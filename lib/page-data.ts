@@ -1,11 +1,11 @@
 import { getPool } from "./db";
-import { loadEvents, loadPrices, loadSubject, isStale } from "./store/read";
-import { ensureSources, emptyStats, upsertEvent, upsertSubject } from "./ingest/store";
+import { loadEvents, loadPrices, loadSubject, loadIndustryFor, isStale, type IndustryRef } from "./store/read";
+import { ensureSources, emptyStats, upsertEvent, upsertSubject, linkToIndustry } from "./ingest/store";
 import { PricePoint, TimelineEvent } from "./types";
 import { getTopicTimeline } from "./wiki";
 import { getPressMentions, dropImplausiblePress } from "./loc";
 import { getNews } from "./news";
-import { resolveCompany, getFilings } from "./sec";
+import { resolveCompany, getFilings, getIndustry, type Industry } from "./sec";
 import { getDailyPrices } from "./prices";
 import { getOfficialDomain } from "./wikidata";
 
@@ -27,6 +27,7 @@ export interface CompanyPageData {
   siteDomain: string | null;
   prices: PricePoint[];
   events: TimelineEvent[];
+  industry: IndustryRef | null;
   servedFrom: ServedFrom;
 }
 
@@ -37,7 +38,8 @@ export interface CompanyPageData {
 async function persist(
   subject: Parameters<typeof upsertSubject>[1],
   events: TimelineEvent[],
-  prices?: PricePoint[]
+  prices?: PricePoint[],
+  industry?: Industry | null
 ): Promise<void> {
   let client;
   try {
@@ -58,6 +60,7 @@ async function persist(
           [subjectId, prices.map((p) => p.time), prices.map((p) => p.value)]
         );
       }
+      if (industry) await linkToIndustry(client, subjectId, industry);
       await client.query("COMMIT");
     } catch (err) {
       await client.query("ROLLBACK");
@@ -122,9 +125,10 @@ export async function getCompanyPageData(ticker: string): Promise<CompanyPageDat
   try {
     const subject = await loadSubject(ticker);
     if (subject?.ticker && !isStale(subject.refreshedAt, COMPANY_TTL_MINUTES)) {
-      const [events, prices] = await Promise.all([
+      const [events, prices, industry] = await Promise.all([
         loadEvents(subject.id),
         loadPrices(subject.id),
+        loadIndustryFor(subject.id),
       ]);
       if (events.length && prices.length) {
         return {
@@ -133,6 +137,7 @@ export async function getCompanyPageData(ticker: string): Promise<CompanyPageDat
           siteDomain: subject.siteDomain,
           prices,
           events,
+          industry,
           servedFrom: "database",
         };
       }
@@ -144,11 +149,12 @@ export async function getCompanyPageData(ticker: string): Promise<CompanyPageDat
   const company = await resolveCompany(ticker);
   if (!company) return null;
 
-  const [prices, filings, news, siteDomain] = await Promise.all([
+  const [prices, filings, news, siteDomain, sicIndustry] = await Promise.all([
     getDailyPrices(company.ticker),
     getFilings(company),
     getNews(company.name),
     getOfficialDomain(company.name),
+    getIndustry(company),
   ]);
   const events = [...filings, ...news];
 
@@ -159,11 +165,20 @@ export async function getCompanyPageData(ticker: string): Promise<CompanyPageDat
       displayName: company.name,
       ticker: company.ticker,
       cik: company.cik,
+      sic: sicIndustry?.sic ?? null,
       siteDomain,
     },
     events,
-    prices
+    prices,
+    sicIndustry
   );
+
+  // read the membership back so the peer count reflects everyone ingested so far
+  let industry: IndustryRef | null = null;
+  if (sicIndustry) {
+    const subject = await loadSubject(company.ticker).catch(() => null);
+    if (subject) industry = await loadIndustryFor(subject.id).catch(() => null);
+  }
 
   return {
     name: company.name,
@@ -171,6 +186,7 @@ export async function getCompanyPageData(ticker: string): Promise<CompanyPageDat
     siteDomain,
     prices,
     events,
+    industry,
     servedFrom: "live",
   };
 }

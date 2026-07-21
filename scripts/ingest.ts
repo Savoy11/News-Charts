@@ -11,6 +11,7 @@ import {
   logFetch,
   upsertEvent,
   upsertSubject,
+  linkToIndustry,
   emptyStats,
   type UpsertStats,
 } from "../lib/ingest/store";
@@ -18,7 +19,7 @@ import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
 import { getTopicTimeline } from "../lib/wiki";
 import { fetchPressMentions, dropImplausiblePress } from "../lib/loc";
 import { fetchNews } from "../lib/news";
-import { resolveCompany, getFilings } from "../lib/sec";
+import { resolveCompany, getFilings, getIndustry } from "../lib/sec";
 import { getDailyPrices } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 
@@ -133,17 +134,32 @@ async function ingestCompany(client: PoolClient, ticker: string) {
     return;
   }
 
-  const siteDomain = await getOfficialDomain(company.name);
+  const [siteDomain, industry] = await Promise.all([
+    getOfficialDomain(company.name),
+    getIndustry(company),
+  ]);
   const subjectId = await upsertSubject(client, {
     kind: "company",
     slug: company.ticker.toLowerCase(),
     displayName: company.name,
     ticker: company.ticker,
     cik: company.cik,
+    sic: industry?.sic ?? null,
     siteDomain,
   });
   line("subject", `#${subjectId} ${company.name} (${company.ticker}, CIK ${company.cik})`);
   line("site", siteDomain ?? "not resolved");
+
+  if (industry) {
+    const { industryId, slug } = await linkToIndustry(client, subjectId, industry);
+    const { rows } = await client.query<{ n: string }>(
+      "SELECT count(*) AS n FROM subject_members WHERE industry_id = $1",
+      [industryId]
+    );
+    line("industry", `SIC ${industry.sic} ${industry.description} → /${slug} (${rows[0].n} members)`);
+  } else {
+    line("industry", "no SIC code from EDGAR");
+  }
 
   await runSource(client, "sec_edgar", subjectId, company.ticker, async () => {
     const events = await getFilings(company);

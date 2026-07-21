@@ -3,7 +3,7 @@
 
 CREATE TYPE event_kind     AS ENUM ('history','press','news','filing','earnings');
 CREATE TYPE date_precision AS ENUM ('day','month','year');
-CREATE TYPE subject_kind   AS ENUM ('topic','company');
+CREATE TYPE subject_kind   AS ENUM ('topic','company','industry');
 CREATE TYPE fetch_outcome  AS ENUM ('ok','empty','throttled','error');
 
 -- ---------------------------------------------------------------- sources
@@ -27,6 +27,9 @@ CREATE TABLE subjects (
   display_name    text NOT NULL,
   ticker          text,
   cik             char(10),
+  -- SIC comes free with every EDGAR submissions record, so the industry graph is
+  -- authoritative rather than inferred. On an industry subject it is that industry.
+  sic             char(4),
   wikidata_qid    text,
   wikipedia_title text,
   summary         text,                        -- lede paragraph shown above the timeline
@@ -49,6 +52,19 @@ CREATE TABLE subject_aliases (
   PRIMARY KEY (subject_id, alias)
 );
 CREATE INDEX subject_aliases_lookup ON subject_aliases (lower(alias));
+
+-- Industry membership. A join table rather than deriving from matching `sic` values,
+-- so curated groupings ("AI chip makers") can span SIC codes later without a migration,
+-- and so a company can sit in more than one industry.
+CREATE TABLE subject_members (
+  industry_id bigint NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+  member_id   bigint NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+  source      text   NOT NULL DEFAULT 'sic',   -- 'sic' | 'manual'
+  added_at    timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (industry_id, member_id),
+  CONSTRAINT subject_members_not_self CHECK (industry_id <> member_id)
+);
+CREATE INDEX subject_members_member ON subject_members (member_id);
 
 -- ----------------------------------------------------------------- events
 -- What happened. Carries no source columns: those live in event_attestations,

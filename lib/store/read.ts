@@ -80,6 +80,101 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
   });
 }
 
+export interface IndustryRef {
+  slug: string;
+  name: string;
+  sic: string;
+  memberCount: number;
+}
+
+/** The industry a company belongs to, for the peer link on its page. */
+export async function loadIndustryFor(subjectId: number): Promise<IndustryRef | null> {
+  const { rows } = await getPool().query(
+    `SELECT i.slug, i.display_name, i.sic,
+            (SELECT count(*) FROM subject_members x WHERE x.industry_id = i.id) AS members
+       FROM subjects i
+       JOIN subject_members sm ON sm.industry_id = i.id
+      WHERE sm.member_id = $1 AND i.kind = 'industry'
+      LIMIT 1`,
+    [subjectId]
+  );
+  if (!rows[0]) return null;
+  return {
+    slug: rows[0].slug,
+    name: rows[0].display_name,
+    sic: rows[0].sic,
+    memberCount: Number(rows[0].members),
+  };
+}
+
+export interface IndustryPage {
+  id: number;
+  name: string;
+  sic: string;
+  members: { ticker: string; name: string; slug: string }[];
+}
+
+export async function loadIndustry(slug: string): Promise<IndustryPage | null> {
+  const { rows } = await getPool().query(
+    `SELECT id, display_name, sic FROM subjects WHERE slug = $1 AND kind = 'industry'`,
+    [slug.toLowerCase()]
+  );
+  if (!rows[0]) return null;
+  const { rows: members } = await getPool().query(
+    `SELECT m.ticker, m.display_name, m.slug
+       FROM subject_members sm JOIN subjects m ON m.id = sm.member_id
+      WHERE sm.industry_id = $1 ORDER BY m.ticker`,
+    [rows[0].id]
+  );
+  return {
+    id: Number(rows[0].id),
+    name: rows[0].display_name,
+    sic: rows[0].sic,
+    members: members.map((m) => ({ ticker: m.ticker, name: m.display_name, slug: m.slug })),
+  };
+}
+
+/**
+ * Every event concerning any member of an industry, deduplicated. An event touching
+ * several peers appears once, tagged with all of them — that overlap is the signal a
+ * trend pass will look for.
+ */
+export async function loadIndustryEvents(industryId: number): Promise<TimelineEvent[]> {
+  const { rows } = await getPool().query(
+    `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title,
+            a.url, a.source_label,
+            string_agg(DISTINCT m.ticker, ', ' ORDER BY m.ticker) AS tickers,
+            count(DISTINCT m.id) AS peers
+       FROM events e
+       JOIN event_subjects es ON es.event_id = e.id
+       JOIN subjects m ON m.id = es.subject_id AND m.kind = 'company'
+       JOIN subject_members sm ON sm.member_id = m.id AND sm.industry_id = $1
+       LEFT JOIN event_attestations a ON a.event_id = e.id AND a.is_primary
+      WHERE es.relevance IS NULL OR es.relevance >= $2
+      GROUP BY e.id, e.kind, e.occurred_on, e.date_precision, e.title, a.url, a.source_label
+      ORDER BY e.occurred_on DESC
+      LIMIT 400`,
+    [industryId, RELEVANCE_THRESHOLD]
+  );
+  return rows.map((r) => {
+    const date =
+      r.occurred_on instanceof Date
+        ? r.occurred_on.toISOString().slice(0, 10)
+        : String(r.occurred_on).slice(0, 10);
+    const peers = Number(r.peers);
+    return {
+      id: `ind-${r.id}`,
+      date,
+      type: r.kind as EventType,
+      title: r.title,
+      source: r.source_label ?? "Chronolens",
+      url: r.url ?? undefined,
+      description: peers > 1 ? `${r.tickers} · ${peers} peers` : r.tickers,
+      yearOnly: r.date_precision === "year",
+    } satisfies TimelineEvent;
+  });
+}
+
 export async function loadPrices(subjectId: number): Promise<PricePoint[]> {
   const { rows } = await getPool().query(
     `SELECT on_date, close FROM prices WHERE subject_id = $1 ORDER BY on_date`,

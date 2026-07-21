@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import CompanyExplorer from "@/components/CompanyExplorer";
 import AdSlot from "@/components/AdSlot";
@@ -35,6 +36,20 @@ export default async function CompanyPage({ params }: { params: { ticker: string
               )}
               <span className="ml-2 text-xs font-normal text-slate-500">
                 last close · {last.time}
+              </span>
+            </p>
+          )}
+          {data.industry && (
+            <p className="mt-1.5 text-xs text-slate-500">
+              Sector:{" "}
+              <Link
+                href={`/industry/${data.industry.slug}`}
+                className="font-semibold text-emerald-400 underline decoration-emerald-800 underline-offset-2 hover:text-emerald-300"
+              >
+                {data.industry.name}
+              </Link>{" "}
+              <span className="text-slate-600">
+                (SIC {data.industry.sic} · {data.industry.memberCount} tracked)
               </span>
             </p>
           )}

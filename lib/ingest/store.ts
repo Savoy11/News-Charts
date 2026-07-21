@@ -127,11 +127,12 @@ export async function logFetch(
 export async function upsertSubject(
   client: PoolClient,
   s: {
-    kind: "topic" | "company";
+    kind: "topic" | "company" | "industry";
     slug: string;
     displayName: string;
     ticker?: string;
     cik?: string;
+    sic?: string | null;
     wikipediaTitle?: string;
     summary?: string | null;
     siteDomain?: string | null;
@@ -140,11 +141,12 @@ export async function upsertSubject(
 ): Promise<number> {
   const { rows } = await client.query<{ id: string }>(
     `INSERT INTO subjects
-       (kind, slug, display_name, ticker, cik, wikipedia_title, summary,
+       (kind, slug, display_name, ticker, cik, sic, wikipedia_title, summary,
         site_domain, first_event_on, refreshed_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, now())
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, now())
      ON CONFLICT (slug) DO UPDATE
         SET display_name    = EXCLUDED.display_name,
+            sic             = COALESCE(EXCLUDED.sic, subjects.sic),
             wikipedia_title = COALESCE(EXCLUDED.wikipedia_title, subjects.wikipedia_title),
             summary         = COALESCE(EXCLUDED.summary, subjects.summary),
             site_domain     = COALESCE(EXCLUDED.site_domain, subjects.site_domain),
@@ -159,6 +161,7 @@ export async function upsertSubject(
       s.displayName,
       s.ticker ?? null,
       s.cik ?? null,
+      s.sic ?? null,
       s.wikipediaTitle ?? null,
       s.summary ?? null,
       s.siteDomain ?? null,
@@ -166,6 +169,32 @@ export async function upsertSubject(
     ]
   );
   return Number(rows[0].id);
+}
+
+/**
+ * Create (or find) the industry a company belongs to and record the membership.
+ * Industries are ordinary subjects, so they get timelines, syntheses and relevance
+ * scoring for free — an industry-level event simply links to the industry subject.
+ */
+export async function linkToIndustry(
+  client: PoolClient,
+  companySubjectId: number,
+  industry: { sic: string; description: string }
+): Promise<{ industryId: number; slug: string }> {
+  const slug = `sic-${industry.sic}`;
+  const industryId = await upsertSubject(client, {
+    kind: "industry",
+    slug,
+    displayName: industry.description,
+    sic: industry.sic,
+  });
+  await client.query(
+    `INSERT INTO subject_members (industry_id, member_id, source)
+     VALUES ($1,$2,'sic')
+     ON CONFLICT (industry_id, member_id) DO NOTHING`,
+    [industryId, companySubjectId]
+  );
+  return { industryId, slug };
 }
 
 export interface UpsertStats {

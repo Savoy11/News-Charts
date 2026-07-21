@@ -27,6 +27,24 @@ like-for-like by kind so the 2-company/3-topic balance holds, never re-rolling t
 changed. Rotation pauses when the tab is hidden and is disabled entirely under
 `prefers-reduced-motion`; the ↻ button reshuffles on demand.
 
+## Industry graph
+
+Every EDGAR submissions record carries an SIC code, so peer grouping is **authoritative and
+free** rather than inferred — NVDA and INTC both return `3674 Semiconductors & Related Devices`.
+Ingesting a company creates (or joins) that industry automatically, via both the worker and the
+page read-through.
+
+Industries are ordinary `subjects` (`kind='industry'`, slug `sic-<code>`), so they inherit
+timelines, relevance scoring and — later — syntheses for free. Membership is a join table
+rather than a `sic` equality check, so curated groupings that span SIC codes ("AI chip makers")
+can be added without a migration.
+
+`/industry/sic-3674` shows the members and a merged sector timeline, with each event tagged by
+which peers it touches. **Events touching more than one peer are the trend signal** and they
+fall out of the existing content-dedup for free: ingesting AMD after NVIDIA reported "30 events,
+26 new" — four stories about AI infrastructure and chipmaking materials were one event linked to
+both companies, not two rows.
+
 ## Backups
 
 Git covers the source; it does **not** cover the database. Postgres keeps its data under

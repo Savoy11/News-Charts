@@ -33,6 +33,31 @@ export async function resolveCompany(query: string): Promise<CompanyInfo | null>
   };
 }
 
+export interface Industry {
+  /** 4-digit SIC code, e.g. "3674" */
+  sic: string;
+  /** EDGAR's own label, e.g. "Semiconductors & Related Devices" */
+  description: string;
+}
+
+/**
+ * Every EDGAR submissions record carries an SIC code, so peer grouping is
+ * authoritative rather than inferred — and free. Shares the fetch cache with
+ * getFilings(), so asking for both costs one request.
+ */
+export async function getIndustry(company: CompanyInfo): Promise<Industry | null> {
+  const res = await fetch(`https://data.sec.gov/submissions/CIK${company.cik}.json`, {
+    headers: UA,
+    next: { revalidate: 3600 },
+  });
+  if (!res.ok) return null;
+  const json = await res.json();
+  const sic = String(json?.sic ?? "").trim();
+  const description = String(json?.sicDescription ?? "").trim();
+  if (!/^\d{3,4}$/.test(sic) || !description) return null;
+  return { sic: sic.padStart(4, "0"), description };
+}
+
 /** Filings from EDGAR. 10-K/10-Q become "earnings" events; other material forms become "filing" events. */
 export async function getFilings(company: CompanyInfo): Promise<TimelineEvent[]> {
   const res = await fetch(`https://data.sec.gov/submissions/CIK${company.cik}.json`, {

@@ -9,6 +9,7 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
   filing: { label: "Filing", cls: "bg-sky-500/15 text-sky-400 border-sky-700/50" },
   news: { label: "News", cls: "bg-slate-500/15 text-slate-400 border-slate-600/50" },
   press: { label: "Press", cls: "bg-orange-500/15 text-orange-400 border-orange-700/50" },
+  regulation: { label: "Regulation", cls: "bg-rose-500/15 text-rose-400 border-rose-700/50" },
   history: { label: "History", cls: "bg-violet-500/15 text-violet-400 border-violet-700/50" },
 };
 

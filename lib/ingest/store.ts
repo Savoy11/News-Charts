@@ -46,6 +46,15 @@ export const SOURCES: {
     commercialOk: true,
     notes: "requires a User-Agent with contact details",
   },
+  {
+    id: 5,
+    key: "federal_register",
+    name: "Federal Register",
+    license: "public domain",
+    attribution: "U.S. Government Publishing Office, Federal Register",
+    commercialOk: true,
+    notes: "industry-level rules, proposed rules and notices; no key, generous limits",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

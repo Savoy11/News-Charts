@@ -45,6 +45,27 @@ fall out of the existing content-dedup for free: ingesting AMD after NVIDIA repo
 26 new" — four stories about AI infrastructure and chipmaking materials were one event linked to
 both companies, not two rows.
 
+### Regulatory events (Federal Register)
+
+```
+npm run ingest -- --industry sic-3674
+```
+
+Pulls rules, proposed rules and notices from the Federal Register — public domain, no key,
+generous limits — and links them to the **industry** subject rather than any member company.
+An export-control rule is a semiconductor event that happens to matter to Nvidia, not an Nvidia
+event. The sector timeline shows them tagged `sector-wide`; company events keep their tickers.
+
+The search term comes from a stored `subject_aliases` row if present, otherwise the leading word
+of EDGAR's own label ("Semiconductors & Related Devices" → `semiconductors`). Add an alias to
+override a bad default rather than editing code.
+
+**These are the first events the deterministic scorer deliberately refuses to score.** A
+full-text search match doesn't prove relevance — an immigration rule mentioning semiconductors
+in passing looks identical to an ITC ruling on DRAM devices. All 60 are left `NULL` for the
+model tier, which means they display until something can actually judge them. That is the
+relevance problem the AI layer exists for, now with real material to work on.
+
 ## Backups
 
 Git covers the source; it does **not** cover the database. Postgres keeps its data under

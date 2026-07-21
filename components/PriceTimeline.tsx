@@ -17,6 +17,7 @@ const MARKER_STYLE = {
   news: { color: "#64748b", position: "aboveBar", shape: "circle", text: "" },
   history: { color: "#a78bfa", position: "aboveBar", shape: "square", text: "" },
   press: { color: "#fb923c", position: "aboveBar", shape: "square", text: "" },
+  regulation: { color: "#fb7185", position: "aboveBar", shape: "square", text: "" },
 } as const;
 
 interface Props {
@@ -76,6 +77,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
       earnings: 3,
       filing: 2,
       history: 2,
+      regulation: 2,
       press: 1,
       news: 1,
     };

@@ -1,7 +1,7 @@
 -- Generated from docs/EVENTS-SCHEMA.md. Edit the spec, then regenerate:
 --   npm run db:gen
 
-CREATE TYPE event_kind     AS ENUM ('history','press','news','filing','earnings');
+CREATE TYPE event_kind     AS ENUM ('history','press','news','filing','earnings','regulation');
 CREATE TYPE date_precision AS ENUM ('day','month','year');
 CREATE TYPE subject_kind   AS ENUM ('topic','company','industry');
 CREATE TYPE fetch_outcome  AS ENUM ('ok','empty','throttled','error');

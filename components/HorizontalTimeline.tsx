@@ -29,6 +29,11 @@ const STYLE: Record<EventType, { dot: string; badge: string; label: string }> = 
     badge: "border-orange-700/50 bg-orange-500/15 text-orange-300",
     label: "Press",
   },
+  regulation: {
+    dot: "bg-rose-400 ring-rose-400/30",
+    badge: "border-rose-700/50 bg-rose-500/15 text-rose-300",
+    label: "Regulation",
+  },
   earnings: {
     dot: "bg-amber-400 ring-amber-400/30",
     badge: "border-amber-700/50 bg-amber-500/15 text-amber-300",

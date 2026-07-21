@@ -22,6 +22,7 @@ import { fetchNews } from "../lib/news";
 import { resolveCompany, getFilings, getIndustry } from "../lib/sec";
 import { getDailyPrices } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
+import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 
 const BACKOFF_MINUTES = 10;
 
@@ -182,11 +183,49 @@ async function ingestCompany(client: PoolClient, ticker: string) {
   line("prices", `${prices.length} daily closes`);
 }
 
+/**
+ * Regulatory events for a whole sector. These link to the industry subject, not to any
+ * member company — an export-control rule is a semiconductor event that happens to
+ * matter to Nvidia, not an Nvidia event.
+ */
+async function ingestIndustry(client: PoolClient, slug: string) {
+  console.log(`\nindustry: ${slug}`);
+  const { rows } = await client.query(
+    `SELECT id, display_name, sic FROM subjects WHERE slug = $1 AND kind = 'industry'`,
+    [slug.toLowerCase()]
+  );
+  if (!rows[0]) {
+    console.log("  no such industry — ingest a member company first to create it");
+    return;
+  }
+  const subjectId = Number(rows[0].id);
+  const { rows: aliasRows } = await client.query(
+    "SELECT alias FROM subject_aliases WHERE subject_id = $1",
+    [subjectId]
+  );
+  const query = regulationQueryFor(
+    rows[0].display_name,
+    aliasRows.map((a) => a.alias)
+  );
+
+  const { rows: memberRows } = await client.query(
+    `SELECT count(*) AS n FROM subject_members WHERE industry_id = $1`,
+    [subjectId]
+  );
+  line("subject", `#${subjectId} ${rows[0].display_name} (SIC ${rows[0].sic}, ${memberRows[0].n} members)`);
+  line("query", `"${query}"`);
+
+  await runSource(client, "federal_register", subjectId, query, () => fetchRegulations(query));
+}
+
 async function main() {
   const topic = arg("topic");
   const ticker = arg("ticker");
-  if (!topic && !ticker) {
-    console.error("usage: npm run ingest -- --topic <name> | --ticker <SYMBOL>");
+  const industry = arg("industry");
+  if (!topic && !ticker && !industry) {
+    console.error(
+      "usage: npm run ingest -- --topic <name> | --ticker <SYMBOL> | --industry <sic-slug>"
+    );
     process.exit(2);
   }
 
@@ -195,6 +234,7 @@ async function main() {
     await ensureSources(client);
     if (topic) await ingestTopic(client, topic);
     if (ticker) await ingestCompany(client, ticker.toUpperCase());
+    if (industry) await ingestIndustry(client, industry);
   } finally {
     client.release();
     await closePool();

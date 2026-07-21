@@ -140,15 +140,22 @@ export async function loadIndustry(slug: string): Promise<IndustryPage | null> {
  * trend pass will look for.
  */
 export async function loadIndustryEvents(industryId: number): Promise<TimelineEvent[]> {
+  // Scope is the industry itself *plus* its members: sector-wide events (Federal
+  // Register rules) link to the industry, company events link to the members.
   const { rows } = await getPool().query(
-    `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title,
+    `WITH scope AS (
+       SELECT $1::bigint AS id
+       UNION
+       SELECT member_id FROM subject_members WHERE industry_id = $1
+     )
+     SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title,
             a.url, a.source_label,
-            string_agg(DISTINCT m.ticker, ', ' ORDER BY m.ticker) AS tickers,
-            count(DISTINCT m.id) AS peers
+            string_agg(DISTINCT m.ticker, ', ') FILTER (WHERE m.ticker IS NOT NULL) AS tickers,
+            count(DISTINCT m.id) FILTER (WHERE m.ticker IS NOT NULL) AS peers
        FROM events e
        JOIN event_subjects es ON es.event_id = e.id
-       JOIN subjects m ON m.id = es.subject_id AND m.kind = 'company'
-       JOIN subject_members sm ON sm.member_id = m.id AND sm.industry_id = $1
+       JOIN scope sc ON sc.id = es.subject_id
+       LEFT JOIN subjects m ON m.id = es.subject_id AND m.kind = 'company'
        LEFT JOIN event_attestations a ON a.event_id = e.id AND a.is_primary
       WHERE es.relevance IS NULL OR es.relevance >= $2
       GROUP BY e.id, e.kind, e.occurred_on, e.date_precision, e.title, a.url, a.source_label
@@ -169,7 +176,8 @@ export async function loadIndustryEvents(industryId: number): Promise<TimelineEv
       title: r.title,
       source: r.source_label ?? "Chronolens",
       url: r.url ?? undefined,
-      description: peers > 1 ? `${r.tickers} · ${peers} peers` : r.tickers,
+      description:
+        peers > 1 ? `${r.tickers} · ${peers} peers` : (r.tickers ?? "sector-wide"),
       yearOnly: r.date_precision === "year",
     } satisfies TimelineEvent;
   });

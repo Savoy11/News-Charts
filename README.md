@@ -27,6 +27,37 @@ like-for-like by kind so the 2-company/3-topic balance holds, never re-rolling t
 changed. Rotation pauses when the tab is hidden and is disabled entirely under
 `prefers-reduced-motion`; the ↻ button reshuffles on demand.
 
+## Backups
+
+Git covers the source; it does **not** cover the database. Postgres keeps its data under
+`C:\Program Files\PostgreSQL\17\data` — outside both the repo and OneDrive — so without this the
+ingested events, prices and relevance scores exist in exactly one place.
+
+```
+npm run db:backup
+```
+
+Writes a compressed `pg_dump -Fc` into `backups/` (gitignored, inside OneDrive so it syncs off
+the machine), keeps the newest 14, and prunes the rest. `pg_dump` isn't on PATH in a default
+Windows install, so the script finds it under `C:\Program Files\PostgreSQL\<version>\bin`; set
+`PG_DUMP_PATH` to override, or `BACKUP_DIR` to write elsewhere. The password is passed via
+`PGPASSWORD` rather than argv, keeping it out of the process list.
+
+Each run prints what it captured and verifies the file with `pg_restore -l` before pruning
+anything — a dump that can't be listed can't be restored, and an unverified backup that silently
+contains nothing is worse than none.
+
+Restore:
+
+```
+pg_restore --clean --if-exists -d "$DATABASE_URL" backups/chronolens-<timestamp>.dump
+```
+
+Verified 2026-07-21 by expanding a dump to SQL and comparing row counts against the live
+database — all 12 tables matched exactly (490 events, 490 attestations, 561 links, 2512 prices).
+A full restore *rehearsal* into a scratch database still hasn't been done: the `chronolens` role
+deliberately lacks `CREATEDB`, so it needs either that grant or a one-off superuser run.
+
 ## Database and ingest worker
 
 Chronolens owns a dedicated `chronolens` database and a non-superuser `chronolens` role.

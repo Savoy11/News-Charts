@@ -1,0 +1,82 @@
+import { CompanyInfo, TimelineEvent } from "./types";
+
+const UA = { "User-Agent": "Chronolens Research marcusowens94@gmail.com" };
+
+interface TickerRow {
+  cik_str: number;
+  ticker: string;
+  title: string;
+}
+
+async function getTickerMap(): Promise<TickerRow[]> {
+  const res = await fetch("https://www.sec.gov/files/company_tickers.json", {
+    headers: UA,
+    next: { revalidate: 86400 },
+  });
+  if (!res.ok) return [];
+  const json = (await res.json()) as Record<string, TickerRow>;
+  return Object.values(json);
+}
+
+export async function resolveCompany(query: string): Promise<CompanyInfo | null> {
+  const rows = await getTickerMap();
+  const q = query.trim().toUpperCase();
+  const hit =
+    rows.find((r) => r.ticker === q) ??
+    rows.find((r) => r.title.toUpperCase() === q) ??
+    null;
+  if (!hit) return null;
+  return {
+    ticker: hit.ticker,
+    cik: String(hit.cik_str).padStart(10, "0"),
+    name: hit.title,
+  };
+}
+
+/** Filings from EDGAR. 10-K/10-Q become "earnings" events; other material forms become "filing" events. */
+export async function getFilings(company: CompanyInfo): Promise<TimelineEvent[]> {
+  const res = await fetch(`https://data.sec.gov/submissions/CIK${company.cik}.json`, {
+    headers: UA,
+    next: { revalidate: 3600 },
+  });
+  if (!res.ok) return [];
+  const json = await res.json();
+  const recent = json?.filings?.recent;
+  if (!recent) return [];
+
+  const wanted = new Set(["8-K", "10-K", "10-Q", "S-1", "DEF 14A", "20-F", "6-K"]);
+  const events: TimelineEvent[] = [];
+  const n = recent.form.length;
+  for (let i = 0; i < n; i++) {
+    const form: string = recent.form[i];
+    if (!wanted.has(form)) continue;
+    const date: string = recent.filingDate[i];
+    const accession: string = recent.accessionNumber[i].replace(/-/g, "");
+    const doc: string = recent.primaryDocument[i];
+    const items: string = recent.items?.[i] ?? "";
+    const isEarnings =
+      form === "10-K" || form === "10-Q" || (form === "8-K" && items.includes("2.02"));
+    const label =
+      form === "10-K"
+        ? "Annual report (10-K)"
+        : form === "10-Q"
+          ? "Quarterly report (10-Q)"
+          : form === "8-K" && items.includes("2.02")
+            ? "Earnings announcement (8-K)"
+            : `${form} filing`;
+    events.push({
+      id: `sec-${accession}`,
+      date,
+      type: isEarnings ? "earnings" : "filing",
+      title: `${company.name}: ${label}`,
+      source: "SEC EDGAR",
+      url: `https://www.sec.gov/Archives/edgar/data/${Number(company.cik)}/${accession}/${doc}`,
+      description: form === "8-K" && items ? `Items: ${items}` : undefined,
+      sourceKey: "sec_edgar",
+      // the accession number is already globally unique, so document and event identity coincide
+      externalId: accession,
+      dedupBasis: `sec:${accession}`,
+    });
+  }
+  return events;
+}

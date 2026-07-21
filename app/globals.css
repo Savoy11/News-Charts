@@ -2,26 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* horizontal timeline track */
+.chrono-scroller {
+  scrollbar-color: #475569 #0f172a;
+}
+.chrono-scroller::-webkit-scrollbar {
+  height: 12px;
+}
+.chrono-scroller::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+.chrono-scroller::-webkit-scrollbar-thumb {
+  background: #475569;
+  border: 3px solid #0f172a;
+  border-radius: 999px;
+}
+.chrono-scroller::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }

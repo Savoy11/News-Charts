@@ -11,7 +11,8 @@
     "db:gen": "node scripts/gen-migration.mjs",
     "ingest": "tsx scripts/ingest.ts",
     "score": "tsx scripts/score.ts",
-    "db:backup": "tsx scripts/backup.ts"
+    "db:backup": "tsx scripts/backup.ts",
+    "signals": "tsx scripts/signals.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

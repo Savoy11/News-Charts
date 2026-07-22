@@ -4,7 +4,9 @@ import EventList from "@/components/EventList";
 import AdSlot from "@/components/AdSlot";
 import CaepPromo from "@/components/CaepPromo";
 import SearchBox from "@/components/SearchBox";
+import SignalPanel from "@/components/SignalPanel";
 import { loadIndustry, loadIndustryEvents } from "@/lib/store/read";
+import { computeSignals } from "@/lib/signals";
 
 export const revalidate = 900;
 
@@ -12,7 +14,11 @@ export default async function IndustryPage({ params }: { params: { slug: string 
   const industry = await loadIndustry(decodeURIComponent(params.slug)).catch(() => null);
   if (!industry) notFound();
 
-  const events = await loadIndustryEvents(industry.id);
+  const [events, signals] = await Promise.all([
+    loadIndustryEvents(industry.id),
+    // signals are arithmetic, so a failure here must not take down the timeline
+    computeSignals(industry.id, "2024-01-01").catch(() => []),
+  ]);
   const shared = events.filter((e) => e.description?.includes("peers")).length;
 
   return (
@@ -40,6 +46,8 @@ export default async function IndustryPage({ params }: { params: { slug: string 
           </Link>
         ))}
       </div>
+
+      <SignalPanel signals={signals} />
 
       <div className="mb-4 flex items-baseline gap-2">
         <h2 className="text-lg font-bold text-slate-100">Sector timeline</h2>

@@ -66,6 +66,36 @@ in passing looks identical to an ITC ruling on DRAM devices. All 60 are left `NU
 model tier, which means they display until something can actually judge them. That is the
 relevance problem the AI layer exists for, now with real material to work on.
 
+### Trend signals (`lib/signals.ts`)
+
+```
+npm run signals -- --industry sic-3674 --since 2024-01-01
+```
+
+**Computed, not generated.** Every signal is arithmetic over the event table, and each one
+carries the event ids that produced it. Statistics find *where* something happened; explaining
+*what it means* is a separate step that must cite these rows. Keeping those apart is what stops
+a model inventing a confident narrative from a pile of headlines — it is handed an anomaly and
+its evidence, not a blank page.
+
+Four signals today:
+
+| Signal | Method |
+| --- | --- |
+| `volume_spike` | weekly event count vs a **median + MAD** baseline, per kind |
+| `regulatory_burst` | same, restricted to Federal Register events |
+| `cross_peer_cluster` | weeks where one event concerned several peers at once |
+| `price_divergence` | a member's return vs the sector median over the window |
+
+Two deliberate choices. The baseline uses **median absolute deviation**, not standard deviation,
+because the spikes we're hunting would inflate a mean-based baseline and hide themselves. And
+every spike must clear an **absolute floor** as well as the statistical threshold — without it,
+2 events against a baseline of 0 looks infinitely significant and every quiet sector produces
+noise.
+
+Real output on the semiconductor sector: `INTC lagged the sector by 172.3 points`
+(+120.6% vs a sector median of +292.9% since 2024). No model involved.
+
 ## Backups
 
 Git covers the source; it does **not** cover the database. Postgres keeps its data under

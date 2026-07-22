@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Signal, SignalKind } from "@/lib/signals";
+import type { StoredExplanation } from "@/lib/store/read";
 import { DEFAULT_PREFS, loadPrefs, openPrefs, PREFS_EVENT, type Prefs } from "@/lib/prefs";
 import type { TimelineEvent } from "@/lib/types";
 
@@ -36,6 +37,7 @@ interface Props {
 export default function SignalPanel({ industrySlug, tickers, onExtraEvents }: Props) {
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [signals, setSignals] = useState<Signal[] | null>(null);
+  const [explanations, setExplanations] = useState<StoredExplanation[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,6 +66,7 @@ export default function SignalPanel({ industrySlug, tickers, onExtraEvents }: Pr
       .then((json) => {
         if (cancelled) return;
         setSignals(json.signals ?? []);
+        setExplanations(json.explanations ?? []);
         setError(json.error ?? null);
         if (json.extraEvents?.length) onExtraEvents?.(json.extraEvents);
       })
@@ -130,6 +133,38 @@ export default function SignalPanel({ industrySlug, tickers, onExtraEvents }: Pr
                 </>
               )}
             </span>
+            {(() => {
+              const ex = explanations.find((e) => e.key === `${s.kind}|${s.windowStart}`);
+              if (!ex) return null;
+              return (
+                <div className="mt-1.5 w-full rounded-md border border-fuchsia-900/40 bg-fuchsia-500/[0.04] p-2.5">
+                  <p className="text-xs leading-relaxed text-slate-300">{ex.body}</p>
+                  <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-600">
+                    <span className="uppercase tracking-wider">
+                      explained by {ex.model} · cites
+                    </span>
+                    {ex.citations.map((c, n) =>
+                      c.url ? (
+                        <a
+                          key={c.id}
+                          href={c.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={c.title}
+                          className="text-slate-500 underline decoration-slate-700 underline-offset-2 hover:text-fuchsia-300"
+                        >
+                          [{n + 1}]
+                        </a>
+                      ) : (
+                        <span key={c.id} title={c.title} className="text-slate-600">
+                          [{n + 1}]
+                        </span>
+                      )
+                    )}
+                  </p>
+                </div>
+              );
+            })()}
           </li>
         ))}
       </ul>

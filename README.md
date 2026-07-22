@@ -66,6 +66,30 @@ in passing looks identical to an ITC ruling on DRAM devices. All 60 are left `NU
 model tier, which means they display until something can actually judge them. That is the
 relevance problem the AI layer exists for, now with real material to work on.
 
+### Explaining a signal (`lib/enrich/explain.ts`)
+
+```
+npm run explain -- --industry sic-3674
+npm run explain -- --industry sic-3674 --dry-run
+```
+
+The first step that uses a model, and it is handed an anomaly **plus its evidence** — never a
+blank page and a pile of headlines. The prompt carries one signal and only the events that
+signal cites, and forbids outside knowledge, speculation about causes or prices, and market
+commentary. "These events don't explain it" is an accepted answer.
+
+**An explanation with no citations is discarded, not stored.** The model returns indices into
+the event list it was shown; anything it invents is dropped, and if nothing valid remains the
+generation is thrown away. `synthesis_citations` uses `ON DELETE RESTRICT`, so a cited event
+cannot later vanish beneath a published claim. Explanations render under their signal with each
+citation as a link to the original document.
+
+Cost is bounded structurally: the cache key is the signal plus a hash of the exact event
+content shown, so an unchanged anomaly is never paid for twice, and the run reports its own
+token usage and dollar cost. Requires `ANTHROPIC_API_KEY` in `.env.local`; without it the
+command reports what it *would* explain and generates nothing. Signals and timelines are
+unaffected — explanations are purely additive.
+
 ### Visitor preferences (`lib/prefs.ts`)
 
 Behind the same ⚙ as the model settings, three things a visitor can add:

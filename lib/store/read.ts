@@ -118,6 +118,41 @@ export async function loadSectorEvents(industryId: number): Promise<TimelineEven
   }));
 }
 
+export interface StoredExplanation {
+  /** matches a signal by kind + window */
+  key: string;
+  body: string;
+  model: string;
+  citations: { id: number; title: string; url: string | null }[];
+}
+
+/**
+ * Explanations already generated for a subject. Each carries the events it cites — the
+ * UI shows them as links, so a reader can always check a claim against the source.
+ */
+export async function loadExplanations(subjectId: number): Promise<StoredExplanation[]> {
+  const { rows } = await getPool().query(
+    `SELECT sy.id, sy.kind, sy.model, sy.body,
+            to_char(sy.window_start,'YYYY-MM-DD') AS ws,
+            json_agg(json_build_object('id', e.id, 'title', e.title, 'url', a.url)
+                     ORDER BY sc.ordinal) AS citations
+       FROM syntheses sy
+       JOIN synthesis_citations sc ON sc.synthesis_id = sy.id
+       JOIN events e ON e.id = sc.event_id
+       LEFT JOIN event_attestations a ON a.event_id = e.id AND a.is_primary
+      WHERE sy.subject_id = $1
+      GROUP BY sy.id, sy.kind, sy.model, sy.body, sy.window_start
+      ORDER BY sy.window_start DESC`,
+    [subjectId]
+  );
+  return rows.map((r) => ({
+    key: `${r.kind}|${r.ws}`,
+    body: r.body,
+    model: r.model,
+    citations: r.citations ?? [],
+  }));
+}
+
 export interface IndustryRef {
   id: number;
   slug: string;

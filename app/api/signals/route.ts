@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { computeSignals, type SignalOptions } from "@/lib/signals";
 import { fetchRegulations } from "@/lib/federalregister";
+import { loadExplanations } from "@/lib/store/read";
 
 export const dynamic = "force-dynamic";
 
@@ -72,16 +73,24 @@ export async function GET(req: NextRequest) {
       .filter((t) => t.length > 2)
       .slice(0, 5);
 
-    const [signals, extra] = await Promise.all([
+    const [signals, extra, explanations] = await Promise.all([
       computeSignals(scopeIds, memberIds, sinceStr, opts),
       Promise.all(terms.map((t) => fetchRegulations(t, sinceStr))),
+      // explanations are stored against the industry subject, when one exists
+      industrySlug && scopeIds.length ? loadExplanations(scopeIds[0]).catch(() => []) : [],
     ]);
 
     const extraEvents = extra.flatMap((r, i) =>
       r.events.slice(0, 20).map((e) => ({ ...e, description: `${e.description} · “${terms[i]}”` }))
     );
 
-    return NextResponse.json({ signals, extraEvents, since: sinceStr, memberCount: memberIds.length });
+    return NextResponse.json({
+      signals,
+      extraEvents,
+      explanations,
+      since: sinceStr,
+      memberCount: memberIds.length,
+    });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message, signals: [], extraEvents: [] });
   }

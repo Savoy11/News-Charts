@@ -31,7 +31,12 @@ async function main() {
 
   for (const ind of rows) {
     console.log(`\n${ind.slug} — ${ind.display_name}   (since ${since})`);
-    const signals = await computeSignals(Number(ind.id), since);
+    const { rows: mem } = await pool.query(
+      "SELECT member_id FROM subject_members WHERE industry_id = $1",
+      [ind.id]
+    );
+    const memberIds = mem.map((m) => Number(m.member_id));
+    const signals = await computeSignals([Number(ind.id), ...memberIds], memberIds, since);
     if (!signals.length) {
       console.log("  no signals above threshold");
       continue;

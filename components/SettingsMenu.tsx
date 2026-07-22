@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import AiSettingsForm from "./AiSettingsForm";
+import PrefsSettings from "./PrefsSettings";
+import { loadPrefs, PREFS_EVENT, type Prefs, DEFAULT_PREFS } from "@/lib/prefs";
 import {
   CONFIG_EVENT,
   OPEN_SETTINGS_EVENT,
@@ -15,20 +17,26 @@ export default function SettingsMenu() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [config, setConfig] = useState<AiConfig | null>(null);
+  const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
 
   useEffect(() => setMounted(true), []);
 
-  const refresh = useCallback(() => setConfig(loadConfig()), []);
+  const refresh = useCallback(() => {
+    setConfig(loadConfig());
+    setPrefs(loadPrefs());
+  }, []);
 
   useEffect(() => {
     refresh();
     const openHandler = () => setOpen(true);
     window.addEventListener(CONFIG_EVENT, refresh);
+    window.addEventListener(PREFS_EVENT, refresh);
     window.addEventListener(OPEN_SETTINGS_EVENT, openHandler);
     // keep multiple tabs in step
     window.addEventListener("storage", refresh);
     return () => {
       window.removeEventListener(CONFIG_EVENT, refresh);
+      window.removeEventListener(PREFS_EVENT, refresh);
       window.removeEventListener(OPEN_SETTINGS_EVENT, openHandler);
       window.removeEventListener("storage", refresh);
     };
@@ -113,6 +121,10 @@ export default function SettingsMenu() {
                 the AI search box.
               </p>
               <AiSettingsForm config={config} onSaved={setConfig} />
+
+              <div className="mt-6 border-t border-slate-800 pt-5">
+                <PrefsSettings prefs={prefs} onChange={setPrefs} />
+              </div>
             </div>
           </div>
           </div>,

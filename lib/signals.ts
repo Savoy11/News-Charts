@@ -46,11 +46,30 @@ function mad(xs: number[]): number {
  * The floor matters: without it, 2 events against a baseline of 0 looks infinitely
  * significant and every quiet sector produces noise.
  */
-function isSpike(n: number, baseline: number, spread: number, floor: number): boolean {
+function isSpike(
+  n: number,
+  baseline: number,
+  spread: number,
+  floor: number,
+  sigma: number
+): boolean {
   if (n < floor) return false;
-  const threshold = spread > 0 ? baseline + 2 * spread : baseline + 3;
+  const threshold = spread > 0 ? baseline + sigma * spread : baseline + sigma + 1;
   return n >= threshold;
 }
+
+/** Tunable per visitor; defaults match lib/prefs.ts. */
+export interface SignalOptions {
+  floor: number;
+  sigma: number;
+  divergencePct: number;
+}
+
+export const DEFAULT_SIGNAL_OPTIONS: SignalOptions = {
+  floor: 5,
+  sigma: 2,
+  divergencePct: 15,
+};
 
 interface WeekRow {
   wk: string;
@@ -59,12 +78,9 @@ interface WeekRow {
   ids: number[];
 }
 
-async function weeklyCounts(industryId: number, since: string): Promise<WeekRow[]> {
+async function weeklyCounts(scopeIds: number[], since: string): Promise<WeekRow[]> {
   const { rows } = await getPool().query(
-    `WITH scope AS (
-       SELECT $1::bigint AS id
-       UNION SELECT member_id FROM subject_members WHERE industry_id = $1
-     )
+    `WITH scope AS (SELECT unnest($1::bigint[]) AS id)
      SELECT to_char(date_trunc('week', e.occurred_on), 'YYYY-MM-DD') AS wk,
             e.kind::text AS kind,
             count(DISTINCT e.id)      AS n,
@@ -76,7 +92,7 @@ async function weeklyCounts(industryId: number, since: string): Promise<WeekRow[
         AND (es.relevance IS NULL OR es.relevance >= 0.4)
       GROUP BY 1, 2
       ORDER BY 1`,
-    [industryId, since]
+    [scopeIds, since]
   );
   return rows.map((r) => ({
     wk: r.wk,
@@ -87,7 +103,7 @@ async function weeklyCounts(industryId: number, since: string): Promise<WeekRow[
 }
 
 /** Weeks where one event concerned several peers at once — the clearest sector signal. */
-async function crossPeerWeeks(industryId: number, since: string) {
+async function crossPeerWeeks(memberIds: number[], since: string) {
   const { rows } = await getPool().query(
     `SELECT to_char(date_trunc('week', e.occurred_on), 'YYYY-MM-DD') AS wk,
             count(*) AS shared,
@@ -98,13 +114,13 @@ async function crossPeerWeeks(industryId: number, since: string) {
            FROM events e
            JOIN event_subjects es ON es.event_id = e.id
            JOIN subjects m ON m.id = es.subject_id AND m.kind = 'company'
-           JOIN subject_members sm ON sm.member_id = m.id AND sm.industry_id = $1
+                          AND m.id = ANY($1::bigint[])
           WHERE e.occurred_on >= $2
           GROUP BY e.id, e.occurred_on
          HAVING count(DISTINCT m.id) > 1
        ) e
       GROUP BY 1 ORDER BY 1`,
-    [industryId, since]
+    [memberIds, since]
   );
   return rows.map((r) => ({
     wk: r.wk,
@@ -115,11 +131,10 @@ async function crossPeerWeeks(industryId: number, since: string) {
 }
 
 /** A member whose return over the window diverges most from its peers'. */
-async function priceDivergence(industryId: number, since: string) {
+async function priceDivergence(memberIds: number[], since: string) {
   const { rows } = await getPool().query(
     `WITH members AS (
-       SELECT m.id, m.ticker FROM subject_members sm
-       JOIN subjects m ON m.id = sm.member_id WHERE sm.industry_id = $1
+       SELECT id, ticker FROM subjects WHERE id = ANY($1::bigint[])
      ), bounds AS (
        SELECT p.subject_id,
               (array_agg(p.close ORDER BY p.on_date))[1]                      AS first_close,
@@ -134,7 +149,7 @@ async function priceDivergence(industryId: number, since: string) {
             to_char(b.d0,'YYYY-MM-DD') AS d0, to_char(b.d1,'YYYY-MM-DD') AS d1
        FROM bounds b JOIN members m ON m.id = b.subject_id
       WHERE b.first_close > 0`,
-    [industryId, since]
+    [memberIds, since]
   );
   return rows.map((r) => ({ ticker: r.ticker, pct: Number(r.pct), d0: r.d0, d1: r.d1 }));
 }
@@ -145,11 +160,22 @@ function weekEnd(wk: string): string {
   return d.toISOString().slice(0, 10);
 }
 
-export async function computeSignals(industryId: number, since: string): Promise<Signal[]> {
+/**
+ * `scopeIds` is everything whose events count (an industry subject plus its members, or
+ * just a custom set of companies); `memberIds` is the companies among them, which is what
+ * peer clustering and price divergence compare.
+ */
+export async function computeSignals(
+  scopeIds: number[],
+  memberIds: number[],
+  since: string,
+  opts: SignalOptions = DEFAULT_SIGNAL_OPTIONS
+): Promise<Signal[]> {
+  if (!scopeIds.length) return [];
   const [weeks, shared, prices] = await Promise.all([
-    weeklyCounts(industryId, since),
-    crossPeerWeeks(industryId, since),
-    priceDivergence(industryId, since),
+    weeklyCounts(scopeIds, since),
+    crossPeerWeeks(memberIds, since),
+    priceDivergence(memberIds, since),
   ]);
 
   const signals: Signal[] = [];
@@ -163,9 +189,10 @@ export async function computeSignals(industryId: number, since: string): Promise
     const counts = rows.map((r) => r.n);
     const base = median(counts);
     const spread = mad(counts);
-    const floor = kind === "regulation" ? 4 : 5;
+    // regulations arrive in a steadier stream than news, so they need a slightly lower bar
+    const floor = kind === "regulation" ? Math.max(2, opts.floor - 1) : opts.floor;
     for (const r of rows) {
-      if (!isSpike(r.n, base, spread, floor)) continue;
+      if (!isSpike(r.n, base, spread, floor, opts.sigma)) continue;
       signals.push({
         kind: kind === "regulation" ? "regulatory_burst" : "volume_spike",
         windowStart: r.wk,
@@ -198,7 +225,7 @@ export async function computeSignals(industryId: number, since: string): Promise
       (a, b) => Math.abs(b.pct - med) - Math.abs(a.pct - med)
     )[0];
     const gap = Number((worst.pct - med).toFixed(1));
-    if (Math.abs(gap) >= 15) {
+    if (Math.abs(gap) >= opts.divergencePct) {
       signals.push({
         kind: "price_divergence",
         windowStart: worst.d0,

@@ -66,6 +66,27 @@ in passing looks identical to an ITC ruling on DRAM devices. All 60 are left `NU
 model tier, which means they display until something can actually judge them. That is the
 relevance problem the AI layer exists for, now with real material to work on.
 
+### Visitor preferences (`lib/prefs.ts`)
+
+Behind the same ⚙ as the model settings, three things a visitor can add:
+
+- **Signal sensitivity** — event floor, deviations above baseline, lookback, price-divergence
+  cutoff. The Signals panel re-computes live; its header doubles as a readout
+  (`floor 5 · 2σ · 30mo`) and a shortcut back into settings.
+- **Their own sources** — extra Federal Register search terms merged into sector timelines.
+  **Terms, not URLs.** Accepting arbitrary URLs would turn the server into an SSRF proxy, so
+  visitors compose queries against sources Chronolens already trusts.
+- **Custom peer groups** — named ticker sets that can span SIC codes ("AI chip makers"), each
+  with its own timeline and signals at `/group/<name>`.
+
+Preferences live in `localStorage` and are **sent as parameters** to `/api/signals` and
+`/api/group`; the server stays stateless. Nothing a visitor configures is stored server-side,
+so one person's thresholds or feeds can never change what anyone else sees, and nothing they
+type can write into the shared corpus. Same rule as the BYO-model key.
+
+`computeSignals` takes a scope of subject ids rather than an industry id, which is what lets a
+SIC industry and an ad-hoc ticker set run through identical code.
+
 ### Trend signals (`lib/signals.ts`)
 
 ```

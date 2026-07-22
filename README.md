@@ -143,10 +143,30 @@ Restore:
 pg_restore --clean --if-exists -d "$DATABASE_URL" backups/chronolens-<timestamp>.dump
 ```
 
-Verified 2026-07-21 by expanding a dump to SQL and comparing row counts against the live
-database — all 12 tables matched exactly (490 events, 490 attestations, 561 links, 2512 prices).
-A full restore *rehearsal* into a scratch database still hasn't been done: the `chronolens` role
-deliberately lacks `CREATEDB`, so it needs either that grant or a one-off superuser run.
+### Rehearsing a restore
+
+```
+npm run db:verify-restore              # newest dump
+npm run db:verify-restore -- --file backups/chronolens-....dump
+```
+
+A backup nobody has restored is a guess. This runs the dump's **own SQL — DROP and CREATE
+included, exactly what real recovery executes** — inside a transaction that is then rolled
+back. The `chronolens` role deliberately lacks `CREATEDB`, so a scratch database isn't
+available; this needs no extra privileges and persists nothing. Even an impossible commit
+would write the dump of this same database.
+
+It earned its keep on the first run:
+
+> **A dump taken before a schema migration cannot be `--clean` restored over the evolved
+> schema.** A dump from before `subject_members` existed failed with *"cannot drop constraint
+> subjects_pkey … subject_members_industry_id_fkey depends on it"* — the dump's DROP statements
+> can't remove objects that newer, not-in-the-dump tables still reference. **Restore an old dump
+> into an empty database, never over a migrated one.** A current dump verifies cleanly (157
+> statements).
+
+Contents were separately checked by expanding a dump to SQL and comparing row counts against
+the live database — all 12 tables matched exactly.
 
 ## Database and ingest worker
 

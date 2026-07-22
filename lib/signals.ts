@@ -130,6 +130,27 @@ async function crossPeerWeeks(memberIds: number[], since: string) {
   }));
 }
 
+/**
+ * The diverging company's own events in the window. Every other signal ships the rows
+ * that produced it; without this, price divergence would be the one anomaly a model
+ * could not explain with sources — and an uncited explanation is the failure mode the
+ * whole statistics-first design exists to avoid.
+ */
+async function eventsForDivergence(subjectId: number, since: string): Promise<number[]> {
+  const { rows } = await getPool().query(
+    `SELECT e.id
+       FROM events e
+       JOIN event_subjects es ON es.event_id = e.id AND es.subject_id = $1
+      WHERE e.occurred_on >= $2
+        AND e.kind IN ('earnings','filing','news')
+        AND (es.relevance IS NULL OR es.relevance >= 0.4)
+      ORDER BY e.occurred_on DESC
+      LIMIT 25`,
+    [subjectId, since]
+  );
+  return rows.map((r) => Number(r.id));
+}
+
 /** A member whose return over the window diverges most from its peers'. */
 async function priceDivergence(memberIds: number[], since: string) {
   const { rows } = await getPool().query(
@@ -144,14 +165,14 @@ async function priceDivergence(memberIds: number[], since: string) {
         WHERE p.on_date >= $2
         GROUP BY p.subject_id
      )
-     SELECT m.ticker,
+     SELECT m.id, m.ticker,
             round(((b.last_close - b.first_close) / b.first_close * 100)::numeric, 1) AS pct,
             to_char(b.d0,'YYYY-MM-DD') AS d0, to_char(b.d1,'YYYY-MM-DD') AS d1
        FROM bounds b JOIN members m ON m.id = b.subject_id
       WHERE b.first_close > 0`,
     [memberIds, since]
   );
-  return rows.map((r) => ({ ticker: r.ticker, pct: Number(r.pct), d0: r.d0, d1: r.d1 }));
+  return rows.map((r) => ({ id: Number(r.id), ticker: r.ticker, pct: Number(r.pct), d0: r.d0, d1: r.d1 }));
 }
 
 function weekEnd(wk: string): string {
@@ -226,6 +247,7 @@ export async function computeSignals(
     )[0];
     const gap = Number((worst.pct - med).toFixed(1));
     if (Math.abs(gap) >= opts.divergencePct) {
+      const cites = await eventsForDivergence(worst.id, since);
       signals.push({
         kind: "price_divergence",
         windowStart: worst.d0,
@@ -233,7 +255,7 @@ export async function computeSignals(
         magnitude: gap,
         headline: `${worst.ticker} ${gap > 0 ? "outran" : "lagged"} the sector by ${Math.abs(gap)} points`,
         detail: `${worst.ticker} ${worst.pct}% vs sector median ${med}%`,
-        eventIds: [],
+        eventIds: cites,
       });
     }
   }

@@ -12,7 +12,8 @@
     "ingest": "tsx scripts/ingest.ts",
     "score": "tsx scripts/score.ts",
     "db:backup": "tsx scripts/backup.ts",
-    "signals": "tsx scripts/signals.ts"
+    "signals": "tsx scripts/signals.ts",
+    "db:verify-restore": "tsx scripts/verify-restore.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

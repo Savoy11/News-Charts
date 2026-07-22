@@ -66,6 +66,29 @@ in passing looks identical to an ITC ruling on DRAM devices. All 60 are left `NU
 model tier, which means they display until something can actually judge them. That is the
 relevance problem the AI layer exists for, now with real material to work on.
 
+### Source planning (`lib/enrich/plan.ts`)
+
+```
+npm run plan -- --subject sic-3674              # propose only
+npm run plan -- --subject sic-3674 --execute    # fetch and ingest them
+```
+
+The model proposes **which searches to run**, not what is true. It emits a source key from a
+fixed list plus a plain search term; deterministic code does the fetching, and results land as
+ordinary events with real URLs. Provenance is untouched — the model never becomes a source.
+
+**`validatePlans` is a trust boundary and treats model output as hostile.** It drops unknown
+sources, URLs and schemes, protocol-relative addresses, shell metacharacters, control
+characters, over-long or over-short terms, duplicates, and repeats of anything already
+searched — rejecting rather than repairing. Tested against 14 hostile inputs including an
+SSRF attempt at `169.254.169.254` and `file:///etc/passwd`: **12 rejected, only the 2
+legitimate plans accepted.**
+
+This is the same rule as visitor-supplied sources, for the same reason: anything that could
+name a URL is a fetch-anything proxy. Dry by default; `--execute` is required to touch the
+network, and each executed query is logged to `source_fetches` with the model that proposed
+it, so a bad suggestion is auditable after the fact.
+
 ### Explaining a signal (`lib/enrich/explain.ts`)
 
 ```

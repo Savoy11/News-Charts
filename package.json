@@ -14,7 +14,8 @@
     "db:backup": "tsx scripts/backup.ts",
     "signals": "tsx scripts/signals.ts",
     "db:verify-restore": "tsx scripts/verify-restore.ts",
-    "explain": "tsx scripts/explain.ts"
+    "explain": "tsx scripts/explain.ts",
+    "plan": "tsx scripts/plan.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

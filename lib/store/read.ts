@@ -16,10 +16,16 @@ export interface SubjectRow {
 }
 
 export async function loadSubject(slug: string): Promise<SubjectRow | null> {
+  // match the canonical slug first, then any phrasing recorded as an alias — several
+  // searches ("electric car", "electric cars") legitimately point at one subject
   const { rows } = await getPool().query(
-    `SELECT id, kind, slug, display_name, ticker, cik, wikipedia_title,
-            summary, site_domain, refreshed_at
-       FROM subjects WHERE slug = $1`,
+    `SELECT s.id, s.kind, s.slug, s.display_name, s.ticker, s.cik, s.wikipedia_title,
+            s.summary, s.site_domain, s.refreshed_at
+       FROM subjects s
+       LEFT JOIN subject_aliases a ON a.subject_id = s.id
+      WHERE s.slug = $1 OR lower(a.alias) = $1
+      ORDER BY (s.slug = $1) DESC
+      LIMIT 1`,
     [slug.toLowerCase()]
   );
   if (!rows[0]) return null;
@@ -80,7 +86,40 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
   });
 }
 
+/**
+ * Sector-level events (Federal Register rules) attach to the industry, not to any member.
+ * Without this a company page never shows the regulation that hit its whole sector — which
+ * is backwards, since that is often the most consequential thing in the window.
+ */
+export async function loadSectorEvents(industryId: number): Promise<TimelineEvent[]> {
+  const { rows } = await getPool().query(
+    `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title,
+            a.url, a.source_label
+       FROM events e
+       JOIN event_subjects es ON es.event_id = e.id AND es.subject_id = $1
+       LEFT JOIN event_attestations a ON a.event_id = e.id AND a.is_primary
+      WHERE es.relevance IS NULL OR es.relevance >= $2
+      ORDER BY e.occurred_on DESC
+      LIMIT 120`,
+    [industryId, RELEVANCE_THRESHOLD]
+  );
+  return rows.map((r) => ({
+    id: `sector-${r.id}`,
+    date:
+      r.occurred_on instanceof Date
+        ? r.occurred_on.toISOString().slice(0, 10)
+        : String(r.occurred_on).slice(0, 10),
+    type: r.kind as EventType,
+    title: r.title,
+    source: r.source_label ?? "Chronolens",
+    url: r.url ?? undefined,
+    description: "sector-wide",
+    yearOnly: r.date_precision === "year",
+  }));
+}
+
 export interface IndustryRef {
+  id: number;
   slug: string;
   name: string;
   sic: string;
@@ -90,7 +129,7 @@ export interface IndustryRef {
 /** The industry a company belongs to, for the peer link on its page. */
 export async function loadIndustryFor(subjectId: number): Promise<IndustryRef | null> {
   const { rows } = await getPool().query(
-    `SELECT i.slug, i.display_name, i.sic,
+    `SELECT i.id, i.slug, i.display_name, i.sic,
             (SELECT count(*) FROM subject_members x WHERE x.industry_id = i.id) AS members
        FROM subjects i
        JOIN subject_members sm ON sm.industry_id = i.id
@@ -100,6 +139,7 @@ export async function loadIndustryFor(subjectId: number): Promise<IndustryRef | 
   );
   if (!rows[0]) return null;
   return {
+    id: Number(rows[0].id),
     slug: rows[0].slug,
     name: rows[0].display_name,
     sic: rows[0].sic,

@@ -11,6 +11,7 @@ const FILTERS: { key: EventType; label: string }[] = [
   { key: "earnings", label: "Earnings" },
   { key: "filing", label: "Filings" },
   { key: "news", label: "News" },
+  { key: "regulation", label: "Sector rules" },
 ];
 
 interface Props {
@@ -21,7 +22,7 @@ interface Props {
 
 export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
   const [active, setActive] = useState<Set<EventType>>(
-    new Set<EventType>(["earnings", "filing", "news"])
+    new Set<EventType>(["earnings", "filing", "news", "regulation"])
   );
 
   const [ranking, setRanking] = useState<AiRanking | null>(null);

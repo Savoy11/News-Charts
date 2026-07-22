@@ -181,6 +181,64 @@ export async function upsertSubject(
 }
 
 /**
+ * Find-or-create a topic subject **by the article it resolves to**, not by what the
+ * visitor typed. "electric car" and "electric cars" both land on Electric car, so they
+ * must share one subject; the typed strings become aliases so every URL still resolves.
+ *
+ * Keying on the search string instead is what produced duplicate subjects holding
+ * identical events.
+ */
+export async function upsertTopicSubject(
+  client: PoolClient,
+  s: {
+    searchTerm: string;
+    wikipediaTitle: string;
+    displayName: string;
+    summary?: string | null;
+    firstEventOn?: string | null;
+  }
+): Promise<number> {
+  const slug = s.searchTerm.toLowerCase();
+
+  const existing = await client.query<{ id: string }>(
+    `SELECT id FROM subjects WHERE kind = 'topic' AND wikipedia_title = $1 LIMIT 1`,
+    [s.wikipediaTitle]
+  );
+
+  let id: number;
+  if (existing.rows[0]) {
+    id = Number(existing.rows[0].id);
+    await client.query(
+      `UPDATE subjects
+          SET display_name   = $2,
+              summary        = COALESCE($3, summary),
+              first_event_on = LEAST(COALESCE($4::date, first_event_on),
+                                     COALESCE(first_event_on, $4::date)),
+              refreshed_at   = now()
+        WHERE id = $1`,
+      [id, s.displayName, s.summary ?? null, s.firstEventOn ?? null]
+    );
+  } else {
+    id = await upsertSubject(client, {
+      kind: "topic",
+      slug,
+      displayName: s.displayName,
+      wikipediaTitle: s.wikipediaTitle,
+      summary: s.summary,
+      firstEventOn: s.firstEventOn,
+    });
+  }
+
+  // record the phrasing that was searched, so /topic/<that> keeps resolving
+  await client.query(
+    `INSERT INTO subject_aliases (subject_id, alias) VALUES ($1,$2)
+     ON CONFLICT DO NOTHING`,
+    [id, slug]
+  );
+  return id;
+}
+
+/**
  * Create (or find) the industry a company belongs to and record the membership.
  * Industries are ordinary subjects, so they get timelines, syntheses and relevance
  * scoring for free — an industry-level event simply links to the industry subject.

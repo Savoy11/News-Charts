@@ -1,6 +1,6 @@
 import { getPool } from "./db";
-import { loadEvents, loadPrices, loadSubject, loadIndustryFor, isStale, type IndustryRef } from "./store/read";
-import { ensureSources, emptyStats, upsertEvent, upsertSubject, linkToIndustry } from "./ingest/store";
+import { loadEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, isStale, type IndustryRef } from "./store/read";
+import { ensureSources, emptyStats, upsertEvent, upsertSubject, upsertTopicSubject, linkToIndustry } from "./ingest/store";
 import { PricePoint, TimelineEvent } from "./types";
 import { getTopicTimeline } from "./wiki";
 import { getPressMentions, dropImplausiblePress } from "./loc";
@@ -73,6 +73,33 @@ async function persist(
   }
 }
 
+async function persistTopic(
+  subject: Parameters<typeof upsertTopicSubject>[1],
+  events: TimelineEvent[]
+): Promise<void> {
+  let client;
+  try {
+    client = await getPool().connect();
+    await ensureSources(client);
+    const subjectId = await upsertTopicSubject(client, subject);
+    const stats = emptyStats();
+    await client.query("BEGIN");
+    try {
+      for (const ev of events) {
+        if (ev.sourceKey) await upsertEvent(client, ev, subjectId, stats);
+      }
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    }
+  } catch (err) {
+    console.warn("[chronolens] persist skipped:", (err as Error).message);
+  } finally {
+    client?.release();
+  }
+}
+
 export async function getTopicPageData(topic: string): Promise<TopicPageData | null> {
   // 1. serve from the database when we have a fresh copy
   try {
@@ -106,15 +133,9 @@ export async function getTopicPageData(topic: string): Promise<TopicPageData | n
     ...news.slice(0, 30),
   ];
 
-  await persist(
-    {
-      kind: "topic",
-      slug: topic,
-      displayName: wiki.title,
-      wikipediaTitle: wiki.title,
-      summary: wiki.summary,
-      firstEventOn,
-    },
+  await persistTopic(
+    { searchTerm: topic, wikipediaTitle: wiki.title, displayName: wiki.title,
+      summary: wiki.summary, firstEventOn },
     events
   );
 
@@ -131,12 +152,13 @@ export async function getCompanyPageData(ticker: string): Promise<CompanyPageDat
         loadIndustryFor(subject.id),
       ]);
       if (events.length && prices.length) {
+        const sector = industry ? await loadSectorEvents(industry.id).catch(() => []) : [];
         return {
           name: subject.displayName,
           ticker: subject.ticker,
           siteDomain: subject.siteDomain,
           prices,
-          events,
+          events: [...events, ...sector],
           industry,
           servedFrom: "database",
         };
@@ -179,13 +201,14 @@ export async function getCompanyPageData(ticker: string): Promise<CompanyPageDat
     const subject = await loadSubject(company.ticker).catch(() => null);
     if (subject) industry = await loadIndustryFor(subject.id).catch(() => null);
   }
+  const sector = industry ? await loadSectorEvents(industry.id).catch(() => []) : [];
 
   return {
     name: company.name,
     ticker: company.ticker,
     siteDomain,
     prices,
-    events,
+    events: [...events, ...sector],
     industry,
     servedFrom: "live",
   };

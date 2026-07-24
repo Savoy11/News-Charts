@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getPool } from "./db";
 import { loadEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, isStale, type IndustryRef } from "./store/read";
 import { ensureSources, emptyStats, upsertEvent, upsertSubject, upsertTopicSubject, linkToIndustry } from "./ingest/store";
@@ -11,6 +12,15 @@ import { getOfficialDomain } from "./wikidata";
 
 const TOPIC_TTL_MINUTES = 360; // 6h — topic history barely moves
 const COMPANY_TTL_MINUTES = 60; // 1h — prices and filings do
+
+// Request-memoised so a page and its generateMetadata share one load instead of fetching twice.
+// (Function declarations below are hoisted, so referencing them here is fine.)
+export const getTopicPageData = cache(
+  (topic: string): Promise<TopicPageData | null> => getTopicPageDataImpl(topic)
+);
+export const getCompanyPageData = cache(
+  (ticker: string): Promise<CompanyPageData | null> => getCompanyPageDataImpl(ticker)
+);
 
 export type ServedFrom = "database" | "live";
 
@@ -100,7 +110,7 @@ async function persistTopic(
   }
 }
 
-export async function getTopicPageData(topic: string): Promise<TopicPageData | null> {
+async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null> {
   // 1. serve from the database when we have a fresh copy
   try {
     const subject = await loadSubject(topic);
@@ -142,7 +152,7 @@ export async function getTopicPageData(topic: string): Promise<TopicPageData | n
   return { title: wiki.title, summary: wiki.summary, events, servedFrom: "live" };
 }
 
-export async function getCompanyPageData(ticker: string): Promise<CompanyPageData | null> {
+async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData | null> {
   try {
     const subject = await loadSubject(ticker);
     if (subject?.ticker && !isStale(subject.refreshedAt, COMPANY_TTL_MINUTES)) {

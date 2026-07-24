@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EventList from "@/components/EventList";
@@ -5,9 +6,31 @@ import AdSlot from "@/components/AdSlot";
 import CaepPromo from "@/components/CaepPromo";
 import SearchBox from "@/components/SearchBox";
 import SignalPanel from "@/components/SignalPanel";
+import JsonLd from "@/components/JsonLd";
 import { loadIndustry, loadIndustryEvents } from "@/lib/store/read";
+import { absolute, breadcrumbLd, SITE_NAME } from "@/lib/seo";
 
 export const revalidate = 900;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const slug = decodeURIComponent(params.slug);
+  const industry = await loadIndustry(slug).catch(() => null);
+  if (!industry) return { title: "Industry not found", robots: { index: false } };
+  const title = `${industry.name} sector timeline`;
+  const description = `A merged timeline for the ${industry.name} sector (SIC ${industry.sic}): peer-company news, filings, earnings, and regulation in one view.`;
+  const url = absolute(`/industry/${slug}`);
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `${title} · ${SITE_NAME}`, description, url, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 export default async function IndustryPage({ params }: { params: { slug: string } }) {
   const slug = decodeURIComponent(params.slug);
@@ -19,6 +42,13 @@ export default async function IndustryPage({ params }: { params: { slug: string 
 
   return (
     <div>
+      <JsonLd
+        data={breadcrumbLd([
+          { name: SITE_NAME, path: "/" },
+          { name: "Explore", path: "/explore" },
+          { name: industry.name, path: `/industry/${slug}` },
+        ])}
+      />
       <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-emerald-400">

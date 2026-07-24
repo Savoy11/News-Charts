@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import GroupView from "@/components/GroupView";
 import AdSlot from "@/components/AdSlot";
 import CaepPromo from "@/components/CaepPromo";
 import SearchBox from "@/components/SearchBox";
+
+// A group exists only in the visitor's own browser, so it's private by definition — keep it out
+// of search indexes and the sitemap. (Also blocked in robots.ts as a backstop.)
+export function generateMetadata({ params }: { params: { name: string } }): Metadata {
+  const name = decodeURIComponent(params.name);
+  return { title: `${name} — custom group`, robots: { index: false, follow: false } };
+}
 
 /**
  * Custom peer groups live in the visitor's browser, so the page is a shell: the client

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import TopicExplorer from "@/components/TopicExplorer";
 import AdSlot from "@/components/AdSlot";
@@ -5,10 +6,33 @@ import CaepPromo from "@/components/CaepPromo";
 import SearchBox from "@/components/SearchBox";
 import TopicSummary from "@/components/TopicSummary";
 import ServedFrom from "@/components/ServedFrom";
+import JsonLd from "@/components/JsonLd";
 import { getTopicPageData } from "@/lib/page-data";
+import { absolute, breadcrumbLd, clampDescription, SITE_NAME } from "@/lib/seo";
 
 // short enough that a page rendered while a source was throttled self-heals quickly
 export const revalidate = 900;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const data = await getTopicPageData(decodeURIComponent(params.slug));
+  if (!data) return { title: "Topic not found", robots: { index: false } };
+  const title = `${data.title} timeline`;
+  const description = data.summary
+    ? clampDescription(data.summary)
+    : `A timeline of ${data.title}: history, news, and key events on one axis.`;
+  const url = absolute(`/topic/${encodeURIComponent(params.slug)}`);
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `${title} · ${SITE_NAME}`, description, url, type: "article" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 export default async function TopicPage({ params }: { params: { slug: string } }) {
   const topic = decodeURIComponent(params.slug);
@@ -17,6 +41,13 @@ export default async function TopicPage({ params }: { params: { slug: string } }
 
   return (
     <div>
+      <JsonLd
+        data={breadcrumbLd([
+          { name: SITE_NAME, path: "/" },
+          { name: "Explore", path: "/explore" },
+          { name: data.title, path: `/topic/${encodeURIComponent(params.slug)}` },
+        ])}
+      />
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-violet-400">

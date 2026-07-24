@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import CompanyExplorer from "@/components/CompanyExplorer";
@@ -5,9 +6,30 @@ import AdSlot from "@/components/AdSlot";
 import CaepPromo from "@/components/CaepPromo";
 import SearchBox from "@/components/SearchBox";
 import ServedFrom from "@/components/ServedFrom";
+import JsonLd from "@/components/JsonLd";
 import { getCompanyPageData } from "@/lib/page-data";
+import { absolute, breadcrumbLd, SITE_NAME } from "@/lib/seo";
 
 export const revalidate = 900;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { ticker: string };
+}): Promise<Metadata> {
+  const data = await getCompanyPageData(decodeURIComponent(params.ticker));
+  if (!data) return { title: "Company not found", robots: { index: false } };
+  const title = `${data.name} (${data.ticker}) timeline`;
+  const description = `${data.name} (${data.ticker}) news, SEC filings, and earnings on one timeline, pegged to the stock price — see what moved the stock.`;
+  const url = absolute(`/company/${data.ticker}`);
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `${title} · ${SITE_NAME}`, description, url, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 export default async function CompanyPage({ params }: { params: { ticker: string } }) {
   const data = await getCompanyPageData(decodeURIComponent(params.ticker));
@@ -19,6 +41,23 @@ export default async function CompanyPage({ params }: { params: { ticker: string
 
   return (
     <div>
+      <JsonLd
+        data={breadcrumbLd([
+          { name: SITE_NAME, path: "/" },
+          { name: "Explore", path: "/explore" },
+          { name: `${data.name} (${data.ticker})`, path: `/company/${data.ticker}` },
+        ])}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Corporation",
+          name: data.name,
+          tickerSymbol: data.ticker,
+          url: absolute(`/company/${data.ticker}`),
+          ...(data.siteDomain ? { sameAs: `https://${data.siteDomain}` } : {}),
+        }}
+      />
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="flex flex-wrap items-center gap-2 text-2xl font-black text-slate-100">

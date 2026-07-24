@@ -22,31 +22,38 @@ export async function loadCompareSubject(query: string): Promise<CompareSubject 
   const q = query.trim();
   if (!q) return null;
 
-  const company = await resolveCompany(q).catch(() => null);
-  if (company) {
-    const data = await getCompanyPageData(company.ticker);
-    if (data) {
+  // A subject that fails to load (a throttled live source, a flaky fetch) must resolve to null,
+  // not throw — /compare loads two of these together, so one failure would otherwise 500 the whole
+  // page instead of showing a "couldn't find it" notice for the side that didn't load.
+  try {
+    const company = await resolveCompany(q).catch(() => null);
+    if (company) {
+      const data = await getCompanyPageData(company.ticker);
+      if (data) {
+        return {
+          kind: "company",
+          key: data.ticker,
+          label: `${data.name} (${data.ticker})`,
+          href: `/company/${data.ticker}`,
+          events: data.events,
+          prices: data.prices,
+        };
+      }
+    }
+
+    const topic = await getTopicPageData(q);
+    if (topic) {
       return {
-        kind: "company",
-        key: data.ticker,
-        label: `${data.name} (${data.ticker})`,
-        href: `/company/${data.ticker}`,
-        events: data.events,
-        prices: data.prices,
+        kind: "topic",
+        key: q,
+        label: topic.title,
+        href: `/topic/${encodeURIComponent(q)}`,
+        events: topic.events,
+        prices: [],
       };
     }
-  }
-
-  const topic = await getTopicPageData(q);
-  if (topic) {
-    return {
-      kind: "topic",
-      key: q,
-      label: topic.title,
-      href: `/topic/${encodeURIComponent(q)}`,
-      events: topic.events,
-      prices: [],
-    };
+  } catch {
+    /* fall through to null — the page shows a "couldn't find" notice for this side */
   }
 
   return null;

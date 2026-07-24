@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import PriceTimeline from "./PriceTimeline";
 import EventList, { dateAnchorId } from "./EventList";
 import AiPanel, { type AiRanking } from "./AiPanel";
@@ -14,6 +15,14 @@ const FILTERS: { key: EventType; label: string }[] = [
   { key: "regulation", label: "Sector rules" },
 ];
 
+const ALL_TYPES = FILTERS.map((f) => f.key);
+
+/** Encode the active type filters as ?types= — omitted entirely when all are on (the default). */
+function encodeTypes(active: Set<EventType>): string {
+  const on = ALL_TYPES.filter((t) => active.has(t));
+  return on.length === ALL_TYPES.length ? "" : `?types=${on.join(",")}`;
+}
+
 interface Props {
   prices: PricePoint[];
   events: TimelineEvent[];
@@ -24,6 +33,23 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
   const [active, setActive] = useState<Set<EventType>>(
     new Set<EventType>(["earnings", "filing", "news", "regulation"])
   );
+  const pathname = usePathname();
+  const [copied, setCopied] = useState(false);
+
+  // A shared ?types= link reproduces that filter selection on load.
+  useEffect(() => {
+    try {
+      const t = new URLSearchParams(window.location.search).get("types");
+      if (t !== null) {
+        const set = new Set(
+          t.split(",").filter((x): x is EventType => (ALL_TYPES as string[]).includes(x))
+        );
+        if (set.size) setActive(set);
+      }
+    } catch {
+      /* malformed URL — ignore */
+    }
+  }, []);
 
   const [ranking, setRanking] = useState<AiRanking | null>(null);
   const filtered = useMemo(() => events.filter((e) => active.has(e.type)), [events, active]);
@@ -47,12 +73,26 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
   );
 
   function toggle(type: EventType) {
-    setActive((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
-      return next;
-    });
+    const next = new Set(active);
+    if (next.has(type)) next.delete(type);
+    else next.add(type);
+    setActive(next);
+    // reflect the selection in the URL (replaceState: no history spam, no navigation)
+    try {
+      window.history.replaceState(null, "", pathname + encodeTypes(next));
+    } catch {
+      /* history unavailable — link just won't reflect the filters */
+    }
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard blocked — no-op */
+    }
   }
 
   return (
@@ -77,7 +117,14 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
             {f.label}
           </button>
         ))}
-        <span className="ml-auto text-xs text-slate-500">
+        <button
+          onClick={copyLink}
+          title="Copy a link to this filtered view"
+          className="ml-auto rounded-md border border-slate-700 px-3 py-1 text-xs font-semibold text-slate-400 transition-colors hover:border-sky-600 hover:text-sky-300"
+        >
+          {copied ? "Copied ✓" : "Copy link"}
+        </button>
+        <span className="text-xs text-slate-500">
           {ranked.length === filtered.length
             ? `${filtered.length} events`
             : `${ranked.length} of ${filtered.length} events`}

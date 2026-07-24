@@ -21,25 +21,66 @@ const FILTERS: { key: EventType; label: string }[] = [
   { key: "news", label: "Recent news" },
 ];
 
+const ALL_TYPES = FILTERS.map((f) => f.key);
+
+/**
+ * Serialise the shareable part of the view (mode + which types are on) into a query string.
+ * Defaults are omitted so a fresh page keeps a clean, canonical URL; only a deviation shows up.
+ */
+function encodeView(view: "timeline" | "list", active: Set<EventType>): string {
+  const p = new URLSearchParams();
+  if (view !== "timeline") p.set("view", view);
+  const on = ALL_TYPES.filter((t) => active.has(t));
+  if (on.length !== ALL_TYPES.length) p.set("types", on.join(","));
+  const qs = p.toString();
+  return qs ? `?${qs}` : "";
+}
+
 export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
   const [active, setActive] = useState<Set<EventType>>(
     new Set<EventType>(["history", "press", "news"])
   );
   const [view, setView] = useState<"timeline" | "list">("timeline");
-  const storeKey = `chronolens:view:${usePathname()}`;
+  const pathname = usePathname();
+  const storeKey = `chronolens:view:${pathname}`;
+  const [copied, setCopied] = useState(false);
   // saving must wait for the restore pass, or the default state overwrites what was stored
   const hydrated = useRef(false);
 
-  // restore the reader's view and filters when they return from a source
+  // Restore the view. A URL that carries ?view/?types wins (it's a shared link, meant to
+  // reproduce exactly that); otherwise fall back to what this browser last used on this path.
   useEffect(() => {
+    let fromUrl = false;
     try {
-      const saved = JSON.parse(sessionStorage.getItem(storeKey) || "{}");
-      if (saved.view === "timeline" || saved.view === "list") setView(saved.view);
-      if (Array.isArray(saved.active) && saved.active.length) {
-        setActive(new Set<EventType>(saved.active));
+      const sp = new URLSearchParams(window.location.search);
+      const v = sp.get("view");
+      const t = sp.get("types");
+      if (v === "list" || v === "timeline") {
+        setView(v);
+        fromUrl = true;
+      }
+      if (t !== null) {
+        const set = new Set(
+          t.split(",").filter((x): x is EventType => (ALL_TYPES as string[]).includes(x))
+        );
+        if (set.size) {
+          setActive(set);
+          fromUrl = true;
+        }
       }
     } catch {
-      /* storage unavailable — start fresh */
+      /* malformed URL — ignore */
+    }
+    if (!fromUrl) {
+      try {
+        const saved = JSON.parse(sessionStorage.getItem(storeKey) || "{}");
+        if (saved.view === "timeline" || saved.view === "list") setView(saved.view);
+        if (Array.isArray(saved.active) && saved.active.length) {
+          setActive(new Set<EventType>(saved.active));
+        }
+      } catch {
+        /* storage unavailable — start fresh */
+      }
     }
     hydrated.current = true;
   }, [storeKey]);
@@ -49,13 +90,22 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
   // ranking narrows and reorders; the timeline still renders chronologically
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);
 
-  /** Persist from user actions only — an effect would fire with default state and clobber. */
+  /**
+   * Persist from user actions only — an effect would fire with default state and clobber.
+   * Writes both the per-path sessionStorage (return-visit restore) and the URL (a copyable link),
+   * the latter via replaceState so it doesn't spam history or trigger a navigation.
+   */
   function persist(nextView: "timeline" | "list", nextActive: Set<EventType>) {
     if (!hydrated.current) return;
     try {
       sessionStorage.setItem(storeKey, JSON.stringify({ view: nextView, active: [...nextActive] }));
     } catch {
       /* storage unavailable — selection just won't persist */
+    }
+    try {
+      window.history.replaceState(null, "", pathname + encodeView(nextView, nextActive));
+    } catch {
+      /* history unavailable — link just won't reflect the view */
     }
   }
 
@@ -70,6 +120,16 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
   function chooseView(next: "timeline" | "list") {
     setView(next);
     persist(next, active);
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard blocked — no-op */
+    }
   }
 
   return (
@@ -95,7 +155,15 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
           );
         })}
 
-        <div className="ml-auto flex rounded-md border border-slate-700">
+        <button
+          onClick={copyLink}
+          title="Copy a link to this exact view"
+          className="ml-auto rounded-md border border-slate-700 px-3 py-1 text-xs font-semibold text-slate-400 transition-colors hover:border-sky-600 hover:text-sky-300"
+        >
+          {copied ? "Copied ✓" : "Copy link"}
+        </button>
+
+        <div className="flex rounded-md border border-slate-700">
           {(["timeline", "list"] as const).map((v) => (
             <button
               key={v}

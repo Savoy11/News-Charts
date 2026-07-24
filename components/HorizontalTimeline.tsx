@@ -164,6 +164,22 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
   // the restore's own scroll fires an event; ignore it or it saves pre-restore state
   const suppressSave = useRef(false);
 
+  // Mini-map viewport, as fractions of the whole track (left edge + visible width). Measured from
+  // the scroller so the overview reflects the real pixel layout, not a re-derived time scale.
+  const [viewport, setViewport] = useState<{ left: number; width: number }>({ left: 0, width: 1 });
+  const updateViewport = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const total = el.scrollWidth || 1;
+    setViewport({ left: el.scrollLeft / total, width: Math.min(1, el.clientWidth / total) });
+  }, []);
+  const seekTo = useCallback((fraction: number) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    // centre the clicked point in the viewport, clamped to the track
+    el.scrollTo({ left: Math.max(0, fraction * el.scrollWidth - el.clientWidth / 2) });
+  }, []);
+
   // Display preferences (stack on/off, expand trigger, default zoom). Start from defaults so SSR
   // and first client render agree, then read the real values after mount and on any change.
   const [tl, setTl] = useState<TimelinePrefs>(DEFAULT_PREFS.timeline);
@@ -315,14 +331,25 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
     let raf = 0;
     const onScroll = () => {
       cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => persist(zoomRef.current, el.scrollLeft));
+      raf = requestAnimationFrame(() => {
+        persist(zoomRef.current, el.scrollLeft);
+        updateViewport();
+      });
     };
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       el.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
     };
-  }, [persist]);
+  }, [persist, updateViewport]);
+
+  // keep the mini-map viewport in step with layout changes (zoom, width, window resize)
+  useEffect(() => {
+    updateViewport();
+    const onResize = () => updateViewport();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [width, zoom, updateViewport]);
 
   const chooseZoom = useCallback(
     (i: number) => {
@@ -537,11 +564,75 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
         </div>
       </div>
 
+      {/* Overview mini-map — only when the track actually overflows the viewport. Shows the whole
+          span at a glance, with a draggable window for where you are. */}
+      {viewport.width < 0.999 && (
+        <MiniMap clusters={clusters} width={width} viewport={viewport} onSeek={seekTo} />
+      )}
+
       <p className="border-t border-slate-800 px-3 py-2 text-[11px] text-slate-600">
-        Drag the track or scroll to move through time. Busy periods stack into one card — hover a
-        stack to browse everything from that period. Click any card to open its source; your place
-        is remembered if you come back. Spacing is proportional to the time between periods.
+        Drag the track or scroll to move through time — or drag the mini-map below to jump. Busy
+        periods stack into one card — hover a stack to browse everything from that period. Click any
+        card to open its source; your place is remembered if you come back.
       </p>
+    </div>
+  );
+}
+
+/**
+ * A compact overview of the whole track: one tick per period (brighter for a stack), with a
+ * draggable window showing the visible slice. Lives outside the scroller, so its pointer events
+ * never fight the track's drag-to-pan.
+ */
+function MiniMap({
+  clusters,
+  width,
+  viewport,
+  onSeek,
+}: {
+  clusters: Cluster[];
+  width: number;
+  viewport: { left: number; width: number };
+  onSeek: (fraction: number) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+
+  const seekAt = (clientX: number) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    onSeek(Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)));
+  };
+
+  return (
+    <div
+      ref={ref}
+      onPointerDown={(e) => {
+        dragging.current = true;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        seekAt(e.clientX);
+      }}
+      onPointerMove={(e) => dragging.current && seekAt(e.clientX)}
+      onPointerUp={() => (dragging.current = false)}
+      onPointerCancel={() => (dragging.current = false)}
+      title="Drag to jump anywhere on the timeline"
+      className="relative mx-3 mb-1 mt-1 h-8 cursor-pointer touch-none overflow-hidden rounded-md border border-slate-800 bg-slate-950/60"
+    >
+      <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-slate-800" />
+      {clusters.map((c) => (
+        <span
+          key={c.id}
+          className={`absolute top-1/2 h-2.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${
+            c.events.length > 1 ? "bg-slate-300" : "bg-sky-500/70"
+          }`}
+          style={{ left: `${(c.x / width) * 100}%` }}
+        />
+      ))}
+      <div
+        className="pointer-events-none absolute inset-y-0 rounded-sm border border-sky-500/70 bg-sky-500/15"
+        style={{ left: `${viewport.left * 100}%`, width: `${Math.max(2, viewport.width * 100)}%` }}
+      />
     </div>
   );
 }

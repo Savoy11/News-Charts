@@ -5,13 +5,20 @@ import { usePathname } from "next/navigation";
 import { EventType, TimelineEvent } from "@/lib/types";
 
 const CARD_W = 244;
+/** Expanded-stack popover: wider than a card for readable rows, capped so it stays inside the 420px track. */
+const PANEL_W = 300;
+const PANEL_MAX_H = 380;
 
+// `bucket` sets what counts as "the same time period" for stacking at each zoom: crowded years
+// collapse into one stack until Wide pulls the axis apart enough to break them into months.
 const ZOOMS = [
-  { label: "Compact", pxPerYear: 1.5, minGap: 132, maxGap: 240 },
-  { label: "Default", pxPerYear: 6, minGap: 148, maxGap: 520 },
-  { label: "Wide", pxPerYear: 20, minGap: 176, maxGap: 1100 },
-];
+  { label: "Compact", pxPerYear: 1.5, minGap: 132, maxGap: 240, bucket: "year" },
+  { label: "Default", pxPerYear: 6, minGap: 148, maxGap: 520, bucket: "year" },
+  { label: "Wide", pxPerYear: 20, minGap: 176, maxGap: 1100, bucket: "month" },
+] as const;
 const DEFAULT_ZOOM = 1;
+
+type Bucket = "year" | "month";
 
 const STYLE: Record<EventType, { dot: string; badge: string; label: string }> = {
   history: {
@@ -57,6 +64,24 @@ function toYearValue(date: string): number {
 
 function yearOf(date: string): number {
   return Number(date.slice(0, 4));
+}
+
+/** Which period an event stacks into at the current zoom. Same-bucket events sit as one stack. */
+function bucketKey(date: string, bucket: Bucket): string {
+  return bucket === "month" ? date.slice(0, 7) : date.slice(0, 4);
+}
+
+/** Human label for a stack's period — "2026" by year, "Jul 2026" by month (UTC, so it never drifts a day). */
+function periodLabel(date: string, bucket: Bucket): string {
+  const [y, m] = date.split("-").map(Number);
+  if (bucket === "month") {
+    return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-US", {
+      timeZone: "UTC",
+      month: "short",
+      year: "numeric",
+    });
+  }
+  return String(y);
 }
 
 function formatDate(ev: TimelineEvent): string {
@@ -110,13 +135,18 @@ function EventCard({ ev, style }: { ev: TimelineEvent; style: React.CSSPropertie
   );
 }
 
-interface Placed {
-  ev: TimelineEvent;
+interface Cluster {
+  /** stable across renders (first event's id) so React and the hover state keep their footing */
+  id: string;
+  /** one event → a plain card; more than one → a stack that expands on hover */
+  events: TimelineEvent[];
   x: number;
   above: boolean;
-  /** years skipped since the previous event, when the jump is large enough to call out */
+  /** years skipped since the previous period, when the jump is large enough to call out */
   gapYears: number;
   gapMidX: number;
+  /** axis label — the event's date for a single, the period ("Jul 2026") for a stack */
+  label: string;
 }
 
 export default function HorizontalTimeline({ events }: { events: TimelineEvent[] }) {
@@ -146,25 +176,58 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
     hydrated.current = true;
   }, [storeKey]);
 
-  const { items, width } = useMemo(() => {
+  const { clusters, width } = useMemo(() => {
     const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));
-    const placed: Placed[] = [];
+
+    // Fold consecutive same-period events into one group. Sorted input means a period's events
+    // are always adjacent, so a single linear pass groups them.
+    const groups: TimelineEvent[][] = [];
+    for (const ev of sorted) {
+      const last = groups[groups.length - 1];
+      if (last && bucketKey(last[0].date, z.bucket) === bucketKey(ev.date, z.bucket)) last.push(ev);
+      else groups.push([ev]);
+    }
+
+    // Spacing is now proportional to the gap between *periods*, anchored on each period's
+    // earliest event — so a busy year occupies one stack's width instead of N min-gaps.
+    const placed: Cluster[] = [];
     let x = CARD_W / 2 + 32;
-    for (let i = 0; i < sorted.length; i++) {
+    for (let i = 0; i < groups.length; i++) {
+      const group = groups[i];
       let gapYears = 0;
       let gapMidX = 0;
       if (i > 0) {
-        const delta = toYearValue(sorted[i].date) - toYearValue(sorted[i - 1].date);
+        const delta = toYearValue(group[0].date) - toYearValue(groups[i - 1][0].date);
         const gap = Math.min(Math.max(delta * z.pxPerYear, z.minGap), z.maxGap);
         gapMidX = x + gap / 2;
         x += gap;
         // call out a quiet stretch once proportional spacing has actually opened a gap
         if (delta >= 15 && gap > z.minGap + 20) gapYears = Math.round(delta);
       }
-      placed.push({ ev: sorted[i], x, above: i % 2 === 0, gapYears, gapMidX });
+      const label = group.length > 1 ? periodLabel(group[0].date, z.bucket) : formatDate(group[0]);
+      placed.push({ id: group[0].id, events: group, x, above: i % 2 === 0, gapYears, gapMidX, label });
     }
-    return { items: placed, width: x + CARD_W / 2 + 32 };
+    return { clusters: placed, width: x + CARD_W / 2 + 32 };
   }, [events, z]);
+
+  // Which stack is expanded. A short close delay bridges the gap as the pointer travels from the
+  // collapsed deck to the centered panel, so it doesn't flicker shut mid-move.
+  const [openId, setOpenId] = useState<string | null>(null);
+  const closeTimer = useRef<number | null>(null);
+  const openStack = useCallback((id: string) => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    setOpenId(id);
+  }, []);
+  const scheduleClose = useCallback(() => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setOpenId(null), 140);
+  }, []);
+  useEffect(() => () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  }, []);
 
   // apply a restored scroll position once the track has been laid out at the right zoom
   useEffect(() => {
@@ -227,6 +290,8 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       if (e.ctrlKey) return;
+      // let an expanded stack scroll its own list instead of panning the track
+      if ((e.target as HTMLElement).closest("[data-cluster-panel]")) return;
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       const atStart = el.scrollLeft <= 0 && delta < 0;
       const atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 1 && delta > 0;
@@ -250,7 +315,8 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
     let startScroll = 0;
 
     const onDown = (e: PointerEvent) => {
-      if ((e.target as HTMLElement).closest("button")) return;
+      // buttons and the expanded stack's list are interactive, not drag surfaces
+      if ((e.target as HTMLElement).closest("button, [data-cluster-panel]")) return;
       down = true;
       dragged = false;
       startX = e.clientX;
@@ -300,12 +366,13 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
     el.scrollTo({ left: end === "start" ? 0 : el.scrollWidth, behavior: "smooth" });
   }, []);
 
-  if (items.length === 0) {
+  if (clusters.length === 0) {
     return <p className="text-sm text-slate-500">No events to plot.</p>;
   }
 
-  const firstYear = yearOf(items[0].ev.date);
-  const lastYear = yearOf(items[items.length - 1].ev.date);
+  const firstYear = yearOf(clusters[0].events[0].date);
+  const lastYear = yearOf(clusters[clusters.length - 1].events[0].date);
+  const eventCount = events.length;
 
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/40">
@@ -314,7 +381,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
           {firstYear} – {lastYear}
         </span>
         <span className="text-xs text-slate-600">·</span>
-        <span className="text-xs text-slate-500">{items.length} events</span>
+        <span className="text-xs text-slate-500">{eventCount} events</span>
 
         <div className="ml-auto flex items-center gap-1">
           <div className="mr-2 flex rounded-md border border-slate-700">
@@ -354,52 +421,66 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
           {/* the axis */}
           <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-slate-800 via-slate-600 to-slate-800" />
 
-          {items.map(({ ev, x, above, gapYears, gapMidX }) => {
-            const s = STYLE[ev.type];
+          {clusters.map((c) => {
+            const isStack = c.events.length > 1;
+            const first = c.events[0];
+            const s = STYLE[first.type];
             return (
-              <div key={ev.id}>
-                {gapYears > 0 && (
+              <div key={c.id}>
+                {c.gapYears > 0 && (
                   <span
                     className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-slate-800 bg-slate-950 px-2 py-0.5 text-[10px] font-medium text-slate-600"
-                    style={{ left: gapMidX }}
+                    style={{ left: c.gapMidX }}
                   >
-                    {gapYears} years
+                    {c.gapYears} years
                   </span>
                 )}
 
-                {/* dot on the axis */}
+                {/* dot on the axis — neutral for a stack, the event's type colour for a single */}
                 <span
-                  className={`absolute top-1/2 z-10 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-4 ${s.dot}`}
-                  style={{ left: x }}
+                  className={`absolute top-1/2 z-10 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-4 ${
+                    isStack ? "bg-slate-300 ring-slate-400/30" : s.dot
+                  }`}
+                  style={{ left: c.x }}
                 />
 
-                {/* date label, opposite the card */}
+                {/* period / date label, opposite the card */}
                 <span
                   className="absolute -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold text-slate-500"
                   style={{
-                    left: x,
-                    top: above ? "calc(50% + 12px)" : undefined,
-                    bottom: above ? undefined : "calc(50% + 12px)",
+                    left: c.x,
+                    top: c.above ? "calc(50% + 12px)" : undefined,
+                    bottom: c.above ? undefined : "calc(50% + 12px)",
                   }}
                 >
-                  {formatDate(ev)}
+                  {c.label}
+                  {isStack && <span className="text-slate-600"> · {c.events.length}</span>}
                 </span>
 
                 {/* connector */}
                 <span
                   className="absolute w-px bg-slate-700"
-                  style={{ left: x, height: 26, top: above ? "calc(50% - 26px)" : "50%" }}
+                  style={{ left: c.x, height: 26, top: c.above ? "calc(50% - 26px)" : "50%" }}
                 />
 
-                <EventCard
-                  ev={ev}
-                  style={{
-                    left: x - CARD_W / 2,
-                    width: CARD_W,
-                    bottom: above ? "calc(50% + 26px)" : undefined,
-                    top: above ? undefined : "calc(50% + 26px)",
-                  }}
-                />
+                {isStack ? (
+                  <Stack
+                    cluster={c}
+                    open={openId === c.id}
+                    onOpen={() => openStack(c.id)}
+                    onClose={scheduleClose}
+                  />
+                ) : (
+                  <EventCard
+                    ev={first}
+                    style={{
+                      left: c.x - CARD_W / 2,
+                      width: CARD_W,
+                      bottom: c.above ? "calc(50% + 26px)" : undefined,
+                      top: c.above ? undefined : "calc(50% + 26px)",
+                    }}
+                  />
+                )}
               </div>
             );
           })}
@@ -407,11 +488,152 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
       </div>
 
       <p className="border-t border-slate-800 px-3 py-2 text-[11px] text-slate-600">
-        Drag the track or scroll to move through time. Click any card to open its source; your
-        place is remembered if you come back. Spacing is proportional to the time between events —
-        wide gaps mean quiet stretches.
+        Drag the track or scroll to move through time. Busy periods stack into one card — hover a
+        stack to browse everything from that period. Click any card to open its source; your place
+        is remembered if you come back. Spacing is proportional to the time between periods.
       </p>
     </div>
+  );
+}
+
+/**
+ * A collapsed deck of same-period events. Hovering (or focusing) it opens a centered, scrollable
+ * panel listing every event in the period. The panel is centered on the axis and height-capped so
+ * it always fits inside the fixed-height track; its `data-cluster-panel` marker tells the track's
+ * wheel/drag handlers to leave it alone so the list scrolls and its links click normally.
+ */
+function Stack({
+  cluster,
+  open,
+  onOpen,
+  onClose,
+}: {
+  cluster: Cluster;
+  open: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+}) {
+  const { events, x, above, label } = cluster;
+  const first = events[0];
+  const s = STYLE[first.type];
+
+  return (
+    <>
+      {/* collapsed deck — fades whole (layers included) while the centered panel is open, but stays
+          mounted and pointer-catching so the hover that opened it doesn't immediately lapse */}
+      <div
+        className={`absolute cursor-pointer transition-opacity ${open ? "opacity-0" : "opacity-100"}`}
+        style={{
+          left: x - CARD_W / 2,
+          width: CARD_W,
+          bottom: above ? "calc(50% + 26px)" : undefined,
+          top: above ? undefined : "calc(50% + 26px)",
+        }}
+        tabIndex={0}
+        role="button"
+        aria-label={`${events.length} events in ${label} — expand to browse`}
+        onPointerEnter={onOpen}
+        onPointerLeave={onClose}
+        onFocus={onOpen}
+        onBlur={onClose}
+      >
+        {/* offset layers behind the top card, to read as a deck */}
+        <span
+          aria-hidden
+          className="absolute inset-0 translate-x-[6px] translate-y-[6px] rounded-lg border border-slate-800 bg-slate-900/70"
+        />
+        <span
+          aria-hidden
+          className="absolute inset-0 translate-x-[3px] translate-y-[3px] rounded-lg border border-slate-800 bg-slate-900/85"
+        />
+        <div className="relative rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-lg">
+          <div className="flex items-center justify-between gap-2">
+            <span
+              className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.badge}`}
+            >
+              {s.label}
+            </span>
+            <span className="rounded-full bg-sky-600/20 px-2 py-0.5 text-[10px] font-bold text-sky-300">
+              {events.length}
+            </span>
+          </div>
+          <span className="mt-1.5 line-clamp-3 block text-sm font-medium leading-snug text-slate-200">
+            {first.title}
+          </span>
+          <span className="mt-1.5 block text-[11px] text-slate-500">
+            +{events.length - 1} more in {label}
+          </span>
+        </div>
+      </div>
+
+      {/* expanded, scrollable list of the period's events */}
+      {open && (
+        <div
+          data-cluster-panel
+          className="absolute z-30 flex flex-col overflow-hidden rounded-lg border border-sky-700/50 bg-slate-950 shadow-2xl"
+          style={{
+            left: x - PANEL_W / 2,
+            width: PANEL_W,
+            top: "50%",
+            transform: "translateY(-50%)",
+            maxHeight: PANEL_MAX_H,
+          }}
+          onPointerEnter={onOpen}
+          onPointerLeave={onClose}
+        >
+          <div className="flex items-center justify-between border-b border-slate-800 px-3 py-2">
+            <span className="text-xs font-semibold text-slate-300">{label}</span>
+            <span className="text-[11px] text-slate-500">{events.length} events</span>
+          </div>
+          <ul className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2">
+            {events.map((ev) => (
+              <li key={ev.id}>
+                <StackRow ev={ev} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
+  );
+}
+
+function StackRow({ ev }: { ev: TimelineEvent }) {
+  const s = STYLE[ev.type];
+  const body = (
+    <>
+      <div className="flex items-center gap-2">
+        <span
+          className={`inline-block rounded border px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${s.badge}`}
+        >
+          {s.label}
+        </span>
+        <span className="text-[10px] text-slate-500">{formatDate(ev)}</span>
+      </div>
+      <span className="mt-1 line-clamp-2 block text-xs font-medium leading-snug text-slate-200">
+        {ev.title}
+      </span>
+      <span className="mt-0.5 block truncate text-[10px] text-slate-500">
+        {ev.source}
+        {ev.url ? " ↗" : ""}
+      </span>
+    </>
+  );
+
+  if (!ev.url) {
+    return <div className="rounded-md border border-slate-800 bg-slate-900/60 p-2">{body}</div>;
+  }
+  return (
+    <a
+      href={ev.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      draggable={false}
+      title={`Open ${ev.source} (new tab)`}
+      className="block rounded-md border border-slate-800 bg-slate-900/60 p-2 transition-colors hover:border-sky-600/70 hover:bg-slate-800/70"
+    >
+      {body}
+    </a>
   );
 }
 

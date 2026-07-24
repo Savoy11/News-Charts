@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { EventType, TimelineEvent } from "@/lib/types";
+import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT, type TimelinePrefs } from "@/lib/prefs";
 
 const CARD_W = 244;
 /** Expanded-stack popover: wider than a card for readable rows, capped so it stays inside the 420px track. */
@@ -163,12 +164,30 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
   // the restore's own scroll fires an event; ignore it or it saves pre-restore state
   const suppressSave = useRef(false);
 
+  // Display preferences (stack on/off, expand trigger, default zoom). Start from defaults so SSR
+  // and first client render agree, then read the real values after mount and on any change.
+  const [tl, setTl] = useState<TimelinePrefs>(DEFAULT_PREFS.timeline);
+  useEffect(() => {
+    const refresh = () => setTl(loadPrefs().timeline);
+    refresh();
+    window.addEventListener(PREFS_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(PREFS_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, []);
+
   // Opening a source navigates away in browsers that block new tabs, so remember
-  // where the reader was and restore it when they come back.
+  // where the reader was and restore it when they come back. A path with no saved zoom falls
+  // back to the reader's default-zoom preference (read straight from storage — state may not have
+  // caught up on this first pass).
   useEffect(() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem(storeKey) || "{}");
-      if (typeof saved.zoom === "number" && ZOOMS[saved.zoom]) setZoom(saved.zoom);
+      const fallback = loadPrefs().timeline.defaultZoom;
+      const initial = typeof saved.zoom === "number" && ZOOMS[saved.zoom] ? saved.zoom : fallback;
+      if (ZOOMS[initial]) setZoom(initial);
       pendingScroll.current = typeof saved.scrollLeft === "number" ? saved.scrollLeft : null;
     } catch {
       /* storage unavailable — start fresh */
@@ -184,7 +203,9 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
     const groups: TimelineEvent[][] = [];
     for (const ev of sorted) {
       const last = groups[groups.length - 1];
-      if (last && bucketKey(last[0].date, z.bucket) === bucketKey(ev.date, z.bucket)) last.push(ev);
+      // stacking off → every event is its own group, i.e. a plain card (the pre-stack layout)
+      if (tl.stack && last && bucketKey(last[0].date, z.bucket) === bucketKey(ev.date, z.bucket))
+        last.push(ev);
       else groups.push([ev]);
     }
 
@@ -208,7 +229,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
       placed.push({ id: group[0].id, events: group, x, above: i % 2 === 0, gapYears, gapMidX, label });
     }
     return { clusters: placed, width: x + CARD_W / 2 + 32 };
-  }, [events, z]);
+  }, [events, z, tl.stack]);
 
   // Which stack is expanded. A short close delay bridges the gap as the pointer travels from the
   // collapsed deck to the centered panel, so it doesn't flicker shut mid-move.
@@ -225,9 +246,36 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
     if (closeTimer.current) clearTimeout(closeTimer.current);
     closeTimer.current = window.setTimeout(() => setOpenId(null), 140);
   }, []);
+  const closeNow = useCallback(() => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    setOpenId(null);
+  }, []);
   useEffect(() => () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
   }, []);
+
+  // Escape closes an open stack; in click mode a press or tap outside the deck/panel closes it too
+  // (hover mode closes itself on pointer-leave, so it needs neither).
+  useEffect(() => {
+    if (!openId) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeNow();
+    window.addEventListener("keydown", onKey);
+    let detachDown = () => {};
+    if (tl.expand === "click") {
+      const onDown = (e: PointerEvent) => {
+        if (!(e.target as HTMLElement).closest("[data-cluster-panel], [data-cluster-deck]")) closeNow();
+      };
+      document.addEventListener("pointerdown", onDown, true);
+      detachDown = () => document.removeEventListener("pointerdown", onDown, true);
+    }
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      detachDown();
+    };
+  }, [openId, tl.expand, closeNow]);
 
   // apply a restored scroll position once the track has been laid out at the right zoom
   useEffect(() => {
@@ -467,8 +515,10 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
                   <Stack
                     cluster={c}
                     open={openId === c.id}
+                    expand={tl.expand}
                     onOpen={() => openStack(c.id)}
                     onClose={scheduleClose}
+                    onCloseNow={closeNow}
                   />
                 ) : (
                   <EventCard
@@ -505,23 +555,44 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
 function Stack({
   cluster,
   open,
+  expand,
   onOpen,
   onClose,
+  onCloseNow,
 }: {
   cluster: Cluster;
   open: boolean;
+  expand: "hover" | "click";
   onOpen: () => void;
   onClose: () => void;
+  onCloseNow: () => void;
 }) {
   const { events, x, above, label } = cluster;
   const first = events[0];
   const s = STYLE[first.type];
+  const toggle = () => (open ? onCloseNow() : onOpen());
+
+  // Hover mode peeks on pointer-over and keyboard focus; click mode opens only on a deliberate
+  // click or Enter/Space and is dismissed by Escape / outside click (handled by the parent).
+  const deckHandlers =
+    expand === "hover"
+      ? { onPointerEnter: onOpen, onPointerLeave: onClose, onFocus: onOpen, onBlur: onClose }
+      : {
+          onClick: toggle,
+          onKeyDown: (e: React.KeyboardEvent) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggle();
+            }
+          },
+        };
 
   return (
     <>
       {/* collapsed deck — fades whole (layers included) while the centered panel is open, but stays
           mounted and pointer-catching so the hover that opened it doesn't immediately lapse */}
       <div
+        data-cluster-deck
         className={`absolute cursor-pointer transition-opacity ${open ? "opacity-0" : "opacity-100"}`}
         style={{
           left: x - CARD_W / 2,
@@ -531,11 +602,9 @@ function Stack({
         }}
         tabIndex={0}
         role="button"
+        aria-expanded={open}
         aria-label={`${events.length} events in ${label} — expand to browse`}
-        onPointerEnter={onOpen}
-        onPointerLeave={onClose}
-        onFocus={onOpen}
-        onBlur={onClose}
+        {...deckHandlers}
       >
         {/* offset layers behind the top card, to read as a deck */}
         <span
@@ -566,7 +635,9 @@ function Stack({
         </div>
       </div>
 
-      {/* expanded, scrollable list of the period's events */}
+      {/* expanded, scrollable list of the period's events. In hover mode the panel keeps itself
+          open while the pointer is over it; in click mode it's dismissed via Escape / outside
+          click (parent) or its own close button. */}
       {open && (
         <div
           data-cluster-panel
@@ -578,12 +649,22 @@ function Stack({
             transform: "translateY(-50%)",
             maxHeight: PANEL_MAX_H,
           }}
-          onPointerEnter={onOpen}
-          onPointerLeave={onClose}
+          {...(expand === "hover" ? { onPointerEnter: onOpen, onPointerLeave: onClose } : {})}
         >
-          <div className="flex items-center justify-between border-b border-slate-800 px-3 py-2">
+          <div className="flex items-center justify-between gap-2 border-b border-slate-800 px-3 py-2">
             <span className="text-xs font-semibold text-slate-300">{label}</span>
-            <span className="text-[11px] text-slate-500">{events.length} events</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-slate-500">{events.length} events</span>
+              {expand === "click" && (
+                <button
+                  onClick={onCloseNow}
+                  aria-label="Close"
+                  className="rounded px-1 text-base leading-none text-slate-500 hover:text-slate-200"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </div>
           <ul className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2">
             {events.map((ev) => (

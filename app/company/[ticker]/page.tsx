@@ -5,9 +5,12 @@ import AdSlot from "@/components/AdSlot";
 import CaepPromo from "@/components/CaepPromo";
 import SearchBox from "@/components/SearchBox";
 import ServedFrom from "@/components/ServedFrom";
+import FollowBar from "@/components/FollowBar";
 import { getCompanyPageData } from "@/lib/page-data";
 
 export const revalidate = 900;
+
+const latestDate = (events: { date: string }[]) => events.reduce((m, e) => (e.date > m ? e.date : m), "");
 
 export default async function CompanyPage({ params }: { params: { ticker: string } }) {
   const data = await getCompanyPageData(decodeURIComponent(params.ticker));
@@ -54,7 +57,13 @@ export default async function CompanyPage({ params }: { params: { ticker: string
             </p>
           )}
         </div>
-        <SearchBox />
+        <div className="flex items-center gap-3">
+          <FollowBar
+            subject={{ href: `/company/${data.ticker}`, kind: "company", label: `${data.name} (${data.ticker})` }}
+            signature={{ count: data.events.length, latest: latestDate(data.events) }}
+          />
+          <SearchBox />
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_280px]">

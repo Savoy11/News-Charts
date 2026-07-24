@@ -201,7 +201,15 @@ export default function EventList({ events, order = "desc", siteDomain }: Props)
           );
         }
         return (
-          <li key={row.key} id={dateAnchorId(row.date)} className="mb-6 scroll-mt-24">
+          // The year-only node shares its date (Jan 1) with a genuine Jan-1 day group when both
+          // exist in a year; give it a distinct anchor so the DOM id stays unique. Nothing scrolls
+          // to a year-only anchor (company pages, the only anchor consumer, carry no year-only
+          // events), so the precise day rows keep the canonical dateAnchorId contract.
+          <li
+            key={row.key}
+            id={row.approx ? `d-${row.date.slice(0, 4)}-year` : dateAnchorId(row.date)}
+            className="mb-6 scroll-mt-24"
+          >
             <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
             {row.approx ? (
               <span className="text-xs font-semibold italic text-slate-500" title="The source gave only the year">

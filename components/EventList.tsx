@@ -78,51 +78,156 @@ interface Props {
   siteDomain?: string | null;
 }
 
-export default function EventList({ events, order = "desc", siteDomain }: Props) {
-  const groups = useMemo(() => {
-    const byDate = new Map<string, TimelineEvent[]>();
-    for (const ev of events) {
-      const list = byDate.get(ev.date) ?? [];
-      list.push(ev);
-      byDate.set(ev.date, list);
-    }
-    const dates = [...byDate.keys()].sort((a, b) =>
-      order === "desc" ? b.localeCompare(a) : a.localeCompare(b)
-    );
-    return dates.map((d) => ({ date: d, items: byDate.get(d)! }));
-  }, [events, order]);
+/** "2026-07-24" → "July 2026". Built from the string parts under UTC so the label never drifts a day across time zones. */
+function monthYearLabel(date: string) {
+  const [y, m] = date.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-US", {
+    timeZone: "UTC",
+    month: "long",
+    year: "numeric",
+  });
+}
 
-  if (groups.length === 0) {
+/** "2026-07-24" → "Jul 24". The year lives in the month header above, so the day node drops it. */
+function dayLabel(date: string) {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US", {
+    timeZone: "UTC",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/**
+ * One flat row per rendered line, chronological. Years and months are header rows with no
+ * timeline dot; day rows keep the dot, the `dateAnchorId` anchor, and the event cards — so the
+ * horizontal timeline's click-to-scroll and the dot alignment are unchanged by the grouping.
+ */
+type Row =
+  | { kind: "year"; key: string; year: string }
+  | { kind: "month"; key: string; label: string }
+  | { kind: "day"; key: string; date: string; items: TimelineEvent[]; approx: boolean };
+
+/**
+ * Groups events into Year → Month → Day. Events flagged `yearOnly` (the source knew only the
+ * year, so the date was normalised to Jan 1) are bucketed straight under the year as a single
+ * "Year only" node — showing them as a precise "Jan 1" would invent a month and day the source
+ * never gave. Within a year that approximate bucket sorts as the year's boundary (before
+ * January ascending, after December descending).
+ */
+function buildRows(events: TimelineEvent[], order: "asc" | "desc"): Row[] {
+  const byKey = (a: string, b: string) => (order === "desc" ? b.localeCompare(a) : a.localeCompare(b));
+
+  // year -> { months: monthKey -> (date -> events), approx: events | null }
+  const years = new Map<
+    string,
+    { months: Map<string, Map<string, TimelineEvent[]>>; approx: TimelineEvent[] | null }
+  >();
+  const yearOf = (y: string) => {
+    let yb = years.get(y);
+    if (!yb) {
+      yb = { months: new Map(), approx: null };
+      years.set(y, yb);
+    }
+    return yb;
+  };
+
+  for (const ev of events) {
+    const year = ev.date.slice(0, 4);
+    const yb = yearOf(year);
+    if (ev.yearOnly) {
+      (yb.approx ??= []).push(ev);
+      continue;
+    }
+    const monthKey = ev.date.slice(0, 7); // YYYY-MM
+    const month = yb.months.get(monthKey) ?? new Map<string, TimelineEvent[]>();
+    const day = month.get(ev.date) ?? [];
+    day.push(ev);
+    month.set(ev.date, day);
+    yb.months.set(monthKey, month);
+  }
+
+  const rows: Row[] = [];
+  for (const year of [...years.keys()].sort(byKey)) {
+    const yb = years.get(year)!;
+    rows.push({ kind: "year", key: `y-${year}`, year });
+
+    // Months and the approximate bucket share one ordering pass; the bucket's key sits just
+    // outside the month range so it lands at whichever end of the year `order` puts it.
+    const sections = [
+      ...[...yb.months.keys()].map((monthKey) => ({ sortKey: monthKey, monthKey })),
+      ...(yb.approx ? [{ sortKey: `${year}-00`, monthKey: null as string | null }] : []),
+    ].sort((a, b) => byKey(a.sortKey, b.sortKey));
+
+    for (const section of sections) {
+      if (section.monthKey === null) {
+        rows.push({ kind: "day", key: `a-${year}`, date: `${year}-01-01`, items: yb.approx!, approx: true });
+        continue;
+      }
+      const month = yb.months.get(section.monthKey)!;
+      const firstDate = [...month.keys()][0];
+      rows.push({ kind: "month", key: `m-${section.monthKey}`, label: monthYearLabel(firstDate) });
+      for (const date of [...month.keys()].sort(byKey)) {
+        rows.push({ kind: "day", key: `d-${date}`, date, items: month.get(date)!, approx: false });
+      }
+    }
+  }
+  return rows;
+}
+
+export default function EventList({ events, order = "desc", siteDomain }: Props) {
+  const rows = useMemo(() => buildRows(events, order), [events, order]);
+
+  if (rows.length === 0) {
     return <p className="text-sm text-slate-500">No events found.</p>;
   }
 
   return (
     <ol className="relative border-l border-slate-800 pl-6">
-      {groups.map((g) => (
-        <li key={g.date} id={dateAnchorId(g.date)} className="mb-8 scroll-mt-24">
-          <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
-          <time className="text-sm font-semibold text-slate-300">
-            {new Date(`${g.date}T00:00:00`).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
-          </time>
-          <ul className="mt-2 space-y-2">
-            {g.items.map((ev) => (
-              <li
-                key={ev.id}
-                className="flex items-stretch rounded-lg border border-slate-800 bg-slate-900/60 transition-colors hover:border-slate-700"
-              >
-                <div className="min-w-0 flex-1">
-                  <EventRow ev={ev} />
-                </div>
-                {siteDomain && <SiteSnapshotLink domain={siteDomain} date={ev.date} />}
-              </li>
-            ))}
-          </ul>
-        </li>
-      ))}
+      {rows.map((row) => {
+        if (row.kind === "year") {
+          return (
+            <li key={row.key} className="mb-4 mt-8 flex items-center gap-3 first:mt-0">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{row.year}</span>
+              <span className="h-px flex-1 bg-slate-800/70" />
+            </li>
+          );
+        }
+        if (row.kind === "month") {
+          return (
+            <li key={row.key} className="mb-3 mt-6 text-sm font-bold text-slate-200">
+              {row.label}
+            </li>
+          );
+        }
+        return (
+          <li key={row.key} id={dateAnchorId(row.date)} className="mb-6 scroll-mt-24">
+            <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
+            {row.approx ? (
+              <span className="text-xs font-semibold italic text-slate-500" title="The source gave only the year">
+                Year only
+              </span>
+            ) : (
+              <time dateTime={row.date} className="text-xs font-semibold text-slate-400">
+                {dayLabel(row.date)}
+              </time>
+            )}
+            <ul className="mt-2 space-y-2">
+              {row.items.map((ev) => (
+                <li
+                  key={ev.id}
+                  className="flex items-stretch rounded-lg border border-slate-800 bg-slate-900/60 transition-colors hover:border-slate-700"
+                >
+                  <div className="min-w-0 flex-1">
+                    <EventRow ev={ev} />
+                  </div>
+                  {siteDomain && <SiteSnapshotLink domain={siteDomain} date={ev.date} />}
+                </li>
+              ))}
+            </ul>
+          </li>
+        );
+      })}
     </ol>
   );
 }

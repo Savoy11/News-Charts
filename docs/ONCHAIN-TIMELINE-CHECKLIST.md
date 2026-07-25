@@ -5,7 +5,8 @@ engine**, with CAEP (Crypto-Stuff) as a shared data source and consumer. Add to 
 things off, re-prioritise. This is the single source of truth for the initiative across both
 repos.
 
-**Last updated:** 2026-07-25
+**Last updated:** 2026-07-25 · **Boundary:** projects stay independent; connections are
+approval-gated (see ⛔ Boundary & governance).
 
 ---
 
@@ -13,23 +14,56 @@ repos.
 
 Give users a free, visual way to see on-chain history on a linear timeline — protocol
 milestones, governance, stablecoin supply moves, and exploits — pegged to the price chart so
-they can see *what sparked a move*. On-chain becomes the **shared spine** between the two
-projects: CAEP produces/consumes the same event stream, deep-links "view on timeline," and
-Chronolens links back to CAEP's evaluation (driving traffic to CAEP, per Chronolens's purpose).
+they can see *what sparked a move*.
+
+On-chain *could* become a shared spine between the two projects (CAEP producing/consuming the
+same event stream, cross deep-links) — but that is an **approval-gated option, not the plan**.
+By default each project builds its on-chain capability independently; see the Boundary section
+below. Any connection is opt-in and recorded before it's built.
+
+## ⛔ Boundary & governance (read first)
+
+**The two projects stay independent. This document is the only thing that connects them.**
+
+1. **No code is shared between Chronolens and CAEP (Crypto-Stuff) unless explicitly approved,
+   in writing, per instance.** This includes — but is not limited to — submodules, published/
+   shared packages, copied modules, shared config, and shared build tooling. The default is
+   **duplicate, don't share**: if both projects need the same logic (e.g. an address-label map
+   or event taxonomy), each keeps its own copy unless sharing is approved.
+2. **Any runtime coupling is also approval-gated**, not just source code. That means one project
+   calling the other's API (e.g. Chronolens reading CAEP's `/api/v1/`), cross-project deep-links,
+   or any dependency where one project's change can break the other. Approved couplings are
+   listed explicitly in the "Approved connections" register below.
+3. **This checklist is the coordination surface.** Cross-project alignment happens by editing
+   this doc — not by reaching into the other repo. Items that would create a connection are
+   marked 🔒 and must not be started until they appear in the register as approved.
+
+### Approved connections register
+
+_Nothing is approved yet. Add a dated row here the moment a connection is signed off; a 🔒 item
+may not be started until it is listed here._
+
+| Date | Connection | Type (code / runtime) | Approved by | Notes |
+| --- | --- | --- | --- | --- |
+| — | _(none yet)_ | — | — | — |
 
 ## Legend
 
 - **Priority:** `P0` = do first / unblocks others · `P1` = core value · `P2` = later / nice-to-have
 - **Project:** 📈 Chronolens · 🔗 CAEP (Crypto-Stuff) · 🤝 Shared / cross-cutting
+- **🔒 = creates a cross-project connection — blocked until listed in the Approved connections
+  register above.** Everything else is safe to do within a single repo.
 - Check a box when done; add sub-bullets for notes/links as we go.
 
 ---
 
 ## Open decisions (resolve as we build)
 
-- [ ] 🤝 `P0` **Source topology:** does Chronolens hit explorers directly, or consume CAEP's
-      `/api/v1/` as the on-chain source? (Leaning: CAEP `/api/v1/` for mints/burns/depegs = one
-      source of truth; explorers direct for network milestones & governance.)
+- [ ] 🤝 `P0` 🔒 **Source topology:** does Chronolens hit explorers directly, or consume CAEP's
+      `/api/v1/` as the on-chain source? **Default under the boundary rule: Chronolens hits
+      explorers directly — the two projects do not depend on each other at runtime.** Consuming
+      CAEP's `/api/v1/` is a runtime coupling and stays 🔒 until explicitly approved and
+      registered.
 - [ ] 📈 `P0` **Subject model for coins/protocols:** `kind='topic'` with slug (`ethereum`,
       `usdc`) vs. a new `subject_kind`. (Leaning: reuse `topic` — no migration, inherits
       timelines/scoring.)
@@ -92,18 +126,24 @@ Goal: prove the chart-overlay value on long-finalized events with no spend.
 
 ## Phase 3 — CAEP ⇄ Chronolens integration (the shared spine) · `P1`
 
-- [ ] 🔗 `P1` Expose CAEP on-chain events via `/api/v1/` (mints/burns, depeg events) with CORS +
-      `updatedAt`/`source` metadata (CAEP's existing v1 conventions).
-- [ ] 📈 `P1` If topology = "CAEP as source": Chronolens adapter reads CAEP `/api/v1/` instead of
+> **Every item in this phase is 🔒 by definition — it creates a cross-project connection.** None
+> may be started until it is signed off and listed in the Approved connections register. The
+> default remains: no connection. This phase exists so the *option* is documented, not so it
+> happens automatically.
+
+- [ ] 🔗 `P1` 🔒 Expose CAEP on-chain events via `/api/v1/` (mints/burns, depeg events) with CORS +
+      `updatedAt`/`source` metadata — **only if a Chronolens→CAEP runtime coupling is approved.**
+- [ ] 📈 `P1` 🔒 If topology = "CAEP as source": Chronolens adapter reads CAEP `/api/v1/` instead of
       explorers for those event classes.
-- [ ] 🔗 `P1` **Deep-link out:** CAEP coin/stablecoin pages get a "View on timeline →" link to
+- [ ] 🔗 `P1` 🔒 **Deep-link out:** CAEP coin/stablecoin pages get a "View on timeline →" link to
       the Chronolens subject.
-- [ ] 📈 `P1` **Deep-link back:** Chronolens crypto subjects link to CAEP's evaluation/risk page
+- [ ] 📈 `P1` 🔒 **Deep-link back:** Chronolens crypto subjects link to CAEP's evaluation/risk page
       for that asset.
-- [ ] 🔗 `P2` CAEP depeg **alerts** (`/live-data/alerts`) emit timeline events (depeg start/
-      recovery) into the shared stream.
-- [ ] 🤝 `P2` Decide whether the address-label map and curated event catalog are **shared code**
-      between repos (submodule / published package) vs. duplicated.
+- [ ] 🔗 `P2` 🔒 CAEP depeg **alerts** (`/live-data/alerts`) emit timeline events (depeg start/
+      recovery) into a shared stream.
+- [ ] 🤝 `P2` 🔒 Decide whether the address-label map and curated event catalog are **shared code**
+      between repos (submodule / published package) vs. duplicated. **Default per the boundary
+      rule: duplicated.** Sharing requires approval.
 
 ## Cross-cutting (applies to every phase)
 

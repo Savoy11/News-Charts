@@ -18,6 +18,7 @@ const MARKER_STYLE = {
   history: { color: "#a78bfa", position: "aboveBar", shape: "square", text: "" },
   press: { color: "#fb923c", position: "aboveBar", shape: "square", text: "" },
   regulation: { color: "#fb7185", position: "aboveBar", shape: "square", text: "" },
+  citation: { color: "#2dd4bf", position: "aboveBar", shape: "circle", text: "" },
 } as const;
 
 interface Props {
@@ -80,6 +81,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
       regulation: 2,
       press: 1,
       news: 1,
+      citation: 1,
     };
     const byDay = new Map<string, TimelineEvent>();
     for (const ev of events) {

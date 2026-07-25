@@ -1,4 +1,11 @@
-export type EventType = "news" | "filing" | "earnings" | "history" | "press" | "regulation";
+export type EventType =
+  | "news"
+  | "filing"
+  | "earnings"
+  | "history"
+  | "press"
+  | "regulation"
+  | "citation";
 
 /** Matches the fetch_outcome enum in the database. */
 export type FetchOutcome = "ok" | "empty" | "throttled" | "error";

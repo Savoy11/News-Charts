@@ -18,6 +18,7 @@ export function applyRanking(events: TimelineEvent[], ranking: AiRanking | null)
 
 const FILTERS: { key: EventType; label: string }[] = [
   { key: "history", label: "History" },
+  { key: "citation", label: "Cited articles" },
   { key: "press", label: "Historical press" },
   { key: "news", label: "Recent news" },
 ];
@@ -63,7 +64,7 @@ function encodeView(view: "timeline" | "list", active: Set<EventType>): string {
 
 export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
   const [active, setActive] = useState<Set<EventType>>(
-    new Set<EventType>(["history", "press", "news"])
+    new Set<EventType>(["history", "citation", "press", "news"])
   );
   const [view, setView] = useState<"timeline" | "list">("timeline");
   const pathname = usePathname();

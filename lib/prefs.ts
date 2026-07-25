@@ -35,6 +35,8 @@ export interface TimelinePrefs {
   expand: "hover" | "click";
   /** starting zoom for a timeline you haven't visited before — 0 Compact, 1 Default, 2 Wide */
   defaultZoom: number;
+  /** cap on Wikipedia "history" entries shown on a topic timeline (0 = show all). Sampled evenly across time. */
+  maxHistory: number;
 }
 
 export interface Prefs {
@@ -48,7 +50,7 @@ export const DEFAULT_PREFS: Prefs = {
   signals: { floor: 5, sigma: 2, sinceMonths: 30, divergencePct: 15 },
   sources: { federalRegisterTerms: [] },
   groups: [],
-  timeline: { stack: true, expand: "hover", defaultZoom: 1 },
+  timeline: { stack: true, expand: "hover", defaultZoom: 1, maxHistory: 60 },
 };
 
 const STORAGE_KEY = "chronolens:prefs:v1";

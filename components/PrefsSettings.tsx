@@ -238,6 +238,15 @@ export default function PrefsSettings({
           ]}
           onChange={(defaultZoom) => set({ timeline: { ...prefs.timeline, defaultZoom } })}
         />
+        <Num
+          label="Max history entries"
+          hint="cap on Wikipedia history events per topic, sampled evenly across time · 0 = show all"
+          value={prefs.timeline.maxHistory}
+          min={0}
+          max={200}
+          step={10}
+          onChange={(maxHistory) => set({ timeline: { ...prefs.timeline, maxHistory } })}
+        />
       </section>
 
       {/* ---------------------------------------------------------- signals */}

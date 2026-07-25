@@ -6,6 +6,7 @@ import HorizontalTimeline from "./HorizontalTimeline";
 import EventList from "./EventList";
 import AiPanel, { type AiRanking } from "./AiPanel";
 import { EventType, TimelineEvent } from "@/lib/types";
+import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT } from "@/lib/prefs";
 
 /** Keep only what the visitor's model judged relevant, best matches first. */
 export function applyRanking(events: TimelineEvent[], ranking: AiRanking | null): TimelineEvent[] {
@@ -22,6 +23,30 @@ const FILTERS: { key: EventType; label: string }[] = [
 ];
 
 const ALL_TYPES = FILTERS.map((f) => f.key);
+
+/**
+ * Cap Wikipedia "history" entries to `max`, sampling evenly across time so the timeline keeps its
+ * full range (oldest and newest survive) instead of collapsing to one era. Non-history events and
+ * everything else are untouched. `max <= 0` means no cap.
+ */
+function capHistory(events: TimelineEvent[], max: number): TimelineEvent[] {
+  if (max <= 0) return events;
+  const history = events.filter((e) => e.type === "history");
+  if (history.length <= max) return events;
+  const others = events.filter((e) => e.type !== "history");
+  const sorted = [...history].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const denom = Math.max(1, max - 1);
+  const seen = new Set<string>();
+  const kept: TimelineEvent[] = [];
+  for (let i = 0; i < max; i++) {
+    const ev = sorted[Math.round((i * (sorted.length - 1)) / denom)];
+    if (!seen.has(ev.id)) {
+      seen.add(ev.id);
+      kept.push(ev);
+    }
+  }
+  return [...others, ...kept];
+}
 
 /**
  * Serialise the shareable part of the view (mode + which types are on) into a query string.
@@ -85,8 +110,23 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
     hydrated.current = true;
   }, [storeKey]);
 
+  // History cap (Wikipedia). Start from the default so SSR and first client render agree, then
+  // read the reader's preference after mount and on any change.
+  const [maxHistory, setMaxHistory] = useState(DEFAULT_PREFS.timeline.maxHistory);
+  useEffect(() => {
+    const refresh = () => setMaxHistory(loadPrefs().timeline.maxHistory);
+    refresh();
+    window.addEventListener(PREFS_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(PREFS_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, []);
+  const capped = useMemo(() => capHistory(events, maxHistory), [events, maxHistory]);
+
   const [ranking, setRanking] = useState<AiRanking | null>(null);
-  const filtered = useMemo(() => events.filter((e) => active.has(e.type)), [events, active]);
+  const filtered = useMemo(() => capped.filter((e) => active.has(e.type)), [capped, active]);
   // ranking narrows and reorders; the timeline still renders chronologically
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);
 
@@ -138,7 +178,7 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {FILTERS.map((f) => {
-          const count = events.filter((e) => e.type === f.key).length;
+          const count = capped.filter((e) => e.type === f.key).length;
           if (count === 0) return null;
           return (
             <button

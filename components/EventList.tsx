@@ -410,7 +410,7 @@ function PeekPopover({
   );
 }
 
-export default function EventList({ events, order = "desc", siteDomain, persistKey }: Props) {
+export default function EventList({ events, order = "asc", siteDomain, persistKey }: Props) {
   const rows = useMemo(() => condenseFilings(buildRows(events, order)), [events, order]);
 
   // Per-year/-month tallies (so a collapsed header still says how much it hides) plus a small

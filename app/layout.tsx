@@ -47,6 +47,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               >
                 Explore
               </Link>
+              <Link
+                href="/compare"
+                className="text-xs font-semibold text-slate-400 transition-colors hover:text-slate-200"
+              >
+                Compare
+              </Link>
               <span className="hidden text-xs text-slate-500 sm:inline">Timelines for analysts</span>
               <SettingsMenu />
             </div>

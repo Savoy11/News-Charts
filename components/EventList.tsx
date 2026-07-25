@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { EventType, TimelineEvent } from "@/lib/types";
 import { waybackUrl } from "@/lib/wikidata";
 import EventThumb from "./EventThumb";
@@ -181,8 +181,154 @@ function buildRows(events: TimelineEvent[], order: "asc" | "desc"): Row[] {
   return rows;
 }
 
+type DayRow = Extract<Row, { kind: "day" }>;
+type RenderRow = Row | { kind: "filings"; key: string; days: DayRow[] };
+
+// a run of filing-only days must reach this many filings before it collapses
+const MIN_FILING_STACK = 3;
+
+/**
+ * Collapse consecutive filing-only day rows into one compact, cyclable card. Filings
+ * arrive in near-identical runs ("6-K filing" × 12) that bury everything else; one row
+ * with a pager reads the same information in a fraction of the scroll. Month and year
+ * headers break runs naturally, so a stack never spans a month boundary. Days that mix
+ * a filing with news stay as ordinary rows — the mix is the story there.
+ */
+function condenseFilings(rows: Row[]): RenderRow[] {
+  const out: RenderRow[] = [];
+  let run: DayRow[] = [];
+  const flush = () => {
+    const total = run.reduce((n, d) => n + d.items.length, 0);
+    if (total >= MIN_FILING_STACK) {
+      out.push({ kind: "filings", key: `f-${run[0].date}`, days: run });
+    } else {
+      out.push(...run);
+    }
+    run = [];
+  };
+  for (const row of rows) {
+    if (row.kind === "day" && !row.approx && row.items.every((e) => e.type === "filing")) {
+      run.push(row);
+      continue;
+    }
+    if (run.length) flush();
+    out.push(row);
+  }
+  if (run.length) flush();
+  return out;
+}
+
+const FORM_RE = /\b(10-K\/?A?|10-Q\/?A?|8-K\/?A?|6-K\/?A?|20-F|40-F|S-\d\w*|F-\d\w*|13[DG]\/?A?|DEF 14A|424B\d|SC 13[DG])\b/i;
+
+/** "6-K ×4 · 8-K ×2" — which forms are in the stack, most frequent first. */
+function formSummary(items: TimelineEvent[]): string {
+  const counts = new Map<string, number>();
+  for (const ev of items) {
+    const form = ev.title.match(FORM_RE)?.[1].toUpperCase() ?? "filing";
+    counts.set(form, (counts.get(form) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([form, n]) => (n > 1 ? `${form} ×${n}` : form))
+    .join(" · ");
+}
+
+/** One collapsed card for a run of filings: cycle with ‹ ›, or open the full list. */
+function FilingStack({ days }: { days: DayRow[] }) {
+  const all = useMemo(
+    () => days.flatMap((d) => d.items.map((ev) => ({ ...ev, date: d.date }))),
+    [days]
+  );
+  const [idx, setIdx] = useState(0);
+  const [expanded, setExpanded] = useState(false);
+  const cur = all[Math.min(idx, all.length - 1)];
+  const step = (d: number) => setIdx((i) => (i + d + all.length) % all.length);
+
+  return (
+    <div className="relative rounded-lg border border-slate-800 bg-slate-900/60 transition-colors hover:border-slate-700">
+      {/* invisible anchors so the chart's click-to-jump still lands on swallowed days */}
+      {days.map((d) => (
+        <span
+          key={d.date}
+          id={dateAnchorId(d.date)}
+          className="pointer-events-none absolute inset-0 rounded-lg scroll-mt-24"
+        />
+      ))}
+      <div className="flex flex-wrap items-center gap-2 px-3 pt-3">
+        <span
+          className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${BADGE.filing.cls}`}
+        >
+          {all.length} filings
+        </span>
+        <span className="text-xs text-slate-400">{formSummary(all)}</span>
+        <span className="text-xs text-slate-600">
+          {dayLabel(days[0].date)} – {dayLabel(days[days.length - 1].date)}
+        </span>
+        <button
+          onClick={() => setExpanded((e) => !e)}
+          className="ml-auto rounded border border-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-500 transition-colors hover:border-sky-700 hover:text-sky-300"
+        >
+          {expanded ? "Collapse" : "Show all"}
+        </button>
+      </div>
+
+      {expanded ? (
+        <ul className="space-y-1 p-2">
+          {all.map((ev) => (
+            <li key={ev.id}>
+              <a
+                href={ev.url ?? "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-baseline gap-2 rounded px-2 py-1 hover:bg-slate-800/50"
+              >
+                <time dateTime={ev.date} className="w-14 shrink-0 text-[11px] text-slate-500">
+                  {dayLabel(ev.date)}
+                </time>
+                <span className="min-w-0 flex-1 truncate text-sm text-slate-300">{ev.title}</span>
+                <span className="shrink-0 text-[10px] text-slate-600">{ev.source} ↗</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="flex items-center gap-2 p-3 pt-2">
+          <button
+            onClick={() => step(-1)}
+            aria-label="Previous filing"
+            className="h-7 w-7 shrink-0 rounded-md border border-slate-700 text-sm text-slate-400 transition-colors hover:border-sky-600 hover:text-sky-300"
+          >
+            ‹
+          </button>
+          <span className="shrink-0 text-[10px] tabular-nums text-slate-500">
+            {Math.min(idx, all.length - 1) + 1}/{all.length}
+          </span>
+          <button
+            onClick={() => step(1)}
+            aria-label="Next filing"
+            className="h-7 w-7 shrink-0 rounded-md border border-slate-700 text-sm text-slate-400 transition-colors hover:border-sky-600 hover:text-sky-300"
+          >
+            ›
+          </button>
+          <a
+            href={cur.url ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="min-w-0 flex-1 rounded px-2 py-1 hover:bg-slate-800/50"
+          >
+            <span className="block truncate text-sm font-medium text-slate-200">{cur.title}</span>
+            <span className="mt-0.5 block text-xs text-slate-500">
+              {dayLabel(cur.date)} · {cur.source} ↗
+            </span>
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function EventList({ events, order = "desc", siteDomain }: Props) {
-  const rows = useMemo(() => buildRows(events, order), [events, order]);
+  const rows = useMemo(() => condenseFilings(buildRows(events, order)), [events, order]);
 
   if (rows.length === 0) {
     return <p className="text-sm text-slate-500">No events found.</p>;
@@ -203,6 +349,14 @@ export default function EventList({ events, order = "desc", siteDomain }: Props)
           return (
             <li key={row.key} className="mb-3 mt-6 text-sm font-bold text-slate-200">
               {row.label}
+            </li>
+          );
+        }
+        if (row.kind === "filings") {
+          return (
+            <li key={row.key} className="mb-6 scroll-mt-24">
+              <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
+              <FilingStack days={row.days} />
             </li>
           );
         }

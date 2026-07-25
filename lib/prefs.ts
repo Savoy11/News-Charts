@@ -28,16 +28,27 @@ export interface CustomGroup {
   tickers: string[];
 }
 
+export interface TimelinePrefs {
+  /** collapse a period's events into one expandable stack, instead of a card each */
+  stack: boolean;
+  /** how a stack reveals its list */
+  expand: "hover" | "click";
+  /** starting zoom for a timeline you haven't visited before — 0 Compact, 1 Default, 2 Wide */
+  defaultZoom: number;
+}
+
 export interface Prefs {
   signals: SignalPrefs;
   sources: SourcePrefs;
   groups: CustomGroup[];
+  timeline: TimelinePrefs;
 }
 
 export const DEFAULT_PREFS: Prefs = {
   signals: { floor: 5, sigma: 2, sinceMonths: 30, divergencePct: 15 },
   sources: { federalRegisterTerms: [] },
   groups: [],
+  timeline: { stack: true, expand: "hover", defaultZoom: 1 },
 };
 
 const STORAGE_KEY = "chronolens:prefs:v1";
@@ -54,6 +65,7 @@ export function loadPrefs(): Prefs {
       signals: { ...DEFAULT_PREFS.signals, ...(parsed.signals ?? {}) },
       sources: { ...DEFAULT_PREFS.sources, ...(parsed.sources ?? {}) },
       groups: Array.isArray(parsed.groups) ? parsed.groups : [],
+      timeline: { ...DEFAULT_PREFS.timeline, ...(parsed.timeline ?? {}) },
     };
   } catch {
     return DEFAULT_PREFS;

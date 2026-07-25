@@ -46,6 +46,86 @@ function Num({
   );
 }
 
+/** A labelled on/off switch. */
+function Toggle({
+  label,
+  hint,
+  checked,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start justify-between gap-3">
+      <span className="min-w-0">
+        <span className="block text-xs font-medium text-slate-400">{label}</span>
+        <span className="text-[11px] text-slate-600">{hint}</span>
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        onClick={() => onChange(!checked)}
+        className={`mt-0.5 h-5 w-9 shrink-0 rounded-full border transition-colors ${
+          checked ? "border-sky-600 bg-sky-600/40" : "border-slate-700 bg-slate-800"
+        }`}
+      >
+        <span
+          className={`block h-4 w-4 rounded-full bg-slate-200 transition-transform ${
+            checked ? "translate-x-4" : "translate-x-0.5"
+          }`}
+        />
+      </button>
+    </label>
+  );
+}
+
+/** A segmented single-choice control, styled like the timeline's zoom switch. */
+function Segmented<T extends string | number>({
+  label,
+  hint,
+  value,
+  options,
+  disabled = false,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  value: T;
+  options: { value: T; label: string }[];
+  disabled?: boolean;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className={disabled ? "opacity-40" : undefined}>
+      <div className="flex items-baseline justify-between">
+        <span className="text-xs font-medium text-slate-400">{label}</span>
+      </div>
+      <div className="mt-1 flex rounded-md border border-slate-700" role="group" aria-label={label}>
+        {options.map((o) => (
+          <button
+            key={String(o.value)}
+            type="button"
+            disabled={disabled}
+            aria-pressed={value === o.value}
+            onClick={() => onChange(o.value)}
+            className={`flex-1 px-2.5 py-1 text-xs font-semibold first:rounded-l-md last:rounded-r-md disabled:cursor-not-allowed ${
+              value === o.value ? "bg-sky-600/25 text-sky-300" : "text-slate-500 hover:text-slate-300"
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <span className="mt-1 block text-[11px] text-slate-600">{hint}</span>
+    </div>
+  );
+}
+
 /** Chip list editor used for both extra source terms and group tickers. */
 function Chips({
   values,
@@ -117,6 +197,49 @@ export default function PrefsSettings({
 
   return (
     <div className="space-y-6">
+      {/* -------------------------------------------------------- timeline */}
+      <section className="space-y-3">
+        <div>
+          <h3 className="text-sm font-bold text-slate-200">Timeline display</h3>
+          <p className="text-xs text-slate-500">
+            How the horizontal timeline lays out events. These are display-only and take effect the
+            next time a timeline renders.
+          </p>
+        </div>
+        <Toggle
+          label="Stack busy periods"
+          hint="collapse a period's events into one card you expand — off shows every event on the track"
+          checked={prefs.timeline.stack}
+          onChange={(stack) => set({ timeline: { ...prefs.timeline, stack } })}
+        />
+        <Segmented
+          label="Open a stack on"
+          hint={
+            prefs.timeline.stack
+              ? "hover to peek as you scan, or click for a deliberate open (better on touch)"
+              : "only applies while stacking is on"
+          }
+          value={prefs.timeline.expand}
+          disabled={!prefs.timeline.stack}
+          options={[
+            { value: "hover", label: "Hover" },
+            { value: "click", label: "Click" },
+          ]}
+          onChange={(expand) => set({ timeline: { ...prefs.timeline, expand } })}
+        />
+        <Segmented
+          label="Default zoom"
+          hint="starting spacing for a timeline you open for the first time"
+          value={prefs.timeline.defaultZoom}
+          options={[
+            { value: 0, label: "Compact" },
+            { value: 1, label: "Default" },
+            { value: 2, label: "Wide" },
+          ]}
+          onChange={(defaultZoom) => set({ timeline: { ...prefs.timeline, defaultZoom } })}
+        />
+      </section>
+
       {/* ---------------------------------------------------------- signals */}
       <section className="space-y-3">
         <div>

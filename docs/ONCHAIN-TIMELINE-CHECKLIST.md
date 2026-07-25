@@ -8,6 +8,12 @@ repos.
 **Last updated:** 2026-07-25 · **Boundary:** projects stay independent; connections are
 approval-gated (see ⛔ Boundary & governance).
 
+> **📄 Mirrored copy — keep both in sync.** This file lives identically in **both** repos:
+> `chronolens/docs/ONCHAIN-TIMELINE-CHECKLIST.md` and
+> `Crypto-Stuff/docs/ONCHAIN-TIMELINE-CHECKLIST.md`. It is deliberately duplicated (not shared),
+> consistent with the boundary rule below. **Any change must be applied to both copies in the
+> same round** so they never drift. This doc is the one intentional link between the projects.
+
 ---
 
 ## North star

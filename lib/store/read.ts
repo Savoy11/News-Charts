@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getPool } from "../db";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
 import { EventType, PricePoint, TimelineEvent } from "../types";
@@ -189,7 +190,8 @@ export interface IndustryPage {
   members: { ticker: string; name: string; slug: string }[];
 }
 
-export async function loadIndustry(slug: string): Promise<IndustryPage | null> {
+// Request-memoised so the industry page and its generateMetadata share one query pair.
+export const loadIndustry = cache(async (slug: string): Promise<IndustryPage | null> => {
   const { rows } = await getPool().query(
     `SELECT id, display_name, sic FROM subjects WHERE slug = $1 AND kind = 'industry'`,
     [slug.toLowerCase()]
@@ -207,7 +209,7 @@ export async function loadIndustry(slug: string): Promise<IndustryPage | null> {
     sic: rows[0].sic,
     members: members.map((m) => ({ ticker: m.ticker, name: m.display_name, slug: m.slug })),
   };
-}
+});
 
 /**
  * Every event concerning any member of an industry, deduplicated. An event touching

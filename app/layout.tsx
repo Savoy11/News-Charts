@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import localFont from "next/font/local";
 import SettingsMenu from "@/components/SettingsMenu";
+import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -10,10 +11,24 @@ const geistSans = localFont({
   weight: "100 900",
 });
 
+const DEFAULT_TITLE = "Chronolens — Research any topic on a timeline";
+const DEFAULT_DESCRIPTION =
+  "See news, earnings, SEC filings, and historical events on a single timeline — pegged to the stock price for public companies.";
+
 export const metadata: Metadata = {
-  title: "Chronolens — Research any topic on a timeline",
-  description:
-    "See news, earnings, SEC filings, and historical events on a single timeline — pegged to the stock price for public companies.",
+  metadataBase: new URL(SITE_URL),
+  // Subject pages set their own title; this template frames it. `default` is the home/fallback.
+  title: { default: DEFAULT_TITLE, template: `%s · ${SITE_NAME}` },
+  description: DEFAULT_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    url: SITE_URL,
+  },
+  twitter: { card: "summary_large_image", title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -26,6 +41,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               chrono<span className="text-sky-400">lens</span>
             </Link>
             <div className="flex items-center gap-3">
+              <Link
+                href="/explore"
+                className="text-xs font-semibold text-slate-400 transition-colors hover:text-slate-200"
+              >
+                Explore
+              </Link>
               <span className="hidden text-xs text-slate-500 sm:inline">Timelines for analysts</span>
               <SettingsMenu />
             </div>

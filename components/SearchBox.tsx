@@ -15,8 +15,10 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
     try {
       const res = await fetch(`/api/resolve?q=${encodeURIComponent(q)}`);
       const json = await res.json();
-      if (json.kind === "company") router.push(`/company/${json.ticker}`);
-      else if (json.kind === "topic") router.push(`/topic/${json.slug}`);
+      // the qualifier from a natural-language prompt rides along so the page can use it
+      const focus = json.focus ? `?focus=${encodeURIComponent(json.focus)}` : "";
+      if (json.kind === "company") router.push(`/company/${json.ticker}${focus}`);
+      else if (json.kind === "topic") router.push(`/topic/${json.slug}${focus}`);
     } finally {
       setBusy(false);
     }
@@ -27,7 +29,7 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search a ticker (AAPL) or any topic (bicycle)…"
+        placeholder="AAPL, bicycle, or “history of Alibaba in the US”…"
         className={`flex-1 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:outline-none ${
           large ? "px-5 py-4 text-lg" : "px-4 py-2 text-sm"
         }`}

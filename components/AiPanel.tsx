@@ -20,9 +20,11 @@ interface Props {
   events: RankableEvent[];
   ranking: AiRanking | null;
   onRanking: (r: AiRanking | null) => void;
+  /** seed for the instruction box — the focus a search prompt carried in via ?focus= */
+  initialInstruction?: string;
 }
 
-export default function AiPanel({ events, ranking, onRanking }: Props) {
+export default function AiPanel({ events, ranking, onRanking, initialInstruction }: Props) {
   const [config, setConfig] = useState<AiConfig | null>(null);
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState(false);
@@ -37,6 +39,12 @@ export default function AiPanel({ events, ranking, onRanking }: Props) {
     window.addEventListener(CONFIG_EVENT, refresh);
     return () => window.removeEventListener(CONFIG_EVENT, refresh);
   }, []);
+
+  // pre-fill (never overwrite) with the focus a search prompt carried in, so the
+  // visitor's angle is one click from being applied rather than silently dropped
+  useEffect(() => {
+    if (initialInstruction) setInstruction((cur) => cur || initialInstruction);
+  }, [initialInstruction]);
 
   async function run() {
     if (!config) {

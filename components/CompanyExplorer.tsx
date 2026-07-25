@@ -19,9 +19,13 @@ const FILTERS: { key: EventType; label: string }[] = [
 const ALL_TYPES = FILTERS.map((f) => f.key);
 
 /** Encode the active type filters as ?types= — omitted entirely when all are on (the default). */
-function encodeTypes(active: Set<EventType>): string {
+function encodeTypes(active: Set<EventType>, focus: string | null): string {
+  const p = new URLSearchParams();
   const on = ALL_TYPES.filter((t) => active.has(t));
-  return on.length === ALL_TYPES.length ? "" : `?types=${on.join(",")}`;
+  if (on.length !== ALL_TYPES.length) p.set("types", on.join(","));
+  if (focus) p.set("focus", focus); // survives filter toggles — it came from the search prompt
+  const qs = p.toString();
+  return qs ? `?${qs}` : "";
 }
 
 interface Props {
@@ -36,11 +40,16 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
   );
   const pathname = usePathname();
   const [copied, setCopied] = useState(false);
+  // the angle a natural-language search prompt carried in ("in the united states")
+  const [focusHint, setFocusHint] = useState<string | null>(null);
 
   // A shared ?types= link reproduces that filter selection on load.
   useEffect(() => {
     try {
-      const t = new URLSearchParams(window.location.search).get("types");
+      const sp = new URLSearchParams(window.location.search);
+      const f = sp.get("focus");
+      if (f) setFocusHint(f);
+      const t = sp.get("types");
       if (t !== null) {
         const set = new Set(
           t.split(",").filter((x): x is EventType => (ALL_TYPES as string[]).includes(x))
@@ -80,7 +89,7 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
     setActive(next);
     // reflect the selection in the URL (replaceState: no history spam, no navigation)
     try {
-      window.history.replaceState(null, "", pathname + encodeTypes(next));
+      window.history.replaceState(null, "", pathname + encodeTypes(next, focusHint));
     } catch {
       /* history unavailable — link just won't reflect the filters */
     }
@@ -103,7 +112,12 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
       {/* pairs each big move with the nearest displayed event, so it tracks the filters/search */}
       <BiggestMoves prices={prices} events={ranked} onSelectDate={handleSelectDate} />
       <div className="mt-6">
-        <AiPanel events={filtered} ranking={ranking} onRanking={setRanking} />
+        <AiPanel
+          events={filtered}
+          ranking={ranking}
+          onRanking={setRanking}
+          initialInstruction={focusHint ?? undefined}
+        />
       </div>
       <div className="mb-4 flex items-center gap-2">
         <h2 className="mr-2 text-lg font-bold text-slate-100">Timeline</h2>

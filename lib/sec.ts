@@ -21,10 +21,16 @@ async function getTickerMap(): Promise<TickerRow[]> {
 export async function resolveCompany(query: string): Promise<CompanyInfo | null> {
   const rows = await getTickerMap();
   const q = query.trim().toUpperCase();
+  // name-prefix rung: "ALIBABA" should find "ALIBABA GROUP HOLDING LIMITED" — nobody
+  // types the full legal title. The SEC file is ordered roughly by market cap, so the
+  // first prefix hit is the company a person almost certainly means ("APPLE" → Apple
+  // Inc, not Apple Hospitality REIT). Minimum length guards against junk prefixes.
   const hit =
     rows.find((r) => r.ticker === q) ??
     rows.find((r) => r.title.toUpperCase() === q) ??
-    null;
+    (q.length >= 3
+      ? rows.find((r) => r.title.toUpperCase().startsWith(q + " ")) ?? null
+      : null);
   if (!hit) return null;
   return {
     ticker: hit.ticker,

@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import PriceTimeline from "./PriceTimeline";
+import BiggestMoves from "./BiggestMoves";
 import EventList, { dateAnchorId } from "./EventList";
 import AiPanel, { type AiRanking } from "./AiPanel";
 import { applyRanking } from "./TopicExplorer";
@@ -59,6 +60,8 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
     <div>
       {/* markers stay chronological; ranking narrows the list below */}
       <PriceTimeline prices={prices} events={ranked} onSelectDate={handleSelectDate} />
+      {/* pairs each big move with the nearest displayed event, so it tracks the filters/search */}
+      <BiggestMoves prices={prices} events={ranked} onSelectDate={handleSelectDate} />
       <div className="mt-6">
         <AiPanel events={filtered} ranking={ranking} onRanking={setRanking} />
       </div>

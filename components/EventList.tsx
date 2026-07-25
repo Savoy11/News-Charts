@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { EventType, TimelineEvent } from "@/lib/types";
 import { waybackUrl } from "@/lib/wikidata";
+import { loadJSON, saveJSON } from "@/lib/viewState";
 import EventThumb from "./EventThumb";
 
 const BADGE: Record<EventType, { label: string; cls: string }> = {
@@ -82,6 +83,8 @@ interface Props {
   order?: "asc" | "desc";
   /** when set, each row offers a Wayback snapshot of the company site on that date */
   siteDomain?: string | null;
+  /** when set, which sections are collapsed is remembered here across visits */
+  persistKey?: string;
 }
 
 /** "2026-07-24" → "July 2026". Built from the string parts under UTC so the label never drifts a day across time zones. */
@@ -344,6 +347,8 @@ function FilingStack({ days }: { days: DayRow[] }) {
 }
 
 const plural = (n: number) => `${n} event${n === 1 ? "" : "s"}`;
+const yearAnchorId = (year: string) => `y-${year}`;
+const PEEK_MAX = 8; // titles shown in a hover preview before "+N more"
 
 /**
  * Zero-height anchor stand-ins for a collapsed section's days. They keep the price
@@ -360,28 +365,102 @@ function CollapsedAnchors({ dates }: { dates: string[] }) {
   );
 }
 
-export default function EventList({ events, order = "desc", siteDomain }: Props) {
+const DOT: Record<EventType, string> = {
+  earnings: "bg-amber-400",
+  filing: "bg-sky-400",
+  news: "bg-slate-400",
+  press: "bg-orange-400",
+  regulation: "bg-rose-400",
+  history: "bg-violet-400",
+  citation: "bg-teal-400",
+};
+
+/** Preview of a collapsed section's contents, shown on hover so it can be read without a click. */
+function PeekPopover({
+  items,
+  total,
+  onEnter,
+  onLeave,
+}: {
+  items: TimelineEvent[];
+  total: number;
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <div
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      className="absolute left-6 top-full z-20 mt-1 w-72 rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl"
+    >
+      <ul className="space-y-1">
+        {items.map((ev) => (
+          <li key={ev.id} className="flex items-center gap-1.5">
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT[ev.type]}`} />
+            <span className="truncate text-[11px] text-slate-300">{ev.title}</span>
+          </li>
+        ))}
+      </ul>
+      {total > items.length && (
+        <p className="mt-1 px-1 text-[10px] text-slate-500">
+          +{total - items.length} more — click to expand
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default function EventList({ events, order = "desc", siteDomain, persistKey }: Props) {
   const rows = useMemo(() => condenseFilings(buildRows(events, order)), [events, order]);
 
-  // Event tallies per year and per month, so a collapsed header still tells you how much it hides.
-  const { yearCount, monthCount, years } = useMemo(() => {
+  // Per-year/-month tallies (so a collapsed header still says how much it hides) plus a small
+  // preview of each section's titles, used for the hover peek without expanding.
+  const { yearCount, monthCount, years, yearPeek, monthPeek } = useMemo(() => {
     const yearCount = new Map<string, number>();
     const monthCount = new Map<string, number>();
+    const yearPeek = new Map<string, TimelineEvent[]>();
+    const monthPeek = new Map<string, TimelineEvent[]>();
     const years: string[] = [];
-    const tally = (year: string, monthKey: string | null, n: number) => {
-      yearCount.set(year, (yearCount.get(year) ?? 0) + n);
-      if (monthKey) monthCount.set(monthKey, (monthCount.get(monthKey) ?? 0) + n);
+    const peek = (map: Map<string, TimelineEvent[]>, key: string, items: TimelineEvent[]) => {
+      const a = map.get(key) ?? [];
+      if (a.length < PEEK_MAX) a.push(...items.slice(0, PEEK_MAX - a.length));
+      map.set(key, a);
+    };
+    const add = (year: string, monthKey: string | null, items: TimelineEvent[]) => {
+      yearCount.set(year, (yearCount.get(year) ?? 0) + items.length);
+      peek(yearPeek, year, items);
+      if (monthKey) {
+        monthCount.set(monthKey, (monthCount.get(monthKey) ?? 0) + items.length);
+        peek(monthPeek, monthKey, items);
+      }
     };
     for (const r of rows) {
       if (r.kind === "year") years.push(r.year);
-      else if (r.kind === "day") tally(r.year, r.monthKey, r.items.length);
-      else if (r.kind === "filings") tally(r.year, r.monthKey, r.days.reduce((s, d) => s + d.items.length, 0));
+      else if (r.kind === "day") add(r.year, r.monthKey, r.items);
+      else if (r.kind === "filings") add(r.year, r.monthKey, r.days.flatMap((d) => d.items));
     }
-    return { yearCount, monthCount, years };
+    return { yearCount, monthCount, years, yearPeek, monthPeek };
   }, [rows]);
 
   const [collapsedYears, setCollapsedYears] = useState<Set<string>>(new Set());
   const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set());
+
+  // Remember-my-view: load the saved collapse set for this subject after mount (so SSR and the
+  // first client render agree), then save on every change. The hydrated gate stops the initial
+  // default state from overwriting what was stored.
+  const hydrated = useRef(false);
+  useEffect(() => {
+    hydrated.current = false;
+    if (!persistKey) return;
+    const saved = loadJSON<{ years?: string[]; months?: string[] }>(persistKey, {});
+    setCollapsedYears(new Set(saved.years ?? []));
+    setCollapsedMonths(new Set(saved.months ?? []));
+    hydrated.current = true;
+  }, [persistKey]);
+  useEffect(() => {
+    if (!persistKey || !hydrated.current) return;
+    saveJSON(persistKey, { years: [...collapsedYears], months: [...collapsedMonths] });
+  }, [persistKey, collapsedYears, collapsedMonths]);
 
   const toggle = (set: Set<string>, key: string) => {
     const next = new Set(set);
@@ -395,6 +474,29 @@ export default function EventList({ events, order = "desc", siteDomain }: Props)
   const allCollapsed = years.length > 0 && years.every((y) => collapsedYears.has(y));
   const toggleAll = () => setCollapsedYears(allCollapsed ? new Set() : new Set(years));
 
+  // Jump-to-year: expand the year (so its content is there to see) and scroll to its header.
+  const jumpToYear = (y: string) => {
+    setCollapsedYears((s) => {
+      const next = new Set(s);
+      next.delete(y);
+      return next;
+    });
+    document.getElementById(yearAnchorId(y))?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // Hover-to-peek: which collapsed header is being previewed, with a small close delay so the
+  // pointer can travel from the header onto the popover without it vanishing.
+  const [peek, setPeek] = useState<string | null>(null);
+  const peekTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openPeek = (key: string) => {
+    if (peekTimer.current) clearTimeout(peekTimer.current);
+    setPeek(key);
+  };
+  const closePeek = () => {
+    if (peekTimer.current) clearTimeout(peekTimer.current);
+    peekTimer.current = setTimeout(() => setPeek(null), 200);
+  };
+
   if (rows.length === 0) {
     return <p className="text-sm text-slate-500">No events found.</p>;
   }
@@ -406,10 +508,22 @@ export default function EventList({ events, order = "desc", siteDomain }: Props)
   return (
     <div>
       {years.length > 1 && (
-        <div className="mb-2 flex justify-end">
+        <div className="sticky top-0 z-10 mb-2 flex items-center gap-1 overflow-x-auto rounded-md border border-slate-800 bg-slate-950/85 px-2 py-1.5 backdrop-blur">
+          <span className="mr-1 shrink-0 text-[10px] font-bold uppercase tracking-widest text-slate-600">
+            Jump
+          </span>
+          {years.map((y) => (
+            <button
+              key={y}
+              onClick={() => jumpToYear(y)}
+              className="shrink-0 rounded px-1.5 py-0.5 text-[11px] tabular-nums text-slate-400 transition-colors hover:bg-slate-800 hover:text-sky-300"
+            >
+              {y}
+            </button>
+          ))}
           <button
             onClick={toggleAll}
-            className="rounded border border-slate-800 px-2 py-1 text-[10px] font-semibold text-slate-500 transition-colors hover:border-sky-700 hover:text-sky-300"
+            className="ml-auto shrink-0 rounded border border-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-500 transition-colors hover:border-sky-700 hover:text-sky-300"
           >
             {allCollapsed ? "Expand all" : "Collapse all"}
           </button>
@@ -419,8 +533,15 @@ export default function EventList({ events, order = "desc", siteDomain }: Props)
         {rows.map((row) => {
           if (row.kind === "year") {
             const yc = collapsedYears.has(row.year);
+            const pk = yearAnchorId(row.year);
             return (
-              <li key={row.key} className="mb-4 mt-8 first:mt-0">
+              <li
+                key={row.key}
+                id={pk}
+                className="relative mb-4 mt-8 scroll-mt-24 first:mt-0"
+                onMouseEnter={yc ? () => openPeek(pk) : undefined}
+                onMouseLeave={yc ? closePeek : undefined}
+              >
                 <button
                   onClick={() => toggleYear(row.year)}
                   aria-expanded={!yc}
@@ -437,14 +558,28 @@ export default function EventList({ events, order = "desc", siteDomain }: Props)
                     {plural(yearCount.get(row.year) ?? 0)}
                   </span>
                 </button>
+                {yc && peek === pk && (
+                  <PeekPopover
+                    items={yearPeek.get(row.year) ?? []}
+                    total={yearCount.get(row.year) ?? 0}
+                    onEnter={() => openPeek(pk)}
+                    onLeave={closePeek}
+                  />
+                )}
               </li>
             );
           }
           if (row.kind === "month") {
             if (collapsedYears.has(row.year)) return null;
             const mc = collapsedMonths.has(row.monthKey);
+            const pk = `m-${row.monthKey}`;
             return (
-              <li key={row.key} className="mb-3 mt-6">
+              <li
+                key={row.key}
+                className="relative mb-3 mt-6"
+                onMouseEnter={mc ? () => openPeek(pk) : undefined}
+                onMouseLeave={mc ? closePeek : undefined}
+              >
                 <button
                   onClick={() => toggleMonth(row.monthKey)}
                   aria-expanded={!mc}
@@ -460,6 +595,14 @@ export default function EventList({ events, order = "desc", siteDomain }: Props)
                     · {plural(monthCount.get(row.monthKey) ?? 0)}
                   </span>
                 </button>
+                {mc && peek === pk && (
+                  <PeekPopover
+                    items={monthPeek.get(row.monthKey) ?? []}
+                    total={monthCount.get(row.monthKey) ?? 0}
+                    onEnter={() => openPeek(pk)}
+                    onLeave={closePeek}
+                  />
+                )}
               </li>
             );
           }

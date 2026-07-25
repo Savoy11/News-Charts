@@ -46,7 +46,10 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
   // the angle a natural-language search prompt carried in ("in the united states")
   const [focusHint, setFocusHint] = useState<string | null>(null);
 
-  // A shared ?types= link reproduces that filter selection on load.
+  const filterKey = `chronolens:filters:${pathname}`;
+
+  // Restore the filter selection: a shared ?types= link wins (reproduces exactly that view);
+  // otherwise fall back to what this browser last chose here, remembered across visits.
   useEffect(() => {
     try {
       const sp = new URLSearchParams(window.location.search);
@@ -58,11 +61,17 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
           t.split(",").filter((x): x is EventType => (ALL_TYPES as string[]).includes(x))
         );
         if (set.size) setActive(set);
+        return;
+      }
+      const saved = JSON.parse(localStorage.getItem(filterKey) || "null");
+      if (Array.isArray(saved) && saved.length) {
+        const set = new Set(saved.filter((x): x is EventType => (ALL_TYPES as string[]).includes(x)));
+        if (set.size) setActive(set);
       }
     } catch {
-      /* malformed URL — ignore */
+      /* malformed URL / storage — ignore */
     }
-  }, []);
+  }, [filterKey]);
 
   const [ranking, setRanking] = useState<AiRanking | null>(null);
   const filtered = useMemo(() => events.filter((e) => active.has(e.type)), [events, active]);
@@ -108,6 +117,12 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
       window.history.replaceState(null, "", pathname + encodeTypes(next, focusHint));
     } catch {
       /* history unavailable — link just won't reflect the filters */
+    }
+    // remember it for next visit too (URL only survives if the link is shared/kept)
+    try {
+      localStorage.setItem(filterKey, JSON.stringify([...next]));
+    } catch {
+      /* storage unavailable — selection just won't persist */
     }
   }
 
@@ -182,7 +197,7 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
             : `${ranked.length} of ${filtered.length} events`}
         </span>
       </div>
-      <EventList events={ranked} siteDomain={siteDomain} />
+      <EventList events={ranked} siteDomain={siteDomain} persistKey={`chronolens:collapse:${pathname}`} />
     </div>
   );
 }

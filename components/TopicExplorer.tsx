@@ -108,7 +108,8 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
     }
     if (!fromUrl) {
       try {
-        const saved = JSON.parse(sessionStorage.getItem(storeKey) || "{}");
+        // localStorage (not sessionStorage) so the choice is remembered across visits, not just the tab
+        const saved = JSON.parse(localStorage.getItem(storeKey) || "{}");
         if (saved.view === "timeline" || saved.view === "list") setView(saved.view);
         if (Array.isArray(saved.active) && saved.active.length) {
           setActive(new Set<EventType>(saved.active));
@@ -148,7 +149,7 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
   function persist(nextView: "timeline" | "list", nextActive: Set<EventType>) {
     if (!hydrated.current) return;
     try {
-      sessionStorage.setItem(storeKey, JSON.stringify({ view: nextView, active: [...nextActive] }));
+      localStorage.setItem(storeKey, JSON.stringify({ view: nextView, active: [...nextActive] }));
     } catch {
       /* storage unavailable — selection just won't persist */
     }
@@ -236,7 +237,7 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
       {view === "timeline" ? (
         <HorizontalTimeline events={ranked} />
       ) : (
-        <EventList events={ranked} order="asc" />
+        <EventList events={ranked} order="asc" persistKey={`chronolens:collapse:${pathname}`} />
       )}
     </div>
   );

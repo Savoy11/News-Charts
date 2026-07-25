@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { EventType, TimelineEvent } from "@/lib/types";
 import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT, type TimelinePrefs } from "@/lib/prefs";
+import EventThumb from "./EventThumb";
 
 const CARD_W = 244;
 /** Expanded-stack popover: wider than a card for readable rows, capped so it stays inside the 420px track. */
@@ -99,6 +100,10 @@ function EventCard({ ev, style }: { ev: TimelineEvent; style: React.CSSPropertie
   const s = STYLE[ev.type];
   const body = (
     <>
+      <EventThumb
+        src={ev.imageUrl}
+        className="mb-2 h-20 w-full rounded-md border border-slate-800 object-cover"
+      />
       <span
         className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.badge}`}
       >
@@ -773,23 +778,29 @@ function Stack({
 function StackRow({ ev }: { ev: TimelineEvent }) {
   const s = STYLE[ev.type];
   const body = (
-    <>
-      <div className="flex items-center gap-2">
-        <span
-          className={`inline-block rounded border px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${s.badge}`}
-        >
-          {s.label}
+    <div className="flex items-start gap-2">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-block rounded border px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${s.badge}`}
+          >
+            {s.label}
+          </span>
+          <span className="text-[10px] text-slate-500">{formatDate(ev)}</span>
+        </div>
+        <span className="mt-1 line-clamp-2 block text-xs font-medium leading-snug text-slate-200">
+          {ev.title}
         </span>
-        <span className="text-[10px] text-slate-500">{formatDate(ev)}</span>
+        <span className="mt-0.5 block truncate text-[10px] text-slate-500">
+          {ev.source}
+          {ev.url ? " ↗" : ""}
+        </span>
       </div>
-      <span className="mt-1 line-clamp-2 block text-xs font-medium leading-snug text-slate-200">
-        {ev.title}
-      </span>
-      <span className="mt-0.5 block truncate text-[10px] text-slate-500">
-        {ev.source}
-        {ev.url ? " ↗" : ""}
-      </span>
-    </>
+      <EventThumb
+        src={ev.imageUrl}
+        className="h-11 w-11 shrink-0 rounded border border-slate-800 object-cover"
+      />
+    </div>
   );
 
   if (!ev.url) {

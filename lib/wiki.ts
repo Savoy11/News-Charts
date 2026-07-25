@@ -6,19 +6,27 @@ const UA = { "User-Agent": "Chronolens Research marcusowens94@gmail.com" };
 interface Page {
   title: string;
   text: string;
+  /** the article's lead image, shared by every history event drawn from this page */
+  image?: string;
 }
 
 async function getExtract(title: string): Promise<Page | null> {
-  const url = `${API}?action=query&prop=extracts&explaintext=1&redirects=1&format=json&titles=${encodeURIComponent(
+  // pageimages rides along in the same request — one call gets the prose and the lead thumbnail.
+  const url = `${API}?action=query&prop=extracts|pageimages&explaintext=1&piprop=thumbnail&pithumbsize=400&redirects=1&format=json&titles=${encodeURIComponent(
     title
   )}`;
   const res = await fetch(url, { headers: UA, next: { revalidate: 86400 } });
   if (!res.ok) return null;
   const json = await res.json();
   const pages = json?.query?.pages ?? {};
-  const page = Object.values(pages)[0] as { title?: string; extract?: string; missing?: string };
+  const page = Object.values(pages)[0] as {
+    title?: string;
+    extract?: string;
+    missing?: string;
+    thumbnail?: { source?: string };
+  };
   if (!page || page.missing !== undefined || !page.extract) return null;
-  return { title: page.title ?? title, text: page.extract };
+  return { title: page.title ?? title, text: page.extract, image: page.thumbnail?.source };
 }
 
 /** Best-matching article title via Wikipedia's search index, for queries that aren't exact titles. */
@@ -108,6 +116,7 @@ function eventsFromPage(page: Page, idPrefix: string, limit: number): TimelineEv
         title: s,
         source: `Wikipedia: ${page.title}`,
         url: quoteUrl(page.title, s),
+        imageUrl: page.image,
         sourceKey: "wikipedia",
         // the article is the document; the sentence is the event, so the same
         // sentence in "History of X" and "Timeline of X" collapses to one row

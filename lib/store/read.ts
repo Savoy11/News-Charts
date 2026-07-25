@@ -51,7 +51,7 @@ export async function loadSubject(slug: string): Promise<SubjectRow | null> {
  */
 export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
   const { rows } = await getPool().query(
-    `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title, e.body,
+    `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title, e.body, e.image_url,
             a.url, a.source_label,
             (SELECT count(*) FROM event_attestations x WHERE x.event_id = e.id) AS attestations
        FROM events e
@@ -82,6 +82,7 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
         attestations > 1
           ? `${r.body ? `${r.body} · ` : ""}${attestations} sources`
           : r.body ?? undefined,
+      imageUrl: r.image_url ?? undefined,
       yearOnly: r.date_precision === "year",
     } satisfies TimelineEvent;
   });
@@ -94,7 +95,7 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
  */
 export async function loadSectorEvents(industryId: number): Promise<TimelineEvent[]> {
   const { rows } = await getPool().query(
-    `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title,
+    `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title, e.image_url,
             a.url, a.source_label
        FROM events e
        JOIN event_subjects es ON es.event_id = e.id AND es.subject_id = $1
@@ -115,6 +116,7 @@ export async function loadSectorEvents(industryId: number): Promise<TimelineEven
     source: r.source_label ?? "Chronolens",
     url: r.url ?? undefined,
     description: "sector-wide",
+    imageUrl: r.image_url ?? undefined,
     yearOnly: r.date_precision === "year",
   }));
 }

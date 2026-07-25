@@ -12,26 +12,34 @@ import CompareView from "@/components/CompareView";
 import type { TimelineEvent, PricePoint } from "@/lib/types";
 import type { CompareSubject } from "@/lib/compare";
 
+// a self-contained placeholder "photo" so the thumbnail layout is visible without external hosts
+const SAMPLE_IMG =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='220'><rect width='400' height='220' fill='#1e293b'/><circle cx='130' cy='84' r='36' fill='#334155'/><rect x='0' y='150' width='400' height='70' fill='#334155'/><text x='200' y='128' font-size='17' fill='#64748b' text-anchor='middle' font-family='sans-serif'>sample image</text></svg>`
+  );
+
 const ev = (
   id: string,
   date: string,
   type: TimelineEvent["type"],
   title: string,
-  yearOnly = false
-): TimelineEvent => ({ id, date, type, title, source: "Sample", url: "#", yearOnly });
+  yearOnly = false,
+  imageUrl?: string
+): TimelineEvent => ({ id, date, type, title, source: "Sample", url: "#", yearOnly, imageUrl });
 
 // A topic-shaped timeline: sparse year-only history, then busy modern clusters (to show stacking
 // on the horizontal view and Year → Month grouping + "Year only" on the list view).
 const TOPIC_EVENTS: TimelineEvent[] = [
-  ev("h1", "1817-01-01", "history", "Karl von Drais builds the draisine, the first two-wheeler", true),
+  ev("h1", "1817-01-01", "history", "Karl von Drais builds the draisine, the first two-wheeler", true, SAMPLE_IMG),
   ev("h2", "1885-01-01", "history", "Rover safety bicycle sets the modern template", true),
   ev("h3", "1903-01-01", "history", "First Tour de France is held", true),
   ev("h4", "1970-01-01", "history", "US bike boom; imports triple", true),
   ev("p1", "2019-04-12", "press", "City doubles its protected bike-lane budget"),
-  ev("n1", "2023-05-02", "news", "E-bike sales surge 40% year over year"),
+  ev("n1", "2023-05-02", "news", "E-bike sales surge 40% year over year", false, SAMPLE_IMG),
   ev("n2", "2023-05-11", "news", "Metro bikeshare passes 10 million rides"),
-  ev("n3", "2023-05-19", "news", "New carbon-frame safety standard proposed"),
-  ev("n4", "2023-06-02", "news", "Battery recall hits three e-bike brands"),
+  ev("n3", "2023-05-19", "news", "New carbon-frame safety standard proposed", false, SAMPLE_IMG),
+  ev("n4", "2023-06-02", "news", "Battery recall hits three e-bike brands", false, SAMPLE_IMG),
   ev("n5", "2023-06-21", "news", "Cargo bikes gain last-mile delivery share"),
   ev("n6", "2023-11-08", "news", "Winter ridership hits a record in northern cities"),
   ev("n7", "2024-02-14", "news", "Tariff review targets imported components"),

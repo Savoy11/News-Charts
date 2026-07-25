@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { EventType, TimelineEvent } from "@/lib/types";
 import { waybackUrl } from "@/lib/wikidata";
+import EventThumb from "./EventThumb";
 
 const BADGE: Record<EventType, { label: string; cls: string }> = {
   earnings: { label: "Earnings", cls: "bg-amber-500/15 text-amber-400 border-amber-700/50" },
@@ -28,7 +29,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
       >
         {BADGE[ev.type].label}
       </span>
-      <span className="min-w-0">
+      <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium text-slate-200">{ev.title}</span>
         <span className="mt-0.5 block text-xs text-slate-500">
           {ev.source}
@@ -36,6 +37,10 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
           {ev.description ? ` · ${ev.description}` : ""}
         </span>
       </span>
+      <EventThumb
+        src={ev.imageUrl}
+        className="ml-1 h-14 w-14 shrink-0 rounded-md border border-slate-800 object-cover"
+      />
     </>
   );
 

@@ -6,6 +6,7 @@ interface GdeltArticle {
   seendate: string; // 20260717T001500Z
   domain: string;
   language: string;
+  socialimage?: string; // article's social/share image, when GDELT has one
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -72,6 +73,7 @@ export async function fetchNews(query: string): Promise<FetchResult> {
           source: a.domain,
           url: a.url,
           sourceKey: "gdelt",
+          imageUrl: a.socialimage || undefined,
           // the article URL identifies the document; headline + day identifies the
           // story, so a wire piece syndicated across outlets collapses to one event
           externalId: a.url,

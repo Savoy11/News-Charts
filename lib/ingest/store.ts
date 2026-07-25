@@ -291,14 +291,17 @@ export async function upsertEvent(
   const sourceId = SOURCE_ID.get(sourceKey);
 
   const key = dedupKey(ev.dedupBasis ?? ev.title);
-  const hash = contentHash([ev.title, ev.description, ev.url]);
+  // image is part of the content fingerprint, so a newly-found thumbnail counts as a change and
+  // the row updates instead of being skipped by the unchanged-hash guard below.
+  const hash = contentHash([ev.title, ev.description, ev.url, ev.imageUrl]);
 
   // Identity is the dedup_key; content changes only bump the hash and updated_at.
   const upserted = await client.query<{ id: string; inserted: boolean }>(
-    `INSERT INTO events (kind, occurred_on, date_precision, title, body, dedup_key, content_hash)
-     VALUES ($1,$2,$3,$4,$5,$6,$7)
+    `INSERT INTO events (kind, occurred_on, date_precision, title, body, image_url, dedup_key, content_hash)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
      ON CONFLICT (dedup_key) DO UPDATE
         SET body = EXCLUDED.body,
+            image_url = COALESCE(EXCLUDED.image_url, events.image_url),
             content_hash = EXCLUDED.content_hash,
             updated_at = now()
       WHERE events.content_hash IS DISTINCT FROM EXCLUDED.content_hash
@@ -309,6 +312,7 @@ export async function upsertEvent(
       ev.yearOnly ? "year" : "day",
       ev.title,
       ev.description ?? null,
+      ev.imageUrl ?? null,
       key,
       hash,
     ]

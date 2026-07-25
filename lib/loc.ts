@@ -9,6 +9,7 @@ interface LocResult {
   date?: string; // YYYY-MM-DD
   partof_title?: string[];
   location_state?: string[];
+  image_url?: string[];
 }
 
 /** "aberdeen herald (aberdeen, chehalis county, w.t.) 1886-1917" -> "Aberdeen Herald" */
@@ -87,6 +88,7 @@ export async function fetchPressMentions(topic: string): Promise<FetchResult> {
       source: "Chronicling America · Library of Congress",
       url: link || undefined,
       description: "Digitised newspaper page",
+      imageUrl: (Array.isArray(r.image_url) ? r.image_url[0] : undefined)?.replace(/^http:/, "https:"),
       sourceKey: "loc_chronam",
       // one scanned page is both the document and the event
       externalId: link || `${date}-${paper}`,

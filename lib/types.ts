@@ -18,6 +18,8 @@ export interface TimelineEvent {
   source: string;
   url?: string;
   description?: string;
+  /** optional thumbnail for the event — article social image, Wikipedia lead image, newspaper scan */
+  imageUrl?: string;
 
   // --- ingest metadata; ignored by the UI, required by the worker ---
   /** which source produced this */

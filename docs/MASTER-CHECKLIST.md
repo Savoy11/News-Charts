@@ -17,7 +17,51 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
 ## Legend
 
 - **Priority:** `P0` = do first / unblocks others · `P1` = core value · `P2` = later / nice-to-have
+- Each backlog item is rated on three lenses: **Importance** (impact / business value),
+  **Efficiency** (ROI — value ÷ effort), **Practicality** (readiness — dependencies, risk, is it
+  already built). Priority is the net of the three.
 - Check a box when done; add sub-bullets for notes/links as we go.
+
+---
+
+## Project state & prioritized backlog (from PR review — 2026-07-25)
+
+**Where Chronolens stands.** The data layer is real — 5 SQL migrations (`db/001`–`005`) plus a
+full script suite (`ingest`, `score`, `signals`, `explain`, `plan`). But **all 7 feature PRs
+(#1–#7) are open, unmerged drafts**, and every one says *"not yet eyeballed in a live browser
+against a seeded DB."* So the value is built but unshipped, and the blocker is verification, not
+coding. (The `docs/EVENTS-SCHEMA.md` "not yet applied" header is stale — migrations exist.)
+
+Prioritized, most-important first. For a **traffic/ad-funded** product, discoverability and
+retention outrank polish.
+
+- [ ] `P0` **Stand up a seeded environment and verify the 7 open PRs live.** *Importance:*
+      critical — it unblocks *all* of #1–#7 at once (each is code-/build-verified but not
+      browser-verified). *Efficiency:* high — one-time Postgres + migrate + ingest a few subjects.
+      *Practicality:* high. **Do this first; it gates everything below.**
+- [ ] `P0` **Merge #4 — SEO + shareable URLs + dynamic OG images.** *Importance:* highest —
+      discoverability **is** the revenue model for an ad-funded site (metadata, sitemap, robots,
+      `/explore`, JSON-LD, social cards). *Efficiency:* high (done, `next build` verified).
+      *Practicality:* merge this **first of the #4/#5/#6 trio** to set the nav/header baseline.
+- [ ] `P1` **Merge #6 — Follow subjects + "new since your last visit."** *Importance:* high —
+      retention hook → return visits → more ad impressions, with no accounts/server state.
+      *Practicality:* resolve the nav/header conflict against #4 (keep both).
+- [ ] `P1` **Merge #7 — settings copy fix** ("nothing leaves your machine" was misleading; timeline
+      data is fetched online). *Importance:* med (honesty/trust) · *Efficiency:* very high (copy-only)
+      · *Practicality:* trivial. **Easy win.**
+- [ ] `P1` **Merge #1 — EventList year→month→day grouping.** *Importance:* med (readability of the
+      core view) · *Efficiency:* high (small, presentational) · *Practicality:* high, no conflicts.
+- [ ] `P2` **Merge #5 — Compare two subjects (`/compare`).** *Importance:* med-high (differentiating
+      feature; makes `price_divergence` visual) · *Practicality:* third of the nav-conflict trio.
+- [ ] `P2` **Merge #2 — timeline stacking + settings + mini-map.** *Importance:* med (UX for busy
+      periods) · *Efficiency:* med (largest presentational surface) · *Practicality:* independent.
+- [ ] `P2` **Merge #3 — "Biggest moves" panel** on company pages. *Importance:* med (surfaces
+      catalysts) · *Practicality:* independent, derived-only.
+- [ ] `P1` **Coordinate the #4/#5/#6 nav/header merge conflicts** — all three edit `app/layout.tsx`
+      and subject headers. Merge in order (#4 → #6 → #5), keeping every header link/control at each step.
+
+> The **On-chain events** initiative below is a new P1 build — schedule it after (or alongside)
+> clearing this backlog, since the pending PRs are already-sunk work waiting only on verification.
 
 ---
 

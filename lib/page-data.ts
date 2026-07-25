@@ -9,6 +9,7 @@ import { getNews } from "./news";
 import { resolveCompany, getFilings, getIndustry, commonName, type Industry } from "./sec";
 import { getDailyPrices } from "./prices";
 import { getOfficialDomain } from "./wikidata";
+import { dropCompanyPrehistory } from "./history";
 
 const TOPIC_TTL_MINUTES = 360; // 6h — topic history barely moves
 const COMPANY_TTL_MINUTES = 60; // 1h — prices and filings do
@@ -168,7 +169,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
           ticker: subject.ticker,
           siteDomain: subject.siteDomain,
           prices,
-          events: [...events, ...sector],
+          events: dropCompanyPrehistory([...events, ...sector]),
           industry,
           servedFrom: "database",
         };
@@ -221,7 +222,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
     ticker: company.ticker,
     siteDomain,
     prices,
-    events: [...events, ...sector],
+    events: dropCompanyPrehistory([...events, ...sector]),
     industry,
     servedFrom: "live",
   };

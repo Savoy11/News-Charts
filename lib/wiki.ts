@@ -60,10 +60,12 @@ function quoteUrl(title: string, sentence: string): string {
 
 /**
  * Pull a year from a sentence, ignoring numbers that only look like years.
- * Screen resolutions ("1280 x 720"), sensor sizes ("3264 × 1836") and spec figures
- * are the common false positives and would otherwise plant events in the Middle Ages.
+ * Screen resolutions ("1280 x 720"), sensor sizes ("3264 × 1836"), spec figures,
+ * stock tickers ("SEHK: 1060") and domain names ("1688.com") are the common false
+ * positives and would otherwise plant events in the Middle Ages — the exact bug that
+ * scattered Alibaba's early history across the years 1060 and 1688.
  */
-function extractYear(sentence: string): number | null {
+export function extractYear(sentence: string): number | null {
   const masked = sentence
     // resolutions and dimension pairs
     .replace(/\d[\d,.]*\s*[×x*]\s*\d[\d,.]*/gi, " ")
@@ -74,7 +76,16 @@ function extractYear(sentence: string): number | null {
     )
     // currency and large counts, e.g. "$1,999" or "1080p"
     .replace(/[$€£]\s?\d[\d,.]*/g, " ")
-    .replace(/\b\d{3,4}[ip]\b/gi, " ");
+    .replace(/\b\d{3,4}[ip]\b/gi, " ")
+    // stock listing codes: "(SEHK: 1060)", "HKG: 1688", "SSE 600519" — a ticker, not a year
+    .replace(
+      /\b(?:SEHK|HKEX|HKG|SSE|SZSE|SHA|SHE|SHG|NYSE|NASDAQ|NYSEARCA|AMEX|LSE|LON|TYO|TSE|KRX|ASX|TSX|OTC|BATS)\b\s*:?\s*#?\s*\d{2,6}/gi,
+      " "
+    )
+    // "stock code 1060", "ticker 0700" — an identifier, not a date
+    .replace(/\b(?:stock code|ticker(?:\s+symbol)?)\s*:?\s*#?\s*\d{2,6}/gi, " ")
+    // domain names: "1688.com", "163.cn" — the digits are a brand, not a year
+    .replace(/\b\d{2,4}\.[a-z]{2,}\b/gi, " ");
   // reject digit/letter neighbours so model numbers ("PW1500G") don't read as years,
   // while still allowing "in 2013," and decade forms like "mid-1990s"
   const m = masked.match(/(?<!\w)(1[0-9]{3}|20[0-2][0-9])(?:s\b)?(?!\w)/);

@@ -180,6 +180,56 @@ purpose.**
 - [ ] Staking milestones (ETH beacon deposits, validator counts).
 - [ ] Multi-chain expansion (L2s, Solana) once the EVM adapter pattern is proven.
 
+## Initiative: Historical article resurfacing — expand beyond Wikipedia · `P1`
+
+**North star.** Resurface the *actual articles/sources from a period*, not just narrate it.
+Today Wikipedia does double duty badly: `getTopicTimeline` slices one or two *History of X* /
+*Timeline of X* articles into ~60 dated sentences, and **every event deep-links back to the same
+article** — dense on screen, redundant as sourcing. Reframe Wikipedia as **skeleton + source
+index**, and add real archives to close the **1963–2017 gap** (Chronicling America covers
+pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
+
+### Coverage map (which source owns which era)
+
+| Source | Reaches back to | Cost / key |
+| --- | --- | --- |
+| Chronicling America (LoC) — *have it* | ~pre-1963 (public domain) | keyless |
+| NYT Article Search | **1851** | free BYO key |
+| The Guardian Open Platform | **1999** | free BYO key |
+| GDELT — *have it* | 2017 | keyless |
+| Wikipedia citations | mixed (per article) | keyless |
+| Google / alt discovery engine | present-day web | keyed, quota-capped |
+
+### Backlog
+
+- [ ] `P0` **Mine Wikipedia *citations*** (the References list) into distinct, dated source
+      events instead of only slicing prose; demote prose-sentence events to connective narrative
+      and cap them. *Keyless. Directly fixes the "all events link the same article" redundancy —
+      the reason this initiative exists.*
+- [ ] `P1` **Internet Archive adapter** (advancedsearch + Wayback CDX) — keyless archive search.
+- [ ] `P1` **NYT Article Search adapter** (archive to 1851) — free BYO key, plumbed like the
+      AI-model key (stays in the browser / server env, never in the shared corpus).
+- [ ] `P1` **Guardian Open Platform adapter** (to 1999) — free BYO key, same plumbing.
+- [ ] `P2` **Google Programmable Search** (Custom Search JSON API) as a **present-day discovery
+      layer only** — accept the 100/day free cap and weak historical date-filtering; it searches
+      the live web, not archives, so it is *not* a time machine.
+- [ ] `P1` **Evaluate an alternative search engine to Google** — Bing Web Search, Brave Search
+      API, SerpAPI, Marginalia, DuckDuckGo (and similar). Compare historical reach, date-filter
+      quality, quota, cost, and ToS for an ad-supported product; pick the best discovery engine,
+      which may replace Google rather than supplement it.
+
+### Cross-cutting
+
+- [ ] `P1` **Licensing gate:** every source carries `commercialOk` + license in `SOURCES`; only
+      commercial-safe sources feed the ad-supported path (same discipline as the on-chain and
+      Google-News-RSS bars).
+- [ ] `P1` **BYO-key plumbing** for the keyed sources (NYT, Guardian, discovery engine) — mirror
+      the AI-model-key pattern; keys never touch the shared server state.
+- [ ] `P1` **Dedup basis = article URL**, so the same wire story surfaced by two engines collapses
+      to one event (mirrors the existing GDELT dedup rule).
+- [ ] `P2` **Coverage-map doc** kept current as sources are added, so "how far back can this go"
+      is answerable per subject.
+
 ## Other initiatives
 
 _Add new Chronolens initiatives here as they come up — this doc is meant to govern the whole

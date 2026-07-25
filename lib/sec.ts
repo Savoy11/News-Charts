@@ -39,6 +39,22 @@ export async function resolveCompany(query: string): Promise<CompanyInfo | null>
   };
 }
 
+// legal suffixes that Wikipedia titles don't carry — stripped iteratively, so
+// "Alibaba Group Holding Limited" → "Alibaba Group", "Tesla, Inc." → "Tesla"
+const LEGAL_SUFFIX =
+  /\b(?:incorporated|inc|corporation|corp|company|co|limited|ltd|plc|holdings?|s\.a\.|n\.v\.|ag|se)\.?$/i;
+
+/** The everyday name of a company, for looking it up outside SEC filings. */
+export function commonName(title: string): string {
+  let s = title.trim();
+  let prev = "";
+  while (prev !== s) {
+    prev = s;
+    s = s.replace(/[,.]\s*$/, "").replace(LEGAL_SUFFIX, "").trim();
+  }
+  return s || title;
+}
+
 export interface Industry {
   /** 4-digit SIC code, e.g. "3674" */
   sic: string;

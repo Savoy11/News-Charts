@@ -6,7 +6,7 @@ import { PricePoint, TimelineEvent } from "./types";
 import { getTopicTimeline } from "./wiki";
 import { getPressMentions, dropImplausiblePress } from "./loc";
 import { getNews } from "./news";
-import { resolveCompany, getFilings, getIndustry, type Industry } from "./sec";
+import { resolveCompany, getFilings, getIndustry, commonName, type Industry } from "./sec";
 import { getDailyPrices } from "./prices";
 import { getOfficialDomain } from "./wikidata";
 
@@ -181,14 +181,17 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
   const company = await resolveCompany(ticker);
   if (!company) return null;
 
-  const [prices, filings, news, siteDomain, sicIndustry] = await Promise.all([
+  const [prices, filings, news, siteDomain, sicIndustry, story] = await Promise.all([
     getDailyPrices(company.ticker),
     getFilings(company),
     getNews(company.name),
     getOfficialDomain(company.name),
     getIndustry(company),
+    // the company's story predates its ticker: Wikipedia history + cited articles
+    // cover the run-up to going public, which filings and news feeds can't reach
+    getTopicTimeline(commonName(company.name)).catch(() => null),
   ]);
-  const events = [...filings, ...news];
+  const events = [...filings, ...news, ...(story?.events ?? [])];
 
   await persist(
     {

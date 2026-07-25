@@ -7,8 +7,11 @@ import SearchBox from "@/components/SearchBox";
 import TopicSummary from "@/components/TopicSummary";
 import ServedFrom from "@/components/ServedFrom";
 import JsonLd from "@/components/JsonLd";
+import FollowBar from "@/components/FollowBar";
 import { getTopicPageData } from "@/lib/page-data";
 import { absolute, breadcrumbLd, clampDescription, SITE_NAME } from "@/lib/seo";
+
+const latestDate = (events: { date: string }[]) => events.reduce((m, e) => (e.date > m ? e.date : m), "");
 
 // short enough that a page rendered while a source was throttled self-heals quickly
 export const revalidate = 900;
@@ -56,7 +59,13 @@ export default async function TopicPage({ params }: { params: { slug: string } }
           </p>
           <h1 className="text-2xl font-black leading-tight text-slate-100">{data.title}</h1>
         </div>
-        <SearchBox />
+        <div className="flex items-center gap-3">
+          <FollowBar
+            subject={{ href: `/topic/${encodeURIComponent(topic)}`, kind: "topic", label: data.title }}
+            signature={{ count: data.events.length, latest: latestDate(data.events) }}
+          />
+          <SearchBox />
+        </div>
       </div>
 
       {data.summary && <TopicSummary text={data.summary} />}

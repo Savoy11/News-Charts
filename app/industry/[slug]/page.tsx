@@ -7,10 +7,13 @@ import CaepPromo from "@/components/CaepPromo";
 import SearchBox from "@/components/SearchBox";
 import SignalPanel from "@/components/SignalPanel";
 import JsonLd from "@/components/JsonLd";
+import FollowBar from "@/components/FollowBar";
 import { loadIndustry, loadIndustryEvents } from "@/lib/store/read";
 import { absolute, breadcrumbLd, SITE_NAME } from "@/lib/seo";
 
 export const revalidate = 900;
+
+const latestDate = (events: { date: string }[]) => events.reduce((m, e) => (e.date > m ? e.date : m), "");
 
 export async function generateMetadata({
   params,
@@ -56,7 +59,13 @@ export default async function IndustryPage({ params }: { params: { slug: string 
           </p>
           <h1 className="text-2xl font-black leading-tight text-slate-100">{industry.name}</h1>
         </div>
-        <SearchBox />
+        <div className="flex items-center gap-3">
+          <FollowBar
+            subject={{ href: `/industry/${slug}`, kind: "industry", label: industry.name }}
+            signature={{ count: events.length, latest: latestDate(events) }}
+          />
+          <SearchBox />
+        </div>
       </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-2">

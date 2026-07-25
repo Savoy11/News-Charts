@@ -111,8 +111,16 @@ function dayLabel(date: string) {
  */
 type Row =
   | { kind: "year"; key: string; year: string }
-  | { kind: "month"; key: string; label: string }
-  | { kind: "day"; key: string; date: string; items: TimelineEvent[]; approx: boolean };
+  | { kind: "month"; key: string; label: string; year: string; monthKey: string }
+  | {
+      kind: "day";
+      key: string;
+      date: string;
+      items: TimelineEvent[];
+      approx: boolean;
+      year: string;
+      monthKey: string | null;
+    };
 
 /**
  * Groups events into Year → Month → Day. Events flagged `yearOnly` (the source knew only the
@@ -167,14 +175,14 @@ function buildRows(events: TimelineEvent[], order: "asc" | "desc"): Row[] {
 
     for (const section of sections) {
       if (section.monthKey === null) {
-        rows.push({ kind: "day", key: `a-${year}`, date: `${year}-01-01`, items: yb.approx!, approx: true });
+        rows.push({ kind: "day", key: `a-${year}`, date: `${year}-01-01`, items: yb.approx!, approx: true, year, monthKey: null });
         continue;
       }
       const month = yb.months.get(section.monthKey)!;
       const firstDate = [...month.keys()][0];
-      rows.push({ kind: "month", key: `m-${section.monthKey}`, label: monthYearLabel(firstDate) });
+      rows.push({ kind: "month", key: `m-${section.monthKey}`, label: monthYearLabel(firstDate), year, monthKey: section.monthKey });
       for (const date of [...month.keys()].sort(byKey)) {
-        rows.push({ kind: "day", key: `d-${date}`, date, items: month.get(date)!, approx: false });
+        rows.push({ kind: "day", key: `d-${date}`, date, items: month.get(date)!, approx: false, year, monthKey: section.monthKey });
       }
     }
   }
@@ -182,7 +190,9 @@ function buildRows(events: TimelineEvent[], order: "asc" | "desc"): Row[] {
 }
 
 type DayRow = Extract<Row, { kind: "day" }>;
-type RenderRow = Row | { kind: "filings"; key: string; days: DayRow[] };
+type RenderRow =
+  | Row
+  | { kind: "filings"; key: string; days: DayRow[]; year: string; monthKey: string | null };
 
 // a run of filing-only days must reach this many filings before it collapses
 const MIN_FILING_STACK = 3;
@@ -200,7 +210,13 @@ function condenseFilings(rows: Row[]): RenderRow[] {
   const flush = () => {
     const total = run.reduce((n, d) => n + d.items.length, 0);
     if (total >= MIN_FILING_STACK) {
-      out.push({ kind: "filings", key: `f-${run[0].date}`, days: run });
+      out.push({
+        kind: "filings",
+        key: `f-${run[0].date}`,
+        days: run,
+        year: run[0].year,
+        monthKey: run[0].monthKey,
+      });
     } else {
       out.push(...run);
     }
@@ -327,75 +343,189 @@ function FilingStack({ days }: { days: DayRow[] }) {
   );
 }
 
+const plural = (n: number) => `${n} event${n === 1 ? "" : "s"}`;
+
+/**
+ * Zero-height anchor stand-ins for a collapsed section's days. They keep the price
+ * chart's click-to-jump contract alive: `dateAnchorId(date)` still resolves and
+ * `scrollIntoView` lands at the collapsed section instead of finding nothing.
+ */
+function CollapsedAnchors({ dates }: { dates: string[] }) {
+  return (
+    <li className="h-0" aria-hidden>
+      {dates.map((d) => (
+        <span key={d} id={dateAnchorId(d)} className="block scroll-mt-24" />
+      ))}
+    </li>
+  );
+}
+
 export default function EventList({ events, order = "desc", siteDomain }: Props) {
   const rows = useMemo(() => condenseFilings(buildRows(events, order)), [events, order]);
+
+  // Event tallies per year and per month, so a collapsed header still tells you how much it hides.
+  const { yearCount, monthCount, years } = useMemo(() => {
+    const yearCount = new Map<string, number>();
+    const monthCount = new Map<string, number>();
+    const years: string[] = [];
+    const tally = (year: string, monthKey: string | null, n: number) => {
+      yearCount.set(year, (yearCount.get(year) ?? 0) + n);
+      if (monthKey) monthCount.set(monthKey, (monthCount.get(monthKey) ?? 0) + n);
+    };
+    for (const r of rows) {
+      if (r.kind === "year") years.push(r.year);
+      else if (r.kind === "day") tally(r.year, r.monthKey, r.items.length);
+      else if (r.kind === "filings") tally(r.year, r.monthKey, r.days.reduce((s, d) => s + d.items.length, 0));
+    }
+    return { yearCount, monthCount, years };
+  }, [rows]);
+
+  const [collapsedYears, setCollapsedYears] = useState<Set<string>>(new Set());
+  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set());
+
+  const toggle = (set: Set<string>, key: string) => {
+    const next = new Set(set);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    return next;
+  };
+  const toggleYear = (y: string) => setCollapsedYears((s) => toggle(s, y));
+  const toggleMonth = (k: string) => setCollapsedMonths((s) => toggle(s, k));
+
+  const allCollapsed = years.length > 0 && years.every((y) => collapsedYears.has(y));
+  const toggleAll = () => setCollapsedYears(allCollapsed ? new Set() : new Set(years));
 
   if (rows.length === 0) {
     return <p className="text-sm text-slate-500">No events found.</p>;
   }
 
+  // a month/day is hidden when its year is collapsed, a day also when its own month is collapsed
+  const hidden = (year: string, monthKey: string | null) =>
+    collapsedYears.has(year) || (monthKey !== null && collapsedMonths.has(monthKey));
+
   return (
-    <ol className="relative border-l border-slate-800 pl-6">
-      {rows.map((row) => {
-        if (row.kind === "year") {
-          return (
-            <li key={row.key} className="mb-4 mt-8 flex items-center gap-3 first:mt-0">
-              <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{row.year}</span>
-              <span className="h-px flex-1 bg-slate-800/70" />
-            </li>
-          );
-        }
-        if (row.kind === "month") {
-          return (
-            <li key={row.key} className="mb-3 mt-6 text-sm font-bold text-slate-200">
-              {row.label}
-            </li>
-          );
-        }
-        if (row.kind === "filings") {
-          return (
-            <li key={row.key} className="mb-6 scroll-mt-24">
-              <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
-              <FilingStack days={row.days} />
-            </li>
-          );
-        }
-        return (
-          // The year-only node shares its date (Jan 1) with a genuine Jan-1 day group when both
-          // exist in a year; give it a distinct anchor so the DOM id stays unique. Nothing scrolls
-          // to a year-only anchor (company pages, the only anchor consumer, carry no year-only
-          // events), so the precise day rows keep the canonical dateAnchorId contract.
-          <li
-            key={row.key}
-            id={row.approx ? `d-${row.date.slice(0, 4)}-year` : dateAnchorId(row.date)}
-            className="mb-6 scroll-mt-24"
+    <div>
+      {years.length > 1 && (
+        <div className="mb-2 flex justify-end">
+          <button
+            onClick={toggleAll}
+            className="rounded border border-slate-800 px-2 py-1 text-[10px] font-semibold text-slate-500 transition-colors hover:border-sky-700 hover:text-sky-300"
           >
-            <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
-            {row.approx ? (
-              <span className="text-xs font-semibold italic text-slate-500" title="The source gave only the year">
-                Year only
-              </span>
-            ) : (
+            {allCollapsed ? "Expand all" : "Collapse all"}
+          </button>
+        </div>
+      )}
+      <ol className="relative border-l border-slate-800 pl-6">
+        {rows.map((row) => {
+          if (row.kind === "year") {
+            const yc = collapsedYears.has(row.year);
+            return (
+              <li key={row.key} className="mb-4 mt-8 first:mt-0">
+                <button
+                  onClick={() => toggleYear(row.year)}
+                  aria-expanded={!yc}
+                  className="group flex w-full items-center gap-2.5 text-left"
+                >
+                  <span className="w-2 shrink-0 text-[9px] text-slate-600 group-hover:text-slate-400">
+                    {yc ? "▶" : "▼"}
+                  </span>
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 group-hover:text-slate-300">
+                    {row.year}
+                  </span>
+                  <span className="h-px flex-1 bg-slate-800/70" />
+                  <span className="shrink-0 text-[10px] tabular-nums text-slate-600">
+                    {plural(yearCount.get(row.year) ?? 0)}
+                  </span>
+                </button>
+              </li>
+            );
+          }
+          if (row.kind === "month") {
+            if (collapsedYears.has(row.year)) return null;
+            const mc = collapsedMonths.has(row.monthKey);
+            return (
+              <li key={row.key} className="mb-3 mt-6">
+                <button
+                  onClick={() => toggleMonth(row.monthKey)}
+                  aria-expanded={!mc}
+                  className="group flex w-full items-center gap-2 text-left"
+                >
+                  <span className="w-2 shrink-0 text-[9px] text-slate-600 group-hover:text-slate-400">
+                    {mc ? "▶" : "▼"}
+                  </span>
+                  <span className="text-sm font-bold text-slate-200 group-hover:text-sky-300">
+                    {row.label}
+                  </span>
+                  <span className="text-[10px] font-normal text-slate-600">
+                    · {plural(monthCount.get(row.monthKey) ?? 0)}
+                  </span>
+                </button>
+              </li>
+            );
+          }
+          if (row.kind === "filings") {
+            if (hidden(row.year, row.monthKey)) {
+              return <CollapsedAnchors key={row.key} dates={row.days.map((d) => d.date)} />;
+            }
+            return (
+              <li key={row.key} className="mb-6 scroll-mt-24">
+                <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
+                <FilingStack days={row.days} />
+              </li>
+            );
+          }
+
+          // day row
+          if (row.approx) {
+            if (collapsedYears.has(row.year)) return null; // year-only rows are never jump targets
+            return (
+              <li key={row.key} id={`d-${row.date.slice(0, 4)}-year`} className="mb-6 scroll-mt-24">
+                <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
+                <span className="text-xs font-semibold italic text-slate-500" title="The source gave only the year">
+                  Year only
+                </span>
+                <ul className="mt-2 space-y-2">
+                  {row.items.map((ev) => (
+                    <li
+                      key={ev.id}
+                      className="flex items-stretch rounded-lg border border-slate-800 bg-slate-900/60 transition-colors hover:border-slate-700"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <EventRow ev={ev} />
+                      </div>
+                      {siteDomain && <SiteSnapshotLink domain={siteDomain} date={ev.date} />}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          }
+          if (hidden(row.year, row.monthKey)) {
+            return <CollapsedAnchors key={row.key} dates={[row.date]} />;
+          }
+          return (
+            <li key={row.key} id={dateAnchorId(row.date)} className="mb-6 scroll-mt-24">
+              <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
               <time dateTime={row.date} className="text-xs font-semibold text-slate-400">
                 {dayLabel(row.date)}
               </time>
-            )}
-            <ul className="mt-2 space-y-2">
-              {row.items.map((ev) => (
-                <li
-                  key={ev.id}
-                  className="flex items-stretch rounded-lg border border-slate-800 bg-slate-900/60 transition-colors hover:border-slate-700"
-                >
-                  <div className="min-w-0 flex-1">
-                    <EventRow ev={ev} />
-                  </div>
-                  {siteDomain && <SiteSnapshotLink domain={siteDomain} date={ev.date} />}
-                </li>
-              ))}
-            </ul>
-          </li>
-        );
-      })}
-    </ol>
+              <ul className="mt-2 space-y-2">
+                {row.items.map((ev) => (
+                  <li
+                    key={ev.id}
+                    className="flex items-stretch rounded-lg border border-slate-800 bg-slate-900/60 transition-colors hover:border-slate-700"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <EventRow ev={ev} />
+                    </div>
+                    {siteDomain && <SiteSnapshotLink domain={siteDomain} date={ev.date} />}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }

@@ -109,6 +109,15 @@ export const SOURCES: {
     commercialOk: false,
     notes: "multi-outlet aggregator, recent news; free key (CURRENTS_API_KEY). Re-license before the ad-supported path uses it",
   },
+  {
+    id: 12,
+    key: "marketaux",
+    name: "Marketaux",
+    license: "Marketaux terms — free tier is non-commercial",
+    attribution: "Marketaux",
+    commercialOk: false,
+    notes: "finance-native news tagged by ticker; free key (MARKETAUX_API_KEY), 100 req/day, 3 articles/req. Re-license before the ad-supported path uses it",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

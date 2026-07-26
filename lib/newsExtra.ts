@@ -365,6 +365,59 @@ export async function getCurrentsNews(query: string): Promise<TimelineEvent[]> {
   }
 }
 
+/**
+ * Marketaux — finance-native news with per-ticker entity tagging, so company pages can
+ * ask by symbol instead of name-matching. Free key from marketaux.com →
+ * MARKETAUX_API_KEY (100 req/day, 3 articles/req on the free tier).
+ */
+export async function getMarketauxNews(query: string, symbol?: string): Promise<TimelineEvent[]> {
+  const key = process.env.MARKETAUX_API_KEY;
+  if (!key) return [];
+  try {
+    const filter = symbol
+      ? `symbols=${encodeURIComponent(symbol)}`
+      : `search=${encodeURIComponent(query)}`;
+    const url =
+      `https://api.marketaux.com/v1/news/all?${filter}` +
+      `&language=en&api_token=${encodeURIComponent(key)}`;
+    const res = await fetch(url, REVAL);
+    if (!res.ok) return [];
+    const json = await res.json();
+    const items = (json?.data ?? []) as {
+      title?: string;
+      description?: string;
+      snippet?: string;
+      url?: string;
+      image_url?: string;
+      published_at?: string; // ISO
+      source?: string; // publisher domain, e.g. "reuters.com"
+    }[];
+    const events: TimelineEvent[] = [];
+    for (const n of items) {
+      const day = n.published_at ? toDay(new Date(n.published_at)) : null;
+      if (!n.title || !n.url || !day) continue;
+      events.push({
+        id: `mx-${events.length}`,
+        date: day,
+        type: "news",
+        title: n.title.trim(),
+        source: n.source?.trim() || "Marketaux",
+        url: n.url,
+        description:
+          (n.description ?? n.snippet ?? "").trim().slice(0, 240) || undefined,
+        imageUrl:
+          n.image_url && /^https?:\/\//i.test(n.image_url) ? n.image_url : undefined,
+        sourceKey: "marketaux",
+        externalId: n.url,
+        dedupBasis: n.url,
+      });
+    }
+    return events;
+  } catch {
+    return [];
+  }
+}
+
 /** Keep the first event seen per URL — the same story surfaced by two repositories is one event. */
 export function dedupByUrl(...lists: TimelineEvent[][]): TimelineEvent[] {
   const seen = new Set<string>();

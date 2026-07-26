@@ -17,6 +17,7 @@ import {
   getNewsdataNews,
   getGnewsNews,
   getCurrentsNews,
+  getMarketauxNews,
   dedupByUrl,
 } from "./newsExtra";
 
@@ -204,7 +205,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
   const company = await resolveCompany(ticker);
   if (!company) return null;
 
-  const [prices, filings, news, yahoo, nyt, guardian, newsdata, gnews, currents, siteDomain, sicIndustry, story] =
+  const [prices, filings, news, yahoo, nyt, guardian, newsdata, gnews, currents, marketaux, siteDomain, sicIndustry, story] =
     await Promise.all([
       getDailyPrices(company.ticker),
       getFilings(company),
@@ -215,6 +216,8 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
       getNewsdataNews(commonName(company.name)),
       getGnewsNews(commonName(company.name)),
       getCurrentsNews(commonName(company.name)),
+      // finance-native: query by ticker, not name — its entity tagging is the point
+      getMarketauxNews(commonName(company.name), company.ticker),
       getOfficialDomain(company.name),
       getIndustry(company),
       // the company's story predates its ticker: Wikipedia history + cited articles
@@ -231,7 +234,8 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
     guardian,
     newsdata,
     gnews,
-    currents
+    currents,
+    marketaux
   );
 
   await persist(

@@ -51,23 +51,22 @@ function snapToTradingDay(date: string, tradingDays: string[]): string | null {
   return tradingDays[lo];
 }
 
-/** One chip on the lane: every event that snapped near this pixel of the chart. */
-interface LaneCluster {
-  x: number;
-  day: string;
-  events: TimelineEvent[];
-}
-
-// chips closer than this merge into one — matches the chip's rendered footprint
-const CLUSTER_PX = 96;
-
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 function shortDate(day: string): string {
   return `${MONTHS_SHORT[Number(day.slice(5, 7)) - 1]} ${Number(day.slice(8, 10))}, ${day.slice(0, 4)}`;
 }
 
-function dominantType(evs: TimelineEvent[]): EventType {
-  return evs.reduce((best, e) => (PRIORITY[e.type] > PRIORITY[best] ? e.type : best), evs[0].type);
+// how far (in trading days) the hover reaches for the nearest event day, so sweeping
+// the line pops articles up without needing pixel-perfect aim at a marker
+const HOVER_REACH = 5;
+const POPUP_W = 304;
+const POPUP_MAX = 5; // articles listed before "+N more"
+
+interface Hover {
+  x: number;
+  y: number;
+  day: string;
+  events: TimelineEvent[];
 }
 
 export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
@@ -75,11 +74,11 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
   const onSelectRef = useRef(onSelectDate);
   onSelectRef.current = onSelectDate;
 
-  // the horizontal event lane under the chart, re-laid-out on every pan/zoom
-  const [lane, setLane] = useState<LaneCluster[]>([]);
-  const [laneWidth, setLaneWidth] = useState(0);
-  const [open, setOpen] = useState<number | null>(null);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // crosshair-follow popup: the nearest event day's articles, at the pointer
+  const [hover, setHover] = useState<Hover | null>(null);
+  // pointer is on the popup itself — freeze updates so its links can be clicked
+  const pinned = useRef(false);
+  const widthRef = useRef(0);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -109,10 +108,10 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
     series.setData(prices.map((p) => ({ time: p.time as Time, value: p.value })));
 
     const tradingDays = prices.map((p) => p.time);
-    // one marker per day; the highest-priority kind decides the glyph
+    const dayIndex = new Map(tradingDays.map((d, i) => [d, i]));
+    // one marker per day (highest-priority kind decides the glyph); the popup keeps every event
     const markerByDay = new Map<string, TimelineEvent>();
-    // the lane keeps every event, grouped by snapped day
-    const laneByDay = new Map<string, TimelineEvent[]>();
+    const eventsByDay = new Map<string, TimelineEvent[]>();
     for (const ev of events) {
       const day = snapToTradingDay(ev.date, tradingDays);
       if (!day) continue;
@@ -120,10 +119,15 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
       if (!existing || PRIORITY[ev.type] > PRIORITY[existing.type]) {
         markerByDay.set(day, { ...ev, date: day });
       }
-      const list = laneByDay.get(day);
+      const list = eventsByDay.get(day);
       if (list) list.push(ev);
-      else laneByDay.set(day, [ev]);
+      else eventsByDay.set(day, [ev]);
     }
+    // event days by trading-day index, for a binary "nearest within reach" lookup
+    const eventDayIndices = [...eventsByDay.keys()]
+      .map((d) => dayIndex.get(d)!)
+      .sort((a, b) => a - b);
+
     const markers: SeriesMarker<Time>[] = [...markerByDay.values()]
       .sort((a, b) => a.date.localeCompare(b.date))
       .map((ev) => {
@@ -139,33 +143,38 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
       });
     createSeriesMarkers(series, markers);
 
-    /**
-     * Project each event day onto the chart's current x-axis and cluster what lands
-     * close together. Runs on every visible-range change, so dragging or zooming the
-     * chart moves the lane with it — the two always show the same window of time.
-     */
-    const layoutLane = () => {
-      const ts = chart.timeScale();
-      const pts: { x: number; day: string; events: TimelineEvent[] }[] = [];
-      for (const [day, evs] of laneByDay) {
-        const x = ts.timeToCoordinate(day as Time);
-        if (x === null) continue; // outside the visible window
-        pts.push({ x, day, events: evs });
+    // Sweep the line → the nearest event day (within reach) pops its articles up at the cursor.
+    chart.subscribeCrosshairMove((param) => {
+      if (pinned.current) return; // reader is on the popup — don't move it out from under them
+      widthRef.current = el.clientWidth;
+      if (!param.time || !param.point) {
+        setHover(null);
+        return;
       }
-      pts.sort((a, b) => a.x - b.x);
-      const clusters: LaneCluster[] = [];
-      for (const p of pts) {
-        const last = clusters[clusters.length - 1];
-        if (last && p.x - last.x < CLUSTER_PX) {
-          last.events.push(...p.events);
-        } else {
-          clusters.push({ x: p.x, day: p.day, events: [...p.events] });
-        }
+      const idx = dayIndex.get(String(param.time));
+      if (idx === undefined || eventDayIndices.length === 0) {
+        setHover(null);
+        return;
       }
-      setLane(clusters);
-      setLaneWidth(el.clientWidth);
-      setOpen(null); // the chip under the pointer just moved — a stale popover would lie
-    };
+      // nearest event day by trading-day distance
+      let lo = 0;
+      let hi = eventDayIndices.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (eventDayIndices[mid] < idx) lo = mid + 1;
+        else hi = mid;
+      }
+      let best = eventDayIndices[lo];
+      if (lo > 0 && idx - eventDayIndices[lo - 1] < Math.abs(best - idx)) {
+        best = eventDayIndices[lo - 1];
+      }
+      if (Math.abs(best - idx) > HOVER_REACH) {
+        setHover(null);
+        return;
+      }
+      const day = tradingDays[best];
+      setHover({ x: param.point.x, y: param.point.y, day, events: eventsByDay.get(day) ?? [] });
+    });
 
     chart.subscribeClick((param) => {
       if (param.time && onSelectRef.current) {
@@ -174,11 +183,10 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
     });
 
     chart.timeScale().fitContent();
-    chart.timeScale().subscribeVisibleTimeRangeChange(layoutLane);
 
     const resize = () => {
       chart.applyOptions({ width: el.clientWidth });
-      layoutLane();
+      widthRef.current = el.clientWidth;
     };
     resize();
     const observer = new ResizeObserver(resize);
@@ -187,109 +195,78 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
     return () => {
       observer.disconnect();
       chart.remove();
+      setHover(null);
     };
   }, [prices, events]);
 
-  function scheduleClose() {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    closeTimer.current = setTimeout(() => setOpen(null), 250);
-  }
-  function cancelClose() {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-  }
-
-  const clampX = (x: number) => Math.min(Math.max(x, 56), Math.max(laneWidth - 56, 56));
+  const popupLeft = (x: number) =>
+    Math.min(Math.max(x + 14, 8), Math.max((widthRef.current || POPUP_W) - POPUP_W - 8, 8));
 
   return (
     <div>
-      <div ref={containerRef} className="w-full" />
-
-      {lane.length > 0 && (
-        <div className="relative mt-1 h-[96px] rounded-md border border-slate-800/60 bg-slate-950/40">
-          <span className="absolute left-2 top-1 text-[9px] font-bold uppercase tracking-widest text-slate-600">
-            Events · follows the chart
-          </span>
-          {lane.map((c, i) => {
-            const type = dominantType(c.events);
-            const single = c.events.length === 1;
-            const x = clampX(c.x);
-            return (
-              <div key={`${c.day}-${i}`}>
-                <button
-                  data-lane-chip
-                  onMouseEnter={() => {
-                    cancelClose();
-                    setOpen(i);
-                  }}
-                  onMouseLeave={scheduleClose}
-                  onClick={() => onSelectDate?.(c.day)}
-                  style={{ left: x, top: i % 2 === 0 ? 18 : 56 }}
-                  className="absolute w-[150px] -translate-x-1/2 rounded-md border border-slate-800 bg-slate-900/90 px-2 py-1 text-left transition-colors hover:border-sky-600/70"
-                >
-                  <span className="flex items-center gap-1.5">
+      <div className="relative">
+        <div ref={containerRef} className="w-full" />
+        {hover && hover.events.length > 0 && (
+          <div
+            onMouseEnter={() => {
+              pinned.current = true;
+            }}
+            onMouseLeave={() => {
+              pinned.current = false;
+              setHover(null);
+            }}
+            style={{ left: popupLeft(hover.x), top: Math.min(hover.y + 16, 250), width: POPUP_W }}
+            className="absolute z-20 rounded-lg border border-slate-700 bg-slate-900/95 p-2 shadow-xl backdrop-blur"
+          >
+            <p className="mb-1.5 flex items-baseline justify-between px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <span>{shortDate(hover.day)}</span>
+              <span className="font-normal normal-case text-slate-600">
+                {hover.events.length} event{hover.events.length > 1 ? "s" : ""}
+              </span>
+            </p>
+            <div className="space-y-1">
+              {hover.events.slice(0, POPUP_MAX).map((ev) => {
+                const s = MARKER_STYLE[ev.type];
+                const row = (
+                  <span className="flex items-start gap-1.5">
                     <span
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: MARKER_STYLE[type].color }}
+                      className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: s.color }}
                     />
-                    <span className="truncate text-[10px] font-semibold text-slate-300">
-                      {single ? c.events[0].title : `${c.events.length} events`}
+                    <span className="text-[11px] leading-snug text-slate-300">
+                      {ev.title}
+                      <span className="ml-1 text-[10px] text-slate-500">{ev.source}</span>
                     </span>
                   </span>
-                  <span className="mt-0.5 block truncate pl-3.5 text-[9px] text-slate-500">
-                    {shortDate(c.day)}
-                    {!single && ` — ${c.events[0].title}`}
-                  </span>
-                </button>
-
-                {open === i && (
-                  <div
-                    onMouseEnter={cancelClose}
-                    onMouseLeave={scheduleClose}
-                    style={{ left: Math.min(Math.max(x - 140, 8), Math.max(laneWidth - 296, 8)) }}
-                    className="absolute top-[96px] z-20 w-[288px] rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl"
+                );
+                return ev.url ? (
+                  <a
+                    key={ev.id}
+                    href={ev.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block rounded px-1 py-0.5 hover:bg-slate-800/70"
                   >
-                    <p className="mb-1.5 px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      {shortDate(c.day)} · {c.events.length} event{c.events.length > 1 ? "s" : ""}
-                    </p>
-                    <div className="max-h-56 space-y-1 overflow-y-auto">
-                      {c.events.map((ev) => {
-                        const s = MARKER_STYLE[ev.type];
-                        const row = (
-                          <span className="flex items-start gap-1.5">
-                            <span
-                              className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
-                              style={{ backgroundColor: s.color }}
-                            />
-                            <span className="text-[11px] leading-snug text-slate-300">
-                              {ev.title}
-                              <span className="ml-1 text-[10px] text-slate-500">{ev.source}</span>
-                            </span>
-                          </span>
-                        );
-                        return ev.url ? (
-                          <a
-                            key={ev.id}
-                            href={ev.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block rounded px-1 py-0.5 hover:bg-slate-800/70"
-                          >
-                            {row}
-                          </a>
-                        ) : (
-                          <div key={ev.id} className="px-1 py-0.5">
-                            {row}
-                          </div>
-                        );
-                      })}
-                    </div>
+                    {row}
+                  </a>
+                ) : (
+                  <div key={ev.id} className="px-1 py-0.5">
+                    {row}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                );
+              })}
+            </div>
+            {hover.events.length > POPUP_MAX && (
+              <button
+                onClick={() => onSelectDate?.(hover.day)}
+                className="mt-1 w-full rounded px-1 py-0.5 text-left text-[10px] text-slate-500 hover:bg-slate-800/70 hover:text-sky-300"
+              >
+                +{hover.events.length - POPUP_MAX} more — jump to this date below
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-400">
         <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-amber-500" />Earnings</span>
@@ -297,8 +274,8 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
         <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-slate-500" />News</span>
         <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-teal-400" />Cited</span>
         <span className="text-slate-500">
-          Drag or zoom the chart — the event lane moves with it. Click a chip to jump to that
-          date&apos;s events.
+          Sweep the line — nearby articles pop up at the cursor. Click a point to jump to that
+          date&apos;s events below.
         </span>
       </div>
     </div>

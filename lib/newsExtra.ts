@@ -266,6 +266,55 @@ export async function getNewsdataNews(query: string): Promise<TimelineEvent[]> {
   }
 }
 
+/**
+ * GNews — Google News results as JSON. Recent coverage across many outlets; each
+ * article credits the publishing outlet. Free key from gnews.io → GNEWS_API_KEY
+ * (100 req/day, 10 articles/req on the free tier — one cached call per subject per
+ * 6h window stays far under that).
+ */
+export async function getGnewsNews(query: string): Promise<TimelineEvent[]> {
+  const key = process.env.GNEWS_API_KEY;
+  if (!key) return [];
+  try {
+    const url =
+      `https://gnews.io/api/v4/search?q=${encodeURIComponent(`"${query}"`)}` +
+      `&lang=en&max=10&apikey=${encodeURIComponent(key)}`;
+    const res = await fetch(url, REVAL);
+    if (!res.ok) return [];
+    const json = await res.json();
+    const articles = (json?.articles ?? []) as {
+      title?: string;
+      description?: string;
+      url?: string;
+      image?: string;
+      publishedAt?: string; // ISO
+      source?: { name?: string };
+    }[];
+    const events: TimelineEvent[] = [];
+    for (const a of articles) {
+      const day = a.publishedAt ? toDay(new Date(a.publishedAt)) : null;
+      if (!a.title || !a.url || !day) continue;
+      events.push({
+        id: `gn-${events.length}`,
+        date: day,
+        type: "news",
+        title: a.title.trim(),
+        // credit the outlet Google News found, not the aggregator
+        source: a.source?.name?.trim() || "GNews",
+        url: a.url,
+        description: (a.description ?? "").trim().slice(0, 240) || undefined,
+        imageUrl: a.image && /^https?:\/\//i.test(a.image) ? a.image : undefined,
+        sourceKey: "gnews",
+        externalId: a.url,
+        dedupBasis: a.url,
+      });
+    }
+    return events;
+  } catch {
+    return [];
+  }
+}
+
 /** Keep the first event seen per URL — the same story surfaced by two repositories is one event. */
 export function dedupByUrl(...lists: TimelineEvent[][]): TimelineEvent[] {
   const seen = new Set<string>();

@@ -118,6 +118,15 @@ export const SOURCES: {
     commercialOk: false,
     notes: "finance-native news tagged by ticker; free key (MARKETAUX_API_KEY), 100 req/day, 3 articles/req. Re-license before the ad-supported path uses it",
   },
+  {
+    id: 13,
+    key: "eodhd",
+    name: "EODHD Financial News",
+    license: "EODHD terms — free tier for personal/evaluation use",
+    attribution: "EOD Historical Data",
+    commercialOk: false,
+    notes: "ticker-keyed financial news; free key (EODHD_API_KEY), ~20 req/day and news access varies by plan — adapter degrades to empty. Re-license before the ad-supported path uses it",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

@@ -22,7 +22,8 @@ export type SourceKey =
   | "newsdata"
   | "gnews"
   | "currents"
-  | "marketaux";
+  | "marketaux"
+  | "eodhd";
 
 export interface TimelineEvent {
   id: string;

@@ -418,6 +418,58 @@ export async function getMarketauxNews(query: string, symbol?: string): Promise<
   }
 }
 
+/**
+ * EODHD financial news — ticker-keyed (s=BABA.US). Free key from eodhd.com →
+ * EODHD_API_KEY. The free tier is ~20 calls/day and news access varies by plan;
+ * a plan without news just yields an error status here, which degrades to [].
+ * Items carry no publisher name, so the link's domain stands in (GDELT-style).
+ */
+export async function getEodhdNews(ticker: string): Promise<TimelineEvent[]> {
+  const key = process.env.EODHD_API_KEY;
+  if (!key) return [];
+  try {
+    const url =
+      `https://eodhd.com/api/news?s=${encodeURIComponent(`${ticker}.US`)}` +
+      `&limit=25&fmt=json&api_token=${encodeURIComponent(key)}`;
+    const res = await fetch(url, REVAL);
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    const items = json as {
+      date?: string; // ISO
+      title?: string;
+      content?: string;
+      link?: string;
+    }[];
+    const events: TimelineEvent[] = [];
+    for (const n of items) {
+      const day = n.date ? toDay(new Date(n.date)) : null;
+      if (!n.title || !n.link || !day) continue;
+      let outlet = "EODHD";
+      try {
+        outlet = new URL(n.link).hostname.replace(/^www\./, "");
+      } catch {
+        /* keep fallback */
+      }
+      events.push({
+        id: `eod-${events.length}`,
+        date: day,
+        type: "news",
+        title: n.title.trim(),
+        source: outlet,
+        url: n.link,
+        description: (n.content ?? "").replace(/\s+/g, " ").trim().slice(0, 240) || undefined,
+        sourceKey: "eodhd",
+        externalId: n.link,
+        dedupBasis: n.link,
+      });
+    }
+    return events;
+  } catch {
+    return [];
+  }
+}
+
 /** Keep the first event seen per URL — the same story surfaced by two repositories is one event. */
 export function dedupByUrl(...lists: TimelineEvent[][]): TimelineEvent[] {
   const seen = new Set<string>();

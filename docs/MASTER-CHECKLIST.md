@@ -310,6 +310,29 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
 - [ ] `P1` **Merge PR #9 to main** — ~20 commits across two dozen files is enough surface;
       shrink the risk. Add a committed `.env.example` documenting all eight key names.
 
+### External audit findings (2026-07-26) — verified against the code
+
+A second model audited the repo; each claim was checked against the actual implementation
+rather than accepted. Verdicts recorded so nobody re-litigates them:
+
+- [x] ~~Image thumbnails need next/image remotePatterns~~ — **refuted**: no `next/image`
+      anywhere; `EventThumb` is a deliberate plain `<img>` with `loading="lazy"` and an
+      `onError` that hides broken images (hosts are arbitrary and off-domain). Exactly the
+      mitigation the audit asked for.
+- [x] ~~`new Date("YYYY-MM-DD")` timezone day-shift~~ — **refuted**: every calendar-label path
+      parses via string-split + `Date.UTC` (EventList, BiggestMoves, HorizontalTimeline period
+      labels) or pure string slicing (PriceTimeline); chart time keys are date strings. Feed
+      timestamps go through `toDay()` → UTC day, consistently. No bare `new Date("date")`
+      grouping exists.
+- [x] ~~`?focus=` injection into SQL/LLM~~ — **refuted**: focus never touches SQL (all pg
+      queries are parameterized `$1`); it only rides the URL and pre-fills the visitor's own
+      client-side AI instruction box, run against their own key. No server-side LLM ever sees
+      it.
+- [ ] `P2` **Virtualize very large event lists** — the one claim with substance: no windowing
+      exists, so a 500+-event timeline renders every row. Current mitigations (160-citation
+      cap, filing stacks, collapsible sections, stacking) keep it acceptable; add
+      virtualization (or render-on-expand) if profiling shows scroll jank on big subjects.
+
 ## Other initiatives
 
 _Add new Chronolens initiatives here as they come up — this doc is meant to govern the whole

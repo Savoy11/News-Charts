@@ -65,6 +65,46 @@ retention outrank polish.
 
 ---
 
+## ⛔ Pre-release gate: check ALL feeds before the website ships · `P0 · release blocker`
+
+**Do not release until every data feed has been checked on two axes — does it work, and are we
+allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SOURCES`) carries a
+`commercialOk` flag + license note per source and is the single place to verify against.
+
+### Licensing / keys (monetization turns several free tiers non-compliant)
+
+- [ ] **Newsdata.io** — free tier is personal/testing. Upgrade to a paid plan (explicitly allows
+      commercial use); swap key in `.env.local`. No code change.
+- [ ] **GNews** — free tier is non-commercial. Upgrade to a paid tier; swap key. No code change.
+- [ ] **Guardian** — free developer key is non-commercial. Request a commercial license/key from
+      Guardian Open Platform; swap key.
+- [ ] **NYT Article Search** — public API terms are non-commercial and there is **no self-serve
+      commercial tier**. Either negotiate a license with NYT or **remove `NYT_API_KEY` at launch**
+      (adapter degrades gracefully to off).
+- [ ] **Yahoo Finance RSS** — gray zone (headline+link+date with click-through). Review the ToS at
+      ship time; if uncomfortable, disable the adapter.
+- [ ] Keyless public-domain / open sources — SEC EDGAR, Federal Register, Chronicling America,
+      Wikipedia (CC BY-SA, attribution rendered), GDELT — nothing to do, confirm attribution shows.
+- [ ] Optional hardening: build a `COMMERCIAL_MODE=true` env flag that refuses to fetch from any
+      source flagged `commercialOk: false`, so a forgotten key can't cause non-compliance.
+- [ ] Get a real legal review of the above before revenue flows — the flags encode a practical
+      reading of published terms, not legal advice.
+
+### Feed health (each source, against production keys)
+
+- [ ] Every adapter returns real data for a fresh company AND a fresh topic (not silently `[]`):
+      GDELT, Yahoo RSS, NYT, Guardian, Newsdata, GNews, Wikipedia (prose + citations), LoC press,
+      SEC filings, Federal Register, prices.
+- [ ] Keys valid under production quotas (Newsdata 200/day, GNews 100/day, NYT/Guardian limits)
+      with the 6h/1h cache windows doing the rate-limiting.
+- [ ] Dedup sanity: the same story from two repositories collapses to one event (URL dedup).
+- [ ] Attribution renders on every surface (source label + outward link on list rows, cards,
+      chart popup).
+- [ ] Run from the production host, not a dev box — several sources behave differently from
+      datacenter IPs.
+
+---
+
 ## Initiative: On-chain events in the timeline engine · `P1`
 
 **North star.** Give users a free, visual way to see on-chain history on a linear timeline —

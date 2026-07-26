@@ -275,6 +275,41 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
 - [ ] `P2` **Coverage-map doc** kept current as sources are added, so "how far back can this go"
       is answerable per subject.
 
+## Initiative: Hardening & follow-ups from the feed/UX build-out (2026-07 session)
+
+Consequences of what shipped on PR #9 (citation mining, NL prompts, pre-IPO story, crosshair
+popup, filing stacks, collapsible list, 8 new news repositories), ranked by value-per-effort.
+
+- [ ] `P0` **Commit the test suite.** The session's verification (cite-date parsing, prompt
+      parsing, year extraction incl. ticker/domain false positives, prehistory guard, all 9
+      adapter fixtures with mocked fetch) lives in throwaway scratchpad scripts. Add vitest and
+      commit those ~60 assertions so every parser is regression-proof.
+- [ ] `P1` **Noise control for the aggregators.** Keyword search across four general aggregators
+      pulls junk (listicles, passing mentions). Add a server-side relevance floor (title must
+      mention the subject; Marketaux/EODHD ticker tags are free wins) and near-duplicate
+      collapsing across feeds — dedup is exact-URL today, so one wire story from three outlets
+      shows three times (extend GDELT's headline+day rule cross-feed).
+- [ ] `P1` **Per-source refresh windows + quota safety.** The company path fires ~15 fetches
+      every hour a page is viewed. Split TTLs by volatility (news hourly, wiki daily, archives
+      weekly) — faster pages, and free-tier quotas (Newsdata 200/day, GNews 100/day) stop being
+      a multi-user risk.
+- [ ] `P1` **Feed visibility in the UI.** A page silently rendering with 3 of 11 feeds down
+      looks fine and misdirects debugging (the CAEP fallback lesson). Per-subject "Sources"
+      panel: which feeds contributed, how many articles each — doubles as the attribution
+      display the licenses want. `scripts/check-feeds.ts` covers the CLI half.
+- [ ] `P1` **Finish the approved "Both views" condense.** The horizontal timeline still has no
+      collapse-all (list view got one); add the one-click condense control there.
+- [ ] `P2` **Auto-expand on jump.** Chart click-to-jump into a collapsed list section scrolls to
+      it but doesn't open it.
+- [ ] `P2` **NYT Keyword facet → event tags.** Needs a tags field on events; would feed the
+      focus/AI relevance filtering.
+- [ ] `P2` **Month-level date precision** plumb-through (month-only citation dates currently
+      land on the 1st with day precision).
+- [ ] `P1` **Internet Archive adapter (keyless).** Still the biggest unbuilt lever for the
+      old-articles goal — and immune to key expiry or licensing changes.
+- [ ] `P1` **Merge PR #9 to main** — ~20 commits across two dozen files is enough surface;
+      shrink the risk. Add a committed `.env.example` documenting all eight key names.
+
 ## Other initiatives
 
 _Add new Chronolens initiatives here as they come up — this doc is meant to govern the whole

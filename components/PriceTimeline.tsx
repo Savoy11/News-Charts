@@ -10,6 +10,7 @@ import {
   type Time,
 } from "lightweight-charts";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
+import EventThumb from "./EventThumb";
 
 const MARKER_STYLE = {
   earnings: { color: "#f59e0b", position: "belowBar", shape: "arrowUp", text: "E" },
@@ -233,10 +234,14 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
                       className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
                       style={{ backgroundColor: s.color }}
                     />
-                    <span className="text-[11px] leading-snug text-slate-300">
+                    <span className="min-w-0 flex-1 text-[11px] leading-snug text-slate-300">
                       {ev.title}
                       <span className="ml-1 text-[10px] text-slate-500">{ev.source}</span>
                     </span>
+                    <EventThumb
+                      src={ev.imageUrl}
+                      className="ml-1 h-9 w-9 shrink-0 rounded border border-slate-800 object-cover"
+                    />
                   </span>
                 );
                 return ev.url ? (

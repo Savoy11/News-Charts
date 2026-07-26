@@ -20,7 +20,8 @@ export type SourceKey =
   | "nyt"
   | "guardian"
   | "newsdata"
-  | "gnews";
+  | "gnews"
+  | "currents";
 
 export interface TimelineEvent {
   id: string;

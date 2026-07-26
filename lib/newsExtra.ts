@@ -315,6 +315,56 @@ export async function getGnewsNews(query: string): Promise<TimelineEvent[]> {
   }
 }
 
+/**
+ * Currents API — another multi-outlet aggregator with a keyword search. Free key from
+ * currentsapi.services → CURRENTS_API_KEY. Items carry an author but no reliable outlet
+ * name, so the author stands in when present.
+ */
+export async function getCurrentsNews(query: string): Promise<TimelineEvent[]> {
+  const key = process.env.CURRENTS_API_KEY;
+  if (!key) return [];
+  try {
+    const url =
+      `https://api.currentsapi.services/v1/search?keywords=${encodeURIComponent(query)}` +
+      `&language=en&apiKey=${encodeURIComponent(key)}`;
+    const res = await fetch(url, REVAL);
+    if (!res.ok) return [];
+    const json = await res.json();
+    const items = (json?.news ?? []) as {
+      title?: string;
+      description?: string;
+      url?: string;
+      author?: string;
+      image?: string;
+      published?: string; // "2026-07-25 03:20:20 +0000"
+    }[];
+    const events: TimelineEvent[] = [];
+    for (const n of items) {
+      const day = n.published ? toDay(new Date(n.published)) : null;
+      if (!n.title || !n.url || !day) continue;
+      const author = n.author?.trim();
+      events.push({
+        id: `cur-${events.length}`,
+        date: day,
+        type: "news",
+        title: n.title.trim(),
+        source: author && author.toLowerCase() !== "none" ? author : "Currents",
+        url: n.url,
+        description: (n.description ?? "").trim().slice(0, 240) || undefined,
+        // the API uses the literal string "None" for missing images
+        imageUrl: n.image && /^https?:\/\//i.test(n.image) ? n.image : undefined,
+        sourceKey: "currents",
+        externalId: n.url,
+        dedupBasis: n.url,
+      });
+      if (events.length >= 25) break;
+    }
+    return events;
+  } catch {
+    return [];
+  }
+}
+
 /** Keep the first event seen per URL — the same story surfaced by two repositories is one event. */
 export function dedupByUrl(...lists: TimelineEvent[][]): TimelineEvent[] {
   const seen = new Set<string>();

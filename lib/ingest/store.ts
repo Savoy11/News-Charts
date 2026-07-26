@@ -100,6 +100,15 @@ export const SOURCES: {
     commercialOk: false,
     notes: "Google News results as JSON, recent news; free key (GNEWS_API_KEY), 100 req/day, 10 articles/req. Re-license before the ad-supported path uses it",
   },
+  {
+    id: 11,
+    key: "currents",
+    name: "Currents API",
+    license: "Currents terms — free developer tier is non-commercial",
+    attribution: "CurrentsAPI",
+    commercialOk: false,
+    notes: "multi-outlet aggregator, recent news; free key (CURRENTS_API_KEY). Re-license before the ad-supported path uses it",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

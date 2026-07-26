@@ -333,6 +333,46 @@ rather than accepted. Verdicts recorded so nobody re-litigates them:
       cap, filing stacks, collapsible sections, stacking) keep it acceptable; add
       virtualization (or render-on-expand) if profiling shows scroll jank on big subjects.
 
+## Initiative: Product ideas from external model review · vetted 2026-07-26
+
+Each idea checked against the codebase before listing — several were cheaper than they look
+(the data already arrives) and two were partly built already.
+
+- [ ] `P1` **Volume bars + moving averages on the price chart.** Cheap win: the Yahoo chart
+      response the prices route already fetches carries volume in the same payload; SMAs
+      (50/200-day) compute client-side. Lightweight-charts supports histogram + line series on
+      the existing chart. Lets a reader see if an event moved price on real volume.
+- [ ] `P1` **Corporate actions on the timeline (splits, dividends).** Also cheap: Yahoo's chart
+      API returns dividend and split events via `events=div,splits` on the same request. Plot
+      as their own marker type so a mechanical price change is never misread as news reaction.
+      (Note: our prices are adjusted, so splits don't cliff — the value is labeling, not
+      correction. Buybacks already arrive via 8-K filings.)
+- [ ] `P2` **Sentiment coloring on event nodes.** Do it keyless first: a lexicon-based
+      positive/negative/neutral score at ingest (title keywords), color-coding timeline dots so
+      perceived sentiment can be read against the actual price move. BYO-model rescoring can
+      refine later; no server-side LLM cost.
+- [ ] `P2` **AI primary-event summary nodes.** Overlaps the planned cross-feed near-duplicate
+      collapsing (hardening list) — do the heuristic clustering there first; the DB's existing
+      syntheses layer (synthesis + synthesis_citations tables) is the natural home for an
+      AI-written summary node over a cluster. Sequence: cluster → then summarize.
+- [ ] `P2` **Macro-event overlay (Fed decisions, CPI prints).** Architecture already supports
+      it: sector events merge into company timelines via subject membership — a curated "macro"
+      subject whose events overlay any company page is the same pattern. FOMC/CPI calendars are
+      public and keyless. Toggle off by default.
+- [ ] `P2` **Compare: both subjects' events** — partly built already: /compare renders a
+      shared-axis event strip and combined timeline for both subjects. The remaining gap is
+      per-side event markers on the price overlay itself, and industry-news intersection
+      (BABA vs JD under one regulatory headline) via the existing sector-event machinery.
+- [ ] `P2` **Private annotations on the timeline.** Fits the localStorage-first pattern
+      perfectly (like follows/prefs — no accounts, no server state): pin notes / thesis markers
+      / entry-exit points to dates, rendered as a distinct marker type. The trading-journal
+      angle with zero infra.
+- [ ] `P3` **Saved-focus alerts (email/push on new matches).** Real retention value but the
+      only idea needing infrastructure that doesn't exist: accounts, background jobs, an email
+      provider. The no-server cousin is already live (Follow + "new since last visit"); an
+      intermediate step is highlighting saved-focus matches on return, still keyless. Defer
+      until there are users to retain.
+
 ## Other initiatives
 
 _Add new Chronolens initiatives here as they come up — this doc is meant to govern the whole

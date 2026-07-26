@@ -15,7 +15,10 @@ export type SourceKey =
   | "loc_chronam"
   | "gdelt"
   | "sec_edgar"
-  | "federal_register";
+  | "federal_register"
+  | "yahoo_finance"
+  | "nyt"
+  | "guardian";
 
 export interface TimelineEvent {
   id: string;

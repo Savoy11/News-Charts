@@ -10,6 +10,7 @@ import { resolveCompany, getFilings, getIndustry, commonName, type Industry } fr
 import { getDailyPrices } from "./prices";
 import { getOfficialDomain } from "./wikidata";
 import { dropCompanyPrehistory } from "./history";
+import { getYahooFinanceNews, getNytNews, getGuardianNews, dedupByUrl } from "./newsExtra";
 
 const TOPIC_TTL_MINUTES = 360; // 6h — topic history barely moves
 const COMPANY_TTL_MINUTES = 60; // 1h — prices and filings do
@@ -135,14 +136,21 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
   const wiki = await getTopicTimeline(topic);
   if (!wiki) return null;
 
-  const [pressCandidates, news] = await Promise.all([getPressMentions(topic), getNews(topic)]);
+  const [pressCandidates, news, nyt, guardian] = await Promise.all([
+    getPressMentions(topic),
+    getNews(topic),
+    getNytNews(topic),
+    getGuardianNews(topic),
+  ]);
   const firstEventOn = wiki.events[0]?.date ?? null;
   const floor = firstEventOn ? Number(firstEventOn.slice(0, 4)) : 0;
-  const events = [
-    ...wiki.events,
-    ...dropImplausiblePress(pressCandidates, floor),
-    ...news.slice(0, 30),
-  ];
+  const events = dedupByUrl(
+    wiki.events,
+    dropImplausiblePress(pressCandidates, floor),
+    news.slice(0, 30),
+    nyt,
+    guardian
+  );
 
   await persistTopic(
     { searchTerm: topic, wikipediaTitle: wiki.title, displayName: wiki.title,
@@ -182,17 +190,23 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
   const company = await resolveCompany(ticker);
   if (!company) return null;
 
-  const [prices, filings, news, siteDomain, sicIndustry, story] = await Promise.all([
-    getDailyPrices(company.ticker),
-    getFilings(company),
-    getNews(company.name),
-    getOfficialDomain(company.name),
-    getIndustry(company),
-    // the company's story predates its ticker: Wikipedia history + cited articles
-    // cover the run-up to going public, which filings and news feeds can't reach
-    getTopicTimeline(commonName(company.name)).catch(() => null),
-  ]);
-  const events = [...filings, ...news, ...(story?.events ?? [])];
+  const [prices, filings, news, yahoo, nyt, guardian, siteDomain, sicIndustry, story] =
+    await Promise.all([
+      getDailyPrices(company.ticker),
+      getFilings(company),
+      getNews(company.name),
+      getYahooFinanceNews(company.ticker),
+      getNytNews(commonName(company.name)),
+      getGuardianNews(commonName(company.name)),
+      getOfficialDomain(company.name),
+      getIndustry(company),
+      // the company's story predates its ticker: Wikipedia history + cited articles
+      // cover the run-up to going public, which filings and news feeds can't reach
+      getTopicTimeline(commonName(company.name)).catch(() => null),
+    ]);
+  // citations first so a story cited by Wikipedia keeps its curated form when a feed
+  // also carries the same URL; every list after it drops duplicates by URL
+  const events = dedupByUrl([...filings, ...(story?.events ?? [])], news, yahoo, nyt, guardian);
 
   await persist(
     {

@@ -55,6 +55,33 @@ export const SOURCES: {
     commercialOk: true,
     notes: "industry-level rules, proposed rules and notices; no key, generous limits",
   },
+  {
+    id: 6,
+    key: "yahoo_finance",
+    name: "Yahoo Finance RSS",
+    license: "RSS headlines + links",
+    attribution: "Yahoo Finance",
+    commercialOk: true,
+    notes: "per-ticker feed; headline/link/date only, article stays on yahoo.com",
+  },
+  {
+    id: 7,
+    key: "nyt",
+    name: "NYT Article Search",
+    license: "NYT API terms — non-commercial",
+    attribution: "The New York Times",
+    commercialOk: false,
+    notes: "archive to 1851; free key (NYT_API_KEY). Re-license before the ad-supported path uses it",
+  },
+  {
+    id: 8,
+    key: "guardian",
+    name: "The Guardian Open Platform",
+    license: "Guardian Open Platform terms — free tier is non-commercial",
+    attribution: "Guardian News & Media",
+    commercialOk: false,
+    notes: "archive to 1999; free key (GUARDIAN_API_KEY). Re-license before the ad-supported path uses it",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

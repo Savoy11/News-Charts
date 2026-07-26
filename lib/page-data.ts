@@ -19,6 +19,7 @@ import {
   getCurrentsNews,
   getMarketauxNews,
   getEodhdNews,
+  getFinnhubNews,
   dedupByUrl,
 } from "./newsExtra";
 
@@ -206,7 +207,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
   const company = await resolveCompany(ticker);
   if (!company) return null;
 
-  const [prices, filings, news, yahoo, nyt, guardian, newsdata, gnews, currents, marketaux, eodhd, siteDomain, sicIndustry, story] =
+  const [prices, filings, news, yahoo, nyt, guardian, newsdata, gnews, currents, marketaux, eodhd, finnhub, pressCandidates, siteDomain, sicIndustry, story] =
     await Promise.all([
       getDailyPrices(company.ticker),
       getFilings(company),
@@ -220,16 +221,24 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
       // finance-native: query by ticker, not name — their entity tagging is the point
       getMarketauxNews(commonName(company.name), company.ticker),
       getEodhdNews(company.ticker),
+      getFinnhubNews(company.ticker),
+      // period newspaper scans for the pre-IPO era of old companies
+      getPressMentions(commonName(company.name)).catch(() => []),
       getOfficialDomain(company.name),
       getIndustry(company),
       // the company's story predates its ticker: Wikipedia history + cited articles
       // cover the run-up to going public, which filings and news feeds can't reach
       getTopicTimeline(commonName(company.name)).catch(() => null),
     ]);
+  // Press scans only make sense from the company's founding onward — same implausibility
+  // guard as topics ("Apple" in an 1890 paper is the fruit). No wiki story → no floor →
+  // skip press entirely rather than let OCR noise in.
+  const firstStoryYear = story?.events[0]?.date ? Number(story.events[0].date.slice(0, 4)) : null;
+  const press = firstStoryYear ? dropImplausiblePress(pressCandidates, firstStoryYear) : [];
   // citations first so a story cited by Wikipedia keeps its curated form when a feed
   // also carries the same URL; every list after it drops duplicates by URL
   const events = dedupByUrl(
-    [...filings, ...(story?.events ?? [])],
+    [...filings, ...(story?.events ?? []), ...press],
     news,
     yahoo,
     nyt,
@@ -238,7 +247,8 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
     gnews,
     currents,
     marketaux,
-    eodhd
+    eodhd,
+    finnhub
   );
 
   await persist(

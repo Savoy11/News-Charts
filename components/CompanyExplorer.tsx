@@ -13,6 +13,7 @@ import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
 const FILTERS: { key: EventType; label: string }[] = [
   { key: "history", label: "History" },
   { key: "citation", label: "Cited articles" },
+  { key: "press", label: "Historical press" },
   { key: "earnings", label: "Earnings" },
   { key: "filing", label: "Filings" },
   { key: "news", label: "News" },
@@ -39,7 +40,7 @@ interface Props {
 
 export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
   const [active, setActive] = useState<Set<EventType>>(
-    new Set<EventType>(["history", "citation", "earnings", "filing", "news", "regulation"])
+    new Set<EventType>(["history", "citation", "press", "earnings", "filing", "news", "regulation"])
   );
   const pathname = usePathname();
   const [copied, setCopied] = useState(false);

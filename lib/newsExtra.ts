@@ -470,6 +470,58 @@ export async function getEodhdNews(ticker: string): Promise<TimelineEvent[]> {
   }
 }
 
+/**
+ * Finnhub company news — ticker-keyed, with the publisher named per article. Free key
+ * from finnhub.io → FINNHUB_API_KEY (60 req/min; company news reaches back one year on
+ * the free tier, so that's exactly the window requested).
+ */
+export async function getFinnhubNews(ticker: string): Promise<TimelineEvent[]> {
+  const key = process.env.FINNHUB_API_KEY;
+  if (!key) return [];
+  try {
+    const to = new Date();
+    const from = new Date(to.getTime() - 365 * 86_400_000);
+    const url =
+      `https://finnhub.io/api/v1/company-news?symbol=${encodeURIComponent(ticker)}` +
+      `&from=${from.toISOString().slice(0, 10)}&to=${to.toISOString().slice(0, 10)}` +
+      `&token=${encodeURIComponent(key)}`;
+    const res = await fetch(url, REVAL);
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    const items = json as {
+      headline?: string;
+      url?: string;
+      datetime?: number; // unix seconds
+      source?: string;
+      summary?: string;
+      image?: string;
+    }[];
+    const events: TimelineEvent[] = [];
+    for (const n of items) {
+      const day = n.datetime ? toDay(new Date(n.datetime * 1000)) : null;
+      if (!n.headline || !n.url || !day) continue;
+      events.push({
+        id: `fh-${events.length}`,
+        date: day,
+        type: "news",
+        title: n.headline.trim(),
+        source: n.source?.trim() || "Finnhub",
+        url: n.url,
+        description: (n.summary ?? "").trim().slice(0, 240) || undefined,
+        imageUrl: n.image && /^https?:\/\//i.test(n.image) ? n.image : undefined,
+        sourceKey: "finnhub",
+        externalId: n.url,
+        dedupBasis: n.url,
+      });
+      if (events.length >= 40) break;
+    }
+    return events;
+  } catch {
+    return [];
+  }
+}
+
 /** Keep the first event seen per URL — the same story surfaced by two repositories is one event. */
 export function dedupByUrl(...lists: TimelineEvent[][]): TimelineEvent[] {
   const seen = new Set<string>();

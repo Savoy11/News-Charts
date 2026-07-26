@@ -127,6 +127,15 @@ export const SOURCES: {
     commercialOk: false,
     notes: "ticker-keyed financial news; free key (EODHD_API_KEY), ~20 req/day and news access varies by plan — adapter degrades to empty. Re-license before the ad-supported path uses it",
   },
+  {
+    id: 14,
+    key: "finnhub",
+    name: "Finnhub Company News",
+    license: "Finnhub terms — free tier is personal/non-commercial",
+    attribution: "Finnhub",
+    commercialOk: false,
+    notes: "ticker-keyed company news, trailing year on the free tier; free key (FINNHUB_API_KEY), 60 req/min. Re-license before the ad-supported path uses it",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

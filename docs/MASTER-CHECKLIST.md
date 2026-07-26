@@ -76,6 +76,7 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
 - [ ] **Newsdata.io** — free tier is personal/testing. Upgrade to a paid plan (explicitly allows
       commercial use); swap key in `.env.local`. No code change.
 - [ ] **GNews** — free tier is non-commercial. Upgrade to a paid tier; swap key. No code change.
+- [ ] **Currents API** — free developer tier is non-commercial. Upgrade or drop the key at launch.
 - [ ] **Guardian** — free developer key is non-commercial. Request a commercial license/key from
       Guardian Open Platform; swap key.
 - [ ] **NYT Article Search** — public API terms are non-commercial and there is **no self-serve
@@ -93,7 +94,7 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
 ### Feed health (each source, against production keys)
 
 - [ ] Every adapter returns real data for a fresh company AND a fresh topic (not silently `[]`):
-      GDELT, Yahoo RSS, NYT, Guardian, Newsdata, GNews, Wikipedia (prose + citations), LoC press,
+      GDELT, Yahoo RSS, NYT, Guardian, Newsdata, GNews, Currents, Wikipedia (prose + citations), LoC press,
       SEC filings, Federal Register, prices.
 - [ ] Keys valid under production quotas (Newsdata 200/day, GNews 100/day, NYT/Guardian limits)
       with the 6h/1h cache windows doing the rate-limiting.

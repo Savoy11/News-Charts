@@ -209,6 +209,63 @@ export async function getGuardianNews(query: string): Promise<TimelineEvent[]> {
   }
 }
 
+/**
+ * Newsdata.io — a multi-outlet aggregator, so one call brings back coverage from many
+ * publications at once (the free tier reaches recent news; its deep archive is paid).
+ * Free key from newsdata.io → NEWSDATA_API_KEY. 200 credits/day; one page per subject
+ * per 6h cache window stays far under that.
+ */
+export async function getNewsdataNews(query: string): Promise<TimelineEvent[]> {
+  const key = process.env.NEWSDATA_API_KEY;
+  if (!key) return [];
+  try {
+    const url =
+      `https://newsdata.io/api/1/latest?apikey=${encodeURIComponent(key)}` +
+      `&q=${encodeURIComponent(`"${query}"`)}&language=en`;
+    const res = await fetch(url, REVAL);
+    if (!res.ok) return [];
+    const json = await res.json();
+    const results = (json?.results ?? []) as {
+      title?: string;
+      link?: string;
+      pubDate?: string; // "2026-07-25 14:03:11"
+      description?: string;
+      image_url?: string;
+      source_name?: string;
+      source_id?: string;
+      creator?: string[] | null;
+    }[];
+    const events: TimelineEvent[] = [];
+    for (const r of results) {
+      const day = r.pubDate ? toDay(new Date(r.pubDate.replace(" ", "T") + "Z")) : null;
+      if (!r.title || !r.link || !day) continue;
+      const byline = Array.isArray(r.creator) ? r.creator.filter(Boolean).join(", ") : "";
+      const description =
+        [byline, (r.description ?? "").trim()].filter(Boolean).join(" — ").slice(0, 240) ||
+        undefined;
+      events.push({
+        id: `nd-${events.length}`,
+        date: day,
+        type: "news",
+        title: r.title.trim(),
+        // the aggregator isn't the publisher — credit the outlet it found
+        source: r.source_name?.trim() || r.source_id?.trim() || "Newsdata.io",
+        url: r.link,
+        description,
+        imageUrl:
+          r.image_url && /^https?:\/\//i.test(r.image_url) ? r.image_url : undefined,
+        sourceKey: "newsdata",
+        externalId: r.link,
+        dedupBasis: r.link,
+      });
+      if (events.length >= 25) break;
+    }
+    return events;
+  } catch {
+    return [];
+  }
+}
+
 /** Keep the first event seen per URL — the same story surfaced by two repositories is one event. */
 export function dedupByUrl(...lists: TimelineEvent[][]): TimelineEvent[] {
   const seen = new Set<string>();

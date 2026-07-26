@@ -82,6 +82,15 @@ export const SOURCES: {
     commercialOk: false,
     notes: "archive to 1999; free key (GUARDIAN_API_KEY). Re-license before the ad-supported path uses it",
   },
+  {
+    id: 9,
+    key: "newsdata",
+    name: "Newsdata.io",
+    license: "Newsdata.io terms — free tier for personal/testing use",
+    attribution: "Newsdata.io",
+    commercialOk: false,
+    notes: "multi-outlet aggregator, recent news; free key (NEWSDATA_API_KEY), 200 credits/day. Re-license before the ad-supported path uses it",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

@@ -18,7 +18,8 @@ export type SourceKey =
   | "federal_register"
   | "yahoo_finance"
   | "nyt"
-  | "guardian";
+  | "guardian"
+  | "newsdata";
 
 export interface TimelineEvent {
   id: string;

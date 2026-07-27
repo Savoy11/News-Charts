@@ -401,6 +401,54 @@ this is a shared revenue *pattern*, not shared code.**
 - [ ] `P3` Measure click-through per surface before expanding, without shipping
       user-identifying analytics.
 
+## Owner backlog (2026-07-26 brain dump)
+
+Chronolens-side items only. CAEP items went to that project's `docs/ROADMAP.md`; company-level
+items (entity filing, federal regulation research, disclosure documents, "what does sellable
+look like") went to a **separate business checklist** worked independently of both products —
+`docs/BUSINESS-CHECKLIST.md` in the Crypto-Stuff repo.
+
+- [ ] `P1` **Topic timeline pegged to a company's stock price.** Pick any search term and
+      overlay it on any company's price series — e.g. "Donald Trump presidency" against Ford
+      stock. The strongest new idea in the dump: it generalises what company pages already do
+      (events pegged to price) to *arbitrary* subjects, and `/compare` already aligns two
+      subjects on one axis, so the pieces exist. Design question to settle first: the topic
+      supplies events, the company supplies the price — so this is a **two-subject compose**,
+      not a new page type. Keep the correlation framing honest (proximity ≠ causation, same
+      rule as Biggest Moves).
+- [ ] `P1` **Test and fine-tune the AI tools.** The BYO-key ranking panel is the only AI surface
+      here: check ranking quality across subject types, the 0.35 relevance cut-off, batch size,
+      and behaviour when a model returns junk. (CAEP's 11 agents are tracked separately.)
+- [ ] `P1` **Beta launch.** ⚠ Blocked by the ⛔ pre-release feed gate above — a public beta is a
+      release, so licences and feed health must be settled first, not after.
+- [ ] `P2` **Security deep-dive + what an account looks like (Google login?).** ⚠ Note the
+      architectural shift: Chronolens is deliberately accounts-free today — follows, prefs and
+      view state are localStorage, and "your key never leaves your machine" is currently
+      literally true. Accounts add a user table, session security, and a privacy-policy surface.
+      They are also the prerequisite for the `P3` saved-focus alerts already parked above.
+      Decide whether the retention gain is worth becoming a data controller.
+- [ ] `P2` **Translation / i18n for the site.** Note what actually needs translating: the UI
+      chrome can be localised, but the *events* are English-language sources — be explicit
+      rather than shipping a half-translated page.
+- [ ] `P2` **Which countries can access the site** (implementation side: geo-detection,
+      blocking, or per-region content). The *decision* — which jurisdictions are worth the
+      compliance cost — lives in the business checklist.
+- [ ] `P2` **Site name / domain.** Candidates: Timelines.ai · Timecharts.ai · Newscharts.ai ·
+      Thetimeline.ai · Timeline.ai. ⚠ Renaming is not just a logo: `SITE_URL`, canonical URLs,
+      the sitemap, OG images and JSON-LD all carry the name, and redirects would be needed to
+      keep any indexed pages. Cheapest before launch, expensive after. Check domain
+      availability and trademark conflicts before falling in love with one.
+- [ ] `P2` **Lobbying data as a source.** *Interpretation flagged — this is my read of "lobbying
+      sources and compliance", correct it if you meant something else.* Federal lobbying
+      disclosures (Senate LDA / House filings) are free, public, quarterly and name the client
+      company — a natural event stream for company timelines ("spent $X lobbying on Y"). The
+      compliance half: it's public-record data, so the constraint is accuracy and framing, not
+      licensing. Would suit CAEP's equities module equally; ships here first if built.
+- [ ] `P2` **Research more data repositories.** *Interpretation flagged: reading "repositories"
+      as news/data sources, consistent with this session's usage — say so if you meant code
+      hosting.* Feeds the article-resurfacing initiative; the keyless Internet Archive adapter
+      is still the top unbuilt candidate.
+
 ## Other initiatives
 
 _Add new Chronolens initiatives here as they come up — this doc is meant to govern the whole

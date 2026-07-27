@@ -438,15 +438,18 @@ look like") went to a **separate business checklist** worked independently of bo
       the sitemap, OG images and JSON-LD all carry the name, and redirects would be needed to
       keep any indexed pages. Cheapest before launch, expensive after. Check domain
       availability and trademark conflicts before falling in love with one.
-- [ ] `P2` **Lobbying data as a source.** *Interpretation flagged — this is my read of "lobbying
-      sources and compliance", correct it if you meant something else.* Federal lobbying
-      disclosures (Senate LDA / House filings) are free, public, quarterly and name the client
-      company — a natural event stream for company timelines ("spent $X lobbying on Y"). The
-      compliance half: it's public-record data, so the constraint is accuracy and framing, not
-      licensing. Would suit CAEP's equities module equally; ships here first if built.
-- [ ] `P2` **Research more data repositories.** *Interpretation flagged: reading "repositories"
-      as news/data sources, consistent with this session's usage — say so if you meant code
-      hosting.* Feeds the article-resurfacing initiative; the keyless Internet Archive adapter
+- [ ] `P1` **Label every source on screen, and the compliance around it.** Chronolens's half of
+      the source-labeling policy in the business checklist (`docs/BUSINESS-CHECKLIST.md`,
+      Crypto-Stuff repo). Concretely: every event already carries a `source` label and an
+      outward link, but with eleven feeds the labels are inconsistent — GDELT reports bare
+      domains (`chinatechnews.com`), NYT/Guardian report publication names, aggregators report
+      whichever outlet they found, and Wikipedia prose reports the article. Decide the house
+      form, then render licence-required attribution properly (Wikipedia is CC BY-SA and must
+      credit contributors + licence; LoC, GDELT and SEC each differ). Mark *derived* values as
+      ours, never as a publisher's. Pairs with the feed-visibility panel above — the same panel
+      can carry the attribution block.
+- [ ] `P2` **Research more news repositories.** Feeds the article-resurfacing initiative; the
+      keyless Internet Archive adapter
       is still the top unbuilt candidate.
 
 ## Other initiatives

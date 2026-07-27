@@ -373,6 +373,34 @@ Each idea checked against the codebase before listing — several were cheaper t
       intermediate step is highlighting saved-focus matches on return, still keyless. Defer
       until there are users to retain.
 
+## Initiative: Affiliate links on relevant surfaces · `P2`
+
+Companion to CAEP's affiliate item (`docs/ROADMAP.md` in Crypto-Stuff — staking pages first,
+across both its free web and desktop distributions). Chronolens's own affiliate opportunities
+are thinner but real, and the same integrity rules apply. **The two projects stay independent;
+this is a shared revenue *pattern*, not shared code.**
+
+- [ ] `P0` **Recognise what this triggers: affiliate revenue makes Chronolens commercial.** That
+      activates every item in the ⛔ pre-release feed gate above — NYT, Guardian, Newsdata,
+      GNews, Currents, Marketaux, EODHD and Finnhub are all on non-commercial free tiers today.
+      Adding a single paid link is the moment those licences must be resolved. **Do the feed
+      gate first, or not the links.**
+- [ ] `P1` **Neutrality rule.** Chronolens's product *is* an unbiased historical record. An
+      affiliate relationship must never influence which events, articles or sources surface,
+      nor their ordering. Structurally: the ingest/ranking layers must not be able to read
+      affiliate state, exactly as CAEP keeps it out of the risk engine.
+- [ ] `P1` **Disclosure.** Per-link marking (FTC "clear and conspicuous"), `rel="sponsored
+      noopener"` on paid links, and a "How we make money" page covering ads + affiliates
+      together. The existing `AdSlot` placement is the natural place to establish the pattern.
+- [ ] `P2` **Candidate surfaces** — only where an outbound link genuinely helps the reader:
+      brokerage/data referrals on company pages; book or archive-subscription links on topic
+      pages (a period-history reader is a plausible book buyer); `CaepPromo` already does
+      cross-promotion to CAEP, so the slot pattern exists.
+- [ ] `P2` **Never paywall-launder.** Linking a reader to a paywalled cited article is fine and
+      honest; taking a commission for it must not change which citations get mined or shown.
+- [ ] `P3` Measure click-through per surface before expanding, without shipping
+      user-identifying analytics.
+
 ## Other initiatives
 
 _Add new Chronolens initiatives here as they come up — this doc is meant to govern the whole

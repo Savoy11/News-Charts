@@ -21,16 +21,38 @@ async function getTickerMap(): Promise<TickerRow[]> {
 export async function resolveCompany(query: string): Promise<CompanyInfo | null> {
   const rows = await getTickerMap();
   const q = query.trim().toUpperCase();
+  // name-prefix rung: "ALIBABA" should find "ALIBABA GROUP HOLDING LIMITED" — nobody
+  // types the full legal title. The SEC file is ordered roughly by market cap, so the
+  // first prefix hit is the company a person almost certainly means ("APPLE" → Apple
+  // Inc, not Apple Hospitality REIT). Minimum length guards against junk prefixes.
   const hit =
     rows.find((r) => r.ticker === q) ??
     rows.find((r) => r.title.toUpperCase() === q) ??
-    null;
+    (q.length >= 3
+      ? rows.find((r) => r.title.toUpperCase().startsWith(q + " ")) ?? null
+      : null);
   if (!hit) return null;
   return {
     ticker: hit.ticker,
     cik: String(hit.cik_str).padStart(10, "0"),
     name: hit.title,
   };
+}
+
+// legal suffixes that Wikipedia titles don't carry — stripped iteratively, so
+// "Alibaba Group Holding Limited" → "Alibaba Group", "Tesla, Inc." → "Tesla"
+const LEGAL_SUFFIX =
+  /\b(?:incorporated|inc|corporation|corp|company|co|limited|ltd|plc|holdings?|s\.a\.|n\.v\.|ag|se)\.?$/i;
+
+/** The everyday name of a company, for looking it up outside SEC filings. */
+export function commonName(title: string): string {
+  let s = title.trim();
+  let prev = "";
+  while (prev !== s) {
+    prev = s;
+    s = s.replace(/[,.]\s*$/, "").replace(LEGAL_SUFFIX, "").trim();
+  }
+  return s || title;
 }
 
 export interface Industry {

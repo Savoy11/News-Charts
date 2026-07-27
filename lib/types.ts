@@ -1,4 +1,11 @@
-export type EventType = "news" | "filing" | "earnings" | "history" | "press" | "regulation";
+export type EventType =
+  | "news"
+  | "filing"
+  | "earnings"
+  | "history"
+  | "press"
+  | "regulation"
+  | "citation";
 
 /** Matches the fetch_outcome enum in the database. */
 export type FetchOutcome = "ok" | "empty" | "throttled" | "error";
@@ -8,7 +15,16 @@ export type SourceKey =
   | "loc_chronam"
   | "gdelt"
   | "sec_edgar"
-  | "federal_register";
+  | "federal_register"
+  | "yahoo_finance"
+  | "nyt"
+  | "guardian"
+  | "newsdata"
+  | "gnews"
+  | "currents"
+  | "marketaux"
+  | "eodhd"
+  | "finnhub";
 
 export interface TimelineEvent {
   id: string;

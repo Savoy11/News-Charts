@@ -15,6 +15,7 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
   history: { label: "History", cls: "border-violet-700/50 bg-violet-500/15 text-violet-300" },
   press: { label: "Press", cls: "border-orange-700/50 bg-orange-500/15 text-orange-300" },
   news: { label: "News", cls: "border-slate-600/50 bg-slate-500/15 text-slate-300" },
+  citation: { label: "Cited", cls: "border-teal-700/50 bg-teal-500/15 text-teal-300" },
 };
 
 // A move on day D can be sparked by an item dated D itself (intraday news) or a few days before
@@ -28,6 +29,7 @@ const CATALYST_PRIORITY: Record<EventType, number> = {
   history: 2,
   press: 1,
   news: 1,
+  citation: 1,
 };
 const MIN_PCT = 2; // ignore ordinary days — a "biggest move" under 2% isn't worth a callout
 const MAX_MOVES = 6;

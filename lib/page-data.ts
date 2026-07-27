@@ -6,9 +6,22 @@ import { PricePoint, TimelineEvent } from "./types";
 import { getTopicTimeline } from "./wiki";
 import { getPressMentions, dropImplausiblePress } from "./loc";
 import { getNews } from "./news";
-import { resolveCompany, getFilings, getIndustry, type Industry } from "./sec";
+import { resolveCompany, getFilings, getIndustry, commonName, type Industry } from "./sec";
 import { getDailyPrices } from "./prices";
 import { getOfficialDomain } from "./wikidata";
+import { dropCompanyPrehistory } from "./history";
+import {
+  getYahooFinanceNews,
+  getNytNews,
+  getGuardianNews,
+  getNewsdataNews,
+  getGnewsNews,
+  getCurrentsNews,
+  getMarketauxNews,
+  getEodhdNews,
+  getFinnhubNews,
+  dedupByUrl,
+} from "./newsExtra";
 
 const TOPIC_TTL_MINUTES = 360; // 6h — topic history barely moves
 const COMPANY_TTL_MINUTES = 60; // 1h — prices and filings do
@@ -134,14 +147,27 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
   const wiki = await getTopicTimeline(topic);
   if (!wiki) return null;
 
-  const [pressCandidates, news] = await Promise.all([getPressMentions(topic), getNews(topic)]);
+  const [pressCandidates, news, nyt, guardian, newsdata, gnews, currents] = await Promise.all([
+    getPressMentions(topic),
+    getNews(topic),
+    getNytNews(topic),
+    getGuardianNews(topic),
+    getNewsdataNews(topic),
+    getGnewsNews(topic),
+    getCurrentsNews(topic),
+  ]);
   const firstEventOn = wiki.events[0]?.date ?? null;
   const floor = firstEventOn ? Number(firstEventOn.slice(0, 4)) : 0;
-  const events = [
-    ...wiki.events,
-    ...dropImplausiblePress(pressCandidates, floor),
-    ...news.slice(0, 30),
-  ];
+  const events = dedupByUrl(
+    wiki.events,
+    dropImplausiblePress(pressCandidates, floor),
+    news.slice(0, 30),
+    nyt,
+    guardian,
+    newsdata,
+    gnews,
+    currents
+  );
 
   await persistTopic(
     { searchTerm: topic, wikipediaTitle: wiki.title, displayName: wiki.title,
@@ -168,7 +194,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
           ticker: subject.ticker,
           siteDomain: subject.siteDomain,
           prices,
-          events: [...events, ...sector],
+          events: dropCompanyPrehistory([...events, ...sector]),
           industry,
           servedFrom: "database",
         };
@@ -181,14 +207,49 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
   const company = await resolveCompany(ticker);
   if (!company) return null;
 
-  const [prices, filings, news, siteDomain, sicIndustry] = await Promise.all([
-    getDailyPrices(company.ticker),
-    getFilings(company),
-    getNews(company.name),
-    getOfficialDomain(company.name),
-    getIndustry(company),
-  ]);
-  const events = [...filings, ...news];
+  const [prices, filings, news, yahoo, nyt, guardian, newsdata, gnews, currents, marketaux, eodhd, finnhub, pressCandidates, siteDomain, sicIndustry, story] =
+    await Promise.all([
+      getDailyPrices(company.ticker),
+      getFilings(company),
+      getNews(company.name),
+      getYahooFinanceNews(company.ticker),
+      getNytNews(commonName(company.name)),
+      getGuardianNews(commonName(company.name)),
+      getNewsdataNews(commonName(company.name)),
+      getGnewsNews(commonName(company.name)),
+      getCurrentsNews(commonName(company.name)),
+      // finance-native: query by ticker, not name — their entity tagging is the point
+      getMarketauxNews(commonName(company.name), company.ticker),
+      getEodhdNews(company.ticker),
+      getFinnhubNews(company.ticker),
+      // period newspaper scans for the pre-IPO era of old companies
+      getPressMentions(commonName(company.name)).catch(() => []),
+      getOfficialDomain(company.name),
+      getIndustry(company),
+      // the company's story predates its ticker: Wikipedia history + cited articles
+      // cover the run-up to going public, which filings and news feeds can't reach
+      getTopicTimeline(commonName(company.name)).catch(() => null),
+    ]);
+  // Press scans only make sense from the company's founding onward — same implausibility
+  // guard as topics ("Apple" in an 1890 paper is the fruit). No wiki story → no floor →
+  // skip press entirely rather than let OCR noise in.
+  const firstStoryYear = story?.events[0]?.date ? Number(story.events[0].date.slice(0, 4)) : null;
+  const press = firstStoryYear ? dropImplausiblePress(pressCandidates, firstStoryYear) : [];
+  // citations first so a story cited by Wikipedia keeps its curated form when a feed
+  // also carries the same URL; every list after it drops duplicates by URL
+  const events = dedupByUrl(
+    [...filings, ...(story?.events ?? []), ...press],
+    news,
+    yahoo,
+    nyt,
+    guardian,
+    newsdata,
+    gnews,
+    currents,
+    marketaux,
+    eodhd,
+    finnhub
+  );
 
   await persist(
     {
@@ -218,7 +279,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
     ticker: company.ticker,
     siteDomain,
     prices,
-    events: [...events, ...sector],
+    events: dropCompanyPrehistory([...events, ...sector]),
     industry,
     servedFrom: "live",
   };

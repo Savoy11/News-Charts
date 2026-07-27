@@ -60,10 +60,12 @@ function quoteUrl(title: string, sentence: string): string {
 
 /**
  * Pull a year from a sentence, ignoring numbers that only look like years.
- * Screen resolutions ("1280 x 720"), sensor sizes ("3264 × 1836") and spec figures
- * are the common false positives and would otherwise plant events in the Middle Ages.
+ * Screen resolutions ("1280 x 720"), sensor sizes ("3264 × 1836"), spec figures,
+ * stock tickers ("SEHK: 1060") and domain names ("1688.com") are the common false
+ * positives and would otherwise plant events in the Middle Ages — the exact bug that
+ * scattered Alibaba's early history across the years 1060 and 1688.
  */
-function extractYear(sentence: string): number | null {
+export function extractYear(sentence: string): number | null {
   const masked = sentence
     // resolutions and dimension pairs
     .replace(/\d[\d,.]*\s*[×x*]\s*\d[\d,.]*/gi, " ")
@@ -74,7 +76,16 @@ function extractYear(sentence: string): number | null {
     )
     // currency and large counts, e.g. "$1,999" or "1080p"
     .replace(/[$€£]\s?\d[\d,.]*/g, " ")
-    .replace(/\b\d{3,4}[ip]\b/gi, " ");
+    .replace(/\b\d{3,4}[ip]\b/gi, " ")
+    // stock listing codes: "(SEHK: 1060)", "HKG: 1688", "SSE 600519" — a ticker, not a year
+    .replace(
+      /\b(?:SEHK|HKEX|HKG|SSE|SZSE|SHA|SHE|SHG|NYSE|NASDAQ|NYSEARCA|AMEX|LSE|LON|TYO|TSE|KRX|ASX|TSX|OTC|BATS)\b\s*:?\s*#?\s*\d{2,6}/gi,
+      " "
+    )
+    // "stock code 1060", "ticker 0700" — an identifier, not a date
+    .replace(/\b(?:stock code|ticker(?:\s+symbol)?)\s*:?\s*#?\s*\d{2,6}/gi, " ")
+    // domain names: "1688.com", "163.cn" — the digits are a brand, not a year
+    .replace(/\b\d{2,4}\.[a-z]{2,}\b/gi, " ");
   // reject digit/letter neighbours so model numbers ("PW1500G") don't read as years,
   // while still allowing "in 2013," and decade forms like "mid-1990s"
   const m = masked.match(/(?<!\w)(1[0-9]{3}|20[0-2][0-9])(?:s\b)?(?!\w)/);
@@ -88,6 +99,227 @@ export interface TopicResult {
   /** every Wikipedia article the timeline drew on */
   articles: string[];
   events: TimelineEvent[];
+}
+
+// ---------------------------------------------------------------------------
+// Citation mining — the References list, not the prose.
+//
+// Every prose 'history' event deep-links the same encyclopedia article, so as
+// *sourcing* a 60-event timeline is one document sliced 60 ways. The article's
+// {{cite ...}} templates are the opposite: a hand-curated bibliography of real,
+// dated, external articles — the thing a reader from that period actually read.
+// Mining them turns Wikipedia from "the story" into an index of period sources.
+// ---------------------------------------------------------------------------
+
+/** One parsed {{cite ...}} template that carried enough to become an event. */
+export interface WikiCitation {
+  title: string;
+  url: string;
+  date: string; // YYYY-MM-DD (month/day default to 01 when the template omits them)
+  yearOnly: boolean;
+  /** work / newspaper / publisher — falls back to the URL's hostname */
+  publication: string;
+}
+
+/** Raw wikitext of an article (the rendered extract has no reference metadata). */
+async function getWikitext(title: string): Promise<string | null> {
+  try {
+    const url = `${API}?action=parse&page=${encodeURIComponent(
+      title
+    )}&prop=wikitext&format=json&redirects=1`;
+    const res = await fetch(url, { headers: UA, next: { revalidate: 86400 } });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.parse?.wikitext?.["*"] ?? null;
+  } catch {
+    // citations are an enrichment — a network failure must never take down the topic
+    return null;
+  }
+}
+
+const MONTHS: Record<string, number> = {
+  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7,
+  august: 8, september: 9, october: 10, november: 11, december: 12,
+  jan: 1, feb: 2, mar: 3, apr: 4, jun: 6, jul: 7, aug: 8,
+  sep: 9, sept: 9, oct: 10, nov: 11, dec: 12,
+};
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/**
+ * Parse the |date= field of a cite template. Handles the forms Wikipedia's style
+ * guide allows: "2015-01-05", "January 5, 2015", "5 January 2015", "January 2015",
+ * and a bare "2015". Anything else (n.d., ranges, seasons) is rejected — an
+ * undatable citation can't take a place on a timeline.
+ */
+export function parseCiteDate(raw: string): { date: string; yearOnly: boolean } | null {
+  const s = raw.trim();
+  const okYear = (y: number) => y >= 1750 && y <= new Date().getFullYear() + 1;
+  const okDay = (m: number, d: number) => d >= 1 && d <= [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
+
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); // ISO
+  if (m) {
+    const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+    if (okYear(y) && mo >= 1 && mo <= 12 && okDay(mo, d)) {
+      return { date: `${y}-${pad(mo)}-${pad(d)}`, yearOnly: false };
+    }
+    return null;
+  }
+  m = s.match(/^([A-Za-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})$/); // January 5, 2015
+  if (m) {
+    const mo = MONTHS[m[1].toLowerCase()];
+    const [d, y] = [Number(m[2]), Number(m[3])];
+    if (mo && okYear(y) && okDay(mo, d)) return { date: `${y}-${pad(mo)}-${pad(d)}`, yearOnly: false };
+    return null;
+  }
+  m = s.match(/^(\d{1,2})\s+([A-Za-z]+)\.?\s+(\d{4})$/); // 5 January 2015
+  if (m) {
+    const mo = MONTHS[m[2].toLowerCase()];
+    const [d, y] = [Number(m[1]), Number(m[3])];
+    if (mo && okYear(y) && okDay(mo, d)) return { date: `${y}-${pad(mo)}-${pad(d)}`, yearOnly: false };
+    return null;
+  }
+  m = s.match(/^([A-Za-z]+)\.?\s+(\d{4})$/); // January 2015
+  if (m) {
+    const mo = MONTHS[m[1].toLowerCase()];
+    const y = Number(m[2]);
+    if (mo && okYear(y)) return { date: `${y}-${pad(mo)}-01`, yearOnly: false };
+    return null;
+  }
+  m = s.match(/^(\d{4})$/); // bare year
+  if (m && okYear(Number(m[1]))) return { date: `${m[1]}-01-01`, yearOnly: true };
+  return null;
+}
+
+/** Strip wiki markup from a template field value so it reads as plain text. */
+function cleanCiteText(s: string): string {
+  return s
+    .replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, "$1") // [[target|label]] → label
+    .replace(/\{\{!\}\}/g, "|")
+    .replace(/\{\{[^{}]*\}\}/g, "") // any leftover inner template
+    .replace(/<[^>]+>/g, "")
+    .replace(/''+/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Split a template body on top-level pipes (nested {{...}} and [[...]] stay intact). */
+function templateParams(tpl: string): Map<string, string> {
+  const inner = tpl.slice(2, -2);
+  const parts: string[] = [];
+  let cur = "";
+  let depth = 0;
+  for (let i = 0; i < inner.length; i++) {
+    const two = inner.slice(i, i + 2);
+    if (two === "{{" || two === "[[") { depth++; cur += two; i++; continue; }
+    if (two === "}}" || two === "]]") { depth--; cur += two; i++; continue; }
+    if (inner[i] === "|" && depth === 0) { parts.push(cur); cur = ""; continue; }
+    cur += inner[i];
+  }
+  parts.push(cur);
+  const map = new Map<string, string>();
+  for (const p of parts.slice(1)) { // parts[0] is the template name itself
+    const eq = p.indexOf("=");
+    if (eq < 0) continue;
+    map.set(p.slice(0, eq).trim().toLowerCase(), p.slice(eq + 1).trim());
+  }
+  return map;
+}
+
+// template families that cite a dated, linkable document
+const CITE_RE = /\{\{\s*cite\s+(?:news|web|press release|magazine|journal|report|interview|av media|podcast|episode)\b/gi;
+
+/**
+ * Every citation in an article's wikitext that has a title, a real URL, and a
+ * parseable publication date. Order follows the article, which for history
+ * articles is roughly chronological — but callers should sort by date anyway.
+ */
+export function parseCitations(wikitext: string): WikiCitation[] {
+  const out: WikiCitation[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = CITE_RE.exec(wikitext))) {
+    // walk to the matching close so nested templates don't truncate the block
+    let depth = 0;
+    let i = m.index;
+    while (i < wikitext.length) {
+      const two = wikitext.slice(i, i + 2);
+      if (two === "{{") { depth++; i += 2; continue; }
+      if (two === "}}") { depth--; i += 2; if (depth === 0) break; continue; }
+      i++;
+    }
+    if (depth !== 0) break; // unbalanced tail — stop rather than mis-parse
+    const params = templateParams(wikitext.slice(m.index, i));
+    CITE_RE.lastIndex = i;
+
+    const url = params.get("url")?.trim() ?? "";
+    if (!/^https?:\/\//i.test(url)) continue;
+    const title = cleanCiteText(params.get("title") ?? "");
+    if (title.length < 8) continue;
+    const when = parseCiteDate(params.get("date") ?? "");
+    if (!when) continue;
+
+    let publication = cleanCiteText(
+      params.get("work") ?? params.get("newspaper") ?? params.get("magazine") ??
+      params.get("website") ?? params.get("publisher") ?? params.get("agency") ?? ""
+    );
+    if (!publication) {
+      try {
+        publication = new URL(url).hostname.replace(/^www\./, "");
+      } catch {
+        publication = "cited source";
+      }
+    }
+    out.push({ title, url, date: when.date, yearOnly: when.yearOnly, publication });
+  }
+  return out;
+}
+
+/** Timelines stack fine, but the DB write path pays per event — keep an upper bound. */
+const CITATION_CAP = 160;
+
+/** Even-spread sample so a cap keeps the full range instead of one era. */
+function spreadSample<T>(items: T[], max: number): T[] {
+  if (items.length <= max) return items;
+  const kept: T[] = [];
+  const seen = new Set<number>();
+  for (let i = 0; i < max; i++) {
+    const idx = Math.round((i * (items.length - 1)) / (max - 1));
+    if (!seen.has(idx)) {
+      seen.add(idx);
+      kept.push(items[idx]);
+    }
+  }
+  return kept;
+}
+
+/** Turn every article's parsed citations into deduplicated, date-sorted events. */
+function citationEvents(articles: { wikitext: string }[]): TimelineEvent[] {
+  const byUrl = new Map<string, WikiCitation>();
+  for (const a of articles) {
+    for (const c of parseCitations(a.wikitext)) {
+      const existing = byUrl.get(c.url);
+      // same URL cited in both the History and Timeline articles: keep the fuller date
+      if (!existing || (existing.yearOnly && !c.yearOnly)) byUrl.set(c.url, c);
+    }
+  }
+  const sorted = [...byUrl.values()].sort((a, b) => a.date.localeCompare(b.date));
+  return spreadSample(sorted, CITATION_CAP).map((c, i) => ({
+    id: `cite-${i}`,
+    date: c.date,
+    type: "citation" as const,
+    title: c.title,
+    source: c.publication,
+    url: c.url,
+    sourceKey: "wikipedia" as const,
+    // the cited article is the document AND the event — one URL, one row
+    externalId: c.url,
+    dedupBasis: c.url,
+    yearOnly: c.yearOnly,
+  }));
 }
 
 /** Pull dated sentences out of one article's prose. */
@@ -107,7 +339,9 @@ function eventsFromPage(page: Page, idPrefix: string, limit: number): TimelineEv
       const year = extractYear(s);
       if (year === null) continue;
       const count = seenYears.get(year) ?? 0;
-      if (count >= 2) continue;
+      // one sentence per year: prose is connective narrative now — the citations
+      // mined from the same article carry the "what was written then" weight
+      if (count >= 1) continue;
       seenYears.set(year, count + 1);
       events.push({
         id: `${idPrefix}-${year}-${count}`,
@@ -164,16 +398,24 @@ export async function getTopicTimeline(topic: string): Promise<TopicResult | nul
     if (c && !pages.some((p) => p.title === c.title)) pages.push(c);
   }
 
+  // the References lists ride along as their own event stream: distinct, dated,
+  // external articles — the part of Wikipedia that actually resurfaces the period
+  const wikitexts = await Promise.all(pages.map((p) => getWikitext(p.title)));
+  const citations = citationEvents(
+    wikitexts.filter((w): w is string => w !== null).map((w) => ({ wikitext: w }))
+  );
+
   const seen = new Set<string>();
   const events: TimelineEvent[] = [];
   pages.forEach((p, i) => {
-    for (const ev of eventsFromPage(p, `hist${i}`, 80)) {
+    for (const ev of eventsFromPage(p, `hist${i}`, 40)) {
       const key = ev.title.slice(0, 80).toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
       events.push(ev);
     }
   });
+  events.push(...citations);
   events.sort((a, b) => a.date.localeCompare(b.date));
 
   return {

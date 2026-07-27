@@ -18,6 +18,7 @@ export function applyRanking(events: TimelineEvent[], ranking: AiRanking | null)
 
 const FILTERS: { key: EventType; label: string }[] = [
   { key: "history", label: "History" },
+  { key: "citation", label: "Cited articles" },
   { key: "press", label: "Historical press" },
   { key: "news", label: "Recent news" },
 ];
@@ -52,23 +53,30 @@ function capHistory(events: TimelineEvent[], max: number): TimelineEvent[] {
  * Serialise the shareable part of the view (mode + which types are on) into a query string.
  * Defaults are omitted so a fresh page keeps a clean, canonical URL; only a deviation shows up.
  */
-function encodeView(view: "timeline" | "list", active: Set<EventType>): string {
+function encodeView(
+  view: "timeline" | "list",
+  active: Set<EventType>,
+  focus: string | null
+): string {
   const p = new URLSearchParams();
   if (view !== "timeline") p.set("view", view);
   const on = ALL_TYPES.filter((t) => active.has(t));
   if (on.length !== ALL_TYPES.length) p.set("types", on.join(","));
+  if (focus) p.set("focus", focus); // survives filter toggles — it came from the search prompt
   const qs = p.toString();
   return qs ? `?${qs}` : "";
 }
 
 export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
   const [active, setActive] = useState<Set<EventType>>(
-    new Set<EventType>(["history", "press", "news"])
+    new Set<EventType>(["history", "citation", "press", "news"])
   );
   const [view, setView] = useState<"timeline" | "list">("timeline");
   const pathname = usePathname();
   const storeKey = `chronolens:view:${pathname}`;
   const [copied, setCopied] = useState(false);
+  // the angle a natural-language search prompt carried in ("in the united states")
+  const [focusHint, setFocusHint] = useState<string | null>(null);
   // saving must wait for the restore pass, or the default state overwrites what was stored
   const hydrated = useRef(false);
 
@@ -78,6 +86,8 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
     let fromUrl = false;
     try {
       const sp = new URLSearchParams(window.location.search);
+      const f = sp.get("focus");
+      if (f) setFocusHint(f);
       const v = sp.get("view");
       const t = sp.get("types");
       if (v === "list" || v === "timeline") {
@@ -98,7 +108,8 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
     }
     if (!fromUrl) {
       try {
-        const saved = JSON.parse(sessionStorage.getItem(storeKey) || "{}");
+        // localStorage (not sessionStorage) so the choice is remembered across visits, not just the tab
+        const saved = JSON.parse(localStorage.getItem(storeKey) || "{}");
         if (saved.view === "timeline" || saved.view === "list") setView(saved.view);
         if (Array.isArray(saved.active) && saved.active.length) {
           setActive(new Set<EventType>(saved.active));
@@ -138,12 +149,12 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
   function persist(nextView: "timeline" | "list", nextActive: Set<EventType>) {
     if (!hydrated.current) return;
     try {
-      sessionStorage.setItem(storeKey, JSON.stringify({ view: nextView, active: [...nextActive] }));
+      localStorage.setItem(storeKey, JSON.stringify({ view: nextView, active: [...nextActive] }));
     } catch {
       /* storage unavailable — selection just won't persist */
     }
     try {
-      window.history.replaceState(null, "", pathname + encodeView(nextView, nextActive));
+      window.history.replaceState(null, "", pathname + encodeView(nextView, nextActive, focusHint));
     } catch {
       /* history unavailable — link just won't reflect the view */
     }
@@ -174,7 +185,12 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
 
   return (
     <div>
-      <AiPanel events={filtered} ranking={ranking} onRanking={setRanking} />
+      <AiPanel
+        events={filtered}
+        ranking={ranking}
+        onRanking={setRanking}
+        initialInstruction={focusHint ?? undefined}
+      />
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {FILTERS.map((f) => {
@@ -221,7 +237,7 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
       {view === "timeline" ? (
         <HorizontalTimeline events={ranked} />
       ) : (
-        <EventList events={ranked} order="asc" />
+        <EventList events={ranked} order="asc" persistKey={`chronolens:collapse:${pathname}`} />
       )}
     </div>
   );

@@ -94,6 +94,32 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
 - [ ] Get a real legal review of the above before revenue flows — the flags encode a practical
       reading of published terms, not legal advice.
 
+### 🔁 Recurring: re-check source licensing (this is not a one-time gate)
+
+**Why this needs its own standing item:** a licence change is *silent*. When a feed breaks you
+find out immediately — the page is empty and `check-feeds` says so. When a provider changes its
+terms, nothing breaks: every adapter keeps fetching happily while the site quietly becomes
+non-compliant. The `commercialOk` flags in `SOURCES` are a practical reading of published terms
+**on the day they were written** (2026-07), and they rot from that moment.
+
+- [ ] **Set a review cadence** — quarterly is a reasonable default once live; monthly while
+      terms are actively changing under a new provider.
+- [ ] **Re-check on every trigger, not just on the calendar:**
+      - a new feed is added (it must be added to the gate list above, with its own flag)
+      - ads, affiliate links or any paid tier goes live — i.e. the site becomes commercial
+      - beta → public launch, or a jurisdiction is opened up
+      - a provider emails about terms/pricing changes, or a free tier is restructured
+      - a key is upgraded or downgraded between plans
+- [ ] **Record when each source was last verified.** Add a reviewed-on date to each `SOURCES`
+      entry so staleness is visible in the registry itself rather than remembered — an
+      un-dated flag is indistinguishable from a flag nobody has looked at in a year.
+- [ ] **Re-read the actual terms, not the notes.** The notes in `SOURCES` are a summary written
+      by whoever added the feed; the binding text is the provider's.
+- [ ] **When a source turns non-compliant, the removal path must already work** — every adapter
+      is failure-isolated and skips without its key, so pulling a source is a one-line
+      `.env.local` change today. Keep it that way: never let a feed become load-bearing enough
+      that dropping it breaks pages.
+
 ### Feed health (each source, against production keys)
 
 - [ ] Every adapter returns real data for a fresh company AND a fresh topic (not silently `[]`):

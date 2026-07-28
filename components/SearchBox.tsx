@@ -16,9 +16,15 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
       const res = await fetch(`/api/resolve?q=${encodeURIComponent(q)}`);
       const json = await res.json();
       // the qualifier from a natural-language prompt rides along so the page can use it
-      const focus = json.focus ? `?focus=${encodeURIComponent(json.focus)}` : "";
-      if (json.kind === "company") router.push(`/company/${json.ticker}${focus}`);
-      else if (json.kind === "topic") router.push(`/topic/${json.slug}${focus}`);
+      const focus = json.focus ? `focus=${encodeURIComponent(json.focus)}` : "";
+      const query = (existing: string) =>
+        [existing, focus].filter(Boolean).length ? `?${[existing, focus].filter(Boolean).join("&")}` : "";
+
+      // A relational question with both sides drawable — the answer is two subjects on one axis,
+      // not one subject with the other typed into a box.
+      if (json.kind === "compare") router.push(`/compare${query(`a=${json.a}&b=${json.b}`)}`);
+      else if (json.kind === "company") router.push(`/company/${json.ticker}${query("")}`);
+      else if (json.kind === "topic") router.push(`/topic/${json.slug}${query("")}`);
     } finally {
       setBusy(false);
     }

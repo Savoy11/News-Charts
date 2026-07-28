@@ -30,6 +30,27 @@ async function getExtract(title: string): Promise<Page | null> {
 }
 
 /** Best-matching article title via Wikipedia's search index, for queries that aren't exact titles. */
+/**
+ * Does Wikipedia have anything for this term?
+ *
+ * One search request, no extract and no wikitext — the point is a yes/no cheap enough to ask
+ * inside a search request. `getTopicTimeline` is the real fetch and costs a dozen calls, which is
+ * far too much to spend deciding *which page to send someone to*.
+ *
+ * Deliberately answers false on a network failure. A blocked or throttled Wikipedia means we do
+ * not know, and routing someone to a two-subject compose whose second subject may not exist is
+ * worse than the single-subject page that definitely does.
+ */
+export async function wikipediaHasSubject(term: string): Promise<boolean> {
+  const t = term.trim();
+  if (!t) return false;
+  try {
+    return (await searchTitle(t)) !== null;
+  } catch {
+    return false;
+  }
+}
+
 async function searchTitle(query: string): Promise<string | null> {
   const url = `${API}?action=query&list=search&srsearch=${encodeURIComponent(
     query

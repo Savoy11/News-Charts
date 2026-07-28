@@ -704,10 +704,22 @@ look like") went to a **separate business checklist** worked independently of bo
         EDGAR ticker file used to turn every company search into a Wikipedia guess, from the
         app's main entry point. It also resolves aliases the live path cannot see
         ("bitcoin" → `btc`), which is what makes the Phase 0 crypto aliases reachable.
-      - ⚠ **Still open, and this is the item below:** the honest answer to that question is a
-        *two-subject compose* — Obama's events over Ford's price. Today it lands on Ford's
-        timeline with "Barak Obamas" pre-filled in the AI panel, which is useful and truthful,
-        but it is not yet the overlay the question actually asks for.
+      - **The compose now happens** (2026-07-28). A relational prompt whose other side we can
+        actually draw routes to `/compare?a=<influence>&b=<ticker>` — the influence supplies the
+        events, the company supplies the price axis, which is the compose the item below built.
+        `parseSearchPrompt` keeps the influence as its own field rather than only folding it into
+        `focus`, and the focus still rides along so the AI panel sees the angle either way.
+        The routing only fires when the influence is **known to be drawable** — a subject in the
+        database, a company in the EDGAR index, or a Wikipedia page (one search request, not the
+        dozen a real fetch costs). Otherwise it keeps the old behaviour. Trading a page that works
+        for a compare with one empty half would answer the question with a warning, and a question
+        answered partly beats that. The probe answers *false* on a network failure for the same
+        reason: not knowing is not a yes.
+        ⚠ **The Wikipedia branch is unverified live** — egress is blocked here, so "Barak Obamas"
+        still falls back to Ford's timeline in this environment, which is the fallback working as
+        designed. Verified end-to-end against seeded subjects instead: *"electric cars effect on
+        Ford stock"* and *"how did GM affect Ford"* both land on the compose, *"zzqqxx effect on
+        Ford stock"* falls back, and a plain "Ford" is untouched.
 - [x] ~~`P1` **Topic timeline pegged to a company's stock price**~~ — done 2026-07-28, and the
       design question settled the way the item predicted: **a two-subject compose, not a new page
       type.** `/compare?a=<topic>&b=<ticker>` now plots the priced subject's series with the other

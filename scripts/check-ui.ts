@@ -448,6 +448,55 @@ async function comparePage(page: Page): Promise<void> {
   );
 }
 
+/**
+ * The search box, which is the app's front door and the place a bad parse does the most damage.
+ *
+ * Reported 2026-07-28: "Barak Obamas effect on Ford stock" returned junk twice. The parser now
+ * understands relational questions, and when both sides are drawable the answer is the compose
+ * rather than one subject with the other pre-filled — which is what these assert.
+ */
+async function searchRouting(page: Page): Promise<void> {
+  console.log("\nSearch routing");
+
+  const search = async (q: string) => {
+    await go(page, "/");
+    await page.locator("input").first().fill(q);
+    await page.locator("button", { hasText: /Explore/ }).first().click();
+    await page.waitForURL((u) => u.pathname !== "/", { timeout: 60_000 }).catch(() => {});
+    await page.waitForTimeout(1500);
+    return new URL(page.url());
+  };
+
+  // A relational question with both sides in the corpus: the electric-car topic supplies the
+  // events, Ford supplies the price. This is the shape the Obama question asks for.
+  const rel = await search("electric cars effect on Ford stock");
+  check("a relational prompt routes to the compose", rel.pathname === "/compare", rel.pathname + rel.search);
+  check(
+    "the influence supplies the events and the company the axis",
+    rel.searchParams.get("a")?.toLowerCase() === "electric cars" &&
+      rel.searchParams.get("b")?.toUpperCase() === "F",
+    `a=${rel.searchParams.get("a")} b=${rel.searchParams.get("b")}`
+  );
+  // The angle the visitor asked for must survive the redirect, not be dropped by it.
+  check("the focus rides along", rel.searchParams.get("focus") === "electric cars", String(rel.searchParams.get("focus")));
+  const composed = await visible(page);
+  check("the compose actually draws", /supplies the events/.test(composed));
+
+  // A relational prompt whose other side we cannot draw must keep today's behaviour: the
+  // company's own timeline, not a compare with one empty half.
+  const undrawable = await search("zzqqxx effect on Ford stock");
+  check(
+    "an undrawable influence falls back to the subject's page",
+    /^\/company\/F$/i.test(undrawable.pathname),
+    undrawable.pathname + undrawable.search
+  );
+  check("and still carries the angle asked for", undrawable.searchParams.get("focus") === "zzqqxx", String(undrawable.searchParams.get("focus")));
+
+  // Plain subjects are untouched by any of this.
+  const plain = await search("Ford");
+  check("a plain company search is unchanged", /^\/company\/F$/i.test(plain.pathname), plain.pathname);
+}
+
 async function chromeAndRoutes(page: Page): Promise<void> {
   console.log("\nSite chrome");
   await go(page, "/explore");
@@ -532,7 +581,8 @@ async function main(): Promise<void> {
     await topicPage(page);
     await cryptoTopic(page);
     await comparePage(page);
-    await chromeAndRoutes(page);
+    await searchRouting(page);
+  await chromeAndRoutes(page);
     await ctx.close();
     await responsive(browser);
   } finally {

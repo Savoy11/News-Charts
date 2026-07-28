@@ -12,6 +12,16 @@ export interface ParsedPrompt {
   subject: string;
   /** qualifier the visitor attached, e.g. "in the united states" — null when none */
   focus: string | null;
+  /**
+   * The *other* side of a relational question — the thing doing the affecting, e.g. "barack
+   * obama" in "Barack Obama's effect on Ford stock". Null for every non-relational prompt.
+   *
+   * It is also folded into `focus`, because it is a real qualifier and the AI panel should still
+   * see it wherever the visitor lands. Kept separate as well so the caller can try the thing the
+   * question actually asks for: two subjects on one axis, rather than one subject with the other
+   * mentioned in a text box.
+   */
+  influence: string | null;
 }
 
 // conversational scaffolding that precedes the actual request
@@ -142,10 +152,14 @@ export function parseSearchPrompt(raw: string): ParsedPrompt {
 
   subject = stripStockSuffix(subject.trim());
   // over-stripped to nothing — fall back to the raw query rather than search for ""
-  if (!subject) return { subject: raw.trim(), focus: null };
+  if (!subject) return { subject: raw.trim(), focus: null, influence: null };
 
   // both angles survive when a prompt carries a relation and a qualifier
   // ("impact of tariffs on Ford in 2025")
   const parts = [relationFocus, focus].filter(Boolean) as string[];
-  return { subject, focus: parts.length ? parts.join(" · ") : null };
+  return {
+    subject,
+    focus: parts.length ? parts.join(" · ") : null,
+    influence: relationFocus ? stripStockSuffix(relationFocus) : null,
+  };
 }

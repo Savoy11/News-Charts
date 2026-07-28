@@ -90,6 +90,12 @@ interface Props {
   siteDomain?: string | null;
   /** when set, which sections are collapsed is remembered here across visits */
   persistKey?: string;
+  /**
+   * A date the reader has just jumped to from the chart. Its year and month are opened, because
+   * landing on a collapsed section shows them the header of the thing they asked to see and
+   * nothing else. The counter makes a repeat jump to the same date re-open it.
+   */
+  reveal?: { date: string; n: number } | null;
 }
 
 /** "2026-07-24" → "July 2026". Built from the string parts under UTC so the label never drifts a day across time zones. */
@@ -417,7 +423,7 @@ function PeekPopover({
   );
 }
 
-export default function EventList({ events, order = "asc", siteDomain, persistKey }: Props) {
+export default function EventList({ events, order = "asc", siteDomain, persistKey, reveal }: Props) {
   const rows = useMemo(() => condenseFilings(buildRows(events, order)), [events, order]);
 
   // Per-year/-month tallies (so a collapsed header still says how much it hides) plus a small
@@ -477,6 +483,26 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
   };
   const toggleYear = (y: string) => setCollapsedYears((s) => toggle(s, y));
   const toggleMonth = (k: string) => setCollapsedMonths((s) => toggle(s, k));
+
+  // Open whatever contains the jumped-to date. Set-identity is preserved when nothing changes
+  // so this cannot loop, and it runs after the restore pass for the same reason saving does.
+  useEffect(() => {
+    if (!reveal?.date) return;
+    const year = reveal.date.slice(0, 4);
+    const monthKey = reveal.date.slice(0, 7);
+    setCollapsedYears((prev) => {
+      if (!prev.has(year)) return prev;
+      const next = new Set(prev);
+      next.delete(year);
+      return next;
+    });
+    setCollapsedMonths((prev) => {
+      if (!prev.has(monthKey)) return prev;
+      const next = new Set(prev);
+      next.delete(monthKey);
+      return next;
+    });
+  }, [reveal?.date, reveal?.n]);
 
   const allCollapsed = years.length > 0 && years.every((y) => collapsedYears.has(y));
   const toggleAll = () => setCollapsedYears(allCollapsed ? new Set() : new Set(years));

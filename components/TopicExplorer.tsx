@@ -85,6 +85,8 @@ export default function TopicExplorer({
   const pathname = usePathname();
   const storeKey = `news-charts:view:${pathname}`;
   const [copied, setCopied] = useState(false);
+  // the date the chart last jumped to, so the list can open whatever contains it
+  const [reveal, setReveal] = useState<{ date: string; n: number } | null>(null);
   // the angle a natural-language search prompt carried in ("in the united states")
   const [focusHint, setFocusHint] = useState<string | null>(null);
   // saving must wait for the restore pass, or the default state overwrites what was stored
@@ -196,9 +198,12 @@ export default function TopicExplorer({
       else break;
     }
     if (view !== "list") chooseView("list"); // the anchors only exist in the list view
+    const landing = target ?? dates[0];
+    // open whatever section contains it before scrolling, or the reader lands on a shut header
+    setReveal((r) => ({ date: landing, n: (r?.n ?? 0) + 1 }));
     // let the list mount before scrolling to an anchor inside it
     setTimeout(() => {
-      const el = document.getElementById(dateAnchorId(target ?? dates[0]));
+      const el = document.getElementById(dateAnchorId(landing));
       el?.scrollIntoView({ behavior: "smooth", block: "start" });
       el?.classList.add("ring-1", "ring-sky-500");
       setTimeout(() => el?.classList.remove("ring-1", "ring-sky-500"), 2000);
@@ -278,7 +283,12 @@ export default function TopicExplorer({
       {view === "timeline" ? (
         <HorizontalTimeline events={ranked} />
       ) : (
-        <EventList events={ranked} order="asc" persistKey={`news-charts:collapse:${pathname}`} />
+        <EventList
+          events={ranked}
+          order="asc"
+          persistKey={`news-charts:collapse:${pathname}`}
+          reveal={reveal}
+        />
       )}
     </div>
   );

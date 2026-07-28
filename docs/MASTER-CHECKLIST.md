@@ -441,8 +441,13 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
         through a presence check.
       - Adding it pushed the toolbar past a phone viewport (454px in 390px). Same grid/flex
         shrink family as the three before it; fixed by letting the button row wrap.
-- [ ] `P2` **Auto-expand on jump.** Chart click-to-jump into a collapsed list section scrolls to
-      it but doesn't open it.
+- [x] ~~`P2` **Auto-expand on jump**~~ — done 2026-07-28. Collapsed sections keep zero-height
+      anchors so a jump *lands*, but landing is not arriving: the reader was dropped on the closed
+      header of the very thing they had just clicked. The chart now asks the list to open whatever
+      contains the target date, and scrolls a tick later so the anchor is at its final position.
+      Carried as `{ date, n }` rather than a bare date, so jumping to the same date twice re-opens
+      it after a manual collapse. Covered in `check:ui`: collapse everything, jump, assert rows
+      appear (0 → 15).
 - [ ] `P2` **NYT Keyword facet → event tags.** Needs a tags field on events; would feed the
       focus/AI relevance filtering.
 - [ ] `P2` **Month-level date precision** plumb-through (month-only citation dates currently

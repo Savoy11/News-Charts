@@ -137,6 +137,46 @@ async function companyPage(page: Page): Promise<void> {
   }
 }
 
+/**
+ * Clicking the chart jumps the list to that date. Collapsed sections keep zero-height anchors so
+ * the jump *lands*, but landing is not arriving: the reader used to be dropped on the closed
+ * header of the very thing they clicked.
+ */
+async function jumpOpensSection(page: Page): Promise<void> {
+  console.log("\nChart click-to-jump");
+  await go(page, COMPANY);
+
+  const collapseAll = page.locator('button:has-text("Collapse all")').first();
+  if (!(await collapseAll.count())) {
+    check("collapse-all control present", false, "not found");
+    return;
+  }
+  await collapseAll.click();
+  await page.waitForTimeout(900);
+
+  // Scoped to EventList's own row class — a looser selector also catches the pre-IPO
+  // horizontal timeline's cards, which are never collapsed and would mask the result.
+  const listRows = () => page.locator(".flex.items-start.gap-2.p-3").count();
+  const rowsWhenShut = await listRows();
+  check("collapse all really closes the sections", rowsWhenShut === 0, `${rowsWhenShut} rows still shown`);
+
+  // A Biggest-moves card calls the same jump handler the chart does, with a known date —
+  // deterministic, where pixel-clicking a canvas depends on hitting a plotted point.
+  const moveCard = page
+    .locator("button")
+    .filter({ hasText: /^\w{3} \d{1,2}, 20\d\d/ })
+    .first();
+  if (!(await moveCard.count())) {
+    check("a biggest-moves card to jump from", false, "none found");
+    return;
+  }
+  await moveCard.click();
+  await page.waitForTimeout(1600);
+
+  const rowsAfter = await listRows();
+  check("jumping opens the section it lands in", rowsAfter > 0, `${rowsWhenShut} → ${rowsAfter} rows`);
+}
+
 async function chartOverlays(page: Page): Promise<void> {
   console.log("\nChart overlays");
   await go(page, COMPANY);
@@ -322,6 +362,7 @@ async function main(): Promise<void> {
 
   try {
     await companyPage(page);
+    await jumpOpensSection(page);
     await chartOverlays(page);
     await topicPage(page);
     await cryptoTopic(page);

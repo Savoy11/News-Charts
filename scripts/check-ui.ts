@@ -278,8 +278,12 @@ async function chartOverlays(page: Page): Promise<void> {
   check("overlays turn back off", Math.abs((await distinctColours()) - before) <= 3);
 
   const body = await visible(page);
-  check("legend lists split / dividend", body.includes("Split / dividend"));
-  check("legend omits kinds this page lacks", !body.includes("On-chain"));
+  // Scoped to the legend itself. Reading the whole page for "On-chain" passed until the footer
+  // started crediting the explorers, at which point a check about a chart legend was being
+  // decided by the site's boilerplate.
+  const legend = await page.locator("[data-chart-legend]").first().innerText();
+  check("legend lists split / dividend", legend.includes("Split / dividend"), legend.replace(/\n/g, " · "));
+  check("legend omits kinds this page lacks", !legend.includes("On-chain"), legend.replace(/\n/g, " · "));
 }
 
 async function topicPage(page: Page): Promise<void> {
@@ -346,6 +350,25 @@ async function cryptoTopic(page: Page): Promise<void> {
   check("the charted halving is present", /3\.125 BTC/.test(body));
   check("older halvings kept", /25 BTC/.test(body) && /6\.25 BTC/.test(body));
   check("legend names the on-chain marker", body.includes("On-chain"));
+
+  // Attribution. The claim an on-chain row makes is only as good as the reader's ability to go
+  // and check it, so the block has to be on the row — not only inside the link's href.
+  const halving = await page
+    .locator("[data-event-row], a", { hasText: /block reward drops to 3\.125/ })
+    .first()
+    .innerText()
+    .catch(() => "");
+  check("the row names the chain and block", /Bitcoin · block 840,000/.test(halving), halving.replace(/\n/g, " · "));
+  check(
+    "the explorer is credited as the lookup, not the fact",
+    /block 840,000 · via mempool\.space/.test(halving.replace(/\n/g, " ")),
+    halving.replace(/\n/g, " · ")
+  );
+  check("the footer credits the explorers", /mempool\.space|Blockscout/.test(body));
+  check(
+    "the footer says the chain is the source, not the explorer",
+    /read from the chains themselves/i.test(body)
+  );
 }
 
 async function comparePage(page: Page): Promise<void> {

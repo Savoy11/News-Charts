@@ -66,7 +66,10 @@ export async function getBitcoinHalvings(maxEpochs = 6): Promise<TimelineEvent[]
           `protocol, not decided by anyone.`,
         url: block.web,
         ref: `btc-block-${height}`,
-        sourceLabel: `Bitcoin block ${height.toLocaleString("en-US")} (${block.label})`,
+        // The explorer alone. The block height is the event's chain reference and the row
+        // renders it there; repeating it here read as "Bitcoin block 840,000 · via Bitcoin
+        // block 840,000", and credited the explorer with the fact rather than with the lookup.
+        sourceLabel: block.label,
       })
     );
   }

@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { chainRefOf, parseChainRef } from "../lib/onchain/attribution";
 config({ path: ".env.local" });
 
 /**
@@ -153,11 +154,42 @@ async function usdc() {
   check("no key → adapter sits out", (await getUsdcSupplyMoves()).length === 0);
 }
 
+async function attribution(): Promise<void> {
+  console.log("\nChain attribution");
+  // The row shows the block and credits the explorer separately, so the reference has to survive
+  // the round trip through the database — the read path used to drop external_id entirely.
+  check("a block ref reads back as its chain and height", (() => {
+    const r = parseChainRef("btc-block-840000");
+    return r?.chain === "Bitcoin" && r.label === "block 840,000";
+  })(), JSON.stringify(parseChainRef("btc-block-840000")));
+  check("digits are grouped", parseChainRef("eth-block-15537394")?.label === "block 15,537,394", parseChainRef("eth-block-15537394")?.label);
+  // Both ends of a hash are what a reader compares against an explorer; the middle is not.
+  const hash = "eth-tx-0x1f4c9a2b3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8";
+  check("a tx hash is elided in the middle, not truncated",
+    parseChainRef(hash)?.label.startsWith("tx 0x1f4c9a") === true && parseChainRef(hash)!.label.endsWith("c6d7e8"),
+    parseChainRef(hash)?.label);
+  check("a short hash is left alone", parseChainRef("eth-tx-0xabc123")?.label === "tx 0xabc123");
+  check("an unknown chain has no attribution to show", parseChainRef("sol-block-1") === null);
+  check("a malformed height is refused, not printed", parseChainRef("btc-block-eight") === null);
+  check("a malformed hash is refused", parseChainRef("eth-tx-nothex") === null);
+  check("nothing in, nothing out", parseChainRef(undefined) === null);
+  // Only on-chain rows have a chain to point at; a filing's external id is an accession number.
+  check("a filing is not given a chain reference", chainRefOf({
+    id: "db-1", date: "2026-02-17", type: "filing", title: "10-K", source: "SEC EDGAR",
+    externalId: "btc-block-840000",
+  }) === null);
+  check("an on-chain row is", chainRefOf({
+    id: "db-2", date: "2024-04-20", type: "onchain", title: "Halving", source: "mempool.space",
+    externalId: "btc-block-840000",
+  })?.chain === "Bitcoin");
+}
+
 async function main(): Promise<void> {
   try {
     await bitcoin();
     await ethereum();
     await usdc();
+    await attribution();
   } finally {
     globalThis.fetch = realFetch;
   }

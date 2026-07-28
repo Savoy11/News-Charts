@@ -5,6 +5,7 @@ import { EventType, TimelineEvent } from "@/lib/types";
 import { waybackUrl } from "@/lib/wikidata";
 import { loadJSON, saveJSON } from "@/lib/viewState";
 import { toneOf } from "@/lib/sentiment";
+import ChainRef from "./ChainRef";
 import EventThumb from "./EventThumb";
 
 const BADGE: Record<EventType, { label: string; cls: string }> = {
@@ -61,6 +62,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium text-slate-200">{ev.title}</span>
         <span className="mt-0.5 block text-xs text-slate-500">
+          <ChainRef ev={ev} />
           {ev.source}
           {ev.url ? " ↗" : ""}
           {ev.description ? ` · ${ev.description}` : ""}

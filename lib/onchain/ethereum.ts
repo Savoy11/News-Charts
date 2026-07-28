@@ -16,6 +16,9 @@ import type { TimelineEvent } from "../types";
  */
 const BLOCKSCOUT = "https://eth.blockscout.com/api/v2/blocks";
 const EXPLORER_WEB = "https://etherscan.io/block";
+// Blockscout answers the timestamp; Etherscan is where the link sends a reader. Naming both is
+// the honest credit — one did the lookup, the other is the page you land on.
+const EXPLORER_LABEL = "Blockscout · Etherscan";
 
 interface Milestone {
   block: number;
@@ -80,7 +83,7 @@ export async function getEthereumMilestones(): Promise<TimelineEvent[]> {
         description: m.description,
         url: `${EXPLORER_WEB}/${m.block}`,
         ref: `eth-block-${m.block}`,
-        sourceLabel: `Ethereum block ${m.block.toLocaleString("en-US")}`,
+        sourceLabel: EXPLORER_LABEL,
       })
     );
   }

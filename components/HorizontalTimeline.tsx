@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { EventType, TimelineEvent } from "@/lib/types";
 import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT, type TimelinePrefs } from "@/lib/prefs";
+import ChainRef from "./ChainRef";
 import EventThumb from "./EventThumb";
 
 const CARD_W = 244;
@@ -133,6 +134,7 @@ function EventCard({ ev, style }: { ev: TimelineEvent; style: React.CSSPropertie
         {ev.title}
       </span>
       <span className="mt-1.5 block truncate text-[11px] text-slate-500">
+        <ChainRef ev={ev} />
         {ev.source}
         {ev.url ? " ↗" : ""}
       </span>
@@ -864,6 +866,9 @@ function StackRow({ ev }: { ev: TimelineEvent }) {
         <span className="mt-1 line-clamp-2 block text-xs font-medium leading-snug text-slate-200">
           {ev.title}
         </span>
+        {/* No chain reference here: this card is the condensed stack entry, one truncated line
+            wide, and a block height would push the explorer's name off it. The full card and the
+            list both carry it. */}
         <span className="mt-0.5 block truncate text-[10px] text-slate-500">
           {ev.source}
           {ev.url ? " ↗" : ""}

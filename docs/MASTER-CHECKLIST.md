@@ -272,7 +272,21 @@ machine closes that gap.
       5/s, 100k/day) aren't exceeded by scheduled ingest.
 - [ ] `P1` **AI-cost discipline:** on-chain is high-volume — filter before enrichment; rely on
       content-hash keying so unchanged events are never re-paid for.
-- [ ] `P2` **Attribution UI:** render chain/explorer attribution on event cards + footer.
+- [x] ~~`P2` **Attribution UI:** render chain/explorer attribution on event cards + footer.~~ —
+      done 2026-07-28. An on-chain row now reads `Bitcoin · block 840,000 · via mempool.space`,
+      and the footer credits the explorers separately from the other sources.
+      The ordering is the argument. The chain is where the fact comes from; the explorer only
+      read it for us, and any other explorer would answer the same. Leading with the explorer's
+      name credited it with the claim and quietly made the row only as good as one company's
+      uptime. The adapters' source labels were carrying the block height themselves
+      (`Bitcoin block 840,000 (mempool.space)`), which is why they now name the explorer alone.
+      Two things had to be fixed to make this possible at all: `loadEvents` was dropping the
+      attestation's `external_id`, so a stored on-chain row could not say which block it came
+      from even though the value was sitting in the database; and the chart legend check read
+      the whole page for "On-chain", so it started failing the moment the footer mentioned the
+      phrase — it now reads the legend element. The condensed stack card is deliberately left
+      without the reference: it is one truncated line wide, and a block height would push the
+      explorer off it.
 
 ### Reference — historical depth (how far back)
 

@@ -360,7 +360,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
         )}
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-400">
+      <div data-chart-legend className="mt-2 flex flex-wrap gap-4 text-xs text-slate-400">
         {/* Derived from what is actually plotted. The legend used to be a hardcoded list of
             company event kinds, so a Bitcoin page advertised "Earnings" and "SEC filing" and
             omitted the on-chain marker it was actually showing. */}

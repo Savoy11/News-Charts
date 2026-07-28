@@ -595,7 +595,8 @@ async function main(): Promise<void> {
         `At block ${Number(height).toLocaleString("en-US")} the subsidy paid to miners fell to ` +
         `${reward} BTC, halving the rate of new issuance. Written into the protocol, not decided by anyone.`,
       type: "onchain" as const,
-      source: `Bitcoin block ${Number(height).toLocaleString("en-US")} (mempool.space)`,
+      // the explorer only — the block height is the chain reference, rendered from externalId
+      source: "mempool.space",
       url: `https://mempool.space/block/${height}`,
       sourceKey: "onchain" as const,
       externalId: `btc-block-${height}`,

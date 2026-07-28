@@ -21,6 +21,11 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
   **Efficiency** (ROI — value ÷ effort), **Practicality** (readiness — dependencies, risk, is it
   already built). Priority is the net of the three.
 - Check a box when done; add sub-bullets for notes/links as we go.
+- **Check the box in the same change that ships the work.** A 2026-07-28 audit against the code
+  found seven items sitting open that were already built — including this initiative's own
+  headline `P0` (Wikipedia citation mining, shipped in PR #9) — plus one item duplicated across
+  two sections. A checklist that overstates what is left is as misleading as one that overstates
+  what is done: it hides the real remaining work behind noise.
 
 ---
 
@@ -92,8 +97,16 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
       (adapter degrades gracefully to off).
 - [ ] **Yahoo Finance RSS** — gray zone (headline+link+date with click-through). Review the ToS at
       ship time; if uncomfortable, disable the adapter.
-- [ ] Keyless public-domain / open sources — SEC EDGAR, Federal Register, Chronicling America,
-      Wikipedia (CC BY-SA, attribution rendered), GDELT — nothing to do, confirm attribution shows.
+- [x] Keyless public-domain / open sources — SEC EDGAR, Federal Register, Chronicling America,
+      Wikipedia (CC BY-SA), GDELT — nothing to license. **Attribution confirmed rendering**
+      2026-07-28 against the seeded corpus: every event row carries its source label and an
+      outward link (84 on one company page — "Wikipedia: History of Ford Motor Company",
+      "Chronicling America: Detroit Free Press", "SEC EDGAR", "Federal Register", outlet names
+      for news), and the footer credits Yahoo, SEC EDGAR, GDELT, the Library of Congress and
+      Wikipedia's CC BY-SA. The rendering path is the same whatever a row was fetched from, so
+      this holds for live data too — what it does *not* prove is that each live adapter labels
+      its rows the way the seed does, which is the inconsistency the owner-backlog
+      source-labelling item is about.
 - [x] ~~Optional hardening:~~ **`COMMERCIAL_MODE=true` is built** (2026-07-28) — and it was not
       optional, because it turned out to be the *only* thing guarding the path that matters.
       `assertCommercialOk` refuses non-commercial sources in `scripts/ingest.ts`, but **the site
@@ -129,8 +142,14 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
 - [ ] Keys valid under production quotas (Newsdata 200/day, GNews 100/day, NYT/Guardian limits)
       with the 6h/1h cache windows doing the rate-limiting.
 - [ ] Dedup sanity: the same story from two repositories collapses to one event (URL dedup).
-- [ ] Attribution renders on every surface (source label + outward link on list rows, cards,
-      chart popup).
+- [x] Attribution renders on every surface — **all three verified 2026-07-28** against the
+      seeded corpus. List rows and cards: 84 outward links on one company page, each with its
+      source label. Chart crosshair popup: sweeping the price line pops the day's events, each
+      showing its source ("SEC EDGAR") and wrapped in an outward link. Footer credits every
+      source family including Wikipedia's CC BY-SA. What this does **not** prove is that each
+      *live* adapter labels its rows the way the seed does — that inconsistency (GDELT reports
+      bare domains, NYT/Guardian report publication names) is the owner-backlog
+      source-labelling item, and it stays open.
 - [ ] Run from the production host, not a dev box — several sources behave differently from
       datacenter IPs.
 
@@ -273,14 +292,19 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
 
 ### Backlog
 
-- [ ] `P0` **Mine Wikipedia *citations*** (the References list) into distinct, dated source
-      events instead of only slicing prose; demote prose-sentence events to connective narrative
-      and cap them. *Keyless. Directly fixes the "all events link the same article" redundancy —
-      the reason this initiative exists.*
+- [x] ~~`P0` **Mine Wikipedia *citations***~~ — **shipped in PR #9** (merged 2026-07-27).
+      `lib/wiki.ts` parses each article's `{{cite …}}` templates into a `citation` event kind
+      (migration `007`), deduped by URL and spread-capped at 160; prose is demoted to connective
+      narrative (1 sentence/year, 40/page). This was the item the initiative was named for.
 - [ ] `P1` **Internet Archive adapter** (advancedsearch + Wayback CDX) — keyless archive search.
-- [ ] `P1` **NYT Article Search adapter** (archive to 1851) — free BYO key, plumbed like the
-      AI-model key (stays in the browser / server env, never in the shared corpus).
-- [ ] `P1` **Guardian Open Platform adapter** (to 1999) — free BYO key, same plumbing.
+      **The biggest unbuilt lever left in this initiative**, and immune to key expiry or a
+      licensing change, which none of the eight keyed feeds are. (The hardening list below
+      carried a duplicate of this item; it now points here.)
+- [x] ~~`P1` **NYT Article Search adapter** (archive to 1851)~~ — **shipped in PR #9**
+      (`getNytNews`). ⚠ Plumbed as a **server** env key, not the browser-side BYO pattern the
+      item asked for — see the BYO-key item under Cross-cutting, which is still open.
+- [x] ~~`P1` **Guardian Open Platform adapter** (to 1999)~~ — **shipped in PR #9**
+      (`getGuardianNews`), same server-env caveat as NYT above.
 - [ ] `P2` **Google Programmable Search** (Custom Search JSON API) as a **present-day discovery
       layer only** — accept the 100/day free cap and weak historical date-filtering; it searches
       the live web, not archives, so it is *not* a time machine.
@@ -291,13 +315,20 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
 
 ### Cross-cutting
 
-- [ ] `P1` **Licensing gate:** every source carries `commercialOk` + license in `SOURCES`; only
-      commercial-safe sources feed the ad-supported path (same discipline as the on-chain and
-      Google-News-RSS bars).
+- [x] ~~`P1` **Licensing gate**~~ — done 2026-07-28. Every source carries `commercialOk` + a
+      licence note in `SOURCES`, and `COMMERCIAL_MODE=true` now enforces the second half — only
+      commercial-safe sources can feed the ad-supported path. See the feed gate above for how it
+      works and `npm run check:commercial-mode` for the proof.
 - [ ] `P1` **BYO-key plumbing** for the keyed sources (NYT, Guardian, discovery engine) — mirror
-      the AI-model-key pattern; keys never touch the shared server state.
-- [ ] `P1` **Dedup basis = article URL**, so the same wire story surfaced by two engines collapses
-      to one event (mirrors the existing GDELT dedup rule).
+      the AI-model-key pattern; keys never touch the shared server state. **Still open, and the
+      shipped NYT/Guardian adapters do not do this**: they read a *server* env key, so the
+      operator pays the quota and wears the licence. Moving them browser-side would make each
+      visitor's own key the licensee — which is a materially different answer to the
+      non-commercial-tier problem in the feed gate, and worth weighing against buying licences.
+- [x] ~~`P1` **Dedup basis = article URL**~~ — shipped in PR #9: `dedupByUrl` in
+      `lib/newsExtra.ts` merges every repository's results, so one wire story surfaced by three
+      outlets collapses to one event. (Cross-*feed* near-duplicate collapsing by headline+day is
+      a separate, still-open item in the hardening list below.)
 - [ ] `P2` **Coverage-map doc** kept current as sources are added, so "how far back can this go"
       is answerable per subject.
 
@@ -329,7 +360,9 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
 - [ ] `P1` **Feed visibility in the UI.** A page silently rendering with 3 of 11 feeds down
       looks fine and misdirects debugging (the CAEP fallback lesson). Per-subject "Sources"
       panel: which feeds contributed, how many articles each — doubles as the attribution
-      display the licenses want. `scripts/check-feeds.ts` covers the CLI half.
+      display the licenses want. **The CLI half is now complete**: `scripts/check-feeds.ts`
+      distinguishes *withheld* ("blocked by COMMERCIAL_MODE", "no KEY set") from *genuinely
+      empty*, which were indistinguishable before. The in-page panel is the remaining half.
 - [ ] `P1` **Finish the approved "Both views" condense.** The horizontal timeline still has no
       collapse-all (list view got one); add the one-click condense control there.
 - [ ] `P2` **Auto-expand on jump.** Chart click-to-jump into a collapsed list section scrolls to
@@ -338,8 +371,8 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
       focus/AI relevance filtering.
 - [ ] `P2` **Month-level date precision** plumb-through (month-only citation dates currently
       land on the 1st with day precision).
-- [ ] `P1` **Internet Archive adapter (keyless).** Still the biggest unbuilt lever for the
-      old-articles goal — and immune to key expiry or licensing changes.
+- [ ] `P1` **Internet Archive adapter (keyless).** → **duplicate**; tracked in the Historical
+      article resurfacing backlog above. Left as a pointer so it isn't picked up twice.
 - [x] ~~`P1` **Merge PR #9 to main**~~ — merged 2026-07-27. `.env.example` now also documents
       all eight news keys and `COMMERCIAL_MODE` (it was committed but listed only
       `DATABASE_URL` and `ANTHROPIC_API_KEY` until 2026-07-28).

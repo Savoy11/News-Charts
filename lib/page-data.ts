@@ -3,6 +3,7 @@ import { getPool } from "./db";
 import { loadEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, loadLastFetched, isStale, type IndustryRef } from "./store/read";
 import { ensureSources, emptyStats, logFetch, upsertEvent, upsertSubject, upsertTopicSubject, linkToIndustry } from "./ingest/store";
 import { selectStaleSources } from "./ingest/refresh";
+import { LOOSE_SOURCES, applyRelevanceFloor, collapseNearDuplicates } from "./newsQuality";
 import { PricePoint, SourceKey, TimelineEvent } from "./types";
 import { getTopicTimeline } from "./wiki";
 import { getPressMentions, dropImplausiblePress } from "./loc";
@@ -233,15 +234,24 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
   ]);
   const firstEventOn = wiki.events[0]?.date ?? null;
   const floor = firstEventOn ? Number(firstEventOn.slice(0, 4)) : 0;
-  const events = dedupByUrl(
-    wiki.events,
-    dropImplausiblePress(pressCandidates, floor),
-    news.slice(0, 30),
-    nyt,
-    guardian,
-    newsdata,
-    gnews,
-    currents
+  // URL dedup first (the same document twice), then story-level collapsing (the same happening
+  // reported by several outlets), then the keyword-search floor.
+  const events = applyRelevanceFloor(
+    collapseNearDuplicates(
+      dedupByUrl(
+        wiki.events,
+        dropImplausiblePress(pressCandidates, floor),
+        news.slice(0, 30),
+        nyt,
+        guardian,
+        newsdata,
+        gnews,
+        currents
+      )
+    ),
+    wiki.title,
+    LOOSE_SOURCES,
+    [topic]
   );
 
   await persistTopic(
@@ -332,18 +342,27 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
   const press = firstStoryYear ? dropImplausiblePress(pressCandidates, firstStoryYear) : [];
   // citations first so a story cited by Wikipedia keeps its curated form when a feed
   // also carries the same URL; every list after it drops duplicates by URL
-  const events = dedupByUrl(
-    [...filings, ...priceData.actions, ...(story?.events ?? []), ...press],
-    news,
-    yahoo,
-    nyt,
-    guardian,
-    newsdata,
-    gnews,
-    currents,
-    marketaux,
-    eodhd,
-    finnhub
+  // Same three passes as the topic path. The floor is given both the legal name and the common
+  // one, because a headline says "Ford", not "Ford Motor Company".
+  const events = applyRelevanceFloor(
+    collapseNearDuplicates(
+      dedupByUrl(
+        [...filings, ...priceData.actions, ...(story?.events ?? []), ...press],
+        news,
+        yahoo,
+        nyt,
+        guardian,
+        newsdata,
+        gnews,
+        currents,
+        marketaux,
+        eodhd,
+        finnhub
+      )
+    ),
+    company.name,
+    LOOSE_SOURCES,
+    [commonName(company.name), company.ticker]
   );
 
   await persist(

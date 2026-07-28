@@ -393,11 +393,30 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
       Four offline suites are now committed and run together with `npm run check`:
       `check:prompt` (24), `check:onchain` (22), `check:commercial-mode` (16), `check:refresh`
       (12). This item is what remains.
-- [ ] `P1` **Noise control for the aggregators.** Keyword search across four general aggregators
-      pulls junk (listicles, passing mentions). Add a server-side relevance floor (title must
-      mention the subject; Marketaux/EODHD ticker tags are free wins) and near-duplicate
-      collapsing across feeds — dedup is exact-URL today, so one wire story from three outlets
-      shows three times (extend GDELT's headline+day rule cross-feed).
+- [x] ~~`P1` **Noise control for the aggregators**~~ — done 2026-07-28 (`lib/newsQuality.ts`,
+      `npm run check:news-quality`, 23 cases). Both halves are pure functions, because each can
+      fail silently in opposite directions: too loose and a timeline carries three copies of one
+      wire story plus a listicle, too tight and a real story vanishes with nothing to show it
+      ever arrived.
+      - **Near-duplicate collapsing.** ⚠ This was not just a merge-time gap.
+        `docs/EVENTS-SCHEMA.md` has always specified that a news event keys on **headline +
+        publication date** — *"an AP story syndicated to 50 papers → one row, 50 attestations"* —
+        and GDELT did exactly that, but **every other adapter keyed on its own URL**, so one wire
+        story reaching us through three aggregators became three rows in the database, not just
+        three rows on a page. All nine now use `storyKey`, which restores the documented contract
+        and makes the attestation count the corroboration signal the schema intends.
+        Normalisation strips a trailing *capitalised* masthead ("… — Reuters", "… | CNBC") and
+        leading tags ("Exclusive:"), and the collapse keeps the **richest** copy rather than the
+        first, since aggregators differ in whether they return a description or an image.
+      - **Relevance floor.** A headline must name the subject by a *distinctive* token — matching
+        on "motor" or "company" would let anything through. Applied **only** to the three
+        keyword-searched general aggregators; the finance-native feeds query by ticker and their
+        own entity tagging is better evidence than anything we could infer from a title, and
+        GDELT has its own handling.
+      - ⚠ **Thresholds are unverified against live data.** The tests fix the *behaviour*; whether
+        the floor is too aggressive on real headlines ("Automaker recalls SUVs" names no subject
+        and would be dropped) needs a run against live aggregators. Worth watching the Sources
+        panel counts after `npm run ingest -- --ticker F`.
 - [x] ~~`P1` **Per-source refresh windows + quota safety**~~ — done 2026-07-28.
       Freshness was all-or-nothing on `subjects.refreshed_at`: once a subject aged past its TTL,
       **every** source was refetched together. Worse, the page path never wrote `source_fetches`

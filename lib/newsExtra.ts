@@ -1,11 +1,18 @@
 import { TimelineEvent } from "./types";
 import { licensedKey } from "./ingest/store";
+import { storyKey } from "./newsQuality";
 
 /**
  * Additional news repositories beyond GDELT, so a subject's coverage isn't one feed's
  * opinion. Each fetcher is failure-isolated (returns [] on any error) and the keyed ones
  * skip silently when their env key is absent — pages must never depend on an optional
- * source being up. Dedup across repositories happens at merge time, by article URL.
+ * source being up.
+ *
+ * **Identity is the story, not the document.** `docs/EVENTS-SCHEMA.md` has always specified
+ * that a news event keys on headline + publication date — "an AP story syndicated to 50 papers
+ * → one row, 50 attestations" — but every adapter here keyed on its own URL, so one wire story
+ * reaching us through three aggregators became three rows. `storyKey` restores the documented
+ * contract, and the attestation count becomes the corroboration signal the schema intends.
  *
  * Keys come from `licensedKey`, not `process.env` directly: eight of these sources are on
  * non-commercial tiers today, and `COMMERCIAL_MODE=true` withholds their key so a forgotten
@@ -95,7 +102,7 @@ export async function getYahooFinanceNews(ticker: string): Promise<TimelineEvent
         imageUrl: item.image,
         sourceKey: "yahoo_finance",
         externalId: item.link,
-        dedupBasis: item.link,
+        dedupBasis: storyKey(item.title, day),
       });
       if (events.length >= 25) break;
     }
@@ -154,7 +161,7 @@ export async function getNytNews(query: string): Promise<TimelineEvent[]> {
         imageUrl: nytImage(doc.multimedia),
         sourceKey: "nyt",
         externalId: doc.web_url,
-        dedupBasis: doc.web_url,
+        dedupBasis: storyKey(title, day),
       });
     }
     return events;
@@ -205,7 +212,7 @@ export async function getGuardianNews(query: string): Promise<TimelineEvent[]> {
         imageUrl: thumb && /^https?:\/\//i.test(thumb) ? thumb : undefined,
         sourceKey: "guardian",
         externalId: r.webUrl,
-        dedupBasis: r.webUrl,
+        dedupBasis: storyKey(r.webTitle!, day),
       });
     }
     return events;
@@ -261,7 +268,7 @@ export async function getNewsdataNews(query: string): Promise<TimelineEvent[]> {
           r.image_url && /^https?:\/\//i.test(r.image_url) ? r.image_url : undefined,
         sourceKey: "newsdata",
         externalId: r.link,
-        dedupBasis: r.link,
+        dedupBasis: storyKey(r.title, day),
       });
       if (events.length >= 25) break;
     }
@@ -311,7 +318,7 @@ export async function getGnewsNews(query: string): Promise<TimelineEvent[]> {
         imageUrl: a.image && /^https?:\/\//i.test(a.image) ? a.image : undefined,
         sourceKey: "gnews",
         externalId: a.url,
-        dedupBasis: a.url,
+        dedupBasis: storyKey(a.title, day),
       });
     }
     return events;
@@ -360,7 +367,7 @@ export async function getCurrentsNews(query: string): Promise<TimelineEvent[]> {
         imageUrl: n.image && /^https?:\/\//i.test(n.image) ? n.image : undefined,
         sourceKey: "currents",
         externalId: n.url,
-        dedupBasis: n.url,
+        dedupBasis: storyKey(n.title, day),
       });
       if (events.length >= 25) break;
     }
@@ -414,7 +421,7 @@ export async function getMarketauxNews(query: string, symbol?: string): Promise<
           n.image_url && /^https?:\/\//i.test(n.image_url) ? n.image_url : undefined,
         sourceKey: "marketaux",
         externalId: n.url,
-        dedupBasis: n.url,
+        dedupBasis: storyKey(n.title, day),
       });
     }
     return events;
@@ -466,7 +473,7 @@ export async function getEodhdNews(ticker: string): Promise<TimelineEvent[]> {
         description: (n.content ?? "").replace(/\s+/g, " ").trim().slice(0, 240) || undefined,
         sourceKey: "eodhd",
         externalId: n.link,
-        dedupBasis: n.link,
+        dedupBasis: storyKey(n.title, day),
       });
     }
     return events;
@@ -517,7 +524,7 @@ export async function getFinnhubNews(ticker: string): Promise<TimelineEvent[]> {
         imageUrl: n.image && /^https?:\/\//i.test(n.image) ? n.image : undefined,
         sourceKey: "finnhub",
         externalId: n.url,
-        dedupBasis: n.url,
+        dedupBasis: storyKey(n.headline!.trim(), day),
       });
       if (events.length >= 40) break;
     }

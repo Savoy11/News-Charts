@@ -308,6 +308,10 @@ const EV_CITATIONS: [string, string, string][] = [
   ["2024-03-21", "EPA Finalises Vehicle Emissions Rules", "Associated Press"],
 ];
 
+/** `npm run db:seed-demo -- --stress` — the fixture `npm run profile:list` measures against. */
+const STRESS = process.argv.includes("--stress");
+const STRESS_EVENTS = 600;
+
 async function main(): Promise<void> {
   const pool = getPool();
   const client = await pool.connect();
@@ -500,6 +504,48 @@ async function main(): Promise<void> {
       );
     }
 
+    // ------------------------------------------------- a deliberately huge subject
+    // The checklist asks whether large lists need windowing, and that is a question about
+    // measurement, not opinion. `--stress` seeds a subject big enough to answer it, for
+    // `npm run profile:list`.
+    //
+    // Every event is a citation, because that is the kind with no ceiling on it. Wikipedia
+    // history is already sampled down to 60 rows by `capHistory`, so seeding history would
+    // measure that cap rather than the list; a subject cited a few hundred times is the case
+    // that actually reaches EventList unthinned.
+    //
+    // Off by default: it is a fixture, not a demo. Left in, it would sit in /explore and in the
+    // suggestion index as though it were something a reader might want to look at.
+    if (STRESS) {
+      const bigId = await upsertTopicSubject(client, {
+        searchTerm: "stress test",
+        wikipediaTitle: "Stress test (timeline rendering)",
+        displayName: "Stress test",
+        summary:
+          "A deliberately oversized timeline, seeded to measure list rendering at scale. Not a " +
+          "real subject — it exists so the question of whether large lists need windowing can " +
+          "be answered with a number.",
+        firstEventOn: "1900-01-01",
+      });
+      const bulk: Seed[] = [];
+      for (let i = 0; i < STRESS_EVENTS; i++) {
+        const d = new Date(Date.UTC(1900, 0, 1) + i * 55 * 86_400_000).toISOString().slice(0, 10);
+        bulk.push({
+          date: d,
+          title: `Stress event ${i + 1} — a headline of roughly the length a real one runs to`,
+          description: "Seeded to measure rendering at scale; carries no meaning.",
+          type: "citation",
+          source: "Sample publication",
+          url: `https://example.com/stress/${i}`,
+          sourceKey: "wikipedia" as const,
+          externalId: `stress-${i}`,
+        });
+      }
+      await client.query("BEGIN");
+      for (const e of bulk) await upsertEvent(client, ev(e), bigId, stats);
+      await client.query("COMMIT");
+    }
+
     // -------------------------------------------------------- crypto
     // Phase 0's demo: a Bitcoin halving read against the BTC price chart. Modelled as a topic
     // (no CIK or ticker to give it, and the schema is right to refuse a company without one),
@@ -564,6 +610,7 @@ async function main(): Promise<void> {
     console.log(
       `\n  Seeded 5 subjects — /company/f, /company/gm, /topic/electric%20cars, /topic/btc, ` +
         `/industry/${industrySlug}\n` +
+        (STRESS ? `  plus /topic/stress%20test — ${STRESS_EVENTS} events, for profiling\n` : "") +
         `  ${stats.events} events (${stats.newEvents} new), ${stats.attestations} attestations, ` +
         `${days.length} trading days of prices for two tickers.\n`
     );

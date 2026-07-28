@@ -122,7 +122,7 @@ async function companyPage(page: Page): Promise<void> {
 
   // Tone dots: shown only where a headline actually reads one way, never on a filing.
   const tones = await page.evaluate(() => {
-    const rows = [...document.querySelectorAll(".flex.items-start.gap-2.p-3")];
+    const rows = [...document.querySelectorAll("[data-event-row]")];
     return rows.map((r) => ({
       text: (r as HTMLElement).innerText.slice(0, 80),
       tone: r.querySelector("span.bg-emerald-400, span.bg-red-400")
@@ -221,7 +221,7 @@ async function jumpOpensSection(page: Page): Promise<void> {
 
   // Scoped to EventList's own row class — a looser selector also catches the pre-IPO
   // horizontal timeline's cards, which are never collapsed and would mask the result.
-  const listRows = () => page.locator(".flex.items-start.gap-2.p-3").count();
+  const listRows = () => page.locator("[data-event-row]").count();
   const rowsWhenShut = await listRows();
   check("collapse all really closes the sections", rowsWhenShut === 0, `${rowsWhenShut} rows still shown`);
 

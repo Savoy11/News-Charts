@@ -517,10 +517,22 @@ rather than accepted. Verdicts recorded so nobody re-litigates them:
       queries are parameterized `$1`); it only rides the URL and pre-fills the visitor's own
       client-side AI instruction box, run against their own key. No server-side LLM ever sees
       it.
-- [ ] `P2` **Virtualize very large event lists** — the one claim with substance: no windowing
-      exists, so a 500+-event timeline renders every row. Current mitigations (160-citation
-      cap, filing stacks, collapsible sections, stacking) keep it acceptable; add
-      virtualization (or render-on-expand) if profiling shows scroll jank on big subjects.
+- [x] ~~`P2` **Virtualize very large event lists**~~ — **measured, not needed** 2026-07-28.
+      The item's own trigger was "if profiling shows scroll jank", so it was profiled rather
+      than assumed: `npm run db:seed-demo -- --stress` seeds a 600-event subject (all
+      `citation`, the kind with no cap on it — Wikipedia history is already sampled to 60 by
+      `capHistory`, so seeding history would have measured the cap instead of the list), and
+      `npm run profile:list` drives it against a production build. At 600 rows — 10,362 DOM
+      nodes, 96,480px of page, 13.3MB heap — scrolling holds 60fps: frame p50 16.6ms, p95
+      18.0ms, worst 22.0ms, **zero frames over 50ms**, indistinguishable from the 36-row
+      baseline (p50 16.6 / p95 18.8). There is no scroll jank to fix.
+      The only cost that scales is mounting: remounting all rows after a filter toggle takes
+      335ms vs 83ms at 36 rows. That is the part windowing would speed up, and it is not worth
+      what it would break — rows must stay in the DOM for browser find-in-page and for the
+      `dateAnchorId` targets that the price chart and Biggest-moves cards scroll to. The
+      codebase already carries `CollapsedAnchors` as zero-height stand-ins precisely because
+      one collapsed section removing rows broke those jumps; windowing would mean that
+      workaround everywhere, permanently. Re-run the profiler if the caps ever rise.
 
 ## Initiative: Product ideas from external model review · vetted 2026-07-26
 

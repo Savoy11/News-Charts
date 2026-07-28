@@ -79,8 +79,14 @@ export function scoreTone(title: string): Tone {
 
   for (let i = 0; i < words.length; i++) {
     const w = words[i];
-    if (POSITIVE.has(w)) negatedAt(i) ? negative++ : positive++;
-    else if (NEGATIVE.has(w)) negatedAt(i) ? positive++ : negative++;
+    const flipped = negatedAt(i);
+    if (POSITIVE.has(w)) {
+      if (flipped) negative++;
+      else positive++;
+    } else if (NEGATIVE.has(w)) {
+      if (flipped) positive++;
+      else negative++;
+    }
   }
 
   if (positive > 0 && negative > 0) return "neutral"; // mixed — say nothing

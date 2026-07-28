@@ -73,9 +73,12 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
     </>
   );
 
-  if (!ev.url) return <div className={ROW_CLASS}>{body}</div>;
+  // data-event-row is a handle for the browser checks and the list profiler: counting rows by
+  // their utility classes broke the moment the classes changed, and silently passed.
+  if (!ev.url) return <div className={ROW_CLASS} data-event-row>{body}</div>;
   return (
     <a
+      data-event-row
       href={ev.url}
       target="_blank"
       rel="noopener noreferrer"

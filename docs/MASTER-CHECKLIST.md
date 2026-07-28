@@ -601,9 +601,23 @@ Each idea checked against the codebase before listing — several were cheaper t
       table and not the other would render as a marker on one page and nothing on the next,
       which reads as missing data rather than as a bug. `npm run check:markers` covers the
       edge cases that are invisible on screen (weekend snapping, busy days, pre-window drops).
-- [ ] `P2` **Compare: industry-news intersection** — BABA vs JD under one regulatory headline,
-      via the existing sector-event machinery. The remaining half of the compare item: an event
-      that hit both sides should be legible as *one* happening, not as two coincidental markers.
+- [x] ~~`P2` **Compare: industry-news intersection**~~ — done 2026-07-28. An event that landed on
+      both subjects now reads as one happening: a single diamond on the strip's axis rather than
+      a dot on each side, one row in the combined timeline chipped to both, and a count. Two
+      companies under one regulation is a different fact from two companies that each had
+      something happen on a Tuesday, and drawing it twice stated the weaker one.
+      Identity is deliberately narrow. Sector events match on their database id, because both
+      members genuinely read the same row; news, press and cited articles match on headline and
+      day through the same normalisation that collapses syndicated copies. Everything else is
+      unshared by construction — the first build merged Ford's and GM's identically-titled 10-K
+      and called a filing calendar a shared event. `npm run check:compare` pins both directions:
+      missing an intersection understates, inventing one misleads.
+      Two fixture bugs surfaced and are fixed: the demo seed hung the Federal Register rule on
+      Ford instead of on the industry, where `scripts/ingest.ts` puts it and `loadSectorEvents`
+      looks for it — so GM never saw a rule that hit its whole sector; and seeded events keyed
+      their dedup basis without the subject, so two companies' boilerplate filings collapsed into
+      one database row. Every real adapter scopes its own basis (EDGAR keys on the accession
+      number); the fixture now does too.
 - [x] ~~`P2` **Private annotations on the timeline**~~ — done 2026-07-28. Note / Entry / Exit
       pinned to a date on any company or topic timeline, rendered as a cyan marker through the
       same machinery as everything else, and stored per subject path in this browser only.

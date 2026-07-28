@@ -91,9 +91,17 @@ function priceSeries(
 
 type Seed = Omit<TimelineEvent, "id"> & { id?: string };
 
-/** Ingest identity is the dedup basis; keep it stable and unique per seeded event. */
-function ev(e: Seed): TimelineEvent {
-  const id = e.id ?? `seed-${e.sourceKey}-${e.date}-${e.title.slice(0, 40)}`;
+/**
+ * Ingest identity is the dedup basis; keep it stable and unique per seeded event.
+ *
+ * `scope` is the subject the event belongs to, and leaving it out was a real bug: filing titles
+ * are boilerplate, so Ford's and GM's identically-titled 10-K on one day hashed to the same key
+ * and became a single database row owned by both. Every real adapter scopes its own basis —
+ * EDGAR keys on the accession number — so a fixture that does not models the schema wrongly and
+ * invents a shared event out of a filing calendar.
+ */
+function ev(e: Seed, scope = ""): TimelineEvent {
+  const id = e.id ?? `seed-${scope ? `${scope}-` : ""}${e.sourceKey}-${e.date}-${e.title.slice(0, 40)}`;
   return { ...e, id, dedupBasis: e.dedupBasis ?? id };
 }
 
@@ -238,7 +246,15 @@ const FORD_ACTIONS: Seed[] = [
   },
 ];
 
-const FORD_REGULATION: Seed[] = [
+/**
+ * A sector rule, attached to the *industry* rather than to a company — which is where
+ * `scripts/ingest.ts` puts Federal Register results, and where `loadSectorEvents` looks for them.
+ *
+ * The seed used to hang this on Ford. It looked right on Ford's page and was wrong everywhere
+ * else: GM never saw a rule that hit its whole sector, and /compare could not tell that one
+ * regulation had landed on both. A fixture that models the schema loosely tests nothing.
+ */
+const SECTOR_REGULATION: Seed[] = [
   {
     date: "2026-03-18",
     title: "NHTSA proposes updated fuel economy standards for light trucks",
@@ -358,11 +374,10 @@ async function main(): Promise<void> {
       ...FORD_FILINGS,
       ...FORD_EARNINGS,
       ...FORD_NEWS,
-      ...FORD_REGULATION,
       ...FORD_ACTIONS,
     ];
     await client.query("BEGIN");
-    for (const e of fordEvents) await upsertEvent(client, ev(e), fordId, stats);
+    for (const e of fordEvents) await upsertEvent(client, ev(e, "f"), fordId, stats);
     await client.query("COMMIT");
 
     // ------------------------------------------------------------ GM
@@ -382,7 +397,7 @@ async function main(): Promise<void> {
     });
 
     await client.query("BEGIN");
-    for (const e of GM_EVENTS) await upsertEvent(client, ev(e), gmId, stats);
+    for (const e of GM_EVENTS) await upsertEvent(client, ev(e, "gm"), gmId, stats);
     await client.query("COMMIT");
 
     await seedFetchLog(fordId, [
@@ -398,14 +413,15 @@ async function main(): Promise<void> {
     ]);
 
     // ------------------------------------------------------ industry
-    const { slug: industrySlug } = await linkToIndustry(client, fordId, {
-      sic: "3711",
-      description: "Motor Vehicles & Passenger Car Bodies",
-    });
-    await linkToIndustry(client, gmId, {
-      sic: "3711",
-      description: "Motor Vehicles & Passenger Car Bodies",
-    });
+    const SIC_3711 = { sic: "3711", description: "Motor Vehicles & Passenger Car Bodies" };
+    const { slug: industrySlug, industryId } = await linkToIndustry(client, fordId, SIC_3711);
+    await linkToIndustry(client, gmId, SIC_3711);
+
+    // The rule lands on the industry, so both members read it off the same row — which is what
+    // lets /compare say one regulation hit both rather than showing two coincidental markers.
+    await client.query("BEGIN");
+    for (const e of SECTOR_REGULATION) await upsertEvent(client, ev(e, "sic-3711"), industryId, stats);
+    await client.query("COMMIT");
 
     // --------------------------------------------------------- topic
     const topicId = await upsertTopicSubject(client, {
@@ -459,7 +475,7 @@ async function main(): Promise<void> {
       })),
     ];
     await client.query("BEGIN");
-    for (const e of topicEvents) await upsertEvent(client, ev(e), topicId, stats);
+    for (const e of topicEvents) await upsertEvent(client, ev(e, "ev-cars"), topicId, stats);
     await client.query("COMMIT");
 
     // -------------------------------------------------------- prices
@@ -542,7 +558,7 @@ async function main(): Promise<void> {
         });
       }
       await client.query("BEGIN");
-      for (const e of bulk) await upsertEvent(client, ev(e), bigId, stats);
+      for (const e of bulk) await upsertEvent(client, ev(e, "stress"), bigId, stats);
       await client.query("COMMIT");
     }
 
@@ -587,7 +603,7 @@ async function main(): Promise<void> {
     }));
 
     await client.query("BEGIN");
-    for (const e of halvings) await upsertEvent(client, ev(e), btcId, stats);
+    for (const e of halvings) await upsertEvent(client, ev(e, "btc"), btcId, stats);
     await client.query("COMMIT");
     await seedFetchLog(btcId, [["onchain", "ok", 4]]);
 

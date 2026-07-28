@@ -389,6 +389,29 @@ async function comparePage(page: Page): Promise<void> {
     readout
   );
 
+  // Industry intersection: the seeded sector rule attaches to sic-3711, so both Ford and GM
+  // carry the same row. It has to read as one happening, not as two coincidences on a Tuesday.
+  check("shared events are called out", /hit both/.test(body), body.match(/\d+ events? hit both/)?.[0]);
+  const bothRows = page.locator("li", { hasText: /^Both/ });
+  const bothCount = await bothRows.count();
+  check("a shared event is listed once, not twice", bothCount === 1, `${bothCount} rows`);
+
+  // Assert on the row's own text, not on the page's. Matching the rule's title anywhere in the
+  // body passed while the row was chipped to Ford alone and the sector event was never shared —
+  // the check confirmed the page mentioned a regulation, which was never in doubt.
+  const bothText = bothCount ? await bothRows.first().innerText() : "";
+  check(
+    "the shared row is the sector rule",
+    /NHTSA|fuel economy/i.test(bothText),
+    bothText.replace(/\n/g, " · ")
+  );
+  // Boilerplate is the trap: every issuer files an identically-titled 10-K in the same weeks.
+  check(
+    "a filing calendar is not mistaken for a shared event",
+    !/10-K|10-Q|8-K/.test(bothText),
+    bothText.replace(/\n/g, " · ")
+  );
+
   // The two-subject compose: a topic supplies the events, a company supplies the price.
   // "Donald Trump presidency against Ford stock" is the shape; the seed's stand-in is the
   // electric-car topic against Ford.

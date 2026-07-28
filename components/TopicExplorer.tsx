@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useVisitorFeeds } from "@/lib/useVisitorFeeds";
 import { usePathname } from "next/navigation";
 import HorizontalTimeline from "./HorizontalTimeline";
 import EventList, { dateAnchorId } from "./EventList";
@@ -74,10 +75,13 @@ function encodeView(
 export default function TopicExplorer({
   events,
   prices = [],
+  subject,
 }: {
   events: TimelineEvent[];
   /** Present only for subjects that have a price series — crypto assets today. */
   prices?: PricePoint[];
+  /** what the visitor's own feed keys should be asked about — the topic's title */
+  subject: string;
 }) {
   // Derived from FILTERS rather than repeated — the same duplication in CompanyExplorer left a
   // newly added event kind filtered out by default. A topic's filter list is deliberately
@@ -165,9 +169,12 @@ export default function TopicExplorer({
   }, [pathname]);
 
   const [ranking, setRanking] = useState<AiRanking | null>(null);
+  // Articles the visitor's own keys add. Merged here rather than server-side because they were
+  // fetched under the visitor's licence and must never reach shared storage.
+  const mine = useVisitorFeeds(subject, capped);
   const filtered = useMemo(
-    () => [...capped.filter((e) => active.has(e.type)), ...notes],
-    [capped, active, notes]
+    () => [...[...capped, ...mine].filter((e) => active.has(e.type)), ...notes],
+    [capped, mine, active, notes]
   );
   // ranking narrows and reorders; the timeline still renders chronologically
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);

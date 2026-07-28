@@ -71,7 +71,7 @@ export default async function TopicPage({ params }: { params: { slug: string } }
 
       {data.summary && <TopicSummary text={data.summary} />}
 
-      <TopicExplorer events={data.events} prices={data.prices} />
+      <TopicExplorer events={data.events} prices={data.prices} subject={data.title} />
 
       {/* min-w-0 on both items: a grid item cannot shrink below its own content by default,
           and the source names and attribution lines are long enough to push a phone sideways

@@ -498,6 +498,72 @@ async function searchRouting(page: Page): Promise<void> {
   check("a plain company search is unchanged", /^\/company\/F$/i.test(plain.pathname), plain.pathname);
 }
 
+/**
+ * Bring-your-own feed keys.
+ *
+ * The licensing argument is that the visitor's key makes the visitor the licensee, which only
+ * holds if the key never reaches us. That is an absence, and an absence is exactly what a future
+ * refactor breaks by accident — so this watches every request the page makes and fails if the
+ * key appears in one bound for our own origin, the same way the annotations check does.
+ */
+async function feedKeys(page: Page): Promise<void> {
+  console.log("\nBring-your-own feed keys");
+  await go(page, COMPANY);
+
+  const secret = `byo-key-${Date.now().toString(36)}`;
+  const leaked: string[] = [];
+  const ourOrigin = new URL(BASE!).origin;
+  page.on("request", (r) => {
+    const url = r.url();
+    const body = r.postData() ?? "";
+    if (url.startsWith(ourOrigin) && (url.includes(secret) || body.includes(secret))) leaked.push(url);
+  });
+
+  const gear = page.locator("button[aria-label*='ettings'], button:has-text('⚙')").first();
+  await gear.click();
+  await page.waitForTimeout(800);
+  const body = await visible(page);
+  check("the settings dialog offers feed keys", /News feed keys/.test(body));
+  // The copy has to say why this is the visitor's key rather than ours, because it looks
+  // like a chore and the reason is the entire point.
+  check("and says why they are the visitor's own", /licensee/i.test(body));
+  check("and that nothing fetched is kept", /never saved/i.test(body));
+
+  const field = page.locator("input[data-feed-key]").first();
+  if (!(await field.count())) {
+    check("a key field to type into", false, "not found");
+    return;
+  }
+  await field.fill(secret);
+  await page.locator("button", { hasText: /^Save keys$/ }).first().click();
+  await page.waitForTimeout(600);
+
+  const stored: string | null = await page.evaluate(() =>
+    localStorage.getItem("news-charts:feed-keys:v1")
+  );
+  check("the key is stored in the browser", stored?.includes(secret) === true, stored ? "present" : "absent");
+
+  // Reload with the key set: the timeline must render, and the key must not travel with it.
+  await go(page, COMPANY);
+  check("the timeline still renders with a key set", (await visible(page)).includes("Ford Motor Company"));
+  check("the key never reaches a News Charts origin", leaked.length === 0, leaked.join(", "));
+
+  // Forgetting it has to actually forget it.
+  await page.locator("button[aria-label*='ettings'], button:has-text('⚙')").first().click();
+  await page.waitForTimeout(800);
+  const forget = page.locator("button", { hasText: /^Forget keys$/ }).first();
+  if (await forget.count()) {
+    await forget.click();
+    await page.waitForTimeout(500);
+    const after: string | null = await page.evaluate(() =>
+      localStorage.getItem("news-charts:feed-keys:v1")
+    );
+    check("forgetting removes it", after === null, String(after));
+  } else {
+    check("a forget control appears once a key is stored", false, "not found");
+  }
+}
+
 async function chromeAndRoutes(page: Page): Promise<void> {
   console.log("\nSite chrome");
   await go(page, "/explore");
@@ -571,7 +637,23 @@ async function main(): Promise<void> {
 
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const page = await ctx.newPage();
-  page.on("console", (m) => m.type() === "error" && consoleErrors.push(m.text().slice(0, 200)));
+  /**
+   * A failed cross-origin fetch is logged by the browser itself, not by us, and this container
+   * has no egress. Once the BYO-key check stores a key, the page correctly tries to reach the
+   * publisher and correctly gets nothing — which is the feature working, not the app erroring.
+   *
+   * Narrow on purpose: only the tunnel/DNS shapes a blocked network produces, and only when the
+   * message names a third-party host. Anything our own origin logs still fails the suite.
+   */
+  const BLOCKED_EGRESS = /net::ERR_(TUNNEL_CONNECTION_FAILED|NAME_NOT_RESOLVED|CONNECTION_REFUSED|PROXY_CONNECTION_FAILED)/;
+  page.on("console", (m) => {
+    if (m.type() !== "error") return;
+    const text = m.text().slice(0, 200);
+    const url = m.location()?.url ?? "";
+    const thirdParty = url ? !url.startsWith(new URL(BASE!).origin) : false;
+    if (thirdParty && BLOCKED_EGRESS.test(text)) return;
+    consoleErrors.push(text);
+  });
   page.on("pageerror", (e) => consoleErrors.push(`PAGEERROR ${String(e).slice(0, 200)}`));
 
   try {
@@ -582,7 +664,8 @@ async function main(): Promise<void> {
     await topicPage(page);
     await cryptoTopic(page);
     await comparePage(page);
-    await searchRouting(page);
+    await feedKeys(page);
+  await searchRouting(page);
   await chromeAndRoutes(page);
     await ctx.close();
     await responsive(browser);

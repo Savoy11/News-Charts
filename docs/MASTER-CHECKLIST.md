@@ -385,12 +385,29 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
       licence note in `SOURCES`, and `COMMERCIAL_MODE=true` now enforces the second half — only
       commercial-safe sources can feed the ad-supported path. See the feed gate above for how it
       works and `npm run check:commercial-mode` for the proof.
-- [ ] `P1` **BYO-key plumbing** for the keyed sources (NYT, Guardian, discovery engine) — mirror
-      the AI-model-key pattern; keys never touch the shared server state. **Still open, and the
-      shipped NYT/Guardian adapters do not do this**: they read a *server* env key, so the
-      operator pays the quota and wears the licence. Moving them browser-side would make each
-      visitor's own key the licensee — which is a materially different answer to the
-      non-commercial-tier problem in the feed gate, and worth weighing against buying licences.
+- [x] ~~`P1` **BYO-key plumbing** for the keyed sources~~ — done 2026-07-28 for NYT and the
+      Guardian, mirroring the AI-model-key pattern. `lib/feedKeys.ts` stores the keys in
+      localStorage, `lib/feeds/browser.ts` fetches browser → publisher with no proxy of ours,
+      and `useVisitorFeeds` merges the results into the rendered timeline.
+      **Nothing fetched this way is persisted**, and that absence is the whole feature. Writing
+      those articles into the shared database would make this site the redistributor and undo the
+      licensing argument entirely — so they live for the life of the page and are gone on reload.
+      Parsing is deliberately identical to the server adapters (same fields, same `storyKey`
+      identity, same source key), so an article dedups the same whichever way it arrived.
+      This is now a **real option against the feed gate above**: NYT has no self-serve commercial
+      tier and the Guardian's free key is non-commercial, so under a server key the operator is
+      the licensee — which an ad-supported product cannot be. Under the visitor's key, they are.
+      It does not remove the decision, it prices it: BYO reaches only visitors willing to get a
+      key, so the choice is now "buy licences" versus "deep archive for the motivated few".
+      ⚠ **Unverified live on two counts**, and the second is new: egress is blocked here, and
+      browser-side use additionally depends on each publisher sending permissive CORS headers,
+      which nothing offline can test. **A CORS rejection looks exactly like a wrong key — no
+      articles, no error** — so this needs one run on a real machine with a real key before it is
+      claimed to work. `npm run check:feed-keys` (29 cases) pins the parsing and the failure
+      modes; `check:ui` asserts the key reaches localStorage, never reaches a News Charts origin,
+      and is genuinely forgotten.
+      **Not done:** the discovery engine, which has no adapter yet — it belongs with whichever
+      engine the evaluation item picks.
 - [x] ~~`P1` **Dedup basis = article URL**~~ — shipped in PR #9: `dedupByUrl` in
       `lib/newsExtra.ts` merges every repository's results, so one wire story surfaced by three
       outlets collapses to one event. (Cross-*feed* near-duplicate collapsing by headline+day is

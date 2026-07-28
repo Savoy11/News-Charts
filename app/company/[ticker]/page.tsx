@@ -117,6 +117,7 @@ export default async function CompanyPage({ params }: { params: { ticker: string
               prices={data.prices}
               events={data.events}
               siteDomain={data.siteDomain}
+              subject={data.name}
             />
           ) : (
             <p className="text-slate-500">No price data available for {data.ticker}.</p>

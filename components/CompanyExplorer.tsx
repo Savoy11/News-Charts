@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useVisitorFeeds } from "@/lib/useVisitorFeeds";
 import { usePathname } from "next/navigation";
 import PriceTimeline from "./PriceTimeline";
 import HorizontalTimeline from "./HorizontalTimeline";
@@ -39,9 +40,11 @@ interface Props {
   prices: PricePoint[];
   events: TimelineEvent[];
   siteDomain?: string | null;
+  /** what the visitor's own feed keys should be asked about — the company's common name */
+  subject: string;
 }
 
-export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
+export default function CompanyExplorer({ prices, events, siteDomain, subject }: Props) {
   // Derived from FILTERS, never a second hand-written list: this defaulted to a literal of the
   // seven kinds that existed when it was written, so adding an eighth left it filtered out by
   // default — its chip rendered, inactive, and its rows never appeared. `Set<EventType>` cannot
@@ -97,9 +100,12 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
   }, [pathname]);
 
   const [ranking, setRanking] = useState<AiRanking | null>(null);
+  // Articles the visitor's own keys add. Merged here rather than server-side because they were
+  // fetched under the visitor's licence and must never reach shared storage.
+  const mine = useVisitorFeeds(subject, events);
   const filtered = useMemo(
-    () => [...events.filter((e) => active.has(e.type)), ...notes],
-    [events, active, notes]
+    () => [...[...events, ...mine].filter((e) => active.has(e.type)), ...notes],
+    [events, mine, active, notes]
   );
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);
 

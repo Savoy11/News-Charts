@@ -18,7 +18,8 @@
     "db:verify-restore": "tsx scripts/verify-restore.ts",
     "explain": "tsx scripts/explain.ts",
     "plan": "tsx scripts/plan.ts",
-    "check:onchain": "tsx scripts/check-onchain.ts"
+    "check:onchain": "tsx scripts/check-onchain.ts",
+    "check:prompt": "tsx scripts/check-prompt.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

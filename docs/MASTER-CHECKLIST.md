@@ -526,6 +526,25 @@ items (entity filing, federal regulation research, disclosure documents, "what d
 look like") went to a **separate business checklist** worked independently of both products —
 `docs/BUSINESS-CHECKLIST.md` in the Crypto-Stuff repo.
 
+- [ ] `P1` **Search-prompt coverage beyond the shapes it was built for.** Reported 2026-07-28:
+      *"Barak Obamas effect on Ford stock"* returned junk twice. The parser only understood
+      *"the history of X in Y"*; anything else went to `resolveCompany` verbatim, missed, and was
+      handed to Wikipedia, which fuzzy-matched something unrelated — a confidently wrong page
+      rather than an error. **Fixed** (`npm run check:prompt`, 24 cases, was 10/24):
+      - Relational questions — *"X's effect on Y"*, *"effect of X on Y"*, *"how did X affect Y"*,
+        *"did X affect Y"*. **The subject is the thing affected**, because that is the side with
+        a timeline and a price series; the influence becomes the focus and seeds the AI panel.
+      - *"<name> stock"* — plain "Ford" resolves against the EDGAR index, "Ford stock" resolved
+        against nothing. Trailing `stock`/`shares`/`share price`/`ticker` is now stripped, with a
+        short compound denylist so "rolling stock" survives.
+      - `/api/resolve` is now **database-first**, the same fix `/compare` needed: a throttled
+        EDGAR ticker file used to turn every company search into a Wikipedia guess, from the
+        app's main entry point. It also resolves aliases the live path cannot see
+        ("bitcoin" → `btc`), which is what makes the Phase 0 crypto aliases reachable.
+      - ⚠ **Still open, and this is the item below:** the honest answer to that question is a
+        *two-subject compose* — Obama's events over Ford's price. Today it lands on Ford's
+        timeline with "Barak Obamas" pre-filled in the AI panel, which is useful and truthful,
+        but it is not yet the overlay the question actually asks for.
 - [ ] `P1` **Topic timeline pegged to a company's stock price.** Pick any search term and
       overlay it on any company's price series — e.g. "Donald Trump presidency" against Ford
       stock. The strongest new idea in the dump: it generalises what company pages already do

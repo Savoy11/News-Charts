@@ -16,6 +16,38 @@ export interface SubjectRow {
   refreshedAt: Date | null;
 }
 
+/**
+ * The database mirror of `resolveCompany`, for companies already ingested.
+ *
+ * `loadSubject` matches a slug or a recorded alias, which only helps a visitor who types the
+ * ticker — nothing ever records "Ford" as an alias of `f`. This matches the way people actually
+ * search, on the same three rungs the EDGAR lookup uses: exact ticker, exact name, then a name
+ * prefix ("Ford" → "Ford Motor Company"). Prefix hits prefer the shortest name, so "Ford" lands
+ * on Ford Motor Company rather than a longer namesake.
+ *
+ * Ordered before the live EDGAR call so search keeps working when that file is throttled.
+ */
+export async function findKnownCompany(
+  query: string
+): Promise<{ ticker: string; displayName: string } | null> {
+  const q = query.trim();
+  if (!q) return null;
+  const { rows } = await getPool().query<{ ticker: string; display_name: string }>(
+    `SELECT ticker, display_name
+       FROM subjects
+      WHERE kind = 'company' AND ticker IS NOT NULL
+        AND (upper(ticker) = upper($1)
+             OR lower(display_name) = lower($1)
+             OR display_name ILIKE $1 || ' %')
+      ORDER BY (upper(ticker) = upper($1)) DESC,
+               (lower(display_name) = lower($1)) DESC,
+               length(display_name)
+      LIMIT 1`,
+    [q]
+  );
+  return rows[0] ? { ticker: rows[0].ticker, displayName: rows[0].display_name } : null;
+}
+
 export async function loadSubject(slug: string): Promise<SubjectRow | null> {
   // match the canonical slug first, then any phrasing recorded as an alias — several
   // searches ("electric car", "electric cars") legitimately point at one subject

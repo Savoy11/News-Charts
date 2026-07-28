@@ -7,6 +7,7 @@ import { LOOSE_SOURCES, applyRelevanceFloor, collapseNearDuplicates } from "./ne
 import { PricePoint, SourceKey, TimelineEvent } from "./types";
 import { getTopicTimeline } from "./wiki";
 import { getPressMentions, dropImplausiblePress } from "./loc";
+import { getArchiveItems } from "./archive";
 import { getNews } from "./news";
 import { resolveCompany, getFilings, getIndustry, commonName, type Industry } from "./sec";
 import { getDailyPrices } from "./prices";
@@ -218,12 +219,12 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
 
   // Only ask the sources actually due a refresh. Everything skipped is already in the database
   // and comes back in the union below, so a partial refresh costs the page nothing.
-  const TOPIC_SOURCES = ["loc_chronam", "gdelt", "nyt", "guardian", "newsdata", "gnews", "currents"] as const;
+  const TOPIC_SOURCES = ["loc_chronam", "gdelt", "nyt", "guardian", "newsdata", "gnews", "currents", "internet_archive"] as const;
   const due = await dueSources(topic, TOPIC_SOURCES);
   const ask = <T>(key: SourceKey, run: () => Promise<T[]>): Promise<T[]> =>
     due.has(key) ? run() : Promise.resolve([]);
 
-  const [pressCandidates, news, nyt, guardian, newsdata, gnews, currents] = await Promise.all([
+  const [pressCandidates, news, nyt, guardian, newsdata, gnews, currents, archive] = await Promise.all([
     ask("loc_chronam", () => getPressMentions(topic)),
     ask("gdelt", () => getNews(topic)),
     ask("nyt", () => getNytNews(topic)),
@@ -231,6 +232,8 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
     ask("newsdata", () => getNewsdataNews(topic)),
     ask("gnews", () => getGnewsNews(topic)),
     ask("currents", () => getCurrentsNews(topic)),
+    // keyless, and the only historical source not exposed to a key expiry or a licence change
+    ask("internet_archive", () => getArchiveItems(topic).catch(() => [])),
   ]);
   const firstEventOn = wiki.events[0]?.date ?? null;
   const floor = firstEventOn ? Number(firstEventOn.slice(0, 4)) : 0;
@@ -246,7 +249,10 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
         guardian,
         newsdata,
         gnews,
-        currents
+        currents,
+        // same plausibility floor as the newspaper scans: an archive item predating the subject
+        // is a keyword collision, not early coverage
+        dropImplausiblePress(archive, floor)
       )
     ),
     wiki.title,
@@ -307,12 +313,13 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
   const COMPANY_SOURCES = [
     "sec_edgar", "gdelt", "yahoo_finance", "nyt", "guardian", "newsdata",
     "gnews", "currents", "marketaux", "eodhd", "finnhub", "loc_chronam",
+    "internet_archive",
   ] as const;
   const due = await dueSources(company.ticker, COMPANY_SOURCES);
   const ask = <T>(key: SourceKey, run: () => Promise<T[]>): Promise<T[]> =>
     due.has(key) ? run() : Promise.resolve([]);
 
-  const [priceData, filings, news, yahoo, nyt, guardian, newsdata, gnews, currents, marketaux, eodhd, finnhub, pressCandidates, siteDomain, sicIndustry, story] =
+  const [priceData, filings, news, yahoo, nyt, guardian, newsdata, gnews, currents, marketaux, eodhd, finnhub, pressCandidates, archive, siteDomain, sicIndustry, story] =
     await Promise.all([
       getDailyPrices(company.ticker),
       ask("sec_edgar", () => getFilings(company)),
@@ -329,6 +336,8 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
       ask("finnhub", () => getFinnhubNews(company.ticker)),
       // period newspaper scans for the pre-IPO era of old companies
       ask("loc_chronam", () => getPressMentions(commonName(company.name)).catch(() => [])),
+      // archived material about the company itself — annual reports, catalogues, advertising
+      ask("internet_archive", () => getArchiveItems(commonName(company.name)).catch(() => [])),
       getOfficialDomain(company.name),
       getIndustry(company),
       // the company's story predates its ticker: Wikipedia history + cited articles
@@ -340,6 +349,10 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
   // skip press entirely rather than let OCR noise in.
   const firstStoryYear = story?.events[0]?.date ? Number(story.events[0].date.slice(0, 4)) : null;
   const press = firstStoryYear ? dropImplausiblePress(pressCandidates, firstStoryYear) : [];
+  // Archive items get the same floor for the same reason: "Apple" in an 1890 catalogue is fruit.
+  // Unlike press, they survive without a floor — archive metadata is catalogued rather than
+  // OCR-guessed, so a wrong date is a rarity there and a systematic hazard in the scans.
+  const archived = firstStoryYear ? dropImplausiblePress(archive, firstStoryYear) : archive.slice(0, 25);
   // citations first so a story cited by Wikipedia keeps its curated form when a feed
   // also carries the same URL; every list after it drops duplicates by URL
   // Same three passes as the topic path. The floor is given both the legal name and the common
@@ -347,7 +360,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
   const events = applyRelevanceFloor(
     collapseNearDuplicates(
       dedupByUrl(
-        [...filings, ...priceData.actions, ...(story?.events ?? []), ...press],
+        [...filings, ...priceData.actions, ...(story?.events ?? []), ...press, ...archived],
         news,
         yahoo,
         nyt,

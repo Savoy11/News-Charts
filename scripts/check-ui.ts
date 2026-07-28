@@ -365,6 +365,7 @@ async function cryptoTopic(page: Page): Promise<void> {
     halving.replace(/\n/g, " · ")
   );
   check("the footer credits the explorers", /mempool\.space|Blockscout/.test(body));
+  check("the footer credits the archive", /Internet Archive/.test(body));
   check(
     "the footer says the chain is the source, not the explorer",
     /read from the chains themselves/i.test(body)

@@ -80,7 +80,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               News Charts is a research tool, not investment advice. Price data from Yahoo Finance,
               filings from SEC EDGAR, recent news from GDELT, historical newspapers from the
               Library of Congress (Chronicling America), historical context from Wikipedia
-              (CC BY-SA), sector rules from the Federal Register.
+              (CC BY-SA), sector rules from the Federal Register, archived material from the
+              Internet Archive.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

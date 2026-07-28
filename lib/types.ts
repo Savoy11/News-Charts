@@ -32,7 +32,8 @@ export type SourceKey =
   | "marketaux"
   | "eodhd"
   | "finnhub"
-  | "onchain";
+  | "onchain"
+  | "internet_archive";
 
 export interface TimelineEvent {
   id: string;

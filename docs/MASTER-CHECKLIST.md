@@ -349,10 +349,23 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
       `lib/wiki.ts` parses each article's `{{cite …}}` templates into a `citation` event kind
       (migration `007`), deduped by URL and spread-capped at 160; prose is demoted to connective
       narrative (1 sentence/year, 40/page). This was the item the initiative was named for.
-- [ ] `P1` **Internet Archive adapter** (advancedsearch + Wayback CDX) — keyless archive search.
-      **The biggest unbuilt lever left in this initiative**, and immune to key expiry or a
-      licensing change, which none of the eight keyed feeds are. (The hardening list below
-      carried a duplicate of this item; it now points here.)
+- [x] ~~`P1` **Internet Archive adapter** (advancedsearch + Wayback CDX)~~ — done 2026-07-28.
+      `lib/archive.ts`, keyless, wired into both the topic and company ingest paths under source
+      key `internet_archive` (id 16, `commercialOk: true`) with a 24h window. Items land as
+      `citation` events, so no new event kind and no migration.
+      What is used is the *index* — an item's title, date and identifier, plus a link to
+      archive.org. Item content is never copied or served from here, which is what keeps the
+      ad-supported path clear; republishing the content itself would be a different question and
+      this adapter does not ask it.
+      The archive's metadata is uneven by design, so the parsing is where the risk sits and
+      `npm run check:archive` (39 cases) is aimed there: **a bare year stays year-precision**
+      (normalising "1922" to a specific day would put a March pamphlet in January), a
+      `collection` is not an event (its date says when someone made a folder), a multi-valued
+      title takes one value rather than rendering "a,b", and the Wayback CDX **header row is not
+      a capture** — treating it as one produced a snapshot dated "timestamp".
+      ⚠ **Both payload shapes come from archive.org's published API docs and are unverified
+      live** — egress is blocked here, the same standing caveat as every other adapter in this
+      repo. The checks prove the parsing, not the endpoint.
 - [x] ~~`P1` **NYT Article Search adapter** (archive to 1851)~~ — **shipped in PR #9**
       (`getNytNews`). ⚠ Plumbed as a **server** env key, not the browser-side BYO pattern the
       item asked for — see the BYO-key item under Cross-cutting, which is still open.

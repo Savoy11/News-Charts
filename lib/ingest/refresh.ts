@@ -31,6 +31,10 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   loc_chronam: 10080,
   // Halvings and network upgrades are settled history; Phase 0 holds nothing live.
   onchain: 1440,
+  // An archive of things that already happened. New items are catalogued daily, but what is
+  // catalogued today is almost never *dated* today, so a short window buys nothing. Keyless, so
+  // the only cost of asking is archive.org's patience — which is exactly why not to spend it.
+  internet_archive: 1440,
 
   // ---- keyed feeds, windowed by quota headroom rather than by volatility ----
   // 100 requests/day. At 6h one subject costs 4/day, so ~25 subjects fit the budget.

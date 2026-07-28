@@ -148,6 +148,19 @@ export const SOURCES: {
     commercialOk: true,
     notes: "keyless for BTC/ETH milestones; ETHERSCAN_API_KEY only for token supply moves. No aggregator data — raw chain + public explorers only",
   },
+  {
+    id: 16,
+    key: "internet_archive",
+    name: "Internet Archive",
+    license: "varies by item; index and metadata openly available",
+    attribution: "Internet Archive (archive.org, Wayback Machine)",
+    // What is used here is the *index*: an item's title, date and identifier, plus a link to
+    // archive.org. Individual items carry their own rights and are never copied or served from
+    // here, so the ad-supported path is clear on the metadata alone. Republishing item *content*
+    // would be a different question and this adapter does not do it.
+    commercialOk: true,
+    notes: "keyless. advancedsearch for dated items, Wayback CDX for site captures. Metadata quality is uneven — bare years are common and stay year-precision",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

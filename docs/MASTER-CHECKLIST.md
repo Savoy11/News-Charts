@@ -548,10 +548,26 @@ Each idea checked against the codebase before listing — several were cheaper t
         eighth kind left it filtered out by default — the chip rendered, inactive, and the rows
         never appeared — and `Set<EventType>` cannot be checked for exhaustiveness, so `tsc` was
         silent. Both now derive from `FILTERS`. **Any future event kind would have hit this.**
-- [ ] `P2` **Sentiment coloring on event nodes.** Do it keyless first: a lexicon-based
-      positive/negative/neutral score at ingest (title keywords), color-coding timeline dots so
-      perceived sentiment can be read against the actual price move. BYO-model rescoring can
-      refine later; no server-side LLM cost.
+- [x] ~~`P2` **Sentiment coloring on event nodes**~~ — done 2026-07-28, keyless as the item asked
+      (`lib/sentiment.ts`, `npm run check:sentiment`, 24 cases). A small green/red dot beside a
+      headline, so **perceived** tone can be read against the **actual** price move — which is
+      interesting precisely when the two disagree.
+      Deliberately shy, because a colour on a financial timeline reads as a judgement *we* made
+      and a confident wrong label is worse than none:
+      - **Any opposing evidence means neutral**, not "whichever side has more". *"Profit rises but
+        deliveries miss expectations"* is two positive words to one negative and is plainly mixed
+        to a reader; calling it positive on a 2–1 count would be inventing a signal from
+        arithmetic.
+      - **Neutral renders nothing at all** rather than a grey dot. Absence is the honest form of
+        "no opinion"; a third colour implies we looked and decided.
+      - **Only news, press and citations are scored.** A filing, a halving or a reader's own note
+        is a fact, not good or bad news.
+      - Negation is checked across a three-token window, because English rarely puts them
+        adjacent: *"not **a** miss"*, *"avoids **a** strike"*, *"denies **any** breach"*. A
+        one-word lookback (the obvious implementation, and the first one written here) missed
+        every realistic phrasing and inverted them all.
+      - The lexicon is market-specific: "beat", "miss" and "cut" are near-meaningless in general
+        English and unambiguous here. BYO-model rescoring can refine it later at no server cost.
 - [ ] `P2` **AI primary-event summary nodes.** Overlaps the planned cross-feed near-duplicate
       collapsing (hardening list) — do the heuristic clustering there first; the DB's existing
       syntheses layer (synthesis + synthesis_citations tables) is the natural home for an

@@ -120,6 +120,24 @@ async function companyPage(page: Page): Promise<void> {
   check("filing runs condense", (await page.locator("text=/^Show all$/").count()) > 0);
   check("corporate actions render", /Dividend of|stock split/.test(body));
 
+  // Tone dots: shown only where a headline actually reads one way, never on a filing.
+  const tones = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll(".flex.items-start.gap-2.p-3")];
+    return rows.map((r) => ({
+      text: (r as HTMLElement).innerText.slice(0, 80),
+      tone: r.querySelector("span.bg-emerald-400, span.bg-red-400")
+        ? r.querySelector("span.bg-emerald-400")
+          ? "positive"
+          : "negative"
+        : "none",
+    }));
+  });
+  const recall = tones.find((t) => /recalls SUVs/.test(t.text));
+  const filing = tones.find((t) => /^FILING/.test(t.text));
+  check("a negative headline gets a tone dot", recall?.tone === "negative", recall?.tone ?? "row not found");
+  check("a filing is never toned", filing ? filing.tone === "none" : false, filing?.tone ?? "row not found");
+  check("most rows carry no tone at all", tones.filter((t) => t.tone === "none").length > tones.length / 2);
+
   // The Sources panel: its whole purpose is telling these two states apart.
   check("sources panel", body.includes("Sources") && /contributing/.test(body));
   check("distinguishes empty from rate-limited", /nothing returned/.test(body) && /rate limited/.test(body));

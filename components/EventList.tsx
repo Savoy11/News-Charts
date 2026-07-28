@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { EventType, TimelineEvent } from "@/lib/types";
 import { waybackUrl } from "@/lib/wikidata";
 import { loadJSON, saveJSON } from "@/lib/viewState";
+import { toneOf } from "@/lib/sentiment";
 import EventThumb from "./EventThumb";
 
 const BADGE: Record<EventType, { label: string; cls: string }> = {
@@ -28,10 +29,30 @@ export function dateAnchorId(date: string) {
 
 const ROW_CLASS = "flex items-start gap-2 p-3";
 
+/**
+ * A small tone dot beside a headline — perceived tone, which is worth seeing *against* the
+ * actual price move because the interesting case is when the two disagree. Neutral shows
+ * nothing at all rather than a grey dot: absence is the honest rendering of "no opinion", and a
+ * third colour would imply we had looked and decided.
+ */
+function ToneDot({ ev }: { ev: TimelineEvent }) {
+  const tone = toneOf(ev);
+  if (tone === "neutral") return null;
+  return (
+    <span
+      title={`Headline reads as ${tone} — a keyword estimate, not a judgement of the news`}
+      className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
+        tone === "positive" ? "bg-emerald-400" : "bg-red-400"
+      }`}
+    />
+  );
+}
+
 /** The whole row is the click target, so there's no need to hit the title text exactly. */
 function EventRow({ ev }: { ev: TimelineEvent }) {
   const body = (
     <>
+      <ToneDot ev={ev} />
       <span
         className={`mt-0.5 shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${BADGE[ev.type].cls}`}
       >

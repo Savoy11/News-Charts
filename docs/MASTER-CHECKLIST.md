@@ -171,33 +171,72 @@ idempotent for free.
 
 ### Open decisions
 
-- [ ] `P0` **Subject model for coins/protocols:** `kind='topic'` with slug (`ethereum`, `usdc`)
-      vs. a new `subject_kind`. (Leaning: reuse `topic` — no migration, inherits
-      timelines/scoring.)
-- [ ] `P0` **New `event_kind`:** add `'onchain'` to the enum (migration) vs. reuse an existing
-      kind. (Leaning: dedicated `'onchain'` for filtering/attribution.)
+- [x] ~~`P0` **Subject model for coins/protocols**~~ — **decided 2026-07-28: reuse `topic`**, as
+      the leaning suggested, but for a firmer reason than "no migration". The schema bars
+      `kind='company'` without a CIK *and* a ticker, neither of which a crypto asset has and
+      neither of which it would be honest to invent; a new `subject_kind` would mean a migration
+      plus a fourth page type inheriting none of the timeline, scoring, SEO or follow behaviour
+      topics already have.
+      - ⚠ **The north star's "works out of the box" was not true.** Pegging events to a price
+        chart was a *company-page* feature — `TopicExplorer` had no chart at all — so modelling
+        crypto as a topic would have silently lost the one thing that makes a halving worth
+        plotting. `TopicExplorer` now renders the price chart when a subject has price rows.
+        Ordinary topics have none and are untouched, and Yahoo quotes crypto on the same chart
+        endpoint (`BTC-USD`), so the series and its overlays came free.
+- [x] ~~`P0` **New `event_kind`**~~ — **decided: dedicated `'onchain'`** (`db/009`). A news event
+      is someone's *report* of a thing; an on-chain event *is* the thing, and its attestation is
+      a block or transaction anyone can re-verify without trusting us or a publisher. Worth
+      showing a reader, and worth filtering on.
 - [ ] `P1` **Confirmation lag / finality policy:** how many blocks (or "finalized" tag) before an
-      event is ingestable, to avoid reorg orphans.
-- [ ] `P1` **Address label source:** hand-maintained provenance map vs. Etherscan labels vs.
-      both. Where does the canonical map live?
+      event is ingestable, to avoid reorg orphans. **Still open, and deliberately not needed
+      yet:** every Phase 0 event is years finalized (the most recent is the April 2024 halving),
+      which is exactly why the phase was scoped this way. The policy must land *before* Phase 1's
+      live stablecoin feed, not after — an orphaned event that a synthesis already cites cannot
+      be deleted (`ON DELETE RESTRICT`).
+- [x] ~~`P1` **Address label source**~~ — **decided for Phase 0: hand-maintained only**
+      (`lib/onchain/addresses.ts`), each entry carrying *why* we believe it. Etherscan's labels
+      were rejected for now: republishing an explorer's tag without being able to show our work
+      turns someone else's guess into a factual claim on our timeline about who moved money.
+      Rule for adding one: identifiable from the issuer's own documentation or an on-chain role,
+      never from an explorer tag alone. Revisit if hand-maintenance stops scaling in Phase 1.
 
-### Phase 0 — Foundations & spike (free, zero reorg risk) · `P0`
+### Phase 0 — Foundations & spike (free, zero reorg risk) · `P0` — **built 2026-07-28**
 
-Prove the chart-overlay value on long-finalized events with no spend.
+Prove the chart-overlay value on long-finalized events with no spend. Built; **live explorer
+calls are unverified** — egress to mempool.space, Blockscout and Etherscan is blocked from this
+container, so the adapters are verified against canned responses (`npm run check:onchain`, 22
+checks) and the UI against seeded rows. One `npm run ingest -- --onchain all` on a networked
+machine closes that gap.
 
-- [ ] `P0` Add `'onchain'` to the `event_kind` enum + migration (`scripts/gen-migration.mjs`).
-- [ ] `P0` Register an `onchain` entry in `SOURCES` (`lib/ingest/store.ts`) with
-      `commercialOk: true`, license = "public domain (on-chain facts)", attribution per chain.
-- [ ] `P0` Seed 3–4 crypto subjects (`btc`, `eth`, `usdc`) as `topic` subjects with slugs + aliases.
-- [ ] `P0` **BTC halvings** adapter (keyless): 2012/2016/2020/2024 via mempool.space /
-      Blockstream Esplora, with on-chain block links.
-- [ ] `P0` **ETH network milestones** adapter: Frontier (2015), The Merge (2022), Shanghai,
-      Dencun — dates + block links.
-- [ ] `P0` **One stablecoin's mints/burns** (USDC `Transfer` from/to treasury) via Etherscan free
-      key, curated to material sizes only.
-- [ ] `P0` Verify events render on the timeline **pegged to the price chart** (BTC halving on BTC
-      price = the demo).
-- [ ] `P0` Confirm dedup/idempotency: re-run ingest, confirm updates not duplicates.
+- [x] ~~`P0` Add `'onchain'` to the `event_kind` enum + migration~~ — spec + `db/009`.
+- [x] ~~`P0` Register an `onchain` entry in `SOURCES`~~ — id 15, `commercialOk: true`,
+      "public domain (on-chain facts)", attribution naming each explorer.
+- [x] ~~`P0` Seed 3–4 crypto subjects as `topic` subjects with slugs + aliases~~ — `btc`, `eth`,
+      `usdc` in `lib/onchain/index.ts`, ingested by `npm run ingest -- --onchain <slug|all>`.
+- [x] ~~`P0` **BTC halvings** adapter (keyless)~~ — heights are protocol constants (every 210,000
+      blocks) but the **dates come from the chain**, because a halving happens when the block is
+      mined. mempool.space first, Blockstream Esplora as fallback (same Esplora API, so the
+      fallback is a base-URL swap). A height above the tip has no block, so a *future* halving
+      drops out on its own — no date arithmetic to get wrong, and nothing scheduled is ever
+      published as though it had happened.
+- [x] ~~`P0` **ETH network milestones** adapter~~ — Frontier, The Merge, Shanghai/Capella, Dencun.
+      *Which* blocks matter is curated (an upgrade happens when the network agrees it does); the
+      **date is read from the chain** via Blockscout, keyless, with the published date as a
+      fallback only when the explorer is unreachable. A settled historical fact should not vanish
+      because an explorer is down.
+- [x] ~~`P0` **One stablecoin's mints/burns** via Etherscan free key~~ — USDC `Transfer` to/from
+      the null address, floored at $100m. The floor is load-bearing: USDC mints hundreds of times
+      a month and an un-floored feed would bury a timeline in treasury housekeeping. The only
+      Phase 0 adapter needing a key; without `ETHERSCAN_API_KEY` it returns nothing and the rest
+      of the on-chain timeline is unaffected.
+- [x] ~~`P0` Verify events render **pegged to the price chart**~~ — the demo works: `/topic/btc`
+      shows the April 2024 halving marked on the BTC price series. **This is what forced the
+      subject-model decision above** — topics had no chart, so "works out of the box" was untrue
+      until `TopicExplorer` learned to render one for subjects that have prices.
+- [x] ~~`P0` Confirm dedup/idempotency~~ — identity is the *chain* fact, never our wording: a
+      halving keys on `btc-block-840000`, a supply move on its transaction hash. Re-running the
+      seed reports `0 new`, and the fixture tests assert the dedup basis never contains a title we
+      might later reword.
 
 ### Phase 1 — Curated on-chain adapter (breadth) · `P1`
 

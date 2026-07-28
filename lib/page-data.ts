@@ -41,6 +41,11 @@ export interface TopicPageData {
   title: string;
   summary: string;
   events: TimelineEvent[];
+  /**
+   * Empty for ordinary topics. A crypto asset is modelled as a topic but has a continuous
+   * price series, so its page renders the same chart a company page does.
+   */
+  prices: PricePoint[];
   servedFrom: ServedFrom;
 }
 
@@ -137,12 +142,16 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
   try {
     const subject = await loadSubject(topic);
     if (subject && !isStale(subject.refreshedAt, TOPIC_TTL_MINUTES)) {
-      const events = await loadEvents(subject.id);
+      const [events, prices] = await Promise.all([
+        loadEvents(subject.id),
+        loadPrices(subject.id),
+      ]);
       if (events.length) {
         return {
           title: subject.displayName,
           summary: subject.summary ?? "",
           events,
+          prices,
           servedFrom: "database",
         };
       }
@@ -184,7 +193,9 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
     events
   );
 
-  return { title: wiki.title, summary: wiki.summary, events, servedFrom: "live" };
+  // A live topic render has no price series: prices reach a topic through ingest (crypto
+  // assets), not through the Wikipedia path this branch takes.
+  return { title: wiki.title, summary: wiki.summary, events, prices: [], servedFrom: "live" };
 }
 
 async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData | null> {

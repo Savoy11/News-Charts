@@ -23,6 +23,7 @@ import { resolveCompany, getFilings, getIndustry } from "../lib/sec";
 import { getDailyPrices } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
+import { CRYPTO_SUBJECTS, ingestOnchainFor } from "../lib/onchain";
 
 const BACKOFF_MINUTES = 10;
 
@@ -240,13 +241,77 @@ async function ingestIndustry(client: PoolClient, slug: string) {
   await runSource(client, "federal_register", subjectId, query, () => fetchRegulations(query));
 }
 
+/**
+ * On-chain ingest. Crypto assets are `topic` subjects (they have no CIK or ticker, so the
+ * company kind is barred by the schema and would be a lie anyway) that happen to carry a price
+ * series — which is what lets a halving be read against the BTC chart.
+ */
+async function ingestOnchain(client: PoolClient, which: string) {
+  const targets = which === "all" ? CRYPTO_SUBJECTS : CRYPTO_SUBJECTS.filter((c) => c.slug === which);
+  if (!targets.length) {
+    console.error(`unknown on-chain subject "${which}"`);
+    process.exit(2);
+  }
+
+  await assertCommercialOk(client, "onchain");
+
+  for (const asset of targets) {
+    console.log(`\n${asset.displayName} (${asset.slug})`);
+    const subjectId = await upsertSubject(client, {
+      kind: "topic",
+      slug: asset.slug,
+      displayName: asset.displayName,
+      summary: asset.summary,
+      firstEventOn: asset.firstEventOn,
+    });
+    for (const alias of asset.aliases) {
+      await client.query(
+        `INSERT INTO subject_aliases (subject_id, alias) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+        [subjectId, alias.toLowerCase()]
+      );
+    }
+
+    const events = await ingestOnchainFor(asset.slug);
+    const stats = emptyStats();
+    await client.query("BEGIN");
+    try {
+      for (const ev of events) await upsertEvent(client, ev, subjectId, stats);
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    }
+    await logFetch(client, "onchain", subjectId, asset.slug, events.length ? "ok" : "empty", events.length);
+    report("onchain", events.length ? "ok" : "empty", stats);
+
+    // Yahoo quotes crypto under `BTC-USD` — the same chart endpoint companies use, so the
+    // price series and its overlays come for free.
+    if (asset.yahooSymbol) {
+      const { points } = await getDailyPrices(asset.yahooSymbol);
+      if (points.length) {
+        await client.query(
+          `INSERT INTO prices (subject_id, on_date, close, volume)
+           SELECT $1, d, c, v FROM unnest($2::date[], $3::numeric[], $4::bigint[]) AS t(d, c, v)
+           ON CONFLICT (subject_id, on_date) DO UPDATE
+              SET close = EXCLUDED.close,
+                  volume = COALESCE(EXCLUDED.volume, prices.volume)`,
+          [subjectId, points.map((p) => p.time), points.map((p) => p.value), points.map((p) => p.volume ?? null)]
+        );
+      }
+      line("prices", `${points.length} daily closes for ${asset.yahooSymbol}`);
+    }
+  }
+}
+
 async function main() {
   const topic = arg("topic");
   const ticker = arg("ticker");
   const industry = arg("industry");
-  if (!topic && !ticker && !industry) {
+  const onchain = arg("onchain");
+  if (!topic && !ticker && !industry && !onchain) {
     console.error(
-      "usage: npm run ingest -- --topic <name> | --ticker <SYMBOL> | --industry <sic-slug>"
+      "usage: npm run ingest -- --topic <name> | --ticker <SYMBOL> | --industry <sic-slug>\n" +
+        `                       | --onchain <${CRYPTO_SUBJECTS.map((c) => c.slug).join("|")}|all>`
     );
     process.exit(2);
   }
@@ -257,6 +322,7 @@ async function main() {
     if (topic) await ingestTopic(client, topic);
     if (ticker) await ingestCompany(client, ticker.toUpperCase());
     if (industry) await ingestIndustry(client, industry);
+    if (onchain) await ingestOnchain(client, onchain.toLowerCase());
   } finally {
     client.release();
     await closePool();

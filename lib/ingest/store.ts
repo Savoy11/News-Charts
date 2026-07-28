@@ -136,6 +136,18 @@ export const SOURCES: {
     commercialOk: false,
     notes: "ticker-keyed company news, trailing year on the free tier; free key (FINNHUB_API_KEY), 60 req/min. Re-license before the ad-supported path uses it",
   },
+  {
+    id: 15,
+    key: "onchain",
+    name: "On-chain records",
+    license: "public domain (on-chain facts)",
+    attribution: "Bitcoin and Ethereum block data via mempool.space, Blockstream Esplora and Etherscan",
+    // Raw chain facts are nobody's copyright, and the explorers used here serve them under
+    // terms that permit commercial use. This stays true only while the sources stay raw:
+    // Dune and Nansen sell *aggregations*, and their terms bar the ad-supported path.
+    commercialOk: true,
+    notes: "keyless for BTC/ETH milestones; ETHERSCAN_API_KEY only for token supply moves. No aggregator data — raw chain + public explorers only",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

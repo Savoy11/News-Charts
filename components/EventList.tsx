@@ -18,6 +18,7 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
     label: "Corporate action",
     cls: "bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-700/50",
   },
+  onchain: { label: "On-chain", cls: "bg-lime-500/15 text-lime-400 border-lime-700/50" },
 };
 
 export function dateAnchorId(date: string) {
@@ -378,6 +379,7 @@ const DOT: Record<EventType, string> = {
   history: "bg-violet-400",
   citation: "bg-teal-400",
   corporate_action: "bg-fuchsia-400",
+  onchain: "bg-lime-400",
 };
 
 /** Preview of a collapsed section's contents, shown on hover so it can be read without a click. */

@@ -70,7 +70,7 @@ export default async function TopicPage({ params }: { params: { slug: string } }
 
       {data.summary && <TopicSummary text={data.summary} />}
 
-      <TopicExplorer events={data.events} />
+      <TopicExplorer events={data.events} prices={data.prices} />
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[2fr_1fr]">
         <CaepPromo />

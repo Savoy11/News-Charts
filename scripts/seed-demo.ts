@@ -39,6 +39,16 @@ function mulberry32(seed: number): () => number {
   };
 }
 
+/** Crypto trades every day, so its series has no weekend gaps to skip. */
+function everyDay(fromISO: string, toISO: string): string[] {
+  const out: string[] = [];
+  const end = Date.parse(toISO);
+  for (let t = Date.parse(fromISO); t <= end; t += 86_400_000) {
+    out.push(new Date(t).toISOString().slice(0, 10));
+  }
+  return out;
+}
+
 /** Weekdays only — a real close series has no weekend rows, and gap guards rely on that. */
 function tradingDays(fromISO: string, toISO: string): string[] {
   const out: string[] = [];
@@ -445,8 +455,69 @@ async function main(): Promise<void> {
       );
     }
 
+    // -------------------------------------------------------- crypto
+    // Phase 0's demo: a Bitcoin halving read against the BTC price chart. Modelled as a topic
+    // (no CIK or ticker to give it, and the schema is right to refuse a company without one),
+    // and it renders a chart because it has price rows — which ordinary topics do not.
+    const btcId = await upsertSubject(client, {
+      kind: "topic",
+      slug: "btc",
+      displayName: "Bitcoin",
+      summary:
+        "Bitcoin is a peer-to-peer digital currency whose issuance schedule is fixed in its " +
+        "protocol: the reward paid to miners halves every 210,000 blocks, roughly every four " +
+        "years. Its on-chain history begins at the genesis block in 2009.",
+      firstEventOn: "2009-01-03",
+    });
+    for (const alias of ["bitcoin", "btc-usd"]) {
+      await client.query(
+        `INSERT INTO subject_aliases (subject_id, alias) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+        [btcId, alias]
+      );
+    }
+
+    const halvings: Seed[] = [
+      ["2012-11-28", 210000, "25"],
+      ["2016-07-09", 420000, "12.5"],
+      ["2020-05-11", 630000, "6.25"],
+      ["2024-04-20", 840000, "3.125"],
+    ].map(([date, height, reward]) => ({
+      date: date as string,
+      title: `Bitcoin halving — block reward drops to ${reward} BTC`,
+      description:
+        `At block ${Number(height).toLocaleString("en-US")} the subsidy paid to miners fell to ` +
+        `${reward} BTC, halving the rate of new issuance. Written into the protocol, not decided by anyone.`,
+      type: "onchain" as const,
+      source: `Bitcoin block ${Number(height).toLocaleString("en-US")} (mempool.space)`,
+      url: `https://mempool.space/block/${height}`,
+      sourceKey: "onchain" as const,
+      externalId: `btc-block-${height}`,
+      dedupBasis: `btc-block-${height}`,
+    }));
+
+    await client.query("BEGIN");
+    for (const e of halvings) await upsertEvent(client, ev(e), btcId, stats);
+    await client.query("COMMIT");
+
+    // Spans the 2024 halving, so the marker lands on the chart rather than before it.
+    const btcDays = everyDay("2023-01-01", "2026-07-24");
+    const btcPrices = priceSeries(btcDays, 16_500, 424242, { "2024-04-20": 0.043 }, 28_000_000_000);
+    await client.query(
+      `INSERT INTO prices (subject_id, on_date, close, volume)
+       SELECT $1, d, c, v FROM unnest($2::date[], $3::numeric[], $4::bigint[]) AS t(d, c, v)
+       ON CONFLICT (subject_id, on_date) DO UPDATE
+          SET close = EXCLUDED.close, volume = COALESCE(EXCLUDED.volume, prices.volume)`,
+      [
+        btcId,
+        btcPrices.map((p) => p.time),
+        btcPrices.map((p) => p.value),
+        btcPrices.map((p) => p.volume ?? null),
+      ]
+    );
+
     console.log(
-      `\n  Seeded 4 subjects — /company/f, /company/gm, /topic/electric%20cars, /industry/${industrySlug}\n` +
+      `\n  Seeded 5 subjects — /company/f, /company/gm, /topic/electric%20cars, /topic/btc, ` +
+        `/industry/${industrySlug}\n` +
         `  ${stats.events} events (${stats.newEvents} new), ${stats.attestations} attestations, ` +
         `${days.length} trading days of prices for two tickers.\n`
     );

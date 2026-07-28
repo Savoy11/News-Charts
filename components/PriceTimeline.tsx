@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createChart,
   createSeriesMarkers,
@@ -25,7 +25,22 @@ const MARKER_STYLE = {
   // below the bar like earnings (both are scheduled, dated facts) but a different glyph, so a
   // mechanical change is never mistaken for a reaction to news
   corporate_action: { color: "#e879f9", position: "belowBar", shape: "square", text: "" },
+  // above the bar and unmistakable: a protocol event is the headline on a crypto timeline
+  onchain: { color: "#a3e635", position: "aboveBar", shape: "arrowDown", text: "" },
 } as const;
+
+/** Legend wording, which is not always the badge wording ("SEC filing", not "Filing"). */
+const LEGEND_LABEL: Record<EventType, string> = {
+  earnings: "Earnings",
+  filing: "SEC filing",
+  news: "News",
+  history: "History",
+  press: "Historical press",
+  regulation: "Sector rule",
+  citation: "Cited",
+  corporate_action: "Split / dividend",
+  onchain: "On-chain",
+};
 
 // which kind wins when several share a day — the market-moving ones first
 const PRIORITY: Record<EventType, number> = {
@@ -33,6 +48,7 @@ const PRIORITY: Record<EventType, number> = {
   filing: 2,
   history: 2,
   regulation: 2,
+  onchain: 3,
   corporate_action: 2,
   press: 1,
   news: 1,
@@ -122,6 +138,10 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
     sma200: false,
   });
   const hasVolume = prices.some((p) => p.volume != null);
+  const legend = useMemo(() => {
+    const present = new Set(events.map((e) => e.type));
+    return (Object.keys(LEGEND_LABEL) as EventType[]).filter((k) => present.has(k));
+  }, [events]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -387,11 +407,18 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
       </div>
 
       <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-400">
-        <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-amber-500" />Earnings</span>
-        <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-sky-400" />SEC filing</span>
-        <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-slate-500" />News</span>
-        <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-teal-400" />Cited</span>
-        <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-fuchsia-400" />Split / dividend</span>
+        {/* Derived from what is actually plotted. The legend used to be a hardcoded list of
+            company event kinds, so a Bitcoin page advertised "Earnings" and "SEC filing" and
+            omitted the on-chain marker it was actually showing. */}
+        {legend.map((k) => (
+          <span key={k}>
+            <span
+              className="mr-1 inline-block h-2 w-2 rounded-full"
+              style={{ backgroundColor: MARKER_STYLE[k].color }}
+            />
+            {LEGEND_LABEL[k]}
+          </span>
+        ))}
         <span className="text-slate-500">
           Sweep the line — nearby articles pop up at the cursor. Click a point to jump to that
           date&apos;s events below.

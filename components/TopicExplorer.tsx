@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import HorizontalTimeline from "./HorizontalTimeline";
-import EventList from "./EventList";
+import EventList, { dateAnchorId } from "./EventList";
+import PriceTimeline from "./PriceTimeline";
 import AiPanel, { type AiRanking } from "./AiPanel";
-import { EventType, TimelineEvent } from "@/lib/types";
+import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
 import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT } from "@/lib/prefs";
 
 /** Keep only what the visitor's model judged relevant, best matches first. */
@@ -21,6 +22,7 @@ const FILTERS: { key: EventType; label: string }[] = [
   { key: "citation", label: "Cited articles" },
   { key: "press", label: "Historical press" },
   { key: "news", label: "Recent news" },
+  { key: "onchain", label: "On-chain" },
 ];
 
 const ALL_TYPES = FILTERS.map((f) => f.key);
@@ -67,7 +69,14 @@ function encodeView(
   return qs ? `?${qs}` : "";
 }
 
-export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
+export default function TopicExplorer({
+  events,
+  prices = [],
+}: {
+  events: TimelineEvent[];
+  /** Present only for subjects that have a price series — crypto assets today. */
+  prices?: PricePoint[];
+}) {
   // Derived from FILTERS rather than repeated — the same duplication in CompanyExplorer left a
   // newly added event kind filtered out by default. A topic's filter list is deliberately
   // shorter than a company's; this stays in step with whatever it holds.
@@ -174,6 +183,28 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
     persist(next, active);
   }
 
+  /**
+   * Clicking the chart jumps the list to the nearest event group at or before that day —
+   * the same contract CompanyExplorer uses, so the anchor ids stay the one shared thing.
+   */
+  function jumpToDate(date: string) {
+    const dates = [...new Set(ranked.map((e) => e.date))].sort();
+    if (!dates.length) return;
+    let target: string | null = null;
+    for (const d of dates) {
+      if (d <= date) target = d;
+      else break;
+    }
+    if (view !== "list") chooseView("list"); // the anchors only exist in the list view
+    // let the list mount before scrolling to an anchor inside it
+    setTimeout(() => {
+      const el = document.getElementById(dateAnchorId(target ?? dates[0]));
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+      el?.classList.add("ring-1", "ring-sky-500");
+      setTimeout(() => el?.classList.remove("ring-1", "ring-sky-500"), 2000);
+    }, 0);
+  }
+
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -192,6 +223,15 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
         onRanking={setRanking}
         initialInstruction={focusHint ?? undefined}
       />
+
+      {/* A topic with a continuous price series gets the same chart a company page has, so
+          events can be read against the price. Ordinary topics have no price rows and are
+          untouched by this. */}
+      {prices.length > 0 && (
+        <div className="mb-4">
+          <PriceTimeline prices={prices} events={ranked} onSelectDate={jumpToDate} />
+        </div>
+      )}
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {FILTERS.map((f) => {

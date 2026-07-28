@@ -6,7 +6,8 @@ export type EventType =
   | "press"
   | "regulation"
   | "citation"
-  | "corporate_action";
+  | "corporate_action"
+  | "onchain";
 
 /** Matches the fetch_outcome enum in the database. */
 export type FetchOutcome = "ok" | "empty" | "throttled" | "error";
@@ -25,7 +26,8 @@ export type SourceKey =
   | "currents"
   | "marketaux"
   | "eodhd"
-  | "finnhub";
+  | "finnhub"
+  | "onchain";
 
 export interface TimelineEvent {
   id: string;

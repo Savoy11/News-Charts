@@ -20,6 +20,7 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
     label: "Corporate action",
     cls: "border-fuchsia-700/50 bg-fuchsia-500/15 text-fuchsia-300",
   },
+  onchain: { label: "On-chain", cls: "border-lime-700/50 bg-lime-500/15 text-lime-300" },
 };
 
 // A move on day D can be sparked by an item dated D itself (intraday news) or a few days before
@@ -32,6 +33,8 @@ const CATALYST_PRIORITY: Record<EventType, number> = {
   // thing this panel can say about that day: the move wasn't a reaction to anything.
   corporate_action: 4,
   filing: 4,
+  // a protocol event (a halving, an upgrade) is a real, dated cause — above ordinary news
+  onchain: 3,
   regulation: 3,
   history: 2,
   press: 1,

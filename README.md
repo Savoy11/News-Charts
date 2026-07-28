@@ -243,6 +243,30 @@ Dividends and stock splits arrive on that same request (`events=div,splits`) and
 split-adjusted, so the line does not step on a split — the marker is the only thing that says it
 happened. That is the point: a mechanical change should never read as a reaction to news.
 
+### On-chain events
+
+Crypto assets are **topic** subjects that happen to carry a price series — the schema bars a
+company without a CIK and ticker, and inventing one would be a lie. A topic with price rows
+renders the same chart a company page does, which is what lets a Bitcoin halving be read against
+the BTC price; ordinary topics have no price rows and are unaffected.
+
+```
+npm run ingest -- --onchain btc     # halvings, dated from the chain
+npm run ingest -- --onchain eth     # network upgrades
+npm run ingest -- --onchain all
+npm run check:onchain               # adapters against canned responses, offline
+```
+
+Sources are raw chain facts and public explorers only — mempool.space and Blockstream for
+Bitcoin, Blockscout for Ethereum, Etherscan for token supply moves. All are `commercialOk: true`,
+and that stays true only while they stay raw: Dune and Nansen sell *aggregations* and their terms
+bar the ad-supported path. Only the stablecoin adapter needs a key (`ETHERSCAN_API_KEY`); without
+it that one adapter sits out and the rest of the on-chain timeline is unaffected.
+
+Every Phase 0 event is years finalized, so there is no reorg risk to reason about yet. A
+confirmation-lag policy has to land before any live feed is added — an orphaned event that a
+synthesis already cites cannot be deleted, by design (`ON DELETE RESTRICT`).
+
 ### Seeding without the network
 
 `npm run db:seed-demo` writes a small demo corpus — two companies with a price series, a topic,

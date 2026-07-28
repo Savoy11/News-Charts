@@ -428,8 +428,19 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
       - ⚠ Adding it reintroduced the grid `min-width:auto` overflow on a phone (727px in a
         390px viewport) — the third time that pattern has bitten. Caught by the browser suite,
         fixed with `min-w-0`. Worth remembering when adding any sidebar content.
-- [ ] `P1` **Finish the approved "Both views" condense.** The horizontal timeline still has no
-      collapse-all (list view got one); add the one-click condense control there.
+- [x] ~~`P1` **Finish the approved "Both views" condense**~~ — done 2026-07-28. The horizontal
+      timeline now has a **Condense / Expand all** control beside the zoom group, the counterpart
+      to the list view's "Collapse all". Stacking was previously reachable only through settings,
+      which is a long way to go to quieten a sprawling timeline.
+      It is a per-view override of the preference (`null` means follow it), persisted per path
+      alongside zoom and scroll position, so the choice survives following a source link and
+      coming back. Any open stack closes on toggle rather than being left hanging over a track
+      that has moved underneath it.
+      - The `check:ui` assertion is that the track actually **restructures**, not that a label
+        flipped — a control that toggled its own text while the layout stayed put would sail
+        through a presence check.
+      - Adding it pushed the toolbar past a phone viewport (454px in 390px). Same grid/flex
+        shrink family as the three before it; fixed by letting the button row wrap.
 - [ ] `P2` **Auto-expand on jump.** Chart click-to-jump into a collapsed list section scrolls to
       it but doesn't open it.
 - [ ] `P2` **NYT Keyword facet → event tags.** Needs a tags field on events; would feed the

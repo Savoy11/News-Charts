@@ -191,6 +191,23 @@ async function topicPage(page: Page): Promise<void> {
   await page.waitForTimeout(900);
   check("a stack opens on hover", true);
 
+  // The list view's "Collapse all" counterpart. Assert it actually restructures the track —
+  // a label that toggles while the layout stays put would pass a presence check.
+  const condense = page.locator('button:has-text("Condense"), button:has-text("Expand all")').first();
+  check("condense control on the horizontal timeline", (await condense.count()) > 0);
+  const cardsNow = await page.locator(".chrono-scroller a, .chrono-scroller > div > div").count();
+  const wasCondensed = (await condense.innerText()).trim() === "Expand all";
+  await condense.click();
+  await page.waitForTimeout(1200);
+  const cardsAfter = await page.locator(".chrono-scroller a, .chrono-scroller > div > div").count();
+  check(
+    wasCondensed ? "expanding spreads the track out" : "condensing folds periods into stacks",
+    cardsAfter !== cardsNow,
+    `${cardsNow} → ${cardsAfter}`
+  );
+  await condense.click();
+  await page.waitForTimeout(900);
+
   const list = page.locator("button", { hasText: /^List$/i }).first();
   await list.click();
   await page.waitForTimeout(1000);

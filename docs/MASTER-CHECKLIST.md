@@ -3,7 +3,7 @@
 The governing checklist for the **News Charts** project: a single place to track initiatives,
 priorities, and progress. Add to it, check things off, re-prioritise. This is a living doc.
 
-**Last updated:** 2026-07-25
+**Last updated:** 2026-07-28
 
 ## Scope & independence
 
@@ -433,11 +433,25 @@ look like") went to a **separate business checklist** worked independently of bo
 - [ ] `P2` **Which countries can access the site** (implementation side: geo-detection,
       blocking, or per-region content). The *decision* — which jurisdictions are worth the
       compliance cost — lives in the business checklist.
-- [ ] `P2` **Site name / domain.** Candidates: Timelines.ai · Timecharts.ai · Newscharts.ai ·
-      Thetimeline.ai · Timeline.ai. ⚠ Renaming is not just a logo: `SITE_URL`, canonical URLs,
-      the sitemap, OG images and JSON-LD all carry the name, and redirects would be needed to
-      keep any indexed pages. Cheapest before launch, expensive after. Check domain
-      availability and trademark conflicts before falling in love with one.
+- [x] **Rename the software to News Charts.** Done 2026-07-28 (PR #11, merged) — settled the
+      *name* half of the site-name/domain question below, pre-launch, i.e. at its cheapest.
+      Display name, header/OG wordmarks, SEO metadata and docs say **News Charts**; the
+      `news-charts` slug covers the npm package, the localStorage/event namespace, backup
+      filenames and log tags; docs and `.env.example` use a `news_charts` Postgres
+      role/database. An inline pre-hydration script in `app/layout.tsx` migrates visitors' old
+      `chronolens:*` localStorage keys, so follows, prefs and AI settings survive. The GitHub
+      repo is renamed to `News-Charts` (old URLs redirect). Loose ends:
+      - [ ] `P2` Rename the live Postgres role/database from `chronolens` to `news_charts` —
+            or keep the old names in `.env.local`; only the docs assume `news_charts`.
+      - [ ] `P2` Old `chronolens-*.dump` backups no longer match the retention regex in
+            `scripts/backup.ts`, so they are never auto-pruned — delete them by hand once
+            enough `news-charts-*` dumps have accumulated.
+- [ ] `P2` **Domain for the site.** The name is now settled (News Charts, above), which points
+      at **Newscharts.ai** from the original candidate list (Timelines.ai · Timecharts.ai ·
+      Thetimeline.ai · Timeline.ai were the alternatives). ⚠ Still to do: check domain
+      availability and trademark conflicts, then set `SITE_URL` — canonical URLs, the sitemap,
+      OG images and JSON-LD all carry it, and redirects would be needed to keep any indexed
+      pages. Cheapest before launch, expensive after.
 - [ ] `P1` **Label every source on screen, and the compliance around it.** News Charts' half of
       the source-labeling policy in the business checklist (`docs/BUSINESS-CHECKLIST.md`,
       Crypto-Stuff repo). Concretely: every event already carries a `source` label and an

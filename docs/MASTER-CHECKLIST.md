@@ -387,12 +387,20 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
       Asserts behaviour rather than presence where it matters — that the chart *repaints* when an
       overlay is toggled (every series shares one canvas, so counting canvases proves nothing),
       and that Biggest moves pairs a move with the *prior* day's after-close earnings.
-- [ ] `P0` **Commit the parser assertions from the PR #9 session** — cite-date parsing, year
-      extraction including ticker/domain false positives, the prehistory guard, and the nine
-      adapter fixtures with mocked fetch. Those ~60 assertions are still in throwaway scripts.
-      Four offline suites are now committed and run together with `npm run check`:
-      `check:prompt` (24), `check:onchain` (22), `check:commercial-mode` (16), `check:refresh`
-      (12). This item is what remains.
+- [x] ~~`P0` **Commit the parser assertions from the PR #9 session**~~ — done 2026-07-28.
+      `npm run check:parsers` (31) covers year extraction with its ticker and domain false
+      positives, the company prehistory guard, and the implausible-press floor; `check:dates`
+      (20) covers cite-date parsing. **Seven offline suites now run together as `npm run check`**
+      — parsers, dates, news quality, refresh windows, prompts, on-chain, licence gate.
+      These parsers decide *where an event lands in time*, and being wrong doesn't throw: it
+      plants an event in the Middle Ages, drags the timeline's range with it, and leaves a page
+      that looks fine to anyone not reading the axis.
+      - ⚠ **Writing them found a live bug.** `in` was in the measurement unit list (inches) with
+        a space allowed, so `\d+\s*in\b` masked the year in *"founded in 1903 in Detroit"* —
+        the commonest preposition in English. `extractYear` returned null and the sentence was
+        **silently dropped from the timeline** with nothing to show it had been. Inches now has
+        to be attached (`27in`) or punctuated (`27 in.`), which is how a measurement is written.
+        Every Wikipedia history sentence of the form "…in YYYY in PLACE" was affected.
 - [x] ~~`P1` **Noise control for the aggregators**~~ — done 2026-07-28 (`lib/newsQuality.ts`,
       `npm run check:news-quality`, 23 cases). Both halves are pure functions, because each can
       fail silently in opposite directions: too loose and a timeline carries three copies of one

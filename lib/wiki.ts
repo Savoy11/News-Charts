@@ -71,9 +71,14 @@ export function extractYear(sentence: string): number | null {
     .replace(/\d[\d,.]*\s*[×x*]\s*\d[\d,.]*/gi, " ")
     // measurements and hardware specs
     .replace(
-      /\b\d+(\.\d+)?\s*(mm|cm|km|in|inch|inches|mah|k?hz|mhz|ghz|kb|mb|gb|tb|ppi|dpi|px|nm|bit|megapixels?|mp|rpm|w|kw)\b/gi,
+      /\b\d+(\.\d+)?\s*(mm|cm|km|inch|inches|mah|k?hz|mhz|ghz|kb|mb|gb|tb|ppi|dpi|px|nm|bit|megapixels?|mp|rpm|w|kw)\b/gi,
       " "
     )
+    // Inches abbreviated to "in" needs its own rule, because "in" is also the commonest
+    // preposition in English: with a space allowed, "founded in 1903 in Detroit" masked the
+    // year and the sentence silently lost its place on the timeline. Require the unit to be
+    // attached ("27in") or punctuated ("27 in."), which is how a measurement is actually written.
+    .replace(/\b\d+(\.\d+)?(?:in\b|\s*in\.)/gi, " ")
     // currency and large counts, e.g. "$1,999" or "1080p"
     .replace(/[$€£]\s?\d[\d,.]*/g, " ")
     .replace(/\b\d{3,4}[ip]\b/gi, " ")

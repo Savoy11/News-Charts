@@ -146,15 +146,19 @@ type Row =
 function buildRows(events: TimelineEvent[], order: "asc" | "desc"): Row[] {
   const byKey = (a: string, b: string) => (order === "desc" ? b.localeCompare(a) : a.localeCompare(b));
 
-  // year -> { months: monthKey -> (date -> events), approx: events | null }
+  // year -> { months: monthKey -> (date -> events), monthOnly: monthKey -> events, approx: events | null }
   const years = new Map<
     string,
-    { months: Map<string, Map<string, TimelineEvent[]>>; approx: TimelineEvent[] | null }
+    {
+      months: Map<string, Map<string, TimelineEvent[]>>;
+      monthOnly: Map<string, TimelineEvent[]>;
+      approx: TimelineEvent[] | null;
+    }
   >();
   const yearOf = (y: string) => {
     let yb = years.get(y);
     if (!yb) {
-      yb = { months: new Map(), approx: null };
+      yb = { months: new Map(), monthOnly: new Map(), approx: null };
       years.set(y, yb);
     }
     return yb;
@@ -163,11 +167,20 @@ function buildRows(events: TimelineEvent[], order: "asc" | "desc"): Row[] {
   for (const ev of events) {
     const year = ev.date.slice(0, 4);
     const yb = yearOf(year);
-    if (ev.yearOnly) {
+    if (ev.precision === "year") {
       (yb.approx ??= []).push(ev);
       continue;
     }
     const monthKey = ev.date.slice(0, 7); // YYYY-MM
+    // The month is known but the day is not. It belongs under its month header, just not on a
+    // specific day — the date was normalised to the 1st purely so it can be sorted and plotted.
+    if (ev.precision === "month") {
+      const bucket = yb.monthOnly.get(monthKey) ?? [];
+      bucket.push(ev);
+      yb.monthOnly.set(monthKey, bucket);
+      yb.months.set(monthKey, yb.months.get(monthKey) ?? new Map());
+      continue;
+    }
     const month = yb.months.get(monthKey) ?? new Map<string, TimelineEvent[]>();
     const day = month.get(ev.date) ?? [];
     day.push(ev);
@@ -193,8 +206,20 @@ function buildRows(events: TimelineEvent[], order: "asc" | "desc"): Row[] {
         continue;
       }
       const month = yb.months.get(section.monthKey)!;
-      const firstDate = [...month.keys()][0];
+      const monthOnly = yb.monthOnly.get(section.monthKey);
+      const firstDate = [...month.keys()][0] ?? `${section.monthKey}-01`;
       rows.push({ kind: "month", key: `m-${section.monthKey}`, label: monthYearLabel(firstDate), year, monthKey: section.monthKey });
+      if (monthOnly) {
+        rows.push({
+          kind: "day",
+          key: `mo-${section.monthKey}`,
+          date: `${section.monthKey}-01`,
+          items: monthOnly,
+          approx: true,
+          year,
+          monthKey: section.monthKey,
+        });
+      }
       for (const date of [...month.keys()].sort(byKey)) {
         rows.push({ kind: "day", key: `d-${date}`, date, items: month.get(date)!, approx: false, year, monthKey: section.monthKey });
       }
@@ -653,12 +678,26 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
 
           // day row
           if (row.approx) {
-            if (collapsedYears.has(row.year)) return null; // year-only rows are never jump targets
+            if (hidden(row.year, row.monthKey)) return null; // approximate rows are never jump targets
+            // `monthKey` distinguishes the two: a year-only bucket sits directly under the year,
+            // a month-only bucket under its month.
+            const monthPrecision = row.monthKey !== null;
             return (
-              <li key={row.key} id={`d-${row.date.slice(0, 4)}-year`} className="mb-6 scroll-mt-24">
+              <li
+                key={row.key}
+                id={monthPrecision ? `d-${row.monthKey}-month` : `d-${row.date.slice(0, 4)}-year`}
+                className="mb-6 scroll-mt-24"
+              >
                 <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
-                <span className="text-xs font-semibold italic text-slate-500" title="The source gave only the year">
-                  Year only
+                <span
+                  className="text-xs font-semibold italic text-slate-500"
+                  title={
+                    monthPrecision
+                      ? "The source gave a month but no day"
+                      : "The source gave only the year"
+                  }
+                >
+                  {monthPrecision ? "Day not given" : "Year only"}
                 </span>
                 <ul className="mt-2 space-y-2">
                   {row.items.map((ev) => (

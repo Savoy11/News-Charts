@@ -450,8 +450,22 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
       appear (0 → 15).
 - [ ] `P2` **NYT Keyword facet → event tags.** Needs a tags field on events; would feed the
       focus/AI relevance filtering.
-- [ ] `P2` **Month-level date precision** plumb-through (month-only citation dates currently
-      land on the 1st with day precision).
+- [x] ~~`P2` **Month-level date precision**~~ — done 2026-07-28. `date_precision` has had a
+      `'month'` value since `db/001` and nothing ever wrote it: "January 2015" was stored as
+      `2015-01-01` at **day** precision, so the page printed "Jan 1" for a day the source never
+      gave. An over-precise date is worse than a vague one — it reads as a fact.
+      `TimelineEvent.yearOnly` (two states) is replaced by `precision: 'day' | 'month' | 'year'`,
+      which made the type checker enumerate every site that had to change. `date` stays a full
+      day so events still sort and plot; precision governs display only. Month-precision events
+      group under their month as a **"Day not given"** node, the month-level counterpart of the
+      existing "Year only" bucket.
+      - ⚠ **Found a pre-existing bug while testing it:** the ISO pattern was unanchored, so a
+        date *range* (`2015-01-05/2015-02-01`) matched its own prefix and was stored as a
+        specific day — the one shape the parser's own doc comment promises to reject, reported
+        as a fact. Anchored, and covered.
+      - `npm run check:dates` (20 cases) covers every form the style guide allows, the rejects
+        (ranges, seasons, `n.d.`, impossible days), and that all three precisions still sort
+        correctly against each other. Part of the outstanding PR #9 parser-assertion `P0`.
 - [ ] `P1` **Internet Archive adapter (keyless).** → **duplicate**; tracked in the Historical
       article resurfacing backlog above. Left as a pointer so it isn't picked up twice.
 - [x] ~~`P1` **Merge PR #9 to main**~~ — merged 2026-07-27. `.env.example` now also documents

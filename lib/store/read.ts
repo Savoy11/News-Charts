@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { getPool } from "../db";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
-import { EventType, PricePoint, SourceKey, TimelineEvent } from "../types";
+import { DatePrecision, EventType, PricePoint, SourceKey, TimelineEvent } from "../types";
 
 export interface SubjectRow {
   id: number;
@@ -195,7 +195,7 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
           ? `${r.body ? `${r.body} · ` : ""}${attestations} sources`
           : r.body ?? undefined,
       imageUrl: r.image_url ?? undefined,
-      yearOnly: r.date_precision === "year",
+      precision: r.date_precision as DatePrecision,
     } satisfies TimelineEvent;
   });
 }
@@ -229,7 +229,7 @@ export async function loadSectorEvents(industryId: number): Promise<TimelineEven
     url: r.url ?? undefined,
     description: "sector-wide",
     imageUrl: r.image_url ?? undefined,
-    yearOnly: r.date_precision === "year",
+    precision: r.date_precision as DatePrecision,
   }));
 }
 
@@ -369,7 +369,7 @@ export async function loadIndustryEvents(industryId: number): Promise<TimelineEv
       url: r.url ?? undefined,
       description:
         peers > 1 ? `${r.tickers} · ${peers} peers` : (r.tickers ?? "sector-wide"),
-      yearOnly: r.date_precision === "year",
+      precision: r.date_precision as DatePrecision,
     } satisfies TimelineEvent;
   });
 }

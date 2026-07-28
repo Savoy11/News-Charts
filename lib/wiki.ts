@@ -1,4 +1,4 @@
-import { TimelineEvent } from "./types";
+import { DatePrecision, TimelineEvent } from "./types";
 
 const API = "https://en.wikipedia.org/w/api.php";
 const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
@@ -116,7 +116,7 @@ export interface WikiCitation {
   title: string;
   url: string;
   date: string; // YYYY-MM-DD (month/day default to 01 when the template omits them)
-  yearOnly: boolean;
+  precision: DatePrecision;
   /** work / newspaper / publisher — falls back to the URL's hostname */
   publication: string;
 }
@@ -152,16 +152,19 @@ const pad = (n: number) => String(n).padStart(2, "0");
  * and a bare "2015". Anything else (n.d., ranges, seasons) is rejected — an
  * undatable citation can't take a place on a timeline.
  */
-export function parseCiteDate(raw: string): { date: string; yearOnly: boolean } | null {
+export function parseCiteDate(raw: string): { date: string; precision: DatePrecision } | null {
   const s = raw.trim();
   const okYear = (y: number) => y >= 1750 && y <= new Date().getFullYear() + 1;
   const okDay = (m: number, d: number) => d >= 1 && d <= [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
 
-  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); // ISO
+  // Anchored at both ends on purpose. Unanchored, a range ("2015-01-05/2015-02-01") matched its
+  // own prefix and was stored as a specific day — the one shape this parser promises to reject,
+  // reported as a fact.
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); // ISO
   if (m) {
     const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
     if (okYear(y) && mo >= 1 && mo <= 12 && okDay(mo, d)) {
-      return { date: `${y}-${pad(mo)}-${pad(d)}`, yearOnly: false };
+      return { date: `${y}-${pad(mo)}-${pad(d)}`, precision: "day" };
     }
     return null;
   }
@@ -169,25 +172,27 @@ export function parseCiteDate(raw: string): { date: string; yearOnly: boolean } 
   if (m) {
     const mo = MONTHS[m[1].toLowerCase()];
     const [d, y] = [Number(m[2]), Number(m[3])];
-    if (mo && okYear(y) && okDay(mo, d)) return { date: `${y}-${pad(mo)}-${pad(d)}`, yearOnly: false };
+    if (mo && okYear(y) && okDay(mo, d)) return { date: `${y}-${pad(mo)}-${pad(d)}`, precision: "day" };
     return null;
   }
   m = s.match(/^(\d{1,2})\s+([A-Za-z]+)\.?\s+(\d{4})$/); // 5 January 2015
   if (m) {
     const mo = MONTHS[m[2].toLowerCase()];
     const [d, y] = [Number(m[1]), Number(m[3])];
-    if (mo && okYear(y) && okDay(mo, d)) return { date: `${y}-${pad(mo)}-${pad(d)}`, yearOnly: false };
+    if (mo && okYear(y) && okDay(mo, d)) return { date: `${y}-${pad(mo)}-${pad(d)}`, precision: "day" };
     return null;
   }
   m = s.match(/^([A-Za-z]+)\.?\s+(\d{4})$/); // January 2015
   if (m) {
     const mo = MONTHS[m[1].toLowerCase()];
     const y = Number(m[2]);
-    if (mo && okYear(y)) return { date: `${y}-${pad(mo)}-01`, yearOnly: false };
+    // month known, day not — normalised to the 1st, but recorded as month precision so the UI
+  // never prints a day the source withheld
+  if (mo && okYear(y)) return { date: `${y}-${pad(mo)}-01`, precision: "month" };
     return null;
   }
   m = s.match(/^(\d{4})$/); // bare year
-  if (m && okYear(Number(m[1]))) return { date: `${m[1]}-01-01`, yearOnly: true };
+  if (m && okYear(Number(m[1]))) return { date: `${m[1]}-01-01`, precision: "year" };
   return null;
 }
 
@@ -273,7 +278,7 @@ export function parseCitations(wikitext: string): WikiCitation[] {
         publication = "cited source";
       }
     }
-    out.push({ title, url, date: when.date, yearOnly: when.yearOnly, publication });
+    out.push({ title, url, date: when.date, precision: when.precision, publication });
   }
   return out;
 }
@@ -303,7 +308,9 @@ function citationEvents(articles: { wikitext: string }[]): TimelineEvent[] {
     for (const c of parseCitations(a.wikitext)) {
       const existing = byUrl.get(c.url);
       // same URL cited in both the History and Timeline articles: keep the fuller date
-      if (!existing || (existing.yearOnly && !c.yearOnly)) byUrl.set(c.url, c);
+      // keep the most precise version of a repeated citation
+      const rank = (p: DatePrecision) => ({ day: 2, month: 1, year: 0 })[p];
+      if (!existing || rank(c.precision) > rank(existing.precision)) byUrl.set(c.url, c);
     }
   }
   const sorted = [...byUrl.values()].sort((a, b) => a.date.localeCompare(b.date));
@@ -318,7 +325,7 @@ function citationEvents(articles: { wikitext: string }[]): TimelineEvent[] {
     // the cited article is the document AND the event — one URL, one row
     externalId: c.url,
     dedupBasis: c.url,
-    yearOnly: c.yearOnly,
+    precision: c.precision,
   }));
 }
 
@@ -356,7 +363,7 @@ function eventsFromPage(page: Page, idPrefix: string, limit: number): TimelineEv
         // sentence in "History of X" and "Timeline of X" collapses to one row
         externalId: page.title,
         dedupBasis: s,
-        yearOnly: true,
+        precision: "year",
       });
       if (events.length >= limit) return events;
     }

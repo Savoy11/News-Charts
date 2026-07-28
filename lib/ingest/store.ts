@@ -439,7 +439,7 @@ export async function upsertEvent(
     [
       ev.type,
       ev.date,
-      ev.yearOnly ? "year" : "day",
+      ev.precision ?? "day",
       ev.title,
       ev.description ?? null,
       ev.imageUrl ?? null,

@@ -9,6 +9,9 @@ export type EventType =
   | "corporate_action"
   | "onchain";
 
+/** Matches the date_precision enum in the database. */
+export type DatePrecision = "day" | "month" | "year";
+
 /** Matches the fetch_outcome enum in the database. */
 export type FetchOutcome = "ok" | "empty" | "throttled" | "error";
 
@@ -47,8 +50,13 @@ export interface TimelineEvent {
   externalId?: string;
   /** identity of the *event* — two items with the same basis are the same happening */
   dedupBasis?: string;
-  /** true when the source only gave a year, so the date is normalised to Jan 1 */
-  yearOnly?: boolean;
+  /**
+   * How precise the source actually was. `date` is always a full day so it can be sorted and
+   * plotted, but a month-precision date is normalised to the 1st and a year-precision one to
+   * Jan 1 — rendering either as a specific day asserts precision nobody gave us.
+   * Absent means day precision.
+   */
+  precision?: DatePrecision;
 }
 
 /** What a source fetch returned, so ingest can tell "nothing" from "rate limited". */

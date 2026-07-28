@@ -22,7 +22,8 @@
     "check:prompt": "tsx scripts/check-prompt.ts",
     "check:refresh": "tsx scripts/check-refresh.ts",
     "check:ui": "tsx scripts/check-ui.ts",
-    "check": "npm run check:refresh && npm run check:prompt && npm run check:onchain && npm run check:commercial-mode"
+    "check": "npm run check:dates && npm run check:refresh && npm run check:prompt && npm run check:onchain && npm run check:commercial-mode",
+    "check:dates": "tsx scripts/check-dates.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

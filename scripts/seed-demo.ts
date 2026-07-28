@@ -125,7 +125,7 @@ const FORD_HISTORY: Seed[] = [
   externalId: "History of Ford Motor Company",
   // The three Jan-1 rows above are year-only in the source; EventList buckets them
   // under the year instead of inventing a January date.
-  yearOnly: date.endsWith("-01-01"),
+  precision: date.endsWith("-01-01") ? ("year" as const) : ("day" as const),
 }));
 
 const FORD_PRESS: Seed[] = [
@@ -254,7 +254,7 @@ const FORD_REGULATION: Seed[] = [
 // ------------------------------------------------------------------- GM
 const GM_EVENTS: Seed[] = [
   { date: "1908-09-16", title: "General Motors is founded in Flint, Michigan", description: "Formed as a holding company for Buick.", type: "history", source: "Wikipedia: General Motors", url: "https://en.wikipedia.org/wiki/General_Motors", sourceKey: "wikipedia", externalId: "General Motors" },
-  { date: "1953-01-01", title: "The Corvette enters production", description: "Chevrolet's two-seat sports car begins limited production in Flint.", type: "history", source: "Wikipedia: General Motors", url: "https://en.wikipedia.org/wiki/General_Motors", sourceKey: "wikipedia", externalId: "General Motors", yearOnly: true },
+  { date: "1953-01-01", title: "The Corvette enters production", description: "Chevrolet's two-seat sports car begins limited production in Flint.", type: "history", source: "Wikipedia: General Motors", url: "https://en.wikipedia.org/wiki/General_Motors", sourceKey: "wikipedia", externalId: "General Motors", precision: "year" },
   { date: "2009-06-01", title: "General Motors files for Chapter 11 reorganisation", description: "The company emerges the same year as a new entity.", type: "history", source: "Wikipedia: General Motors", url: "https://en.wikipedia.org/wiki/General_Motors", sourceKey: "wikipedia", externalId: "General Motors" },
   { date: "2010-11-18", title: "General Motors returns to public markets", description: "One of the largest initial public offerings on record at the time.", type: "history", source: "Wikipedia: General Motors", url: "https://en.wikipedia.org/wiki/General_Motors", sourceKey: "wikipedia", externalId: "General Motors" },
   { date: "2025-04-02", title: "Q1 2025 results and revised outlook", description: "Quarterly results released after the close.", type: "earnings", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "earnings-gm-2025-04-02" },
@@ -425,9 +425,25 @@ async function main(): Promise<void> {
         url: "https://en.wikipedia.org/wiki/Electric_car",
         sourceKey: "wikipedia" as const,
         externalId: "Electric car",
-        yearOnly: date.endsWith("-01-01"),
+        precision: date.endsWith("-01-01") ? ("year" as const) : ("day" as const),
       })),
-      ...EV_CITATIONS.map(([date, title, publication]) => ({
+      // Two citations whose source gave a month but no day. They must render under their month
+  // without a day node — printing "Jun 1" would invent precision the source withheld.
+  ...([
+    ["2012-06-01", "Electric Car Sales Climb Through the First Half", "The Economist"],
+    ["2021-03-01", "Charging Networks Expand Across Europe", "Financial Times"],
+  ] as [string, string, string][]).map(([date, title, publication]) => ({
+    date,
+    title,
+    description: `Cited by the Electric car article. ${publication}.`,
+    type: "citation" as const,
+    source: publication,
+    url: `https://example.com/ev-month-${date}`,
+    sourceKey: "wikipedia" as const,
+    externalId: `citation-ev-month-${date}`,
+    precision: "month" as const,
+  })),
+  ...EV_CITATIONS.map(([date, title, publication]) => ({
         date,
         title,
         description: `Cited by the Electric car article. ${publication}.`,

@@ -255,6 +255,16 @@ async function topicPage(page: Page): Promise<void> {
 
   // An ordinary topic must not gain the crypto price chart.
   check("no price chart on an ordinary topic", (await page.locator("canvas").count()) === 0);
+
+  // Month-precision citations: under their month, but with no invented day.
+  const listBody = await visible(page);
+  check("month-precision events render", listBody.includes("Electric Car Sales Climb"));
+  check("labelled as day-not-given", listBody.includes("Day not given"));
+  check(
+    "no invented day node for them",
+    !/Jun 1\b[\s\S]{0,120}Electric Car Sales Climb/.test(listBody),
+    "a 'Jun 1' day node appeared above the month-only citation"
+  );
 }
 
 async function cryptoTopic(page: Page): Promise<void> {

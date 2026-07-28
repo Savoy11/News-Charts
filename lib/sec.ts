@@ -1,6 +1,6 @@
 import { CompanyInfo, TimelineEvent } from "./types";
 
-const UA = { "User-Agent": "Chronolens Research marcusowens94@gmail.com" };
+const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 
 interface TickerRow {
   cik_str: number;

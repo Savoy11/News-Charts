@@ -11,7 +11,7 @@ const geistSans = localFont({
   weight: "100 900",
 });
 
-const DEFAULT_TITLE = "Chronolens — Research any topic on a timeline";
+const DEFAULT_TITLE = "News Charts — Research any topic on a timeline";
 const DEFAULT_DESCRIPTION =
   "See news, earnings, SEC filings, and historical events on a single timeline — pegged to the stock price for public companies.";
 
@@ -68,7 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="mt-16 border-t border-slate-800/80 py-6">
           <div className="mx-auto max-w-6xl px-4 text-xs text-slate-600">
             <p>
-              Chronolens is a research tool, not investment advice. Price data from Yahoo Finance,
+              News Charts is a research tool, not investment advice. Price data from Yahoo Finance,
               filings from SEC EDGAR, recent news from GDELT, historical newspapers from the
               Library of Congress (Chronicling America), historical context from Wikipedia
               (CC BY-SA).

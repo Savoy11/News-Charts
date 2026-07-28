@@ -1,4 +1,4 @@
-# Chronolens — events schema (v1 spec)
+# News Charts — events schema (v1 spec)
 
 Target: PostgreSQL 15+. Status: **spec, not yet applied.** No database exists yet; the site
 currently fetches every source live and leans on Next.js ISR.

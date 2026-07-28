@@ -1,17 +1,17 @@
-# Chronolens — Master Checklist
+# News Charts — Master Checklist
 
-The governing checklist for the **Chronolens** project: a single place to track initiatives,
+The governing checklist for the **News Charts** project: a single place to track initiatives,
 priorities, and progress. Add to it, check things off, re-prioritise. This is a living doc.
 
 **Last updated:** 2026-07-25
 
 ## Scope & independence
 
-- **This checklist governs Chronolens only.** Crypto-Stuff / CAEP is a **separate project with
+- **This checklist governs News Charts only.** Crypto-Stuff / CAEP is a **separate project with
   its own master checklist**; the two are developed **independently** — no shared code, no
   runtime coupling. Any future cross-project connection would be a separate, explicit decision,
   not something assumed or tracked here.
-- **Related Chronolens docs:** `README.md` (feature notes), `docs/EVENTS-SCHEMA.md` (the events
+- **Related News Charts docs:** `README.md` (feature notes), `docs/EVENTS-SCHEMA.md` (the events
   schema spec). This checklist tracks *work*; those describe *what exists*.
 
 ## Legend
@@ -26,7 +26,7 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
 
 ## Project state & prioritized backlog (from PR review — 2026-07-25)
 
-**Where Chronolens stands.** The data layer is real — 5 SQL migrations (`db/001`–`005`) plus a
+**Where News Charts stands.** The data layer is real — 5 SQL migrations (`db/001`–`005`) plus a
 full script suite (`ingest`, `score`, `signals`, `explain`, `plan`). But **all 7 feature PRs
 (#1–#7) are open, unmerged drafts**, and every one says *"not yet eyeballed in a live browser
 against a seeded DB."* So the value is built but unshipped, and the blocker is verification, not
@@ -201,7 +201,7 @@ On-chain data has a hard floor at genesis, and it's young. Name it; don't fake d
 | Most DeFi / governance | **~2020+** | Protocol-dependent |
 
 Within these bounds data is complete and gap-free (immutable chain); the only constraint is
-backfill throughput, handled by back-off + idempotency. Contrast Chronolens's other sources
+backfill throughput, handled by back-off + idempotency. Contrast News Charts' other sources
 (Chronicling America → 1800s, Wikipedia → further): **crypto subjects have short timelines, on
 purpose.**
 
@@ -376,16 +376,16 @@ Each idea checked against the codebase before listing — several were cheaper t
 ## Initiative: Affiliate links on relevant surfaces · `P2`
 
 Companion to CAEP's affiliate item (`docs/ROADMAP.md` in Crypto-Stuff — staking pages first,
-across both its free web and desktop distributions). Chronolens's own affiliate opportunities
+across both its free web and desktop distributions). News Charts' own affiliate opportunities
 are thinner but real, and the same integrity rules apply. **The two projects stay independent;
 this is a shared revenue *pattern*, not shared code.**
 
-- [ ] `P0` **Recognise what this triggers: affiliate revenue makes Chronolens commercial.** That
+- [ ] `P0` **Recognise what this triggers: affiliate revenue makes News Charts commercial.** That
       activates every item in the ⛔ pre-release feed gate above — NYT, Guardian, Newsdata,
       GNews, Currents, Marketaux, EODHD and Finnhub are all on non-commercial free tiers today.
       Adding a single paid link is the moment those licences must be resolved. **Do the feed
       gate first, or not the links.**
-- [ ] `P1` **Neutrality rule.** Chronolens's product *is* an unbiased historical record. An
+- [ ] `P1` **Neutrality rule.** News Charts' product *is* an unbiased historical record. An
       affiliate relationship must never influence which events, articles or sources surface,
       nor their ordering. Structurally: the ingest/ranking layers must not be able to read
       affiliate state, exactly as CAEP keeps it out of the risk engine.
@@ -403,7 +403,7 @@ this is a shared revenue *pattern*, not shared code.**
 
 ## Owner backlog (2026-07-26 brain dump)
 
-Chronolens-side items only. CAEP items went to that project's `docs/ROADMAP.md`; company-level
+News Charts-side items only. CAEP items went to that project's `docs/ROADMAP.md`; company-level
 items (entity filing, federal regulation research, disclosure documents, "what does sellable
 look like") went to a **separate business checklist** worked independently of both products —
 `docs/BUSINESS-CHECKLIST.md` in the Crypto-Stuff repo.
@@ -422,7 +422,7 @@ look like") went to a **separate business checklist** worked independently of bo
 - [ ] `P1` **Beta launch.** ⚠ Blocked by the ⛔ pre-release feed gate above — a public beta is a
       release, so licences and feed health must be settled first, not after.
 - [ ] `P2` **Security deep-dive + what an account looks like (Google login?).** ⚠ Note the
-      architectural shift: Chronolens is deliberately accounts-free today — follows, prefs and
+      architectural shift: News Charts is deliberately accounts-free today — follows, prefs and
       view state are localStorage, and "your key never leaves your machine" is currently
       literally true. Accounts add a user table, session security, and a privacy-policy surface.
       They are also the prerequisite for the `P3` saved-focus alerts already parked above.
@@ -438,7 +438,7 @@ look like") went to a **separate business checklist** worked independently of bo
       the sitemap, OG images and JSON-LD all carry the name, and redirects would be needed to
       keep any indexed pages. Cheapest before launch, expensive after. Check domain
       availability and trademark conflicts before falling in love with one.
-- [ ] `P1` **Label every source on screen, and the compliance around it.** Chronolens's half of
+- [ ] `P1` **Label every source on screen, and the compliance around it.** News Charts' half of
       the source-labeling policy in the business checklist (`docs/BUSINESS-CHECKLIST.md`,
       Crypto-Stuff repo). Concretely: every event already carries a `source` label and an
       outward link, but with eleven feeds the labels are inconsistent — GDELT reports bare
@@ -454,5 +454,5 @@ look like") went to a **separate business checklist** worked independently of bo
 
 ## Other initiatives
 
-_Add new Chronolens initiatives here as they come up — this doc is meant to govern the whole
+_Add new News Charts initiatives here as they come up — this doc is meant to govern the whole
 project, not just the on-chain work._

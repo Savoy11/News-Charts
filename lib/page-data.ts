@@ -90,7 +90,7 @@ async function persist(
       throw err;
     }
   } catch (err) {
-    console.warn("[chronolens] persist skipped:", (err as Error).message);
+    console.warn("[news-charts] persist skipped:", (err as Error).message);
   } finally {
     client?.release();
   }
@@ -117,7 +117,7 @@ async function persistTopic(
       throw err;
     }
   } catch (err) {
-    console.warn("[chronolens] persist skipped:", (err as Error).message);
+    console.warn("[news-charts] persist skipped:", (err as Error).message);
   } finally {
     client?.release();
   }
@@ -140,7 +140,7 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
     }
   } catch (err) {
     // database unavailable — the site keeps working on live sources alone
-    console.warn("[chronolens] db read failed, falling back to live:", (err as Error).message);
+    console.warn("[news-charts] db read failed, falling back to live:", (err as Error).message);
   }
 
   // 2. otherwise fetch live, then store what we got for next time
@@ -201,7 +201,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
       }
     }
   } catch (err) {
-    console.warn("[chronolens] db read failed, falling back to live:", (err as Error).message);
+    console.warn("[news-charts] db read failed, falling back to live:", (err as Error).message);
   }
 
   const company = await resolveCompany(ticker);

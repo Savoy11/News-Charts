@@ -68,7 +68,7 @@ async function main() {
 
       if (!apiKey) {
         console.log(
-          "\n  No ANTHROPIC_API_KEY in chronolens/.env.local — nothing was generated.\n" +
+          "\n  No ANTHROPIC_API_KEY in news-charts/.env.local — nothing was generated.\n" +
             "  Signals and the timeline are unaffected; explanations are purely additive."
         );
         for (const s of withEvidence) {

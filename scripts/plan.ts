@@ -111,7 +111,7 @@ async function main() {
 
     if (!apiKey) {
       console.log(
-        "\n  No ANTHROPIC_API_KEY in chronolens/.env.local — no plan was generated.\n" +
+        "\n  No ANTHROPIC_API_KEY in news-charts/.env.local — no plan was generated.\n" +
           "  Planning only ever proposes search terms against the sources below; it can\n" +
           "  never name a URL, so nothing here fetches from an arbitrary address.\n" +
           "    federal_register · gdelt · loc_chronam"

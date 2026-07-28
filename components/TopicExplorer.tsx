@@ -73,7 +73,7 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
   );
   const [view, setView] = useState<"timeline" | "list">("timeline");
   const pathname = usePathname();
-  const storeKey = `chronolens:view:${pathname}`;
+  const storeKey = `news-charts:view:${pathname}`;
   const [copied, setCopied] = useState(false);
   // the angle a natural-language search prompt carried in ("in the united states")
   const [focusHint, setFocusHint] = useState<string | null>(null);
@@ -237,7 +237,7 @@ export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
       {view === "timeline" ? (
         <HorizontalTimeline events={ranked} />
       ) : (
-        <EventList events={ranked} order="asc" persistKey={`chronolens:collapse:${pathname}`} />
+        <EventList events={ranked} order="asc" persistKey={`news-charts:collapse:${pathname}`} />
       )}
     </div>
   );

@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 /**
  * Actually restores a dump instead of merely inspecting it.
  *
- * The `chronolens` role deliberately lacks CREATEDB, so a scratch database isn't an
+ * The `news_charts` role deliberately lacks CREATEDB, so a scratch database isn't an
  * option. Instead the dump's own SQL — DROP and CREATE included, exactly what a real
  * recovery runs — is executed inside a transaction that is then rolled back. Nothing
  * persists, and even in the impossible case of a commit the data written would be the
@@ -55,7 +55,7 @@ function main() {
   console.log(`rehearsing ${file}`);
 
   // 1. expand the dump to the SQL a real restore would run
-  const work = mkdtempSync(join(tmpdir(), "chronolens-restore-"));
+  const work = mkdtempSync(join(tmpdir(), "news-charts-restore-"));
   const sqlFile = join(work, "restore.sql");
   const expand = spawnSync(
     findTool("pg_restore"),

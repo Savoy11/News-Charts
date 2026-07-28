@@ -1,4 +1,4 @@
-# Chronolens
+# News Charts
 
 Research any topic on a linear timeline. For publicly traded companies, news, SEC filings, and
 earnings are pegged to the stock price chart so analysts can spot what sparked a move. For
@@ -122,7 +122,7 @@ Behind the same ⚙ as the model settings, three things a visitor can add:
   (`floor 5 · 2σ · 30mo`) and a shortcut back into settings.
 - **Their own sources** — extra Federal Register search terms merged into sector timelines.
   **Terms, not URLs.** Accepting arbitrary URLs would turn the server into an SSRF proxy, so
-  visitors compose queries against sources Chronolens already trusts.
+  visitors compose queries against sources News Charts already trusts.
 - **Custom peer groups** — named ticker sets that can span SIC codes ("AI chip makers"), each
   with its own timeline and signals at `/group/<name>`.
 
@@ -187,19 +187,19 @@ contains nothing is worse than none.
 Restore:
 
 ```
-pg_restore --clean --if-exists -d "$DATABASE_URL" backups/chronolens-<timestamp>.dump
+pg_restore --clean --if-exists -d "$DATABASE_URL" backups/news-charts-<timestamp>.dump
 ```
 
 ### Rehearsing a restore
 
 ```
 npm run db:verify-restore              # newest dump
-npm run db:verify-restore -- --file backups/chronolens-....dump
+npm run db:verify-restore -- --file backups/news-charts-....dump
 ```
 
 A backup nobody has restored is a guess. This runs the dump's **own SQL — DROP and CREATE
 included, exactly what real recovery executes** — inside a transaction that is then rolled
-back. The `chronolens` role deliberately lacks `CREATEDB`, so a scratch database isn't
+back. The `news_charts` role deliberately lacks `CREATEDB`, so a scratch database isn't
 available; this needs no extra privileges and persists nothing. Even an impossible commit
 would write the dump of this same database.
 
@@ -217,7 +217,7 @@ the live database — all 12 tables matched exactly.
 
 ## Database and ingest worker
 
-Chronolens owns a dedicated `chronolens` database and a non-superuser `chronolens` role.
+News Charts owns a dedicated `news_charts` database and a non-superuser `news_charts` role.
 **It shares nothing with any other project on this machine** — no credentials, no schema, no
 data. `DATABASE_URL` lives in `.env.local` (gitignored).
 
@@ -249,7 +249,7 @@ for `CONFIG_EVENT` so saving or forgetting a key updates every mounted panel imm
 > `backdrop-filter` makes an element a containing block for `position: fixed` descendants —
 > without the portal the modal renders trapped inside the header bar.
 
-**The key never touches a Chronolens server.** `lib/ai/client.ts` and `components/AiPanel.tsx`
+**The key never touches a News Charts server.** `lib/ai/client.ts` and `components/AiPanel.tsx`
 are both `"use client"`, and every request goes straight from the browser to the chosen
 provider. There is no API route, no server action, and no server module that reads the stored
 config — verify with:
@@ -257,7 +257,7 @@ config — verify with:
 ```
 grep -rn "apiKey" app/ lib/ components/     # only the two client files, plus the
                                             # separate operator-side scorer
-grep -rln "chronolens:ai" app/ lib/         # nothing server-side
+grep -rln "news-charts:ai" app/ lib/         # nothing server-side
 ```
 
 That's what makes "your key stays in this browser" a checkable claim rather than a promise.

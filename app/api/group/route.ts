@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
         date,
         type: r.kind as EventType,
         title: r.title,
-        source: r.source_label ?? "Chronolens",
+        source: r.source_label ?? "News Charts",
         url: r.url ?? undefined,
         description: peers > 1 ? `${r.tickers} · ${peers} peers` : r.tickers,
         yearOnly: r.date_precision === "year",

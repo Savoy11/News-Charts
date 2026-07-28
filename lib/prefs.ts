@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Visitor preferences. Held in this browser, never on a Chronolens server — the same
+ * Visitor preferences. Held in this browser, never on a News Charts server — the same
  * rule as the BYO-model key. The server stays stateless: pages send these values as
  * parameters and get a computation back, so one visitor's settings never alter what
  * anyone else sees, and nothing a visitor types can write to the shared corpus.
@@ -53,8 +53,8 @@ export const DEFAULT_PREFS: Prefs = {
   timeline: { stack: true, expand: "hover", defaultZoom: 1, maxHistory: 60 },
 };
 
-const STORAGE_KEY = "chronolens:prefs:v1";
-export const PREFS_EVENT = "chronolens:prefs";
+const STORAGE_KEY = "news-charts:prefs:v1";
+export const PREFS_EVENT = "news-charts:prefs";
 
 export function loadPrefs(): Prefs {
   if (typeof window === "undefined") return DEFAULT_PREFS;
@@ -85,7 +85,7 @@ export function resetPrefs(): void {
 }
 
 export function openPrefs(): void {
-  window.dispatchEvent(new Event("chronolens:open-settings"));
+  window.dispatchEvent(new Event("news-charts:open-settings"));
 }
 
 export function isDefault(prefs: Prefs): boolean {

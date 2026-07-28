@@ -47,7 +47,7 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
   // the angle a natural-language search prompt carried in ("in the united states")
   const [focusHint, setFocusHint] = useState<string | null>(null);
 
-  const filterKey = `chronolens:filters:${pathname}`;
+  const filterKey = `news-charts:filters:${pathname}`;
 
   // Restore the filter selection: a shared ?types= link wins (reproduces exactly that view);
   // otherwise fall back to what this browser last chose here, remembered across visits.
@@ -198,7 +198,7 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
             : `${ranked.length} of ${filtered.length} events`}
         </span>
       </div>
-      <EventList events={ranked} siteDomain={siteDomain} persistKey={`chronolens:collapse:${pathname}`} />
+      <EventList events={ranked} siteDomain={siteDomain} persistKey={`news-charts:collapse:${pathname}`} />
     </div>
   );
 }

@@ -302,7 +302,7 @@ export default function PrefsSettings({
           <h3 className="text-sm font-bold text-slate-200">Your own sources</h3>
           <p className="text-xs text-slate-500">
             Extra Federal Register searches merged into sector timelines. Terms are queried
-            against sources Chronolens already trusts — arbitrary URLs are deliberately not
+            against sources News Charts already trusts — arbitrary URLs are deliberately not
             accepted, so nothing here can be pointed at an internal address.
           </p>
         </div>

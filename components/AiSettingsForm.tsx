@@ -12,7 +12,7 @@ import {
 
 /**
  * The single place model settings are edited. Rendered inside the header dialog;
- * nothing here ever talks to a Chronolens server.
+ * nothing here ever talks to a News Charts server.
  */
 export default function AiSettingsForm({
   config,
@@ -155,9 +155,9 @@ export default function AiSettingsForm({
 
       <p className="rounded-md border border-slate-800 bg-slate-950/60 p-3 text-[11px] leading-relaxed text-slate-500">
         Your key is stored in <strong className="text-slate-400">this browser only</strong> and is
-        sent directly to the provider you choose — it never reaches a Chronolens server, and we
+        sent directly to the provider you choose — it never reaches a News Charts server, and we
         never see your prompts or results. This adds an AI search box over the timeline; the
-        timeline itself — news, filings and reports — is served by Chronolens over the internet, so
+        timeline itself — news, filings and reports — is served by News Charts over the internet, so
         it isn’t available offline.
       </p>
     </div>

@@ -35,10 +35,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${geistSans.variable} min-h-screen bg-slate-950 font-sans text-slate-200 antialiased`}>
+        {/* One-time migration of localStorage from the old "chronolens:" namespace. Inline so it
+            runs while the HTML parses — before hydration, and therefore before any component's
+            first read of a "news-charts:" key. An existing new key wins over an old one. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'try{for(var k of Object.keys(localStorage)){if(k.slice(0,11)==="chronolens:"){var n="news-charts:"+k.slice(11);if(localStorage.getItem(n)===null)localStorage.setItem(n,localStorage.getItem(k));localStorage.removeItem(k)}}}catch(e){}',
+          }}
+        />
         <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
             <Link href="/" className="text-lg font-black tracking-tight text-slate-100">
-              chrono<span className="text-sky-400">lens</span>
+              news&nbsp;<span className="text-sky-400">charts</span>
             </Link>
             <div className="flex items-center gap-3">
               <Link

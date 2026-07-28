@@ -22,10 +22,12 @@ import {
   ensureSources,
   emptyStats,
   linkToIndustry,
+  logFetch,
   upsertEvent,
   upsertSubject,
   upsertTopicSubject,
 } from "../lib/ingest/store";
+import type { SourceKey } from "../lib/types";
 import type { PricePoint, TimelineEvent } from "../lib/types";
 
 // Fixed seed: the same command twice gives the same chart, so a screenshot stays comparable.
@@ -311,6 +313,21 @@ async function main(): Promise<void> {
   const client = await pool.connect();
   const stats = emptyStats();
 
+  /**
+   * Record fetch history too, so the Sources panel has something to show and so the per-source
+   * refresh windows have a starting point. A couple of deliberately unhappy outcomes are seeded
+   * as well — a feed that returned nothing and one that was rate limited look identical on a
+   * page without that panel, which is the whole reason it exists.
+   */
+  async function seedFetchLog(
+    subjectId: number,
+    entries: [SourceKey, "ok" | "empty" | "throttled" | "error", number][]
+  ): Promise<void> {
+    for (const [key, outcome, count] of entries) {
+      await logFetch(client, key, subjectId, "seed-demo", outcome, count);
+    }
+  }
+
   try {
     await ensureSources(client);
 
@@ -363,6 +380,18 @@ async function main(): Promise<void> {
     await client.query("BEGIN");
     for (const e of GM_EVENTS) await upsertEvent(client, ev(e), gmId, stats);
     await client.query("COMMIT");
+
+    await seedFetchLog(fordId, [
+      ["wikipedia", "ok", 13],
+      ["loc_chronam", "ok", 4],
+      ["sec_edgar", "ok", 13],
+      ["gdelt", "ok", 7],
+      ["federal_register", "ok", 1],
+      ["yahoo_finance", "ok", 7],
+      // the two that a page cannot distinguish without the panel
+      ["nyt", "empty", 0],
+      ["gnews", "throttled", 0],
+    ]);
 
     // ------------------------------------------------------ industry
     const { slug: industrySlug } = await linkToIndustry(client, fordId, {
@@ -498,6 +527,7 @@ async function main(): Promise<void> {
     await client.query("BEGIN");
     for (const e of halvings) await upsertEvent(client, ev(e), btcId, stats);
     await client.query("COMMIT");
+    await seedFetchLog(btcId, [["onchain", "ok", 4]]);
 
     // Spans the 2024 halving, so the marker lands on the chart rather than before it.
     const btcDays = everyDay("2023-01-01", "2026-07-24");

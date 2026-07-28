@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import TopicExplorer from "@/components/TopicExplorer";
 import AdSlot from "@/components/AdSlot";
 import CaepPromo from "@/components/CaepPromo";
+import SourcesPanel from "@/components/SourcesPanel";
 import SearchBox from "@/components/SearchBox";
 import TopicSummary from "@/components/TopicSummary";
 import ServedFrom from "@/components/ServedFrom";
@@ -72,9 +73,15 @@ export default async function TopicPage({ params }: { params: { slug: string } }
 
       <TopicExplorer events={data.events} prices={data.prices} />
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <CaepPromo />
+      {/* min-w-0 on both items: a grid item cannot shrink below its own content by default,
+          and the source names and attribution lines are long enough to push a phone sideways
+          even though they are individually truncated. */}
+      <div className="mt-8 grid gap-4 lg:grid-cols-[2fr_1fr] [&>*]:min-w-0">
+        <SourcesPanel slug={decodeURIComponent(params.slug)} />
         <AdSlot />
+      </div>
+      <div className="mt-4">
+        <CaepPromo />
       </div>
     </div>
   );

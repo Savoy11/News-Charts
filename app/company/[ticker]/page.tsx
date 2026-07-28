@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import CompanyExplorer from "@/components/CompanyExplorer";
 import AdSlot from "@/components/AdSlot";
 import CaepPromo from "@/components/CaepPromo";
+import SourcesPanel from "@/components/SourcesPanel";
 import SearchBox from "@/components/SearchBox";
 import ServedFrom from "@/components/ServedFrom";
 import JsonLd from "@/components/JsonLd";
@@ -121,7 +122,10 @@ export default async function CompanyPage({ params }: { params: { ticker: string
             <p className="text-slate-500">No price data available for {data.ticker}.</p>
           )}
         </div>
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
+          {/* which feeds actually contributed — a page with three feeds down looks fine
+              without it, which is exactly how it misdirects debugging */}
+          <SourcesPanel slug={data.ticker} />
           <AdSlot />
           <CaepPromo />
           <AdSlot />

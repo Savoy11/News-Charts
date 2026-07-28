@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { getPool } from "../db";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
-import { EventType, PricePoint, TimelineEvent } from "../types";
+import { EventType, PricePoint, SourceKey, TimelineEvent } from "../types";
 
 export interface SubjectRow {
   id: number;
@@ -14,6 +14,86 @@ export interface SubjectRow {
   summary: string | null;
   siteDomain: string | null;
   refreshedAt: Date | null;
+}
+
+/**
+ * When each source was last asked about this subject, for the per-source refresh windows.
+ * Only successful-ish attempts count as "asked": an `error` row means we never got an answer,
+ * and treating that as a fresh fetch would silence a broken feed for hours.
+ */
+export async function loadLastFetched(subjectId: number): Promise<Map<SourceKey, Date>> {
+  const { rows } = await getPool().query<{ key: SourceKey; fetched_at: Date }>(
+    `SELECT DISTINCT ON (s.key) s.key, f.fetched_at
+       FROM source_fetches f
+       JOIN sources s ON s.id = f.source_id
+      WHERE f.subject_id = $1 AND f.outcome IN ('ok','empty')
+      ORDER BY s.key, f.fetched_at DESC`,
+    [subjectId]
+  );
+  return new Map(rows.map((r) => [r.key, r.fetched_at]));
+}
+
+export interface SourceContribution {
+  key: SourceKey;
+  name: string;
+  license: string;
+  attribution: string;
+  /** events on this subject's timeline that this source attests */
+  events: number;
+  lastFetchedAt: Date | null;
+  lastOutcome: string | null;
+}
+
+/**
+ * What each source actually contributed to this subject, and how its last attempt went.
+ *
+ * A page rendering with three of eleven feeds down looks completely healthy, which sends
+ * anyone debugging it in the wrong direction. This is the data that tells them apart, and it
+ * doubles as the per-source attribution the licences ask for.
+ */
+export async function loadSourceContributions(subjectId: number): Promise<SourceContribution[]> {
+  const { rows } = await getPool().query<{
+    key: SourceKey;
+    name: string;
+    license: string;
+    attribution: string;
+    events: string;
+    fetched_at: Date | null;
+    outcome: string | null;
+  }>(
+    `WITH contributed AS (
+       SELECT a.source_id, count(DISTINCT e.id) AS events
+         FROM event_subjects es
+         JOIN events e ON e.id = es.event_id
+         JOIN event_attestations a ON a.event_id = e.id
+        WHERE es.subject_id = $1
+        GROUP BY a.source_id
+     ),
+     latest AS (
+       SELECT DISTINCT ON (source_id) source_id, fetched_at, outcome
+         FROM source_fetches
+        WHERE subject_id = $1
+        ORDER BY source_id, fetched_at DESC
+     )
+     SELECT s.key, s.name, s.license, s.attribution,
+            COALESCE(c.events, 0) AS events,
+            l.fetched_at, l.outcome
+       FROM sources s
+       LEFT JOIN contributed c ON c.source_id = s.id
+       LEFT JOIN latest l ON l.source_id = s.id
+      WHERE c.events IS NOT NULL OR l.source_id IS NOT NULL
+      ORDER BY COALESCE(c.events, 0) DESC, s.name`,
+    [subjectId]
+  );
+  return rows.map((r) => ({
+    key: r.key,
+    name: r.name,
+    license: r.license,
+    attribution: r.attribution,
+    events: Number(r.events),
+    lastFetchedAt: r.fetched_at,
+    lastOutcome: r.outcome,
+  }));
 }
 
 /**

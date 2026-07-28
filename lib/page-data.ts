@@ -1,8 +1,9 @@
 import { cache } from "react";
 import { getPool } from "./db";
-import { loadEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, isStale, type IndustryRef } from "./store/read";
-import { ensureSources, emptyStats, upsertEvent, upsertSubject, upsertTopicSubject, linkToIndustry } from "./ingest/store";
-import { PricePoint, TimelineEvent } from "./types";
+import { loadEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, loadLastFetched, isStale, type IndustryRef } from "./store/read";
+import { ensureSources, emptyStats, logFetch, upsertEvent, upsertSubject, upsertTopicSubject, linkToIndustry } from "./ingest/store";
+import { selectStaleSources } from "./ingest/refresh";
+import { PricePoint, SourceKey, TimelineEvent } from "./types";
 import { getTopicTimeline } from "./wiki";
 import { getPressMentions, dropImplausiblePress } from "./loc";
 import { getNews } from "./news";
@@ -60,6 +61,35 @@ export interface CompanyPageData {
 }
 
 /**
+ * Which sources are due a refresh for a subject we may or may not have seen before.
+ *
+ * Fails open: if the freshness lookup itself fails, every source is treated as stale, which is
+ * exactly the behaviour this replaced. A page must never lose a feed because a bookkeeping
+ * query had a bad day.
+ */
+async function dueSources(slug: string, keys: readonly SourceKey[]): Promise<Set<SourceKey>> {
+  try {
+    const subject = await loadSubject(slug);
+    if (!subject) return new Set(keys); // never ingested — nothing is fresh
+    const lastFetched = await loadLastFetched(subject.id);
+    return new Set(selectStaleSources(keys, lastFetched));
+  } catch {
+    return new Set(keys);
+  }
+}
+
+/**
+ * Record that these sources were asked, so the next request can skip the ones still inside
+ * their window. Without this the page path has no memory and re-asks everything every time —
+ * which is what drained the small free tiers.
+ */
+async function recordFetches(subjectId: number, asked: readonly SourceKey[], client: import("pg").PoolClient): Promise<void> {
+  for (const key of asked) {
+    await logFetch(client, key, subjectId, "page", "ok", 0).catch(() => {});
+  }
+}
+
+/**
  * Persist what we just fetched. Best-effort: a write failure must never take down a
  * page that already has its data in hand.
  */
@@ -67,7 +97,8 @@ async function persist(
   subject: Parameters<typeof upsertSubject>[1],
   events: TimelineEvent[],
   prices?: PricePoint[],
-  industry?: Industry | null
+  industry?: Industry | null,
+  asked: readonly SourceKey[] = []
 ): Promise<void> {
   let client;
   try {
@@ -98,6 +129,7 @@ async function persist(
         );
       }
       if (industry) await linkToIndustry(client, subjectId, industry);
+      await recordFetches(subjectId, asked, client);
       await client.query("COMMIT");
     } catch (err) {
       await client.query("ROLLBACK");
@@ -112,7 +144,8 @@ async function persist(
 
 async function persistTopic(
   subject: Parameters<typeof upsertTopicSubject>[1],
-  events: TimelineEvent[]
+  events: TimelineEvent[],
+  asked: readonly SourceKey[] = []
 ): Promise<void> {
   let client;
   try {
@@ -125,6 +158,7 @@ async function persistTopic(
       for (const ev of events) {
         if (ev.sourceKey) await upsertEvent(client, ev, subjectId, stats);
       }
+      await recordFetches(subjectId, asked, client);
       await client.query("COMMIT");
     } catch (err) {
       await client.query("ROLLBACK");
@@ -134,6 +168,22 @@ async function persistTopic(
     console.warn("[news-charts] persist skipped:", (err as Error).message);
   } finally {
     client?.release();
+  }
+}
+
+/**
+ * After a partial refresh the in-memory merge holds only the sources we just asked, so the
+ * union has to come back out of the database — the skipped sources' events are already there.
+ * Falls back to what we fetched if the read fails, which is degraded but never empty.
+ */
+async function unionFromDatabase(slug: string, fetched: TimelineEvent[]): Promise<TimelineEvent[]> {
+  try {
+    const subject = await loadSubject(slug);
+    if (!subject) return fetched;
+    const stored = await loadEvents(subject.id);
+    return stored.length >= fetched.length ? stored : fetched;
+  } catch {
+    return fetched;
   }
 }
 
@@ -165,14 +215,21 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
   const wiki = await getTopicTimeline(topic);
   if (!wiki) return null;
 
+  // Only ask the sources actually due a refresh. Everything skipped is already in the database
+  // and comes back in the union below, so a partial refresh costs the page nothing.
+  const TOPIC_SOURCES = ["loc_chronam", "gdelt", "nyt", "guardian", "newsdata", "gnews", "currents"] as const;
+  const due = await dueSources(topic, TOPIC_SOURCES);
+  const ask = <T>(key: SourceKey, run: () => Promise<T[]>): Promise<T[]> =>
+    due.has(key) ? run() : Promise.resolve([]);
+
   const [pressCandidates, news, nyt, guardian, newsdata, gnews, currents] = await Promise.all([
-    getPressMentions(topic),
-    getNews(topic),
-    getNytNews(topic),
-    getGuardianNews(topic),
-    getNewsdataNews(topic),
-    getGnewsNews(topic),
-    getCurrentsNews(topic),
+    ask("loc_chronam", () => getPressMentions(topic)),
+    ask("gdelt", () => getNews(topic)),
+    ask("nyt", () => getNytNews(topic)),
+    ask("guardian", () => getGuardianNews(topic)),
+    ask("newsdata", () => getNewsdataNews(topic)),
+    ask("gnews", () => getGnewsNews(topic)),
+    ask("currents", () => getCurrentsNews(topic)),
   ]);
   const firstEventOn = wiki.events[0]?.date ?? null;
   const floor = firstEventOn ? Number(firstEventOn.slice(0, 4)) : 0;
@@ -190,12 +247,20 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
   await persistTopic(
     { searchTerm: topic, wikipediaTitle: wiki.title, displayName: wiki.title,
       summary: wiki.summary, firstEventOn },
-    events
+    events,
+    // wikipedia was fetched unconditionally above — it is what decides the subject exists
+    ["wikipedia", ...due]
   );
 
   // A live topic render has no price series: prices reach a topic through ingest (crypto
   // assets), not through the Wikipedia path this branch takes.
-  return { title: wiki.title, summary: wiki.summary, events, prices: [], servedFrom: "live" };
+  return {
+    title: wiki.title,
+    summary: wiki.summary,
+    events: await unionFromDatabase(topic, events),
+    prices: [],
+    servedFrom: "live",
+  };
 }
 
 async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData | null> {
@@ -227,23 +292,33 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
   const company = await resolveCompany(ticker);
   if (!company) return null;
 
+  // Per-source windows: a stale subject no longer means fifteen requests. The keyed feeds sit
+  // on free tiers small enough that re-asking them hourly drains the day's budget.
+  const COMPANY_SOURCES = [
+    "sec_edgar", "gdelt", "yahoo_finance", "nyt", "guardian", "newsdata",
+    "gnews", "currents", "marketaux", "eodhd", "finnhub", "loc_chronam",
+  ] as const;
+  const due = await dueSources(company.ticker, COMPANY_SOURCES);
+  const ask = <T>(key: SourceKey, run: () => Promise<T[]>): Promise<T[]> =>
+    due.has(key) ? run() : Promise.resolve([]);
+
   const [priceData, filings, news, yahoo, nyt, guardian, newsdata, gnews, currents, marketaux, eodhd, finnhub, pressCandidates, siteDomain, sicIndustry, story] =
     await Promise.all([
       getDailyPrices(company.ticker),
-      getFilings(company),
-      getNews(company.name),
-      getYahooFinanceNews(company.ticker),
-      getNytNews(commonName(company.name)),
-      getGuardianNews(commonName(company.name)),
-      getNewsdataNews(commonName(company.name)),
-      getGnewsNews(commonName(company.name)),
-      getCurrentsNews(commonName(company.name)),
+      ask("sec_edgar", () => getFilings(company)),
+      ask("gdelt", () => getNews(company.name)),
+      ask("yahoo_finance", () => getYahooFinanceNews(company.ticker)),
+      ask("nyt", () => getNytNews(commonName(company.name))),
+      ask("guardian", () => getGuardianNews(commonName(company.name))),
+      ask("newsdata", () => getNewsdataNews(commonName(company.name))),
+      ask("gnews", () => getGnewsNews(commonName(company.name))),
+      ask("currents", () => getCurrentsNews(commonName(company.name))),
       // finance-native: query by ticker, not name — their entity tagging is the point
-      getMarketauxNews(commonName(company.name), company.ticker),
-      getEodhdNews(company.ticker),
-      getFinnhubNews(company.ticker),
+      ask("marketaux", () => getMarketauxNews(commonName(company.name), company.ticker)),
+      ask("eodhd", () => getEodhdNews(company.ticker)),
+      ask("finnhub", () => getFinnhubNews(company.ticker)),
       // period newspaper scans for the pre-IPO era of old companies
-      getPressMentions(commonName(company.name)).catch(() => []),
+      ask("loc_chronam", () => getPressMentions(commonName(company.name)).catch(() => [])),
       getOfficialDomain(company.name),
       getIndustry(company),
       // the company's story predates its ticker: Wikipedia history + cited articles
@@ -283,7 +358,9 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
     },
     events,
     priceData.points,
-    sicIndustry
+    sicIndustry,
+    // wikipedia and the price/actions fetch run unconditionally; the rest is whatever was due
+    ["wikipedia", "yahoo_finance", ...due]
   );
 
   // read the membership back so the peer count reflects everyone ingested so far
@@ -299,7 +376,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
     ticker: company.ticker,
     siteDomain,
     prices: priceData.points,
-    events: dropCompanyPrehistory([...events, ...sector]),
+    events: dropCompanyPrehistory([...(await unionFromDatabase(company.ticker, events)), ...sector]),
     industry,
     servedFrom: "live",
   };

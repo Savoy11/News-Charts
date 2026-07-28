@@ -392,16 +392,36 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
       mention the subject; Marketaux/EODHD ticker tags are free wins) and near-duplicate
       collapsing across feeds — dedup is exact-URL today, so one wire story from three outlets
       shows three times (extend GDELT's headline+day rule cross-feed).
-- [ ] `P1` **Per-source refresh windows + quota safety.** The company path fires ~15 fetches
-      every hour a page is viewed. Split TTLs by volatility (news hourly, wiki daily, archives
-      weekly) — faster pages, and free-tier quotas (Newsdata 200/day, GNews 100/day) stop being
-      a multi-user risk.
-- [ ] `P1` **Feed visibility in the UI.** A page silently rendering with 3 of 11 feeds down
-      looks fine and misdirects debugging (the CAEP fallback lesson). Per-subject "Sources"
-      panel: which feeds contributed, how many articles each — doubles as the attribution
-      display the licenses want. **The CLI half is now complete**: `scripts/check-feeds.ts`
-      distinguishes *withheld* ("blocked by COMMERCIAL_MODE", "no KEY set") from *genuinely
-      empty*, which were indistinguishable before. The in-page panel is the remaining half.
+- [x] ~~`P1` **Per-source refresh windows + quota safety**~~ — done 2026-07-28.
+      Freshness was all-or-nothing on `subjects.refreshed_at`: once a subject aged past its TTL,
+      **every** source was refetched together. Worse, the page path never wrote `source_fetches`
+      at all — only the CLI did — so it had no per-source memory to reason with.
+      Each source now carries its own window (`lib/ingest/refresh.ts`), set by how fast it
+      actually changes *and* how much quota headroom it has, **with quota winning where they
+      disagree**: a feed silent because we burned its budget is worse than one six hours stale.
+      Wikipedia daily, Chronicling America weekly (1800s scans will never change), GNews 6h.
+      - `npm run check:refresh` asserts the arithmetic rather than the intent: GNews at 4
+        requests/day/subject fits 25 subjects inside its 100/day cap, where the old shared
+        60-minute window cost 24/day — a quarter of the cap for one company.
+      - Fails open. If the freshness lookup errors, every source is treated as stale, which is
+        exactly the previous behaviour; a page must never lose a feed to a bookkeeping query.
+      - A `throttled` or `error` attempt does **not** count as "asked", so a rate-limited feed
+        stays due for retry instead of being silenced for hours.
+      - Because a partial refresh only holds part of the picture, the live path now serves the
+        **union from the database** and falls back to what it fetched if that read fails.
+- [x] ~~`P1` **Feed visibility in the UI**~~ — done 2026-07-28. `components/SourcesPanel.tsx`
+      on every company and topic page: each source with what it contributed, how long ago it was
+      asked, and its attribution + licence. Four states, colour-coded, and the middle two are the
+      point — **"nothing returned" and "rate limited" used to look identical on a page**, which
+      is precisely how a half-broken page misdirects debugging.
+      It doubles as the per-source attribution the licences ask for, rendered next to the count
+      of what each source actually gave us. Diagnostics only: it returns `null` on any error
+      rather than letting a panel take down a page.
+      The CLI half was completed earlier — `scripts/check-feeds.ts` distinguishes *withheld*
+      ("blocked by COMMERCIAL_MODE", "no KEY set") from *genuinely empty*.
+      - ⚠ Adding it reintroduced the grid `min-width:auto` overflow on a phone (727px in a
+        390px viewport) — the third time that pattern has bitten. Caught by the browser suite,
+        fixed with `min-w-0`. Worth remembering when adding any sidebar content.
 - [ ] `P1` **Finish the approved "Both views" condense.** The horizontal timeline still has no
       collapse-all (list view got one); add the one-click condense control there.
 - [ ] `P2` **Auto-expand on jump.** Chart click-to-jump into a collapsed list section scrolls to

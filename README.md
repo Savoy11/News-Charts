@@ -243,6 +243,24 @@ Dividends and stock splits arrive on that same request (`events=div,splits`) and
 split-adjusted, so the line does not step on a split — the marker is the only thing that says it
 happened. That is the point: a mechanical change should never read as a reaction to news.
 
+### Refresh windows and the Sources panel
+
+Each source carries its own refresh window (`lib/ingest/refresh.ts`) rather than sharing one
+per-subject TTL. Windows are set by how fast a source actually changes *and* how much quota it
+has, and **quota wins where they disagree** — a feed that is silent because its budget was burned
+is worse than one that is six hours stale. Wikipedia refreshes daily, Chronicling America weekly
+(digitised 1800s newspapers will never change), GNews every six hours against its 100/day cap.
+`npm run check:refresh` asserts the arithmetic, so the table can be argued with.
+
+A `throttled` or `error` attempt does not count as having asked, so a rate-limited feed stays due
+for retry rather than being silenced. Because a refresh may now cover only some sources, the live
+path serves the union from the database and falls back to what it fetched if that read fails.
+
+Every subject page carries a **Sources** panel showing what each feed contributed, when it was
+last asked, and its attribution and licence. The states that matter are the middle two: *nothing
+returned* and *rate limited* look identical on a page without it, which is how a half-broken page
+sends you debugging in the wrong direction.
+
 ### On-chain events
 
 Crypto assets are **topic** subjects that happen to carry a price series — the schema bars a

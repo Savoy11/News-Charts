@@ -19,7 +19,8 @@
     "explain": "tsx scripts/explain.ts",
     "plan": "tsx scripts/plan.ts",
     "check:onchain": "tsx scripts/check-onchain.ts",
-    "check:prompt": "tsx scripts/check-prompt.ts"
+    "check:prompt": "tsx scripts/check-prompt.ts",
+    "check:refresh": "tsx scripts/check-refresh.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

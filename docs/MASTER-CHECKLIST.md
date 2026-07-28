@@ -376,17 +376,23 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
 Consequences of what shipped on PR #9 (citation mining, NL prompts, pre-IPO story, crosshair
 popup, filing stacks, collapsible list, 8 new news repositories), ranked by value-per-effort.
 
-- [ ] `P0` **Commit the test suite.** The session's verification (cite-date parsing, prompt
-      parsing, year extraction incl. ticker/domain false positives, prehistory guard, all 9
-      adapter fixtures with mocked fetch) lives in throwaway scratchpad scripts. Add vitest and
-      commit those ~60 assertions so every parser is regression-proof.
-      - [ ] `P1` **Commit the browser smoke pass too.** The 2026-07-28 verification (22 Playwright
-            checks over both subject page types, `/compare`, `/explore`, `/following`, the OG
-            route, plus a horizontal-overflow sweep at 390px and 1440px) was also a throwaway
-            script, and it is what caught all three defects listed at the top of this doc —
-            none of which `tsc` or `next build` can see. `npm run db:seed-demo` already makes
-            the data half reproducible; committing the harness (Playwright as a devDependency)
-            would make the whole pass a one-command regression gate.
+- [x] ~~`P0` **Commit the browser smoke pass**~~ — done 2026-07-28. `npm run check:ui`,
+      **64 checks**, committed with Playwright as a devDependency. It is what caught every defect
+      in this branch that `tsc` and `next build` could not see: a price overlay silently replaced
+      by a notice, a chart sizing itself to 2102px on a phone, a filter chip rendering inactive so
+      its rows never appeared, a legend advertising event kinds the page did not have.
+      Runs against the seeded corpus, so it needs `npm run db:seed-demo` and a dev server; pass
+      `-- --base <url>` for a server on another port. It falls back to any Chromium on the machine
+      when Playwright's pinned build is absent, because a suite only has value if it gets run.
+      Asserts behaviour rather than presence where it matters — that the chart *repaints* when an
+      overlay is toggled (every series shares one canvas, so counting canvases proves nothing),
+      and that Biggest moves pairs a move with the *prior* day's after-close earnings.
+- [ ] `P0` **Commit the parser assertions from the PR #9 session** — cite-date parsing, year
+      extraction including ticker/domain false positives, the prehistory guard, and the nine
+      adapter fixtures with mocked fetch. Those ~60 assertions are still in throwaway scripts.
+      Four offline suites are now committed and run together with `npm run check`:
+      `check:prompt` (24), `check:onchain` (22), `check:commercial-mode` (16), `check:refresh`
+      (12). This item is what remains.
 - [ ] `P1` **Noise control for the aggregators.** Keyword search across four general aggregators
       pulls junk (listicles, passing mentions). Add a server-side relevance floor (title must
       mention the subject; Marketaux/EODHD ticker tags are free wins) and near-duplicate

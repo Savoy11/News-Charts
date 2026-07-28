@@ -243,6 +243,19 @@ Dividends and stock splits arrive on that same request (`events=div,splits`) and
 split-adjusted, so the line does not step on a split — the marker is the only thing that says it
 happened. That is the point: a mechanical change should never read as a reaction to news.
 
+### Checks
+
+```
+npm run check              # the offline suites: prompts, on-chain, licence gate, refresh windows
+npm run check:ui           # 64 browser checks — needs a seeded database and a dev server
+```
+
+`check:ui` exists because every defect that reached a page in this project was invisible to
+`tsc` and `next build`: a price overlay silently replaced by a notice, a chart that sized itself
+to 2102px on a phone, a filter chip that rendered inactive so its rows never appeared. All of
+them needed data on screen. Seed first (`npm run db:seed-demo`), start `npm run dev`, then run
+it; add `-- --base http://localhost:3001` for a server on another port.
+
 ### Refresh windows and the Sources panel
 
 Each source carries its own refresh window (`lib/ingest/refresh.ts`) rather than sharing one

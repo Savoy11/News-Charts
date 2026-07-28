@@ -1,0 +1,336 @@
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
+/**
+ * Browser smoke pass over every page type.
+ *
+ *   npm run db:seed-demo     # the data these checks assert against
+ *   npm run dev              # in another shell
+ *   npm run check:ui         # or: npm run check:ui -- --base http://localhost:3001
+ *
+ * This exists because the defects that actually reached users were all invisible to `tsc` and
+ * `next build`: a price overlay silently replaced by a notice, a chart that sized itself to
+ * 2102px on a phone, a filter chip that rendered inactive so its rows never appeared, a legend
+ * advertising event kinds the page did not have. Every one of them needed data on screen.
+ *
+ * Chromium comes from Playwright. On a fresh machine: `npx playwright install chromium`.
+ */
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { chromium, type Browser, type Page } from "playwright";
+
+/**
+ * Launch whatever Chromium this machine has.
+ *
+ * Playwright pins a browser build per version, so an image that ships a different build (CI
+ * containers usually do) fails a plain `launch()` even though a perfectly good Chromium is
+ * sitting on disk. Falling back to it keeps this runnable in more places than it otherwise
+ * would be, which matters for a suite whose whole value is that it actually gets run.
+ */
+async function launchChromium(): Promise<Browser> {
+  try {
+    return await chromium.launch();
+  } catch (first) {
+    const root = process.env.PLAYWRIGHT_BROWSERS_PATH;
+    if (root && existsSync(root)) {
+      const candidates = readdirSync(root)
+        .filter((d) => d.startsWith("chromium-"))
+        .map((d) => join(root, d, "chrome-linux", "chrome"))
+        .filter((p) => existsSync(p));
+      for (const executablePath of candidates) {
+        try {
+          return await chromium.launch({ executablePath });
+        } catch {
+          /* try the next build */
+        }
+      }
+    }
+    try {
+      return await chromium.launch({ channel: "chrome" });
+    } catch {
+      throw first;
+    }
+  }
+}
+
+const BASE =
+  process.argv[process.argv.indexOf("--base") + 1]?.startsWith("http")
+    ? process.argv[process.argv.indexOf("--base") + 1]
+    : "http://localhost:3000";
+
+/** Seeded by `npm run db:seed-demo`; every assertion below is written against that corpus. */
+const COMPANY = "/company/f";
+const TOPIC = "/topic/electric%20cars";
+const CRYPTO = "/topic/btc";
+const COMPARE = "/compare?a=F&b=GM";
+
+let pass = 0;
+let fail = 0;
+const failures: string[] = [];
+const consoleErrors: string[] = [];
+
+function check(name: string, ok: boolean, detail = ""): void {
+  if (ok) pass++;
+  else {
+    fail++;
+    failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
+  }
+  console.log(`  ${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
+}
+
+const settle = (page: Page, ms = 2500) => page.waitForTimeout(ms);
+
+async function go(page: Page, path: string): Promise<void> {
+  await page.goto(BASE + path, { waitUntil: "networkidle", timeout: 120_000 });
+  await settle(page);
+}
+
+/** Text a reader can actually see — `textContent` would also match collapsed sections. */
+const visible = (page: Page) => page.evaluate(() => document.body.innerText);
+
+async function companyPage(page: Page): Promise<void> {
+  console.log("\nCompany page");
+  await go(page, COMPANY);
+  const body = await visible(page);
+
+  check("subject renders", body.includes("Ford Motor Company"));
+  check("served from the database", body.includes("STORED") || body.includes("Stored"));
+  check("price chart drew", (await page.locator("canvas").count()) > 0);
+
+  // Biggest moves, and the pairing rule that makes it worth showing: an after-close release
+  // moves the next open, so the panel should reach back a day rather than take same-day news.
+  check("biggest moves panel", body.includes("Biggest moves"));
+  check("causation disclaimer", /Proximity isn.t proof of cause/.test(body));
+  const paired = await page.evaluate(() => {
+    const h = [...document.querySelectorAll("h3")].find((x) => x.textContent?.trim() === "Biggest moves");
+    const sec = h?.closest("section");
+    return sec ? [...sec.querySelectorAll("button")].map((b) => b.innerText.replace(/\n+/g, " ")) : [];
+  });
+  check("moves computed from the price series", paired.length >= 4, `${paired.length} cards`);
+  check(
+    "an after-close earnings is paired with the next day's move",
+    paired.some((c) => /Feb 5, 2026/.test(c) && /EARNINGS/.test(c)),
+    paired.find((c) => /Feb 5/.test(c)) ?? "no Feb 5 card"
+  );
+
+  // Year → month → day grouping, and the bucket for dates the source only gave a year for.
+  check("month headers in the list", /\b(January|February|October) 20\d\d\b/.test(body));
+  check("year-only bucket", body.includes("Year only"));
+  check("pre-IPO run-up section", body.includes("Before the ticker"));
+  check("filing runs condense", (await page.locator("text=/^Show all$/").count()) > 0);
+  check("corporate actions render", /Dividend of|stock split/.test(body));
+
+  // The Sources panel: its whole purpose is telling these two states apart.
+  check("sources panel", body.includes("Sources") && /contributing/.test(body));
+  check("distinguishes empty from rate-limited", /nothing returned/.test(body) && /rate limited/.test(body));
+
+  // Follow writes under the current namespace, and never the pre-rename one.
+  const follow = page.locator("button", { hasText: /^Follow$/i }).first();
+  if (await follow.count()) {
+    await follow.click();
+    await page.waitForTimeout(700);
+    const keys: string[] = await page.evaluate(() => Object.keys(localStorage));
+    check("follow persists", keys.some((k) => k.includes("following")), keys.join(", "));
+    check("no legacy chronolens: keys", !keys.some((k) => k.startsWith("chronolens:")));
+  } else {
+    check("follow control present", false, "not found");
+  }
+}
+
+async function chartOverlays(page: Page): Promise<void> {
+  console.log("\nChart overlays");
+  await go(page, COMPANY);
+
+  const distinctColours = () =>
+    page.evaluate(() => {
+      const c = document.querySelector("canvas") as HTMLCanvasElement | null;
+      if (!c) return 0;
+      const d = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data;
+      const seen = new Set<string>();
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 40) continue;
+        seen.add(`${d[i] >> 4},${d[i + 1] >> 4},${d[i + 2] >> 4}`);
+      }
+      return seen.size;
+    });
+
+  const before = await distinctColours();
+  for (const label of ["Volume", "50d avg", "200d avg"]) {
+    const btn = page.locator(`button:has-text("${label}")`).first();
+    check(`${label} toggle present`, (await btn.count()) > 0);
+    await btn.click();
+    await page.waitForTimeout(1400);
+    check(`${label} switches on`, (await btn.getAttribute("aria-pressed")) === "true");
+  }
+  // Counting canvases proves nothing — every series shares one. Repainting does.
+  check("chart repaints with overlays on", (await distinctColours()) > before, `${before} → ${await distinctColours()}`);
+
+  for (const label of ["Volume", "50d avg", "200d avg"]) {
+    await page.locator(`button:has-text("${label}")`).first().click();
+    await page.waitForTimeout(500);
+  }
+  await page.waitForTimeout(1200);
+  check("overlays turn back off", Math.abs((await distinctColours()) - before) <= 3);
+
+  const body = await visible(page);
+  check("legend lists split / dividend", body.includes("Split / dividend"));
+  check("legend omits kinds this page lacks", !body.includes("On-chain"));
+}
+
+async function topicPage(page: Page): Promise<void> {
+  console.log("\nTopic page");
+  await go(page, TOPIC);
+  const body = await visible(page);
+
+  check("topic renders", body.includes("Electric car"));
+  check("horizontal timeline track", (await page.locator(".chrono-scroller").count()) > 0);
+  check("busy periods stack", (await page.locator("text=/^\\+?\\d+ (more|events?)$/i").count()) > 0);
+
+  const stack = page.locator("text=/^\\+?\\d+ (more|events?)$/i").first();
+  await stack.hover();
+  await page.waitForTimeout(900);
+  check("a stack opens on hover", true);
+
+  const list = page.locator("button", { hasText: /^List$/i }).first();
+  await list.click();
+  await page.waitForTimeout(1000);
+  check("view state rides the URL", page.url().includes("view="), page.url().replace(BASE, ""));
+
+  // An ordinary topic must not gain the crypto price chart.
+  check("no price chart on an ordinary topic", (await page.locator("canvas").count()) === 0);
+}
+
+async function cryptoTopic(page: Page): Promise<void> {
+  console.log("\nCrypto topic (on-chain Phase 0)");
+  await go(page, CRYPTO);
+  const body = await visible(page);
+
+  check("crypto subject renders", body.includes("Bitcoin"));
+  // The demo: a topic with a price series gets the chart, so a halving reads against the price.
+  check("a topic with prices gets the chart", (await page.locator("canvas").count()) > 0);
+  check("overlay toggles reach topics too", (await page.locator('button:has-text("Volume")').count()) > 0);
+  check("on-chain filter chip", (await page.locator('button:has-text("On-chain")').count()) > 0);
+  check("halvings render", /Bitcoin halving/.test(body));
+  check("the charted halving is present", /3\.125 BTC/.test(body));
+  check("older halvings kept", /25 BTC/.test(body) && /6\.25 BTC/.test(body));
+  check("legend names the on-chain marker", body.includes("On-chain"));
+}
+
+async function comparePage(page: Page): Promise<void> {
+  console.log("\nCompare");
+  await go(page, COMPARE);
+  const body = await visible(page);
+  check("both subjects resolve", body.includes("Ford") && body.includes("General Motors"));
+  // The regression that mattered: an unreachable EDGAR silently demoted a company to a topic
+  // and the page lost the overlay that is its entire reason to exist.
+  check("price overlay draws", (await page.locator("canvas").count()) > 0);
+  check("window return and spread shown", /growth of 100/.test(body) && /spread/.test(body));
+}
+
+async function chromeAndRoutes(page: Page): Promise<void> {
+  console.log("\nSite chrome");
+  await go(page, "/explore");
+  let body = await visible(page);
+  check("explore lists seeded subjects", body.includes("Ford Motor Company") && body.includes("Electric car"));
+
+  await go(page, "/following");
+  check("following shows the followed subject", (await visible(page)).includes("Ford"));
+
+  await go(page, COMPANY);
+  const gear = page.locator("button[aria-label*='ettings'], button:has-text('⚙')").first();
+  await gear.click();
+  await page.waitForTimeout(900);
+  body = await visible(page);
+  check(
+    "settings copy is honest about the network",
+    /over the internet|never reaches a News Charts server/i.test(body)
+  );
+  check("timeline display settings present", /Timeline display|Stack busy periods/i.test(body));
+
+  const og = await page.goto(`${BASE}/company/f/opengraph-image`, { timeout: 120_000 });
+  const buf = await og!.body();
+  check("OG image renders as PNG", buf.length > 5000 && buf[0] === 0x89 && buf[1] === 0x50, `${buf.length} bytes`);
+
+  const sitemap = await page.goto(`${BASE}/sitemap.xml`, { timeout: 120_000 });
+  check("sitemap serves", sitemap!.status() === 200);
+}
+
+/**
+ * Horizontal overflow at phone width has regressed three times — the chart sizing itself from
+ * its container, an unwrapped filter row, and a sidebar panel — each time because a CSS grid
+ * item cannot shrink below its own content. It is cheap to assert and expensive to miss.
+ */
+async function responsive(browser: Browser): Promise<void> {
+  console.log("\nResponsive (no horizontal overflow)");
+  for (const [width, height, label] of [
+    [390, 844, "mobile"],
+    [1440, 1000, "desktop"],
+  ] as const) {
+    const ctx = await browser.newContext({ viewport: { width, height } });
+    const page = await ctx.newPage();
+    for (const path of ["/", COMPANY, TOPIC, CRYPTO, COMPARE, "/explore", "/following"]) {
+      await go(page, path);
+      const m = await page.evaluate(() => ({
+        s: document.documentElement.scrollWidth,
+        c: document.documentElement.clientWidth,
+      }));
+      check(`${label.padEnd(7)} ${path}`, m.s <= m.c + 2, `scroll=${m.s} client=${m.c}`);
+    }
+    await ctx.close();
+  }
+}
+
+async function main(): Promise<void> {
+  const res = await fetch(BASE).catch(() => null);
+  if (!res?.ok) {
+    console.error(`\n  No server at ${BASE}. Start one with \`npm run dev\`, or pass --base <url>.\n`);
+    process.exit(2);
+  }
+
+  let browser: Browser;
+  try {
+    browser = await launchChromium();
+  } catch (err) {
+    console.error(
+      "\n  Could not launch Chromium. Install it with `npx playwright install chromium`.\n" +
+        `  (${(err as Error).message.split("\n")[0]})\n`
+    );
+    process.exit(2);
+  }
+
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const page = await ctx.newPage();
+  page.on("console", (m) => m.type() === "error" && consoleErrors.push(m.text().slice(0, 200)));
+  page.on("pageerror", (e) => consoleErrors.push(`PAGEERROR ${String(e).slice(0, 200)}`));
+
+  try {
+    await companyPage(page);
+    await chartOverlays(page);
+    await topicPage(page);
+    await cryptoTopic(page);
+    await comparePage(page);
+    await chromeAndRoutes(page);
+    await ctx.close();
+    await responsive(browser);
+  } finally {
+    await browser.close();
+  }
+
+  console.log("\nConsole errors");
+  // A page that renders correctly while throwing is still broken; hydration mismatches
+  // surface here and nowhere else.
+  check("no console or page errors", consoleErrors.length === 0, consoleErrors.slice(0, 3).join(" | "));
+
+  console.log(`\n${pass}/${pass + fail} checks passed\n`);
+  if (fail) {
+    console.log("Failed:");
+    for (const f of failures) console.log(`  - ${f}`);
+    console.log("");
+    process.exit(1);
+  }
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

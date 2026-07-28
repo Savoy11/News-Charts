@@ -20,7 +20,9 @@
     "plan": "tsx scripts/plan.ts",
     "check:onchain": "tsx scripts/check-onchain.ts",
     "check:prompt": "tsx scripts/check-prompt.ts",
-    "check:refresh": "tsx scripts/check-refresh.ts"
+    "check:refresh": "tsx scripts/check-refresh.ts",
+    "check:ui": "tsx scripts/check-ui.ts",
+    "check": "npm run check:refresh && npm run check:prompt && npm run check:onchain && npm run check:commercial-mode"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
@@ -37,6 +39,7 @@
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
+    "playwright": "^1.62.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.23.1",

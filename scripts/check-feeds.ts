@@ -29,24 +29,31 @@ import {
   getEodhdNews,
   getFinnhubNews,
 } from "../lib/newsExtra";
-import type { TimelineEvent } from "../lib/types";
+import { commercialMode, skipReason } from "../lib/ingest/store";
+import type { SourceKey, TimelineEvent } from "../lib/types";
 
-const KEYS: Record<string, string | undefined> = {
-  "NYT": process.env.NYT_API_KEY,
-  "Guardian": process.env.GUARDIAN_API_KEY,
-  "Newsdata": process.env.NEWSDATA_API_KEY,
-  "GNews": process.env.GNEWS_API_KEY,
-  "Currents": process.env.CURRENTS_API_KEY,
-  "Marketaux": process.env.MARKETAUX_API_KEY,
-  "EODHD": process.env.EODHD_API_KEY,
-  "Finnhub": process.env.FINNHUB_API_KEY,
+// Each keyed feed with the source key its licence is recorded under, so this report can say
+// *why* a feed sat out. A silently-empty feed and a deliberately-withheld one look identical
+// on a page, and telling them apart is the whole point of running this.
+const KEYED: Record<string, { env: string; source: SourceKey }> = {
+  "NYT": { env: "NYT_API_KEY", source: "nyt" },
+  "Guardian": { env: "GUARDIAN_API_KEY", source: "guardian" },
+  "Newsdata": { env: "NEWSDATA_API_KEY", source: "newsdata" },
+  "GNews": { env: "GNEWS_API_KEY", source: "gnews" },
+  "Currents": { env: "CURRENTS_API_KEY", source: "currents" },
+  "Marketaux": { env: "MARKETAUX_API_KEY", source: "marketaux" },
+  "EODHD": { env: "EODHD_API_KEY", source: "eodhd" },
+  "Finnhub": { env: "FINNHUB_API_KEY", source: "finnhub" },
 };
 
 function report(name: string, events: TimelineEvent[], note = "") {
-  const keyed = name in KEYS;
-  if (keyed && !KEYS[name]) {
-    console.log(`  ${name.padEnd(22)} — no key (set in .env.local to enable)`);
-    return;
+  const keyed = KEYED[name];
+  if (keyed) {
+    const skip = skipReason(keyed.env, keyed.source);
+    if (skip) {
+      console.log(`  ${name.padEnd(22)} — ${skip}`);
+      return;
+    }
   }
   if (events.length === 0) {
     console.log(`  ${name.padEnd(22)} ⚠ 0 articles ${note}`);
@@ -64,6 +71,11 @@ async function main() {
   const company = await resolveCompany(arg).catch(() => null);
   const name = company ? commonName(company.name) : arg;
   const ticker = company?.ticker ?? null;
+  if (commercialMode()) {
+    console.log(
+      "\n  COMMERCIAL_MODE=true — sources not licensed for commercial use are withheld below."
+    );
+  }
   console.log(
     company
       ? `\nChecking feeds for ${company.name} (${company.ticker}) — query "${name}"\n`

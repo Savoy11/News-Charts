@@ -154,6 +154,43 @@ export async function ensureSources(client: PoolClient): Promise<void> {
   }
 }
 
+/** Keys whose terms bar commercial use, derived from SOURCES so there is one registry, not two. */
+const NON_COMMERCIAL: ReadonlySet<SourceKey> = new Set(
+  SOURCES.filter((s) => !s.commercialOk).map((s) => s.key)
+);
+
+/**
+ * Set `COMMERCIAL_MODE=true` once anything on the site earns money — ads, affiliate links, a
+ * paid tier. See the pre-release feed gate in docs/MASTER-CHECKLIST.md.
+ */
+export function commercialMode(): boolean {
+  return process.env.COMMERCIAL_MODE === "true";
+}
+
+/**
+ * The API key for a source, or null when the adapter must not run.
+ *
+ * `assertCommercialOk` below guards the ingest worker, but the site does not ingest to render:
+ * `lib/page-data.ts` calls these adapters directly on the page path, so a non-commercial source
+ * would keep serving visitors with nothing checking its licence. This closes that path.
+ *
+ * Returning null rather than throwing is deliberate — it is the same signal as "no key
+ * configured", which every adapter already degrades from cleanly, so switching the flag on can
+ * empty a feed but can never break a page.
+ */
+export function licensedKey(envVar: string, source: SourceKey): string | null {
+  if (commercialMode() && NON_COMMERCIAL.has(source)) return null;
+  return process.env[envVar] || null;
+}
+
+/** Why an adapter is sitting out, for the CLI feed report — null when it should run. */
+export function skipReason(envVar: string, source: SourceKey): string | null {
+  if (commercialMode() && NON_COMMERCIAL.has(source)) {
+    return "blocked by COMMERCIAL_MODE (source is not licensed for commercial use)";
+  }
+  return process.env[envVar] ? null : `no ${envVar} set`;
+}
+
 /** Refuse to ingest from a source whose terms bar commercial use. */
 export async function assertCommercialOk(client: PoolClient, key: SourceKey): Promise<void> {
   const { rows } = await client.query<{ commercial_ok: boolean }>(

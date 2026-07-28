@@ -1,10 +1,15 @@
 import { TimelineEvent } from "./types";
+import { licensedKey } from "./ingest/store";
 
 /**
  * Additional news repositories beyond GDELT, so a subject's coverage isn't one feed's
  * opinion. Each fetcher is failure-isolated (returns [] on any error) and the keyed ones
  * skip silently when their env key is absent — pages must never depend on an optional
  * source being up. Dedup across repositories happens at merge time, by article URL.
+ *
+ * Keys come from `licensedKey`, not `process.env` directly: eight of these sources are on
+ * non-commercial tiers today, and `COMMERCIAL_MODE=true` withholds their key so a forgotten
+ * `.env.local` entry cannot quietly serve them once the site earns money.
  *
  *   Yahoo Finance RSS  — keyless, per-ticker company headlines (recent)
  *   NYT Article Search — archive back to 1851, free key: NYT_API_KEY
@@ -106,7 +111,7 @@ export async function getYahooFinanceNews(ticker: string): Promise<TimelineEvent
  * appearances in print) and the newest. Free key from developer.nytimes.com.
  */
 export async function getNytNews(query: string): Promise<TimelineEvent[]> {
-  const key = process.env.NYT_API_KEY;
+  const key = licensedKey("NYT_API_KEY", "nyt");
   if (!key) return [];
   const page = async (sort: "oldest" | "newest") => {
     const url =
@@ -160,7 +165,7 @@ export async function getNytNews(query: string): Promise<TimelineEvent[]> {
 
 /** The Guardian Open Platform — archive to 1999. Free key from open-platform.theguardian.com. */
 export async function getGuardianNews(query: string): Promise<TimelineEvent[]> {
-  const key = process.env.GUARDIAN_API_KEY;
+  const key = licensedKey("GUARDIAN_API_KEY", "guardian");
   if (!key) return [];
   const page = async (orderBy: "oldest" | "newest") => {
     // show-fields rides along in the same request: thumbnail, standfirst text, byline
@@ -216,7 +221,7 @@ export async function getGuardianNews(query: string): Promise<TimelineEvent[]> {
  * per 6h cache window stays far under that.
  */
 export async function getNewsdataNews(query: string): Promise<TimelineEvent[]> {
-  const key = process.env.NEWSDATA_API_KEY;
+  const key = licensedKey("NEWSDATA_API_KEY", "newsdata");
   if (!key) return [];
   try {
     const url =
@@ -273,7 +278,7 @@ export async function getNewsdataNews(query: string): Promise<TimelineEvent[]> {
  * 6h window stays far under that).
  */
 export async function getGnewsNews(query: string): Promise<TimelineEvent[]> {
-  const key = process.env.GNEWS_API_KEY;
+  const key = licensedKey("GNEWS_API_KEY", "gnews");
   if (!key) return [];
   try {
     const url =
@@ -321,7 +326,7 @@ export async function getGnewsNews(query: string): Promise<TimelineEvent[]> {
  * name, so the author stands in when present.
  */
 export async function getCurrentsNews(query: string): Promise<TimelineEvent[]> {
-  const key = process.env.CURRENTS_API_KEY;
+  const key = licensedKey("CURRENTS_API_KEY", "currents");
   if (!key) return [];
   try {
     const url =
@@ -371,7 +376,7 @@ export async function getCurrentsNews(query: string): Promise<TimelineEvent[]> {
  * MARKETAUX_API_KEY (100 req/day, 3 articles/req on the free tier).
  */
 export async function getMarketauxNews(query: string, symbol?: string): Promise<TimelineEvent[]> {
-  const key = process.env.MARKETAUX_API_KEY;
+  const key = licensedKey("MARKETAUX_API_KEY", "marketaux");
   if (!key) return [];
   try {
     const filter = symbol
@@ -425,7 +430,7 @@ export async function getMarketauxNews(query: string, symbol?: string): Promise<
  * Items carry no publisher name, so the link's domain stands in (GDELT-style).
  */
 export async function getEodhdNews(ticker: string): Promise<TimelineEvent[]> {
-  const key = process.env.EODHD_API_KEY;
+  const key = licensedKey("EODHD_API_KEY", "eodhd");
   if (!key) return [];
   try {
     const url =
@@ -476,7 +481,7 @@ export async function getEodhdNews(ticker: string): Promise<TimelineEvent[]> {
  * the free tier, so that's exactly the window requested).
  */
 export async function getFinnhubNews(ticker: string): Promise<TimelineEvent[]> {
-  const key = process.env.FINNHUB_API_KEY;
+  const key = licensedKey("FINNHUB_API_KEY", "finnhub");
   if (!key) return [];
   try {
     const to = new Date();

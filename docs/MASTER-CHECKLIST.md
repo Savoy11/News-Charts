@@ -94,8 +94,29 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
       ship time; if uncomfortable, disable the adapter.
 - [ ] Keyless public-domain / open sources — SEC EDGAR, Federal Register, Chronicling America,
       Wikipedia (CC BY-SA, attribution rendered), GDELT — nothing to do, confirm attribution shows.
-- [ ] Optional hardening: build a `COMMERCIAL_MODE=true` env flag that refuses to fetch from any
-      source flagged `commercialOk: false`, so a forgotten key can't cause non-compliance.
+- [x] ~~Optional hardening:~~ **`COMMERCIAL_MODE=true` is built** (2026-07-28) — and it was not
+      optional, because it turned out to be the *only* thing guarding the path that matters.
+      `assertCommercialOk` refuses non-commercial sources in `scripts/ingest.ts`, but **the site
+      does not ingest to render**: `lib/page-data.ts` calls all eight keyed adapters directly on
+      the page-render path, where nothing checked a licence. So every page view already fetches
+      from eight non-commercially-licensed APIs, and the day ads go live that becomes a
+      compliance problem with no code change to blame.
+      Now every keyed adapter takes its key from `licensedKey()` rather than `process.env`, and
+      with the flag on the key is withheld — the same signal as "no key", which every adapter
+      already degrades from cleanly, so switching it on can empty a feed but never break a page.
+      - Verify with `npm run check:commercial-mode`: it gives all eight adapters a valid-looking
+        key, turns the flag on, and asserts **no request is attempted at all** — then turns it
+        off and asserts they do fetch, so a gate that is simply broken-on cannot pass. Offline
+        (fetch is mocked), so it needs no keys and no network. 16/16 passing.
+      - `scripts/check-feeds.ts` now reports *why* a feed sat out ("blocked by COMMERCIAL_MODE"
+        vs "no KEY set") instead of showing an indistinguishable empty result.
+      - ⚠ The flag enforces the `commercialOk` flags; it does not judge them. Yahoo Finance RSS
+        is flagged `true` today (the "gray zone" item above), so it keeps fetching — settle that
+        call rather than assuming the flag covers it.
+- [ ] `P0` **Turn `COMMERCIAL_MODE=true` on in production the same day anything earns money.**
+      The flag is built and tested but is **off by default**, which is right for development and
+      wrong the moment an ad renders. Pair it with the affiliate item further down — that item's
+      "recognise what this triggers" note is this switch.
 - [ ] Get a real legal review of the above before revenue flows — the flags encode a practical
       reading of published terms, not legal advice.
 
@@ -319,8 +340,9 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
       land on the 1st with day precision).
 - [ ] `P1` **Internet Archive adapter (keyless).** Still the biggest unbuilt lever for the
       old-articles goal — and immune to key expiry or licensing changes.
-- [x] ~~`P1` **Merge PR #9 to main**~~ — merged 2026-07-27; `.env.example` is committed and
-      documents the key names.
+- [x] ~~`P1` **Merge PR #9 to main**~~ — merged 2026-07-27. `.env.example` now also documents
+      all eight news keys and `COMMERCIAL_MODE` (it was committed but listed only
+      `DATABASE_URL` and `ANTHROPIC_API_KEY` until 2026-07-28).
 
 ### External audit findings (2026-07-26) — verified against the code
 

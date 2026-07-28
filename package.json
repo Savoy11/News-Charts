@@ -10,6 +10,7 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:gen": "node scripts/gen-migration.mjs",
     "db:seed-demo": "tsx scripts/seed-demo.ts",
+    "check:commercial-mode": "tsx scripts/check-commercial-mode.ts",
     "ingest": "tsx scripts/ingest.ts",
     "score": "tsx scripts/score.ts",
     "db:backup": "tsx scripts/backup.ts",

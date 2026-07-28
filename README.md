@@ -226,7 +226,24 @@ npm run db:gen      # regenerate db/001_init.sql from docs/EVENTS-SCHEMA.md
 npm run db:migrate  # apply pending db/*.sql, tracked in schema_migrations
 npm run ingest -- --topic bicycle
 npm run ingest -- --ticker AAPL
+npm run db:seed-demo # network-free demo corpus, for verifying the UI
 ```
+
+### Seeding without the network
+
+`npm run db:seed-demo` writes a small demo corpus — two companies with a price series, a topic,
+an industry — straight to Postgres through the same upserts ingest uses, with no API calls. It
+exists because most of the UI can only be checked against data on screen, and a machine with no
+keys, no egress, or a rate-limited feed otherwise has nothing to look at.
+
+It seeds *shapes*, not volume: year-only dates (which bucket under the year instead of inventing
+a January day), a clean run of filing-only days (which condense into one cyclable card), a
+pre-IPO era (the "Before the ticker" run-up), and planted >2% single-day price moves with an
+after-close earnings the session before (which is what "Biggest moves" pairs against). It is
+idempotent, never deletes, and only touches the four subjects it owns.
+
+Because the price series only runs 18 months, every seeded history event predates the first
+trading day, so the "Before the ticker" section is larger than it would be against real prices.
 
 ### Bring your own model (visitor-side AI search)
 

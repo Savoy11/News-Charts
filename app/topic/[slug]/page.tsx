@@ -59,7 +59,7 @@ export default async function TopicPage({ params }: { params: { slug: string } }
           </p>
           <h1 className="text-2xl font-black leading-tight text-slate-100">{data.title}</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <FollowBar
             subject={{ href: `/topic/${encodeURIComponent(topic)}`, kind: "topic", label: data.title }}
             signature={{ count: data.events.length, latest: latestDate(data.events) }}

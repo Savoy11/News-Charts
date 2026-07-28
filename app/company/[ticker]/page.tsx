@@ -96,7 +96,7 @@ export default async function CompanyPage({ params }: { params: { ticker: string
             </p>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <FollowBar
             subject={{ href: `/company/${data.ticker}`, kind: "company", label: `${data.name} (${data.ticker})` }}
             signature={{ count: data.events.length, latest: latestDate(data.events) }}
@@ -106,7 +106,11 @@ export default async function CompanyPage({ params }: { params: { ticker: string
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-        <div>
+        {/* min-w-0: a grid item defaults to min-width:auto, so it cannot shrink below its
+            content. The price chart sizes itself from this column's width and then writes that
+            width back as an explicit px value, so on a phone the two fed each other and the
+            column settled ~2000px wide, scrolling the whole page sideways. */}
+        <div className="min-w-0">
           {data.prices.length > 0 ? (
             <CompanyExplorer
               prices={data.prices}

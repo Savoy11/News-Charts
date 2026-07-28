@@ -164,7 +164,9 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
           initialInstruction={focusHint ?? undefined}
         />
       </div>
-      <div className="mb-4 flex items-center gap-2">
+      {/* flex-wrap so the type chips stack on a phone instead of running off the side —
+          TopicExplorer's equivalent row already wraps. */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <h2 className="mr-2 text-lg font-bold text-slate-100">Timeline</h2>
         {FILTERS.map((f) => {
           // hide chips with nothing behind them — a company with no Wikipedia story

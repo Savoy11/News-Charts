@@ -24,44 +24,49 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
 
 ---
 
-## Project state & prioritized backlog (from PR review — 2026-07-25)
+## Project state & prioritized backlog (opened 2026-07-25 · cleared 2026-07-28)
 
-**Where News Charts stands.** The data layer is real — 5 SQL migrations (`db/001`–`005`) plus a
-full script suite (`ingest`, `score`, `signals`, `explain`, `plan`). But **all 7 feature PRs
-(#1–#7) are open, unmerged drafts**, and every one says *"not yet eyeballed in a live browser
-against a seeded DB."* So the value is built but unshipped, and the blocker is verification, not
-coding. (The `docs/EVENTS-SCHEMA.md` "not yet applied" header is stale — migrations exist.)
+**Where News Charts stands.** The data layer is real — 7 SQL migrations (`db/001`–`007`) plus a
+full script suite (`ingest`, `score`, `signals`, `explain`, `plan`). The feature backlog that
+opened this section is **done**: PRs #1–#7 all merged 2026-07-25, #9 (citation mining, NL
+prompts, pre-IPO story, chart interaction, eight news repositories) merged 2026-07-27, and #11
+(the News Charts rename) merged 2026-07-28. The verification each of those PRs deferred —
+*"not yet eyeballed in a live browser against a seeded DB"* — has now happened; see below.
 
-Prioritized, most-important first. For a **traffic/ad-funded** product, discoverability and
-retention outrank polish.
+- [x] ~~`P0` Merge #4 (SEO) · #6 (follow) · #7 (settings copy) · #1 (grouping) · #5 (compare) ·
+      #2 (stacking) · #3 (biggest moves), and coordinate the #4/#5/#6 nav conflicts~~ — **all
+      merged 2026-07-25**; the nav/header conflicts were resolved keeping every link and control.
+- [x] **`P0` Stand up a seeded environment and verify the merged work in a live browser.**
+      Done 2026-07-28. `npm run db:seed-demo` (new) writes a network-free demo corpus through the
+      same upserts ingest uses — two companies with a price series carrying planted >2% moves, a
+      crowded topic, an industry, plus the *shapes* features depend on (year-only dates, a clean
+      run of filing-only days, a pre-IPO era). All 7 migrations applied to a fresh `news_charts`
+      database; every route rendered from the database; 22 browser checks passed with **no console
+      errors**; no horizontal overflow at 390px or 1440px. What this **cannot** cover: live feed
+      behaviour against real API keys — egress to GDELT/Wikipedia/SEC/Yahoo is blocked from the
+      build container, so that half stays in the ⛔ feed gate below and needs the owner's machine.
 
-- [ ] `P0` **Stand up a seeded environment and verify the 7 open PRs live.** *Importance:*
-      critical — it unblocks *all* of #1–#7 at once (each is code-/build-verified but not
-      browser-verified). *Efficiency:* high — one-time Postgres + migrate + ingest a few subjects.
-      *Practicality:* high. **Do this first; it gates everything below.**
-- [ ] `P0` **Merge #4 — SEO + shareable URLs + dynamic OG images.** *Importance:* highest —
-      discoverability **is** the revenue model for an ad-funded site (metadata, sitemap, robots,
-      `/explore`, JSON-LD, social cards). *Efficiency:* high (done, `next build` verified).
-      *Practicality:* merge this **first of the #4/#5/#6 trio** to set the nav/header baseline.
-- [ ] `P1` **Merge #6 — Follow subjects + "new since your last visit."** *Importance:* high —
-      retention hook → return visits → more ad impressions, with no accounts/server state.
-      *Practicality:* resolve the nav/header conflict against #4 (keep both).
-- [ ] `P1` **Merge #7 — settings copy fix** ("nothing leaves your machine" was misleading; timeline
-      data is fetched online). *Importance:* med (honesty/trust) · *Efficiency:* very high (copy-only)
-      · *Practicality:* trivial. **Easy win.**
-- [ ] `P1` **Merge #1 — EventList year→month→day grouping.** *Importance:* med (readability of the
-      core view) · *Efficiency:* high (small, presentational) · *Practicality:* high, no conflicts.
-- [ ] `P2` **Merge #5 — Compare two subjects (`/compare`).** *Importance:* med-high (differentiating
-      feature; makes `price_divergence` visual) · *Practicality:* third of the nav-conflict trio.
-- [ ] `P2` **Merge #2 — timeline stacking + settings + mini-map.** *Importance:* med (UX for busy
-      periods) · *Efficiency:* med (largest presentational surface) · *Practicality:* independent.
-- [ ] `P2` **Merge #3 — "Biggest moves" panel** on company pages. *Importance:* med (surfaces
-      catalysts) · *Practicality:* independent, derived-only.
-- [ ] `P1` **Coordinate the #4/#5/#6 nav/header merge conflicts** — all three edit `app/layout.tsx`
-      and subject headers. Merge in order (#4 → #6 → #5), keeping every header link/control at each step.
+**Three real defects the browser pass found, all fixed** (none were visible to `tsc`, `next
+build`, or the offline parser tests — they only appear with data on screen):
 
-> The **On-chain events** initiative below is a new P1 build — schedule it after (or alongside)
-> clearing this backlog, since the pending PRs are already-sunk work waiting only on verification.
+- [x] **`/compare` silently dropped its price overlay.** `loadCompareSubject` asked the network
+      (`resolveCompany` → EDGAR ticker file) whether a query was a company *before* asking the
+      database. With EDGAR throttled or unreachable, a real ticker fell through to the topic
+      branch — which still found the company by slug and rendered it as a topic with no prices —
+      so the page lost the growth-of-100 overlay that is the entire point of `/compare`, while
+      `/company/<ticker>` beside it rendered fine from the same rows. Now database-first, like
+      every other loader.
+- [x] **Company pages scrolled sideways on a phone (2102px in a 390px viewport).** The price
+      chart is created without an explicit width and sizes itself from its container, then writes
+      that width back as inline px. Inside a grid item — which defaults to `min-width:auto` and so
+      cannot shrink below its content — the two fed each other until the column settled ~2000px.
+      Fixed with `min-w-0` on the column; also wrapped the company type-filter row (`TopicExplorer`
+      already wrapped its equivalent) and let the subject header row and search input shrink.
+- [x] **Subject header rows overflowed ~15px on a phone** — `flex-wrap` on the company/topic/
+      industry header rows and `min-w-0` on the search input.
+
+> The **On-chain events** initiative below is the next P1 build; with this backlog cleared it is
+> no longer competing with already-sunk work.
 
 ---
 
@@ -284,6 +289,13 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
       parsing, year extraction incl. ticker/domain false positives, prehistory guard, all 9
       adapter fixtures with mocked fetch) lives in throwaway scratchpad scripts. Add vitest and
       commit those ~60 assertions so every parser is regression-proof.
+      - [ ] `P1` **Commit the browser smoke pass too.** The 2026-07-28 verification (22 Playwright
+            checks over both subject page types, `/compare`, `/explore`, `/following`, the OG
+            route, plus a horizontal-overflow sweep at 390px and 1440px) was also a throwaway
+            script, and it is what caught all three defects listed at the top of this doc —
+            none of which `tsc` or `next build` can see. `npm run db:seed-demo` already makes
+            the data half reproducible; committing the harness (Playwright as a devDependency)
+            would make the whole pass a one-command regression gate.
 - [ ] `P1` **Noise control for the aggregators.** Keyword search across four general aggregators
       pulls junk (listicles, passing mentions). Add a server-side relevance floor (title must
       mention the subject; Marketaux/EODHD ticker tags are free wins) and near-duplicate
@@ -307,8 +319,8 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
       land on the 1st with day precision).
 - [ ] `P1` **Internet Archive adapter (keyless).** Still the biggest unbuilt lever for the
       old-articles goal — and immune to key expiry or licensing changes.
-- [ ] `P1` **Merge PR #9 to main** — ~20 commits across two dozen files is enough surface;
-      shrink the risk. Add a committed `.env.example` documenting all eight key names.
+- [x] ~~`P1` **Merge PR #9 to main**~~ — merged 2026-07-27; `.env.example` is committed and
+      documents the key names.
 
 ### External audit findings (2026-07-26) — verified against the code
 

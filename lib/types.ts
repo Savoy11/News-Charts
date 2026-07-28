@@ -7,7 +7,9 @@ export type EventType =
   | "regulation"
   | "citation"
   | "corporate_action"
-  | "onchain";
+  | "onchain"
+  /** a reader's own private note, held in their browser and never persisted server-side */
+  | "annotation";
 
 /** Matches the date_precision enum in the database. */
 export type DatePrecision = "day" | "month" | "year";

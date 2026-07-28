@@ -7,8 +7,10 @@ import HorizontalTimeline from "./HorizontalTimeline";
 import BiggestMoves from "./BiggestMoves";
 import EventList, { dateAnchorId } from "./EventList";
 import AiPanel, { type AiRanking } from "./AiPanel";
+import Annotations from "./Annotations";
 import { applyRanking } from "./TopicExplorer";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
+import { ANNOTATIONS_EVENT, annotationsAsEvents, loadAnnotations } from "@/lib/annotations";
 
 const FILTERS: { key: EventType; label: string }[] = [
   { key: "history", label: "History" },
@@ -79,8 +81,26 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
     }
   }, [filterKey]);
 
+  // A reader's own notes, merged in so they plot through the same marker machinery as anything
+  // else. They are never filtered out by the type chips: the reader put them there deliberately,
+  // and a note vanishing behind a filter they set for *sources* would be surprising.
+  const [notes, setNotes] = useState<TimelineEvent[]>([]);
+  useEffect(() => {
+    const refresh = () => setNotes(annotationsAsEvents(loadAnnotations(pathname)) as TimelineEvent[]);
+    refresh();
+    window.addEventListener(ANNOTATIONS_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(ANNOTATIONS_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [pathname]);
+
   const [ranking, setRanking] = useState<AiRanking | null>(null);
-  const filtered = useMemo(() => events.filter((e) => active.has(e.type)), [events, active]);
+  const filtered = useMemo(
+    () => [...events.filter((e) => active.has(e.type)), ...notes],
+    [events, active, notes]
+  );
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);
 
   // The story before the ticker: events older than the first trading day can never sit
@@ -169,6 +189,7 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
       <PriceTimeline prices={prices} events={ranked} onSelectDate={handleSelectDate} />
       {/* pairs each big move with the nearest displayed event, so it tracks the filters/search */}
       <BiggestMoves prices={prices} events={ranked} onSelectDate={handleSelectDate} />
+      <Annotations path={pathname} />
       <div className="mt-6">
         <AiPanel
           events={filtered}

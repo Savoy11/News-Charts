@@ -27,6 +27,8 @@ const MARKER_STYLE = {
   corporate_action: { color: "#e879f9", position: "belowBar", shape: "square", text: "" },
   // above the bar and unmistakable: a protocol event is the headline on a crypto timeline
   onchain: { color: "#a3e635", position: "aboveBar", shape: "arrowDown", text: "" },
+  // the reader's own mark, visually apart from anything we sourced
+  annotation: { color: "#22d3ee", position: "belowBar", shape: "circle", text: "" },
 } as const;
 
 /** Legend wording, which is not always the badge wording ("SEC filing", not "Filing"). */
@@ -40,6 +42,7 @@ const LEGEND_LABEL: Record<EventType, string> = {
   citation: "Cited",
   corporate_action: "Split / dividend",
   onchain: "On-chain",
+  annotation: "Your notes",
 };
 
 // which kind wins when several share a day — the market-moving ones first
@@ -48,6 +51,8 @@ const PRIORITY: Record<EventType, number> = {
   filing: 2,
   history: 2,
   regulation: 2,
+  // a reader's own note should never be hidden behind a marker we chose
+  annotation: 4,
   onchain: 3,
   corporate_action: 2,
   press: 1,

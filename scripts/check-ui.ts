@@ -138,6 +138,53 @@ async function companyPage(page: Page): Promise<void> {
 }
 
 /**
+ * Private annotations: written in the browser, plotted like any other marker, and never sent
+ * anywhere. The last part is the one worth asserting — the value of a trading journal here rests
+ * on it, so the check watches for a request carrying the note's text.
+ */
+async function annotations(page: Page): Promise<void> {
+  console.log("\nPrivate annotations");
+  await go(page, COMPANY);
+
+  const secret = `thesis-${Date.now().toString(36)}`;
+  const posted: string[] = [];
+  page.on("request", (r) => {
+    const body = r.postData();
+    if (body?.includes(secret) || r.url().includes(secret)) posted.push(r.url());
+  });
+
+  const openBtn = page.locator('button:has-text("Add a note")').first();
+  check("annotations panel present", (await openBtn.count()) > 0);
+  if (!(await openBtn.count())) return;
+  await openBtn.click();
+  await page.waitForTimeout(500);
+
+  await page.locator('input[aria-label="Date this note is about"]').first().fill("2026-02-05");
+  await page.locator('button:has-text("Entry")').first().click();
+  await page.locator('input[aria-label="Note text"]').first().fill(secret);
+  await page.locator('button:has-text("Save")').first().click();
+  await page.waitForTimeout(1500);
+
+  const body = await visible(page);
+  check("the note is listed", body.includes(secret));
+  check("it renders as a timeline event", (await page.locator("text=Your note").count()) > 0);
+  check("the chart legend names it", body.includes("Your notes"));
+
+  const keys: string[] = await page.evaluate(() => Object.keys(localStorage));
+  check("stored under the subject's own key", keys.some((k) => k.startsWith("news-charts:notes:")));
+  // The whole premise: this never leaves the browser.
+  check("never sent to a server", posted.length === 0, posted.slice(0, 2).join(" "));
+
+  // it survives a reload, and can be removed again
+  await page.reload({ waitUntil: "networkidle" });
+  await settle(page);
+  check("survives a reload", (await visible(page)).includes(secret));
+  await page.locator('button[aria-label^="Delete note"]').first().click();
+  await page.waitForTimeout(900);
+  check("can be deleted", !(await visible(page)).includes(secret));
+}
+
+/**
  * Clicking the chart jumps the list to that date. Collapsed sections keep zero-height anchors so
  * the jump *lands*, but landing is not arriving: the reader used to be dropped on the closed
  * header of the very thing they clicked.
@@ -384,6 +431,7 @@ async function main(): Promise<void> {
 
   try {
     await companyPage(page);
+    await annotations(page);
     await jumpOpensSection(page);
     await chartOverlays(page);
     await topicPage(page);

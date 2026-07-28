@@ -21,6 +21,7 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
     cls: "border-fuchsia-700/50 bg-fuchsia-500/15 text-fuchsia-300",
   },
   onchain: { label: "On-chain", cls: "border-lime-700/50 bg-lime-500/15 text-lime-300" },
+  annotation: { label: "Your note", cls: "border-cyan-700/50 bg-cyan-500/15 text-cyan-300" },
 };
 
 // A move on day D can be sparked by an item dated D itself (intraday news) or a few days before
@@ -35,6 +36,8 @@ const CATALYST_PRIORITY: Record<EventType, number> = {
   filing: 4,
   // a protocol event (a halving, an upgrade) is a real, dated cause — above ordinary news
   onchain: 3,
+  // a reader's own note is never the explanation for a market move
+  annotation: 0,
   regulation: 3,
   history: 2,
   press: 1,

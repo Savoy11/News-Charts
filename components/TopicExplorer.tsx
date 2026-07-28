@@ -6,7 +6,9 @@ import HorizontalTimeline from "./HorizontalTimeline";
 import EventList, { dateAnchorId } from "./EventList";
 import PriceTimeline from "./PriceTimeline";
 import AiPanel, { type AiRanking } from "./AiPanel";
+import Annotations from "./Annotations";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
+import { ANNOTATIONS_EVENT, annotationsAsEvents, loadAnnotations } from "@/lib/annotations";
 import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT } from "@/lib/prefs";
 
 /** Keep only what the visitor's model judged relevant, best matches first. */
@@ -148,8 +150,25 @@ export default function TopicExplorer({
   }, []);
   const capped = useMemo(() => capHistory(events, maxHistory), [events, maxHistory]);
 
+  // A reader's own notes, merged in so they plot like anything else and never filtered out by
+  // the type chips — those select sources, and a note is not a source.
+  const [notes, setNotes] = useState<TimelineEvent[]>([]);
+  useEffect(() => {
+    const refresh = () => setNotes(annotationsAsEvents(loadAnnotations(pathname)) as TimelineEvent[]);
+    refresh();
+    window.addEventListener(ANNOTATIONS_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(ANNOTATIONS_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [pathname]);
+
   const [ranking, setRanking] = useState<AiRanking | null>(null);
-  const filtered = useMemo(() => capped.filter((e) => active.has(e.type)), [capped, active]);
+  const filtered = useMemo(
+    () => [...capped.filter((e) => active.has(e.type)), ...notes],
+    [capped, active, notes]
+  );
   // ranking narrows and reorders; the timeline still renders chronologically
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);
 
@@ -279,6 +298,8 @@ export default function TopicExplorer({
           ))}
         </div>
       </div>
+
+      <Annotations path={pathname} />
 
       {view === "timeline" ? (
         <HorizontalTimeline events={ranked} />

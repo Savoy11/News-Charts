@@ -68,6 +68,11 @@ const STYLE: Record<EventType, { dot: string; badge: string; label: string }> = 
     badge: "border-lime-700/50 bg-lime-500/15 text-lime-300",
     label: "On-chain",
   },
+  annotation: {
+    dot: "bg-cyan-400 ring-cyan-400/30",
+    badge: "border-cyan-700/50 bg-cyan-500/15 text-cyan-300",
+    label: "Your note",
+  },
 };
 
 const CARD_CLASS =

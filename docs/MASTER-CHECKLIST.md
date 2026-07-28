@@ -564,10 +564,22 @@ Each idea checked against the codebase before listing — several were cheaper t
       shared-axis event strip and combined timeline for both subjects. The remaining gap is
       per-side event markers on the price overlay itself, and industry-news intersection
       (BABA vs JD under one regulatory headline) via the existing sector-event machinery.
-- [ ] `P2` **Private annotations on the timeline.** Fits the localStorage-first pattern
-      perfectly (like follows/prefs — no accounts, no server state): pin notes / thesis markers
-      / entry-exit points to dates, rendered as a distinct marker type. The trading-journal
-      angle with zero infra.
+- [x] ~~`P2` **Private annotations on the timeline**~~ — done 2026-07-28. Note / Entry / Exit
+      pinned to a date on any company or topic timeline, rendered as a cyan marker through the
+      same machinery as everything else, and stored per subject path in this browser only.
+      The privacy is the feature, not a limitation to apologise for: a thesis or an entry price
+      is exactly what nobody should hand to a server they don't run, and because it never leaves
+      there is no account to create, nothing to leak, and nothing to delete on request.
+      `check:ui` asserts that directly — it writes a note containing a unique token and fails if
+      that token appears in **any** outbound request.
+      - Notes are merged in *after* the type filters and are never filtered out by them: the
+        chips select **sources**, and a note the reader put there deliberately vanishing behind
+        a source filter would be surprising.
+      - `'annotation'` was added to the database enum (`db/010`) as well as `EventType` even
+        though nothing writes it, so the two cannot drift apart. Ingest skips it for free —
+        an annotation carries no source key.
+      - Bounded (500 chars, 200 per subject) so a runaway paste cannot fill the origin's storage
+        and take prefs and follows down with it. Malformed stored JSON is filtered, not thrown on.
 - [ ] `P3` **Saved-focus alerts (email/push on new matches).** Real retention value but the
       only idea needing infrastructure that doesn't exist: accounts, background jobs, an email
       provider. The no-server cousin is already live (Follow + "new since last visit"); an

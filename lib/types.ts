@@ -5,7 +5,8 @@ export type EventType =
   | "history"
   | "press"
   | "regulation"
-  | "citation";
+  | "citation"
+  | "corporate_action";
 
 /** Matches the fetch_outcome enum in the database. */
 export type FetchOutcome = "ok" | "empty" | "throttled" | "error";
@@ -59,6 +60,8 @@ export interface FetchResult {
 export interface PricePoint {
   time: string; // YYYY-MM-DD
   value: number;
+  /** shares traded that session. Optional: rows persisted before volume was plumbed have none. */
+  volume?: number;
 }
 
 export interface CompanyInfo {

@@ -6,6 +6,8 @@ import {
   createSeriesMarkers,
   AreaSeries,
   ColorType,
+  HistogramSeries,
+  LineSeries,
   type SeriesMarker,
   type Time,
 } from "lightweight-charts";
@@ -20,6 +22,9 @@ const MARKER_STYLE = {
   press: { color: "#fb923c", position: "aboveBar", shape: "square", text: "" },
   regulation: { color: "#fb7185", position: "aboveBar", shape: "square", text: "" },
   citation: { color: "#2dd4bf", position: "aboveBar", shape: "circle", text: "" },
+  // below the bar like earnings (both are scheduled, dated facts) but a different glyph, so a
+  // mechanical change is never mistaken for a reaction to news
+  corporate_action: { color: "#e879f9", position: "belowBar", shape: "square", text: "" },
 } as const;
 
 // which kind wins when several share a day — the market-moving ones first
@@ -28,6 +33,7 @@ const PRIORITY: Record<EventType, number> = {
   filing: 2,
   history: 2,
   regulation: 2,
+  corporate_action: 2,
   press: 1,
   news: 1,
   citation: 1,
@@ -70,6 +76,33 @@ interface Hover {
   events: TimelineEvent[];
 }
 
+/**
+ * Simple moving average over the close series. Returns one point per input day from the
+ * `period`-th onward — a partial average over the first N-1 days would draw a line that
+ * looks like data but isn't, so those days simply have no point.
+ */
+function sma(prices: PricePoint[], period: number): { time: Time; value: number }[] {
+  if (prices.length < period) return [];
+  const out: { time: Time; value: number }[] = [];
+  let sum = 0;
+  for (let i = 0; i < prices.length; i++) {
+    sum += prices[i].value;
+    if (i >= period) sum -= prices[i - period].value;
+    if (i >= period - 1) {
+      out.push({ time: prices[i].time as Time, value: Math.round((sum / period) * 100) / 100 });
+    }
+  }
+  return out;
+}
+
+const OVERLAYS = [
+  { key: "volume", label: "Volume", swatch: "bg-slate-500" },
+  { key: "sma50", label: "50d avg", swatch: "bg-amber-400" },
+  { key: "sma200", label: "200d avg", swatch: "bg-violet-400" },
+] as const;
+
+type OverlayKey = (typeof OVERLAYS)[number]["key"];
+
 export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const onSelectRef = useRef(onSelectDate);
@@ -80,6 +113,15 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
   // pointer is on the popup itself — freeze updates so its links can be clicked
   const pinned = useRef(false);
   const widthRef = useRef(0);
+
+  // Overlays are off by default: the price line and its event markers are what the page is
+  // for, and three more series on top of them is a busier chart than most readers want.
+  const [on, setOn] = useState<Record<OverlayKey, boolean>>({
+    volume: false,
+    sma50: false,
+    sma200: false,
+  });
+  const hasVolume = prices.some((p) => p.volume != null);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -107,6 +149,48 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
       lineWidth: 2,
     });
     series.setData(prices.map((p) => ({ time: p.time as Time, value: p.value })));
+
+    // Volume sits on its own invisible overlay scale pinned to the bottom fifth, so it never
+    // competes with the price axis or squashes the line.
+    if (on.volume && hasVolume) {
+      const volume = chart.addSeries(HistogramSeries, {
+        priceFormat: { type: "volume" },
+        priceScaleId: "volume",
+        priceLineVisible: false,
+        lastValueVisible: false,
+      });
+      volume.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+      volume.setData(
+        prices
+          .filter((p) => p.volume != null)
+          .map((p, i, arr) => ({
+            time: p.time as Time,
+            value: p.volume as number,
+            // green on an up day, red on a down day — the direction the volume belongs to
+            color:
+              i > 0 && arr[i - 1].value > p.value
+                ? "rgba(248, 113, 113, 0.45)"
+                : "rgba(52, 211, 153, 0.45)",
+          }))
+      );
+    }
+
+    for (const [key, period, color] of [
+      ["sma50", 50, "#fbbf24"],
+      ["sma200", 200, "#a78bfa"],
+    ] as const) {
+      if (!on[key]) continue;
+      const data = sma(prices, period);
+      if (!data.length) continue; // shorter history than the window — draw nothing, not a stub
+      const line = chart.addSeries(LineSeries, {
+        color,
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      });
+      line.setData(data);
+    }
 
     const tradingDays = prices.map((p) => p.time);
     const dayIndex = new Map(tradingDays.map((d, i) => [d, i]));
@@ -198,13 +282,42 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
       chart.remove();
       setHover(null);
     };
-  }, [prices, events]);
+    // toggling an overlay rebuilds the chart — simpler than adding and removing series by
+    // hand, and cheap at this data size
+  }, [prices, events, on, hasVolume]);
 
   const popupLeft = (x: number) =>
     Math.min(Math.max(x + 14, 8), Math.max((widthRef.current || POPUP_W) - POPUP_W - 8, 8));
 
   return (
     <div>
+      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+        <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+          Overlay
+        </span>
+        {OVERLAYS.map((o) => {
+          // Volume is only offered when the series actually carries it: rows persisted before
+          // volume was plumbed have none, and a toggle that does nothing is worse than no toggle.
+          const unavailable = o.key === "volume" && !hasVolume;
+          if (unavailable) return null;
+          const active = on[o.key];
+          return (
+            <button
+              key={o.key}
+              onClick={() => setOn((s) => ({ ...s, [o.key]: !s[o.key] }))}
+              aria-pressed={active}
+              className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors ${
+                active
+                  ? "border-slate-600 bg-slate-800 text-slate-200"
+                  : "border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300"
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${o.swatch} ${active ? "" : "opacity-40"}`} />
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
       <div className="relative">
         <div ref={containerRef} className="w-full" />
         {hover && hover.events.length > 0 && (
@@ -278,6 +391,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
         <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-sky-400" />SEC filing</span>
         <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-slate-500" />News</span>
         <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-teal-400" />Cited</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-fuchsia-400" />Split / dividend</span>
         <span className="text-slate-500">
           Sweep the line — nearby articles pop up at the cursor. Click a point to jump to that
           date&apos;s events below.

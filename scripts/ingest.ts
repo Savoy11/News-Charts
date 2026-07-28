@@ -171,16 +171,38 @@ async function ingestCompany(client: PoolClient, ticker: string) {
     e.slice(0, 30)
   );
 
-  const prices = await getDailyPrices(company.ticker);
-  if (prices.length) {
+  const { points, actions } = await getDailyPrices(company.ticker);
+  if (points.length) {
     await client.query(
-      `INSERT INTO prices (subject_id, on_date, close)
-       SELECT $1, d, c FROM unnest($2::date[], $3::numeric[]) AS t(d, c)
-       ON CONFLICT (subject_id, on_date) DO UPDATE SET close = EXCLUDED.close`,
-      [subjectId, prices.map((p) => p.time), prices.map((p) => p.value)]
+      `INSERT INTO prices (subject_id, on_date, close, volume)
+       SELECT $1, d, c, v FROM unnest($2::date[], $3::numeric[], $4::bigint[]) AS t(d, c, v)
+       ON CONFLICT (subject_id, on_date) DO UPDATE
+          SET close = EXCLUDED.close,
+              volume = COALESCE(EXCLUDED.volume, prices.volume)`,
+      [
+        subjectId,
+        points.map((p) => p.time),
+        points.map((p) => p.value),
+        points.map((p) => p.volume ?? null),
+      ]
     );
   }
-  line("prices", `${prices.length} daily closes`);
+  const withVolume = points.filter((p) => p.volume != null).length;
+  line("prices", `${points.length} daily closes (${withVolume} with volume)`);
+
+  // Dividends and splits ride the same chart response, so they cost no extra request.
+  if (actions.length) {
+    const stats = emptyStats();
+    await client.query("BEGIN");
+    try {
+      for (const ev of actions) await upsertEvent(client, ev, subjectId, stats);
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    }
+    line("yahoo_finance", `${actions.length} corporate actions (dividends + splits)`);
+  }
 }
 
 /**

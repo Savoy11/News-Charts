@@ -18,6 +18,7 @@ const FILTERS: { key: EventType; label: string }[] = [
   { key: "filing", label: "Filings" },
   { key: "news", label: "News" },
   { key: "regulation", label: "Sector rules" },
+  { key: "corporate_action", label: "Splits & dividends" },
 ];
 
 const ALL_TYPES = FILTERS.map((f) => f.key);
@@ -39,9 +40,11 @@ interface Props {
 }
 
 export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
-  const [active, setActive] = useState<Set<EventType>>(
-    new Set<EventType>(["history", "citation", "press", "earnings", "filing", "news", "regulation"])
-  );
+  // Derived from FILTERS, never a second hand-written list: this defaulted to a literal of the
+  // seven kinds that existed when it was written, so adding an eighth left it filtered out by
+  // default — its chip rendered, inactive, and its rows never appeared. `Set<EventType>` cannot
+  // be checked for exhaustiveness, so the type system could not catch that.
+  const [active, setActive] = useState<Set<EventType>>(() => new Set<EventType>(ALL_TYPES));
   const pathname = usePathname();
   const [copied, setCopied] = useState(false);
   // the angle a natural-language search prompt carried in ("in the united states")

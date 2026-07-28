@@ -1,0 +1,13 @@
+-- Corporate actions: dividends and stock splits, as reported alongside the price series
+-- by the same Yahoo chart request (`events=div,splits`).
+--
+-- Their own kind rather than 'news' on purpose. A split moves the printed price without
+-- anything happening to the company, and our series is split-adjusted, so the bar does not
+-- cliff — which means a reader comparing an event to a price move has no way to tell a
+-- mechanical change from a reaction unless the timeline says so. Labelling is the value
+-- here, not correction.
+--
+-- Idempotent: 001 is regenerated from the spec and already contains this value on fresh
+-- installs. ADD VALUE is transaction-safe on PG12+ as long as the new value is not used in
+-- the same transaction; nothing here inserts a 'corporate_action' row.
+ALTER TYPE event_kind ADD VALUE IF NOT EXISTS 'corporate_action';

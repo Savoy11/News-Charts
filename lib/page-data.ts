@@ -77,10 +77,19 @@ async function persist(
       }
       if (prices?.length) {
         await client.query(
-          `INSERT INTO prices (subject_id, on_date, close)
-           SELECT $1, d, c FROM unnest($2::date[], $3::numeric[]) AS t(d, c)
-           ON CONFLICT (subject_id, on_date) DO UPDATE SET close = EXCLUDED.close`,
-          [subjectId, prices.map((p) => p.time), prices.map((p) => p.value)]
+          `INSERT INTO prices (subject_id, on_date, close, volume)
+           SELECT $1, d, c, v FROM unnest($2::date[], $3::numeric[], $4::bigint[]) AS t(d, c, v)
+           ON CONFLICT (subject_id, on_date) DO UPDATE
+              SET close = EXCLUDED.close,
+                  -- keep a known volume rather than overwrite it with a null from a
+                  -- response that happened to omit the field
+                  volume = COALESCE(EXCLUDED.volume, prices.volume)`,
+          [
+            subjectId,
+            prices.map((p) => p.time),
+            prices.map((p) => p.value),
+            prices.map((p) => p.volume ?? null),
+          ]
         );
       }
       if (industry) await linkToIndustry(client, subjectId, industry);
@@ -207,7 +216,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
   const company = await resolveCompany(ticker);
   if (!company) return null;
 
-  const [prices, filings, news, yahoo, nyt, guardian, newsdata, gnews, currents, marketaux, eodhd, finnhub, pressCandidates, siteDomain, sicIndustry, story] =
+  const [priceData, filings, news, yahoo, nyt, guardian, newsdata, gnews, currents, marketaux, eodhd, finnhub, pressCandidates, siteDomain, sicIndustry, story] =
     await Promise.all([
       getDailyPrices(company.ticker),
       getFilings(company),
@@ -238,7 +247,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
   // citations first so a story cited by Wikipedia keeps its curated form when a feed
   // also carries the same URL; every list after it drops duplicates by URL
   const events = dedupByUrl(
-    [...filings, ...(story?.events ?? []), ...press],
+    [...filings, ...priceData.actions, ...(story?.events ?? []), ...press],
     news,
     yahoo,
     nyt,
@@ -262,7 +271,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
       siteDomain,
     },
     events,
-    prices,
+    priceData.points,
     sicIndustry
   );
 
@@ -278,7 +287,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
     name: company.name,
     ticker: company.ticker,
     siteDomain,
-    prices,
+    prices: priceData.points,
     events: dropCompanyPrehistory([...events, ...sector]),
     industry,
     servedFrom: "live",

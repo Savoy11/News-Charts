@@ -57,7 +57,7 @@ input the AI layer gets for free.
 ## DDL
 
 ```sql
-CREATE TYPE event_kind     AS ENUM ('history','press','news','filing','earnings','regulation','citation');
+CREATE TYPE event_kind     AS ENUM ('history','press','news','filing','earnings','regulation','citation','corporate_action');
 CREATE TYPE date_precision AS ENUM ('day','month','year');
 CREATE TYPE subject_kind   AS ENUM ('topic','company','industry');
 CREATE TYPE fetch_outcome  AS ENUM ('ok','empty','throttled','error');

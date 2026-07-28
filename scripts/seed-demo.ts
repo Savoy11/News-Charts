@@ -60,7 +60,8 @@ function priceSeries(
   days: string[],
   start: number,
   seed: number,
-  planted: Record<string, number>
+  planted: Record<string, number>,
+  baseVolume: number
 ): PricePoint[] {
   const rand = mulberry32(seed);
   let value = start;
@@ -68,7 +69,11 @@ function priceSeries(
     const shock = planted[time];
     const drift = shock ?? (rand() - 0.49) * 0.022;
     value = Math.max(1, value * (1 + drift));
-    return { time, value: Number(value.toFixed(2)) };
+    // Volume tracks the size of the move — a planted 8% day should visibly spike the bars,
+    // which is the whole point of showing volume next to an event.
+    const intensity = 1 + Math.abs(drift) * 18;
+    const volume = Math.round(baseVolume * intensity * (0.75 + rand() * 0.5));
+    return { time, value: Number(value.toFixed(2)), volume };
   });
 }
 
@@ -194,6 +199,33 @@ const FORD_NEWS: Seed[] = [
   externalId: `news-ford-${date}-${outlet}`,
 }));
 
+// Quarterly dividends plus one split. The split matters most: our series is split-adjusted,
+// so the line does not step and the marker is the only thing that says it happened.
+const FORD_ACTIONS: Seed[] = [
+  ...["2025-02-12", "2025-05-14", "2025-08-13", "2025-11-12", "2026-02-11", "2026-05-13"].map(
+    (date) => ({
+      date,
+      title: "Dividend of $0.15 per share",
+      description: "Cash dividend with this ex-dividend date. A mechanical change, not news.",
+      type: "corporate_action" as const,
+      source: "Yahoo Finance",
+      sourceKey: "yahoo_finance" as const,
+      externalId: `div-F-${date}`,
+    })
+  ),
+  {
+    date: "2026-03-04",
+    title: "2:1 stock split",
+    description:
+      "The share count changed on this date. Prices here are split-adjusted, so the line " +
+      "does not step — this marker is the only thing that says it happened.",
+    type: "corporate_action",
+    source: "Yahoo Finance",
+    sourceKey: "yahoo_finance",
+    externalId: "split-F-2026-03-04",
+  },
+];
+
 const FORD_REGULATION: Seed[] = [
   {
     date: "2026-03-18",
@@ -296,6 +328,7 @@ async function main(): Promise<void> {
       ...FORD_EARNINGS,
       ...FORD_NEWS,
       ...FORD_REGULATION,
+      ...FORD_ACTIONS,
     ];
     await client.query("BEGIN");
     for (const e of fordEvents) await upsertEvent(client, ev(e), fordId, stats);
@@ -372,28 +405,43 @@ async function main(): Promise<void> {
 
     // -------------------------------------------------------- prices
     const days = tradingDays("2025-01-02", "2026-07-24");
-    const fordPrices = priceSeries(days, 10.4, 20260728, {
-      "2025-04-03": -0.078,
-      "2025-10-27": 0.061,
-      "2026-02-05": -0.084,
-      "2026-05-13": -0.042,
-      "2026-07-08": 0.052,
-    });
-    const gmPrices = priceSeries(days, 52.0, 99001, {
-      "2025-04-03": -0.055,
-      "2026-02-05": 0.031,
-      "2026-07-08": 0.024,
-    });
+    const fordPrices = priceSeries(
+      days,
+      10.4,
+      20260728,
+      {
+        "2025-04-03": -0.078,
+        "2025-10-27": 0.061,
+        "2026-02-05": -0.084,
+        "2026-05-13": -0.042,
+        "2026-07-08": 0.052,
+      },
+      62_000_000
+    );
+    const gmPrices = priceSeries(
+      days,
+      52.0,
+      99001,
+      { "2025-04-03": -0.055, "2026-02-05": 0.031, "2026-07-08": 0.024 },
+      14_000_000
+    );
 
     for (const [subjectId, series] of [
       [fordId, fordPrices],
       [gmId, gmPrices],
     ] as const) {
       await client.query(
-        `INSERT INTO prices (subject_id, on_date, close)
-         SELECT $1, d, c FROM unnest($2::date[], $3::numeric[]) AS t(d, c)
-         ON CONFLICT (subject_id, on_date) DO UPDATE SET close = EXCLUDED.close`,
-        [subjectId, series.map((p) => p.time), series.map((p) => p.value)]
+        `INSERT INTO prices (subject_id, on_date, close, volume)
+         SELECT $1, d, c, v FROM unnest($2::date[], $3::numeric[], $4::bigint[]) AS t(d, c, v)
+         ON CONFLICT (subject_id, on_date) DO UPDATE
+            SET close = EXCLUDED.close,
+                volume = COALESCE(EXCLUDED.volume, prices.volume)`,
+        [
+          subjectId,
+          series.map((p) => p.time),
+          series.map((p) => p.value),
+          series.map((p) => p.volume ?? null),
+        ]
       );
     }
 

@@ -68,9 +68,10 @@ function encodeView(
 }
 
 export default function TopicExplorer({ events }: { events: TimelineEvent[] }) {
-  const [active, setActive] = useState<Set<EventType>>(
-    new Set<EventType>(["history", "citation", "press", "news"])
-  );
+  // Derived from FILTERS rather than repeated — the same duplication in CompanyExplorer left a
+  // newly added event kind filtered out by default. A topic's filter list is deliberately
+  // shorter than a company's; this stays in step with whatever it holds.
+  const [active, setActive] = useState<Set<EventType>>(() => new Set<EventType>(ALL_TYPES));
   const [view, setView] = useState<"timeline" | "list">("timeline");
   const pathname = usePathname();
   const storeKey = `news-charts:view:${pathname}`;

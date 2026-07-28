@@ -405,15 +405,27 @@ rather than accepted. Verdicts recorded so nobody re-litigates them:
 Each idea checked against the codebase before listing — several were cheaper than they look
 (the data already arrives) and two were partly built already.
 
-- [ ] `P1` **Volume bars + moving averages on the price chart.** Cheap win: the Yahoo chart
-      response the prices route already fetches carries volume in the same payload; SMAs
-      (50/200-day) compute client-side. Lightweight-charts supports histogram + line series on
-      the existing chart. Lets a reader see if an event moved price on real volume.
-- [ ] `P1` **Corporate actions on the timeline (splits, dividends).** Also cheap: Yahoo's chart
-      API returns dividend and split events via `events=div,splits` on the same request. Plot
-      as their own marker type so a mechanical price change is never misread as news reaction.
-      (Note: our prices are adjusted, so splits don't cliff — the value is labeling, not
-      correction. Buybacks already arrive via 8-K filings.)
+- [x] ~~`P1` **Volume bars + moving averages on the price chart**~~ — done 2026-07-28. The
+      `volume` column existed in `db/001` from the start and nothing had ever populated it;
+      it is now read from the Yahoo payload, persisted, and plumbed through `PricePoint`.
+      Three toggles above the chart (**Volume · 50d avg · 200d avg**), all **off by default** —
+      the price line and its event markers are what the page is for, and three more series is a
+      busier chart than most readers want. Volume sits on its own overlay scale pinned to the
+      bottom fifth so it never squashes the price line, and is coloured by the day's direction.
+      An average whose window is longer than the available history draws **nothing** rather than
+      a partial-window stub that would look like data.
+- [x] ~~`P1` **Corporate actions on the timeline (splits, dividends)**~~ — done 2026-07-28.
+      `events=div,splits` rides the *same* Yahoo chart request, so this costs no extra fetch,
+      key, or rate-limit budget. New `corporate_action` event kind (spec + `db/008`) with its
+      own fuchsia marker, badge, legend entry and "Splits & dividends" filter chip, so a
+      mechanical change is never read as a reaction. Prices are split-adjusted and the line does
+      not step, so the marker is the only thing that says a split happened — labelling, not
+      correction, exactly as the item anticipated.
+      - ⚠ **This surfaced a latent trap worth knowing about.** Both explorers seeded their
+        default type filter from a *hand-written literal* duplicating `ALL_TYPES`. Adding an
+        eighth kind left it filtered out by default — the chip rendered, inactive, and the rows
+        never appeared — and `Set<EventType>` cannot be checked for exhaustiveness, so `tsc` was
+        silent. Both now derive from `FILTERS`. **Any future event kind would have hit this.**
 - [ ] `P2` **Sentiment coloring on event nodes.** Do it keyless first: a lexicon-based
       positive/negative/neutral score at ingest (title keywords), color-coding timeline dots so
       perceived sentiment can be read against the actual price move. BYO-model rescoring can

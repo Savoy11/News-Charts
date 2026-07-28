@@ -16,6 +16,10 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
   press: { label: "Press", cls: "border-orange-700/50 bg-orange-500/15 text-orange-300" },
   news: { label: "News", cls: "border-slate-600/50 bg-slate-500/15 text-slate-300" },
   citation: { label: "Cited", cls: "border-teal-700/50 bg-teal-500/15 text-teal-300" },
+  corporate_action: {
+    label: "Corporate action",
+    cls: "border-fuchsia-700/50 bg-fuchsia-500/15 text-fuchsia-300",
+  },
 };
 
 // A move on day D can be sparked by an item dated D itself (intraday news) or a few days before
@@ -24,6 +28,9 @@ const CATALYST_LOOKBACK_DAYS = 5;
 // Which kind wins when two events sit on the same nearest day — the market-moving ones first.
 const CATALYST_PRIORITY: Record<EventType, number> = {
   earnings: 5,
+  // A dividend ex-date drop is mechanical, so pairing it with the move is the *most* useful
+  // thing this panel can say about that day: the move wasn't a reaction to anything.
+  corporate_action: 4,
   filing: 4,
   regulation: 3,
   history: 2,

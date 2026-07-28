@@ -229,6 +229,20 @@ npm run ingest -- --ticker AAPL
 npm run db:seed-demo # network-free demo corpus, for verifying the UI
 ```
 
+### Chart overlays
+
+The price chart carries three optional overlays, toggled above it and **off by default**:
+**Volume**, **50d avg** and **200d avg**. Volume comes from the same Yahoo chart response as the
+closes — no extra request — and renders on its own scale pinned to the bottom of the plot, tinted
+by the day's direction, so an event can be read against whether the day actually traded. The
+moving averages are computed client-side from the closes; one whose window is longer than the
+available history draws nothing rather than a partial-window stub.
+
+Dividends and stock splits arrive on that same request (`events=div,splits`) and become
+`corporate_action` events with their own marker, badge and filter chip. Prices from Yahoo are
+split-adjusted, so the line does not step on a split — the marker is the only thing that says it
+happened. That is the point: a mechanical change should never read as a reaction to news.
+
 ### Seeding without the network
 
 `npm run db:seed-demo` writes a small demo corpus — two companies with a price series, a topic,

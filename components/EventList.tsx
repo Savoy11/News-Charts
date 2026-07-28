@@ -14,6 +14,10 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
   regulation: { label: "Regulation", cls: "bg-rose-500/15 text-rose-400 border-rose-700/50" },
   history: { label: "History", cls: "bg-violet-500/15 text-violet-400 border-violet-700/50" },
   citation: { label: "Cited", cls: "bg-teal-500/15 text-teal-400 border-teal-700/50" },
+  corporate_action: {
+    label: "Corporate action",
+    cls: "bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-700/50",
+  },
 };
 
 export function dateAnchorId(date: string) {
@@ -373,6 +377,7 @@ const DOT: Record<EventType, string> = {
   regulation: "bg-rose-400",
   history: "bg-violet-400",
   citation: "bg-teal-400",
+  corporate_action: "bg-fuchsia-400",
 };
 
 /** Preview of a collapsed section's contents, shown on hover so it can be read without a click. */

@@ -264,7 +264,7 @@ export async function loadIndustryEvents(industryId: number): Promise<TimelineEv
 
 export async function loadPrices(subjectId: number): Promise<PricePoint[]> {
   const { rows } = await getPool().query(
-    `SELECT on_date, close FROM prices WHERE subject_id = $1 ORDER BY on_date`,
+    `SELECT on_date, close, volume FROM prices WHERE subject_id = $1 ORDER BY on_date`,
     [subjectId]
   );
   return rows.map((r) => ({
@@ -273,6 +273,8 @@ export async function loadPrices(subjectId: number): Promise<PricePoint[]> {
         ? r.on_date.toISOString().slice(0, 10)
         : String(r.on_date).slice(0, 10),
     value: Number(r.close),
+    // bigint arrives as a string from pg; rows persisted before volume was plumbed have none
+    ...(r.volume == null ? {} : { volume: Number(r.volume) }),
   }));
 }
 

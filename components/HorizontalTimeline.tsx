@@ -58,6 +58,11 @@ const STYLE: Record<EventType, { dot: string; badge: string; label: string }> = 
     badge: "border-teal-700/50 bg-teal-500/15 text-teal-300",
     label: "Cited",
   },
+  corporate_action: {
+    dot: "bg-fuchsia-400 ring-fuchsia-400/30",
+    badge: "border-fuchsia-700/50 bg-fuchsia-500/15 text-fuchsia-300",
+    label: "Corporate action",
+  },
 };
 
 const CARD_CLASS =

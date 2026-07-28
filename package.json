@@ -23,11 +23,12 @@
     "check:refresh": "tsx scripts/check-refresh.ts",
     "check:ui": "tsx scripts/check-ui.ts",
     "profile:list": "tsx scripts/profile-list.ts",
-    "check": "npm run check:parsers && npm run check:dates && npm run check:sentiment && npm run check:news-quality && npm run check:refresh && npm run check:prompt && npm run check:onchain && npm run check:commercial-mode",
+    "check": "npm run check:parsers && npm run check:dates && npm run check:sentiment && npm run check:markers && npm run check:news-quality && npm run check:refresh && npm run check:prompt && npm run check:onchain && npm run check:commercial-mode",
     "check:dates": "tsx scripts/check-dates.ts",
     "check:news-quality": "tsx scripts/check-news-quality.ts",
     "check:parsers": "tsx scripts/check-parsers.ts",
-    "check:sentiment": "tsx scripts/check-sentiment.ts"
+    "check:sentiment": "tsx scripts/check-sentiment.ts",
+    "check:markers": "tsx scripts/check-markers.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

@@ -588,10 +588,22 @@ Each idea checked against the codebase before listing — several were cheaper t
       it: sector events merge into company timelines via subject membership — a curated "macro"
       subject whose events overlay any company page is the same pattern. FOMC/CPI calendars are
       public and keyless. Toggle off by default.
-- [ ] `P2` **Compare: both subjects' events** — partly built already: /compare renders a
-      shared-axis event strip and combined timeline for both subjects. The remaining gap is
-      per-side event markers on the price overlay itself, and industry-news intersection
-      (BABA vs JD under one regulatory headline) via the existing sector-event machinery.
+- [x] ~~`P2` **Compare: per-side event markers on the price overlay**~~ — done 2026-07-28.
+      Each subject's events now hang off its own line in its own colour: A's above the line,
+      B's below, shaped by kind so a filing still looks like a filing. Side deciding position
+      overrides the above/below convention used on single-subject charts, deliberately — there
+      that convention separates scheduled facts from reactions, but here two lines cross, and a
+      marker floating between them that could belong to either subject says nothing.
+      Hovering names what is under the cursor, which is the part that makes the markers worth
+      drawing: a dot you cannot identify tells a reader something happened and refuses to say
+      what. The snapping, priority and nearest-day rules moved out of PriceTimeline into
+      `lib/markers.ts` so the two charts cannot drift — a new event kind added to one glyph
+      table and not the other would render as a marker on one page and nothing on the next,
+      which reads as missing data rather than as a bug. `npm run check:markers` covers the
+      edge cases that are invisible on screen (weekend snapping, busy days, pre-window drops).
+- [ ] `P2` **Compare: industry-news intersection** — BABA vs JD under one regulatory headline,
+      via the existing sector-event machinery. The remaining half of the compare item: an event
+      that hit both sides should be legible as *one* happening, not as two coincidental markers.
 - [x] ~~`P2` **Private annotations on the timeline**~~ — done 2026-07-28. Note / Entry / Exit
       pinned to a date on any company or topic timeline, rendered as a cyan marker through the
       same machinery as everything else, and stored per subject path in this browser only.

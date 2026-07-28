@@ -148,11 +148,14 @@ export default function CompareView({ a, b }: { a: CompareSubject; b: CompareSub
    * Ford stock". This is the compose the product was missing: the company supplies the axis,
    * the topic supplies what happened, and neither is a new page type.
    *
-   * Only the *other* subject's events are plotted, deliberately. Markers are coloured by event
-   * kind, not by which subject they came from, so merging both sides' events would produce a
+   * Only the *other* subject's events are plotted, deliberately. PriceTimeline colours markers by
+   * event kind, not by which subject they came from, so merging both sides' events would produce a
    * chart where a Ford filing and a Trump speech are indistinguishable — the reader could not
    * tell which claim they were looking at. The priced subject's own timeline is one click away
    * on its own page.
+   *
+   * The two-company overlay above does plot both sides, because it can: there each subject has its
+   * own line to hang markers off, and colour is free to mean *whose* rather than *what kind*.
    */
   const priced = !bothCompanies ? (a.prices.length > 0 ? a : b.prices.length > 0 ? b : null) : null;
   const eventful = priced ? (priced === a ? b : a) : null;
@@ -162,8 +165,8 @@ export default function CompareView({ a, b }: { a: CompareSubject; b: CompareSub
     <div className="space-y-6">
       {bothCompanies ? (
         <PriceOverlay
-          a={{ label: a.label, prices: a.prices, color: A_COLOR }}
-          b={{ label: b.label, prices: b.prices, color: B_COLOR }}
+          a={{ label: a.label, prices: a.prices, events: a.events, color: A_COLOR }}
+          b={{ label: b.label, prices: b.prices, events: b.events, color: B_COLOR }}
         />
       ) : composable ? (
         <section>

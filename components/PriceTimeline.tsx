@@ -12,24 +12,8 @@ import {
   type Time,
 } from "lightweight-charts";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
+import { MARKER_STYLE, markerEventsByDay, snapToTradingDay } from "@/lib/markers";
 import EventThumb from "./EventThumb";
-
-const MARKER_STYLE = {
-  earnings: { color: "#f59e0b", position: "belowBar", shape: "arrowUp", text: "E" },
-  filing: { color: "#38bdf8", position: "aboveBar", shape: "circle", text: "" },
-  news: { color: "#64748b", position: "aboveBar", shape: "circle", text: "" },
-  history: { color: "#a78bfa", position: "aboveBar", shape: "square", text: "" },
-  press: { color: "#fb923c", position: "aboveBar", shape: "square", text: "" },
-  regulation: { color: "#fb7185", position: "aboveBar", shape: "square", text: "" },
-  citation: { color: "#2dd4bf", position: "aboveBar", shape: "circle", text: "" },
-  // below the bar like earnings (both are scheduled, dated facts) but a different glyph, so a
-  // mechanical change is never mistaken for a reaction to news
-  corporate_action: { color: "#e879f9", position: "belowBar", shape: "square", text: "" },
-  // above the bar and unmistakable: a protocol event is the headline on a crypto timeline
-  onchain: { color: "#a3e635", position: "aboveBar", shape: "arrowDown", text: "" },
-  // the reader's own mark, visually apart from anything we sourced
-  annotation: { color: "#22d3ee", position: "belowBar", shape: "circle", text: "" },
-} as const;
 
 /** Legend wording, which is not always the badge wording ("SEC filing", not "Filing"). */
 const LEGEND_LABEL: Record<EventType, string> = {
@@ -45,38 +29,10 @@ const LEGEND_LABEL: Record<EventType, string> = {
   annotation: "Your notes",
 };
 
-// which kind wins when several share a day — the market-moving ones first
-const PRIORITY: Record<EventType, number> = {
-  earnings: 3,
-  filing: 2,
-  history: 2,
-  regulation: 2,
-  // a reader's own note should never be hidden behind a marker we chose
-  annotation: 4,
-  onchain: 3,
-  corporate_action: 2,
-  press: 1,
-  news: 1,
-  citation: 1,
-};
-
 interface Props {
   prices: PricePoint[];
   events: TimelineEvent[];
   onSelectDate?: (date: string) => void;
-}
-
-/** Snap an event date to the nearest trading day at or before it (weekends/holidays have no bar). */
-function snapToTradingDay(date: string, tradingDays: string[]): string | null {
-  if (tradingDays.length === 0 || date < tradingDays[0]) return null;
-  let lo = 0;
-  let hi = tradingDays.length - 1;
-  while (lo < hi) {
-    const mid = Math.ceil((lo + hi) / 2);
-    if (tradingDays[mid] <= date) lo = mid;
-    else hi = mid - 1;
-  }
-  return tradingDays[lo];
 }
 
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -220,15 +176,10 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
     const tradingDays = prices.map((p) => p.time);
     const dayIndex = new Map(tradingDays.map((d, i) => [d, i]));
     // one marker per day (highest-priority kind decides the glyph); the popup keeps every event
-    const markerByDay = new Map<string, TimelineEvent>();
     const eventsByDay = new Map<string, TimelineEvent[]>();
     for (const ev of events) {
       const day = snapToTradingDay(ev.date, tradingDays);
       if (!day) continue;
-      const existing = markerByDay.get(day);
-      if (!existing || PRIORITY[ev.type] > PRIORITY[existing.type]) {
-        markerByDay.set(day, { ...ev, date: day });
-      }
       const list = eventsByDay.get(day);
       if (list) list.push(ev);
       else eventsByDay.set(day, [ev]);
@@ -238,19 +189,17 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
       .map((d) => dayIndex.get(d)!)
       .sort((a, b) => a - b);
 
-    const markers: SeriesMarker<Time>[] = [...markerByDay.values()]
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .map((ev) => {
-        const s = MARKER_STYLE[ev.type];
-        return {
-          time: ev.date as Time,
-          position: s.position,
-          color: s.color,
-          shape: s.shape,
-          text: s.text,
-          size: ev.type === "earnings" ? 1.5 : 1,
-        };
-      });
+    const markers: SeriesMarker<Time>[] = markerEventsByDay(events, tradingDays).map((ev) => {
+      const s = MARKER_STYLE[ev.type];
+      return {
+        time: ev.date as Time,
+        position: s.position,
+        color: s.color,
+        shape: s.shape,
+        text: s.text,
+        size: ev.type === "earnings" ? 1.5 : 1,
+      };
+    });
     createSeriesMarkers(series, markers);
 
     // Sweep the line → the nearest event day (within reach) pops its articles up at the cursor.

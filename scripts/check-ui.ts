@@ -358,6 +358,37 @@ async function comparePage(page: Page): Promise<void> {
   check("price overlay draws", (await page.locator("canvas").count()) > 0);
   check("window return and spread shown", /growth of 100/.test(body) && /spread/.test(body));
 
+  // Per-side markers. The legend has to say whose is whose, because on a two-line chart the
+  // position of a dot is the only thing distinguishing a Ford filing from a GM recall.
+  check(
+    "overlay names which side's markers sit where",
+    /above its line/.test(body) && /below/.test(body),
+    body.slice(0, 0)
+  );
+  check("overlay keeps the correlation framing honest", /coincidence, not cause/.test(body));
+
+  // Sweep the chart rather than aiming at a marker: the readout is drawn on a canvas whose
+  // marker pixels we cannot query, and a single hover that misses would pass for a feature
+  // that isn't there. A sweep across the full width has to hit something.
+  const chart = page.locator("canvas").first();
+  const box = await chart.boundingBox();
+  let readout = "";
+  if (box) {
+    for (let i = 1; i < 40 && !readout; i++) {
+      await page.mouse.move(box.x + (box.width * i) / 40, box.y + box.height / 2);
+      await page.waitForTimeout(60);
+      const tip = page.locator("div.absolute.z-10.w-64").first();
+      if (await tip.count()) readout = (await tip.innerText()).replace(/\n/g, " · ");
+    }
+  }
+  check("hovering the overlay names the event under the cursor", readout.length > 0, readout);
+  check(
+    "the readout says which subject it belongs to",
+    // case-insensitive: the label is uppercased in CSS, so innerText comes back shouting
+    /ford|general motors/i.test(readout),
+    readout
+  );
+
   // The two-subject compose: a topic supplies the events, a company supplies the price.
   // "Donald Trump presidency against Ford stock" is the shape; the seed's stand-in is the
   // electric-car topic against Ford.

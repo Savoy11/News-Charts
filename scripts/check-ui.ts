@@ -292,6 +292,18 @@ async function comparePage(page: Page): Promise<void> {
   // and the page lost the overlay that is its entire reason to exist.
   check("price overlay draws", (await page.locator("canvas").count()) > 0);
   check("window return and spread shown", /growth of 100/.test(body) && /spread/.test(body));
+
+  // The two-subject compose: a topic supplies the events, a company supplies the price.
+  // "Donald Trump presidency against Ford stock" is the shape; the seed's stand-in is the
+  // electric-car topic against Ford.
+  await go(page, "/compare?a=electric%20cars&b=F");
+  const composed = await visible(page);
+  check("compose: names which side supplies what", /supplies the events/.test(composed));
+  check("compose: draws the priced subject's chart", (await page.locator("canvas").count()) > 0);
+  check(
+    "compose: keeps the correlation framing honest",
+    /coincidence, not cause/.test(composed)
+  );
 }
 
 async function chromeAndRoutes(page: Page): Promise<void> {

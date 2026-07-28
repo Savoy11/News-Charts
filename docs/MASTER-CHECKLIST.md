@@ -620,14 +620,24 @@ look like") went to a **separate business checklist** worked independently of bo
         *two-subject compose* — Obama's events over Ford's price. Today it lands on Ford's
         timeline with "Barak Obamas" pre-filled in the AI panel, which is useful and truthful,
         but it is not yet the overlay the question actually asks for.
-- [ ] `P1` **Topic timeline pegged to a company's stock price.** Pick any search term and
-      overlay it on any company's price series — e.g. "Donald Trump presidency" against Ford
-      stock. The strongest new idea in the dump: it generalises what company pages already do
-      (events pegged to price) to *arbitrary* subjects, and `/compare` already aligns two
-      subjects on one axis, so the pieces exist. Design question to settle first: the topic
-      supplies events, the company supplies the price — so this is a **two-subject compose**,
-      not a new page type. Keep the correlation framing honest (proximity ≠ causation, same
-      rule as Biggest Moves).
+- [x] ~~`P1` **Topic timeline pegged to a company's stock price**~~ — done 2026-07-28, and the
+      design question settled the way the item predicted: **a two-subject compose, not a new page
+      type.** `/compare?a=<topic>&b=<ticker>` now plots the priced subject's series with the other
+      subject's events on it. The pieces really did exist — `PriceTimeline` already takes a price
+      series plus an arbitrary event list, so this was mostly deciding what *not* to draw.
+      - **Only the other subject's events are plotted, deliberately.** Markers are coloured by
+        event *kind*, not by which subject they came from, so merging both sides would give a
+        chart where a Ford filing and a Trump speech are indistinguishable — the reader could not
+        tell which claim they were looking at. The priced subject's own timeline is one click
+        away on its own page.
+      - The framing is inline and explicit: *"X supplies the events; Y supplies the price. Lining
+        two subjects up in time shows coincidence, not cause — the same rule as Biggest moves."*
+      - The chart legend derives from the plotted events, so a topic-over-company view advertises
+        only the kinds that topic actually has.
+      - ⚠ Events outside the price window cannot be plotted, so the value depends on price
+        history reaching back as far as the events. Against the seed's 18-month series most of a
+        topic's history falls off the left edge; against a real decades-long series it would not.
+        Worth checking with `npm run ingest -- --ticker F` before judging the feature.
 - [ ] `P1` **Test and fine-tune the AI tools.** The BYO-key ranking panel is the only AI surface
       here: check ranking quality across subject types, the 0.35 relevance cut-off, batch size,
       and behaviour when a model returns junk. (CAEP's 11 agents are tracked separately.)

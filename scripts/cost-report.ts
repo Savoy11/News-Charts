@@ -18,6 +18,7 @@ config({ path: ".env.local" });
  */
 import { getPool, closePool } from "../lib/db";
 import { QUOTAS, project, subjectCapacity } from "../lib/ingest/quota";
+import { costUsd, formatUsd } from "../lib/enrich/cost";
 import { SOURCES } from "../lib/ingest/store";
 import type { SourceKey } from "../lib/types";
 
@@ -93,6 +94,56 @@ async function main(): Promise<void> {
   } else {
     console.log(`\n  Every metered source fits its free tier at ${subjects} subjects.\n`);
   }
+
+  /**
+   * AI spend, from what was actually recorded rather than what was printed.
+   *
+   * Both tiers key on a content hash — `event_enrichments` on the event's own, `syntheses` on
+   * the hash of everything cited — so an unchanged input is never paid for twice. That is the
+   * discipline; this is the receipt.
+   */
+  console.log("\nAI spend — recorded, all time\n");
+  const { rows: enrich } = await pool.query<{ model: string; n: string; intok: string; outtok: string }>(
+    `SELECT model, count(*) AS n,
+            coalesce(sum(input_tokens),0)  AS intok,
+            coalesce(sum(output_tokens),0) AS outtok
+       FROM event_enrichments GROUP BY model`
+  );
+  const { rows: synth } = await pool.query<{ model: string; n: string; intok: string; outtok: string; unknown: string }>(
+    `SELECT model, count(*) AS n,
+            coalesce(sum(input_tokens),0)  AS intok,
+            coalesce(sum(output_tokens),0) AS outtok,
+            count(*) FILTER (WHERE input_tokens IS NULL) AS unknown
+       FROM syntheses GROUP BY model`
+  );
+  const { rows: scored } = await pool.query<{ scored_by: string; n: string }>(
+    `SELECT scored_by, count(*) AS n FROM event_subjects
+      WHERE scored_by IS NOT NULL GROUP BY scored_by ORDER BY n DESC`
+  );
+
+  let total = 0;
+  for (const [label, rows] of [["enrichments", enrich], ["syntheses", synth]] as const) {
+    for (const r of rows) {
+      const usd = costUsd(r.model, Number(r.intok), Number(r.outtok));
+      total += usd;
+      console.log(
+        `  ${label.padEnd(13)} ${r.model.padEnd(28)} ${String(r.n).padStart(4)} rows  ` +
+          `${r.intok} in / ${r.outtok} out  ${formatUsd(usd)}`
+      );
+    }
+  }
+  // Rows written before db/013 carry no figure, and a zero there would understate the total.
+  const unknown = synth.reduce((n, r) => n + Number(r.unknown ?? 0), 0);
+  if (unknown) console.log(`  ${unknown} synthesis row(s) predate token recording — not counted.`);
+
+  for (const r of scored) {
+    // Deterministic scores are the ones that cost nothing; showing them next to the paid ones is
+    // the point, because the ratio is what the relevance floor is for.
+    const free = r.scored_by === "deterministic";
+    console.log(`  ${"relevance".padEnd(13)} ${r.scored_by.padEnd(28)} ${String(r.n).padStart(4)} rows  ${free ? "free" : "paid"}`);
+  }
+  if (!enrich.length && !synth.length && !scored.length) console.log("  nothing enriched yet.");
+  else console.log(`\n  total recorded model spend: ${formatUsd(total)}`);
 
   await closePool();
 }

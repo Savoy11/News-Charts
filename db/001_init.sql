@@ -161,6 +161,8 @@ CREATE TABLE syntheses (
   prompt_version smallint NOT NULL,
   input_hash     bytea NOT NULL,                -- hash of cited event ids + their content hashes
   body           text NOT NULL,
+  input_tokens   integer,                      -- NULL for rows written before db/013
+  output_tokens  integer,
   created_at     timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT syntheses_window_ck CHECK (window_end >= window_start),
   CONSTRAINT syntheses_uq

@@ -398,8 +398,26 @@ machine closes that gap.
       (~20 calls/day, and the free plan may exclude news entirely). GNews covers ~25 subjects,
       Marketaux ~16. Everything else has room. Those are the numbers behind the licensing
       decisions above.
-- [ ] `P1` **AI-cost discipline:** on-chain is high-volume — filter before enrichment; rely on
-      content-hash keying so unchanged events are never re-paid for.
+- [x] ~~`P1` **AI-cost discipline**~~ — done 2026-07-28, in three parts.
+      **Filter before enrichment** — already shipped as the deterministic relevance floor above:
+      on-chain, governance, exploits, filings and corporate actions are all scored from
+      provenance and never reach a model. Only oblique news headlines and regulations do.
+      **Content-hash keying verified, not assumed.** Both paid tiers already had it and it holds:
+      `event_enrichments` is unique on `(event, task, model, prompt_version, input_hash)`, and a
+      synthesis keys on the hash of every cited event's own content hash — change the text and it
+      regenerates, otherwise it is never bought twice. Scoring skips anything already scored.
+      **Estimate before spending, which was the real gap.** Both scripts reported an accurate
+      cost that arrived too late to act on. `lib/enrich/cost.ts` now prices a pass *before* it
+      runs and stops above a **$1 cap** (`--max-usd` to raise it). Not a budget — a tripwire: any
+      single run costing more than about a dollar means something changed, and that is worth one
+      human glance. The estimate is deliberately pessimistic (3 chars/token, per-batch overhead
+      counted) because an estimate that undershoots defeats its own purpose, and an unknown model
+      is priced at the *dearest* known rate, since an unknown model is usually a newer one.
+      **Spend is now recorded, not just printed.** `db/013` adds token columns to `syntheses` —
+      `event_enrichments` always had them, syntheses never did, so every explanation run's cost
+      went to a terminal and was lost. `npm run cost-report` totals both, shows deterministic
+      (free) against model (paid) scoring side by side, and refuses to count the pre-`013` rows
+      that genuinely have no figure rather than treating them as zero.
 - [x] ~~`P2` **Attribution UI:** render chain/explorer attribution on event cards + footer.~~ —
       done 2026-07-28. An on-chain row now reads `Bitcoin · block 840,000 · via mempool.space`,
       and the footer credits the explorers separately from the other sources.

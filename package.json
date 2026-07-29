@@ -28,7 +28,7 @@
     "verify:addresses": "tsx scripts/verify-addresses.ts",
     "cost-report": "tsx scripts/cost-report.ts",
     "profile:list": "tsx scripts/profile-list.ts",
-    "check": "npm run check:parsers && npm run check:dates && npm run check:sentiment && npm run check:markers && npm run check:compare && npm run check:archive && npm run check:feed-keys && npm run check:focus && npm run check:relevance && npm run check:news-quality && npm run check:refresh && npm run check:prompt && npm run check:onchain && npm run check:governance && npm run check:exploits && npm run check:commercial-mode",
+    "check": "npm run check:parsers && npm run check:dates && npm run check:sentiment && npm run check:markers && npm run check:compare && npm run check:archive && npm run check:feed-keys && npm run check:focus && npm run check:relevance && npm run check:cost && npm run check:news-quality && npm run check:refresh && npm run check:prompt && npm run check:onchain && npm run check:governance && npm run check:exploits && npm run check:commercial-mode",
     "check:dates": "tsx scripts/check-dates.ts",
     "check:news-quality": "tsx scripts/check-news-quality.ts",
     "check:parsers": "tsx scripts/check-parsers.ts",
@@ -38,7 +38,8 @@
     "check:archive": "tsx scripts/check-archive.ts",
     "check:feed-keys": "tsx scripts/check-feed-keys.ts",
     "check:focus": "tsx scripts/check-focus.ts",
-    "check:relevance": "tsx scripts/check-relevance.ts"
+    "check:relevance": "tsx scripts/check-relevance.ts",
+    "check:cost": "tsx scripts/check-cost.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

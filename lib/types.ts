@@ -11,7 +11,9 @@ export type EventType =
   /** a reader's own private note, held in their browser and never persisted server-side */
   | "annotation"
   /** a protocol's own governance decision — off-chain signalling, not a transaction */
-  | "governance";
+  | "governance"
+  /** a reported security incident against a protocol — someone else's finding, attributed */
+  | "exploit";
 
 /** Matches the date_precision enum in the database. */
 export type DatePrecision = "day" | "month" | "year";
@@ -36,7 +38,8 @@ export type SourceKey =
   | "finnhub"
   | "onchain"
   | "internet_archive"
-  | "snapshot";
+  | "snapshot"
+  | "defillama";
 
 export interface TimelineEvent {
   id: string;

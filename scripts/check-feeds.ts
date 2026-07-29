@@ -18,6 +18,7 @@ import { getNews } from "../lib/news";
 import { getPressMentions } from "../lib/loc";
 import { getArchiveItems } from "../lib/archive";
 import { GOVERNANCE_SPACES, getGovernanceFor } from "../lib/onchain/governance";
+import { EXPLOIT_TARGETS, getExploitsFor } from "../lib/onchain/exploits";
 import { getTopicTimeline } from "../lib/wiki";
 import { resolveCompany, commonName } from "../lib/sec";
 import {
@@ -104,6 +105,11 @@ async function main() {
   // month of governance — the one thing this report exists to tell apart.
   for (const g of GOVERNANCE_SPACES) {
     report(`Snapshot ${g.space}`, await safe(getGovernanceFor(g.slug)), "(closed proposals only)");
+  }
+  // ⚠ Check the amounts on the first real run: DefiLlama reports millions, and a unit error
+  // shows here as "$600" where "$600m" belongs — obvious on screen, invisible offline.
+  for (const t of EXPLOIT_TARGETS) {
+    report(`Exploits (${t.slug})`, await safe(getExploitsFor(t.slug)), "(attributed, not confirmed on-chain)");
   }
 
   const story = await getTopicTimeline(name).catch(() => null);

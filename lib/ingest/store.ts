@@ -172,6 +172,17 @@ export const SOURCES: {
     commercialOk: true,
     notes: "keyless GraphQL. Off-chain signed votes, NOT transactions — filed as 'governance', never 'onchain'",
   },
+  {
+    id: 18,
+    key: "defillama",
+    name: "DefiLlama (hacks dataset)",
+    license: "open data, keyless API",
+    attribution: "DefiLlama",
+    // A public record of incidents, republished with attribution and a link back. What is used
+    // is the fact of the incident, not DefiLlama's analysis of it.
+    commercialOk: true,
+    notes: "incidents are ATTRIBUTED, not confirmed on-chain by us — the 'exploit' kind exists to keep that distinction visible",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

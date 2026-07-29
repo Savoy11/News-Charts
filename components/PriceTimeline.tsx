@@ -28,6 +28,7 @@ const LEGEND_LABEL: Record<EventType, string> = {
   onchain: "On-chain",
   annotation: "Your notes",
   governance: "Governance vote",
+  exploit: "Exploit",
 };
 
 interface Props {

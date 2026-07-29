@@ -346,8 +346,32 @@ machine closes that gap.
       a token chart invites reading a vote as a trade signal, which is a chart we would have to
       defend.
       ⚠ Payload shape is from Snapshot's published GraphQL schema; unverified live from here.
-- [ ] `P1` **Exploits/hacks** curated feed (correlate with price drops) — the highest-signal
-      timeline events; confirm each on-chain before ingest.
+- [x] ~~`P1` **Exploits/hacks** feed~~ — done 2026-07-28, **sourced rather than curated, and
+      attributed rather than confirmed.** Both departures from the item as written, both
+      deliberate.
+      *Sourced, not curated:* a hand-written incident list would have been me writing dates and
+      dollar figures for real security failures at real organisations from memory, with no way to
+      check any of them from this environment. `lib/onchain/exploits.ts` reads DefiLlama's public
+      keyless hacks dataset instead, so nothing here is my recollection.
+      *Attributed, not confirmed:* the item asks for on-chain confirmation before ingest. This
+      does not do that, and does not imply it — every row names DefiLlama, links to the record,
+      and its own copy says *"not confirmed on-chain by News Charts."* A new `exploit` kind
+      (`db/012`) keeps the distinction visible: an `onchain` event is one we read from a block and
+      a reader can re-verify; an exploit is someone else's finding that we are repeating. Adding
+      true on-chain confirmation stays open below.
+      **Attachment rules matter as much as the data.** A protocol takes incidents naming it, by
+      word boundary — a prefix match would put another project's loss on Uniswap's page. A
+      *chain* takes only incidents above $100m: a bridge hack is a real event in Ethereum's
+      history, every small exploit on it is not, and an unfiltered feed would bury the chain's
+      timeline in other people's failures. Missing date, name or amount → not published at all.
+      ⚠ **The amount unit is the one thing to check first on a live run.** DefiLlama reports
+      *millions* of USD; if that is wrong every figure is off by 10⁶ — glaring on screen
+      ("$600" where "$600m" belongs), invisible offline. `npm run check:feeds` reports each
+      target so it is visible immediately.
+- [ ] `P2` **Confirm exploits on-chain before ingest** — the stronger guarantee the item above
+      originally asked for. Needs a transaction reference per incident and a check against the
+      chain, on the pattern of `npm run verify:addresses`. Until then the `exploit` kind and its
+      copy carry the weaker claim honestly rather than overstating it.
 - [ ] `P2` **Tally / on-chain governance** for executed proposals (parameter changes).
 - [ ] `P2` **DefiLlama** protocol launches / TVL inflection events.
 - [ ] `P2` **Industry/sector grouping** for crypto (mirror the SIC industry graph): "stablecoins",

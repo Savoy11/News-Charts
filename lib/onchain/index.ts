@@ -3,10 +3,12 @@ import { getEthereumMilestones } from "./ethereum";
 import { getStablecoinSupplyMoves } from "./stablecoin";
 import { DAI, PYUSD, USDC, type Stablecoin } from "./addresses";
 import { GOVERNANCE_SPACES, getGovernanceFor } from "./governance";
+import { EXPLOIT_TARGETS, getExploitsFor } from "./exploits";
 import type { TimelineEvent } from "../types";
 
 export { getBitcoinHalvings } from "./bitcoin";
 export { GOVERNANCE_SPACES, fetchGovernance, getGovernanceFor, tally } from "./governance";
+export { EXPLOIT_TARGETS, claims, fetchExploits, getExploitsFor } from "./exploits";
 export { getEthereumMilestones, ETH_MILESTONES } from "./ethereum";
 export {
   getAllStablecoinSupplyMoves,
@@ -137,17 +139,31 @@ const PROTOCOL_SUBJECTS = GOVERNANCE_SPACES.map((g) => ({
 /** Governance subjects join the crypto list, so ingest and /explore find them like any other. */
 CRYPTO_SUBJECTS.push(...PROTOCOL_SUBJECTS);
 
+/**
+ * Every on-chain-adjacent feed a subject draws from, merged.
+ *
+ * Exploits are additive rather than exclusive: Ethereum has milestones *and* incidents, and a
+ * protocol has governance *and* incidents. One feed failing costs only its own events.
+ */
+async function alsoExploits(slug: string, base: Promise<TimelineEvent[]>): Promise<TimelineEvent[]> {
+  const [own, hacks] = await Promise.all([
+    base.catch(() => []),
+    EXPLOIT_TARGETS.some((t) => t.slug === slug) ? getExploitsFor(slug).catch(() => []) : Promise.resolve([]),
+  ]);
+  return [...own, ...hacks];
+}
+
 export async function ingestOnchainFor(slug: string): Promise<TimelineEvent[]> {
   switch (slug) {
     case "btc":
       return getBitcoinHalvings().catch(() => []);
     case "eth":
-      return getEthereumMilestones().catch(() => []);
+      return alsoExploits(slug, getEthereumMilestones());
     default: {
       const token = STABLECOIN_SUBJECTS[slug];
       if (token) return getStablecoinSupplyMoves(token).catch(() => []);
       if (GOVERNANCE_SPACES.some((g) => g.slug === slug)) {
-        return getGovernanceFor(slug).catch(() => []);
+        return alsoExploits(slug, getGovernanceFor(slug));
       }
       return [];
     }

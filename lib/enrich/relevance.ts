@@ -132,6 +132,14 @@ export function deterministicScore(
      */
     case "governance":
       return { score: 1, reason: "a vote in the subject's own governance space" };
+
+    /**
+     * An incident is only attached to a subject it actually names, or to a chain it happened on
+     * above a high bar — both decided at ingest, from structured fields rather than a headline.
+     * There is nothing left for a model to judge.
+     */
+    case "exploit":
+      return { score: 1, reason: "an incident recorded against the subject itself" };
   }
 }
 

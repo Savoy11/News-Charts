@@ -79,6 +79,11 @@ const STYLE: Record<EventType, { dot: string; badge: string; label: string }> = 
     badge: "border-indigo-700/50 bg-indigo-500/15 text-indigo-300",
     label: "Governance",
   },
+  exploit: {
+    dot: "bg-red-500 ring-red-500/30",
+    badge: "border-red-700/50 bg-red-500/15 text-red-300",
+    label: "Exploit",
+  },
 };
 
 const CARD_CLASS =

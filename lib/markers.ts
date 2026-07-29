@@ -27,6 +27,10 @@ export const MARKER_STYLE = {
   // above the bar like the events it sits among, but a square: a vote is a decision taken, not a
   // transaction executed, and the glyph should not imply the second
   governance: { color: "#818cf8", position: "aboveBar", shape: "square", text: "" },
+  // red, below the bar, and the only marker carrying a letter besides earnings: an exploit is
+  // the thing a reader scanning a crypto timeline is looking for, and it should not need a
+  // legend lookup to be found
+  exploit: { color: "#ef4444", position: "belowBar", shape: "arrowDown", text: "!" },
 } as const;
 
 /** Which kind wins when several share a day — the market-moving ones first. */
@@ -45,6 +49,8 @@ export const PRIORITY: Record<EventType, number> = {
   // a protocol changing its own rules outranks coverage of it, and sits with the other
   // official, dated acts rather than above them
   governance: 2,
+  // the highest-signal event a protocol can have; nothing else on the day outranks it
+  exploit: 5,
 };
 
 /** Snap an event date to the nearest trading day at or before it (weekends/holidays have no bar). */

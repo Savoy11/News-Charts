@@ -408,6 +408,39 @@ export async function upsertTopicSubject(
  * Industries are ordinary subjects, so they get timelines, syntheses and relevance
  * scoring for free — an industry-level event simply links to the industry subject.
  */
+/**
+ * Group subjects that share a role rather than a SIC code.
+ *
+ * Crypto has no SIC code and never will, but the grouping question is the same one the industry
+ * graph already answers: *what else is like this, and did the same thing happen to all of them?*
+ * A stablecoin sector page puts every issuer's supply moves on one axis, which is where a
+ * redemption wave is visible and on any single issuer's page it is not.
+ *
+ * Reuses `kind = 'industry'` deliberately. A fourth subject kind would need a migration, a fourth
+ * page type, and would inherit none of the timeline, SEO or follow behaviour industries already
+ * have — for a distinction that is ours, not the reader's. The membership row records `curated`
+ * rather than `sic`, which is the honest provenance: nobody assigned these, we did.
+ */
+export async function linkToSector(
+  client: PoolClient,
+  memberSubjectId: number,
+  sector: { slug: string; displayName: string; summary?: string }
+): Promise<number> {
+  const industryId = await upsertSubject(client, {
+    kind: "industry",
+    slug: sector.slug,
+    displayName: sector.displayName,
+    summary: sector.summary,
+  });
+  await client.query(
+    `INSERT INTO subject_members (industry_id, member_id, source)
+     VALUES ($1,$2,'curated')
+     ON CONFLICT (industry_id, member_id) DO NOTHING`,
+    [industryId, memberSubjectId]
+  );
+  return industryId;
+}
+
 export async function linkToIndustry(
   client: PoolClient,
   companySubjectId: number,

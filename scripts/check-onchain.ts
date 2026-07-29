@@ -18,6 +18,7 @@ import { getBitcoinHalvings } from "../lib/onchain/bitcoin";
 import { getEthereumMilestones } from "../lib/onchain/ethereum";
 import { getAllStablecoinSupplyMoves, getStablecoinSupplyMoves, getUsdcSupplyMoves } from "../lib/onchain/stablecoin";
 import { CRYPTO_SUBJECTS, STABLECOIN_SUBJECTS, ingestOnchainFor } from "../lib/onchain";
+import { CRYPTO_SECTORS, sectorsFor } from "../lib/onchain/sectors";
 import {
   ADDRESS_BOOK,
   BURN,
@@ -468,6 +469,27 @@ async function usdt(): Promise<void> {
   check("no key means the adapter sits out", (await getUsdtSupplyMoves()).length === 0);
 }
 
+async function sectors(): Promise<void> {
+  console.log("\nCrypto sectors");
+  // Reuses kind='industry' rather than adding a fourth subject kind: a distinction that is ours
+  // and not the reader's does not earn a migration and a page type.
+  check("every sector has members", CRYPTO_SECTORS.every((s) => s.members.length > 0));
+  check("every sector explains itself", CRYPTO_SECTORS.every((s) => s.summary.length > 40));
+  check("slugs are namespaced away from SIC codes", CRYPTO_SECTORS.every((s) => s.slug.startsWith("sector-")));
+  check("no duplicate slugs", new Set(CRYPTO_SECTORS.map((s) => s.slug)).size === CRYPTO_SECTORS.length);
+
+  // Membership must point at subjects that exist, or a sector page aggregates nothing and looks
+  // like a quiet corner of the site rather than a broken link.
+  const known = new Set(CRYPTO_SUBJECTS.map((c) => c.slug));
+  for (const sector of CRYPTO_SECTORS) {
+    const missing = sector.members.filter((m) => !known.has(m));
+    check(`  ${sector.slug} members all exist`, missing.length === 0, missing.join(",") || "all present");
+  }
+  check("stablecoins covers every covered token", STABLECOINS.every((t) => sectorsFor(t.label.toLowerCase()).length > 0),
+    STABLECOINS.filter((t) => !sectorsFor(t.label.toLowerCase()).length).map((t) => t.label).join(","));
+  check("a subject in no sector reports none", sectorsFor("electric cars").length === 0);
+}
+
 async function main(): Promise<void> {
   try {
     await bitcoin();
@@ -478,6 +500,7 @@ async function main(): Promise<void> {
     await stablecoins();
     await addressBook();
     await usdt();
+    await sectors();
   } finally {
     globalThis.fetch = realFetch;
   }

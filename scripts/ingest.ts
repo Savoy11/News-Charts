@@ -12,6 +12,7 @@ import {
   upsertEvent,
   upsertSubject,
   linkToIndustry,
+  linkToSector,
   emptyStats,
   type UpsertStats,
 } from "../lib/ingest/store";
@@ -24,6 +25,7 @@ import { getDailyPrices } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { CRYPTO_SUBJECTS, ingestOnchainFor } from "../lib/onchain";
+import { sectorsFor } from "../lib/onchain/sectors";
 
 const BACKOFF_MINUTES = 10;
 
@@ -246,6 +248,27 @@ export async function ingestIndustry(client: PoolClient, slug: string) {
  * company kind is barred by the schema and would be a lie anyway) that happen to carry a price
  * series — which is what lets a halving be read against the BTC chart.
  */
+/**
+ * Record which sectors a crypto subject belongs to.
+ *
+ * Runs after the subject exists, because membership needs its id — and silently does nothing for
+ * a subject no sector claims, which is most of them.
+ */
+async function linkCryptoSectors(client: PoolClient, slug: string): Promise<void> {
+  const { rows } = await client.query<{ id: string }>(
+    `SELECT id FROM subjects WHERE slug = $1`,
+    [slug]
+  );
+  if (!rows[0]) return;
+  for (const sector of sectorsFor(slug)) {
+    await linkToSector(client, Number(rows[0].id), {
+      slug: sector.slug,
+      displayName: sector.displayName,
+      summary: sector.summary,
+    });
+  }
+}
+
 export async function ingestOnchain(client: PoolClient, which: string) {
   const targets = which === "all" ? CRYPTO_SUBJECTS : CRYPTO_SUBJECTS.filter((c) => c.slug === which);
   if (!targets.length) {
@@ -283,6 +306,9 @@ export async function ingestOnchain(client: PoolClient, which: string) {
     }
     await logFetch(client, "onchain", subjectId, asset.slug, events.length ? "ok" : "empty", events.length);
     report("onchain", events.length ? "ok" : "empty", stats);
+
+    // Sector membership, so /industry/sector-stablecoins aggregates every issuer's supply moves.
+    await linkCryptoSectors(client, asset.slug);
 
     // Yahoo quotes crypto under `BTC-USD` — the same chart endpoint companies use, so the
     // price series and its overlays come for free.

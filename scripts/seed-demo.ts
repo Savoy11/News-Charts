@@ -22,11 +22,13 @@ import {
   ensureSources,
   emptyStats,
   linkToIndustry,
+  linkToSector,
   logFetch,
   upsertEvent,
   upsertSubject,
   upsertTopicSubject,
 } from "../lib/ingest/store";
+import { sectorsFor } from "../lib/onchain/sectors";
 import type { SourceKey } from "../lib/types";
 import type { PricePoint, TimelineEvent } from "../lib/types";
 
@@ -607,6 +609,16 @@ async function main(): Promise<void> {
     for (const e of halvings) await upsertEvent(client, ev(e, "btc"), btcId, stats);
     await client.query("COMMIT");
     await seedFetchLog(btcId, [["onchain", "ok", 4]]);
+
+    // Sector membership, so /industry/sector-layer-1 has something to aggregate. The demo corpus
+    // only carries Bitcoin, so this is the shape rather than the full set.
+    for (const sector of sectorsFor("btc")) {
+      await linkToSector(client, btcId, {
+        slug: sector.slug,
+        displayName: sector.displayName,
+        summary: sector.summary,
+      });
+    }
 
     // Spans the 2024 halving, so the marker lands on the chart rather than before it.
     const btcDays = everyDay("2023-01-01", "2026-07-24");

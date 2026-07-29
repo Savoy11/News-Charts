@@ -133,6 +133,23 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
 - [ ] Get a real legal review of the above before revenue flows — the flags encode a practical
       reading of published terms, not legal advice.
 
+### Scheduled refresh (needs a scheduler on the host)
+
+- [ ] `P0` **Run `npm run refresh` on a schedule — hourly.** Nothing runs it automatically, so
+      until something does, **the corpus only changes when it is run by hand**. Cron, a GitHub
+      Actions workflow, or the host's own scheduler all work; the tightest per-source window is
+      an hour and anything shorter only re-asks sources that would decline to answer.
+      This is now the *only* thing that refreshes a chart: pages read the database and never
+      fetch. A scheduler that is not running looks exactly like a quiet news week.
+- [ ] `P1` **Watch the first few runs.** `npm run refresh -- --dry-run` lists what it would touch
+      without spending anything, and `npm run cost-report` shows what the real runs actually
+      spent against each free tier. The projection is a floor, so the first live numbers are the
+      ones that matter — EODHD is already projected at 100% of its tier at five subjects.
+- [ ] `P2` **Decide how far the request queue is worked per run.** `--requests` defaults to 10
+      most-wanted per run. Too low and demand backs up; too high and new subjects crowd out
+      refreshing the ones already on the site. The right number depends on real demand, which
+      does not exist yet.
+
 ### Feed health (each source, against production keys)
 
 - [ ] Every adapter returns real data for a fresh company AND a fresh topic (not silently `[]`):
@@ -386,8 +403,18 @@ machine closes that gap.
       copy carry the weaker claim honestly rather than overstating it.
 - [ ] `P2` **Tally / on-chain governance** for executed proposals (parameter changes).
 - [ ] `P2` **DefiLlama** protocol launches / TVL inflection events.
-- [ ] `P2` **Industry/sector grouping** for crypto (mirror the SIC industry graph): "stablecoins",
-      "L2s" as industry subjects with merged timelines.
+- [x] ~~`P2` **Industry/sector grouping** for crypto~~ — done 2026-07-28, `lib/onchain/sectors.ts`:
+      `/industry/sector-stablecoins`, `sector-layer-1`, `sector-defi-governance`.
+      **Reuses `kind = 'industry'` rather than adding a fourth subject kind.** A new kind would
+      need a migration, a fourth page type, and would inherit none of the timeline, SEO or follow
+      behaviour industries already have — for a distinction that is ours, not the reader's. No
+      migration was needed at all: `sic` is nullable and only companies are constrained.
+      Membership rows record `source = 'curated'` rather than `'sic'`, which is the honest
+      provenance — nobody assigned these categories, we did, and that is a different kind of
+      claim from a SIC code an issuer filed.
+      The point is aggregation: a stablecoin sector page puts every issuer's supply moves on one
+      axis, which is where a redemption wave is legible. On any single issuer's page it looks
+      like an ordinary week.
 
 ### Cross-cutting for this initiative
 
@@ -570,8 +597,17 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
       `lib/newsExtra.ts` merges every repository's results, so one wire story surfaced by three
       outlets collapses to one event. (Cross-*feed* near-duplicate collapsing by headline+day is
       a separate, still-open item in the hardening list below.)
-- [ ] `P2` **Coverage-map doc** kept current as sources are added, so "how far back can this go"
-      is answerable per subject.
+- [x] ~~`P2` **Coverage-map doc**~~ — done 2026-07-28, `docs/COVERAGE-MAP.md`: who owns which
+      era, what it means per subject type, and where the holes are.
+      The reason it is worth having written down: *"the timeline starts in 2017"* is almost always
+      a statement about **our sources**, not about the subject, and those are very different
+      claims to put in front of a reader. A company founded in 1903 whose page begins in 2017 has
+      not had a quiet century.
+      **The biggest hole is 1963–2017** for anything outside the NYT and the Guardian —
+      Chronicling America stops around 1963 on copyright grounds, GDELT is queried from 2017, and
+      the keyed aggregators are days-to-weeks deep. A subject whose most interesting decades sit
+      in that window looks sparser than it was. Worth knowing before deciding which licences to
+      buy: the aggregators add breadth to the present, never depth to the past.
 
 ## Initiative: Hardening & follow-ups from the feed/UX build-out (2026-07 session)
 

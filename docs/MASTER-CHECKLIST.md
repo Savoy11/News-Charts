@@ -537,8 +537,9 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
       - `npm run check:dates` (20 cases) covers every form the style guide allows, the rejects
         (ranges, seasons, `n.d.`, impossible days), and that all three precisions still sort
         correctly against each other. Part of the outstanding PR #9 parser-assertion `P0`.
-- [ ] `P1` **Internet Archive adapter (keyless).** → **duplicate**; tracked in the Historical
-      article resurfacing backlog above. Left as a pointer so it isn't picked up twice.
+- [x] ~~`P1` **Internet Archive adapter (keyless).**~~ → **duplicate**; shipped 2026-07-28 under
+      the Historical article resurfacing backlog above. Left as a pointer so it isn't picked up
+      twice.
 - [x] ~~`P1` **Merge PR #9 to main**~~ — merged 2026-07-27. `.env.example` now also documents
       all eight news keys and `COMMERCIAL_MODE` (it was committed but listed only
       `DATABASE_URL` and `ANTHROPIC_API_KEY` until 2026-07-28).
@@ -719,11 +720,12 @@ items (entity filing, federal regulation research, disclosure documents, "what d
 look like") went to a **separate business checklist** worked independently of both products —
 `docs/BUSINESS-CHECKLIST.md` in the Crypto-Stuff repo.
 
-- [ ] `P1` **Search-prompt coverage beyond the shapes it was built for.** Reported 2026-07-28:
+- [x] ~~`P1` **Search-prompt coverage beyond the shapes it was built for.**~~ — reported and
+      closed 2026-07-28, both halves. Original report:
       *"Barak Obamas effect on Ford stock"* returned junk twice. The parser only understood
       *"the history of X in Y"*; anything else went to `resolveCompany` verbatim, missed, and was
       handed to Wikipedia, which fuzzy-matched something unrelated — a confidently wrong page
-      rather than an error. **Fixed** (`npm run check:prompt`, 24 cases, was 10/24):
+      rather than an error. **Fixed** (`npm run check:prompt`, now 34 cases, was 10/24):
       - Relational questions — *"X's effect on Y"*, *"effect of X on Y"*, *"how did X affect Y"*,
         *"did X affect Y"*. **The subject is the thing affected**, because that is the side with
         a timeline and a price series; the influence becomes the focus and seeds the AI panel.

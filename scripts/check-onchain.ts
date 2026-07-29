@@ -1,5 +1,7 @@
 import { config } from "dotenv";
 import { chainRefOf, parseChainRef } from "../lib/onchain/attribution";
+import { FINALITY, chainOfRef, isFinal, withheldReason } from "../lib/onchain/finality";
+import { onchainEvent } from "../lib/onchain/chain";
 config({ path: ".env.local" });
 
 /**
@@ -146,6 +148,23 @@ async function usdc() {
   check("immaterial move is filtered out", !out.some((e) => e.title.includes("$5m")));
   check("identity is the transaction hash", out.every((e) => /^eth-tx-0x/.test(e.dedupBasis ?? "")));
 
+  /**
+   * The live-feed case the finality policy was written for. This adapter reads transfers
+   * newest-first, so without the gate a mint minutes old would be published — and once a
+   * synthesis cites it, `ON DELETE RESTRICT` means a reorg leaves a row that cannot be removed.
+   */
+  const nowSec = Math.floor(Date.now() / 1000);
+  serve(() => ({
+    status: "1",
+    result: [
+      tx("0xfresh", NULL_ADDRESS, treasury, 250_000_000, nowSec - 120), // two minutes old
+      tx("0xsettled", NULL_ADDRESS, treasury, 250_000_000, nowSec - 48 * 3600),
+    ],
+  }));
+  const mixed = await getUsdcSupplyMoves();
+  check("a mint minutes old is withheld", !mixed.some((e) => e.url?.includes("0xfresh")), mixed.map((e) => e.url).join(" "));
+  check("while a settled one publishes", mixed.some((e) => e.url?.includes("0xsettled")), `${mixed.length} events`);
+
   // Etherscan reports failure as HTTP 200 with status "0" — an empty result must not look like success.
   serve(() => ({ status: "0", message: "NOTOK", result: "Max rate limit reached" }));
   check("an Etherscan error yields nothing, not junk", (await getUsdcSupplyMoves()).length === 0);
@@ -184,12 +203,70 @@ async function attribution(): Promise<void> {
   })?.chain === "Bitcoin");
 }
 
+async function finality(): Promise<void> {
+  console.log("\nFinality policy");
+  const now = 1_800_000_000; // fixed clock, so these assert the rule and not the wall time
+  const hour = 3600;
+
+  // Post-Merge Ethereum finalises in ~12.8 minutes; the hour is the margin, not the guarantee.
+  check("a settled Ethereum block passes", isFinal("ethereum", now - 2 * hour, now));
+  check("a block inside the window is withheld", !isFinal("ethereum", now - 10 * 60, now));
+  check("exactly at the threshold passes", isFinal("ethereum", now - hour, now));
+  check("one second under does not", !isFinal("ethereum", now - hour + 1, now));
+
+  // Bitcoin has no finality gadget, so depth is a probability and the margin is much larger.
+  check("Bitcoin needs longer than Ethereum", FINALITY.bitcoin.minAgeSeconds > FINALITY.ethereum.minAgeSeconds);
+  check("an hour-old Bitcoin block is withheld", !isFinal("bitcoin", now - hour, now));
+  check("a day-old one passes", isFinal("bitcoin", now - 24 * hour, now));
+
+  console.log("\nFailing closed");
+  // Every one of these means "we cannot show this block is settled", and when the mistake is
+  // permanent that has to behave exactly like "it is not settled".
+  check("an unknown chain is never final", !isFinal(null, now - 99 * hour, now));
+  check("a missing timestamp is never final", !isFinal("ethereum", undefined, now));
+  check("a NaN timestamp is never final", !isFinal("ethereum", Number.NaN, now));
+  check("a zero timestamp is never final", !isFinal("ethereum", 0, now));
+  // A future block is a clock disagreement or a bad parse, not a settled block.
+  check("a block dated ahead of us is never final", !isFinal("ethereum", now + hour, now));
+
+  console.log("\nReading the chain off an event's identity");
+  check("a Bitcoin ref", chainOfRef("btc-block-840000") === "bitcoin");
+  check("an Ethereum ref", chainOfRef("eth-tx-0xabc") === "ethereum");
+  check("an unrecognised ref has no chain, so nothing publishes", chainOfRef("sol-block-1") === null);
+
+  console.log("\nThe gate at the point of construction");
+  // Requiring blockTime is what stops a future adapter skipping the check by forgetting it.
+  const recent = Math.floor(Date.now() / 1000) - 60;
+  const settled = Math.floor(Date.now() / 1000) - 48 * hour;
+  const mk = (ref: string, blockTime: number) =>
+    onchainEvent({
+      date: "2024-01-01",
+      title: "t",
+      description: "d",
+      url: "https://example.com",
+      ref,
+      sourceLabel: "s",
+      blockTime,
+    });
+  check("a minute-old transaction yields no event at all", mk("eth-tx-0x1", recent) === null);
+  check("a settled one yields an event", mk("eth-tx-0x1", settled)?.type === "onchain");
+  check("an unknown chain yields no event however old", mk("sol-tx-0x1", settled) === null);
+
+  console.log("\nWithholding is reported, not silent");
+  // "nothing returned" and "too new" look identical on a page; the ingest log has to tell them apart.
+  check("a too-new block says so", /not yet final/.test(withheldReason("ethereum", recent)), withheldReason("ethereum", recent));
+  check("and names the wait", /\d+ min/.test(withheldReason("bitcoin", recent)), withheldReason("bitcoin", recent));
+  check("a missing timestamp says that instead", withheldReason("ethereum", undefined) === "no block timestamp");
+  check("an unknown chain says that", withheldReason(null, settled) === "unknown chain");
+}
+
 async function main(): Promise<void> {
   try {
     await bitcoin();
     await ethereum();
     await usdc();
     await attribution();
+    await finality();
   } finally {
     globalThis.fetch = realFetch;
   }

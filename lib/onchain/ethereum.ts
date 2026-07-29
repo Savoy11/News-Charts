@@ -73,19 +73,29 @@ export async function getEthereumMilestones(): Promise<TimelineEvent[]> {
   for (const m of ETH_MILESTONES) {
     const block = await getJson<{ timestamp?: string }>(`${BLOCKSCOUT}/${m.block}`);
     const parsed = block?.timestamp ? Date.parse(block.timestamp) : NaN;
-    const date = Number.isFinite(parsed)
-      ? dayFromEpoch(Math.floor(parsed / 1000))
-      : m.fallbackDate;
-    out.push(
-      onchainEvent({
-        date,
-        title: m.name,
-        description: m.description,
-        url: `${EXPLORER_WEB}/${m.block}`,
-        ref: `eth-block-${m.block}`,
-        sourceLabel: EXPLORER_LABEL,
-      })
-    );
+    /**
+     * When the explorer answers, the chain's own timestamp both dates the event and proves the
+     * block is settled. When it does not, the published activation date stands in for both.
+     *
+     * That substitution is safe *here* and would not be everywhere: these are curated
+     * milestones with published dates years in the past, so the finality check they face is a
+     * formality. It is still worth making them face it — a milestone added with a date of today
+     * is withheld, which is the correct answer whether the explorer replied or not.
+     */
+    const blockTime = Number.isFinite(parsed)
+      ? Math.floor(parsed / 1000)
+      : Math.floor(Date.parse(`${m.fallbackDate}T00:00:00Z`) / 1000);
+    const date = Number.isFinite(parsed) ? dayFromEpoch(Math.floor(parsed / 1000)) : m.fallbackDate;
+    const event = onchainEvent({
+      date,
+      title: m.name,
+      description: m.description,
+      url: `${EXPLORER_WEB}/${m.block}`,
+      ref: `eth-block-${m.block}`,
+      sourceLabel: EXPLORER_LABEL,
+      blockTime,
+    });
+    if (event) out.push(event);
   }
   return out;
 }

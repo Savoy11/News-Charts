@@ -187,12 +187,24 @@ idempotent for free.
       is someone's *report* of a thing; an on-chain event *is* the thing, and its attestation is
       a block or transaction anyone can re-verify without trusting us or a publisher. Worth
       showing a reader, and worth filtering on.
-- [ ] `P1` **Confirmation lag / finality policy:** how many blocks (or "finalized" tag) before an
-      event is ingestable, to avoid reorg orphans. **Still open, and deliberately not needed
-      yet:** every Phase 0 event is years finalized (the most recent is the April 2024 halving),
-      which is exactly why the phase was scoped this way. The policy must land *before* Phase 1's
-      live stablecoin feed, not after — an orphaned event that a synthesis already cites cannot
-      be deleted (`ON DELETE RESTRICT`).
+- [x] ~~`P1` **Confirmation lag / finality policy**~~ — decided and built 2026-07-28,
+      `lib/onchain/finality.ts`. **Ethereum: 1 hour. Bitcoin: 6 hours.**
+      Expressed as *age*, not confirmation depth, because every adapter already holds a block
+      timestamp — it is what dates the event — and none holds a chain tip to count back from
+      without an extra request per event. Age is the same guarantee in the units we already have.
+      Ethereum's hour is ~4.7× the two-epoch (~12.8 min) finality window, which absorbs missed
+      slots and a lagging explorer. Bitcoin has no finality gadget, so depth is a probability:
+      six hours is ~36 blocks, far past the deepest mainnet reorg outside a consensus bug, and
+      it costs nothing because nothing here is time-sensitive to the hour.
+      **Enforced at construction, not by convention.** `onchainEvent` now *requires* `blockTime`
+      and returns `null` for a block that has not settled, so a future adapter cannot skip the
+      check by not knowing it exists — the type system asks every time. It caught all three
+      existing call sites the moment the signature changed.
+      **Fails closed** on an unknown chain, a missing or nonsensical timestamp, or a block dated
+      in the future. Each means "we cannot show this is settled", and when the mistake is
+      permanent that has to behave like "it is not settled".
+      This was the gate on the live stablecoin feed, which reads transfers newest-first and would
+      otherwise have published a mint minutes old. `npm run check:onchain` asserts exactly that.
 - [x] ~~`P1` **Address label source**~~ — **decided for Phase 0: hand-maintained only**
       (`lib/onchain/addresses.ts`), each entry carrying *why* we believe it. Etherscan's labels
       were rejected for now: republishing an explorer's tag without being able to show our work
@@ -243,8 +255,8 @@ machine closes that gap.
 - [ ] `P1` Generalise Phase-0 fetchers into a reusable module (`lib/onchain/*`) matching the
       `FetchResult` / `TimelineEvent` contract.
 - [ ] `P1` Extend stablecoin coverage: USDT, DAI, PYUSD mints/burns.
-- [ ] `P1` **Reorg safety:** ingest only finalized blocks (confirmation lag) so no published
-      event can be orphaned (respects `ON DELETE RESTRICT` on citations).
+- [x] ~~`P1` **Reorg safety:** ingest only finalized blocks~~ — done 2026-07-28 by the finality
+      policy above; every on-chain event now passes the gate at construction.
 - [ ] `P1` **Address labeling** map for issuers/treasuries/bridges (Circle, Tether, exchange hot
       wallets) — provenance-tracked.
 - [ ] `P1` Deterministic relevance floor: enrich only material events; leave ambiguous ones

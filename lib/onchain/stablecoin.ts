@@ -67,8 +67,7 @@ export async function getUsdcSupplyMoves(
     const seconds = Number(tx.timeStamp);
     if (!Number.isFinite(seconds)) continue;
 
-    out.push(
-      onchainEvent({
+    const event = onchainEvent({
         date: dayFromEpoch(seconds),
         title: `${money(amount)} USDC ${minted ? "minted" : "burned"}`,
         description: minted
@@ -80,8 +79,16 @@ export async function getUsdcSupplyMoves(
         // the transaction hash is the event's identity: re-running ingest updates, never duplicates
         ref: `eth-tx-${tx.hash}`,
         sourceLabel: "Ethereum transaction (Etherscan)",
-      })
-    );
+        blockTime: seconds,
+      });
+    /**
+     * The reason the finality policy exists. This feed reads transfers sorted newest-first, so
+     * without the gate a mint minutes old would be published, and a reorg would leave a row that
+     * cannot be deleted once anything cites it. Skipping rather than breaking: the list is
+     * newest-first, so the too-new ones are all at the top and the settled ones follow.
+     */
+    if (!event) continue;
+    out.push(event);
     if (out.length >= limit) break;
   }
   return out.sort((a, b) => a.date.localeCompare(b.date));

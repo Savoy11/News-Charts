@@ -298,8 +298,26 @@ machine closes that gap.
       kept separate from skipped ones for the same reason.
       **To add an exchange or bridge:** cite the operator's own documentation or an on-chain role
       in `provenance`, and prefer an entry `verify:addresses` can re-check.
-- [ ] `P1` Deterministic relevance floor: enrich only material events; leave ambiguous ones
-      `NULL` for the AI tier (same pattern as Federal Register events).
+- [x] ~~`P1` Deterministic relevance floor~~ — done 2026-07-28, and it found a live cost leak.
+      `deterministicScore` used to end in a bare `return null`, so **every event kind it had not
+      been taught about was sent to the paid model tier by default** — silently, and forever.
+      On-chain was exactly that case: a USDC mint read off the USDC contract is as certain as a
+      filing under a CIK, and it was queued for a model to assess its aboutness. Paying to
+      re-judge the one kind of event whose whole value is that it is certain.
+      Now **exhaustive over `EventType` with no default arm**, so adding a kind stops compiling
+      until someone decides which side of the line it belongs on. Verified by adding a fake kind
+      and watching the build break.
+      Scored from provenance (never reaches a model): `onchain` and `corporate_action` at 1,
+      alongside the existing `filing`/`earnings`/`history`; `annotation` at 1 so a reader's own
+      note is never paid for; `citation` at 0.9 — structural link to the subject, but the cited
+      *work* can be broader than the subject it supports.
+      **Only `news` with an oblique headline and `regulation` still reach the paid tier**, both
+      deliberately. A Federal Register rule arrives via a keyword query built from the industry's
+      name, so whether it bears on that sector is precisely the judgement provenance cannot make
+      — scoring it here would be inventing certainty. That is the pattern this item names, and it
+      is now the *only* thing left to the model besides ambiguous headlines.
+      Materiality for on-chain is settled upstream: a supply move below its token's bar is never
+      ingested, so every on-chain row that exists is one already judged worth showing.
 - [ ] `P2` Backfill throughput: paginated `eth_getLogs` with back-off; document each source's
       reach (genesis) and rate limits.
 

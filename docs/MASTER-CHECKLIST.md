@@ -915,6 +915,29 @@ this is a shared revenue *pattern*, not shared code.**
       pool at a dead port and asserts the null, because a distinction like this is exactly what a
       later simplification quietly removes.
 
+- [x] ~~`P1` **Refresh on a schedule, not on a page view.**~~ — done 2026-07-28, owner's call.
+      Refresh used to be a side effect of traffic: a visitor arriving after a TTL expired waited
+      on eleven feeds inline, several arriving together each triggered their own fetch, and a
+      **database outage turned every page view into a live fetch** — burning the free tiers
+      exactly when they could least be spared.
+      **`npm run refresh` owns fetching now** (run it hourly; the tightest window is an hour, and
+      anything shorter only re-asks sources that would decline). Per-source windows still apply
+      inside each subject, so "due" does not mean eleven requests. Oldest subject first, so a run
+      that cannot finish still makes progress on the stalest.
+      **Pages read the database and nothing else.** `lib/page-data.ts` went from 449 lines to 122
+      — every live-fetch path, TTL constant and persistence helper deleted, because live fetching
+      belongs in `scripts/ingest.ts` and now lives only there. Cost is a function of how many
+      subjects exist, a number we choose, rather than of how much traffic arrives, which is not.
+      **Which needed a queue, or nothing new would ever enter the corpus** — a page view was the
+      only thing that ever added a subject. `db/014 subject_requests` records what visitors asked
+      for and the runner works it **most-wanted first**, which is the only fair way to spend a
+      quota that cannot cover every request in one pass. A failed request stays pending: a source
+      down this hour may answer the next, and a request quietly marked done is a subject nobody
+      ever gets. Deliberately a table in the Postgres already running rather than a second store.
+      **The 404 copy was a casualty worth catching.** "Nothing found" was true when only a bad
+      URL reached it; now the likelier reader is someone who typed a real ticker nobody has
+      ingested. It says so, and says the request was noted.
+
 ## Owner backlog (2026-07-26 brain dump)
 
 News Charts-side items only. CAEP items went to that project's `docs/ROADMAP.md`; company-level

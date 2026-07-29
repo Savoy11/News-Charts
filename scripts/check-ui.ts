@@ -649,6 +649,23 @@ async function chromeAndRoutes(page: Page): Promise<void> {
 
   const sitemap = await page.goto(`${BASE}/sitemap.xml`, { timeout: 120_000 });
   check("sitemap serves", sitemap!.status() === 200);
+
+  /**
+   * A subject we have not gathered yet is not a wrong URL, and the page must not say it is.
+   * Pages read only the database now, so this is the common path for any real ticker nobody has
+   * ingested — telling that visitor "nothing found" would be false.
+   */
+  await go(page, "/company/ZZQQ");
+  const missing = await visible(page);
+  check("an ungathered subject explains itself", /Not on News Charts yet/.test(missing), missing.slice(0, 60));
+  check("and says the request was noted", /been noted/.test(missing));
+  check("and does not claim nothing was found", !/Nothing found/.test(missing));
+  // The demand has to actually reach the queue, or the message is a promise nothing keeps.
+  const queued = await page.evaluate(async (base) => {
+    const r = await fetch(`${base}/api/resolve?q=ZZQQ`);
+    return (await r.json()) as { kind?: string };
+  }, BASE);
+  check("the search path still resolves it to a subject page", queued.kind === "company" || queued.kind === "topic", JSON.stringify(queued));
 }
 
 /**

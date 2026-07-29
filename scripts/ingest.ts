@@ -89,7 +89,7 @@ async function runSource(
   report(sourceKey, result.outcome, stats);
 }
 
-async function ingestTopic(client: PoolClient, topic: string) {
+export async function ingestTopic(client: PoolClient, topic: string) {
   console.log(`\ntopic: ${topic}`);
   const wiki = await getTopicTimeline(topic);
   if (!wiki) {
@@ -128,7 +128,7 @@ async function ingestTopic(client: PoolClient, topic: string) {
   await runSource(client, "gdelt", subjectId, topic, () => fetchNews(topic), (e) => e.slice(0, 30));
 }
 
-async function ingestCompany(client: PoolClient, ticker: string) {
+export async function ingestCompany(client: PoolClient, ticker: string) {
   console.log(`\ncompany: ${ticker}`);
   const company = await resolveCompany(ticker);
   if (!company) {
@@ -211,7 +211,7 @@ async function ingestCompany(client: PoolClient, ticker: string) {
  * member company — an export-control rule is a semiconductor event that happens to
  * matter to Nvidia, not an Nvidia event.
  */
-async function ingestIndustry(client: PoolClient, slug: string) {
+export async function ingestIndustry(client: PoolClient, slug: string) {
   console.log(`\nindustry: ${slug}`);
   const { rows } = await client.query(
     `SELECT id, display_name, sic FROM subjects WHERE slug = $1 AND kind = 'industry'`,
@@ -246,7 +246,7 @@ async function ingestIndustry(client: PoolClient, slug: string) {
  * company kind is barred by the schema and would be a lie anyway) that happen to carry a price
  * series — which is what lets a halving be read against the BTC chart.
  */
-async function ingestOnchain(client: PoolClient, which: string) {
+export async function ingestOnchain(client: PoolClient, which: string) {
   const targets = which === "all" ? CRYPTO_SUBJECTS : CRYPTO_SUBJECTS.filter((c) => c.slug === which);
   if (!targets.length) {
     console.error(`unknown on-chain subject "${which}"`);
@@ -330,7 +330,11 @@ async function main() {
   console.log("\ndone.");
 }
 
-main().catch((err) => {
-  console.error("\ningest failed:", err.message);
-  process.exit(1);
-});
+// Guarded so `scripts/refresh.ts` can import the per-subject ingesters without the CLI running
+// as a side effect of the import.
+if (require.main === module) {
+  main().catch((err) => {
+    console.error("\ningest failed:", err.message);
+    process.exit(1);
+  });
+}

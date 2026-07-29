@@ -16,8 +16,9 @@ config({ path: ".env.local" });
  */
 import { getBitcoinHalvings } from "../lib/onchain/bitcoin";
 import { getEthereumMilestones } from "../lib/onchain/ethereum";
-import { getUsdcSupplyMoves } from "../lib/onchain/stablecoin";
-import { NULL_ADDRESS } from "../lib/onchain/addresses";
+import { getAllStablecoinSupplyMoves, getStablecoinSupplyMoves, getUsdcSupplyMoves } from "../lib/onchain/stablecoin";
+import { CRYPTO_SUBJECTS, ingestOnchainFor } from "../lib/onchain";
+import { DAI, NULL_ADDRESS, PYUSD, STABLECOINS, USDC } from "../lib/onchain/addresses";
 
 let pass = 0;
 let fail = 0;
@@ -260,6 +261,79 @@ async function finality(): Promise<void> {
   check("an unknown chain says that", withheldReason(null, settled) === "unknown chain");
 }
 
+async function stablecoins(): Promise<void> {
+  console.log("\nStablecoin coverage");
+  const settledTs = Math.floor(Date.now() / 1000) - 48 * 3600;
+  const treasury2 = "0x55fe002aeff02f77364de339a1292923a15844b8";
+  process.env.ETHERSCAN_API_KEY = "test-key";
+
+  /**
+   * The decimals trap, which is the whole reason each token carries its own.
+   *
+   * DAI is 18-decimal and USDC is 6. Reading DAI's base units with USDC's decimals reports
+   * $50m as $50,000,000,000,000 — a number so wrong it looks like a formatting bug, but it
+   * would render as a confident headline.
+   */
+  const rawDai = "50000000" + "0".repeat(18); // 50,000,000 DAI, at 18 decimals
+  serve(() => ({
+    status: "1",
+    result: [
+      { hash: "0xdai", timeStamp: String(settledTs), from: NULL_ADDRESS, to: treasury2, value: rawDai },
+    ],
+  }));
+  const dai = await getStablecoinSupplyMoves(DAI);
+  check("DAI is read at 18 decimals", dai[0]?.title.startsWith("$50m DAI"), dai[0]?.title);
+  check("and labelled as DAI, not USDC", /DAI minted/.test(dai[0]?.title ?? ""), dai[0]?.title);
+  check("its description names the token too", /New DAI entered/.test(dai[0]?.description ?? ""), dai[0]?.description);
+
+  // Each token's bar is its own: $6m is immaterial for USDC and material for PYUSD.
+  const rawPyusd = "6" + "0".repeat(6 + 6); // 6,000,000 PYUSD at 6 decimals
+  serve(() => ({
+    status: "1",
+    result: [
+      { hash: "0xpyusd", timeStamp: String(settledTs), from: NULL_ADDRESS, to: treasury2, value: rawPyusd },
+    ],
+  }));
+  check("a $6m PYUSD mint clears PYUSD's bar", (await getStablecoinSupplyMoves(PYUSD)).length === 1);
+  check("and would not clear USDC's", (await getStablecoinSupplyMoves(USDC)).length === 0);
+  check("PYUSD's bar is lower than USDC's", PYUSD.materialUsd < USDC.materialUsd);
+
+  // Every covered token has to be asked about its own contract, or one token's moves get
+  // labelled as another's.
+  const asked: string[] = [];
+  serve((url) => {
+    asked.push(url);
+    return { status: "1", result: [] };
+  });
+  await getAllStablecoinSupplyMoves();
+  check("every covered token is asked for", asked.length === STABLECOINS.length, `${asked.length} of ${STABLECOINS.length}`);
+  for (const t of STABLECOINS) {
+    check(`  ...including ${t.label}, at its own contract`, asked.some((u) => u.includes(t.address)));
+  }
+  // USDT is excluded on purpose: its contract does not mint through the null address, so this
+  // code path would return nothing and look exactly like "no material mints".
+  check("USDT is not silently covered", !STABLECOINS.some((t) => t.label === "USDT"));
+
+  // Every stablecoin subject must be wired to a token. An unwired one compiles fine and returns
+  // an empty timeline, which reads as "nothing has happened" rather than "nobody connected it".
+  const stableSubjects = CRYPTO_SUBJECTS.filter((c) => c.yahooSymbol === null);
+  for (const sub of stableSubjects) {
+    const events = await ingestOnchainFor(sub.slug);
+    check(`  ${sub.slug} is wired to a token`, Array.isArray(events), sub.displayName);
+  }
+  check("all three covered tokens have a subject", stableSubjects.length === STABLECOINS.length, `${stableSubjects.length} subjects, ${STABLECOINS.length} tokens`);
+
+  // One token rate-limited must not discard the ones that answered.
+  serve((url) => (url.includes(DAI.address) ? undefined : {
+    status: "1",
+    result: [
+      { hash: "0xok", timeStamp: String(settledTs), from: NULL_ADDRESS, to: treasury2, value: "250" + "0".repeat(6 + 6) },
+    ],
+  }));
+  const partial = await getAllStablecoinSupplyMoves();
+  check("one token failing does not discard the others", partial.length >= 1, `${partial.length} events`);
+}
+
 async function main(): Promise<void> {
   try {
     await bitcoin();
@@ -267,6 +341,7 @@ async function main(): Promise<void> {
     await usdc();
     await attribution();
     await finality();
+    await stablecoins();
   } finally {
     globalThis.fetch = realFetch;
   }

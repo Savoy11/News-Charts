@@ -1,11 +1,17 @@
 import { getBitcoinHalvings } from "./bitcoin";
 import { getEthereumMilestones } from "./ethereum";
-import { getUsdcSupplyMoves } from "./stablecoin";
+import { getStablecoinSupplyMoves } from "./stablecoin";
+import { DAI, PYUSD, USDC, type Stablecoin } from "./addresses";
 import type { TimelineEvent } from "../types";
 
 export { getBitcoinHalvings } from "./bitcoin";
 export { getEthereumMilestones, ETH_MILESTONES } from "./ethereum";
-export { getUsdcSupplyMoves, MATERIAL_USDC } from "./stablecoin";
+export {
+  getAllStablecoinSupplyMoves,
+  getStablecoinSupplyMoves,
+  getUsdcSupplyMoves,
+  MATERIAL_USDC,
+} from "./stablecoin";
 
 /**
  * The crypto subjects Phase 0 covers.
@@ -65,7 +71,43 @@ export const CRYPTO_SUBJECTS: CryptoSubject[] = [
     // a stablecoin's price is ~$1 by construction; a chart of it would say nothing
     yahooSymbol: null,
   },
+  {
+    slug: "dai",
+    displayName: "DAI",
+    aliases: ["dai", "makerdao dai", "dai-usd"],
+    summary:
+      "DAI is a dollar-pegged stablecoin issued by the Maker protocol against collateral held " +
+      "in smart contracts rather than by a company holding reserves. Supply expands and " +
+      "contracts as borrowers open and close positions, so its issuance history is a record of " +
+      "on-chain credit demand.",
+    firstEventOn: "2019-11-18",
+    yahooSymbol: null,
+  },
+  {
+    slug: "pyusd",
+    displayName: "PayPal USD",
+    aliases: ["pyusd", "paypal usd", "paypal dollar"],
+    summary:
+      "PayPal USD is a dollar-backed stablecoin issued by Paxos for PayPal. It is the first " +
+      "stablecoin from a mainstream US payments company, which makes its supply history a " +
+      "readable proxy for how quickly that distribution actually took hold.",
+    firstEventOn: "2023-08-07",
+    yahooSymbol: null,
+  },
 ];
+
+/**
+ * Which token each stablecoin subject reads.
+ *
+ * A `Record` rather than a lookup by slug: adding a subject without wiring its token would
+ * otherwise compile and return an empty timeline, which reads as "nothing has happened" instead
+ * of "nobody connected this up".
+ */
+const STABLECOIN_SUBJECTS: Record<string, Stablecoin> = {
+  usdc: USDC,
+  dai: DAI,
+  pyusd: PYUSD,
+};
 
 /**
  * Every on-chain event for a subject. Each adapter is failure-isolated, so one explorer being
@@ -77,9 +119,9 @@ export async function ingestOnchainFor(slug: string): Promise<TimelineEvent[]> {
       return getBitcoinHalvings().catch(() => []);
     case "eth":
       return getEthereumMilestones().catch(() => []);
-    case "usdc":
-      return getUsdcSupplyMoves().catch(() => []);
-    default:
-      return [];
+    default: {
+      const token = STABLECOIN_SUBJECTS[slug];
+      return token ? getStablecoinSupplyMoves(token).catch(() => []) : [];
+    }
   }
 }

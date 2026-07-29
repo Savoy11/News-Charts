@@ -252,9 +252,27 @@ machine closes that gap.
 
 ### Phase 1 — Curated on-chain adapter (breadth) · `P1`
 
-- [ ] `P1` Generalise Phase-0 fetchers into a reusable module (`lib/onchain/*`) matching the
-      `FetchResult` / `TimelineEvent` contract.
-- [ ] `P1` Extend stablecoin coverage: USDT, DAI, PYUSD mints/burns.
+- [x] ~~`P1` Generalise Phase-0 fetchers into a reusable module~~ — done 2026-07-28, and
+      generalised *by adding tokens* rather than by inventing an abstraction first. The only
+      things that actually differ between stablecoins are the contract, the decimals and the
+      materiality bar, so those are the only things `Stablecoin` carries.
+- [x] ~~`P1` Extend stablecoin coverage: **DAI and PYUSD**~~ — done 2026-07-28, each a
+      `/topic/` subject of its own with its own supply timeline.
+      **Thresholds are per token.** A bar is a claim about what mattered, and $100m is routine
+      for USDC and most of a month for PYUSD; one number would either bury the small tokens or
+      hide the big one's housekeeping. USDC $100m, DAI $10m, PYUSD $5m.
+      **Decimals are per token**, and that is the trap the checks aim at: DAI is 18-decimal and
+      USDC is 6, so reading DAI with USDC's decimals reports $50m as $50,000,000,000,000 — wrong
+      enough to look like a bug, but it would render as a confident headline.
+      ⚠ **USDT is deliberately excluded, not forgotten.** Tether's contract does not mint or burn
+      through the null address: `issue()` credits the treasury directly and emits its own `Issue`
+      event, `redeem()` emits `Redeem`. Reading null-address transfers would return *nothing* for
+      USDT — indistinguishable on a page from "no material mints this month", which is exactly
+      the silent-empty failure the Sources panel exists to expose. Covering it needs a second
+      code path against those events; that is its own item, below.
+- [ ] `P1` **USDT supply moves via `Issue`/`Redeem`** — the second code path the item above
+      describes. Not a line in the token table: Tether's contract reports supply changes through
+      its own events rather than null-address transfers, so this needs a different read.
 - [x] ~~`P1` **Reorg safety:** ingest only finalized blocks~~ — done 2026-07-28 by the finality
       policy above; every on-chain event now passes the gate at construction.
 - [ ] `P1` **Address labeling** map for issuers/treasuries/bridges (Circle, Tether, exchange hot

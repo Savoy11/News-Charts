@@ -141,6 +141,16 @@ async function companyPage(page: Page): Promise<void> {
   // The Sources panel: its whole purpose is telling these two states apart.
   check("sources panel", body.includes("Sources") && /contributing/.test(body));
   check("distinguishes empty from rate-limited", /nothing returned/.test(body) && /rate limited/.test(body));
+  // CC BY-SA obliges naming contributors and the licence wherever the text is reused, so that
+  // credit must not be a truncated line that disappears at a narrow viewport.
+  const wikiCredit = page.locator('[data-source-credit="wikipedia"]').first();
+  if (await wikiCredit.count()) {
+    const cls = (await wikiCredit.getAttribute("class")) ?? "";
+    check("the CC BY-SA credit is not truncated", !cls.includes("truncate"), cls);
+    check("and names contributors and the licence", /CC BY-SA/.test(await wikiCredit.innerText()), await wikiCredit.innerText());
+  } else {
+    check("a Wikipedia credit line is present", false, "not found");
+  }
 
   // Follow writes under the current namespace, and never the pre-rename one.
   const follow = page.locator("button", { hasText: /^Follow$/i }).first();

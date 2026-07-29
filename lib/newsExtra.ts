@@ -1,4 +1,5 @@
 import { TimelineEvent } from "./types";
+import { sourceLabel } from "./sourceLabel";
 import { licensedKey } from "./ingest/store";
 import { storyKey } from "./newsQuality";
 
@@ -261,7 +262,7 @@ export async function getNewsdataNews(query: string): Promise<TimelineEvent[]> {
         type: "news",
         title: r.title.trim(),
         // the aggregator isn't the publisher — credit the outlet it found
-        source: r.source_name?.trim() || r.source_id?.trim() || "Newsdata.io",
+        source: sourceLabel(r.source_name ?? r.source_id, "newsdata"),
         url: r.link,
         description,
         imageUrl:
@@ -312,7 +313,7 @@ export async function getGnewsNews(query: string): Promise<TimelineEvent[]> {
         type: "news",
         title: a.title.trim(),
         // credit the outlet Google News found, not the aggregator
-        source: a.source?.name?.trim() || "GNews",
+        source: sourceLabel(a.source?.name, "gnews"),
         url: a.url,
         description: (a.description ?? "").trim().slice(0, 240) || undefined,
         imageUrl: a.image && /^https?:\/\//i.test(a.image) ? a.image : undefined,
@@ -329,8 +330,10 @@ export async function getGnewsNews(query: string): Promise<TimelineEvent[]> {
 
 /**
  * Currents API — another multi-outlet aggregator with a keyword search. Free key from
- * currentsapi.services → CURRENTS_API_KEY. Items carry an author but no reliable outlet
- * name, so the author stands in when present.
+ * currentsapi.services → CURRENTS_API_KEY. Items carry an author but no reliable outlet name.
+ * The author used to stand in as the source, which made a byline read as a masthead — it is a
+ * person, not a publisher. It now rides in the description where a byline belongs, and the
+ * outlet is reported honestly as unknown.
  */
 export async function getCurrentsNews(query: string): Promise<TimelineEvent[]> {
   const key = licensedKey("CURRENTS_API_KEY", "currents");
@@ -355,14 +358,19 @@ export async function getCurrentsNews(query: string): Promise<TimelineEvent[]> {
       const day = n.published ? toDay(new Date(n.published)) : null;
       if (!n.title || !n.url || !day) continue;
       const author = n.author?.trim();
+      const byline = author && author.toLowerCase() !== "none" ? author : null;
       events.push({
         id: `cur-${events.length}`,
         date: day,
         type: "news",
         title: n.title.trim(),
-        source: author && author.toLowerCase() !== "none" ? author : "Currents",
+        // Currents reports an *author*, which is a person and not a publisher. Using it as the
+        // source made a byline look like a masthead; the outlet is simply unknown here.
+        source: sourceLabel(null, "currents"),
         url: n.url,
-        description: (n.description ?? "").trim().slice(0, 240) || undefined,
+        description:
+          [byline, (n.description ?? "").trim()].filter(Boolean).join(" — ").slice(0, 240) ||
+          undefined,
         // the API uses the literal string "None" for missing images
         imageUrl: n.image && /^https?:\/\//i.test(n.image) ? n.image : undefined,
         sourceKey: "currents",
@@ -413,7 +421,7 @@ export async function getMarketauxNews(query: string, symbol?: string): Promise<
         date: day,
         type: "news",
         title: n.title.trim(),
-        source: n.source?.trim() || "Marketaux",
+        source: sourceLabel(n.source, "marketaux"),
         url: n.url,
         description:
           (n.description ?? n.snippet ?? "").trim().slice(0, 240) || undefined,
@@ -468,7 +476,7 @@ export async function getEodhdNews(ticker: string): Promise<TimelineEvent[]> {
         date: day,
         type: "news",
         title: n.title.trim(),
-        source: outlet,
+        source: sourceLabel(outlet, "eodhd"),
         url: n.link,
         description: (n.content ?? "").replace(/\s+/g, " ").trim().slice(0, 240) || undefined,
         sourceKey: "eodhd",
@@ -518,7 +526,7 @@ export async function getFinnhubNews(ticker: string): Promise<TimelineEvent[]> {
         date: day,
         type: "news",
         title: n.headline.trim(),
-        source: n.source?.trim() || "Finnhub",
+        source: sourceLabel(n.source, "finnhub"),
         url: n.url,
         description: (n.summary ?? "").trim().slice(0, 240) || undefined,
         imageUrl: n.image && /^https?:\/\//i.test(n.image) ? n.image : undefined,

@@ -1,4 +1,5 @@
 import { FetchResult, TimelineEvent } from "./types";
+import { cleanDomain, sourceLabel } from "./sourceLabel";
 
 interface GdeltArticle {
   url: string;
@@ -70,7 +71,9 @@ export async function fetchNews(query: string): Promise<FetchResult> {
           date: `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`,
           type: "news",
           title: a.title,
-          source: a.domain,
+          // GDELT reports a bare domain and nothing else; it is a real publisher identity,
+          // tidied rather than embellished into a masthead we would be guessing at.
+          source: sourceLabel(cleanDomain(a.domain), "gdelt"),
           url: a.url,
           sourceKey: "gdelt",
           imageUrl: a.socialimage || undefined,

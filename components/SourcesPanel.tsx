@@ -1,4 +1,5 @@
 import { loadSourceContributions, loadSubject, type SourceContribution } from "@/lib/store/read";
+import { requiresLicenceCredit } from "@/lib/sourceLabel";
 
 /**
  * Which feeds actually contributed to this subject, and how their last attempt went.
@@ -63,9 +64,18 @@ export default async function SourcesPanel({ slug }: { slug: string }) {
                   {status.label}
                   {s.lastFetchedAt ? ` · ${ago(s.lastFetchedAt)}` : ""}
                 </span>
-                {/* attribution and licence, rendered where the count is — the licences ask for
-                    credit, and crediting a source next to what it gave us is the honest form */}
-                <span className="block truncate text-slate-600" title={`${s.attribution} — ${s.license}`}>
+                {/* Attribution and licence, rendered where the count is — crediting a source
+                    next to what it gave us is the honest form.
+
+                    Not truncated where the licence *requires* the credit. CC BY-SA obliges
+                    naming the contributors and the licence wherever the text is reused, and a
+                    requirement that disappears at a narrow viewport is not met. Courtesy credit
+                    for public-domain and open-data sources still truncates. */}
+                <span
+                  data-source-credit={s.key}
+                  className={`block text-slate-600 ${requiresLicenceCredit(s.key) ? "" : "truncate"}`}
+                  title={`${s.attribution} — ${s.license}`}
+                >
                   {s.attribution} · {s.license}
                 </span>
               </span>

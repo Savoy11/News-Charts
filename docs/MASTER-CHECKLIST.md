@@ -989,16 +989,26 @@ look like") went to a **separate business checklist** worked independently of bo
       availability and trademark conflicts, then set `SITE_URL` — canonical URLs, the sitemap,
       OG images and JSON-LD all carry it, and redirects would be needed to keep any indexed
       pages. Cheapest before launch, expensive after.
-- [ ] `P1` **Label every source on screen, and the compliance around it.** News Charts' half of
-      the source-labeling policy in the business checklist (`docs/BUSINESS-CHECKLIST.md`,
-      Crypto-Stuff repo). Concretely: every event already carries a `source` label and an
-      outward link, but with eleven feeds the labels are inconsistent — GDELT reports bare
-      domains (`chinatechnews.com`), NYT/Guardian report publication names, aggregators report
-      whichever outlet they found, and Wikipedia prose reports the article. Decide the house
-      form, then render licence-required attribution properly (Wikipedia is CC BY-SA and must
-      credit contributors + licence; LoC, GDELT and SEC each differ). Mark *derived* values as
-      ours, never as a publisher's. Pairs with the feed-visibility panel above — the same panel
-      can carry the attribution block.
+- [x] ~~`P1` **Label every source on screen, and the compliance around it.**~~ — done 2026-07-28.
+      **The house form is "who published it · how we found it"** (`lib/sourceLabel.ts`), the same
+      shape the on-chain attribution work settled on: `Reuters · via GNews` says two true things.
+      ⚠ **This was not only a consistency problem — it was a false statement.** When an
+      aggregator handed over an article without naming the outlet, the label fell back to the
+      aggregator's own name, so a page said *GNews* published a story GNews had merely found.
+      Five feeds did this. It now reads `Unattributed · via GNews`, and a feed reporting itself
+      as the outlet is caught too.
+      **Currents was worse:** it used the article's *author* as the source, so a byline rendered
+      as a masthead. The author now rides in the description, where a person belongs, and the
+      outlet is reported honestly as unknown.
+      GDELT's bare domains are tidied (`https://www.reuters.com/` → `reuters.com`) but **never
+      embellished** — inferring "The New York Times" from a domain is a guess dressed as a fact,
+      and "Nytimes" is worse than the domain it replaced. A domain is a real, checkable publisher
+      identity; it just is not a pretty one.
+      **Licence credit is now distinguished from courtesy credit.** The Sources panel already
+      rendered `attribution · licence` per source, but as a *truncated* line — and a CC BY-SA
+      obligation that disappears at a narrow viewport is not met. Wikipedia's credit no longer
+      truncates; public-domain and open-data credit still does, because there it is accuracy
+      rather than a condition. `check:ui` asserts both.
 - [ ] `P2` **Research more news repositories.** Feeds the article-resurfacing initiative; the
       keyless Internet Archive adapter
       is still the top unbuilt candidate.

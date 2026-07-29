@@ -2,9 +2,11 @@ import { getBitcoinHalvings } from "./bitcoin";
 import { getEthereumMilestones } from "./ethereum";
 import { getStablecoinSupplyMoves } from "./stablecoin";
 import { DAI, PYUSD, USDC, type Stablecoin } from "./addresses";
+import { GOVERNANCE_SPACES, getGovernanceFor } from "./governance";
 import type { TimelineEvent } from "../types";
 
 export { getBitcoinHalvings } from "./bitcoin";
+export { GOVERNANCE_SPACES, fetchGovernance, getGovernanceFor, tally } from "./governance";
 export { getEthereumMilestones, ETH_MILESTONES } from "./ethereum";
 export {
   getAllStablecoinSupplyMoves,
@@ -103,16 +105,38 @@ export const CRYPTO_SUBJECTS: CryptoSubject[] = [
  * otherwise compile and return an empty timeline, which reads as "nothing has happened" instead
  * of "nobody connected this up".
  */
-const STABLECOIN_SUBJECTS: Record<string, Stablecoin> = {
+export const STABLECOIN_SUBJECTS: Record<string, Stablecoin> = {
   usdc: USDC,
   dai: DAI,
   pyusd: PYUSD,
 };
 
 /**
+ * Protocol subjects whose timeline is their governance record.
+ *
+ * Neither has a token price series here — Uniswap and Aave both have tokens, but a governance
+ * timeline is about the protocol's decisions rather than its token's price, and pairing the two
+ * would invite reading a vote as a trade signal. That is a chart we would have to defend.
+ */
+const PROTOCOL_SUBJECTS = GOVERNANCE_SPACES.map((g) => ({
+  slug: g.slug,
+  displayName: g.displayName,
+  aliases: [g.slug, g.displayName.toLowerCase(), `${g.displayName.toLowerCase()} governance`],
+  summary:
+    `${g.displayName} is governed by token holders voting on proposals. Because those votes are ` +
+    `public and dated, its governance record reads as a timeline of decisions the protocol took ` +
+    `about itself — not coverage of them.`,
+  firstEventOn: "2020-01-01",
+  yahooSymbol: null,
+}));
+
+/**
  * Every on-chain event for a subject. Each adapter is failure-isolated, so one explorer being
  * unreachable costs that adapter's events and nothing else.
  */
+/** Governance subjects join the crypto list, so ingest and /explore find them like any other. */
+CRYPTO_SUBJECTS.push(...PROTOCOL_SUBJECTS);
+
 export async function ingestOnchainFor(slug: string): Promise<TimelineEvent[]> {
   switch (slug) {
     case "btc":
@@ -121,7 +145,11 @@ export async function ingestOnchainFor(slug: string): Promise<TimelineEvent[]> {
       return getEthereumMilestones().catch(() => []);
     default: {
       const token = STABLECOIN_SUBJECTS[slug];
-      return token ? getStablecoinSupplyMoves(token).catch(() => []) : [];
+      if (token) return getStablecoinSupplyMoves(token).catch(() => []);
+      if (GOVERNANCE_SPACES.some((g) => g.slug === slug)) {
+        return getGovernanceFor(slug).catch(() => []);
+      }
+      return [];
     }
   }
 }

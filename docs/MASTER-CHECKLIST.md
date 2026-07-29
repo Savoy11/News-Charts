@@ -323,8 +323,29 @@ machine closes that gap.
 
 ### Phase 2 — Governance & protocol events · `P1`/`P2`
 
-- [ ] `P1` **Snapshot GraphQL** adapter (keyless): passed governance proposals for Uniswap, Aave,
-      Compound, Maker → protocol subjects.
+- [x] ~~`P1` **Snapshot GraphQL** adapter (keyless)~~ — done 2026-07-28 for **Uniswap and Aave**
+      as `/topic/uni` and `/topic/aave`. Compound and Maker are left off deliberately: both run
+      governance largely on their own on-chain systems rather than Snapshot, so a space id for
+      them would be a guess, and a wrong space id returns an empty list that reads as "a quiet
+      month" rather than "we asked the wrong place". `npm run check:feeds` now reports per space
+      so that zero is visible.
+      **A new `governance` event kind (`db/011`), not `onchain`** — and this is the decision that
+      matters. A Snapshot vote is signed messages tallied by a hub: there is no transaction
+      behind it, and the change it authorises executes later, elsewhere, or never. Filing it
+      under `onchain` would claim exactly the re-verifiable proof that kind exists to mean. The
+      copy on every row says the vote is off-chain and records the decision, not its execution.
+      **The real trap was reading the tally.** Snapshot choices are free text in no fixed order,
+      so `scores[0] > scores[1]` is wrong for any space listing "Against" first. The winner is
+      decided by score and then classified by wording, and where the wording is neither plainly
+      affirmative nor negative — a multi-option proposal, an abstain winning — the outcome is
+      reported as **"decided: <option>"** rather than forced into pass/fail. Ties and unvoted
+      proposals produce no event at all. Saying a proposal passed when it was rejected is worse
+      than missing every one of them, and `npm run check:governance` (33 cases) is mostly aimed
+      there.
+      Protocol subjects carry **no price series on purpose**: pairing a governance timeline with
+      a token chart invites reading a vote as a trade signal, which is a chart we would have to
+      defend.
+      ⚠ Payload shape is from Snapshot's published GraphQL schema; unverified live from here.
 - [ ] `P1` **Exploits/hacks** curated feed (correlate with price drops) — the highest-signal
       timeline events; confirm each on-chain before ingest.
 - [ ] `P2` **Tally / on-chain governance** for executed proposals (parameter changes).

@@ -17,7 +17,7 @@ config({ path: ".env.local" });
 import { getBitcoinHalvings } from "../lib/onchain/bitcoin";
 import { getEthereumMilestones } from "../lib/onchain/ethereum";
 import { getAllStablecoinSupplyMoves, getStablecoinSupplyMoves, getUsdcSupplyMoves } from "../lib/onchain/stablecoin";
-import { CRYPTO_SUBJECTS, ingestOnchainFor } from "../lib/onchain";
+import { CRYPTO_SUBJECTS, STABLECOIN_SUBJECTS, ingestOnchainFor } from "../lib/onchain";
 import {
   ADDRESS_BOOK,
   BURN,
@@ -328,7 +328,10 @@ async function stablecoins(): Promise<void> {
 
   // Every stablecoin subject must be wired to a token. An unwired one compiles fine and returns
   // an empty timeline, which reads as "nothing has happened" rather than "nobody connected it".
-  const stableSubjects = CRYPTO_SUBJECTS.filter((c) => c.yahooSymbol === null);
+  // Keyed off the actual mapping, not off "has no price series" — that proxy broke the moment
+  // governance subjects arrived, which also have no ticker. A check that drifts with the data
+  // it describes is worse than none.
+  const stableSubjects = CRYPTO_SUBJECTS.filter((c) => c.slug in STABLECOIN_SUBJECTS);
   for (const sub of stableSubjects) {
     const events = await ingestOnchainFor(sub.slug);
     check(`  ${sub.slug} is wired to a token`, Array.isArray(events), sub.displayName);

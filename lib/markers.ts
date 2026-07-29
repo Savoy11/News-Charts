@@ -24,6 +24,9 @@ export const MARKER_STYLE = {
   onchain: { color: "#a3e635", position: "aboveBar", shape: "arrowDown", text: "" },
   // the reader's own mark, visually apart from anything we sourced
   annotation: { color: "#22d3ee", position: "belowBar", shape: "circle", text: "" },
+  // above the bar like the events it sits among, but a square: a vote is a decision taken, not a
+  // transaction executed, and the glyph should not imply the second
+  governance: { color: "#818cf8", position: "aboveBar", shape: "square", text: "" },
 } as const;
 
 /** Which kind wins when several share a day — the market-moving ones first. */
@@ -39,6 +42,9 @@ export const PRIORITY: Record<EventType, number> = {
   press: 1,
   news: 1,
   citation: 1,
+  // a protocol changing its own rules outranks coverage of it, and sits with the other
+  // official, dated acts rather than above them
+  governance: 2,
 };
 
 /** Snap an event date to the nearest trading day at or before it (weekends/holidays have no bar). */

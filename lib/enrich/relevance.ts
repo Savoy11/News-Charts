@@ -124,6 +124,14 @@ export function deterministicScore(
      */
     case "regulation":
       return null;
+
+    /**
+     * A proposal read from the protocol's own governance space is about that protocol by
+     * construction, the same way a filing is about its filer. Scored here so a high-volume
+     * governance feed never becomes a model bill.
+     */
+    case "governance":
+      return { score: 1, reason: "a vote in the subject's own governance space" };
   }
 }
 

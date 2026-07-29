@@ -27,6 +27,7 @@ const LEGEND_LABEL: Record<EventType, string> = {
   corporate_action: "Split / dividend",
   onchain: "On-chain",
   annotation: "Your notes",
+  governance: "Governance vote",
 };
 
 interface Props {

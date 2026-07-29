@@ -161,6 +161,17 @@ export const SOURCES: {
     commercialOk: true,
     notes: "keyless. advancedsearch for dated items, Wayback CDX for site captures. Metadata quality is uneven — bare years are common and stay year-precision",
   },
+  {
+    id: 17,
+    key: "snapshot",
+    name: "Snapshot",
+    license: "public governance records; open API, no key",
+    attribution: "Snapshot Labs (snapshot.org)",
+    // What is read is the record of a public vote — who proposed what and how the tally landed.
+    // Governance results are facts about a protocol, not anyone's copyrighted work.
+    commercialOk: true,
+    notes: "keyless GraphQL. Off-chain signed votes, NOT transactions — filed as 'governance', never 'onchain'",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

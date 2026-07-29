@@ -16,6 +16,7 @@ config({ path: ".env.local" });
 
 import { getNews } from "../lib/news";
 import { getPressMentions } from "../lib/loc";
+import { getArchiveItems } from "../lib/archive";
 import { getTopicTimeline } from "../lib/wiki";
 import { resolveCompany, commonName } from "../lib/sec";
 import {
@@ -97,6 +98,7 @@ async function main() {
     report("Finnhub", await safe(getFinnhubNews(ticker)));
   }
   report("LoC press (pre-1963)", await safe(getPressMentions(name).then((r) => r)), "(normal for modern subjects)");
+  report("Internet Archive", await safe(getArchiveItems(name)), "(keyless; metadata index only)");
 
   const story = await getTopicTimeline(name).catch(() => null);
   const hist = story?.events.filter((e) => e.type === "history") ?? [];

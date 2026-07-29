@@ -1,5 +1,11 @@
 import { dayFromEpoch, getJson, onchainEvent } from "./chain";
-import { NULL_ADDRESS, STABLECOINS, USDC, type Stablecoin } from "./addresses";
+import {
+  NULL_ADDRESS,
+  STABLECOINS,
+  USDC,
+  describeCounterparty,
+  type Stablecoin,
+} from "./addresses";
 import type { TimelineEvent } from "../types";
 
 /**
@@ -83,14 +89,23 @@ export async function getStablecoinSupplyMoves(
     const seconds = Number(tx.timeStamp);
     if (!Number.isFinite(seconds)) continue;
 
+    // the other side of the move: who received a mint, or who sent tokens to be burned
+    const counterparty = describeCounterparty(minted ? tx.to : tx.from);
+
     const event = onchainEvent({
         date: dayFromEpoch(seconds),
         title: `${money(amount)} ${token.label} ${minted ? "minted" : "burned"}`,
+        /**
+         * Names the counterparty only when we can stand behind the name. `labelFor` returns null
+         * for everything outside the address book, and the wording then says so rather than
+         * dropping the clause — omitting it silently implies the money went nowhere in
+         * particular, which is a claim we have not earned.
+         */
         description: minted
-          ? `New ${token.label} entered circulation in a single transaction — supply expanding, ` +
-            `which usually tracks demand for dollars on-chain.`
-          : `${token.label} was destroyed in a single transaction — supply contracting, usually ` +
-            `a redemption back to dollars.`,
+          ? `New ${token.label} entered circulation in a single transaction, issued to ` +
+            `${counterparty}. Supply expanding usually tracks demand for dollars on-chain.`
+          : `${token.label} was destroyed in a single transaction, sent from ${counterparty}. ` +
+            `Supply contracting is usually a redemption back to dollars.`,
         url: `https://etherscan.io/tx/${tx.hash}`,
         // the transaction hash is the event's identity: re-running ingest updates, never duplicates
         ref: `eth-tx-${tx.hash}`,

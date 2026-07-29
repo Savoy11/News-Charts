@@ -18,7 +18,19 @@ import { getBitcoinHalvings } from "../lib/onchain/bitcoin";
 import { getEthereumMilestones } from "../lib/onchain/ethereum";
 import { getAllStablecoinSupplyMoves, getStablecoinSupplyMoves, getUsdcSupplyMoves } from "../lib/onchain/stablecoin";
 import { CRYPTO_SUBJECTS, ingestOnchainFor } from "../lib/onchain";
-import { DAI, NULL_ADDRESS, PYUSD, STABLECOINS, USDC } from "../lib/onchain/addresses";
+import {
+  ADDRESS_BOOK,
+  BURN,
+  DAI,
+  NULL_ADDRESS,
+  PYUSD,
+  STABLECOINS,
+  USDC,
+  describeCounterparty,
+  isAddress,
+  labelFor,
+} from "../lib/onchain/addresses";
+import { decodeDecimals, decodeSymbol, verifyEntry } from "../lib/onchain/verify";
 
 let pass = 0;
 let fail = 0;
@@ -334,6 +346,58 @@ async function stablecoins(): Promise<void> {
   check("one token failing does not discard the others", partial.length >= 1, `${partial.length} events`);
 }
 
+async function addressBook(): Promise<void> {
+  console.log("\nAddress book");
+  check("every entry is a well-formed address", ADDRESS_BOOK.every((a) => isAddress(a.address)),
+    ADDRESS_BOOK.filter((a) => !isAddress(a.address)).map((a) => a.label).join(",") || "all valid");
+  check("every entry records why we believe it", ADDRESS_BOOK.every((a) => a.provenance.trim().length > 20));
+  check("addresses are stored lowercase, so lookups cannot miss on case",
+    ADDRESS_BOOK.every((a) => a.address === a.address.toLowerCase()));
+  check("no duplicate addresses", new Set(ADDRESS_BOOK.map((a) => a.address)).size === ADDRESS_BOOK.length);
+
+  console.log("\nNaming a counterparty");
+  // Explorers differ on casing; a checksummed address must still find its label.
+  check("a known address is named", labelFor(USDC.address)?.label === "USDC");
+  check("checksummed input still matches", labelFor(USDC.address.toUpperCase().replace("0X", "0x"))?.label === "USDC");
+  check("the burn address is named", labelFor(NULL_ADDRESS)?.kind === "burn");
+  // The important half: not knowing must be sayable, never silently omitted.
+  check("an unknown address is not guessed at", labelFor("0x1111111111111111111111111111111111111111") === null);
+  check("and is described as unidentified", /haven’t identified/.test(describeCounterparty("0x1111111111111111111111111111111111111111")));
+  check("junk is described as unknown", describeCounterparty("not-an-address") === "an unknown address");
+  check("a missing address is described, not dropped", describeCounterparty(undefined) === "an unknown address");
+  // The provenance rule bars community attributions, which is most exchange labels.
+  check("no exchange labels crept in without provenance", !ADDRESS_BOOK.some((a) => a.kind === "exchange"));
+
+  console.log("\nReading what a contract says about itself");
+  // ERC-20 says symbol() returns string: offset, length, bytes.
+  const dyn = "0x" + "20".padStart(64, "0") + "4".padStart(64, "0") + Buffer.from("USDC").toString("hex").padEnd(64, "0");
+  check("a standard string symbol decodes", decodeSymbol(dyn) === "USDC", String(decodeSymbol(dyn)));
+  // Several older, widely held tokens declare bytes32 instead. Assuming the standard form on one
+  // of those reads the length slot as text and yields mojibake — failing a correct address.
+  const b32 = "0x" + Buffer.from("DAI").toString("hex").padEnd(64, "0");
+  check("a bytes32 symbol decodes too", decodeSymbol(b32) === "DAI", String(decodeSymbol(b32)));
+  check("an empty answer decodes to nothing", decodeSymbol("0x") === null);
+  check("a non-hex answer decodes to nothing", decodeSymbol(null) === null);
+  check("decimals reads the low byte", decodeDecimals("0x" + "6".padStart(64, "0")) === 6);
+  check("18 decimals reads as 18", decodeDecimals("0x" + (18).toString(16).padStart(64, "0")) === 18);
+  // A nonsense width would sail through as a plausible number and misreport every amount.
+  check("an absurd decimals value is refused", decodeDecimals("0x" + "ff".padStart(64, "0")) === null);
+  check("a missing decimals answer is refused", decodeDecimals(null) === null);
+
+  console.log("\nVerifying an entry");
+  serve(() => undefined);
+  const unreachable = await verifyEntry(USDC, "https://example.invalid");
+  check("an unreachable node is not a mismatch", unreachable.status === "unreachable", unreachable.status);
+  // The burn address has no contract to ask, and saying so beats reporting a false failure.
+  const burnCheck = await verifyEntry(BURN, "https://example.invalid");
+  check("an entry with nothing to assert is skipped", burnCheck.status === "skipped", burnCheck.status);
+  const bogus = await verifyEntry(
+    { address: "0xnope", label: "x", kind: "token", provenance: "p".repeat(30), expect: { symbol: "X", decimals: 1 } },
+    "https://example.invalid"
+  );
+  check("a malformed address is caught before any request", bogus.status === "malformed", bogus.status);
+}
+
 async function main(): Promise<void> {
   try {
     await bitcoin();
@@ -342,6 +406,7 @@ async function main(): Promise<void> {
     await attribution();
     await finality();
     await stablecoins();
+    await addressBook();
   } finally {
     globalThis.fetch = realFetch;
   }

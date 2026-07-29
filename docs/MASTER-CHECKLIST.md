@@ -275,8 +275,29 @@ machine closes that gap.
       its own events rather than null-address transfers, so this needs a different read.
 - [x] ~~`P1` **Reorg safety:** ingest only finalized blocks~~ — done 2026-07-28 by the finality
       policy above; every on-chain event now passes the gate at construction.
-- [ ] `P1` **Address labeling** map for issuers/treasuries/bridges (Circle, Tether, exchange hot
-      wallets) — provenance-tracked.
+- [x] ~~`P1` **Address labeling** map — provenance-tracked~~ — built 2026-07-28, and the result
+      is **deliberately almost empty**, which is the finding rather than a shortfall.
+      `ADDRESS_BOOK` holds the burn address and the three token contracts. `labelFor` names a
+      counterparty when we can stand behind the name, and `describeCounterparty` says *"an
+      address we haven't identified"* when we cannot — omitting the clause instead would imply
+      the money went nowhere in particular, which is a claim we have not earned.
+      **The exchange hot wallets and treasuries the item names are not in it, on purpose.** Those
+      labels are community attributions carried by explorers, and this file's own rule bars
+      adding an address on an explorer's tag alone: republishing one turns someone else's guess
+      into our factual claim about who moved money. Every entry that *is* here can be checked by
+      asking the contract what it is.
+      **`npm run verify:addresses`** does exactly that — `symbol()` and `decimals()` over keyless
+      public RPC — turning each provenance note from a written claim into one a machine re-checks.
+      A wrong address fails silently in both directions (never matches, so a counterparty goes
+      unnamed; or matches the wrong contract, so events are filed under the wrong token), and
+      neither shows up on a page. The decoder handles both `string` and `bytes32` symbols, because
+      assuming the ERC-20 standard form on a `bytes32` token reads the length slot as text and
+      would fail a perfectly correct address.
+      ⚠ **Run it on a networked machine** — every entry reports "unreachable" from this container,
+      and the script says so rather than reporting a clean bill of health. Verified counts are
+      kept separate from skipped ones for the same reason.
+      **To add an exchange or bridge:** cite the operator's own documentation or an on-chain role
+      in `provenance`, and prefer an entry `verify:addresses` can re-check.
 - [ ] `P1` Deterministic relevance floor: enrich only material events; leave ambiguous ones
       `NULL` for the AI tier (same pattern as Federal Register events).
 - [ ] `P2` Backfill throughput: paginated `eth_getLogs` with back-off; document each source's

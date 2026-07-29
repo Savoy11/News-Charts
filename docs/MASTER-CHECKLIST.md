@@ -896,6 +896,25 @@ this is a shared revenue *pattern*, not shared code.**
       is still one click away from the focus bar, and `/compare` still handles an explicit
       "X vs Y".
 
+- [x] ~~`P1` **`/explore` and `sitemap.xml` cached a database failure as "no subjects".**~~ —
+      found and fixed 2026-07-28, after it produced a false test failure three times in one
+      session and I finally stopped treating it as an environment quirk.
+      `listIndexedSubjects` swallowed a failed read and returned `[]`, which is indistinguishable
+      from an empty database — the same empty-versus-failed confusion the Sources panel exists to
+      expose, except both callers are **cached** pages (`revalidate = 3600`, prerendered at
+      build). A build that could not reach Postgres baked an empty listing *and an empty sitemap*
+      into the output and served them for an hour.
+      That is not a local annoyance: a build machine that cannot reach the production database is
+      the normal case, not an edge one, so the shipped sitemap would have told search engines the
+      site was the curated seed pool.
+      The loader now returns **`null` for "could not ask"**, distinct from `[]` for "nothing
+      indexed", and both callers respond with `unstable_noStore()` — which opts *that render*
+      out of the cache, shows the curated fallback once, and lets the next request try again.
+      Verified both ways: with Postgres up the routes build **static** with real data; with it
+      down they build **dynamic**, so nothing wrong is cached. `npm run check:index` points the
+      pool at a dead port and asserts the null, because a distinction like this is exactly what a
+      later simplification quietly removes.
+
 ## Owner backlog (2026-07-26 brain dump)
 
 News Charts-side items only. CAEP items went to that project's `docs/ROADMAP.md`; company-level

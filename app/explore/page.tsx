@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import SearchBox from "@/components/SearchBox";
 import AdSlot from "@/components/AdSlot";
@@ -63,9 +64,20 @@ function Group({ heading, blurb, entries }: { heading: string; blurb: string; en
 export default async function ExplorePage() {
   const subjects = await listIndexedSubjects(1, 5000);
 
+  /**
+   * A failed read must not be cached as an answer.
+   *
+   * This page is prerendered at build and revalidated hourly, so an unreachable database at
+   * build time used to bake an empty listing into the output — and a build machine that cannot
+   * reach the production database is the normal case, not an edge one. `noStore()` opts *this*
+   * render out of the cache, so the fallback is shown once and the next request tries again,
+   * rather than a wrong page being published with an hour's shelf life.
+   */
+  if (subjects === null) noStore();
+
   // DB-backed when available; otherwise the curated seed pool so the page is never empty.
   const byKind: Record<SubjectKind, Entry[]> = { company: [], topic: [], industry: [] };
-  if (subjects.length) {
+  if (subjects?.length) {
     for (const s of subjects) {
       byKind[s.kind].push({ name: s.name, href: subjectPath(s.kind, s.slug, s.ticker), count: s.count });
     }
@@ -76,7 +88,7 @@ export default async function ExplorePage() {
     }
   }
 
-  const total = subjects.length || CURATED.length;
+  const total = subjects?.length || CURATED.length;
 
   return (
     <div>

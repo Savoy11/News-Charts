@@ -4,11 +4,13 @@ import { getStablecoinSupplyMoves } from "./stablecoin";
 import { DAI, PYUSD, USDC, type Stablecoin } from "./addresses";
 import { GOVERNANCE_SPACES, getGovernanceFor } from "./governance";
 import { EXPLOIT_TARGETS, getExploitsFor } from "./exploits";
+import { getUsdtSupplyMoves } from "./usdt";
 import type { TimelineEvent } from "../types";
 
 export { getBitcoinHalvings } from "./bitcoin";
 export { GOVERNANCE_SPACES, fetchGovernance, getGovernanceFor, tally } from "./governance";
 export { EXPLOIT_TARGETS, claims, fetchExploits, getExploitsFor } from "./exploits";
+export { fetchUsdtSupplyMoves, getUsdtSupplyMoves, ISSUE_TOPIC, REDEEM_TOPIC } from "./usdt";
 export { getEthereumMilestones, ETH_MILESTONES } from "./ethereum";
 export {
   getAllStablecoinSupplyMoves,
@@ -98,6 +100,17 @@ export const CRYPTO_SUBJECTS: CryptoSubject[] = [
     firstEventOn: "2023-08-07",
     yahooSymbol: null,
   },
+  {
+    slug: "usdt",
+    displayName: "Tether",
+    aliases: ["usdt", "tether", "usdt-usd"],
+    summary:
+      "Tether is the largest dollar-backed stablecoin. Its supply changes are authorised by " +
+      "Tether itself rather than by a contract anyone can call, and are recorded on-chain as " +
+      "Issue and Redeem events — so issuance history is visible even though issuance is not open.",
+    firstEventOn: "2017-11-01",
+    yahooSymbol: null,
+  },
 ];
 
 /**
@@ -160,6 +173,9 @@ export async function ingestOnchainFor(slug: string): Promise<TimelineEvent[]> {
     case "eth":
       return alsoExploits(slug, getEthereumMilestones());
     default: {
+      // USDT first: it is a stablecoin subject but not a transfer-readable one, so it must not
+      // fall through to the table that would ask the wrong question and find nothing.
+      if (slug === "usdt") return alsoExploits(slug, getUsdtSupplyMoves());
       const token = STABLECOIN_SUBJECTS[slug];
       if (token) return getStablecoinSupplyMoves(token).catch(() => []);
       if (GOVERNANCE_SPACES.some((g) => g.slug === slug)) {

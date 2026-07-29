@@ -31,6 +31,8 @@ import {
   labelFor,
 } from "../lib/onchain/addresses";
 import { decodeDecimals, decodeSymbol, verifyEntry } from "../lib/onchain/verify";
+import { keccak256 } from "../lib/onchain/keccak";
+import { ISSUE_TOPIC, REDEEM_TOPIC, amountFromData, getUsdtSupplyMoves } from "../lib/onchain/usdt";
 
 let pass = 0;
 let fail = 0;
@@ -401,6 +403,71 @@ async function addressBook(): Promise<void> {
   check("a malformed address is caught before any request", bogus.status === "malformed", bogus.status);
 }
 
+async function usdt(): Promise<void> {
+  console.log("\nKeccak-256");
+  /**
+   * The two digests that prove the implementation. Both are published in a thousand places, and
+   * the second is the ERC-20 Transfer topic present in every token log ever emitted — if these
+   * match, every event topic derived here is right.
+   *
+   * Node's crypto cannot substitute: its sha3-256 differs from Ethereum's Keccak-256 in the
+   * padding byte, and produces an entirely different digest.
+   */
+  check("the empty string hashes correctly",
+    keccak256("") === "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470", keccak256(""));
+  check("the ERC-20 Transfer topic hashes correctly",
+    keccak256("Transfer(address,address,uint256)") === "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+  // A digest is 32 bytes; anything else means the squeeze is wrong.
+  check("a digest is 32 bytes", keccak256("anything").length === 66);
+  check("different inputs differ", keccak256("a") !== keccak256("b"));
+  // Longer than the 136-byte rate, so more than one absorb block runs.
+  check("input longer than the rate still hashes", keccak256("x".repeat(500)).length === 66);
+  check("and differs from a shorter one", keccak256("x".repeat(500)) !== keccak256("x".repeat(499)));
+  check("topics are derived, not copied", ISSUE_TOPIC === keccak256("Issue(uint256)"));
+  check("issue and redeem differ", ISSUE_TOPIC !== REDEEM_TOPIC);
+
+  console.log("\nUSDT amounts");
+  const raw = (whole: number) => "0x" + (BigInt(whole) * BigInt(10) ** BigInt(6)).toString(16);
+  check("a uint256 word decodes at 6 decimals", amountFromData(raw(250_000_000), 6) === 250_000_000);
+  // Above 2^53: converting the raw value to a Number before dividing loses precision and
+  // silently misreports the largest mints, which are the ones that matter most.
+  check("a value past exact float range is still exact", amountFromData(raw(1_000_000_000), 6) === 1_000_000_000);
+  check("zero is not an amount", amountFromData("0x0", 6) === null);
+  check("junk is refused", amountFromData("not-hex", 6) === null);
+  check("missing data is refused", amountFromData(undefined, 6) === null);
+
+  console.log("\nUSDT supply moves");
+  process.env.ETHERSCAN_API_KEY = "test-key";
+  const settled = Math.floor(Date.now() / 1000) - 48 * 3600;
+  const log = (topic: string, whole: number, hash: string, ts = settled) => ({
+    topics: [topic],
+    data: raw(whole),
+    timeStamp: String(ts),
+    transactionHash: hash,
+  });
+  serve((url) => ({
+    status: "1",
+    result: url.includes(ISSUE_TOPIC)
+      ? [log(ISSUE_TOPIC, 1_000_000_000, "0xissue"), log(ISSUE_TOPIC, 5_000_000, "0xsmall")]
+      : [log(REDEEM_TOPIC, 300_000_000, "0xredeem")],
+  }));
+  const out = await getUsdtSupplyMoves();
+  check("issues and redeems both land", out.length === 2, `${out.length}`);
+  check("an issue is labelled minted", out.some((e) => /USDT minted/.test(e.title)), out.map((e) => e.title).join(" / "));
+  check("a redeem is labelled burned", out.some((e) => /USDT burned/.test(e.title)));
+  check("billions format as billions", out.some((e) => /\$1\.00bn/.test(e.title)), out.map((e) => e.title).join(" / "));
+  check("an immaterial move is filtered out", !out.some((e) => e.url?.includes("0xsmall")));
+  check("identity is the transaction", out.every((e) => /^eth-tx-0x/.test(e.dedupBasis ?? "")));
+  // The finality gate applies here exactly as it does to the transfer reader.
+  serve(() => ({ status: "1", result: [log(ISSUE_TOPIC, 1_000_000_000, "0xfresh", Math.floor(Date.now() / 1000) - 60)] }));
+  check("a mint minutes old is withheld", (await getUsdtSupplyMoves()).length === 0);
+  // Etherscan reports failure as HTTP 200 with status "0".
+  serve(() => ({ status: "0", message: "NOTOK", result: "Max rate limit reached" }));
+  check("a rate limit is not read as no supply moves", (await getUsdtSupplyMoves()).length === 0);
+  delete process.env.ETHERSCAN_API_KEY;
+  check("no key means the adapter sits out", (await getUsdtSupplyMoves()).length === 0);
+}
+
 async function main(): Promise<void> {
   try {
     await bitcoin();
@@ -410,6 +477,7 @@ async function main(): Promise<void> {
     await finality();
     await stablecoins();
     await addressBook();
+    await usdt();
   } finally {
     globalThis.fetch = realFetch;
   }

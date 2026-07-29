@@ -270,9 +270,21 @@ machine closes that gap.
       USDT — indistinguishable on a page from "no material mints this month", which is exactly
       the silent-empty failure the Sources panel exists to expose. Covering it needs a second
       code path against those events; that is its own item, below.
-- [ ] `P1` **USDT supply moves via `Issue`/`Redeem`** — the second code path the item above
-      describes. Not a line in the token table: Tether's contract reports supply changes through
-      its own events rather than null-address transfers, so this needs a different read.
+- [x] ~~`P1` **USDT supply moves via `Issue`/`Redeem`**~~ — done 2026-07-28, `lib/onchain/usdt.ts`,
+      as `/topic/usdt`. Reads Tether's own log events rather than null-address transfers, which is
+      why it could never have been a row in the token table.
+      **The topics are derived, not copied**, and that decision needed its own implementation.
+      Filtering logs means matching `topic0`, the Keccak-256 hash of the event signature, and
+      writing those 32 bytes from memory is the worst guess available here: a wrong topic matches
+      *nothing*, and a feed returning nothing looks exactly like a token having a quiet month —
+      the silent-empty failure, self-inflicted. Node's `crypto` cannot help, because its
+      `sha3-256` differs from Ethereum's Keccak-256 in the padding byte and yields an entirely
+      different digest. So `lib/onchain/keccak.ts` implements the permutation and is pinned
+      against two published digests: the empty string, and the ERC-20 `Transfer` topic present in
+      every token log ever emitted. If those match, every topic derived here is right.
+      Amounts decode through `BigInt` before dividing: a billion-dollar mint in base units is
+      past exact float range, and converting first would silently misreport the largest moves —
+      which are the ones that matter most. The finality gate applies here as everywhere else.
 - [x] ~~`P1` **Reorg safety:** ingest only finalized blocks~~ — done 2026-07-28 by the finality
       policy above; every on-chain event now passes the gate at construction.
 - [x] ~~`P1` **Address labeling** map — provenance-tracked~~ — built 2026-07-28, and the result

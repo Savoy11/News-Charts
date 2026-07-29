@@ -19,6 +19,7 @@ import { getPressMentions } from "../lib/loc";
 import { getArchiveItems } from "../lib/archive";
 import { GOVERNANCE_SPACES, getGovernanceFor } from "../lib/onchain/governance";
 import { EXPLOIT_TARGETS, getExploitsFor } from "../lib/onchain/exploits";
+import { getUsdtSupplyMoves } from "../lib/onchain/usdt";
 import { getTopicTimeline } from "../lib/wiki";
 import { resolveCompany, commonName } from "../lib/sec";
 import {
@@ -108,6 +109,7 @@ async function main() {
   }
   // ⚠ Check the amounts on the first real run: DefiLlama reports millions, and a unit error
   // shows here as "$600" where "$600m" belongs — obvious on screen, invisible offline.
+  report("USDT supply (Issue/Redeem)", await safe(getUsdtSupplyMoves()), "(needs ETHERSCAN_API_KEY)");
   for (const t of EXPLOIT_TARGETS) {
     report(`Exploits (${t.slug})`, await safe(getExploitsFor(t.slug)), "(attributed, not confirmed on-chain)");
   }

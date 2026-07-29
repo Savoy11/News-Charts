@@ -95,6 +95,23 @@ export const PYUSD: Stablecoin = {
 };
 
 /**
+ * Tether, which reports supply changes through its own events rather than null-address
+ * transfers — see `usdt.ts`. Kept out of `STABLECOINS` so the transfer-reading path never asks
+ * about it and silently finds nothing.
+ */
+export const USDT: Stablecoin = {
+  address: "0xdac17f958d2ee523a2206206994597c13d831ec7",
+  label: "USDT",
+  kind: "token",
+  expect: { symbol: "USDT", decimals: 6 },
+  decimals: 6,
+  materialUsd: 100_000_000,
+  provenance:
+    "Tether's published USDT contract address for Ethereum mainnet. Its supply changes emit " +
+    "Issue(uint256) and Redeem(uint256) rather than Transfer to or from the null address.",
+};
+
+/**
  * Tokens whose supply moves this adapter can read, and why USDT is not among them.
  *
  * **USDT is deliberately excluded.** Tether's contract does not mint or burn through the null
@@ -136,7 +153,7 @@ export const BURN: LabelledAddress = {
  * that in `provenance`, and prefer an entry that `npm run verify:addresses` can re-check. An
  * address nobody can check does not belong here, however confident the internet is about it.
  */
-export const ADDRESS_BOOK: LabelledAddress[] = [BURN, USDC, DAI, PYUSD];
+export const ADDRESS_BOOK: LabelledAddress[] = [BURN, USDC, DAI, PYUSD, USDT];
 
 const BY_ADDRESS = new Map(ADDRESS_BOOK.map((a) => [normaliseAddress(a.address), a]));
 

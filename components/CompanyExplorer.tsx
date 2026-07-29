@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { applyFocus } from "@/lib/focus";
+import FocusBar from "./FocusBar";
 import { useVisitorFeeds } from "@/lib/useVisitorFeeds";
 import { usePathname } from "next/navigation";
 import PriceTimeline from "./PriceTimeline";
@@ -103,9 +105,17 @@ export default function CompanyExplorer({ prices, events, siteDomain, subject }:
   // Articles the visitor's own keys add. Merged here rather than server-side because they were
   // fetched under the visitor's licence and must never reach shared storage.
   const mine = useVisitorFeeds(subject, events);
+  // The keyless half of a focused search: narrow this subject's own events to the ones that also
+  // concern the influence the visitor asked about. That intersection is what "how did X affect Y"
+  // is actually asking for — Y's story, limited to the part X is in.
+  const [showAll, setShowAll] = useState(false);
+  const focusResult = useMemo(
+    () => applyFocus([...events, ...mine], showAll ? null : focusHint),
+    [events, mine, focusHint, showAll]
+  );
   const filtered = useMemo(
-    () => [...[...events, ...mine].filter((e) => active.has(e.type)), ...notes],
-    [events, mine, active, notes]
+    () => [...focusResult.events.filter((e) => active.has(e.type)), ...notes],
+    [focusResult, active, notes]
   );
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);
 
@@ -178,6 +188,15 @@ export default function CompanyExplorer({ prices, events, siteDomain, subject }:
 
   return (
     <div>
+      {focusHint && (
+        <FocusBar
+          focus={focusHint}
+          result={focusResult}
+          subject={subject}
+          onClear={() => setShowAll(true)}
+        />
+      )}
+
       {preIpo.length > 0 && (
         <section className="mb-6">
           <div className="mb-1.5 flex flex-wrap items-baseline gap-x-2">

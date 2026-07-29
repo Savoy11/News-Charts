@@ -713,6 +713,31 @@ this is a shared revenue *pattern*, not shared code.**
 - [ ] `P3` Measure click-through per surface before expanding, without shipping
       user-identifying analytics.
 
+- [x] ~~`P1` **Relational search: answer the intersection, not the overlay.**~~ — done 2026-07-28,
+      from a live prompt-testing pass. *"I want to see how Donald Trumps presidency affected IBM
+      stock"* is asking for IBM's price with the IBM events that **also** concern Trump. Two
+      things stopped that working.
+      **The parser missed the shape entirely.** A *how* question with no auxiliary verb — "how
+      Donald Trumps presidency affected IBM" rather than "how did X affect Y" — matched no
+      relation pattern and fell through to a Wikipedia search for the whole sentence, producing
+      `/topic/how donald trumps presidency affected ford`. The same pass found three more:
+      "I'd like to **know** how…" left a "to know" behind (only "know about" was stripped), "what
+      did X **do to** Y" had no pattern, and the perfect tense captured "AI **has**" as the
+      influence. Plural "stocks" was not stripped either. `npm run check:prompt` covers all of it.
+      **`focus` did nothing without an AI key.** It only pre-filled the BYO-model panel, so a
+      keyless visitor asked the question and got an unfiltered timeline with their phrase sitting
+      in a text box. `lib/focus.ts` now narrows the subject's own events to those that mention the
+      influence — which *is* the intersection, since everything on the page already concerns the
+      subject, sector regulations included.
+      **A focus matching nothing shows everything and says so.** An empty timeline reads as "we
+      have no data on this company" rather than "no overlap", so the zero is reported instead of
+      rendered. `npm run check:focus` (20 cases) pins that rule hardest.
+      ⚠ **This reverses the morning's routing.** Relational prompts went to `/compare`; the
+      compose there draws the influence's *own* timeline, which answers "what was Trump doing"
+      rather than "what did Trump do to IBM" — most of it never touches the company. The compose
+      is still one click away from the focus bar, and `/compare` still handles an explicit
+      "X vs Y".
+
 ## Owner backlog (2026-07-26 brain dump)
 
 News Charts-side items only. CAEP items went to that project's `docs/ROADMAP.md`; company-level

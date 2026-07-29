@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { applyFocus } from "@/lib/focus";
+import FocusBar from "./FocusBar";
 import { useVisitorFeeds } from "@/lib/useVisitorFeeds";
 import { usePathname } from "next/navigation";
 import HorizontalTimeline from "./HorizontalTimeline";
@@ -172,9 +174,17 @@ export default function TopicExplorer({
   // Articles the visitor's own keys add. Merged here rather than server-side because they were
   // fetched under the visitor's licence and must never reach shared storage.
   const mine = useVisitorFeeds(subject, capped);
+  // The keyless half of a focused search: narrow this subject's own events to the ones that also
+  // concern the influence the visitor asked about. That intersection is what "how did X affect Y"
+  // is actually asking for — Y's story, limited to the part X is in.
+  const [showAll, setShowAll] = useState(false);
+  const focusResult = useMemo(
+    () => applyFocus([...capped, ...mine], showAll ? null : focusHint),
+    [capped, mine, focusHint, showAll]
+  );
   const filtered = useMemo(
-    () => [...[...capped, ...mine].filter((e) => active.has(e.type)), ...notes],
-    [capped, mine, active, notes]
+    () => [...focusResult.events.filter((e) => active.has(e.type)), ...notes],
+    [focusResult, active, notes]
   );
   // ranking narrows and reorders; the timeline still renders chronologically
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);
@@ -248,6 +258,15 @@ export default function TopicExplorer({
 
   return (
     <div>
+      {focusHint && (
+        <FocusBar
+          focus={focusHint}
+          result={focusResult}
+          subject={subject}
+          onClear={() => setShowAll(true)}
+        />
+      )}
+
       <AiPanel
         events={filtered}
         ranking={ranking}

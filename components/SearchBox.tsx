@@ -20,10 +20,10 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
       const query = (existing: string) =>
         [existing, focus].filter(Boolean).length ? `?${[existing, focus].filter(Boolean).join("&")}` : "";
 
-      // A relational question with both sides drawable — the answer is two subjects on one axis,
-      // not one subject with the other typed into a box.
-      if (json.kind === "compare") router.push(`/compare${query(`a=${json.a}&b=${json.b}`)}`);
-      else if (json.kind === "company") router.push(`/company/${json.ticker}${query("")}`);
+      // A relational question lands on the affected subject with the influence as a focus, which
+      // narrows that subject's own timeline — the intersection the question asks about. The
+      // two-subject compose stays one click away from the focus bar there.
+      if (json.kind === "company") router.push(`/company/${json.ticker}${query("")}`);
       else if (json.kind === "topic") router.push(`/topic/${json.slug}${query("")}`);
     } finally {
       setBusy(false);

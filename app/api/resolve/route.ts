@@ -40,34 +40,36 @@ export async function GET(req: NextRequest) {
   const ticker = knownCompany?.ticker ?? (known?.kind === "company" ? known.ticker : company?.ticker);
 
   /**
-   * "Barack Obama's effect on Ford stock" asks about two subjects, and the honest answer puts
-   * both on one axis: his events against Ford's price. Until now it landed on Ford's timeline
-   * with "barack obama" pre-filled in the AI panel — useful and truthful, but not the thing
-   * asked for.
+   * "How did Donald Trump's presidency affect IBM stock" is a question about an *intersection*:
+   * IBM's price, with the IBM events that also concern Trump. So a relational prompt lands on
+   * the affected subject's page and the influence rides along as `focus`, which now narrows that
+   * subject's own timeline rather than only pre-filling the AI box.
    *
-   * Only when the influence is *known to be drawable*. A relational prompt whose other side we
-   * cannot find would otherwise trade a page that works for a compare with one empty half, and a
-   * question answered partly beats a question answered with a warning.
+   * This reverses an earlier routing that sent these to `/compare`. The compose there draws the
+   * influence's *own* timeline beside the price, which answers a different question — it shows
+   * what Trump did, not what Trump did *to IBM*, and most of it never touches the company. The
+   * compose is still one click away from the focus bar for the cases where it is the better
+   * read, and `/compare` still handles an explicit "X vs Y".
    *
-   * The priced subject goes in `b` and the influence in `a`, matching the compose /compare
-   * already renders: one side supplies the axis, the other supplies what happened.
+   * `isDrawable` is kept because that link is only worth offering when the other side exists.
    */
-  if (influence && ticker && (await isDrawable(influence))) {
-    return NextResponse.json({
-      kind: "compare",
-      a: encodeURIComponent(influence),
-      b: encodeURIComponent(ticker),
-      focus,
-    });
-  }
+  const composable = influence ? await isDrawable(influence) : false;
 
-  if (ticker) return NextResponse.json({ kind: "company", ticker, focus });
+  if (ticker) return NextResponse.json({ kind: "company", ticker, focus, influence, composable });
   if (known?.kind === "topic") {
-    return NextResponse.json({ kind: "topic", slug: encodeURIComponent(known.slug), focus });
+    return NextResponse.json({
+      kind: "topic",
+      slug: encodeURIComponent(known.slug),
+      focus,
+      influence,
+      composable,
+    });
   }
   return NextResponse.json({
     kind: "topic",
     slug: encodeURIComponent(subject.toLowerCase()),
     focus,
+    influence,
+    composable,
   });
 }

@@ -468,26 +468,29 @@ async function searchRouting(page: Page): Promise<void> {
     return new URL(page.url());
   };
 
-  // A relational question with both sides in the corpus: the electric-car topic supplies the
-  // events, Ford supplies the price. This is the shape the Obama question asks for.
-  const rel = await search("electric cars effect on Ford stock");
-  check("a relational prompt routes to the compose", rel.pathname === "/compare", rel.pathname + rel.search);
+  // The reported phrasing, verbatim in shape: a *how* question with no auxiliary verb. This one
+  // used to fall through every pattern and land on /topic/how-donald-trumps-presidency-affected.
+  const asked = await search("I want to see how Donald Trumps presidency affected Ford stock");
   check(
-    "the influence supplies the events and the company the axis",
-    rel.searchParams.get("a")?.toLowerCase() === "electric cars" &&
-      rel.searchParams.get("b")?.toUpperCase() === "F",
-    `a=${rel.searchParams.get("a")} b=${rel.searchParams.get("b")}`
+    "the reported phrasing reaches the company, not a junk topic",
+    /^\/company\/F$/i.test(asked.pathname),
+    asked.pathname + asked.search
   );
-  // The angle the visitor asked for must survive the redirect, not be dropped by it.
-  check("the focus rides along", rel.searchParams.get("focus") === "electric cars", String(rel.searchParams.get("focus")));
-  const composed = await visible(page);
-  check("the compose actually draws", /supplies the events/.test(composed));
+  check(
+    "and carries the influence as the focus",
+    asked.searchParams.get("focus") === "Donald Trumps presidency",
+    String(asked.searchParams.get("focus"))
+  );
 
-  // A relational prompt whose other side we cannot draw must keep today's behaviour: the
-  // company's own timeline, not a compare with one empty half.
+  // A relational prompt lands on the affected subject with the influence narrowing its own
+  // timeline — the intersection. The compose is offered from the focus bar, not chosen for them.
+  const rel = await search("electric cars effect on Ford stock");
+  check("a relational prompt routes to the affected subject", /^\/company\/F$/i.test(rel.pathname), rel.pathname + rel.search);
+  check("the focus rides along", rel.searchParams.get("focus") === "electric cars", String(rel.searchParams.get("focus")));
+
   const undrawable = await search("zzqqxx effect on Ford stock");
   check(
-    "an undrawable influence falls back to the subject's page",
+    "an influence we cannot find still reaches the subject",
     /^\/company\/F$/i.test(undrawable.pathname),
     undrawable.pathname + undrawable.search
   );
@@ -562,6 +565,52 @@ async function feedKeys(page: Page): Promise<void> {
   } else {
     check("a forget control appears once a key is stored", false, "not found");
   }
+}
+
+/**
+ * The focus filter — the intersection half of "how did X affect Y stock".
+ *
+ * The question asks for Y's price with the Y events that also concern X, so what is checked is
+ * that the timeline actually narrows, that it says so, that it can be undone, and — the one that
+ * matters most — that a focus matching nothing shows everything with a note rather than an empty
+ * page. An empty timeline reads as "we have nothing on this company", which is a different and
+ * false claim.
+ */
+async function focusFilter(page: Page): Promise<void> {
+  console.log("\nFocus filter");
+
+  await go(page, "/company/F?focus=NHTSA");
+  const bar = page.locator("[data-focus-bar]");
+  check("a focused search announces itself", (await bar.count()) > 0);
+  const text = (await bar.first().innerText()).replace(/\n/g, " ");
+  check("it says how much it is hiding", /Showing the \d+ of \d+ events/.test(text), text.slice(0, 80));
+
+  const narrowed = await page.locator("[data-event-row]").count();
+  check("the timeline is actually narrowed", narrowed > 0 && narrowed < 10, `${narrowed} rows`);
+  // The sector rule is a regulation reaching Ford through the industry graph — exactly the kind
+  // of event a political or regulatory focus is asking about.
+  check("and keeps the event that matches", /NHTSA/.test(await visible(page)));
+
+  await page.locator("[data-focus-bar] button").first().click();
+  await page.waitForTimeout(1200);
+  const widened = await page.locator("[data-event-row]").count();
+  check("and can be undone", widened > narrowed, `${narrowed} → ${widened} rows`);
+
+  // The rule that keeps a narrowed page honest.
+  await go(page, "/company/F?focus=Vladimir%20Putin");
+  const missText = (await page.locator("[data-focus-bar]").first().innerText()).replace(/\n/g, " ");
+  check("a focus matching nothing says so", /Nothing on this timeline mentions/.test(missText), missText.slice(0, 70));
+  const stillThere = await page.locator("[data-event-row]").count();
+  check("and shows everything rather than an empty page", stillThere > 10, `${stillThere} rows`);
+
+  // This morning's compose is the other honest reading; it stays one click away.
+  const compose = page.locator("[data-focus-bar] a");
+  check("the two-subject compose is still offered", (await compose.count()) > 0);
+  check(
+    "and points at the compare",
+    (await compose.first().getAttribute("href"))?.startsWith("/compare?a=") === true,
+    String(await compose.first().getAttribute("href"))
+  );
 }
 
 async function chromeAndRoutes(page: Page): Promise<void> {
@@ -664,7 +713,8 @@ async function main(): Promise<void> {
     await topicPage(page);
     await cryptoTopic(page);
     await comparePage(page);
-    await feedKeys(page);
+    await focusFilter(page);
+  await feedKeys(page);
   await searchRouting(page);
   await chromeAndRoutes(page);
     await ctx.close();

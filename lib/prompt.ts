@@ -28,7 +28,11 @@ export interface ParsedPrompt {
 const FILLERS = [
   /^please\s+/i,
   /^(?:can|could|would)\s+you\s+/i,
-  /^i(?:'d|’d| would)?\s*(?:like|want|need)\s+(?:to\s+(?:see|know\s+about|explore|read\s+about)\s+)?/i,
+  // The trailing "to …" clause is optional *and* varied. "know about" has to be tried before
+  // bare "know", or "I'd like to know how AI changed Nvidia" keeps a "to know" that the relation
+  // patterns then fail to match — the prompt parsed to the subject "to know how AI has changed
+  // Nvidia" and searched Wikipedia for it.
+  /^i(?:'d|’d| would)?\s*(?:like|want|need)\s+(?:to\s+(?:see|know\s+about|know|understand|explore|read\s+about|learn\s+about|learn|find\s+out)\s+)?/i,
   /^show\s+me\s+/i,
   /^tell\s+me\s+about\s+/i,
   /^give\s+me\s+/i,
@@ -65,6 +69,21 @@ const RELATIONS = [
   /^how\s+(?:did|does|do|has|have|had)\s+(.+?)\s+(?:affects?|affected|impacts?|impacted|influenced?|changed?|moved?|hurt|helped?)\s+(.+)$/i,
   /^(?:did|does|do|has|have|had)\s+(.+?)\s+(?:affects?|impacts?|influence|move|hurt|help)\s+(.+)$/i,
   /^(.+?)(?:['’]s)?\s+(?:effects?|impacts?|influence)\s+on\s+(.+)$/i,
+  /**
+   * "how Donald Trump's presidency affected IBM stock" — a *how* question with no auxiliary
+   * verb, because the subject of the sentence is a noun phrase rather than the thing acting.
+   * This is how people actually type the question, and it was the single commonest shape the
+   * parser missed: it fell all the way through to a Wikipedia search for the whole sentence and
+   * produced `/topic/how donald trumps presidency affected ford`.
+   *
+   * Must sit after the auxiliary form above, or "how did X affect Y" would match here with
+   * "did X" as the influence.
+   */
+  // The perfect-tense auxiliary is absorbed rather than captured: "how AI has changed Nvidia"
+  // otherwise yields the influence "AI has", which then gets searched for verbatim.
+  /^how\s+(.+?)(?:\s+(?:has|have|had))?\s+(?:affected|impacted|influenced|changed|moved|hurt|helped|shaped|reshaped)\s+(.+)$/i,
+  /** "what did the chip shortage do to Ford stock" */
+  /^what\s+(?:did|does|has|have|had)\s+(.+?)\s+(?:do|done)\s+(?:to|for)\s+(.+)$/i,
 ];
 
 /**
@@ -72,7 +91,7 @@ const RELATIONS = [
  * the suffix on turned a resolvable company into a Wikipedia guess — plain "Ford" resolves,
  * "Ford stock" did not.
  */
-const STOCK_SUFFIX = /\s+(?:stock\s+price|share\s+price|stock|shares|share|ticker|equity)$/i;
+const STOCK_SUFFIX = /\s+(?:stock\s+prices?|share\s+prices?|stocks|stock|shares|share|ticker|equity)$/i;
 
 /**
  * Compounds where the trailing word is part of the name, not a way of saying "the company".

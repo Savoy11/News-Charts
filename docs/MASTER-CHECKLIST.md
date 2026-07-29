@@ -382,8 +382,22 @@ machine closes that gap.
 - [ ] `P0` **Licensing gate:** keep all sources `commercialOk: true` — raw chain facts + public
       explorers only. **No Dune/Nansen aggregations in the ad-supported path** (TOS), same
       discipline as the Google-News-RSS bar.
-- [ ] `P1` **Cost monitoring:** log per-source fetch counts; confirm free-tier limits (Etherscan
-      5/s, 100k/day) aren't exceeded by scheduled ingest.
+- [x] ~~`P1` **Cost monitoring**~~ — done 2026-07-28. `npm run cost-report [days]`.
+      Two halves. **Observed** reads `source_fetches`, which has logged every request since the
+      start, and separates throttles from empties — only a throttle means "we asked too often",
+      and burying it among the outcomes that mean "the source had nothing" is how the signal gets
+      lost. **Projected** works out what the current refresh windows cost per tracked subject and
+      compares it against each free tier, in `lib/ingest/quota.ts`.
+      The number worth having is **subject capacity** — it turns an abstract quota into "this
+      tier covers ~25 subjects", which is the form the buy-or-drop decision in the release gate
+      actually takes.
+      The projection is deliberately a **floor**: one request per source per window per subject,
+      counting no retries, no second pages, no manual runs. Where it says "tight" the real answer
+      is probably "over". Flattering the budget would be worse than not reporting it.
+      **First run already found one:** EODHD sits at **100% of its free tier at five subjects**
+      (~20 calls/day, and the free plan may exclude news entirely). GNews covers ~25 subjects,
+      Marketaux ~16. Everything else has room. Those are the numbers behind the licensing
+      decisions above.
 - [ ] `P1` **AI-cost discipline:** on-chain is high-volume — filter before enrichment; rely on
       content-hash keying so unchanged events are never re-paid for.
 - [x] ~~`P2` **Attribution UI:** render chain/explorer attribution on event cards + footer.~~ —

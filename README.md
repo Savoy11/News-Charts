@@ -31,8 +31,7 @@ changed. Rotation pauses when the tab is hidden and is disabled entirely under
 
 Every EDGAR submissions record carries an SIC code, so peer grouping is **authoritative and
 free** rather than inferred — NVDA and INTC both return `3674 Semiconductors & Related Devices`.
-Ingesting a company creates (or joins) that industry automatically, via both the worker and the
-page read-through.
+Ingesting a company creates (or joins) that industry automatically.
 
 Industries are ordinary `subjects` (`kind='industry'`, slug `sic-<code>`), so they inherit
 timelines, relevance scoring and — later — syntheses for free. Membership is a join table
@@ -266,8 +265,16 @@ is worse than one that is six hours stale. Wikipedia refreshes daily, Chroniclin
 `npm run check:refresh` asserts the arithmetic, so the table can be argued with.
 
 A `throttled` or `error` attempt does not count as having asked, so a rate-limited feed stays due
-for retry rather than being silenced. Because a refresh may now cover only some sources, the live
-path serves the union from the database and falls back to what it fetched if that read fails.
+for retry rather than being silenced. Because a refresh covers only the sources actually due,
+each ingest run prints what it skipped and why; the page reads the union out of the database, so
+a partial refresh costs a page nothing.
+
+`npm run check:wiring` asserts the other half — that the windows are *consulted*. Every defect it
+was written for was one shape: a working, registered, checked source that no entry point called.
+It asserts every `SourceKey` has an ingest call site or a written-down reason not to, that no
+source barred from commercial use sits on the ingest path, that `refresh.ts` reaches every
+subject kind an ingester exists for, and that every `EventType` has a filter chip that can show
+it.
 
 Every subject page carries a **Sources** panel showing what each feed contributed, when it was
 last asked, and its attribution and licence. The states that matter are the middle two: *nothing
@@ -389,17 +396,24 @@ story — at the cost of demoting oblique headlines like "iPhone maker rebounds"
 
 ### How pages read
 
-`lib/page-data.ts` is a **read-through cache**. A page tries the database first; on a miss or a
-stale subject (6h for topics, 1h for companies) it fetches live, renders, *and* stores what it
-fetched — so the database fills from real traffic, not just from manual ingest runs. A small
-`stored` / `live` badge on each page shows which path served it.
+`lib/page-data.ts` **reads the database and nothing else**. It used to be a read-through cache
+that fetched live on a miss or a stale subject, which cost three things: the visitor arriving
+first after a TTL expired waited on eleven feeds, several arriving together each triggered their
+own fetch, and a database outage turned every page view into a live fetch — burning the free
+tiers exactly when they could least be spared. `npm run refresh` owns fetching now, so cost is a
+function of how many subjects exist (a number we choose) rather than of how much traffic arrives
+(which is not).
 
-Measured on this machine: `/topic/bicycle` went from ~11–16s live to **0.6s** from the database,
-and a first visit to an un-ingested topic took 45s live, then **0.07s** on the next request.
+Measured on this machine: `/topic/bicycle` went from ~11–16s live to **0.6s** from the database.
 
-**The database is optional.** Every read is wrapped so that an unreachable database logs a
-warning and falls through to live sources. Verified by pointing `DATABASE_URL` at a dead port:
-the page still returned 200 with all 97 cards, badged `live`.
+A small `stored` badge on each page carries the date that copy was last refreshed. It replaced a
+`stored` / `live` badge, which after the cut-over had one reachable value and implied a
+comparison the code no longer performed.
+
+**A subject we do not have is not fetched under a visitor.** The page says so, and the request is
+recorded in `subject_requests` for the next scheduled run to work most-wanted first. A database
+outage is now an outage: it logs a warning and the page renders its "not indexed yet" notice
+rather than silently becoming eleven live fetches per view.
 
 The worker fetches through the same `lib/` functions the site uses, then stores each item as
 an **event** (deduplicated by content), an **attestation** (the document it came from), and a
@@ -453,11 +467,19 @@ nearest capture. The domain comes from Wikidata P856 (`lib/wikidata.ts`); EDGAR 
 and `investorWebsite` fields but leaves them empty for most filers, including Apple. Wikidata
 often stores a locale URL (`https://apple.com/at/`), so normalise to the hostname.
 
+**archive.org item search was later adopted**, reversing the rejection recorded below.
+`lib/archive.ts` reads the advancedsearch index under source key `internet_archive` and files
+items as `citation` events on both the topic and company ingest paths. What changed is the
+handling, not the data: a bare year now stays year-precision instead of being normalised to
+1 January, a `collection` is not treated as an event, and items predating the subject's first
+recorded year are dropped by the same `dropImplausiblePress` floor the newspaper scans use.
+`npm run check:archive` (39 cases) is aimed squarely at that parsing.
+
 Rejected as *event* sources after testing:
 
-- **archive.org item search** — item dates are unreliable. "The Bicycle Girl" exists twice, dated
-  1895 (correct) and 1770 (garbage), and a date-sorted bicycle search returns four items from
-  1770. Same silent-corruption class as the OCR problem; not worth the cleanup.
+- **archive.org item search** — *superseded, see above.* Item dates are unreliable: "The Bicycle
+  Girl" exists twice, dated 1895 (correct) and 1770 (garbage), and a date-sorted bicycle search
+  returns four items from 1770. The parsing rules above are what made this workable.
 - **Wayback first-capture as an event** — confounded by the Archive's own crawl history. Both
   apple.com and nvidia.com report 1996-10-22 because that's when the Archive started crawling,
   not when either site launched. Only meaningful for sites first archived later (tesla.com,

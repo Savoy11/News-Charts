@@ -34,6 +34,7 @@ import {
   getFinnhubNews,
 } from "../lib/newsExtra";
 import { commercialMode, skipReason } from "../lib/ingest/store";
+import { COMPANY_SOURCES, TOPIC_SOURCES } from "./ingest";
 import type { SourceKey, TimelineEvent } from "../lib/types";
 
 // Each keyed feed with the source key its licence is recorded under, so this report can say
@@ -50,23 +51,59 @@ const KEYED: Record<string, { env: string; source: SourceKey }> = {
   "Finnhub": { env: "FINNHUB_API_KEY", source: "finnhub" },
 };
 
+/**
+ * Which registered source each line here is checking, so the report can say whether a working
+ * feed actually reaches the corpus.
+ *
+ * This check calls the adapters directly. That is the right way to answer "does this feed
+ * work?", and it is also how a feed can pass here while contributing nothing to a page — which
+ * is exactly what happened to eight of these after the scheduler cut-over. A green line and an
+ * ingested article are two different claims, and this report used to make only the first while
+ * looking like both.
+ */
+const SOURCE_OF: Record<string, SourceKey> = {
+  GDELT: "gdelt",
+  "Yahoo Finance RSS": "yahoo_finance",
+  NYT: "nyt",
+  Guardian: "guardian",
+  Newsdata: "newsdata",
+  GNews: "gnews",
+  Currents: "currents",
+  Marketaux: "marketaux",
+  EODHD: "eodhd",
+  Finnhub: "finnhub",
+  "LoC press (pre-1963)": "loc_chronam",
+  "Internet Archive": "internet_archive",
+};
+
+const INGESTED: ReadonlySet<SourceKey> = new Set([...TOPIC_SOURCES, ...COMPANY_SOURCES]);
+
+/** Marks a feed that answers here but never reaches the database. */
+function pathNote(name: string): string {
+  const key = SOURCE_OF[name];
+  if (!key || INGESTED.has(key)) return "";
+  return KEYED[name]
+    ? "  ⚠ not ingested — licence bars it; visitor-key path only"
+    : "  ⚠ not ingested — no call site on the ingest path";
+}
+
 function report(name: string, events: TimelineEvent[], note = "") {
   const keyed = KEYED[name];
   if (keyed) {
     const skip = skipReason(keyed.env, keyed.source);
     if (skip) {
-      console.log(`  ${name.padEnd(22)} — ${skip}`);
+      console.log(`  ${name.padEnd(22)} — ${skip}${pathNote(name)}`);
       return;
     }
   }
   if (events.length === 0) {
-    console.log(`  ${name.padEnd(22)} ⚠ 0 articles ${note}`);
+    console.log(`  ${name.padEnd(22)} ⚠ 0 articles ${note}${pathNote(name)}`);
     return;
   }
   const dates = events.map((e) => e.date).sort();
   const sample = events[0].title.slice(0, 60);
   console.log(
-    `  ${name.padEnd(22)} ✓ ${String(events.length).padStart(3)} articles  ${dates[0]} → ${dates[dates.length - 1]}  e.g. “${sample}”`
+    `  ${name.padEnd(22)} ✓ ${String(events.length).padStart(3)} articles  ${dates[0]} → ${dates[dates.length - 1]}  e.g. “${sample}”${pathNote(name)}`
   );
 }
 
@@ -124,7 +161,12 @@ async function main() {
   );
 
   console.log("\nKeyless feeds showing ⚠ 0 usually mean the source is unreachable from this network.");
-  console.log("Keyed feeds showing ⚠ 0 with a key set usually mean the key or plan is wrong — test the key with curl.\n");
+  console.log("Keyed feeds showing ⚠ 0 with a key set usually mean the key or plan is wrong — test the key with curl.");
+  console.log(
+    "Lines marked “not ingested” answer here but never reach the database: ingesting is\n" +
+      "republishing, and their terms bar it (`assertCommercialOk` refuses them). Do not price a\n" +
+      "licence off a green line alone — `npm run check:wiring` is what says a source is connected.\n"
+  );
 }
 
 main();

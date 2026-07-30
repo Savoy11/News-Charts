@@ -207,6 +207,19 @@ const NON_COMMERCIAL: ReadonlySet<SourceKey> = new Set(
 );
 
 /**
+ * The sources the ingest path is allowed to reach, i.e. the ones we may write into the shared
+ * corpus. This is `assertCommercialOk` as a set rather than a throw, so a check can assert the
+ * rule statically instead of waiting for a runtime refusal — see `scripts/check-wiring.ts`.
+ *
+ * A non-commercial source is not merely gated by `COMMERCIAL_MODE` on the ingest path: ingesting
+ * is republishing, so it is barred outright. Where such a feed still has a home it is the
+ * visitor's own key in `lib/feeds/browser.ts`, which never touches this database.
+ */
+export const INGESTABLE_SOURCES: ReadonlySet<SourceKey> = new Set(
+  SOURCES.filter((s) => s.commercialOk).map((s) => s.key)
+);
+
+/**
  * Set `COMMERCIAL_MODE=true` once anything on the site earns money — ads, affiliate links, a
  * paid tier. See the pre-release feed gate in docs/MASTER-CHECKLIST.md.
  */
@@ -238,15 +251,56 @@ export function skipReason(envVar: string, source: SourceKey): string | null {
   return process.env[envVar] ? null : `no ${envVar} set`;
 }
 
-/** Refuse to ingest from a source whose terms bar commercial use. */
+/**
+ * Refuse to ingest from a source whose terms bar commercial use.
+ *
+ * A source the `sources` table has never heard of is a refusal, not a pass. This used to read
+ * `if (rows[0] && !rows[0].commercial_ok)`, so on a database where nothing had ever called
+ * `ensureSources` the lookup returned no row, the condition was false, and every source ingested
+ * with the licence check silently permitting it — including the eight flagged `commercialOk:
+ * false` above. No migration seeds this table, and the scheduled refresh path did not seed it
+ * either, so "no row" was the *normal* state of a fresh production database rather than an
+ * exotic one. A gate that answers "fine" for a source it cannot find is not defence in depth.
+ */
 export async function assertCommercialOk(client: PoolClient, key: SourceKey): Promise<void> {
   const { rows } = await client.query<{ commercial_ok: boolean }>(
     "SELECT commercial_ok FROM sources WHERE key = $1",
     [key]
   );
-  if (rows[0] && !rows[0].commercial_ok) {
+  if (!rows[0]) {
+    throw new Error(
+      `source ${key} is not in the sources registry — ingest refused. ` +
+        `Call ensureSources() before ingesting.`
+    );
+  }
+  if (!rows[0].commercial_ok) {
     throw new Error(`source ${key} is not licensed for commercial use — ingest refused`);
   }
+}
+
+/**
+ * When each source was last asked about this subject, for the per-source refresh windows.
+ *
+ * Only successful-ish attempts count as "asked": an `error` row means we never got an answer,
+ * and treating that as a fresh fetch would silence a broken feed for hours.
+ *
+ * Lives here rather than in `lib/store/read.ts` because its caller is `scripts/ingest.ts`, and
+ * that module memoises with React's `cache` — importing it from a plain node script throws on
+ * load. Page reads and ingest reads are different worlds; this one belongs to ingest.
+ */
+export async function loadLastFetched(
+  client: PoolClient,
+  subjectId: number
+): Promise<Map<SourceKey, Date>> {
+  const { rows } = await client.query<{ key: SourceKey; fetched_at: Date }>(
+    `SELECT DISTINCT ON (s.key) s.key, f.fetched_at
+       FROM source_fetches f
+       JOIN sources s ON s.id = f.source_id
+      WHERE f.subject_id = $1 AND f.outcome IN ('ok','empty')
+      ORDER BY s.key, f.fetched_at DESC`,
+    [subjectId]
+  );
+  return new Map(rows.map((r) => [r.key, r.fetched_at]));
 }
 
 /**

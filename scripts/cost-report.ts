@@ -20,9 +20,26 @@ import { getPool, closePool } from "../lib/db";
 import { QUOTAS, project, subjectCapacity } from "../lib/ingest/quota";
 import { costUsd, formatUsd } from "../lib/enrich/cost";
 import { SOURCES } from "../lib/ingest/store";
+import { COMPANY_SOURCES, TOPIC_SOURCES } from "./ingest";
 import type { SourceKey } from "../lib/types";
 
 const MARK = { ok: "✓", tight: "!", over: "✗", unmetered: "·" } as const;
+
+/**
+ * The sources scheduled ingest actually asks. A projection over the whole registry counted
+ * requests for the eight keyed aggregators nothing calls — which is a licence bill quoted for
+ * feeds contributing zero rows, and the buy-or-drop decision this report exists to inform is the
+ * one it would have got wrong.
+ */
+const INGESTED: ReadonlySet<SourceKey> = new Set<SourceKey>([
+  ...TOPIC_SOURCES,
+  ...COMPANY_SOURCES,
+  // reached by the other two ingesters rather than by a subject refresh
+  "federal_register",
+  "onchain",
+  "snapshot",
+  "defillama",
+]);
 
 async function main(): Promise<void> {
   const days = Number(process.argv[2] ?? 7) || 7;
@@ -68,10 +85,19 @@ async function main(): Promise<void> {
 
   console.log(`\nProjected — ${subjects} tracked subject${subjects === 1 ? "" : "s"}, at the current refresh windows\n`);
   const rows = (SOURCES.map((s) => s.key) as SourceKey[])
-    .map((key) => ({ key, p: project(key, subjects), cap: subjectCapacity(key) }))
+    .map((key) => ({ key, p: project(key, subjects), cap: subjectCapacity(key), on: INGESTED.has(key) }))
     .sort((a, b) => (b.p.utilisation ?? -1) - (a.p.utilisation ?? -1));
 
-  for (const { key, p, cap } of rows) {
+  for (const { key, p, cap, on } of rows) {
+    if (!on) {
+      // Its window would cost this much *if* anything asked. Nothing does, so the honest figure
+      // is zero, and the projection is kept only as what turning it on would cost.
+      console.log(
+        `  · ${key.padEnd(18)} not on the ingest path — 0/day today` +
+          (p.limit === null ? "" : ` (would be ${p.projectedPerDay}/${p.limit} if wired)`)
+      );
+      continue;
+    }
     const budget =
       p.limit === null
         ? "no published daily limit"
@@ -80,7 +106,7 @@ async function main(): Promise<void> {
     console.log(`  ${MARK[p.verdict]} ${key.padEnd(18)} ${budget}`);
   }
 
-  const problems = rows.filter((r) => r.p.verdict === "over" || r.p.verdict === "tight");
+  const problems = rows.filter((r) => r.on && (r.p.verdict === "over" || r.p.verdict === "tight"));
   if (problems.length) {
     console.log(
       `\n  ${problems.length} source${problems.length === 1 ? "" : "s"} at or past the free tier:\n` +
@@ -92,7 +118,7 @@ async function main(): Promise<void> {
         `  the real answer is probably "over".\n`
     );
   } else {
-    console.log(`\n  Every metered source fits its free tier at ${subjects} subjects.\n`);
+    console.log(`\n  Every metered source on the ingest path fits its free tier at ${subjects} subjects.\n`);
   }
 
   /**

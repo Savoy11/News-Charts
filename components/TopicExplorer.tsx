@@ -22,12 +22,24 @@ export function applyRanking(events: TimelineEvent[], ranking: AiRanking | null)
     .sort((a, b) => (ranking.scores.get(b.id) ?? 0) - (ranking.scores.get(a.id) ?? 0));
 }
 
+/**
+ * Every event kind a topic can carry, each with the chip that turns it on.
+ *
+ * `ALL_TYPES` below seeds the default active set *and* builds the chip row, so a kind missing
+ * here is not merely unfiltered — it is discarded on render with no control to bring it back.
+ * `db/011` and `db/012` added `governance` and `exploit` without adding them here, which left
+ * `/topic/uni` and `/topic/aave` (governance-only subjects) rendering an empty timeline while the
+ * Sources panel reported Snapshot contributing events. A `Set<EventType>` cannot be
+ * exhaustiveness-checked, so `tsc` was silent; `scripts/check-ui.ts` asserts the coverage instead.
+ */
 const FILTERS: { key: EventType; label: string }[] = [
   { key: "history", label: "History" },
   { key: "citation", label: "Cited articles" },
   { key: "press", label: "Historical press" },
   { key: "news", label: "Recent news" },
   { key: "onchain", label: "On-chain" },
+  { key: "governance", label: "Governance" },
+  { key: "exploit", label: "Incidents" },
 ];
 
 const ALL_TYPES = FILTERS.map((f) => f.key);

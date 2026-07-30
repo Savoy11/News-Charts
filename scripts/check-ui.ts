@@ -94,7 +94,13 @@ async function companyPage(page: Page): Promise<void> {
   const body = await visible(page);
 
   check("subject renders", body.includes("Ford Motor Company"));
-  check("served from the database", body.includes("STORED") || body.includes("Stored"));
+  // The badge is a provenance claim, and after the read-through cache was removed the only
+  // honest thing it can claim is how old the stored copy is — a `stored`/`live` badge with one
+  // reachable value implied a comparison nothing performed. `upsertSubject` stamps
+  // `refreshed_at`, so a seeded subject always has a date to show.
+  const badge = /stored · (\d{4}-\d{2}-\d{2})/i.exec(body);
+  check("served from the database", /stored/i.test(body));
+  check("and says when that copy was refreshed", Boolean(badge), badge?.[0] ?? "no date on the badge");
   check("price chart drew", (await page.locator("canvas").count()) > 0);
 
   // Biggest moves, and the pairing rule that makes it worth showing: an after-close release

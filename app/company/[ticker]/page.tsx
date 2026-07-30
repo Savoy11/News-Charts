@@ -6,7 +6,7 @@ import AdSlot from "@/components/AdSlot";
 import CaepPromo from "@/components/CaepPromo";
 import SourcesPanel from "@/components/SourcesPanel";
 import SearchBox from "@/components/SearchBox";
-import ServedFrom from "@/components/ServedFrom";
+import StoredBadge from "@/components/StoredBadge";
 import JsonLd from "@/components/JsonLd";
 import FollowBar from "@/components/FollowBar";
 import { getCompanyPageData } from "@/lib/page-data";
@@ -66,7 +66,7 @@ export default async function CompanyPage({ params }: { params: { ticker: string
         <div>
           <h1 className="flex flex-wrap items-center gap-2 text-2xl font-black text-slate-100">
             {data.name} <span className="text-slate-500">({data.ticker})</span>
-            <ServedFrom source={data.servedFrom} />
+            <StoredBadge refreshedAt={data.refreshedAt} />
           </h1>
           {last && (
             <p className="mt-1 text-lg font-semibold text-slate-300">

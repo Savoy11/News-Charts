@@ -1,0 +1,11 @@
+-- On-chain events: network milestones, governance outcomes, stablecoin supply moves.
+--
+-- Its own kind rather than 'news' because the provenance is categorically different. A news
+-- event is someone's report of a thing; an on-chain event *is* the thing, and its attestation
+-- is a block or a transaction anyone can re-verify without trusting us or a publisher. That
+-- distinction is worth surfacing to a reader, and worth filtering on.
+--
+-- Idempotent: 001 is regenerated from the spec and already contains this value on fresh
+-- installs. ADD VALUE is transaction-safe on PG12+ as long as the new value is not used in
+-- the same transaction; nothing here inserts an 'onchain' row.
+ALTER TYPE event_kind ADD VALUE IF NOT EXISTS 'onchain';

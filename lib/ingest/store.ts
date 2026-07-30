@@ -136,6 +136,18 @@ export const SOURCES: {
     commercialOk: false,
     notes: "ticker-keyed company news, trailing year on the free tier; free key (FINNHUB_API_KEY), 60 req/min. Re-license before the ad-supported path uses it",
   },
+  {
+    id: 15,
+    key: "onchain",
+    name: "On-chain records",
+    license: "public domain (on-chain facts)",
+    attribution: "Bitcoin and Ethereum block data via mempool.space, Blockstream Esplora and Etherscan",
+    // Raw chain facts are nobody's copyright, and the explorers used here serve them under
+    // terms that permit commercial use. This stays true only while the sources stay raw:
+    // Dune and Nansen sell *aggregations*, and their terms bar the ad-supported path.
+    commercialOk: true,
+    notes: "keyless for BTC/ETH milestones; ETHERSCAN_API_KEY only for token supply moves. No aggregator data — raw chain + public explorers only",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));
@@ -152,6 +164,43 @@ export async function ensureSources(client: PoolClient): Promise<void> {
       [s.id, s.key, s.name, s.license, s.attribution, s.commercialOk, s.notes ?? null]
     );
   }
+}
+
+/** Keys whose terms bar commercial use, derived from SOURCES so there is one registry, not two. */
+const NON_COMMERCIAL: ReadonlySet<SourceKey> = new Set(
+  SOURCES.filter((s) => !s.commercialOk).map((s) => s.key)
+);
+
+/**
+ * Set `COMMERCIAL_MODE=true` once anything on the site earns money — ads, affiliate links, a
+ * paid tier. See the pre-release feed gate in docs/MASTER-CHECKLIST.md.
+ */
+export function commercialMode(): boolean {
+  return process.env.COMMERCIAL_MODE === "true";
+}
+
+/**
+ * The API key for a source, or null when the adapter must not run.
+ *
+ * `assertCommercialOk` below guards the ingest worker, but the site does not ingest to render:
+ * `lib/page-data.ts` calls these adapters directly on the page path, so a non-commercial source
+ * would keep serving visitors with nothing checking its licence. This closes that path.
+ *
+ * Returning null rather than throwing is deliberate — it is the same signal as "no key
+ * configured", which every adapter already degrades from cleanly, so switching the flag on can
+ * empty a feed but can never break a page.
+ */
+export function licensedKey(envVar: string, source: SourceKey): string | null {
+  if (commercialMode() && NON_COMMERCIAL.has(source)) return null;
+  return process.env[envVar] || null;
+}
+
+/** Why an adapter is sitting out, for the CLI feed report — null when it should run. */
+export function skipReason(envVar: string, source: SourceKey): string | null {
+  if (commercialMode() && NON_COMMERCIAL.has(source)) {
+    return "blocked by COMMERCIAL_MODE (source is not licensed for commercial use)";
+  }
+  return process.env[envVar] ? null : `no ${envVar} set`;
 }
 
 /** Refuse to ingest from a source whose terms bar commercial use. */
@@ -390,7 +439,7 @@ export async function upsertEvent(
     [
       ev.type,
       ev.date,
-      ev.yearOnly ? "year" : "day",
+      ev.precision ?? "day",
       ev.title,
       ev.description ?? null,
       ev.imageUrl ?? null,

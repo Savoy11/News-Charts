@@ -226,7 +226,93 @@ npm run db:gen      # regenerate db/001_init.sql from docs/EVENTS-SCHEMA.md
 npm run db:migrate  # apply pending db/*.sql, tracked in schema_migrations
 npm run ingest -- --topic bicycle
 npm run ingest -- --ticker AAPL
+npm run db:seed-demo # network-free demo corpus, for verifying the UI
 ```
+
+### Chart overlays
+
+The price chart carries three optional overlays, toggled above it and **off by default**:
+**Volume**, **50d avg** and **200d avg**. Volume comes from the same Yahoo chart response as the
+closes — no extra request — and renders on its own scale pinned to the bottom of the plot, tinted
+by the day's direction, so an event can be read against whether the day actually traded. The
+moving averages are computed client-side from the closes; one whose window is longer than the
+available history draws nothing rather than a partial-window stub.
+
+Dividends and stock splits arrive on that same request (`events=div,splits`) and become
+`corporate_action` events with their own marker, badge and filter chip. Prices from Yahoo are
+split-adjusted, so the line does not step on a split — the marker is the only thing that says it
+happened. That is the point: a mechanical change should never read as a reaction to news.
+
+### Checks
+
+```
+npm run check              # the offline suites: prompts, on-chain, licence gate, refresh windows
+npm run check:ui           # 64 browser checks — needs a seeded database and a dev server
+```
+
+`check:ui` exists because every defect that reached a page in this project was invisible to
+`tsc` and `next build`: a price overlay silently replaced by a notice, a chart that sized itself
+to 2102px on a phone, a filter chip that rendered inactive so its rows never appeared. All of
+them needed data on screen. Seed first (`npm run db:seed-demo`), start `npm run dev`, then run
+it; add `-- --base http://localhost:3001` for a server on another port.
+
+### Refresh windows and the Sources panel
+
+Each source carries its own refresh window (`lib/ingest/refresh.ts`) rather than sharing one
+per-subject TTL. Windows are set by how fast a source actually changes *and* how much quota it
+has, and **quota wins where they disagree** — a feed that is silent because its budget was burned
+is worse than one that is six hours stale. Wikipedia refreshes daily, Chronicling America weekly
+(digitised 1800s newspapers will never change), GNews every six hours against its 100/day cap.
+`npm run check:refresh` asserts the arithmetic, so the table can be argued with.
+
+A `throttled` or `error` attempt does not count as having asked, so a rate-limited feed stays due
+for retry rather than being silenced. Because a refresh may now cover only some sources, the live
+path serves the union from the database and falls back to what it fetched if that read fails.
+
+Every subject page carries a **Sources** panel showing what each feed contributed, when it was
+last asked, and its attribution and licence. The states that matter are the middle two: *nothing
+returned* and *rate limited* look identical on a page without it, which is how a half-broken page
+sends you debugging in the wrong direction.
+
+### On-chain events
+
+Crypto assets are **topic** subjects that happen to carry a price series — the schema bars a
+company without a CIK and ticker, and inventing one would be a lie. A topic with price rows
+renders the same chart a company page does, which is what lets a Bitcoin halving be read against
+the BTC price; ordinary topics have no price rows and are unaffected.
+
+```
+npm run ingest -- --onchain btc     # halvings, dated from the chain
+npm run ingest -- --onchain eth     # network upgrades
+npm run ingest -- --onchain all
+npm run check:onchain               # adapters against canned responses, offline
+```
+
+Sources are raw chain facts and public explorers only — mempool.space and Blockstream for
+Bitcoin, Blockscout for Ethereum, Etherscan for token supply moves. All are `commercialOk: true`,
+and that stays true only while they stay raw: Dune and Nansen sell *aggregations* and their terms
+bar the ad-supported path. Only the stablecoin adapter needs a key (`ETHERSCAN_API_KEY`); without
+it that one adapter sits out and the rest of the on-chain timeline is unaffected.
+
+Every Phase 0 event is years finalized, so there is no reorg risk to reason about yet. A
+confirmation-lag policy has to land before any live feed is added — an orphaned event that a
+synthesis already cites cannot be deleted, by design (`ON DELETE RESTRICT`).
+
+### Seeding without the network
+
+`npm run db:seed-demo` writes a small demo corpus — two companies with a price series, a topic,
+an industry — straight to Postgres through the same upserts ingest uses, with no API calls. It
+exists because most of the UI can only be checked against data on screen, and a machine with no
+keys, no egress, or a rate-limited feed otherwise has nothing to look at.
+
+It seeds *shapes*, not volume: year-only dates (which bucket under the year instead of inventing
+a January day), a clean run of filing-only days (which condense into one cyclable card), a
+pre-IPO era (the "Before the ticker" run-up), and planted >2% single-day price moves with an
+after-close earnings the session before (which is what "Biggest moves" pairs against). It is
+idempotent, never deletes, and only touches the four subjects it owns.
+
+Because the price series only runs 18 months, every seeded history event predates the first
+trading day, so the "Before the ticker" section is larger than it would be against real prices.
 
 ### Bring your own model (visitor-side AI search)
 

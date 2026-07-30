@@ -45,7 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
         <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
             <Link href="/" className="text-lg font-black tracking-tight text-slate-100">
               news&nbsp;<span className="text-sky-400">charts</span>
             </Link>

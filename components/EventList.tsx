@@ -14,6 +14,11 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
   regulation: { label: "Regulation", cls: "bg-rose-500/15 text-rose-400 border-rose-700/50" },
   history: { label: "History", cls: "bg-violet-500/15 text-violet-400 border-violet-700/50" },
   citation: { label: "Cited", cls: "bg-teal-500/15 text-teal-400 border-teal-700/50" },
+  corporate_action: {
+    label: "Corporate action",
+    cls: "bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-700/50",
+  },
+  onchain: { label: "On-chain", cls: "bg-lime-500/15 text-lime-400 border-lime-700/50" },
 };
 
 export function dateAnchorId(date: string) {
@@ -85,6 +90,12 @@ interface Props {
   siteDomain?: string | null;
   /** when set, which sections are collapsed is remembered here across visits */
   persistKey?: string;
+  /**
+   * A date the reader has just jumped to from the chart. Its year and month are opened, because
+   * landing on a collapsed section shows them the header of the thing they asked to see and
+   * nothing else. The counter makes a repeat jump to the same date re-open it.
+   */
+  reveal?: { date: string; n: number } | null;
 }
 
 /** "2026-07-24" → "July 2026". Built from the string parts under UTC so the label never drifts a day across time zones. */
@@ -135,15 +146,19 @@ type Row =
 function buildRows(events: TimelineEvent[], order: "asc" | "desc"): Row[] {
   const byKey = (a: string, b: string) => (order === "desc" ? b.localeCompare(a) : a.localeCompare(b));
 
-  // year -> { months: monthKey -> (date -> events), approx: events | null }
+  // year -> { months: monthKey -> (date -> events), monthOnly: monthKey -> events, approx: events | null }
   const years = new Map<
     string,
-    { months: Map<string, Map<string, TimelineEvent[]>>; approx: TimelineEvent[] | null }
+    {
+      months: Map<string, Map<string, TimelineEvent[]>>;
+      monthOnly: Map<string, TimelineEvent[]>;
+      approx: TimelineEvent[] | null;
+    }
   >();
   const yearOf = (y: string) => {
     let yb = years.get(y);
     if (!yb) {
-      yb = { months: new Map(), approx: null };
+      yb = { months: new Map(), monthOnly: new Map(), approx: null };
       years.set(y, yb);
     }
     return yb;
@@ -152,11 +167,20 @@ function buildRows(events: TimelineEvent[], order: "asc" | "desc"): Row[] {
   for (const ev of events) {
     const year = ev.date.slice(0, 4);
     const yb = yearOf(year);
-    if (ev.yearOnly) {
+    if (ev.precision === "year") {
       (yb.approx ??= []).push(ev);
       continue;
     }
     const monthKey = ev.date.slice(0, 7); // YYYY-MM
+    // The month is known but the day is not. It belongs under its month header, just not on a
+    // specific day — the date was normalised to the 1st purely so it can be sorted and plotted.
+    if (ev.precision === "month") {
+      const bucket = yb.monthOnly.get(monthKey) ?? [];
+      bucket.push(ev);
+      yb.monthOnly.set(monthKey, bucket);
+      yb.months.set(monthKey, yb.months.get(monthKey) ?? new Map());
+      continue;
+    }
     const month = yb.months.get(monthKey) ?? new Map<string, TimelineEvent[]>();
     const day = month.get(ev.date) ?? [];
     day.push(ev);
@@ -182,8 +206,20 @@ function buildRows(events: TimelineEvent[], order: "asc" | "desc"): Row[] {
         continue;
       }
       const month = yb.months.get(section.monthKey)!;
-      const firstDate = [...month.keys()][0];
+      const monthOnly = yb.monthOnly.get(section.monthKey);
+      const firstDate = [...month.keys()][0] ?? `${section.monthKey}-01`;
       rows.push({ kind: "month", key: `m-${section.monthKey}`, label: monthYearLabel(firstDate), year, monthKey: section.monthKey });
+      if (monthOnly) {
+        rows.push({
+          kind: "day",
+          key: `mo-${section.monthKey}`,
+          date: `${section.monthKey}-01`,
+          items: monthOnly,
+          approx: true,
+          year,
+          monthKey: section.monthKey,
+        });
+      }
       for (const date of [...month.keys()].sort(byKey)) {
         rows.push({ kind: "day", key: `d-${date}`, date, items: month.get(date)!, approx: false, year, monthKey: section.monthKey });
       }
@@ -373,6 +409,8 @@ const DOT: Record<EventType, string> = {
   regulation: "bg-rose-400",
   history: "bg-violet-400",
   citation: "bg-teal-400",
+  corporate_action: "bg-fuchsia-400",
+  onchain: "bg-lime-400",
 };
 
 /** Preview of a collapsed section's contents, shown on hover so it can be read without a click. */
@@ -410,7 +448,7 @@ function PeekPopover({
   );
 }
 
-export default function EventList({ events, order = "asc", siteDomain, persistKey }: Props) {
+export default function EventList({ events, order = "asc", siteDomain, persistKey, reveal }: Props) {
   const rows = useMemo(() => condenseFilings(buildRows(events, order)), [events, order]);
 
   // Per-year/-month tallies (so a collapsed header still says how much it hides) plus a small
@@ -470,6 +508,26 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
   };
   const toggleYear = (y: string) => setCollapsedYears((s) => toggle(s, y));
   const toggleMonth = (k: string) => setCollapsedMonths((s) => toggle(s, k));
+
+  // Open whatever contains the jumped-to date. Set-identity is preserved when nothing changes
+  // so this cannot loop, and it runs after the restore pass for the same reason saving does.
+  useEffect(() => {
+    if (!reveal?.date) return;
+    const year = reveal.date.slice(0, 4);
+    const monthKey = reveal.date.slice(0, 7);
+    setCollapsedYears((prev) => {
+      if (!prev.has(year)) return prev;
+      const next = new Set(prev);
+      next.delete(year);
+      return next;
+    });
+    setCollapsedMonths((prev) => {
+      if (!prev.has(monthKey)) return prev;
+      const next = new Set(prev);
+      next.delete(monthKey);
+      return next;
+    });
+  }, [reveal?.date, reveal?.n]);
 
   const allCollapsed = years.length > 0 && years.every((y) => collapsedYears.has(y));
   const toggleAll = () => setCollapsedYears(allCollapsed ? new Set() : new Set(years));
@@ -620,12 +678,26 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
 
           // day row
           if (row.approx) {
-            if (collapsedYears.has(row.year)) return null; // year-only rows are never jump targets
+            if (hidden(row.year, row.monthKey)) return null; // approximate rows are never jump targets
+            // `monthKey` distinguishes the two: a year-only bucket sits directly under the year,
+            // a month-only bucket under its month.
+            const monthPrecision = row.monthKey !== null;
             return (
-              <li key={row.key} id={`d-${row.date.slice(0, 4)}-year`} className="mb-6 scroll-mt-24">
+              <li
+                key={row.key}
+                id={monthPrecision ? `d-${row.monthKey}-month` : `d-${row.date.slice(0, 4)}-year`}
+                className="mb-6 scroll-mt-24"
+              >
                 <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
-                <span className="text-xs font-semibold italic text-slate-500" title="The source gave only the year">
-                  Year only
+                <span
+                  className="text-xs font-semibold italic text-slate-500"
+                  title={
+                    monthPrecision
+                      ? "The source gave a month but no day"
+                      : "The source gave only the year"
+                  }
+                >
+                  {monthPrecision ? "Day not given" : "Year only"}
                 </span>
                 <ul className="mt-2 space-y-2">
                   {row.items.map((ev) => (

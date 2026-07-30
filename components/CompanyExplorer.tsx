@@ -18,6 +18,7 @@ const FILTERS: { key: EventType; label: string }[] = [
   { key: "filing", label: "Filings" },
   { key: "news", label: "News" },
   { key: "regulation", label: "Sector rules" },
+  { key: "corporate_action", label: "Splits & dividends" },
 ];
 
 const ALL_TYPES = FILTERS.map((f) => f.key);
@@ -39,11 +40,15 @@ interface Props {
 }
 
 export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
-  const [active, setActive] = useState<Set<EventType>>(
-    new Set<EventType>(["history", "citation", "press", "earnings", "filing", "news", "regulation"])
-  );
+  // Derived from FILTERS, never a second hand-written list: this defaulted to a literal of the
+  // seven kinds that existed when it was written, so adding an eighth left it filtered out by
+  // default — its chip rendered, inactive, and its rows never appeared. `Set<EventType>` cannot
+  // be checked for exhaustiveness, so the type system could not catch that.
+  const [active, setActive] = useState<Set<EventType>>(() => new Set<EventType>(ALL_TYPES));
   const pathname = usePathname();
   const [copied, setCopied] = useState(false);
+  // the date the chart last jumped to, so the list can open whatever contains it
+  const [reveal, setReveal] = useState<{ date: string; n: number } | null>(null);
   // the angle a natural-language search prompt carried in ("in the united states")
   const [focusHint, setFocusHint] = useState<string | null>(null);
 
@@ -95,15 +100,23 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
     (date: string) => {
       // jump to the nearest event group at or before the clicked trading day
       const dates = [...new Set(filtered.map((e) => e.date))].sort();
+      if (!dates.length) return;
       let target: string | null = null;
       for (const d of dates) {
         if (d <= date) target = d;
         else break;
       }
-      const el = document.getElementById(dateAnchorId(target ?? dates[0]));
-      el?.scrollIntoView({ behavior: "smooth", block: "start" });
-      el?.classList.add("ring-1", "ring-sky-500");
-      setTimeout(() => el?.classList.remove("ring-1", "ring-sky-500"), 2000);
+      const landing = target ?? dates[0];
+      // Ask the list to open the section first. Scrolling into a still-collapsed section put
+      // the reader on the header of the thing they clicked and nothing else.
+      setReveal((r) => ({ date: landing, n: (r?.n ?? 0) + 1 }));
+      // one tick, so the expansion has rendered and the anchor is at its final position
+      setTimeout(() => {
+        const el = document.getElementById(dateAnchorId(landing));
+        el?.scrollIntoView({ behavior: "smooth", block: "start" });
+        el?.classList.add("ring-1", "ring-sky-500");
+        setTimeout(() => el?.classList.remove("ring-1", "ring-sky-500"), 2000);
+      }, 0);
     },
     [filtered]
   );
@@ -164,7 +177,9 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
           initialInstruction={focusHint ?? undefined}
         />
       </div>
-      <div className="mb-4 flex items-center gap-2">
+      {/* flex-wrap so the type chips stack on a phone instead of running off the side —
+          TopicExplorer's equivalent row already wraps. */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <h2 className="mr-2 text-lg font-bold text-slate-100">Timeline</h2>
         {FILTERS.map((f) => {
           // hide chips with nothing behind them — a company with no Wikipedia story
@@ -198,7 +213,12 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
             : `${ranked.length} of ${filtered.length} events`}
         </span>
       </div>
-      <EventList events={ranked} siteDomain={siteDomain} persistKey={`news-charts:collapse:${pathname}`} />
+      <EventList
+        events={ranked}
+        siteDomain={siteDomain}
+        persistKey={`news-charts:collapse:${pathname}`}
+        reveal={reveal}
+      />
     </div>
   );
 }

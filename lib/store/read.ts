@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { getPool } from "../db";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
-import { EventType, PricePoint, TimelineEvent } from "../types";
+import { DatePrecision, EventType, PricePoint, SourceKey, TimelineEvent } from "../types";
 
 export interface SubjectRow {
   id: number;
@@ -14,6 +14,118 @@ export interface SubjectRow {
   summary: string | null;
   siteDomain: string | null;
   refreshedAt: Date | null;
+}
+
+/**
+ * When each source was last asked about this subject, for the per-source refresh windows.
+ * Only successful-ish attempts count as "asked": an `error` row means we never got an answer,
+ * and treating that as a fresh fetch would silence a broken feed for hours.
+ */
+export async function loadLastFetched(subjectId: number): Promise<Map<SourceKey, Date>> {
+  const { rows } = await getPool().query<{ key: SourceKey; fetched_at: Date }>(
+    `SELECT DISTINCT ON (s.key) s.key, f.fetched_at
+       FROM source_fetches f
+       JOIN sources s ON s.id = f.source_id
+      WHERE f.subject_id = $1 AND f.outcome IN ('ok','empty')
+      ORDER BY s.key, f.fetched_at DESC`,
+    [subjectId]
+  );
+  return new Map(rows.map((r) => [r.key, r.fetched_at]));
+}
+
+export interface SourceContribution {
+  key: SourceKey;
+  name: string;
+  license: string;
+  attribution: string;
+  /** events on this subject's timeline that this source attests */
+  events: number;
+  lastFetchedAt: Date | null;
+  lastOutcome: string | null;
+}
+
+/**
+ * What each source actually contributed to this subject, and how its last attempt went.
+ *
+ * A page rendering with three of eleven feeds down looks completely healthy, which sends
+ * anyone debugging it in the wrong direction. This is the data that tells them apart, and it
+ * doubles as the per-source attribution the licences ask for.
+ */
+export async function loadSourceContributions(subjectId: number): Promise<SourceContribution[]> {
+  const { rows } = await getPool().query<{
+    key: SourceKey;
+    name: string;
+    license: string;
+    attribution: string;
+    events: string;
+    fetched_at: Date | null;
+    outcome: string | null;
+  }>(
+    `WITH contributed AS (
+       SELECT a.source_id, count(DISTINCT e.id) AS events
+         FROM event_subjects es
+         JOIN events e ON e.id = es.event_id
+         JOIN event_attestations a ON a.event_id = e.id
+        WHERE es.subject_id = $1
+        GROUP BY a.source_id
+     ),
+     latest AS (
+       SELECT DISTINCT ON (source_id) source_id, fetched_at, outcome
+         FROM source_fetches
+        WHERE subject_id = $1
+        ORDER BY source_id, fetched_at DESC
+     )
+     SELECT s.key, s.name, s.license, s.attribution,
+            COALESCE(c.events, 0) AS events,
+            l.fetched_at, l.outcome
+       FROM sources s
+       LEFT JOIN contributed c ON c.source_id = s.id
+       LEFT JOIN latest l ON l.source_id = s.id
+      WHERE c.events IS NOT NULL OR l.source_id IS NOT NULL
+      ORDER BY COALESCE(c.events, 0) DESC, s.name`,
+    [subjectId]
+  );
+  return rows.map((r) => ({
+    key: r.key,
+    name: r.name,
+    license: r.license,
+    attribution: r.attribution,
+    events: Number(r.events),
+    lastFetchedAt: r.fetched_at,
+    lastOutcome: r.outcome,
+  }));
+}
+
+/**
+ * The database mirror of `resolveCompany`, for companies already ingested.
+ *
+ * `loadSubject` matches a slug or a recorded alias, which only helps a visitor who types the
+ * ticker — nothing ever records "Ford" as an alias of `f`. This matches the way people actually
+ * search, on the same three rungs the EDGAR lookup uses: exact ticker, exact name, then a name
+ * prefix ("Ford" → "Ford Motor Company"). Prefix hits prefer the shortest name, so "Ford" lands
+ * on Ford Motor Company rather than a longer namesake.
+ *
+ * Ordered before the live EDGAR call so search keeps working when that file is throttled.
+ */
+export async function findKnownCompany(
+  query: string
+): Promise<{ ticker: string; displayName: string } | null> {
+  const q = query.trim();
+  if (!q) return null;
+  const { rows } = await getPool().query<{ ticker: string; display_name: string }>(
+    `SELECT ticker, display_name
+       FROM subjects
+      WHERE kind = 'company' AND ticker IS NOT NULL
+        AND (upper(ticker) = upper($1)
+             OR lower(display_name) = lower($1)
+             OR display_name ILIKE $1 || ' %')
+      ORDER BY (upper(ticker) = upper($1)) DESC,
+               (lower(display_name) = lower($1)) DESC,
+               length(display_name)
+      LIMIT 1`,
+    [q]
+  );
+  return rows[0] ? { ticker: rows[0].ticker, displayName: rows[0].display_name } : null;
 }
 
 export async function loadSubject(slug: string): Promise<SubjectRow | null> {
@@ -83,7 +195,7 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
           ? `${r.body ? `${r.body} · ` : ""}${attestations} sources`
           : r.body ?? undefined,
       imageUrl: r.image_url ?? undefined,
-      yearOnly: r.date_precision === "year",
+      precision: r.date_precision as DatePrecision,
     } satisfies TimelineEvent;
   });
 }
@@ -117,7 +229,7 @@ export async function loadSectorEvents(industryId: number): Promise<TimelineEven
     url: r.url ?? undefined,
     description: "sector-wide",
     imageUrl: r.image_url ?? undefined,
-    yearOnly: r.date_precision === "year",
+    precision: r.date_precision as DatePrecision,
   }));
 }
 
@@ -257,14 +369,14 @@ export async function loadIndustryEvents(industryId: number): Promise<TimelineEv
       url: r.url ?? undefined,
       description:
         peers > 1 ? `${r.tickers} · ${peers} peers` : (r.tickers ?? "sector-wide"),
-      yearOnly: r.date_precision === "year",
+      precision: r.date_precision as DatePrecision,
     } satisfies TimelineEvent;
   });
 }
 
 export async function loadPrices(subjectId: number): Promise<PricePoint[]> {
   const { rows } = await getPool().query(
-    `SELECT on_date, close FROM prices WHERE subject_id = $1 ORDER BY on_date`,
+    `SELECT on_date, close, volume FROM prices WHERE subject_id = $1 ORDER BY on_date`,
     [subjectId]
   );
   return rows.map((r) => ({
@@ -273,6 +385,8 @@ export async function loadPrices(subjectId: number): Promise<PricePoint[]> {
         ? r.on_date.toISOString().slice(0, 10)
         : String(r.on_date).slice(0, 10),
     value: Number(r.close),
+    // bigint arrives as a string from pg; rows persisted before volume was plumbed have none
+    ...(r.volume == null ? {} : { volume: Number(r.volume) }),
   }));
 }
 

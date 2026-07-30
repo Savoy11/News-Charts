@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { CompareSubject } from "@/lib/compare";
 import type { TimelineEvent } from "@/lib/types";
 import PriceOverlay, { A_COLOR, B_COLOR } from "./PriceOverlay";
+import PriceTimeline from "./PriceTimeline";
 
 const LIST_CAP = 60;
 
@@ -142,6 +143,21 @@ function InterleavedList({ a, b }: { a: CompareSubject; b: CompareSubject }) {
 export default function CompareView({ a, b }: { a: CompareSubject; b: CompareSubject }) {
   const bothCompanies = a.prices.length > 0 && b.prices.length > 0;
 
+  /**
+   * One side has a price series, the other has the events — "Donald Trump presidency against
+   * Ford stock". This is the compose the product was missing: the company supplies the axis,
+   * the topic supplies what happened, and neither is a new page type.
+   *
+   * Only the *other* subject's events are plotted, deliberately. Markers are coloured by event
+   * kind, not by which subject they came from, so merging both sides' events would produce a
+   * chart where a Ford filing and a Trump speech are indistinguishable — the reader could not
+   * tell which claim they were looking at. The priced subject's own timeline is one click away
+   * on its own page.
+   */
+  const priced = !bothCompanies ? (a.prices.length > 0 ? a : b.prices.length > 0 ? b : null) : null;
+  const eventful = priced ? (priced === a ? b : a) : null;
+  const composable = priced !== null && eventful !== null && eventful.events.length > 0;
+
   return (
     <div className="space-y-6">
       {bothCompanies ? (
@@ -149,10 +165,25 @@ export default function CompareView({ a, b }: { a: CompareSubject; b: CompareSub
           a={{ label: a.label, prices: a.prices, color: A_COLOR }}
           b={{ label: b.label, prices: b.prices, color: B_COLOR }}
         />
+      ) : composable ? (
+        <section>
+          <div className="mb-2">
+            <h3 className="text-sm font-bold text-slate-200">
+              {eventful!.label} events against {priced!.label}
+            </h3>
+            <p className="text-xs text-slate-500">
+              {eventful!.label} supplies the events; {priced!.label} supplies the price. Lining
+              two subjects up in time shows coincidence, not cause — the same rule as Biggest
+              moves.
+            </p>
+          </div>
+          <PriceTimeline prices={priced!.prices} events={eventful!.events} />
+        </section>
       ) : (
         <p className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-500">
-          Price overlay is shown when both sides are public companies. Here it’s the event
-          timelines below that line up.
+          {priced
+            ? `${eventful?.label ?? "The other subject"} has no events to plot yet, so it’s the timelines below that line up.`
+            : "Neither side has a price series, so it’s the event timelines below that line up."}
         </p>
       )}
 

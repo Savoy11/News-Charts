@@ -28,11 +28,55 @@ const FILLERS = [
   /^pull\s+up\s+/i,
   /^bring\s+up\s+/i,
   /^what(?:'s|’s|\s+is)\s+/i,
+  /^what\s+(?:was|were|are)\s+/i,
 ];
 
 // "the history of X", "a timeline of X", "origins of X" — the noun is the wrapper, X is the subject
 const LEAD_IN =
   /^(?:the\s+|a\s+)?(?:history|story|timeline|evolution|origins?|background)\s+(?:of|behind|about)\s+(?:the\s+)?/i;
+
+/**
+ * Relational questions — "Barack Obama's effect on Ford stock", "how did tariffs affect GM".
+ *
+ * These are the product's own use case phrased as a question, and they used to fall through
+ * entirely: the whole sentence went to `resolveCompany`, missed, and was handed to Wikipedia,
+ * which fuzzy-matched something unrelated. The visitor got a confidently wrong page.
+ *
+ * **The subject is the thing being affected**, because that is the side we can actually draw —
+ * it has the timeline and, for a company, the price series. The influence becomes the focus,
+ * which seeds the AI panel so the angle isn't dropped. (A true two-subject overlay — a topic's
+ * events against a company's price — is the separate `P1` item in the owner backlog.)
+ *
+ * Ordered: "effect of X on Y" must be tried before "X effect on Y", or the former's "the
+ * effect of X" would be read as the influencer.
+ */
+const RELATIONS = [
+  /^(?:the\s+)?(?:effects?|impacts?|influence|role)\s+of\s+(.+?)\s+on\s+(.+)$/i,
+  /^how\s+(?:did|does|do|has|have|had)\s+(.+?)\s+(?:affects?|affected|impacts?|impacted|influenced?|changed?|moved?|hurt|helped?)\s+(.+)$/i,
+  /^(?:did|does|do|has|have|had)\s+(.+?)\s+(?:affects?|impacts?|influence|move|hurt|help)\s+(.+)$/i,
+  /^(.+?)(?:['’]s)?\s+(?:effects?|impacts?|influence)\s+on\s+(.+)$/i,
+];
+
+/**
+ * "Ford stock" is how people refer to a company; the EDGAR ticker index knows "Ford". Leaving
+ * the suffix on turned a resolvable company into a Wikipedia guess — plain "Ford" resolves,
+ * "Ford stock" did not.
+ */
+const STOCK_SUFFIX = /\s+(?:stock\s+price|share\s+price|stock|shares|share|ticker|equity)$/i;
+
+/**
+ * Compounds where the trailing word is part of the name, not a way of saying "the company".
+ * The trade is deliberate: mis-stripping sends a rare topic to a near-miss page, while not
+ * stripping sends every "<company> stock" query to a junk match.
+ */
+const STOCK_COMPOUNDS = /^(?:rolling|livestock|laughing)\s+stock$/i;
+
+function stripStockSuffix(subject: string): string {
+  if (STOCK_COMPOUNDS.test(subject)) return subject;
+  const next = subject.replace(STOCK_SUFFIX, "").trim();
+  // never strip away the entire query ("stock", "shares")
+  return next ? next : subject;
+}
 
 // where the subject ends and the qualifier begins; earliest match wins
 const QUALIFIERS = [
@@ -70,6 +114,17 @@ export function parseSearchPrompt(raw: string): ParsedPrompt {
   // "alibaba's history" / "alibaba history" — wrapper trailing instead of leading
   s = s.replace(/['’]s\s+(?:history|story|timeline)$/i, "").replace(/\s+(?:history|timeline)$/i, "");
 
+  // A relational question names two things; the affected one is the subject we can draw.
+  let relationFocus: string | null = null;
+  for (const r of RELATIONS) {
+    const m = s.match(r);
+    if (m && m[1]?.trim() && m[2]?.trim()) {
+      relationFocus = m[1].trim();
+      s = m[2].trim();
+      break;
+    }
+  }
+
   // split subject from qualifier at the earliest marker (subject must keep ≥ 1 word)
   let subject = s;
   let focus: string | null = null;
@@ -85,8 +140,12 @@ export function parseSearchPrompt(raw: string): ParsedPrompt {
     focus = s.slice(at).trim() || null;
   }
 
-  subject = subject.trim();
+  subject = stripStockSuffix(subject.trim());
   // over-stripped to nothing — fall back to the raw query rather than search for ""
   if (!subject) return { subject: raw.trim(), focus: null };
-  return { subject, focus };
+
+  // both angles survive when a prompt carries a relation and a qualifier
+  // ("impact of tariffs on Ford in 2025")
+  const parts = [relationFocus, focus].filter(Boolean) as string[];
+  return { subject, focus: parts.length ? parts.join(" · ") : null };
 }

@@ -59,7 +59,7 @@ export default async function IndustryPage({ params }: { params: { slug: string 
           </p>
           <h1 className="text-2xl font-black leading-tight text-slate-100">{industry.name}</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <FollowBar
             subject={{ href: `/industry/${slug}`, kind: "industry", label: industry.name }}
             signature={{ count: events.length, latest: latestDate(events) }}

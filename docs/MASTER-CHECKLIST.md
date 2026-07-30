@@ -3,7 +3,7 @@
 The governing checklist for the **News Charts** project: a single place to track initiatives,
 priorities, and progress. Add to it, check things off, re-prioritise. This is a living doc.
 
-**Last updated:** 2026-07-25
+**Last updated:** 2026-07-28
 
 ## Scope & independence
 
@@ -21,47 +21,57 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
   **Efficiency** (ROI — value ÷ effort), **Practicality** (readiness — dependencies, risk, is it
   already built). Priority is the net of the three.
 - Check a box when done; add sub-bullets for notes/links as we go.
+- **Check the box in the same change that ships the work.** A 2026-07-28 audit against the code
+  found seven items sitting open that were already built — including this initiative's own
+  headline `P0` (Wikipedia citation mining, shipped in PR #9) — plus one item duplicated across
+  two sections. A checklist that overstates what is left is as misleading as one that overstates
+  what is done: it hides the real remaining work behind noise.
 
 ---
 
-## Project state & prioritized backlog (from PR review — 2026-07-25)
+## Project state & prioritized backlog (opened 2026-07-25 · cleared 2026-07-28)
 
-**Where News Charts stands.** The data layer is real — 5 SQL migrations (`db/001`–`005`) plus a
-full script suite (`ingest`, `score`, `signals`, `explain`, `plan`). But **all 7 feature PRs
-(#1–#7) are open, unmerged drafts**, and every one says *"not yet eyeballed in a live browser
-against a seeded DB."* So the value is built but unshipped, and the blocker is verification, not
-coding. (The `docs/EVENTS-SCHEMA.md` "not yet applied" header is stale — migrations exist.)
+**Where News Charts stands.** The data layer is real — 7 SQL migrations (`db/001`–`007`) plus a
+full script suite (`ingest`, `score`, `signals`, `explain`, `plan`). The feature backlog that
+opened this section is **done**: PRs #1–#7 all merged 2026-07-25, #9 (citation mining, NL
+prompts, pre-IPO story, chart interaction, eight news repositories) merged 2026-07-27, and #11
+(the News Charts rename) merged 2026-07-28. The verification each of those PRs deferred —
+*"not yet eyeballed in a live browser against a seeded DB"* — has now happened; see below.
 
-Prioritized, most-important first. For a **traffic/ad-funded** product, discoverability and
-retention outrank polish.
+- [x] ~~`P0` Merge #4 (SEO) · #6 (follow) · #7 (settings copy) · #1 (grouping) · #5 (compare) ·
+      #2 (stacking) · #3 (biggest moves), and coordinate the #4/#5/#6 nav conflicts~~ — **all
+      merged 2026-07-25**; the nav/header conflicts were resolved keeping every link and control.
+- [x] **`P0` Stand up a seeded environment and verify the merged work in a live browser.**
+      Done 2026-07-28. `npm run db:seed-demo` (new) writes a network-free demo corpus through the
+      same upserts ingest uses — two companies with a price series carrying planted >2% moves, a
+      crowded topic, an industry, plus the *shapes* features depend on (year-only dates, a clean
+      run of filing-only days, a pre-IPO era). All 7 migrations applied to a fresh `news_charts`
+      database; every route rendered from the database; 22 browser checks passed with **no console
+      errors**; no horizontal overflow at 390px or 1440px. What this **cannot** cover: live feed
+      behaviour against real API keys — egress to GDELT/Wikipedia/SEC/Yahoo is blocked from the
+      build container, so that half stays in the ⛔ feed gate below and needs the owner's machine.
 
-- [ ] `P0` **Stand up a seeded environment and verify the 7 open PRs live.** *Importance:*
-      critical — it unblocks *all* of #1–#7 at once (each is code-/build-verified but not
-      browser-verified). *Efficiency:* high — one-time Postgres + migrate + ingest a few subjects.
-      *Practicality:* high. **Do this first; it gates everything below.**
-- [ ] `P0` **Merge #4 — SEO + shareable URLs + dynamic OG images.** *Importance:* highest —
-      discoverability **is** the revenue model for an ad-funded site (metadata, sitemap, robots,
-      `/explore`, JSON-LD, social cards). *Efficiency:* high (done, `next build` verified).
-      *Practicality:* merge this **first of the #4/#5/#6 trio** to set the nav/header baseline.
-- [ ] `P1` **Merge #6 — Follow subjects + "new since your last visit."** *Importance:* high —
-      retention hook → return visits → more ad impressions, with no accounts/server state.
-      *Practicality:* resolve the nav/header conflict against #4 (keep both).
-- [ ] `P1` **Merge #7 — settings copy fix** ("nothing leaves your machine" was misleading; timeline
-      data is fetched online). *Importance:* med (honesty/trust) · *Efficiency:* very high (copy-only)
-      · *Practicality:* trivial. **Easy win.**
-- [ ] `P1` **Merge #1 — EventList year→month→day grouping.** *Importance:* med (readability of the
-      core view) · *Efficiency:* high (small, presentational) · *Practicality:* high, no conflicts.
-- [ ] `P2` **Merge #5 — Compare two subjects (`/compare`).** *Importance:* med-high (differentiating
-      feature; makes `price_divergence` visual) · *Practicality:* third of the nav-conflict trio.
-- [ ] `P2` **Merge #2 — timeline stacking + settings + mini-map.** *Importance:* med (UX for busy
-      periods) · *Efficiency:* med (largest presentational surface) · *Practicality:* independent.
-- [ ] `P2` **Merge #3 — "Biggest moves" panel** on company pages. *Importance:* med (surfaces
-      catalysts) · *Practicality:* independent, derived-only.
-- [ ] `P1` **Coordinate the #4/#5/#6 nav/header merge conflicts** — all three edit `app/layout.tsx`
-      and subject headers. Merge in order (#4 → #6 → #5), keeping every header link/control at each step.
+**Three real defects the browser pass found, all fixed** (none were visible to `tsc`, `next
+build`, or the offline parser tests — they only appear with data on screen):
 
-> The **On-chain events** initiative below is a new P1 build — schedule it after (or alongside)
-> clearing this backlog, since the pending PRs are already-sunk work waiting only on verification.
+- [x] **`/compare` silently dropped its price overlay.** `loadCompareSubject` asked the network
+      (`resolveCompany` → EDGAR ticker file) whether a query was a company *before* asking the
+      database. With EDGAR throttled or unreachable, a real ticker fell through to the topic
+      branch — which still found the company by slug and rendered it as a topic with no prices —
+      so the page lost the growth-of-100 overlay that is the entire point of `/compare`, while
+      `/company/<ticker>` beside it rendered fine from the same rows. Now database-first, like
+      every other loader.
+- [x] **Company pages scrolled sideways on a phone (2102px in a 390px viewport).** The price
+      chart is created without an explicit width and sizes itself from its container, then writes
+      that width back as inline px. Inside a grid item — which defaults to `min-width:auto` and so
+      cannot shrink below its content — the two fed each other until the column settled ~2000px.
+      Fixed with `min-w-0` on the column; also wrapped the company type-filter row (`TopicExplorer`
+      already wrapped its equivalent) and let the subject header row and search input shrink.
+- [x] **Subject header rows overflowed ~15px on a phone** — `flex-wrap` on the company/topic/
+      industry header rows and `min-w-0` on the search input.
+
+> The **On-chain events** initiative below is the next P1 build; with this backlog cleared it is
+> no longer competing with already-sunk work.
 
 ---
 
@@ -87,10 +97,39 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
       (adapter degrades gracefully to off).
 - [ ] **Yahoo Finance RSS** — gray zone (headline+link+date with click-through). Review the ToS at
       ship time; if uncomfortable, disable the adapter.
-- [ ] Keyless public-domain / open sources — SEC EDGAR, Federal Register, Chronicling America,
-      Wikipedia (CC BY-SA, attribution rendered), GDELT — nothing to do, confirm attribution shows.
-- [ ] Optional hardening: build a `COMMERCIAL_MODE=true` env flag that refuses to fetch from any
-      source flagged `commercialOk: false`, so a forgotten key can't cause non-compliance.
+- [x] Keyless public-domain / open sources — SEC EDGAR, Federal Register, Chronicling America,
+      Wikipedia (CC BY-SA), GDELT — nothing to license. **Attribution confirmed rendering**
+      2026-07-28 against the seeded corpus: every event row carries its source label and an
+      outward link (84 on one company page — "Wikipedia: History of Ford Motor Company",
+      "Chronicling America: Detroit Free Press", "SEC EDGAR", "Federal Register", outlet names
+      for news), and the footer credits Yahoo, SEC EDGAR, GDELT, the Library of Congress and
+      Wikipedia's CC BY-SA. The rendering path is the same whatever a row was fetched from, so
+      this holds for live data too — what it does *not* prove is that each live adapter labels
+      its rows the way the seed does, which is the inconsistency the owner-backlog
+      source-labelling item is about.
+- [x] ~~Optional hardening:~~ **`COMMERCIAL_MODE=true` is built** (2026-07-28) — and it was not
+      optional, because it turned out to be the *only* thing guarding the path that matters.
+      `assertCommercialOk` refuses non-commercial sources in `scripts/ingest.ts`, but **the site
+      does not ingest to render**: `lib/page-data.ts` calls all eight keyed adapters directly on
+      the page-render path, where nothing checked a licence. So every page view already fetches
+      from eight non-commercially-licensed APIs, and the day ads go live that becomes a
+      compliance problem with no code change to blame.
+      Now every keyed adapter takes its key from `licensedKey()` rather than `process.env`, and
+      with the flag on the key is withheld — the same signal as "no key", which every adapter
+      already degrades from cleanly, so switching it on can empty a feed but never break a page.
+      - Verify with `npm run check:commercial-mode`: it gives all eight adapters a valid-looking
+        key, turns the flag on, and asserts **no request is attempted at all** — then turns it
+        off and asserts they do fetch, so a gate that is simply broken-on cannot pass. Offline
+        (fetch is mocked), so it needs no keys and no network. 16/16 passing.
+      - `scripts/check-feeds.ts` now reports *why* a feed sat out ("blocked by COMMERCIAL_MODE"
+        vs "no KEY set") instead of showing an indistinguishable empty result.
+      - ⚠ The flag enforces the `commercialOk` flags; it does not judge them. Yahoo Finance RSS
+        is flagged `true` today (the "gray zone" item above), so it keeps fetching — settle that
+        call rather than assuming the flag covers it.
+- [ ] `P0` **Turn `COMMERCIAL_MODE=true` on in production the same day anything earns money.**
+      The flag is built and tested but is **off by default**, which is right for development and
+      wrong the moment an ad renders. Pair it with the affiliate item further down — that item's
+      "recognise what this triggers" note is this switch.
 - [ ] Get a real legal review of the above before revenue flows — the flags encode a practical
       reading of published terms, not legal advice.
 
@@ -103,8 +142,14 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
 - [ ] Keys valid under production quotas (Newsdata 200/day, GNews 100/day, NYT/Guardian limits)
       with the 6h/1h cache windows doing the rate-limiting.
 - [ ] Dedup sanity: the same story from two repositories collapses to one event (URL dedup).
-- [ ] Attribution renders on every surface (source label + outward link on list rows, cards,
-      chart popup).
+- [x] Attribution renders on every surface — **all three verified 2026-07-28** against the
+      seeded corpus. List rows and cards: 84 outward links on one company page, each with its
+      source label. Chart crosshair popup: sweeping the price line pops the day's events, each
+      showing its source ("SEC EDGAR") and wrapped in an outward link. Footer credits every
+      source family including Wikipedia's CC BY-SA. What this does **not** prove is that each
+      *live* adapter labels its rows the way the seed does — that inconsistency (GDELT reports
+      bare domains, NYT/Guardian report publication names) is the owner-backlog
+      source-labelling item, and it stays open.
 - [ ] Run from the production host, not a dev box — several sources behave differently from
       datacenter IPs.
 
@@ -126,33 +171,72 @@ idempotent for free.
 
 ### Open decisions
 
-- [ ] `P0` **Subject model for coins/protocols:** `kind='topic'` with slug (`ethereum`, `usdc`)
-      vs. a new `subject_kind`. (Leaning: reuse `topic` — no migration, inherits
-      timelines/scoring.)
-- [ ] `P0` **New `event_kind`:** add `'onchain'` to the enum (migration) vs. reuse an existing
-      kind. (Leaning: dedicated `'onchain'` for filtering/attribution.)
+- [x] ~~`P0` **Subject model for coins/protocols**~~ — **decided 2026-07-28: reuse `topic`**, as
+      the leaning suggested, but for a firmer reason than "no migration". The schema bars
+      `kind='company'` without a CIK *and* a ticker, neither of which a crypto asset has and
+      neither of which it would be honest to invent; a new `subject_kind` would mean a migration
+      plus a fourth page type inheriting none of the timeline, scoring, SEO or follow behaviour
+      topics already have.
+      - ⚠ **The north star's "works out of the box" was not true.** Pegging events to a price
+        chart was a *company-page* feature — `TopicExplorer` had no chart at all — so modelling
+        crypto as a topic would have silently lost the one thing that makes a halving worth
+        plotting. `TopicExplorer` now renders the price chart when a subject has price rows.
+        Ordinary topics have none and are untouched, and Yahoo quotes crypto on the same chart
+        endpoint (`BTC-USD`), so the series and its overlays came free.
+- [x] ~~`P0` **New `event_kind`**~~ — **decided: dedicated `'onchain'`** (`db/009`). A news event
+      is someone's *report* of a thing; an on-chain event *is* the thing, and its attestation is
+      a block or transaction anyone can re-verify without trusting us or a publisher. Worth
+      showing a reader, and worth filtering on.
 - [ ] `P1` **Confirmation lag / finality policy:** how many blocks (or "finalized" tag) before an
-      event is ingestable, to avoid reorg orphans.
-- [ ] `P1` **Address label source:** hand-maintained provenance map vs. Etherscan labels vs.
-      both. Where does the canonical map live?
+      event is ingestable, to avoid reorg orphans. **Still open, and deliberately not needed
+      yet:** every Phase 0 event is years finalized (the most recent is the April 2024 halving),
+      which is exactly why the phase was scoped this way. The policy must land *before* Phase 1's
+      live stablecoin feed, not after — an orphaned event that a synthesis already cites cannot
+      be deleted (`ON DELETE RESTRICT`).
+- [x] ~~`P1` **Address label source**~~ — **decided for Phase 0: hand-maintained only**
+      (`lib/onchain/addresses.ts`), each entry carrying *why* we believe it. Etherscan's labels
+      were rejected for now: republishing an explorer's tag without being able to show our work
+      turns someone else's guess into a factual claim on our timeline about who moved money.
+      Rule for adding one: identifiable from the issuer's own documentation or an on-chain role,
+      never from an explorer tag alone. Revisit if hand-maintenance stops scaling in Phase 1.
 
-### Phase 0 — Foundations & spike (free, zero reorg risk) · `P0`
+### Phase 0 — Foundations & spike (free, zero reorg risk) · `P0` — **built 2026-07-28**
 
-Prove the chart-overlay value on long-finalized events with no spend.
+Prove the chart-overlay value on long-finalized events with no spend. Built; **live explorer
+calls are unverified** — egress to mempool.space, Blockscout and Etherscan is blocked from this
+container, so the adapters are verified against canned responses (`npm run check:onchain`, 22
+checks) and the UI against seeded rows. One `npm run ingest -- --onchain all` on a networked
+machine closes that gap.
 
-- [ ] `P0` Add `'onchain'` to the `event_kind` enum + migration (`scripts/gen-migration.mjs`).
-- [ ] `P0` Register an `onchain` entry in `SOURCES` (`lib/ingest/store.ts`) with
-      `commercialOk: true`, license = "public domain (on-chain facts)", attribution per chain.
-- [ ] `P0` Seed 3–4 crypto subjects (`btc`, `eth`, `usdc`) as `topic` subjects with slugs + aliases.
-- [ ] `P0` **BTC halvings** adapter (keyless): 2012/2016/2020/2024 via mempool.space /
-      Blockstream Esplora, with on-chain block links.
-- [ ] `P0` **ETH network milestones** adapter: Frontier (2015), The Merge (2022), Shanghai,
-      Dencun — dates + block links.
-- [ ] `P0` **One stablecoin's mints/burns** (USDC `Transfer` from/to treasury) via Etherscan free
-      key, curated to material sizes only.
-- [ ] `P0` Verify events render on the timeline **pegged to the price chart** (BTC halving on BTC
-      price = the demo).
-- [ ] `P0` Confirm dedup/idempotency: re-run ingest, confirm updates not duplicates.
+- [x] ~~`P0` Add `'onchain'` to the `event_kind` enum + migration~~ — spec + `db/009`.
+- [x] ~~`P0` Register an `onchain` entry in `SOURCES`~~ — id 15, `commercialOk: true`,
+      "public domain (on-chain facts)", attribution naming each explorer.
+- [x] ~~`P0` Seed 3–4 crypto subjects as `topic` subjects with slugs + aliases~~ — `btc`, `eth`,
+      `usdc` in `lib/onchain/index.ts`, ingested by `npm run ingest -- --onchain <slug|all>`.
+- [x] ~~`P0` **BTC halvings** adapter (keyless)~~ — heights are protocol constants (every 210,000
+      blocks) but the **dates come from the chain**, because a halving happens when the block is
+      mined. mempool.space first, Blockstream Esplora as fallback (same Esplora API, so the
+      fallback is a base-URL swap). A height above the tip has no block, so a *future* halving
+      drops out on its own — no date arithmetic to get wrong, and nothing scheduled is ever
+      published as though it had happened.
+- [x] ~~`P0` **ETH network milestones** adapter~~ — Frontier, The Merge, Shanghai/Capella, Dencun.
+      *Which* blocks matter is curated (an upgrade happens when the network agrees it does); the
+      **date is read from the chain** via Blockscout, keyless, with the published date as a
+      fallback only when the explorer is unreachable. A settled historical fact should not vanish
+      because an explorer is down.
+- [x] ~~`P0` **One stablecoin's mints/burns** via Etherscan free key~~ — USDC `Transfer` to/from
+      the null address, floored at $100m. The floor is load-bearing: USDC mints hundreds of times
+      a month and an un-floored feed would bury a timeline in treasury housekeeping. The only
+      Phase 0 adapter needing a key; without `ETHERSCAN_API_KEY` it returns nothing and the rest
+      of the on-chain timeline is unaffected.
+- [x] ~~`P0` Verify events render **pegged to the price chart**~~ — the demo works: `/topic/btc`
+      shows the April 2024 halving marked on the BTC price series. **This is what forced the
+      subject-model decision above** — topics had no chart, so "works out of the box" was untrue
+      until `TopicExplorer` learned to render one for subjects that have prices.
+- [x] ~~`P0` Confirm dedup/idempotency~~ — identity is the *chain* fact, never our wording: a
+      halving keys on `btc-block-840000`, a supply move on its transaction hash. Re-running the
+      seed reports `0 new`, and the fixture tests assert the dedup basis never contains a title we
+      might later reword.
 
 ### Phase 1 — Curated on-chain adapter (breadth) · `P1`
 
@@ -247,14 +331,19 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
 
 ### Backlog
 
-- [ ] `P0` **Mine Wikipedia *citations*** (the References list) into distinct, dated source
-      events instead of only slicing prose; demote prose-sentence events to connective narrative
-      and cap them. *Keyless. Directly fixes the "all events link the same article" redundancy —
-      the reason this initiative exists.*
+- [x] ~~`P0` **Mine Wikipedia *citations***~~ — **shipped in PR #9** (merged 2026-07-27).
+      `lib/wiki.ts` parses each article's `{{cite …}}` templates into a `citation` event kind
+      (migration `007`), deduped by URL and spread-capped at 160; prose is demoted to connective
+      narrative (1 sentence/year, 40/page). This was the item the initiative was named for.
 - [ ] `P1` **Internet Archive adapter** (advancedsearch + Wayback CDX) — keyless archive search.
-- [ ] `P1` **NYT Article Search adapter** (archive to 1851) — free BYO key, plumbed like the
-      AI-model key (stays in the browser / server env, never in the shared corpus).
-- [ ] `P1` **Guardian Open Platform adapter** (to 1999) — free BYO key, same plumbing.
+      **The biggest unbuilt lever left in this initiative**, and immune to key expiry or a
+      licensing change, which none of the eight keyed feeds are. (The hardening list below
+      carried a duplicate of this item; it now points here.)
+- [x] ~~`P1` **NYT Article Search adapter** (archive to 1851)~~ — **shipped in PR #9**
+      (`getNytNews`). ⚠ Plumbed as a **server** env key, not the browser-side BYO pattern the
+      item asked for — see the BYO-key item under Cross-cutting, which is still open.
+- [x] ~~`P1` **Guardian Open Platform adapter** (to 1999)~~ — **shipped in PR #9**
+      (`getGuardianNews`), same server-env caveat as NYT above.
 - [ ] `P2` **Google Programmable Search** (Custom Search JSON API) as a **present-day discovery
       layer only** — accept the 100/day free cap and weak historical date-filtering; it searches
       the live web, not archives, so it is *not* a time machine.
@@ -265,13 +354,20 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
 
 ### Cross-cutting
 
-- [ ] `P1` **Licensing gate:** every source carries `commercialOk` + license in `SOURCES`; only
-      commercial-safe sources feed the ad-supported path (same discipline as the on-chain and
-      Google-News-RSS bars).
+- [x] ~~`P1` **Licensing gate**~~ — done 2026-07-28. Every source carries `commercialOk` + a
+      licence note in `SOURCES`, and `COMMERCIAL_MODE=true` now enforces the second half — only
+      commercial-safe sources can feed the ad-supported path. See the feed gate above for how it
+      works and `npm run check:commercial-mode` for the proof.
 - [ ] `P1` **BYO-key plumbing** for the keyed sources (NYT, Guardian, discovery engine) — mirror
-      the AI-model-key pattern; keys never touch the shared server state.
-- [ ] `P1` **Dedup basis = article URL**, so the same wire story surfaced by two engines collapses
-      to one event (mirrors the existing GDELT dedup rule).
+      the AI-model-key pattern; keys never touch the shared server state. **Still open, and the
+      shipped NYT/Guardian adapters do not do this**: they read a *server* env key, so the
+      operator pays the quota and wears the licence. Moving them browser-side would make each
+      visitor's own key the licensee — which is a materially different answer to the
+      non-commercial-tier problem in the feed gate, and worth weighing against buying licences.
+- [x] ~~`P1` **Dedup basis = article URL**~~ — shipped in PR #9: `dedupByUrl` in
+      `lib/newsExtra.ts` merges every repository's results, so one wire story surfaced by three
+      outlets collapses to one event. (Cross-*feed* near-duplicate collapsing by headline+day is
+      a separate, still-open item in the hardening list below.)
 - [ ] `P2` **Coverage-map doc** kept current as sources are added, so "how far back can this go"
       is answerable per subject.
 
@@ -280,35 +376,120 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
 Consequences of what shipped on PR #9 (citation mining, NL prompts, pre-IPO story, crosshair
 popup, filing stacks, collapsible list, 8 new news repositories), ranked by value-per-effort.
 
-- [ ] `P0` **Commit the test suite.** The session's verification (cite-date parsing, prompt
-      parsing, year extraction incl. ticker/domain false positives, prehistory guard, all 9
-      adapter fixtures with mocked fetch) lives in throwaway scratchpad scripts. Add vitest and
-      commit those ~60 assertions so every parser is regression-proof.
-- [ ] `P1` **Noise control for the aggregators.** Keyword search across four general aggregators
-      pulls junk (listicles, passing mentions). Add a server-side relevance floor (title must
-      mention the subject; Marketaux/EODHD ticker tags are free wins) and near-duplicate
-      collapsing across feeds — dedup is exact-URL today, so one wire story from three outlets
-      shows three times (extend GDELT's headline+day rule cross-feed).
-- [ ] `P1` **Per-source refresh windows + quota safety.** The company path fires ~15 fetches
-      every hour a page is viewed. Split TTLs by volatility (news hourly, wiki daily, archives
-      weekly) — faster pages, and free-tier quotas (Newsdata 200/day, GNews 100/day) stop being
-      a multi-user risk.
-- [ ] `P1` **Feed visibility in the UI.** A page silently rendering with 3 of 11 feeds down
-      looks fine and misdirects debugging (the CAEP fallback lesson). Per-subject "Sources"
-      panel: which feeds contributed, how many articles each — doubles as the attribution
-      display the licenses want. `scripts/check-feeds.ts` covers the CLI half.
-- [ ] `P1` **Finish the approved "Both views" condense.** The horizontal timeline still has no
-      collapse-all (list view got one); add the one-click condense control there.
-- [ ] `P2` **Auto-expand on jump.** Chart click-to-jump into a collapsed list section scrolls to
-      it but doesn't open it.
+- [x] ~~`P0` **Commit the browser smoke pass**~~ — done 2026-07-28. `npm run check:ui`,
+      **64 checks**, committed with Playwright as a devDependency. It is what caught every defect
+      in this branch that `tsc` and `next build` could not see: a price overlay silently replaced
+      by a notice, a chart sizing itself to 2102px on a phone, a filter chip rendering inactive so
+      its rows never appeared, a legend advertising event kinds the page did not have.
+      Runs against the seeded corpus, so it needs `npm run db:seed-demo` and a dev server; pass
+      `-- --base <url>` for a server on another port. It falls back to any Chromium on the machine
+      when Playwright's pinned build is absent, because a suite only has value if it gets run.
+      Asserts behaviour rather than presence where it matters — that the chart *repaints* when an
+      overlay is toggled (every series shares one canvas, so counting canvases proves nothing),
+      and that Biggest moves pairs a move with the *prior* day's after-close earnings.
+- [ ] `P0` **Commit the parser assertions from the PR #9 session** — cite-date parsing, year
+      extraction including ticker/domain false positives, the prehistory guard, and the nine
+      adapter fixtures with mocked fetch. Those ~60 assertions are still in throwaway scripts.
+      Four offline suites are now committed and run together with `npm run check`:
+      `check:prompt` (24), `check:onchain` (22), `check:commercial-mode` (16), `check:refresh`
+      (12). This item is what remains.
+- [x] ~~`P1` **Noise control for the aggregators**~~ — done 2026-07-28 (`lib/newsQuality.ts`,
+      `npm run check:news-quality`, 23 cases). Both halves are pure functions, because each can
+      fail silently in opposite directions: too loose and a timeline carries three copies of one
+      wire story plus a listicle, too tight and a real story vanishes with nothing to show it
+      ever arrived.
+      - **Near-duplicate collapsing.** ⚠ This was not just a merge-time gap.
+        `docs/EVENTS-SCHEMA.md` has always specified that a news event keys on **headline +
+        publication date** — *"an AP story syndicated to 50 papers → one row, 50 attestations"* —
+        and GDELT did exactly that, but **every other adapter keyed on its own URL**, so one wire
+        story reaching us through three aggregators became three rows in the database, not just
+        three rows on a page. All nine now use `storyKey`, which restores the documented contract
+        and makes the attestation count the corroboration signal the schema intends.
+        Normalisation strips a trailing *capitalised* masthead ("… — Reuters", "… | CNBC") and
+        leading tags ("Exclusive:"), and the collapse keeps the **richest** copy rather than the
+        first, since aggregators differ in whether they return a description or an image.
+      - **Relevance floor.** A headline must name the subject by a *distinctive* token — matching
+        on "motor" or "company" would let anything through. Applied **only** to the three
+        keyword-searched general aggregators; the finance-native feeds query by ticker and their
+        own entity tagging is better evidence than anything we could infer from a title, and
+        GDELT has its own handling.
+      - ⚠ **Thresholds are unverified against live data.** The tests fix the *behaviour*; whether
+        the floor is too aggressive on real headlines ("Automaker recalls SUVs" names no subject
+        and would be dropped) needs a run against live aggregators. Worth watching the Sources
+        panel counts after `npm run ingest -- --ticker F`.
+- [x] ~~`P1` **Per-source refresh windows + quota safety**~~ — done 2026-07-28.
+      Freshness was all-or-nothing on `subjects.refreshed_at`: once a subject aged past its TTL,
+      **every** source was refetched together. Worse, the page path never wrote `source_fetches`
+      at all — only the CLI did — so it had no per-source memory to reason with.
+      Each source now carries its own window (`lib/ingest/refresh.ts`), set by how fast it
+      actually changes *and* how much quota headroom it has, **with quota winning where they
+      disagree**: a feed silent because we burned its budget is worse than one six hours stale.
+      Wikipedia daily, Chronicling America weekly (1800s scans will never change), GNews 6h.
+      - `npm run check:refresh` asserts the arithmetic rather than the intent: GNews at 4
+        requests/day/subject fits 25 subjects inside its 100/day cap, where the old shared
+        60-minute window cost 24/day — a quarter of the cap for one company.
+      - Fails open. If the freshness lookup errors, every source is treated as stale, which is
+        exactly the previous behaviour; a page must never lose a feed to a bookkeeping query.
+      - A `throttled` or `error` attempt does **not** count as "asked", so a rate-limited feed
+        stays due for retry instead of being silenced for hours.
+      - Because a partial refresh only holds part of the picture, the live path now serves the
+        **union from the database** and falls back to what it fetched if that read fails.
+- [x] ~~`P1` **Feed visibility in the UI**~~ — done 2026-07-28. `components/SourcesPanel.tsx`
+      on every company and topic page: each source with what it contributed, how long ago it was
+      asked, and its attribution + licence. Four states, colour-coded, and the middle two are the
+      point — **"nothing returned" and "rate limited" used to look identical on a page**, which
+      is precisely how a half-broken page misdirects debugging.
+      It doubles as the per-source attribution the licences ask for, rendered next to the count
+      of what each source actually gave us. Diagnostics only: it returns `null` on any error
+      rather than letting a panel take down a page.
+      The CLI half was completed earlier — `scripts/check-feeds.ts` distinguishes *withheld*
+      ("blocked by COMMERCIAL_MODE", "no KEY set") from *genuinely empty*.
+      - ⚠ Adding it reintroduced the grid `min-width:auto` overflow on a phone (727px in a
+        390px viewport) — the third time that pattern has bitten. Caught by the browser suite,
+        fixed with `min-w-0`. Worth remembering when adding any sidebar content.
+- [x] ~~`P1` **Finish the approved "Both views" condense**~~ — done 2026-07-28. The horizontal
+      timeline now has a **Condense / Expand all** control beside the zoom group, the counterpart
+      to the list view's "Collapse all". Stacking was previously reachable only through settings,
+      which is a long way to go to quieten a sprawling timeline.
+      It is a per-view override of the preference (`null` means follow it), persisted per path
+      alongside zoom and scroll position, so the choice survives following a source link and
+      coming back. Any open stack closes on toggle rather than being left hanging over a track
+      that has moved underneath it.
+      - The `check:ui` assertion is that the track actually **restructures**, not that a label
+        flipped — a control that toggled its own text while the layout stayed put would sail
+        through a presence check.
+      - Adding it pushed the toolbar past a phone viewport (454px in 390px). Same grid/flex
+        shrink family as the three before it; fixed by letting the button row wrap.
+- [x] ~~`P2` **Auto-expand on jump**~~ — done 2026-07-28. Collapsed sections keep zero-height
+      anchors so a jump *lands*, but landing is not arriving: the reader was dropped on the closed
+      header of the very thing they had just clicked. The chart now asks the list to open whatever
+      contains the target date, and scrolls a tick later so the anchor is at its final position.
+      Carried as `{ date, n }` rather than a bare date, so jumping to the same date twice re-opens
+      it after a manual collapse. Covered in `check:ui`: collapse everything, jump, assert rows
+      appear (0 → 15).
 - [ ] `P2` **NYT Keyword facet → event tags.** Needs a tags field on events; would feed the
       focus/AI relevance filtering.
-- [ ] `P2` **Month-level date precision** plumb-through (month-only citation dates currently
-      land on the 1st with day precision).
-- [ ] `P1` **Internet Archive adapter (keyless).** Still the biggest unbuilt lever for the
-      old-articles goal — and immune to key expiry or licensing changes.
-- [ ] `P1` **Merge PR #9 to main** — ~20 commits across two dozen files is enough surface;
-      shrink the risk. Add a committed `.env.example` documenting all eight key names.
+- [x] ~~`P2` **Month-level date precision**~~ — done 2026-07-28. `date_precision` has had a
+      `'month'` value since `db/001` and nothing ever wrote it: "January 2015" was stored as
+      `2015-01-01` at **day** precision, so the page printed "Jan 1" for a day the source never
+      gave. An over-precise date is worse than a vague one — it reads as a fact.
+      `TimelineEvent.yearOnly` (two states) is replaced by `precision: 'day' | 'month' | 'year'`,
+      which made the type checker enumerate every site that had to change. `date` stays a full
+      day so events still sort and plot; precision governs display only. Month-precision events
+      group under their month as a **"Day not given"** node, the month-level counterpart of the
+      existing "Year only" bucket.
+      - ⚠ **Found a pre-existing bug while testing it:** the ISO pattern was unanchored, so a
+        date *range* (`2015-01-05/2015-02-01`) matched its own prefix and was stored as a
+        specific day — the one shape the parser's own doc comment promises to reject, reported
+        as a fact. Anchored, and covered.
+      - `npm run check:dates` (20 cases) covers every form the style guide allows, the rejects
+        (ranges, seasons, `n.d.`, impossible days), and that all three precisions still sort
+        correctly against each other. Part of the outstanding PR #9 parser-assertion `P0`.
+- [ ] `P1` **Internet Archive adapter (keyless).** → **duplicate**; tracked in the Historical
+      article resurfacing backlog above. Left as a pointer so it isn't picked up twice.
+- [x] ~~`P1` **Merge PR #9 to main**~~ — merged 2026-07-27. `.env.example` now also documents
+      all eight news keys and `COMMERCIAL_MODE` (it was committed but listed only
+      `DATABASE_URL` and `ANTHROPIC_API_KEY` until 2026-07-28).
 
 ### External audit findings (2026-07-26) — verified against the code
 
@@ -338,15 +519,27 @@ rather than accepted. Verdicts recorded so nobody re-litigates them:
 Each idea checked against the codebase before listing — several were cheaper than they look
 (the data already arrives) and two were partly built already.
 
-- [ ] `P1` **Volume bars + moving averages on the price chart.** Cheap win: the Yahoo chart
-      response the prices route already fetches carries volume in the same payload; SMAs
-      (50/200-day) compute client-side. Lightweight-charts supports histogram + line series on
-      the existing chart. Lets a reader see if an event moved price on real volume.
-- [ ] `P1` **Corporate actions on the timeline (splits, dividends).** Also cheap: Yahoo's chart
-      API returns dividend and split events via `events=div,splits` on the same request. Plot
-      as their own marker type so a mechanical price change is never misread as news reaction.
-      (Note: our prices are adjusted, so splits don't cliff — the value is labeling, not
-      correction. Buybacks already arrive via 8-K filings.)
+- [x] ~~`P1` **Volume bars + moving averages on the price chart**~~ — done 2026-07-28. The
+      `volume` column existed in `db/001` from the start and nothing had ever populated it;
+      it is now read from the Yahoo payload, persisted, and plumbed through `PricePoint`.
+      Three toggles above the chart (**Volume · 50d avg · 200d avg**), all **off by default** —
+      the price line and its event markers are what the page is for, and three more series is a
+      busier chart than most readers want. Volume sits on its own overlay scale pinned to the
+      bottom fifth so it never squashes the price line, and is coloured by the day's direction.
+      An average whose window is longer than the available history draws **nothing** rather than
+      a partial-window stub that would look like data.
+- [x] ~~`P1` **Corporate actions on the timeline (splits, dividends)**~~ — done 2026-07-28.
+      `events=div,splits` rides the *same* Yahoo chart request, so this costs no extra fetch,
+      key, or rate-limit budget. New `corporate_action` event kind (spec + `db/008`) with its
+      own fuchsia marker, badge, legend entry and "Splits & dividends" filter chip, so a
+      mechanical change is never read as a reaction. Prices are split-adjusted and the line does
+      not step, so the marker is the only thing that says a split happened — labelling, not
+      correction, exactly as the item anticipated.
+      - ⚠ **This surfaced a latent trap worth knowing about.** Both explorers seeded their
+        default type filter from a *hand-written literal* duplicating `ALL_TYPES`. Adding an
+        eighth kind left it filtered out by default — the chip rendered, inactive, and the rows
+        never appeared — and `Set<EventType>` cannot be checked for exhaustiveness, so `tsc` was
+        silent. Both now derive from `FILTERS`. **Any future event kind would have hit this.**
 - [ ] `P2` **Sentiment coloring on event nodes.** Do it keyless first: a lexicon-based
       positive/negative/neutral score at ingest (title keywords), color-coding timeline dots so
       perceived sentiment can be read against the actual price move. BYO-model rescoring can
@@ -408,14 +601,43 @@ items (entity filing, federal regulation research, disclosure documents, "what d
 look like") went to a **separate business checklist** worked independently of both products —
 `docs/BUSINESS-CHECKLIST.md` in the Crypto-Stuff repo.
 
-- [ ] `P1` **Topic timeline pegged to a company's stock price.** Pick any search term and
-      overlay it on any company's price series — e.g. "Donald Trump presidency" against Ford
-      stock. The strongest new idea in the dump: it generalises what company pages already do
-      (events pegged to price) to *arbitrary* subjects, and `/compare` already aligns two
-      subjects on one axis, so the pieces exist. Design question to settle first: the topic
-      supplies events, the company supplies the price — so this is a **two-subject compose**,
-      not a new page type. Keep the correlation framing honest (proximity ≠ causation, same
-      rule as Biggest Moves).
+- [ ] `P1` **Search-prompt coverage beyond the shapes it was built for.** Reported 2026-07-28:
+      *"Barak Obamas effect on Ford stock"* returned junk twice. The parser only understood
+      *"the history of X in Y"*; anything else went to `resolveCompany` verbatim, missed, and was
+      handed to Wikipedia, which fuzzy-matched something unrelated — a confidently wrong page
+      rather than an error. **Fixed** (`npm run check:prompt`, 24 cases, was 10/24):
+      - Relational questions — *"X's effect on Y"*, *"effect of X on Y"*, *"how did X affect Y"*,
+        *"did X affect Y"*. **The subject is the thing affected**, because that is the side with
+        a timeline and a price series; the influence becomes the focus and seeds the AI panel.
+      - *"<name> stock"* — plain "Ford" resolves against the EDGAR index, "Ford stock" resolved
+        against nothing. Trailing `stock`/`shares`/`share price`/`ticker` is now stripped, with a
+        short compound denylist so "rolling stock" survives.
+      - `/api/resolve` is now **database-first**, the same fix `/compare` needed: a throttled
+        EDGAR ticker file used to turn every company search into a Wikipedia guess, from the
+        app's main entry point. It also resolves aliases the live path cannot see
+        ("bitcoin" → `btc`), which is what makes the Phase 0 crypto aliases reachable.
+      - ⚠ **Still open, and this is the item below:** the honest answer to that question is a
+        *two-subject compose* — Obama's events over Ford's price. Today it lands on Ford's
+        timeline with "Barak Obamas" pre-filled in the AI panel, which is useful and truthful,
+        but it is not yet the overlay the question actually asks for.
+- [x] ~~`P1` **Topic timeline pegged to a company's stock price**~~ — done 2026-07-28, and the
+      design question settled the way the item predicted: **a two-subject compose, not a new page
+      type.** `/compare?a=<topic>&b=<ticker>` now plots the priced subject's series with the other
+      subject's events on it. The pieces really did exist — `PriceTimeline` already takes a price
+      series plus an arbitrary event list, so this was mostly deciding what *not* to draw.
+      - **Only the other subject's events are plotted, deliberately.** Markers are coloured by
+        event *kind*, not by which subject they came from, so merging both sides would give a
+        chart where a Ford filing and a Trump speech are indistinguishable — the reader could not
+        tell which claim they were looking at. The priced subject's own timeline is one click
+        away on its own page.
+      - The framing is inline and explicit: *"X supplies the events; Y supplies the price. Lining
+        two subjects up in time shows coincidence, not cause — the same rule as Biggest moves."*
+      - The chart legend derives from the plotted events, so a topic-over-company view advertises
+        only the kinds that topic actually has.
+      - ⚠ Events outside the price window cannot be plotted, so the value depends on price
+        history reaching back as far as the events. Against the seed's 18-month series most of a
+        topic's history falls off the left edge; against a real decades-long series it would not.
+        Worth checking with `npm run ingest -- --ticker F` before judging the feature.
 - [ ] `P1` **Test and fine-tune the AI tools.** The BYO-key ranking panel is the only AI surface
       here: check ranking quality across subject types, the 0.35 relevance cut-off, batch size,
       and behaviour when a model returns junk. (CAEP's 11 agents are tracked separately.)
@@ -433,11 +655,25 @@ look like") went to a **separate business checklist** worked independently of bo
 - [ ] `P2` **Which countries can access the site** (implementation side: geo-detection,
       blocking, or per-region content). The *decision* — which jurisdictions are worth the
       compliance cost — lives in the business checklist.
-- [ ] `P2` **Site name / domain.** Candidates: Timelines.ai · Timecharts.ai · Newscharts.ai ·
-      Thetimeline.ai · Timeline.ai. ⚠ Renaming is not just a logo: `SITE_URL`, canonical URLs,
-      the sitemap, OG images and JSON-LD all carry the name, and redirects would be needed to
-      keep any indexed pages. Cheapest before launch, expensive after. Check domain
-      availability and trademark conflicts before falling in love with one.
+- [x] **Rename the software to News Charts.** Done 2026-07-28 (PR #11, merged) — settled the
+      *name* half of the site-name/domain question below, pre-launch, i.e. at its cheapest.
+      Display name, header/OG wordmarks, SEO metadata and docs say **News Charts**; the
+      `news-charts` slug covers the npm package, the localStorage/event namespace, backup
+      filenames and log tags; docs and `.env.example` use a `news_charts` Postgres
+      role/database. An inline pre-hydration script in `app/layout.tsx` migrates visitors' old
+      `chronolens:*` localStorage keys, so follows, prefs and AI settings survive. The GitHub
+      repo is renamed to `News-Charts` (old URLs redirect). Loose ends:
+      - [ ] `P2` Rename the live Postgres role/database from `chronolens` to `news_charts` —
+            or keep the old names in `.env.local`; only the docs assume `news_charts`.
+      - [ ] `P2` Old `chronolens-*.dump` backups no longer match the retention regex in
+            `scripts/backup.ts`, so they are never auto-pruned — delete them by hand once
+            enough `news-charts-*` dumps have accumulated.
+- [ ] `P2` **Domain for the site.** The name is now settled (News Charts, above), which points
+      at **Newscharts.ai** from the original candidate list (Timelines.ai · Timecharts.ai ·
+      Thetimeline.ai · Timeline.ai were the alternatives). ⚠ Still to do: check domain
+      availability and trademark conflicts, then set `SITE_URL` — canonical URLs, the sitemap,
+      OG images and JSON-LD all carry it, and redirects would be needed to keep any indexed
+      pages. Cheapest before launch, expensive after.
 - [ ] `P1` **Label every source on screen, and the compliance around it.** News Charts' half of
       the source-labeling policy in the business checklist (`docs/BUSINESS-CHECKLIST.md`,
       Crypto-Stuff repo). Concretely: every event already carries a `source` label and an

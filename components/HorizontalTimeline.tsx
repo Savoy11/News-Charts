@@ -58,6 +58,16 @@ const STYLE: Record<EventType, { dot: string; badge: string; label: string }> = 
     badge: "border-teal-700/50 bg-teal-500/15 text-teal-300",
     label: "Cited",
   },
+  corporate_action: {
+    dot: "bg-fuchsia-400 ring-fuchsia-400/30",
+    badge: "border-fuchsia-700/50 bg-fuchsia-500/15 text-fuchsia-300",
+    label: "Corporate action",
+  },
+  onchain: {
+    dot: "bg-lime-400 ring-lime-400/30",
+    badge: "border-lime-700/50 bg-lime-500/15 text-lime-300",
+    label: "On-chain",
+  },
 };
 
 const CARD_CLASS =
@@ -163,6 +173,12 @@ interface Cluster {
 export default function HorizontalTimeline({ events }: { events: TimelineEvent[] }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
+  /**
+   * A per-view override of the stacking preference, so condensing a sprawling timeline is one
+   * click rather than a trip through settings — the list view has had "Collapse all" since it
+   * shipped and this is its counterpart. `null` means "follow the preference".
+   */
+  const [stackOverride, setStackOverride] = useState<boolean | null>(null);
   const z = ZOOMS[zoom];
   const storeKey = `news-charts:timeline:${usePathname()}`;
   const pendingScroll = useRef<number | null>(null);
@@ -173,6 +189,8 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
   zoomRef.current = zoom;
   // the restore's own scroll fires an event; ignore it or it saves pre-restore state
   const suppressSave = useRef(false);
+  // read inside persist(), which must not re-create itself when the override flips
+  const stackOverrideRef = useRef<boolean | null>(null);
 
   // Mini-map viewport, as fractions of the whole track (left edge + visible width). Measured from
   // the scroller so the overview reflects the real pixel layout, not a re-derived time scale.
@@ -214,12 +232,16 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
       const fallback = loadPrefs().timeline.defaultZoom;
       const initial = typeof saved.zoom === "number" && ZOOMS[saved.zoom] ? saved.zoom : fallback;
       if (ZOOMS[initial]) setZoom(initial);
+      if (typeof saved.stacked === "boolean") setStackOverride(saved.stacked);
       pendingScroll.current = typeof saved.scrollLeft === "number" ? saved.scrollLeft : null;
     } catch {
       /* storage unavailable — start fresh */
     }
     hydrated.current = true;
   }, [storeKey]);
+
+  const stacked = stackOverride ?? tl.stack;
+  stackOverrideRef.current = stackOverride;
 
   const { clusters, width } = useMemo(() => {
     const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));
@@ -230,7 +252,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
     for (const ev of sorted) {
       const last = groups[groups.length - 1];
       // stacking off → every event is its own group, i.e. a plain card (the pre-stack layout)
-      if (tl.stack && last && bucketKey(last[0].date, z.bucket) === bucketKey(ev.date, z.bucket))
+      if (stacked && last && bucketKey(last[0].date, z.bucket) === bucketKey(ev.date, z.bucket))
         last.push(ev);
       else groups.push([ev]);
     }
@@ -255,7 +277,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
       placed.push({ id: group[0].id, events: group, x, above: i % 2 === 0, gapYears, gapMidX, label });
     }
     return { clusters: placed, width: x + CARD_W / 2 + 32 };
-  }, [events, z, tl.stack]);
+  }, [events, z, stacked]);
 
   // Which stack is expanded. A short close delay bridges the gap as the pointer travels from the
   // collapsed deck to the centered panel, so it doesn't flicker shut mid-move.
@@ -326,10 +348,29 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
       try {
         sessionStorage.setItem(
           storeKey,
-          JSON.stringify({ zoom: nextZoom, scrollLeft: Math.round(scrollLeft) })
+          JSON.stringify({
+            zoom: nextZoom,
+            scrollLeft: Math.round(scrollLeft),
+            ...(stackOverrideRef.current === null ? {} : { stacked: stackOverrideRef.current }),
+          })
         );
       } catch {
         /* storage unavailable — position just won't persist */
+      }
+    },
+    [storeKey]
+  );
+
+  /** Writes immediately, for a deliberate action rather than incidental scrolling. */
+  const persistWith = useCallback(
+    (nextStacked: boolean, nextZoom: number, scrollLeft: number) => {
+      try {
+        sessionStorage.setItem(
+          storeKey,
+          JSON.stringify({ zoom: nextZoom, scrollLeft: Math.round(scrollLeft), stacked: nextStacked })
+        );
+      } catch {
+        /* storage unavailable — the choice just won't persist */
       }
     },
     [storeKey]
@@ -468,7 +509,29 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
         <span className="text-xs text-slate-600">·</span>
         <span className="text-xs text-slate-500">{eventCount} events</span>
 
-        <div className="ml-auto flex items-center gap-1">
+        {/* wraps: the toolbar now carries condense + three zooms + four track buttons, which is
+            wider than a phone viewport in one row */}
+        <div className="ml-auto flex flex-wrap items-center gap-1">
+          {/* The list view's "Collapse all" counterpart. Stacking was reachable only through
+              settings, which is a long way to go to quieten a sprawling timeline. */}
+          <button
+            onClick={() => {
+              closeNow();
+              const next = !stacked;
+              setStackOverride(next);
+              const el = scrollerRef.current;
+              if (el) persistWith(next, zoom, el.scrollLeft);
+            }}
+            aria-pressed={stacked}
+            title={
+              stacked
+                ? "Show every event as its own card"
+                : "Fold each period's events into one stack"
+            }
+            className="mr-2 rounded-md border border-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-400 transition-colors hover:border-sky-600 hover:text-sky-300"
+          >
+            {stacked ? "Expand all" : "Condense"}
+          </button>
           <div className="mr-2 flex rounded-md border border-slate-700">
             {ZOOMS.map((zz, i) => (
               <button

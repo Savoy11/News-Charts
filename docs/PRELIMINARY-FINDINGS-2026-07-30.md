@@ -9,10 +9,19 @@
 > Treat everything here as **leads to verify**, not as a baseline. The first real baseline
 > is the `code-auditor` run described in `docs/IMPROVEMENT-AGENT-SETUP.md`.
 >
-> **Neither agent could run anything.** `node_modules` is absent and installing it needs
-> network, so there are no results from the 19 offline suites, `tsc`, lint or `check:ui`
-> behind any of this. Every item was reached by reading code. Egress to GDELT / Wikipedia /
-> SEC / Yahoo is blocked from this container, so no feed behaviour was observed either.
+> **Neither stand-in ran anything** — every item below was reached by reading code, with no
+> `tsc`, lint or offline-suite results behind it.
+>
+> **Correction (same day):** the stand-ins reported this as impossible, and that was wrong.
+> A later `code-auditor` run installed dependencies successfully via
+> `npm install --ignore-scripts` through the agent proxy and executed `tsc --noEmit` (clean),
+> `npm run lint` (2 `react-hooks/exhaustive-deps` warnings) and all 19 offline suites (pass).
+> So the absence of results here is a limitation of that stand-in run, **not** of the
+> environment. See `docs/audits/2026-07-30-audit.md`.
+>
+> What genuinely cannot run here is `npm run check:feeds` — egress to GDELT / Wikipedia /
+> SEC / Yahoo is blocked from this container, so it would report a false negative rather
+> than no result. No feed behaviour was observed.
 
 ---
 

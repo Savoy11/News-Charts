@@ -16,6 +16,10 @@ config({ path: ".env.local" });
 
 import { getNews } from "../lib/news";
 import { getPressMentions } from "../lib/loc";
+import { getArchiveItems } from "../lib/archive";
+import { GOVERNANCE_SPACES, getGovernanceFor } from "../lib/onchain/governance";
+import { EXPLOIT_TARGETS, getExploitsFor } from "../lib/onchain/exploits";
+import { getUsdtSupplyMoves } from "../lib/onchain/usdt";
 import { getTopicTimeline } from "../lib/wiki";
 import { resolveCompany, commonName } from "../lib/sec";
 import {
@@ -29,24 +33,31 @@ import {
   getEodhdNews,
   getFinnhubNews,
 } from "../lib/newsExtra";
-import type { TimelineEvent } from "../lib/types";
+import { commercialMode, skipReason } from "../lib/ingest/store";
+import type { SourceKey, TimelineEvent } from "../lib/types";
 
-const KEYS: Record<string, string | undefined> = {
-  "NYT": process.env.NYT_API_KEY,
-  "Guardian": process.env.GUARDIAN_API_KEY,
-  "Newsdata": process.env.NEWSDATA_API_KEY,
-  "GNews": process.env.GNEWS_API_KEY,
-  "Currents": process.env.CURRENTS_API_KEY,
-  "Marketaux": process.env.MARKETAUX_API_KEY,
-  "EODHD": process.env.EODHD_API_KEY,
-  "Finnhub": process.env.FINNHUB_API_KEY,
+// Each keyed feed with the source key its licence is recorded under, so this report can say
+// *why* a feed sat out. A silently-empty feed and a deliberately-withheld one look identical
+// on a page, and telling them apart is the whole point of running this.
+const KEYED: Record<string, { env: string; source: SourceKey }> = {
+  "NYT": { env: "NYT_API_KEY", source: "nyt" },
+  "Guardian": { env: "GUARDIAN_API_KEY", source: "guardian" },
+  "Newsdata": { env: "NEWSDATA_API_KEY", source: "newsdata" },
+  "GNews": { env: "GNEWS_API_KEY", source: "gnews" },
+  "Currents": { env: "CURRENTS_API_KEY", source: "currents" },
+  "Marketaux": { env: "MARKETAUX_API_KEY", source: "marketaux" },
+  "EODHD": { env: "EODHD_API_KEY", source: "eodhd" },
+  "Finnhub": { env: "FINNHUB_API_KEY", source: "finnhub" },
 };
 
 function report(name: string, events: TimelineEvent[], note = "") {
-  const keyed = name in KEYS;
-  if (keyed && !KEYS[name]) {
-    console.log(`  ${name.padEnd(22)} — no key (set in .env.local to enable)`);
-    return;
+  const keyed = KEYED[name];
+  if (keyed) {
+    const skip = skipReason(keyed.env, keyed.source);
+    if (skip) {
+      console.log(`  ${name.padEnd(22)} — ${skip}`);
+      return;
+    }
   }
   if (events.length === 0) {
     console.log(`  ${name.padEnd(22)} ⚠ 0 articles ${note}`);
@@ -64,6 +75,11 @@ async function main() {
   const company = await resolveCompany(arg).catch(() => null);
   const name = company ? commonName(company.name) : arg;
   const ticker = company?.ticker ?? null;
+  if (commercialMode()) {
+    console.log(
+      "\n  COMMERCIAL_MODE=true — sources not licensed for commercial use are withheld below."
+    );
+  }
   console.log(
     company
       ? `\nChecking feeds for ${company.name} (${company.ticker}) — query "${name}"\n`
@@ -85,6 +101,18 @@ async function main() {
     report("Finnhub", await safe(getFinnhubNews(ticker)));
   }
   report("LoC press (pre-1963)", await safe(getPressMentions(name).then((r) => r)), "(normal for modern subjects)");
+  report("Internet Archive", await safe(getArchiveItems(name)), "(keyless; metadata index only)");
+  // Per space, because a wrong space id returns an empty list that looks exactly like a quiet
+  // month of governance — the one thing this report exists to tell apart.
+  for (const g of GOVERNANCE_SPACES) {
+    report(`Snapshot ${g.space}`, await safe(getGovernanceFor(g.slug)), "(closed proposals only)");
+  }
+  // ⚠ Check the amounts on the first real run: DefiLlama reports millions, and a unit error
+  // shows here as "$600" where "$600m" belongs — obvious on screen, invisible offline.
+  report("USDT supply (Issue/Redeem)", await safe(getUsdtSupplyMoves()), "(needs ETHERSCAN_API_KEY)");
+  for (const t of EXPLOIT_TARGETS) {
+    report(`Exploits (${t.slug})`, await safe(getExploitsFor(t.slug)), "(attributed, not confirmed on-chain)");
+  }
 
   const story = await getTopicTimeline(name).catch(() => null);
   const hist = story?.events.filter((e) => e.type === "history") ?? [];

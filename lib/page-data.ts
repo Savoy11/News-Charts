@@ -1,30 +1,9 @@
 import { cache } from "react";
-import { getPool } from "./db";
-import { loadEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, isStale, type IndustryRef } from "./store/read";
-import { ensureSources, emptyStats, upsertEvent, upsertSubject, upsertTopicSubject, linkToIndustry } from "./ingest/store";
+import { loadEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, type IndustryRef } from "./store/read";
 import { PricePoint, TimelineEvent } from "./types";
-import { getTopicTimeline } from "./wiki";
-import { getPressMentions, dropImplausiblePress } from "./loc";
-import { getNews } from "./news";
-import { resolveCompany, getFilings, getIndustry, commonName, type Industry } from "./sec";
-import { getDailyPrices } from "./prices";
-import { getOfficialDomain } from "./wikidata";
+import { requestSubject } from "./ingest/queue";
 import { dropCompanyPrehistory } from "./history";
-import {
-  getYahooFinanceNews,
-  getNytNews,
-  getGuardianNews,
-  getNewsdataNews,
-  getGnewsNews,
-  getCurrentsNews,
-  getMarketauxNews,
-  getEodhdNews,
-  getFinnhubNews,
-  dedupByUrl,
-} from "./newsExtra";
 
-const TOPIC_TTL_MINUTES = 360; // 6h — topic history barely moves
-const COMPANY_TTL_MINUTES = 60; // 1h — prices and filings do
 
 // Request-memoised so a page and its generateMetadata share one load instead of fetching twice.
 // (Function declarations below are hoisted, so referencing them here is fine.)
@@ -41,6 +20,11 @@ export interface TopicPageData {
   title: string;
   summary: string;
   events: TimelineEvent[];
+  /**
+   * Empty for ordinary topics. A crypto asset is modelled as a topic but has a continuous
+   * price series, so its page renders the same chart a company page does.
+   */
+  prices: PricePoint[];
   servedFrom: ServedFrom;
 }
 
@@ -54,134 +38,61 @@ export interface CompanyPageData {
   servedFrom: ServedFrom;
 }
 
+
+
+
+
+
 /**
- * Persist what we just fetched. Best-effort: a write failure must never take down a
- * page that already has its data in hand.
+ * Pages read the database and nothing else.
+ *
+ * This used to fall through to a live fetch whenever the stored copy was stale *or* the database
+ * was unreachable, which cost three things. The visitor arriving first after a TTL expired waited
+ * on eleven feeds. Several arriving together each triggered their own fetch. And a database
+ * outage turned every page view into a live fetch, burning the free tiers precisely when they
+ * could least be spared.
+ *
+ * `npm run refresh` owns fetching now, so the cost is a function of how many subjects exist —
+ * a number we choose — instead of how much traffic arrives, which is not. A subject we do not
+ * have renders a notice and is queued; it is not fetched under a visitor.
+ *
+ * Staleness no longer hides a stored copy either: showing what we have, dated, beats showing
+ * nothing while a scheduler catches up.
  */
-async function persist(
-  subject: Parameters<typeof upsertSubject>[1],
-  events: TimelineEvent[],
-  prices?: PricePoint[],
-  industry?: Industry | null
-): Promise<void> {
-  let client;
-  try {
-    client = await getPool().connect();
-    await ensureSources(client);
-    const subjectId = await upsertSubject(client, subject);
-    const stats = emptyStats();
-    await client.query("BEGIN");
-    try {
-      for (const ev of events) {
-        if (ev.sourceKey) await upsertEvent(client, ev, subjectId, stats);
-      }
-      if (prices?.length) {
-        await client.query(
-          `INSERT INTO prices (subject_id, on_date, close)
-           SELECT $1, d, c FROM unnest($2::date[], $3::numeric[]) AS t(d, c)
-           ON CONFLICT (subject_id, on_date) DO UPDATE SET close = EXCLUDED.close`,
-          [subjectId, prices.map((p) => p.time), prices.map((p) => p.value)]
-        );
-      }
-      if (industry) await linkToIndustry(client, subjectId, industry);
-      await client.query("COMMIT");
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    }
-  } catch (err) {
-    console.warn("[chronolens] persist skipped:", (err as Error).message);
-  } finally {
-    client?.release();
-  }
-}
-
-async function persistTopic(
-  subject: Parameters<typeof upsertTopicSubject>[1],
-  events: TimelineEvent[]
-): Promise<void> {
-  let client;
-  try {
-    client = await getPool().connect();
-    await ensureSources(client);
-    const subjectId = await upsertTopicSubject(client, subject);
-    const stats = emptyStats();
-    await client.query("BEGIN");
-    try {
-      for (const ev of events) {
-        if (ev.sourceKey) await upsertEvent(client, ev, subjectId, stats);
-      }
-      await client.query("COMMIT");
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    }
-  } catch (err) {
-    console.warn("[chronolens] persist skipped:", (err as Error).message);
-  } finally {
-    client?.release();
-  }
-}
-
 async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null> {
-  // 1. serve from the database when we have a fresh copy
   try {
     const subject = await loadSubject(topic);
-    if (subject && !isStale(subject.refreshedAt, TOPIC_TTL_MINUTES)) {
-      const events = await loadEvents(subject.id);
+    if (subject) {
+      const [events, prices] = await Promise.all([
+        loadEvents(subject.id),
+        loadPrices(subject.id),
+      ]);
       if (events.length) {
         return {
           title: subject.displayName,
           summary: subject.summary ?? "",
           events,
+          prices,
           servedFrom: "database",
         };
       }
     }
+    // Not indexed. Record the demand so the scheduled run picks it up, and tell the visitor.
+    await requestSubject(topic, "topic");
+    return null;
   } catch (err) {
-    // database unavailable — the site keeps working on live sources alone
-    console.warn("[chronolens] db read failed, falling back to live:", (err as Error).message);
+    // The database is the only source a page has now, so an outage is an outage — it must not
+    // silently become eleven live fetches per page view.
+    console.warn("[news-charts] db read failed:", (err as Error).message);
+    return null;
   }
-
-  // 2. otherwise fetch live, then store what we got for next time
-  const wiki = await getTopicTimeline(topic);
-  if (!wiki) return null;
-
-  const [pressCandidates, news, nyt, guardian, newsdata, gnews, currents] = await Promise.all([
-    getPressMentions(topic),
-    getNews(topic),
-    getNytNews(topic),
-    getGuardianNews(topic),
-    getNewsdataNews(topic),
-    getGnewsNews(topic),
-    getCurrentsNews(topic),
-  ]);
-  const firstEventOn = wiki.events[0]?.date ?? null;
-  const floor = firstEventOn ? Number(firstEventOn.slice(0, 4)) : 0;
-  const events = dedupByUrl(
-    wiki.events,
-    dropImplausiblePress(pressCandidates, floor),
-    news.slice(0, 30),
-    nyt,
-    guardian,
-    newsdata,
-    gnews,
-    currents
-  );
-
-  await persistTopic(
-    { searchTerm: topic, wikipediaTitle: wiki.title, displayName: wiki.title,
-      summary: wiki.summary, firstEventOn },
-    events
-  );
-
-  return { title: wiki.title, summary: wiki.summary, events, servedFrom: "live" };
 }
 
+/** Database-only, for the reasons set out above `getTopicPageDataImpl`. */
 async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData | null> {
   try {
     const subject = await loadSubject(ticker);
-    if (subject?.ticker && !isStale(subject.refreshedAt, COMPANY_TTL_MINUTES)) {
+    if (subject?.ticker) {
       const [events, prices, industry] = await Promise.all([
         loadEvents(subject.id),
         loadPrices(subject.id),
@@ -200,87 +111,12 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
         };
       }
     }
+    // Not indexed. Record the demand for the scheduled run rather than fetching under a visitor.
+    await requestSubject(ticker, "company", ticker);
+    return null;
   } catch (err) {
-    console.warn("[chronolens] db read failed, falling back to live:", (err as Error).message);
+    console.warn("[news-charts] db read failed:", (err as Error).message);
+    return null;
   }
-
-  const company = await resolveCompany(ticker);
-  if (!company) return null;
-
-  const [prices, filings, news, yahoo, nyt, guardian, newsdata, gnews, currents, marketaux, eodhd, finnhub, pressCandidates, siteDomain, sicIndustry, story] =
-    await Promise.all([
-      getDailyPrices(company.ticker),
-      getFilings(company),
-      getNews(company.name),
-      getYahooFinanceNews(company.ticker),
-      getNytNews(commonName(company.name)),
-      getGuardianNews(commonName(company.name)),
-      getNewsdataNews(commonName(company.name)),
-      getGnewsNews(commonName(company.name)),
-      getCurrentsNews(commonName(company.name)),
-      // finance-native: query by ticker, not name — their entity tagging is the point
-      getMarketauxNews(commonName(company.name), company.ticker),
-      getEodhdNews(company.ticker),
-      getFinnhubNews(company.ticker),
-      // period newspaper scans for the pre-IPO era of old companies
-      getPressMentions(commonName(company.name)).catch(() => []),
-      getOfficialDomain(company.name),
-      getIndustry(company),
-      // the company's story predates its ticker: Wikipedia history + cited articles
-      // cover the run-up to going public, which filings and news feeds can't reach
-      getTopicTimeline(commonName(company.name)).catch(() => null),
-    ]);
-  // Press scans only make sense from the company's founding onward — same implausibility
-  // guard as topics ("Apple" in an 1890 paper is the fruit). No wiki story → no floor →
-  // skip press entirely rather than let OCR noise in.
-  const firstStoryYear = story?.events[0]?.date ? Number(story.events[0].date.slice(0, 4)) : null;
-  const press = firstStoryYear ? dropImplausiblePress(pressCandidates, firstStoryYear) : [];
-  // citations first so a story cited by Wikipedia keeps its curated form when a feed
-  // also carries the same URL; every list after it drops duplicates by URL
-  const events = dedupByUrl(
-    [...filings, ...(story?.events ?? []), ...press],
-    news,
-    yahoo,
-    nyt,
-    guardian,
-    newsdata,
-    gnews,
-    currents,
-    marketaux,
-    eodhd,
-    finnhub
-  );
-
-  await persist(
-    {
-      kind: "company",
-      slug: company.ticker,
-      displayName: company.name,
-      ticker: company.ticker,
-      cik: company.cik,
-      sic: sicIndustry?.sic ?? null,
-      siteDomain,
-    },
-    events,
-    prices,
-    sicIndustry
-  );
-
-  // read the membership back so the peer count reflects everyone ingested so far
-  let industry: IndustryRef | null = null;
-  if (sicIndustry) {
-    const subject = await loadSubject(company.ticker).catch(() => null);
-    if (subject) industry = await loadIndustryFor(subject.id).catch(() => null);
-  }
-  const sector = industry ? await loadSectorEvents(industry.id).catch(() => []) : [];
-
-  return {
-    name: company.name,
-    ticker: company.ticker,
-    siteDomain,
-    prices,
-    events: dropCompanyPrehistory([...events, ...sector]),
-    industry,
-    servedFrom: "live",
-  };
 }
+

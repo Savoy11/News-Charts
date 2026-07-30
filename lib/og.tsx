@@ -24,8 +24,8 @@ export function ogCard(eyebrow: string, title: string) {
         }}
       >
         <div style={{ display: "flex", fontSize: 36, fontWeight: 800, letterSpacing: -0.5 }}>
-          <span style={{ color: "#f1f5f9" }}>chrono</span>
-          <span style={{ color: "#38bdf8" }}>lens</span>
+          <span style={{ color: "#f1f5f9" }}>news&nbsp;</span>
+          <span style={{ color: "#38bdf8" }}>charts</span>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column" }}>

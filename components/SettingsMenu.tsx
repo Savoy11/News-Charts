@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import AiSettingsForm from "./AiSettingsForm";
 import PrefsSettings from "./PrefsSettings";
+import FeedKeysForm from "./FeedKeysForm";
 import { loadPrefs, PREFS_EVENT, type Prefs, DEFAULT_PREFS } from "@/lib/prefs";
 import {
   CONFIG_EVENT,
@@ -117,10 +118,20 @@ export default function SettingsMenu() {
               </div>
               <p className="pb-1 text-xs leading-relaxed text-slate-500">
                 Connect your own model to search timelines in plain language — “antitrust and
-                regulation”, “product launches”. Chronolens works fully without this; it only adds
+                regulation”, “product launches”. News Charts works fully without this; it only adds
                 the AI search box.
               </p>
               <AiSettingsForm config={config} onSaved={setConfig} />
+
+              <div className="mt-6 border-t border-slate-800 pt-5">
+                <h3 className="text-sm font-bold text-slate-200">News feed keys</h3>
+                <p className="pb-2 pt-1 text-xs leading-relaxed text-slate-500">
+                  Optional. The New York Times and Guardian archives are free to read with your own
+                  API key, and their terms make the key holder the licensee — so these are yours,
+                  not ours. Without them the timeline still works; it just reaches less far back.
+                </p>
+                <FeedKeysForm />
+              </div>
 
               <div className="mt-6 border-t border-slate-800 pt-5">
                 <PrefsSettings prefs={prefs} onChange={setPrefs} />

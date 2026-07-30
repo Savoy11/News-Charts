@@ -66,7 +66,7 @@ async function main() {
   const contents = await snapshotCounts();
 
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const outFile = join(outDir, `chronolens-${stamp}.dump`);
+  const outFile = join(outDir, `news-charts-${stamp}.dump`);
   const pgDump = findPgDump();
 
   // -Fc: compressed custom format, restorable whole or table-by-table with pg_restore.
@@ -109,7 +109,7 @@ async function main() {
   if (entries === 0) throw new Error("dump contains no restorable objects");
 
   const old = readdirSync(outDir)
-    .filter((f) => /^chronolens-.*\.dump$/.test(f))
+    .filter((f) => /^news-charts-.*\.dump$/.test(f))
     .sort()
     .slice(0, -KEEP);
   for (const f of old) unlinkSync(join(outDir, f));

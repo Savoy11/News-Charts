@@ -17,7 +17,23 @@ export interface IndexedSubject {
   refreshedAt: string | null;
 }
 
-export async function listIndexedSubjects(minEvents = 1, limit = 5000): Promise<IndexedSubject[]> {
+/**
+ * Every indexed subject, or **null when we could not ask**.
+ *
+ * The distinction is the whole point, and it used to be thrown away: a failed database read
+ * returned `[]`, which is indistinguishable from "nothing is indexed yet". That is the same
+ * empty-versus-failed confusion the Sources panel exists to expose, except here it was worse,
+ * because both callers are cached pages. A build that cannot reach the database — the normal
+ * case when build and runtime are different environments — baked an empty `/explore` and an
+ * empty `sitemap.xml` into the output and served them for an hour.
+ *
+ * `null` lets the caller opt that render out of the cache and try again on the next request,
+ * instead of publishing a wrong answer with a long shelf life.
+ */
+export async function listIndexedSubjects(
+  minEvents = 1,
+  limit = 5000
+): Promise<IndexedSubject[] | null> {
   try {
     const { rows } = await getPool().query(
       `SELECT s.slug, s.kind, s.display_name, s.ticker, s.refreshed_at,
@@ -40,7 +56,7 @@ export async function listIndexedSubjects(minEvents = 1, limit = 5000): Promise<
       refreshedAt: r.refreshed_at ? new Date(r.refreshed_at).toISOString() : null,
     }));
   } catch {
-    // no database — callers substitute the curated seed pool
-    return [];
+    // could not ask — NOT the same as "there is nothing", and callers must treat it differently
+    return null;
   }
 }

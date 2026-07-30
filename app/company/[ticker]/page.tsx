@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import CompanyExplorer from "@/components/CompanyExplorer";
 import AdSlot from "@/components/AdSlot";
 import CaepPromo from "@/components/CaepPromo";
+import SourcesPanel from "@/components/SourcesPanel";
 import SearchBox from "@/components/SearchBox";
 import ServedFrom from "@/components/ServedFrom";
 import JsonLd from "@/components/JsonLd";
@@ -96,7 +97,7 @@ export default async function CompanyPage({ params }: { params: { ticker: string
             </p>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <FollowBar
             subject={{ href: `/company/${data.ticker}`, kind: "company", label: `${data.name} (${data.ticker})` }}
             signature={{ count: data.events.length, latest: latestDate(data.events) }}
@@ -106,18 +107,26 @@ export default async function CompanyPage({ params }: { params: { ticker: string
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-        <div>
+        {/* min-w-0: a grid item defaults to min-width:auto, so it cannot shrink below its
+            content. The price chart sizes itself from this column's width and then writes that
+            width back as an explicit px value, so on a phone the two fed each other and the
+            column settled ~2000px wide, scrolling the whole page sideways. */}
+        <div className="min-w-0">
           {data.prices.length > 0 ? (
             <CompanyExplorer
               prices={data.prices}
               events={data.events}
               siteDomain={data.siteDomain}
+              subject={data.name}
             />
           ) : (
             <p className="text-slate-500">No price data available for {data.ticker}.</p>
           )}
         </div>
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
+          {/* which feeds actually contributed — a page with three feeds down looks fine
+              without it, which is exactly how it misdirects debugging */}
+          <SourcesPanel slug={data.ticker} />
           <AdSlot />
           <CaepPromo />
           <AdSlot />

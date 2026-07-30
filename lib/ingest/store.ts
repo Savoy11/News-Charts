@@ -136,6 +136,53 @@ export const SOURCES: {
     commercialOk: false,
     notes: "ticker-keyed company news, trailing year on the free tier; free key (FINNHUB_API_KEY), 60 req/min. Re-license before the ad-supported path uses it",
   },
+  {
+    id: 15,
+    key: "onchain",
+    name: "On-chain records",
+    license: "public domain (on-chain facts)",
+    attribution: "Bitcoin and Ethereum block data via mempool.space, Blockstream Esplora and Etherscan",
+    // Raw chain facts are nobody's copyright, and the explorers used here serve them under
+    // terms that permit commercial use. This stays true only while the sources stay raw:
+    // Dune and Nansen sell *aggregations*, and their terms bar the ad-supported path.
+    commercialOk: true,
+    notes: "keyless for BTC/ETH milestones; ETHERSCAN_API_KEY only for token supply moves. No aggregator data — raw chain + public explorers only",
+  },
+  {
+    id: 16,
+    key: "internet_archive",
+    name: "Internet Archive",
+    license: "varies by item; index and metadata openly available",
+    attribution: "Internet Archive (archive.org, Wayback Machine)",
+    // What is used here is the *index*: an item's title, date and identifier, plus a link to
+    // archive.org. Individual items carry their own rights and are never copied or served from
+    // here, so the ad-supported path is clear on the metadata alone. Republishing item *content*
+    // would be a different question and this adapter does not do it.
+    commercialOk: true,
+    notes: "keyless. advancedsearch for dated items, Wayback CDX for site captures. Metadata quality is uneven — bare years are common and stay year-precision",
+  },
+  {
+    id: 17,
+    key: "snapshot",
+    name: "Snapshot",
+    license: "public governance records; open API, no key",
+    attribution: "Snapshot Labs (snapshot.org)",
+    // What is read is the record of a public vote — who proposed what and how the tally landed.
+    // Governance results are facts about a protocol, not anyone's copyrighted work.
+    commercialOk: true,
+    notes: "keyless GraphQL. Off-chain signed votes, NOT transactions — filed as 'governance', never 'onchain'",
+  },
+  {
+    id: 18,
+    key: "defillama",
+    name: "DefiLlama (hacks dataset)",
+    license: "open data, keyless API",
+    attribution: "DefiLlama",
+    // A public record of incidents, republished with attribution and a link back. What is used
+    // is the fact of the incident, not DefiLlama's analysis of it.
+    commercialOk: true,
+    notes: "incidents are ATTRIBUTED, not confirmed on-chain by us — the 'exploit' kind exists to keep that distinction visible",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));
@@ -152,6 +199,43 @@ export async function ensureSources(client: PoolClient): Promise<void> {
       [s.id, s.key, s.name, s.license, s.attribution, s.commercialOk, s.notes ?? null]
     );
   }
+}
+
+/** Keys whose terms bar commercial use, derived from SOURCES so there is one registry, not two. */
+const NON_COMMERCIAL: ReadonlySet<SourceKey> = new Set(
+  SOURCES.filter((s) => !s.commercialOk).map((s) => s.key)
+);
+
+/**
+ * Set `COMMERCIAL_MODE=true` once anything on the site earns money — ads, affiliate links, a
+ * paid tier. See the pre-release feed gate in docs/MASTER-CHECKLIST.md.
+ */
+export function commercialMode(): boolean {
+  return process.env.COMMERCIAL_MODE === "true";
+}
+
+/**
+ * The API key for a source, or null when the adapter must not run.
+ *
+ * `assertCommercialOk` below guards the ingest worker, but the site does not ingest to render:
+ * `lib/page-data.ts` calls these adapters directly on the page path, so a non-commercial source
+ * would keep serving visitors with nothing checking its licence. This closes that path.
+ *
+ * Returning null rather than throwing is deliberate — it is the same signal as "no key
+ * configured", which every adapter already degrades from cleanly, so switching the flag on can
+ * empty a feed but can never break a page.
+ */
+export function licensedKey(envVar: string, source: SourceKey): string | null {
+  if (commercialMode() && NON_COMMERCIAL.has(source)) return null;
+  return process.env[envVar] || null;
+}
+
+/** Why an adapter is sitting out, for the CLI feed report — null when it should run. */
+export function skipReason(envVar: string, source: SourceKey): string | null {
+  if (commercialMode() && NON_COMMERCIAL.has(source)) {
+    return "blocked by COMMERCIAL_MODE (source is not licensed for commercial use)";
+  }
+  return process.env[envVar] ? null : `no ${envVar} set`;
 }
 
 /** Refuse to ingest from a source whose terms bar commercial use. */
@@ -324,6 +408,39 @@ export async function upsertTopicSubject(
  * Industries are ordinary subjects, so they get timelines, syntheses and relevance
  * scoring for free — an industry-level event simply links to the industry subject.
  */
+/**
+ * Group subjects that share a role rather than a SIC code.
+ *
+ * Crypto has no SIC code and never will, but the grouping question is the same one the industry
+ * graph already answers: *what else is like this, and did the same thing happen to all of them?*
+ * A stablecoin sector page puts every issuer's supply moves on one axis, which is where a
+ * redemption wave is visible and on any single issuer's page it is not.
+ *
+ * Reuses `kind = 'industry'` deliberately. A fourth subject kind would need a migration, a fourth
+ * page type, and would inherit none of the timeline, SEO or follow behaviour industries already
+ * have — for a distinction that is ours, not the reader's. The membership row records `curated`
+ * rather than `sic`, which is the honest provenance: nobody assigned these, we did.
+ */
+export async function linkToSector(
+  client: PoolClient,
+  memberSubjectId: number,
+  sector: { slug: string; displayName: string; summary?: string }
+): Promise<number> {
+  const industryId = await upsertSubject(client, {
+    kind: "industry",
+    slug: sector.slug,
+    displayName: sector.displayName,
+    summary: sector.summary,
+  });
+  await client.query(
+    `INSERT INTO subject_members (industry_id, member_id, source)
+     VALUES ($1,$2,'curated')
+     ON CONFLICT (industry_id, member_id) DO NOTHING`,
+    [industryId, memberSubjectId]
+  );
+  return industryId;
+}
+
 export async function linkToIndustry(
   client: PoolClient,
   companySubjectId: number,
@@ -390,7 +507,7 @@ export async function upsertEvent(
     [
       ev.type,
       ev.date,
-      ev.yearOnly ? "year" : "day",
+      ev.precision ?? "day",
       ev.title,
       ev.description ?? null,
       ev.imageUrl ?? null,

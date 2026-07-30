@@ -4,6 +4,13 @@ config({ path: ".env.local" });
 import type { PoolClient } from "pg";
 import { getPool, closePool } from "../lib/db";
 import {
+  DEFAULT_CAP_USD,
+  costUsd,
+  estimateBatched,
+  formatUsd,
+  withinCap,
+} from "../lib/enrich/cost";
+import {
   MODEL,
   aliasesFor,
   deterministicScore,
@@ -94,9 +101,27 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     console.log(
-      `  model pass skipped — set ANTHROPIC_API_KEY in chronolens/.env.local to score the rest.\n` +
+      `  model pass skipped — set ANTHROPIC_API_KEY in news-charts/.env.local to score the rest.\n` +
         `  (they stay NULL, which still displays: nothing is hidden without a score)`
     );
+    return;
+  }
+
+  /**
+   * Estimate before spending, not after.
+   *
+   * The old flow reported an accurate cost that arrived too late to act on. A 600-event subject
+   * is one `--limit` away, so the first warning should not be the bill.
+   */
+  const estimate = estimateBatched(MODEL, remaining.map((r) => r.title), BATCH);
+  const capUsd = Number(arg("max-usd") ?? DEFAULT_CAP_USD);
+  const verdict = withinCap(estimate, capUsd);
+  console.log(
+    `  model pass: ${estimate.items} events in ${estimate.batches} batch(es), ` +
+      `~${formatUsd(estimate.usd)} estimated`
+  );
+  if (!verdict.allowed) {
+    console.log(`  stopped — ${verdict.reason}`);
     return;
   }
 
@@ -116,11 +141,10 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
       console.log(`  batch ${i / BATCH + 1} failed: ${(err as Error).message}`);
     }
   }
-  // Haiku 4.5 list price: $1/MTok in, $5/MTok out
-  const cost = (inTok / 1e6) * 1 + (outTok / 1e6) * 5;
   console.log(
     `  model (${MODEL}): scored ${scoredCount}  ` +
-      `tokens ${inTok} in / ${outTok} out  ≈ $${cost.toFixed(4)}`
+      `tokens ${inTok} in / ${outTok} out  ≈ ${formatUsd(costUsd(MODEL, inTok, outTok))}` +
+      `  (estimated ${formatUsd(estimate.usd)})`
   );
 }
 

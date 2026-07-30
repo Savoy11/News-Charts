@@ -42,8 +42,15 @@ function mentions(title: string, aliases: string[]): boolean {
 }
 
 /**
- * Free tier. Only scores what is certain from provenance; everything ambiguous returns
- * null and is left for the model (or left unscored, which still displays).
+ * Free tier. Scores what provenance already settles, and returns null only where the answer
+ * genuinely needs judgement — which is what the paid model tier is for.
+ *
+ * **Exhaustive over `EventType` on purpose.** This used to end in a bare `return null`, so a new
+ * event kind fell through to the *paid* tier by default and nobody found out until a bill.
+ * On-chain was exactly that case: a USDC mint read off the USDC contract is as certain as a
+ * filing under a CIK, and it was being sent to a model to have its aboutness assessed. The
+ * switch below has no default arm, so adding a kind stops compiling until someone decides which
+ * side of the line it is on.
  *
  * `strictHeadline` is a product decision rather than a fact: it demotes company news whose
  * *headline* never names the subject. That removes market-roundup noise, at the cost of
@@ -55,27 +62,85 @@ export function deterministicScore(
   aliases: string[],
   strictHeadline = false
 ): Scored | null {
-  // A filing is indexed under the company's own CIK — it cannot be about anyone else.
-  if (row.kind === "filing" || row.kind === "earnings") {
-    return { score: 1, reason: "filed under the subject's CIK" };
+  switch (row.kind) {
+    // Indexed under the company's own CIK — it cannot be about anyone else.
+    case "filing":
+    case "earnings":
+      return { score: 1, reason: "filed under the subject's CIK" };
+
+    // Extracted from the article the subject resolves to.
+    case "history":
+      return { score: 1, reason: "extracted from the subject's own article" };
+
+    /**
+     * A split or a dividend comes from the price adapter for this ticker. Same standing as a
+     * filing: it is a corporate action *of* the subject, not a report about one.
+     */
+    case "corporate_action":
+      return { score: 1, reason: "a corporate action on the subject's own ticker" };
+
+    /**
+     * Read from the subject's own contract or its own chain — a USDC mint is a transfer on the
+     * USDC contract, a halving is a Bitcoin block. Certainty here is the point of on-chain data,
+     * and paying a model to re-assess it would be paying to weaken it.
+     *
+     * Materiality is already settled upstream: a supply move below the token's bar is never
+     * ingested, so every on-chain row that exists is one we judged worth showing.
+     */
+    case "onchain":
+      return { score: 1, reason: "read from the subject's own contract or chain" };
+
+    /**
+     * The reader placed it on this subject themselves. Never persisted today — annotations live
+     * in the browser — but scored explicitly so that if they ever are, nobody pays a model to
+     * decide whether someone's own note is about the thing they attached it to.
+     */
+    case "annotation":
+      return { score: 1, reason: "the reader attached it to this subject" };
+
+    /**
+     * Mined from the reference list of the subject's own article, so the link to the subject is
+     * structural. Below a filing because the *cited work* can be broader than the subject — it
+     * supports a sentence about them rather than being about them.
+     */
+    case "citation":
+      return { score: 0.9, reason: "cited by the subject's own article" };
+
+    // Phrase search over digitised pages, and OCR is noisy enough to keep this off 1.
+    case "press":
+      return { score: 0.7, reason: "phrase match in a digitised newspaper page" };
+
+    case "news":
+      if (mentions(row.title, aliases)) return { score: 0.9, reason: "headline names the subject" };
+      if (strictHeadline) return { score: 0.2, reason: "headline never names the subject" };
+      // headline is oblique — a real judgement call, so it goes to the model
+      return null;
+
+    /**
+     * Left for the model deliberately, and this is the case the others are measured against.
+     * A Federal Register rule reaches an industry through a *keyword query* built from the
+     * industry's name, so whether it actually bears on that sector is exactly the judgement we
+     * cannot make from provenance. Scoring it here would be inventing certainty.
+     */
+    case "regulation":
+      return null;
+
+    /**
+     * A proposal read from the protocol's own governance space is about that protocol by
+     * construction, the same way a filing is about its filer. Scored here so a high-volume
+     * governance feed never becomes a model bill.
+     */
+    case "governance":
+      return { score: 1, reason: "a vote in the subject's own governance space" };
+
+    /**
+     * An incident is only attached to a subject it actually names, or to a chain it happened on
+     * above a high bar — both decided at ingest, from structured fields rather than a headline.
+     * There is nothing left for a model to judge.
+     */
+    case "exploit":
+      return { score: 1, reason: "an incident recorded against the subject itself" };
   }
-  // History sentences were extracted from the article the subject resolves to.
-  if (row.kind === "history") {
-    return { score: 1, reason: "extracted from the subject's own article" };
-  }
-  // Press cards are built from a phrase search for the topic, but OCR is noisy.
-  if (row.kind === "press") {
-    return { score: 0.7, reason: "phrase match in a digitised newspaper page" };
-  }
-  if (row.kind === "news") {
-    if (mentions(row.title, aliases)) {
-      return { score: 0.9, reason: "headline names the subject" };
-    }
-    if (strictHeadline) {
-      return { score: 0.2, reason: "headline never names the subject" };
-    }
-  }
-  return null;
 }
 
 interface AnthropicResponse {

@@ -1,0 +1,13 @@
+-- Governance decisions: a protocol's own votes, as recorded by its governance forum.
+--
+-- A separate kind from 'onchain', and the distinction is the honest one. An on-chain event *is*
+-- the thing, attested by a block anyone can re-verify. A Snapshot vote is **off-chain**: signed
+-- messages tallied by a hub, with no transaction behind it. Filing those under 'onchain' would
+-- claim a kind of proof they do not have — and that proof is the entire reason the on-chain kind
+-- exists. A governance vote is still a real, dated, official act of the subject, which is why it
+-- is a kind rather than news about one.
+--
+-- Idempotent: 001 is regenerated from the spec and already contains this value on fresh
+-- installs. ADD VALUE is transaction-safe on PG12+ as long as the new value is not used in the
+-- same transaction; nothing here inserts a 'governance' row.
+ALTER TYPE event_kind ADD VALUE IF NOT EXISTS 'governance';

@@ -1,14 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { applyFocus } from "@/lib/focus";
+import FocusBar from "./FocusBar";
+import { useVisitorFeeds } from "@/lib/useVisitorFeeds";
 import { usePathname } from "next/navigation";
 import PriceTimeline from "./PriceTimeline";
 import HorizontalTimeline from "./HorizontalTimeline";
 import BiggestMoves from "./BiggestMoves";
 import EventList, { dateAnchorId } from "./EventList";
 import AiPanel, { type AiRanking } from "./AiPanel";
+import Annotations from "./Annotations";
 import { applyRanking } from "./TopicExplorer";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
+import { ANNOTATIONS_EVENT, annotationsAsEvents, loadAnnotations } from "@/lib/annotations";
 
 const FILTERS: { key: EventType; label: string }[] = [
   { key: "history", label: "History" },
@@ -18,6 +23,7 @@ const FILTERS: { key: EventType; label: string }[] = [
   { key: "filing", label: "Filings" },
   { key: "news", label: "News" },
   { key: "regulation", label: "Sector rules" },
+  { key: "corporate_action", label: "Splits & dividends" },
 ];
 
 const ALL_TYPES = FILTERS.map((f) => f.key);
@@ -36,18 +42,24 @@ interface Props {
   prices: PricePoint[];
   events: TimelineEvent[];
   siteDomain?: string | null;
+  /** what the visitor's own feed keys should be asked about — the company's common name */
+  subject: string;
 }
 
-export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
-  const [active, setActive] = useState<Set<EventType>>(
-    new Set<EventType>(["history", "citation", "press", "earnings", "filing", "news", "regulation"])
-  );
+export default function CompanyExplorer({ prices, events, siteDomain, subject }: Props) {
+  // Derived from FILTERS, never a second hand-written list: this defaulted to a literal of the
+  // seven kinds that existed when it was written, so adding an eighth left it filtered out by
+  // default — its chip rendered, inactive, and its rows never appeared. `Set<EventType>` cannot
+  // be checked for exhaustiveness, so the type system could not catch that.
+  const [active, setActive] = useState<Set<EventType>>(() => new Set<EventType>(ALL_TYPES));
   const pathname = usePathname();
   const [copied, setCopied] = useState(false);
+  // the date the chart last jumped to, so the list can open whatever contains it
+  const [reveal, setReveal] = useState<{ date: string; n: number } | null>(null);
   // the angle a natural-language search prompt carried in ("in the united states")
   const [focusHint, setFocusHint] = useState<string | null>(null);
 
-  const filterKey = `chronolens:filters:${pathname}`;
+  const filterKey = `news-charts:filters:${pathname}`;
 
   // Restore the filter selection: a shared ?types= link wins (reproduces exactly that view);
   // otherwise fall back to what this browser last chose here, remembered across visits.
@@ -74,8 +86,37 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
     }
   }, [filterKey]);
 
+  // A reader's own notes, merged in so they plot through the same marker machinery as anything
+  // else. They are never filtered out by the type chips: the reader put them there deliberately,
+  // and a note vanishing behind a filter they set for *sources* would be surprising.
+  const [notes, setNotes] = useState<TimelineEvent[]>([]);
+  useEffect(() => {
+    const refresh = () => setNotes(annotationsAsEvents(loadAnnotations(pathname)) as TimelineEvent[]);
+    refresh();
+    window.addEventListener(ANNOTATIONS_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(ANNOTATIONS_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [pathname]);
+
   const [ranking, setRanking] = useState<AiRanking | null>(null);
-  const filtered = useMemo(() => events.filter((e) => active.has(e.type)), [events, active]);
+  // Articles the visitor's own keys add. Merged here rather than server-side because they were
+  // fetched under the visitor's licence and must never reach shared storage.
+  const mine = useVisitorFeeds(subject, events);
+  // The keyless half of a focused search: narrow this subject's own events to the ones that also
+  // concern the influence the visitor asked about. That intersection is what "how did X affect Y"
+  // is actually asking for — Y's story, limited to the part X is in.
+  const [showAll, setShowAll] = useState(false);
+  const focusResult = useMemo(
+    () => applyFocus([...events, ...mine], showAll ? null : focusHint),
+    [events, mine, focusHint, showAll]
+  );
+  const filtered = useMemo(
+    () => [...focusResult.events.filter((e) => active.has(e.type)), ...notes],
+    [focusResult, active, notes]
+  );
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);
 
   // The story before the ticker: events older than the first trading day can never sit
@@ -95,15 +136,23 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
     (date: string) => {
       // jump to the nearest event group at or before the clicked trading day
       const dates = [...new Set(filtered.map((e) => e.date))].sort();
+      if (!dates.length) return;
       let target: string | null = null;
       for (const d of dates) {
         if (d <= date) target = d;
         else break;
       }
-      const el = document.getElementById(dateAnchorId(target ?? dates[0]));
-      el?.scrollIntoView({ behavior: "smooth", block: "start" });
-      el?.classList.add("ring-1", "ring-sky-500");
-      setTimeout(() => el?.classList.remove("ring-1", "ring-sky-500"), 2000);
+      const landing = target ?? dates[0];
+      // Ask the list to open the section first. Scrolling into a still-collapsed section put
+      // the reader on the header of the thing they clicked and nothing else.
+      setReveal((r) => ({ date: landing, n: (r?.n ?? 0) + 1 }));
+      // one tick, so the expansion has rendered and the anchor is at its final position
+      setTimeout(() => {
+        const el = document.getElementById(dateAnchorId(landing));
+        el?.scrollIntoView({ behavior: "smooth", block: "start" });
+        el?.classList.add("ring-1", "ring-sky-500");
+        setTimeout(() => el?.classList.remove("ring-1", "ring-sky-500"), 2000);
+      }, 0);
     },
     [filtered]
   );
@@ -139,6 +188,15 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
 
   return (
     <div>
+      {focusHint && (
+        <FocusBar
+          focus={focusHint}
+          result={focusResult}
+          subject={subject}
+          onClear={() => setShowAll(true)}
+        />
+      )}
+
       {preIpo.length > 0 && (
         <section className="mb-6">
           <div className="mb-1.5 flex flex-wrap items-baseline gap-x-2">
@@ -156,6 +214,7 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
       <PriceTimeline prices={prices} events={ranked} onSelectDate={handleSelectDate} />
       {/* pairs each big move with the nearest displayed event, so it tracks the filters/search */}
       <BiggestMoves prices={prices} events={ranked} onSelectDate={handleSelectDate} />
+      <Annotations path={pathname} />
       <div className="mt-6">
         <AiPanel
           events={filtered}
@@ -164,7 +223,9 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
           initialInstruction={focusHint ?? undefined}
         />
       </div>
-      <div className="mb-4 flex items-center gap-2">
+      {/* flex-wrap so the type chips stack on a phone instead of running off the side —
+          TopicExplorer's equivalent row already wraps. */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <h2 className="mr-2 text-lg font-bold text-slate-100">Timeline</h2>
         {FILTERS.map((f) => {
           // hide chips with nothing behind them — a company with no Wikipedia story
@@ -198,7 +259,12 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
             : `${ranked.length} of ${filtered.length} events`}
         </span>
       </div>
-      <EventList events={ranked} siteDomain={siteDomain} persistKey={`chronolens:collapse:${pathname}`} />
+      <EventList
+        events={ranked}
+        siteDomain={siteDomain}
+        persistKey={`news-charts:collapse:${pathname}`}
+        reveal={reveal}
+      />
     </div>
   );
 }

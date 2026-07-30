@@ -12,6 +12,7 @@ import {
   upsertEvent,
   upsertSubject,
   linkToIndustry,
+  linkToSector,
   emptyStats,
   type UpsertStats,
 } from "../lib/ingest/store";
@@ -23,6 +24,8 @@ import { resolveCompany, getFilings, getIndustry } from "../lib/sec";
 import { getDailyPrices } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
+import { CRYPTO_SUBJECTS, ingestOnchainFor } from "../lib/onchain";
+import { sectorsFor } from "../lib/onchain/sectors";
 
 const BACKOFF_MINUTES = 10;
 
@@ -88,7 +91,7 @@ async function runSource(
   report(sourceKey, result.outcome, stats);
 }
 
-async function ingestTopic(client: PoolClient, topic: string) {
+export async function ingestTopic(client: PoolClient, topic: string) {
   console.log(`\ntopic: ${topic}`);
   const wiki = await getTopicTimeline(topic);
   if (!wiki) {
@@ -127,7 +130,7 @@ async function ingestTopic(client: PoolClient, topic: string) {
   await runSource(client, "gdelt", subjectId, topic, () => fetchNews(topic), (e) => e.slice(0, 30));
 }
 
-async function ingestCompany(client: PoolClient, ticker: string) {
+export async function ingestCompany(client: PoolClient, ticker: string) {
   console.log(`\ncompany: ${ticker}`);
   const company = await resolveCompany(ticker);
   if (!company) {
@@ -171,16 +174,38 @@ async function ingestCompany(client: PoolClient, ticker: string) {
     e.slice(0, 30)
   );
 
-  const prices = await getDailyPrices(company.ticker);
-  if (prices.length) {
+  const { points, actions } = await getDailyPrices(company.ticker);
+  if (points.length) {
     await client.query(
-      `INSERT INTO prices (subject_id, on_date, close)
-       SELECT $1, d, c FROM unnest($2::date[], $3::numeric[]) AS t(d, c)
-       ON CONFLICT (subject_id, on_date) DO UPDATE SET close = EXCLUDED.close`,
-      [subjectId, prices.map((p) => p.time), prices.map((p) => p.value)]
+      `INSERT INTO prices (subject_id, on_date, close, volume)
+       SELECT $1, d, c, v FROM unnest($2::date[], $3::numeric[], $4::bigint[]) AS t(d, c, v)
+       ON CONFLICT (subject_id, on_date) DO UPDATE
+          SET close = EXCLUDED.close,
+              volume = COALESCE(EXCLUDED.volume, prices.volume)`,
+      [
+        subjectId,
+        points.map((p) => p.time),
+        points.map((p) => p.value),
+        points.map((p) => p.volume ?? null),
+      ]
     );
   }
-  line("prices", `${prices.length} daily closes`);
+  const withVolume = points.filter((p) => p.volume != null).length;
+  line("prices", `${points.length} daily closes (${withVolume} with volume)`);
+
+  // Dividends and splits ride the same chart response, so they cost no extra request.
+  if (actions.length) {
+    const stats = emptyStats();
+    await client.query("BEGIN");
+    try {
+      for (const ev of actions) await upsertEvent(client, ev, subjectId, stats);
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    }
+    line("yahoo_finance", `${actions.length} corporate actions (dividends + splits)`);
+  }
 }
 
 /**
@@ -188,7 +213,7 @@ async function ingestCompany(client: PoolClient, ticker: string) {
  * member company — an export-control rule is a semiconductor event that happens to
  * matter to Nvidia, not an Nvidia event.
  */
-async function ingestIndustry(client: PoolClient, slug: string) {
+export async function ingestIndustry(client: PoolClient, slug: string) {
   console.log(`\nindustry: ${slug}`);
   const { rows } = await client.query(
     `SELECT id, display_name, sic FROM subjects WHERE slug = $1 AND kind = 'industry'`,
@@ -218,13 +243,101 @@ async function ingestIndustry(client: PoolClient, slug: string) {
   await runSource(client, "federal_register", subjectId, query, () => fetchRegulations(query));
 }
 
+/**
+ * On-chain ingest. Crypto assets are `topic` subjects (they have no CIK or ticker, so the
+ * company kind is barred by the schema and would be a lie anyway) that happen to carry a price
+ * series — which is what lets a halving be read against the BTC chart.
+ */
+/**
+ * Record which sectors a crypto subject belongs to.
+ *
+ * Runs after the subject exists, because membership needs its id — and silently does nothing for
+ * a subject no sector claims, which is most of them.
+ */
+async function linkCryptoSectors(client: PoolClient, slug: string): Promise<void> {
+  const { rows } = await client.query<{ id: string }>(
+    `SELECT id FROM subjects WHERE slug = $1`,
+    [slug]
+  );
+  if (!rows[0]) return;
+  for (const sector of sectorsFor(slug)) {
+    await linkToSector(client, Number(rows[0].id), {
+      slug: sector.slug,
+      displayName: sector.displayName,
+      summary: sector.summary,
+    });
+  }
+}
+
+export async function ingestOnchain(client: PoolClient, which: string) {
+  const targets = which === "all" ? CRYPTO_SUBJECTS : CRYPTO_SUBJECTS.filter((c) => c.slug === which);
+  if (!targets.length) {
+    console.error(`unknown on-chain subject "${which}"`);
+    process.exit(2);
+  }
+
+  await assertCommercialOk(client, "onchain");
+
+  for (const asset of targets) {
+    console.log(`\n${asset.displayName} (${asset.slug})`);
+    const subjectId = await upsertSubject(client, {
+      kind: "topic",
+      slug: asset.slug,
+      displayName: asset.displayName,
+      summary: asset.summary,
+      firstEventOn: asset.firstEventOn,
+    });
+    for (const alias of asset.aliases) {
+      await client.query(
+        `INSERT INTO subject_aliases (subject_id, alias) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+        [subjectId, alias.toLowerCase()]
+      );
+    }
+
+    const events = await ingestOnchainFor(asset.slug);
+    const stats = emptyStats();
+    await client.query("BEGIN");
+    try {
+      for (const ev of events) await upsertEvent(client, ev, subjectId, stats);
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    }
+    await logFetch(client, "onchain", subjectId, asset.slug, events.length ? "ok" : "empty", events.length);
+    report("onchain", events.length ? "ok" : "empty", stats);
+
+    // Sector membership, so /industry/sector-stablecoins aggregates every issuer's supply moves.
+    await linkCryptoSectors(client, asset.slug);
+
+    // Yahoo quotes crypto under `BTC-USD` — the same chart endpoint companies use, so the
+    // price series and its overlays come for free.
+    if (asset.yahooSymbol) {
+      const { points } = await getDailyPrices(asset.yahooSymbol);
+      if (points.length) {
+        await client.query(
+          `INSERT INTO prices (subject_id, on_date, close, volume)
+           SELECT $1, d, c, v FROM unnest($2::date[], $3::numeric[], $4::bigint[]) AS t(d, c, v)
+           ON CONFLICT (subject_id, on_date) DO UPDATE
+              SET close = EXCLUDED.close,
+                  volume = COALESCE(EXCLUDED.volume, prices.volume)`,
+          [subjectId, points.map((p) => p.time), points.map((p) => p.value), points.map((p) => p.volume ?? null)]
+        );
+      }
+      line("prices", `${points.length} daily closes for ${asset.yahooSymbol}`);
+    }
+  }
+}
+
 async function main() {
   const topic = arg("topic");
   const ticker = arg("ticker");
   const industry = arg("industry");
-  if (!topic && !ticker && !industry) {
+  const onchain = arg("onchain");
+  if (!topic && !ticker && !industry && !onchain) {
     console.error(
-      "usage: npm run ingest -- --topic <name> | --ticker <SYMBOL> | --industry <sic-slug>"
+      "usage: npm run ingest -- --topic <name> | --ticker <SYMBOL> | --industry <sic-slug>\n" +
+        `                       | --onchain <${CRYPTO_SUBJECTS.map((c) => c.slug).join("|")}|all>`
     );
     process.exit(2);
   }
@@ -235,6 +348,7 @@ async function main() {
     if (topic) await ingestTopic(client, topic);
     if (ticker) await ingestCompany(client, ticker.toUpperCase());
     if (industry) await ingestIndustry(client, industry);
+    if (onchain) await ingestOnchain(client, onchain.toLowerCase());
   } finally {
     client.release();
     await closePool();
@@ -242,7 +356,11 @@ async function main() {
   console.log("\ndone.");
 }
 
-main().catch((err) => {
-  console.error("\ningest failed:", err.message);
-  process.exit(1);
-});
+// Guarded so `scripts/refresh.ts` can import the per-subject ingesters without the CLI running
+// as a side effect of the import.
+if (require.main === module) {
+  main().catch((err) => {
+    console.error("\ningest failed:", err.message);
+    process.exit(1);
+  });
+}

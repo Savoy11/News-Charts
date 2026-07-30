@@ -1,5 +1,5 @@
 const API = "https://www.wikidata.org/w/api.php";
-const UA = { "User-Agent": "Chronolens Research marcusowens94@gmail.com" };
+const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 
 /**
  * Resolve a company's official website to a bare hostname via Wikidata (P856).

@@ -1,17 +1,30 @@
 import { TimelineEvent } from "./types";
+import { sourceLabel } from "./sourceLabel";
+import { licensedKey } from "./ingest/store";
+import { storyKey } from "./newsQuality";
 
 /**
  * Additional news repositories beyond GDELT, so a subject's coverage isn't one feed's
  * opinion. Each fetcher is failure-isolated (returns [] on any error) and the keyed ones
  * skip silently when their env key is absent — pages must never depend on an optional
- * source being up. Dedup across repositories happens at merge time, by article URL.
+ * source being up.
+ *
+ * **Identity is the story, not the document.** `docs/EVENTS-SCHEMA.md` has always specified
+ * that a news event keys on headline + publication date — "an AP story syndicated to 50 papers
+ * → one row, 50 attestations" — but every adapter here keyed on its own URL, so one wire story
+ * reaching us through three aggregators became three rows. `storyKey` restores the documented
+ * contract, and the attestation count becomes the corroboration signal the schema intends.
+ *
+ * Keys come from `licensedKey`, not `process.env` directly: eight of these sources are on
+ * non-commercial tiers today, and `COMMERCIAL_MODE=true` withholds their key so a forgotten
+ * `.env.local` entry cannot quietly serve them once the site earns money.
  *
  *   Yahoo Finance RSS  — keyless, per-ticker company headlines (recent)
  *   NYT Article Search — archive back to 1851, free key: NYT_API_KEY
  *   The Guardian       — archive back to 1999, free key: GUARDIAN_API_KEY
  */
 
-const UA = { "User-Agent": "Chronolens Research marcusowens94@gmail.com" };
+const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const REVAL = { next: { revalidate: 21600 } }; // 6h — matches the topic TTL
 
 /** Minimal RSS <item> reader — title/link/date plus a media thumbnail when the feed carries one. */
@@ -90,7 +103,7 @@ export async function getYahooFinanceNews(ticker: string): Promise<TimelineEvent
         imageUrl: item.image,
         sourceKey: "yahoo_finance",
         externalId: item.link,
-        dedupBasis: item.link,
+        dedupBasis: storyKey(item.title, day),
       });
       if (events.length >= 25) break;
     }
@@ -106,7 +119,7 @@ export async function getYahooFinanceNews(ticker: string): Promise<TimelineEvent
  * appearances in print) and the newest. Free key from developer.nytimes.com.
  */
 export async function getNytNews(query: string): Promise<TimelineEvent[]> {
-  const key = process.env.NYT_API_KEY;
+  const key = licensedKey("NYT_API_KEY", "nyt");
   if (!key) return [];
   const page = async (sort: "oldest" | "newest") => {
     const url =
@@ -149,7 +162,7 @@ export async function getNytNews(query: string): Promise<TimelineEvent[]> {
         imageUrl: nytImage(doc.multimedia),
         sourceKey: "nyt",
         externalId: doc.web_url,
-        dedupBasis: doc.web_url,
+        dedupBasis: storyKey(title, day),
       });
     }
     return events;
@@ -160,7 +173,7 @@ export async function getNytNews(query: string): Promise<TimelineEvent[]> {
 
 /** The Guardian Open Platform — archive to 1999. Free key from open-platform.theguardian.com. */
 export async function getGuardianNews(query: string): Promise<TimelineEvent[]> {
-  const key = process.env.GUARDIAN_API_KEY;
+  const key = licensedKey("GUARDIAN_API_KEY", "guardian");
   if (!key) return [];
   const page = async (orderBy: "oldest" | "newest") => {
     // show-fields rides along in the same request: thumbnail, standfirst text, byline
@@ -200,7 +213,7 @@ export async function getGuardianNews(query: string): Promise<TimelineEvent[]> {
         imageUrl: thumb && /^https?:\/\//i.test(thumb) ? thumb : undefined,
         sourceKey: "guardian",
         externalId: r.webUrl,
-        dedupBasis: r.webUrl,
+        dedupBasis: storyKey(r.webTitle!, day),
       });
     }
     return events;
@@ -216,7 +229,7 @@ export async function getGuardianNews(query: string): Promise<TimelineEvent[]> {
  * per 6h cache window stays far under that.
  */
 export async function getNewsdataNews(query: string): Promise<TimelineEvent[]> {
-  const key = process.env.NEWSDATA_API_KEY;
+  const key = licensedKey("NEWSDATA_API_KEY", "newsdata");
   if (!key) return [];
   try {
     const url =
@@ -249,14 +262,14 @@ export async function getNewsdataNews(query: string): Promise<TimelineEvent[]> {
         type: "news",
         title: r.title.trim(),
         // the aggregator isn't the publisher — credit the outlet it found
-        source: r.source_name?.trim() || r.source_id?.trim() || "Newsdata.io",
+        source: sourceLabel(r.source_name ?? r.source_id, "newsdata"),
         url: r.link,
         description,
         imageUrl:
           r.image_url && /^https?:\/\//i.test(r.image_url) ? r.image_url : undefined,
         sourceKey: "newsdata",
         externalId: r.link,
-        dedupBasis: r.link,
+        dedupBasis: storyKey(r.title, day),
       });
       if (events.length >= 25) break;
     }
@@ -273,7 +286,7 @@ export async function getNewsdataNews(query: string): Promise<TimelineEvent[]> {
  * 6h window stays far under that).
  */
 export async function getGnewsNews(query: string): Promise<TimelineEvent[]> {
-  const key = process.env.GNEWS_API_KEY;
+  const key = licensedKey("GNEWS_API_KEY", "gnews");
   if (!key) return [];
   try {
     const url =
@@ -300,13 +313,13 @@ export async function getGnewsNews(query: string): Promise<TimelineEvent[]> {
         type: "news",
         title: a.title.trim(),
         // credit the outlet Google News found, not the aggregator
-        source: a.source?.name?.trim() || "GNews",
+        source: sourceLabel(a.source?.name, "gnews"),
         url: a.url,
         description: (a.description ?? "").trim().slice(0, 240) || undefined,
         imageUrl: a.image && /^https?:\/\//i.test(a.image) ? a.image : undefined,
         sourceKey: "gnews",
         externalId: a.url,
-        dedupBasis: a.url,
+        dedupBasis: storyKey(a.title, day),
       });
     }
     return events;
@@ -317,11 +330,13 @@ export async function getGnewsNews(query: string): Promise<TimelineEvent[]> {
 
 /**
  * Currents API — another multi-outlet aggregator with a keyword search. Free key from
- * currentsapi.services → CURRENTS_API_KEY. Items carry an author but no reliable outlet
- * name, so the author stands in when present.
+ * currentsapi.services → CURRENTS_API_KEY. Items carry an author but no reliable outlet name.
+ * The author used to stand in as the source, which made a byline read as a masthead — it is a
+ * person, not a publisher. It now rides in the description where a byline belongs, and the
+ * outlet is reported honestly as unknown.
  */
 export async function getCurrentsNews(query: string): Promise<TimelineEvent[]> {
-  const key = process.env.CURRENTS_API_KEY;
+  const key = licensedKey("CURRENTS_API_KEY", "currents");
   if (!key) return [];
   try {
     const url =
@@ -343,19 +358,24 @@ export async function getCurrentsNews(query: string): Promise<TimelineEvent[]> {
       const day = n.published ? toDay(new Date(n.published)) : null;
       if (!n.title || !n.url || !day) continue;
       const author = n.author?.trim();
+      const byline = author && author.toLowerCase() !== "none" ? author : null;
       events.push({
         id: `cur-${events.length}`,
         date: day,
         type: "news",
         title: n.title.trim(),
-        source: author && author.toLowerCase() !== "none" ? author : "Currents",
+        // Currents reports an *author*, which is a person and not a publisher. Using it as the
+        // source made a byline look like a masthead; the outlet is simply unknown here.
+        source: sourceLabel(null, "currents"),
         url: n.url,
-        description: (n.description ?? "").trim().slice(0, 240) || undefined,
+        description:
+          [byline, (n.description ?? "").trim()].filter(Boolean).join(" — ").slice(0, 240) ||
+          undefined,
         // the API uses the literal string "None" for missing images
         imageUrl: n.image && /^https?:\/\//i.test(n.image) ? n.image : undefined,
         sourceKey: "currents",
         externalId: n.url,
-        dedupBasis: n.url,
+        dedupBasis: storyKey(n.title, day),
       });
       if (events.length >= 25) break;
     }
@@ -371,7 +391,7 @@ export async function getCurrentsNews(query: string): Promise<TimelineEvent[]> {
  * MARKETAUX_API_KEY (100 req/day, 3 articles/req on the free tier).
  */
 export async function getMarketauxNews(query: string, symbol?: string): Promise<TimelineEvent[]> {
-  const key = process.env.MARKETAUX_API_KEY;
+  const key = licensedKey("MARKETAUX_API_KEY", "marketaux");
   if (!key) return [];
   try {
     const filter = symbol
@@ -401,7 +421,7 @@ export async function getMarketauxNews(query: string, symbol?: string): Promise<
         date: day,
         type: "news",
         title: n.title.trim(),
-        source: n.source?.trim() || "Marketaux",
+        source: sourceLabel(n.source, "marketaux"),
         url: n.url,
         description:
           (n.description ?? n.snippet ?? "").trim().slice(0, 240) || undefined,
@@ -409,7 +429,7 @@ export async function getMarketauxNews(query: string, symbol?: string): Promise<
           n.image_url && /^https?:\/\//i.test(n.image_url) ? n.image_url : undefined,
         sourceKey: "marketaux",
         externalId: n.url,
-        dedupBasis: n.url,
+        dedupBasis: storyKey(n.title, day),
       });
     }
     return events;
@@ -425,7 +445,7 @@ export async function getMarketauxNews(query: string, symbol?: string): Promise<
  * Items carry no publisher name, so the link's domain stands in (GDELT-style).
  */
 export async function getEodhdNews(ticker: string): Promise<TimelineEvent[]> {
-  const key = process.env.EODHD_API_KEY;
+  const key = licensedKey("EODHD_API_KEY", "eodhd");
   if (!key) return [];
   try {
     const url =
@@ -456,12 +476,12 @@ export async function getEodhdNews(ticker: string): Promise<TimelineEvent[]> {
         date: day,
         type: "news",
         title: n.title.trim(),
-        source: outlet,
+        source: sourceLabel(outlet, "eodhd"),
         url: n.link,
         description: (n.content ?? "").replace(/\s+/g, " ").trim().slice(0, 240) || undefined,
         sourceKey: "eodhd",
         externalId: n.link,
-        dedupBasis: n.link,
+        dedupBasis: storyKey(n.title, day),
       });
     }
     return events;
@@ -476,7 +496,7 @@ export async function getEodhdNews(ticker: string): Promise<TimelineEvent[]> {
  * the free tier, so that's exactly the window requested).
  */
 export async function getFinnhubNews(ticker: string): Promise<TimelineEvent[]> {
-  const key = process.env.FINNHUB_API_KEY;
+  const key = licensedKey("FINNHUB_API_KEY", "finnhub");
   if (!key) return [];
   try {
     const to = new Date();
@@ -506,13 +526,13 @@ export async function getFinnhubNews(ticker: string): Promise<TimelineEvent[]> {
         date: day,
         type: "news",
         title: n.headline.trim(),
-        source: n.source?.trim() || "Finnhub",
+        source: sourceLabel(n.source, "finnhub"),
         url: n.url,
         description: (n.summary ?? "").trim().slice(0, 240) || undefined,
         imageUrl: n.image && /^https?:\/\//i.test(n.image) ? n.image : undefined,
         sourceKey: "finnhub",
         externalId: n.url,
-        dedupBasis: n.url,
+        dedupBasis: storyKey(n.headline!.trim(), day),
       });
       if (events.length >= 40) break;
     }

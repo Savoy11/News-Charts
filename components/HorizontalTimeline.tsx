@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { EventType, TimelineEvent } from "@/lib/types";
 import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT, type TimelinePrefs } from "@/lib/prefs";
+import ChainRef from "./ChainRef";
 import EventThumb from "./EventThumb";
 
 const CARD_W = 244;
@@ -57,6 +58,31 @@ const STYLE: Record<EventType, { dot: string; badge: string; label: string }> = 
     dot: "bg-teal-400 ring-teal-400/30",
     badge: "border-teal-700/50 bg-teal-500/15 text-teal-300",
     label: "Cited",
+  },
+  corporate_action: {
+    dot: "bg-fuchsia-400 ring-fuchsia-400/30",
+    badge: "border-fuchsia-700/50 bg-fuchsia-500/15 text-fuchsia-300",
+    label: "Corporate action",
+  },
+  onchain: {
+    dot: "bg-lime-400 ring-lime-400/30",
+    badge: "border-lime-700/50 bg-lime-500/15 text-lime-300",
+    label: "On-chain",
+  },
+  annotation: {
+    dot: "bg-cyan-400 ring-cyan-400/30",
+    badge: "border-cyan-700/50 bg-cyan-500/15 text-cyan-300",
+    label: "Your note",
+  },
+  governance: {
+    dot: "bg-indigo-400 ring-indigo-400/30",
+    badge: "border-indigo-700/50 bg-indigo-500/15 text-indigo-300",
+    label: "Governance",
+  },
+  exploit: {
+    dot: "bg-red-500 ring-red-500/30",
+    badge: "border-red-700/50 bg-red-500/15 text-red-300",
+    label: "Exploit",
   },
 };
 
@@ -118,6 +144,7 @@ function EventCard({ ev, style }: { ev: TimelineEvent; style: React.CSSPropertie
         {ev.title}
       </span>
       <span className="mt-1.5 block truncate text-[11px] text-slate-500">
+        <ChainRef ev={ev} />
         {ev.source}
         {ev.url ? " ↗" : ""}
       </span>
@@ -163,8 +190,14 @@ interface Cluster {
 export default function HorizontalTimeline({ events }: { events: TimelineEvent[] }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
+  /**
+   * A per-view override of the stacking preference, so condensing a sprawling timeline is one
+   * click rather than a trip through settings — the list view has had "Collapse all" since it
+   * shipped and this is its counterpart. `null` means "follow the preference".
+   */
+  const [stackOverride, setStackOverride] = useState<boolean | null>(null);
   const z = ZOOMS[zoom];
-  const storeKey = `chronolens:timeline:${usePathname()}`;
+  const storeKey = `news-charts:timeline:${usePathname()}`;
   const pendingScroll = useRef<number | null>(null);
   // saving must wait for the restore pass, or the default state overwrites what was stored
   const hydrated = useRef(false);
@@ -173,6 +206,8 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
   zoomRef.current = zoom;
   // the restore's own scroll fires an event; ignore it or it saves pre-restore state
   const suppressSave = useRef(false);
+  // read inside persist(), which must not re-create itself when the override flips
+  const stackOverrideRef = useRef<boolean | null>(null);
 
   // Mini-map viewport, as fractions of the whole track (left edge + visible width). Measured from
   // the scroller so the overview reflects the real pixel layout, not a re-derived time scale.
@@ -214,12 +249,16 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
       const fallback = loadPrefs().timeline.defaultZoom;
       const initial = typeof saved.zoom === "number" && ZOOMS[saved.zoom] ? saved.zoom : fallback;
       if (ZOOMS[initial]) setZoom(initial);
+      if (typeof saved.stacked === "boolean") setStackOverride(saved.stacked);
       pendingScroll.current = typeof saved.scrollLeft === "number" ? saved.scrollLeft : null;
     } catch {
       /* storage unavailable — start fresh */
     }
     hydrated.current = true;
   }, [storeKey]);
+
+  const stacked = stackOverride ?? tl.stack;
+  stackOverrideRef.current = stackOverride;
 
   const { clusters, width } = useMemo(() => {
     const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));
@@ -230,7 +269,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
     for (const ev of sorted) {
       const last = groups[groups.length - 1];
       // stacking off → every event is its own group, i.e. a plain card (the pre-stack layout)
-      if (tl.stack && last && bucketKey(last[0].date, z.bucket) === bucketKey(ev.date, z.bucket))
+      if (stacked && last && bucketKey(last[0].date, z.bucket) === bucketKey(ev.date, z.bucket))
         last.push(ev);
       else groups.push([ev]);
     }
@@ -255,7 +294,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
       placed.push({ id: group[0].id, events: group, x, above: i % 2 === 0, gapYears, gapMidX, label });
     }
     return { clusters: placed, width: x + CARD_W / 2 + 32 };
-  }, [events, z, tl.stack]);
+  }, [events, z, stacked]);
 
   // Which stack is expanded. A short close delay bridges the gap as the pointer travels from the
   // collapsed deck to the centered panel, so it doesn't flicker shut mid-move.
@@ -326,10 +365,29 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
       try {
         sessionStorage.setItem(
           storeKey,
-          JSON.stringify({ zoom: nextZoom, scrollLeft: Math.round(scrollLeft) })
+          JSON.stringify({
+            zoom: nextZoom,
+            scrollLeft: Math.round(scrollLeft),
+            ...(stackOverrideRef.current === null ? {} : { stacked: stackOverrideRef.current }),
+          })
         );
       } catch {
         /* storage unavailable — position just won't persist */
+      }
+    },
+    [storeKey]
+  );
+
+  /** Writes immediately, for a deliberate action rather than incidental scrolling. */
+  const persistWith = useCallback(
+    (nextStacked: boolean, nextZoom: number, scrollLeft: number) => {
+      try {
+        sessionStorage.setItem(
+          storeKey,
+          JSON.stringify({ zoom: nextZoom, scrollLeft: Math.round(scrollLeft), stacked: nextStacked })
+        );
+      } catch {
+        /* storage unavailable — the choice just won't persist */
       }
     },
     [storeKey]
@@ -468,7 +526,29 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
         <span className="text-xs text-slate-600">·</span>
         <span className="text-xs text-slate-500">{eventCount} events</span>
 
-        <div className="ml-auto flex items-center gap-1">
+        {/* wraps: the toolbar now carries condense + three zooms + four track buttons, which is
+            wider than a phone viewport in one row */}
+        <div className="ml-auto flex flex-wrap items-center gap-1">
+          {/* The list view's "Collapse all" counterpart. Stacking was reachable only through
+              settings, which is a long way to go to quieten a sprawling timeline. */}
+          <button
+            onClick={() => {
+              closeNow();
+              const next = !stacked;
+              setStackOverride(next);
+              const el = scrollerRef.current;
+              if (el) persistWith(next, zoom, el.scrollLeft);
+            }}
+            aria-pressed={stacked}
+            title={
+              stacked
+                ? "Show every event as its own card"
+                : "Fold each period's events into one stack"
+            }
+            className="mr-2 rounded-md border border-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-400 transition-colors hover:border-sky-600 hover:text-sky-300"
+          >
+            {stacked ? "Expand all" : "Condense"}
+          </button>
           <div className="mr-2 flex rounded-md border border-slate-700">
             {ZOOMS.map((zz, i) => (
               <button
@@ -796,6 +876,9 @@ function StackRow({ ev }: { ev: TimelineEvent }) {
         <span className="mt-1 line-clamp-2 block text-xs font-medium leading-snug text-slate-200">
           {ev.title}
         </span>
+        {/* No chain reference here: this card is the condensed stack entry, one truncated line
+            wide, and a block height would push the explorer's name off it. The full card and the
+            list both carry it. */}
         <span className="mt-0.5 block truncate text-[10px] text-slate-500">
           {ev.source}
           {ev.url ? " ↗" : ""}

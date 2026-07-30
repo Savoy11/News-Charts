@@ -16,6 +16,14 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
   press: { label: "Press", cls: "border-orange-700/50 bg-orange-500/15 text-orange-300" },
   news: { label: "News", cls: "border-slate-600/50 bg-slate-500/15 text-slate-300" },
   citation: { label: "Cited", cls: "border-teal-700/50 bg-teal-500/15 text-teal-300" },
+  corporate_action: {
+    label: "Corporate action",
+    cls: "border-fuchsia-700/50 bg-fuchsia-500/15 text-fuchsia-300",
+  },
+  onchain: { label: "On-chain", cls: "border-lime-700/50 bg-lime-500/15 text-lime-300" },
+  annotation: { label: "Your note", cls: "border-cyan-700/50 bg-cyan-500/15 text-cyan-300" },
+  governance: { label: "Governance", cls: "border-indigo-700/50 bg-indigo-500/15 text-indigo-300" },
+  exploit: { label: "Exploit", cls: "border-red-700/50 bg-red-500/15 text-red-300" },
 };
 
 // A move on day D can be sparked by an item dated D itself (intraday news) or a few days before
@@ -24,7 +32,19 @@ const CATALYST_LOOKBACK_DAYS = 5;
 // Which kind wins when two events sit on the same nearest day — the market-moving ones first.
 const CATALYST_PRIORITY: Record<EventType, number> = {
   earnings: 5,
+  // A dividend ex-date drop is mechanical, so pairing it with the move is the *most* useful
+  // thing this panel can say about that day: the move wasn't a reaction to anything.
+  corporate_action: 4,
   filing: 4,
+  // a protocol event (a halving, an upgrade) is a real, dated cause — above ordinary news
+  onchain: 3,
+  // a governance vote decides a change; the change itself lands later, so it explains a move
+  // less directly than an executed on-chain event but more than coverage of one
+  governance: 3,
+  // if a protocol was exploited near a big move, that is the explanation, not a coincidence
+  exploit: 6,
+  // a reader's own note is never the explanation for a market move
+  annotation: 0,
   regulation: 3,
   history: 2,
   press: 1,

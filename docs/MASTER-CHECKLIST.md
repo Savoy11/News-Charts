@@ -3,7 +3,7 @@
 The governing checklist for the **News Charts** project: a single place to track initiatives,
 priorities, and progress. Add to it, check things off, re-prioritise. This is a living doc.
 
-**Last updated:** 2026-07-28
+**Last updated:** 2026-07-30
 
 ## Scope & independence
 
@@ -31,8 +31,8 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
 
 ## Project state & prioritized backlog (opened 2026-07-25 · cleared 2026-07-28)
 
-**Where News Charts stands.** The data layer is real — 7 SQL migrations (`db/001`–`007`) plus a
-full script suite (`ingest`, `score`, `signals`, `explain`, `plan`). The feature backlog that
+**Where News Charts stands.** The data layer is real — 14 SQL migrations (`db/001`–`014`) plus a
+full script suite (`ingest`, `score`, `signals`, `explain`, `plan`, `refresh`). The feature backlog that
 opened this section is **done**: PRs #1–#7 all merged 2026-07-25, #9 (citation mining, NL
 prompts, pre-IPO story, chart interaction, eight news repositories) merged 2026-07-27, and #11
 (the News Charts rename) merged 2026-07-28. The verification each of those PRs deferred —
@@ -72,6 +72,122 @@ build`, or the offline parser tests — they only appear with data on screen):
 
 > The **On-chain events** initiative below is the next P1 build; with this backlog cleared it is
 > no longer competing with already-sunk work.
+
+---
+
+## ⛔ Initiative: wiring regressions from the scheduler cut-over · `P0 · blocks the feed gate`
+
+**Where this came from.** The `code-auditor` and `opportunity-scout` agents (PR #14) were run as a
+smoke test on 2026-07-30; the auditor was capped at **2 findings by instruction**, so its report is
+not a baseline. The more serious material is in `docs/PRELIMINARY-FINDINGS-2026-07-30.md`. **Every
+item below was independently re-verified against the code before being filed here** — agent output
+was not taken on trust, and one finding was reproduced against a live database rather than argued
+from the source.
+
+**The common cause.** Commit `813d505` ("Refresh on a schedule; pages read the database and nothing
+else", merged on PR #13) removed live fetching from `lib/page-data.ts` on the stated basis that
+fetching "now lives only there" in `scripts/ingest.ts`. **The second half did not happen.** The
+render path was gutted; the ingest path was never given what it lost.
+
+> ⚠ **Why the 686 passing checks did not catch this.** Every suite exercises its unit directly —
+> `check:feeds` calls the adapters itself, `check:refresh` calls `selectStaleSources` itself. The
+> defects are all in the *wiring between* units, which is the one thing unit-level checks
+> structurally cannot see. **A green `check:feeds` currently proves an adapter parses, not that
+> anything ingests from it.** Treat that distinction as the lesson, not the incident.
+
+### A · The ingest path lost ten adapters and its own scheduling logic
+
+- [ ] `P0` **Ten adapters feed nothing.** `lib/newsExtra.ts` (Yahoo RSS, NYT, Guardian, Newsdata,
+      GNews, Currents, Marketaux, EODHD, Finnhub) and `lib/archive.ts` (Internet Archive) are
+      imported by **exactly two files — `scripts/check-feeds.ts` and `scripts/check-commercial-mode.ts`,
+      both diagnostics.** `scripts/ingest.ts` imports wiki, loc, news (GDELT), sec, prices, wikidata,
+      federalregister and onchain — and neither of those two. So the **entire keyed-news layer plus
+      the Internet Archive contribute nothing to the database**, while `npm run check:feeds` reports
+      them green because it calls them directly.
+      ⚠ **This blocks the ⛔ feed gate below**: it is currently pricing licences for sources that
+      feed nothing. **Do not buy against `cost-report`'s numbers until this is wired.**
+      *Importance:* critical — the site is not doing what its docs say · *Efficiency:* high ·
+      *Practicality:* high, no schema change.
+- [ ] `P0` **`npm run refresh` ignores the per-source windows.** `scripts/refresh.ts:22` mentions
+      `selectStaleSources` in a **comment**; its imports never pull in `selectStaleSources` or
+      `ttlFor`. The only real caller of either is `scripts/check-refresh.ts` — the test. The
+      quota-safety feature shipped on #12 is therefore inert on the one path that spends quota, and
+      an hourly run re-asks Wikipedia and Chronicling America far inside their declared windows.
+- [ ] `P1` **On-chain subjects never refresh on schedule.** `scripts/refresh.ts:25` imports
+      `ingestCompany, ingestTopic` and no `ingestOnchain`. Crypto assets are `kind='topic'` by
+      design, so they route through the topic path.
+      - [ ] Check the reported second-order effect, which is **not yet verified**: whether
+            `upsertSubject` then lets Wikipedia overwrite `/topic/dai`'s display name and summary
+            via a fuzzy match on the bare string "dai". That is the confidently-wrong-page failure
+            mode the prompt-parsing work exists to prevent.
+
+### B · The licence gate fails open — reproduced, not inferred
+
+- [ ] `P0` **`assertCommercialOk` permits any source it has never heard of.** It reads
+      `if (rows[0] && !rows[0].commercial_ok)` (`lib/ingest/store.ts`), so **a missing `sources` row
+      means no throw**. `ensureSources` is called only from `scripts/ingest.ts:347`, inside the CLI
+      `main()` — which `scripts/refresh.ts` never enters, because it imports `ingestCompany`/
+      `ingestTopic` directly. No migration seeds the table (`grep "INSERT INTO sources" db/` is
+      empty). On any database where only `db:migrate` and the scheduler have run, the table is
+      empty and the gate is a no-op.
+      **Reproduced 2026-07-30** against a fresh migrate-only database:
+      ```
+      sources rows after migrate-only: 0
+      FAIL-OPEN  assertCommercialOk("nyt")      returned normally — ingest would proceed
+      FAIL-OPEN  assertCommercialOk("gnews")    returned normally — ingest would proceed
+      FAIL-OPEN  assertCommercialOk("newsdata") returned normally — ingest would proceed
+      ```
+      All three are flagged `commercialOk: false`. The failure is silent — it does not error, log
+      or skip, and nothing in `source_fetches` would record that it happened.
+      **Fix:** treat a missing row as a refusal rather than a pass, and have the refresh path
+      establish the registry before ingesting. *Importance:* high — licensing exposure, silent ·
+      *Efficiency:* high — a one-condition change plus one call · *Practicality:* high.
+
+### C · Phase 2 events are built but render nowhere
+
+- [ ] `P1` **`governance` and `exploit` events are filtered out of every topic page.**
+      `components/TopicExplorer.tsx` `FILTERS` lists five kinds; `EventType` has **thirteen**.
+      `ALL_TYPES` derives from `FILTERS`, `active` is seeded from `ALL_TYPES`, and the render
+      filters on `active` — so those rows are discarded, **and because the chip row also derives
+      from `FILTERS` there is no control to turn them back on.** Deriving from `FILTERS` keeps the
+      default set and the chip list in step but does not make `FILTERS` exhaustive over
+      `EventType`, and a `Set<EventType>` cannot be exhaustiveness-checked, so `tsc` is silent.
+      ⚠ The Phase 2 block in this checklist is marked `[x]` while the work renders nowhere.
+      - [ ] Confirm the reported blast radius in a browser (**not yet observed**): that
+            `/topic/uni` and `/topic/aave` are governance-only subjects rendering an empty timeline
+            while the Sources panel reports Snapshot contributing events.
+
+### D · Smaller correctness and honesty items
+
+- [ ] `P2` **`/api/group` emits a field the type dropped.** `app/api/group/route.ts:51` sets
+      `yearOnly: r.date_precision === "year"`; `TimelineEvent` replaced `yearOnly` with
+      `precision`. `tsc` cannot see it because the query is called without a row generic, so `rows`
+      is `any[]` and the assignment skips excess/missing property checks.
+- [ ] `P2` **`servedFrom: "live"` is unreachable, but the badge and README still promise it.**
+      `lib/page-data.ts` declares `ServedFrom = "database" | "live"` and assigns only `"database"`;
+      the file fetches nothing. `components/ServedFrom.tsx` still renders the dead arm with the
+      tooltip *"Fetched live from the sources and stored for next time"*, and it is mounted on both
+      detail routes. `README.md:392-395` still documents the removed read-through cache and the
+      `stored`/`live` badge. This is a **provenance** surface — a badge with one reachable value
+      implies a comparison the code no longer performs. Decide whether the distinction still
+      exists; if not, collapse the type, restate or drop the badge, and follow with the README.
+- [x] ~~Checklist stated 7 migrations~~ — corrected to **14** (`db/001`–`014`) 2026-07-30.
+
+### Cross-cutting
+
+- [ ] `P1` **Add a wiring/reachability check to the suite.** All of section A is one shape: an
+      exported function no scheduled entry point reaches. The existing suites cannot catch it by
+      construction. A check that asserts every adapter in `SOURCES` is reachable from an ingest
+      entry point — and that every `EventType` appears in a UI filter list — would have caught A1,
+      A3 and C at once.
+- [ ] `P1` **Re-run both agents properly.** The 2026-07-30 pass was a smoke test capped at 2
+      findings and 2 proposals by instruction. Neither is a baseline; a full fortnightly run has
+      not happened.
+- [ ] `P2` **Fix the auditor's script name.** `.claude/agents/code-auditor.md` Step 2 names
+      `npm run check-feeds`; this repo's script is `check:feeds`, so the check errors as "Missing
+      script" rather than running. Also note in the agent definition that egress is blocked from
+      the build container, so a report must state **where it ran** or a blocked feed reads as a
+      broken one.
 
 ---
 
@@ -171,10 +287,25 @@ non-compliant. The `commercialOk` flags in `SOURCES` are a practical reading of 
       without spending anything, and `npm run cost-report` shows what the real runs actually
       spent against each free tier. The projection is a floor, so the first live numbers are the
       ones that matter — EODHD is already projected at 100% of its tier at five subjects.
+- [ ] `P1` **Report on the demand queue — make `subject_requests` readable.** *(opportunity-scout
+      proposal, 2026-07-30 — approved.)* A `npm run demand` report: most-wanted unfulfilled
+      subjects with request counts and first/last-asked dates, plus a second block for requests
+      carrying a `last_error`. Read-only, no new table, no new page.
+      `db/014_subject_requests.sql` stores `requests`, `first_asked`, `last_asked`, `fulfilled_at`
+      and `last_error`; `lib/ingest/queue.ts` writes all five and reads back four. **Nothing in
+      `app/` reads the table at all, and `last_error` is written by `markFailed()` and read by
+      nobody** — so a subject failing every hourly run is invisible outside psql. Data already
+      collected, already paid for, never surfaced.
+      This is the instrument the `P2` sizing item below is blocked on — **file it above that item,
+      not in place of it.** Deliberately a CLI report, not a public page: the app has no auth, and
+      publishing what visitors search for would expose their queries and invite gaming of the
+      ingest queue. *Importance:* medium-high · *Efficiency:* high — two SELECTs over existing
+      schema · *Practicality:* high — no network, no risk to any render path.
 - [ ] `P2` **Decide how far the request queue is worked per run.** `--requests` defaults to 10
       most-wanted per run. Too low and demand backs up; too high and new subjects crowd out
       refreshing the ones already on the site. The right number depends on real demand, which
-      does not exist yet.
+      does not exist yet. ⚠ Blocked on the demand report above — once the hourly scheduler runs,
+      demand exists but is unreadable.
 
 ### Feed health (each source, against production keys)
 
@@ -377,6 +508,11 @@ machine closes that gap.
       reach (genesis) and rate limits.
 
 ### Phase 2 — Governance & protocol events · `P1`/`P2`
+
+> ⚠ **The ticks in this section describe the ingest half only.** Audit 2026-07-30 found that
+> `governance` and `exploit` events are filtered out of every topic page and have no chip to turn
+> them back on, so none of the work below currently reaches a reader. See finding **C** in the
+> scheduler cut-over initiative at the top of this file. **Do not read these `[x]`s as "shipped".**
 
 - [x] ~~`P1` **Snapshot GraphQL** adapter (keyless)~~ — done 2026-07-28 for **Uniswap and Aave**
       as `/topic/uni` and `/topic/aave`. Compound and Maker are left off deliberately: both run
@@ -763,6 +899,24 @@ popup, filing stacks, collapsible list, 8 new news repositories), ranked by valu
 - [x] ~~`P1` **Merge PR #9 to main**~~ — merged 2026-07-27. `.env.example` now also documents
       all eight news keys and `COMMERCIAL_MODE` (it was committed but listed only
       `DATABASE_URL` and `ANTHROPIC_API_KEY` until 2026-07-28).
+- [ ] `P2` **Give industry pages their own OpenGraph card.** *(opportunity-scout proposal,
+      2026-07-30 — approved.)* Add `app/industry/[slug]/opengraph-image.tsx` so a shared sector
+      link renders "*&lt;Industry name&gt; · sector timeline*" instead of the generic site card.
+      `app/company/[ticker]/` and `app/topic/[slug]/` each have one; `app/industry/[slug]/` has
+      only `loading.tsx` and `page.tsx`, so it falls through to `ogCard("Timelines for analysts",
+      …)`. These pages are publicly indexed — `lib/seo.ts`'s `subjectPath()` maps
+      `kind === "industry"` to `/industry/${slug}` and `app/sitemap.ts` emits every indexed
+      subject through it — and the page's own `generateMetadata` already declares
+      `twitter: { card: "summary_large_image" }`, so the large-image promise is made and the
+      generic image is what fills it.
+      ⚠ **One honest wrinkle:** the existing cards are deliberately fetch-free (the company card
+      renders the ticker from `params` alone), but an industry slug is `sic-3674` and a card
+      reading "sic-3674" would be worse than the generic one. So this card needs the display
+      name, which means calling the same `loadIndustry(slug)` that `generateMetadata` already
+      calls — **a DB read in an OG route, which the other two do not do.** Fall back to the
+      generic card when the lookup fails. *Importance:* medium — serves the stated traffic
+      objective on the most differentiated page type · *Practicality:* high, additive, degrades
+      to today's behaviour.
 
 ### External audit findings (2026-07-26) — verified against the code
 

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { unstable_noStore as noStore } from "next/cache";
 import { absolute, subjectPath } from "@/lib/seo";
 import { listIndexedSubjects } from "@/lib/subjects-index";
 import { CURATED } from "@/lib/suggestions";
@@ -16,7 +17,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const subjects = await listIndexedSubjects(1, 5000);
 
-  const subjectRoutes: MetadataRoute.Sitemap = subjects.length
+  // Same reasoning as /explore, and the consequence is larger: a sitemap generated during a
+  // build that could not reach the database would list only the curated seed pool, and search
+  // engines would be told that is the whole site.
+  if (subjects === null) noStore();
+
+  const subjectRoutes: MetadataRoute.Sitemap = subjects?.length
     ? subjects.map((s) => ({
         url: absolute(subjectPath(s.kind, s.slug, s.ticker)),
         lastModified: s.refreshedAt ? new Date(s.refreshedAt) : undefined,

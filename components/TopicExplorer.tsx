@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { applyFocus } from "@/lib/focus";
+import FocusBar from "./FocusBar";
+import { useVisitorFeeds } from "@/lib/useVisitorFeeds";
 import { usePathname } from "next/navigation";
 import HorizontalTimeline from "./HorizontalTimeline";
 import EventList, { dateAnchorId } from "./EventList";
 import PriceTimeline from "./PriceTimeline";
 import AiPanel, { type AiRanking } from "./AiPanel";
+import Annotations from "./Annotations";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
+import { ANNOTATIONS_EVENT, annotationsAsEvents, loadAnnotations } from "@/lib/annotations";
 import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT } from "@/lib/prefs";
 
 /** Keep only what the visitor's model judged relevant, best matches first. */
@@ -72,10 +77,13 @@ function encodeView(
 export default function TopicExplorer({
   events,
   prices = [],
+  subject,
 }: {
   events: TimelineEvent[];
   /** Present only for subjects that have a price series — crypto assets today. */
   prices?: PricePoint[];
+  /** what the visitor's own feed keys should be asked about — the topic's title */
+  subject: string;
 }) {
   // Derived from FILTERS rather than repeated — the same duplication in CompanyExplorer left a
   // newly added event kind filtered out by default. A topic's filter list is deliberately
@@ -148,8 +156,36 @@ export default function TopicExplorer({
   }, []);
   const capped = useMemo(() => capHistory(events, maxHistory), [events, maxHistory]);
 
+  // A reader's own notes, merged in so they plot like anything else and never filtered out by
+  // the type chips — those select sources, and a note is not a source.
+  const [notes, setNotes] = useState<TimelineEvent[]>([]);
+  useEffect(() => {
+    const refresh = () => setNotes(annotationsAsEvents(loadAnnotations(pathname)) as TimelineEvent[]);
+    refresh();
+    window.addEventListener(ANNOTATIONS_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(ANNOTATIONS_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [pathname]);
+
   const [ranking, setRanking] = useState<AiRanking | null>(null);
-  const filtered = useMemo(() => capped.filter((e) => active.has(e.type)), [capped, active]);
+  // Articles the visitor's own keys add. Merged here rather than server-side because they were
+  // fetched under the visitor's licence and must never reach shared storage.
+  const mine = useVisitorFeeds(subject, capped);
+  // The keyless half of a focused search: narrow this subject's own events to the ones that also
+  // concern the influence the visitor asked about. That intersection is what "how did X affect Y"
+  // is actually asking for — Y's story, limited to the part X is in.
+  const [showAll, setShowAll] = useState(false);
+  const focusResult = useMemo(
+    () => applyFocus([...capped, ...mine], showAll ? null : focusHint),
+    [capped, mine, focusHint, showAll]
+  );
+  const filtered = useMemo(
+    () => [...focusResult.events.filter((e) => active.has(e.type)), ...notes],
+    [focusResult, active, notes]
+  );
   // ranking narrows and reorders; the timeline still renders chronologically
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);
 
@@ -222,6 +258,15 @@ export default function TopicExplorer({
 
   return (
     <div>
+      {focusHint && (
+        <FocusBar
+          focus={focusHint}
+          result={focusResult}
+          subject={subject}
+          onClear={() => setShowAll(true)}
+        />
+      )}
+
       <AiPanel
         events={filtered}
         ranking={ranking}
@@ -279,6 +324,8 @@ export default function TopicExplorer({
           ))}
         </div>
       </div>
+
+      <Annotations path={pathname} />
 
       {view === "timeline" ? (
         <HorizontalTimeline events={ranked} />

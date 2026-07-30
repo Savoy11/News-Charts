@@ -12,13 +12,27 @@ export interface ParsedPrompt {
   subject: string;
   /** qualifier the visitor attached, e.g. "in the united states" — null when none */
   focus: string | null;
+  /**
+   * The *other* side of a relational question — the thing doing the affecting, e.g. "barack
+   * obama" in "Barack Obama's effect on Ford stock". Null for every non-relational prompt.
+   *
+   * It is also folded into `focus`, because it is a real qualifier and the AI panel should still
+   * see it wherever the visitor lands. Kept separate as well so the caller can try the thing the
+   * question actually asks for: two subjects on one axis, rather than one subject with the other
+   * mentioned in a text box.
+   */
+  influence: string | null;
 }
 
 // conversational scaffolding that precedes the actual request
 const FILLERS = [
   /^please\s+/i,
   /^(?:can|could|would)\s+you\s+/i,
-  /^i(?:'d|’d| would)?\s*(?:like|want|need)\s+(?:to\s+(?:see|know\s+about|explore|read\s+about)\s+)?/i,
+  // The trailing "to …" clause is optional *and* varied. "know about" has to be tried before
+  // bare "know", or "I'd like to know how AI changed Nvidia" keeps a "to know" that the relation
+  // patterns then fail to match — the prompt parsed to the subject "to know how AI has changed
+  // Nvidia" and searched Wikipedia for it.
+  /^i(?:'d|’d| would)?\s*(?:like|want|need)\s+(?:to\s+(?:see|know\s+about|know|understand|explore|read\s+about|learn\s+about|learn|find\s+out)\s+)?/i,
   /^show\s+me\s+/i,
   /^tell\s+me\s+about\s+/i,
   /^give\s+me\s+/i,
@@ -55,6 +69,21 @@ const RELATIONS = [
   /^how\s+(?:did|does|do|has|have|had)\s+(.+?)\s+(?:affects?|affected|impacts?|impacted|influenced?|changed?|moved?|hurt|helped?)\s+(.+)$/i,
   /^(?:did|does|do|has|have|had)\s+(.+?)\s+(?:affects?|impacts?|influence|move|hurt|help)\s+(.+)$/i,
   /^(.+?)(?:['’]s)?\s+(?:effects?|impacts?|influence)\s+on\s+(.+)$/i,
+  /**
+   * "how Donald Trump's presidency affected IBM stock" — a *how* question with no auxiliary
+   * verb, because the subject of the sentence is a noun phrase rather than the thing acting.
+   * This is how people actually type the question, and it was the single commonest shape the
+   * parser missed: it fell all the way through to a Wikipedia search for the whole sentence and
+   * produced `/topic/how donald trumps presidency affected ford`.
+   *
+   * Must sit after the auxiliary form above, or "how did X affect Y" would match here with
+   * "did X" as the influence.
+   */
+  // The perfect-tense auxiliary is absorbed rather than captured: "how AI has changed Nvidia"
+  // otherwise yields the influence "AI has", which then gets searched for verbatim.
+  /^how\s+(.+?)(?:\s+(?:has|have|had))?\s+(?:affected|impacted|influenced|changed|moved|hurt|helped|shaped|reshaped)\s+(.+)$/i,
+  /** "what did the chip shortage do to Ford stock" */
+  /^what\s+(?:did|does|has|have|had)\s+(.+?)\s+(?:do|done)\s+(?:to|for)\s+(.+)$/i,
 ];
 
 /**
@@ -62,7 +91,7 @@ const RELATIONS = [
  * the suffix on turned a resolvable company into a Wikipedia guess — plain "Ford" resolves,
  * "Ford stock" did not.
  */
-const STOCK_SUFFIX = /\s+(?:stock\s+price|share\s+price|stock|shares|share|ticker|equity)$/i;
+const STOCK_SUFFIX = /\s+(?:stock\s+prices?|share\s+prices?|stocks|stock|shares|share|ticker|equity)$/i;
 
 /**
  * Compounds where the trailing word is part of the name, not a way of saying "the company".
@@ -142,10 +171,14 @@ export function parseSearchPrompt(raw: string): ParsedPrompt {
 
   subject = stripStockSuffix(subject.trim());
   // over-stripped to nothing — fall back to the raw query rather than search for ""
-  if (!subject) return { subject: raw.trim(), focus: null };
+  if (!subject) return { subject: raw.trim(), focus: null, influence: null };
 
   // both angles survive when a prompt carries a relation and a qualifier
   // ("impact of tariffs on Ford in 2025")
   const parts = [relationFocus, focus].filter(Boolean) as string[];
-  return { subject, focus: parts.length ? parts.join(" · ") : null };
+  return {
+    subject,
+    focus: parts.length ? parts.join(" · ") : null,
+    influence: relationFocus ? stripStockSuffix(relationFocus) : null,
+  };
 }

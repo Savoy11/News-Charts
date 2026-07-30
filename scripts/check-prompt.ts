@@ -74,5 +74,40 @@ for (const c of CASES) {
   }
 }
 
+/**
+ * The influence, kept as its own field so the resolve route can send a relational question to a
+ * two-subject compose instead of to one subject with the other pre-filled in a text box.
+ *
+ * It is still folded into `focus` as well — the AI panel should see it wherever the visitor
+ * lands, including when the compose is not available.
+ */
+console.log("\nThe influence, separated from the focus");
+const inf = (q: string, want: string | null) => {
+  const got = parseSearchPrompt(q).influence;
+  const ok = got === want;
+  if (ok) pass++;
+  else fail++;
+  console.log(`  ${ok ? "PASS" : "FAIL"}  ${JSON.stringify(q.slice(0, 46))} → ${JSON.stringify(got)}`);
+};
+inf("Barak Obamas effect on Ford stock", "Barak Obamas");
+inf("effect of Obama on Ford stock", "Obama");
+inf("how did tariffs affect GM", "tariffs");
+// The suffix is stripped on both sides — "Tesla stock's effect on Ford" names a company either way.
+inf("Tesla stock's effect on Ford", "Tesla");
+// No relation, no influence: a plain subject must never route to a compare with an empty half.
+inf("Ford", null);
+inf("the history of Alibaba in the United States", null);
+inf("effect", null);
+// A relation plus a qualifier keeps the two apart, and `focus` still carries both.
+inf("impact of tariffs on Ford in 2025", "tariffs");
+const both = parseSearchPrompt("impact of tariffs on Ford in 2025");
+const also = (name: string, ok: boolean, detail: string) => {
+  if (ok) pass++;
+  else fail++;
+  console.log(`  ${ok ? "PASS" : "FAIL"}  ${name} — ${detail}`);
+};
+also("focus still carries the relation and the qualifier", both.focus === "tariffs \u00b7 in 2025", String(both.focus));
+also("and the subject is still the thing affected", both.subject === "Ford", both.subject);
+
 console.log(`\n${pass}/${pass + fail} checks passed\n`);
 if (fail) process.exit(1);

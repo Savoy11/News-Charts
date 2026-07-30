@@ -164,7 +164,7 @@ export async function loadSubject(slug: string): Promise<SubjectRow | null> {
 export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
   const { rows } = await getPool().query(
     `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title, e.body, e.image_url,
-            a.url, a.source_label,
+            a.url, a.source_label, a.external_id,
             (SELECT count(*) FROM event_attestations x WHERE x.event_id = e.id) AS attestations
        FROM events e
        JOIN event_subjects es ON es.event_id = e.id
@@ -195,6 +195,10 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
           ? `${r.body ? `${r.body} · ` : ""}${attestations} sources`
           : r.body ?? undefined,
       imageUrl: r.image_url ?? undefined,
+      // The attestation's external id is what the source calls this thing — a block height, an
+      // accession number. The read path used to drop it, which left on-chain rows unable to say
+      // which block they came from even though the row was sitting in the database.
+      externalId: r.external_id ?? undefined,
       precision: r.date_precision as DatePrecision,
     } satisfies TimelineEvent;
   });

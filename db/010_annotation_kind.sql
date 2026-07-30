@@ -1,0 +1,12 @@
+-- Reader annotations: private notes pinned to a date on a subject's timeline.
+--
+-- The value exists in the enum so the TypeScript EventType and the database enum cannot drift
+-- apart, and so the marker/badge machinery treats a note like any other kind. **Nothing writes
+-- it today**: annotations live in the reader's own browser, never on a server, which is the
+-- same rule follows, prefs and the BYO-model key follow. Ingest skips them for free because an
+-- annotation carries no source key.
+--
+-- Idempotent: 001 is regenerated from the spec and already contains this value on fresh
+-- installs. ADD VALUE is transaction-safe on PG12+ as long as the new value is not used in the
+-- same transaction; nothing here inserts an 'annotation' row.
+ALTER TYPE event_kind ADD VALUE IF NOT EXISTS 'annotation';

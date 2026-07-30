@@ -120,9 +120,37 @@ async function companyPage(page: Page): Promise<void> {
   check("filing runs condense", (await page.locator("text=/^Show all$/").count()) > 0);
   check("corporate actions render", /Dividend of|stock split/.test(body));
 
+  // Tone dots: shown only where a headline actually reads one way, never on a filing.
+  const tones = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll("[data-event-row]")];
+    return rows.map((r) => ({
+      text: (r as HTMLElement).innerText.slice(0, 80),
+      tone: r.querySelector("span.bg-emerald-400, span.bg-red-400")
+        ? r.querySelector("span.bg-emerald-400")
+          ? "positive"
+          : "negative"
+        : "none",
+    }));
+  });
+  const recall = tones.find((t) => /recalls SUVs/.test(t.text));
+  const filing = tones.find((t) => /^FILING/.test(t.text));
+  check("a negative headline gets a tone dot", recall?.tone === "negative", recall?.tone ?? "row not found");
+  check("a filing is never toned", filing ? filing.tone === "none" : false, filing?.tone ?? "row not found");
+  check("most rows carry no tone at all", tones.filter((t) => t.tone === "none").length > tones.length / 2);
+
   // The Sources panel: its whole purpose is telling these two states apart.
   check("sources panel", body.includes("Sources") && /contributing/.test(body));
   check("distinguishes empty from rate-limited", /nothing returned/.test(body) && /rate limited/.test(body));
+  // CC BY-SA obliges naming contributors and the licence wherever the text is reused, so that
+  // credit must not be a truncated line that disappears at a narrow viewport.
+  const wikiCredit = page.locator('[data-source-credit="wikipedia"]').first();
+  if (await wikiCredit.count()) {
+    const cls = (await wikiCredit.getAttribute("class")) ?? "";
+    check("the CC BY-SA credit is not truncated", !cls.includes("truncate"), cls);
+    check("and names contributors and the licence", /CC BY-SA/.test(await wikiCredit.innerText()), await wikiCredit.innerText());
+  } else {
+    check("a Wikipedia credit line is present", false, "not found");
+  }
 
   // Follow writes under the current namespace, and never the pre-rename one.
   const follow = page.locator("button", { hasText: /^Follow$/i }).first();
@@ -135,6 +163,53 @@ async function companyPage(page: Page): Promise<void> {
   } else {
     check("follow control present", false, "not found");
   }
+}
+
+/**
+ * Private annotations: written in the browser, plotted like any other marker, and never sent
+ * anywhere. The last part is the one worth asserting — the value of a trading journal here rests
+ * on it, so the check watches for a request carrying the note's text.
+ */
+async function annotations(page: Page): Promise<void> {
+  console.log("\nPrivate annotations");
+  await go(page, COMPANY);
+
+  const secret = `thesis-${Date.now().toString(36)}`;
+  const posted: string[] = [];
+  page.on("request", (r) => {
+    const body = r.postData();
+    if (body?.includes(secret) || r.url().includes(secret)) posted.push(r.url());
+  });
+
+  const openBtn = page.locator('button:has-text("Add a note")').first();
+  check("annotations panel present", (await openBtn.count()) > 0);
+  if (!(await openBtn.count())) return;
+  await openBtn.click();
+  await page.waitForTimeout(500);
+
+  await page.locator('input[aria-label="Date this note is about"]').first().fill("2026-02-05");
+  await page.locator('button:has-text("Entry")').first().click();
+  await page.locator('input[aria-label="Note text"]').first().fill(secret);
+  await page.locator('button:has-text("Save")').first().click();
+  await page.waitForTimeout(1500);
+
+  const body = await visible(page);
+  check("the note is listed", body.includes(secret));
+  check("it renders as a timeline event", (await page.locator("text=Your note").count()) > 0);
+  check("the chart legend names it", body.includes("Your notes"));
+
+  const keys: string[] = await page.evaluate(() => Object.keys(localStorage));
+  check("stored under the subject's own key", keys.some((k) => k.startsWith("news-charts:notes:")));
+  // The whole premise: this never leaves the browser.
+  check("never sent to a server", posted.length === 0, posted.slice(0, 2).join(" "));
+
+  // it survives a reload, and can be removed again
+  await page.reload({ waitUntil: "networkidle" });
+  await settle(page);
+  check("survives a reload", (await visible(page)).includes(secret));
+  await page.locator('button[aria-label^="Delete note"]').first().click();
+  await page.waitForTimeout(900);
+  check("can be deleted", !(await visible(page)).includes(secret));
 }
 
 /**
@@ -156,7 +231,7 @@ async function jumpOpensSection(page: Page): Promise<void> {
 
   // Scoped to EventList's own row class — a looser selector also catches the pre-IPO
   // horizontal timeline's cards, which are never collapsed and would mask the result.
-  const listRows = () => page.locator(".flex.items-start.gap-2.p-3").count();
+  const listRows = () => page.locator("[data-event-row]").count();
   const rowsWhenShut = await listRows();
   check("collapse all really closes the sections", rowsWhenShut === 0, `${rowsWhenShut} rows still shown`);
 
@@ -213,8 +288,12 @@ async function chartOverlays(page: Page): Promise<void> {
   check("overlays turn back off", Math.abs((await distinctColours()) - before) <= 3);
 
   const body = await visible(page);
-  check("legend lists split / dividend", body.includes("Split / dividend"));
-  check("legend omits kinds this page lacks", !body.includes("On-chain"));
+  // Scoped to the legend itself. Reading the whole page for "On-chain" passed until the footer
+  // started crediting the explorers, at which point a check about a chart legend was being
+  // decided by the site's boilerplate.
+  const legend = await page.locator("[data-chart-legend]").first().innerText();
+  check("legend lists split / dividend", legend.includes("Split / dividend"), legend.replace(/\n/g, " · "));
+  check("legend omits kinds this page lacks", !legend.includes("On-chain"), legend.replace(/\n/g, " · "));
 }
 
 async function topicPage(page: Page): Promise<void> {
@@ -281,6 +360,26 @@ async function cryptoTopic(page: Page): Promise<void> {
   check("the charted halving is present", /3\.125 BTC/.test(body));
   check("older halvings kept", /25 BTC/.test(body) && /6\.25 BTC/.test(body));
   check("legend names the on-chain marker", body.includes("On-chain"));
+
+  // Attribution. The claim an on-chain row makes is only as good as the reader's ability to go
+  // and check it, so the block has to be on the row — not only inside the link's href.
+  const halving = await page
+    .locator("[data-event-row], a", { hasText: /block reward drops to 3\.125/ })
+    .first()
+    .innerText()
+    .catch(() => "");
+  check("the row names the chain and block", /Bitcoin · block 840,000/.test(halving), halving.replace(/\n/g, " · "));
+  check(
+    "the explorer is credited as the lookup, not the fact",
+    /block 840,000 · via mempool\.space/.test(halving.replace(/\n/g, " ")),
+    halving.replace(/\n/g, " · ")
+  );
+  check("the footer credits the explorers", /mempool\.space|Blockscout/.test(body));
+  check("the footer credits the archive", /Internet Archive/.test(body));
+  check(
+    "the footer says the chain is the source, not the explorer",
+    /read from the chains themselves/i.test(body)
+  );
 }
 
 async function comparePage(page: Page): Promise<void> {
@@ -293,6 +392,60 @@ async function comparePage(page: Page): Promise<void> {
   check("price overlay draws", (await page.locator("canvas").count()) > 0);
   check("window return and spread shown", /growth of 100/.test(body) && /spread/.test(body));
 
+  // Per-side markers. The legend has to say whose is whose, because on a two-line chart the
+  // position of a dot is the only thing distinguishing a Ford filing from a GM recall.
+  check(
+    "overlay names which side's markers sit where",
+    /above its line/.test(body) && /below/.test(body),
+    body.slice(0, 0)
+  );
+  check("overlay keeps the correlation framing honest", /coincidence, not cause/.test(body));
+
+  // Sweep the chart rather than aiming at a marker: the readout is drawn on a canvas whose
+  // marker pixels we cannot query, and a single hover that misses would pass for a feature
+  // that isn't there. A sweep across the full width has to hit something.
+  const chart = page.locator("canvas").first();
+  const box = await chart.boundingBox();
+  let readout = "";
+  if (box) {
+    for (let i = 1; i < 40 && !readout; i++) {
+      await page.mouse.move(box.x + (box.width * i) / 40, box.y + box.height / 2);
+      await page.waitForTimeout(60);
+      const tip = page.locator("div.absolute.z-10.w-64").first();
+      if (await tip.count()) readout = (await tip.innerText()).replace(/\n/g, " · ");
+    }
+  }
+  check("hovering the overlay names the event under the cursor", readout.length > 0, readout);
+  check(
+    "the readout says which subject it belongs to",
+    // case-insensitive: the label is uppercased in CSS, so innerText comes back shouting
+    /ford|general motors/i.test(readout),
+    readout
+  );
+
+  // Industry intersection: the seeded sector rule attaches to sic-3711, so both Ford and GM
+  // carry the same row. It has to read as one happening, not as two coincidences on a Tuesday.
+  check("shared events are called out", /hit both/.test(body), body.match(/\d+ events? hit both/)?.[0]);
+  const bothRows = page.locator("li", { hasText: /^Both/ });
+  const bothCount = await bothRows.count();
+  check("a shared event is listed once, not twice", bothCount === 1, `${bothCount} rows`);
+
+  // Assert on the row's own text, not on the page's. Matching the rule's title anywhere in the
+  // body passed while the row was chipped to Ford alone and the sector event was never shared —
+  // the check confirmed the page mentioned a regulation, which was never in doubt.
+  const bothText = bothCount ? await bothRows.first().innerText() : "";
+  check(
+    "the shared row is the sector rule",
+    /NHTSA|fuel economy/i.test(bothText),
+    bothText.replace(/\n/g, " · ")
+  );
+  // Boilerplate is the trap: every issuer files an identically-titled 10-K in the same weeks.
+  check(
+    "a filing calendar is not mistaken for a shared event",
+    !/10-K|10-Q|8-K/.test(bothText),
+    bothText.replace(/\n/g, " · ")
+  );
+
   // The two-subject compose: a topic supplies the events, a company supplies the price.
   // "Donald Trump presidency against Ford stock" is the shape; the seed's stand-in is the
   // electric-car topic against Ford.
@@ -303,6 +456,170 @@ async function comparePage(page: Page): Promise<void> {
   check(
     "compose: keeps the correlation framing honest",
     /coincidence, not cause/.test(composed)
+  );
+}
+
+/**
+ * The search box, which is the app's front door and the place a bad parse does the most damage.
+ *
+ * Reported 2026-07-28: "Barak Obamas effect on Ford stock" returned junk twice. The parser now
+ * understands relational questions, and when both sides are drawable the answer is the compose
+ * rather than one subject with the other pre-filled — which is what these assert.
+ */
+async function searchRouting(page: Page): Promise<void> {
+  console.log("\nSearch routing");
+
+  const search = async (q: string) => {
+    await go(page, "/");
+    await page.locator("input").first().fill(q);
+    await page.locator("button", { hasText: /Explore/ }).first().click();
+    await page.waitForURL((u) => u.pathname !== "/", { timeout: 60_000 }).catch(() => {});
+    await page.waitForTimeout(1500);
+    return new URL(page.url());
+  };
+
+  // The reported phrasing, verbatim in shape: a *how* question with no auxiliary verb. This one
+  // used to fall through every pattern and land on /topic/how-donald-trumps-presidency-affected.
+  const asked = await search("I want to see how Donald Trumps presidency affected Ford stock");
+  check(
+    "the reported phrasing reaches the company, not a junk topic",
+    /^\/company\/F$/i.test(asked.pathname),
+    asked.pathname + asked.search
+  );
+  check(
+    "and carries the influence as the focus",
+    asked.searchParams.get("focus") === "Donald Trumps presidency",
+    String(asked.searchParams.get("focus"))
+  );
+
+  // A relational prompt lands on the affected subject with the influence narrowing its own
+  // timeline — the intersection. The compose is offered from the focus bar, not chosen for them.
+  const rel = await search("electric cars effect on Ford stock");
+  check("a relational prompt routes to the affected subject", /^\/company\/F$/i.test(rel.pathname), rel.pathname + rel.search);
+  check("the focus rides along", rel.searchParams.get("focus") === "electric cars", String(rel.searchParams.get("focus")));
+
+  const undrawable = await search("zzqqxx effect on Ford stock");
+  check(
+    "an influence we cannot find still reaches the subject",
+    /^\/company\/F$/i.test(undrawable.pathname),
+    undrawable.pathname + undrawable.search
+  );
+  check("and still carries the angle asked for", undrawable.searchParams.get("focus") === "zzqqxx", String(undrawable.searchParams.get("focus")));
+
+  // Plain subjects are untouched by any of this.
+  const plain = await search("Ford");
+  check("a plain company search is unchanged", /^\/company\/F$/i.test(plain.pathname), plain.pathname);
+}
+
+/**
+ * Bring-your-own feed keys.
+ *
+ * The licensing argument is that the visitor's key makes the visitor the licensee, which only
+ * holds if the key never reaches us. That is an absence, and an absence is exactly what a future
+ * refactor breaks by accident — so this watches every request the page makes and fails if the
+ * key appears in one bound for our own origin, the same way the annotations check does.
+ */
+async function feedKeys(page: Page): Promise<void> {
+  console.log("\nBring-your-own feed keys");
+  await go(page, COMPANY);
+
+  const secret = `byo-key-${Date.now().toString(36)}`;
+  const leaked: string[] = [];
+  const ourOrigin = new URL(BASE!).origin;
+  page.on("request", (r) => {
+    const url = r.url();
+    const body = r.postData() ?? "";
+    if (url.startsWith(ourOrigin) && (url.includes(secret) || body.includes(secret))) leaked.push(url);
+  });
+
+  const gear = page.locator("button[aria-label*='ettings'], button:has-text('⚙')").first();
+  await gear.click();
+  await page.waitForTimeout(800);
+  const body = await visible(page);
+  check("the settings dialog offers feed keys", /News feed keys/.test(body));
+  // The copy has to say why this is the visitor's key rather than ours, because it looks
+  // like a chore and the reason is the entire point.
+  check("and says why they are the visitor's own", /licensee/i.test(body));
+  check("and that nothing fetched is kept", /never saved/i.test(body));
+
+  const field = page.locator("input[data-feed-key]").first();
+  if (!(await field.count())) {
+    check("a key field to type into", false, "not found");
+    return;
+  }
+  await field.fill(secret);
+  await page.locator("button", { hasText: /^Save keys$/ }).first().click();
+  await page.waitForTimeout(600);
+
+  const stored: string | null = await page.evaluate(() =>
+    localStorage.getItem("news-charts:feed-keys:v1")
+  );
+  check("the key is stored in the browser", stored?.includes(secret) === true, stored ? "present" : "absent");
+
+  // Reload with the key set: the timeline must render, and the key must not travel with it.
+  await go(page, COMPANY);
+  check("the timeline still renders with a key set", (await visible(page)).includes("Ford Motor Company"));
+  check("the key never reaches a News Charts origin", leaked.length === 0, leaked.join(", "));
+
+  // Forgetting it has to actually forget it.
+  await page.locator("button[aria-label*='ettings'], button:has-text('⚙')").first().click();
+  await page.waitForTimeout(800);
+  const forget = page.locator("button", { hasText: /^Forget keys$/ }).first();
+  if (await forget.count()) {
+    await forget.click();
+    await page.waitForTimeout(500);
+    const after: string | null = await page.evaluate(() =>
+      localStorage.getItem("news-charts:feed-keys:v1")
+    );
+    check("forgetting removes it", after === null, String(after));
+  } else {
+    check("a forget control appears once a key is stored", false, "not found");
+  }
+}
+
+/**
+ * The focus filter — the intersection half of "how did X affect Y stock".
+ *
+ * The question asks for Y's price with the Y events that also concern X, so what is checked is
+ * that the timeline actually narrows, that it says so, that it can be undone, and — the one that
+ * matters most — that a focus matching nothing shows everything with a note rather than an empty
+ * page. An empty timeline reads as "we have nothing on this company", which is a different and
+ * false claim.
+ */
+async function focusFilter(page: Page): Promise<void> {
+  console.log("\nFocus filter");
+
+  await go(page, "/company/F?focus=NHTSA");
+  const bar = page.locator("[data-focus-bar]");
+  check("a focused search announces itself", (await bar.count()) > 0);
+  const text = (await bar.first().innerText()).replace(/\n/g, " ");
+  check("it says how much it is hiding", /Showing the \d+ of \d+ events/.test(text), text.slice(0, 80));
+
+  const narrowed = await page.locator("[data-event-row]").count();
+  check("the timeline is actually narrowed", narrowed > 0 && narrowed < 10, `${narrowed} rows`);
+  // The sector rule is a regulation reaching Ford through the industry graph — exactly the kind
+  // of event a political or regulatory focus is asking about.
+  check("and keeps the event that matches", /NHTSA/.test(await visible(page)));
+
+  await page.locator("[data-focus-bar] button").first().click();
+  await page.waitForTimeout(1200);
+  const widened = await page.locator("[data-event-row]").count();
+  check("and can be undone", widened > narrowed, `${narrowed} → ${widened} rows`);
+
+  // The rule that keeps a narrowed page honest.
+  await go(page, "/company/F?focus=Vladimir%20Putin");
+  const missText = (await page.locator("[data-focus-bar]").first().innerText()).replace(/\n/g, " ");
+  check("a focus matching nothing says so", /Nothing on this timeline mentions/.test(missText), missText.slice(0, 70));
+  const stillThere = await page.locator("[data-event-row]").count();
+  check("and shows everything rather than an empty page", stillThere > 10, `${stillThere} rows`);
+
+  // This morning's compose is the other honest reading; it stays one click away.
+  const compose = page.locator("[data-focus-bar] a");
+  check("the two-subject compose is still offered", (await compose.count()) > 0);
+  check(
+    "and points at the compare",
+    (await compose.first().getAttribute("href"))?.startsWith("/compare?a=") === true,
+    String(await compose.first().getAttribute("href"))
   );
 }
 
@@ -332,6 +649,23 @@ async function chromeAndRoutes(page: Page): Promise<void> {
 
   const sitemap = await page.goto(`${BASE}/sitemap.xml`, { timeout: 120_000 });
   check("sitemap serves", sitemap!.status() === 200);
+
+  /**
+   * A subject we have not gathered yet is not a wrong URL, and the page must not say it is.
+   * Pages read only the database now, so this is the common path for any real ticker nobody has
+   * ingested — telling that visitor "nothing found" would be false.
+   */
+  await go(page, "/company/ZZQQ");
+  const missing = await visible(page);
+  check("an ungathered subject explains itself", /Not on News Charts yet/.test(missing), missing.slice(0, 60));
+  check("and says the request was noted", /been noted/.test(missing));
+  check("and does not claim nothing was found", !/Nothing found/.test(missing));
+  // The demand has to actually reach the queue, or the message is a promise nothing keeps.
+  const queued = await page.evaluate(async (base) => {
+    const r = await fetch(`${base}/api/resolve?q=ZZQQ`);
+    return (await r.json()) as { kind?: string };
+  }, BASE);
+  check("the search path still resolves it to a subject page", queued.kind === "company" || queued.kind === "topic", JSON.stringify(queued));
 }
 
 /**
@@ -379,17 +713,37 @@ async function main(): Promise<void> {
 
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const page = await ctx.newPage();
-  page.on("console", (m) => m.type() === "error" && consoleErrors.push(m.text().slice(0, 200)));
+  /**
+   * A failed cross-origin fetch is logged by the browser itself, not by us, and this container
+   * has no egress. Once the BYO-key check stores a key, the page correctly tries to reach the
+   * publisher and correctly gets nothing — which is the feature working, not the app erroring.
+   *
+   * Narrow on purpose: only the tunnel/DNS shapes a blocked network produces, and only when the
+   * message names a third-party host. Anything our own origin logs still fails the suite.
+   */
+  const BLOCKED_EGRESS = /net::ERR_(TUNNEL_CONNECTION_FAILED|NAME_NOT_RESOLVED|CONNECTION_REFUSED|PROXY_CONNECTION_FAILED)/;
+  page.on("console", (m) => {
+    if (m.type() !== "error") return;
+    const text = m.text().slice(0, 200);
+    const url = m.location()?.url ?? "";
+    const thirdParty = url ? !url.startsWith(new URL(BASE!).origin) : false;
+    if (thirdParty && BLOCKED_EGRESS.test(text)) return;
+    consoleErrors.push(text);
+  });
   page.on("pageerror", (e) => consoleErrors.push(`PAGEERROR ${String(e).slice(0, 200)}`));
 
   try {
     await companyPage(page);
+    await annotations(page);
     await jumpOpensSection(page);
     await chartOverlays(page);
     await topicPage(page);
     await cryptoTopic(page);
     await comparePage(page);
-    await chromeAndRoutes(page);
+    await focusFilter(page);
+  await feedKeys(page);
+  await searchRouting(page);
+  await chromeAndRoutes(page);
     await ctx.close();
     await responsive(browser);
   } finally {

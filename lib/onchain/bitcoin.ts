@@ -56,8 +56,7 @@ export async function getBitcoinHalvings(maxEpochs = 6): Promise<TimelineEvent[]
     if (!block) break; // not mined yet — and neither is anything after it
     const before = fmtReward(rewardAfter(n - 1));
     const after = fmtReward(rewardAfter(n));
-    out.push(
-      onchainEvent({
+    const event = onchainEvent({
         date: dayFromEpoch(block.time),
         title: `Bitcoin halving — block reward drops to ${after} BTC`,
         description:
@@ -66,9 +65,15 @@ export async function getBitcoinHalvings(maxEpochs = 6): Promise<TimelineEvent[]
           `protocol, not decided by anyone.`,
         url: block.web,
         ref: `btc-block-${height}`,
-        sourceLabel: `Bitcoin block ${height.toLocaleString("en-US")} (${block.label})`,
-      })
-    );
+        // The explorer alone. The block height is the event's chain reference and the row
+        // renders it there; repeating it here read as "Bitcoin block 840,000 · via Bitcoin
+        // block 840,000", and credited the explorer with the fact rather than with the lookup.
+        sourceLabel: block.label,
+        blockTime: block.time,
+      });
+    // A halving mined in the last few hours is withheld rather than published early: it is not
+    // going anywhere, and nothing here is time-sensitive to the hour.
+    if (event) out.push(event);
   }
   return out;
 }

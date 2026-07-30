@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { EventType, TimelineEvent } from "@/lib/types";
 import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT, type TimelinePrefs } from "@/lib/prefs";
+import ChainRef from "./ChainRef";
 import EventThumb from "./EventThumb";
 
 const CARD_W = 244;
@@ -68,6 +69,21 @@ const STYLE: Record<EventType, { dot: string; badge: string; label: string }> = 
     badge: "border-lime-700/50 bg-lime-500/15 text-lime-300",
     label: "On-chain",
   },
+  annotation: {
+    dot: "bg-cyan-400 ring-cyan-400/30",
+    badge: "border-cyan-700/50 bg-cyan-500/15 text-cyan-300",
+    label: "Your note",
+  },
+  governance: {
+    dot: "bg-indigo-400 ring-indigo-400/30",
+    badge: "border-indigo-700/50 bg-indigo-500/15 text-indigo-300",
+    label: "Governance",
+  },
+  exploit: {
+    dot: "bg-red-500 ring-red-500/30",
+    badge: "border-red-700/50 bg-red-500/15 text-red-300",
+    label: "Exploit",
+  },
 };
 
 const CARD_CLASS =
@@ -128,6 +144,7 @@ function EventCard({ ev, style }: { ev: TimelineEvent; style: React.CSSPropertie
         {ev.title}
       </span>
       <span className="mt-1.5 block truncate text-[11px] text-slate-500">
+        <ChainRef ev={ev} />
         {ev.source}
         {ev.url ? " ↗" : ""}
       </span>
@@ -859,6 +876,9 @@ function StackRow({ ev }: { ev: TimelineEvent }) {
         <span className="mt-1 line-clamp-2 block text-xs font-medium leading-snug text-slate-200">
           {ev.title}
         </span>
+        {/* No chain reference here: this card is the condensed stack entry, one truncated line
+            wide, and a block height would push the explorer's name off it. The full card and the
+            list both carry it. */}
         <span className="mt-0.5 block truncate text-[10px] text-slate-500">
           {ev.source}
           {ev.url ? " ↗" : ""}

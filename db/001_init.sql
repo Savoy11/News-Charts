@@ -1,7 +1,7 @@
 -- Generated from docs/EVENTS-SCHEMA.md. Edit the spec, then regenerate:
 --   npm run db:gen
 
-CREATE TYPE event_kind     AS ENUM ('history','press','news','filing','earnings','regulation','citation','corporate_action','onchain');
+CREATE TYPE event_kind     AS ENUM ('history','press','news','filing','earnings','regulation','citation','corporate_action','onchain','annotation','governance','exploit');
 CREATE TYPE date_precision AS ENUM ('day','month','year');
 CREATE TYPE subject_kind   AS ENUM ('topic','company','industry');
 CREATE TYPE fetch_outcome  AS ENUM ('ok','empty','throttled','error');
@@ -161,6 +161,8 @@ CREATE TABLE syntheses (
   prompt_version smallint NOT NULL,
   input_hash     bytea NOT NULL,                -- hash of cited event ids + their content hashes
   body           text NOT NULL,
+  input_tokens   integer,                      -- NULL for rows written before db/013
+  output_tokens  integer,
   created_at     timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT syntheses_window_ck CHECK (window_end >= window_start),
   CONSTRAINT syntheses_uq

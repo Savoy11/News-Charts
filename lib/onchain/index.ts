@@ -1,11 +1,23 @@
 import { getBitcoinHalvings } from "./bitcoin";
 import { getEthereumMilestones } from "./ethereum";
-import { getUsdcSupplyMoves } from "./stablecoin";
+import { getStablecoinSupplyMoves } from "./stablecoin";
+import { DAI, PYUSD, USDC, type Stablecoin } from "./addresses";
+import { GOVERNANCE_SPACES, getGovernanceFor } from "./governance";
+import { EXPLOIT_TARGETS, getExploitsFor } from "./exploits";
+import { getUsdtSupplyMoves } from "./usdt";
 import type { TimelineEvent } from "../types";
 
 export { getBitcoinHalvings } from "./bitcoin";
+export { GOVERNANCE_SPACES, fetchGovernance, getGovernanceFor, tally } from "./governance";
+export { EXPLOIT_TARGETS, claims, fetchExploits, getExploitsFor } from "./exploits";
+export { fetchUsdtSupplyMoves, getUsdtSupplyMoves, ISSUE_TOPIC, REDEEM_TOPIC } from "./usdt";
 export { getEthereumMilestones, ETH_MILESTONES } from "./ethereum";
-export { getUsdcSupplyMoves, MATERIAL_USDC } from "./stablecoin";
+export {
+  getAllStablecoinSupplyMoves,
+  getStablecoinSupplyMoves,
+  getUsdcSupplyMoves,
+  MATERIAL_USDC,
+} from "./stablecoin";
 
 /**
  * The crypto subjects Phase 0 covers.
@@ -65,21 +77,111 @@ export const CRYPTO_SUBJECTS: CryptoSubject[] = [
     // a stablecoin's price is ~$1 by construction; a chart of it would say nothing
     yahooSymbol: null,
   },
+  {
+    slug: "dai",
+    displayName: "DAI",
+    aliases: ["dai", "makerdao dai", "dai-usd"],
+    summary:
+      "DAI is a dollar-pegged stablecoin issued by the Maker protocol against collateral held " +
+      "in smart contracts rather than by a company holding reserves. Supply expands and " +
+      "contracts as borrowers open and close positions, so its issuance history is a record of " +
+      "on-chain credit demand.",
+    firstEventOn: "2019-11-18",
+    yahooSymbol: null,
+  },
+  {
+    slug: "pyusd",
+    displayName: "PayPal USD",
+    aliases: ["pyusd", "paypal usd", "paypal dollar"],
+    summary:
+      "PayPal USD is a dollar-backed stablecoin issued by Paxos for PayPal. It is the first " +
+      "stablecoin from a mainstream US payments company, which makes its supply history a " +
+      "readable proxy for how quickly that distribution actually took hold.",
+    firstEventOn: "2023-08-07",
+    yahooSymbol: null,
+  },
+  {
+    slug: "usdt",
+    displayName: "Tether",
+    aliases: ["usdt", "tether", "usdt-usd"],
+    summary:
+      "Tether is the largest dollar-backed stablecoin. Its supply changes are authorised by " +
+      "Tether itself rather than by a contract anyone can call, and are recorded on-chain as " +
+      "Issue and Redeem events — so issuance history is visible even though issuance is not open.",
+    firstEventOn: "2017-11-01",
+    yahooSymbol: null,
+  },
 ];
+
+/**
+ * Which token each stablecoin subject reads.
+ *
+ * A `Record` rather than a lookup by slug: adding a subject without wiring its token would
+ * otherwise compile and return an empty timeline, which reads as "nothing has happened" instead
+ * of "nobody connected this up".
+ */
+export const STABLECOIN_SUBJECTS: Record<string, Stablecoin> = {
+  usdc: USDC,
+  dai: DAI,
+  pyusd: PYUSD,
+};
+
+/**
+ * Protocol subjects whose timeline is their governance record.
+ *
+ * Neither has a token price series here — Uniswap and Aave both have tokens, but a governance
+ * timeline is about the protocol's decisions rather than its token's price, and pairing the two
+ * would invite reading a vote as a trade signal. That is a chart we would have to defend.
+ */
+const PROTOCOL_SUBJECTS = GOVERNANCE_SPACES.map((g) => ({
+  slug: g.slug,
+  displayName: g.displayName,
+  aliases: [g.slug, g.displayName.toLowerCase(), `${g.displayName.toLowerCase()} governance`],
+  summary:
+    `${g.displayName} is governed by token holders voting on proposals. Because those votes are ` +
+    `public and dated, its governance record reads as a timeline of decisions the protocol took ` +
+    `about itself — not coverage of them.`,
+  firstEventOn: "2020-01-01",
+  yahooSymbol: null,
+}));
 
 /**
  * Every on-chain event for a subject. Each adapter is failure-isolated, so one explorer being
  * unreachable costs that adapter's events and nothing else.
  */
+/** Governance subjects join the crypto list, so ingest and /explore find them like any other. */
+CRYPTO_SUBJECTS.push(...PROTOCOL_SUBJECTS);
+
+/**
+ * Every on-chain-adjacent feed a subject draws from, merged.
+ *
+ * Exploits are additive rather than exclusive: Ethereum has milestones *and* incidents, and a
+ * protocol has governance *and* incidents. One feed failing costs only its own events.
+ */
+async function alsoExploits(slug: string, base: Promise<TimelineEvent[]>): Promise<TimelineEvent[]> {
+  const [own, hacks] = await Promise.all([
+    base.catch(() => []),
+    EXPLOIT_TARGETS.some((t) => t.slug === slug) ? getExploitsFor(slug).catch(() => []) : Promise.resolve([]),
+  ]);
+  return [...own, ...hacks];
+}
+
 export async function ingestOnchainFor(slug: string): Promise<TimelineEvent[]> {
   switch (slug) {
     case "btc":
       return getBitcoinHalvings().catch(() => []);
     case "eth":
-      return getEthereumMilestones().catch(() => []);
-    case "usdc":
-      return getUsdcSupplyMoves().catch(() => []);
-    default:
+      return alsoExploits(slug, getEthereumMilestones());
+    default: {
+      // USDT first: it is a stablecoin subject but not a transfer-readable one, so it must not
+      // fall through to the table that would ask the wrong question and find nothing.
+      if (slug === "usdt") return alsoExploits(slug, getUsdtSupplyMoves());
+      const token = STABLECOIN_SUBJECTS[slug];
+      if (token) return getStablecoinSupplyMoves(token).catch(() => []);
+      if (GOVERNANCE_SPACES.some((g) => g.slug === slug)) {
+        return alsoExploits(slug, getGovernanceFor(slug));
+      }
       return [];
+    }
   }
 }

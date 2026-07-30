@@ -1,4 +1,6 @@
 import { config } from "dotenv";
+import { QUOTAS, TIGHT_AT, overBudget, project, subjectCapacity } from "../lib/ingest/quota";
+import { SOURCES } from "../lib/ingest/store";
 config({ path: ".env.local" });
 
 /**
@@ -110,6 +112,37 @@ console.log("\nTable sanity");
     Object.values(SOURCE_TTL_MINUTES).every((m) => m > 0)
   );
 }
+
+console.log("\nQuota headroom");
+/**
+ * The refresh windows were chosen against these limits, but nothing checked the arithmetic
+ * afterwards — and a feed that spends its budget by lunchtime looks like a source with nothing
+ * to say, not a rate-limited one. These assert the maths, not the published figures.
+ */
+// The projection has to be a floor, never a flattering estimate: it counts one request per
+// source per window per subject, so anything it calls "tight" is probably already over.
+check("projection scales with subjects", project("gnews", 10).projectedPerDay === project("gnews", 5).projectedPerDay * 2,
+  `${project("gnews", 5).projectedPerDay} → ${project("gnews", 10).projectedPerDay}`);
+check("zero subjects costs nothing", project("gnews", 0).projectedPerDay === 0);
+check("a negative count cannot buy headroom", project("gnews", -5).projectedPerDay === 0);
+
+// The number the buy-or-drop decision actually needs.
+const gnewsCap = subjectCapacity("gnews");
+check("a metered source reports its subject capacity", typeof gnewsCap === "number" && gnewsCap > 0, String(gnewsCap));
+check("capacity matches the projection at that count", (project("gnews", gnewsCap!).utilisation ?? 0) <= 1, String(project("gnews", gnewsCap!).utilisation));
+check("one subject past capacity goes over", project("gnews", gnewsCap! + 1).verdict === "over", project("gnews", gnewsCap! + 1).verdict);
+
+check("an unmetered source has no capacity to report", subjectCapacity("wikipedia") === null);
+check("and is verdicted unmetered, not ok", project("wikipedia", 1000).verdict === "unmetered");
+// "unmetered" must not read as "free": a source with no published cap still has obligations,
+// which is why the note is carried rather than the field left empty.
+check("every source carries a quota note", (Object.keys(QUOTAS) as SourceKey[]).every((k) => QUOTAS[k].note.length > 10));
+check("every source key has a quota entry", SOURCES.every((s) => s.key in QUOTAS));
+
+check("80% of a cap counts as tight, not ok", TIGHT_AT === 0.8);
+const tight = (Object.keys(QUOTAS) as SourceKey[]).map((k) => project(k, 5)).filter((p) => p.verdict === "tight" || p.verdict === "over");
+check("overBudget agrees with the per-source verdicts", overBudget(5).length === tight.length, `${overBudget(5).length} vs ${tight.length}`);
+check("overBudget is ordered tightest first", overBudget(200).every((p, i, a) => i === 0 || (a[i - 1].utilisation ?? 0) >= (p.utilisation ?? 0)));
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);
 if (fail) process.exit(1);

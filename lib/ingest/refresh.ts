@@ -31,6 +31,16 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   loc_chronam: 10080,
   // Halvings and network upgrades are settled history; Phase 0 holds nothing live.
   onchain: 1440,
+  // An archive of things that already happened. New items are catalogued daily, but what is
+  // catalogued today is almost never *dated* today, so a short window buys nothing. Keyless, so
+  // the only cost of asking is archive.org's patience — which is exactly why not to spend it.
+  internet_archive: 1440,
+  // Governance moves on a proposal cycle, not a news cycle: a space closes a handful of votes a
+  // month, and a closed one never changes. Keyless, so the cost of asking is Snapshot's patience.
+  snapshot: 720,
+  // A curated incident list. New entries land days after the event as researchers confirm them,
+  // and a settled incident never changes — so asking twice a day buys nothing.
+  defillama: 720,
 
   // ---- keyed feeds, windowed by quota headroom rather than by volatility ----
   // 100 requests/day. At 6h one subject costs 4/day, so ~25 subjects fit the budget.

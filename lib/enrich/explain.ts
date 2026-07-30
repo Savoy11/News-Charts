@@ -164,9 +164,12 @@ export async function saveExplanation(
   await client.query("BEGIN");
   try {
     const { rows } = await client.query<{ id: string }>(
+      // Tokens are stored with the row (db/013) so what a run cost survives the terminal it was
+      // printed to — otherwise cumulative AI spend is unanswerable from the database.
       `INSERT INTO syntheses
-         (subject_id, kind, window_start, window_end, model, prompt_version, input_hash, body)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         (subject_id, kind, window_start, window_end, model, prompt_version, input_hash, body,
+          input_tokens, output_tokens)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        ON CONFLICT DO NOTHING
        RETURNING id`,
       [
@@ -178,6 +181,8 @@ export async function saveExplanation(
         PROMPT_VERSION,
         inputHash,
         explanation.body,
+        explanation.inputTokens,
+        explanation.outputTokens,
       ]
     );
     if (!rows[0]) {

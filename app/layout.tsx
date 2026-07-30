@@ -80,7 +80,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               News Charts is a research tool, not investment advice. Price data from Yahoo Finance,
               filings from SEC EDGAR, recent news from GDELT, historical newspapers from the
               Library of Congress (Chronicling America), historical context from Wikipedia
-              (CC BY-SA).
+              (CC BY-SA), sector rules from the Federal Register, archived material from the
+              Internet Archive.
+            </p>
+            {/* Explorers are credited separately because their standing is different: they read a
+                public chain for us, they are not the authority for what it says. Every on-chain
+                row carries the block or transaction it came from, so the claim can be checked
+                against any explorer, not only the one we happened to ask. */}
+            <p className="mt-2">
+              On-chain events are read from the chains themselves — Bitcoin via mempool.space (Blockstream as
+              fallback), Ethereum via Blockscout — and each row names the block or transaction it came from,
+              so any explorer can be used to check it.
             </p>
           </div>
         </footer>

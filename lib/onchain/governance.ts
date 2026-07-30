@@ -1,0 +1,189 @@
+import type { FetchResult, TimelineEvent } from "../types";
+
+/**
+ * Governance decisions from Snapshot, the off-chain voting hub most DeFi protocols use.
+ *
+ * Keyless and public, which is why it is here rather than Tally: a protocol changing its own
+ * rules is among the highest-signal events on its timeline, and this is the source that costs
+ * nothing to read.
+ *
+ * **These are not on-chain events**, and the distinction is load-bearing. A Snapshot vote is a
+ * set of signed messages tallied by a hub — there is no transaction behind it, and often the
+ * change it authorises is executed later, elsewhere, or not at all. They are filed under the
+ * `governance` kind for that reason; calling them `onchain` would claim a proof they do not have.
+ *
+ * ⚠ The payload shape below comes from Snapshot's published GraphQL schema and has never been
+ * exercised live from here — egress is blocked. `npm run check:governance` pins the parsing.
+ */
+
+const SNAPSHOT_API = "https://hub.snapshot.org/graphql";
+
+/** A protocol's governance space, and how we know it is theirs. */
+export interface GovernanceSpace {
+  /** subject slug this attaches to */
+  slug: string;
+  /** Snapshot space id, e.g. "uniswapgovernance.eth" */
+  space: string;
+  displayName: string;
+  provenance: string;
+}
+
+/**
+ * The spaces covered, each recorded the same way an address is: with why we believe it.
+ *
+ * ⚠ **Unverified from here.** A wrong space id returns an empty proposal list, which on a page is
+ * indistinguishable from "this protocol has not voted lately" — the silent-empty failure again.
+ * `npm run check:feeds` reports each space's count so a zero is visible rather than assumed.
+ */
+export const GOVERNANCE_SPACES: GovernanceSpace[] = [
+  {
+    slug: "uni",
+    space: "uniswapgovernance.eth",
+    displayName: "Uniswap",
+    provenance: "The space linked from Uniswap's own governance documentation.",
+  },
+  {
+    slug: "aave",
+    space: "aave.eth",
+    displayName: "Aave",
+    provenance: "The space linked from Aave's own governance portal.",
+  },
+];
+
+interface SnapshotProposal {
+  id?: string;
+  title?: string;
+  choices?: string[];
+  scores?: number[];
+  scores_total?: number;
+  /** epoch seconds — when voting closed, which is when the decision was taken */
+  end?: number;
+  state?: string;
+  space?: { id?: string };
+}
+
+/**
+ * Affirmative and negative choice wordings, because Snapshot choices are free text.
+ *
+ * Spaces write them differently — "For"/"Against", "Yes"/"No", "Yae"/"Nay" — and they are *not*
+ * consistently ordered, so reading `scores[0] > scores[1]` as "passed" is wrong the moment a
+ * space lists Against first. The winning choice is decided by score, then classified by wording.
+ */
+const AFFIRMATIVE = /^\s*(for|yes|yae|yea|aye|approve|accept|in favou?r|support|pass)\b/i;
+const NEGATIVE = /^\s*(against|no|nay|reject|decline|oppose|do not|don'?t)\b/i;
+
+export type Outcome = "passed" | "rejected" | "decided";
+
+export interface Tally {
+  outcome: Outcome;
+  winning: string;
+}
+
+/**
+ * What a closed proposal actually decided.
+ *
+ * Returns `decided` — naming the winning option without calling it a pass or a fail — whenever
+ * the wording is not plainly one or the other. A multi-option proposal ("Option A / Option B /
+ * Abstain") has a winner but no pass/fail, and asserting one would be inventing a result. On a
+ * governance timeline that is a serious thing to get wrong, so the shape of the answer changes
+ * rather than a guess being made.
+ */
+export function tally(choices: string[] | undefined, scores: number[] | undefined): Tally | null {
+  if (!Array.isArray(choices) || !Array.isArray(scores) || choices.length === 0) return null;
+  if (scores.length !== choices.length) return null;
+  const total = scores.reduce((a, b) => a + (Number.isFinite(b) ? b : 0), 0);
+  if (total <= 0) return null; // nobody voted — there is no decision to report
+
+  let best = 0;
+  for (let i = 1; i < scores.length; i++) if (scores[i] > scores[best]) best = i;
+  // A tie has no winner, and picking the earlier index would make one up.
+  if (scores.filter((s) => s === scores[best]).length > 1) return null;
+
+  const winning = choices[best];
+  if (AFFIRMATIVE.test(winning)) return { outcome: "passed", winning };
+  if (NEGATIVE.test(winning)) return { outcome: "rejected", winning };
+  return { outcome: "decided", winning };
+}
+
+const dayFromEpoch = (seconds: number): string =>
+  new Date(seconds * 1000).toISOString().slice(0, 10);
+
+/** The GraphQL query. `state: "closed"` is the finality signal here — voting has ended. */
+function query(space: string, first: number): string {
+  return `{
+    proposals(
+      first: ${first}
+      where: { space: ${JSON.stringify(space)}, state: "closed" }
+      orderBy: "end"
+      orderDirection: desc
+    ) { id title choices scores scores_total end state space { id } }
+  }`;
+}
+
+export async function fetchGovernance(
+  target: GovernanceSpace,
+  first = 40
+): Promise<FetchResult> {
+  try {
+    const res = await fetch(SNAPSHOT_API, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: query(target.space, first) }),
+      next: { revalidate: 21600 },
+    });
+    if (res.status === 429 || res.status === 503) {
+      return { events: [], outcome: "throttled", httpStatus: res.status };
+    }
+    if (!res.ok) return { events: [], outcome: "error", httpStatus: res.status };
+
+    const json = await res.json();
+    // GraphQL reports errors with HTTP 200 and an `errors` array, so a bad query would otherwise
+    // read as an empty result — the same trap Etherscan sets with status "0".
+    if (Array.isArray(json?.errors) && json.errors.length) {
+      return { events: [], outcome: "error", detail: String(json.errors[0]?.message ?? "graphql error") };
+    }
+    const proposals: SnapshotProposal[] = json?.data?.proposals ?? [];
+    const events: TimelineEvent[] = [];
+
+    for (const p of proposals) {
+      if (!p.id || !p.title) continue;
+      if (typeof p.end !== "number" || !Number.isFinite(p.end) || p.end <= 0) continue;
+      // A proposal whose voting has not closed has not decided anything yet.
+      if (p.state !== "closed") continue;
+      const result = tally(p.choices, p.scores);
+      if (!result) continue; // no quorum, a tie, or a malformed tally — nothing to assert
+
+      const verb =
+        result.outcome === "passed"
+          ? "passed"
+          : result.outcome === "rejected"
+            ? "rejected"
+            : `decided: ${result.winning}`;
+
+      events.push({
+        id: `snapshot-${p.id}`,
+        date: dayFromEpoch(p.end),
+        type: "governance",
+        title: `${target.displayName} governance ${verb} — ${p.title.replace(/\s+/g, " ").trim()}`,
+        description:
+          `Voting closed with “${result.winning}” ahead. Snapshot votes are signed off-chain, ` +
+          `so this records the decision, not its execution.`,
+        source: `Snapshot · ${target.space}`,
+        url: `https://snapshot.org/#/${target.space}/proposal/${p.id}`,
+        sourceKey: "snapshot",
+        externalId: p.id,
+        // the proposal id is Snapshot's own primary key: stable across re-reads
+        dedupBasis: `snapshot:${p.id}`,
+      });
+    }
+    return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
+  } catch (err) {
+    return { events: [], outcome: "error", detail: (err as Error).message };
+  }
+}
+
+export async function getGovernanceFor(slug: string): Promise<TimelineEvent[]> {
+  const target = GOVERNANCE_SPACES.find((g) => g.slug === slug);
+  if (!target) return [];
+  return (await fetchGovernance(target)).events;
+}

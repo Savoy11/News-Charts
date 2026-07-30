@@ -1,14 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { applyFocus } from "@/lib/focus";
+import FocusBar from "./FocusBar";
+import { useVisitorFeeds } from "@/lib/useVisitorFeeds";
 import { usePathname } from "next/navigation";
 import PriceTimeline from "./PriceTimeline";
 import HorizontalTimeline from "./HorizontalTimeline";
 import BiggestMoves from "./BiggestMoves";
 import EventList, { dateAnchorId } from "./EventList";
 import AiPanel, { type AiRanking } from "./AiPanel";
+import Annotations from "./Annotations";
 import { applyRanking } from "./TopicExplorer";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
+import { ANNOTATIONS_EVENT, annotationsAsEvents, loadAnnotations } from "@/lib/annotations";
 
 const FILTERS: { key: EventType; label: string }[] = [
   { key: "history", label: "History" },
@@ -37,9 +42,11 @@ interface Props {
   prices: PricePoint[];
   events: TimelineEvent[];
   siteDomain?: string | null;
+  /** what the visitor's own feed keys should be asked about — the company's common name */
+  subject: string;
 }
 
-export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
+export default function CompanyExplorer({ prices, events, siteDomain, subject }: Props) {
   // Derived from FILTERS, never a second hand-written list: this defaulted to a literal of the
   // seven kinds that existed when it was written, so adding an eighth left it filtered out by
   // default — its chip rendered, inactive, and its rows never appeared. `Set<EventType>` cannot
@@ -79,8 +86,37 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
     }
   }, [filterKey]);
 
+  // A reader's own notes, merged in so they plot through the same marker machinery as anything
+  // else. They are never filtered out by the type chips: the reader put them there deliberately,
+  // and a note vanishing behind a filter they set for *sources* would be surprising.
+  const [notes, setNotes] = useState<TimelineEvent[]>([]);
+  useEffect(() => {
+    const refresh = () => setNotes(annotationsAsEvents(loadAnnotations(pathname)) as TimelineEvent[]);
+    refresh();
+    window.addEventListener(ANNOTATIONS_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(ANNOTATIONS_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [pathname]);
+
   const [ranking, setRanking] = useState<AiRanking | null>(null);
-  const filtered = useMemo(() => events.filter((e) => active.has(e.type)), [events, active]);
+  // Articles the visitor's own keys add. Merged here rather than server-side because they were
+  // fetched under the visitor's licence and must never reach shared storage.
+  const mine = useVisitorFeeds(subject, events);
+  // The keyless half of a focused search: narrow this subject's own events to the ones that also
+  // concern the influence the visitor asked about. That intersection is what "how did X affect Y"
+  // is actually asking for — Y's story, limited to the part X is in.
+  const [showAll, setShowAll] = useState(false);
+  const focusResult = useMemo(
+    () => applyFocus([...events, ...mine], showAll ? null : focusHint),
+    [events, mine, focusHint, showAll]
+  );
+  const filtered = useMemo(
+    () => [...focusResult.events.filter((e) => active.has(e.type)), ...notes],
+    [focusResult, active, notes]
+  );
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);
 
   // The story before the ticker: events older than the first trading day can never sit
@@ -152,6 +188,15 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
 
   return (
     <div>
+      {focusHint && (
+        <FocusBar
+          focus={focusHint}
+          result={focusResult}
+          subject={subject}
+          onClear={() => setShowAll(true)}
+        />
+      )}
+
       {preIpo.length > 0 && (
         <section className="mb-6">
           <div className="mb-1.5 flex flex-wrap items-baseline gap-x-2">
@@ -169,6 +214,7 @@ export default function CompanyExplorer({ prices, events, siteDomain }: Props) {
       <PriceTimeline prices={prices} events={ranked} onSelectDate={handleSelectDate} />
       {/* pairs each big move with the nearest displayed event, so it tracks the filters/search */}
       <BiggestMoves prices={prices} events={ranked} onSelectDate={handleSelectDate} />
+      <Annotations path={pathname} />
       <div className="mt-6">
         <AiPanel
           events={filtered}

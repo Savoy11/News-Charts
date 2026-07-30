@@ -30,6 +30,27 @@ async function getExtract(title: string): Promise<Page | null> {
 }
 
 /** Best-matching article title via Wikipedia's search index, for queries that aren't exact titles. */
+/**
+ * Does Wikipedia have anything for this term?
+ *
+ * One search request, no extract and no wikitext — the point is a yes/no cheap enough to ask
+ * inside a search request. `getTopicTimeline` is the real fetch and costs a dozen calls, which is
+ * far too much to spend deciding *which page to send someone to*.
+ *
+ * Deliberately answers false on a network failure. A blocked or throttled Wikipedia means we do
+ * not know, and routing someone to a two-subject compose whose second subject may not exist is
+ * worse than the single-subject page that definitely does.
+ */
+export async function wikipediaHasSubject(term: string): Promise<boolean> {
+  const t = term.trim();
+  if (!t) return false;
+  try {
+    return (await searchTitle(t)) !== null;
+  } catch {
+    return false;
+  }
+}
+
 async function searchTitle(query: string): Promise<string | null> {
   const url = `${API}?action=query&list=search&srsearch=${encodeURIComponent(
     query
@@ -71,9 +92,14 @@ export function extractYear(sentence: string): number | null {
     .replace(/\d[\d,.]*\s*[×x*]\s*\d[\d,.]*/gi, " ")
     // measurements and hardware specs
     .replace(
-      /\b\d+(\.\d+)?\s*(mm|cm|km|in|inch|inches|mah|k?hz|mhz|ghz|kb|mb|gb|tb|ppi|dpi|px|nm|bit|megapixels?|mp|rpm|w|kw)\b/gi,
+      /\b\d+(\.\d+)?\s*(mm|cm|km|inch|inches|mah|k?hz|mhz|ghz|kb|mb|gb|tb|ppi|dpi|px|nm|bit|megapixels?|mp|rpm|w|kw)\b/gi,
       " "
     )
+    // Inches abbreviated to "in" needs its own rule, because "in" is also the commonest
+    // preposition in English: with a space allowed, "founded in 1903 in Detroit" masked the
+    // year and the sentence silently lost its place on the timeline. Require the unit to be
+    // attached ("27in") or punctuated ("27 in."), which is how a measurement is actually written.
+    .replace(/\b\d+(\.\d+)?(?:in\b|\s*in\.)/gi, " ")
     // currency and large counts, e.g. "$1,999" or "1080p"
     .replace(/[$€£]\s?\d[\d,.]*/g, " ")
     .replace(/\b\d{3,4}[ip]\b/gi, " ")

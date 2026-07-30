@@ -16,9 +16,15 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
       const res = await fetch(`/api/resolve?q=${encodeURIComponent(q)}`);
       const json = await res.json();
       // the qualifier from a natural-language prompt rides along so the page can use it
-      const focus = json.focus ? `?focus=${encodeURIComponent(json.focus)}` : "";
-      if (json.kind === "company") router.push(`/company/${json.ticker}${focus}`);
-      else if (json.kind === "topic") router.push(`/topic/${json.slug}${focus}`);
+      const focus = json.focus ? `focus=${encodeURIComponent(json.focus)}` : "";
+      const query = (existing: string) =>
+        [existing, focus].filter(Boolean).length ? `?${[existing, focus].filter(Boolean).join("&")}` : "";
+
+      // A relational question lands on the affected subject with the influence as a focus, which
+      // narrows that subject's own timeline — the intersection the question asks about. The
+      // two-subject compose stays one click away from the focus bar there.
+      if (json.kind === "company") router.push(`/company/${json.ticker}${query("")}`);
+      else if (json.kind === "topic") router.push(`/topic/${json.slug}${query("")}`);
     } finally {
       setBusy(false);
     }

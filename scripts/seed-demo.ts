@@ -22,11 +22,13 @@ import {
   ensureSources,
   emptyStats,
   linkToIndustry,
+  linkToSector,
   logFetch,
   upsertEvent,
   upsertSubject,
   upsertTopicSubject,
 } from "../lib/ingest/store";
+import { sectorsFor } from "../lib/onchain/sectors";
 import type { SourceKey } from "../lib/types";
 import type { PricePoint, TimelineEvent } from "../lib/types";
 
@@ -91,9 +93,17 @@ function priceSeries(
 
 type Seed = Omit<TimelineEvent, "id"> & { id?: string };
 
-/** Ingest identity is the dedup basis; keep it stable and unique per seeded event. */
-function ev(e: Seed): TimelineEvent {
-  const id = e.id ?? `seed-${e.sourceKey}-${e.date}-${e.title.slice(0, 40)}`;
+/**
+ * Ingest identity is the dedup basis; keep it stable and unique per seeded event.
+ *
+ * `scope` is the subject the event belongs to, and leaving it out was a real bug: filing titles
+ * are boilerplate, so Ford's and GM's identically-titled 10-K on one day hashed to the same key
+ * and became a single database row owned by both. Every real adapter scopes its own basis —
+ * EDGAR keys on the accession number — so a fixture that does not models the schema wrongly and
+ * invents a shared event out of a filing calendar.
+ */
+function ev(e: Seed, scope = ""): TimelineEvent {
+  const id = e.id ?? `seed-${scope ? `${scope}-` : ""}${e.sourceKey}-${e.date}-${e.title.slice(0, 40)}`;
   return { ...e, id, dedupBasis: e.dedupBasis ?? id };
 }
 
@@ -238,7 +248,15 @@ const FORD_ACTIONS: Seed[] = [
   },
 ];
 
-const FORD_REGULATION: Seed[] = [
+/**
+ * A sector rule, attached to the *industry* rather than to a company — which is where
+ * `scripts/ingest.ts` puts Federal Register results, and where `loadSectorEvents` looks for them.
+ *
+ * The seed used to hang this on Ford. It looked right on Ford's page and was wrong everywhere
+ * else: GM never saw a rule that hit its whole sector, and /compare could not tell that one
+ * regulation had landed on both. A fixture that models the schema loosely tests nothing.
+ */
+const SECTOR_REGULATION: Seed[] = [
   {
     date: "2026-03-18",
     title: "NHTSA proposes updated fuel economy standards for light trucks",
@@ -308,6 +326,10 @@ const EV_CITATIONS: [string, string, string][] = [
   ["2024-03-21", "EPA Finalises Vehicle Emissions Rules", "Associated Press"],
 ];
 
+/** `npm run db:seed-demo -- --stress` — the fixture `npm run profile:list` measures against. */
+const STRESS = process.argv.includes("--stress");
+const STRESS_EVENTS = 600;
+
 async function main(): Promise<void> {
   const pool = getPool();
   const client = await pool.connect();
@@ -354,11 +376,10 @@ async function main(): Promise<void> {
       ...FORD_FILINGS,
       ...FORD_EARNINGS,
       ...FORD_NEWS,
-      ...FORD_REGULATION,
       ...FORD_ACTIONS,
     ];
     await client.query("BEGIN");
-    for (const e of fordEvents) await upsertEvent(client, ev(e), fordId, stats);
+    for (const e of fordEvents) await upsertEvent(client, ev(e, "f"), fordId, stats);
     await client.query("COMMIT");
 
     // ------------------------------------------------------------ GM
@@ -378,7 +399,7 @@ async function main(): Promise<void> {
     });
 
     await client.query("BEGIN");
-    for (const e of GM_EVENTS) await upsertEvent(client, ev(e), gmId, stats);
+    for (const e of GM_EVENTS) await upsertEvent(client, ev(e, "gm"), gmId, stats);
     await client.query("COMMIT");
 
     await seedFetchLog(fordId, [
@@ -394,14 +415,15 @@ async function main(): Promise<void> {
     ]);
 
     // ------------------------------------------------------ industry
-    const { slug: industrySlug } = await linkToIndustry(client, fordId, {
-      sic: "3711",
-      description: "Motor Vehicles & Passenger Car Bodies",
-    });
-    await linkToIndustry(client, gmId, {
-      sic: "3711",
-      description: "Motor Vehicles & Passenger Car Bodies",
-    });
+    const SIC_3711 = { sic: "3711", description: "Motor Vehicles & Passenger Car Bodies" };
+    const { slug: industrySlug, industryId } = await linkToIndustry(client, fordId, SIC_3711);
+    await linkToIndustry(client, gmId, SIC_3711);
+
+    // The rule lands on the industry, so both members read it off the same row — which is what
+    // lets /compare say one regulation hit both rather than showing two coincidental markers.
+    await client.query("BEGIN");
+    for (const e of SECTOR_REGULATION) await upsertEvent(client, ev(e, "sic-3711"), industryId, stats);
+    await client.query("COMMIT");
 
     // --------------------------------------------------------- topic
     const topicId = await upsertTopicSubject(client, {
@@ -455,7 +477,7 @@ async function main(): Promise<void> {
       })),
     ];
     await client.query("BEGIN");
-    for (const e of topicEvents) await upsertEvent(client, ev(e), topicId, stats);
+    for (const e of topicEvents) await upsertEvent(client, ev(e, "ev-cars"), topicId, stats);
     await client.query("COMMIT");
 
     // -------------------------------------------------------- prices
@@ -500,6 +522,48 @@ async function main(): Promise<void> {
       );
     }
 
+    // ------------------------------------------------- a deliberately huge subject
+    // The checklist asks whether large lists need windowing, and that is a question about
+    // measurement, not opinion. `--stress` seeds a subject big enough to answer it, for
+    // `npm run profile:list`.
+    //
+    // Every event is a citation, because that is the kind with no ceiling on it. Wikipedia
+    // history is already sampled down to 60 rows by `capHistory`, so seeding history would
+    // measure that cap rather than the list; a subject cited a few hundred times is the case
+    // that actually reaches EventList unthinned.
+    //
+    // Off by default: it is a fixture, not a demo. Left in, it would sit in /explore and in the
+    // suggestion index as though it were something a reader might want to look at.
+    if (STRESS) {
+      const bigId = await upsertTopicSubject(client, {
+        searchTerm: "stress test",
+        wikipediaTitle: "Stress test (timeline rendering)",
+        displayName: "Stress test",
+        summary:
+          "A deliberately oversized timeline, seeded to measure list rendering at scale. Not a " +
+          "real subject — it exists so the question of whether large lists need windowing can " +
+          "be answered with a number.",
+        firstEventOn: "1900-01-01",
+      });
+      const bulk: Seed[] = [];
+      for (let i = 0; i < STRESS_EVENTS; i++) {
+        const d = new Date(Date.UTC(1900, 0, 1) + i * 55 * 86_400_000).toISOString().slice(0, 10);
+        bulk.push({
+          date: d,
+          title: `Stress event ${i + 1} — a headline of roughly the length a real one runs to`,
+          description: "Seeded to measure rendering at scale; carries no meaning.",
+          type: "citation",
+          source: "Sample publication",
+          url: `https://example.com/stress/${i}`,
+          sourceKey: "wikipedia" as const,
+          externalId: `stress-${i}`,
+        });
+      }
+      await client.query("BEGIN");
+      for (const e of bulk) await upsertEvent(client, ev(e, "stress"), bigId, stats);
+      await client.query("COMMIT");
+    }
+
     // -------------------------------------------------------- crypto
     // Phase 0's demo: a Bitcoin halving read against the BTC price chart. Modelled as a topic
     // (no CIK or ticker to give it, and the schema is right to refuse a company without one),
@@ -533,7 +597,8 @@ async function main(): Promise<void> {
         `At block ${Number(height).toLocaleString("en-US")} the subsidy paid to miners fell to ` +
         `${reward} BTC, halving the rate of new issuance. Written into the protocol, not decided by anyone.`,
       type: "onchain" as const,
-      source: `Bitcoin block ${Number(height).toLocaleString("en-US")} (mempool.space)`,
+      // the explorer only — the block height is the chain reference, rendered from externalId
+      source: "mempool.space",
       url: `https://mempool.space/block/${height}`,
       sourceKey: "onchain" as const,
       externalId: `btc-block-${height}`,
@@ -541,9 +606,19 @@ async function main(): Promise<void> {
     }));
 
     await client.query("BEGIN");
-    for (const e of halvings) await upsertEvent(client, ev(e), btcId, stats);
+    for (const e of halvings) await upsertEvent(client, ev(e, "btc"), btcId, stats);
     await client.query("COMMIT");
     await seedFetchLog(btcId, [["onchain", "ok", 4]]);
+
+    // Sector membership, so /industry/sector-layer-1 has something to aggregate. The demo corpus
+    // only carries Bitcoin, so this is the shape rather than the full set.
+    for (const sector of sectorsFor("btc")) {
+      await linkToSector(client, btcId, {
+        slug: sector.slug,
+        displayName: sector.displayName,
+        summary: sector.summary,
+      });
+    }
 
     // Spans the 2024 halving, so the marker lands on the chart rather than before it.
     const btcDays = everyDay("2023-01-01", "2026-07-24");
@@ -564,6 +639,7 @@ async function main(): Promise<void> {
     console.log(
       `\n  Seeded 5 subjects — /company/f, /company/gm, /topic/electric%20cars, /topic/btc, ` +
         `/industry/${industrySlug}\n` +
+        (STRESS ? `  plus /topic/stress%20test — ${STRESS_EVENTS} events, for profiling\n` : "") +
         `  ${stats.events} events (${stats.newEvents} new), ${stats.attestations} attestations, ` +
         `${days.length} trading days of prices for two tickers.\n`
     );

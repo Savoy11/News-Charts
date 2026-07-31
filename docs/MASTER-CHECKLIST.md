@@ -273,6 +273,50 @@ section of `docs/PRELIMINARY-FINDINGS-2026-07-30.md`.
 
 ---
 
+## Initiative: Search accuracy · `P1`
+
+Search is the front door and the place a wrong answer does the most damage, and until now every
+accuracy change has been judged by typing a phrase and looking at where it landed. That finds the
+bug you thought of and nothing else. This initiative starts with the instrument, because none of
+the items under it can be argued for or against without one.
+
+- [x] ~~`P0` **Log what search resolves to.**~~ — done 2026-07-31. `db/015`, `lib/searchLog.ts`,
+      `npm run search-report`, `npm run check:search-log` (34 offline checks). Every resolution
+      records the query, what the parser made of it, which rung answered, whether the subject it
+      routed to had events, and how long the ladder took.
+      The headline number is **landed**: the share of searches that reached a subject with
+      something on it. Rows whose outcome could not be determined are excluded rather than
+      counted as successes — a metric that quietly scores its own failures as wins is worse than
+      no metric.
+      Privacy: query text only, no IP, user agent, session or join key to anything; capped at 200
+      characters; no page or API reads the table; 90-day retention applied by the scheduled
+      refresh rather than by whoever remembers. **Confirm this is the trade you want** — measuring
+      accuracy needs the raw query, and hashing it would make the miss list useless.
+- [ ] `P1` **Invert parse and resolve.** `parseSearchPrompt` strips conversational scaffolding
+      with a list of regexes and hands whatever survives to the ladder, so any phrasing the
+      patterns do not anticipate travels through as the subject — which is how a prompt once
+      became `/topic/how-donald-trumps-presidency-affected`. Generate candidate spans and test
+      them against the subject index instead, keeping the longest that resolves: the corpus
+      decides what is a subject name, rather than a list of English patterns.
+- [ ] `P1` **Score candidates instead of laddering.** Every rung is exact-ish — exact ticker,
+      exact name, name prefix, slug or alias — so a typo matches nothing and falls through to a
+      Wikipedia guess, and two plausible matches always resolve to whichever rung is earlier.
+      `pg_trgm` on `display_name`, `ticker` and `subject_aliases` gives typo tolerance and one
+      comparable score across rungs; where the top two are close, disambiguate on screen rather
+      than picking silently.
+- [ ] `P1` **Stop the last rung inventing.** Anything unresolved becomes
+      `/topic/<whatever was typed>`. The page is honest about not having it, but the query has by
+      then been classified as a topic — and if that slug reaches `ingestTopic`, Wikipedia's search
+      will confidently return *some* article. That is the confidently-wrong-page failure.
+- [ ] `P2` **Feed every real bad query into `check:prompt`.** The report's "rewrites that then
+      landed on nothing" block exists to produce these. Cheapest accuracy work in the repo.
+- [ ] `P2` **Resolve without the network.** `/api/resolve` reaches EDGAR and Wikipedia while a
+      visitor waits — the last read path that still fetches. It is already visible in the log: with
+      the ticker index unreachable, a real ticker is recorded as `assumed_topic` rather than
+      `edgar`.
+
+---
+
 ## Initiative: On-chain events in the timeline engine · `P1`
 
 **North star.** Give users a free, visual way to see on-chain history on a linear timeline —

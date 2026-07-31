@@ -394,6 +394,33 @@ nothing is hidden without evidence and the site behaves identically with scoring
 it took visible items from 12/12 to 4/12, removing every market-roundup and rival-company
 story — at the cost of demoting oblique headlines like "iPhone maker rebounds". Off by default.
 
+### Measuring search
+
+Every search goes through `/api/resolve`, and every resolution is now recorded: what was typed,
+what `parseSearchPrompt` made of it, which rung of the ladder answered, and — the number that
+matters — whether the subject it routed to had any events.
+
+```
+npm run search-report            # last 7 days
+npm run search-report 30
+npm run search-report -- --purge # apply the 90-day retention now
+```
+
+The ladder is `known_company` → `known_subject` → `edgar` → `assumed_topic`, and the last rung is
+where wrong pages come from: nothing matched, so the typed string is assumed to name a topic. The
+report separates them, because "we routed the visitor somewhere" and "the visitor saw something"
+are different claims and only the second is accuracy. A row whose outcome could not be determined
+is excluded from the headline rather than counted as a success.
+
+It is also a live check on the ladder itself. With the SEC ticker index unreachable, a real ticker
+falls past `edgar` and is logged as `assumed_topic` — the network-on-the-read-path fragility,
+visible as a number instead of an anecdote.
+
+**Privacy.** The query is stored with nothing attached that could identify anybody: no IP, no user
+agent, no session or cookie, no join key to any other table. Queries are capped at 200 characters,
+nothing reads the table but the operator's report, and the scheduled refresh deletes rows after 90
+days — retention that depends on someone remembering is not retention.
+
 ### How pages read
 
 `lib/page-data.ts` **reads the database and nothing else**. It used to be a read-through cache

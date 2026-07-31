@@ -27,6 +27,7 @@ import { ensureSources } from "../lib/ingest/store";
 import { markFailed, markFulfilled, pendingRequests } from "../lib/ingest/queue";
 import { project } from "../lib/ingest/quota";
 import { CRYPTO_SUBJECTS } from "../lib/onchain";
+import { purgeOldResolutions } from "../lib/searchLog";
 import type { SourceKey } from "../lib/types";
 
 /**
@@ -139,6 +140,14 @@ async function main(): Promise<void> {
 
   if (!dry) {
     console.log(`\n  ${ok} refreshed, ${failed} failed`);
+
+    /**
+     * Search-log retention, applied here because this is the only thing that runs on a schedule.
+     * A 90-day policy that depends on an operator remembering to run a command is not a policy,
+     * and the rows are visitor queries — the one kind of data worth deleting on time.
+     */
+    const purged = await purgeOldResolutions(90);
+    if (purged) console.log(`  purged ${purged} search log row(s) past the 90-day retention`);
     /**
      * The quota check belongs here, where the requests were actually made — and over the sources
      * this run actually asks. It named GNews, Newsdata, EODHD, Marketaux and NYT, none of which

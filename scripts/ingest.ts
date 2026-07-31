@@ -14,13 +14,18 @@ import {
   linkToIndustry,
   linkToSector,
   emptyStats,
+  loadLastFetched,
   type UpsertStats,
 } from "../lib/ingest/store";
+import { selectStaleSources, ttlFor } from "../lib/ingest/refresh";
+import { collapseNearDuplicates } from "../lib/newsQuality";
 import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
 import { getTopicTimeline } from "../lib/wiki";
 import { fetchPressMentions, dropImplausiblePress } from "../lib/loc";
 import { fetchNews } from "../lib/news";
-import { resolveCompany, getFilings, getIndustry } from "../lib/sec";
+import { getArchiveItems } from "../lib/archive";
+import { getYahooFinanceNews } from "../lib/newsExtra";
+import { resolveCompany, getFilings, getIndustry, commonName } from "../lib/sec";
 import { getDailyPrices } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
@@ -28,6 +33,35 @@ import { CRYPTO_SUBJECTS, ingestOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
 
 const BACKOFF_MINUTES = 10;
+
+/**
+ * Every source a topic draws from, and every source a company draws from.
+ *
+ * Declared as lists rather than left implicit in the call order below, because these are what
+ * the per-source refresh windows are computed over and what `scripts/check-wiring.ts` asserts
+ * against the registry — a source added to `SOURCES` and never added here would otherwise be a
+ * feed that reports healthy in `check:feeds` and contributes nothing to a page.
+ *
+ * The non-commercial keyed aggregators (NYT, Guardian, Newsdata, GNews, Currents, Marketaux,
+ * EODHD, Finnhub) are deliberately absent. Ingesting is republishing, and their terms bar it;
+ * `assertCommercialOk` refuses them outright. Their home is the visitor's own key in
+ * `lib/feeds/browser.ts`, which renders under the visitor's licence and never persists.
+ */
+export const TOPIC_SOURCES = [
+  "wikipedia",
+  "loc_chronam",
+  "gdelt",
+  "internet_archive",
+] as const satisfies readonly SourceKey[];
+
+export const COMPANY_SOURCES = [
+  "wikipedia",
+  "sec_edgar",
+  "gdelt",
+  "yahoo_finance",
+  "loc_chronam",
+  "internet_archive",
+] as const satisfies readonly SourceKey[];
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -46,6 +80,73 @@ function report(source: string, outcome: string, s: UpsertStats) {
   );
 }
 
+/**
+ * Which of these sources are outside their refresh window for this subject.
+ *
+ * The windows in `lib/ingest/refresh.ts` were written for the page path and went with it: the
+ * only caller left after the scheduler cut-over was their own test, so an hourly run re-asked
+ * Wikipedia and 1800s newspaper scans every hour — sources whose declared windows are a day and
+ * a week. This is what puts `selectStaleSources` back on the path it was written for.
+ *
+ * Fails open, deliberately: if the bookkeeping query itself fails, everything counts as stale.
+ * A subject must never lose a feed because a freshness lookup had a bad day.
+ */
+async function dueSources(
+  client: PoolClient,
+  subjectId: number | null,
+  keys: readonly SourceKey[]
+): Promise<Set<SourceKey>> {
+  if (subjectId === null) return new Set(keys); // never ingested — nothing is fresh
+  try {
+    return new Set(selectStaleSources(keys, await loadLastFetched(client, subjectId)));
+  } catch {
+    return new Set(keys);
+  }
+}
+
+/** What we already hold for a slug, so a refresh can skip what is still inside its window. */
+async function storedSubject(
+  client: PoolClient,
+  slug: string
+): Promise<{ id: number; displayName: string; firstEventOn: string | null } | null> {
+  const { rows } = await client.query<{ id: string; display_name: string; first_event_on: Date | string | null }>(
+    `SELECT s.id, s.display_name, s.first_event_on
+       FROM subjects s
+       LEFT JOIN subject_aliases a ON a.subject_id = s.id
+      WHERE s.slug = $1 OR lower(a.alias) = $1
+      ORDER BY (s.slug = $1) DESC
+      LIMIT 1`,
+    [slug.toLowerCase()]
+  );
+  if (!rows[0]) return null;
+  const on = rows[0].first_event_on;
+  return {
+    id: Number(rows[0].id),
+    displayName: rows[0].display_name,
+    firstEventOn: on instanceof Date ? on.toISOString().slice(0, 10) : on ? String(on).slice(0, 10) : null,
+  };
+}
+
+/**
+ * Record that this subject was worked, without changing anything about it.
+ *
+ * `upsertSubject` stamps `refreshed_at`, and every path used to call it because every path
+ * re-fetched Wikipedia. A run that finds every source inside its window now writes nothing — and
+ * `scripts/refresh.ts` orders by `refreshed_at NULLS FIRST`, so a subject that is never stamped
+ * stays at the head of the queue for ever and, under `--limit`, starves everything behind it.
+ */
+async function touchSubject(client: PoolClient, subjectId: number): Promise<void> {
+  await client.query("UPDATE subjects SET refreshed_at = now() WHERE id = $1", [subjectId]);
+}
+
+/** Adapters that return events rather than a `FetchResult`, adapted to what `runSource` logs. */
+function asResult(fetch: () => Promise<TimelineEvent[]>): () => Promise<FetchResult> {
+  return async () => {
+    const events = await fetch();
+    return { events, outcome: events.length ? "ok" : "empty" };
+  };
+}
+
 /** Fetch → store → log, with a back-off check so we don't hammer a throttled source. */
 async function runSource(
   client: PoolClient,
@@ -54,16 +155,26 @@ async function runSource(
   query: string,
   fetcher: () => Promise<FetchResult>,
   transform: (events: TimelineEvent[]) => TimelineEvent[] = (e) => e
-): Promise<void> {
+): Promise<TimelineEvent[]> {
   await assertCommercialOk(client, sourceKey);
 
   const backoff = await shouldBackOff(client, sourceKey, subjectId, BACKOFF_MINUTES);
   if (backoff) {
     line(sourceKey, `skipped   last attempt ${backoff}, within ${BACKOFF_MINUTES} min backoff`);
-    return;
+    return [];
   }
 
-  const result = await fetcher();
+  let result: FetchResult;
+  try {
+    result = await fetcher();
+  } catch (err) {
+    // A source that throws costs its own events and nothing else. Before, the rejection travelled
+    // out of the whole ingest and took every source after it with it — one unreachable host and
+    // the subject lost its filings too.
+    await logFetch(client, sourceKey, subjectId, query, "error", 0, undefined, String(err).slice(0, 200));
+    line(sourceKey, `FAILED    ${(err as Error).message}`);
+    return [];
+  }
   const events = transform(result.events);
   const stats = emptyStats();
 
@@ -86,48 +197,96 @@ async function runSource(
     // still record the attempt, outside the failed transaction
     await logFetch(client, sourceKey, subjectId, query, "error", 0, undefined, String(err).slice(0, 200));
     line(sourceKey, `FAILED    ${(err as Error).message}`);
-    return;
+    return [];
   }
   report(sourceKey, result.outcome, stats);
+  return events;
+}
+
+/**
+ * A `runSource` bound to one subject and one due-set: sources still inside their window are
+ * reported and skipped rather than asked.
+ */
+function runnerFor(client: PoolClient, subjectId: number, due: ReadonlySet<SourceKey>) {
+  return async (
+    sourceKey: SourceKey,
+    query: string,
+    fetcher: () => Promise<FetchResult>,
+    transform?: (events: TimelineEvent[]) => TimelineEvent[]
+  ): Promise<TimelineEvent[]> => {
+    if (!due.has(sourceKey)) {
+      line(sourceKey, `fresh     inside its ${ttlFor(sourceKey)} min window`);
+      return [];
+    }
+    return runSource(client, sourceKey, subjectId, query, fetcher, transform);
+  };
 }
 
 export async function ingestTopic(client: PoolClient, topic: string) {
   console.log(`\ntopic: ${topic}`);
-  const wiki = await getTopicTimeline(topic);
-  if (!wiki) {
-    console.log("  no Wikipedia article found — nothing to ingest");
-    return;
-  }
 
-  const firstEventOn = wiki.events[0]?.date ?? null;
-  const subjectId = await upsertSubject(client, {
-    kind: "topic",
-    slug: topic.toLowerCase(),
-    displayName: wiki.title,
-    wikipediaTitle: wiki.title,
-    summary: wiki.summary,
-    firstEventOn,
-  });
-  line("subject", `#${subjectId} ${wiki.title}  (articles: ${wiki.articles.join(", ")})`);
+  // What we already have decides which sources are worth asking. A subject we have never seen
+  // has nothing fresh, so everything is due — including Wikipedia, which is what establishes
+  // that the subject exists at all.
+  const existing = await storedSubject(client, topic);
+  const due = await dueSources(client, existing?.id ?? null, TOPIC_SOURCES);
 
-  // Wikipedia is already fetched; store it without a second round trip.
-  const stats = emptyStats();
-  await client.query("BEGIN");
-  try {
-    for (const ev of wiki.events) await upsertEvent(client, ev, subjectId, stats);
-    await logFetch(client, "wikipedia", subjectId, topic, wiki.events.length ? "ok" : "empty", wiki.events.length, 200);
-    await client.query("COMMIT");
-  } catch (err) {
-    await client.query("ROLLBACK");
-    throw err;
+  let subjectId: number;
+  let title: string;
+  let firstEventOn: string | null;
+
+  if (existing && !due.has("wikipedia")) {
+    ({ id: subjectId, displayName: title, firstEventOn } = existing);
+    line("subject", `#${subjectId} ${title}`);
+    line("wikipedia", `fresh     inside its ${ttlFor("wikipedia")} min window`);
+    await touchSubject(client, subjectId);
+  } else {
+    const wiki = await getTopicTimeline(topic);
+    if (!wiki) {
+      console.log("  no Wikipedia article found — nothing to ingest");
+      return;
+    }
+    title = wiki.title;
+    firstEventOn = wiki.events[0]?.date ?? null;
+    subjectId = await upsertSubject(client, {
+      kind: "topic",
+      slug: topic.toLowerCase(),
+      displayName: wiki.title,
+      wikipediaTitle: wiki.title,
+      summary: wiki.summary,
+      firstEventOn,
+    });
+    line("subject", `#${subjectId} ${wiki.title}  (articles: ${wiki.articles.join(", ")})`);
+
+    // Wikipedia is already fetched; store it without a second round trip.
+    const stats = emptyStats();
+    await client.query("BEGIN");
+    try {
+      for (const ev of wiki.events) await upsertEvent(client, ev, subjectId, stats);
+      await logFetch(client, "wikipedia", subjectId, topic, wiki.events.length ? "ok" : "empty", wiki.events.length, 200);
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    }
+    report("wikipedia", wiki.events.length ? "ok" : "empty", stats);
   }
-  report("wikipedia", wiki.events.length ? "ok" : "empty", stats);
 
   const floor = firstEventOn ? Number(firstEventOn.slice(0, 4)) : 0;
-  await runSource(client, "loc_chronam", subjectId, topic, () => fetchPressMentions(topic), (evts) =>
+  const run = runnerFor(client, subjectId, due);
+
+  await run("loc_chronam", topic, () => fetchPressMentions(topic), (evts) =>
     dropImplausiblePress(evts, floor)
   );
-  await runSource(client, "gdelt", subjectId, topic, () => fetchNews(topic), (e) => e.slice(0, 30));
+  // collapseNearDuplicates before storing: one wire story carried by several outlets is one
+  // happening, and the richest copy is the one worth keeping.
+  await run("gdelt", topic, () => fetchNews(topic), (e) => collapseNearDuplicates(e.slice(0, 30)));
+  // Keyless, and the only historical source not exposed to a key expiry or a licence change.
+  // Same plausibility floor as the newspaper scans: an archive item predating the subject is a
+  // keyword collision, not early coverage.
+  await run("internet_archive", topic, asResult(() => getArchiveItems(topic)), (evts) =>
+    dropImplausiblePress(evts, floor)
+  );
 }
 
 export async function ingestCompany(client: PoolClient, ticker: string) {
@@ -154,6 +313,12 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
   line("subject", `#${subjectId} ${company.name} (${company.ticker}, CIK ${company.cik})`);
   line("site", siteDomain ?? "not resolved");
 
+  const due = await dueSources(client, subjectId, COMPANY_SOURCES);
+  const run = runnerFor(client, subjectId, due);
+  // Headlines say "Ford", not "Ford Motor Company" — every keyword-searched feed gets the
+  // common name, and only EDGAR and the price endpoint get the ticker.
+  const name = commonName(company.name);
+
   if (industry) {
     const { industryId, slug } = await linkToIndustry(client, subjectId, industry);
     const { rows } = await client.query<{ n: string }>(
@@ -165,14 +330,72 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
     line("industry", "no SIC code from EDGAR");
   }
 
-  await runSource(client, "sec_edgar", subjectId, company.ticker, async () => {
+  await run("sec_edgar", company.ticker, async () => {
     const events = await getFilings(company);
     return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
   });
 
-  await runSource(client, "gdelt", subjectId, company.name, () => fetchNews(company.name), (e) =>
-    e.slice(0, 30)
+  await run("gdelt", company.name, () => fetchNews(company.name), (e) =>
+    collapseNearDuplicates(e.slice(0, 30))
   );
+
+  /**
+   * The company's story predates its ticker.
+   *
+   * Wikipedia history and its cited articles cover the run-up to going public, which filings and
+   * news feeds cannot reach — it is what fills the "Before the ticker" section. The page path
+   * fetched this on every company render and the scheduler cut-over dropped it, so a company
+   * ingested since has had no history at all.
+   *
+   * It doubles as the plausibility floor for the two historical sources below: "Apple" in an
+   * 1890 newspaper is the fruit, and without a founding year there is no way to tell.
+   */
+  const story = due.has("wikipedia") ? await getTopicTimeline(name).catch(() => null) : null;
+  if (!due.has("wikipedia")) {
+    line("wikipedia", `fresh     inside its ${ttlFor("wikipedia")} min window`);
+  } else if (story) {
+    line("wikipedia", `resolved  “${story.title}” (${story.events.length} events)`);
+    await run("wikipedia", name, asResult(async () => story.events));
+  } else {
+    line("wikipedia", "no article resolved for this company");
+  }
+
+  /**
+   * The two historical sources, both floored on the company's first recorded year.
+   *
+   * No founding year means no floor, and without one the newspaper scans are OCR noise — "Apple"
+   * in an 1890 paper is the fruit. The floor rides on the Wikipedia story, so these run in the
+   * same pass it does; their own windows (a week, a day) are longer than Wikipedia's, so a run
+   * that finds Wikipedia fresh would have found these fresh too.
+   */
+  const firstStoryYear = story?.events[0]?.date ? Number(story.events[0].date.slice(0, 4)) : null;
+  if (firstStoryYear) {
+    await run("loc_chronam", name, () => fetchPressMentions(name), (evts) =>
+      dropImplausiblePress(evts, firstStoryYear)
+    );
+    // Archived material about the company itself — annual reports, catalogues, advertising.
+    await run("internet_archive", name, asResult(() => getArchiveItems(name)), (evts) =>
+      dropImplausiblePress(evts, firstStoryYear)
+    );
+  } else if (story) {
+    // Archive metadata is catalogued rather than OCR-guessed, so a wrong date is a rarity there
+    // and a systematic hazard in the scans — it survives an unknown founding year, capped.
+    await run("internet_archive", name, asResult(() => getArchiveItems(name)), (e) => e.slice(0, 25));
+  }
+
+  // Headline/link/date under the ticker's own feed. Licensed for the ad-supported path (the
+  // registry's `commercialOk: true`), unlike the keyed aggregators, which is why it is here and
+  // they are not.
+  await run("yahoo_finance", company.ticker, asResult(() => getYahooFinanceNews(company.ticker)), (e) =>
+    collapseNearDuplicates(e)
+  );
+
+  // Prices come off the same host and the same licence as the RSS feed above, so they share its
+  // window: closes are daily bars, and re-asking for them twice an hour buys nothing.
+  if (!due.has("yahoo_finance")) {
+    line("prices", `fresh     inside its ${ttlFor("yahoo_finance")} min window`);
+    return;
+  }
 
   const { points, actions } = await getDailyPrices(company.ticker);
   if (points.length) {

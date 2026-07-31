@@ -6,7 +6,7 @@ import CaepPromo from "@/components/CaepPromo";
 import SourcesPanel from "@/components/SourcesPanel";
 import SearchBox from "@/components/SearchBox";
 import TopicSummary from "@/components/TopicSummary";
-import ServedFrom from "@/components/ServedFrom";
+import StoredBadge from "@/components/StoredBadge";
 import JsonLd from "@/components/JsonLd";
 import FollowBar from "@/components/FollowBar";
 import { getTopicPageData } from "@/lib/page-data";
@@ -56,7 +56,7 @@ export default async function TopicPage({ params }: { params: { slug: string } }
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-violet-400">
             Topic timeline
-            <ServedFrom source={data.servedFrom} />
+            <StoredBadge refreshedAt={data.refreshedAt} />
           </p>
           <h1 className="text-2xl font-black leading-tight text-slate-100">{data.title}</h1>
         </div>

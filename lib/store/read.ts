@@ -16,23 +16,6 @@ export interface SubjectRow {
   refreshedAt: Date | null;
 }
 
-/**
- * When each source was last asked about this subject, for the per-source refresh windows.
- * Only successful-ish attempts count as "asked": an `error` row means we never got an answer,
- * and treating that as a fresh fetch would silence a broken feed for hours.
- */
-export async function loadLastFetched(subjectId: number): Promise<Map<SourceKey, Date>> {
-  const { rows } = await getPool().query<{ key: SourceKey; fetched_at: Date }>(
-    `SELECT DISTINCT ON (s.key) s.key, f.fetched_at
-       FROM source_fetches f
-       JOIN sources s ON s.id = f.source_id
-      WHERE f.subject_id = $1 AND f.outcome IN ('ok','empty')
-      ORDER BY s.key, f.fetched_at DESC`,
-    [subjectId]
-  );
-  return new Map(rows.map((r) => [r.key, r.fetched_at]));
-}
-
 export interface SourceContribution {
   key: SourceKey;
   name: string;

@@ -14,7 +14,16 @@ export const getCompanyPageData = cache(
   (ticker: string): Promise<CompanyPageData | null> => getCompanyPageDataImpl(ticker)
 );
 
-export type ServedFrom = "database" | "live";
+/**
+ * When `npm run refresh` last wrote this subject.
+ *
+ * This replaces a `servedFrom: "database" | "live"` flag. Commit 813d505 removed live fetching
+ * from the render path, after which `"live"` was unreachable and the badge on every page said
+ * `stored` unconditionally — a two-valued badge implying a comparison the code no longer
+ * performs. What a reader actually needs from a provenance badge on a database-only site is not
+ * *which* path served the page but *how old* what it served is, which is this.
+ */
+export type RefreshedAt = Date | null;
 
 export interface TopicPageData {
   title: string;
@@ -25,7 +34,7 @@ export interface TopicPageData {
    * price series, so its page renders the same chart a company page does.
    */
   prices: PricePoint[];
-  servedFrom: ServedFrom;
+  refreshedAt: RefreshedAt;
 }
 
 export interface CompanyPageData {
@@ -35,7 +44,7 @@ export interface CompanyPageData {
   prices: PricePoint[];
   events: TimelineEvent[];
   industry: IndustryRef | null;
-  servedFrom: ServedFrom;
+  refreshedAt: RefreshedAt;
 }
 
 
@@ -73,7 +82,7 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
           summary: subject.summary ?? "",
           events,
           prices,
-          servedFrom: "database",
+          refreshedAt: subject.refreshedAt,
         };
       }
     }
@@ -107,7 +116,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
           prices,
           events: dropCompanyPrehistory([...events, ...sector]),
           industry,
-          servedFrom: "database",
+          refreshedAt: subject.refreshedAt,
         };
       }
     }

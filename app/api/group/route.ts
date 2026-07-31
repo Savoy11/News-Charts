@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { RELEVANCE_THRESHOLD } from "@/lib/enrich/relevance";
-import type { EventType, TimelineEvent } from "@/lib/types";
+import type { DatePrecision, EventType, TimelineEvent } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,20 @@ export async function GET(req: NextRequest) {
   if (!tickers.length) return NextResponse.json({ events: [] });
 
   try {
-    const { rows } = await getPool().query(
+    // Typed rows, so a column renamed out from under this route is a compile error rather than a
+    // field the UI silently stops finding: without the generic `rows` is `any[]`, and every
+    // property check in the map below is skipped.
+    const { rows } = await getPool().query<{
+      id: string;
+      kind: EventType;
+      occurred_on: Date | string;
+      date_precision: DatePrecision;
+      title: string;
+      url: string | null;
+      source_label: string | null;
+      tickers: string | null;
+      peers: string;
+    }>(
       `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title,
               a.url, a.source_label,
               string_agg(DISTINCT m.ticker, ', ') AS tickers,
@@ -43,12 +56,15 @@ export async function GET(req: NextRequest) {
       return {
         id: `grp-${r.id}`,
         date,
-        type: r.kind as EventType,
+        type: r.kind,
         title: r.title,
         source: r.source_label ?? "News Charts",
         url: r.url ?? undefined,
-        description: peers > 1 ? `${r.tickers} · ${peers} peers` : r.tickers,
-        yearOnly: r.date_precision === "year",
+        description: (peers > 1 ? `${r.tickers} · ${peers} peers` : r.tickers) ?? undefined,
+        // `precision`, not the `yearOnly` boolean it replaced: month precision is a third state,
+        // and emitting the dropped field left every month-only event in a group rendered on an
+        // invented day.
+        precision: r.date_precision,
       };
     });
 

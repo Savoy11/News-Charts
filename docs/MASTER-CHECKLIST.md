@@ -3,7 +3,7 @@
 The governing checklist for the **News Charts** project: a single place to track initiatives,
 priorities, and progress. Add to it, check things off, re-prioritise. This is a living doc.
 
-**Last updated:** 2026-07-28
+**Last updated:** 2026-07-30
 
 ## Scope & independence
 
@@ -31,7 +31,7 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
 
 ## Project state & prioritized backlog (opened 2026-07-25 · cleared 2026-07-28)
 
-**Where News Charts stands.** The data layer is real — 7 SQL migrations (`db/001`–`007`) plus a
+**Where News Charts stands.** The data layer is real — 14 SQL migrations (`db/001`–`014`) plus a
 full script suite (`ingest`, `score`, `signals`, `explain`, `plan`). The feature backlog that
 opened this section is **done**: PRs #1–#7 all merged 2026-07-25, #9 (citation mining, NL
 prompts, pre-IPO story, chart interaction, eight news repositories) merged 2026-07-27, and #11
@@ -170,7 +170,9 @@ non-compliant. The `commercialOk` flags in `SOURCES` are a practical reading of 
 - [ ] `P1` **Watch the first few runs.** `npm run refresh -- --dry-run` lists what it would touch
       without spending anything, and `npm run cost-report` shows what the real runs actually
       spent against each free tier. The projection is a floor, so the first live numbers are the
-      ones that matter — EODHD is already projected at 100% of its tier at five subjects.
+      ones that matter. Since 2026-07-30 the projection covers only sources the ingest path
+      actually asks — the keyed aggregators it used to price (EODHD at 100% of its tier at five
+      subjects, among them) are not on that path and spend nothing.
 - [ ] `P2` **Decide how far the request queue is worked per run.** `--requests` defaults to 10
       most-wanted per run. Too low and demand backs up; too high and new subjects crowd out
       refreshing the ones already on the site. The right number depends on real demand, which
@@ -195,6 +197,123 @@ non-compliant. The `commercialOk` flags in `SOURCES` are a practical reading of 
       source-labelling item, and it stays open.
 - [ ] Run from the production host, not a dev box — several sources behave differently from
       datacenter IPs.
+
+---
+
+## Initiative: Wiring, reachability and the licence gate (2026-07-30) — **shipped**
+
+The scheduler cut-over (`813d505`, "Refresh on a schedule; pages read the database and nothing
+else") moved fetching off the page path without moving everything that fetching depended on.
+What was left behind all had one shape: a working, registered, tested piece of code that no
+entry point called. `tsc` cannot see an unused export and the nineteen behaviour suites cannot
+either, because each orphaned piece *worked* — what was missing was the wire.
+
+Sources: `docs/audits/2026-07-30-audit.md` (findings 1 and 2) and the *Independently verified*
+section of `docs/PRELIMINARY-FINDINGS-2026-07-30.md`.
+
+- [x] ~~`P1` **The commercial licence gate failed open on the scheduled path.**~~ —
+      `assertCommercialOk` read `if (rows[0] && !rows[0].commercial_ok)`, so a source with no
+      `sources` row passed. No migration seeds that table and `scripts/refresh.ts` never called
+      `ensureSources` — so "no row" was the normal state of a fresh production database, and the
+      scheduled refresh ingested with every licence check silently permitting. A missing row is
+      now a refusal, and `refresh.ts` establishes the registry before it ingests anything.
+- [x] ~~`P1` **The refresh windows were consulted by nothing.**~~ — `selectStaleSources` and
+      `ttlFor` had one real caller, `check-refresh.ts`, which is their own test. An hourly run
+      re-asked Wikipedia (24h window) and Chronicling America (weekly) every hour.
+      `scripts/ingest.ts` now computes the due set per subject from `source_fetches` and prints
+      what it skipped and why; the Wikipedia fetch itself is inside the window, so a fresh
+      subject costs no round trip at all.
+- [x] ~~`P1` **On-chain subjects never refreshed on schedule.**~~ — `refresh.ts` imported
+      `ingestCompany` and `ingestTopic` only. Crypto assets are `topic` subjects by design, so
+      every one of them took the Wikipedia path: no halving, supply move, governance vote or
+      exploit had refreshed since seed time, and a bare slug like "dai" was being resolved
+      against an encyclopedia. Crypto slugs now route to `ingestOnchain`.
+- [x] ~~`P1` **Ten adapters were orphaned; two of them belonged on the path.**~~ — the archive
+      adapter was recorded in this checklist as "wired into both the topic and company ingest
+      paths" and was not; Yahoo Finance RSS and the company's Wikipedia story (the source of the
+      "Before the ticker" section, and the plausibility floor for the newspaper scans) went with
+      the page path. All three are on the ingest path now.
+      **The other eight are not, by decision rather than by omission.** NYT, Guardian, Newsdata,
+      GNews, Currents, Marketaux, EODHD and Finnhub all bar commercial use, and ingesting is
+      republishing — `assertCommercialOk` refuses them outright, so wiring them in would breach
+      the ⛔ gate above, not satisfy it. Their home is the visitor's own key
+      (`lib/feeds/browser.ts`), which renders under the visitor's licence and persists nothing.
+      What was wrong was the *reporting*: `check:feeds` called the adapters directly and showed
+      them green, and `cost-report` priced their quotas, so the licence gate was costing out
+      feeds contributing zero rows. Both now say which sources reach the corpus and which do not.
+- [x] ~~`P1` **`governance` and `exploit` events were filtered out of every topic page.**~~ —
+      `db/011` and `db/012` added the kinds; `TopicExplorer`'s `FILTERS` never did, and both the
+      default active set and the chip row derive from it, so the rows were discarded with no
+      control to bring them back. `/topic/uni` and `/topic/aave` are governance-only subjects
+      and rendered empty timelines while the Sources panel reported Snapshot contributing events.
+- [x] ~~`P2` **`/api/group` emitted a removed field.**~~ — `yearOnly: r.date_precision === "year"`
+      where the type carries `precision`, so month-precision events in a custom group rendered on
+      an invented day. The query had no row generic, so `rows` was `any[]` and `tsc` saw nothing;
+      it is typed now.
+- [x] ~~`P2` **`servedFrom: "live"` was unreachable while the badge still promised it.**~~ — the
+      cut-over left a two-valued type with one reachable value, a component branch nothing could
+      render, and a README paragraph describing the deleted read-through cache. The badge now
+      carries the date the stored copy was refreshed, which is what a reader of a database-only
+      site actually needs from it.
+- [x] ~~`P0` **A wiring/reachability check, so the next one is caught on the day it lands.**~~ —
+      `npm run check:wiring` (93 checks, offline, in `npm run check`). Every `SourceKey` must
+      have an ingest call site or a written-down reason not to; nothing barred from commercial
+      use may sit on the ingest path and nothing on it may be unlicensed; every source must have
+      a window and a quota entry; `refresh.ts` must reach every subject kind an ingester exists
+      for; and every `EventType` must have a filter chip that can show it. It would have caught
+      all six items above.
+- [x] ~~One source of run-ending fragility, found while wiring.~~ — a fetcher that threw took the
+      whole subject with it, so one unreachable host cost a company its filings too. A source
+      that throws now costs its own events, logs an `error` row, and the run continues.
+- [ ] `P2` **The aggregator relevance floor is inert.** `applyRelevanceFloor`, `titleNamesSubject`
+      and `LOOSE_SOURCES` act on `newsdata`, `gnews` and `currents` — exactly the sources the
+      licence bars from ingest — so nothing calls them outside `check:news-quality`. Left in
+      place rather than deleted or given a no-op call site: it is the filter those feeds would
+      need if a paid tier is ever bought. Decide it with the ⛔ gate, not before.
+
+---
+
+## Initiative: Search accuracy · `P1`
+
+Search is the front door and the place a wrong answer does the most damage, and until now every
+accuracy change has been judged by typing a phrase and looking at where it landed. That finds the
+bug you thought of and nothing else. This initiative starts with the instrument, because none of
+the items under it can be argued for or against without one.
+
+- [x] ~~`P0` **Log what search resolves to.**~~ — done 2026-07-31. `db/015`, `lib/searchLog.ts`,
+      `npm run search-report`, `npm run check:search-log` (34 offline checks). Every resolution
+      records the query, what the parser made of it, which rung answered, whether the subject it
+      routed to had events, and how long the ladder took.
+      The headline number is **landed**: the share of searches that reached a subject with
+      something on it. Rows whose outcome could not be determined are excluded rather than
+      counted as successes — a metric that quietly scores its own failures as wins is worse than
+      no metric.
+      Privacy: query text only, no IP, user agent, session or join key to anything; capped at 200
+      characters; no page or API reads the table; 90-day retention applied by the scheduled
+      refresh rather than by whoever remembers. **Confirm this is the trade you want** — measuring
+      accuracy needs the raw query, and hashing it would make the miss list useless.
+- [ ] `P1` **Invert parse and resolve.** `parseSearchPrompt` strips conversational scaffolding
+      with a list of regexes and hands whatever survives to the ladder, so any phrasing the
+      patterns do not anticipate travels through as the subject — which is how a prompt once
+      became `/topic/how-donald-trumps-presidency-affected`. Generate candidate spans and test
+      them against the subject index instead, keeping the longest that resolves: the corpus
+      decides what is a subject name, rather than a list of English patterns.
+- [ ] `P1` **Score candidates instead of laddering.** Every rung is exact-ish — exact ticker,
+      exact name, name prefix, slug or alias — so a typo matches nothing and falls through to a
+      Wikipedia guess, and two plausible matches always resolve to whichever rung is earlier.
+      `pg_trgm` on `display_name`, `ticker` and `subject_aliases` gives typo tolerance and one
+      comparable score across rungs; where the top two are close, disambiguate on screen rather
+      than picking silently.
+- [ ] `P1` **Stop the last rung inventing.** Anything unresolved becomes
+      `/topic/<whatever was typed>`. The page is honest about not having it, but the query has by
+      then been classified as a topic — and if that slug reaches `ingestTopic`, Wikipedia's search
+      will confidently return *some* article. That is the confidently-wrong-page failure.
+- [ ] `P2` **Feed every real bad query into `check:prompt`.** The report's "rewrites that then
+      landed on nothing" block exists to produce these. Cheapest accuracy work in the repo.
+- [ ] `P2` **Resolve without the network.** `/api/resolve` reaches EDGAR and Wikipedia while a
+      visitor waits — the last read path that still fetches. It is already visible in the log: with
+      the ticker index unreachable, a real ticker is recorded as `assumed_topic` rather than
+      `edgar`.
 
 ---
 

@@ -3,6 +3,7 @@ import { resolveCompany } from "@/lib/sec";
 import { findKnownCompany, loadSubject } from "@/lib/store/read";
 import { parseSearchPrompt } from "@/lib/prompt";
 import { wikipediaHasSubject } from "@/lib/wiki";
+import { logResolution, targetHasEvents, type ResolutionRung } from "@/lib/searchLog";
 
 /**
  * Can we actually draw this side of a relational question?
@@ -21,8 +22,22 @@ async function isDrawable(term: string): Promise<boolean> {
 }
 
 export async function GET(req: NextRequest) {
+  const started = Date.now();
   const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
-  if (!q) return NextResponse.json({ kind: "none" });
+  if (!q) {
+    await logResolution({
+      query: "",
+      subject: "",
+      focus: null,
+      influence: null,
+      resolvedBy: "empty",
+      kind: null,
+      target: null,
+      hasEvents: null,
+      durationMs: Date.now() - started,
+    });
+    return NextResponse.json({ kind: "none" });
+  }
 
   // "Show me the history of Alibaba in the United States" resolves the *subject*
   // (Alibaba); the qualifier travels back as `focus` so the page can act on it.
@@ -54,6 +69,40 @@ export async function GET(req: NextRequest) {
    * `isDrawable` is kept because that link is only worth offering when the other side exists.
    */
   const composable = influence ? await isDrawable(influence) : false;
+
+  /**
+   * Record what the ladder decided, so accuracy is a number rather than an opinion.
+   *
+   * Which rung answered is not cosmetic bookkeeping: `known_company` and `known_subject` mean
+   * the corpus knew the answer, `edgar` means a real company nobody has ingested, and
+   * `assumed_topic` means the ladder ran out and guessed that the typed string names something.
+   * The last of those is where a wrong page comes from, and today nothing counts them.
+   */
+  const resolvedBy: ResolutionRung = knownCompany
+    ? "known_company"
+    : known
+      ? "known_subject"
+      : company
+        ? "edgar"
+        : "assumed_topic";
+
+  const kind = ticker ? "company" : "topic";
+  const target = ticker ?? (known?.kind === "topic" ? known.slug : subject.toLowerCase());
+
+  // Awaited rather than fired and forgotten: this route already reaches EDGAR and Wikipedia on
+  // its slower paths, so two indexed local queries are noise beside them — and a background
+  // write is not guaranteed to survive the response on a serverless host.
+  await logResolution({
+    query: q,
+    subject,
+    focus,
+    influence,
+    resolvedBy,
+    kind,
+    target,
+    hasEvents: await targetHasEvents(target),
+    durationMs: Date.now() - started,
+  });
 
   if (ticker) return NextResponse.json({ kind: "company", ticker, focus, influence, composable });
   if (known?.kind === "topic") {

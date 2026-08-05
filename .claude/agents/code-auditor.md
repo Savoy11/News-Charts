@@ -49,12 +49,20 @@ npm test                 # record coverage if reported
 npm run build            # if quick
 npm run audit                      # Finance Now — live-data provenance
 npm run data-sources -- --verify   # Finance Now — registry vs route code
-npm run check-feeds                # News Charts — per-source feed health
+npm run check:feeds                # News Charts — per-source feed health (NETWORK; see below)
+npm run check                      # News Charts — every offline suite
 git log --oneline -30
 ```
 
 **Report every check you could not run, with its error.** A broken or undocumented script is
 itself a finding, and silently omitting it hides the most useful signal in the report.
+
+**Say where you ran.** `check:feeds` reaches GDELT, Wikipedia, SEC, Yahoo and the rest over the
+network, and egress is blocked from the build container — so a report that does not state where
+it ran turns "this environment has no internet" into "these feeds are broken". Skipping it there
+is correct; recording a false negative is not. It has also earned its place twice now: it is the
+only check that reads real values, and it is what caught the exploit amounts being published 10^6
+too high after 24 offline checks agreed with the bug.
 
 ## Step 3 — Look where defects actually live
 

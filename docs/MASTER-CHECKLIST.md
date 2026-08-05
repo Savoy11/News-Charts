@@ -173,10 +173,24 @@ non-compliant. The `commercialOk` flags in `SOURCES` are a practical reading of 
       ones that matter. Since 2026-07-30 the projection covers only sources the ingest path
       actually asks — the keyed aggregators it used to price (EODHD at 100% of its tier at five
       subjects, among them) are not on that path and spend nothing.
+- [ ] `P1` **Report on the demand queue — make `subject_requests` readable.** *(opportunity-scout
+      proposal, 2026-07-30 — approved; carried over from the closed PR #15.)* A `npm run demand`
+      report: most-wanted unfulfilled subjects with request counts and first/last-asked dates,
+      plus a second block for requests carrying a `last_error`. Read-only, no new table, no new
+      page.
+      `db/014_subject_requests.sql` stores `requests`, `first_asked`, `last_asked`, `fulfilled_at`
+      and `last_error`; `lib/ingest/queue.ts` writes all five and reads back four. **Nothing in
+      `app/` reads the table at all, and `last_error` is written by `markFailed()` and read by
+      nobody** — so a subject failing every hourly run is invisible outside psql. Data already
+      collected, already paid for, never surfaced.
+      File it *above* the sizing item below, not in place of it: it is the instrument that item is
+      blocked on. Deliberately a CLI report rather than a public page — the app has no auth, and
+      what visitors search for is not something to publish.
 - [ ] `P2` **Decide how far the request queue is worked per run.** `--requests` defaults to 10
       most-wanted per run. Too low and demand backs up; too high and new subjects crowd out
       refreshing the ones already on the site. The right number depends on real demand, which
-      does not exist yet.
+      does not exist yet. ⚠ Blocked on the demand report above — once the hourly scheduler runs,
+      demand exists but is unreadable.
 
 ### Feed health (each source, against production keys)
 
@@ -270,6 +284,28 @@ section of `docs/PRELIMINARY-FINDINGS-2026-07-30.md`.
       licence bars from ingest — so nothing calls them outside `check:news-quality`. Left in
       place rather than deleted or given a no-op call site: it is the filter those feeds would
       need if a paid tier is ever bought. Decide it with the ⛔ gate, not before.
+
+---
+
+## Improvement agents (`code-auditor`, `opportunity-scout`)
+
+Installed on PR #14. What has run so far is **not a baseline** — items carried over from the
+closed PR #15, whose findings are otherwise all shipped.
+
+- [ ] `P1` **Re-run both agents properly.** The 2026-07-30 pass was a smoke test capped at 2
+      findings and 2 proposals *by instruction*, and its own scope note says so. A full
+      fortnightly run has not happened, so nobody knows what a complete pass turns up — the
+      capped run alone produced eight verified defects.
+- [x] ~~`P2` **Fix the auditor's script name.**~~ — done 2026-07-31. `.claude/agents/code-auditor.md`
+      named `npm run check-feeds`; this repo's script is `check:feeds`, so the check errored as
+      "Missing script" rather than running. The definition now also runs `npm run check` and is
+      explicit that a report must say **where** it ran: egress is blocked from the build
+      container, so an unqualified skip turns "no internet here" into "these feeds are broken".
+- [ ] `P2` **Give the auditor the two lessons this month taught.** Both are about the same blind
+      spot and neither is in the definition yet: a check that calls a unit directly proves the
+      unit works, not that anything reaches it (`check:wiring` exists now because of this); and a
+      fixture written from the code's own assumption can only confirm that assumption — the
+      exploit amounts were 10^6 too high through 24 passing checks.
 
 ---
 
@@ -803,6 +839,25 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
 
 Consequences of what shipped on PR #9 (citation mining, NL prompts, pre-IPO story, crosshair
 popup, filing stacks, collapsible list, 8 new news repositories), ranked by value-per-effort.
+
+- [ ] `P2` **Give industry pages their own OpenGraph card.** *(opportunity-scout proposal,
+      2026-07-30 — approved; carried over from the closed PR #15.)* Add
+      `app/industry/[slug]/opengraph-image.tsx` so a shared sector link renders
+      "*&lt;Industry name&gt; · sector timeline*" instead of the generic site card.
+      `app/company/[ticker]/` and `app/topic/[slug]/` each have one; `app/industry/[slug]/` has
+      only `loading.tsx` and `page.tsx`, so it falls through to `ogCard("Timelines for analysts",
+      …)`. These pages are publicly indexed — `lib/seo.ts`'s `subjectPath()` maps
+      `kind === "industry"` to `/industry/${slug}` and `app/sitemap.ts` emits every indexed subject
+      through it — and the page's own `generateMetadata` already declares
+      `twitter: { card: "summary_large_image" }`, so the large-image promise is already made and
+      the generic image is what fills it. The sector timeline is the most distinctive thing the
+      product makes, and it is the one page type whose preview says nothing about what is on it.
+      ⚠ **One honest wrinkle:** the existing cards are deliberately fetch-free (the company card
+      renders the ticker from `params` alone), but an industry slug is `sic-3674` and a card
+      reading "sic-3674" would be worse than the generic one. So this card needs the display name,
+      which means calling the same `loadIndustry(slug)` that `generateMetadata` already calls — a
+      DB read in an OG route, which the other two avoid. Node runtime, already the case; fall back
+      to the generic card when the lookup fails, so it degrades to today's behaviour.
 
 - [x] ~~`P0` **Commit the browser smoke pass**~~ — done 2026-07-28. `npm run check:ui`,
       **64 checks**, committed with Playwright as a devDependency. It is what caught every defect

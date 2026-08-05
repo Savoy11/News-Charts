@@ -547,12 +547,22 @@ export async function upsertEvent(
   // the row updates instead of being skipped by the unchanged-hash guard below.
   const hash = contentHash([ev.title, ev.description, ev.url, ev.imageUrl]);
 
-  // Identity is the dedup_key; content changes only bump the hash and updated_at.
+  /**
+   * Identity is the dedup_key; content changes only bump the hash and updated_at.
+   *
+   * `title` is updated as well as `body`, which it was not. `contentHash` has always included
+   * the title, so a corrected headline bumped the hash, satisfied the conflict predicate, wrote
+   * the new body — and left the old title on the row for ever. That was not theoretical: the
+   * DefiLlama unit fix (2026-07-31) corrects figures that live *in the title*
+   * ("Aave V3 exploited — $862.00bn"), and without this those rows could never be healed by
+   * re-ingesting. A source that corrects itself must be able to correct us.
+   */
   const upserted = await client.query<{ id: string; inserted: boolean }>(
     `INSERT INTO events (kind, occurred_on, date_precision, title, body, image_url, dedup_key, content_hash)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
      ON CONFLICT (dedup_key) DO UPDATE
-        SET body = EXCLUDED.body,
+        SET title = EXCLUDED.title,
+            body = EXCLUDED.body,
             image_url = COALESCE(EXCLUDED.image_url, events.image_url),
             content_hash = EXCLUDED.content_hash,
             updated_at = now()

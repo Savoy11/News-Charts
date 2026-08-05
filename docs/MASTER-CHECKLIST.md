@@ -273,6 +273,51 @@ section of `docs/PRELIMINARY-FINDINGS-2026-07-30.md`.
 
 ---
 
+## ⛔ Exploit amounts were published 10^6 too high · **fixed 2026-07-31**
+
+- [x] ~~`P0` **DefiLlama's `amount` is plain USD, not millions.**~~ — `toUsd` multiplied by 10^6 on
+      the strength of the documented unit. The **first live `npm run check:feeds` run** printed
+      `Aave V3 exploited — $862.00bn` and `Unizen exploited — $2100.00bn`, against real incidents
+      of roughly $862k and $2.1m. `lib/onchain/exploits.ts` predicted this exact failure in its own
+      header — *"If that is wrong every figure is off by 10^6 — obvious on a real run, invisible
+      offline"* — which is what it turned out to be.
+      This was the most serious defect the project has had: a specific, false, public claim about
+      named organisations, on the one event kind whose whole design is about attribution being
+      honest.
+      - **Why 24 passing checks missed it.** `scripts/check-exploits.ts` built its fixtures in
+        millions, so the test and the code agreed with each other and neither agreed with the API.
+        A unit is a claim about the *outside world*; a fixture written from the same assumption as
+        the code can only ever confirm the assumption. The fixtures are in dollars now, and two
+        cases assert the live 2026-07-31 values specifically.
+      - **The materiality filters were also inert.** `MATERIAL_USD` ($10m) and `CHAIN_FLOOR_USD`
+        ($100m) were applied to inflated figures, so a $100 incident cleared a $100m floor — which
+        is why `Exploits (eth)` returned 265 rows. They now do what they were written to do.
+      - **`MAX_CREDIBLE_USD` ($10bn) is the new guard**: past that, disbelieve the number rather
+        than print it. The largest real incident on record is under $2bn, so the ceiling is
+        generous by five times and still an order of magnitude below what a unit error produces.
+        The lesson is that the previous error was *renderable* — it passed every filter because
+        nothing asked whether the figure was believable, only whether it was large.
+- [x] ~~`P1` **A corrected title never reached the database.**~~ — `upsertEvent` updated `body`,
+      `image_url` and `content_hash` on conflict but not `title`, while `contentHash` has always
+      included the title. So a corrected headline bumped the hash, wrote the new body, and left
+      the old title in place for ever. Found because this fix corrects figures that live *in the
+      title*. A source that corrects itself must be able to correct us.
+- [x] ~~`P1` **Clean up the rows already published.**~~ — `npm run fix:exploit-amounts`, dry run by
+      default. Correcting the adapter does not heal them: most of these incidents fall below the
+      materiality bar once the unit is right, so a re-ingest never revisits the row — it stops
+      producing it and the wrong one stays on the timeline.
+      Rows past the ceiling are deleted and re-ingested correctly on the next refresh. A row cited
+      by a synthesis cannot be deleted (`ON DELETE RESTRICT`, and rightly — a citation that loses
+      its referent is a claim with no evidence), so its figure is **corrected in place** instead.
+      Verified against a real database: `$862.00bn → $862k` on a cited row, an uncited `$2100.00bn`
+      deleted, and legitimate figures ($600m Ronin, $1.50bn Bybit) untouched.
+- [ ] `P1` **Check the remaining live figures once.** The ceiling and the floors are arithmetic;
+      whether the *surviving* rows are right is a question only a real run answers. Run
+      `npm run check:feeds` and read the exploit lines against what actually happened — this is the
+      second time the answer has been in the output rather than in the code.
+
+---
+
 ## Initiative: Search accuracy · `P1`
 
 Search is the front door and the place a wrong answer does the most damage, and until now every

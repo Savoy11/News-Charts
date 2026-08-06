@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import GroupView from "@/components/GroupView";
 import AdSlot from "@/components/AdSlot";
-import CaepPromo from "@/components/CaepPromo";
+import FinanceNowPromo from "@/components/FinanceNowPromo";
 import SearchBox from "@/components/SearchBox";
 
 // A group exists only in the visitor's own browser, so it's private by definition — keep it out
@@ -33,7 +33,7 @@ export default function GroupPage({ params }: { params: { name: string } }) {
       <GroupView name={name} />
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <CaepPromo />
+        <FinanceNowPromo />
         <AdSlot />
       </div>
     </div>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import FollowingList from "@/components/FollowingList";
 import SearchBox from "@/components/SearchBox";
 import AdSlot from "@/components/AdSlot";
-import CaepPromo from "@/components/CaepPromo";
+import FinanceNowPromo from "@/components/FinanceNowPromo";
 
 // Personal, browser-only list — nothing to index.
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export default function FollowingPage() {
         <FollowingList />
         <aside className="space-y-4">
           <AdSlot />
-          <CaepPromo />
+          <FinanceNowPromo />
         </aside>
       </div>
     </div>

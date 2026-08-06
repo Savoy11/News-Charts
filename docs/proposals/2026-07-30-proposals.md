@@ -112,7 +112,7 @@ DB read, and it degrades to today's behaviour
   *requested* subject has no events yet, so it would chip through to an empty page. Revisit only
   once the queue is actually being worked; proposal 1 is the prerequisite for even knowing whether
   there is demand to blend.
-- **Anything touching Crypto-Stuff / CAEP / Finance Now.** The checklist's Scope & independence
+- **Anything touching Finance Now** (`Crypto-Stuff` or `Finance-Now-Free`; formerly CAEP). The checklist's Scope & independence
   section rules the projects separate with no shared code or runtime coupling; nothing here
   crosses that line.
 

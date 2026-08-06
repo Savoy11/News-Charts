@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import CompanyExplorer from "@/components/CompanyExplorer";
 import AdSlot from "@/components/AdSlot";
-import CaepPromo from "@/components/CaepPromo";
+import FinanceNowPromo from "@/components/FinanceNowPromo";
 import SourcesPanel from "@/components/SourcesPanel";
 import SearchBox from "@/components/SearchBox";
 import StoredBadge from "@/components/StoredBadge";
@@ -128,7 +128,7 @@ export default async function CompanyPage({ params }: { params: { ticker: string
               without it, which is exactly how it misdirects debugging */}
           <SourcesPanel slug={data.ticker} />
           <AdSlot />
-          <CaepPromo />
+          <FinanceNowPromo />
           <AdSlot />
         </aside>
       </div>

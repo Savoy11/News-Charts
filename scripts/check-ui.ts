@@ -518,6 +518,57 @@ async function searchRouting(page: Page): Promise<void> {
 }
 
 /**
+ * The homepage suggestion chips, which are a promise about what is here.
+ *
+ * They were drawn from a hardcoded list of 44 subjects with real ones merely appended, so a
+ * database holding none of them still advertised GME, quantum computing and nuclear power — and
+ * every example a first-time visitor clicked landed on "Not on News Charts yet". Reported from a
+ * live instance as "if I click any of these examples it doesn't have a response".
+ *
+ * The seeded corpus has three subjects rich enough to suggest, and a row holds five, so this
+ * asserts the rule rather than the absence of stand-ins: everything we hold is offered before
+ * anything we do not.
+ */
+async function homepageSuggestions(page: Page): Promise<void> {
+  console.log("\nHomepage suggestions");
+  await go(page, "/");
+
+  const chips = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll("a")]
+        .filter((a) => a.className.includes("rounded-full"))
+        .map((a) => a.textContent?.trim() ?? "")
+    );
+
+  const shown = await chips();
+  check("chips render", shown.length >= 3, shown.join(", "));
+  // Every seeded subject with a real timeline, offered ahead of any curated stand-in.
+  for (const subject of ["F", "GM", "Electric car"]) {
+    check(`${subject} is offered before a stand-in`, shown.includes(subject), shown.join(", "));
+  }
+
+  /**
+   * Rotation must stop while someone is aiming at a chip. A swap takes 260ms and fires every
+   * 3.8s, so a click landing during one opens a subject the reader never chose.
+   */
+  const target = page.locator("a").filter({ hasText: /^F$/ }).first();
+  const box = await target.boundingBox();
+  if (!box) {
+    check("a chip to hover", false, "no bounding box");
+    return;
+  }
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  const held = await chips();
+  await page.waitForTimeout(9_000); // two rotation ticks
+  check("rotation pauses while a chip is under the pointer", JSON.stringify(await chips()) === JSON.stringify(held), (await chips()).join(", "));
+
+  await page.mouse.move(box.x, box.y - 200);
+  const atLeave = await chips();
+  await page.waitForTimeout(9_000);
+  check("and resumes once it is not", JSON.stringify(await chips()) !== JSON.stringify(atLeave), (await chips()).join(", "));
+}
+
+/**
  * What the search box does when it cannot get an answer.
  *
  * It awaited `/api/resolve` with no deadline and no failure branch, so a slow resolve left the
@@ -806,6 +857,7 @@ async function main(): Promise<void> {
     await cryptoTopic(page);
     await comparePage(page);
     await focusFilter(page);
+    await homepageSuggestions(page);
     await searchResilience(page);
   await feedKeys(page);
   await searchRouting(page);

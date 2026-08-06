@@ -1,5 +1,6 @@
 import { getPool } from "./db";
 import type { SubjectKind } from "./seo";
+import type { Suggestion } from "./suggestions";
 
 /**
  * Subjects worth exposing to crawlers and the Explore directory — the ones that actually carry
@@ -58,5 +59,55 @@ export async function listIndexedSubjects(
   } catch {
     // could not ask — NOT the same as "there is nothing", and callers must treat it differently
     return null;
+  }
+}
+
+/**
+ * Subjects worth suggesting on the homepage: ones a visitor clicking through will actually find
+ * something on.
+ *
+ * Industries are excluded, and that is a fix rather than a preference — the previous version of
+ * this query filtered on nothing, and an industry row fell through its `kind === "company"` test
+ * into a `/topic/sic-3711` link, which is not where industries live. A suggestion that 404s is
+ * worse than no suggestion.
+ *
+ * Ordered by how much there is to see rather than by recency: the chips are a shop window, and
+ * the subject with 400 events shows the product better than the one ingested most recently.
+ *
+ * Returns `[]` rather than null on failure. The distinction `listIndexedSubjects` preserves
+ * matters there because an empty `/explore` is a false claim; here the caller pads from the seed
+ * pool either way, so "could not ask" and "nothing yet" genuinely take the same action.
+ */
+export async function loadSuggestibleSubjects(limit = 24): Promise<Suggestion[]> {
+  try {
+    const { rows } = await getPool().query<{
+      slug: string;
+      kind: "company" | "topic";
+      display_name: string;
+      ticker: string | null;
+    }>(
+      `SELECT s.slug, s.kind, s.display_name, s.ticker
+         FROM subjects s
+         JOIN event_subjects es ON es.subject_id = s.id
+        WHERE s.kind IN ('company', 'topic')
+        GROUP BY s.id
+       HAVING count(es.event_id) >= 10
+        ORDER BY count(es.event_id) DESC
+        LIMIT $1`,
+      [limit]
+    );
+    return rows.map((r) => {
+      const isCompany = r.kind === "company" && r.ticker;
+      return {
+        label: isCompany ? String(r.ticker) : String(r.display_name),
+        href: isCompany
+          ? `/company/${r.ticker}`
+          : `/topic/${encodeURIComponent(String(r.slug))}`,
+        kind: isCompany ? "company" : "topic",
+      } satisfies Suggestion;
+    });
+  } catch {
+    // the caller falls back to the seed pool
+    return [];
   }
 }

@@ -411,6 +411,26 @@ the items under it can be argued for or against without one.
         `assumed_topic`.
       - `check:ui` covers all four behaviours through route interception, because "EDGAR happens
         to be throttled today" is not a test.
+- [x] ~~`P1` **The homepage advertised subjects it did not have.**~~ — done 2026-08-05, reported as
+      *"if I click any of these examples it doesn't have a response"*.
+      The chips were drawn from `CURATED` — 44 hardcoded subjects — with real ones merely
+      *appended* by `/api/suggestions`, and `pickMix` then shuffled the whole pool uniformly. On a
+      corpus holding three of them, the row still offered GME, quantum computing and nuclear
+      power, and every example a first-time visitor clicked landed on "Not on News Charts yet".
+      A suggestion is a promise about what is here.
+      - The corpus comes first (`loadSuggestibleSubjects`), the seed pool only tops up what the
+        corpus cannot fill, and stand-ins carry `padded: true` so `pickMix` offers every real
+        subject before any of them. Blending alone was not enough — the pool was right and the
+        *pick* was still wrong.
+      - Picked on the **server** so the first paint offers real subjects rather than flashing
+        curated ones and swapping them out on mount.
+      - Fixed alongside: the old query filtered on no `kind`, so an industry row fell through its
+        company test into a `/topic/sic-3711` link, which is not where industries live.
+      - **Rotation now pauses while a chip is hovered or focused.** A swap takes 260ms and fires
+        every 3.8s, so a click landing during one opened a subject the reader never chose — found
+        while testing this, when a click went somewhere the test had not asked for.
+      - Covered by `check:index` (the blend and pick rules, offline) and `check:ui` (the chips
+        lead somewhere, and the hover pause).
 - [ ] `P2` **Resolve without the network at all.** Bounding it is not removing it: a real ticker
       still depends on EDGAR being reachable the first time anybody searches it. The ticker file
       is small, static and public — caching it locally would take the last fetch off the read path

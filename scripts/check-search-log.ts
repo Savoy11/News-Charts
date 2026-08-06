@@ -12,8 +12,10 @@ config({ path: ".env.local" });
  *
  * Offline: pure functions over hand-built rows, no database.
  */
+import { CLIENT_BUDGET_MS, NETWORK_BUDGET_MS, timedOut, withTimeout } from "../lib/timeout";
 import {
   MAX_QUERY,
+  RUNGS,
   fromCorpus,
   normaliseQuery,
   percentile,
@@ -44,6 +46,8 @@ const row = (
   durationMs = 10,
   subject = query
 ): LoggedRow => ({ query, subject, resolvedBy, hasEvents, durationMs });
+
+const pctOf = (x: number): string => `${(x * 100).toFixed(1)}%`;
 
 console.log("\nWhat gets stored");
 check("whitespace is collapsed", trimForLog("  ford   motor \n company ") === "ford motor company");
@@ -115,29 +119,69 @@ check("most-asked first", misses[0].query === "ford", misses[0].query);
 check("an inconsistently answered query shows both rungs", misses[0].rungs.length === 2, misses[0].rungs.join(", "));
 check("the limit is honoured", topQueries(misses.map((m) => row(m.query, "edgar", false)), 1).length === 1);
 
-console.log("\nWhich rungs mean we already knew the answer");
-check("a known company did", fromCorpus("known_company"));
-check("a known subject did", fromCorpus("known_subject"));
-check("EDGAR did not", !fromCorpus("edgar"));
-// The rung that produces a confidently wrong page. It must never read as a corpus hit.
-check("an assumed topic did not", !fromCorpus("assumed_topic"));
+console.log("\nA slow source is not a failed parse");
+/**
+ * The distinction `network_timeout` exists to preserve. Both rungs end in the same guess, and
+ * collapsing them was what made a throttled EDGAR read as "our parser is weak" — a true statement
+ * about somebody else's server, filed as a false one about us.
+ */
+check("a timed-out probe is its own rung", RUNGS.includes("network_timeout"));
+check("and never counts as knowing the answer", !fromCorpus("network_timeout"));
+const slow = summarise([
+  row("MSFT", "network_timeout", false),
+  row("zzqq", "assumed_topic", false),
+  row("aapl", "known_company", true),
+]);
+check(
+  "it is reported apart from an ordinary guess",
+  slow.byRung.filter((r) => r.rung === "network_timeout" || r.rung === "assumed_topic").length === 2,
+  slow.byRung.map((r) => r.rung).join(", ")
+);
 
-console.log("\nLatency percentiles");
-const ds = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-check("p50", percentile(ds, 50) === 50, String(percentile(ds, 50)));
-check("p95", percentile(ds, 95) === 100, String(percentile(ds, 95)));
-check("a single sample is its own percentile", percentile([7], 95) === 7);
-check("no samples is 0", percentile([], 50) === 0);
-check("input is not mutated", (() => { const xs = [3, 1, 2]; percentile(xs, 50); return xs[0] === 3; })());
+/**
+ * The rest needs `await`, which this file cannot use at the top level (tsx compiles these
+ * scripts to CJS), so it runs in a main() rather than being restructured around it.
+ */
+async function main(): Promise<void> {
+  console.log("\nThe network budget");
+  check("the client waits longer than the server", CLIENT_BUDGET_MS > NETWORK_BUDGET_MS);
+  // A client that gave up first would abandon a request the server was about to answer, and report
+  // a failure that never happened.
+  check("by enough for both server-side probes", CLIENT_BUDGET_MS >= NETWORK_BUDGET_MS * 2);
 
-function pctOf(x: number): string {
-  return `${(x * 100).toFixed(1)}%`;
+  const fast = await withTimeout(Promise.resolve("answered"), 1000);
+  check("work inside the budget returns its value", fast === "answered", String(fast));
+  const slowWork = await withTimeout(new Promise((r) => setTimeout(() => r("late"), 60)), 10);
+  check("work past it returns the sentinel", timedOut(slowWork));
+  // A rejection is not silence, but every caller here treats it the same way — and a thrown probe
+  // must never take down a search.
+  const thrown = await withTimeout(Promise.reject(new Error("EDGAR said no")), 1000);
+  check("a rejection resolves rather than throws", timedOut(thrown));
+  check("a real null is not mistaken for a timeout", (await withTimeout(Promise.resolve(null), 1000)) === null);
+
+  console.log("\nWhich rungs mean we already knew the answer");
+  check("a known company did", fromCorpus("known_company"));
+  check("a known subject did", fromCorpus("known_subject"));
+  check("EDGAR did not", !fromCorpus("edgar"));
+  // The rung that produces a confidently wrong page. It must never read as a corpus hit.
+  check("an assumed topic did not", !fromCorpus("assumed_topic"));
+
+  console.log("\nLatency percentiles");
+  const ds = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+  check("p50", percentile(ds, 50) === 50, String(percentile(ds, 50)));
+  check("p95", percentile(ds, 95) === 100, String(percentile(ds, 95)));
+  check("a single sample is its own percentile", percentile([7], 95) === 7);
+  check("no samples is 0", percentile([], 50) === 0);
+  check("input is not mutated", (() => { const xs = [3, 1, 2]; percentile(xs, 50); return xs[0] === 3; })());
+
+  console.log(`\n${pass}/${pass + fail} checks passed\n`);
+  if (fail) {
+    console.log("Failed:");
+    for (const f of failures) console.log(`  - ${f}`);
+    console.log("");
+    process.exit(1);
+  }
+
 }
 
-console.log(`\n${pass}/${pass + fail} checks passed\n`);
-if (fail) {
-  console.log("Failed:");
-  for (const f of failures) console.log(`  - ${f}`);
-  console.log("");
-  process.exit(1);
-}
+main();

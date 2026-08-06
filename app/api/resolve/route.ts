@@ -4,6 +4,7 @@ import { findKnownCompany, loadSubject } from "@/lib/store/read";
 import { parseSearchPrompt } from "@/lib/prompt";
 import { wikipediaHasSubject } from "@/lib/wiki";
 import { logResolution, targetHasEvents, type ResolutionRung } from "@/lib/searchLog";
+import { NETWORK_BUDGET_MS, timedOut, withTimeout } from "@/lib/timeout";
 
 /**
  * Can we actually draw this side of a relational question?
@@ -17,8 +18,18 @@ async function isDrawable(term: string): Promise<boolean> {
   if (!term) return false;
   if (await findKnownCompany(term).catch(() => null)) return true;
   if (await loadSubject(term).catch(() => null)) return true;
-  if (await resolveCompany(term).catch(() => null)) return true;
-  return wikipediaHasSubject(term);
+  // Both remaining rungs leave the machine. Bounded together rather than separately: this only
+  // decides whether to *offer* the two-subject compose, and no link is worth six seconds.
+  const remote = await withTimeout(
+    (async () => {
+      if (await resolveCompany(term).catch(() => null)) return true;
+      return wikipediaHasSubject(term);
+    })(),
+    NETWORK_BUDGET_MS
+  );
+  // Not drawable, as far as we could tell in the time available. Under-offering the compose is
+  // the safe direction: the link is an extra, and one that 404s is worse than one absent.
+  return timedOut(remote) ? false : remote;
 }
 
 export async function GET(req: NextRequest) {
@@ -49,8 +60,24 @@ export async function GET(req: NextRequest) {
   // point. This also resolves aliases ("bitcoin" → btc) that the live path cannot see.
   const knownCompany = await findKnownCompany(subject).catch(() => null);
   const known = knownCompany ? null : await loadSubject(subject).catch(() => null);
-  const company =
-    knownCompany ?? (known ? null : await resolveCompany(subject).catch(() => null));
+
+  /**
+   * The one rung that leaves the machine, on a budget.
+   *
+   * EDGAR rate-limits by User-Agent, so a few scheduled refresh runs are enough to make it slow
+   * for everyone — including a visitor waiting on the search box, which awaited this with no
+   * deadline at all. A bounded miss is a result the page can act on; an unbounded await is not a
+   * result, it is a spinner.
+   *
+   * The distinction between "EDGAR says no" and "EDGAR did not answer" is kept rather than
+   * collapsed, because only one of them is a fact about the query.
+   */
+  const probe =
+    knownCompany || known
+      ? null
+      : await withTimeout(resolveCompany(subject).catch(() => null), NETWORK_BUDGET_MS);
+  const tickerIndexSlow = probe !== null && timedOut(probe);
+  const company = knownCompany ?? (probe === null || timedOut(probe) ? null : probe);
 
   const ticker = knownCompany?.ticker ?? (known?.kind === "company" ? known.ticker : company?.ticker);
 
@@ -84,7 +111,9 @@ export async function GET(req: NextRequest) {
       ? "known_subject"
       : company
         ? "edgar"
-        : "assumed_topic";
+        : tickerIndexSlow
+          ? "network_timeout"
+          : "assumed_topic";
 
   const kind = ticker ? "company" : "topic";
   const target = ticker ?? (known?.kind === "topic" ? known.slug : subject.toLowerCase());

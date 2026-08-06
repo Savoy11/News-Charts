@@ -19,6 +19,13 @@ export const RUNGS = [
   "known_subject",
   "edgar",
   "assumed_topic",
+  /**
+   * The ticker index did not answer inside its budget, so the query fell through to a guess it
+   * might not have needed. Distinct from `assumed_topic` on purpose: one says our parser could
+   * not identify the query, the other says somebody else's server was slow. Only the second is
+   * fixed by not asking it.
+   */
+  "network_timeout",
   "empty",
 ] as const;
 

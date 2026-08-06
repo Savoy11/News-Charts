@@ -34,6 +34,9 @@ const MEANING: Record<ResolutionRung, string> = {
   known_subject: "a subject slug or recorded alias",
   edgar: "a real company nobody has ingested — over the network, on the visitor's request",
   assumed_topic: "nothing matched; the typed string was assumed to name a topic",
+  network_timeout:
+    "the ticker index did not answer in time — a guess we may not have needed. Read this as a" +
+    " statement about EDGAR, not about the query",
   empty: "nothing was typed",
 };
 

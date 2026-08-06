@@ -518,6 +518,116 @@ async function searchRouting(page: Page): Promise<void> {
 }
 
 /**
+ * The homepage suggestion chips, which are a promise about what is here.
+ *
+ * They were drawn from a hardcoded list of 44 subjects with real ones merely appended, so a
+ * database holding none of them still advertised GME, quantum computing and nuclear power — and
+ * every example a first-time visitor clicked landed on "Not on News Charts yet". Reported from a
+ * live instance as "if I click any of these examples it doesn't have a response".
+ *
+ * The seeded corpus has three subjects rich enough to suggest, and a row holds five, so this
+ * asserts the rule rather than the absence of stand-ins: everything we hold is offered before
+ * anything we do not.
+ */
+async function homepageSuggestions(page: Page): Promise<void> {
+  console.log("\nHomepage suggestions");
+  await go(page, "/");
+
+  const chips = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll("a")]
+        .filter((a) => a.className.includes("rounded-full"))
+        .map((a) => a.textContent?.trim() ?? "")
+    );
+
+  const shown = await chips();
+  check("chips render", shown.length >= 3, shown.join(", "));
+  // Every seeded subject with a real timeline, offered ahead of any curated stand-in.
+  for (const subject of ["F", "GM", "Electric car"]) {
+    check(`${subject} is offered before a stand-in`, shown.includes(subject), shown.join(", "));
+  }
+
+  /**
+   * Rotation must stop while someone is aiming at a chip. A swap takes 260ms and fires every
+   * 3.8s, so a click landing during one opens a subject the reader never chose.
+   */
+  const target = page.locator("a").filter({ hasText: /^F$/ }).first();
+  const box = await target.boundingBox();
+  if (!box) {
+    check("a chip to hover", false, "no bounding box");
+    return;
+  }
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  const held = await chips();
+  await page.waitForTimeout(9_000); // two rotation ticks
+  check("rotation pauses while a chip is under the pointer", JSON.stringify(await chips()) === JSON.stringify(held), (await chips()).join(", "));
+
+  await page.mouse.move(box.x, box.y - 200);
+  const atLeave = await chips();
+  await page.waitForTimeout(9_000);
+  check("and resumes once it is not", JSON.stringify(await chips()) !== JSON.stringify(atLeave), (await chips()).join(", "));
+}
+
+/**
+ * What the search box does when it cannot get an answer.
+ *
+ * It awaited `/api/resolve` with no deadline and no failure branch, so a slow resolve left the
+ * button reading "…" indefinitely with nothing on screen. The route reaches the SEC ticker index,
+ * which rate-limits by User-Agent — a few scheduled refresh runs are enough to make the site's
+ * front door look dead to everybody, and it did.
+ *
+ * Asserted through route interception rather than by waiting for a real slow source: the failure
+ * has to be reproducible on demand, and "EDGAR happens to be throttled today" is not a test.
+ */
+async function searchResilience(page: Page): Promise<void> {
+  console.log("\nSearch when the answer doesn't come");
+  await go(page, "/");
+
+  const box = page.locator("form").filter({ has: page.locator("input") }).first();
+  const input = box.locator("input");
+  const button = box.locator("button");
+  const error = () => page.locator("[data-search-error]");
+
+  // A request that never answers. The client's own budget is what has to end it.
+  await page.route("**/api/resolve*", async (route) => {
+    await new Promise((r) => setTimeout(r, 14_000));
+    await route.abort();
+  });
+  await input.fill("NVDA");
+  await button.click();
+  await page.waitForTimeout(2_000);
+  check("the button shows it is working", await button.isDisabled());
+  await page.waitForTimeout(9_500);
+
+  const timedOutMsg = (await error().count()) ? await error().innerText() : "";
+  check("a stalled search gives up and says so", /taking too long/i.test(timedOutMsg), timedOutMsg || "still spinning");
+  check("and the box can be used again", !(await button.isDisabled()));
+  // The visitor is looking at the button they pressed, not at the space below it.
+  check("the message is announced, not just drawn", (await error().getAttribute("aria-live")) === "polite");
+
+  // A failing route is a different message: retrying in a moment is unlikely to help.
+  await page.unroute("**/api/resolve*");
+  await page.route("**/api/resolve*", (route) => route.fulfill({ status: 500, body: "boom" }));
+  await input.fill("Ford");
+  await button.click();
+  await page.waitForTimeout(1_500);
+  const failedMsg = (await error().count()) ? await error().innerText() : "";
+  check("a failing resolve is reported too", /couldn.t reach search/i.test(failedMsg), failedMsg || "no message");
+
+  // A failure describing a query the visitor has since changed is its own small lie.
+  await input.fill("Fo");
+  await page.waitForTimeout(300);
+  check("editing the query clears the stale failure", (await error().count()) === 0);
+
+  // And none of it costs a working search.
+  await page.unroute("**/api/resolve*");
+  await input.fill("Ford");
+  await button.click();
+  await page.waitForURL((u) => u.pathname !== "/", { timeout: 30_000 }).catch(() => {});
+  check("a healthy search still routes", /^\/company\/F$/i.test(new URL(page.url()).pathname), new URL(page.url()).pathname);
+}
+
+/**
  * Bring-your-own feed keys.
  *
  * The licensing argument is that the visitor's key makes the visitor the licensee, which only
@@ -747,6 +857,8 @@ async function main(): Promise<void> {
     await cryptoTopic(page);
     await comparePage(page);
     await focusFilter(page);
+    await homepageSuggestions(page);
+    await searchResilience(page);
   await feedKeys(page);
   await searchRouting(page);
   await chromeAndRoutes(page);

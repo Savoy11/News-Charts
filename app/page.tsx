@@ -2,8 +2,26 @@ import SearchBox from "@/components/SearchBox";
 import AdSlot from "@/components/AdSlot";
 import CaepPromo from "@/components/CaepPromo";
 import SuggestionChips from "@/components/SuggestionChips";
+import { loadSuggestibleSubjects } from "@/lib/subjects-index";
+import { blend, pickMix } from "@/lib/suggestions";
 
-export default function Home() {
+/**
+ * Re-read hourly. The chips are drawn from the corpus now, so a subject ingested this morning
+ * should be offerable this afternoon without a deploy — and the query is one grouped count, which
+ * is not worth doing on every request to a page that is otherwise static.
+ */
+export const revalidate = 3600;
+
+export default async function Home() {
+  /**
+   * Picked on the server so the first paint already offers subjects we have.
+   *
+   * These arrive as a prop rather than being recomputed on the client, which is what keeps
+   * hydration stable: the component's first render is exactly this list, and it only reshuffles
+   * afterwards. Rendering the curated fallback first and swapping it out on mount would flash
+   * suggestions that lead nowhere.
+   */
+  const suggestions = pickMix(blend(await loadSuggestibleSubjects()));
   return (
     <div>
       <section className="flex flex-col items-center py-16 text-center">
@@ -18,7 +36,7 @@ export default function Home() {
         <div className="mt-8 flex w-full justify-center">
           <SearchBox large />
         </div>
-        <SuggestionChips />
+        <SuggestionChips initial={suggestions} />
       </section>
 
       <section className="grid gap-4 sm:grid-cols-3">

@@ -391,10 +391,50 @@ the items under it can be argued for or against without one.
       will confidently return *some* article. That is the confidently-wrong-page failure.
 - [ ] `P2` **Feed every real bad query into `check:prompt`.** The report's "rewrites that then
       landed on nothing" block exists to produce these. Cheapest accuracy work in the repo.
-- [ ] `P2` **Resolve without the network.** `/api/resolve` reaches EDGAR and Wikipedia while a
-      visitor waits — the last read path that still fetches. It is already visible in the log: with
-      the ticker index unreachable, a real ticker is recorded as `assumed_topic` rather than
-      `edgar`.
+- [x] ~~`P1` **Bound the network on the search path, and say so when it runs out.**~~ — done
+      2026-08-05, after a report that searches on a local instance were not working.
+      `/api/resolve` awaited the SEC ticker index with no deadline, and `SearchBox` awaited the
+      route with no deadline and no failure branch — so a throttled EDGAR (which is what a few
+      `npm run refresh` runs produce, since it rate-limits by User-Agent) left the button reading
+      "…" for ever with nothing on screen. The site's front door looked dead, and the cause was
+      somebody else's server being slow.
+      - Server: both network rungs get `NETWORK_BUDGET_MS` (3s). Verified with a deliberately
+        stalled EDGAR — the route answered in **3.07s** instead of hanging, while an in-corpus
+        company stayed at 26ms because it never leaves the machine.
+      - Client: a 10s backstop, an amber message that says which kind of failure it was, a button
+        that becomes usable again, and the message cleared as soon as the query is edited — a
+        failure describing a query the visitor has since changed is its own small lie.
+      - `network_timeout` (`db/016`) is a **sixth rung**, kept apart from `assumed_topic` on
+        purpose: one says our parser could not identify the query, the other says a source was
+        slow, and only the second is fixed by not asking it. A rejection is not a timeout either —
+        EDGAR answering "no such ticker" quickly is knowledge, and it still logs as `edgar` or
+        `assumed_topic`.
+      - `check:ui` covers all four behaviours through route interception, because "EDGAR happens
+        to be throttled today" is not a test.
+- [x] ~~`P1` **The homepage advertised subjects it did not have.**~~ — done 2026-08-05, reported as
+      *"if I click any of these examples it doesn't have a response"*.
+      The chips were drawn from `CURATED` — 44 hardcoded subjects — with real ones merely
+      *appended* by `/api/suggestions`, and `pickMix` then shuffled the whole pool uniformly. On a
+      corpus holding three of them, the row still offered GME, quantum computing and nuclear
+      power, and every example a first-time visitor clicked landed on "Not on News Charts yet".
+      A suggestion is a promise about what is here.
+      - The corpus comes first (`loadSuggestibleSubjects`), the seed pool only tops up what the
+        corpus cannot fill, and stand-ins carry `padded: true` so `pickMix` offers every real
+        subject before any of them. Blending alone was not enough — the pool was right and the
+        *pick* was still wrong.
+      - Picked on the **server** so the first paint offers real subjects rather than flashing
+        curated ones and swapping them out on mount.
+      - Fixed alongside: the old query filtered on no `kind`, so an industry row fell through its
+        company test into a `/topic/sic-3711` link, which is not where industries live.
+      - **Rotation now pauses while a chip is hovered or focused.** A swap takes 260ms and fires
+        every 3.8s, so a click landing during one opened a subject the reader never chose — found
+        while testing this, when a click went somewhere the test had not asked for.
+      - Covered by `check:index` (the blend and pick rules, offline) and `check:ui` (the chips
+        lead somewhere, and the hover pause).
+- [ ] `P2` **Resolve without the network at all.** Bounding it is not removing it: a real ticker
+      still depends on EDGAR being reachable the first time anybody searches it. The ticker file
+      is small, static and public — caching it locally would take the last fetch off the read path
+      entirely, which is what every other read path already did.
 
 ---
 

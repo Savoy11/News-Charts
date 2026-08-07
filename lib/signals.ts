@@ -1,4 +1,5 @@
 import { getPool } from "./db";
+import { RELEVANCE_THRESHOLD } from "./enrich/relevance";
 
 /**
  * Deterministic trend signals.
@@ -89,7 +90,9 @@ async function weeklyCounts(scopeIds: number[], since: string): Promise<WeekRow[
        JOIN event_subjects es ON es.event_id = e.id
        JOIN scope sc ON sc.id = es.subject_id
       WHERE e.occurred_on >= $2
-        AND (es.relevance IS NULL OR es.relevance >= 0.4)
+        -- the same display gate the timeline applies, from the same constant — a hardcoded
+        -- copy here once let a threshold change desync signals from what the page shows
+        AND (es.relevance IS NULL OR es.relevance >= ${RELEVANCE_THRESHOLD})
       GROUP BY 1, 2
       ORDER BY 1`,
     [scopeIds, since]
@@ -143,7 +146,9 @@ async function eventsForDivergence(subjectId: number, since: string): Promise<nu
        JOIN event_subjects es ON es.event_id = e.id AND es.subject_id = $1
       WHERE e.occurred_on >= $2
         AND e.kind IN ('earnings','filing','news')
-        AND (es.relevance IS NULL OR es.relevance >= 0.4)
+        -- the same display gate the timeline applies, from the same constant — a hardcoded
+        -- copy here once let a threshold change desync signals from what the page shows
+        AND (es.relevance IS NULL OR es.relevance >= ${RELEVANCE_THRESHOLD})
       ORDER BY e.occurred_on DESC
       LIMIT 25`,
     [subjectId, since]

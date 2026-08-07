@@ -20,6 +20,44 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
 - **Related News Charts docs:** `README.md` (feature notes), `docs/EVENTS-SCHEMA.md` (the events
   schema spec). This checklist tracks *work*; those describe *what exists*.
 
+## Search engine — first-visit ingest, recall, relevance (2026-08-07)
+
+- [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on
+      `/topic/*` or `/company/*` runs a bounded keyless gather while the visitor waits —
+      Wikipedia for topics, EDGAR + the Yahoo chart for companies (exactly what flips each
+      page's render gate) — then renders the real timeline. Verified live: Adobe 2.4s,
+      telegraph 1.9s, penicillin 3.5s, each from a cold corpus through the real search box.
+      - The bounds, chosen not emergent: attempt ledger claimed in one statement BEFORE any
+        fetch (db/017), 360-min cooldown, 30m→2h→8h→week backoff for unresolvable slugs, a
+        dedicated `max: 2` pool with 250ms connect timeout (third simultaneous miss sheds to
+        the notice), advisory lock shared with `scripts/refresh.ts`, 8s deadline, and a DB
+        outage produces zero fetches. `npm run check:ondemand` asserts all of it offline.
+      - ⚠ Manual verification still owed: the advisory lock excluding two OS processes
+        (first pass vs `npm run refresh`) needs a two-terminal test against a live database —
+        the offline check cannot prove it and does not claim to.
+      - Observed, bounded, and kept: homepage chip prefetch triggers first passes for
+        suggested topics, so the seed pool self-fulfils (≤44 subjects, ledger-deduped).
+- [x] **Head-prefix salvage** (`salvaged_prefix` rung, db/018): "Netflix password sharing"
+      lands on NFLX with the tail as focus instead of minting a junk subject — the hard cost
+      gate in front of first-visit ingest. Verified live through the search box.
+- [x] **Relevance engine hardened** (`lib/enrich/relevance.ts`): weak tokens can no longer
+      carry a 0.9 ("Motor racing…" for Ford), person-name collisions go to the model
+      ("Harrison Ford…"), short names (3M, GE, single-letter tickers) and accented names
+      (Nestlé) now match, stored `subject_aliases` join as whole phrases, and every ingest
+      path scores links deterministically at insert (746 rows scored inline in live testing).
+      `check:relevance` grew from 24 to 34 checks.
+- [x] **Recall quick wins**: GDELT queried under the common name (the legal title matched no
+      headline — a silent, total recall loss on the highest-volume source); dedupe before
+      capping with the cap widened 30→75; `check:recall` locks both in.
+- [x] **`check:types` added to the chain, first**: the whole suite runs via tsx, which strips
+      types unchecked — the exhaustive-switch guard on `deterministicScore` never actually
+      fired, and check-relevance's own ALL list was missing two kinds.
+- [ ] `P2` Remaining from the recall/relevance design (judge-approved, not yet built): graded
+      focus scoring + a "Best matches" strip over the chronological timeline; SSR focus via a
+      dynamic sub-route; alias harvesting from Wikidata; GDELT year-window backfill; LoC
+      decade walk; EDGAR older-history shards; richer paid-tier evidence with an aggregate
+      spend cap. Each carries cost-judge amendments recorded in the session's design output.
+
 ## Legend
 
 - **Priority:** `P0` = do first / unblocks others · `P1` = core value · `P2` = later / nice-to-have

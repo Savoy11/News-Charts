@@ -1,7 +1,16 @@
 /**
- * Instant loading fallback for the data-heavy pages. A first visit to an un-ingested subject
- * fetches live (Wikipedia + news + archives) and can take many seconds; without this the click
- * looks frozen. Next renders this immediately during that fetch. Server component — pure markup.
+ * Instant loading fallback for the data-heavy pages, shown while the timeline is read out of the
+ * stored corpus. Server component — pure markup.
+ *
+ * The copy used to promise something the app stopped doing: "a first visit gathers this from
+ * Wikipedia, news and archives, so it can take a few seconds. Next time it loads instantly."
+ * Commit 813d505 removed live fetching from the render path (see the note on `RefreshedAt` in
+ * lib/page-data.ts), so nothing is gathered while anyone waits and a second visit to a subject we
+ * do not hold is identical to the first. It also contradicted `app/not-found.tsx` — the very next
+ * thing an un-ingested subject renders — which correctly says the corpus is read, not fetched.
+ *
+ * A visitor watching that message wait out a subject that will never arrive has been told the site
+ * is working on it. It is not.
  */
 export default function PageSkeleton({
   eyebrow = "Loading timeline",
@@ -59,9 +68,11 @@ export default function PageSkeleton({
         </div>
       )}
 
+      {/* True of both paths: a stored subject is a fast read; a first search runs the bounded
+          keyless gather (lib/ingest/firstPass.ts) before rendering, which is the "few seconds". */}
       <p className="mt-4 text-center text-xs text-slate-500">
-        {eyebrow} — a first visit gathers this from Wikipedia, news and archives, so it can take a
-        few seconds. Next time it loads instantly.
+        {eyebrow} — a first search gathers the essentials while you wait, so it can take a few
+        seconds. After that it loads from the corpus.
       </p>
     </div>
   );

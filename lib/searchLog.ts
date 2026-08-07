@@ -18,6 +18,13 @@ export const RUNGS = [
   "known_company",
   "known_subject",
   "edgar",
+  /**
+   * The whole query resolved to nothing, but a head-prefix of it did — "Tesla battery fires"
+   * landing on Tesla with "battery fires" carried as focus. Distinct from the exact rungs so
+   * salvage accuracy is measurable, and from `assumed_topic` because it is not a guess: some
+   * rung really answered for the prefix.
+   */
+  "salvaged_prefix",
   "assumed_topic",
   /**
    * The ticker index did not answer inside its budget, so the query fell through to a guess it

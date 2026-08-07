@@ -1,6 +1,16 @@
 import type { PoolClient } from "pg";
 import { contentHash, dedupKey } from "./keys";
 import { FetchOutcome, SourceKey, TimelineEvent } from "../types";
+import { deterministicScore, type SubjectContext } from "../enrich/relevance";
+
+/**
+ * Everything upsertEvent needs to score a row at link time: the subject it is being linked
+ * to, plus the alias set already computed once per ingest run rather than once per event.
+ */
+export interface ScoringContext {
+  subject: SubjectContext;
+  aliases: string[];
+}
 
 export const SOURCES: {
   id: number;
@@ -536,7 +546,8 @@ export async function upsertEvent(
   client: PoolClient,
   ev: TimelineEvent,
   subjectId: number,
-  stats: UpsertStats
+  stats: UpsertStats,
+  scoring?: ScoringContext
 ): Promise<void> {
   const sourceKey = ev.sourceKey;
   if (!sourceKey) throw new Error(`event ${ev.id} has no sourceKey`);
@@ -610,10 +621,29 @@ export async function upsertEvent(
   stats.attestations++;
   if ((attested.rows[0] as unknown as { inserted: boolean })?.inserted) stats.newAttestations++;
 
+  /**
+   * Score at link time, free. `deterministicScore` is pure and synchronous, and without this
+   * a freshly ingested subject sat entirely unranked (NULL) until someone remembered to run
+   * `npm run score` — which on a first-visit ingest means the page's whole first paint.
+   *
+   * Non-strict mode on purpose: every non-null verdict there is 0.7–1.0, all above the
+   * display threshold, so the inline scorer can never hide what it just ingested. Null
+   * verdicts (oblique news, regulation) stay NULL and keep displaying. ON CONFLICT DO
+   * NOTHING is preserved, so a row a model already scored is never overwritten.
+   */
+  const verdict = scoring
+    ? deterministicScore(
+        { eventId: 0, kind: ev.type, title: ev.title },
+        scoring.subject,
+        scoring.aliases,
+        false
+      )
+    : null;
   const linked = await client.query(
-    `INSERT INTO event_subjects (event_id, subject_id) VALUES ($1,$2)
+    `INSERT INTO event_subjects (event_id, subject_id, relevance, scored_by, scored_at)
+     VALUES ($1,$2,$3,$4, CASE WHEN $3::real IS NULL THEN NULL ELSE now() END)
      ON CONFLICT DO NOTHING`,
-    [eventId, subjectId]
+    [eventId, subjectId, verdict?.score ?? null, verdict ? "deterministic" : null]
   );
   stats.links += linked.rowCount ?? 0;
 }

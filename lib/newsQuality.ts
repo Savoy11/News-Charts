@@ -71,8 +71,14 @@ export function collapseNearDuplicates(events: TimelineEvent[]): TimelineEvent[]
   return out;
 }
 
-/** Words too common to prove a story is about the subject on their own. */
-const WEAK = new Set([
+/**
+ * Words too common to prove a story is about the subject on their own.
+ *
+ * Exported (as `WEAK_TOKENS`) because the relevance scorer's alias builder needs the same
+ * judgement: "Ford Motor Company" must not contribute "motor" as a full-strength alias, or
+ * "Motor racing season opens" displays as strong Ford news. One list, one place to argue it.
+ */
+export const WEAK_TOKENS = new Set([
   "the", "and", "of", "for", "inc", "corp", "corporation", "company", "co", "group",
   "holdings", "holding", "limited", "ltd", "plc", "sa", "nv", "ag", "se", "motor",
   "motors", "international", "technologies", "technology", "systems", "industries",
@@ -106,7 +112,7 @@ export function titleNamesSubject(title: string, subject: string, aliases: strin
   for (const candidate of candidates) {
     if (!candidate) continue;
     if (haystack.includes(candidate)) return true;
-    const strong = candidate.split(" ").filter((t) => t.length > 2 && !WEAK.has(t));
+    const strong = candidate.split(" ").filter((t) => t.length > 2 && !WEAK_TOKENS.has(t));
     // every distinctive token present (in any order) counts as naming the subject
     if (strong.length && strong.every((t) => new RegExp(`\\b${t}\\b`).test(haystack))) return true;
   }

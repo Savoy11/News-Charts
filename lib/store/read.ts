@@ -147,6 +147,7 @@ export async function loadSubject(slug: string): Promise<SubjectRow | null> {
 export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
   const { rows } = await getPool().query(
     `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title, e.body, e.image_url,
+            es.relevance,
             a.url, a.source_label, a.external_id,
             (SELECT count(*) FROM event_attestations x WHERE x.event_id = e.id) AS attestations
        FROM events e
@@ -183,6 +184,9 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
       // which block they came from even though the row was sitting in the database.
       externalId: r.external_id ?? undefined,
       precision: r.date_precision as DatePrecision,
+      // The stored subject-aboutness score, surfaced so ranking can use it. It was only ever
+      // an invisible SQL gate before — a score that can hide a row but never order one.
+      relevance: r.relevance == null ? undefined : Number(r.relevance),
     } satisfies TimelineEvent;
   });
 }

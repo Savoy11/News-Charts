@@ -1,6 +1,6 @@
 import { resolveCompany } from "./sec";
 import { findKnownCompany, loadSubject } from "./store/read";
-import { parseSearchPrompt } from "./prompt";
+import { headPrefixes, parseSearchPrompt } from "./prompt";
 import { wikipediaHasSubject } from "./wiki";
 import { logResolution, targetHasEvents, type ResolutionRung } from "./searchLog";
 import { NETWORK_BUDGET_MS, timedOut, withTimeout } from "./timeout";
@@ -101,7 +101,52 @@ export async function resolveSearch(q: string): Promise<ResolvedSearch> {
   const tickerIndexSlow = probe !== null && timedOut(probe);
   const company = knownCompany ?? (probe === null || timedOut(probe) ? null : probe);
 
-  const ticker = knownCompany?.ticker ?? (known?.kind === "company" ? known.ticker : company?.ticker);
+  let ticker = knownCompany?.ticker ?? (known?.kind === "company" ? known.ticker : company?.ticker);
+
+  /**
+   * Head-prefix salvage — the gate between a marker-less query and a junk subject.
+   *
+   * "Tesla battery fires" matches no qualifier pattern, fails every rung above, and used to
+   * fall through to `assumed_topic` — which mints a subject request for the raw string, and
+   * with first-visit ingest live would spend a real gather on it. The longest head-prefixes
+   * get the same rungs instead (database first, EDGAR under the remaining budget), and the
+   * unmatched tail rides along as focus, which is what the query's extra words were: a
+   * concern about the subject, not part of its name.
+   */
+  let salvaged: { kind: "company" | "topic"; slug?: string } | null = null;
+  let salvagedKnownTopic: Awaited<ReturnType<typeof loadSubject>> = null;
+  let salvageFocus: string | null = null;
+  if (!ticker && !known && !tickerIndexSlow) {
+    for (const { prefix, tail } of headPrefixes(subject)) {
+      const pCompany = await findKnownCompany(prefix).catch(() => null);
+      if (pCompany) {
+        ticker = pCompany.ticker;
+        salvaged = { kind: "company" };
+        salvageFocus = tail;
+        break;
+      }
+      const pKnown = await loadSubject(prefix).catch(() => null);
+      if (pKnown) {
+        if (pKnown.kind === "company" && pKnown.ticker) {
+          ticker = pKnown.ticker;
+          salvaged = { kind: "company" };
+        } else {
+          salvaged = { kind: "topic", slug: pKnown.slug };
+          salvagedKnownTopic = pKnown;
+        }
+        salvageFocus = tail;
+        break;
+      }
+      const pEdgar = await withTimeout(resolveCompany(prefix).catch(() => null), NETWORK_BUDGET_MS);
+      if (!timedOut(pEdgar) && pEdgar) {
+        ticker = pEdgar.ticker;
+        salvaged = { kind: "company" };
+        salvageFocus = tail;
+        break;
+      }
+    }
+  }
+  const mergedFocus = salvageFocus ? [salvageFocus, focus].filter(Boolean).join(" · ") : focus;
 
   /**
    * "How did Donald Trump's presidency affect IBM stock" is a question about an *intersection*:
@@ -133,12 +178,20 @@ export async function resolveSearch(q: string): Promise<ResolvedSearch> {
       ? "known_subject"
       : company
         ? "edgar"
-        : tickerIndexSlow
-          ? "network_timeout"
-          : "assumed_topic";
+        : salvaged
+          ? "salvaged_prefix"
+          : tickerIndexSlow
+            ? "network_timeout"
+            : "assumed_topic";
 
   const kind = ticker ? "company" : "topic";
-  const target = ticker ?? (known?.kind === "topic" ? known.slug : subject.toLowerCase());
+  const target =
+    ticker ??
+    (known?.kind === "topic"
+      ? known.slug
+      : salvaged?.kind === "topic" && salvaged.slug
+        ? salvaged.slug
+        : subject.toLowerCase());
 
   // Awaited rather than fired and forgotten: this route already reaches EDGAR and Wikipedia on
   // its slower paths, so two indexed local queries are noise beside them — and a background
@@ -146,7 +199,7 @@ export async function resolveSearch(q: string): Promise<ResolvedSearch> {
   await logResolution({
     query: q,
     subject,
-    focus,
+    focus: mergedFocus,
     influence,
     resolvedBy,
     kind,
@@ -155,11 +208,16 @@ export async function resolveSearch(q: string): Promise<ResolvedSearch> {
     durationMs: Date.now() - started,
   });
 
-  if (ticker) return { kind: "company", ticker, focus, influence, composable };
+  if (ticker) return { kind: "company", ticker, focus: mergedFocus, influence, composable };
   return {
     kind: "topic",
-    slug: known?.kind === "topic" ? known.slug : subject.toLowerCase(),
-    focus,
+    slug:
+      known?.kind === "topic"
+        ? known.slug
+        : salvagedKnownTopic
+          ? salvagedKnownTopic.slug
+          : subject.toLowerCase(),
+    focus: mergedFocus,
     influence,
     composable,
   };

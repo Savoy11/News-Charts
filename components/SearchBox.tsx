@@ -62,8 +62,12 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
 
   return (
     <div className={`w-full ${large ? "max-w-2xl" : "max-w-md"}`}>
-      <form onSubmit={submit} className="flex w-full gap-2">
+      {/* action + name are the pre-hydration floor: until React attaches `submit`, a native
+          submit performs a real search through /search (which redirects), instead of the silent
+          reload of `/` that swallowed the query. After hydration, preventDefault wins. */}
+      <form onSubmit={submit} action="/search" method="get" className="flex w-full gap-2">
         <input
+          name="q"
           value={q}
           onChange={(e) => {
             setQ(e.target.value);

@@ -1,4 +1,5 @@
 import SearchBox from "@/components/SearchBox";
+import CorpusExamples from "@/components/CorpusExamples";
 
 /**
  * Reached for two different situations, and the copy has to be true of both.
@@ -22,10 +23,12 @@ export default function NotFound() {
       </p>
       <p className="mt-3 max-w-lg text-sm text-slate-500">
         If you searched for a real company or topic, it&apos;s been noted — the next scheduled
-        refresh works through the most-requested first. Meanwhile, try a ticker like{" "}
-        <span className="text-slate-400">AAPL</span> or a broader topic like{" "}
-        <span className="text-slate-400">bicycle</span>.
+        refresh works through the most-requested first.
       </p>
+      {/* Drawn from the corpus, never hardcoded: this page used to offer "AAPL" and "bicycle" by
+          name, so a visitor sent here by a miss could follow the example straight into a second
+          miss. See CorpusExamples, and cf9d820 for the same fix on the homepage. */}
+      <CorpusExamples />
       <div className="mt-6 flex w-full justify-center">
         <SearchBox large />
       </div>

@@ -62,7 +62,13 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
     ticker: subjectRows[0].ticker,
   };
   const subjectId = Number(subjectRows[0].id);
-  const aliases = aliasesFor(subject);
+  // Stored aliases ("Google" for Alphabet) settle headlines deterministically that would
+  // otherwise cost a model call — one indexed read that pays for itself immediately.
+  const { rows: aliasRows } = await client.query<{ alias: string }>(
+    `SELECT alias FROM subject_aliases WHERE subject_id = $1`,
+    [subjectId]
+  );
+  const aliases = aliasesFor(subject, aliasRows.map((r) => r.alias));
 
   const { rows } = await client.query(
     `SELECT e.id, e.kind, e.title

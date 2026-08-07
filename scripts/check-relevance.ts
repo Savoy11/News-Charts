@@ -63,6 +63,46 @@ check("the ticker counts as naming it", (score("news", "F beats estimates")?.sco
 check("an oblique headline is left for the model", score("news", "Detroit carmaker rebounds") === null);
 check("unless strict mode demotes it", (score("news", "Detroit carmaker rebounds", true)?.score ?? 1) < RELEVANCE_THRESHOLD);
 
+console.log("\nWeak tokens and name collisions — the false positives this scorer must not make");
+// "Ford Motor Company" must not contribute "motor": weak tokens prove nothing alone.
+check("a weak-token-only headline is left for the model", score("news", "Motor racing season opens") === null);
+// The token matches but reads as a person's name — a judgement call, not a naming.
+check("a person-name collision is left for the model", score("news", "Harrison Ford wins award") === null);
+check(
+  "  ...in strict mode too — a suspicion is not evidence of absence",
+  score("news", "Harrison Ford wins award", true) === null
+);
+
+console.log("\nShort and non-ASCII names — the false negatives this scorer must not make");
+const MMM: SubjectContext = { kind: "company", displayName: "3M Company", ticker: "MMM" };
+const mmmScore = deterministicScore(row("news", "3M announces buyback"), MMM, aliasesFor(MMM));
+check("a digit-bearing short name still names the subject", (mmmScore?.score ?? 0) >= 0.9, String(mmmScore?.score));
+const NESTLE: SubjectContext = { kind: "company", displayName: "Nestlé S.A.", ticker: "NSRGY" };
+const nestleScore = deterministicScore(row("news", "Nestlé announces buyback"), NESTLE, aliasesFor(NESTLE));
+check("an accented name still names the subject", (nestleScore?.score ?? 0) >= 0.9, String(nestleScore?.score));
+// Single-letter tickers: standalone uppercase is Ford; an initial is not.
+check("a single-letter ticker as an initial does not name it", score("news", "John F. Kennedy Airport reopens") === null);
+
+console.log("\nStored aliases join as whole phrases");
+const GOOG: SubjectContext = { kind: "company", displayName: "Alphabet Inc.", ticker: "GOOGL" };
+const googAliases = aliasesFor(GOOG, ["Google"]);
+const googScore = deterministicScore(row("news", "Google unveils Gemini"), GOOG, googAliases);
+check("an alias-named headline scores as naming the subject", (googScore?.score ?? 0) >= 0.9, String(googScore?.score));
+const googWithout = deterministicScore(row("news", "Google unveils Gemini"), GOOG, aliasesFor(GOOG));
+check("  ...and without the stored alias it stays a model call", googWithout === null);
+
+console.log("\nOne threshold, one place");
+// signals.ts once hardcoded its own copy of the display gate; a threshold change then
+// desynced signal windows from what the timeline showed. Source-asserted, not hoped.
+import { readFileSync } from "node:fs";
+import * as path from "node:path";
+const signalsSrc = readFileSync(path.join(__dirname, "../lib/signals.ts"), "utf8");
+check("signals.ts imports the shared threshold", signalsSrc.includes("RELEVANCE_THRESHOLD"));
+check(
+  "signals.ts carries no hardcoded threshold literal",
+  !/relevance\s*>=\s*0\.\d/.test(signalsSrc)
+);
+
 console.log("\nLeft for the model, deliberately");
 /**
  * The case the others are measured against. A Federal Register rule reaches an industry through
@@ -80,6 +120,7 @@ console.log("\nNothing falls through by accident");
 const ALL: EventType[] = [
   "news", "filing", "earnings", "history", "press",
   "regulation", "citation", "corporate_action", "onchain", "annotation",
+  "governance", "exploit",
 ];
 const toModel = ALL.filter((k) => score(k) === null);
 check(

@@ -66,6 +66,12 @@ export interface TimelineEvent {
    * Absent means day precision.
    */
   precision?: DatePrecision;
+  /**
+   * Stored subject-aboutness score (0–1) from `event_subjects.relevance`, when one exists.
+   * Absent means unscored — which always displays; ranking treats it as a neutral prior,
+   * never as evidence against the event.
+   */
+  relevance?: number;
 }
 
 /** What a source fetch returned, so ingest can tell "nothing" from "rate limited". */

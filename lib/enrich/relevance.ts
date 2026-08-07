@@ -1,4 +1,5 @@
 import { EventType } from "../types";
+import { WEAK_TOKENS } from "../newsQuality";
 
 export const MODEL = "claude-haiku-4-5-20251001";
 
@@ -22,23 +23,81 @@ export interface Scored {
   reason: string;
 }
 
-/** Distinctive lowercase tokens that identify the subject in a headline. */
-export function aliasesFor(subject: SubjectContext): string[] {
-  const stop = new Set(["inc", "inc.", "corp", "corp.", "co", "co.", "the", "company", "plc", "ltd", "holdings", "group"]);
-  const words = subject.displayName
-    .toLowerCase()
-    .replace(/[.,]/g, "")
-    .split(/\s+/)
-    .filter((w) => w.length > 2 && !stop.has(w));
-  const aliases = new Set<string>(words);
+/**
+ * Distinctive lowercase tokens and phrases that identify the subject in a headline.
+ *
+ * Weakness is judged by the shared `WEAK_TOKENS` list from newsQuality — the private ten-word
+ * stop list this replaces let "Ford Motor Company" contribute "motor" as a full-strength alias,
+ * so "Motor racing season opens" displayed as strong Ford news at 0.9.
+ *
+ * Short tokens are inspected BEFORE lowercasing: "3M" and "GE" are the subject's actual name,
+ * and the old `length > 2` filter silently dropped them — which sent every 3M headline to the
+ * paid tier. A digit-bearing or all-caps short token survives; a lowercase short word does not.
+ *
+ * `extraAliases` carries stored `subject_aliases` rows ("Google" for Alphabet). They join as
+ * whole phrases, never tokenized — an alias is a name someone recorded, not a bag of words.
+ */
+export function aliasesFor(subject: SubjectContext, extraAliases: string[] = []): string[] {
+  const rawTokens = subject.displayName.replace(/[.,]/g, "").split(/\s+/).filter(Boolean);
+  const aliases = new Set<string>();
+  for (const tok of rawTokens) {
+    const keepShort = tok.length >= 2 && (/\d/.test(tok) || tok === tok.toUpperCase());
+    const lower = tok.toLowerCase();
+    if ((tok.length > 2 || keepShort) && !WEAK_TOKENS.has(lower)) aliases.add(lower);
+  }
   aliases.add(subject.displayName.toLowerCase());
   if (subject.ticker) aliases.add(subject.ticker.toLowerCase());
+  for (const phrase of extraAliases) {
+    const p = phrase.trim().toLowerCase();
+    if (p.length >= 3) aliases.add(p);
+  }
   return [...aliases];
 }
 
-function mentions(title: string, aliases: string[]): boolean {
-  const t = title.toLowerCase();
-  return aliases.some((a) => new RegExp(`\\b${a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(t));
+const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** What a headline says about the subject: named outright, obliquely, or not at all. */
+export type Mention = "named" | "oblique" | "none";
+
+/**
+ * Unicode-aware naming test over the ORIGINAL title.
+ *
+ * `\b` without the `u` flag made accented aliases structurally unmatchable — "nestlé" ends in a
+ * non-word character to ASCII `\b`, which then demands a word character right after it. The
+ * lookarounds below define a boundary as "not a letter or digit" in any script.
+ *
+ * Short aliases (single-letter tickers like F, or GM) match only as a standalone UPPERCASE
+ * token in the original title, and never one followed by "." or "-" — "F beats estimates"
+ * names Ford; "John F. Kennedy Airport reopens" does not.
+ *
+ * A single-token alias immediately preceded by a different capitalized word reads as a person's
+ * name — "Harrison Ford", "Gerald Ford" — which is a judgement call, not a naming, so it is
+ * reported `oblique` and left for the model rather than scored as certain.
+ */
+export function mentions(title: string, aliases: string[]): Mention {
+  const lower = title.toLowerCase();
+  let sawOblique = false;
+  for (const a of aliases) {
+    if (a.length < 3) {
+      const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(a.toUpperCase())}(?![\\p{L}\\p{N}.-])`, "u");
+      if (re.test(title)) return "named";
+      continue;
+    }
+    const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(a)}(?![\\p{L}\\p{N}])`, "gu");
+    const m = re.exec(lower);
+    if (!m) continue;
+    // Multi-word aliases ("ford motor company") can't be a surname; only single tokens can.
+    if (!a.includes(" ")) {
+      const before = title.slice(0, m.index);
+      const preceding = /(\p{Lu}[\p{L}'’.-]*)\s+$/u.exec(before)?.[1]?.toLowerCase() ?? null;
+      if (preceding && !aliases.includes(preceding) && !WEAK_TOKENS.has(preceding)) {
+        sawOblique = true;
+        continue;
+      }
+    }
+    return "named";
+  }
+  return sawOblique ? "oblique" : "none";
 }
 
 /**
@@ -110,11 +169,16 @@ export function deterministicScore(
     case "press":
       return { score: 0.7, reason: "phrase match in a digitised newspaper page" };
 
-    case "news":
-      if (mentions(row.title, aliases)) return { score: 0.9, reason: "headline names the subject" };
+    case "news": {
+      const named = mentions(row.title, aliases);
+      if (named === "named") return { score: 0.9, reason: "headline names the subject" };
+      // "Harrison Ford wins award" matches the token but reads as a person — a judgement
+      // call in both modes, so it goes to the model rather than being scored or demoted.
+      if (named === "oblique") return null;
       if (strictHeadline) return { score: 0.2, reason: "headline never names the subject" };
       // headline is oblique — a real judgement call, so it goes to the model
       return null;
+    }
 
     /**
      * Left for the model deliberately, and this is the case the others are measured against.

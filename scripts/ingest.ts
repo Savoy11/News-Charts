@@ -16,7 +16,9 @@ import {
   emptyStats,
   loadLastFetched,
   type UpsertStats,
+  type ScoringContext,
 } from "../lib/ingest/store";
+import { aliasesFor } from "../lib/enrich/relevance";
 import { selectStaleSources, ttlFor } from "../lib/ingest/refresh";
 import { collapseNearDuplicates } from "../lib/newsQuality";
 import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
@@ -154,7 +156,8 @@ async function runSource(
   subjectId: number,
   query: string,
   fetcher: () => Promise<FetchResult>,
-  transform: (events: TimelineEvent[]) => TimelineEvent[] = (e) => e
+  transform: (events: TimelineEvent[]) => TimelineEvent[] = (e) => e,
+  scoring?: ScoringContext
 ): Promise<TimelineEvent[]> {
   await assertCommercialOk(client, sourceKey);
 
@@ -180,7 +183,7 @@ async function runSource(
 
   await client.query("BEGIN");
   try {
-    for (const ev of events) await upsertEvent(client, ev, subjectId, stats);
+    for (const ev of events) await upsertEvent(client, ev, subjectId, stats, scoring);
     await logFetch(
       client,
       sourceKey,
@@ -207,7 +210,12 @@ async function runSource(
  * A `runSource` bound to one subject and one due-set: sources still inside their window are
  * reported and skipped rather than asked.
  */
-function runnerFor(client: PoolClient, subjectId: number, due: ReadonlySet<SourceKey>) {
+function runnerFor(
+  client: PoolClient,
+  subjectId: number,
+  due: ReadonlySet<SourceKey>,
+  scoring?: ScoringContext
+) {
   return async (
     sourceKey: SourceKey,
     query: string,
@@ -218,7 +226,7 @@ function runnerFor(client: PoolClient, subjectId: number, due: ReadonlySet<Sourc
       line(sourceKey, `fresh     inside its ${ttlFor(sourceKey)} min window`);
       return [];
     }
-    return runSource(client, sourceKey, subjectId, query, fetcher, transform);
+    return runSource(client, sourceKey, subjectId, query, fetcher, transform, scoring);
   };
 }
 
@@ -260,9 +268,11 @@ export async function ingestTopic(client: PoolClient, topic: string) {
 
     // Wikipedia is already fetched; store it without a second round trip.
     const stats = emptyStats();
+    const wikiCtx = { kind: "topic" as const, displayName: wiki.title };
+    const wikiScoring: ScoringContext = { subject: wikiCtx, aliases: aliasesFor(wikiCtx, [topic]) };
     await client.query("BEGIN");
     try {
-      for (const ev of wiki.events) await upsertEvent(client, ev, subjectId, stats);
+      for (const ev of wiki.events) await upsertEvent(client, ev, subjectId, stats, wikiScoring);
       await logFetch(client, "wikipedia", subjectId, topic, wiki.events.length ? "ok" : "empty", wiki.events.length, 200);
       await client.query("COMMIT");
     } catch (err) {
@@ -273,14 +283,19 @@ export async function ingestTopic(client: PoolClient, topic: string) {
   }
 
   const floor = firstEventOn ? Number(firstEventOn.slice(0, 4)) : 0;
-  const run = runnerFor(client, subjectId, due);
+  // Score at link time: the typed phrasing rides along as an alias, so "EV" news for a
+  // subject titled "Electric vehicle" still settles deterministically where it can.
+  const topicCtx = { kind: "topic" as const, displayName: title };
+  const scoring: ScoringContext = { subject: topicCtx, aliases: aliasesFor(topicCtx, [topic]) };
+  const run = runnerFor(client, subjectId, due, scoring);
 
   await run("loc_chronam", topic, () => fetchPressMentions(topic), (evts) =>
     dropImplausiblePress(evts, floor)
   );
   // collapseNearDuplicates before storing: one wire story carried by several outlets is one
-  // happening, and the richest copy is the one worth keeping.
-  await run("gdelt", topic, () => fetchNews(topic), (e) => collapseNearDuplicates(e.slice(0, 30)));
+  // happening, and the richest copy is the one worth keeping — collapsed BEFORE the cap, so
+  // syndication doesn't spend cap slots on copies of a story we already hold.
+  await run("gdelt", topic, () => fetchNews(topic), (e) => collapseNearDuplicates(e).slice(0, 75));
   // Keyless, and the only historical source not exposed to a key expiry or a licence change.
   // Same plausibility floor as the newspaper scans: an archive item predating the subject is a
   // keyword collision, not early coverage.
@@ -314,10 +329,14 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
   line("site", siteDomain ?? "not resolved");
 
   const due = await dueSources(client, subjectId, COMPANY_SOURCES);
-  const run = runnerFor(client, subjectId, due);
   // Headlines say "Ford", not "Ford Motor Company" — every keyword-searched feed gets the
   // common name, and only EDGAR and the price endpoint get the ticker.
   const name = commonName(company.name);
+  // Score at link time, with the common name as an extra whole-phrase alias — the same name
+  // the feeds were queried under is the name their headlines will use.
+  const companyCtx = { kind: "company" as const, displayName: company.name, ticker: company.ticker };
+  const scoring: ScoringContext = { subject: companyCtx, aliases: aliasesFor(companyCtx, [name]) };
+  const run = runnerFor(client, subjectId, due, scoring);
 
   if (industry) {
     const { industryId, slug } = await linkToIndustry(client, subjectId, industry);
@@ -335,8 +354,12 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
     return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
   });
 
-  await run("gdelt", company.name, () => fetchNews(company.name), (e) =>
-    collapseNearDuplicates(e.slice(0, 30))
+  // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
+  // headline that says "Ford" — the common name is the query, exactly as the comment above
+  // promised and the historical sources below already do.
+  await run("gdelt", name, () => fetchNews(name), (e) =>
+    // dedupe BEFORE capping: syndicated copies of one wire story must not burn cap slots
+    collapseNearDuplicates(e).slice(0, 75)
   );
 
   /**
@@ -421,7 +444,7 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
     const stats = emptyStats();
     await client.query("BEGIN");
     try {
-      for (const ev of actions) await upsertEvent(client, ev, subjectId, stats);
+      for (const ev of actions) await upsertEvent(client, ev, subjectId, stats, scoring);
       await client.query("COMMIT");
     } catch (err) {
       await client.query("ROLLBACK");
@@ -519,9 +542,14 @@ export async function ingestOnchain(client: PoolClient, which: string) {
 
     const events = await ingestOnchainFor(asset.slug);
     const stats = emptyStats();
+    const assetCtx = { kind: "topic" as const, displayName: asset.displayName };
+    const assetScoring: ScoringContext = {
+      subject: assetCtx,
+      aliases: aliasesFor(assetCtx, asset.aliases),
+    };
     await client.query("BEGIN");
     try {
-      for (const ev of events) await upsertEvent(client, ev, subjectId, stats);
+      for (const ev of events) await upsertEvent(client, ev, subjectId, stats, assetScoring);
       await client.query("COMMIT");
     } catch (err) {
       await client.query("ROLLBACK");

@@ -123,6 +123,27 @@ const QUALIFIERS = [
   /\s+across\s+/i,
 ];
 
+/**
+ * The head-prefixes worth trying when the whole subject resolves to nothing.
+ *
+ * "Tesla battery fires" names a subject and a concern, but matches no qualifier pattern —
+ * QUALIFIERS only fire on markers like "in 2020" or "during the strike". Rather than minting
+ * a junk subject from the raw string, the resolver retries the longest head-prefixes
+ * ("Tesla battery", then "Tesla") and carries the unmatched tail as the page's focus.
+ *
+ * Longest-first on purpose: "General Motors strike" must try "General Motors" before
+ * "General". Single-word originals return nothing — there is no shorter head to try.
+ * Bounded so a pasted sentence cannot turn into a dozen resolver rounds.
+ */
+export function headPrefixes(subject: string, maxPrefixes = 3): { prefix: string; tail: string }[] {
+  const words = subject.replace(/\s+/g, " ").trim().split(" ");
+  const out: { prefix: string; tail: string }[] = [];
+  for (let k = words.length - 1; k >= 1 && out.length < maxPrefixes; k--) {
+    out.push({ prefix: words.slice(0, k).join(" "), tail: words.slice(k).join(" ") });
+  }
+  return out;
+}
+
 export function parseSearchPrompt(raw: string): ParsedPrompt {
   let s = raw.replace(/\s+/g, " ").trim().replace(/[?!.]+$/, "");
 

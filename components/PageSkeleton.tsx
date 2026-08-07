@@ -68,7 +68,12 @@ export default function PageSkeleton({
         </div>
       )}
 
-      <p className="mt-4 text-center text-xs text-slate-500">{eyebrow} — reading the stored timeline.</p>
+      {/* True of both paths: a stored subject is a fast read; a first search runs the bounded
+          keyless gather (lib/ingest/firstPass.ts) before rendering, which is the "few seconds". */}
+      <p className="mt-4 text-center text-xs text-slate-500">
+        {eyebrow} — a first search gathers the essentials while you wait, so it can take a few
+        seconds. After that it loads from the corpus.
+      </p>
     </div>
   );
 }

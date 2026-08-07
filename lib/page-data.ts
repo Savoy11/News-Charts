@@ -2,6 +2,7 @@ import { cache } from "react";
 import { loadEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, type IndustryRef } from "./store/read";
 import { PricePoint, TimelineEvent } from "./types";
 import { requestSubject } from "./ingest/queue";
+import { firstPassCompany, firstPassTopic } from "./ingest/firstPass";
 import { dropCompanyPrehistory } from "./history";
 
 
@@ -86,7 +87,32 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
         };
       }
     }
-    // Not indexed. Record the demand so the scheduled run picks it up, and tell the visitor.
+    /**
+     * Not indexed — run the bounded first pass while this visitor waits, then read again.
+     *
+     * This is the deliberate, quantitative exception to the database-only rule above (see
+     * lib/ingest/firstPass.ts for the full argument): one keyless source, claimed through an
+     * attempt ledger before any fetch, under a deadline, on its own two-connection pool. The
+     * scheduler still owns depth — the request queue below is what deepens this page later.
+     */
+    const outcome = await firstPassTopic(topic);
+    if (outcome === "ingested" || outcome === "already_attempted") {
+      const subject = await loadSubject(topic);
+      if (subject) {
+        const [events, prices] = await Promise.all([loadEvents(subject.id), loadPrices(subject.id)]);
+        if (events.length) {
+          await requestSubject(topic, "topic"); // queue the deepening pass
+          return {
+            title: subject.displayName,
+            summary: subject.summary ?? "",
+            events,
+            prices,
+            refreshedAt: subject.refreshedAt,
+          };
+        }
+      }
+    }
+    // Record the demand so the scheduled run picks it up, and tell the visitor.
     await requestSubject(topic, "topic");
     return null;
   } catch (err) {
@@ -120,7 +146,29 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
         };
       }
     }
-    // Not indexed. Record the demand for the scheduled run rather than fetching under a visitor.
+    // Not indexed — the bounded first pass (EDGAR + the price chart, the two sources whose
+    // conjunction flips this page's render gate), then one re-read. Same contract as the
+    // topic path above; lib/ingest/firstPass.ts carries the argument.
+    const outcome = await firstPassCompany(ticker);
+    if (outcome === "ingested" || outcome === "already_attempted") {
+      const subject = await loadSubject(ticker);
+      if (subject?.ticker) {
+        const [events, prices] = await Promise.all([loadEvents(subject.id), loadPrices(subject.id)]);
+        if (events.length && prices.length) {
+          await requestSubject(ticker, "company", ticker); // queue the deepening pass
+          return {
+            name: subject.displayName,
+            ticker: subject.ticker,
+            siteDomain: subject.siteDomain,
+            prices,
+            events: dropCompanyPrehistory(events),
+            industry: null,
+            refreshedAt: subject.refreshedAt,
+          };
+        }
+      }
+    }
+    // Record the demand for the scheduled run rather than fetching more under a visitor.
     await requestSubject(ticker, "company", ticker);
     return null;
   } catch (err) {

@@ -33,6 +33,9 @@ const MEANING: Record<ResolutionRung, string> = {
   known_company: "a company already in the corpus",
   known_subject: "a subject slug or recorded alias",
   edgar: "a real company nobody has ingested — over the network, on the visitor's request",
+  salvaged_prefix:
+    "the whole query matched nothing, but a head-prefix did — the tail rode along as focus." +
+    " Accuracy here is worth watching: it is a real answer for the prefix, not for the query",
   assumed_topic: "nothing matched; the typed string was assumed to name a topic",
   network_timeout:
     "the ticker index did not answer in time — a guess we may not have needed. Read this as a" +

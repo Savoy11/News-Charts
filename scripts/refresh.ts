@@ -25,6 +25,7 @@ import { getPool, closePool } from "../lib/db";
 import { COMPANY_SOURCES, TOPIC_SOURCES, ingestCompany, ingestOnchain, ingestTopic } from "./ingest";
 import { ensureSources } from "../lib/ingest/store";
 import { markFailed, markFulfilled, pendingRequests } from "../lib/ingest/queue";
+import { subjectLockKey } from "../lib/ingest/firstPass";
 import { project } from "../lib/ingest/quota";
 import { CRYPTO_SUBJECTS } from "../lib/onchain";
 import { purgeOldResolutions } from "../lib/searchLog";
@@ -44,9 +45,29 @@ async function refreshSubject(
   client: import("pg").PoolClient,
   s: { slug: string; kind: string; ticker: string | null }
 ): Promise<void> {
-  if (s.kind === "company" && s.ticker) return ingestCompany(client, s.ticker);
-  if (ONCHAIN_SLUGS.has(s.slug)) return ingestOnchain(client, s.slug);
-  return ingestTopic(client, s.slug);
+  /**
+   * The same advisory lock the first-visit pass takes (lib/ingest/firstPass.ts), so the two
+   * writers exclude each other — a lock excludes nothing unless both sides take it, and this
+   * runs in a separate OS process with its own pool. Skipping is correct, not a failure: the
+   * only holder is a first pass mid-gather for this very subject, which will queue the
+   * deepening request this run would have served.
+   */
+  const [k1, k2] = subjectLockKey((s.kind === "company" && s.ticker ? s.ticker : s.slug).toLowerCase());
+  const { rows } = await client.query<{ ok: boolean }>(
+    "SELECT pg_try_advisory_lock($1, $2) AS ok",
+    [k1, k2]
+  );
+  if (!rows[0]?.ok) {
+    console.log(`  … ${s.ticker ?? s.slug} locked by a first-visit gather; skipping this cycle`);
+    return;
+  }
+  try {
+    if (s.kind === "company" && s.ticker) return await ingestCompany(client, s.ticker);
+    if (ONCHAIN_SLUGS.has(s.slug)) return await ingestOnchain(client, s.slug);
+    return await ingestTopic(client, s.slug);
+  } finally {
+    await client.query("SELECT pg_advisory_unlock($1, $2)", [k1, k2]).catch(() => {});
+  }
 }
 
 const arg = (name: string): string | undefined => {

@@ -3,7 +3,7 @@
 The governing checklist for the **News Charts** project: a single place to track initiatives,
 priorities, and progress. Add to it, check things off, re-prioritise. This is a living doc.
 
-**Last updated:** 2026-07-30
+**Last updated:** 2026-08-07
 
 ## Scope & independence
 
@@ -11,6 +11,12 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
   its own master checklist**; the two are developed **independently** — no shared code, no
   runtime coupling. Any future cross-project connection would be a separate, explicit decision,
   not something assumed or tracked here.
+  - **Enforced by test since 2026-08-07** (`npm run check:boundary`, part of `npm run check`),
+    mirroring Finance-Now-Free's `repoBoundary.test.ts` so the protection is symmetric: no
+    submodules, remotes point only at this repo, no cross-repo CI checkout, no import escapes
+    the repo or names a sibling project, no `file:`/git dependency on one, and `CLAUDE.md`
+    (added the same day) must keep stating the scope rule with no stale path into another
+    checkout.
 - **Related News Charts docs:** `README.md` (feature notes), `docs/EVENTS-SCHEMA.md` (the events
   schema spec). This checklist tracks *work*; those describe *what exists*.
 

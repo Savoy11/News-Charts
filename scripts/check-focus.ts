@@ -11,7 +11,7 @@ config({ path: ".env.local" });
  * which looks identical to a subject we know very little about. The zero-match rule is the one
  * that matters most: an empty page reads as "no data on IBM", not "no overlap".
  */
-import { applyFocus, focusTerms, matchesFocus } from "../lib/focus";
+import { applyFocus, focusScore, focusTerms, matchesFocus } from "../lib/focus";
 import type { EventType, TimelineEvent } from "../lib/types";
 
 let pass = 0;
@@ -76,6 +76,60 @@ const none = applyFocus(timeline, null);
 check("nothing is filtered", none.events.length === 4 && !none.active);
 const noise = applyFocus(timeline, "the effect of the stock price");
 check("a focus of pure scaffolding filters nothing", noise.events.length === 4 && !noise.active, `${noise.events.length}`);
+
+console.log("\nThe grade agrees with the gate — membership can never differ");
+// Every fixture above, both ways: matchesFocus is exactly focusScore > 0 (empty-terms aside).
+const gateFixtures = [
+  ev("Trump signs executive order on trade"),
+  ev("IBM opens a research lab in Zurich"),
+  ev("Quarterly results", "earnings", "Cited the Trump tariffs as a headwind"),
+  ev("10-K — Annual report", "filing"),
+];
+check(
+  "gate equivalence over every fixture",
+  gateFixtures.every((e) => matchesFocus(e, terms) === (focusScore(e, terms) > 0))
+);
+
+console.log("\nGrading — the phrase the reader typed beats two stray words");
+const fireTerms = focusTerms("battery fires");
+const probe = ev("Tesla battery fire probe widens");
+const layoffs = ev("Tesla fires 700 workers");
+check("both pass the gate", matchesFocus(probe, fireTerms) && matchesFocus(layoffs, fireTerms));
+check(
+  "the adjacent full phrase outranks the single stray term",
+  focusScore(probe, fireTerms) > focusScore(layoffs, fireTerms),
+  `${focusScore(probe, fireTerms).toFixed(2)} vs ${focusScore(layoffs, fireTerms).toFixed(2)}`
+);
+const titleHit = ev("Tariff ruling lands");
+const bodyHit = ev("Markets shrug", "news", "traders discounted the tariff ruling");
+const tariffTerms = focusTerms("tariff ruling");
+check(
+  "a title match outranks a description match",
+  focusScore(titleHit, tariffTerms) > focusScore(bodyHit, tariffTerms),
+  `${focusScore(titleHit, tariffTerms).toFixed(2)} vs ${focusScore(bodyHit, tariffTerms).toFixed(2)}`
+);
+check("scores stay within [0, 1]", [probe, layoffs, titleHit, bodyHit].every((e) => {
+  const s = focusScore(e, fireTerms);
+  return s >= 0 && s <= 1;
+}));
+
+console.log("\nRanking — best-first, with the stored score as the tiebreak");
+const rel = (title: string, relevance?: number): TimelineEvent => ({ ...ev(title), relevance });
+const tie = [rel("battery fire report A", 0.41), rel("battery fire report B"), rel("battery fire report C", 0.9)];
+const rankedOut = applyFocus(tie, "battery fires");
+const names = rankedOut.ranked.map((e) => e.title.slice(-1));
+check("equal grades break on stored relevance, unscored as a neutral prior", names.join("") === "CBA", names.join(""));
+check(
+  "ranked is a permutation of the matches",
+  rankedOut.ranked.length === rankedOut.matched &&
+    new Set(rankedOut.ranked.map((e) => e.id)).size === rankedOut.matched
+);
+check("an inactive focus ranks nothing", applyFocus(tie, null).ranked.length === 0);
+// The spine stays chronological: applyFocus's events field must be the original order.
+check(
+  "the filtered view keeps timeline order — ranking never reorders it",
+  applyFocus(tie, "battery fires").events.map((e) => e.id).join() === tie.map((e) => e.id).join()
+);
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);
 if (fail) process.exit(1);

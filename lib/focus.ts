@@ -50,18 +50,50 @@ export function focusTerms(focus: string): string[] {
 }
 
 /**
- * Does this event concern the focus?
+ * How much this event concerns the focus, in [0, 1].
  *
- * Any term, not all of them: a headline says "Trump signs order", not "Donald Trump's
- * presidency". Requiring every term would match almost nothing and quietly empty the page.
+ * The gate (`matchesFocus`) stays any-term — a headline says "Trump signs order", not "Donald
+ * Trump's presidency", and requiring every term would quietly empty the page. But the *grade*
+ * distinguishes what the gate cannot: covering 2 of 2 terms beats 1 of 2, a term in the title
+ * is worth double one in the description or source line, and consecutive focus terms appearing
+ * as an adjacent pair ("battery fire") earn a bonus — the phrase the reader typed, not two
+ * words that both happen to occur.
+ */
+export function focusScore(ev: TimelineEvent, terms: string[]): number {
+  if (terms.length === 0) return 0;
+  const titleToks = normalise(ev.title).split(" ").map(stem);
+  const restToks = normalise(`${ev.description ?? ""} ${ev.source ?? ""}`).split(" ").map(stem);
+  const inTitle = new Set(titleToks);
+  const inRest = new Set(restToks);
+
+  let weight = 0;
+  for (const t of terms) {
+    if (inTitle.has(t)) weight += 2;
+    else if (inRest.has(t)) weight += 1;
+  }
+  if (weight === 0) return 0;
+  let score = weight / (2 * terms.length); // 1.0 = every term, all in the title
+
+  // Adjacent stemmed bigram of consecutive focus terms, in either field.
+  const adjacent = (toks: string[]): boolean => {
+    for (let i = 0; i < terms.length - 1; i++) {
+      for (let j = 0; j < toks.length - 1; j++) {
+        if (toks[j] === terms[i] && toks[j + 1] === terms[i + 1]) return true;
+      }
+    }
+    return false;
+  };
+  if (terms.length > 1 && (adjacent(titleToks) || adjacent(restToks))) score = Math.min(1, score + 0.15);
+  return score;
+}
+
+/**
+ * Does this event concern the focus? Exactly `focusScore > 0` (with the empty-terms
+ * convention preserved), so the gate and the grade can never disagree about membership.
  */
 export function matchesFocus(ev: TimelineEvent, terms: string[]): boolean {
   if (terms.length === 0) return true;
-  const hay = normalise(`${ev.title} ${ev.description ?? ""} ${ev.source ?? ""}`)
-    .split(" ")
-    .map(stem);
-  const bag = new Set(hay);
-  return terms.some((t) => bag.has(t));
+  return focusScore(ev, terms) > 0;
 }
 
 export interface FocusResult {
@@ -72,6 +104,13 @@ export interface FocusResult {
   /** true when the filter is actually narrowing the view */
   active: boolean;
   terms: string[];
+  /**
+   * The matches again, best-first: focus grade, then stored subject-relevance (unscored rows
+   * take a neutral 0.7 prior — never treated as evidence against the event), then recency.
+   * A ranking for the "Best matches" strip; the chronological timeline is untouched by it.
+   * Empty when the focus isn't narrowing.
+   */
+  ranked: TimelineEvent[];
 }
 
 /**
@@ -85,14 +124,25 @@ export interface FocusResult {
 export function applyFocus(events: TimelineEvent[], focus: string | null): FocusResult {
   const terms = focus ? focusTerms(focus) : [];
   if (!focus || terms.length === 0) {
-    return { events, matched: events.length, total: events.length, active: false, terms };
+    return { events, matched: events.length, total: events.length, active: false, terms, ranked: [] };
   }
   const hits = events.filter((e) => matchesFocus(e, terms));
+  const ranked =
+    hits.length > 0
+      ? [...hits].sort((a, b) => {
+          const byGrade = focusScore(b, terms) - focusScore(a, terms);
+          if (byGrade !== 0) return byGrade;
+          const byRelevance = (b.relevance ?? 0.7) - (a.relevance ?? 0.7);
+          if (byRelevance !== 0) return byRelevance;
+          return b.date.localeCompare(a.date);
+        })
+      : [];
   return {
     events: hits.length > 0 ? hits : events,
     matched: hits.length,
     total: events.length,
     active: hits.length > 0,
     terms,
+    ranked,
   };
 }

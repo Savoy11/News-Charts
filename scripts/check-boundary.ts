@@ -20,6 +20,17 @@ import * as path from "node:path";
 const REPO = path.resolve(__dirname, "..");
 const OTHER_PROJECTS = /crypto-stuff|finance-now/i;
 
+/**
+ * Every name this one repository has gone by, lowercased.
+ *
+ * A rename is a legitimate act; a remote pointing at another *product* is not. Keeping these
+ * separate concerns separate is the whole point — the first version of this check asserted the
+ * remote contained "news-charts", so renaming the GitHub repo to `chronolens` would have failed
+ * the boundary guard on every machine, which reads as "you have breached the scope rule" when
+ * the truth is "the repo has a new name". Add to this list when the repo is renamed again.
+ */
+const THIS_REPO_NAMES = ["news-charts", "chronolens"];
+
 let pass = 0;
 let fail = 0;
 const check = (name: string, ok: boolean, detail = "") => {
@@ -50,10 +61,22 @@ function checkRemotes(): void {
     // `url.<base>.insteadOf` rewrite rules are config, not remotes.
     .filter((u) => u.includes("github.com/") && !u.endsWith("github.com/"));
   for (const u of urls) {
+    const lower = u.toLowerCase();
+    // The boundary is "never another product", and that is the hard failure. A remote naming
+    // a sibling project is what this whole file exists to catch.
+    const sibling = OTHER_PROJECTS.exec(lower)?.[0];
+    if (sibling) {
+      check("remote points at this repository", false, `"${u}" names ${sibling} — a session here must not push to another product`);
+      continue;
+    }
+    // Then the softer half: is it *this* repo? Checked against a list of names rather than one,
+    // because a rename is a legitimate act and must not read as a boundary violation. The repo
+    // was News-Charts and is now chronolens; both resolve to the same GitHub repository.
+    const mine = THIS_REPO_NAMES.some((n) => lower.includes(n));
     check(
       "remote points at this repository",
-      u.toLowerCase().includes("news-charts"),
-      u.toLowerCase().includes("news-charts") ? "" : `"${u}" — a session here must not push elsewhere`
+      mine,
+      mine ? "" : `"${u}" is neither a known name for this repo (${THIS_REPO_NAMES.join(", ")}) nor a sibling project — if the repo was renamed, add the new name to THIS_REPO_NAMES`
     );
   }
   if (urls.length === 0) check("remote points at this repository", false, "no github remote found");

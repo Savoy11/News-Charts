@@ -7,8 +7,10 @@ touches anything; the deep documentation lives in `README.md` and `docs/`.
 
 ## ⛔ Scope rule — read this first
 
-**This repository is `Savoy11/News-Charts`: a standalone product.** It shares an owner — and
-nothing else — with the other products.
+**This repository is `Savoy11/chronolens` (formerly `Savoy11/News-Charts`): a standalone
+product.** It shares an owner — and nothing else — with the other products. Both names resolve
+to this one repo; `scripts/check-boundary.ts` accepts either, and a further rename means adding
+the new name to its `THIS_REPO_NAMES`.
 
 1. **Never touch another product's repository from a session here.** Crypto-Stuff / CAEP /
    "Finance Now" (and its free-edition copy, `Savoy11/Finance-Now-Free`) are separate projects

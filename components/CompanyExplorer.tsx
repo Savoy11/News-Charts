@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { applyFocus } from "@/lib/focus";
 import FocusBar from "./FocusBar";
+import BestMatches from "./BestMatches";
 import { useVisitorFeeds } from "@/lib/useVisitorFeeds";
 import { usePathname } from "next/navigation";
 import PriceTimeline from "./PriceTimeline";
@@ -196,6 +197,10 @@ export default function CompanyExplorer({ prices, events, siteDomain, subject }:
           onClear={() => setShowAll(true)}
         />
       )}
+
+      {/* Best-first over the focus matches, additive: the chronological views below still
+          render every match. Type chips apply so the strip never offers a hidden kind. */}
+      <BestMatches result={focusResult} activeTypes={active} onJump={handleSelectDate} />
 
       {preIpo.length > 0 && (
         <section className="mb-6">

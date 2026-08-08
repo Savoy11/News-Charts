@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { applyFocus } from "@/lib/focus";
 import FocusBar from "./FocusBar";
+import BestMatches from "./BestMatches";
 import { useVisitorFeeds } from "@/lib/useVisitorFeeds";
 import { usePathname } from "next/navigation";
 import HorizontalTimeline from "./HorizontalTimeline";
@@ -278,6 +279,10 @@ export default function TopicExplorer({
           onClear={() => setShowAll(true)}
         />
       )}
+
+      {/* Best-first over the focus matches, additive: the chronological views below still
+          render every match. Type chips apply so the strip never offers a hidden kind. */}
+      <BestMatches result={focusResult} activeTypes={active} onJump={jumpToDate} />
 
       <AiPanel
         events={filtered}

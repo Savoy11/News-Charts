@@ -8,7 +8,7 @@
 import type { TimelineEvent } from "../types";
 import { chainOfRef, isFinal } from "./finality";
 
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
+const UA = { "User-Agent": "Chronolens Research marcusowens94@gmail.com" };
 
 /** Explorers rate-limit modestly and we ask for very little; one retry is plenty. */
 export async function getJson<T>(url: string): Promise<T | null> {

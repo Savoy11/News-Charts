@@ -9,7 +9,7 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3
   ""
 );
 
-export const SITE_NAME = "News Charts";
+export const SITE_NAME = "Chronolens";
 
 /** Absolute URL for a site-relative path, so Open Graph / canonical tags resolve correctly. */
 export function absolute(path: string): string {

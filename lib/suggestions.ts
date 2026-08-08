@@ -19,7 +19,7 @@ export interface Suggestion {
  * These 44 subjects are hardcoded, so nothing guarantees a single one of them is in the corpus.
  * They used to be the pool the chips were drawn from, with real subjects merely appended, which
  * meant the homepage advertised GME, quantum computing and nuclear power to a database that had
- * none of them: every example a first-time visitor clicked led to "Not on News Charts yet".
+ * none of them: every example a first-time visitor clicked led to "Not on Chronolens yet".
  *
  * A suggestion is a promise. `blend` below keeps these for the one case where the promise cannot
  * be made from the corpus — a fresh install, or a database we cannot reach.

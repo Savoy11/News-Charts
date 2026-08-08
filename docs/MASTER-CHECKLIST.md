@@ -1,13 +1,13 @@
-# News Charts — Master Checklist
+# Chronolens — Master Checklist
 
-The governing checklist for the **News Charts** project: a single place to track initiatives,
+The governing checklist for the **Chronolens** project: a single place to track initiatives,
 priorities, and progress. Add to it, check things off, re-prioritise. This is a living doc.
 
-**Last updated:** 2026-08-07
+**Last updated:** 2026-08-08
 
 ## Scope & independence
 
-- **This checklist governs News Charts only.** Crypto-Stuff / CAEP is a **separate project with
+- **This checklist governs Chronolens only.** Crypto-Stuff / CAEP is a **separate project with
   its own master checklist**; the two are developed **independently** — no shared code, no
   runtime coupling. Any future cross-project connection would be a separate, explicit decision,
   not something assumed or tracked here.
@@ -17,7 +17,7 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
     the repo or names a sibling project, no `file:`/git dependency on one, and `CLAUDE.md`
     (added the same day) must keep stating the scope rule with no stale path into another
     checkout.
-- **Related News Charts docs:** `README.md` (feature notes), `docs/EVENTS-SCHEMA.md` (the events
+- **Related Chronolens docs:** `README.md` (feature notes), `docs/EVENTS-SCHEMA.md` (the events
   schema spec). This checklist tracks *work*; those describe *what exists*.
 
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
@@ -75,7 +75,7 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
 
 ## Project state & prioritized backlog (opened 2026-07-25 · cleared 2026-07-28)
 
-**Where News Charts stands.** The data layer is real — 14 SQL migrations (`db/001`–`014`) plus a
+**Where Chronolens stands.** The data layer is real — 14 SQL migrations (`db/001`–`014`) plus a
 full script suite (`ingest`, `score`, `signals`, `explain`, `plan`). The feature backlog that
 opened this section is **done**: PRs #1–#7 all merged 2026-07-25, #9 (citation mining, NL
 prompts, pre-IPO story, chart interaction, eight news repositories) merged 2026-07-27, and #11
@@ -694,7 +694,7 @@ machine closes that gap.
       keyless hacks dataset instead, so nothing here is my recollection.
       *Attributed, not confirmed:* the item asks for on-chain confirmation before ingest. This
       does not do that, and does not imply it — every row names DefiLlama, links to the record,
-      and its own copy says *"not confirmed on-chain by News Charts."* A new `exploit` kind
+      and its own copy says *"not confirmed on-chain by Chronolens."* A new `exploit` kind
       (`db/012`) keeps the distinction visible: an `onchain` event is one we read from a block and
       a reader can re-verify; an exploit is someone else's finding that we are repeating. Adding
       true on-chain confirmation stays open below.
@@ -794,7 +794,7 @@ On-chain data has a hard floor at genesis, and it's young. Name it; don't fake d
 | Most DeFi / governance | **~2020+** | Protocol-dependent |
 
 Within these bounds data is complete and gap-free (immutable chain); the only constraint is
-backfill throughput, handled by back-off + idempotency. Contrast News Charts' other sources
+backfill throughput, handled by back-off + idempotency. Contrast Chronolens' other sources
 (Chronicling America → 1800s, Wikipedia → further): **crypto subjects have short timelines, on
 purpose.**
 
@@ -899,7 +899,7 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
       which nothing offline can test. **A CORS rejection looks exactly like a wrong key — no
       articles, no error** — so this needs one run on a real machine with a real key before it is
       claimed to work. `npm run check:feed-keys` (29 cases) pins the parsing and the failure
-      modes; `check:ui` asserts the key reaches localStorage, never reaches a News Charts origin,
+      modes; `check:ui` asserts the key reaches localStorage, never reaches a Chronolens origin,
       and is genuinely forgotten.
       **Not done:** the discovery engine, which has no adapter yet — it belongs with whichever
       engine the evaluation item picks.
@@ -1211,16 +1211,16 @@ Each idea checked against the codebase before listing — several were cheaper t
 ## Initiative: Affiliate links on relevant surfaces · `P2`
 
 Companion to CAEP's affiliate item (`docs/ROADMAP.md` in Crypto-Stuff — staking pages first,
-across both its free web and desktop distributions). News Charts' own affiliate opportunities
+across both its free web and desktop distributions). Chronolens' own affiliate opportunities
 are thinner but real, and the same integrity rules apply. **The two projects stay independent;
 this is a shared revenue *pattern*, not shared code.**
 
-- [ ] `P0` **Recognise what this triggers: affiliate revenue makes News Charts commercial.** That
+- [ ] `P0` **Recognise what this triggers: affiliate revenue makes Chronolens commercial.** That
       activates every item in the ⛔ pre-release feed gate above — NYT, Guardian, Newsdata,
       GNews, Currents, Marketaux, EODHD and Finnhub are all on non-commercial free tiers today.
       Adding a single paid link is the moment those licences must be resolved. **Do the feed
       gate first, or not the links.**
-- [ ] `P1` **Neutrality rule.** News Charts' product *is* an unbiased historical record. An
+- [ ] `P1` **Neutrality rule.** Chronolens' product *is* an unbiased historical record. An
       affiliate relationship must never influence which events, articles or sources surface,
       nor their ordering. Structurally: the ingest/ranking layers must not be able to read
       affiliate state, exactly as CAEP keeps it out of the risk engine.
@@ -1305,7 +1305,7 @@ this is a shared revenue *pattern*, not shared code.**
 
 ## Owner backlog (2026-07-26 brain dump)
 
-News Charts-side items only. CAEP items went to that project's `docs/ROADMAP.md`; company-level
+Chronolens-side items only. CAEP items went to that project's `docs/ROADMAP.md`; company-level
 items (entity filing, federal regulation research, disclosure documents, "what does sellable
 look like") went to a **separate business checklist** worked independently of both products —
 `docs/BUSINESS-CHECKLIST.md` in the Crypto-Stuff repo.
@@ -1366,7 +1366,7 @@ look like") went to a **separate business checklist** worked independently of bo
 - [ ] `P1` **Beta launch.** ⚠ Blocked by the ⛔ pre-release feed gate above — a public beta is a
       release, so licences and feed health must be settled first, not after.
 - [ ] `P2` **Security deep-dive + what an account looks like (Google login?).** ⚠ Note the
-      architectural shift: News Charts is deliberately accounts-free today — follows, prefs and
+      architectural shift: Chronolens is deliberately accounts-free today — follows, prefs and
       view state are localStorage, and "your key never leaves your machine" is currently
       literally true. Accounts add a user table, session security, and a privacy-policy surface.
       They are also the prerequisite for the `P3` saved-focus alerts already parked above.
@@ -1377,25 +1377,40 @@ look like") went to a **separate business checklist** worked independently of bo
 - [ ] `P2` **Which countries can access the site** (implementation side: geo-detection,
       blocking, or per-region content). The *decision* — which jurisdictions are worth the
       compliance cost — lives in the business checklist.
-- [x] **Rename the software to News Charts.** Done 2026-07-28 (PR #11, merged) — settled the
-      *name* half of the site-name/domain question below, pre-launch, i.e. at its cheapest.
-      Display name, header/OG wordmarks, SEO metadata and docs say **News Charts**; the
-      `news-charts` slug covers the npm package, the localStorage/event namespace, backup
-      filenames and log tags; docs and `.env.example` use a `news_charts` Postgres
-      role/database. An inline pre-hydration script in `app/layout.tsx` migrates visitors' old
-      `chronolens:*` localStorage keys, so follows, prefs and AI settings survive. The GitHub
-      repo is renamed to `News-Charts` (old URLs redirect). Loose ends:
-      - [ ] `P2` Rename the live Postgres role/database from `chronolens` to `news_charts` —
-            or keep the old names in `.env.local`; only the docs assume `news_charts`.
-      - [ ] `P2` Old `chronolens-*.dump` backups no longer match the retention regex in
-            `scripts/backup.ts`, so they are never auto-pruned — delete them by hand once
-            enough `news-charts-*` dumps have accumulated.
-- [ ] `P2` **Domain for the site.** The name is now settled (News Charts, above), which points
-      at **Newscharts.ai** from the original candidate list (Timelines.ai · Timecharts.ai ·
-      Thetimeline.ai · Timeline.ai were the alternatives). ⚠ Still to do: check domain
-      availability and trademark conflicts, then set `SITE_URL` — canonical URLs, the sitemap,
-      OG images and JSON-LD all carry it, and redirects would be needed to keep any indexed
-      pages. Cheapest before launch, expensive after.
+- [x] ~~**Rename the software to News Charts.**~~ Done 2026-07-28 (PR #11, merged) — **and
+      reversed 2026-08-08; the product is Chronolens again, see the entry below.** Left here
+      rather than rewritten: a done log that edits its own history to match the present is
+      worth less than one that shows the decision was taken twice.
+- [x] **Rename the software back to Chronolens.** Done 2026-08-08. Display name, header
+      wordmark, OG images, SEO metadata and docs say **Chronolens**; the `chronolens` slug
+      covers the npm package, the localStorage/event namespace, backup filenames and log tags.
+      The GitHub repo is `Savoy11/chronolens` (old `News-Charts` URLs redirect), and
+      `scripts/check-boundary.ts` accepts both names so a rename never reads as a scope breach.
+      - The `app/layout.tsx` pre-hydration shim now migrates `news-charts:*` keys **back** to
+        `chronolens:*`. One hop reaches everybody: visitors from the original Chronolens were
+        moved to `news-charts:` by the shim this replaces. Getting the prefix lengths wrong here
+        silently empties follows, prefs, notes, AI settings and feed keys — the naive
+        search-and-replace produced exactly that (a loop that copied each key to itself and then
+        deleted it), which is why the lengths are now written out in the comment.
+      - **Closes a loose end rather than repeating it:** the live Postgres role/database was
+        never renamed away from `chronolens`, so the docs and `.env.example` now match the
+        database that actually exists. Nothing to migrate.
+      - **Closes the other one too:** `scripts/backup.ts` retention now matches both
+        `chronolens-*` and `news-charts-*` dumps, sorted by timestamp rather than filename
+        (alphabetically every `chronolens-` dump sorts before every `news-charts-` one
+        regardless of date, which would have pruned the wrong end). No dump from either era is
+        orphaned, and the hand-deletion this entry used to ask for is unnecessary.
+      - ⚠ The domain question below reopens: it pointed at Newscharts.ai on the strength of the
+        old name.
+- [ ] `P2` **Domain for the site.** The name is settled again (**Chronolens**, above), which
+      points at **Chronolens.ai / chronolens.com** rather than the **Newscharts.ai** this entry
+      named while the old name stood — recorded so the reasoning is visible rather than the
+      candidate silently swapped. The original alternatives (Timelines.ai · Timecharts.ai ·
+      Thetimeline.ai · Timeline.ai) are still open if the preferred one is taken. ⚠ Still to do:
+      check domain availability and trademark conflicts — **including that "Chronolens" itself is
+      clear**, which was never checked for the first Chronolens era — then set `SITE_URL`:
+      canonical URLs, the sitemap, OG images and JSON-LD all carry it, and redirects would be
+      needed to keep any indexed pages. Cheapest before launch, expensive after.
 - [x] ~~`P1` **Label every source on screen, and the compliance around it.**~~ — done 2026-07-28.
       **The house form is "who published it · how we found it"** (`lib/sourceLabel.ts`), the same
       shape the on-chain attribution work settled on: `Reuters · via GNews` says two true things.
@@ -1422,5 +1437,5 @@ look like") went to a **separate business checklist** worked independently of bo
 
 ## Other initiatives
 
-_Add new News Charts initiatives here as they come up — this doc is meant to govern the whole
+_Add new Chronolens initiatives here as they come up — this doc is meant to govern the whole
 project, not just the on-chain work._

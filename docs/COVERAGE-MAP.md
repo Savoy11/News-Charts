@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-07-28 · 18 sources
 
-The single question this answers: *given a subject, what is the earliest event News Charts could
+The single question this answers: *given a subject, what is the earliest event Chronolens could
 plausibly show, and which source would supply it?*
 
 It exists because "the timeline starts in 2017" is usually a statement about **our sources**, not

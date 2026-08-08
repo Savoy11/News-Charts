@@ -104,7 +104,7 @@ export default function TopicExplorer({
   const [active, setActive] = useState<Set<EventType>>(() => new Set<EventType>(ALL_TYPES));
   const [view, setView] = useState<"timeline" | "list">("timeline");
   const pathname = usePathname();
-  const storeKey = `news-charts:view:${pathname}`;
+  const storeKey = `chronolens:view:${pathname}`;
   const [copied, setCopied] = useState(false);
   // the date the chart last jumped to, so the list can open whatever contains it
   const [reveal, setReveal] = useState<{ date: string; n: number } | null>(null);
@@ -350,7 +350,7 @@ export default function TopicExplorer({
         <EventList
           events={ranked}
           order="asc"
-          persistKey={`news-charts:collapse:${pathname}`}
+          persistKey={`chronolens:collapse:${pathname}`}
           reveal={reveal}
         />
       )}

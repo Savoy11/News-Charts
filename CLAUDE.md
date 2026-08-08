@@ -1,4 +1,4 @@
-# News Charts — Claude Code Project Guide
+# Chronolens — Claude Code Project Guide
 
 This file is auto-loaded by Claude Code at session start. It orients a session before it
 touches anything; the deep documentation lives in `README.md` and `docs/`.
@@ -15,7 +15,7 @@ the new name to its `THIS_REPO_NAMES`.
 1. **Never touch another product's repository from a session here.** Crypto-Stuff / CAEP /
    "Finance Now" (and its free-edition copy, `Savoy11/Finance-Now-Free`) are separate projects
    with their own repos, their own checklists, and their own sessions. This repo has exactly one
-   git remote (`Savoy11/News-Charts`), no submodules, and no workflow that checks out another
+   git remote (`Savoy11/chronolens`), no submodules, and no workflow that checks out another
    repository. Keep it that way — do not add a remote, a submodule, or a `repository:` override
    to reach a sibling project.
 2. **No shared code, no runtime coupling.** The `Scope & independence` section of

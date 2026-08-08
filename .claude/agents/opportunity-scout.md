@@ -34,7 +34,7 @@ You cannot find a good opportunity without knowing what exists and what has been
 
 **Always read:**
 - `README.md` — what the product actually does
-- The checklist: `docs/TASK-QUEUE.md` (Finance Now) or `docs/MASTER-CHECKLIST.md` (News Charts)
+- The checklist: `docs/TASK-QUEUE.md` (Finance Now) or `docs/MASTER-CHECKLIST.md` (Chronolens)
 - `docs/ROADMAP.md` if present
 - `docs/audits/rejected-proposals.md` — **things already declined. Do not raise them again.**
 - The most recent proposal file in `docs/proposals/`
@@ -84,7 +84,7 @@ Discard anything that fails these:
 - **Does it violate a decided policy?** These are settled and not yours to relitigate:
   - No affiliate links, referral parameters or commission-bearing URLs in Finance Now
   - No paid placement in any ranked or scored output, either project
-  - Non-personalised advertising only on News Charts
+  - Non-personalised advertising only on Chronolens
   - Data honesty — sources named, estimates labelled, no fabricated values, coverage travels
     with any score
   - Sources flagged `commercialOk: false` stay out of production paths

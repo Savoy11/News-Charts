@@ -4,7 +4,7 @@
  * Bring-your-own-model.
  *
  * Every call in this file runs in the visitor's browser and goes straight to their
- * chosen provider. The key is held in localStorage and is never sent to a News Charts
+ * chosen provider. The key is held in localStorage and is never sent to a Chronolens
  * server, never logged, and never included in any request to our own origin — that is
  * what makes "your key never leaves your machine" a true statement rather than a promise.
  */
@@ -53,7 +53,7 @@ export interface AiConfig {
   baseUrl?: string;
 }
 
-const STORAGE_KEY = "news-charts:ai:v1";
+const STORAGE_KEY = "chronolens:ai:v1";
 
 export function loadConfig(): AiConfig | null {
   if (typeof window === "undefined") return null;
@@ -68,9 +68,9 @@ export function loadConfig(): AiConfig | null {
 }
 
 /** Fired whenever the stored model config changes, so open panels re-read it. */
-export const CONFIG_EVENT = "news-charts:ai-config";
+export const CONFIG_EVENT = "chronolens:ai-config";
 /** Asks the header's settings dialog to open, from anywhere in the app. */
-export const OPEN_SETTINGS_EVENT = "news-charts:open-settings";
+export const OPEN_SETTINGS_EVENT = "chronolens:open-settings";
 
 export function saveConfig(config: AiConfig): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(config));

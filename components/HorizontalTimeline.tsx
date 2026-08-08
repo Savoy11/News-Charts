@@ -197,7 +197,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
    */
   const [stackOverride, setStackOverride] = useState<boolean | null>(null);
   const z = ZOOMS[zoom];
-  const storeKey = `news-charts:timeline:${usePathname()}`;
+  const storeKey = `chronolens:timeline:${usePathname()}`;
   const pendingScroll = useRef<number | null>(null);
   // saving must wait for the restore pass, or the default state overwrites what was stored
   const hydrated = useRef(false);

@@ -44,7 +44,7 @@ async function main(): Promise<void> {
    *
    * The chips used to be drawn from 44 hardcoded subjects with real ones merely appended, so a
    * database holding none of them still advertised GME, quantum computing and nuclear power —
-   * and every example a first-time visitor clicked landed on "Not on News Charts yet".
+   * and every example a first-time visitor clicked landed on "Not on Chronolens yet".
    */
   console.log("\nSuggestions come from the corpus, not from a wish list");
   const { loadSuggestibleSubjects } = await import("../lib/subjects-index");

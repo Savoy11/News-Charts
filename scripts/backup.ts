@@ -66,7 +66,7 @@ async function main() {
   const contents = await snapshotCounts();
 
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const outFile = join(outDir, `news-charts-${stamp}.dump`);
+  const outFile = join(outDir, `chronolens-${stamp}.dump`);
   const pgDump = findPgDump();
 
   // -Fc: compressed custom format, restorable whole or table-by-table with pg_restore.
@@ -108,10 +108,24 @@ async function main() {
 
   if (entries === 0) throw new Error("dump contains no restorable objects");
 
+  /**
+   * Retention spans every name this project's dumps have carried.
+   *
+   * The last rename left `chronolens-*.dump` files unmatched by a `news-charts-*` regex, so they
+   * were never pruned and had to be deleted by hand — an open item on the checklist for a fortnight.
+   * Renaming back would repeat it in the other direction, so both prefixes are recognised.
+   *
+   * Sorted by the TIMESTAMP rather than the filename: alphabetically every `chronolens-` dump
+   * sorts before every `news-charts-` one regardless of date, so a plain `.sort()` here would
+   * prune the newest dumps of one prefix while keeping the oldest of the other.
+   */
+  const DUMP = /^(?:chronolens|news-charts)-(.*)\.dump$/;
   const old = readdirSync(outDir)
-    .filter((f) => /^news-charts-.*\.dump$/.test(f))
-    .sort()
-    .slice(0, -KEEP);
+    .map((f) => ({ f, stamp: DUMP.exec(f)?.[1] }))
+    .filter((x): x is { f: string; stamp: string } => x.stamp !== undefined)
+    .sort((a, b) => a.stamp.localeCompare(b.stamp))
+    .slice(0, -KEEP)
+    .map((x) => x.f);
   for (const f of old) unlinkSync(join(outDir, f));
   if (old.length) console.log(`pruned   ${old.length} dump(s), keeping the newest ${KEEP}`);
 

@@ -83,7 +83,7 @@ async function nyt(): Promise<void> {
   // The whole licensing argument depends on this request going to the publisher, not to us.
   check("the request goes straight to the publisher", asked[0]?.startsWith("https://api.nytimes.com/"), asked[0]?.slice(0, 48));
   check("it carries the visitor's key", asked[0]?.includes("api-key=visitor-key-123") === true);
-  check("and never a News Charts origin", !asked.some((u) => /\/api\/|localhost|news-?charts/i.test(u)));
+  check("and never a Chronolens origin", !asked.some((u) => /\/api\/|localhost|news-?charts/i.test(u)));
 
   check("articles parse", events.length === 1, `${events.length}`);
   check("dated to publication day", events[0]?.date === "1914-01-06", events[0]?.date);

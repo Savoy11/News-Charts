@@ -253,7 +253,7 @@ CREATE INDEX source_fetches_recent
   ON source_fetches (source_id, subject_id, fetched_at DESC);
 
 -- ----------------------------------------------------------------- prices
--- numeric, never float — same rule as CAEP.
+-- numeric, never float — same rule as Finance Now.
 CREATE TABLE prices (
   subject_id bigint NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
   on_date    date   NOT NULL,

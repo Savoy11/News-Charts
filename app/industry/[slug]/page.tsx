@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import EventList from "@/components/EventList";
 import AdSlot from "@/components/AdSlot";
-import CaepPromo from "@/components/CaepPromo";
+import FinanceNowPromo from "@/components/FinanceNowPromo";
 import SearchBox from "@/components/SearchBox";
 import SignalPanel from "@/components/SignalPanel";
 import JsonLd from "@/components/JsonLd";
@@ -106,7 +106,7 @@ export default async function IndustryPage({ params }: { params: { slug: string 
       )}
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <CaepPromo />
+        <FinanceNowPromo />
         <AdSlot />
       </div>
     </div>

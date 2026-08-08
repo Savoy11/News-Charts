@@ -7,7 +7,8 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
 
 ## Scope & independence
 
-- **This checklist governs News Charts only.** Crypto-Stuff / CAEP is a **separate project with
+- **This checklist governs News Charts only.** Finance Now — the `Crypto-Stuff` checkout and its
+  `Finance-Now-Free` web copy, formerly named CAEP — is a **separate project with
   its own master checklist**; the two are developed **independently** — no shared code, no
   runtime coupling. Any future cross-project connection would be a separate, explicit decision,
   not something assumed or tracked here.
@@ -1210,7 +1211,7 @@ Each idea checked against the codebase before listing — several were cheaper t
 
 ## Initiative: Affiliate links on relevant surfaces · `P2`
 
-Companion to CAEP's affiliate item (`docs/ROADMAP.md` in Crypto-Stuff — staking pages first,
+Companion to Finance Now's affiliate item (`docs/ROADMAP.md` in Crypto-Stuff — staking pages first,
 across both its free web and desktop distributions). News Charts' own affiliate opportunities
 are thinner but real, and the same integrity rules apply. **The two projects stay independent;
 this is a shared revenue *pattern*, not shared code.**
@@ -1223,14 +1224,14 @@ this is a shared revenue *pattern*, not shared code.**
 - [ ] `P1` **Neutrality rule.** News Charts' product *is* an unbiased historical record. An
       affiliate relationship must never influence which events, articles or sources surface,
       nor their ordering. Structurally: the ingest/ranking layers must not be able to read
-      affiliate state, exactly as CAEP keeps it out of the risk engine.
+      affiliate state, exactly as Finance Now keeps it out of the risk engine.
 - [ ] `P1` **Disclosure.** Per-link marking (FTC "clear and conspicuous"), `rel="sponsored
       noopener"` on paid links, and a "How we make money" page covering ads + affiliates
       together. The existing `AdSlot` placement is the natural place to establish the pattern.
 - [ ] `P2` **Candidate surfaces** — only where an outbound link genuinely helps the reader:
       brokerage/data referrals on company pages; book or archive-subscription links on topic
-      pages (a period-history reader is a plausible book buyer); `CaepPromo` already does
-      cross-promotion to CAEP, so the slot pattern exists.
+      pages (a period-history reader is a plausible book buyer); `FinanceNowPromo` already does
+      cross-promotion to Finance Now, so the slot pattern exists.
 - [ ] `P2` **Never paywall-launder.** Linking a reader to a paywalled cited article is fine and
       honest; taking a commission for it must not change which citations get mined or shown.
 - [ ] `P3` Measure click-through per surface before expanding, without shipping
@@ -1305,7 +1306,7 @@ this is a shared revenue *pattern*, not shared code.**
 
 ## Owner backlog (2026-07-26 brain dump)
 
-News Charts-side items only. CAEP items went to that project's `docs/ROADMAP.md`; company-level
+News Charts-side items only. Finance Now items went to that project's `docs/ROADMAP.md`; company-level
 items (entity filing, federal regulation research, disclosure documents, "what does sellable
 look like") went to a **separate business checklist** worked independently of both products —
 `docs/BUSINESS-CHECKLIST.md` in the Crypto-Stuff repo.
@@ -1362,7 +1363,7 @@ look like") went to a **separate business checklist** worked independently of bo
         Worth checking with `npm run ingest -- --ticker F` before judging the feature.
 - [ ] `P1` **Test and fine-tune the AI tools.** The BYO-key ranking panel is the only AI surface
       here: check ranking quality across subject types, the 0.35 relevance cut-off, batch size,
-      and behaviour when a model returns junk. (CAEP's 11 agents are tracked separately.)
+      and behaviour when a model returns junk. (Finance Now's 11 agents are tracked separately.)
 - [ ] `P1` **Beta launch.** ⚠ Blocked by the ⛔ pre-release feed gate above — a public beta is a
       release, so licences and feed health must be settled first, not after.
 - [ ] `P2` **Security deep-dive + what an account looks like (Google login?).** ⚠ Note the

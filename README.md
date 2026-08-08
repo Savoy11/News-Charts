@@ -4,7 +4,7 @@ Research any topic on a linear timeline. For publicly traded companies, news, SE
 earnings are pegged to the stock price chart so analysts can spot what sparked a move. For
 everything else, get the topic's full history as a timeline.
 
-Built to drive traffic and ad revenue supporting the CAEP desktop app.
+Built to drive traffic and ad revenue supporting the Finance Now desktop app.
 
 ## Run
 
@@ -562,4 +562,4 @@ makes this viable in production — if traffic grows, move news to a keyed API.
 
 1. Deploy (Vercel free tier works for MVP)
 2. Buy domain, apply for Google AdSense, replace `AdSlot` placeholders
-3. Point `CaepPromo` at the CAEP product page when it launches
+3. Point `FinanceNowPromo` at the Finance Now product page when it launches

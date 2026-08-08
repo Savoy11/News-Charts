@@ -11,7 +11,7 @@ const geistSans = localFont({
   weight: "100 900",
 });
 
-const DEFAULT_TITLE = "News Charts — Research any topic on a timeline";
+const DEFAULT_TITLE = "Chronolens — Research any topic on a timeline";
 const DEFAULT_DESCRIPTION =
   "See news, earnings, SEC filings, and historical events on a single timeline — pegged to the stock price for public companies.";
 
@@ -35,19 +35,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${geistSans.variable} min-h-screen bg-slate-950 font-sans text-slate-200 antialiased`}>
-        {/* One-time migration of localStorage from the old "chronolens:" namespace. Inline so it
-            runs while the HTML parses — before hydration, and therefore before any component's
-            first read of a "news-charts:" key. An existing new key wins over an old one. */}
+        {/* One-time migration of localStorage from the "news-charts:" namespace back to
+            "chronolens:". Inline so it runs while the HTML parses — before hydration, and
+            therefore before any component's first read of a "chronolens:" key. An existing new
+            key wins over an old one, and `Object.keys` snapshots first so removing during the
+            walk is safe.
+
+            One hop covers everybody: visitors from the original Chronolens had their keys moved
+            to "news-charts:" by the shim this replaces, so moving that namespace back reaches
+            them too. Follows, prefs, notes, AI settings and feed keys all live under it —
+            getting this wrong silently empties them, which is why the prefix lengths are
+            written out rather than trusted to a search-and-replace ("news-charts:" is 12
+            characters, "chronolens:" is 11). */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              'try{for(var k of Object.keys(localStorage)){if(k.slice(0,11)==="chronolens:"){var n="news-charts:"+k.slice(11);if(localStorage.getItem(n)===null)localStorage.setItem(n,localStorage.getItem(k));localStorage.removeItem(k)}}}catch(e){}',
+              'try{for(var k of Object.keys(localStorage)){if(k.slice(0,12)==="news-charts:"){var n="chronolens:"+k.slice(12);if(localStorage.getItem(n)===null)localStorage.setItem(n,localStorage.getItem(k));localStorage.removeItem(k)}}}catch(e){}',
           }}
         />
         <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
             <Link href="/" className="text-lg font-black tracking-tight text-slate-100">
-              news&nbsp;<span className="text-sky-400">charts</span>
+              chrono<span className="text-sky-400">lens</span>
             </Link>
             <div className="flex items-center gap-3">
               <Link
@@ -77,7 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="mt-16 border-t border-slate-800/80 py-6">
           <div className="mx-auto max-w-6xl px-4 text-xs text-slate-600">
             <p>
-              News Charts is a research tool, not investment advice. Price data from Yahoo Finance,
+              Chronolens is a research tool, not investment advice. Price data from Yahoo Finance,
               filings from SEC EDGAR, recent news from GDELT, historical newspapers from the
               Library of Congress (Chronicling America), historical context from Wikipedia
               (CC BY-SA), sector rules from the Federal Register, archived material from the

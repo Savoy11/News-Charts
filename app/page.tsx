@@ -30,7 +30,7 @@ export default async function Home() {
           <span className="text-sky-400">on one timeline</span>
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-400">
-          News Charts lines up news coverage, SEC filings, and earnings against the stock price so
+          Chronolens lines up news coverage, SEC filings, and earnings against the stock price so
           you can see what actually moved it. Or explore the full history of any topic.
         </p>
         <div className="mt-8 flex w-full justify-center">

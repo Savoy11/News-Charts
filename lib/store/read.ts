@@ -171,7 +171,7 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
       date,
       type: r.kind as EventType,
       title: r.title,
-      source: r.source_label ?? "News Charts",
+      source: r.source_label ?? "Chronolens",
       url: r.url ?? undefined,
       // surface corroboration where it exists — "in 12 papers" is a real signal
       description:
@@ -216,7 +216,7 @@ export async function loadSectorEvents(industryId: number): Promise<TimelineEven
         : String(r.occurred_on).slice(0, 10),
     type: r.kind as EventType,
     title: r.title,
-    source: r.source_label ?? "News Charts",
+    source: r.source_label ?? "Chronolens",
     url: r.url ?? undefined,
     description: "sector-wide",
     imageUrl: r.image_url ?? undefined,
@@ -356,7 +356,7 @@ export async function loadIndustryEvents(industryId: number): Promise<TimelineEv
       date,
       type: r.kind as EventType,
       title: r.title,
-      source: r.source_label ?? "News Charts",
+      source: r.source_label ?? "Chronolens",
       url: r.url ?? undefined,
       description:
         peers > 1 ? `${r.tickers} · ${peers} peers` : (r.tickers ?? "sector-wide"),

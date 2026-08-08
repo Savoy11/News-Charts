@@ -118,7 +118,7 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
   } catch (err) {
     // The database is the only source a page has now, so an outage is an outage — it must not
     // silently become eleven live fetches per page view.
-    console.warn("[news-charts] db read failed:", (err as Error).message);
+    console.warn("[chronolens] db read failed:", (err as Error).message);
     return null;
   }
 }
@@ -172,7 +172,7 @@ async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData |
     await requestSubject(ticker, "company", ticker);
     return null;
   } catch (err) {
-    console.warn("[news-charts] db read failed:", (err as Error).message);
+    console.warn("[chronolens] db read failed:", (err as Error).message);
     return null;
   }
 }

@@ -2,7 +2,7 @@
 
 /**
  * "Following" — a reader's own list of subjects, kept in this browser only (same rule as prefs and
- * the BYO-model key: nothing about it touches a News Charts server). Each entry remembers how much
+ * the BYO-model key: nothing about it touches a Chronolens server). Each entry remembers how much
  * of the subject the reader had already seen, so the next visit can say "3 new since you were here"
  * without any account or server state.
  */
@@ -27,8 +27,8 @@ export interface Signature {
   latest: string;
 }
 
-const KEY = "news-charts:following:v1";
-export const FOLLOW_EVENT = "news-charts:following";
+const KEY = "chronolens:following:v1";
+export const FOLLOW_EVENT = "chronolens:following";
 
 type FollowMap = Record<string, FollowedSubject>;
 

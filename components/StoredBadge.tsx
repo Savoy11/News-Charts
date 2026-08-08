@@ -1,7 +1,7 @@
 import type { RefreshedAt } from "@/lib/page-data";
 
 /**
- * Small honesty badge: this page was served out of the News Charts database, and this is when
+ * Small honesty badge: this page was served out of the Chronolens database, and this is when
  * that copy was last written.
  *
  * It replaces a `stored` / `live` badge. Pages fetched live on a miss until commit 813d505 moved
@@ -21,8 +21,8 @@ export default function StoredBadge({ refreshedAt }: { refreshedAt: RefreshedAt 
     <span
       title={
         when
-          ? `Served from the News Charts database — last refreshed ${when}`
-          : "Served from the News Charts database — no refresh recorded for this subject"
+          ? `Served from the Chronolens database — last refreshed ${when}`
+          : "Served from the Chronolens database — no refresh recorded for this subject"
       }
       className="rounded-full border border-teal-800/60 bg-teal-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-teal-400"
     >

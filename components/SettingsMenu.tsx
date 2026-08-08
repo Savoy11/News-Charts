@@ -118,7 +118,7 @@ export default function SettingsMenu() {
               </div>
               <p className="pb-1 text-xs leading-relaxed text-slate-500">
                 Connect your own model to search timelines in plain language — “antitrust and
-                regulation”, “product launches”. News Charts works fully without this; it only adds
+                regulation”, “product launches”. Chronolens works fully without this; it only adds
                 the AI search box.
               </p>
               <AiSettingsForm config={config} onSaved={setConfig} />

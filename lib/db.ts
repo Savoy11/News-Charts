@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 
 /**
- * News Charts owns its own database and its own non-superuser role. It shares
+ * Chronolens owns its own database and its own non-superuser role. It shares
  * nothing with any other project on this machine.
  */
 let pool: Pool | null = null;

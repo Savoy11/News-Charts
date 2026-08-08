@@ -3,7 +3,7 @@
  *
  *   npm run check:boundary
  *
- * The `Scope & independence` section of docs/MASTER-CHECKLIST.md rules News Charts and
+ * The `Scope & independence` section of docs/MASTER-CHECKLIST.md rules Chronolens and
  * Crypto-Stuff / CAEP / Finance Now separate projects — no shared code, no runtime coupling.
  * Prose alone does not hold that line: in Finance-Now-Free, a stale pointer to another
  * checkout survived in the session-orienting doc for the whole life of the project. This is
@@ -21,13 +21,19 @@ const REPO = path.resolve(__dirname, "..");
 const OTHER_PROJECTS = /crypto-stuff|finance-now/i;
 
 /**
- * Every name this one repository has gone by, lowercased.
+ * Every name this one repository has gone by, lowercased. **All of them stay.**
  *
- * A rename is a legitimate act; a remote pointing at another *product* is not. Keeping these
- * separate concerns separate is the whole point — the first version of this check asserted the
- * remote contained "news-charts", so renaming the GitHub repo to `chronolens` would have failed
- * the boundary guard on every machine, which reads as "you have breached the scope rule" when
- * the truth is "the repo has a new name". Add to this list when the repo is renamed again.
+ * A rename is a legitimate act; a remote pointing at another *product* is not. Keeping those two
+ * concerns apart is the point of this list — the first version of this check asserted the remote
+ * contained "news-charts", so renaming the GitHub repo to `chronolens` failed the boundary guard
+ * on every machine that pulled, reported as "you have breached the scope rule" when the truth was
+ * "the repo has a new name".
+ *
+ * Old names are not dead weight: GitHub redirects old URLs, so a clone made before a rename keeps
+ * the old remote and is still this repository. A project-wide search-and-replace during the
+ * 2026-08-08 rename collapsed this array to two copies of the new name and dropped `news-charts`
+ * — this check caught it on the next run, which is the entire argument for the check existing.
+ * Add to the list when the repo is renamed again; never replace what is here.
  */
 const THIS_REPO_NAMES = ["news-charts", "chronolens"];
 

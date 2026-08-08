@@ -12,7 +12,7 @@ export const revalidate = 3600;
 
 const TITLE = "Explore timelines";
 const DESCRIPTION =
-  "Browse every company, topic, and industry on News Charts — timelines of news, filings, earnings, and history.";
+  "Browse every company, topic, and industry on Chronolens — timelines of news, filings, earnings, and history.";
 
 export const metadata: Metadata = {
   title: TITLE,

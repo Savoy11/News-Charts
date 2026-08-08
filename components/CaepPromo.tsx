@@ -3,7 +3,7 @@ export default function CaepPromo() {
   return (
     <div className="rounded-xl border border-emerald-800/60 bg-gradient-to-r from-emerald-950 to-slate-900 p-5">
       <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400">
-        From the maker of News Charts
+        From the maker of Chronolens
       </p>
       <h3 className="mt-1 text-lg font-bold text-slate-100">
         CAEP — Crypto Asset Evaluation Platform

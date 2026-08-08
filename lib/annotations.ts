@@ -24,9 +24,9 @@ export interface Annotation {
   createdAt: string;
 }
 
-export const ANNOTATIONS_EVENT = "news-charts:annotations";
+export const ANNOTATIONS_EVENT = "chronolens:annotations";
 
-const keyFor = (path: string) => `news-charts:notes:${path}`;
+const keyFor = (path: string) => `chronolens:notes:${path}`;
 
 /** Bounded so a runaway paste cannot fill the origin's storage and break prefs and follows. */
 export const MAX_TEXT = 500;

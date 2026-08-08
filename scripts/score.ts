@@ -107,7 +107,7 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     console.log(
-      `  model pass skipped — set ANTHROPIC_API_KEY in news-charts/.env.local to score the rest.\n` +
+      `  model pass skipped — set ANTHROPIC_API_KEY in chronolens/.env.local to score the rest.\n` +
         `  (they stay NULL, which still displays: nothing is hidden without a score)`
     );
     return;

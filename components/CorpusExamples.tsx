@@ -7,7 +7,7 @@ import type { Suggestion } from "@/lib/suggestions";
 /**
  * Subjects this site actually holds, offered as a way out of a dead end.
  *
- * The "Not on News Charts yet" page used to end with "try a ticker like AAPL or a broader topic
+ * The "Not on Chronolens yet" page used to end with "try a ticker like AAPL or a broader topic
  * like bicycle" — two names hardcoded in the markup, neither of which the corpus is guaranteed to
  * hold. That is the same broken promise commit cf9d820 fixed on the homepage, still live on the
  * one page a visitor reaches *because* something was missing: they search, get told it isn't here,
@@ -49,7 +49,7 @@ export default function CorpusExamples({ count = 5 }: { count?: number }) {
 
   return (
     <div className="mt-6">
-      <p className="text-sm text-slate-500">On News Charts right now:</p>
+      <p className="text-sm text-slate-500">On Chronolens right now:</p>
       <div className="mt-2 flex flex-wrap justify-center gap-2">
         {have.map((s) => (
           <Link

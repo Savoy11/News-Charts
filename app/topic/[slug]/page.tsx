@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import TopicExplorer from "@/components/TopicExplorer";
 import AdSlot from "@/components/AdSlot";
-import CaepPromo from "@/components/CaepPromo";
 import SourcesPanel from "@/components/SourcesPanel";
 import SearchBox from "@/components/SearchBox";
 import TopicSummary from "@/components/TopicSummary";
@@ -81,7 +80,7 @@ export default async function TopicPage({ params }: { params: { slug: string } }
         <AdSlot />
       </div>
       <div className="mt-4">
-        <CaepPromo />
+        <AdSlot format="billboard" />
       </div>
     </div>
   );

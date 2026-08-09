@@ -3,7 +3,6 @@ import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import SearchBox from "@/components/SearchBox";
 import AdSlot from "@/components/AdSlot";
-import CaepPromo from "@/components/CaepPromo";
 import { absolute, subjectPath, SITE_NAME, type SubjectKind } from "@/lib/seo";
 import { listIndexedSubjects } from "@/lib/subjects-index";
 import { CURATED } from "@/lib/suggestions";
@@ -111,7 +110,7 @@ export default async function ExplorePage() {
         </div>
         <aside className="space-y-4">
           <AdSlot />
-          <CaepPromo />
+          <AdSlot format="rectangle" />
         </aside>
       </div>
     </div>

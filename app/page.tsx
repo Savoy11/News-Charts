@@ -1,6 +1,5 @@
 import SearchBox from "@/components/SearchBox";
 import AdSlot from "@/components/AdSlot";
-import CaepPromo from "@/components/CaepPromo";
 import SuggestionChips from "@/components/SuggestionChips";
 import { loadSuggestibleSubjects } from "@/lib/subjects-index";
 import { blend, pickMix } from "@/lib/suggestions";
@@ -62,7 +61,7 @@ export default async function Home() {
       </section>
 
       <section className="mt-10 grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <CaepPromo />
+        <AdSlot format="billboard" />
         <AdSlot />
       </section>
     </div>

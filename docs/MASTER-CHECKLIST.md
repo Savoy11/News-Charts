@@ -58,6 +58,21 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
       decade walk; EDGAR older-history shards; richer paid-tier evidence with an aggregate
       spend cap. Each carries cost-judge amendments recorded in the session's design output.
 
+- [x] **Remove the CAEP cross-promotion.** Done 2026-08-08. `components/CaepPromo.tsx` is
+      deleted and its eight placements — home, explore, following, compare, topic, company,
+      industry, group — now hold blank `AdSlot` placeholders. Nothing in the UI references a
+      sibling product.
+      - `AdSlot` gained IAB formats (`leaderboard` 728×90, `billboard` 970×250, `rectangle`
+        300×250) so each replacement reserves the space its slot actually had: billboard in the
+        wide positions the promo card filled, rectangle in the sidebars. A placeholder shorter
+        than the unit that replaces it is how a live ad shoves the paragraph a reader is
+        mid-sentence in. Verified rendered: 736×250 and 280×250 respectively.
+      - The scope rule in `CLAUDE.md` cited this component as the worked example of permitted
+        cross-project *marketing* (as distinct from coupling); it now records that no
+        cross-promotion exists and that re-introducing any is an owner decision.
+      - ⚠ Unchanged by this: ads still make the site commercial. The `COMMERCIAL_MODE` `P0`
+        above governs the day any of these slots carries a real ad.
+
 ## Legend
 
 - **Priority:** `P0` = do first / unblocks others · `P1` = core value · `P2` = later / nice-to-have
@@ -1229,8 +1244,9 @@ this is a shared revenue *pattern*, not shared code.**
       together. The existing `AdSlot` placement is the natural place to establish the pattern.
 - [ ] `P2` **Candidate surfaces** — only where an outbound link genuinely helps the reader:
       brokerage/data referrals on company pages; book or archive-subscription links on topic
-      pages (a period-history reader is a plausible book buyer); `CaepPromo` already does
-      cross-promotion to CAEP, so the slot pattern exists.
+      pages (a period-history reader is a plausible book buyer). The `AdSlot` placements are the
+      slot pattern to follow — `CaepPromo` used to be the worked example of an in-page promo and
+      was removed 2026-08-08, so a first affiliate unit starts from the ad slots, not from it.
 - [ ] `P2` **Never paywall-launder.** Linking a reader to a paywalled cited article is fine and
       honest; taking a commission for it must not change which citations get mined or shown.
 - [ ] `P3` Measure click-through per surface before expanding, without shipping

@@ -55,6 +55,10 @@ export default function CorpusExamples({ count = 5 }: { count?: number }) {
           <Link
             key={s.href}
             href={s.href}
+            /* Same rule as SuggestionChips: no prefetch, so a decorative link never triggers
+               a first-visit gather. (These are corpus-held subjects, so the risk is smaller,
+               but the read alone is not worth paying per render of a miss page.) */
+            prefetch={false}
             className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-sm text-slate-300 hover:border-sky-500 hover:text-sky-300"
           >
             {s.label}

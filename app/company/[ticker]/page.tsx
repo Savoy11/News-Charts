@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { unstable_noStore as noStore } from "next/cache";
 import CompanyExplorer from "@/components/CompanyExplorer";
 import AdSlot from "@/components/AdSlot";
 import SourcesPanel from "@/components/SourcesPanel";
@@ -36,7 +37,17 @@ export async function generateMetadata({
 
 export default async function CompanyPage({ params }: { params: { ticker: string } }) {
   const data = await getCompanyPageData(decodeURIComponent(params.ticker));
-  if (!data) notFound();
+  /**
+   * A miss must never be cached. With `revalidate = 900`, a notFound render would be served
+   * statically for 15 minutes — so a first-visit gather that failed transiently (a throttled
+   * Yahoo, a slow proxy) pinned the miss page even after the attempt ledger's backoff had
+   * expired and a retry would have succeeded. `noStore()` opts THIS render out of the route
+   * cache; successful renders above it still cache for the full window.
+   */
+  if (!data) {
+    noStore();
+    notFound();
+  }
 
   const last = data.prices.at(-1);
   const prev = data.prices.at(-2);

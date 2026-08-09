@@ -11,9 +11,9 @@ const geistSans = localFont({
   weight: "100 900",
 });
 
-const DEFAULT_TITLE = "Chronolens — Research any topic on a timeline";
+const DEFAULT_TITLE = "Chronolens — Every listed security on a timeline";
 const DEFAULT_DESCRIPTION =
-  "See news, earnings, SEC filings, and historical events on a single timeline — pegged to the stock price for public companies.";
+  "News, earnings, and SEC filings pegged to the price chart — for stocks, ETFs, and mutual funds.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

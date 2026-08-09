@@ -29,8 +29,9 @@ export default async function Home() {
           <span className="text-sky-400">on one timeline</span>
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-400">
-          Chronolens lines up news coverage, SEC filings, and earnings against the stock price so
-          you can see what actually moved it. Or explore the full history of any topic.
+          Chronolens lines up news coverage, SEC filings, and earnings against the price chart for
+          any listed security — stocks, ETFs, and mutual funds — so you can see what actually
+          moved it.
         </p>
         <div className="mt-8 flex w-full justify-center">
           <SearchBox large />
@@ -49,8 +50,8 @@ export default async function Home() {
             body: "Earnings and filings come straight from SEC EDGAR — no paraphrasing, one click to the original document.",
           },
           {
-            title: "Any topic",
-            body: "Not a ticker? Search anything — from the bicycle to AI — and get its history as a timeline.",
+            title: "Funds too",
+            body: "ETFs and mutual funds resolve like any ticker — SPY, QQQ, VTSAX — with their filings and price history on the same timeline.",
           },
         ].map((c) => (
           <div key={c.title} className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">

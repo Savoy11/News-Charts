@@ -561,5 +561,8 @@ makes this viable in production — if traffic grows, move news to a keyed API.
 ## Monetization TODO
 
 1. Deploy (Vercel free tier works for MVP)
-2. Buy domain, apply for Google AdSense, replace `AdSlot` placeholders
-3. Point `CaepPromo` at the CAEP product page when it launches
+2. Buy domain, apply for Google AdSense, replace `AdSlot` placeholders — each one declares the
+   IAB format it is standing in for (`leaderboard` 728×90, `billboard` 970×250, `rectangle`
+   300×250), so the live unit drops into a space the page has already reserved
+3. ⚠ Before any of those carries a real ad, turn on `COMMERCIAL_MODE` — several news sources are
+   licensed for non-commercial use only (open `P0` in `docs/MASTER-CHECKLIST.md`)

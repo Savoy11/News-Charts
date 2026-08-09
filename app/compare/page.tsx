@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import ComparePicker from "@/components/ComparePicker";
 import CompareView from "@/components/CompareView";
 import AdSlot from "@/components/AdSlot";
-import CaepPromo from "@/components/CaepPromo";
 import { loadCompareSubject } from "@/lib/compare";
 
 export const revalidate = 900;
@@ -70,7 +69,7 @@ export default async function ComparePage({
         </div>
         <aside className="space-y-4">
           <AdSlot />
-          <CaepPromo />
+          <AdSlot format="rectangle" />
         </aside>
       </div>
     </div>

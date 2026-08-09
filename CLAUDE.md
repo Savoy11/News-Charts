@@ -20,9 +20,11 @@ the new name to its `THIS_REPO_NAMES`.
    to reach a sibling project.
 2. **No shared code, no runtime coupling.** The `Scope & independence` section of
    `docs/MASTER-CHECKLIST.md` rules the projects independent; this repo must build and run with
-   the others absent. Cross-promotion (`components/CaepPromo.tsx` links to the CAEP product) is
-   marketing, not coupling. Any deeper cross-project connection is a separate, explicit owner
-   decision — never something to assume or introduce in passing.
+   the others absent. As of 2026-08-08 there is **no cross-promotion either** — the CAEP promo
+   banner was removed and its slots now hold blank `AdSlot` placeholders, so nothing in the UI
+   references a sibling product. Cross-promotion would be marketing rather than coupling and is
+   not barred by the scope rule, but re-introducing it is an explicit owner decision, as is any
+   deeper cross-project connection — never something to assume or add in passing.
 3. **The work log for this repo is [`docs/MASTER-CHECKLIST.md`](docs/MASTER-CHECKLIST.md)** —
    prioritised backlog plus done log. Check the box in the same change that ships the work.
 4. **This boundary is enforced by test, not just prose:** `npm run check:boundary`

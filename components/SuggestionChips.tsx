@@ -105,6 +105,12 @@ export default function SuggestionChips({ initial = INITIAL }: { initial?: Sugge
         <Link
           key={`${i}-${s.label}`}
           href={s.href}
+          /* A decorative chip must not spend real work: prefetching a page for a subject the
+             corpus lacks triggers a first-visit gather (lib/ingest/firstPass.ts) for a page
+             nobody asked for yet, and five of them on every homepage load saturate the
+             deliberately small ingest pool — measured queueing real searches behind them.
+             The gather runs when someone actually clicks. */
+          prefetch={false}
           style={{ transitionDuration: `${FADE_MS}ms` }}
           className={`rounded-full border px-3 py-1 text-sm transition-all ${
             fading === i ? "scale-95 opacity-0" : "scale-100 opacity-100"

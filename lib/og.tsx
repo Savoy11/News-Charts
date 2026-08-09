@@ -72,7 +72,7 @@ export function ogCard(eyebrow: string, title: string) {
             ))}
           </div>
           <div style={{ display: "flex", fontSize: 26, color: "#94a3b8" }}>
-            Research any topic on a timeline
+            Every listed security on a timeline
           </div>
         </div>
       </div>

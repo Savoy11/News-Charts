@@ -25,7 +25,17 @@ export const RUNGS = [
    * rung really answered for the prefix.
    */
   "salvaged_prefix",
+  /**
+   * Retired 2026-08-08 with the securities scope change, kept for reading historical rows:
+   * an unmatched query used to be assumed to name a topic and routed to /topic/<string>.
+   */
   "assumed_topic",
+  /**
+   * The ladder ran out and said so — the query resolved to no security and no held subject,
+   * and the visitor got the "not what this site covers" answer instead of a guessed page.
+   * Recurring rows here are either a resolver miss (bug) or off-scope demand (signal).
+   */
+  "unresolved",
   /**
    * The ticker index did not answer inside its budget, so the query fell through to a guess it
    * might not have needed. Distinct from `assumed_topic` on purpose: one says our parser could

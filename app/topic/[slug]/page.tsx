@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { unstable_noStore as noStore } from "next/cache";
 import TopicExplorer from "@/components/TopicExplorer";
 import AdSlot from "@/components/AdSlot";
 import SourcesPanel from "@/components/SourcesPanel";
@@ -40,7 +41,12 @@ export async function generateMetadata({
 export default async function TopicPage({ params }: { params: { slug: string } }) {
   const topic = decodeURIComponent(params.slug);
   const data = await getTopicPageData(topic);
-  if (!data) notFound();
+  // A miss must never be cached — same rule and reasoning as the company page: a transient
+  // gather failure would otherwise pin the miss for the whole revalidate window.
+  if (!data) {
+    noStore();
+    notFound();
+  }
 
   return (
     <div>

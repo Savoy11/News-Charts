@@ -63,7 +63,7 @@ async function main(): Promise<void> {
   check("what we have comes first", blended[0].label === "AAPL" && blended[1].label === "Telegraphy");
   check("and is never dropped in favour of a curated one", corpus.every((c) => blended.some((b) => b.label === c.label)));
   check("padding reaches a rotatable pool", blended.length >= MIN_POOL, `${blended.length}`);
-  // Two companies and three topics: a corpus rich in one kind still needs the other.
+  // Four securities and one topic under the 2026-08-08 scope: a corpus rich in one kind still needs the other.
   check("both kinds are represented", blended.some((s) => s.kind === "company") && blended.some((s) => s.kind === "topic"));
   check("no subject is suggested twice", new Set(blended.map((s) => s.label)).size === blended.length);
 

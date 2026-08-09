@@ -15,15 +15,15 @@ npm run dev        # http://localhost:3000 (or -p 3001)
 
 ## Homepage suggestions
 
-The "Try:" chips rotate. `lib/suggestions.ts` holds a seed pool of 44 (20 tickers, 24 topics
-chosen to show off the long-range timeline — a 19th-century subject demonstrates the product
-better than another mega-cap). `/api/suggestions` blends in subjects that already have 10+
-events in the database, so the homepage gets richer as the site is used, and falls back to the
-seed pool alone if the database is down.
+The "Try:" chips rotate. `lib/suggestions.ts` holds a seed pool of 34 (24 securities — household
+tickers plus the biggest index funds — and 10 market-adjacent topics), securities-first per the
+2026-08-08 scope. `/api/suggestions` blends in subjects that already have 10+ events in the
+database, so the homepage gets richer as the site is used, and falls back to the seed pool alone
+if the database is down.
 
 `components/SuggestionChips.tsx` renders a **fixed** set on the server and only shuffles after
 mount — shuffling during render would break hydration. One chip swaps every 3.8s, replaced
-like-for-like by kind so the 2-company/3-topic balance holds, never re-rolling the slot it just
+like-for-like by kind so the 4-security/1-topic balance holds, never re-rolling the slot it just
 changed. Rotation pauses when the tab is hidden and is disabled entirely under
 `prefers-reduced-motion`; the ↻ button reshuffles on demand.
 

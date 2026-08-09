@@ -37,11 +37,20 @@ the new name to its `THIS_REPO_NAMES`.
 
 ## What this is
 
-Research any topic on a linear timeline. For publicly traded companies, news, SEC filings, and
-earnings are pegged to the stock price chart so analysts can spot what sparked a move; for
-everything else, the topic's full history renders as a timeline. Built to drive traffic and ad
-revenue supporting the CAEP desktop app — a business relationship, not a code one (see the
-scope rule).
+**Exchange-traded securities on a timeline** — publicly traded companies, ETFs, and mutual
+funds, with news, SEC filings, and earnings pegged to the price chart so analysts can spot what
+sparked a move. The build scope (refocused 2026-08-08) is depth of coverage for listed
+securities: as many reports and articles per security as the sources honestly allow. Topic
+pages still exist for subjects already held (crypto assets, sector themes), but search resolves
+securities, and new enhancement work targets securities coverage first — see "Scope refocus"
+in the checklist. Built to drive traffic and ad revenue supporting the CAEP desktop app — a
+business relationship, not a code one (see the scope rule).
+
+**Prompt search is shelved, not deleted.** The natural-language layer (`lib/prompt.ts`
+parsing, `lib/focus.ts` grading, FocusBar, BestMatches, `?focus=` links) is dormant, tested
+substrate for the planned v2: pegging specific topics to exchange-traded securities — e.g.
+"how did covid affect Best Buy's stock price" → BBY's page narrowed to its covid events. See
+the checklist's "Prompt search v2" entry before removing any of it.
 
 ## Stack & layout
 

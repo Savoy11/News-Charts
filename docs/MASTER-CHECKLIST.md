@@ -73,6 +73,50 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
       - ⚠ Unchanged by this: ads still make the site commercial. The `COMMERCIAL_MODE` `P0`
         above governs the day any of these slots carries a real ad.
 
+## Scope refocus — exchange-traded securities (2026-08-08)
+
+**The build scope: post as many reports and articles as the sources honestly allow for
+publicly traded companies, mutual funds, ETFs, and other exchange-traded securities.**
+Enhancement work is prioritised against that goal; topic infrastructure remains for subjects
+already held, but new investment goes to securities coverage first.
+
+- [x] **Funds resolve like companies.** `lib/sec.ts` now consults EDGAR's fund ticker file
+      (`company_tickers_mf.json`) after the company file, so SPY, QQQ, VTSAX and every other
+      registered fund symbol resolves to a CIK — filings and price history follow through the
+      existing company pipeline unchanged. Fund names come from the registrant's submissions
+      record (the fund file carries none). Known limit: funds resolve by SYMBOL only —
+      "Vanguard 500" has no free keyless name index yet; candidate enhancement below.
+- [x] **Search resolves securities; unmatched queries stop minting topics.** The
+      `assumed_topic` fallthrough retired (rung kept for history, db/019 adds `unresolved`):
+      an off-scope query now gets "that didn't match a listed security" instead of a guessed
+      topic page and a Wikipedia gather spent on a random string. Corpus subjects of any kind
+      stay searchable — a page we hold is a page worth finding. Head-prefix salvage stays
+      ("Best Buy earnings" → BBY) with the tail dropped for now and logged.
+- [x] **Prompt search removed from the search path** — `parseSearchPrompt` no longer runs on
+      queries; no focus/influence is derived or carried. Homepage, placeholder, SEO and OG
+      copy are securities-first; the suggestion mix is 4 securities + 1 market-adjacent topic.
+- [ ] `P1` **Prompt search v2 — peg topics to exchange-traded securities.** The owner's stated
+      goal (2026-08-08, recorded verbatim): *"revisit a prompt search that will peg specific
+      topics to exchange traded securities (ex. I want to see how covid affected Best Buy's
+      stock price)."* The shape: a prompt names a security and a concern; the answer is the
+      security's page with its timeline narrowed and ranked by the concern — the intersection,
+      not two pages. **The substrate is dormant, tested, and must not be deleted:**
+      `lib/prompt.ts` (subject/focus/influence parsing + head-prefix helper, `check:prompt`),
+      `lib/focus.ts` (graded focusScore + ranked, `check:focus`), `FocusBar`, `BestMatches`,
+      and `?focus=` URL handling in both explorers — all still live behind links, only search
+      stopped producing them. v2 wiring is approximately: resolve the security (existing
+      ladder) → carry the concern as focus (restore two lines in SearchBox//search) → grade
+      with focusScore → consider the paid tier for concepts keywords can't reach ("covid" vs
+      "pandemic" vs "lockdown" in headlines).
+- [ ] `P2` Fund NAME resolution ("Vanguard 500" → VFINX/VOO) — needs a free name index;
+      candidates: SEC series/class data joined to submissions names, or the fund's own
+      N-1A filings.
+- [ ] `P2` Securities-coverage depth items promoted from the recall backlog below: GDELT
+      year-window backfill, EDGAR older-history shards, and richer paid-tier evidence apply
+      per-security and serve this scope directly. The LoC decade walk and Wikidata alias
+      harvesting serve companies too and keep their place. Topic-only recall items rank behind
+      all of these until the scope changes again.
+
 ## Legend
 
 - **Priority:** `P0` = do first / unblocks others · `P1` = core value · `P2` = later / nice-to-have

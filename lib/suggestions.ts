@@ -16,7 +16,7 @@ export interface Suggestion {
 /**
  * Seed pool — a **fallback**, not the homepage's first choice.
  *
- * These 44 subjects are hardcoded, so nothing guarantees a single one of them is in the corpus.
+ * These 34 subjects are hardcoded, so nothing guarantees a single one of them is in the corpus.
  * They used to be the pool the chips were drawn from, with real subjects merely appended, which
  * meant the homepage advertised GME, quantum computing and nuclear power to a database that had
  * none of them: every example a first-time visitor clicked led to "Not on Chronolens yet".
@@ -24,19 +24,24 @@ export interface Suggestion {
  * A suggestion is a promise. `blend` below keeps these for the one case where the promise cannot
  * be made from the corpus — a fresh install, or a database we cannot reach.
  *
- * Deliberately mixes household tickers with topics that show off the long-range timeline — a
- * 19th-century subject demonstrates the product better than another mega-cap does.
+ * Securities-first (2026-08-08 scope): household tickers and the biggest index funds, with a
+ * short tail of market-adjacent topics a securities reader follows into a sector story.
  */
 export const CURATED: Suggestion[] = [
-  ...["AAPL", "NVDA", "TSLA", "MSFT", "AMZN", "GOOGL", "META", "AMD", "INTC", "NFLX",
-    "BA", "JPM", "XOM", "DIS", "UBER", "PLTR", "COIN", "KO", "PFE", "GME"].map(
+  // Companies and funds share the company kind on purpose: an ETF is a CIK with filings and a
+  // priced ticker, exactly the shape the company page renders. Funds sit early so the securities
+  // scope (2026-08-08) shows in the shop window, not only in the resolver.
+  ...["AAPL", "NVDA", "SPY", "TSLA", "MSFT", "QQQ", "AMZN", "GOOGL", "META", "VTI",
+    "AMD", "INTC", "NFLX", "BA", "JPM", "XOM", "DIS", "VOO", "KO", "PFE",
+    "UBER", "PLTR", "COIN", "GME"].map(
     (t): Suggestion => ({ label: t, href: `/company/${t}`, kind: "company" })
   ),
-  ...["bicycle", "artificial intelligence", "semiconductors", "electric vehicles",
-    "solar power", "penicillin", "space exploration", "vaccines", "smartphones",
-    "telegraph", "railways", "container shipping", "3d printing", "quantum computing",
-    "cryptocurrency", "wind power", "antibiotics", "printing press", "photography",
-    "refrigeration", "radio", "aviation", "submarine cables", "nuclear power"].map(
+  // Topics kept to market-adjacent themes — the kind a securities reader follows into a
+  // sector story. The long-history showcase subjects (bicycle, penicillin, telegraph) left
+  // with the scope change; they return with prompt-search v2 if at all.
+  ...["semiconductors", "artificial intelligence", "electric vehicles", "cryptocurrency",
+    "solar power", "wind power", "container shipping", "aviation", "nuclear power",
+    "smartphones"].map(
     (t): Suggestion => ({ label: t, href: `/topic/${encodeURIComponent(t)}`, kind: "topic" })
   ),
 ];
@@ -46,8 +51,8 @@ export const INITIAL: Suggestion[] = [
   CURATED[0],
   CURATED[1],
   CURATED[2],
-  CURATED.find((s) => s.label === "bicycle")!,
-  CURATED.find((s) => s.label === "artificial intelligence")!,
+  CURATED.find((s) => s.label === "QQQ")!,
+  CURATED.find((s) => s.label === "semiconductors")!,
 ];
 
 export function shuffle<T>(items: T[]): T[] {
@@ -67,7 +72,7 @@ export function shuffle<T>(items: T[]): T[] {
  * for when there are not enough of them. A uniform shuffle over the whole pool is what put five
  * curated chips on a homepage backed by three real subjects.
  */
-export function pickMix(pool: Suggestion[], count = 5, companies = 2): Suggestion[] {
+export function pickMix(pool: Suggestion[], count = 5, companies = 4): Suggestion[] {
   const ofKind = (kind: Suggestion["kind"], want: number): Suggestion[] => {
     const mine = pool.filter((s) => s.kind === kind);
     const real = shuffle(mine.filter((s) => !s.padded));
@@ -92,9 +97,9 @@ export const MIN_POOL = 12;
  * What the homepage should offer: the corpus first, topped up from the seed pool only if the
  * corpus cannot fill the row.
  *
- * The order matters and is the whole fix. Padding is per *kind*, because the mix wants two
- * companies and three topics — a corpus of fifteen topics and no companies still needs a ticker
- * from somewhere, or the chips silently become topic-only.
+ * The order matters and is the whole fix. Padding is per *kind*, because the mix wants four
+ * securities and one topic under the 2026-08-08 scope — and a corpus of fifteen topics and no
+ * companies still needs a ticker from somewhere, or the chips silently become topic-only.
  *
  * Pure so the rule can be argued with in `npm run check:index` rather than judged by eye against
  * a homepage whose contents rotate every 3.8 seconds.

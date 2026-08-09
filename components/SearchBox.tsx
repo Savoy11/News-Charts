@@ -34,18 +34,14 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
       });
       if (!res.ok) throw new Error(`resolve responded ${res.status}`);
       const json = await res.json();
-      // the qualifier from a natural-language prompt rides along so the page can use it
-      const focus = json.focus ? `focus=${encodeURIComponent(json.focus)}` : "";
-      const query = (existing: string) =>
-        [existing, focus].filter(Boolean).length ? `?${[existing, focus].filter(Boolean).join("&")}` : "";
-
-      // A relational question lands on the affected subject with the influence as a focus, which
-      // narrows that subject's own timeline — the intersection the question asks about. The
-      // two-subject compose stays one click away from the focus bar there.
-      if (json.kind === "company") router.push(`/company/${json.ticker}${query("")}`);
-      else if (json.kind === "topic") router.push(`/topic/${json.slug}${query("")}`);
-      // `none` is what an empty query resolves to; anything else is a shape we don't know.
-      else setError("That didn't resolve to a subject. Try a ticker, a company name, or a topic.");
+      if (json.kind === "company") router.push(`/company/${json.ticker}`);
+      else if (json.kind === "topic") router.push(`/topic/${json.slug}`);
+      // `none` is a real answer now, not just the empty-query case: the query named no listed
+      // security and nothing the corpus holds. Say what the site is for instead of guessing.
+      else
+        setError(
+          "That didn't match a listed security. Try a ticker (AAPL, SPY, VTSAX) or a company or fund name."
+        );
     } catch (err) {
       // Named separately because they need different things from the reader: one is worth
       // retrying in a moment, the other usually means the site itself is unreachable.
@@ -75,7 +71,7 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
             // of lie: it describes an attempt that no longer matches what is in the box.
             if (error) setError(null);
           }}
-          placeholder="AAPL, bicycle, or “history of Alibaba in the US”…"
+          placeholder="AAPL, SPY, VTSAX, or a company or fund name…"
           // min-w-0: an input carries an intrinsic default width, and flex-1 alone won't shrink
           // below it, so the form pushed a few pixels past a narrow phone viewport.
           className={`min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:outline-none ${

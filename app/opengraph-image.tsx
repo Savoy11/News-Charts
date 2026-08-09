@@ -7,5 +7,5 @@ export const alt = "Chronolens — research any topic on a timeline";
 
 // Site-wide default card (home, /explore, and any page without its own image).
 export default function Image() {
-  return ogCard("Timelines for analysts", "Research any topic on a timeline");
+  return ogCard("Timelines for analysts", "Every listed security on a timeline");
 }

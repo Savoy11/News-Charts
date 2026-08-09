@@ -36,7 +36,10 @@ const MEANING: Record<ResolutionRung, string> = {
   salvaged_prefix:
     "the whole query matched nothing, but a head-prefix did — the tail rode along as focus." +
     " Accuracy here is worth watching: it is a real answer for the prefix, not for the query",
-  assumed_topic: "nothing matched; the typed string was assumed to name a topic",
+  assumed_topic: "nothing matched; the typed string was assumed to name a topic (retired 2026-08-08)",
+  unresolved:
+    "nothing matched and the visitor was told so. A query recurring here is a resolver miss" +
+    " (bug) or off-scope demand (product signal) — read this rung, it is the scope's report card",
   network_timeout:
     "the ticker index did not answer in time — a guess we may not have needed. Read this as a" +
     " statement about EDGAR, not about the query",

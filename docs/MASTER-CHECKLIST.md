@@ -108,9 +108,26 @@ already held, but new investment goes to securities coverage first.
       ladder) → carry the concern as focus (restore two lines in SearchBox//search) → grade
       with focusScore → consider the paid tier for concepts keywords can't reach ("covid" vs
       "pandemic" vs "lockdown" in headlines).
-- [ ] `P2` Fund NAME resolution ("Vanguard 500" → VFINX/VOO) — needs a free name index;
-      candidates: SEC series/class data joined to submissions names, or the fund's own
-      N-1A filings.
+- [ ] `P2` Fund NAME resolution ("Vanguard 500" → VFINX/VOO) — **the free name index exists and
+      has been located; what is left is building it.** (2026-08-12.)
+      - The blocker this item recorded was whether a keyless source carries fund *names* at all.
+        It does, and neither candidate this entry guessed was the one. Registrant names are the
+        wrong level — `data.sec.gov/submissions/CIK0000036405.json` says `VANGUARD INDEX FUNDS`,
+        which "Vanguard 500" does not match. **Series names are the right level**, and EDGAR
+        serves them: `browse-edgar?action=getcompany&CIK=<cik>&scd=series` returns, in one
+        response per registrant, `S000002839 · Vanguard 500 Index Fund` together with every share
+        class and its ticker — `C000007773 Investor Shares VFINX`, `C000092055 ETF Shares VOO`.
+        That is the whole join, from one keyless endpoint.
+      - Shape of the work: 1,164 unique fund CIKs (not 11,970 series or 28,419 symbols), so a
+        sync-time pass is roughly 1,164 requests plus paging for large registrants — minutes at
+        the SEC's rate limit, and it belongs in `npm run sync:tickers` beside the ticker index,
+        never on a read path. Then a fund-name rung in `resolveCompany` mirroring the company
+        name-prefix rung.
+      - Two costs to decide with it: `data/edgar-tickers.json` grows by roughly a megabyte, and
+        share classes make the answer ambiguous by design — "Vanguard 500" is honestly VFINX,
+        VFIAX *and* VOO, so the rung either picks the ETF class or disambiguates on screen. That
+        is the same "where the top two are close, disambiguate rather than pick silently" question
+        the `P1` scoring item raises, and it should be answered the same way in both.
 - [ ] `P2` Securities-coverage depth items promoted from the recall backlog below: GDELT
       year-window backfill, EDGAR older-history shards, and richer paid-tier evidence apply
       per-security and serve this scope directly. The LoC decade walk and Wikidata alias
@@ -203,6 +220,32 @@ queued: the ⛔ pre-release feed gate (`P0` — every free news tier is non-comm
 beta-launch mechanics in `docs/OWNER-ACTIONS.md`. **A paid listing fee is revenue**, so the
 referral board trips the same commercial trigger the affiliate initiative below records: the feed
 gate first, or not the board.
+
+## ⚠ Correction: egress is no longer blocked from the build container (2026-08-12)
+
+**Several entries below state as fact that this container cannot reach the internet. That was
+true when they were written and is now mostly false**, which matters because a standing "cannot
+verify from here" is the reason a dozen adapters were only ever pinned against canned payloads.
+Measured 2026-08-12, from this container:
+
+| Reachable | Blocked |
+|---|---|
+| `sec.gov`, `data.sec.gov` · `en.wikipedia.org` · `query1.finance.yahoo.com` (prices) · `www.federalregister.gov` · `archive.org` · `www.loc.gov` · Snapshot · DefiLlama | `feeds.finance.yahoo.com` (Yahoo RSS **news**) · `web.archive.org` (Wayback CDX) · `query.wikidata.org` |
+| `api.gdeltproject.org` answers but sheds hard — 429/503 on repeat calls, consistent with its ~1-req/5s throttle | |
+
+What this run already produced, on the "does it work" axis of the ⛔ gate above: **Yahoo prices
+✓** (2,512 daily closes for F, 2016-08-12 → 2026-08-11, 34 corporate actions parsing correctly —
+dividends of $0.15 and $0.20 per share), **Wikipedia ✓** (26 history + 160 cited articles),
+**Internet Archive ✓** (49 items — and a real precision defect, fixed below), **Snapshot ✓** (40
+proposals), **DefiLlama exploits ✓** (20 rows, all figures verified — see the `P1` item below),
+**SEC EDGAR ✓** (both ticker files and submissions).
+
+- ⚠ **This does not close the ⛔ gate.** That gate is two axes and this is only the first one:
+  every *licensing* decision is untouched, and the keyed feeds still cannot be tested without
+  keys. `npm run check:feeds` should still be run from the production host, because several
+  sources behave differently from datacenter IPs — GDELT's throttling here may be exactly that.
+- The entries below keep their original "unverified live" wording rather than being rewritten,
+  because each records what was true when the work shipped. Read them against this table.
 
 ## Legend
 
@@ -491,11 +534,16 @@ closed PR #15, whose findings are otherwise all shipped.
       "Missing script" rather than running. The definition now also runs `npm run check` and is
       explicit that a report must say **where** it ran: egress is blocked from the build
       container, so an unqualified skip turns "no internet here" into "these feeds are broken".
-- [ ] `P2` **Give the auditor the two lessons this month taught.** Both are about the same blind
-      spot and neither is in the definition yet: a check that calls a unit directly proves the
-      unit works, not that anything reaches it (`check:wiring` exists now because of this); and a
-      fixture written from the code's own assumption can only confirm that assumption — the
-      exploit amounts were 10^6 too high through 24 passing checks.
+- [x] ~~`P2` **Give the auditor the two lessons this month taught.**~~ — done 2026-08-12.
+      `.claude/agents/code-auditor.md` step 3 gains **"A green check is not evidence the thing
+      works"**, naming both failures so the next pass looks for them by name: *the check calls the
+      unit, nothing calls the unit* (`check:wiring`'s reason for existing; `fetchSiteSnapshots` is
+      the fresh example — fully checked, no caller anywhere), and *a fixture written from an
+      assumption can only confirm that assumption* (the exploit amounts, 10^6 too high through 24
+      passing checks; the Internet Archive's Jan-1 precision bug, wrong through 40, because the
+      fixture used a field the live service does not send). It also tells the auditor to treat
+      "these payload shapes have never met the live server" — which several adapters here say
+      about themselves in comments — as an open finding rather than a caveat.
 
 ---
 
@@ -537,10 +585,14 @@ closed PR #15, whose findings are otherwise all shipped.
       its referent is a claim with no evidence), so its figure is **corrected in place** instead.
       Verified against a real database: `$862.00bn → $862k` on a cited row, an uncited `$2100.00bn`
       deleted, and legitimate figures ($600m Ronin, $1.50bn Bybit) untouched.
-- [ ] `P1` **Check the remaining live figures once.** The ceiling and the floors are arithmetic;
-      whether the *surviving* rows are right is a question only a real run answers. Run
-      `npm run check:feeds` and read the exploit lines against what actually happened — this is the
-      second time the answer has been in the output rather than in the code.
+- [x] ~~`P1` **Check the remaining live figures once.**~~ — done 2026-08-12, from a real
+      `npm run check:feeds` run plus a direct `fetchExploits` call. **All 20 surviving eth rows
+      are right.** Spot-checked against what actually happened: Ronin $624m, Poly Network $611m,
+      Bybit $1.40bn, Nomad $190m, Euler $197m, WazirX $235m, Beanstalk $181m, Wintermute $160m,
+      Poloniex $126m, Harmony $100m — each matches the real incident in date and order of
+      magnitude. Nothing reads `$600` where `$600m` belongs, the range runs $100m–$1.40bn, and
+      the bn/m formatting switches where it should. The 10^6 correction holds in live data, which
+      is the thing only a run could tell us.
 
 ---
 
@@ -1672,12 +1724,18 @@ look like") went to a **separate business checklist** worked independently of bo
       - The trade, recorded deliberately: a genuine 1 January event is now reported as year
         precision. A year band that could have been a day is imprecise; a day that was only ever
         a year is wrong.
-      - ⚠ **Two findings left open rather than fixed here.** `fetchSiteSnapshots` returns `[]`
-        both for "no captures" and for "could not reach the Wayback Machine" — demonstrated live,
-        since `web.archive.org` is blocked from this container and the function reported *zero
-        snapshots for ford.com*. That is the "could not ask is not there is nothing" bug
-        `check:index` exists to prevent, in a function that has **no production caller at all**:
-        only `check:archive` calls it, so it is also an instance of the wiring lesson.
+- [x] **`fetchSiteSnapshots` can no longer report an outage as an empty archive.** Done
+      2026-08-12, from the finding above. It returned a bare `SiteSnapshot[]`, so "the Wayback
+      Machine has never captured this domain" and "we could not reach the Wayback Machine" were
+      both `[]` — and it demonstrated the harm live, reporting **zero captures for ford.com** from
+      a container where `web.archive.org` is blocked. It now returns a `SnapshotResult` carrying
+      `FetchResult`'s own outcome vocabulary (`ok` / `empty` / `error` / `throttled`), so a 503 is
+      "come back", a shape we do not recognise is an error, and only a genuinely empty CDX answer
+      is `empty`. `check:archive` 46 → 52.
+      - ⚠ Still true, and worth its own line: **this function has no production caller.** Only
+        `check:archive` imports it — an instance of the wiring lesson, and the reason the bug
+        could sit fully checked and entirely unexercised. Either the snapshot strip gets built or
+        the function goes; a third state where it is maintained but unreachable is the worst one.
 
 ## Other initiatives
 

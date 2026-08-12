@@ -79,6 +79,25 @@ six pages is.
 **Dead and unreachable code.** Routes in navigation that return nothing. Routes not reachable at
 all. Exported functions with no callers. `TODO`/`FIXME`/`HACK` older than a few months.
 
+**A green check is not evidence the thing works.** Both lessons this project learned the hard way
+are about the same blind spot — a passing suite that was never in a position to fail — and each
+cost a shipped defect, so look for both by name:
+
+- **The check calls the unit; nothing calls the unit.** A test that imports a function and
+  asserts on it proves the function works, not that any code path reaches it. `check:wiring`
+  exists because of this: adapters were verified in isolation while nothing in `app/` or the
+  ingest path ever called them. When a check passes, ask separately *who the production caller
+  is* — and treat "only its own test imports it" as the finding. `fetchSiteSnapshots` was exactly
+  this: fully checked, no caller anywhere.
+- **A fixture written from an assumption can only confirm that assumption.** If the canned
+  payload was authored from the code's own belief about a source — or from the API's published
+  documentation rather than a real response — then the check and the bug agree with each other
+  and the suite is green. The exploit amounts were **10⁶ too high through 24 passing checks**;
+  the Internet Archive adapter reported every year-only item as a specific 1 January through 40,
+  because its fixture used a field the live service does not send. Compare fixtures against a
+  real captured response, and treat "these payload shapes have never met the live server" —
+  which adapters here say about themselves in comments — as an open finding, not a caveat.
+
 **Documentation drift.** Claims in `README.md` or `docs/` the code contradicts. Counts, versions
 and dates in prose that no longer match. Generated files edited by hand — Finance Now's
 `DATA-SOURCES.md` must come from `npm run data-sources`, never a manual edit.

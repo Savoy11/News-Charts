@@ -174,6 +174,26 @@ export interface SiteSnapshot {
 }
 
 /**
+ * Snapshots plus *why* there are none — the distinction an array cannot carry.
+ *
+ * This used to return a bare `SiteSnapshot[]`, so "the Wayback Machine has never captured this
+ * domain" and "we could not reach the Wayback Machine" were both `[]`. Demonstrated rather than
+ * theorised on 2026-08-12: from a container where `web.archive.org` is blocked, this reported
+ * **zero captures for ford.com** — a domain with tens of thousands of them. A caller reading
+ * that number has been told a fact about Ford, and it is false.
+ *
+ * The same mistake `check:index` exists to prevent for the subject index, in the same shape:
+ * an empty answer that a failure is indistinguishable from. `FetchResult` already carries this
+ * vocabulary for events, so the outcomes are its outcomes.
+ */
+export interface SnapshotResult {
+  snapshots: SiteSnapshot[];
+  outcome: "ok" | "empty" | "error" | "throttled";
+  httpStatus?: number;
+  detail?: string;
+}
+
+/**
  * The first capture of a company's own site in each year it was archived.
  *
  * The point is not to plot 40,000 crawls — it is that "the site that day" already exists as a
@@ -184,9 +204,10 @@ export interface SiteSnapshot {
  * large site is tens of thousands of rows and the collapse is what makes it a timeline instead
  * of a log.
  */
-export async function fetchSiteSnapshots(domain: string, limit = 40): Promise<SiteSnapshot[]> {
+export async function fetchSiteSnapshots(domain: string, limit = 40): Promise<SnapshotResult> {
   const d = domain.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-  if (!d) return [];
+  // Nothing was asked, so nothing was learned — not "this domain has no captures".
+  if (!d) return { snapshots: [], outcome: "empty" };
   const params = new URLSearchParams({
     url: d,
     output: "json",
@@ -202,12 +223,27 @@ export async function fetchSiteSnapshots(domain: string, limit = 40): Promise<Si
       headers: UA,
       next: { revalidate: 86400 },
     });
-    if (!res.ok) return [];
+    // The Wayback Machine sheds load the same way the rest of archive.org does, and "come back"
+    // is a different fact from "there is nothing here".
+    if (res.status === 429 || res.status === 503) {
+      return { snapshots: [], outcome: "throttled", httpStatus: res.status };
+    }
+    if (!res.ok) return { snapshots: [], outcome: "error", httpStatus: res.status };
     const rows: CdxRow[] = await res.json();
+    // Something that is not an array at all is an answer we do not understand. Reporting it as
+    // an empty archive would be the original bug wearing different clothes.
+    if (!Array.isArray(rows)) {
+      return { snapshots: [], outcome: "error", httpStatus: 200, detail: "response was not an array" };
+    }
     // The first row is the column header, not data. Treating it as a capture produced a snapshot
     // dated "timestamp", which parses to nothing and renders as an empty row.
-    const [header, ...body] = Array.isArray(rows) ? rows : [];
-    if (!header || header[0] !== "timestamp") return [];
+    const [header, ...body] = rows;
+    // CDX answers a domain it has never captured with an empty array — no header, no rows. That
+    // one really is "there is nothing here".
+    if (!header) return { snapshots: [], outcome: "empty", httpStatus: 200 };
+    if (header[0] !== "timestamp") {
+      return { snapshots: [], outcome: "error", httpStatus: 200, detail: `unexpected columns: ${header.join(",")}` };
+    }
 
     const out: SiteSnapshot[] = [];
     for (const row of body) {
@@ -218,9 +254,10 @@ export async function fetchSiteSnapshots(domain: string, limit = 40): Promise<Si
         url: `https://web.archive.org/web/${ts}/${row[1]}`,
       });
     }
-    return out;
-  } catch {
+    return { snapshots: out, outcome: out.length ? "ok" : "empty", httpStatus: 200 };
+  } catch (err) {
     // A snapshot strip is a nice-to-have; an unreachable Wayback must never take a page down.
-    return [];
+    // It must not be reported as an empty archive either — hence `error` rather than `empty`.
+    return { snapshots: [], outcome: "error", detail: (err as Error).message };
   }
 }

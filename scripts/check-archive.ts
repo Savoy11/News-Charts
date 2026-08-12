@@ -143,26 +143,56 @@ async function snapshots(): Promise<void> {
     ["19971210174900", "http://www.ford.com:80/", "200"],
     ["bogus", "http://www.ford.com/", "200"],
   ]);
-  const snaps = await fetchSiteSnapshots("ford.com");
+  const r = await fetchSiteSnapshots("ford.com");
+  const snaps = r.snapshots;
   check("captures parse", snaps.length === 2, `${snaps.length}`);
+  check("and say so", r.outcome === "ok", r.outcome);
   // Treating the header as data produced a snapshot dated "timestamp" — an empty row on screen.
   check("the header row is not a capture", !snaps.some((s) => s.date.startsWith("time")));
   check("a malformed timestamp is skipped", !snaps.some((s) => s.url.includes("bogus")));
   check("the timestamp becomes a date", snaps[0]?.date === "1996-10-23", snaps[0]?.date);
   check("the link replays that capture", snaps[0]?.url.startsWith("https://web.archive.org/web/19961023234631/"), snaps[0]?.url);
 
+  /**
+   * The half an array could not express.
+   *
+   * Every case below used to be `[]`, so "this domain was never archived" and "we could not ask"
+   * were the same answer. Live proof, 2026-08-12: from a container where web.archive.org is
+   * blocked, this function reported zero captures for ford.com.
+   */
   serve([["timestamp", "original"]]);
-  check("a header with no captures yields nothing", (await fetchSiteSnapshots("ford.com")).length === 0);
-  // A response that is not the documented shape must yield nothing rather than junk rows.
+  const headerOnly = await fetchSiteSnapshots("ford.com");
+  check("a header with no captures is genuinely empty", headerOnly.snapshots.length === 0 && headerOnly.outcome === "empty", headerOnly.outcome);
+
+  // A response that is not the documented shape must yield nothing rather than junk rows —
+  // and must not claim the archive holds nothing, because we did not understand the answer.
   serve({ error: "nope" });
-  check("an unexpected shape yields nothing", (await fetchSiteSnapshots("ford.com")).length === 0);
+  const junk = await fetchSiteSnapshots("ford.com");
+  check("an unexpected shape yields nothing", junk.snapshots.length === 0);
+  check("and is an error, not an empty archive", junk.outcome === "error", junk.outcome);
+
+  serve([["urlkey", "original"]]);
+  const wrongCols = await fetchSiteSnapshots("ford.com");
+  check("unexpected columns are an error", wrongCols.outcome === "error", wrongCols.outcome);
   serve([], 404);
-  check("a 404 yields nothing", (await fetchSiteSnapshots("ford.com")).length === 0);
+  const notFound = await fetchSiteSnapshots("ford.com");
+  check("a 404 yields nothing", notFound.snapshots.length === 0);
+  check("and reports the status it got", notFound.outcome === "error" && notFound.httpStatus === 404, `${notFound.outcome}/${notFound.httpStatus}`);
+
+  serve([], 503);
+  const busy = await fetchSiteSnapshots("ford.com");
+  check("a shedding Wayback is throttled, not empty", busy.outcome === "throttled", busy.outcome);
+
   globalThis.fetch = (async () => {
     throw new Error("network down");
   }) as typeof fetch;
-  check("an unreachable Wayback never takes the page down", (await fetchSiteSnapshots("ford.com")).length === 0);
-  check("an empty domain is not asked about", (await fetchSiteSnapshots("  ")).length === 0);
+  const down = await fetchSiteSnapshots("ford.com");
+  check("an unreachable Wayback never takes the page down", down.snapshots.length === 0);
+  // The one this whole result type exists for: the live failure that reported "0 for ford.com".
+  check("and is never reported as an archive with nothing in it", down.outcome === "error", down.outcome);
+
+  const nothingAsked = await fetchSiteSnapshots("  ");
+  check("an empty domain is not asked about", nothingAsked.snapshots.length === 0 && nothingAsked.outcome === "empty", nothingAsked.outcome);
 }
 
 async function main(): Promise<void> {

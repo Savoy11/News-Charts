@@ -16,6 +16,17 @@ ever made a live request** — egress is blocked from the build container by pol
 payload shape comes from published documentation and is pinned against canned responses. The
 checks prove the parsing, not the endpoints.
 
+> **Partly overtaken by events, 2026-08-12.** Egress from the build container is now mostly open,
+> and the keyless feeds have been exercised live for the first time: Yahoo **prices**, Wikipedia,
+> SEC EDGAR, Federal Register, Internet Archive, Snapshot and DefiLlama all answer, and their
+> payloads parse. Still blocked here: Yahoo's **news** RSS host, the Wayback CDX host, and
+> Wikidata; GDELT answers but throttles hard. **It found a real defect on the first call** — every
+> year-only Internet Archive item was being drawn on a specific 1 January — which is the argument
+> for §1 rather than against it. Two things are unchanged and still yours: **the licensing half
+> below is untouched by any of this**, and this should still be run **from the production host**,
+> because several sources behave differently from datacenter IPs. See the correction table at the
+> top of the master checklist.
+
 ```bash
 npm run check:feeds            # defaults to BABA
 npm run check:feeds NVDA       # a second company

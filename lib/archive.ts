@@ -45,6 +45,21 @@ function first(v: string | string[] | undefined): string | undefined {
  * Metadata quality here is uneven by design — it is a public archive, not a catalogue — so a
  * bare year is common and must stay a bare year. Normalising "1922" to 1922-01-01 and calling it
  * day precision would put a March pamphlet in January and draw it as a specific day.
+ *
+ * ⚠ The archive does that normalising *for us*, which is how the harm above arrived anyway.
+ * Exercised against the live service for the first time on 2026-08-12, `advancedsearch` returns
+ * a year-only item as `{"date":"1936-01-01T00:00:00Z","year":1936}` — a full midnight timestamp
+ * on 1 January, not the bare `year` the API documentation shows. Read literally that is day
+ * precision, so every year-only item in the archive was landing on the timeline as a specific
+ * 1 January. Three consecutive Jan-1 "day" hits in a ten-row sample is the tell.
+ *
+ * The canned fixtures were written from the documentation, so no check ever saw the real shape —
+ * `check:archive` asserted year precision against a doc carrying `year` and no `date` at all,
+ * a payload the service does not send. Both shapes are pinned now.
+ *
+ * A genuine 1 January event is downgraded to year precision by the rule below. That is the
+ * trade, and it is the right way round: a year band that could have been a day is imprecise,
+ * a day that was only ever a year is wrong.
  */
 export function parseArchiveDate(raw: string | undefined): { date: string; precision: DatePrecision } | null {
   const s = String(raw ?? "").trim();
@@ -58,6 +73,12 @@ export function parseArchiveDate(raw: string | undefined): { date: string; preci
     const [y, m, d] = [Number(day[1]), Number(day[2]), Number(day[3])];
     const maxDay = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
     if (okYear(y) && m >= 1 && m <= 12 && d >= 1 && d <= maxDay) {
+      // Midnight on 1 January *with a time component* is the archive's year-only placeholder
+      // (see the note above). A bare "1936-01-01" keeps day precision: the live service sends
+      // the timestamp form, so the bare one is far likelier to be a real date somebody typed.
+      if (m === 1 && d === 1 && /[T ]00:00:00/.test(s)) {
+        return { date: `${day[1]}-01-01`, precision: "year" };
+      }
       return { date: `${day[1]}-${day[2]}-${day[3]}`, precision: "day" };
     }
     return null;
@@ -153,6 +174,26 @@ export interface SiteSnapshot {
 }
 
 /**
+ * Snapshots plus *why* there are none — the distinction an array cannot carry.
+ *
+ * This used to return a bare `SiteSnapshot[]`, so "the Wayback Machine has never captured this
+ * domain" and "we could not reach the Wayback Machine" were both `[]`. Demonstrated rather than
+ * theorised on 2026-08-12: from a container where `web.archive.org` is blocked, this reported
+ * **zero captures for ford.com** — a domain with tens of thousands of them. A caller reading
+ * that number has been told a fact about Ford, and it is false.
+ *
+ * The same mistake `check:index` exists to prevent for the subject index, in the same shape:
+ * an empty answer that a failure is indistinguishable from. `FetchResult` already carries this
+ * vocabulary for events, so the outcomes are its outcomes.
+ */
+export interface SnapshotResult {
+  snapshots: SiteSnapshot[];
+  outcome: "ok" | "empty" | "error" | "throttled";
+  httpStatus?: number;
+  detail?: string;
+}
+
+/**
  * The first capture of a company's own site in each year it was archived.
  *
  * The point is not to plot 40,000 crawls — it is that "the site that day" already exists as a
@@ -163,9 +204,10 @@ export interface SiteSnapshot {
  * large site is tens of thousands of rows and the collapse is what makes it a timeline instead
  * of a log.
  */
-export async function fetchSiteSnapshots(domain: string, limit = 40): Promise<SiteSnapshot[]> {
+export async function fetchSiteSnapshots(domain: string, limit = 40): Promise<SnapshotResult> {
   const d = domain.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-  if (!d) return [];
+  // Nothing was asked, so nothing was learned — not "this domain has no captures".
+  if (!d) return { snapshots: [], outcome: "empty" };
   const params = new URLSearchParams({
     url: d,
     output: "json",
@@ -181,12 +223,27 @@ export async function fetchSiteSnapshots(domain: string, limit = 40): Promise<Si
       headers: UA,
       next: { revalidate: 86400 },
     });
-    if (!res.ok) return [];
+    // The Wayback Machine sheds load the same way the rest of archive.org does, and "come back"
+    // is a different fact from "there is nothing here".
+    if (res.status === 429 || res.status === 503) {
+      return { snapshots: [], outcome: "throttled", httpStatus: res.status };
+    }
+    if (!res.ok) return { snapshots: [], outcome: "error", httpStatus: res.status };
     const rows: CdxRow[] = await res.json();
+    // Something that is not an array at all is an answer we do not understand. Reporting it as
+    // an empty archive would be the original bug wearing different clothes.
+    if (!Array.isArray(rows)) {
+      return { snapshots: [], outcome: "error", httpStatus: 200, detail: "response was not an array" };
+    }
     // The first row is the column header, not data. Treating it as a capture produced a snapshot
     // dated "timestamp", which parses to nothing and renders as an empty row.
-    const [header, ...body] = Array.isArray(rows) ? rows : [];
-    if (!header || header[0] !== "timestamp") return [];
+    const [header, ...body] = rows;
+    // CDX answers a domain it has never captured with an empty array — no header, no rows. That
+    // one really is "there is nothing here".
+    if (!header) return { snapshots: [], outcome: "empty", httpStatus: 200 };
+    if (header[0] !== "timestamp") {
+      return { snapshots: [], outcome: "error", httpStatus: 200, detail: `unexpected columns: ${header.join(",")}` };
+    }
 
     const out: SiteSnapshot[] = [];
     for (const row of body) {
@@ -197,9 +254,10 @@ export async function fetchSiteSnapshots(domain: string, limit = 40): Promise<Si
         url: `https://web.archive.org/web/${ts}/${row[1]}`,
       });
     }
-    return out;
-  } catch {
+    return { snapshots: out, outcome: out.length ? "ok" : "empty", httpStatus: 200 };
+  } catch (err) {
     // A snapshot strip is a nice-to-have; an unreachable Wayback must never take a page down.
-    return [];
+    // It must not be reported as an empty archive either — hence `error` rather than `empty`.
+    return { snapshots: [], outcome: "error", detail: (err as Error).message };
   }
 }

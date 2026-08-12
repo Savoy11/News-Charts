@@ -20,7 +20,32 @@ interface TickerRow {
  * last sync is not in it; those fall through to the live files exactly as before. What changes is
  * that the common case (every security EDGAR knew at sync time) now costs no request at all.
  */
-import tickerIndex from "../data/edgar-tickers.json";
+import rawTickerIndex from "../data/edgar-tickers.json";
+
+/**
+ * The index's contract, declared rather than inferred.
+ *
+ * Importing the JSON gives TypeScript a literal type with 28,000-odd key names in it, which is
+ * both slow to check and wrong to depend on: the code would stop compiling whenever the data file
+ * was regenerated with a field the previous one lacked, which is exactly what a *data* file is
+ * expected to do. Declaring the shape makes the dependency explicit and lets an older file be a
+ * runtime question — every reader below tolerates a missing name index rather than assuming one.
+ */
+export interface TickerIndex {
+  syncedOn: string;
+  companies: [number, string, string][];
+  funds: Record<string, number>;
+  /** fund series names, written once and referenced by index; absent before the 2026-08-12 sync */
+  seriesNames?: string[];
+  /** the preferred (exchange-traded, where there is one) share-class symbol per series */
+  seriesSymbols?: string[];
+  /** the registrant CIK per series — carried, because 36% are not resolvable via `funds` */
+  seriesCiks?: number[];
+  /** every share-class symbol → its series' index in `seriesNames` */
+  symbolSeries?: Record<string, number>;
+}
+
+const tickerIndex = rawTickerIndex as unknown as TickerIndex;
 
 let localRows: TickerRow[] | null = null;
 function localCompanies(): TickerRow[] {
@@ -28,7 +53,7 @@ function localCompanies(): TickerRow[] {
   // The SEC's own ordering is preserved by the sync script and load-bearing here: the
   // name-prefix rung below takes the FIRST prefix hit, which is only "the company a person
   // almost certainly means" because the file is ordered roughly by size.
-  localRows = (tickerIndex.companies as [number, string, string][]).map(([cik_str, ticker, title]) => ({
+  localRows = tickerIndex.companies.map(([cik_str, ticker, title]) => ({
     cik_str,
     ticker,
     title,
@@ -54,9 +79,13 @@ async function getTickerMap(): Promise<TickerRow[]> {
  *
  * `company_tickers.json` covers operating companies (plus some exchange-traded trusts);
  * `company_tickers_mf.json` covers registered funds — every ETF and mutual fund share class,
- * keyed by symbol. It carries **no names**, only cik/series/class/symbol, so a fund resolved
- * here gets its display name from the registrant's own submissions record — one extra request,
- * paid only on an actual fund hit.
+ * keyed by symbol. The split is not what the names suggest: **SPY resolves out of the *company*
+ * file** (it is a unit investment trust) while VOO and VTI exist only here, so both are needed.
+ *
+ * Neither file carries a fund NAME. `npm run sync:tickers` fetches those separately from EDGAR's
+ * series listing and writes them into the index, so `registrantName` below is now only a fallback
+ * for a symbol the name pass missed — it answers with the trust ("VANGUARD INDEX FUNDS") rather
+ * than the fund, which is why it was never good enough on its own.
  */
 interface MfFile {
   fields: string[];
@@ -94,11 +123,6 @@ async function registrantName(cik: string): Promise<string | null> {
 }
 
 /**
- * Resolve any exchange-traded security EDGAR knows: operating companies first, then ETFs and
- * mutual funds by symbol. One resolver on purpose — a fund is a subject exactly the way a
- * company is (a CIK with filings and a priced ticker), and two resolvers would drift.
- */
-/**
  * The company rungs, against whichever copy of the index the caller has.
  *
  * Split out so the local snapshot and the live file go through identical matching — two copies
@@ -127,6 +151,52 @@ function matchCompany(rows: TickerRow[], q: string): CompanyInfo | null {
 /** Symbols are short; anything else cannot be one, and asking about it wastes a request. */
 const SYMBOL_SHAPE = (q: string) => q.length >= 2 && q.length <= 6 && /^[A-Z0-9.]+$/.test(q);
 
+/** The fund series name behind a share-class symbol — "VFIAX" → "Vanguard 500 Index Fund". */
+function fundNameFor(symbol: string): string | null {
+  const idx = tickerIndex.symbolSeries?.[symbol];
+  if (idx === undefined) return null;
+  return tickerIndex.seriesNames?.[idx] ?? null;
+}
+
+/**
+ * Funds by name — the rung "Vanguard 500" needed and could not have.
+ *
+ * Same shape as the company name rungs deliberately: exact name, then name prefix, taking the
+ * first hit. What it resolves *to* is the fund's preferred share class, chosen at sync time —
+ * "Vanguard 500" is honestly VFINX, VFIAX and VOO, and the ETF class is the one this product is
+ * about (2026-08-08 scope refocus). A person who wants a specific class still types its symbol,
+ * which rung 2 answers exactly.
+ *
+ * The minimum length is the same guard the company prefix rung uses: two characters of a fund
+ * name match half the industry.
+ */
+function matchFundName(q: string): CompanyInfo | null {
+  const names = tickerIndex.seriesNames ?? [];
+  const symbols = tickerIndex.seriesSymbols ?? [];
+  const ciks = tickerIndex.seriesCiks ?? [];
+  if (!names.length || q.length < 3) return null;
+
+  let hit = names.findIndex((n) => n.toUpperCase() === q);
+  if (hit < 0) hit = names.findIndex((n) => n.toUpperCase().startsWith(q + " "));
+  if (hit < 0) return null;
+
+  const symbol = symbols[hit];
+  // The CIK comes from the series index, NOT from a `funds[symbol]` lookup: EDGAR's series
+  // listing knows share classes the fund ticker file omits, and 6,787 of 19,040 series (36%)
+  // would otherwise be found by name and then answered with null.
+  const cik = ciks[hit];
+  if (!symbol || cik === undefined) return null;
+  return { ticker: symbol, cik: String(cik).padStart(10, "0"), name: names[hit] };
+}
+
+/**
+ * Resolve any exchange-traded security EDGAR knows: operating companies first, then ETFs and
+ * mutual funds by symbol, then funds by name. One resolver on purpose — a fund is a subject
+ * exactly the way a company is (a CIK with filings and a priced ticker), and two would drift.
+ *
+ * Rungs 1–3 are answered from the committed index and cost nothing; only rung 4 leaves the
+ * machine, and only for a listing newer than the last `npm run sync:tickers`.
+ */
 export async function resolveCompany(query: string): Promise<CompanyInfo | null> {
   const q = query.trim().toUpperCase();
 
@@ -134,19 +204,27 @@ export async function resolveCompany(query: string): Promise<CompanyInfo | null>
   const local = matchCompany(localCompanies(), q);
   if (local) return local;
 
-  // 2. Funds, still from the local index. Symbol-keyed only (the file carries no names), so this
-  //    answers "VTSAX" and "QQQ" but not "Vanguard 500" — a fund NAME index is a separate item.
-  //    The registrant lookup for the display name is an enrichment: it degrades to the symbol.
+  // 2. Funds by SYMBOL, from the local index. The display name comes from the index too, when
+  //    the series pass has named it — so "VOO" answers "Vanguard 500 Index Fund" with no
+  //    request. Only a symbol the name pass missed falls back to the registrant lookup, which
+  //    is an enrichment and degrades to the symbol itself.
   if (SYMBOL_SHAPE(q)) {
-    const localCik = (tickerIndex.funds as Record<string, number>)[q];
+    const localCik = tickerIndex.funds[q];
     if (localCik !== undefined) {
       const cik = String(localCik).padStart(10, "0");
+      const named = fundNameFor(q);
+      if (named) return { ticker: q, cik, name: named };
       const name = await registrantName(cik).catch(() => null);
       return { ticker: q, cik, name: name ?? q };
     }
   }
 
-  // 3. Only now the network, and only for what the snapshot could not know: anything listed
+  // 3. Funds by NAME — "Vanguard 500" → VOO. The rung company names already had, which funds
+  //    could not have while the only fund source was a symbol list.
+  const byName = matchFundName(q);
+  if (byName) return byName;
+
+  // 4. Only now the network, and only for what the snapshot could not know: anything listed
   //    since the last `npm run sync:tickers`. Everything above this line is free and offline.
   const rows = await getTickerMap();
   const live = matchCompany(rows, q);

@@ -108,26 +108,31 @@ already held, but new investment goes to securities coverage first.
       ladder) → carry the concern as focus (restore two lines in SearchBox//search) → grade
       with focusScore → consider the paid tier for concepts keywords can't reach ("covid" vs
       "pandemic" vs "lockdown" in headlines).
-- [ ] `P2` Fund NAME resolution ("Vanguard 500" → VFINX/VOO) — **the free name index exists and
-      has been located; what is left is building it.** (2026-08-12.)
-      - The blocker this item recorded was whether a keyless source carries fund *names* at all.
-        It does, and neither candidate this entry guessed was the one. Registrant names are the
-        wrong level — `data.sec.gov/submissions/CIK0000036405.json` says `VANGUARD INDEX FUNDS`,
-        which "Vanguard 500" does not match. **Series names are the right level**, and EDGAR
-        serves them: `browse-edgar?action=getcompany&CIK=<cik>&scd=series` returns, in one
-        response per registrant, `S000002839 · Vanguard 500 Index Fund` together with every share
-        class and its ticker — `C000007773 Investor Shares VFINX`, `C000092055 ETF Shares VOO`.
-        That is the whole join, from one keyless endpoint.
-      - Shape of the work: 1,164 unique fund CIKs (not 11,970 series or 28,419 symbols), so a
-        sync-time pass is roughly 1,164 requests plus paging for large registrants — minutes at
-        the SEC's rate limit, and it belongs in `npm run sync:tickers` beside the ticker index,
-        never on a read path. Then a fund-name rung in `resolveCompany` mirroring the company
-        name-prefix rung.
-      - Two costs to decide with it: `data/edgar-tickers.json` grows by roughly a megabyte, and
-        share classes make the answer ambiguous by design — "Vanguard 500" is honestly VFINX,
-        VFIAX *and* VOO, so the rung either picks the ETF class or disambiguates on screen. That
-        is the same "where the top two are close, disambiguate rather than pick silently" question
-        the `P1` scoring item raises, and it should be answered the same way in both.
+- [x] ~~`P2` Fund NAME resolution ("Vanguard 500" → VFINX/VOO)~~ — done 2026-08-12. **"Vanguard
+      500" now resolves to VOO, named "Vanguard 500 Index Fund", with no request at all.**
+      - **Neither candidate this entry guessed was the source.** Registrant names are the wrong
+        level: `data.sec.gov/submissions/CIK0000036405.json` says `VANGUARD INDEX FUNDS`, which
+        nobody searches for. **Series names are the right level**, and EDGAR serves the whole join
+        keylessly — `browse-edgar?action=getcompany&CIK=<cik>&scd=series` returns
+        `S000002839 · Vanguard 500 Index Fund` with every share class and its ticker
+        (`C000007773 Investor Shares VFINX`, `C000092055 ETF Shares VOO`) in one response.
+      - **One request per registrant, not per fund:** 1,164 rather than 11,970 series or 28,419
+        symbols, and the largest registrant in the file (145 series, 1,094 classes) comes back
+        complete and unpaginated, so there is no page-walking to get wrong. It runs in
+        `npm run sync:tickers`, never on a read path.
+      - **The share-class ambiguity is answered, not dodged.** "Vanguard 500" is honestly VFINX,
+        VFIAX, VIFSX, VOO and VFFSX. The ETF class wins, for the reason the scope refocus gives:
+        this product is about exchange-traded securities, and the ETF class is the one with a
+        price chart a reader can act on. A person who wants a specific class still types its
+        symbol, which the exact-symbol rung answers. Stated in `preferredClass` and asserted, so
+        it cannot drift into a silent pick.
+      - **It also removed a request the site was making on every fund page.** Resolving a fund by
+        symbol used to fetch the registrant record just to have something to call it; the index
+        now carries the fund's own name, so VFIAX answers "Vanguard 500 Index Fund" offline.
+      - Parsing HTML is the cost, and the parser is the part worth checking: a class belongs to
+        the series *above* it, so two independent regex sweeps would still "work" while attaching
+        every symbol to whichever fund sorted first. `check:tickers` pins that association, the
+        entity decoding, and both preference branches.
 - [ ] `P2` Securities-coverage depth items promoted from the recall backlog below: GDELT
       year-window backfill, EDGAR older-history shards, and richer paid-tier evidence apply
       per-security and serve this scope directly. The LoC decade walk and Wikidata alias

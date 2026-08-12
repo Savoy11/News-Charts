@@ -1,13 +1,13 @@
-# Chronolens — Master Checklist
+# News Charts — Master Checklist
 
-The governing checklist for the **Chronolens** project: a single place to track initiatives,
+The governing checklist for the **News Charts** project: a single place to track initiatives,
 priorities, and progress. Add to it, check things off, re-prioritise. This is a living doc.
 
-**Last updated:** 2026-08-08
+**Last updated:** 2026-08-12
 
 ## Scope & independence
 
-- **This checklist governs Chronolens only.** Crypto-Stuff / CAEP is a **separate project with
+- **This checklist governs News Charts only.** Crypto-Stuff / CAEP is a **separate project with
   its own master checklist**; the two are developed **independently** — no shared code, no
   runtime coupling. Any future cross-project connection would be a separate, explicit decision,
   not something assumed or tracked here.
@@ -17,7 +17,7 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
     the repo or names a sibling project, no `file:`/git dependency on one, and `CLAUDE.md`
     (added the same day) must keep stating the scope rule with no stale path into another
     checkout.
-- **Related Chronolens docs:** `README.md` (feature notes), `docs/EVENTS-SCHEMA.md` (the events
+- **Related News Charts docs:** `README.md` (feature notes), `docs/EVENTS-SCHEMA.md` (the events
   schema spec). This checklist tracks *work*; those describe *what exists*.
 
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
@@ -117,6 +117,93 @@ already held, but new investment goes to securities coverage first.
       harvesting serve companies too and keep their place. Topic-only recall items rank behind
       all of these until the scope changes again.
 
+## Planned initiatives — free planner & referral board (2026-08-12)
+
+**Two planned additions, neither built and neither started: a free retirement planner and a
+professional referral board.** Both widen News Charts from a funnel into a destination product —
+something a visitor comes back to rather than passes through. Both also carry regulatory
+constraints that are **build requirements, not footnotes**: in each case the constraint decides
+what the software is allowed to compute, store and display, and crossing it changes what the
+business legally *is* — a publisher becomes an investment adviser, a directory becomes a
+referral-fee arrangement. Recorded now so the constraints exist before any code does.
+
+- [ ] `P2` **Free retirement planner — a public, no-account calculator.** The user supplies
+      current age, current savings, contribution rate, target retirement age and a return
+      assumption; the tool projects balances forward, the shortfall against the target, and the
+      savings rate required to close it. Nothing built.
+      - **HARD LINE — it never recommends securities or an allocation.** It may do math on the
+        user's own numbers. It may **not** take risk tolerance — or any other profile input —
+        and change which securities or allocations a user is shown. This is the same
+        publisher's-exclusion boundary that governs Finance Now's Portfolio Builder: a
+        calculator the user drives is fine, a tool that outputs what to buy is investment
+        advice. (Cited as precedent only — no shared code, per **Scope & independence** above.)
+      - **Planner state stays isolated from every securities-facing surface.** Its own storage
+        namespace under the `news-charts:` prefix, never joined to follows, prefs, notes, or
+        any research/timeline personalisation. If the profile ever feeds *which securities a
+        user sees*, the boundary is gone regardless of what the UI says.
+      - **Prefer client-side computation with nothing persisted server-side** unless the user
+        explicitly opts in. Holding no retirement PII sidesteps most privacy obligations
+        outright; make that the default and say so on the page, not only here.
+      - **Any "next steps" content is population-level, never personal.** "People with estates
+        above $X often consult an estate attorney" — never "you should hire an attorney."
+      - **SEO note:** free interactive tools are the content type that still earns search
+        traffic and links after AI Overviews, unlike articles. Indexable, fast, and ideally
+        shareable via URL-encoded scenarios — which also serves the no-persistence default,
+        since the scenario then lives in the link rather than in a row.
+- [ ] `P2` **Professional referral board — finance-adjacent, NOT investment advisers.** A
+      searchable local directory of the professionals a financial planner cannot substitute
+      for: estate and elder-law attorneys, CPAs and tax preparers, and insurance producers.
+      Nothing built.
+      - **Scope exclusion, and the reason it is structural.** Investment advisers are
+        deliberately out of scope: North Carolina requires a solicitor for an investment adviser
+        to register as an investment adviser representative *of each adviser solicited for* (NC
+        Secretary of State, Securities Division) — impossible for a multi-advisor platform, and
+        it would pull the business under the SEC Marketing Rule that the publisher posture
+        exists to avoid.
+      - **Fee model — flat, cost-justified listing fees only. No per-referral, no per-lead, no
+        percentage of the professional's fees.** NC Rule of Professional Conduct 7.4
+        ("Intermediary Organizations", which names "online marketing platform" explicitly) bars
+        requiring a lawyer to pay more than "a reasonable sum representing a proportional share
+        of the organization's administrative and advertising costs." The fee schedule must be
+        defensible against real costs, and **that calculation has to be written down** — owner
+        action, mirrored in `docs/OWNER-ACTIONS.md`.
+      - **Disclosure is a component requirement, not a footer link.** Rule 7.4 requires the
+        criteria for inclusion, and any payment made by the professional, to be disclosed at the
+        outset of the user's interaction — so it renders with the listing itself, not behind a
+        link a user may never follow.
+      - **No recommendation, no matching.** The user filters and chooses. No "best match"
+        ranking, no algorithmic pairing, no "recommended for you" — a matched list is an
+        endorsement, and endorsement is what the rules restrict. Note this cuts directly against
+        the instinct the rest of this codebase is built on: `lib/enrich/relevance.ts` and
+        `lib/focus.ts` exist to rank, and the directory must not reuse either.
+      - **Insurance listings must not discuss specific policy terms or conditions.** N.C.G.S.
+        § 58-33-82 bars paying unlicensed persons for selling, soliciting or negotiating
+        insurance; NCDOI's referral-fee FAQ permits referral fees where the referral avoids
+        policy specifics. Hand off, never describe coverage. ⚠ The anti-rebating statutes
+        (§§ 58-33-85, 58-63-15) still need a separate look — not done.
+      - **No unauthorized practice of law.** Never tell a user which kind of professional they
+        need; generic education only.
+      - **Licence verification from day one.** Verify and display current licence status against
+        the public NC State Bar, NC CPA Board and NCDOI lookups; re-verify on a schedule; lapsed
+        or unverifiable means delisted. This satisfies Rule 7.4's inclusion-criteria disclosure
+        and matches the data-honesty posture already in the repo — a listing is shown as what it
+        verifiably is, or not at all.
+      - **Ship a public "How we comply with NC RPC 7.4" page.** Under 7.4 the compliance burden
+        falls on the *participating lawyer*, so answering it up front removes the objection
+        before a prospective listee has to raise it.
+      - **Local SEO is a separate surface** — per-city, per-specialty pages. A different, and far
+        less contested, keyword game than the national timeline product.
+      - **Owner action, blocking launch:** review by a North Carolina attorney covering RPC 7.4,
+        § 58-33-82 plus the rebating statutes, and NC CPA Board referral-fee rules. Mirrored in
+        `docs/OWNER-ACTIONS.md`.
+
+**Both items are `P2` deliberately.** Neither may jump ahead of the launch-critical work already
+queued: the ⛔ pre-release feed gate (`P0` — every free news tier is non-commercial today),
+`COMMERCIAL_MODE=true` in production, the hourly scheduler that nothing runs yet, and the
+beta-launch mechanics in `docs/OWNER-ACTIONS.md`. **A paid listing fee is revenue**, so the
+referral board trips the same commercial trigger the affiliate initiative below records: the feed
+gate first, or not the board.
+
 ## Legend
 
 - **Priority:** `P0` = do first / unblocks others · `P1` = core value · `P2` = later / nice-to-have
@@ -134,7 +221,7 @@ already held, but new investment goes to securities coverage first.
 
 ## Project state & prioritized backlog (opened 2026-07-25 · cleared 2026-07-28)
 
-**Where Chronolens stands.** The data layer is real — 14 SQL migrations (`db/001`–`014`) plus a
+**Where News Charts stands.** The data layer is real — 14 SQL migrations (`db/001`–`014`) plus a
 full script suite (`ingest`, `score`, `signals`, `explain`, `plan`). The feature backlog that
 opened this section is **done**: PRs #1–#7 all merged 2026-07-25, #9 (citation mining, NL
 prompts, pre-IPO story, chart interaction, eight news repositories) merged 2026-07-27, and #11
@@ -753,7 +840,7 @@ machine closes that gap.
       keyless hacks dataset instead, so nothing here is my recollection.
       *Attributed, not confirmed:* the item asks for on-chain confirmation before ingest. This
       does not do that, and does not imply it — every row names DefiLlama, links to the record,
-      and its own copy says *"not confirmed on-chain by Chronolens."* A new `exploit` kind
+      and its own copy says *"not confirmed on-chain by News Charts."* A new `exploit` kind
       (`db/012`) keeps the distinction visible: an `onchain` event is one we read from a block and
       a reader can re-verify; an exploit is someone else's finding that we are repeating. Adding
       true on-chain confirmation stays open below.
@@ -853,7 +940,7 @@ On-chain data has a hard floor at genesis, and it's young. Name it; don't fake d
 | Most DeFi / governance | **~2020+** | Protocol-dependent |
 
 Within these bounds data is complete and gap-free (immutable chain); the only constraint is
-backfill throughput, handled by back-off + idempotency. Contrast Chronolens' other sources
+backfill throughput, handled by back-off + idempotency. Contrast News Charts' other sources
 (Chronicling America → 1800s, Wikipedia → further): **crypto subjects have short timelines, on
 purpose.**
 
@@ -958,7 +1045,7 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
       which nothing offline can test. **A CORS rejection looks exactly like a wrong key — no
       articles, no error** — so this needs one run on a real machine with a real key before it is
       claimed to work. `npm run check:feed-keys` (29 cases) pins the parsing and the failure
-      modes; `check:ui` asserts the key reaches localStorage, never reaches a Chronolens origin,
+      modes; `check:ui` asserts the key reaches localStorage, never reaches a News Charts origin,
       and is genuinely forgotten.
       **Not done:** the discovery engine, which has no adapter yet — it belongs with whichever
       engine the evaluation item picks.
@@ -1270,16 +1357,16 @@ Each idea checked against the codebase before listing — several were cheaper t
 ## Initiative: Affiliate links on relevant surfaces · `P2`
 
 Companion to CAEP's affiliate item (`docs/ROADMAP.md` in Crypto-Stuff — staking pages first,
-across both its free web and desktop distributions). Chronolens' own affiliate opportunities
+across both its free web and desktop distributions). News Charts' own affiliate opportunities
 are thinner but real, and the same integrity rules apply. **The two projects stay independent;
 this is a shared revenue *pattern*, not shared code.**
 
-- [ ] `P0` **Recognise what this triggers: affiliate revenue makes Chronolens commercial.** That
+- [ ] `P0` **Recognise what this triggers: affiliate revenue makes News Charts commercial.** That
       activates every item in the ⛔ pre-release feed gate above — NYT, Guardian, Newsdata,
       GNews, Currents, Marketaux, EODHD and Finnhub are all on non-commercial free tiers today.
       Adding a single paid link is the moment those licences must be resolved. **Do the feed
       gate first, or not the links.**
-- [ ] `P1` **Neutrality rule.** Chronolens' product *is* an unbiased historical record. An
+- [ ] `P1` **Neutrality rule.** News Charts' product *is* an unbiased historical record. An
       affiliate relationship must never influence which events, articles or sources surface,
       nor their ordering. Structurally: the ingest/ranking layers must not be able to read
       affiliate state, exactly as CAEP keeps it out of the risk engine.
@@ -1365,7 +1452,7 @@ this is a shared revenue *pattern*, not shared code.**
 
 ## Owner backlog (2026-07-26 brain dump)
 
-Chronolens-side items only. CAEP items went to that project's `docs/ROADMAP.md`; company-level
+News Charts-side items only. CAEP items went to that project's `docs/ROADMAP.md`; company-level
 items (entity filing, federal regulation research, disclosure documents, "what does sellable
 look like") went to a **separate business checklist** worked independently of both products —
 `docs/BUSINESS-CHECKLIST.md` in the Crypto-Stuff repo.
@@ -1426,7 +1513,7 @@ look like") went to a **separate business checklist** worked independently of bo
 - [ ] `P1` **Beta launch.** ⚠ Blocked by the ⛔ pre-release feed gate above — a public beta is a
       release, so licences and feed health must be settled first, not after.
 - [ ] `P2` **Security deep-dive + what an account looks like (Google login?).** ⚠ Note the
-      architectural shift: Chronolens is deliberately accounts-free today — follows, prefs and
+      architectural shift: News Charts is deliberately accounts-free today — follows, prefs and
       view state are localStorage, and "your key never leaves your machine" is currently
       literally true. Accounts add a user table, session security, and a privacy-policy surface.
       They are also the prerequisite for the `P3` saved-focus alerts already parked above.
@@ -1438,9 +1525,10 @@ look like") went to a **separate business checklist** worked independently of bo
       blocking, or per-region content). The *decision* — which jurisdictions are worth the
       compliance cost — lives in the business checklist.
 - [x] ~~**Rename the software to News Charts.**~~ Done 2026-07-28 (PR #11, merged) — **and
-      reversed 2026-08-08; the product is Chronolens again, see the entry below.** Left here
-      rather than rewritten: a done log that edits its own history to match the present is
-      worth less than one that shows the decision was taken twice.
+      reversed 2026-08-08, then reversed again 2026-08-12; the product is News Charts once
+      more — see the two entries below.** Left here rather than rewritten: a done log that
+      edits its own history to match the present is worth less than one that shows the
+      decision was taken twice (now three times).
 - [x] **Rename the software back to Chronolens.** Done 2026-08-08. Display name, header
       wordmark, OG images, SEO metadata and docs say **Chronolens**; the `chronolens` slug
       covers the npm package, the localStorage/event namespace, backup filenames and log tags.
@@ -1462,15 +1550,52 @@ look like") went to a **separate business checklist** worked independently of bo
         orphaned, and the hand-deletion this entry used to ask for is unnecessary.
       - ⚠ The domain question below reopens: it pointed at Newscharts.ai on the strength of the
         old name.
-- [ ] `P2` **Domain for the site.** The name is settled again (**Chronolens**, above), which
-      points at **Chronolens.ai / chronolens.com** rather than the **Newscharts.ai** this entry
-      named while the old name stood — recorded so the reasoning is visible rather than the
-      candidate silently swapped. The original alternatives (Timelines.ai · Timecharts.ai ·
-      Thetimeline.ai · Timeline.ai) are still open if the preferred one is taken. ⚠ Still to do:
-      check domain availability and trademark conflicts — **including that "Chronolens" itself is
-      clear**, which was never checked for the first Chronolens era — then set `SITE_URL`:
-      canonical URLs, the sitemap, OG images and JSON-LD all carry it, and redirects would be
-      needed to keep any indexed pages. Cheapest before launch, expensive after.
+- [x] **Rename the product back to News Charts.** Done 2026-08-12 (owner decision — the third
+      naming decision; the entry above records the second). Display name, header/OG/SEO copy,
+      UI text, the localStorage/event namespace (`news-charts:*`), the npm package name, the
+      backup filename prefix, the EDGAR/Wikipedia User-Agent strings, log tags and docs all say
+      **News Charts** again. The GitHub repo is `Savoy11/News-Charts` (both names resolve), and
+      `scripts/check-boundary.ts` keeps accepting both, per its own rule.
+      - The `app/layout.tsx` pre-hydration shim migrates `chronolens:*` keys **back** to
+        `news-charts:*` — direction reversed, same existing-key-wins semantics, prefix lengths
+        (11 → 12) written out again rather than trusted to a search-and-replace. One hop still
+        reaches everybody: both Chronolens eras left keys under `chronolens:`, and a visitor
+        who last came during the News Charts era already holds `news-charts:` keys, which the
+        shim leaves untouched.
+      - **Deliberately unchanged:** the live Postgres role/database keeps its original
+        `chronolens` name — renaming running infrastructure is owner work, not a code change,
+        and `.env.example`, `README.md` and `lib/db.ts` now say so explicitly while continuing
+        to match the database that actually exists. `scripts/backup.ts` still writes
+        `news-charts-*` dumps and prunes across both prefixes, so no dump from any era is
+        orphaned — and `scripts/verify-restore.ts` now picks its default "newest dump" by
+        timestamp across both prefixes too, the same rule retention already used (a plain
+        filename sort would have rehearsed a stale dump of whichever prefix sorts later until
+        the first post-rename backup ran).
+      - Fixes two latent leftovers of the 2026-08-08 rename found on the way: `check:ui`'s
+        "no legacy chronolens: keys" assertion and `check:feed-keys`' `/news-?charts/i` origin
+        regex were both written for the News Charts namespace and were silently wrong for the
+        Chronolens one — with this rename both are correct again exactly as written.
+      - The two entries above keep their wording, per this section's own rule about done logs
+        that edit their own history.
+      - **Owner confirmation, 2026-08-12: the name is final.** Everything from here forward
+        uses **News Charts**, and the owner plans to take the site live under it. Recorded so
+        the next naming question is answered by this line instead of reopened — this section
+        has said "the name is settled" twice before without an owner statement behind it, and
+        it flipped both times. The actionable follow-ups are the domain purchase and the
+        "News Charts" trademark check (the `P2` domain item below), and the go-live blockers
+        already queued: the ⛔ pre-release feed gate, `COMMERCIAL_MODE=true`, and the
+        scheduler — see `docs/OWNER-ACTIONS.md`.
+- [ ] `P2` **Domain for the site.** The name is settled once more (**News Charts**, above),
+      which points back at **Newscharts.ai / newscharts.com** rather than the Chronolens.ai
+      this entry named while the 2026-08-08 name stood — the candidate has now followed the
+      product name in both directions, which is itself the argument for buying only when the
+      name stops moving. The original alternatives (Timelines.ai · Timecharts.ai ·
+      Thetimeline.ai · Timeline.ai) are still open if the preferred one is taken. ⚠ Still to
+      do: check domain availability and trademark conflicts — **including that "News Charts"
+      itself is clear**, which was never checked while the name first stood — then set
+      `SITE_URL`: canonical URLs, the sitemap, OG images and JSON-LD all carry it, and
+      redirects would be needed to keep any indexed pages. Cheapest before launch, expensive
+      after.
 - [x] ~~`P1` **Label every source on screen, and the compliance around it.**~~ — done 2026-07-28.
       **The house form is "who published it · how we found it"** (`lib/sourceLabel.ts`), the same
       shape the on-chain attribution work settled on: `Reuters · via GNews` says two true things.
@@ -1497,5 +1622,5 @@ look like") went to a **separate business checklist** worked independently of bo
 
 ## Other initiatives
 
-_Add new Chronolens initiatives here as they come up — this doc is meant to govern the whole
+_Add new News Charts initiatives here as they come up — this doc is meant to govern the whole
 project, not just the on-chain work._

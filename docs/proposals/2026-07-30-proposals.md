@@ -74,7 +74,7 @@ The page's own `generateMetadata` already declares `twitter: { card: "summary_la
 full `openGraph` block — so the large-image promise is made and the generic image is what fills it.
 
 **Who benefits and how:** Traffic, which `README.md` states as the project's purpose ("Built to
-drive traffic and ad revenue"). The sector timeline is the most distinctive thing Chronolens
+drive traffic and ad revenue"). The sector timeline is the most distinctive thing News Charts
 produces — the README's own example is `INTC lagged the sector by 172.3 points` — and it is the
 one page type whose social preview says nothing about what is on it. Also the asymmetry a reader
 notices: sharing a company page looks bespoke, sharing the sector page it links to looks like a

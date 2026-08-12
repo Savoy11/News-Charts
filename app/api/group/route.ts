@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
         date,
         type: r.kind,
         title: r.title,
-        source: r.source_label ?? "Chronolens",
+        source: r.source_label ?? "News Charts",
         url: r.url ?? undefined,
         description: (peers > 1 ? `${r.tickers} · ${peers} peers` : r.tickers) ?? undefined,
         // `precision`, not the `yearOnly` boolean it replaced: month precision is a third state,

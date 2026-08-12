@@ -45,9 +45,13 @@ function main() {
   const file =
     arg("file") ??
     (() => {
+      // Newest by TIMESTAMP, not filename — dumps carry every prefix this project has
+      // used (`chronolens-*`, `news-charts-*`), and alphabetically one prefix always
+      // outranks the other regardless of date. Same rule as backup.ts retention.
+      const DUMP = /^(?:chronolens|news-charts)-(.*)\.dump$/;
       const dumps = readdirSync(dir)
         .filter((f) => f.endsWith(".dump"))
-        .sort();
+        .sort((a, b) => (DUMP.exec(a)?.[1] ?? a).localeCompare(DUMP.exec(b)?.[1] ?? b));
       if (!dumps.length) throw new Error(`no dumps in ${dir} — run npm run db:backup first`);
       return join(dir, dumps[dumps.length - 1]);
     })();
@@ -55,7 +59,7 @@ function main() {
   console.log(`rehearsing ${file}`);
 
   // 1. expand the dump to the SQL a real restore would run
-  const work = mkdtempSync(join(tmpdir(), "chronolens-restore-"));
+  const work = mkdtempSync(join(tmpdir(), "news-charts-restore-"));
   const sqlFile = join(work, "restore.sql");
   const expand = spawnSync(
     findTool("pg_restore"),

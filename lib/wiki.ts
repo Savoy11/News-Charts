@@ -1,7 +1,7 @@
 import { DatePrecision, TimelineEvent } from "./types";
 
 const API = "https://en.wikipedia.org/w/api.php";
-const UA = { "User-Agent": "Chronolens Research marcusowens94@gmail.com" };
+const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 
 interface Page {
   title: string;

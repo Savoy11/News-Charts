@@ -31,7 +31,7 @@ report is a good report.** Three real defects beats ten plausible ones.
 
 Read before looking:
 
-- The checklist: `docs/TASK-QUEUE.md` (Finance Now) or `docs/MASTER-CHECKLIST.md` (Chronolens)
+- The checklist: `docs/TASK-QUEUE.md` (Finance Now) or `docs/MASTER-CHECKLIST.md` (News Charts)
 - Prior reports in `docs/audits/`
 - `README.md` — the stated design principles, which are what you audit against
 
@@ -49,8 +49,8 @@ npm test                 # record coverage if reported
 npm run build            # if quick
 npm run audit                      # Finance Now — live-data provenance
 npm run data-sources -- --verify   # Finance Now — registry vs route code
-npm run check:feeds                # Chronolens — per-source feed health (NETWORK; see below)
-npm run check                      # Chronolens — every offline suite
+npm run check:feeds                # News Charts — per-source feed health (NETWORK; see below)
+npm run check                      # News Charts — every offline suite
 git log --oneline -30
 ```
 
@@ -95,7 +95,7 @@ and dates in prose that no longer match. Generated files edited by hand — Fina
 - No paid placement in ranked or scored output, either project.
 - Sources flagged `commercialOk: false` must not be reachable from a production path.
 - AI-generated content must be labelled where published.
-- Chronolens: end-of-day pricing only; any intraday or real-time fetch is a licensing defect.
+- News Charts: end-of-day pricing only; any intraday or real-time fetch is a licensing defect.
 
 ## Step 4 — Rank
 

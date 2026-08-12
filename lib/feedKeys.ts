@@ -15,7 +15,7 @@ import type { SourceKey } from "./types";
  * ones that apply. That only holds if the key and everything fetched with it stay on their
  * machine, so:
  *
- *   - the key lives in localStorage and is never sent to a Chronolens origin;
+ *   - the key lives in localStorage and is never sent to a News Charts origin;
  *   - the fetch goes browser → publisher, with no proxy of ours in between;
  *   - **nothing fetched this way is ever persisted.** Writing those articles into the shared
  *     database would make us the redistributor and undo the whole argument, so the results are
@@ -54,10 +54,10 @@ export const BYO_FEEDS: {
   },
 ];
 
-const STORAGE_KEY = "chronolens:feed-keys:v1";
+const STORAGE_KEY = "news-charts:feed-keys:v1";
 
 /** Fired whenever the stored keys change, so an open timeline re-reads them. */
-export const FEED_KEYS_EVENT = "chronolens:feed-keys";
+export const FEED_KEYS_EVENT = "news-charts:feed-keys";
 
 export function loadFeedKeys(): FeedKeys {
   if (typeof window === "undefined") return {};

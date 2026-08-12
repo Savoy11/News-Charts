@@ -15,7 +15,7 @@ import { FetchResult, TimelineEvent, DatePrecision } from "./types";
  * documentation, which is the same standard every other adapter here was verified to.
  */
 
-const UA = { "User-Agent": "Chronolens Research marcusowens94@gmail.com" };
+const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 
 /** advancedsearch.php — one document per archived item. */
 interface IaDoc {

@@ -72,7 +72,7 @@ export default function FeedKeysForm() {
 
       <p className="rounded-md border border-slate-800 bg-slate-950/60 p-3 text-[11px] leading-relaxed text-slate-500">
         Your keys are stored in <strong className="text-slate-400">this browser only</strong> and
-        are sent directly to the publisher — they never reach a Chronolens server. Articles
+        are sent directly to the publisher — they never reach a News Charts server. Articles
         fetched with them are shown to you and{" "}
         <strong className="text-slate-400">never saved</strong>: they were fetched under your
         licence, not ours, so keeping them would make this site the redistributor. That is the

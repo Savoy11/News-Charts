@@ -29,7 +29,7 @@ export default async function Home() {
           <span className="text-sky-400">on one timeline</span>
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-400">
-          Chronolens lines up news coverage, SEC filings, and earnings against the price chart for
+          News Charts lines up news coverage, SEC filings, and earnings against the price chart for
           any listed security — stocks, ETFs, and mutual funds — so you can see what actually
           moved it.
         </p>

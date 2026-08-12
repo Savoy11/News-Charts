@@ -530,10 +530,97 @@ section of `docs/PRELIMINARY-FINDINGS-2026-07-30.md`.
 Installed on PR #14. What has run so far is **not a baseline** — items carried over from the
 closed PR #15, whose findings are otherwise all shipped.
 
-- [ ] `P1` **Re-run both agents properly.** The 2026-07-30 pass was a smoke test capped at 2
-      findings and 2 proposals *by instruction*, and its own scope note says so. A full
-      fortnightly run has not happened, so nobody knows what a complete pass turns up — the
-      capped run alone produced eight verified defects.
+- [ ] `P1` **Re-run both agents properly.** ✅ **Auditor half done 2026-08-12** — the first
+      uncapped pass, reported in [`docs/audits/2026-08-12-audit.md`](audits/2026-08-12-audit.md):
+      **10 findings, 4 of them `P1`**, filed as their own items below. Still open: the
+      **`opportunity-scout`** half, whose 2026-07-30 run was capped at 2 proposals by instruction.
+      - What the pass confirms about method, not just about defects: **every finding came from
+        pointing an adapter at a live service.** The offline suites (25, all passing) could not
+        have produced one of them. Findings 1, 2 and 7 share a shape — a live source whose real
+        behaviour nothing asserts against — and the auditor's closing note proposes a live
+        assertion suite distinct from the offline ones. That proposal belongs to the scout.
+
+### Findings from the 2026-08-12 audit
+
+- [ ] `P1` **The Internet Archive query sorts date-ascending on a false premise.**
+      `lib/archive.ts:119` sets `sort[]=date asc`, justified at `:109-111` by *"archive.org items
+      carry catalogued metadata rather than OCR guesses, so the oldest hits are genuinely the
+      oldest."* Measured live, that premise is false and the sort **promotes exactly the
+      mis-catalogued items**: `"Ford Motor"` returns 1770→1916 with 12 pre-1900 rows (five are
+      1914–29 sheet music stamped `year: 1770`); `"Nvidia"`, founded 1993, returns 1898→1999.
+      Two harms from one line — roughly half the request budget is spent on rows the ingest floor
+      then discards, and **the archive contribution to any company page is permanently frozen in
+      its first few years**: no post-1998 NVIDIA item, no post-1980 Apple item, ever. This is the
+      source `lib/archive.ts:6-8` calls "structurally safe" and the intended backbone of the
+      1963–2017 coverage gap. `check:archive` (52 cases) tests parsing, not the query, so nothing
+      offline can see it. Fix: stop sorting by date, as the Chronicling America call already does.
+- [ ] `P1` **Aave's Snapshot space id is not a Snapshot space.** `lib/onchain/governance.ts:45-50`
+      registers `space: "aave.eth"`, which returns `{"space":null}`; Aave's DAO is `aavedao.eth`
+      with **970 proposals**, and the repo's own `fetchGovernance` parses 10/10 events from it
+      immediately. `/topic/aave` has shipped an empty timeline since 2026-07-28. This is the exact
+      failure `governance.ts:34-36` predicts about itself — *"a wrong space id returns an empty
+      proposal list, which on a page is indistinguishable from 'this protocol has not voted
+      lately'"* — and `check:feeds` has been printing that zero per-space without anyone reading
+      it. Fix: `aavedao.eth`, plus a `check:governance` assertion that every id resolves to a
+      non-null space (one request, not a fixture).
+      - ⚠ This corrects a line written **today**: the live-verification table above records
+        "Snapshot ✓ (40 proposals)". That was one of two configured spaces; the other is dead.
+- [ ] `P1` **Two ingest branches apply no plausibility floor to archive items.**
+      `scripts/ingest.ts:403-406` passes them through with only `.slice(0, 25)`, under a comment
+      asserting a wrong date is "a rarity"; `scripts/ingest.ts:285` computes `floor = 0` for a
+      subject with no `firstEventOn`, and a floor of 0 filters nothing. The only remaining guard
+      admits the 1770 and 1812 rows above. The standard is already written down in this file: a
+      wrong date *"plants an event in the Middle Ages, drags the timeline's range with it, and
+      leaves a page that looks fine to anyone not reading the axis."*
+- [ ] `P1` **"Site that day" links promise a capture that does not exist.**
+      `components/EventList.tsx:745,770` render `SiteSnapshotLink` with **no date gate**, labelled
+      *"see {domain} as it looked around {date}"*. Wayback redirects to the nearest capture, so a
+      1926 Ford event links to a page captured **December 1998** — verified against
+      `archive.org/wayback/available`. Every row before ~1996 carries it.
+      - ⚠ **This corrects the `fetchSiteSnapshots` note above**, which says that function has no
+        production caller and implies no snapshot surface ships. One does; it just does not
+        consult the function that would tell it whether a capture exists. The verifying function
+        is already written and fully checked.
+- [ ] `P2` **"3M" resolves to nothing.** `lib/sec.ts:137-141` gates the name-prefix rung on
+      `q.length >= 3`, so `3M → null` while `MMM → "3M CO"` — a Dow 30 component told it is not a
+      listed security. The prefix `"3M "` matches **exactly one row**; of 140 distinct
+      two-character title prefixes in the index, **94 are unique**. The guard's stated reason
+      ("junk prefixes") is a length rule standing in for an ambiguity rule. Fix: gate on how many
+      rows the prefix matches, which the local index gives for free. Adjacent to the `P1` scoring
+      item below but independent of it.
+- [ ] `P2` **Ethereum milestone rows credit an explorer that answered nothing.**
+      `lib/onchain/ethereum.ts:85-88` sets `sourceLabel: "Blockscout · Etherscan"` on both the
+      chain-read branch and the `fallbackDate` branch, so with Blockscout returning 403 all four
+      milestones still claim their date was read from it. Substituting the curated date is
+      deliberate; keeping the provenance is not. Fix: carry the label from the branch that
+      produced the date.
+- [ ] `P2` **`check:feeds` does not exercise three sources the ⛔ gate names.** It never calls
+      `getFilings`, `fetchRegulations` or `getDailyPrices` (nor the keyless on-chain adapters) —
+      the three feeds behind the price series, the filings timeline and sector regulation rows.
+      Both missing keyless adapters work when called by hand (`fetchRegulations("semiconductors")`
+      → 60 events, 3,778 upstream matches), so this is a gap in **the gate's instrument**, not in
+      the feeds. A green run is currently read as evidence for a release blocker while silent on
+      its most load-bearing sources.
+- [ ] `P2` **Five files still say egress is blocked, and `lib/archive.ts` contradicts itself.**
+      Its header says the payloads have *"never been exercised against the live service"* while
+      `:50-52`, 37 lines later, describes the defect a live run found. Same stale claim in
+      `onchain/governance.ts:16` (now disproved), `onchain/usdt.ts:19`, `onchain/verify.ts:13`,
+      `feeds/browser.ts:18`. Fix: say what was verified live and when — and for the three that
+      genuinely still cannot be exercised, say *that* specifically, which is the useful statement
+      the blanket claim replaced. Also `README.md:505` says `check:archive` is 39 cases; it is 52.
+- [ ] `P2` **Five exported functions have no caller, and one is named in this checklist as the
+      live mechanism.** `dedupByUrl`, `wikipediaHasSubject`, `isStale`, `isFollowing`,
+      `clearAnnotations`. The dedup entry above credits `dedupByUrl`; the mechanism that actually
+      does it is `collapseNearDuplicates`, keyed on `storyKey`. Delete the five, correct the entry.
+- [ ] `P2` **`lib/signals.ts` computes displayed figures with no check of any kind.** Three
+      production consumers, no `check:signals`, and its four numeric helpers (`median`, `mad`,
+      `isSpike`, `weekEnd`) are module-private so no offline check could reach them. One
+      behaviour visible from reading it: with exactly two members both are equidistant from the
+      median, so *"A outran by X"* versus *"B lagged by X"* is decided by database row order.
+      Every comparable arithmetic module here has a suite; this one produces the numbers most
+      likely to be read as a finding about a company.
+- [ ] `P3` `npm run cost-report` throws a raw stack trace when `DATABASE_URL` is unset, where
+      `npm run refresh` prints a clean message for the same condition.
 - [x] ~~`P2` **Fix the auditor's script name.**~~ — done 2026-07-31. `.claude/agents/code-auditor.md`
       named `npm run check-feeds`; this repo's script is `check:feeds`, so the check errored as
       "Missing script" rather than running. The definition now also runs `npm run check` and is

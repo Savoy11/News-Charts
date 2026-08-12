@@ -5,7 +5,7 @@
 long one. This exists because that file is ~1,100 lines and mixes work that can be done in a
 build container with work only you can do. This is the second kind, in the order I'd do it.
 
-**Last updated:** 2026-07-28
+**Last updated:** 2026-08-12
 
 ---
 
@@ -76,6 +76,24 @@ Two things worth knowing before you spend:
 The `commercialOk` flags encode my practical reading of published terms. **That is not legal
 advice**, and it is load-bearing — it gates what `COMMERCIAL_MODE=true` withholds. Worth a real
 review before revenue.
+
+**North Carolina review for the planned referral board** (recorded 2026-08-12; nothing is built,
+so this blocks that initiative rather than today's launch). A **North Carolina attorney** needs to
+cover: **RPC 7.4** "Intermediary Organizations" — which names an "online marketing platform"
+explicitly and caps what a participating lawyer may be required to pay at "a reasonable sum
+representing a proportional share of the organization's administrative and advertising costs";
+**N.C.G.S. § 58-33-82** on paying unlicensed persons in connection with insurance, together with
+the **anti-rebating statutes §§ 58-33-85 and 58-63-15**, which have not been read yet; and the
+**NC CPA Board's referral-fee rules**. The same review should confirm the deliberate exclusion of
+investment advisers — the registration-per-adviser-solicited requirement is why they are out of
+scope, and it is the load-bearing assumption of the whole design.
+
+**The listing-fee cost justification is yours to produce, and it is a document, not a number.**
+RPC 7.4 permits only a flat fee proportional to real administrative and advertising costs — no
+per-referral, no per-lead, no share of the professional's fees — so the fee schedule needs a
+written calculation tying it to actual costs, kept current as those costs change. Without it the
+fee is indefensible even if the amount happens to be reasonable. Constraints and the rest of the
+design sit under **Planned initiatives — free planner & referral board** in the master checklist.
 
 ## 5. Launch mechanics
 

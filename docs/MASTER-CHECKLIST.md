@@ -3,7 +3,7 @@
 The governing checklist for the **Chronolens** project: a single place to track initiatives,
 priorities, and progress. Add to it, check things off, re-prioritise. This is a living doc.
 
-**Last updated:** 2026-08-08
+**Last updated:** 2026-08-12
 
 ## Scope & independence
 
@@ -116,6 +116,93 @@ already held, but new investment goes to securities coverage first.
       per-security and serve this scope directly. The LoC decade walk and Wikidata alias
       harvesting serve companies too and keep their place. Topic-only recall items rank behind
       all of these until the scope changes again.
+
+## Planned initiatives — free planner & referral board (2026-08-12)
+
+**Two planned additions, neither built and neither started: a free retirement planner and a
+professional referral board.** Both widen Chronolens from a funnel into a destination product —
+something a visitor comes back to rather than passes through. Both also carry regulatory
+constraints that are **build requirements, not footnotes**: in each case the constraint decides
+what the software is allowed to compute, store and display, and crossing it changes what the
+business legally *is* — a publisher becomes an investment adviser, a directory becomes a
+referral-fee arrangement. Recorded now so the constraints exist before any code does.
+
+- [ ] `P2` **Free retirement planner — a public, no-account calculator.** The user supplies
+      current age, current savings, contribution rate, target retirement age and a return
+      assumption; the tool projects balances forward, the shortfall against the target, and the
+      savings rate required to close it. Nothing built.
+      - **HARD LINE — it never recommends securities or an allocation.** It may do math on the
+        user's own numbers. It may **not** take risk tolerance — or any other profile input —
+        and change which securities or allocations a user is shown. This is the same
+        publisher's-exclusion boundary that governs Finance Now's Portfolio Builder: a
+        calculator the user drives is fine, a tool that outputs what to buy is investment
+        advice. (Cited as precedent only — no shared code, per **Scope & independence** above.)
+      - **Planner state stays isolated from every securities-facing surface.** Its own storage
+        namespace under the `chronolens:` prefix, never joined to follows, prefs, notes, or any
+        research/timeline personalisation. If the profile ever feeds *which securities a user
+        sees*, the boundary is gone regardless of what the UI says.
+      - **Prefer client-side computation with nothing persisted server-side** unless the user
+        explicitly opts in. Holding no retirement PII sidesteps most privacy obligations
+        outright; make that the default and say so on the page, not only here.
+      - **Any "next steps" content is population-level, never personal.** "People with estates
+        above $X often consult an estate attorney" — never "you should hire an attorney."
+      - **SEO note:** free interactive tools are the content type that still earns search
+        traffic and links after AI Overviews, unlike articles. Indexable, fast, and ideally
+        shareable via URL-encoded scenarios — which also serves the no-persistence default,
+        since the scenario then lives in the link rather than in a row.
+- [ ] `P2` **Professional referral board — finance-adjacent, NOT investment advisers.** A
+      searchable local directory of the professionals a financial planner cannot substitute
+      for: estate and elder-law attorneys, CPAs and tax preparers, and insurance producers.
+      Nothing built.
+      - **Scope exclusion, and the reason it is structural.** Investment advisers are
+        deliberately out of scope: North Carolina requires a solicitor for an investment adviser
+        to register as an investment adviser representative *of each adviser solicited for* (NC
+        Secretary of State, Securities Division) — impossible for a multi-advisor platform, and
+        it would pull the business under the SEC Marketing Rule that the publisher posture
+        exists to avoid.
+      - **Fee model — flat, cost-justified listing fees only. No per-referral, no per-lead, no
+        percentage of the professional's fees.** NC Rule of Professional Conduct 7.4
+        ("Intermediary Organizations", which names "online marketing platform" explicitly) bars
+        requiring a lawyer to pay more than "a reasonable sum representing a proportional share
+        of the organization's administrative and advertising costs." The fee schedule must be
+        defensible against real costs, and **that calculation has to be written down** — owner
+        action, mirrored in `docs/OWNER-ACTIONS.md`.
+      - **Disclosure is a component requirement, not a footer link.** Rule 7.4 requires the
+        criteria for inclusion, and any payment made by the professional, to be disclosed at the
+        outset of the user's interaction — so it renders with the listing itself, not behind a
+        link a user may never follow.
+      - **No recommendation, no matching.** The user filters and chooses. No "best match"
+        ranking, no algorithmic pairing, no "recommended for you" — a matched list is an
+        endorsement, and endorsement is what the rules restrict. Note this cuts directly against
+        the instinct the rest of this codebase is built on: `lib/enrich/relevance.ts` and
+        `lib/focus.ts` exist to rank, and the directory must not reuse either.
+      - **Insurance listings must not discuss specific policy terms or conditions.** N.C.G.S.
+        § 58-33-82 bars paying unlicensed persons for selling, soliciting or negotiating
+        insurance; NCDOI's referral-fee FAQ permits referral fees where the referral avoids
+        policy specifics. Hand off, never describe coverage. ⚠ The anti-rebating statutes
+        (§§ 58-33-85, 58-63-15) still need a separate look — not done.
+      - **No unauthorized practice of law.** Never tell a user which kind of professional they
+        need; generic education only.
+      - **Licence verification from day one.** Verify and display current licence status against
+        the public NC State Bar, NC CPA Board and NCDOI lookups; re-verify on a schedule; lapsed
+        or unverifiable means delisted. This satisfies Rule 7.4's inclusion-criteria disclosure
+        and matches the data-honesty posture already in the repo — a listing is shown as what it
+        verifiably is, or not at all.
+      - **Ship a public "How we comply with NC RPC 7.4" page.** Under 7.4 the compliance burden
+        falls on the *participating lawyer*, so answering it up front removes the objection
+        before a prospective listee has to raise it.
+      - **Local SEO is a separate surface** — per-city, per-specialty pages. A different, and far
+        less contested, keyword game than the national timeline product.
+      - **Owner action, blocking launch:** review by a North Carolina attorney covering RPC 7.4,
+        § 58-33-82 plus the rebating statutes, and NC CPA Board referral-fee rules. Mirrored in
+        `docs/OWNER-ACTIONS.md`.
+
+**Both items are `P2` deliberately.** Neither may jump ahead of the launch-critical work already
+queued: the ⛔ pre-release feed gate (`P0` — every free news tier is non-commercial today),
+`COMMERCIAL_MODE=true` in production, the hourly scheduler that nothing runs yet, and the
+beta-launch mechanics in `docs/OWNER-ACTIONS.md`. **A paid listing fee is revenue**, so the
+referral board trips the same commercial trigger the affiliate initiative below records: the feed
+gate first, or not the board.
 
 ## Legend
 

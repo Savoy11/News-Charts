@@ -1,8 +1,10 @@
 import { Pool } from "pg";
 
 /**
- * Chronolens owns its own database and its own non-superuser role. It shares
- * nothing with any other project on this machine.
+ * News Charts owns its own database and its own non-superuser role. It shares
+ * nothing with any other project on this machine. Both are still named `chronolens`
+ * — the live role/database keeps the product's original name across renames;
+ * renaming a running Postgres role is owner infrastructure work, not a code change.
  */
 let pool: Pool | null = null;
 

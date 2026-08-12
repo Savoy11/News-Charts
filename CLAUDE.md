@@ -1,4 +1,4 @@
-# Chronolens — Claude Code Project Guide
+# News Charts — Claude Code Project Guide
 
 This file is auto-loaded by Claude Code at session start. It orients a session before it
 touches anything; the deep documentation lives in `README.md` and `docs/`.
@@ -7,7 +7,7 @@ touches anything; the deep documentation lives in `README.md` and `docs/`.
 
 ## ⛔ Scope rule — read this first
 
-**This repository is `Savoy11/chronolens` (formerly `Savoy11/News-Charts`): a standalone
+**This repository is `Savoy11/News-Charts` (for a time `Savoy11/chronolens`): a standalone
 product.** It shares an owner — and nothing else — with the other products. Both names resolve
 to this one repo; `scripts/check-boundary.ts` accepts either, and a further rename means adding
 the new name to its `THIS_REPO_NAMES`.
@@ -15,7 +15,7 @@ the new name to its `THIS_REPO_NAMES`.
 1. **Never touch another product's repository from a session here.** Crypto-Stuff / CAEP /
    "Finance Now" (and its free-edition copy, `Savoy11/Finance-Now-Free`) are separate projects
    with their own repos, their own checklists, and their own sessions. This repo has exactly one
-   git remote (`Savoy11/chronolens`), no submodules, and no workflow that checks out another
+   git remote (`Savoy11/News-Charts`), no submodules, and no workflow that checks out another
    repository. Keep it that way — do not add a remote, a submodule, or a `repository:` override
    to reach a sibling project.
 2. **No shared code, no runtime coupling.** The `Scope & independence` section of

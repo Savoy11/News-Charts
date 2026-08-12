@@ -3,7 +3,7 @@
  *
  *   npm run check:boundary
  *
- * The `Scope & independence` section of docs/MASTER-CHECKLIST.md rules Chronolens and
+ * The `Scope & independence` section of docs/MASTER-CHECKLIST.md rules News Charts and
  * Crypto-Stuff / CAEP / Finance Now separate projects — no shared code, no runtime coupling.
  * Prose alone does not hold that line: in Finance-Now-Free, a stale pointer to another
  * checkout survived in the session-orienting doc for the whole life of the project. This is
@@ -77,7 +77,7 @@ function checkRemotes(): void {
     }
     // Then the softer half: is it *this* repo? Checked against a list of names rather than one,
     // because a rename is a legitimate act and must not read as a boundary violation. The repo
-    // was News-Charts and is now chronolens; both resolve to the same GitHub repository.
+    // has been named News-Charts and chronolens; both resolve to the same GitHub repository.
     const mine = THIS_REPO_NAMES.some((n) => lower.includes(n));
     check(
       "remote points at this repository",

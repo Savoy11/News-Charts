@@ -66,7 +66,7 @@ async function main() {
   const contents = await snapshotCounts();
 
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const outFile = join(outDir, `chronolens-${stamp}.dump`);
+  const outFile = join(outDir, `news-charts-${stamp}.dump`);
   const pgDump = findPgDump();
 
   // -Fc: compressed custom format, restorable whole or table-by-table with pg_restore.

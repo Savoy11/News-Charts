@@ -205,7 +205,7 @@ async function annotations(page: Page): Promise<void> {
   check("the chart legend names it", body.includes("Your notes"));
 
   const keys: string[] = await page.evaluate(() => Object.keys(localStorage));
-  check("stored under the subject's own key", keys.some((k) => k.startsWith("chronolens:notes:")));
+  check("stored under the subject's own key", keys.some((k) => k.startsWith("news-charts:notes:")));
   // The whole premise: this never leaves the browser.
   check("never sent to a server", posted.length === 0, posted.slice(0, 2).join(" "));
 
@@ -522,7 +522,7 @@ async function searchRouting(page: Page): Promise<void> {
  *
  * They were drawn from a hardcoded list of 44 subjects with real ones merely appended, so a
  * database holding none of them still advertised GME, quantum computing and nuclear power — and
- * every example a first-time visitor clicked landed on "Not on Chronolens yet". Reported from a
+ * every example a first-time visitor clicked landed on "Not on News Charts yet". Reported from a
  * live instance as "if I click any of these examples it doesn't have a response".
  *
  * The seeded corpus has three subjects rich enough to suggest, and a row holds five, so this
@@ -668,14 +668,14 @@ async function feedKeys(page: Page): Promise<void> {
   await page.waitForTimeout(600);
 
   const stored: string | null = await page.evaluate(() =>
-    localStorage.getItem("chronolens:feed-keys:v1")
+    localStorage.getItem("news-charts:feed-keys:v1")
   );
   check("the key is stored in the browser", stored?.includes(secret) === true, stored ? "present" : "absent");
 
   // Reload with the key set: the timeline must render, and the key must not travel with it.
   await go(page, COMPANY);
   check("the timeline still renders with a key set", (await visible(page)).includes("Ford Motor Company"));
-  check("the key never reaches a Chronolens origin", leaked.length === 0, leaked.join(", "));
+  check("the key never reaches a News Charts origin", leaked.length === 0, leaked.join(", "));
 
   // Forgetting it has to actually forget it.
   await page.locator("button[aria-label*='ettings'], button:has-text('⚙')").first().click();
@@ -685,7 +685,7 @@ async function feedKeys(page: Page): Promise<void> {
     await forget.click();
     await page.waitForTimeout(500);
     const after: string | null = await page.evaluate(() =>
-      localStorage.getItem("chronolens:feed-keys:v1")
+      localStorage.getItem("news-charts:feed-keys:v1")
     );
     check("forgetting removes it", after === null, String(after));
   } else {
@@ -755,7 +755,7 @@ async function chromeAndRoutes(page: Page): Promise<void> {
   body = await visible(page);
   check(
     "settings copy is honest about the network",
-    /over the internet|never reaches a Chronolens server/i.test(body)
+    /over the internet|never reaches a News Charts server/i.test(body)
   );
   check("timeline display settings present", /Timeline display|Stack busy periods/i.test(body));
 
@@ -773,7 +773,7 @@ async function chromeAndRoutes(page: Page): Promise<void> {
    */
   await go(page, "/company/ZZQQ");
   const missing = await visible(page);
-  check("an ungathered subject explains itself", /Not on Chronolens yet/.test(missing), missing.slice(0, 60));
+  check("an ungathered subject explains itself", /Not on News Charts yet/.test(missing), missing.slice(0, 60));
   check("and says the request was noted", /been noted/.test(missing));
   check("and does not claim nothing was found", !/Nothing found/.test(missing));
   // The demand has to actually reach the queue, or the message is a promise nothing keeps.

@@ -24,7 +24,7 @@ import { storyKey } from "./newsQuality";
  *   The Guardian       — archive back to 1999, free key: GUARDIAN_API_KEY
  */
 
-const UA = { "User-Agent": "Chronolens Research marcusowens94@gmail.com" };
+const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const REVAL = { next: { revalidate: 21600 } }; // 6h — matches the topic TTL
 
 /** Minimal RSS <item> reader — title/link/date plus a media thumbnail when the feed carries one. */

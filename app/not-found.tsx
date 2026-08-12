@@ -18,7 +18,7 @@ import CorpusExamples from "@/components/CorpusExamples";
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center py-24 text-center">
-      <h1 className="text-3xl font-black text-slate-100">Not on Chronolens yet</h1>
+      <h1 className="text-3xl font-black text-slate-100">Not on News Charts yet</h1>
       <p className="mt-2 max-w-lg text-slate-400">
         A first search runs a quick gather — Wikipedia, SEC filings, price history — and this
         one couldn&apos;t be turned into a timeline. That usually means the name doesn&apos;t

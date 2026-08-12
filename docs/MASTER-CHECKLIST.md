@@ -1577,6 +1577,14 @@ look like") went to a **separate business checklist** worked independently of bo
         Chronolens one — with this rename both are correct again exactly as written.
       - The two entries above keep their wording, per this section's own rule about done logs
         that edit their own history.
+      - **Owner confirmation, 2026-08-12: the name is final.** Everything from here forward
+        uses **News Charts**, and the owner plans to take the site live under it. Recorded so
+        the next naming question is answered by this line instead of reopened — this section
+        has said "the name is settled" twice before without an owner statement behind it, and
+        it flipped both times. The actionable follow-ups are the domain purchase and the
+        "News Charts" trademark check (the `P2` domain item below), and the go-live blockers
+        already queued: the ⛔ pre-release feed gate, `COMMERCIAL_MODE=true`, and the
+        scheduler — see `docs/OWNER-ACTIONS.md`.
 - [ ] `P2` **Domain for the site.** The name is settled once more (**News Charts**, above),
       which points back at **Newscharts.ai / newscharts.com** rather than the Chronolens.ai
       this entry named while the 2026-08-08 name stood — the candidate has now followed the

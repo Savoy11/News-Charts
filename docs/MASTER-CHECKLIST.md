@@ -621,10 +621,32 @@ the items under it can be argued for or against without one.
         while testing this, when a click went somewhere the test had not asked for.
       - Covered by `check:index` (the blend and pick rules, offline) and `check:ui` (the chips
         lead somewhere, and the hover pause).
-- [ ] `P2` **Resolve without the network at all.** Bounding it is not removing it: a real ticker
-      still depends on EDGAR being reachable the first time anybody searches it. The ticker file
-      is small, static and public — caching it locally would take the last fetch off the read path
-      entirely, which is what every other read path already did.
+- [x] ~~`P2` **Resolve without the network at all.**~~ — done 2026-08-12. `npm run sync:tickers`
+      builds `data/edgar-tickers.json` (854KB, committed: 10,387 companies and 28,419 fund
+      symbols), and `resolveCompany` reads it before it reads anyone. **Every security EDGAR knew
+      at sync time now resolves with zero requests**; bounding that fetch was the previous fix,
+      this is the removal.
+      - **Local first, network still second.** A company that listed since the last sync is not in
+        the snapshot and falls through to the live files exactly as before — local-first is not
+        local-only, and `check:tickers` asserts that path with a fixture EDGAR "knows" and the
+        index does not.
+      - The check that matters is not "the index parses" but **"no request was made"**, so
+        `check:tickers` replaces `fetch` with a recorder that throws: a resolver quietly reaching
+        the network shows up as a failure rather than as latency. 19 checks.
+      - **Both ticker files are genuinely needed** and the split is not what the names suggest:
+        SPY resolves out of the *company* file (it is a unit investment trust), while VOO and VTI
+        exist only in the fund file. Verified against both live files while building the index.
+      - The SEC's own ordering is preserved on rebuild and asserted, because the name-prefix rung
+        depends on it: "APPLE" reaches Apple Inc at row 1 rather than Apple Hospitality REIT at
+        row 1,587 only because the file is ordered roughly by size. Sorting the index at any point
+        would silently invert that.
+      - The sync refuses to overwrite with fewer than 5,000 rows of either kind: a truncated
+        upstream response would otherwise replace a good index with a broken one, and every
+        dropped ticker would then resolve as "not a listed security" rather than as an error.
+        The file records `syncedOn` so staleness is visible in the data rather than remembered.
+      - ⚠ Fund *names* still cost one request (`data.sec.gov/submissions/CIK….json`) because the
+        fund file carries no names — the open fund-NAME-resolution item. It is an enrichment and
+        degrades to the symbol, which `check:tickers` pins.
 
 ---
 
@@ -1070,24 +1092,33 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
 Consequences of what shipped on PR #9 (citation mining, NL prompts, pre-IPO story, crosshair
 popup, filing stacks, collapsible list, 8 new news repositories), ranked by value-per-effort.
 
-- [ ] `P2` **Give industry pages their own OpenGraph card.** *(opportunity-scout proposal,
-      2026-07-30 — approved; carried over from the closed PR #15.)* Add
-      `app/industry/[slug]/opengraph-image.tsx` so a shared sector link renders
-      "*&lt;Industry name&gt; · sector timeline*" instead of the generic site card.
-      `app/company/[ticker]/` and `app/topic/[slug]/` each have one; `app/industry/[slug]/` has
-      only `loading.tsx` and `page.tsx`, so it falls through to `ogCard("Timelines for analysts",
-      …)`. These pages are publicly indexed — `lib/seo.ts`'s `subjectPath()` maps
-      `kind === "industry"` to `/industry/${slug}` and `app/sitemap.ts` emits every indexed subject
-      through it — and the page's own `generateMetadata` already declares
-      `twitter: { card: "summary_large_image" }`, so the large-image promise is already made and
-      the generic image is what fills it. The sector timeline is the most distinctive thing the
-      product makes, and it is the one page type whose preview says nothing about what is on it.
-      ⚠ **One honest wrinkle:** the existing cards are deliberately fetch-free (the company card
-      renders the ticker from `params` alone), but an industry slug is `sic-3674` and a card
-      reading "sic-3674" would be worse than the generic one. So this card needs the display name,
-      which means calling the same `loadIndustry(slug)` that `generateMetadata` already calls — a
-      DB read in an OG route, which the other two avoid. Node runtime, already the case; fall back
-      to the generic card when the lookup fails, so it degrades to today's behaviour.
+- [x] ~~`P2` **Give industry pages their own OpenGraph card.**~~ — done 2026-08-12.
+      `app/industry/[slug]/opengraph-image.tsx` renders "*&lt;Industry name&gt; · sector timeline*"
+      where the generic site card used to be, so the `summary_large_image` these pages already
+      promised is now kept.
+      - **It reads the database, unlike the company and topic cards, because an industry slug is
+        an opaque identifier rather than a name.** Ingest writes `sic-3711` and
+        `sector-stablecoins`, so building a title from params alone — the rule the other two
+        cards follow — would render "Sic 3711", worse than the card it replaces. Not a new
+        dependency: the page itself cannot render without the same `loadIndustry` call.
+      - Degradation, not failure: an unreachable database falls back to `industryTitleFromSlug`
+        (`sic-3711` → "SIC 3711", `sector-stablecoins` → "Stablecoins") instead of throwing
+        mid-card, per the schema doc's rule that enrichments degrade pages rather than break them.
+      - `check:index` now asserts **every publicly indexed kind has an `opengraph-image` route** —
+        the gap existed because nothing named the set — plus the fallback titles and the fact that
+        the route guards its database read. 17 → 26 checks.
+      - **The proposal, kept because it called the design problem correctly**
+        *(opportunity-scout, 2026-07-30 — approved; carried over from the closed PR #15)*: these
+        pages are publicly indexed — `lib/seo.ts`'s `subjectPath()` maps `kind === "industry"` to
+        `/industry/${slug}` and `app/sitemap.ts` emits every indexed subject through it — while
+        `app/industry/[slug]/` held only `loading.tsx` and `page.tsx`, so it fell through to
+        `ogCard("Timelines for analysts", …)`. *"The sector timeline is the most distinctive thing
+        the product makes, and it is the one page type whose preview says nothing about what is on
+        it."* It also flagged the wrinkle in advance — the other cards are deliberately fetch-free,
+        but a card reading "sic-3674" would be worse than the generic one — and proposed falling
+        back to the generic card on a failed lookup. The build improved on that last part: a
+        slug-derived title says *which* sector even with the database down, where the generic card
+        says nothing at all.
 
 - [x] ~~`P0` **Commit the browser smoke pass**~~ — done 2026-07-28. `npm run check:ui`,
       **64 checks**, committed with Playwright as a devDependency. It is what caught every defect
@@ -1616,9 +1647,37 @@ look like") went to a **separate business checklist** worked independently of bo
       obligation that disappears at a narrow viewport is not met. Wikipedia's credit no longer
       truncates; public-domain and open-data credit still does, because there it is accuracy
       rather than a condition. `check:ui` asserts both.
-- [ ] `P2` **Research more news repositories.** Feeds the article-resurfacing initiative; the
-      keyless Internet Archive adapter
-      is still the top unbuilt candidate.
+- [ ] `P2` **Research more news repositories.** Feeds the article-resurfacing initiative.
+      - **Correction 2026-08-12: the Internet Archive adapter this entry called "the top unbuilt
+        candidate" has been built for some time.** `lib/archive.ts` holds both halves
+        (advancedsearch items, Wayback CDX snapshots), `internet_archive` is in `SOURCES`,
+        `scripts/ingest.ts` calls it from three sites on the topic and company paths, and
+        `check:archive` is in the chain. The entry described work already done; a fresh
+        candidate has to be picked before this item means anything.
+- [x] **The Internet Archive adapter, exercised against the live service for the first time.**
+      Done 2026-08-12. Its header warned that every payload shape came from documentation and had
+      never met the real server; egress reaches `archive.org` from the build container now, so it
+      was asked. **It returned a real defect on the first call.**
+      - **Every year-only archive item was being drawn on a specific 1 January.** The live
+        service returns a year-only item as `{"date":"1936-01-01T00:00:00Z","year":1936}` — a
+        midnight timestamp, not the bare `year` the API docs show — so `parseArchiveDate` matched
+        its day branch and reported day precision. This is the exact harm the function's own
+        comment warns about ("a March pamphlet in January"), arriving in a shape the guard did
+        not cover. Three consecutive Jan-1 "day" hits in a ten-row sample is the tell.
+      - **The check could not have caught it:** the canned fixture for a year-only item carried
+        `year: 1908` and *no* `date` field — a payload archive.org does not send. Written from
+        the documentation, it proved a code path the live service never takes. Both shapes are
+        pinned now, along with the cases the new rule must not swallow (a real day at midnight,
+        a real 1 January carrying a time, a bare `1965-01-01`). `check:archive` 40 → 46.
+      - The trade, recorded deliberately: a genuine 1 January event is now reported as year
+        precision. A year band that could have been a day is imprecise; a day that was only ever
+        a year is wrong.
+      - ⚠ **Two findings left open rather than fixed here.** `fetchSiteSnapshots` returns `[]`
+        both for "no captures" and for "could not reach the Wayback Machine" — demonstrated live,
+        since `web.archive.org` is blocked from this container and the function reported *zero
+        snapshots for ford.com*. That is the "could not ask is not there is nothing" bug
+        `check:index` exists to prevent, in a function that has **no production caller at all**:
+        only `check:archive` calls it, so it is also an instance of the wiring lesson.
 
 ## Other initiatives
 

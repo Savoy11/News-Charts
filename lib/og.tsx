@@ -81,6 +81,28 @@ export function ogCard(eyebrow: string, title: string) {
   );
 }
 
+/**
+ * The best title an opaque industry slug can honestly give on its own.
+ *
+ * Company and topic cards build their title from route params, because a ticker and a topic slug
+ * are already names. An industry slug is not: ingest writes `sic-3711` (`linkToIndustry`) and
+ * `sector-stablecoins` (`linkToSector`), so the same treatment would render "Sic 3711".
+ *
+ * `sic-3711` becomes "SIC 3711" rather than "Sic 3711" — if the number is all we have it should
+ * at least read as the classification code it is. A curated sector drops its `sector-` prefix,
+ * recovering something close to the display name without inventing the curated wording.
+ *
+ * This is the fallback. The card prefers the real display name and only lands here when the
+ * database cannot be reached.
+ */
+export function industryTitleFromSlug(slug: string): string {
+  const s = slug.trim();
+  const sic = /^sic-(\d+)$/i.exec(s);
+  if (sic) return `SIC ${sic[1]}`;
+  const sector = /^sector-(.+)$/i.exec(s);
+  return titleFromSlug(sector ? sector[1] : s);
+}
+
 /** "artificial%20intelligence" / "electric-cars" → "Artificial Intelligence" for a card title. */
 export function titleFromSlug(slug: string): string {
   let s = slug;

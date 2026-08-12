@@ -8,6 +8,37 @@ interface TickerRow {
   title: string;
 }
 
+/**
+ * The local EDGAR index — the read path's last network hop, taken off it.
+ *
+ * Built by `npm run sync:tickers` into `data/edgar-tickers.json` and committed. Every other read
+ * path already answered from the database; resolving a ticker still went to sec.gov the first
+ * time anybody searched it, so a throttled EDGAR — which a few `npm run refresh` runs are enough
+ * to produce, since it rate-limits by User-Agent — made the site's front door look dead.
+ *
+ * Local first, network still second. The index is a snapshot, so a company that listed after the
+ * last sync is not in it; those fall through to the live files exactly as before. What changes is
+ * that the common case (every security EDGAR knew at sync time) now costs no request at all.
+ */
+import tickerIndex from "../data/edgar-tickers.json";
+
+let localRows: TickerRow[] | null = null;
+function localCompanies(): TickerRow[] {
+  if (localRows) return localRows;
+  // The SEC's own ordering is preserved by the sync script and load-bearing here: the
+  // name-prefix rung below takes the FIRST prefix hit, which is only "the company a person
+  // almost certainly means" because the file is ordered roughly by size.
+  localRows = (tickerIndex.companies as [number, string, string][]).map(([cik_str, ticker, title]) => ({
+    cik_str,
+    ticker,
+    title,
+  }));
+  return localRows;
+}
+
+/** When the committed index was built — surfaced so staleness is visible rather than assumed. */
+export const TICKER_INDEX_SYNCED_ON: string = tickerIndex.syncedOn;
+
 async function getTickerMap(): Promise<TickerRow[]> {
   const res = await fetch("https://www.sec.gov/files/company_tickers.json", {
     headers: UA,
@@ -67,9 +98,14 @@ async function registrantName(cik: string): Promise<string | null> {
  * mutual funds by symbol. One resolver on purpose — a fund is a subject exactly the way a
  * company is (a CIK with filings and a priced ticker), and two resolvers would drift.
  */
-export async function resolveCompany(query: string): Promise<CompanyInfo | null> {
-  const rows = await getTickerMap();
-  const q = query.trim().toUpperCase();
+/**
+ * The company rungs, against whichever copy of the index the caller has.
+ *
+ * Split out so the local snapshot and the live file go through identical matching — two copies
+ * of this laddering would drift, and the drift would be invisible: the local one answers almost
+ * every query, so a divergence would only ever show up for a newly listed company.
+ */
+function matchCompany(rows: TickerRow[], q: string): CompanyInfo | null {
   // name-prefix rung: "ALIBABA" should find "ALIBABA GROUP HOLDING LIMITED" — nobody
   // types the full legal title. The SEC file is ordered roughly by market cap, so the
   // first prefix hit is the company a person almost certainly means ("APPLE" → Apple
@@ -80,18 +116,43 @@ export async function resolveCompany(query: string): Promise<CompanyInfo | null>
     (q.length >= 3
       ? rows.find((r) => r.title.toUpperCase().startsWith(q + " ")) ?? null
       : null);
-  if (hit) {
-    return {
-      ticker: hit.ticker,
-      cik: String(hit.cik_str).padStart(10, "0"),
-      name: hit.title,
-    };
+  if (!hit) return null;
+  return {
+    ticker: hit.ticker,
+    cik: String(hit.cik_str).padStart(10, "0"),
+    name: hit.title,
+  };
+}
+
+/** Symbols are short; anything else cannot be one, and asking about it wastes a request. */
+const SYMBOL_SHAPE = (q: string) => q.length >= 2 && q.length <= 6 && /^[A-Z0-9.]+$/.test(q);
+
+export async function resolveCompany(query: string): Promise<CompanyInfo | null> {
+  const q = query.trim().toUpperCase();
+
+  // 1. The committed index — no request at all, which is the point of this rung.
+  const local = matchCompany(localCompanies(), q);
+  if (local) return local;
+
+  // 2. Funds, still from the local index. Symbol-keyed only (the file carries no names), so this
+  //    answers "VTSAX" and "QQQ" but not "Vanguard 500" — a fund NAME index is a separate item.
+  //    The registrant lookup for the display name is an enrichment: it degrades to the symbol.
+  if (SYMBOL_SHAPE(q)) {
+    const localCik = (tickerIndex.funds as Record<string, number>)[q];
+    if (localCik !== undefined) {
+      const cik = String(localCik).padStart(10, "0");
+      const name = await registrantName(cik).catch(() => null);
+      return { ticker: q, cik, name: name ?? q };
+    }
   }
 
-  // Funds are symbol-keyed only (the file has no names), so this rung answers "VTSAX" and
-  // "QQQ" but not "Vanguard 500" — name search over funds needs a name source we don't have
-  // free and keyless yet. Bounded: symbols are short, so skip anything that can't be one.
-  if (q.length >= 2 && q.length <= 6 && /^[A-Z0-9.]+$/.test(q)) {
+  // 3. Only now the network, and only for what the snapshot could not know: anything listed
+  //    since the last `npm run sync:tickers`. Everything above this line is free and offline.
+  const rows = await getTickerMap();
+  const live = matchCompany(rows, q);
+  if (live) return live;
+
+  if (SYMBOL_SHAPE(q)) {
     const funds = await getFundTickerMap().catch(() => new Map<string, string>());
     const cik = funds.get(q);
     if (cik) {

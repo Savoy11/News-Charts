@@ -109,6 +109,38 @@ async function main(): Promise<void> {
   check("an empty corpus still fills the row", pickMix(blend([])).length === 5);
   check("every one of those is marked as a stand-in", pickMix(blend([])).every((s) => s.padded === true));
 
+  /**
+   * Every indexed kind gets its own social card.
+   *
+   * `sitemap.ts` emits company, topic and industry subjects alike, and each page declares
+   * `twitter: { card: "summary_large_image" }` — a promise of a large image. Industry pages had
+   * no `opengraph-image` route for a fortnight, so they fell through to the generic site card
+   * while still making that promise. The gap was invisible because nothing asserted the set.
+   */
+  console.log("\nEvery publicly indexed kind has a social card");
+  const { existsSync } = await import("node:fs");
+  for (const dir of ["company/[ticker]", "topic/[slug]", "industry/[slug]"]) {
+    check(`/${dir.split("/")[0]} has an opengraph-image route`, existsSync(`app/${dir}/opengraph-image.tsx`));
+  }
+
+  /**
+   * An industry slug is an opaque identifier, so its card reads the database for the real name —
+   * and must survive that read failing, which is the case this whole file already simulates.
+   */
+  const { industryTitleFromSlug } = await import("../lib/og");
+  check("a SIC slug reads as its code, not as a word", industryTitleFromSlug("sic-3711") === "SIC 3711", industryTitleFromSlug("sic-3711"));
+  check("a curated sector drops its prefix", industryTitleFromSlug("sector-stablecoins") === "Stablecoins", industryTitleFromSlug("sector-stablecoins"));
+  check("a hyphenated sector still reads", industryTitleFromSlug("sector-layer-1") === "Layer 1", industryTitleFromSlug("sector-layer-1"));
+  check("anything else falls back to the slug", industryTitleFromSlug("widgets") === "Widgets", industryTitleFromSlug("widgets"));
+
+  // The fallback only helps if the route actually reaches it. A social card that throws on an
+  // unreachable database is the failure this degradation exists to prevent.
+  const routeSrc = await import("node:fs").then((fs) =>
+    fs.readFileSync("app/industry/[slug]/opengraph-image.tsx", "utf8")
+  );
+  check("the card guards its database read", /loadIndustry\([^)]*\)\s*\.catch\(/.test(routeSrc));
+  check("and falls back rather than rendering nothing", /industryTitleFromSlug\(/.test(routeSrc));
+
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);
 }

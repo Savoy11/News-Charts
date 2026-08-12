@@ -40,6 +40,18 @@ async function dates(): Promise<void> {
   check("a full timestamp is a day", parseArchiveDate("1922-03-04T00:00:00Z")?.precision === "day");
   check("and keeps its day", parseArchiveDate("1922-03-04T00:00:00Z")?.date === "1922-03-04");
   check("a bare date is a day", parseArchiveDate("1965-07-19")?.date === "1965-07-19");
+
+  // The shape the LIVE service actually returns for a year-only item, confirmed 2026-08-12:
+  // a midnight timestamp on 1 January. Read literally it is a specific day, which is how every
+  // year-only archive item was being drawn on 1 January. The fixture below this used to be the
+  // only year-only case and it carries a bare `year` — a shape archive.org does not send.
+  const placeholder = parseArchiveDate("1936-01-01T00:00:00Z");
+  check("the archive's Jan-1 midnight placeholder is a year", placeholder?.precision === "year", placeholder?.precision);
+  check("and keeps the year it stood for", placeholder?.date === "1936-01-01", placeholder?.date);
+  // The rule must not swallow real dates: only 1 January, only at midnight, only with a time.
+  check("a real day at midnight stays a day", parseArchiveDate("1922-03-04T00:00:00Z")?.precision === "day");
+  check("a real 1 January time stays a day", parseArchiveDate("1965-01-01T14:30:00Z")?.precision === "day");
+  check("a bare 1 January stays a day", parseArchiveDate("1965-01-01")?.precision === "day");
   // The one that matters: normalising a bare year to Jan 1 and calling it a day would put a
   // March pamphlet in January and draw it as though the archive had said so.
   const y = parseArchiveDate("1922");
@@ -66,6 +78,9 @@ async function items(): Promise<void> {
         { identifier: "fordmotor1922", title: "Ford Motor Company annual report", date: "1922-03-04T00:00:00Z", mediatype: "texts", creator: "Ford Motor Company" },
         // multi-valued title and creator: archive.org returns arrays when an item has several
         { identifier: "modelt", title: ["The Model T", "Model T Ford"], year: 1908, mediatype: "texts", creator: ["Ford", "Anon"] },
+        // A year-only item AS THE LIVE SERVICE SENDS IT — Jan-1 midnight timestamp plus a `year`
+        // field, not the bare `year` the docs show. Verified against archive.org on 2026-08-12.
+        { identifier: "rockefeller1936", title: "Rockefeller Foundation Annual Report(s)", date: "1936-01-01T00:00:00Z", year: 1936, mediatype: "texts", creator: "Rockefeller Foundation" },
         // a container, not a happening — its date says when someone made a folder
         { identifier: "autos-collection", title: "Automobiles", date: "2011-05-02", mediatype: "collection" },
         // undated: there is nothing to place it against
@@ -75,7 +90,7 @@ async function items(): Promise<void> {
   });
 
   const r = await fetchArchiveItems("Ford Motor Company");
-  check("dated items become events", r.events.length === 2, `${r.events.length}`);
+  check("dated items become events", r.events.length === 3, `${r.events.length}`);
   check("outcome is ok when something came back", r.outcome === "ok", r.outcome);
   check("a collection is not an event", !r.events.some((e) => e.id.includes("autos-collection")));
   check("an undated item is dropped", !r.events.some((e) => e.id.includes("undated-thing")));
@@ -93,6 +108,13 @@ async function items(): Promise<void> {
   check("a multi-valued title takes one value", modelT?.title === "The Model T", modelT?.title);
   check("a multi-valued creator takes one value", modelT?.source === "Internet Archive · Ford", modelT?.source);
   check("a year-only item keeps year precision", modelT?.precision === "year", modelT?.precision);
+
+  // The same assertion against the shape the service really sends. This is the one that was
+  // missing: with only the fixture above, the parser could call every live year-only item a
+  // specific 1 January and every check still passed.
+  const rockefeller = r.events.find((e) => e.externalId === "rockefeller1936");
+  check("a live-shaped year-only item is a year, not 1 January", rockefeller?.precision === "year", rockefeller?.precision);
+  check("and still lands in its own year", rockefeller?.date === "1936-01-01", rockefeller?.date);
 
   console.log("\nWhen the archive can't answer");
   serve({ response: { numFound: 0, docs: [] } });

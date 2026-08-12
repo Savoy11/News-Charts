@@ -45,6 +45,21 @@ function first(v: string | string[] | undefined): string | undefined {
  * Metadata quality here is uneven by design — it is a public archive, not a catalogue — so a
  * bare year is common and must stay a bare year. Normalising "1922" to 1922-01-01 and calling it
  * day precision would put a March pamphlet in January and draw it as a specific day.
+ *
+ * ⚠ The archive does that normalising *for us*, which is how the harm above arrived anyway.
+ * Exercised against the live service for the first time on 2026-08-12, `advancedsearch` returns
+ * a year-only item as `{"date":"1936-01-01T00:00:00Z","year":1936}` — a full midnight timestamp
+ * on 1 January, not the bare `year` the API documentation shows. Read literally that is day
+ * precision, so every year-only item in the archive was landing on the timeline as a specific
+ * 1 January. Three consecutive Jan-1 "day" hits in a ten-row sample is the tell.
+ *
+ * The canned fixtures were written from the documentation, so no check ever saw the real shape —
+ * `check:archive` asserted year precision against a doc carrying `year` and no `date` at all,
+ * a payload the service does not send. Both shapes are pinned now.
+ *
+ * A genuine 1 January event is downgraded to year precision by the rule below. That is the
+ * trade, and it is the right way round: a year band that could have been a day is imprecise,
+ * a day that was only ever a year is wrong.
  */
 export function parseArchiveDate(raw: string | undefined): { date: string; precision: DatePrecision } | null {
   const s = String(raw ?? "").trim();
@@ -58,6 +73,12 @@ export function parseArchiveDate(raw: string | undefined): { date: string; preci
     const [y, m, d] = [Number(day[1]), Number(day[2]), Number(day[3])];
     const maxDay = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
     if (okYear(y) && m >= 1 && m <= 12 && d >= 1 && d <= maxDay) {
+      // Midnight on 1 January *with a time component* is the archive's year-only placeholder
+      // (see the note above). A bare "1936-01-01" keeps day precision: the live service sends
+      // the timestamp form, so the bare one is far likelier to be a real date somebody typed.
+      if (m === 1 && d === 1 && /[T ]00:00:00/.test(s)) {
+        return { date: `${day[1]}-01-01`, precision: "year" };
+      }
       return { date: `${day[1]}-${day[2]}-${day[3]}`, precision: "day" };
     }
     return null;

@@ -106,9 +106,28 @@ const CONTAINER_TYPES = new Set(["collection", "web"]);
 /**
  * Dated items mentioning a subject.
  *
- * Sorted by date ascending rather than by relevance, the opposite of the Chronicling America
- * call: OCR misreads are what makes date-sorting dangerous there, and archive.org items carry
- * catalogued metadata rather than OCR guesses, so the oldest hits are genuinely the oldest.
+ * Sorted by RELEVANCE, the same way the Chronicling America call is, and for the same reason.
+ *
+ * ⚠ This used to sort `date asc`, on the stated premise that "archive.org items carry catalogued
+ * metadata rather than OCR guesses, so the oldest hits are genuinely the oldest". Measured
+ * against the live service on 2026-08-12, that premise is false, and the sort was selecting for
+ * the failure rather than around it — the worst-catalogued items in the archive are precisely
+ * the ones an ascending date sort promotes to the top:
+ *
+ *   "Ford Motor"  → 48 items, 1770–1916, 12 of them pre-1900. The five oldest are Driscoll
+ *                   sheet-music covers for 1914–29 songs, every one stamped `year: 1770`.
+ *   "Nvidia"      → 50 items, 1898–1999, for a company founded in 1993.
+ *
+ * Two harms came out of that one parameter. Roughly half of every request's rows were spent on
+ * items `dropImplausiblePress` then discarded — and because the 50 oldest hits are always the
+ * subject's earliest years, this source could never return a post-1998 NVIDIA item, a post-1980
+ * Apple item or a post-1915 Ford item, however much the archive held. For the source this file
+ * calls structurally safe and the coverage map names as the backbone of the 1963–2017 gap, that
+ * is most of its reach, silently unreachable.
+ *
+ * Nothing offline could see it: `check:archive` tests how a payload is parsed, not what the
+ * query asked for. A date window, if one is ever wanted, belongs in `q` — not in taking the head
+ * of a sort over a field the archive itself does not curate.
  */
 export async function fetchArchiveItems(term: string, rows = 50): Promise<FetchResult> {
   const q = `"${term.replace(/"/g, "")}"`;
@@ -116,7 +135,8 @@ export async function fetchArchiveItems(term: string, rows = 50): Promise<FetchR
   for (const f of ["identifier", "title", "date", "year", "mediatype", "creator"]) {
     params.append("fl[]", f);
   }
-  params.append("sort[]", "date asc");
+  // No `sort[]` at all — archive.org's default is relevance, which is what we want. See above:
+  // sorting by a date field the archive does not curate selected for mis-catalogued rows.
   const url = `https://archive.org/advancedsearch.php?${params}`;
 
   try {

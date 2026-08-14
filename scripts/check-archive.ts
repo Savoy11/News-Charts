@@ -6,12 +6,18 @@ config({ path: ".env.local" });
  *
  *   npm run check:archive
  *
- * ⚠ Both payload shapes are taken from archive.org's published API documentation and have never
- * been exercised against the live service from here — egress is blocked by policy. So these
- * checks prove the *parsing*, not the endpoint. What they are really for is the archive's uneven
- * metadata: a bare year must stay a bare year, a container item must not become an event, and a
- * CDX header row must not become a snapshot. Each of those renders as plausible-looking data
- * when it goes wrong.
+ * These checks are offline, like every other suite in the chain, so what they prove is the
+ * *parsing* — plus, since 2026-08-12, what the request asks for. The archive's metadata is uneven
+ * by design: a bare year must stay a bare year, a container item must not become an event, and a
+ * CDX header row must not become a snapshot. Each renders as plausible-looking data when wrong.
+ *
+ * ⚠ **Payload shapes here are no longer taken from documentation alone.** They were, and it cost
+ * two defects that every case in this file passed straight through: year-only items drawn on a
+ * specific 1 January (the fixture used a field the live service does not send), and a `date asc`
+ * sort that selected the archive's worst-catalogued rows (nothing here looked at the query at
+ * all). Both fixtures now match responses captured from `advancedsearch.php` on 2026-08-12.
+ * `web.archive.org` is still unreachable from this container, so the CDX shapes below remain
+ * documentation-derived — that one caveat is real, and it is the only one.
  */
 import { fetchArchiveItems, fetchSiteSnapshots, parseArchiveDate } from "../lib/archive";
 
@@ -24,14 +30,37 @@ function check(name: string, ok: boolean, detail = ""): void {
 }
 
 const realFetch = globalThis.fetch;
+/** The last URL the adapter asked for, so the QUERY can be asserted and not just the parsing. */
+let lastUrl = "";
 function serve(body: unknown, status = 200): void {
-  globalThis.fetch = (async () =>
-    ({
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    lastUrl = String(input);
+    return {
       ok: status >= 200 && status < 300,
       status,
       json: async () => body,
       text: async () => JSON.stringify(body),
-    }) as unknown as Response) as typeof fetch;
+    } as unknown as Response;
+  }) as typeof fetch;
+}
+
+/**
+ * What the adapter ASKS FOR, which is the half this suite could not see.
+ *
+ * Every case below this file tests how a payload is parsed. That is why a `sort[]=date asc`
+ * parameter sat here for weeks: it produced perfectly parseable rows, and the defect was in the
+ * selection, not the parsing. Measured live on 2026-08-12, that sort returned Ford items from
+ * 1770 and capped NVIDIA's reach at 1999 for a company founded in 1993.
+ */
+async function query(): Promise<void> {
+  console.log("\nWhat the request asks for");
+  serve({ response: { numFound: 0, docs: [] } });
+  await fetchArchiveItems("Ford Motor");
+  check("the search term is quoted as a phrase", /q=%22Ford\+Motor%22|q=%22Ford%20Motor%22/.test(lastUrl), lastUrl.slice(0, 90));
+  // The one that matters: archive.org's default is relevance, and its `date` field is not
+  // curated well enough to sort on. Asking for the oldest rows asks for the worst-catalogued.
+  check("no date sort is requested", !/sort/i.test(lastUrl), lastUrl.slice(0, 140));
+  check("the fields the parser reads are requested", ["identifier", "title", "date", "year", "mediatype", "creator"].every((f) => lastUrl.includes(f)));
 }
 
 async function dates(): Promise<void> {
@@ -198,6 +227,7 @@ async function snapshots(): Promise<void> {
 async function main(): Promise<void> {
   try {
     await dates();
+    await query();
     await items();
     await snapshots();
   } finally {

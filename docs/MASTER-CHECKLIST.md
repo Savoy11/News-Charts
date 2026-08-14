@@ -542,29 +542,43 @@ closed PR #15, whose findings are otherwise all shipped.
 
 ### Findings from the 2026-08-12 audit
 
-- [ ] `P1` **The Internet Archive query sorts date-ascending on a false premise.**
-      `lib/archive.ts:119` sets `sort[]=date asc`, justified at `:109-111` by *"archive.org items
-      carry catalogued metadata rather than OCR guesses, so the oldest hits are genuinely the
-      oldest."* Measured live, that premise is false and the sort **promotes exactly the
-      mis-catalogued items**: `"Ford Motor"` returns 1770→1916 with 12 pre-1900 rows (five are
-      1914–29 sheet music stamped `year: 1770`); `"Nvidia"`, founded 1993, returns 1898→1999.
-      Two harms from one line — roughly half the request budget is spent on rows the ingest floor
-      then discards, and **the archive contribution to any company page is permanently frozen in
-      its first few years**: no post-1998 NVIDIA item, no post-1980 Apple item, ever. This is the
-      source `lib/archive.ts:6-8` calls "structurally safe" and the intended backbone of the
-      1963–2017 coverage gap. `check:archive` (52 cases) tests parsing, not the query, so nothing
-      offline can see it. Fix: stop sorting by date, as the Chronicling America call already does.
-- [ ] `P1` **Aave's Snapshot space id is not a Snapshot space.** `lib/onchain/governance.ts:45-50`
-      registers `space: "aave.eth"`, which returns `{"space":null}`; Aave's DAO is `aavedao.eth`
-      with **970 proposals**, and the repo's own `fetchGovernance` parses 10/10 events from it
-      immediately. `/topic/aave` has shipped an empty timeline since 2026-07-28. This is the exact
-      failure `governance.ts:34-36` predicts about itself — *"a wrong space id returns an empty
-      proposal list, which on a page is indistinguishable from 'this protocol has not voted
-      lately'"* — and `check:feeds` has been printing that zero per-space without anyone reading
-      it. Fix: `aavedao.eth`, plus a `check:governance` assertion that every id resolves to a
-      non-null space (one request, not a fixture).
-      - ⚠ This corrects a line written **today**: the live-verification table above records
-        "Snapshot ✓ (40 proposals)". That was one of two configured spaces; the other is dead.
+- [x] ~~`P1` **The Internet Archive query sorts date-ascending on a false premise.**~~ — fixed
+      2026-08-12. The `sort[]` parameter is gone; archive.org's default is relevance, which is
+      what the Chronicling America call already asks for and for the same reason. **Verified live
+      against the same three queries that found it:**
+
+      | query | before | after |
+      |---|---|---|
+      | Nvidia (founded 1993) | 1898 → 1999 | **2011 → 2025**, 0 pre-1900 |
+      | Ford Motor | 1770 → 1916, 12 pre-1900 | **1921 → 2025**, 0 pre-1900 |
+      | Apple Inc | 1976 → 1980 | **2000 → 2025** |
+
+      The source reaches modern material for the first time, and stops spending half its rows on
+      items the floor discards. Historical reach is not lost — Ford still starts 1921.
+      - `check:archive` gained a **"what the request asks for"** section (55 cases). It had none:
+        every case tested how a payload was *parsed*, which is precisely why a bad query parameter
+        could sit there producing perfectly parseable garbage. It now asserts that no date sort is
+        requested, so this cannot be reintroduced silently.
+      - The original finding is preserved in
+        [`docs/audits/2026-08-12-audit.md`](audits/2026-08-12-audit.md) §1.
+- [x] ~~`P1` **Aave's Snapshot space id is not a Snapshot space.**~~ — fixed 2026-08-12.
+      `aavedao.eth`, with the provenance taken from Snapshot's own space record rather than a
+      portal link. **Verified live: `/topic/aave` goes from 0 events to 40**, and both configured
+      spaces resolve (Uniswap 197 proposals, Aave DAO 970).
+      - **The warning that failed is the more useful lesson.** That file already said a wrong id
+        would look like a quiet month, and `check:feeds` already printed the per-space zero on
+        every run — for a fortnight, unread, because the annotation beside it ("closed proposals
+        only") supplied a plausible reason to skip past it. **A visible zero is not a read zero.**
+        `check:feeds` now verifies the id *before* the count and prints **`✖ NOT A SNAPSHOT
+        SPACE`** in its own words, because "this id does not exist" and "nothing closed recently"
+        are different facts and only one of them is our bug.
+      - New `assertSpacesResolve` lives in `lib/onchain/governance.ts`, not in a `check:*` script,
+        because it needs the network and the whole `npm run check` chain is offline by
+        construction. It distinguishes all three answers: resolves, does not exist, could not ask.
+      - `check:governance` had hardcoded `aave.eth` in a URL assertion, so it pinned the typo and
+        had to be edited when the id was corrected. **A check that must change when a config value
+        is corrected is a check protecting the mistake** — it now derives the space from config.
+      - Original finding: audit §2.
 - [ ] `P1` **Two ingest branches apply no plausibility floor to archive items.**
       `scripts/ingest.ts:403-406` passes them through with only `.slice(0, 25)`, under a comment
       asserting a wrong date is "a rarity"; `scripts/ingest.ts:285` computes `floor = 0` for a

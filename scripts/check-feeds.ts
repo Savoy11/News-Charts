@@ -17,7 +17,7 @@ config({ path: ".env.local" });
 import { getNews } from "../lib/news";
 import { getPressMentions } from "../lib/loc";
 import { getArchiveItems } from "../lib/archive";
-import { GOVERNANCE_SPACES, getGovernanceFor } from "../lib/onchain/governance";
+import { GOVERNANCE_SPACES, getGovernanceFor, assertSpacesResolve } from "../lib/onchain/governance";
 import { EXPLOIT_TARGETS, getExploitsFor } from "../lib/onchain/exploits";
 import { getUsdtSupplyMoves } from "../lib/onchain/usdt";
 import { getTopicTimeline } from "../lib/wiki";
@@ -139,10 +139,30 @@ async function main() {
   }
   report("LoC press (pre-1963)", await safe(getPressMentions(name).then((r) => r)), "(normal for modern subjects)");
   report("Internet Archive", await safe(getArchiveItems(name)), "(keyless; metadata index only)");
-  // Per space, because a wrong space id returns an empty list that looks exactly like a quiet
-  // month of governance — the one thing this report exists to tell apart.
+  /**
+   * Per space — but the id is checked BEFORE the proposals, because the two failures look
+   * identical in a proposal count and are not the same fact.
+   *
+   * This report already printed `Snapshot aave.eth ⚠ 0 articles (closed proposals only)` every
+   * time it ran, for a fortnight, while `aave.eth` was not a Snapshot space at all. The zero was
+   * visible and still unread, because the annotation beside it supplied a plausible reason to
+   * skip past. An id that does not resolve now says so in its own words instead.
+   */
+  const spaceChecks = await assertSpacesResolve(GOVERNANCE_SPACES);
   for (const g of GOVERNANCE_SPACES) {
-    report(`Snapshot ${g.space}`, await safe(getGovernanceFor(g.slug)), "(closed proposals only)");
+    const c = spaceChecks.find((x) => x.space === g.space);
+    if (c?.resolves === false) {
+      console.log(
+        `  ${`Snapshot ${g.space}`.padEnd(22)} ✖ NOT A SNAPSHOT SPACE — this id does not ` +
+          `exist, so its timeline can never fill. Fix the id in GOVERNANCE_SPACES.`
+      );
+      continue;
+    }
+    if (c?.resolves === null) {
+      console.log(`  ${`Snapshot ${g.space}`.padEnd(22)} — could not verify the space id (${c.detail ?? "unknown"})`);
+    }
+    const known = c?.proposalsCount != null ? ` (space holds ${c.proposalsCount} proposals)` : "";
+    report(`Snapshot ${g.space}`, await safe(getGovernanceFor(g.slug)), `(closed proposals only)${known}`);
   }
   // ⚠ Check the amounts on the first real run: DefiLlama reports millions, and a unit error
   // shows here as "$600" where "$600m" belongs — obvious on screen, invisible offline.

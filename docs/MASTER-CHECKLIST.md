@@ -767,12 +767,25 @@ the items under it can be argued for or against without one.
       characters; no page or API reads the table; 90-day retention applied by the scheduled
       refresh rather than by whoever remembers. **Confirm this is the trade you want** — measuring
       accuracy needs the raw query, and hashing it would make the miss list useless.
-- [ ] `P1` **Invert parse and resolve.** `parseSearchPrompt` strips conversational scaffolding
-      with a list of regexes and hands whatever survives to the ladder, so any phrasing the
-      patterns do not anticipate travels through as the subject — which is how a prompt once
-      became `/topic/how-donald-trumps-presidency-affected`. Generate candidate spans and test
-      them against the subject index instead, keeping the longest that resolves: the corpus
-      decides what is a subject name, rather than a list of English patterns.
+- [x] ~~`P1` **Invert parse and resolve.**~~ — done 2026-08-12, and **the premise was already
+      half-stale when it was written down.**
+      - **The regex stripping this item describes is not on the search path at all.**
+        `parseSearchPrompt` is defined in `lib/prompt.ts` and called by nothing in `app/`, `lib/`
+        or `components/` — the 2026-08-08 scope refocus took it off the path and the entry was
+        never updated. The failure it names (`/topic/how-donald-trumps-presidency-affected`)
+        cannot happen through search today.
+      - **What is on the path is already the design this item asks for.** `headPrefixes` generates
+        candidate spans longest-first and the resolver tests each against the corpus — "the corpus
+        decides what is a subject name, rather than a list of English patterns" was built; what
+        was missing is that each span was tested with *exact-ish* lookups, so a misspelt span
+        still fell through.
+      - Spans now go through the same scored `findCandidates` the whole query does. Verified
+        against a real Postgres: `Ford earnings` → F via span "Ford"; **`forde motor earnings` →
+        F via span "forde motor"**; `electirc cars history` → Electric car via span "electirc";
+        `zzqqxx nothing here` → nothing. The middle two are new — an exact-only span test dropped
+        both.
+      - This completes the search-accuracy trio, and the third stale item found this session by
+        checking a claim against the code before acting on it.
 - [x] ~~`P1` **Score candidates instead of laddering.**~~ — the scoring half done 2026-08-12;
       **on-screen disambiguation is the remaining half and is recorded below.**
       - `findCandidates` (`lib/store/read.ts`, db/020 adds `pg_trgm` + GIN indexes) puts exact

@@ -98,24 +98,29 @@ export async function resolveSearch(q: string): Promise<ResolvedSearch> {
    * routing to the right security beats a miss page. Logged distinctly so we can see how often
    * the tail was worth something; v2 gives it back as a focus.
    */
+  /**
+   * Head-prefix salvage: "Best Buy earnings" fails every whole-query rung but "Best Buy" is BBY.
+   * The tail is DROPPED for now rather than carried as focus — prompt search is shelved, and
+   * routing to the right security beats a miss page. Logged distinctly so we can see how often
+   * the tail was worth something; v2 gives it back as a focus.
+   *
+   * **This is the "generate candidate spans and test them against the corpus" design**, and each
+   * span is now tested with the same scored lookup the whole query gets — so a misspelt span
+   * ("forde motor earnings") resolves where an exact-only test dropped it. The corpus decides
+   * what is a subject name; no list of English patterns is consulted anywhere on this path.
+   */
   let salvaged: { kind: "company" | "topic"; slug?: string } | null = null;
   let salvagedTopicSlug: string | null = null;
   if (!ticker && !known && !tickerIndexSlow) {
     for (const { prefix } of headPrefixes(query)) {
-      const pCompany = await findKnownCompany(prefix).catch(() => null);
-      if (pCompany) {
-        ticker = pCompany.ticker;
-        salvaged = { kind: "company" };
-        break;
-      }
-      const pKnown = await loadSubject(prefix).catch(() => null);
-      if (pKnown) {
-        if (pKnown.kind === "company" && pKnown.ticker) {
-          ticker = pKnown.ticker;
+      const [pBest] = await findCandidates(prefix, 1).catch(() => []);
+      if (pBest) {
+        if (pBest.kind === "company" && pBest.ticker) {
+          ticker = pBest.ticker;
           salvaged = { kind: "company" };
         } else {
-          salvaged = { kind: "topic", slug: pKnown.slug };
-          salvagedTopicSlug = pKnown.slug;
+          salvaged = { kind: "topic", slug: pBest.slug };
+          salvagedTopicSlug = pBest.slug;
         }
         break;
       }

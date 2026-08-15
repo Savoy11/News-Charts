@@ -9,10 +9,14 @@ import { FetchResult, TimelineEvent, DatePrecision } from "./types";
  * back further than anything except Chronicling America, and unlike Chronicling America it is
  * not limited to US newspapers before 1963.
  *
- * ⚠ Both payload shapes below come from archive.org's published API documentation and have
- * never been exercised against the live service from this environment (egress is blocked by
- * policy). `npm run check:archive` pins them against canned responses matching that
- * documentation, which is the same standard every other adapter here was verified to.
+ * ✅ **Exercised against the live service 2026-08-12**, and it found two defects that every
+ * offline case passed straight through: year-only items drawn on a specific 1 January, and a
+ * `date asc` sort selecting the archive's worst-catalogued rows. The `advancedsearch` fixtures in
+ * `npm run check:archive` now match responses captured that day.
+ *
+ * ⚠ The Wayback **CDX** half below is still documentation-derived — `web.archive.org` is
+ * unreachable from this container even though `archive.org` is not. That one caveat is real, and
+ * it is the only one.
  */
 
 const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };

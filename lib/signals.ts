@@ -28,7 +28,7 @@ export interface Signal {
   eventIds: number[];
 }
 
-function median(xs: number[]): number {
+export function median(xs: number[]): number {
   if (!xs.length) return 0;
   const s = [...xs].sort((a, b) => a - b);
   const m = Math.floor(s.length / 2);
@@ -36,7 +36,7 @@ function median(xs: number[]): number {
 }
 
 /** Median absolute deviation — robust to the very spikes we're hunting for. */
-function mad(xs: number[]): number {
+export function mad(xs: number[]): number {
   if (!xs.length) return 0;
   const m = median(xs);
   return median(xs.map((x) => Math.abs(x - m)));
@@ -47,7 +47,7 @@ function mad(xs: number[]): number {
  * The floor matters: without it, 2 events against a baseline of 0 looks infinitely
  * significant and every quiet sector produces noise.
  */
-function isSpike(
+export function isSpike(
   n: number,
   baseline: number,
   spread: number,
@@ -180,7 +180,7 @@ async function priceDivergence(memberIds: number[], since: string) {
   return rows.map((r) => ({ id: Number(r.id), ticker: r.ticker, pct: Number(r.pct), d0: r.d0, d1: r.d1 }));
 }
 
-function weekEnd(wk: string): string {
+export function weekEnd(wk: string): string {
   const d = new Date(`${wk}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + 6);
   return d.toISOString().slice(0, 10);
@@ -244,8 +244,19 @@ export async function computeSignals(
     });
   }
 
-  // --- one member moving unlike the rest
-  if (prices.length >= 2) {
+  /**
+   * --- one member moving unlike the rest
+   *
+   * **Three members, not two.** With exactly two, the median is the midpoint of the pair, so both
+   * are equidistant from it and `sort` — being stable — returns whichever the database listed
+   * first. The page then reported "A outran the sector by X" or "B lagged the sector by X"
+   * interchangeably, decided by row order, when the honest description is that the two moved
+   * apart and neither is the outlier.
+   *
+   * A two-member "sector median" is just the midpoint of the pair, so there is no sector to
+   * diverge *from*. Withholding the signal is the correct answer, not a conservative one.
+   */
+  if (prices.length >= 3) {
     const med = median(prices.map((p) => p.pct));
     const worst = [...prices].sort(
       (a, b) => Math.abs(b.pct - med) - Math.abs(a.pct - med)

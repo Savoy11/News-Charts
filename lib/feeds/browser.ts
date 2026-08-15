@@ -15,9 +15,10 @@ import type { FeedKeys } from "../feedKeys";
  * env in a browser, and caching a response fetched under someone's personal key in a shared
  * layer is the mistake this whole feature exists to avoid.
  *
- * ⚠ **Unverified live, on two counts.** Egress is blocked from this environment, so neither
- * endpoint has been called; and browser-side use additionally depends on each publisher sending
- * permissive CORS headers, which cannot be tested here at all. Both APIs are widely used from
+ * ⚠ **Unverified live, on two counts — and neither is egress.** These are the NYT and Guardian
+ * endpoints, which need keys the build container does not hold; and browser-side use additionally
+ * depends on each publisher sending permissive CORS headers, which no server-side check can test
+ * whatever the network allows. (Egress itself is open as of 2026-08-12.) Both APIs are widely used from
  * browsers and document doing so, but a CORS failure is the most likely way this feature is
  * broken in the wild, and it will surface as "no articles" rather than as an error.
  */

@@ -12,8 +12,11 @@ config({ path: ".env.local" });
  * choices are free text in no fixed order, so the obvious `scores[0] > scores[1]` reading is
  * wrong for any space that lists "Against" first.
  *
- * ⚠ Payload shape comes from Snapshot's published GraphQL schema; egress is blocked here, so
- * these prove the parsing, not the endpoint.
+ * These prove the parsing, and deliberately only the parsing. The endpoint WAS exercised live on
+ * 2026-08-12 — which is how `aave.eth` was found never to have been a Snapshot space — but the
+ * question "does this id exist" cannot be asked from an offline suite at all, so it lives in
+ * `assertSpacesResolve` and runs under `npm run check:feeds`. A fixture cannot catch a wrong id:
+ * it answers whatever it was told to answer.
  */
 import { GOVERNANCE_SPACES, fetchGovernance, tally } from "../lib/onchain/governance";
 

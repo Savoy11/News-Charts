@@ -12,8 +12,11 @@ import type { FetchResult, TimelineEvent } from "../types";
  * change it authorises is executed later, elsewhere, or not at all. They are filed under the
  * `governance` kind for that reason; calling them `onchain` would claim a proof they do not have.
  *
- * ⚠ The payload shape below comes from Snapshot's published GraphQL schema and has never been
- * exercised live from here — egress is blocked. `npm run check:governance` pins the parsing.
+ * ✅ **Exercised live 2026-08-12**, and it found a defect the fixtures could not: the registered
+ * Aave space id was not a Snapshot space at all. The payload shape below matches what
+ * `hub.snapshot.org` actually returns; `npm run check:governance` pins the parsing offline, and
+ * `assertSpacesResolve` (called by `npm run check:feeds`) is the live half, because whether an id
+ * EXISTS is a question no fixture can answer.
  */
 
 const SNAPSHOT_API = "https://hub.snapshot.org/graphql";

@@ -614,44 +614,56 @@ closed PR #15, whose findings are otherwise all shipped.
         the note above about that function having no production caller: **one surface does ship**,
         it simply never consulted it.
       - Original finding: audit §4.
-- [ ] `P2` **"3M" resolves to nothing.** `lib/sec.ts:137-141` gates the name-prefix rung on
-      `q.length >= 3`, so `3M → null` while `MMM → "3M CO"` — a Dow 30 component told it is not a
-      listed security. The prefix `"3M "` matches **exactly one row**; of 140 distinct
-      two-character title prefixes in the index, **94 are unique**. The guard's stated reason
-      ("junk prefixes") is a length rule standing in for an ambiguity rule. Fix: gate on how many
-      rows the prefix matches, which the local index gives for free. Adjacent to the `P1` scoring
-      item below but independent of it.
-- [ ] `P2` **Ethereum milestone rows credit an explorer that answered nothing.**
-      `lib/onchain/ethereum.ts:85-88` sets `sourceLabel: "Blockscout · Etherscan"` on both the
-      chain-read branch and the `fallbackDate` branch, so with Blockscout returning 403 all four
-      milestones still claim their date was read from it. Substituting the curated date is
-      deliberate; keeping the provenance is not. Fix: carry the label from the branch that
-      produced the date.
-- [ ] `P2` **`check:feeds` does not exercise three sources the ⛔ gate names.** It never calls
-      `getFilings`, `fetchRegulations` or `getDailyPrices` (nor the keyless on-chain adapters) —
-      the three feeds behind the price series, the filings timeline and sector regulation rows.
-      Both missing keyless adapters work when called by hand (`fetchRegulations("semiconductors")`
-      → 60 events, 3,778 upstream matches), so this is a gap in **the gate's instrument**, not in
-      the feeds. A green run is currently read as evidence for a release blocker while silent on
-      its most load-bearing sources.
-- [ ] `P2` **Five files still say egress is blocked, and `lib/archive.ts` contradicts itself.**
-      Its header says the payloads have *"never been exercised against the live service"* while
-      `:50-52`, 37 lines later, describes the defect a live run found. Same stale claim in
-      `onchain/governance.ts:16` (now disproved), `onchain/usdt.ts:19`, `onchain/verify.ts:13`,
-      `feeds/browser.ts:18`. Fix: say what was verified live and when — and for the three that
-      genuinely still cannot be exercised, say *that* specifically, which is the useful statement
-      the blanket claim replaced. Also `README.md:505` says `check:archive` is 39 cases; it is 52.
-- [ ] `P2` **Five exported functions have no caller, and one is named in this checklist as the
-      live mechanism.** `dedupByUrl`, `wikipediaHasSubject`, `isStale`, `isFollowing`,
-      `clearAnnotations`. The dedup entry above credits `dedupByUrl`; the mechanism that actually
-      does it is `collapseNearDuplicates`, keyed on `storyKey`. Delete the five, correct the entry.
-- [ ] `P2` **`lib/signals.ts` computes displayed figures with no check of any kind.** Three
-      production consumers, no `check:signals`, and its four numeric helpers (`median`, `mad`,
-      `isSpike`, `weekEnd`) are module-private so no offline check could reach them. One
-      behaviour visible from reading it: with exactly two members both are equidistant from the
-      median, so *"A outran by X"* versus *"B lagged by X"* is decided by database row order.
-      Every comparable arithmetic module here has a suite; this one produces the numbers most
-      likely to be read as a finding about a company.
+- [x] ~~`P2` **"3M" resolves to nothing.**~~ — fixed 2026-08-12. The name-prefix rung is gated on
+      **ambiguity, not length**: one match is an answer whatever its length, several still need
+      three characters to be meant. `3M` → `MMM` / "3M CO"; ALIBABA, APPLE, Ford, AAPL and
+      "Vanguard 500" all unchanged. The old guard called itself a defence against junk prefixes,
+      but length is a poor proxy for ambiguity — `"3M "` matches exactly one row in 10,387, and 94
+      of the index's 140 two-character title prefixes are unique. Audit §5.
+- [x] ~~`P2` **Ethereum milestone rows credit an explorer that answered nothing.**~~ — fixed
+      2026-08-12. The credit follows whichever branch produced the date; a fallback row now reads
+      **"Published activation date · verify on Etherscan"**, which is perfectly good provenance
+      and simply is not Blockscout. The link still points at Etherscan either way, because that is
+      the page a reader checks. `check:onchain`'s existing fixture was already the exact split
+      needed — The Merge answers, three fall back — so the assertion cost nothing to add and would
+      have caught this from the start. Audit §6.
+- [x] ~~`P2` **`check:feeds` does not exercise three sources the ⛔ gate names.**~~ — fixed
+      2026-08-12. SEC filings, Federal Register and prices are in the report, plus the two keyless
+      on-chain adapters. Run live against NVDA: **filings 92 rows 2020→2026, prices 2,514 closes
+      with 42 corporate actions, Federal Register 60 rows**, four halvings, four Ethereum
+      milestones — the gap was in the instrument, not the feeds. The report already warned against
+      over-reading a green line; it said nothing about absent ones, and absence is harder to
+      notice. Audit §7.
+- [x] ~~`P2` **Five files still say egress is blocked.**~~ — fixed 2026-08-12. **Zero occurrences
+      of "egress is blocked" remain** in `lib/`, `scripts/`, `app/` or `components/`.
+      - Each is replaced by what is actually true of that file, which is more useful than the
+        blanket claim in both directions: `archive.org` and Snapshot were **exercised live** and
+        say so (both found defects); `usdt.ts` and `feeds/browser.ts` are still unverified but
+        because they need **keys**, not network; `verify.ts` still cannot run because those
+        specific hosts are blocked (`eth.blockscout.com` → 403) while egress generally is not.
+      - `lib/archive.ts` had contradicted itself 37 lines apart. Its header now records the live
+        verification and keeps exactly one caveat — the Wayback **CDX** half, still
+        documentation-derived because `web.archive.org` is unreachable even though `archive.org`
+        is not.
+      - `README.md` corrected: `check:archive` is 55 cases, not 39. Audit §8.
+- [x] ~~`P2` **Five exported functions have no caller.**~~ — fixed 2026-08-12. `dedupByUrl`,
+      `wikipediaHasSubject`, `isStale`, `isFollowing` and `clearAnnotations` are deleted, and the
+      **"Dedup basis = article URL" entry is corrected** to name `collapseNearDuplicates` — the
+      mechanism that actually does the work, keyed on `storyKey`. A done log naming a dead
+      function as the live mechanism is the drift this file's own rule exists to prevent, and it
+      survived because nobody re-read the entry against the code. Audit §9.
+- [x] ~~`P2` **`lib/signals.ts` computes displayed figures with no check of any kind.**~~ — fixed
+      2026-08-12. `median`, `mad`, `isSpike` and `weekEnd` are exported and `npm run check:signals`
+      is in the chain (23 cases, suite count 25 → 26). It covers the spike floor and the
+      zero-spread arm, numeric-vs-lexicographic sorting, and week boundaries across month, year
+      and leap-day rollovers.
+      - **The two-member divergence case is fixed, not just tested.** With exactly two members the
+        median is the midpoint of the pair, so both are equidistant and a stable sort returned
+        whichever the database listed first — the page said "A outran the sector by X" or "B
+        lagged by X" interchangeably, decided by row order. A two-member "sector median" is just
+        the midpoint, so there is no sector to diverge *from*; the signal now requires three
+        members and is withheld below that, which is the correct answer rather than a cautious
+        one. Audit §10.
 - [ ] `P3` `npm run cost-report` throws a raw stack trace when `DATABASE_URL` is unset, where
       `npm run refresh` prints a clean message for the same condition.
 - [x] ~~`P2` **Fix the auditor's script name.**~~ — done 2026-07-31. `.claude/agents/code-auditor.md`

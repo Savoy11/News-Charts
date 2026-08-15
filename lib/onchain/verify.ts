@@ -10,8 +10,12 @@ import { ADDRESS_BOOK, isAddress, normaliseAddress, type LabelledAddress } from 
  * contract will tell you its own symbol and decimals, and that is an on-chain role rather than
  * an explorer's opinion, which is exactly the standard `addresses.ts` sets for adding an entry.
  *
- * Keyless, via public JSON-RPC. ⚠ Never run from this build container — egress is blocked, so
- * every call fails and the report would read as "cannot verify" for entries that are fine.
+ * Keyless, via public JSON-RPC. ⚠ **Still unrunnable from this build container, though not for
+ * the reason previously given.** Egress is open as of 2026-08-12; what fails is these specific
+ * hosts — `eth.blockscout.com` answers `403 Host not in allowlist`, and the public RPC endpoints
+ * are unreachable, so `npm run verify:addresses` reports `0 verified · 4 unreachable`. It says
+ * that rather than a clean bill of health, which is the correct behaviour and the reason this
+ * caveat is worth keeping — precisely stated.
  */
 
 /** Public, keyless Ethereum JSON-RPC endpoints. Tried in order, same idiom as the explorers. */

@@ -1248,10 +1248,15 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
       and is genuinely forgotten.
       **Not done:** the discovery engine, which has no adapter yet — it belongs with whichever
       engine the evaluation item picks.
-- [x] ~~`P1` **Dedup basis = article URL**~~ — shipped in PR #9: `dedupByUrl` in
-      `lib/newsExtra.ts` merges every repository's results, so one wire story surfaced by three
-      outlets collapses to one event. (Cross-*feed* near-duplicate collapsing by headline+day is
-      a separate, still-open item in the hardening list below.)
+- [x] ~~`P1` **Dedup basis = article URL**~~ — shipped in PR #9. One wire story surfaced by three
+      outlets collapses to one event.
+      - **Corrected 2026-08-12** (audit §9): this entry credited `dedupByUrl` in `lib/newsExtra.ts`
+        by name. That function was superseded by the `storyKey` work and had **no caller at all** —
+        the mechanism doing this today is `collapseNearDuplicates`, called from three sites in
+        `scripts/ingest.ts`, which keys on `storyKey` rather than on the URL. `dedupByUrl` is now
+        deleted. A done log naming a dead function as the live mechanism is exactly the drift this
+        file's own rule is meant to prevent, and it survived because nobody re-read the entry
+        against the code.
 - [x] ~~`P2` **Coverage-map doc**~~ — done 2026-07-28, `docs/COVERAGE-MAP.md`: who owns which
       era, what it means per subject type, and where the holes are.
       The reason it is worth having written down: *"the timeline starts in 2017"* is almost always

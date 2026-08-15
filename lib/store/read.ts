@@ -380,8 +380,3 @@ export async function loadPrices(subjectId: number): Promise<PricePoint[]> {
     ...(r.volume == null ? {} : { volume: Number(r.volume) }),
   }));
 }
-
-export function isStale(refreshedAt: Date | null, maxAgeMinutes: number): boolean {
-  if (!refreshedAt) return true;
-  return Date.now() - refreshedAt.getTime() > maxAgeMinutes * 60_000;
-}

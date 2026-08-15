@@ -20,8 +20,12 @@ import { getArchiveItems } from "../lib/archive";
 import { GOVERNANCE_SPACES, getGovernanceFor, assertSpacesResolve } from "../lib/onchain/governance";
 import { EXPLOIT_TARGETS, getExploitsFor } from "../lib/onchain/exploits";
 import { getUsdtSupplyMoves } from "../lib/onchain/usdt";
+import { getBitcoinHalvings } from "../lib/onchain/bitcoin";
+import { getEthereumMilestones } from "../lib/onchain/ethereum";
+import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
+import { getDailyPrices } from "../lib/prices";
 import { getTopicTimeline } from "../lib/wiki";
-import { resolveCompany, commonName } from "../lib/sec";
+import { resolveCompany, commonName, getFilings } from "../lib/sec";
 import {
   getYahooFinanceNews,
   getNytNews,
@@ -170,6 +174,34 @@ async function main() {
   for (const t of EXPLOIT_TARGETS) {
     report(`Exploits (${t.slug})`, await safe(getExploitsFor(t.slug)), "(attributed, not confirmed on-chain)");
   }
+
+  /**
+   * The three sources the ⛔ release gate names and this report never asked.
+   *
+   * The gate lists "SEC filings, Federal Register, prices" among what must be checked before the
+   * site ships, and sign-off depends on this script — which called none of them. They are the
+   * feeds behind the price series, the filings timeline and the sector regulation rows: the most
+   * load-bearing in the product. A clean run was being read as evidence about them.
+   *
+   * The closing note below already warns against over-reading a green line. It said nothing about
+   * absent ones, and absence is the harder thing to notice.
+   */
+  if (ticker) {
+    const filings = await safe(getFilings(company!));
+    report("SEC filings", filings, "(keyless; the filings timeline)");
+    const prices = await getDailyPrices(ticker).catch(() => null);
+    console.log(
+      prices?.points.length
+        ? `  ${"Prices (Yahoo chart)".padEnd(22)} ✓ ${String(prices.points.length).padStart(3)} closes    ` +
+            `${prices.points[0].time} → ${prices.points[prices.points.length - 1].time}  ` +
+            `+${prices.actions.length} corporate actions`
+        : `  ${"Prices (Yahoo chart)".padEnd(22)} ⚠ no price series — the chart would be empty`
+    );
+  }
+  const reg = await fetchRegulations(regulationQueryFor(name, [])).catch(() => null);
+  report("Federal Register", reg?.events ?? [], "(keyless; sector regulation)");
+  report("Bitcoin halvings", await safe(getBitcoinHalvings()), "(keyless; public explorer)");
+  report("Ethereum milestones", await safe(getEthereumMilestones()), "(keyless; public explorer)");
 
   const story = await getTopicTimeline(name).catch(() => null);
   const hist = story?.events.filter((e) => e.type === "history") ?? [];

@@ -50,10 +50,6 @@ function save(map: FollowMap): void {
   }
 }
 
-export function isFollowing(href: string): boolean {
-  return Boolean(loadFollows()[href]);
-}
-
 export function follow(subject: Pick<FollowedSubject, "href" | "kind" | "label">, sig: Signature): void {
   const map = loadFollows();
   const now = new Date().toISOString();

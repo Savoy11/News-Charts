@@ -141,6 +141,25 @@ async function main(): Promise<void> {
   check("the card guards its database read", /loadIndustry\([^)]*\)\s*\.catch\(/.test(routeSrc));
   check("and falls back rather than rendering nothing", /industryTitleFromSlug\(/.test(routeSrc));
 
+  /**
+   * The demand report's two promises, both of which are easy to break later.
+   *
+   * `subject_requests` has collected `requests`, `first_asked`, `last_asked` and `last_error`
+   * since db/014 while nothing in `app/` read the table — so a subject failing every hourly run
+   * was invisible outside psql. The report surfaces it, and must stay a *report*.
+   */
+  console.log("\nThe demand report");
+  const demandSrc = await import("node:fs").then((fs) => fs.readFileSync("scripts/demand.ts", "utf8"));
+  // Read-only by construction: the item promised no new table, no new page, no writes.
+  check(
+    "writes nothing",
+    !/\b(INSERT\s+INTO|UPDATE\s+\w|DELETE\s+FROM|CREATE\s+TABLE)\b/i.test(demandSrc),
+    (demandSrc.match(/\b(INSERT INTO|UPDATE \w+|DELETE FROM|CREATE TABLE)\b/i) ?? [])[0]
+  );
+  // The distinction the report exists to draw: a request that FAILED is not one still waiting.
+  check("separates failures from the merely unfulfilled", /last_error IS NOT NULL/.test(demandSrc));
+  check("and excludes what was already fulfilled", /fulfilled_at IS NULL/.test(demandSrc));
+
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);
 }

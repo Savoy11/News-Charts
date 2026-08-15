@@ -411,19 +411,23 @@ non-compliant. The `commercialOk` flags in `SOURCES` are a practical reading of 
       ones that matter. Since 2026-07-30 the projection covers only sources the ingest path
       actually asks — the keyed aggregators it used to price (EODHD at 100% of its tier at five
       subjects, among them) are not on that path and spend nothing.
-- [ ] `P1` **Report on the demand queue — make `subject_requests` readable.** *(opportunity-scout
-      proposal, 2026-07-30 — approved; carried over from the closed PR #15.)* A `npm run demand`
-      report: most-wanted unfulfilled subjects with request counts and first/last-asked dates,
-      plus a second block for requests carrying a `last_error`. Read-only, no new table, no new
-      page.
-      `db/014_subject_requests.sql` stores `requests`, `first_asked`, `last_asked`, `fulfilled_at`
-      and `last_error`; `lib/ingest/queue.ts` writes all five and reads back four. **Nothing in
-      `app/` reads the table at all, and `last_error` is written by `markFailed()` and read by
-      nobody** — so a subject failing every hourly run is invisible outside psql. Data already
-      collected, already paid for, never surfaced.
-      File it *above* the sizing item below, not in place of it: it is the instrument that item is
-      blocked on. Deliberately a CLI report rather than a public page — the app has no auth, and
-      what visitors search for is not something to publish.
+- [x] ~~`P1` **Report on the demand queue — make `subject_requests` readable.**~~ — done
+      2026-08-12. `npm run demand` (optionally `npm run demand 50`): most-wanted unfulfilled
+      subjects with counts and how long each has been waiting, then a **second block for requests
+      that failed rather than waited**, then totals. Read-only — no new table, no new page, no
+      writes, asserted in `check:index`.
+      - The second block is the point. `last_error` has been written by `markFailed()` and read by
+        nobody since db/014, so a request that was tried and broke looked exactly like one the
+        runner had not reached yet — and it breaks again on every run until someone looks. The
+        report separates the two and says so in as many words.
+      - **Verified against a real database**, not reasoned about: Postgres 16 is installed in this
+        container, so a scratch cluster was stood up, all 19 migrations applied cleanly, and the
+        report was run against seeded requests covering the cases that matter — a fulfilled row
+        excluded, two failing rows flagged in both blocks, and the `requests DESC, last_asked DESC`
+        ordering. First DB-backed verification in this environment.
+      - It also names the reason a pending list would never shrink: nothing runs `npm run refresh`
+        yet (the `P0` scheduler item), and a report that did not say so would look like a bug in
+        the queue rather than the absence of a scheduler.
 - [ ] `P2` **Decide how far the request queue is worked per run.** `--requests` defaults to 10
       most-wanted per run. Too low and demand backs up; too high and new subjects crowd out
       refreshing the ones already on the site. The right number depends on real demand, which

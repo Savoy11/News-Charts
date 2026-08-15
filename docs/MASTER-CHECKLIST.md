@@ -579,22 +579,41 @@ closed PR #15, whose findings are otherwise all shipped.
         had to be edited when the id was corrected. **A check that must change when a config value
         is corrected is a check protecting the mistake** — it now derives the space from config.
       - Original finding: audit §2.
-- [ ] `P1` **Two ingest branches apply no plausibility floor to archive items.**
-      `scripts/ingest.ts:403-406` passes them through with only `.slice(0, 25)`, under a comment
-      asserting a wrong date is "a rarity"; `scripts/ingest.ts:285` computes `floor = 0` for a
-      subject with no `firstEventOn`, and a floor of 0 filters nothing. The only remaining guard
-      admits the 1770 and 1812 rows above. The standard is already written down in this file: a
-      wrong date *"plants an event in the Middle Ages, drags the timeline's range with it, and
-      leaves a page that looks fine to anyone not reading the axis."*
-- [ ] `P1` **"Site that day" links promise a capture that does not exist.**
-      `components/EventList.tsx:745,770` render `SiteSnapshotLink` with **no date gate**, labelled
-      *"see {domain} as it looked around {date}"*. Wayback redirects to the nearest capture, so a
-      1926 Ford event links to a page captured **December 1998** — verified against
-      `archive.org/wayback/available`. Every row before ~1996 carries it.
-      - ⚠ **This corrects the `fetchSiteSnapshots` note above**, which says that function has no
-        production caller and implies no snapshot surface ships. One does; it just does not
-        consult the function that would tell it whether a capture exists. The verifying function
-        is already written and fully checked.
+- [x] ~~`P1` **Two ingest branches apply no plausibility floor to archive items.**~~ — fixed
+      2026-08-12. Both now share `dropImplausiblePress` against a new `ABSOLUTE_FLOOR`
+      (`lib/loc.ts`) when the subject offers no floor of its own; the company branch stops passing
+      items through on nothing but a cap.
+      - **The floors bound impossibility, not likelihood — and one is deliberately a no-op.**
+        `company: 1780`, because the oldest surviving US public companies date from that decade
+        (Bank of New York, 1784), so nothing a registrant's archive holds can honestly predate it;
+        this is the value that catches the 1770 sheet-music covers. `topic: 1500`, the archive's
+        own minimum and therefore no filtering at all — the honest answer for a subject that can
+        legitimately be ancient. A tighter topic bound would drop real history to tidy up someone
+        else's cataloguing.
+      - The comment that justified the gap (*"a wrong date is a rarity there"*) is replaced by
+        what was measured: 12 of 48 `"Ford Motor"` items pre-1900, for a company founded in 1903.
+      - ⚠ **This is the backstop, not the fix.** Asking the archive for relevance rather than the
+        oldest rows is what actually repaired it; with that in place the same three queries return
+        zero pre-1900 items. The floor is for the mis-catalogued row that still comes back.
+      - Original finding: audit §3.
+- [x] ~~`P1` **"Site that day" links promise a capture that does not exist.**~~ — fixed
+      2026-08-12. **Two changes, because there were two different wrongs.**
+      - **Before 1996 there is no link at all.** Nothing was archived before the Internet Archive
+        began crawling, so for an earlier event there is no capture to be *near* — the link was
+        not imprecise, it was a claim about a page that never existed. It rendered on every
+        pre-web row, which on a company like Ford is the entire "Before the ticker" section.
+      - **After 1996 the label stops overclaiming.** Wayback redirects to its nearest capture with
+        no bound on distance, so "site that day" promised a precision the mechanism never had. It
+        now reads **"nearest capture"**, and the title says it is the closest archived capture to
+        that date. A 1926 Ford event resolved to a December 1998 page; that is the gap the old
+        label hid.
+      - `waybackCouldHave` is a local constant, not a lookup, on purpose: this half can be decided
+        without asking anyone, and the render path must not acquire a network call.
+        `fetchSiteSnapshots` answers the sharper question (*does this domain have a capture near
+        this date*) and is the upgrade if the snapshot strip is ever built — which also settles
+        the note above about that function having no production caller: **one surface does ship**,
+        it simply never consulted it.
+      - Original finding: audit §4.
 - [ ] `P2` **"3M" resolves to nothing.** `lib/sec.ts:137-141` gates the name-prefix rung on
       `q.length >= 3`, so `3M → null` while `MMM → "3M CO"` — a Dow 30 component told it is not a
       listed security. The prefix `"3M "` matches **exactly one row**; of 140 distinct

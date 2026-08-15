@@ -123,6 +123,27 @@ async function registrantName(cik: string): Promise<string | null> {
 }
 
 /**
+ * The name-prefix rung: "ALIBABA" should find "ALIBABA GROUP HOLDING LIMITED", because nobody
+ * types the full legal title.
+ *
+ * **Gated on ambiguity, not on length.** This used to require three characters, described as a
+ * guard "against junk prefixes" — but length is a proxy for ambiguity, and a bad one. `"3M "`
+ * matches **exactly one** row in the whole index, so the guard was declining an unambiguous
+ * answer and telling a visitor that a Dow 30 component is not a listed security. Of the 140
+ * distinct two-character title prefixes in the committed index, 94 are unique.
+ *
+ * So: one match is an answer whatever its length. Several matches still need enough of a query
+ * to be meant, and the first is taken because the SEC orders its file roughly by size — which is
+ * the only reason "APPLE" reaches Apple Inc rather than Apple Hospitality REIT, and why
+ * `check:tickers` asserts that ordering survives every rebuild.
+ */
+function prefixHit(rows: TickerRow[], q: string): TickerRow | null {
+  const matches = rows.filter((r) => r.title.toUpperCase().startsWith(q + " "));
+  if (matches.length === 1) return matches[0];
+  return matches.length > 1 && q.length >= 3 ? matches[0] : null;
+}
+
+/**
  * The company rungs, against whichever copy of the index the caller has.
  *
  * Split out so the local snapshot and the live file go through identical matching — two copies
@@ -130,16 +151,7 @@ async function registrantName(cik: string): Promise<string | null> {
  * every query, so a divergence would only ever show up for a newly listed company.
  */
 function matchCompany(rows: TickerRow[], q: string): CompanyInfo | null {
-  // name-prefix rung: "ALIBABA" should find "ALIBABA GROUP HOLDING LIMITED" — nobody
-  // types the full legal title. The SEC file is ordered roughly by market cap, so the
-  // first prefix hit is the company a person almost certainly means ("APPLE" → Apple
-  // Inc, not Apple Hospitality REIT). Minimum length guards against junk prefixes.
-  const hit =
-    rows.find((r) => r.ticker === q) ??
-    rows.find((r) => r.title.toUpperCase() === q) ??
-    (q.length >= 3
-      ? rows.find((r) => r.title.toUpperCase().startsWith(q + " ")) ?? null
-      : null);
+  const hit = rows.find((r) => r.ticker === q) ?? rows.find((r) => r.title.toUpperCase() === q) ?? prefixHit(rows, q);
   if (!hit) return null;
   return {
     ticker: hit.ticker,

@@ -74,6 +74,20 @@ async function main(): Promise<void> {
   check("a name prefix still finds the company", alibaba?.ticker === "BABA", alibaba?.ticker ?? "null");
   check("still with no request", asked.length === 0, asked.join(", "));
 
+  /**
+   * The prefix rung is gated on ambiguity, not on length.
+   *
+   * A three-character minimum was declining `"3M"` — which matches exactly one row in the whole
+   * index — and telling a visitor that a Dow 30 component is not a listed security.
+   */
+  const mmm = await resolveCompany("3M").catch(() => null);
+  check("a short but UNIQUE prefix resolves", mmm?.ticker === "MMM", mmm?.ticker ?? "null");
+  check("  …to the company that bears the name", mmm?.name === "3M CO", mmm?.name ?? "null");
+  // …and the ambiguous case still needs enough query to be meant, taking the SEC's own ordering.
+  const apple = await resolveCompany("APPLE").catch(() => null);
+  check("an ambiguous prefix still takes the largest", apple?.ticker === "AAPL", apple?.ticker ?? "null");
+  check("nothing was fetched for either", asked.length === 0, asked.join(", "));
+
   console.log("\nA fund resolves from the index, name included");
   // This used to cost a request: the fund files carry no names, so a fund page fetched the
   // REGISTRANT record just to have something to call it — and got the trust ("VANGUARD INDEX

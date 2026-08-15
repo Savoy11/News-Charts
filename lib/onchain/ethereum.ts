@@ -19,6 +19,12 @@ const EXPLORER_WEB = "https://etherscan.io/block";
 // Blockscout answers the timestamp; Etherscan is where the link sends a reader. Naming both is
 // the honest credit — one did the lookup, the other is the page you land on.
 const EXPLORER_LABEL = "Blockscout · Etherscan";
+/**
+ * What the row is credited to when the explorer did NOT answer and the curated activation date
+ * stood in. The link still points at Etherscan, because that is the page a reader lands on to
+ * check — but nothing here was read from the chain, and the label must not imply it was.
+ */
+const PUBLISHED_LABEL = "Published activation date · verify on Etherscan";
 
 interface Milestone {
   block: number;
@@ -82,17 +88,31 @@ export async function getEthereumMilestones(): Promise<TimelineEvent[]> {
      * formality. It is still worth making them face it — a milestone added with a date of today
      * is withheld, which is the correct answer whether the explorer replied or not.
      */
-    const blockTime = Number.isFinite(parsed)
+    const fromChain = Number.isFinite(parsed);
+    const blockTime = fromChain
       ? Math.floor(parsed / 1000)
       : Math.floor(Date.parse(`${m.fallbackDate}T00:00:00Z`) / 1000);
-    const date = Number.isFinite(parsed) ? dayFromEpoch(Math.floor(parsed / 1000)) : m.fallbackDate;
+    const date = fromChain ? dayFromEpoch(Math.floor(parsed / 1000)) : m.fallbackDate;
     const event = onchainEvent({
       date,
       title: m.name,
       description: m.description,
       url: `${EXPLORER_WEB}/${m.block}`,
       ref: `eth-block-${m.block}`,
-      sourceLabel: EXPLORER_LABEL,
+      /**
+       * The credit follows whichever branch produced the date, which it did not used to.
+       *
+       * Every row carried `Blockscout · Etherscan` unconditionally, so when the explorer was
+       * unreachable — measured 2026-08-12, `eth.blockscout.com` answering 403 from the build
+       * container — all four milestones still told the reader their date had been read from the
+       * chain. Substituting the published date is deliberate and defensible; keeping the
+       * provenance was not. This repo's standard is that a failed provider degrades with
+       * *visible* provenance, and `onchain` is the event kind whose whole justification is that
+       * a reader can re-verify it.
+       *
+       * The published activation date is perfectly good provenance. It simply is not Blockscout.
+       */
+      sourceLabel: fromChain ? EXPLORER_LABEL : PUBLISHED_LABEL,
       blockTime,
     });
     if (event) out.push(event);

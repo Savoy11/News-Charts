@@ -530,11 +530,154 @@ section of `docs/PRELIMINARY-FINDINGS-2026-07-30.md`.
 Installed on PR #14. What has run so far is **not a baseline** — items carried over from the
 closed PR #15, whose findings are otherwise all shipped.
 
-- [ ] `P1` **Re-run both agents properly.** The 2026-07-30 pass was a smoke test capped at 2
-      findings and 2 proposals *by instruction*, and its own scope note says so. A full
-      fortnightly run has not happened, so nobody knows what a complete pass turns up — the
-      capped run alone produced eight verified defects.
-- [x] ~~`P2` **Fix the auditor's script name.**~~ — done 2026-07-31. `.claude/agents/code-auditor.md`
+- [ ] `P1` **Re-run both agents properly.** ✅ **Auditor half done 2026-08-12** — the first
+      uncapped pass, reported in [`docs/audits/2026-08-12-audit.md`](audits/2026-08-12-audit.md):
+      **10 findings, 4 of them `P1`**, filed as their own items below. Still open: the
+      **`opportunity-scout`** half, whose 2026-07-30 run was capped at 2 proposals by instruction.
+      - What the pass confirms about method, not just about defects: **every finding came from
+        pointing an adapter at a live service.** The offline suites (25, all passing) could not
+        have produced one of them. Findings 1, 2 and 7 share a shape — a live source whose real
+        behaviour nothing asserts against — and the auditor's closing note proposes a live
+        assertion suite distinct from the offline ones. That proposal belongs to the scout.
+
+### Findings from the 2026-08-12 audit
+
+- [x] ~~`P1` **The Internet Archive query sorts date-ascending on a false premise.**~~ — fixed
+      2026-08-12. The `sort[]` parameter is gone; archive.org's default is relevance, which is
+      what the Chronicling America call already asks for and for the same reason. **Verified live
+      against the same three queries that found it:**
+
+      | query | before | after |
+      |---|---|---|
+      | Nvidia (founded 1993) | 1898 → 1999 | **2011 → 2025**, 0 pre-1900 |
+      | Ford Motor | 1770 → 1916, 12 pre-1900 | **1921 → 2025**, 0 pre-1900 |
+      | Apple Inc | 1976 → 1980 | **2000 → 2025** |
+
+      The source reaches modern material for the first time, and stops spending half its rows on
+      items the floor discards. Historical reach is not lost — Ford still starts 1921.
+      - `check:archive` gained a **"what the request asks for"** section (55 cases). It had none:
+        every case tested how a payload was *parsed*, which is precisely why a bad query parameter
+        could sit there producing perfectly parseable garbage. It now asserts that no date sort is
+        requested, so this cannot be reintroduced silently.
+      - The original finding is preserved in
+        [`docs/audits/2026-08-12-audit.md`](audits/2026-08-12-audit.md) §1.
+- [x] ~~`P1` **Aave's Snapshot space id is not a Snapshot space.**~~ — fixed 2026-08-12.
+      `aavedao.eth`, with the provenance taken from Snapshot's own space record rather than a
+      portal link. **Verified live: `/topic/aave` goes from 0 events to 40**, and both configured
+      spaces resolve (Uniswap 197 proposals, Aave DAO 970).
+      - **The warning that failed is the more useful lesson.** That file already said a wrong id
+        would look like a quiet month, and `check:feeds` already printed the per-space zero on
+        every run — for a fortnight, unread, because the annotation beside it ("closed proposals
+        only") supplied a plausible reason to skip past it. **A visible zero is not a read zero.**
+        `check:feeds` now verifies the id *before* the count and prints **`✖ NOT A SNAPSHOT
+        SPACE`** in its own words, because "this id does not exist" and "nothing closed recently"
+        are different facts and only one of them is our bug.
+      - New `assertSpacesResolve` lives in `lib/onchain/governance.ts`, not in a `check:*` script,
+        because it needs the network and the whole `npm run check` chain is offline by
+        construction. It distinguishes all three answers: resolves, does not exist, could not ask.
+      - `check:governance` had hardcoded `aave.eth` in a URL assertion, so it pinned the typo and
+        had to be edited when the id was corrected. **A check that must change when a config value
+        is corrected is a check protecting the mistake** — it now derives the space from config.
+      - Original finding: audit §2.
+- [x] ~~`P1` **Two ingest branches apply no plausibility floor to archive items.**~~ — fixed
+      2026-08-12. Both now share `dropImplausiblePress` against a new `ABSOLUTE_FLOOR`
+      (`lib/loc.ts`) when the subject offers no floor of its own; the company branch stops passing
+      items through on nothing but a cap.
+      - **The floors bound impossibility, not likelihood — and one is deliberately a no-op.**
+        `company: 1780`, because the oldest surviving US public companies date from that decade
+        (Bank of New York, 1784), so nothing a registrant's archive holds can honestly predate it;
+        this is the value that catches the 1770 sheet-music covers. `topic: 1500`, the archive's
+        own minimum and therefore no filtering at all — the honest answer for a subject that can
+        legitimately be ancient. A tighter topic bound would drop real history to tidy up someone
+        else's cataloguing.
+      - The comment that justified the gap (*"a wrong date is a rarity there"*) is replaced by
+        what was measured: 12 of 48 `"Ford Motor"` items pre-1900, for a company founded in 1903.
+      - ⚠ **This is the backstop, not the fix.** Asking the archive for relevance rather than the
+        oldest rows is what actually repaired it; with that in place the same three queries return
+        zero pre-1900 items. The floor is for the mis-catalogued row that still comes back.
+      - Original finding: audit §3.
+- [x] ~~`P1` **"Site that day" links promise a capture that does not exist.**~~ — fixed
+      2026-08-12. **Two changes, because there were two different wrongs.**
+      - **Before 1996 there is no link at all.** Nothing was archived before the Internet Archive
+        began crawling, so for an earlier event there is no capture to be *near* — the link was
+        not imprecise, it was a claim about a page that never existed. It rendered on every
+        pre-web row, which on a company like Ford is the entire "Before the ticker" section.
+      - **After 1996 the label stops overclaiming.** Wayback redirects to its nearest capture with
+        no bound on distance, so "site that day" promised a precision the mechanism never had. It
+        now reads **"nearest capture"**, and the title says it is the closest archived capture to
+        that date. A 1926 Ford event resolved to a December 1998 page; that is the gap the old
+        label hid.
+      - `waybackCouldHave` is a local constant, not a lookup, on purpose: this half can be decided
+        without asking anyone, and the render path must not acquire a network call.
+        `fetchSiteSnapshots` answers the sharper question (*does this domain have a capture near
+        this date*) and is the upgrade if the snapshot strip is ever built — which also settles
+        the note above about that function having no production caller: **one surface does ship**,
+        it simply never consulted it.
+      - Original finding: audit §4.
+- [x] ~~`P2` **"3M" resolves to nothing.**~~ — fixed 2026-08-12. The name-prefix rung is gated on
+      **ambiguity, not length**: one match is an answer whatever its length, several still need
+      three characters to be meant. `3M` → `MMM` / "3M CO"; ALIBABA, APPLE, Ford, AAPL and
+      "Vanguard 500" all unchanged. The old guard called itself a defence against junk prefixes,
+      but length is a poor proxy for ambiguity — `"3M "` matches exactly one row in 10,387, and 94
+      of the index's 140 two-character title prefixes are unique. Audit §5.
+- [x] ~~`P2` **Ethereum milestone rows credit an explorer that answered nothing.**~~ — fixed
+      2026-08-12. The credit follows whichever branch produced the date; a fallback row now reads
+      **"Published activation date · verify on Etherscan"**, which is perfectly good provenance
+      and simply is not Blockscout. The link still points at Etherscan either way, because that is
+      the page a reader checks. `check:onchain`'s existing fixture was already the exact split
+      needed — The Merge answers, three fall back — so the assertion cost nothing to add and would
+      have caught this from the start. Audit §6.
+- [x] ~~`P2` **`check:feeds` does not exercise three sources the ⛔ gate names.**~~ — fixed
+      2026-08-12. SEC filings, Federal Register and prices are in the report, plus the two keyless
+      on-chain adapters. Run live against NVDA: **filings 92 rows 2020→2026, prices 2,514 closes
+      with 42 corporate actions, Federal Register 60 rows**, four halvings, four Ethereum
+      milestones — the gap was in the instrument, not the feeds. The report already warned against
+      over-reading a green line; it said nothing about absent ones, and absence is harder to
+      notice. Audit §7.
+- [x] ~~`P2` **Five files still say egress is blocked.**~~ — fixed 2026-08-12. **Zero occurrences
+      of "egress is blocked" remain** in `lib/`, `scripts/`, `app/` or `components/`.
+      - Each is replaced by what is actually true of that file, which is more useful than the
+        blanket claim in both directions: `archive.org` and Snapshot were **exercised live** and
+        say so (both found defects); `usdt.ts` and `feeds/browser.ts` are still unverified but
+        because they need **keys**, not network; `verify.ts` still cannot run because those
+        specific hosts are blocked (`eth.blockscout.com` → 403) while egress generally is not.
+      - `lib/archive.ts` had contradicted itself 37 lines apart. Its header now records the live
+        verification and keeps exactly one caveat — the Wayback **CDX** half, still
+        documentation-derived because `web.archive.org` is unreachable even though `archive.org`
+        is not.
+      - `README.md` corrected: `check:archive` is 55 cases, not 39. Audit §8.
+- [x] ~~`P2` **Five exported functions have no caller.**~~ — fixed 2026-08-12. `dedupByUrl`,
+      `wikipediaHasSubject`, `isStale`, `isFollowing` and `clearAnnotations` are deleted, and the
+      **"Dedup basis = article URL" entry is corrected** to name `collapseNearDuplicates` — the
+      mechanism that actually does the work, keyed on `storyKey`. A done log naming a dead
+      function as the live mechanism is the drift this file's own rule exists to prevent, and it
+      survived because nobody re-read the entry against the code. Audit §9.
+- [x] ~~`P2` **`lib/signals.ts` computes displayed figures with no check of any kind.**~~ — fixed
+      2026-08-12. `median`, `mad`, `isSpike` and `weekEnd` are exported and `npm run check:signals`
+      is in the chain (23 cases, suite count 25 → 26). It covers the spike floor and the
+      zero-spread arm, numeric-vs-lexicographic sorting, and week boundaries across month, year
+      and leap-day rollovers.
+      - **The two-member divergence case is fixed, not just tested.** With exactly two members the
+        median is the midpoint of the pair, so both are equidistant and a stable sort returned
+        whichever the database listed first — the page said "A outran the sector by X" or "B
+        lagged by X" interchangeably, decided by row order. A two-member "sector median" is just
+        the midpoint, so there is no sector to diverge *from*; the signal now requires three
+        members and is withheld below that, which is the correct answer rather than a cautious
+        one. Audit §10.
+- [x] ~~`P3` `npm run cost-report` throws a raw stack trace where `refresh` prints a clean
+      message for the same missing `DATABASE_URL`.~~ — fixed 2026-08-12, and fixed as **one rule
+      rather than one script**.
+      - `configProblem` (`lib/db.ts`) returns the message *plus the remedy* for conditions an
+        operator is expected to hit — a missing `DATABASE_URL`, or a database configured but not
+        answering — and **`null` for everything else, meaning print the stack**. Hiding an
+        unexpected fault to look tidy is how it becomes hard to diagnose, so the tidying is
+        deliberately scoped to the two failures that are settings rather than bugs.
+      - Applied to all **eleven** DB-backed operator scripts, not just the one the audit named.
+        Seven already printed `err.message`, which was the inconsistency the finding pointed at;
+        they now give the remedy line too. The `check:*` suites are deliberately untouched — a
+        crashing check should show its stack.
+      - `check:signals` covers it (23 → 28 cases), including the assertion that matters most:
+        an unexpected error is **not** swallowed into a tidy sentence.- [x] ~~`P2` **Fix the auditor's script name.**~~ — done 2026-07-31. `.claude/agents/code-auditor.md`
       named `npm run check-feeds`; this repo's script is `check:feeds`, so the check errored as
       "Missing script" rather than running. The definition now also runs `npm run check` and is
       explicit that a report must say **where** it ran: egress is blocked from the build
@@ -1128,10 +1271,15 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
       and is genuinely forgotten.
       **Not done:** the discovery engine, which has no adapter yet — it belongs with whichever
       engine the evaluation item picks.
-- [x] ~~`P1` **Dedup basis = article URL**~~ — shipped in PR #9: `dedupByUrl` in
-      `lib/newsExtra.ts` merges every repository's results, so one wire story surfaced by three
-      outlets collapses to one event. (Cross-*feed* near-duplicate collapsing by headline+day is
-      a separate, still-open item in the hardening list below.)
+- [x] ~~`P1` **Dedup basis = article URL**~~ — shipped in PR #9. One wire story surfaced by three
+      outlets collapses to one event.
+      - **Corrected 2026-08-12** (audit §9): this entry credited `dedupByUrl` in `lib/newsExtra.ts`
+        by name. That function was superseded by the `storyKey` work and had **no caller at all** —
+        the mechanism doing this today is `collapseNearDuplicates`, called from three sites in
+        `scripts/ingest.ts`, which keys on `storyKey` rather than on the URL. `dedupByUrl` is now
+        deleted. A done log naming a dead function as the live mechanism is exactly the drift this
+        file's own rule is meant to prevent, and it survived because nobody re-read the entry
+        against the code.
 - [x] ~~`P2` **Coverage-map doc**~~ — done 2026-07-28, `docs/COVERAGE-MAP.md`: who owns which
       era, what it means per subject type, and where the holes are.
       The reason it is worth having written down: *"the timeline starts in 2017"* is almost always

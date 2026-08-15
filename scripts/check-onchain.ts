@@ -125,6 +125,21 @@ async function ethereum() {
     out.every((e) => /^eth-block-\d+$/.test(e.dedupBasis ?? "")),
     merge?.dedupBasis
   );
+
+  /**
+   * The credit follows the branch that produced the date.
+   *
+   * Every row used to carry `Blockscout · Etherscan` unconditionally, so with the explorer
+   * unreachable — its live state from the build container, 403 "Host not in allowlist" — all four
+   * milestones told the reader their date had been read from the chain. This fixture is exactly
+   * that split: The Merge answers, the other three fall back, and they must not claim the same
+   * provenance. `onchain` is the event kind whose justification is that a reader can re-verify it.
+   */
+  check("a chain-read row credits the explorer", /Blockscout/.test(merge?.source ?? ""), merge?.source);
+  check("a fallback row does NOT claim the chain", !/Blockscout/.test(frontier?.source ?? ""), frontier?.source);
+  check("  …and says what it is instead", /published/i.test(frontier?.source ?? ""), frontier?.source);
+  // The link still points at Etherscan either way — that is the page a reader checks.
+  check("both still link to a block", out.every((e) => /etherscan\.io\/block\/\d+$/.test(e.url ?? "")));
 }
 
 async function usdc() {

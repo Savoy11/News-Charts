@@ -101,14 +101,6 @@ export function removeAnnotation(path: string, id: string): Annotation[] {
   return next;
 }
 
-export function clearAnnotations(path: string): void {
-  try {
-    localStorage.removeItem(keyFor(path));
-    window.dispatchEvent(new Event(ANNOTATIONS_EVENT));
-  } catch {
-    /* nothing to do */
-  }
-}
 
 /**
  * Annotations as timeline events, so they plot through the existing marker machinery instead of

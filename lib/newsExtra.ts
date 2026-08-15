@@ -542,18 +542,3 @@ export async function getFinnhubNews(ticker: string): Promise<TimelineEvent[]> {
   }
 }
 
-/** Keep the first event seen per URL — the same story surfaced by two repositories is one event. */
-export function dedupByUrl(...lists: TimelineEvent[][]): TimelineEvent[] {
-  const seen = new Set<string>();
-  const out: TimelineEvent[] = [];
-  for (const list of lists) {
-    for (const ev of list) {
-      if (ev.url) {
-        if (seen.has(ev.url)) continue;
-        seen.add(ev.url);
-      }
-      out.push(ev);
-    }
-  }
-  return out;
-}

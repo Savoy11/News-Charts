@@ -15,7 +15,7 @@ config({ path: ".env.local" });
  * The number to read first is **landed**: the share of searches that reached a subject with
  * something on it. Everything below it explains that number rather than decorating it.
  */
-import { getPool, closePool } from "../lib/db";
+import { getPool, closePool, configProblem } from "../lib/db";
 import {
   fromCorpus,
   percentile,
@@ -156,7 +156,11 @@ async function main(): Promise<void> {
 }
 
 main().catch(async (err) => {
-  console.error("\nsearch-report failed:", err.message);
+  // A configuration problem is a sentence, not a stack; anything else keeps its stack,
+  // because hiding a real fault to look tidy is how it becomes hard to diagnose.
+  const known = configProblem(err);
+  console.error(known ? `
+search-report failed: ${known}` : err);
   await closePool().catch(() => {});
   process.exit(1);
 });

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EventType, TimelineEvent } from "@/lib/types";
-import { waybackUrl } from "@/lib/wikidata";
+import { waybackUrl, waybackCouldHave } from "@/lib/wikidata";
 import { loadJSON, saveJSON } from "@/lib/viewState";
 import { toneOf } from "@/lib/sentiment";
 import ChainRef from "./ChainRef";
@@ -101,15 +101,22 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
  * nesting links is invalid HTML.
  */
 function SiteSnapshotLink({ domain, date }: { domain: string; date: string }) {
+  // Nothing was archived before 1996, so for an earlier event there is no capture to be near and
+  // no honest link to offer. This rendered on every pre-web row — the whole "Before the ticker"
+  // section of a company like Ford — each one promising a page that does not exist.
+  if (!waybackCouldHave(date)) return null;
   return (
     <a
       href={waybackUrl(domain, date)}
       target="_blank"
       rel="noopener noreferrer"
-      title={`See ${domain} as it looked around ${date} (Wayback Machine, new tab)`}
+      // "that day" was the false part: Wayback redirects to its NEAREST capture with no bound on
+      // how far that is, so the label promised a precision the mechanism never had. What the link
+      // actually delivers is the closest capture the archive holds, and it now says so.
+      title={`See the closest archived capture of ${domain} to ${date} (Wayback Machine, new tab)`}
       className="mr-2 mt-2 shrink-0 self-start rounded border border-slate-800 px-2 py-1 text-[10px] font-semibold text-slate-500 transition-colors hover:border-teal-600 hover:text-teal-300"
     >
-      site that day ↗
+      nearest capture ↗
     </a>
   );
 }

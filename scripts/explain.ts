@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
-import { getPool, closePool } from "../lib/db";
+import { getPool, closePool, configProblem } from "../lib/db";
 import { computeSignals, DEFAULT_SIGNAL_OPTIONS } from "../lib/signals";
 import {
   EXPLAIN_MODEL,
@@ -139,7 +139,11 @@ async function main() {
 }
 
 main().catch(async (err) => {
-  console.error("explain failed:", err.message);
+  // A configuration problem is a sentence, not a stack; anything else keeps its stack,
+  // because hiding a real fault to look tidy is how it becomes hard to diagnose.
+  const known = configProblem(err);
+  console.error(known ? `
+explain failed: ${known}` : err);
   await closePool();
   process.exit(1);
 });

@@ -4,7 +4,7 @@ config({ path: ".env.local" });
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { getPool, closePool } from "../lib/db";
+import { getPool, closePool, configProblem } from "../lib/db";
 
 /** Keep this many dumps; older ones are pruned after a successful run. */
 const KEEP = 14;
@@ -133,6 +133,10 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("backup failed:", err.message);
+  // A configuration problem is a sentence, not a stack; anything else keeps its stack,
+  // because hiding a real fault to look tidy is how it becomes hard to diagnose.
+  const known = configProblem(err);
+  console.error(known ? `
+backup failed: ${known}` : err);
   process.exit(1);
 });

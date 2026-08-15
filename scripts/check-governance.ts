@@ -12,8 +12,11 @@ config({ path: ".env.local" });
  * choices are free text in no fixed order, so the obvious `scores[0] > scores[1]` reading is
  * wrong for any space that lists "Against" first.
  *
- * ⚠ Payload shape comes from Snapshot's published GraphQL schema; egress is blocked here, so
- * these prove the parsing, not the endpoint.
+ * These prove the parsing, and deliberately only the parsing. The endpoint WAS exercised live on
+ * 2026-08-12 — which is how `aave.eth` was found never to have been a Snapshot space — but the
+ * question "does this id exist" cannot be asked from an offline suite at all, so it lives in
+ * `assertSpacesResolve` and runs under `npm run check:feeds`. A fixture cannot catch a wrong id:
+ * it answers whatever it was told to answer.
  */
 import { GOVERNANCE_SPACES, fetchGovernance, tally } from "../lib/onchain/governance";
 
@@ -90,7 +93,14 @@ async function main(): Promise<void> {
   check("filed as governance, never onchain", r.events.every((e) => e.type === "governance"));
   check("and the copy says the vote is off-chain", /signed off-chain/.test(one?.description ?? ""), one?.description);
   check("identity is Snapshot's proposal id", one?.dedupBasis === "snapshot:0xaaa", one?.dedupBasis);
-  check("links to the proposal", one?.url?.includes("/aave.eth/proposal/0xaaa") === true, one?.url);
+  // Derived from the configured space, not written out. This assertion hardcoded `aave.eth` and
+  // so had to be edited when that id turned out never to have been a Snapshot space at all — a
+  // check that has to change when a config value is CORRECTED is a check pinning the typo.
+  check(
+    "links to the proposal, in the configured space",
+    one?.url?.includes(`/${GOVERNANCE_SPACES[1].space}/proposal/0xaaa`) === true,
+    one?.url
+  );
 
   console.log("\nWhen Snapshot can't answer");
   // GraphQL reports failure with HTTP 200 and an errors array — the same trap Etherscan sets.

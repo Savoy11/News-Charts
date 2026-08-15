@@ -12,9 +12,11 @@ config({ path: ".env.local" });
  * and no writer to call — so what is checkable here is that the request goes to the publisher's
  * own host, carries the visitor's key, and parses to exactly what the server adapters produce.
  *
- * ⚠ Unverified live twice over: egress is blocked here, and browser use additionally depends on
- * each publisher's CORS headers, which nothing offline can test. A CORS failure would surface as
- * "no extra articles", which is also what a wrong key looks like.
+ * ⚠ Unverified live twice over — and neither reason is egress, which has been open since
+ * 2026-08-12. These endpoints need NYT and Guardian keys the build container does not hold, and
+ * browser use additionally depends on each publisher's CORS headers, which nothing server-side
+ * can test whatever the network allows. A CORS failure surfaces as "no extra articles", which is
+ * also what a wrong key looks like.
  */
 import { fetchGuardianInBrowser, fetchNytInBrowser, fetchVisitorFeeds } from "../lib/feeds/browser";
 

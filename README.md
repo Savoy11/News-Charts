@@ -502,7 +502,7 @@ items as `citation` events on both the topic and company ingest paths. What chan
 handling, not the data: a bare year now stays year-precision instead of being normalised to
 1 January, a `collection` is not treated as an event, and items predating the subject's first
 recorded year are dropped by the same `dropImplausiblePress` floor the newspaper scans use.
-`npm run check:archive` (39 cases) is aimed squarely at that parsing.
+`npm run check:archive` (55 cases) is aimed squarely at that parsing — and, since 2026-08-12, at what the request asks for, which is where a defect sat that every parsing case passed.
 
 Rejected as *event* sources after testing:
 

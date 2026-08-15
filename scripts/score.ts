@@ -2,7 +2,7 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 import type { PoolClient } from "pg";
-import { getPool, closePool } from "../lib/db";
+import { getPool, closePool, configProblem } from "../lib/db";
 import {
   DEFAULT_CAP_USD,
   costUsd,
@@ -178,6 +178,10 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("\nscore failed:", err.message);
+  // A configuration problem is a sentence, not a stack; anything else keeps its stack,
+  // because hiding a real fault to look tidy is how it becomes hard to diagnose.
+  const known = configProblem(err);
+  console.error(known ? `
+score failed: ${known}` : err);
   process.exit(1);
 });

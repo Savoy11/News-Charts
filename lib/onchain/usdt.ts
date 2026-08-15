@@ -16,7 +16,10 @@ import type { FetchResult, TimelineEvent } from "../types";
  * exactly the silent emptiness this exists to avoid, so `keccak256` computes them from the
  * signature and is itself pinned against published digests.
  *
- * ⚠ Unverified live: egress is blocked here. `npm run check:onchain` pins the parsing.
+ * ⚠ **Still unverified live, and for a reason that has not changed: this needs `ETHERSCAN_API_KEY`,
+ * which the build container does not have.** (Egress itself is open as of 2026-08-12 — several
+ * adapters were exercised that day — so the key is the whole blocker here, and saying so is more
+ * use than the blanket claim it replaces.) `npm run check:onchain` pins the parsing.
  */
 
 const ETHERSCAN = "https://api.etherscan.io/api";

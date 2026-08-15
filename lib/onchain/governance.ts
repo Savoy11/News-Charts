@@ -12,8 +12,11 @@ import type { FetchResult, TimelineEvent } from "../types";
  * change it authorises is executed later, elsewhere, or not at all. They are filed under the
  * `governance` kind for that reason; calling them `onchain` would claim a proof they do not have.
  *
- * ⚠ The payload shape below comes from Snapshot's published GraphQL schema and has never been
- * exercised live from here — egress is blocked. `npm run check:governance` pins the parsing.
+ * ✅ **Exercised live 2026-08-12**, and it found a defect the fixtures could not: the registered
+ * Aave space id was not a Snapshot space at all. The payload shape below matches what
+ * `hub.snapshot.org` actually returns; `npm run check:governance` pins the parsing offline, and
+ * `assertSpacesResolve` (called by `npm run check:feeds`) is the live half, because whether an id
+ * EXISTS is a question no fixture can answer.
  */
 
 const SNAPSHOT_API = "https://hub.snapshot.org/graphql";
@@ -31,9 +34,20 @@ export interface GovernanceSpace {
 /**
  * The spaces covered, each recorded the same way an address is: with why we believe it.
  *
- * ⚠ **Unverified from here.** A wrong space id returns an empty proposal list, which on a page is
- * indistinguishable from "this protocol has not voted lately" — the silent-empty failure again.
- * `npm run check:feeds` reports each space's count so a zero is visible rather than assumed.
+ * A wrong space id returns an empty proposal list, which on a page is indistinguishable from
+ * "this protocol has not voted lately" — the silent-empty failure. `npm run check:feeds` reports
+ * each space's count so a zero is visible rather than assumed.
+ *
+ * ⚠ **That warning caught nothing for a fortnight, because a visible zero is not a read zero.**
+ * `aave.eth` was registered here from 2026-07-28 and has never been a Snapshot space at all
+ * (`{ space(id: "aave.eth") }` → `null`); Aave's DAO is `aavedao.eth`, with 970 proposals. So
+ * `/topic/aave` shipped an empty governance timeline for two weeks while `check:feeds` dutifully
+ * printed `⚠ 0 articles` beside it, annotated "(closed proposals only)" — a plausible-sounding
+ * reason that made the zero easier to skip past than to investigate.
+ *
+ * Hence `assertSpacesResolve` below, and the change to how that zero is reported: an id that does
+ * not resolve is now a *different line* from a space with nothing recent, because those are
+ * different facts and only one of them is our bug. Verified live 2026-08-12.
  */
 export const GOVERNANCE_SPACES: GovernanceSpace[] = [
   {
@@ -44,9 +58,11 @@ export const GOVERNANCE_SPACES: GovernanceSpace[] = [
   },
   {
     slug: "aave",
-    space: "aave.eth",
+    space: "aavedao.eth",
     displayName: "Aave",
-    provenance: "The space linked from Aave's own governance portal.",
+    provenance:
+      "Snapshot's own space record — `{ space(id: \"aavedao.eth\") }` returns Aave DAO with 970 " +
+      "proposals. Verified live 2026-08-12, after the previous id was found to be wrong.",
   },
 ];
 
@@ -118,6 +134,64 @@ function query(space: string, first: number): string {
       orderDirection: desc
     ) { id title choices scores scores_total end state space { id } }
   }`;
+}
+
+/** What Snapshot says about a configured space id, as distinct from what it holds. */
+export interface SpaceCheck {
+  space: string;
+  /** true = Snapshot knows this id; false = it does not exist; null = we could not ask */
+  resolves: boolean | null;
+  name?: string;
+  proposalsCount?: number;
+  detail?: string;
+}
+
+/**
+ * Does each configured id actually name a Snapshot space?
+ *
+ * A separate question from "does it have proposals", and the one that went unasked for a
+ * fortnight. `fetchGovernance` cannot answer it: a non-existent space and a space with nothing
+ * closed both come back as an empty `proposals` array, which is the whole failure. Snapshot's
+ * `space` query answers it in one request — `null` means the id is wrong, full stop.
+ *
+ * Lives here rather than in a `check:*` script because it needs the network, and every script in
+ * the `npm run check` chain is offline by construction. `npm run check:feeds` is the live report,
+ * and this is for that.
+ */
+export async function assertSpacesResolve(
+  spaces: GovernanceSpace[] = GOVERNANCE_SPACES
+): Promise<SpaceCheck[]> {
+  const out: SpaceCheck[] = [];
+  for (const s of spaces) {
+    try {
+      const res = await fetch(SNAPSHOT_API, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          query: `{ space(id: "${s.space}") { id name proposalsCount } }`,
+        }),
+      });
+      if (!res.ok) {
+        out.push({ space: s.space, resolves: null, detail: `HTTP ${res.status}` });
+        continue;
+      }
+      const json = await res.json();
+      if (Array.isArray(json?.errors) && json.errors.length) {
+        out.push({ space: s.space, resolves: null, detail: String(json.errors[0]?.message ?? "graphql error") });
+        continue;
+      }
+      const space = json?.data?.space;
+      out.push(
+        space
+          ? { space: s.space, resolves: true, name: space.name, proposalsCount: space.proposalsCount }
+          : { space: s.space, resolves: false }
+      );
+    } catch (err) {
+      // Could not ask is not "does not exist" — the distinction this whole function is about.
+      out.push({ space: s.space, resolves: null, detail: (err as Error).message });
+    }
+  }
+  return out;
 }
 
 export async function fetchGovernance(

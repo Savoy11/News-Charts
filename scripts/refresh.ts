@@ -21,7 +21,7 @@ config({ path: ".env.local" });
  * Per-source windows still apply inside each subject, so a subject being "due" does not mean
  * eleven requests: `selectStaleSources` asks only what has actually aged out.
  */
-import { getPool, closePool } from "../lib/db";
+import { getPool, closePool, configProblem } from "../lib/db";
 import { COMPANY_SOURCES, TOPIC_SOURCES, ingestCompany, ingestOnchain, ingestTopic } from "./ingest";
 import { ensureSources } from "../lib/ingest/store";
 import { markFailed, markFulfilled, pendingRequests } from "../lib/ingest/queue";
@@ -190,7 +190,11 @@ async function main(): Promise<void> {
 }
 
 main().catch(async (err) => {
-  console.error("\nrefresh failed:", err.message);
+  // A configuration problem is a sentence, not a stack; anything else keeps its stack,
+  // because hiding a real fault to look tidy is how it becomes hard to diagnose.
+  const known = configProblem(err);
+  console.error(known ? `
+refresh failed: ${known}` : err);
   await closePool().catch(() => {});
   process.exit(1);
 });

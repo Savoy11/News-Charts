@@ -411,19 +411,23 @@ non-compliant. The `commercialOk` flags in `SOURCES` are a practical reading of 
       ones that matter. Since 2026-07-30 the projection covers only sources the ingest path
       actually asks — the keyed aggregators it used to price (EODHD at 100% of its tier at five
       subjects, among them) are not on that path and spend nothing.
-- [ ] `P1` **Report on the demand queue — make `subject_requests` readable.** *(opportunity-scout
-      proposal, 2026-07-30 — approved; carried over from the closed PR #15.)* A `npm run demand`
-      report: most-wanted unfulfilled subjects with request counts and first/last-asked dates,
-      plus a second block for requests carrying a `last_error`. Read-only, no new table, no new
-      page.
-      `db/014_subject_requests.sql` stores `requests`, `first_asked`, `last_asked`, `fulfilled_at`
-      and `last_error`; `lib/ingest/queue.ts` writes all five and reads back four. **Nothing in
-      `app/` reads the table at all, and `last_error` is written by `markFailed()` and read by
-      nobody** — so a subject failing every hourly run is invisible outside psql. Data already
-      collected, already paid for, never surfaced.
-      File it *above* the sizing item below, not in place of it: it is the instrument that item is
-      blocked on. Deliberately a CLI report rather than a public page — the app has no auth, and
-      what visitors search for is not something to publish.
+- [x] ~~`P1` **Report on the demand queue — make `subject_requests` readable.**~~ — done
+      2026-08-12. `npm run demand` (optionally `npm run demand 50`): most-wanted unfulfilled
+      subjects with counts and how long each has been waiting, then a **second block for requests
+      that failed rather than waited**, then totals. Read-only — no new table, no new page, no
+      writes, asserted in `check:index`.
+      - The second block is the point. `last_error` has been written by `markFailed()` and read by
+        nobody since db/014, so a request that was tried and broke looked exactly like one the
+        runner had not reached yet — and it breaks again on every run until someone looks. The
+        report separates the two and says so in as many words.
+      - **Verified against a real database**, not reasoned about: Postgres 16 is installed in this
+        container, so a scratch cluster was stood up, all 19 migrations applied cleanly, and the
+        report was run against seeded requests covering the cases that matter — a fulfilled row
+        excluded, two failing rows flagged in both blocks, and the `requests DESC, last_asked DESC`
+        ordering. First DB-backed verification in this environment.
+      - It also names the reason a pending list would never shrink: nothing runs `npm run refresh`
+        yet (the `P0` scheduler item), and a report that did not say so would look like a bug in
+        the queue rather than the absence of a scheduler.
 - [ ] `P2` **Decide how far the request queue is worked per run.** `--requests` defaults to 10
       most-wanted per run. Too low and demand backs up; too high and new subjects crowd out
       refreshing the ones already on the site. The right number depends on real demand, which
@@ -769,12 +773,35 @@ the items under it can be argued for or against without one.
       became `/topic/how-donald-trumps-presidency-affected`. Generate candidate spans and test
       them against the subject index instead, keeping the longest that resolves: the corpus
       decides what is a subject name, rather than a list of English patterns.
-- [ ] `P1` **Score candidates instead of laddering.** Every rung is exact-ish — exact ticker,
-      exact name, name prefix, slug or alias — so a typo matches nothing and falls through to a
-      Wikipedia guess, and two plausible matches always resolve to whichever rung is earlier.
-      `pg_trgm` on `display_name`, `ticker` and `subject_aliases` gives typo tolerance and one
-      comparable score across rungs; where the top two are close, disambiguate on screen rather
-      than picking silently.
+- [x] ~~`P1` **Score candidates instead of laddering.**~~ — the scoring half done 2026-08-12;
+      **on-screen disambiguation is the remaining half and is recorded below.**
+      - `findCandidates` (`lib/store/read.ts`, db/020 adds `pg_trgm` + GIN indexes) puts exact
+        ticker, exact name, alias, name prefix and resemblance on **one 0–1 scale**, and
+        `resolveSearch` uses it as its corpus rung. Identifiers are pinned above resemblance
+        (ticker 1.00, name 0.97, alias 0.93, prefix 0.90) because an exact ticker is not "very
+        similar", it is the thing itself.
+      - **`word_similarity`, not `similarity` — measured, not guessed.** Plain trigram overlap
+        dilutes against a long legal name: `"forde"` scores **0.19** against "Ford Motor Company"
+        and **0.67** by word. That difference is the whole item. Verified on a real corpus:
+        `forde` → Ford, `alibba` → Alibaba, `telegrafy` → Telegraphy, `electirc cars` → Electric
+        car — every one of which previously matched nothing and fell through to the live rungs.
+      - **Two false-positive classes found by measuring, and closed.** `"co"` scored 0.67 against
+        "Ford Motor Company" (a partial hit on *Company*); `"company"`, `"motor"`, `"inc"` and
+        `"group"` each scored a perfect 1.00, being genuinely words in the name. `worthFuzzyMatching`
+        gates the fuzzy arms on length and on `WEAK_TOKENS` — **the same list the headline layer
+        already uses**, reused rather than restated so the two cannot drift.
+      - **Verified against a real Postgres**: cluster stood up in this container, db/020 applied,
+        and the whole matrix above run against seeded subjects including two Fords and two Apples.
+- [ ] `P1` **Disambiguate on screen when the top two candidates are close.** The other half of the
+      item above, and the half that needs a UI. `"Ford"` scores **1.00 against both Ford Motor
+      Company and Ford Motor Credit Company**; `"APPLE"` likewise ties Apple Inc. with Apple
+      Hospitality REIT. Today the shorter name wins silently, which is a better rule than rung
+      order and still a coin toss presented as an answer.
+      - The substrate is in place and wired: `findCandidates` already returns the ranked list with
+        each candidate's score and *how* it was found (`ticker` / `name` / `alias` / `prefix` /
+        `fuzzy`), which is exactly what a chooser needs to explain itself.
+      - Deliberately not shipped as dead logic: an `ambiguous` flag computed and unused would be
+        the same unwired-code smell five instances of which were deleted from this repo today.
 - [x] ~~`P1` **Stop the last rung inventing.**~~ — fixed 2026-08-12. **The item was half shipped
       and I nearly closed it on that basis; measuring is what caught the other half.**
       - **The search half was already done** by the 2026-08-08 scope refocus: `lib/resolveSearch.ts`

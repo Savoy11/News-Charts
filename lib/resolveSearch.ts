@@ -1,5 +1,5 @@
 import { resolveCompany } from "./sec";
-import { findKnownCompany, loadSubject } from "./store/read";
+import { findCandidates, findKnownCompany, loadSubject } from "./store/read";
 import { headPrefixes } from "./prompt";
 import { logResolution, targetHasEvents, type ResolutionRung } from "./searchLog";
 import { NETWORK_BUDGET_MS, timedOut, withTimeout } from "./timeout";
@@ -50,10 +50,31 @@ export async function resolveSearch(q: string): Promise<ResolvedSearch> {
     return { kind: "none" };
   }
 
-  // Database first, the same discipline as every other loader — and the alias path
-  // ("bitcoin" → btc) that the live rungs cannot see.
-  const knownCompany = await findKnownCompany(query).catch(() => null);
-  const known = knownCompany ? null : await loadSubject(query).catch(() => null);
+  /**
+   * Database first, the same discipline as every other loader — and the alias path
+   * ("bitcoin" → btc) that the live rungs cannot see.
+   *
+   * **Scored, not laddered.** `findCandidates` puts exact ticker, exact name, alias, prefix and
+   * trigram resemblance on one 0–1 scale, which fixes two failures the old rungs could not tell
+   * apart: a typo matched nothing and fell through to the live rungs (`forde`, `alibba` and
+   * `electirc cars` now resolve — measured), and two plausible matches always went to whichever
+   * rung came first, which is an ordering of our code rather than of the answers.
+   *
+   * The corpus is still consulted before EDGAR, so search keeps working when that file is
+   * throttled. Exact identifiers still win outright; resemblance only decides among the rest.
+   */
+  const candidates = await findCandidates(query).catch(() => []);
+  const best = candidates[0] ?? null;
+  const bestCompany = best?.kind === "company" && best.ticker ? best : null;
+
+  const knownCompany = bestCompany
+    ? { ticker: bestCompany.ticker as string, displayName: bestCompany.displayName }
+    : await findKnownCompany(query).catch(() => null);
+  const known = knownCompany
+    ? null
+    : best
+      ? await loadSubject(best.slug).catch(() => null)
+      : await loadSubject(query).catch(() => null);
 
   /**
    * The one rung that leaves the machine, on a budget. EDGAR rate-limits by User-Agent, and a

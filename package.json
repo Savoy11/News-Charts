@@ -53,7 +53,8 @@
     "check:index": "tsx scripts/check-index.ts",
     "sync:tickers": "tsx scripts/sync-tickers.ts",
     "check:tickers": "tsx scripts/check-tickers.ts",
-    "check:signals": "tsx scripts/check-signals.ts"
+    "check:signals": "tsx scripts/check-signals.ts",
+    "demand": "tsx scripts/demand.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

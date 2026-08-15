@@ -1,5 +1,5 @@
 import { Pool, type PoolClient } from "pg";
-import { getTopicTimeline } from "../wiki";
+import { getTopicTimeline, articleAnswersSlug } from "../wiki";
 import { resolveCompany, getFilings, commonName } from "../sec";
 import { getDailyPrices } from "../prices";
 import { aliasesFor } from "../enrich/relevance";
@@ -162,6 +162,24 @@ export async function firstPassTopic(rawSlug: string): Promise<FirstPassOutcome>
         // notice today; the distinction lives in the ledger (a timeout retries sooner
         // than a dead slug because failures only accrue toward death on a real miss).
         if (!timedOut(wiki)) await recordFailure(client, slug);
+        return "unresolvable";
+      }
+
+      /**
+       * Wikipedia always answers. That is the whole problem.
+       *
+       * Search stopped minting topics in the 2026-08-08 scope refocus, but a slug typed straight
+       * into the URL bar still arrives here — and asked for `best-buy-earnings-q3`, Wikipedia's
+       * search returns **TaxAct**, with 21 events (verified live 2026-08-12). Minting that would
+       * give a visitor a complete, confident timeline for a company they never asked about, which
+       * is worse than the notice they get for a miss: a page that is honestly empty says so, and
+       * this one would not.
+       *
+       * Recorded as a real failure rather than a timeout, because it is one: this slug names
+       * nothing we can chart, and the retry ladder should treat it that way.
+       */
+      if (!articleAnswersSlug(slug, wiki.title)) {
+        await recordFailure(client, slug);
         return "unresolvable";
       }
 

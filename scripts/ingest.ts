@@ -22,7 +22,7 @@ import { aliasesFor } from "../lib/enrich/relevance";
 import { selectStaleSources, ttlFor } from "../lib/ingest/refresh";
 import { collapseNearDuplicates } from "../lib/newsQuality";
 import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
-import { getTopicTimeline } from "../lib/wiki";
+import { getTopicTimeline, articleAnswersSlug } from "../lib/wiki";
 import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
 import { fetchNews } from "../lib/news";
 import { getArchiveItems } from "../lib/archive";
@@ -252,6 +252,18 @@ export async function ingestTopic(client: PoolClient, topic: string) {
     const wiki = await getTopicTimeline(topic);
     if (!wiki) {
       console.log("  no Wikipedia article found — nothing to ingest");
+      return;
+    }
+    /**
+     * The same guard the first pass applies, for the same reason: Wikipedia's search always
+     * answers, so "found an article" is not "found the right article". Asked for
+     * `best buy earnings q3` it returns TaxAct with 21 events.
+     *
+     * This path is the scheduler's, so a junk slug that reached the request queue would be
+     * minted here on a timer rather than by a visitor — quieter, and no less wrong.
+     */
+    if (!articleAnswersSlug(topic, wiki.title)) {
+      console.log(`  Wikipedia returned "${wiki.title}", which is not about "${topic}" — not minting`);
       return;
     }
     title = wiki.title;

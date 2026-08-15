@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { getPool } from "../db";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
+import { WEAK_TOKENS } from "../newsQuality";
 import { DatePrecision, EventType, PricePoint, SourceKey, TimelineEvent } from "../types";
 
 export interface SubjectRow {
@@ -109,6 +110,117 @@ export async function findKnownCompany(
     [q]
   );
   return rows[0] ? { ticker: rows[0].ticker, displayName: rows[0].display_name } : null;
+}
+
+/** One candidate answer to a search, with a score comparable across every way it was found. */
+export interface SubjectCandidate {
+  kind: "company" | "topic" | "industry";
+  slug: string;
+  ticker: string | null;
+  displayName: string;
+  /** 0–1. Exact identifiers score 1; everything else is trigram similarity. */
+  score: number;
+  /** which evidence produced it, for the log and for explaining an ambiguous pair */
+  via: "ticker" | "name" | "prefix" | "alias" | "fuzzy";
+}
+
+/**
+ * Every plausible subject for a query, scored on one scale.
+ *
+ * This replaces laddering for the corpus half of resolution. The rungs it supersedes were each
+ * exact-ish, which had two costs the ladder could not tell apart: **a typo matched nothing** and
+ * fell through to the live rungs, and **two plausible matches always resolved to whichever rung
+ * came first** — an ordering of our code rather than of the answers.
+ *
+ * The scores are chosen so that identifiers always beat resemblance. An exact ticker or an exact
+ * name is not "very similar", it is the thing itself, so those are pinned at 1 and 0.97 rather
+ * than left to `similarity()`, which would rank a short ticker below a long fuzzy name purely
+ * because trigram overlap favours length. Below them, `similarity()` is the whole ordering.
+ *
+ * `SIMILARITY_FLOOR` is deliberately not `pg_trgm`'s default 0.3: at 0.3 a three-letter query
+ * matches a surprising amount of a real corpus. The caller decides what to do with the list —
+ * this function ranks, it does not choose.
+ */
+export const SIMILARITY_FLOOR = 0.5;
+
+/**
+ * Is this query distinctive enough to match on resemblance rather than on identity?
+ *
+ * Two ways it is not, both measured against a real corpus rather than imagined:
+ *
+ *  - **Too short.** `word_similarity` compares the query against the best-matching run inside the
+ *    target, so `"co"` scores 0.67 against "Ford Motor Company" — a partial hit on *Company*.
+ *  - **Nothing but filler.** `"company"`, `"motor"`, `"inc"`, `"group"` and `"holding"` each score
+ *    a perfect 1.00, because they genuinely are words in the name. This repo already settled that
+ *    question for headlines: the bar is a *distinctive* token, and matching on "motor" or
+ *    "company" would let almost anything through. `WEAK_TOKENS` is that list, reused here rather
+ *    than restated, so the two places cannot drift.
+ *
+ * Exact identifiers are unaffected — a ticker or an exact name is still an answer however short
+ * or common it looks, which is why this gates only the fuzzy arms of the query below.
+ */
+function worthFuzzyMatching(q: string): boolean {
+  if (q.length < 3) return false;
+  const tokens = q.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  return tokens.some((t) => t.length >= 3 && !WEAK_TOKENS.has(t));
+}
+
+export async function findCandidates(query: string, limit = 5): Promise<SubjectCandidate[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const fuzzy = worthFuzzyMatching(q);
+  const { rows } = await getPool().query<{
+    kind: string;
+    slug: string;
+    ticker: string | null;
+    display_name: string;
+    score: string;
+    via: string;
+  }>(
+    `WITH scored AS (
+       SELECT s.kind::text AS kind, s.slug, s.ticker, s.display_name,
+              GREATEST(
+                CASE WHEN s.ticker IS NOT NULL AND upper(s.ticker) = upper($1) THEN 1.0 ELSE 0 END,
+                CASE WHEN lower(s.display_name) = lower($1) THEN 0.97 ELSE 0 END,
+                CASE WHEN s.display_name ILIKE $1 || ' %' THEN 0.90 ELSE 0 END,
+                CASE WHEN EXISTS (
+                       SELECT 1 FROM subject_aliases a
+                        WHERE a.subject_id = s.id AND lower(a.alias) = lower($1)
+                     ) THEN 0.93 ELSE 0 END,
+                -- word_similarity, not similarity: the query is a common name and the target is
+                -- often a long legal one, so plain trigram overlap DILUTES. Measured on this
+                -- corpus, "forde" scores 0.19 against "Ford Motor Company" and 0.67 by word —
+                -- the difference between a typo resolving and falling through to the live rungs.
+                CASE WHEN $4 THEN word_similarity($1, s.display_name) ELSE 0 END,
+                CASE WHEN $4 THEN COALESCE((SELECT max(word_similarity($1, a.alias))
+                            FROM subject_aliases a WHERE a.subject_id = s.id), 0) ELSE 0 END
+              ) AS score,
+              CASE
+                WHEN s.ticker IS NOT NULL AND upper(s.ticker) = upper($1) THEN 'ticker'
+                WHEN lower(s.display_name) = lower($1)                     THEN 'name'
+                WHEN EXISTS (SELECT 1 FROM subject_aliases a
+                              WHERE a.subject_id = s.id AND lower(a.alias) = lower($1)) THEN 'alias'
+                WHEN s.display_name ILIKE $1 || ' %'                       THEN 'prefix'
+                ELSE 'fuzzy'
+              END AS via
+         FROM subjects s
+     )
+     SELECT * FROM scored
+      WHERE score >= $2
+      -- length as the tie-break, not row order: with equal scores the shorter name is the more
+      -- exact answer ("Ford" over "Ford Motor Credit"), and row order is not an answer at all.
+      ORDER BY score DESC, length(display_name), slug
+      LIMIT $3`,
+    [q, SIMILARITY_FLOOR, limit, fuzzy]
+  );
+  return rows.map((r) => ({
+    kind: r.kind as SubjectCandidate["kind"],
+    slug: r.slug,
+    ticker: r.ticker,
+    displayName: r.display_name,
+    score: Number(r.score),
+    via: r.via as SubjectCandidate["via"],
+  }));
 }
 
 export async function loadSubject(slug: string): Promise<SubjectRow | null> {

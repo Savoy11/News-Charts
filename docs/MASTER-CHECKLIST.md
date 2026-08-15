@@ -773,12 +773,35 @@ the items under it can be argued for or against without one.
       became `/topic/how-donald-trumps-presidency-affected`. Generate candidate spans and test
       them against the subject index instead, keeping the longest that resolves: the corpus
       decides what is a subject name, rather than a list of English patterns.
-- [ ] `P1` **Score candidates instead of laddering.** Every rung is exact-ish — exact ticker,
-      exact name, name prefix, slug or alias — so a typo matches nothing and falls through to a
-      Wikipedia guess, and two plausible matches always resolve to whichever rung is earlier.
-      `pg_trgm` on `display_name`, `ticker` and `subject_aliases` gives typo tolerance and one
-      comparable score across rungs; where the top two are close, disambiguate on screen rather
-      than picking silently.
+- [x] ~~`P1` **Score candidates instead of laddering.**~~ — the scoring half done 2026-08-12;
+      **on-screen disambiguation is the remaining half and is recorded below.**
+      - `findCandidates` (`lib/store/read.ts`, db/020 adds `pg_trgm` + GIN indexes) puts exact
+        ticker, exact name, alias, name prefix and resemblance on **one 0–1 scale**, and
+        `resolveSearch` uses it as its corpus rung. Identifiers are pinned above resemblance
+        (ticker 1.00, name 0.97, alias 0.93, prefix 0.90) because an exact ticker is not "very
+        similar", it is the thing itself.
+      - **`word_similarity`, not `similarity` — measured, not guessed.** Plain trigram overlap
+        dilutes against a long legal name: `"forde"` scores **0.19** against "Ford Motor Company"
+        and **0.67** by word. That difference is the whole item. Verified on a real corpus:
+        `forde` → Ford, `alibba` → Alibaba, `telegrafy` → Telegraphy, `electirc cars` → Electric
+        car — every one of which previously matched nothing and fell through to the live rungs.
+      - **Two false-positive classes found by measuring, and closed.** `"co"` scored 0.67 against
+        "Ford Motor Company" (a partial hit on *Company*); `"company"`, `"motor"`, `"inc"` and
+        `"group"` each scored a perfect 1.00, being genuinely words in the name. `worthFuzzyMatching`
+        gates the fuzzy arms on length and on `WEAK_TOKENS` — **the same list the headline layer
+        already uses**, reused rather than restated so the two cannot drift.
+      - **Verified against a real Postgres**: cluster stood up in this container, db/020 applied,
+        and the whole matrix above run against seeded subjects including two Fords and two Apples.
+- [ ] `P1` **Disambiguate on screen when the top two candidates are close.** The other half of the
+      item above, and the half that needs a UI. `"Ford"` scores **1.00 against both Ford Motor
+      Company and Ford Motor Credit Company**; `"APPLE"` likewise ties Apple Inc. with Apple
+      Hospitality REIT. Today the shorter name wins silently, which is a better rule than rung
+      order and still a coin toss presented as an answer.
+      - The substrate is in place and wired: `findCandidates` already returns the ranked list with
+        each candidate's score and *how* it was found (`ticker` / `name` / `alias` / `prefix` /
+        `fuzzy`), which is exactly what a chooser needs to explain itself.
+      - Deliberately not shipped as dead logic: an `ambiguous` flag computed and unused would be
+        the same unwired-code smell five instances of which were deleted from this repo today.
 - [x] ~~`P1` **Stop the last rung inventing.**~~ — fixed 2026-08-12. **The item was half shipped
       and I nearly closed it on that basis; measuring is what caught the other half.**
       - **The search half was already done** by the 2026-08-08 scope refocus: `lib/resolveSearch.ts`

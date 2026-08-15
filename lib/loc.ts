@@ -111,3 +111,31 @@ export function dropImplausiblePress(
 ): TimelineEvent[] {
   return press.filter((e) => Number(e.date.slice(0, 4)) >= notBefore).slice(0, limit);
 }
+
+/**
+ * The floor of last resort, for a subject whose own history we do not know.
+ *
+ * `notBefore` above is normally derived from the subject — the first dated event Wikipedia gives.
+ * When there is none, two ingest branches passed `0`, or no floor at all, which let the Internet
+ * Archive's cataloguing errors through unfiltered: measured 2026-08-12, a `"Ford Motor"` query
+ * returned five 1914–29 sheet-music covers stamped `year: 1770`, plus items dated 1292 and year 1.
+ * A wrong date does not throw — it plants an event in the Middle Ages, drags the timeline's range
+ * with it, and leaves a page that looks fine to anyone not reading the axis.
+ *
+ * These are floors on **impossibility, not likelihood**, and they are deliberately weak:
+ *
+ * - `company` — 1780. The oldest surviving US public companies date from that decade (Bank of
+ *   New York, 1784), so nothing a registrant's own archive holds can honestly predate it. This is
+ *   the value that catches the 1770 covers.
+ * - `topic` — 1500, which is the archive's own minimum in `parseArchiveDate` and therefore a
+ *   no-op. That is the honest answer: a topic can legitimately be ancient, and inventing a
+ *   tighter bound would drop real history to tidy up a data-quality problem.
+ *
+ * The primary defence is not this floor — it is asking the archive for relevance rather than for
+ * the oldest rows, which is what was actually wrong (see `lib/archive.ts`). This is the backstop
+ * for the mis-catalogued item that still comes back.
+ */
+export const ABSOLUTE_FLOOR: Record<"company" | "topic", number> = {
+  company: 1780,
+  topic: 1500,
+};

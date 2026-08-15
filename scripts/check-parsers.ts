@@ -13,7 +13,8 @@ config({ path: ".env.local" });
  */
 import { extractYear } from "../lib/wiki";
 import { dropCompanyPrehistory } from "../lib/history";
-import { dropImplausiblePress } from "../lib/loc";
+import { dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
+import { waybackCouldHave, waybackUrl } from "../lib/wikidata";
 import type { TimelineEvent } from "../lib/types";
 
 let pass = 0;
@@ -118,6 +119,36 @@ console.log("\nImplausible press guard");
   check("the floor is inclusive", dropImplausiblePress(scans, 1888).length === 2);
   check("a limit caps the result", dropImplausiblePress(scans, 1800, 1).length === 1);
   check("no floor year → nothing survives an impossible bar", dropImplausiblePress(scans, 3000).length === 0);
+
+  /**
+   * The floor of last resort, for a subject whose own history we do not know.
+   *
+   * Two ingest branches passed `0` here, or no floor at all, which filters nothing — so every
+   * Internet Archive cataloguing error shipped. Measured live 2026-08-12: a `"Ford Motor"` query
+   * returned five 1914–29 sheet-music covers stamped `year: 1770`, plus items dated 1292 and
+   * year 1, for a company founded in 1903.
+   */
+  const junk = [press("0001-01-01"), press("1292-01-01"), press("1770-01-01"), press("1926-06-01")];
+  const companyKept = dropImplausiblePress(junk, ABSOLUTE_FLOOR.company);
+  check("the company floor drops the archive's mis-catalogued rows", companyKept.length === 1, `${companyKept.length} kept`);
+  check("  …and keeps the real one", companyKept[0]?.date === "1926-06-01", companyKept[0]?.date);
+  // 1780 is chosen because the oldest surviving US public companies date from that decade, so it
+  // is a bound on IMPOSSIBILITY. A tighter one would drop real pre-listing history.
+  check("the company floor predates the oldest US public company", ABSOLUTE_FLOOR.company <= 1784);
+  // Deliberately a no-op: a topic can legitimately be ancient, and inventing a tighter bound
+  // would drop real history to tidy up someone else's cataloguing.
+  check("the topic floor claims nothing the archive does not", ABSOLUTE_FLOOR.topic === 1500);
+  check("  …so an old topic keeps its old material", dropImplausiblePress([press("1650-01-01")], ABSOLUTE_FLOOR.topic).length === 1);
+
+  /**
+   * The Wayback link's honesty rule. Nothing was archived before 1996, so for an earlier event
+   * there is no capture to be near — the link was not imprecise, it was a claim about a page that
+   * never existed. A 1926 Ford event resolved to a capture from December 1998.
+   */
+  check("a pre-web event gets no snapshot link", !waybackCouldHave("1926-06-01"));
+  check("the epoch itself is offered", waybackCouldHave("1996-01-01"));
+  check("a modern event is offered", waybackCouldHave("2019-04-02"));
+  check("the link still points at the date asked for", waybackUrl("ford.com", "2019-04-02").includes("/20190402/"), waybackUrl("ford.com", "2019-04-02"));
 }
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);

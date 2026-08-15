@@ -32,7 +32,31 @@ export async function getOfficialDomain(companyName: string): Promise<string | n
 /**
  * Wayback redirects an undated-ish URL to the nearest capture, so a snapshot link
  * needs no API call at all — just the date and the host.
+ *
+ * ⚠ True about the mechanism, and the reason the label built on it was false. "Nearest" has no
+ * bound: asking for `ford.com` in 1926 returns a capture from **December 1998**, verified against
+ * `archive.org/wayback/available` on 2026-08-12. The URL is fine; what it can honestly be called
+ * is the question — see `WAYBACK_EPOCH` and `SiteSnapshotLink`.
  */
 export function waybackUrl(domain: string, date: string): string {
   return `https://web.archive.org/web/${date.replace(/-/g, "")}/http://${domain}`;
+}
+
+/**
+ * The first year the web was archived at all.
+ *
+ * The Internet Archive began crawling in 1996, so for any event before it there is no capture to
+ * be near — the link is not imprecise, it is a claim about a page that did not exist. Offering it
+ * anyway is how a 1926 Ford event came to advertise "the site that day".
+ *
+ * A local constant rather than a lookup on purpose: this is the half that can be decided without
+ * asking anyone, on a render path that must not acquire a network call. `fetchSiteSnapshots`
+ * answers the sharper question (*does this domain have a capture near this date*) and is the
+ * upgrade if the snapshot strip is ever built.
+ */
+export const WAYBACK_EPOCH = "1996-01-01";
+
+/** Could the archive hold anything near this date at all? */
+export function waybackCouldHave(date: string): boolean {
+  return date >= WAYBACK_EPOCH;
 }

@@ -23,7 +23,7 @@ import { selectStaleSources, ttlFor } from "../lib/ingest/refresh";
 import { collapseNearDuplicates } from "../lib/newsQuality";
 import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
 import { getTopicTimeline } from "../lib/wiki";
-import { fetchPressMentions, dropImplausiblePress } from "../lib/loc";
+import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
 import { fetchNews } from "../lib/news";
 import { getArchiveItems } from "../lib/archive";
 import { getYahooFinanceNews } from "../lib/newsExtra";
@@ -282,7 +282,10 @@ export async function ingestTopic(client: PoolClient, topic: string) {
     report("wikipedia", wiki.events.length ? "ok" : "empty", stats);
   }
 
-  const floor = firstEventOn ? Number(firstEventOn.slice(0, 4)) : 0;
+  // A floor of 0 filters nothing, which is what this was for any subject Wikipedia gave no dated
+  // first event for — every archive cataloguing error shipped. `ABSOLUTE_FLOOR.topic` is the
+  // honest fallback: weak on purpose, because a topic can legitimately be ancient.
+  const floor = firstEventOn ? Number(firstEventOn.slice(0, 4)) : ABSOLUTE_FLOOR.topic;
   // Score at link time: the typed phrasing rides along as an alias, so "EV" news for a
   // subject titled "Electric vehicle" still settles deterministically where it can.
   const topicCtx = { kind: "topic" as const, displayName: title };
@@ -401,9 +404,19 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
       dropImplausiblePress(evts, firstStoryYear)
     );
   } else if (story) {
-    // Archive metadata is catalogued rather than OCR-guessed, so a wrong date is a rarity there
-    // and a systematic hazard in the scans — it survives an unknown founding year, capped.
-    await run("internet_archive", name, asResult(() => getArchiveItems(name)), (e) => e.slice(0, 25));
+    /**
+     * No founding year, so no subject-derived floor — but "no floor" is not the answer either.
+     *
+     * This branch used to pass the items straight through with only a cap, on the stated grounds
+     * that "archive metadata is catalogued rather than OCR-guessed, so a wrong date is a rarity
+     * there". Measured against the live archive on 2026-08-12, it is not a rarity: 12 of 48
+     * `"Ford Motor"` items were pre-1900 for a company founded in 1903, five of them stamped
+     * 1770. The same `dropImplausiblePress` the branch above uses now applies here, against the
+     * weakest floor that is still true of every company.
+     */
+    await run("internet_archive", name, asResult(() => getArchiveItems(name)), (evts) =>
+      dropImplausiblePress(evts, ABSOLUTE_FLOOR.company)
+    );
   }
 
   // Headline/link/date under the ticker's own feed. Licensed for the ad-supported path (the

@@ -14,6 +14,7 @@
  * so no check could have reached them even if one had been written.
  */
 import { median, mad, isSpike, weekEnd } from "../lib/signals";
+import { configProblem } from "../lib/db";
 
 let pass = 0;
 let fail = 0;
@@ -62,6 +63,24 @@ check("crosses a year boundary", weekEnd("2026-12-28") === "2027-01-03", weekEnd
 check("crosses a leap day", weekEnd("2028-02-26") === "2028-03-03", weekEnd("2028-02-26"));
 // Built in UTC on purpose: a local-time walk shifts the boundary by a day for half the world.
 check("does not drift with the local zone", weekEnd("2026-01-01") === "2026-01-07", weekEnd("2026-01-01"));
+
+/**
+ * How an operator script reports a failure it caught on the way up.
+ *
+ * Lives here rather than in its own suite because it is four assertions over one pure function.
+ * The rule: a condition the operator can fix gets a sentence and a remedy; anything else keeps
+ * its stack, because hiding a real fault to look tidy is how it becomes hard to diagnose.
+ */
+console.log("\nStartup failures an operator can fix");
+{
+  const missing = configProblem(new Error("DATABASE_URL is not set — see .env.local"));
+  check("a missing DATABASE_URL is explained", missing !== null);
+  check("  …and says what to do about it", /Set it in \.env\.local/.test(missing ?? ""), missing?.split("\n")[1]?.trim());
+  check("a refused connection is explained", configProblem(new Error("connect ECONNREFUSED 127.0.0.1:5432")) !== null);
+  // The half that matters more: an unexpected error must NOT be swallowed into a tidy sentence.
+  check("an unexpected error keeps its stack", configProblem(new Error("Cannot read properties of undefined")) === null);
+  check("a non-Error is handled without throwing", configProblem("boom") === null);
+}
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);
 if (fail) process.exit(1);

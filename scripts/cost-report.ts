@@ -16,7 +16,7 @@ config({ path: ".env.local" });
  * it matters, and it is also the arithmetic behind the launch decision — "buy this tier or drop
  * it" is really "this tier covers N subjects".
  */
-import { getPool, closePool } from "../lib/db";
+import { getPool, closePool, configProblem } from "../lib/db";
 import { QUOTAS, project, subjectCapacity } from "../lib/ingest/quota";
 import { costUsd, formatUsd } from "../lib/enrich/cost";
 import { SOURCES } from "../lib/ingest/store";
@@ -175,7 +175,11 @@ async function main(): Promise<void> {
 }
 
 main().catch(async (err) => {
-  console.error(err);
+  // A configuration problem is a sentence, not a stack; anything else keeps its stack,
+  // because hiding a real fault to look tidy is how it becomes hard to diagnose.
+  const known = configProblem(err);
+  console.error(known ? `
+cost-report failed: ${known}` : err);
   await closePool().catch(() => {});
   process.exit(1);
 });

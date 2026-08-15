@@ -2,7 +2,7 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 import type { PoolClient } from "pg";
-import { getPool, closePool } from "../lib/db";
+import { getPool, closePool, configProblem } from "../lib/db";
 import {
   SOURCES,
   ensureSources,
@@ -624,7 +624,11 @@ async function main() {
 // as a side effect of the import.
 if (require.main === module) {
   main().catch((err) => {
-    console.error("\ningest failed:", err.message);
+    // A configuration problem is a sentence, not a stack; anything else keeps its stack,
+  // because hiding a real fault to look tidy is how it becomes hard to diagnose.
+  const known = configProblem(err);
+  console.error(known ? `
+ingest failed: ${known}` : err);
     process.exit(1);
   });
 }

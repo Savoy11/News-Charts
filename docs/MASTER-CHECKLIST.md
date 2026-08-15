@@ -664,9 +664,20 @@ closed PR #15, whose findings are otherwise all shipped.
         the midpoint, so there is no sector to diverge *from*; the signal now requires three
         members and is withheld below that, which is the correct answer rather than a cautious
         one. Audit §10.
-- [ ] `P3` `npm run cost-report` throws a raw stack trace when `DATABASE_URL` is unset, where
-      `npm run refresh` prints a clean message for the same condition.
-- [x] ~~`P2` **Fix the auditor's script name.**~~ — done 2026-07-31. `.claude/agents/code-auditor.md`
+- [x] ~~`P3` `npm run cost-report` throws a raw stack trace where `refresh` prints a clean
+      message for the same missing `DATABASE_URL`.~~ — fixed 2026-08-12, and fixed as **one rule
+      rather than one script**.
+      - `configProblem` (`lib/db.ts`) returns the message *plus the remedy* for conditions an
+        operator is expected to hit — a missing `DATABASE_URL`, or a database configured but not
+        answering — and **`null` for everything else, meaning print the stack**. Hiding an
+        unexpected fault to look tidy is how it becomes hard to diagnose, so the tidying is
+        deliberately scoped to the two failures that are settings rather than bugs.
+      - Applied to all **eleven** DB-backed operator scripts, not just the one the audit named.
+        Seven already printed `err.message`, which was the inconsistency the finding pointed at;
+        they now give the remedy line too. The `check:*` suites are deliberately untouched — a
+        crashing check should show its stack.
+      - `check:signals` covers it (23 → 28 cases), including the assertion that matters most:
+        an unexpected error is **not** swallowed into a tidy sentence.- [x] ~~`P2` **Fix the auditor's script name.**~~ — done 2026-07-31. `.claude/agents/code-auditor.md`
       named `npm run check-feeds`; this repo's script is `check:feeds`, so the check errored as
       "Missing script" rather than running. The definition now also runs `npm run check` and is
       explicit that a report must say **where** it ran: egress is blocked from the build

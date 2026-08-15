@@ -17,7 +17,7 @@
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
-import { getPool } from "../lib/db";
+import { getPool, configProblem } from "../lib/db";
 import {
   ensureSources,
   emptyStats,
@@ -653,6 +653,10 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error(err);
+  // A configuration problem is a sentence, not a stack; anything else keeps its stack,
+  // because hiding a real fault to look tidy is how it becomes hard to diagnose.
+  const known = configProblem(err);
+  console.error(known ? `
+db:seed-demo failed: ${known}` : err);
   process.exit(1);
 });

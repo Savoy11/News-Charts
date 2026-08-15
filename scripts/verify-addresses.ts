@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 config({ path: ".env.local" });
+import { configProblem } from "../lib/db";
 
 /**
  * Ask each contract in the address book what it is.
@@ -59,6 +60,10 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error(err);
+  // A configuration problem is a sentence, not a stack; anything else keeps its stack,
+  // because hiding a real fault to look tidy is how it becomes hard to diagnose.
+  const known = configProblem(err);
+  console.error(known ? `
+verify:addresses failed: ${known}` : err);
   process.exit(1);
 });

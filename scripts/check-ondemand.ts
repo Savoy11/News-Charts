@@ -82,6 +82,41 @@ async function main(): Promise<void> {
   check("the ingest pool sheds load instead of queueing", /connectionTimeoutMillis:\s*\d+/.test(src));
   check("  ...and is capped at two concurrent gathers", /max:\s*2/.test(src));
 
+  /**
+   * Wikipedia always answers, so "found an article" is not "found the right article".
+   *
+   * Search stopped minting topics in the 2026-08-08 scope refocus, but a slug typed straight into
+   * the URL bar still reaches the first pass. Measured live 2026-08-12, asking Wikipedia for
+   * `best buy earnings q3` returns **TaxAct** with 21 events — a complete, confident timeline for
+   * a company the visitor never asked about, which is worse than the honest notice a miss gets.
+   */
+  console.log("\nThe article has to be about what was asked for");
+  const { articleAnswersSlug } = await import("../lib/wiki");
+  check("the live failure is rejected", !articleAnswersSlug("best buy earnings q3", "TaxAct"));
+  check("  …and so is its shorter form", !articleAnswersSlug("best buy", "TaxAct"));
+  check("an unrelated article is rejected", !articleAnswersSlug("penicillin", "TaxAct"));
+
+  /**
+   * The corpus already depends on stem tolerance, so these are regression cases, not niceties:
+   * exact word-boundary matching — which `mentions()` does, correctly, for headlines — would
+   * reject both and silently delete two subjects the site holds today.
+   */
+  check("telegraph still reaches Telegraphy", articleAnswersSlug("telegraph", "Telegraphy"));
+  check("electric cars still reaches Electric car", articleAnswersSlug("electric cars", "Electric car"));
+  check("a company slug still reaches its article", articleAnswersSlug("ford", "Ford Motor Company"));
+  check("a qualified query still reaches its subject", articleAnswersSlug("nvidia earnings", "Nvidia"));
+  check("covid reaches the pandemic article", articleAnswersSlug("covid", "COVID-19 pandemic"));
+  // The parser artifact that gave this initiative its name still names a real subject.
+  check(
+    "a prompt-shaped slug still matches its subject",
+    articleAnswersSlug("how-donald-trumps-presidency-affected", "Second presidency of Donald Trump")
+  );
+
+  // Conservative where it cannot judge: a slug of nothing but filler has no grounds to refuse on,
+  // and being wrong that way costs a thin page rather than deleting a real subject.
+  check("a slug with no distinctive token is not refused", articleAnswersSlug("q3 earnings", "TaxAct"));
+  check("an empty slug is not refused", articleAnswersSlug("", "Anything"));
+
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);
 }

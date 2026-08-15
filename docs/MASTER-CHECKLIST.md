@@ -775,10 +775,27 @@ the items under it can be argued for or against without one.
       `pg_trgm` on `display_name`, `ticker` and `subject_aliases` gives typo tolerance and one
       comparable score across rungs; where the top two are close, disambiguate on screen rather
       than picking silently.
-- [ ] `P1` **Stop the last rung inventing.** Anything unresolved becomes
-      `/topic/<whatever was typed>`. The page is honest about not having it, but the query has by
-      then been classified as a topic — and if that slug reaches `ingestTopic`, Wikipedia's search
-      will confidently return *some* article. That is the confidently-wrong-page failure.
+- [x] ~~`P1` **Stop the last rung inventing.**~~ — fixed 2026-08-12. **The item was half shipped
+      and I nearly closed it on that basis; measuring is what caught the other half.**
+      - **The search half was already done** by the 2026-08-08 scope refocus: `lib/resolveSearch.ts`
+        has no `assumed_topic` rung, so an unresolved query yields `kind: null` and mints nothing.
+      - **The URL half was not.** A slug typed straight into the address bar still reached
+        `firstPassTopic` → `getTopicTimeline`, and Wikipedia's search always answers. Measured
+        live: **`best buy earnings q3` returns "TaxAct", with 21 events.** A visitor landing on
+        `/topic/best-buy-earnings-q3` got a complete, confident timeline for a company they never
+        asked about — worse than a miss, because a page that is honestly empty says so.
+      - `articleAnswersSlug` (`lib/wiki.ts`) now gates both mint paths — the first pass *and*
+        `ingestTopic`, since a junk slug reaching the request queue would otherwise be minted on a
+        timer instead of by a visitor. A rejection records a real failure, not a timeout: the slug
+        names nothing we can chart and the retry ladder should treat it so.
+      - **Stem-tolerant on purpose, because the corpus depends on it.** `telegraph` legitimately
+        resolves to *"Telegraphy"* and `electric cars` to *"Electric car"*; the relevance layer's
+        `mentions()` does exact word-boundary matching, which is right for headlines and would
+        have silently deleted both subjects here. A strong token must prefix-match in either
+        direction instead. `check:ondemand` pins the live failure and both regression cases (29).
+      - Conservative where it cannot judge: a slug of nothing but filler ("q3 earnings") is
+        accepted, because being wrong that way costs a thin page while the other way deletes a
+        real subject.
 - [ ] `P2` **Feed every real bad query into `check:prompt`.** The report's "rewrites that then
       landed on nothing" block exists to produce these. Cheapest accuracy work in the repo.
 - [x] ~~`P1` **Bound the network on the search path, and say so when it runs out.**~~ — done

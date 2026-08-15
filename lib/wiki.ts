@@ -382,6 +382,58 @@ function eventsFromPage(page: Page, idPrefix: string, limit: number): TimelineEv
  * (preferring a dedicated "History of ..." page) and extract sentences that
  * mention a year.
  */
+/**
+ * Words that carry no identity, so matching on them would let anything through.
+ *
+ * Deliberately the query-shaped ones — a search phrase is not a company name, so this is
+ * `WEAK_TOKENS`' sibling rather than a copy of it: "earnings", "stock", "price" and the
+ * question words are what a person types *around* a subject.
+ */
+const WEAK_QUERY_TOKENS = new Set([
+  "the", "and", "of", "for", "a", "an", "in", "on", "to", "how", "what", "why", "when", "did",
+  "does", "do", "is", "was", "were", "affected", "affect", "effect", "impact", "vs", "versus",
+  "earnings", "stock", "stocks", "share", "shares", "price", "prices", "news", "report",
+  "results", "quarter", "quarterly", "revenue", "history", "q1", "q2", "q3", "q4",
+]);
+
+/** Tokens that could identify a subject, from either a slug or an article title. */
+function identityTokens(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(" ")
+    .filter((t) => t.length >= 3 && !WEAK_QUERY_TOKENS.has(t));
+}
+
+/**
+ * Is the article Wikipedia returned actually about the thing that was asked for?
+ *
+ * Wikipedia's search always answers. Asked for `best buy earnings q3` it returns **TaxAct** —
+ * verified live 2026-08-12 — with 21 events, so a visitor reaching `/topic/best-buy-earnings-q3`
+ * got a complete, confident timeline for an unrelated company. Search itself stopped minting
+ * topics in the 2026-08-08 scope refocus, but a slug typed straight into the URL bar still
+ * reaches the first-pass gather, and that is the path this guards.
+ *
+ * Stem-tolerant on purpose, because the corpus already depends on it: `telegraph` legitimately
+ * resolves to *"Telegraphy"* and `electric cars` to *"Electric car"*. Exact word-boundary
+ * matching — which `mentions()` in the relevance layer does, correctly, for headlines — would
+ * reject both. So a strong token from the slug must PREFIX-match a token of the title, or the
+ * reverse, which accepts a plural or an -y ending and still rejects an unrelated subject.
+ *
+ * Conservative by design: when the slug carries no strong token at all, this cannot judge and
+ * says so by accepting. Being wrong in that direction costs a thin page; being wrong in the
+ * other silently deletes a legitimate subject.
+ */
+export function articleAnswersSlug(slug: string, title: string): boolean {
+  const asked = identityTokens(slug);
+  if (!asked.length) return true; // nothing distinctive was asked — no grounds to refuse
+  const got = identityTokens(title);
+  if (!got.length) return false;
+  return asked.some((a) =>
+    got.some((g) => (a.length >= 4 || g.length >= 4 ? g.startsWith(a) || a.startsWith(g) : a === g))
+  );
+}
+
 export async function getTopicTimeline(topic: string): Promise<TopicResult | null> {
   const t = topic.trim();
   let page = (await getExtract(`History of the ${t}`)) ?? (await getExtract(`History of ${t}`));

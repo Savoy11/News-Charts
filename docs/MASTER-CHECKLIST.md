@@ -133,10 +133,31 @@ already held, but new investment goes to securities coverage first.
         the series *above* it, so two independent regex sweeps would still "work" while attaching
         every symbol to whichever fund sorted first. `check:tickers` pins that association, the
         entity decoding, and both preference branches.
-- [ ] `P2` Securities-coverage depth items promoted from the recall backlog below: GDELT
-      year-window backfill, EDGAR older-history shards, and richer paid-tier evidence apply
-      per-security and serve this scope directly. The LoC decade walk and Wikidata alias
-      harvesting serve companies too and keep their place. Topic-only recall items rank behind
+- [x] ~~**EDGAR older-history shards**~~ — done 2026-08-12, and it was the largest single
+      coverage win available. EDGAR splits a filer's record at roughly a thousand filings:
+      `filings.recent`, then **separate shard files** under `filings.files` that this code never
+      asked for. Measured live:
+
+      | | recent only | with shards |
+      |---|---|---|
+      | Ford | 209 filings, from **2019-05-28** | **937 filings, from 1994-02-10** |
+      | Apple | 161 filings, from **2015-06-10** | **393 filings, from 1994-01-26** |
+
+      Twenty-five years of a company's own primary documents, one request away and never fetched.
+      Every id is unique across the merged set (937/937, 393/393), so dedup identity holds.
+      - **Depth is the scheduler's job, not the first pass's.** `getFilingsDeep(company, true)`
+        runs in `scripts/ingest.ts`, which has no deadline and refreshes on a window; the first
+        pass keeps the shallow `getFilings` because it runs with a visitor waiting on an 8s
+        budget and its job is to flip the render gate, not to be complete. `check:ondemand`
+        asserts both halves of that split, and that the shallow path makes exactly one request.
+      - A shard that fails to load costs its own years and nothing else — the recent block is
+        already in hand, and half a history beats none.
+- [ ] `P2` The rest of the securities-coverage depth set: **GDELT year-window backfill** (GDELT
+      answers from this container but throttles hard — 429/503 — so this needs the production
+      host to develop against) and **richer paid-tier evidence** (needs a paid key). The LoC
+      decade walk and Wikidata alias harvesting serve companies too and keep their place —
+      ⚠ Wikidata is **unreachable from this container** (`query.wikidata.org`), so that one needs
+      a different environment rather than a different design. Topic-only recall items rank behind
       all of these until the scope changes again.
 
 ## Planned initiatives — free planner & referral board (2026-08-12)

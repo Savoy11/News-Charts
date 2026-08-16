@@ -27,7 +27,7 @@ import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib
 import { fetchNews } from "../lib/news";
 import { getArchiveItems } from "../lib/archive";
 import { getYahooFinanceNews } from "../lib/newsExtra";
-import { resolveCompany, getFilings, getIndustry, commonName } from "../lib/sec";
+import { resolveCompany, getFilingsDeep, getIndustry, commonName } from "../lib/sec";
 import { getDailyPrices } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
@@ -365,7 +365,19 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
   }
 
   await run("sec_edgar", company.ticker, async () => {
-    const events = await getFilings(company);
+    /**
+     * The scheduler takes the WHOLE history, not just EDGAR's recent block.
+     *
+     * `filings.recent` stops at roughly a thousand filings, which for an active filer is only
+     * the last few years — measured, Ford's recent block reaches 2019 and Apple's 2015, while
+     * the older shards carry both back to 1994. That is 209 -> 937 filings for Ford and
+     * 161 -> 393 for Apple, and it is exactly the "depth of coverage for listed securities"
+     * this project's scope is about.
+     *
+     * Deep here and shallow in the first pass, deliberately: this path has no deadline and runs
+     * on a refresh window, while the first pass runs with a visitor waiting on an 8s budget.
+     */
+    const events = await getFilingsDeep(company, true);
     return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
   });
 

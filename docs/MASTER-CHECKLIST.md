@@ -1641,11 +1641,23 @@ Each idea checked against the codebase before listing — several were cheaper t
         an annotation carries no source key.
       - Bounded (500 chars, 200 per subject) so a runaway paste cannot fill the origin's storage
         and take prefs and follows down with it. Malformed stored JSON is filtered, not thrown on.
-- [ ] `P3` **Saved-focus alerts (email/push on new matches).** Real retention value but the
-      only idea needing infrastructure that doesn't exist: accounts, background jobs, an email
-      provider. The no-server cousin is already live (Follow + "new since last visit"); an
-      intermediate step is highlighting saved-focus matches on return, still keyless. Defer
-      until there are users to retain.
+- [ ] `P3` **Saved-focus alerts (email/push on new matches).** Real retention value, and the only
+      idea in this file that needs infrastructure which does not exist.
+      - **Blocked on, in order:** (1) the `P2` **accounts** decision below — this needs a user
+        identity to alert, and taking one makes the project a **data controller**, with a user
+        table, session security and a privacy-policy surface; (2) **an email or push provider**,
+        a paid dependency and a deliverability problem rather than a library; (3) **background
+        jobs**, which do not exist either — the only scheduled thing is `npm run refresh`, and
+        that is the `P0` nothing runs yet.
+      - **And on the premise:** *"defer until there are users to retain"* — the site has not
+        launched, so the retention this buys is currently zero by definition. Re-checked
+        2026-08-12: still true.
+      - The keyless cousin already ships (Follow + "new since last visit"). The intermediate the
+        earlier wording floated — highlighting saved-focus matches on return — is **deliberately
+        not queued**: focus is part of the *shelved* prompt-search substrate, so it would be
+        speculative work on dormant machinery for a product with no users. It becomes sensible
+        after **Prompt search v2** lands, not before.
+      - ⚠ Nothing here is a coding problem. Not buildable until (1) is decided.
 
 ## Initiative: Affiliate links on relevant surfaces · `P2`
 
@@ -1673,8 +1685,21 @@ this is a shared revenue *pattern*, not shared code.**
       was removed 2026-08-08, so a first affiliate unit starts from the ad slots, not from it.
 - [ ] `P2` **Never paywall-launder.** Linking a reader to a paywalled cited article is fine and
       honest; taking a commission for it must not change which citations get mined or shown.
-- [ ] `P3` Measure click-through per surface before expanding, without shipping
-      user-identifying analytics.
+- [ ] `P3` **Measure click-through per surface before expanding, without shipping
+      user-identifying analytics.** Doubly blocked, and the second block is the hard one.
+      - **Blocked on, in order:** (1) the ⛔ **pre-release feed gate**, because the `P0` above says
+        it plainly — *"do the feed gate first, or not the links"*; (2) **a first affiliate link
+        existing at all**. There are none: verified 2026-08-12 by audit, `AdSlot` is a static div
+        with no network call and no ranking input, and a repo-wide grep for `utm_`, `affiliate`,
+        `[?&]ref=`, `partner`, `clickid` and `tag=` across `app/`, `components/` and `lib/`
+        returns **only two prose mentions**.
+      - So there is nothing to measure. Building the measurement first would be analytics for
+        links that do not exist, designed against a privacy constraint with no real traffic shape
+        to design against.
+      - **What it will need when it is time:** per-surface counts that are aggregate *at the point
+        of collection* rather than aggregated afterwards — a per-placement counter, not a session
+        or visitor trail. "We anonymised it later" is a different and weaker claim than "we never
+        held it", and that is a decision to take before the first counter, not after.
 
 - [x] ~~`P1` **Relational search: answer the intersection, not the overlay.**~~ — done 2026-07-28,
       from a live prompt-testing pass. *"I want to see how Donald Trumps presidency affected IBM

@@ -117,6 +117,45 @@ async function main(): Promise<void> {
   check("a slug with no distinctive token is not refused", articleAnswersSlug("q3 earnings", "TaxAct"));
   check("an empty slug is not refused", articleAnswersSlug("", "Anything"));
 
+  /**
+   * Depth belongs to the scheduler; the first pass stays bounded.
+   *
+   * EDGAR splits a filer's history at ~1,000 filings — `filings.recent` plus separate shard
+   * files. Reading only `recent` left Ford's timeline starting in 2019 and Apple's in 2015, when
+   * both go back to 1994 (209 → 937 and 161 → 393 filings respectively). The scheduler now takes
+   * the shards; the first pass must NOT, because it runs with a visitor waiting on an 8s budget
+   * and its job is to flip the render gate, not to be complete.
+   */
+  console.log("\nFiling depth is the scheduler's job, not the first pass's");
+  const fs = await import("node:fs");
+  const firstPassSrc = fs.readFileSync("lib/ingest/firstPass.ts", "utf8");
+  const ingestSrc = fs.readFileSync("scripts/ingest.ts", "utf8");
+  check("the first pass takes the recent block only", /\bgetFilings\(/.test(firstPassSrc) && !/getFilingsDeep/.test(firstPassSrc));
+  check("the scheduler takes the older shards", /getFilingsDeep\([^)]*true\)/.test(ingestSrc));
+
+  const { getFilings, getFilingsDeep } = await import("../lib/sec");
+  let asked: string[] = [];
+  (globalThis as { fetch: unknown }).fetch = async (input: RequestInfo | URL) => {
+    asked.push(String(input));
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        filings: {
+          recent: { form: ["10-K"], filingDate: ["2020-01-01"], accessionNumber: ["0000000000-20-000001"], primaryDocument: ["a.htm"] },
+          files: [{ name: "CIK0000000001-submissions-001.json" }],
+        },
+      }),
+    } as unknown as Response;
+  };
+  const co = { ticker: "T", cik: "0000000001", name: "Test Co" };
+  asked = [];
+  await getFilings(co);
+  check("shallow asks for the submissions record and nothing else", asked.length === 1, `${asked.length} requests`);
+  asked = [];
+  await getFilingsDeep(co, true);
+  check("deep asks for the shard too", asked.some((u) => u.includes("submissions-001.json")), asked.join(" "));
+
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);
 }

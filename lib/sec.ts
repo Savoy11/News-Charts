@@ -295,15 +295,20 @@ export async function getIndustry(company: CompanyInfo): Promise<Industry | null
 }
 
 /** Filings from EDGAR. 10-K/10-Q become "earnings" events; other material forms become "filing" events. */
-export async function getFilings(company: CompanyInfo): Promise<TimelineEvent[]> {
-  const res = await fetch(`https://data.sec.gov/submissions/CIK${company.cik}.json`, {
-    headers: UA,
-    next: { revalidate: 3600 },
-  });
-  if (!res.ok) return [];
-  const json = await res.json();
-  const recent = json?.filings?.recent;
-  if (!recent) return [];
+/**
+ * One block of EDGAR's parallel filing arrays — `filings.recent`, or an older shard, which carry
+ * the same columns. Split out so both go through identical typing and labelling: two copies would
+ * drift, and the drift would only ever show on filings old enough that nobody was looking.
+ */
+interface FilingBlock {
+  form?: string[];
+  filingDate?: string[];
+  accessionNumber?: string[];
+  primaryDocument?: string[];
+  items?: string[];
+}
+
+function filingsFromBlock(block: FilingBlock, company: CompanyInfo): TimelineEvent[] {
 
   /**
    * Operating-company forms AND registered-fund forms. The set used to cover companies only,
@@ -334,14 +339,17 @@ export async function getFilings(company: CompanyInfo): Promise<TimelineEvent[]>
     "N-1A": { label: "Fund registration (N-1A)", earnings: false },
   };
   const events: TimelineEvent[] = [];
-  const n = recent.form.length;
+  const n = block.form?.length ?? 0;
   for (let i = 0; i < n; i++) {
-    const form: string = recent.form[i];
+    const form = block.form?.[i] ?? "";
     if (!wanted.has(form)) continue;
-    const date: string = recent.filingDate[i];
-    const accession: string = recent.accessionNumber[i].replace(/-/g, "");
-    const doc: string = recent.primaryDocument[i];
-    const items: string = recent.items?.[i] ?? "";
+    const date = block.filingDate?.[i] ?? "";
+    const accession = (block.accessionNumber?.[i] ?? "").replace(/-/g, "");
+    // A shard row missing either is unusable: no date is nowhere to put it, and no accession is
+    // no stable identity, so it would re-insert as a new event on every refresh.
+    if (!date || !accession) continue;
+    const doc = block.primaryDocument?.[i] ?? "";
+    const items = block.items?.[i] ?? "";
     const fund = FUND_LABELS[form];
     const isEarnings =
       fund?.earnings ?? (form === "10-K" || form === "10-Q" || (form === "8-K" && items.includes("2.02")));
@@ -367,6 +375,61 @@ export async function getFilings(company: CompanyInfo): Promise<TimelineEvent[]>
       externalId: accession,
       dedupBasis: `sec:${accession}`,
     });
+  }
+  return events;
+}
+
+/** The recent block only — what every read path wants, and what the first pass is bounded to. */
+export async function getFilings(company: CompanyInfo): Promise<TimelineEvent[]> {
+  return getFilingsDeep(company, false);
+}
+
+/**
+ * A company's filings, and how far back to go.
+ *
+ * EDGAR's submissions record splits at roughly a thousand filings: `filings.recent` holds the
+ * newest, and everything older lives in **separate shard files** listed under `filings.files`.
+ * This only ever read `recent`, which for an active filer is nowhere near the whole history —
+ * measured against Ford, `recent` reaches back to **2019-05-20**, while two shards hold **3,431
+ * more filings going back to 1994-01-20**. Twenty-five years of a company's own primary
+ * documents, sitting one request away and never asked for.
+ *
+ * `includeOlder` is off by default, and the default is what the **first pass** uses: that path
+ * runs while a visitor waits, on an 8-second budget, and its job is to flip the page's render
+ * gate rather than to be complete. Depth belongs to the scheduler, which has no deadline and
+ * refreshes on a window — so `scripts/ingest.ts` opts in and nothing on the read path does.
+ */
+export async function getFilingsDeep(
+  company: CompanyInfo,
+  includeOlder: boolean
+): Promise<TimelineEvent[]> {
+  const res = await fetch(`https://data.sec.gov/submissions/CIK${company.cik}.json`, {
+    headers: UA,
+    next: { revalidate: 3600 },
+  });
+  if (!res.ok) return [];
+  const json = await res.json();
+  const recent = json?.filings?.recent;
+  if (!recent) return [];
+
+  const events = filingsFromBlock(recent, company);
+  if (!includeOlder) return events;
+
+  const shards: { name?: string }[] = json?.filings?.files ?? [];
+  for (const shard of shards) {
+    if (!shard?.name) continue;
+    try {
+      const r = await fetch(`https://data.sec.gov/submissions/${shard.name}`, {
+        headers: UA,
+        next: { revalidate: 86400 },
+      });
+      // A shard that will not load costs its own years and nothing else — the recent block is
+      // already in hand, and half a history beats none.
+      if (!r.ok) continue;
+      events.push(...filingsFromBlock(await r.json(), company));
+    } catch {
+      continue;
+    }
   }
   return events;
 }

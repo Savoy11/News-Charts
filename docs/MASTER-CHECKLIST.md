@@ -52,11 +52,33 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
 - [x] **`check:types` added to the chain, first**: the whole suite runs via tsx, which strips
       types unchecked — the exhaustive-switch guard on `deterministicScore` never actually
       fired, and check-relevance's own ALL list was missing two kinds.
-- [ ] `P2` Remaining from the recall/relevance design (judge-approved, not yet built): graded
-      focus scoring + a "Best matches" strip over the chronological timeline; SSR focus via a
-      dynamic sub-route; alias harvesting from Wikidata; GDELT year-window backfill; LoC
-      decade walk; EDGAR older-history shards; richer paid-tier evidence with an aggregate
-      spend cap. Each carries cost-judge amendments recorded in the session's design output.
+- [ ] `P2` Remaining from the recall/relevance design (judge-approved). **Corrected 2026-08-12:
+      EDGAR older-history shards are now BUILT** (Ford 209 → 937 filings, back to 1994); this
+      entry listed them as unbuilt for a few hours after they shipped. Still open: graded focus
+      scoring + a "Best matches" strip; SSR focus via a dynamic sub-route; alias harvesting from
+      Wikidata (⚠ `query.wikidata.org` is unreachable from the build container); GDELT
+      year-window backfill (⚠ answers but throttles hard, 429/503); richer paid-tier evidence
+      with an aggregate spend cap (needs a paid key).
+- [ ] `P2` **LoC decade walk — measured 2026-08-12, and it is a real trade-off rather than a
+      clear win. Do not build it without deciding the two questions below.**
+      - **It does reach material relevance ranking never returns.** An unfiltered `"bicycle"`
+        query returns 40 results spanning 1895–1962; adding `dates=1870/1879` and `dates=1860/1869`
+        returns 20 apiece from decades the unfiltered query never touched.
+      - ⚠ **But that is precisely where the OCR noise lives**, and the current design chose
+        relevance ordering *specifically* to avoid it — `lib/loc.ts` says so: *"sorting by date
+        instead surfaces the oldest OCR misreads first (a 'bicycle' hit in 1837)"*. A decade walk
+        deliberately reaches into the decades that warning is about.
+      - ⚠ **And the gain would be discarded anyway.** `dropImplausiblePress(evts, floor, limit)`
+        caps at **25**. Fetching ten times more candidates and then slicing to 25 changes almost
+        nothing unless the *selection* changes too — keep-N-per-decade, or a cap that scales.
+        That redesign is the actual work here, not the extra queries.
+      - **Cost, measured:** LoC throttles aggressively (the adapter already sleeps 4s between
+        retries), and one probe in this session died with an HTTP/2 `INTERNAL_ERROR` under only
+        three sequential requests. A seventeen-decade walk per subject is a different load profile
+        from one query, and belongs on the production host rather than designed blind.
+      - **Two questions to answer first:** (1) does the timeline want breadth-per-decade or the
+        best 25 mentions overall? (2) what replaces the flat cap? Until those are decided, more
+        fetching is not more coverage.
 
 - [x] **Remove the CAEP cross-promotion.** Done 2026-08-08. `components/CaepPromo.tsx` is
       deleted and its eight placements — home, explore, following, compare, topic, company,

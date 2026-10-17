@@ -73,7 +73,7 @@ export default async function SourcesPanel({ slug }: { slug: string }) {
                     for public-domain and open-data sources still truncates. */}
                 <span
                   data-source-credit={s.key}
-                  className={`block text-slate-600 ${requiresLicenceCredit(s.key) ? "" : "truncate"}`}
+                  className={`block text-slate-400 ${requiresLicenceCredit(s.key) ? "" : "truncate"}`}
                   title={`${s.attribution} — ${s.license}`}
                 >
                   {s.attribution} · {s.license}

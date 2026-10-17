@@ -84,7 +84,10 @@ export async function fetchPressMentions(topic: string): Promise<FetchResult> {
       id: `press-${date}-${events.length}`,
       date,
       type: "press",
-      title: `“${topic}” in ${/^the\b/i.test(paper) ? "" : "the "}${paper}${where}`,
+      // Subject-independent: the page is the event (dedup on the link), and one page matched by
+      // "Ford" and by "automobile" used to carry whichever term was ingested last — flipping the
+      // title, and the content hash, on every refresh (NC-140). The subject link says why it's here.
+      title: `Page in ${/^the\b/i.test(paper) ? "" : "the "}${paper}${where}`,
       source: "Chronicling America · Library of Congress",
       url: link || undefined,
       description: "Digitised newspaper page",

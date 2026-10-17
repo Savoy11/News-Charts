@@ -36,6 +36,8 @@ export interface TopicPageData {
    */
   slug: string;
   summary: string;
+  /** the Wikipedia article the summary is quoted from, for its CC BY-SA credit */
+  wikipediaTitle: string | null;
   events: TimelineEvent[];
   /**
    * Empty for ordinary topics. A crypto asset is modelled as a topic but has a continuous
@@ -89,6 +91,7 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
           title: subject.displayName,
           slug: subject.slug,
           summary: subject.summary ?? "",
+          wikipediaTitle: subject.wikipediaTitle ?? null,
           events,
           prices,
           refreshedAt: subject.refreshedAt,
@@ -114,6 +117,7 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
             title: subject.displayName,
             slug: subject.slug,
             summary: subject.summary ?? "",
+            wikipediaTitle: subject.wikipediaTitle ?? null,
             events,
             prices,
             refreshedAt: subject.refreshedAt,

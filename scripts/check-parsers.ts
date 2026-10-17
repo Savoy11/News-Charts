@@ -14,7 +14,7 @@ config({ path: ".env.local" });
 import { extractYear, parseCitations } from "../lib/wiki";
 import { dividendTitle } from "../lib/prices";
 import { dropCompanyPrehistory } from "../lib/history";
-import { dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
+import { dropImplausiblePress, ABSOLUTE_FLOOR, fetchPressMentions } from "../lib/loc";
 import { waybackCouldHave, waybackUrl } from "../lib/wikidata";
 import type { TimelineEvent } from "../lib/types";
 
@@ -179,5 +179,31 @@ for (const [amount, shown] of [
   check(`${amount} → ${shown}`, dividendTitle(amount) === `Dividend of ${shown} per share`, dividendTitle(amount));
 }
 
-console.log(`\n${pass}/${pass + fail} checks passed\n`);
-if (fail) process.exit(1);
+// NC-140: the title baked in the search term ("“Ford” in the Detroit Free Press") while the
+// identity is the page link, so a page matched by "Ford" and by "automobile" took whichever term
+// was ingested last — and flipped, with its content hash, on every refresh.
+async function newspaperTitles(): Promise<void> {
+  console.log("\nOne newspaper page reads the same on every subject that matched it");
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      results: [{ date: "1903-06-17", partof_title: ["Detroit free press"], location_state: ["michigan"], id: "https://www.loc.gov/resource/x/1903-06-17/ed-1/?sp=4" }],
+    }),
+  })) as unknown as typeof fetch;
+  try {
+    const [ford] = (await fetchPressMentions("Ford")).events;
+    const [auto] = (await fetchPressMentions("automobile")).events;
+    check("the same page gets the same title whichever subject asked", ford?.title === auto?.title, `${ford?.title} / ${auto?.title}`);
+    check("  …and the title names no search term", !/Ford|automobile/.test(ford?.title ?? ""), ford?.title);
+    check("  …while the identity is still the page", ford?.dedupBasis === auto?.dedupBasis);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+newspaperTitles().then(() => {
+  console.log(`\n${pass}/${pass + fail} checks passed\n`);
+  if (fail) process.exit(1);
+});

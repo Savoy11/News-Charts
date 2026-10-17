@@ -188,6 +188,19 @@ check(
   "the scheduler keys a topic on its Wikipedia article, as the first pass does",
   /upsertTopicSubject\(client, \{[\s\S]*?wikipediaTitle: wiki\.title/.test(topicIngest) && !/upsertSubject\(/.test(topicIngest)
 );
+// What a re-ingest may correct. Verified against Postgres on 2026-10-17; asserted here as text
+// because this suite never reaches a database.
+const storeSrc = read("lib/ingest/store.ts");
+check(
+  "the owning source can correct an event's date, precision and kind (NC-141)",
+  /occurred_on = CASE WHEN \$9 THEN EXCLUDED\.occurred_on/.test(storeSrc) &&
+    /kind = CASE WHEN \$9 THEN EXCLUDED\.kind/.test(storeSrc) &&
+    /OR \(\$9 AND \(events\.occurred_on, events\.date_precision, events\.kind\)/.test(storeSrc)
+);
+check(
+  "a deterministic score is re-scored on re-ingest, a model's never (NC-131)",
+  /WHERE \$5 AND event_subjects\.scored_by = 'deterministic'/.test(storeSrc)
+);
 // NC-151: pruning ran after a dump pg_restore could not even list.
 const backupSrc = read("scripts/backup.ts");
 check(

@@ -76,7 +76,7 @@ export default async function TopicPage({ params }: { params: { slug: string } }
         </div>
       </div>
 
-      {data.summary && <TopicSummary text={data.summary} />}
+      {data.summary && <TopicSummary text={data.summary} wikipediaTitle={data.wikipediaTitle} />}
 
       <TopicExplorer events={data.events} prices={data.prices} subject={data.title} />
 

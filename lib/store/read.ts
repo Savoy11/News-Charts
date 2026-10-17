@@ -3,6 +3,7 @@ import { getPool } from "../db";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
 import { WEAK_TOKENS } from "../newsQuality";
 import { DatePrecision, EventType, PricePoint, SourceKey, TimelineEvent } from "../types";
+import { PROMPT_VERSION } from "../enrich/explain";
 
 export interface SubjectRow {
   id: number;
@@ -337,7 +338,7 @@ export async function loadSectorEvents(industryId: number): Promise<TimelineEven
 }
 
 export interface StoredExplanation {
-  /** matches a signal by kind + window */
+  /** matches a signal by kind + the whole window: `${kind}|${windowStart}|${windowEnd}` */
   key: string;
   body: string;
   model: string;
@@ -349,22 +350,32 @@ export interface StoredExplanation {
  * UI shows them as links, so a reader can always check a claim against the source.
  */
 export async function loadExplanations(subjectId: number): Promise<StoredExplanation[]> {
+  /**
+   * One explanation per signal window — the newest written under the current prompt.
+   *
+   * These were keyed on kind + start date alone, while a visitor's thresholds change a signal's
+   * end date. The panel then attached whichever stored explanation shared the start: a write-up
+   * of a different window, presented as this one's (NC-165). Headlines are not stored, so the
+   * whole window is the identity; older prompt versions and superseded runs are left out.
+   */
   const { rows } = await getPool().query(
-    `SELECT sy.id, sy.kind, sy.model, sy.body,
+    `SELECT DISTINCT ON (sy.kind, sy.window_start, sy.window_end)
+            sy.id, sy.kind, sy.model, sy.body,
             to_char(sy.window_start,'YYYY-MM-DD') AS ws,
+            to_char(sy.window_end,'YYYY-MM-DD') AS we,
             json_agg(json_build_object('id', e.id, 'title', e.title, 'url', a.url)
                      ORDER BY sc.ordinal) AS citations
        FROM syntheses sy
        JOIN synthesis_citations sc ON sc.synthesis_id = sy.id
        JOIN events e ON e.id = sc.event_id
        LEFT JOIN event_attestations a ON a.event_id = e.id AND a.is_primary
-      WHERE sy.subject_id = $1
-      GROUP BY sy.id, sy.kind, sy.model, sy.body, sy.window_start
-      ORDER BY sy.window_start DESC`,
-    [subjectId]
+      WHERE sy.subject_id = $1 AND sy.prompt_version = $2
+      GROUP BY sy.id, sy.kind, sy.model, sy.body, sy.window_start, sy.window_end, sy.created_at
+      ORDER BY sy.kind, sy.window_start, sy.window_end, sy.created_at DESC`,
+    [subjectId, PROMPT_VERSION]
   );
   return rows.map((r) => ({
-    key: `${r.kind}|${r.ws}`,
+    key: `${r.kind}|${r.ws}|${r.we}`,
     body: r.body,
     model: r.model,
     citations: r.citations ?? [],

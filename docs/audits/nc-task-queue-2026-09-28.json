@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 99,
-   "closed": 41,
+   "open": 89,
+   "closed": 51,
    "parked": 12,
    "blocked": 18
   },
@@ -43,7 +43,7 @@
    "owner-decision": 50
   },
   "counts_recomputed_on": "2026-10-17",
-  "closed_by_annotation": 41
+  "closed_by_annotation": 51
  },
  "blocking_decisions": [
   {
@@ -391,7 +391,12 @@
      "lines": "116",
      "quote": "with the tail dropped for now and logged"
     }
-   ]
+   ],
+   "progress": {
+    "noted_on": "2026-10-17",
+    "note": "scripts/check-ui.ts 'Search routing' still asserts the v2 behaviour (a prompt routes to the affected security with ?focus=). Those six checks fail today by design and are the closest thing to an executable spec for this item.",
+    "evidence": "scripts/check-ui.ts searchRouting"
+   }
   },
   {
    "id": "NC-009",
@@ -1642,13 +1647,18 @@
      "noted_on": "2026-10-17",
      "note": "RE-RUN 2026-10-17 against a seeded Postgres 16 and `next dev`: 100 passed, 1 failed, then the same harness crash as NC-132. The failure ('GM is offered before a stand-in') is a timing flake in the check, not a regression: all three seeded subjects show at load, and the chip row rotates one chip every 3.8s before the check reads it on a slow dev compile.",
      "evidence": "live run 2026-10-17 npm run check:ui -- --base http://localhost:3100"
+    },
+    {
+     "noted_on": "2026-10-17",
+     "note": "FULL RUN 2026-10-17 now that NC-132 is fixed: 141/148. The chip-rotation flake is fixed (the row is read under reduced motion). Seven failures remain, all stale since the 2026-08-08 scope refocus and previously hidden by the crash: six prompt-search routing checks ('how did X affect Ford stock' with a focus) and 'the search path still resolves it to a subject page' for an unknown ticker. Owner decision: rewrite to today's behaviour or keep as the Prompt search v2 spec.",
+     "evidence": "live run 2026-10-17 npm run check:ui -- --base http://localhost:3100"
     }
    ]
   },
   {
    "id": "NC-047",
    "title": "Add inline Wikipedia CC BY-SA attribution to the TopicSummary lede",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "terms-review",
@@ -1665,7 +1675,20 @@
      "lines": "209",
      "quote": "`TopicSummary` renders Wikipedia's lede without inline attribution though the Sources panel credits CC BY-SA on the same page"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "TopicSummary shows 'From Wikipedia's “<article>” article, by its contributors · CC BY-SA 4.0' with both links beside the lede, always visible. TopicPageData carries wikipediaTitle. check:ui asserts the credit and both links on a topic page. Owner: confirm the form meets the attribution requirement.",
+    "evidence": [
+     "components/TopicSummary.tsx:28",
+     "lib/page-data.ts",
+     "scripts/check-ui.ts:843",
+     "docs/MASTER-CHECKLIST.md:124-181"
+    ]
+   }
   },
   {
    "id": "NC-048",
@@ -1711,7 +1734,7 @@
   {
    "id": "NC-049",
    "title": "Clear the three pre-existing react-hooks exhaustive-deps lint warnings",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "tooling",
@@ -1733,6 +1756,18 @@
     "noted_on": "2026-09-28",
     "note": "RE-VERIFIED 2026-09-28 with dependencies installed: `npm run lint` shows exactly three warnings — components/GroupView.tsx:45 (two) and components/PriceOverlay.tsx:170. `tsc --noEmit` is clean and all 26 offline check suites pass.",
     "evidence": "live run 2026-09-28"
+   },
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "All three exhaustive-deps warnings fixed rather than suppressed: GroupView's effect depends on a ticker string, PriceOverlay's lists the events its markers read. `next lint` now reports no warnings or errors.",
+    "evidence": [
+     "components/GroupView.tsx:31",
+     "components/PriceOverlay.tsx:156",
+     "docs/MASTER-CHECKLIST.md:124-181"
+    ]
    }
   },
   {
@@ -4194,7 +4229,7 @@
   {
    "id": "NC-131",
    "title": "Internet Archive search hits are typed 'citation' and auto-scored 0.9 'cited by the subject's own article'",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -4227,12 +4262,26 @@
      "lines": "npm run check:feeds",
      "quote": "Internet Archive ✓ 32 articles … e.g. “Russian Korean Japanese PBT Keycap OEM Profile Dye Sub Therm”"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "deterministicScore judges an Internet Archive 'citation' (by source key) on whether its title or creator names the subject: named 0.7, oblique to the model, otherwise 0.2 (below the display threshold); Wikipedia citations keep 0.9 'cited by the subject's own article'. score.ts passes the primary attestation's source. Existing rows heal on re-ingest: upsertEvent re-scores a link whose stored score came from the deterministic tier when the rule now says otherwise, never a model's. Live 2026-10-17: a stored 0.9 keycap listing re-scored to 0.2; a model's 0.8 on another item was left alone; re-scores are not counted as new links.",
+    "evidence": [
+     "lib/enrich/relevance.ts:177",
+     "lib/ingest/store.ts:674",
+     "scripts/score.ts:76",
+     "scripts/check-relevance.ts:59",
+     "docs/MASTER-CHECKLIST.md:124-181"
+    ]
+   }
   },
   {
    "id": "NC-132",
    "title": "check:ui crashes in 'Search when the answer doesn't come', so every section after it never runs",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "tooling",
@@ -4259,7 +4308,20 @@
      "lines": "npm run check:ui",
      "quote": "101 PASS, then: route.abort: Route is already handled!"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "The stalled-route handler's late abort is caught, so check:ui runs to completion: 141/148 on 2026-10-17 against a seeded Postgres 16 and next dev. Two side issues fixed on the way: the chip check now reads the row under reduced motion (it read mid-rotation), and the console check excludes the exact URLs the suite fails on purpose. The seven remaining failures predate this batch and were hidden by the crash: six prompt-search routing checks and one unknown-ticker check, both behaviours switched off on purpose in the 2026-08-08 scope refocus — left as written for an owner decision (rewrite to today's behaviour, or keep as the Prompt search v2 spec).",
+    "evidence": [
+     "scripts/check-ui.ts:614",
+     "scripts/check-ui.ts:548",
+     "scripts/check-ui.ts:925",
+     "docs/MASTER-CHECKLIST.md:124-181"
+    ]
+   }
   },
   {
    "id": "NC-133",
@@ -4485,7 +4547,7 @@
   {
    "id": "NC-140",
    "title": "A LoC newspaper page matched by two subjects shows the other subject's search term, and flips on each refresh",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -4510,12 +4572,24 @@
      "lines": "575",
      "quote": "SET title = EXCLUDED.title,"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "LoC event titles no longer carry the subject's search term: 'Page in the Detroit Free Press (Michigan)' whichever subject matched the page, so the title and content hash stop flipping between subjects. Existing rows are re-titled on their next ingest (the title is in the content hash). The matched term is not stored per link — event_subjects has no column for it and press relevance does not read the title. check:parsers asserts two subjects get the same title.",
+    "evidence": [
+     "lib/loc.ts:90",
+     "scripts/check-parsers.ts:186",
+     "docs/MASTER-CHECKLIST.md:124-181"
+    ]
+   }
   },
   {
    "id": "NC-141",
    "title": "An event's date, precision and kind are fixed at first insert and never corrected by re-ingest",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -4530,7 +4604,20 @@
      "lines": "572-580",
      "quote": "ON CONFLICT (dedup_key) DO UPDATE\n        SET title = EXCLUDED.title,"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "The event upsert updates occurred_on, date_precision and kind from the source that owns the event's primary attestation only, and treats a date/precision/kind difference from that source as its own reason to update (the content hash is unchanged by a date-only correction, so the hash was deliberately not extended — that would rewrite every row and make two attesting sources take turns). Live 2026-10-17: a citation refined from 1908 (year) to 1908-10-01 (day) was taken; a second source's 1909 date was ignored. check:wiring asserts the SQL shape.",
+    "evidence": [
+     "lib/ingest/store.ts:586",
+     "lib/ingest/store.ts:595",
+     "scripts/check-wiring.ts:195",
+     "docs/MASTER-CHECKLIST.md:124-181"
+    ]
+   }
   },
   {
    "id": "NC-142",
@@ -5140,7 +5227,12 @@
      "lines": "16",
      "quote": "`notFound()` still sets a 404"
     }
-   ]
+   ],
+   "progress": {
+    "noted_on": "2026-10-17",
+    "note": "MEASURED on a production build (next build + next start): with loading.tsx on the route, Next 14.2 returns 200 for /company/ZZZZQ, /topic/<miss> and /industry/<miss> even when notFound() is called from generateMetadata — the loading boundary streams first. Miss pages already carry <meta name=robots content=noindex>. A real 404 needs either dropping loading.tsx on these routes (a first search for a new subject would then wait up to ~8s with no loading screen) or the Next upgrade (NC-166). Left for an owner decision; the generateMetadata attempt was reverted.",
+    "evidence": "live run 2026-10-17 curl -w %{http_code} against next start"
+   }
   },
   {
    "id": "NC-161",
@@ -5281,7 +5373,7 @@
   {
    "id": "NC-165",
    "title": "Stored AI explanations are matched to signals by kind + start date only, so a panel can show an explanation for a different signal",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "data-verification",
@@ -5301,7 +5393,20 @@
      "lines": "137",
      "quote": "explanations.find((e) => e.key === `${s.kind}|${s.windowStart}`)"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "loadExplanations returns one explanation per (kind, window_start, window_end), the newest under the current PROMPT_VERSION, keyed kind|start|end; SignalPanel looks them up by the same three. Headlines are not stored in syntheses, so the whole window is the identity. Live 2026-10-17: of four rows sharing a start date the panel picked the newest one-week explanation, not the two-month window or the prompt-v0 row. check:signals asserts both sides use the same key.",
+    "evidence": [
+     "lib/store/read.ts:362",
+     "components/SignalPanel.tsx:139",
+     "scripts/check-signals.ts:101",
+     "docs/MASTER-CHECKLIST.md:124-181"
+    ]
+   }
   },
   {
    "id": "NC-166",
@@ -5333,7 +5438,7 @@
   {
    "id": "NC-167",
    "title": "Search and compare inputs have no accessible labels; the event tone dot is colour-only",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -5355,12 +5460,28 @@
      "lines": "46-52",
      "quote": "title="
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "aria-labels on the search box, both compare inputs, the compare swap button and the AI input; tone dots are role=img with an aria-label, and a visible key under the event list explains green/red as a keyword estimate wherever dots appear. check:ui 'Readable to everyone' asserts the names, the labels and the key.",
+    "evidence": [
+     "components/SearchBox.tsx:77",
+     "components/ComparePicker.tsx:68",
+     "components/AiPanel.tsx:89",
+     "components/EventList.tsx:49",
+     "components/EventList.tsx:638",
+     "scripts/check-ui.ts:843",
+     "docs/MASTER-CHECKLIST.md:124-181"
+    ]
+   }
   },
   {
    "id": "NC-168",
    "title": "Footer disclaimer, licence credits and AI labels use text-slate-600 (2.66:1 contrast, fails WCAG AA)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "legal",
@@ -5384,12 +5505,26 @@
      "lines": "142-145",
      "quote": "explained by"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Footer disclaimer, Sources-panel licence credits and the AI-explanation line moved from slate-600 to slate-400 (7.87:1 against the page, measured in the browser by check:ui); the AI line now reads 'AI-generated summary — may be wrong' with the model id secondary.",
+    "evidence": [
+     "app/layout.tsx:90",
+     "components/SourcesPanel.tsx",
+     "components/SignalPanel.tsx:148",
+     "scripts/check-ui.ts:843",
+     "docs/MASTER-CHECKLIST.md:124-181"
+    ]
+   }
   },
   {
    "id": "NC-169",
    "title": "Site copy claims the timeline shows what caused price moves ('what actually moved it')",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "terms-review",
@@ -5417,7 +5552,19 @@
      "lines": "5-8",
      "quote": "context, not causation"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Homepage and company meta description reworded to proximity: 'see what was happening around each move'. check:ui asserts the homepage copy.",
+    "evidence": [
+     "app/page.tsx:34",
+     "app/company/[ticker]/page.tsx:27",
+     "docs/MASTER-CHECKLIST.md:124-181"
+    ]
+   }
   },
   {
    "id": "NC-170",
@@ -5491,6 +5638,14 @@
     "basis_key": "Fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, plus live runs against a seeded Postgres 16 and `next dev` (the session proxy refused Wikipedia, the SEC and Yahoo, which the runs used as a real outage).",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:23-75"
+    ]
+   },
+   {
+    "on": "2026-10-17",
+    "what": "Batch 3: 10 items closed (NC-047, NC-049, NC-131, NC-132, NC-140, NC-141, NC-165, NC-167, NC-168, NC-169); measured findings on NC-160 (needs an owner decision) and NC-046; a note on NC-008.",
+    "basis_key": "Fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `next lint` (now no warnings), `next build`, a full `check:ui` run (141/148, the 7 failures stale since 2026-08-08), and live database runs for NC-131, NC-141 and NC-165.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:124-181"
     ]
    }
   ]

@@ -135,14 +135,17 @@ export default function SignalPanel({ industrySlug, tickers, onExtraEvents }: Pr
               )}
             </span>
             {(() => {
-              const ex = explanations.find((e) => e.key === `${s.kind}|${s.windowStart}`);
+              // the whole window, not just its start: a threshold change moves the end (NC-165)
+              const ex = explanations.find((e) => e.key === `${s.kind}|${s.windowStart}|${s.windowEnd}`);
               if (!ex) return null;
               return (
                 <div className="mt-1.5 w-full rounded-md border border-fuchsia-900/40 bg-fuchsia-500/[0.04] p-2.5">
                   <p className="text-xs leading-relaxed text-slate-300">{ex.body}</p>
-                  <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-600">
-                    <span className="uppercase tracking-wider">
-                      explained by {ex.model} · cites
+                  {/* Said plainly and legibly: a reader should not need to recognise a model id to
+                      know this paragraph was written by a model, and could be wrong (NC-168). */}
+                  <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400">
+                    <span>
+                      AI-generated summary — may be wrong · <span className="text-slate-500">{ex.model}</span> · cites
                     </span>
                     {ex.citations.map((c, n) =>
                       safeHref(c.url) ? (
@@ -152,12 +155,12 @@ export default function SignalPanel({ industrySlug, tickers, onExtraEvents }: Pr
                           target="_blank"
                           rel="noopener noreferrer"
                           title={c.title}
-                          className="text-slate-500 underline decoration-slate-700 underline-offset-2 hover:text-fuchsia-300"
+                          className="text-slate-300 underline decoration-slate-600 underline-offset-2 hover:text-fuchsia-300"
                         >
                           [{n + 1}]
                         </a>
                       ) : (
-                        <span key={c.id} title={c.title} className="text-slate-600">
+                        <span key={c.id} title={c.title} className="text-slate-400">
                           [{n + 1}]
                         </span>
                       )

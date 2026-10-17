@@ -86,6 +86,7 @@ export default function AiPanel({ events, ranking, onRanking, initialInstruction
               : "Connect your own model to search this timeline with AI"
           }
           disabled={busy}
+          aria-label="Narrow this timeline with AI"
           className="min-w-[14rem] flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-200 placeholder-slate-600 focus:border-fuchsia-600 focus:outline-none disabled:opacity-60"
         />
 

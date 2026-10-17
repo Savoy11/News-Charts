@@ -1,4 +1,4 @@
-import { EventType } from "../types";
+import { EventType, SourceKey } from "../types";
 import { WEAK_TOKENS } from "../newsQuality";
 
 export const MODEL = "claude-haiku-4-5-20251001";
@@ -10,6 +10,10 @@ export interface ScorableRow {
   eventId: number;
   kind: EventType;
   title: string;
+  /** where the row came from — two sources can share a kind and not share its provenance */
+  sourceKey?: SourceKey | null;
+  /** the source's own label for the row ("Internet Archive · Ford Motor Company") */
+  byline?: string | null;
 }
 
 export interface SubjectContext {
@@ -162,8 +166,23 @@ export function deterministicScore(
      * structural. Below a filing because the *cited work* can be broader than the subject — it
      * supports a sentence about them rather than being about them.
      */
-    case "citation":
+    case "citation": {
+      /**
+       * Only a Wikipedia reference-list citation is "cited by the subject's own article". Internet
+       * Archive items are typed citation too, but they come from a keyword search with nothing but
+       * a date floor — "Russian Korean Japanese PBT Keycap…" reached Alibaba's page at 0.9 and
+       * never met the model (NC-131). They are judged like a headline: on whether the title or
+       * the archive's creator names the subject.
+       */
+      if (row.sourceKey === "internet_archive") {
+        const creator = (row.byline ?? "").replace(/^Internet Archive(?:\s*·\s*)?/, "");
+        const named = mentions(`${row.title} ${creator}`, aliases);
+        if (named === "named") return { score: 0.7, reason: "archive item that names the subject" };
+        if (named === "oblique") return null;
+        return { score: 0.2, reason: "archive item that never names the subject" };
+      }
       return { score: 0.9, reason: "cited by the subject's own article" };
+    }
 
     // Phrase search over digitised pages, and OCR is noisy enough to keep this off 1.
     case "press":

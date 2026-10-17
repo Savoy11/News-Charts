@@ -121,6 +121,64 @@ against a seeded Postgres 16 and `next dev` started with `TZ=Asia/Tokyo`.
   seeded subjects show at load, and the chip row rotates one every 3.8s before the check reads it
   on a slow dev compile. Recorded on NC-046.
 
+## NC ledger — batch 3: honest data, real names, readable pages (2026-10-17)
+
+Ten items: event data that can correct itself and tells sources apart, explanations attached to
+the right signal, pages a screen reader and a phone in sunlight can both read, and a browser
+suite that runs to the end. `npm run check` passes and `next lint` now reports **no warnings at
+all** (NC-049). `next build` compiles. `check:ui` runs to completion for the first time: 141/148,
+with the seven failures noted under NC-132 below.
+
+- [x] **NC-131 — Internet Archive hits are no longer "cited by the subject's own article".**
+      `deterministicScore` judges an archive "citation" on whether its title or creator names
+      the subject: named 0.7, oblique to the model, otherwise 0.2 (hidden). Wikipedia citations
+      keep 0.9. `npm run score` passes the source too, and a re-ingest re-scores links the old
+      rule scored, never a model's. Live: a stored 0.9 keycap listing re-scored to 0.2 while a
+      model's 0.8 stayed. Cases in `check:relevance`.
+- [x] **NC-140 — a Library of Congress page's title no longer carries one subject's search
+      term.** It reads "Page in the Detroit Free Press (Michigan)" whichever subject matched it,
+      so it stops flipping (and re-billing explanations) between refreshes. Existing rows are
+      re-titled on their next ingest. Case in `check:parsers`.
+- [x] **NC-141 — a source can correct when and what an event is.** Date, precision and kind
+      update from the source that owns the event's primary attestation, and only from it. A
+      date-only correction updates even though the content hash is unchanged. Live: a citation
+      refined from 1908 (year) to 1908-10-01 (day) was taken; a second source's 1909 date was
+      ignored.
+- [x] **NC-165 — a stored AI explanation is shown only for its own window.** Explanations are
+      matched on kind, start and end (headlines are not stored); the newest run under the
+      current prompt wins. Live: of four rows sharing a start date, the panel picked the newest
+      one-week explanation and ignored both the two-month window and the old prompt version.
+- [x] **NC-167 — inputs and tone dots have names.** The search box, both compare inputs, the
+      compare swap button and the AI input carry `aria-label`s. Tone dots are announced, and a
+      visible key under the list says what green and red mean.
+- [x] **NC-168 — legally important text is readable.** The footer disclaimer, Sources-panel
+      licence credits and AI-explanation line moved from slate-600 (2.66:1) to slate-400 (7.87:1
+      measured in the browser). Stored explanations now say "AI-generated summary — may be
+      wrong" rather than only naming a model id.
+- [x] **NC-169 — proximity, not causation.** The homepage and company meta descriptions say
+      "see what was happening around each move" instead of "what (actually) moved it".
+- [x] **NC-047 — the Wikipedia lede is credited beside it** on topic pages: the article link,
+      "by its contributors", and CC BY-SA 4.0. Shown even while the teaser is collapsed.
+      Owner: confirm this form meets the attribution requirement.
+- [x] **NC-049 — the three exhaustive-deps lint warnings are fixed**, not suppressed: GroupView
+      depends on a ticker string, and PriceOverlay lists the events its markers read.
+- [x] **NC-132 — `check:ui` runs to the end.** The stalled-request route's late abort is caught.
+      Two side issues surfaced once it ran: the chip check read the row mid-rotation (NC-046), so
+      it now reads under reduced motion; and the console check counted the suite's own faked 500,
+      so deliberately failed URLs are excluded by exact match. New "Readable to everyone" section
+      covers NC-047/167/168/169.
+      - ⚠ **Seven checks fail, and they were already stale before this batch, hidden by the
+        crash.** Six in "Search routing" expect prompt search to route "how did X affect Ford
+        stock" with a `focus`. One in "Chrome and routes" expects an unknown ticker to resolve as
+        a subject. Both behaviours were switched off on purpose in the 2026-08-08 scope refocus.
+        They are left as written for the owner to decide: rewrite them to today's behaviour, or
+        keep them as the Prompt search v2 spec (NC-008).
+- ⚠ **NC-160 (soft 404s) is not in this batch.** Measured on a production build: with
+  `loading.tsx` on a route, Next 14.2 sends 200 even when `notFound()` runs in
+  `generateMetadata`. Miss pages already carry `noindex`. A real 404 needs dropping the loading
+  skeleton on company/topic/industry pages — a visitor's first search for a new subject would
+  then wait up to about 8s with no loading screen — or the Next upgrade (NC-166). Owner decision.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on

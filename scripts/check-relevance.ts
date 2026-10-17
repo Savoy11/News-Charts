@@ -56,6 +56,22 @@ check("but well above the display threshold", (score("citation")?.score ?? 0) > 
 check("press scores below a citation", (score("press")?.score ?? 0) < (score("citation")?.score ?? 0));
 check("press still displays", (score("press")?.score ?? 0) > RELEVANCE_THRESHOLD, String(score("press")?.score));
 
+console.log("\nAn Internet Archive hit is not a citation by the subject's own article");
+{
+  // NC-131: archive items are typed "citation" but come from a keyword search with a date floor,
+  // and every one scored 0.9 "cited by the subject's own article" — junk included.
+  const ia = (title: string, byline = "Internet Archive") =>
+    deterministicScore({ eventId: 1, kind: "citation", title, sourceKey: "internet_archive", byline }, FORD, aliases, false);
+  const keycap = ia("Russian Korean Japanese PBT Keycap OEM Profile Dye Sub Therm");
+  check("a marketplace listing that never names the subject is hidden", (keycap?.score ?? 1) < RELEVANCE_THRESHOLD, `${keycap?.score} ${keycap?.reason}`);
+  check("  …and is not described as cited by the subject's article", keycap?.reason !== "cited by the subject's own article");
+  const report = ia("Ford Motor Company annual report 1955");
+  check("an item titled with the subject still displays", (report?.score ?? 0) > RELEVANCE_THRESHOLD, `${report?.score}`);
+  const byCreator = ia("Annual report 1955", "Internet Archive · Ford Motor Company");
+  check("an item the subject created displays, though its title doesn't name it", (byCreator?.score ?? 0) > RELEVANCE_THRESHOLD, `${byCreator?.score}`);
+  check("a Wikipedia citation keeps its provenance score", deterministicScore({ eventId: 1, kind: "citation", title: "x", sourceKey: "wikipedia" }, FORD, aliases, false)?.score === 0.9);
+}
+
 console.log("\nNews, where the headline is the evidence");
 check("a headline naming the subject scores high", (score("news", "Ford recalls SUVs")?.score ?? 0) >= 0.9);
 check("the ticker counts as naming it", (score("news", "F beats estimates")?.score ?? 0) >= 0.9);

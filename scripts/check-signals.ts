@@ -97,6 +97,14 @@ console.log("\nThe queries behind the signals");
   const div = fn("priceDivergence");
   check("price divergence measures every member over the same dates", /BETWEEN w\.d0 AND w\.d1/.test(div) && /common AS/.test(div));
   check("  …and leaves out a member listed well inside the window", /comparable AS/.test(div));
+
+  // NC-165: stored explanations were keyed on kind + start, the panel looked them up the same way,
+  // and a threshold change moves the end — so a different window's write-up could be attached.
+  const read = readFileSync("lib/store/read.ts", "utf8");
+  const panel = readFileSync("components/SignalPanel.tsx", "utf8");
+  check("stored explanations are keyed on kind, start and end", /key: `\$\{r\.kind\}\|\$\{r\.ws\}\|\$\{r\.we\}`/.test(read));
+  check("  …and the panel looks them up by the same three", /e\.key === `\$\{s\.kind\}\|\$\{s\.windowStart\}\|\$\{s\.windowEnd\}`/.test(panel));
+  check("  …newest per window, current prompt only", /DISTINCT ON \(sy\.kind, sy\.window_start, sy\.window_end\)/.test(read) && /sy\.prompt_version = \$2/.test(read));
 }
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);

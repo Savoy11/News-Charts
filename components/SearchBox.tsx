@@ -72,6 +72,9 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
             if (error) setError(null);
           }}
           placeholder="AAPL, SPY, VTSAX, or a company or fund name…"
+          // A placeholder is not a label: it vanishes on the first keystroke and many screen
+          // readers do not announce it (NC-167).
+          aria-label="Search for a stock, ETF, fund or company name"
           // min-w-0: an input carries an intrinsic default width, and flex-1 alone won't shrink
           // below it, so the form pushed a few pixels past a narrow phone viewport.
           className={`min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:outline-none ${

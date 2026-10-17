@@ -22,7 +22,15 @@ config({ path: ".env.local" });
  * eleven requests: `selectStaleSources` asks only what has actually aged out.
  */
 import { getPool, closePool, configProblem } from "../lib/db";
-import { COMPANY_SOURCES, TOPIC_SOURCES, ingestCompany, ingestOnchain, ingestTopic, type IngestOutcome } from "./ingest";
+import {
+  COMPANY_SOURCES,
+  TOPIC_SOURCES,
+  ingestCompany,
+  ingestIndustry,
+  ingestOnchain,
+  ingestTopic,
+  type IngestOutcome,
+} from "./ingest";
 import { ensureSources } from "../lib/ingest/store";
 import { markFailed, markFulfilled, pendingRequests, purgeStaleRequests } from "../lib/ingest/queue";
 import { subjectLockKey } from "../lib/ingest/firstPass";
@@ -64,6 +72,9 @@ async function refreshSubject(
   }
   try {
     if (s.kind === "company" && s.ticker) return await ingestCompany(client, s.ticker);
+    // Sector rules: only the CLI's --industry ran this, so a sector's regulation rows were never
+    // refreshed after the first ingest — picked up by the 2026-10-17 opportunity scout.
+    if (s.kind === "industry") return await ingestIndustry(client, s.slug);
     if (ONCHAIN_SLUGS.has(s.slug)) return await ingestOnchain(client, s.slug);
     return await ingestTopic(client, s.slug);
   } finally {
@@ -90,7 +101,7 @@ async function main(): Promise<void> {
 
   const { rows } = await pool.query<Row>(
     `SELECT slug, kind, ticker FROM subjects
-      WHERE kind IN ('company','topic')
+      WHERE kind IN ('company','topic','industry')
       -- oldest first, so a run that cannot finish still makes progress on the stalest
       ORDER BY refreshed_at NULLS FIRST
       LIMIT $1`,

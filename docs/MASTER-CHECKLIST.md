@@ -445,8 +445,9 @@ the site off the 24 advisories `npm audit` rated critical. `npm run check` passe
 ## NC ledger — batch 9: live assertions, a ticker index that says its age (2026-10-17)
 
 Tooling and upkeep, chosen because every outside source is refused from the cloud session, so
-work that needs a live answer cannot be verified here. `npm run check` passes with a new suite
-(`check:live-harness`), and `npm run lint` reports nothing.
+work that needs a live answer cannot be verified here. Two items closed (NC-037, NC-038), two
+advanced (NC-051, NC-033), and a scheduled-refresh gap the scout found is fixed. `npm run check`
+passes with a new suite (`check:live-harness`), and `npm run lint` reports nothing.
 
 - [x] **NC-038 — a live-assertion suite: `npm run check:live`.** It stays out of the offline
       chain. Each keyless source the site may publish from is asked a question with a known
@@ -482,6 +483,27 @@ work that needs a live answer cannot be verified here. `npm run check` passes wi
         until a rebuild. Re-syncing means `npm run sync:tickers` from a host that reaches
         sec.gov, then commit and redeploy (now in OWNER-ACTIONS). sec.gov answered a cloud
         session on 2026-09-28 but refuses this one.
+- [x] **NC-037 — the first uncapped opportunity-scout pass.** It wrote
+      [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md): 10
+      proposals, ranked securities-first. Each is tied to one of the allowed anchors with
+      file:line evidence and says whether a cloud session could build it. The top four, all `P1`:
+      1. 8-K item labels, and 20-F/40-F typed as earnings;
+      2. the material forms EDGAR already sends;
+      3. "did you mean" from the committed index;
+      4. Federal Register documents naming the company.
+
+      Spot-checked against the code. **Next: the owner marks each proposal, then a session runs
+      the scout in FILE mode.** It noticed three things in passing:
+      - **Fixed here:** `npm run refresh` selected only companies and topics, so a sector's
+        Federal Register rules never refreshed after the CLI's first `--industry` run. Industries
+        now refresh on the schedule, inside the source's one-day window. A sector is stamped as
+        worked either way, because otherwise refresh's oldest-first order would keep it at the
+        head of the queue. `check:wiring` pins all three (it fails on the old code). A run against
+        Postgres showed skip-when-fresh, fetch-when-due and the stamp.
+      - **Fixed here:** the checklist's on-screen disambiguation `P1` was still open, though NC-039
+        shipped it in batch 7. The box is now ticked.
+      - **Not fixed:** the company page's JSON-LD calls every security a `Corporation`, funds
+        included. It's a structured-data nicety, left for a fund-page pass.
 - [ ] **NC-033 — wording corrected; the live check is still owed.** The release-gate line said
       "URL dedup". The match is a normalised headline plus its day (`storyKey`), which is what
       lets two outlets' copies of one story collapse.
@@ -1060,15 +1082,19 @@ section of `docs/PRELIMINARY-FINDINGS-2026-07-30.md`.
 Installed on PR #14. What has run so far is **not a baseline** — items carried over from the
 closed PR #15, whose findings are otherwise all shipped.
 
-- [ ] `P1` **Re-run both agents properly.** ✅ **Auditor half done 2026-08-12** — the first
+- [x] `P1` **Re-run both agents properly.** ✅ **Auditor half done 2026-08-12** — the first
       uncapped pass, reported in [`docs/audits/2026-08-12-audit.md`](audits/2026-08-12-audit.md):
-      **10 findings, 4 of them `P1`**, filed as their own items below. Still open: the
-      **`opportunity-scout`** half, whose 2026-07-30 run was capped at 2 proposals by instruction.
+      **10 findings, 4 of them `P1`**, filed as their own items below. ✅ **Scout half done
+      2026-10-17** (NC-037, batch 9): the first uncapped `opportunity-scout` pass, in
+      [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md) — 10
+      proposals, 4 `P1`, waiting for the owner's APPROVED / REJECTED / DEFERRED marks before a
+      FILE pass. The 2026-07-30 run had been capped at 2 by instruction.
       - What the pass confirms about method, not just about defects: **every finding came from
         pointing an adapter at a live service.** The offline suites (25, all passing) could not
         have produced one of them. Findings 1, 2 and 7 share a shape — a live source whose real
         behaviour nothing asserts against — and the auditor's closing note proposes a live
         assertion suite distinct from the offline ones. That proposal belongs to the scout.
+        ↳ Built directly instead, as NC-038 in batch 9: `npm run check:live`.
 
 ### Findings from the 2026-08-12 audit
 
@@ -1331,7 +1357,10 @@ the items under it can be argued for or against without one.
         already uses**, reused rather than restated so the two cannot drift.
       - **Verified against a real Postgres**: cluster stood up in this container, db/020 applied,
         and the whole matrix above run against seeded subjects including two Fords and two Apples.
-- [ ] `P1` **Disambiguate on screen when the top two candidates are close.** The other half of the
+- [x] ~~`P1` **Disambiguate on screen when the top two candidates are close.**~~ — shipped
+      2026-10-17 as NC-039 (batch 7): within 0.03 and not an exact ticker, the search box lists
+      the choices and the search log records an `ambiguous` rung. Box ticked 2026-10-17, when the
+      opportunity scout found it still open. The other half of the
       item above, and the half that needs a UI. `"Ford"` scores **1.00 against both Ford Motor
       Company and Ford Motor Credit Company**; `"APPLE"` likewise ties Apple Inc. with Apple
       Hospitality REIT. Today the shorter name wins silently, which is a better rule than rung

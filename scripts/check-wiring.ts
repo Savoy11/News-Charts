@@ -157,6 +157,14 @@ const refreshSrc = read("scripts/refresh.ts");
 check("refresh ingests companies", /ingestCompany\(/.test(refreshSrc));
 check("refresh ingests topics", /ingestTopic\(/.test(refreshSrc));
 check("refresh ingests on-chain subjects", /ingestOnchain\(/.test(refreshSrc));
+// Industries were ingested by the CLI alone, so sector rules never refreshed on the schedule.
+check("refresh ingests industries",
+  /ingestIndustry\(/.test(refreshSrc) && /kind IN \('company','topic','industry'\)/.test(refreshSrc));
+check("…inside the Federal Register's window, as every other path is",
+  /dueSources\(client, subjectId, \["federal_register"\]\)/.test(ingestSrcFor("ingestIndustry")));
+// refresh.ts works oldest-first by refreshed_at; an unstamped sector would head the queue for ever.
+check("…and stamps the sector as worked on both branches",
+  (ingestSrcFor("ingestIndustry").match(/touchSubject\(client, subjectId\)/g) ?? []).length >= 2);
 // Crypto assets are topics by design, so nothing about the row they are stored in says "send
 // this one down the chain path" — the routing has to be explicit or they silently take the
 // Wikipedia path, which fetches none of their history and resolves "dai" against an encyclopedia.

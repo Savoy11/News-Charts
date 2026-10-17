@@ -92,7 +92,8 @@ it, so a bad suggestion is auditable after the fact.
 
 ```
 npm run explain -- --industry sic-3674
-npm run explain -- --industry sic-3674 --dry-run
+npm run explain -- --industry sic-3674 --dry-run   # prices the run, calls nothing
+npm run explain -- --max-usd 3                     # raise the $1 cap
 ```
 
 The first step that uses a model, and it is handed an anomaly **plus its evidence** — never a
@@ -101,14 +102,18 @@ signal cites, and forbids outside knowledge, speculation about causes or prices,
 commentary. "These events don't explain it" is an accepted answer.
 
 **An explanation with no citations is discarded, not stored.** The model returns indices into
-the event list it was shown; anything it invents is dropped, and if nothing valid remains the
-generation is thrown away. `synthesis_citations` uses `ON DELETE RESTRICT`, so a cited event
+the event list it was shown; a reply citing an event it was never shown, carrying a link, or
+running far past the length asked for is thrown away whole. The events go into the prompt as a
+delimited block of JSON lines the model is told never to obey — titles come from news feeds and
+source labels from Wikipedia, which anyone can edit. `synthesis_citations` uses `ON DELETE RESTRICT`, so a cited event
 cannot later vanish beneath a published claim. Explanations render under their signal with each
 citation as a link to the original document.
 
 Cost is bounded structurally: the cache key is the signal plus a hash of the exact event
-content shown, so an unchanged anomaly is never paid for twice, and the run reports its own
-token usage and dollar cost. Requires `ANTHROPIC_API_KEY` in `.env.local`; without it the
+content shown, so an unchanged anomaly is never paid for twice — kept *or* refused, since a
+discarded reply was billed the same and is recorded in `synthesis_refusals`. The whole run is
+priced before the first call, stops above the same $1 cap as `npm run score` (`--max-usd` to
+raise it), and reports its own token usage and dollar cost, refusals included. Requires `ANTHROPIC_API_KEY` in `.env.local`; without it the
 command reports what it *would* explain and generates nothing. Signals and timelines are
 unaffected — explanations are purely additive.
 
@@ -129,6 +134,12 @@ Preferences live in `localStorage` and are **sent as parameters** to `/api/signa
 `/api/group`; the server stays stateless. Nothing a visitor configures is stored server-side,
 so one person's thresholds or feeds can never change what anyone else sees, and nothing they
 type can write into the shared corpus. Same rule as the BYO-model key.
+
+Federal Register terms are the one preference that reaches another service, so they are bounded:
+at most five per request, normalised so "Export Controls" and "export controls" are one cached
+fetch, and `middleware.ts` refuses a client's sixteenth *new* term in an hour (repeats come from
+the cache). The same middleware caps every client at 120 requests a minute to `/api/*` and
+`/search`. It is in memory and per server instance, so a host or WAF limit is the durable version.
 
 `computeSignals` takes a scope of subject ids rather than an industry id, which is what lets a
 SIC industry and an ad-hoc ticker set run through identical code.
@@ -374,7 +385,7 @@ GDELT keyword-matching, which put TSMC and Netflix headlines on the Apple page (
 ```
 npm run score                      # every subject
 npm run score -- --subject aapl    # one
-npm run score -- --dry-run         # no writes
+npm run score -- --dry-run         # no writes, and no model call
 npm run score -- --strict-headline # see below
 ```
 
@@ -440,7 +451,10 @@ A small `stored` badge on each page carries the date that copy was last refreshe
 comparison the code no longer performed.
 
 **A subject we do not have is not fetched under a visitor.** The page says so, and the request is
-recorded in `subject_requests` for the next scheduled run to work most-wanted first. A database
+recorded in `subject_requests` for the next scheduled run to work most-wanted first. Reloading a
+page does not raise its rank: a repeat ask counts at most once an hour, nothing is recorded while
+the first pass has the slug in failure back-off, and requests nobody repeats for 90 days are
+deleted by the scheduled refresh. A database
 outage is now an outage: it logs a warning and the page renders its "not indexed yet" notice
 rather than silently becoming eleven live fetches per view.
 

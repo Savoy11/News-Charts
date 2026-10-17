@@ -180,34 +180,45 @@ async function feed(sourceKey: SourceKey, work: Promise<FetchResult>): Promise<O
  * Exploits are additive rather than exclusive: Ethereum has milestones *and* incidents, and a
  * protocol has governance *and* incidents. One feed failing costs only its own events.
  */
-export async function fetchOnchainFor(slug: string): Promise<OnchainFeed[]> {
+export async function fetchOnchainFor(slug: string, only?: ReadonlySet<SourceKey>): Promise<OnchainFeed[]> {
+  // Each feed as [key, start] so a feed that is not due is never started — ingest passes the
+  // keys still outside their refresh window and not backing off (NC-147).
+  const feeds: [SourceKey, () => Promise<FetchResult>][] = [];
   const exploitTarget = EXPLOIT_TARGETS.find((t) => t.slug === slug);
-  const withExploits = (own: Promise<OnchainFeed>): Promise<OnchainFeed[]> =>
-    Promise.all(exploitTarget ? [own, feed("defillama", fetchExploits(exploitTarget))] : [own]);
+  const exploits = () => {
+    if (exploitTarget) feeds.push(["defillama", () => fetchExploits(exploitTarget)]);
+  };
 
   switch (slug) {
     case "btc":
-      return Promise.all([feed("onchain", fetchBitcoinHalvings())]);
+      feeds.push(["onchain", () => fetchBitcoinHalvings()]);
+      break;
     case "eth":
       // Milestones fall back to their published dates when the explorer is down, so an empty
       // list here really is empty rather than an outage in disguise.
-      return withExploits(
-        feed(
-          "onchain",
-          getEthereumMilestones().then((events): FetchResult => ({ events, outcome: events.length ? "ok" : "empty" }))
-        )
-      );
+      feeds.push([
+        "onchain",
+        () => getEthereumMilestones().then((events): FetchResult => ({ events, outcome: events.length ? "ok" : "empty" })),
+      ]);
+      exploits();
+      break;
     default: {
       // USDT first: it is a stablecoin subject but not a transfer-readable one, so it must not
       // fall through to the table that would ask the wrong question and find nothing.
-      if (slug === "usdt") return withExploits(feed("onchain", fetchUsdtSupplyMoves()));
       const token = STABLECOIN_SUBJECTS[slug];
-      if (token) return Promise.all([feed("onchain", fetchStablecoinSupplyMoves(token))]);
       const space = GOVERNANCE_SPACES.find((g) => g.slug === slug);
-      if (space) return withExploits(feed("snapshot", fetchGovernance(space)));
-      return [];
+      if (slug === "usdt") {
+        feeds.push(["onchain", () => fetchUsdtSupplyMoves()]);
+        exploits();
+      } else if (token) {
+        feeds.push(["onchain", () => fetchStablecoinSupplyMoves(token)]);
+      } else if (space) {
+        feeds.push(["snapshot", () => fetchGovernance(space)]);
+        exploits();
+      }
     }
   }
+  return Promise.all(feeds.filter(([key]) => !only || only.has(key)).map(([key, start]) => feed(key, start())));
 }
 
 /** Every on-chain event for a subject, merged — for callers that only want the events. */

@@ -142,13 +142,20 @@ async function main(): Promise<void> {
             count(*) FILTER (WHERE input_tokens IS NULL) AS unknown
        FROM syntheses GROUP BY model`
   );
+  // Refused explanations were billed too; they were missing from every total until NC-149.
+  const { rows: refused } = await pool.query<{ model: string; n: string; intok: string; outtok: string }>(
+    `SELECT model, count(*) AS n,
+            coalesce(sum(input_tokens),0)  AS intok,
+            coalesce(sum(output_tokens),0) AS outtok
+       FROM synthesis_refusals GROUP BY model`
+  );
   const { rows: scored } = await pool.query<{ scored_by: string; n: string }>(
     `SELECT scored_by, count(*) AS n FROM event_subjects
       WHERE scored_by IS NOT NULL GROUP BY scored_by ORDER BY n DESC`
   );
 
   let total = 0;
-  for (const [label, rows] of [["enrichments", enrich], ["syntheses", synth]] as const) {
+  for (const [label, rows] of [["enrichments", enrich], ["syntheses", synth], ["refused", refused]] as const) {
     for (const r of rows) {
       const usd = costUsd(r.model, Number(r.intok), Number(r.outtok));
       total += usd;
@@ -168,7 +175,7 @@ async function main(): Promise<void> {
     const free = r.scored_by === "deterministic";
     console.log(`  ${"relevance".padEnd(13)} ${r.scored_by.padEnd(28)} ${String(r.n).padStart(4)} rows  ${free ? "free" : "paid"}`);
   }
-  if (!enrich.length && !synth.length && !scored.length) console.log("  nothing enriched yet.");
+  if (!enrich.length && !synth.length && !refused.length && !scored.length) console.log("  nothing enriched yet.");
   else console.log(`\n  total recorded model spend: ${formatUsd(total)}`);
 
   await closePool();

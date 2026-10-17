@@ -453,9 +453,46 @@ export function articleAnswersSlug(slug: string, title: string): boolean {
   if (!asked.length) return true; // nothing distinctive was asked — no grounds to refuse
   const got = identityTokens(title);
   if (!got.length) return false;
-  return asked.some((a) =>
-    got.some((g) => (a.length >= 4 || g.length >= 4 ? g.startsWith(a) || a.startsWith(g) : a === g))
-  );
+  return asked.some((a) => got.some((g) => tokensMatch(a, g)));
+}
+
+/** Stem-tolerant token equality — see `articleAnswersSlug`. */
+function tokensMatch(a: string, g: string): boolean {
+  return a.length >= 4 || g.length >= 4 ? g.startsWith(a) || a.startsWith(g) : a === g;
+}
+
+/**
+ * May these words become a page — a new topic, or a new address for one we hold?
+ *
+ * Stricter than `articleAnswersSlug`, which asks only whether the article is about the thing:
+ * here **every** strong token of the slug must be in the title (NC-157). With one,
+ * `tesla files for bankruptcy` matched *"History of Tesla, Inc."* on "tesla" alone and minted a
+ * permanent public topic under the visitor's wording. Words a title does not contain are words
+ * nobody but the visitor chose, and they are the ones that must never become a page. Qualifiers
+ * like "earnings", "stock" or "affected" are weak tokens and drop out first, so `nvidia earnings`
+ * still reaches *"Nvidia"*. Used where something is minted; a subject already held keeps the
+ * looser test on refresh, so tightening this can never stop one refreshing.
+ */
+export function articleCoversSlug(slug: string, title: string): boolean {
+  const asked = identityTokens(slug);
+  if (!asked.length) return true; // the same conservative default as articleAnswersSlug
+  const got = identityTokens(title);
+  if (!got.length) return false;
+  return asked.every((a) => got.some((g) => tokensMatch(a, g)));
+}
+
+/**
+ * The slug a newly minted topic is stored under: the article's own name, never the words typed
+ * (NC-157). "History of the bicycle" → "bicycle", "Electric car" → "electric car". The typed
+ * phrasing is kept as an alias, and the page redirects it here.
+ */
+export function topicSlugFromTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/^(history|timeline) of (the )?/, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**

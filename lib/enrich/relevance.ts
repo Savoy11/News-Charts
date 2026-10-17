@@ -1,5 +1,6 @@
 import { EventType, SourceKey } from "../types";
 import { WEAK_TOKENS } from "../newsQuality";
+import { dataBlock, untrustedNotice } from "./untrusted";
 
 export const MODEL = "claude-haiku-4-5-20251001";
 
@@ -235,6 +236,61 @@ export interface ModelScoreResult {
   scores: Map<number, number>;
   inputTokens: number;
   outputTokens: number;
+  /** items in the reply that failed validation and were dropped */
+  rejected: number;
+  /** set when the batch looks steered rather than judged — its scores must not be written */
+  suspect: string | null;
+}
+
+/**
+ * A batch this size or larger, scored 0 across the board, is held back instead of written.
+ *
+ * Only headlines the free tier could not settle reach the model, and a zero hides an event below
+ * the relevance floor. One planted headline telling the model to zero its neighbours is the cheap
+ * way to hide a batch, and its signature is exactly this. Leaving the rows unscored fails safe:
+ * an unscored row still displays (NC-153).
+ */
+export const ALL_ZERO_MIN = 3;
+
+/**
+ * Validate a scoring reply against the batch it answers.
+ *
+ * Model output that read untrusted headlines is a trust boundary: an item must name a headline
+ * that was sent (an integer 1..n, once) and carry a score in [0, 1]. Anything else is dropped and
+ * counted rather than clamped into range — a "-5" or a "2" is not a strong opinion, it is a reply
+ * that is not following the instructions.
+ */
+export function parseScoreReply(
+  text: string,
+  batchSize: number
+): { scores: Map<number, number>; rejected: number } {
+  const scores = new Map<number, number>();
+  const match = text.match(/\[[\s\S]*\]/);
+  if (!match) return { scores, rejected: 0 };
+  let items: unknown;
+  try {
+    items = JSON.parse(match[0]);
+  } catch {
+    return { scores, rejected: 0 }; // unparseable — leave the batch unscored rather than guess
+  }
+  if (!Array.isArray(items)) return { scores, rejected: 0 };
+
+  let rejected = 0;
+  for (const item of items) {
+    const { i, s } = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+    const ok =
+      Number.isInteger(i) &&
+      (i as number) >= 1 &&
+      (i as number) <= batchSize &&
+      !scores.has(i as number) &&
+      typeof s === "number" &&
+      Number.isFinite(s) &&
+      s >= 0 &&
+      s <= 1;
+    if (ok) scores.set(i as number, s as number);
+    else rejected++;
+  }
+  return { scores, rejected };
 }
 
 /**
@@ -251,7 +307,8 @@ export async function scoreBatchWithModel(
       ? `${subject.displayName} (a publicly traded company, ticker ${subject.ticker ?? "?"})`
       : `${subject.displayName} (a general topic)`;
 
-  const list = rows.map((r, i) => `${i + 1}. ${r.title.replace(/\s+/g, " ").slice(0, 200)}`).join("\n");
+  // headlines are fetched text, so they go in as data the model is told not to obey (NC-153)
+  const items = rows.map((r, i) => ({ i: i + 1, headline: r.title.replace(/\s+/g, " ").slice(0, 200) }));
 
   const prompt =
     `Subject: ${subjectLine}\n\n` +
@@ -260,7 +317,9 @@ export async function scoreBatchWithModel(
     `0.6 = subject is a significant secondary subject\n` +
     `0.3 = passing mention only\n` +
     `0.0 = not about the subject (e.g. a general market roundup, or about a different company)\n\n` +
-    `${list}\n\n` +
+    `The headlines, one JSON object per line, numbered by "i":\n` +
+    `${untrustedNotice("headlines")}\n\n` +
+    `${dataBlock("headlines", items)}\n\n` +
     `Reply with ONLY a JSON array, one object per headline: [{"i":1,"s":0.9}, ...]`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -284,23 +343,16 @@ export async function scoreBatchWithModel(
 
   const json = (await res.json()) as AnthropicResponse;
   const text = json.content?.find((c) => c.type === "text")?.text ?? "";
-  const match = text.match(/\[[\s\S]*\]/);
+  const reply = parseScoreReply(text, rows.length);
   const scores = new Map<number, number>();
-  if (match) {
-    try {
-      for (const item of JSON.parse(match[0]) as { i: number; s: number }[]) {
-        const row = rows[item.i - 1];
-        if (row && typeof item.s === "number") {
-          scores.set(row.eventId, Math.min(1, Math.max(0, item.s)));
-        }
-      }
-    } catch {
-      /* unparseable reply — leave the batch unscored rather than guessing */
-    }
-  }
+  for (const [i, s] of reply.scores) scores.set(rows[i - 1].eventId, s);
+
+  const allZero = scores.size >= ALL_ZERO_MIN && [...scores.values()].every((s) => s === 0);
   return {
     scores,
     inputTokens: json.usage?.input_tokens ?? 0,
     outputTokens: json.usage?.output_tokens ?? 0,
+    rejected: reply.rejected,
+    suspect: allZero ? `all ${scores.size} headlines scored 0` : null,
   };
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import TopicExplorer from "@/components/TopicExplorer";
 import AdSlot from "@/components/AdSlot";
@@ -49,6 +49,9 @@ export default async function TopicPage({ params }: { params: { slug: string } }
     noStore();
     notFound();
   }
+  // Another phrasing of a held topic is served from the same rows; send the visitor to the one
+  // address the topic is stored under, so a typed wording never stands as a page (NC-157).
+  if (data.slug !== topic.trim().toLowerCase()) redirect(subjectPath("topic", data.slug));
 
   return (
     <div>

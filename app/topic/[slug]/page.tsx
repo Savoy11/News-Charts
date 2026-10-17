@@ -14,8 +14,9 @@ import { absolute, breadcrumbLd, clampDescription, SITE_NAME, subjectPath } from
 
 const latestDate = (events: { date: string }[]) => events.reduce((m, e) => (e.date > m ? e.date : m), "");
 
-// short enough that a page rendered while a source was throttled self-heals quickly
-export const revalidate = 900;
+// No route-level revalidate: it never applied (the route is dynamic — a miss runs a first-visit
+// gather and must never be cached), and it read as if pages were cached. The held-page reads in
+// lib/page-data.ts carry the 15-minute cache instead (NC-159).
 
 export async function generateMetadata({
   params,

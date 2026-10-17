@@ -1,6 +1,6 @@
 import type { PoolClient } from "pg";
 import { contentHash, dedupKey } from "./keys";
-import { FetchOutcome, SourceKey, TimelineEvent } from "../types";
+import { FetchOutcome, PricePoint, SourceKey, TimelineEvent } from "../types";
 import { deterministicScore, type SubjectContext } from "../enrich/relevance";
 import { safeHref } from "../safeUrl";
 
@@ -193,6 +193,18 @@ export const SOURCES: {
     // is the fact of the incident, not DefiLlama's analysis of it.
     commercialOk: true,
     notes: "incidents are ATTRIBUTED, not confirmed on-chain by us — the 'exploit' kind exists to keep that distinction visible",
+  },
+  {
+    id: 19,
+    key: "yahoo_prices",
+    name: "Yahoo Finance chart",
+    license: "unofficial chart API — daily closes and corporate actions",
+    attribution: "Yahoo Finance",
+    // Prices always came from this endpoint; they were logged under the RSS feed's key, or not at
+    // all. A key of its own changes what is recorded, not what is used — the terms question in
+    // the release gate is the same one the RSS row carries.
+    commercialOk: true,
+    notes: "daily closes for the price chart; its own window and outcome log, separate from the RSS headlines (NC-103)",
   },
 ];
 
@@ -565,6 +577,118 @@ export function emptyStats(): UpsertStats {
 }
 
 /**
+ * Write a daily price series for a subject.
+ *
+ * `replace` swaps the whole stored history for this one, in the caller's transaction — what a
+ * split needs, since every close before it is re-adjusted (NC-156). `dropBefore` deletes rows
+ * older than a date instead, when a full history could not be had: a shorter chart is honest,
+ * one that steps at the edge of the old window is not.
+ */
+export async function writePrices(
+  client: PoolClient,
+  subjectId: number,
+  points: PricePoint[],
+  opts: { replace?: boolean; dropBefore?: string } = {}
+): Promise<void> {
+  if (opts.replace) await client.query(`DELETE FROM prices WHERE subject_id = $1`, [subjectId]);
+  else if (opts.dropBefore) {
+    await client.query(`DELETE FROM prices WHERE subject_id = $1 AND on_date < $2`, [subjectId, opts.dropBefore]);
+  }
+  if (!points.length) return;
+  await client.query(
+    `INSERT INTO prices (subject_id, on_date, close, volume)
+     SELECT $1, d, c, v FROM unnest($2::date[], $3::numeric[], $4::bigint[]) AS t(d, c, v)
+     ON CONFLICT (subject_id, on_date) DO UPDATE
+        SET close = EXCLUDED.close,
+            volume = COALESCE(EXCLUDED.volume, prices.volume)`,
+    [subjectId, points.map((p) => p.time), points.map((p) => p.value), points.map((p) => p.volume ?? null)]
+  );
+}
+
+/**
+ * Whether a fresh 10-year series would leave older stored closes on a stale adjustment.
+ *
+ * Yahoo adjusts for splits, but only inside what it returns. A split this series reports and the
+ * database has not seen re-adjusts every earlier close — and rows that have aged out of the
+ * 10-year window since the subject was first ingested are never overwritten, so the chart would
+ * step at that boundary (NC-156). A first ingest has no older rows, so it never triggers.
+ */
+export async function splitNeedsFullHistory(
+  client: PoolClient,
+  subjectId: number,
+  points: PricePoint[],
+  splits: TimelineEvent[]
+): Promise<boolean> {
+  if (!splits.length || !points.length) return false;
+  const { rows } = await client.query<{ older: boolean; known: string }>(
+    `SELECT EXISTS (SELECT 1 FROM prices WHERE subject_id = $1 AND on_date < $2) AS older,
+            (SELECT count(*) FROM events WHERE dedup_key = ANY($3::bytea[])) AS known`,
+    [subjectId, points[0].time, splits.map((e) => dedupKey(e.dedupBasis ?? e.title))]
+  );
+  return Boolean(rows[0]?.older) && Number(rows[0]?.known ?? 0) < splits.length;
+}
+
+/**
+ * Move an event from one identity to another.
+ *
+ * When nothing holds `toKey` yet, the row simply takes it. When something does, the two rows are
+ * the same happening stored twice, and they merge into the one already under `toKey`.
+ */
+export async function rekeyEvent(
+  client: PoolClient,
+  fromKey: Buffer,
+  toKey: Buffer
+): Promise<"none" | "rekeyed" | "merged"> {
+  if (fromKey.equals(toKey)) return "none";
+  const { rows } = await client.query<{ id: string; current: boolean }>(
+    `SELECT id, dedup_key = $2 AS current FROM events WHERE dedup_key IN ($1, $2)`,
+    [fromKey, toKey]
+  );
+  const old = rows.find((r) => !r.current);
+  if (!old) return "none";
+  const survivor = rows.find((r) => r.current);
+  if (!survivor) {
+    await client.query(`UPDATE events SET dedup_key = $2 WHERE id = $1`, [old.id, toKey]);
+    return "rekeyed";
+  }
+  await mergeEvents(client, Number(survivor.id), Number(old.id));
+  return "merged";
+}
+
+/**
+ * Fold one event into another and delete it.
+ *
+ * Every attestation moves across as a secondary source (the survivor keeps the primary the page
+ * links to); subject links move unless the survivor already has them; a synthesis citing the
+ * duplicate now cites the survivor, which is required before the delete, since citations are
+ * `ON DELETE RESTRICT` exactly so a cited event cannot vanish. Enrichments of the duplicate go
+ * with it — they described the same text.
+ */
+export async function mergeEvents(client: PoolClient, survivorId: number, loserId: number): Promise<void> {
+  await client.query(
+    `UPDATE event_attestations a SET event_id = $1, is_primary = false
+      WHERE a.event_id = $2
+        AND NOT EXISTS (SELECT 1 FROM event_attestations x
+                         WHERE x.event_id = $1 AND x.source_id = a.source_id AND x.external_id = a.external_id)`,
+    [survivorId, loserId]
+  );
+  await client.query(
+    `INSERT INTO event_subjects (event_id, subject_id, relevance, scored_by, scored_at)
+     SELECT $1, subject_id, relevance, scored_by, scored_at FROM event_subjects WHERE event_id = $2
+     ON CONFLICT (event_id, subject_id) DO NOTHING`,
+    [survivorId, loserId]
+  );
+  await client.query(
+    `UPDATE synthesis_citations c SET event_id = $1
+      WHERE c.event_id = $2
+        AND NOT EXISTS (SELECT 1 FROM synthesis_citations x WHERE x.synthesis_id = c.synthesis_id AND x.event_id = $1)`,
+    [survivorId, loserId]
+  );
+  await client.query(`DELETE FROM synthesis_citations WHERE event_id = $1`, [loserId]);
+  await client.query(`DELETE FROM events WHERE id = $1`, [loserId]);
+}
+
+/**
  * Store one fetched item as: the event (deduplicated by content), the attestation
  * (this particular document), and the link to the subject it concerns.
  */
@@ -580,6 +704,9 @@ export async function upsertEvent(
   const sourceId = SOURCE_ID.get(sourceKey);
 
   const key = dedupKey(ev.dedupBasis ?? ev.title);
+  // A row stored under this source's old identity is moved onto the new one before anything
+  // else reads the key, so the change of basis never duplicates an event (NC-154).
+  if (ev.legacyDedupBasis) await rekeyEvent(client, dedupKey(ev.legacyDedupBasis), key);
   // Only an http(s) link is ever stored: the read side renders it as an href (NC-163).
   const url = safeHref(ev.url) ?? null;
   // image is part of the content fingerprint, so a newly-found thumbnail counts as a change and

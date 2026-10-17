@@ -32,13 +32,14 @@ import {
   PYUSD,
   STABLECOINS,
   USDC,
+  USDT,
   describeCounterparty,
   isAddress,
   labelFor,
 } from "../lib/onchain/addresses";
 import { decodeDecimals, decodeSymbol, verifyEntry } from "../lib/onchain/verify";
 import { keccak256 } from "../lib/onchain/keccak";
-import { ISSUE_TOPIC, REDEEM_TOPIC, amountFromData, getUsdtSupplyMoves } from "../lib/onchain/usdt";
+import { ISSUE_TOPIC, LOGS_PAGE, MAX_LOG_PAGES, REDEEM_TOPIC, amountFromData, fetchUsdtSupplyMoves, getUsdtSupplyMoves } from "../lib/onchain/usdt";
 
 let pass = 0;
 let fail = 0;
@@ -489,6 +490,104 @@ async function usdt(): Promise<void> {
   check("no key means the adapter sits out", (await getUsdtSupplyMoves()).length === 0);
 }
 
+/**
+ * NC-054: both supply feeds were built on Etherscan V1, which now answers every call with
+ * status "0" and a deprecation notice — so every stablecoin and USDT timeline was empty.
+ * NC-056: USDT asked getLogs once from block 0, which returns the OLDEST 1,000 logs.
+ */
+async function etherscanV2(): Promise<void> {
+  console.log("\nEtherscan V2, and USDT read to the newest log");
+  process.env.ETHERSCAN_API_KEY = "test-key";
+  const asked: string[] = [];
+  const settled = Math.floor(Date.now() / 1000) - 48 * 3600;
+  const word = (whole: number) => "0x" + (BigInt(whole) * BigInt(10) ** BigInt(6)).toString(16);
+
+  serve((url) => {
+    asked.push(url);
+    return { status: "0", message: "No records found", result: [] };
+  });
+  await fetchStablecoinSupplyMoves(USDC);
+  await fetchUsdtSupplyMoves();
+  check("every Etherscan call goes to V2 on mainnet", asked.length > 0 && asked.every((u) => u.startsWith("https://api.etherscan.io/v2/api?chainid=1&module=")), asked[0]);
+  check("  …and none to the retired V1 path", !asked.some((u) => u.startsWith("https://api.etherscan.io/api")));
+
+  const deprecated = { status: "0", message: "NOTOK", result: "You are using a deprecated V1 endpoint, switch to Etherscan API V2" };
+  serve(() => deprecated);
+  const usdc = await fetchStablecoinSupplyMoves(USDC);
+  const usdt = await fetchUsdtSupplyMoves();
+  check("a refusal is an error for the transfer reader, not a quiet month", usdc.outcome === "error" && /deprecated/.test(usdc.detail ?? ""), `${usdc.outcome}: ${usdc.detail}`);
+  check("  …and for USDT", usdt.outcome === "error" && /deprecated/.test(usdt.detail ?? ""), `${usdt.outcome}: ${usdt.detail}`);
+  serve(() => ({ status: "0", message: "No records found", result: [] }));
+  check("no logs at all is honestly empty", (await fetchUsdtSupplyMoves()).outcome === "empty");
+
+  // Two pages of Issue logs: the first is full and immaterial, the newest mint is on the second.
+  const fromBlocks: number[] = [];
+  serve((url) => {
+    const from = Number(new URL(url).searchParams.get("fromBlock"));
+    if (url.includes(REDEEM_TOPIC)) return { status: "0", message: "No records found", result: [] };
+    fromBlocks.push(from);
+    if (from === 0) {
+      return {
+        status: "1",
+        result: Array.from({ length: LOGS_PAGE }, (_, i) => ({
+          topics: [ISSUE_TOPIC],
+          data: word(1_000_000),
+          timeStamp: String(settled - 10_000 + i),
+          transactionHash: `0xold${i}`,
+          blockNumber: "0x" + (1000 + Math.floor(i / 2)).toString(16),
+          logIndex: "0x" + (i % 2).toString(16),
+        })),
+      };
+    }
+    return {
+      status: "1",
+      result: [
+        // the last block of page one again — already read, must not be counted twice
+        { topics: [ISSUE_TOPIC], data: word(1_000_000), timeStamp: String(settled - 9_001), transactionHash: `0xold${LOGS_PAGE - 1}`, blockNumber: "0x" + (1000 + Math.floor((LOGS_PAGE - 1) / 2)).toString(16), logIndex: "0x1" },
+        { topics: [ISSUE_TOPIC], data: word(2_000_000_000), timeStamp: String(settled), transactionHash: "0xnewest", blockNumber: "0x" + (5000).toString(16), logIndex: "0x0" },
+      ],
+    };
+  });
+  const paged = await fetchUsdtSupplyMoves();
+  check("the newest mint, past the first 1,000 logs, is read", paged.events.some((e) => e.url?.includes("0xnewest")), paged.events.map((e) => e.title).join(" / "));
+  check("  …by paging forward from the last block seen", fromBlocks.length === 2 && fromBlocks[1] === 1000 + Math.floor((LOGS_PAGE - 1) / 2), JSON.stringify(fromBlocks));
+  check("  …and the read is complete", paged.outcome === "ok", paged.outcome);
+
+  // More material moves than the limit: the newest are the ones kept.
+  serve((url) => ({
+    status: "1",
+    result: url.includes(REDEEM_TOPIC)
+      ? []
+      : Array.from({ length: 50 }, (_, i) => ({
+          topics: [ISSUE_TOPIC],
+          data: word(500_000_000),
+          timeStamp: String(settled - (50 - i) * 86_400),
+          transactionHash: `0xm${i}`,
+          blockNumber: "0x" + (100 + i).toString(16),
+          logIndex: "0x0",
+        })),
+  }));
+  const capped = await fetchUsdtSupplyMoves(USDT.materialUsd, 40);
+  check("the limit keeps the newest moves, not the oldest", capped.events.length === 40 && capped.events.some((e) => e.url?.includes("0xm49")) && !capped.events.some((e) => e.url?.includes("0xm0")), `${capped.events.length}`);
+
+  // A full page that never leaves one block, for ever: the read steps on and finally stops.
+  let calls = 0;
+  serve((url) => {
+    if (url.includes(REDEEM_TOPIC)) return { status: "0", message: "No records found", result: [] };
+    calls++;
+    return {
+      status: "1",
+      result: Array.from({ length: LOGS_PAGE }, (_, i) => ({ topics: [ISSUE_TOPIC], data: word(1), timeStamp: String(settled), transactionHash: `0xs${calls}-${i}`, blockNumber: "0x10", logIndex: "0x" + i.toString(16) })),
+    };
+  });
+  const stuck = await fetchUsdtSupplyMoves();
+  check("an endless history stops at the page cap", calls === MAX_LOG_PAGES, String(calls));
+  check("  …and says the read was incomplete", stuck.outcome === "error" && /stopped early/.test(stuck.detail ?? ""), `${stuck.outcome}: ${stuck.detail}`);
+
+  delete process.env.ETHERSCAN_API_KEY;
+  check("no key is an error, not a quiet month", (await fetchUsdtSupplyMoves()).outcome === "error");
+}
+
 async function sectors(): Promise<void> {
   console.log("\nCrypto sectors");
   // Reuses kind='industry' rather than adding a fourth subject kind: a distinction that is ours
@@ -574,6 +673,7 @@ async function main(): Promise<void> {
     await stablecoins();
     await addressBook();
     await usdt();
+    await etherscanV2();
     await sectors();
     await outcomes();
   } finally {

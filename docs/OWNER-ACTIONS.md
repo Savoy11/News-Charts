@@ -60,6 +60,8 @@ quiet news week. Until it runs, the corpus only changes when you run it by hand.
 npm run refresh -- --dry-run   # what it would touch, spending nothing
 npm run refresh                # for real
 npm run cost-report            # what it actually spent, against each free tier
+npm run rekey:gdelt -- --dry-run  # once after the NC-154 deploy: GDELT rows to re-key or merge
+npm run rekey:gdelt               # …then for real (one transaction, safe to repeat)
 ```
 
 ## 3. The licensing decisions (the real blocker)

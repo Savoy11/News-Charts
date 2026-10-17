@@ -1,7 +1,7 @@
 import { Pool, type PoolClient } from "pg";
 import { getTopicTimeline, articleCoversSlug, topicSlugFromTitle } from "../wiki";
 import { resolveCompany, getFilings, commonName } from "../sec";
-import { getDailyPrices } from "../prices";
+import { fetchDailyPrices } from "../prices";
 import { aliasesFor } from "../enrich/relevance";
 import { withTimeout, timedOut } from "../timeout";
 import { PG_TYPES } from "../db";
@@ -12,6 +12,7 @@ import {
   upsertTopicSubject,
   logFetch,
   emptyStats,
+  writePrices,
   type ScoringContext,
 } from "./store";
 
@@ -43,7 +44,7 @@ import {
  */
 
 /** Sources the first pass may reach. Asserted keyless/unmetered by scripts/check-ondemand.ts. */
-export const FIRST_PASS_SOURCES = ["wikipedia", "sec_edgar", "yahoo_finance"] as const;
+export const FIRST_PASS_SOURCES = ["wikipedia", "sec_edgar", "yahoo_finance", "yahoo_prices"] as const;
 
 /** How long a visitor's first search may wait on the gather before we fall back to the notice. */
 export const FIRST_PASS_BUDGET_MS = 8_000;
@@ -222,8 +223,9 @@ export async function firstPassTopic(rawSlug: string): Promise<FirstPassOutcome>
 }
 
 /**
- * First pass for a company: EDGAR filings and the Yahoo chart — the two sources whose
- * conjunction flips the company page's render gate. Industry linking, the official domain,
+ * First pass for a company: EDGAR filings and the Yahoo chart. Filings are what flip the
+ * company page's render gate; the chart is asked in the same breath and stored when it answers,
+ * but a page no longer waits on it (NC-103). Industry linking, the official domain,
  * the Wikipedia backstory and every news feed stay on the scheduler: they enrich a page
  * that already renders, so they are not worth a visitor's seconds.
  */
@@ -257,17 +259,20 @@ export async function firstPassCompany(rawQuery: string): Promise<FirstPassOutco
 
     try {
       const gathered = await withTimeout(
-        Promise.all([getFilings(resolved), getDailyPrices(resolved.ticker)]),
+        Promise.all([getFilings(resolved), fetchDailyPrices(resolved.ticker)]),
         FIRST_PASS_BUDGET_MS
       );
       if (timedOut(gathered)) return "unresolvable";
       const [filings, daily] = gathered;
-      if (!filings.length || !daily.points.length) {
-        // A real company with no reachable filings or prices cannot clear the render gate;
-        // count it toward the backoff so a delisted shell doesn't retry every cooldown.
+      if (!filings.length) {
+        // A real company with no reachable filings cannot clear the render gate; count it toward
+        // the backoff so a shell with nothing filed doesn't retry every cooldown.
         await recordFailure(client, ledgerSlug);
         return "unresolvable";
       }
+      // Prices are not part of that test any more. They required both, so a Yahoo refusal at the
+      // moment of a first visit counted toward marking a real company dead (NC-103); the page
+      // now renders its filings and says the chart is missing, and the scheduler fills it in.
 
       await ensureSources(client);
       const subjectId = await upsertSubject(client, {
@@ -289,20 +294,17 @@ export async function firstPassCompany(rawQuery: string): Promise<FirstPassOutco
         for (const ev of filings) await upsertEvent(client, ev, subjectId, stats, scoring);
         for (const ev of daily.actions) await upsertEvent(client, ev, subjectId, stats, scoring);
         await logFetch(client, "sec_edgar", subjectId, resolved.ticker, "ok", filings.length, 200);
-        await client.query(
-          `INSERT INTO prices (subject_id, on_date, close, volume)
-           SELECT $1, d, c, v FROM unnest($2::date[], $3::numeric[], $4::bigint[]) AS t(d, c, v)
-           ON CONFLICT (subject_id, on_date) DO UPDATE
-              SET close = EXCLUDED.close,
-                  volume = COALESCE(EXCLUDED.volume, prices.volume)`,
-          [
-            subjectId,
-            daily.points.map((p) => p.time),
-            daily.points.map((p) => p.value),
-            daily.points.map((p) => p.volume ?? null),
-          ]
+        await writePrices(client, subjectId, daily.points);
+        await logFetch(
+          client,
+          "yahoo_prices",
+          subjectId,
+          resolved.ticker,
+          daily.outcome,
+          daily.points.length,
+          daily.httpStatus,
+          daily.detail
         );
-        await logFetch(client, "yahoo_finance", subjectId, resolved.ticker, "ok", daily.actions.length, 200);
         await client.query("COMMIT");
       } catch (err) {
         await client.query("ROLLBACK");

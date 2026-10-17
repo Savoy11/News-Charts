@@ -34,6 +34,7 @@
     "check:feeds": "tsx scripts/check-feeds.ts",
     "check:ai": "tsx scripts/check-ai.ts",
     "check:abuse": "tsx scripts/check-abuse.ts",
+    "rekey:gdelt": "tsx scripts/rekey-gdelt.ts",
     "verify:addresses": "tsx scripts/verify-addresses.ts",
     "refresh": "tsx scripts/refresh.ts",
     "cost-report": "tsx scripts/cost-report.ts",

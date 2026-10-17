@@ -1,5 +1,6 @@
 import { FetchResult, TimelineEvent } from "./types";
 import { cleanDomain, sourceLabel } from "./sourceLabel";
+import { storyKey } from "./newsQuality";
 
 interface GdeltArticle {
   url: string;
@@ -66,9 +67,10 @@ export async function fetchNews(query: string): Promise<FetchResult> {
         if (!a.title || seenTitles.has(key)) continue;
         seenTitles.add(key);
         const d = a.seendate;
+        const day = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
         events.push({
           id: `news-${events.length}-${d}`,
-          date: `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`,
+          date: day,
           type: "news",
           title: a.title,
           // GDELT reports a bare domain and nothing else; it is a real publisher identity,
@@ -80,7 +82,10 @@ export async function fetchNews(query: string): Promise<FetchResult> {
           // the article URL identifies the document; headline + day identifies the
           // story, so a wire piece syndicated across outlets collapses to one event
           externalId: a.url,
-          dedupBasis: `${a.title}|${d.slice(0, 8)}`,
+          // The same story key every other news feed uses. GDELT kept its own raw-title and
+          // compact-date form, so its copy of a story could never meet Yahoo's (NC-154).
+          dedupBasis: storyKey(a.title, day),
+          legacyDedupBasis: `${a.title}|${d.slice(0, 8)}`,
         });
       }
       return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };

@@ -254,6 +254,66 @@ checks as batch 3, nothing new.
 - Decide whether visitor-chosen Federal Register terms stay. NC-162 suggested server-known term
   lists only; this batch kept the feature and bounded it instead.
 
+## NC ledger — batch 5: correct data, cached pages (2026-10-17)
+
+Seven items: two Ethereum supply feeds brought back from a retired API, one story from two news
+feeds stored once, price history that is logged and survives a split, fund filings that say who
+filed them, and subject pages that stop re-querying the database on every view. `npm run check`
+passes, `next lint` reports no warnings, `next build` compiles, and `check:ui` is 141/148 — the
+same seven stale prompt-search checks as batches 3 and 4.
+
+- [x] **NC-054 — the stablecoin and USDT feeds use Etherscan V2.** Both built their requests on
+      `api.etherscan.io/api`, which answers every call with "deprecated V1 endpoint" (confirmed
+      live 2026-09-28), so every supply timeline was empty. Both now use
+      `api.etherscan.io/v2/api?chainid=1`, and a refusal is logged as an error rather than an empty
+      result (USDT still read it as empty; the transfer reader was fixed in batch 2). Etherscan is
+      blocked from this session, so the owner's keyed run is the live confirmation.
+- [x] **NC-056 — USDT reads to its newest log.** getLogs returns the oldest 1,000 rows from block 0
+      and takes no sort, so recent mints were never read. It now pages forward by block (repeating
+      the last block, skipping rows already read), stops at 20 pages and says so, and keeps the
+      newest material moves. `check:onchain` has a two-page fixture, a stuck-block fixture and the
+      page cap.
+- [x] **NC-154 — GDELT keys a story the way the other feeds do.** Its raw-title, compact-date key
+      could never meet Yahoo's `storyKey`, so the same story was stored twice. New rows use
+      `storyKey`; a row under the old key is re-keyed when GDELT serves it again, or merged into the
+      row already holding that story (attestations become secondary sources, subject links and
+      citations move across). `npm run rekey:gdelt` does the rest in one transaction (`--dry-run`
+      to count first). Live: a GDELT/Yahoo duplicate merged with the explanation's citation carried
+      over, a lone row was re-keyed, a second run found nothing, and a re-served row was re-keyed
+      in place.
+- [x] **NC-103 — prices are logged, windowed and backed off under their own key**
+      (`yahoo_prices`, 12-hour window), instead of riding the RSS feed's window unlogged. A
+      refused chart fetch is an error with Yahoo's reason, not an empty series. A company page now
+      needs events, not prices: one with filings but no closes shows its timeline with "No price
+      data for this security yet", and a first visit no longer counts a Yahoo refusal toward
+      marking a real company dead. Live on a production build: a company with one filing and no
+      prices rendered its timeline and the notice.
+- [x] **NC-156 — a split re-reads the whole price history.** When the chart reports a split the
+      database has not seen, and older closes are stored than the 10-year window covers, the full
+      history (`range=max`) replaces the stored series in one transaction; if that fails, closes
+      older than the window are dropped rather than left on the old adjustment. Live (rolled back):
+      the check fired only for a new split with older rows, and replace/drop wrote what they say.
+- [x] **NC-139 — a fund's filings name who filed them.** EDGAR's submissions list does not say
+      which series a filing covers, so filtering per fund would cost a request per filing. Fund
+      forms are now titled with the registrant ("VANGUARD INDEX FUNDS: Prospectus update (497)"),
+      say they may concern a sibling fund, and score 0.7 ("filed by the fund's registrant") instead
+      of 1.0 — still shown. An operating company's own filings keep its name and 1.0.
+- [x] **NC-159 — subject pages stop re-querying the database on every view.** The routes were
+      dynamic, so `revalidate = 900` did nothing. Sector pages are now cached whole (MISS then HIT,
+      `s-maxage=900`). Company and topic pages cannot be: a miss runs a first-visit gather and must
+      not be cached, and on Next 14 `noStore()` inside a cached route is a 500 ("Page changed from
+      static to dynamic at runtime" — measured). Their held-page reads are cached for 15 minutes
+      instead, and a cached "not held" is re-checked live. Live: a held page kept its cached name
+      after a database rename; a missing company appeared the moment it was added.
+      - Company and topic responses are still `no-store` for the browser and any CDN; the saving
+        is database load, not HTML rendering.
+
+**Owner actions from this batch:**
+- Run `npm run rekey:gdelt` once after deploying (`--dry-run` first shows the counts).
+- Run the stablecoin/USDT ingest with `ETHERSCAN_API_KEY` set, to confirm V2 answers live.
+- Decision: company pages with filings but no prices now render with a notice instead of "not on
+  News Charts yet". Say if the old gate should come back.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on

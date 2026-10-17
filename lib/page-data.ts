@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { loadEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, type IndustryRef } from "./store/read";
 import { PricePoint, TimelineEvent } from "./types";
 import { requestSubject } from "./ingest/queue";
@@ -80,24 +81,8 @@ export interface CompanyPageData {
  */
 async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null> {
   try {
-    const subject = await loadSubject(topic);
-    if (subject) {
-      const [events, prices] = await Promise.all([
-        loadEvents(subject.id),
-        loadPrices(subject.id),
-      ]);
-      if (events.length) {
-        return {
-          title: subject.displayName,
-          slug: subject.slug,
-          summary: subject.summary ?? "",
-          wikipediaTitle: subject.wikipediaTitle ?? null,
-          events,
-          prices,
-          refreshedAt: subject.refreshedAt,
-        };
-      }
-    }
+    const held = await heldTopic(topic);
+    if (held) return held;
     /**
      * Not indexed — run the bounded first pass while this visitor waits, then read again.
      *
@@ -108,21 +93,11 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
      */
     const outcome = await firstPassTopic(topic);
     if (outcome === "ingested" || outcome === "already_attempted") {
-      const subject = await loadSubject(topic);
-      if (subject) {
-        const [events, prices] = await Promise.all([loadEvents(subject.id), loadPrices(subject.id)]);
-        if (events.length) {
-          await requestSubject(topic, "topic"); // queue the deepening pass
-          return {
-            title: subject.displayName,
-            slug: subject.slug,
-            summary: subject.summary ?? "",
-            wikipediaTitle: subject.wikipediaTitle ?? null,
-            events,
-            prices,
-            refreshedAt: subject.refreshedAt,
-          };
-        }
+      // read live, not through the cache: this is the read that finds what was just written
+      const fresh = await heldTopicPage(topic);
+      if (fresh) {
+        await requestSubject(topic, "topic"); // queue the deepening pass
+        return fresh;
       }
     }
     // Record the demand so the scheduled run picks it up, and tell the visitor.
@@ -137,7 +112,69 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
 }
 
 /** Database-only, for the reasons set out above `getTopicPageDataImpl`. */
-/** A company we hold, if it holds enough to render (filings or news, and prices). */
+/** A topic we hold, if it holds anything to render. */
+async function heldTopicPage(topic: string): Promise<TopicPageData | null> {
+  const subject = await loadSubject(topic);
+  if (!subject) return null;
+  const [events, prices] = await Promise.all([loadEvents(subject.id), loadPrices(subject.id)]);
+  if (!events.length) return null;
+  return {
+    title: subject.displayName,
+    slug: subject.slug,
+    summary: subject.summary ?? "",
+    wikipediaTitle: subject.wikipediaTitle ?? null,
+    events,
+    prices,
+    refreshedAt: subject.refreshedAt,
+  };
+}
+
+/**
+ * The held-page reads, cached for the 15 minutes the routes' `revalidate = 900` promised and never
+ * delivered (NC-159).
+ *
+ * With no `generateStaticParams`, the build marked the subject routes dynamic and every view —
+ * bots included — ran the full query set on a four-connection pool. Full-page caching is not the
+ * fix for these two routes: a miss runs a first-visit gather and must never be cached, and under
+ * Next 14 opting one render out of a cached route is a 500 ("Page changed from static to dynamic
+ * at runtime"). So the routes stay dynamic and their reads are cached instead.
+ *
+ * Only a held page is trusted from the cache. A cached "not held" is checked against the database
+ * again straight away, so a subject ingested a minute ago is never hidden behind it, while a held
+ * page costs no queries until its 15 minutes are up. Values cross the cache as JSON, so the one
+ * Date is revived on the way out.
+ */
+const PAGE_CACHE_SECONDS = 900;
+const cachedHeldCompany = unstable_cache((key: string) => heldCompanyPage(key), ["held-company-page", "v1"], {
+  revalidate: PAGE_CACHE_SECONDS,
+  tags: ["subject-pages"],
+});
+const cachedHeldTopic = unstable_cache((key: string) => heldTopicPage(key), ["held-topic-page", "v1"], {
+  revalidate: PAGE_CACHE_SECONDS,
+  tags: ["subject-pages"],
+});
+
+function revive<T extends { refreshedAt: RefreshedAt }>(page: T): T {
+  return { ...page, refreshedAt: page.refreshedAt ? new Date(page.refreshedAt) : null };
+}
+
+async function heldCompany(key: string): Promise<CompanyPageData | null> {
+  const k = key.trim().toLowerCase();
+  const cached = await cachedHeldCompany(k);
+  return cached ? revive(cached) : heldCompanyPage(k);
+}
+
+async function heldTopic(topic: string): Promise<TopicPageData | null> {
+  const k = topic.trim().toLowerCase();
+  const cached = await cachedHeldTopic(k);
+  return cached ? revive(cached) : heldTopicPage(k);
+}
+
+/**
+ * A company we hold, if it holds enough to render: events. Prices used to be required too, so a
+ * company whose chart fetch failed showed "not on News Charts yet" over a timeline we held, and
+ * was queued for a gather it did not need (NC-103). The page says the chart is missing instead.
+ */
 async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
   const subject = await loadSubject(key);
   if (!subject?.ticker) return null;
@@ -146,7 +183,7 @@ async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
     loadPrices(subject.id),
     loadIndustryFor(subject.id),
   ]);
-  if (!events.length || !prices.length) return null;
+  if (!events.length) return null;
   const sector = industry ? await loadSectorEvents(industry.id).catch(() => []) : [];
   return {
     name: subject.displayName,
@@ -161,7 +198,7 @@ async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
 
 async function getCompanyPageDataImpl(query: string): Promise<CompanyPageData | null> {
   try {
-    const held = await heldCompanyPage(query);
+    const held = await heldCompany(query);
     if (held) return held;
 
     /**
@@ -175,7 +212,7 @@ async function getCompanyPageDataImpl(query: string): Promise<CompanyPageData | 
      */
     const ticker = resolveTickerLocally(query) ?? query;
     if (ticker.toLowerCase() !== query.toLowerCase()) {
-      const byTicker = await heldCompanyPage(ticker);
+      const byTicker = await heldCompany(ticker);
       if (byTicker) return byTicker;
     }
 

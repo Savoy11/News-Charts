@@ -11,6 +11,15 @@ import { loadIndustry, loadIndustryEvents } from "@/lib/store/read";
 import { absolute, breadcrumbLd, SITE_NAME } from "@/lib/seo";
 
 export const revalidate = 900;
+/**
+ * Empty on purpose: no sector is built at deploy, each is rendered on its first view and cached
+ * for `revalidate`. Without this the route was dynamic and the setting above did nothing — every
+ * view re-ran the sector's queries (NC-159). A sector page has no first-visit gather, so caching
+ * its "not found" for the same window is harmless: sectors are only ever created by ingest.
+ */
+export async function generateStaticParams() {
+  return [];
+}
 
 const latestDate = (events: { date: string }[]) => events.reduce((m, e) => (e.date > m ? e.date : m), "");
 

@@ -23,6 +23,8 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
 
   // Filings post through the trading day, but not minute to minute.
   sec_edgar: 360,
+  // A daily bar changes once a day. Twice a day catches the close whatever the time zone.
+  yahoo_prices: 720,
 
   // Reference material. A company's encyclopedia article is not an hourly feed.
   wikipedia: 1440,

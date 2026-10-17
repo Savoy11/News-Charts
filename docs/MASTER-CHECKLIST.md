@@ -314,6 +314,47 @@ same seven stale prompt-search checks as batches 3 and 4.
 - Decision: company pages with filings but no prices now render with a notice instead of "not on
   News Charts yet". Say if the old gate should come back.
 
+## NC ledger — batch 6: docs that match the code, a safe restore rehearsal (2026-10-17)
+
+Eight items: a restore rehearsal that no longer locks the live database and now checks what it
+restored, a dated licence judgement on every source, and five documents brought back in line with
+the code. `npm run check` passes and `next lint` reports no warnings. No page code changed, so
+`check:ui` was not re-run (141/148 at batch 5).
+
+- [x] **NC-152 — the restore rehearsal runs against a scratch database and checks what came
+      back.** It used to replay the dump inside a rolled-back transaction against `DATABASE_URL`,
+      holding exclusive locks on every live table for the whole reload. It now needs
+      `RESTORE_TARGET_URL` (or `--target`), refuses the live database under any spelling, restores
+      for real with `--no-owner --single-transaction`, and compares row counts with the
+      `….dump.counts.json` that `npm run db:backup` now writes beside each dump (pruned with it). A
+      failed `pg_dump` no longer leaves an empty dump behind for a rehearsal to pick. Live on
+      Postgres 16: a real dump restored into a scratch database with every count matching; a
+      tampered count reported "RESTORE INCOMPLETE — events: backed up 106, restored 101"; a dump
+      with no counts said it was not compared; the live database was refused.
+- [x] **NC-026 — every `SOURCES` entry carries `reviewedOn`**, taken from the commit that last
+      wrote its licence judgement (2026-07-28 for most; Snapshot and DefiLlama 2026-07-29;
+      `yahoo_prices` 2026-10-17). `check:commercial-mode` requires a valid, non-future date and
+      lists commercial sources unreviewed for 180 days without failing the build.
+- [x] **NC-035 — `licensedKey`'s rationale is corrected.** Its comment and the `COMMERCIAL_MODE`
+      checklist entry said pages call the eight keyed adapters; since the scheduler cut-over
+      nothing on the page or ingest path does. Both now say what the gate guards: future wiring.
+- [x] **NC-073 — `docs/COVERAGE-MAP.md` is current:** the Internet Archive's 1780 company floor
+      and relevance ranking, Ethereum's published-date fallback, ten years of prices (full history
+      after a split), and the eight keyed aggregators marked as not ingested.
+- [x] **NC-097 — `docs/OWNER-ACTIONS.md` is current:** the exploit-units row (fixed 2026-07-31)
+      became the Etherscan V2 confirmation; the cost-report claim now matches what it reports;
+      the Yahoo chart joins the licensing table; ads, affiliates and the missing disclosure and
+      legal pages are noted; and a new section lists the one-time steps and open decisions from
+      the October batches.
+- [x] **NC-104 — README drift fixed:** the finality gate is described as shipped, the data-sources
+      table lists every source on the ingest path (and why the keyed ones are not), and the
+      Structure section says pages read the database with cached held-page reads.
+- [x] **NC-105 — stale markers fixed:** the project-state paragraph no longer pins a migration
+      count (24 today), and both 2026-07-30 proposals are marked SHIPPED with their commits.
+- [x] **NC-046 — `check:ui` runs against a seeded database and server.** Done three times this
+      week, and in full since NC-132: 141/148 on a production build at batches 3, 4 and 5, the
+      seven failures being the stale prompt-search checks already flagged for the owner.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on
@@ -606,7 +647,8 @@ proposals), **DefiLlama exploits ✓** (20 rows, all figures verified — see th
 
 ## Project state & prioritized backlog (opened 2026-07-25 · cleared 2026-07-28)
 
-**Where News Charts stands.** The data layer is real — 14 SQL migrations (`db/001`–`014`) plus a
+**Where News Charts stands.** The data layer is real — SQL migrations in `db/` (14 when this was
+written; 24 as of 2026-10-17, `db/001`–`024` — count the folder rather than this line) plus a
 full script suite (`ingest`, `score`, `signals`, `explain`, `plan`). The feature backlog that
 opened this section is **done**: PRs #1–#7 all merged 2026-07-25, #9 (citation mining, NL
 prompts, pre-IPO story, chart interaction, eight news repositories) merged 2026-07-27, and #11
@@ -696,6 +738,12 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
         key, turns the flag on, and asserts **no request is attempted at all** — then turns it
         off and asserts they do fetch, so a gate that is simply broken-on cannot pass. Offline
         (fetch is mocked), so it needs no keys and no network. 16/16 passing.
+      - **Correction (2026-10-17, NC-035):** the paragraph above describes the site as it was on
+        2026-07-28. Since the scheduler cut-over, `lib/page-data.ts` reads only the database, and
+        none of the eight keyed adapters is called on the page or ingest path — only by the feed
+        diagnostics. `COMMERCIAL_MODE` therefore guards nothing a visitor triggers today; it is
+        the gate any future wiring of those feeds must pass, and the release-gate item to switch
+        it on stands for that reason.
       - `scripts/check-feeds.ts` now reports *why* a feed sat out ("blocked by COMMERCIAL_MODE"
         vs "no KEY set") instead of showing an indistinguishable empty result.
       - ⚠ The flag enforces the `commercialOk` flags; it does not judge them. Yahoo Finance RSS
@@ -724,9 +772,12 @@ non-compliant. The `commercialOk` flags in `SOURCES` are a practical reading of 
       - beta → public launch, or a jurisdiction is opened up
       - a provider emails about terms/pricing changes, or a free tier is restructured
       - a key is upgraded or downgraded between plans
-- [ ] **Record when each source was last verified.** Add a reviewed-on date to each `SOURCES`
+- [x] **Record when each source was last verified.** Add a reviewed-on date to each `SOURCES`
       entry so staleness is visible in the registry itself rather than remembered — an
       un-dated flag is indistinguishable from a flag nobody has looked at in a year.
+      Done 2026-10-17 (NC-026): `reviewedOn` on every entry, set from the commit that last wrote
+      its licence judgement; `check:commercial-mode` requires one and lists commercial sources
+      unreviewed for over 180 days. Re-reading the terms is what moves it.
 - [ ] **Re-read the actual terms, not the notes.** The notes in `SOURCES` are a summary written
       by whoever added the feed; the binding text is the provider's.
 - [ ] **When a source turns non-compliant, the removal path must already work** — every adapter

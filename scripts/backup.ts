@@ -2,9 +2,10 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { getPool, closePool, configProblem } from "../lib/db";
+import { COUNTS_SQL, countsFileFor, countsFromRow, formatCounts, type TableCounts } from "../lib/backupCounts";
 
 /** Keep this many dumps; older ones are pruned after a successful run. */
 const KEEP = 14;
@@ -34,20 +35,16 @@ function findPgDump(): string {
   );
 }
 
-/** Recorded in the log so a dump's contents are verifiable without restoring it. */
-async function snapshotCounts(): Promise<string> {
+/**
+ * Recorded beside the dump so a restore can be checked against it (NC-152), and printed. Null when
+ * the counts could not be read — the dump is still taken, it just has nothing to be compared with.
+ */
+async function snapshotCounts(): Promise<TableCounts | null> {
   try {
-    const { rows } = await getPool().query(`
-      SELECT (SELECT count(*) FROM subjects)           AS subjects,
-             (SELECT count(*) FROM events)             AS events,
-             (SELECT count(*) FROM event_attestations) AS attestations,
-             (SELECT count(*) FROM event_subjects)     AS links,
-             (SELECT count(*) FROM event_subjects WHERE relevance IS NOT NULL) AS scored,
-             (SELECT count(*) FROM prices)             AS prices`);
-    const r = rows[0];
-    return `${r.subjects} subjects, ${r.events} events, ${r.attestations} attestations, ${r.links} links (${r.scored} scored), ${r.prices} prices`;
-  } catch (err) {
-    return `counts unavailable (${(err as Error).message})`;
+    const { rows } = await getPool().query(COUNTS_SQL);
+    return countsFromRow(rows[0]);
+  } catch {
+    return null;
   } finally {
     await closePool();
   }
@@ -88,12 +85,21 @@ async function main() {
     }
   );
 
+  // A failed dump must not stay behind: pg_dump creates the file before it connects, and an empty
+  // file named like the newest backup is exactly what a rehearsal or a 3am restore would pick up.
+  const discard = () => {
+    if (existsSync(outFile)) unlinkSync(outFile);
+  };
   if (result.status !== 0) {
+    discard();
     throw new Error(`pg_dump failed: ${(result.stderr || result.stdout || "").trim().slice(0, 300)}`);
   }
 
   const bytes = statSync(outFile).size;
-  if (bytes === 0) throw new Error("pg_dump produced an empty file");
+  if (bytes === 0) {
+    discard();
+    throw new Error("pg_dump produced an empty file");
+  }
 
   // A dump that cannot be listed cannot be restored — check before pruning old ones.
   const verify = spawnSync(pgDump.replace(/pg_dump(\.exe)?$/i, "pg_restore$1"), ["-l", outFile], {
@@ -103,7 +109,7 @@ async function main() {
 
   console.log(`wrote    ${outFile}`);
   console.log(`size     ${(bytes / 1024).toFixed(0)} KB`);
-  console.log(`captured ${contents}`);
+  console.log(`captured ${contents ? formatCounts(contents) : "counts unavailable"}`);
   console.log(entries >= 0 ? `verified ${entries} restorable objects` : "verified could not run pg_restore -l");
 
   /**
@@ -113,6 +119,8 @@ async function main() {
    */
   if (entries < 0) throw new Error("could not verify the new dump with pg_restore -l — older dumps kept");
   if (entries === 0) throw new Error("dump contains no restorable objects — older dumps kept");
+  // What `npm run db:verify-restore` compares a restored copy against.
+  if (contents) writeFileSync(countsFileFor(outFile), JSON.stringify({ capturedAt: new Date().toISOString(), counts: contents }, null, 2));
 
   /**
    * Retention spans every name this project's dumps have carried.
@@ -132,7 +140,10 @@ async function main() {
     .sort((a, b) => a.stamp.localeCompare(b.stamp))
     .slice(0, -KEEP)
     .map((x) => x.f);
-  for (const f of old) unlinkSync(join(outDir, f));
+  for (const f of old) {
+    unlinkSync(join(outDir, f));
+    if (existsSync(countsFileFor(join(outDir, f)))) unlinkSync(countsFileFor(join(outDir, f)));
+  }
   if (old.length) console.log(`pruned   ${old.length} dump(s), keeping the newest ${KEEP}`);
 
   console.log(`\nrestore with:\n  pg_restore --clean --if-exists -d "$DATABASE_URL" "${outFile}"`);

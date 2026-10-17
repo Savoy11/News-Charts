@@ -2,22 +2,40 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, writeFileSync, mkdtempSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { tmpdir } from "node:os";
+import { Pool } from "pg";
+import { PG_TYPES } from "../lib/db";
+import {
+  COUNTS_SQL,
+  countMismatches,
+  countsFileFor,
+  countsFromRow,
+  formatCounts,
+  sameDatabase,
+  type TableCounts,
+} from "../lib/backupCounts";
 
 /**
- * Actually restores a dump instead of merely inspecting it.
+ * Actually restores a dump instead of merely inspecting it — into a database that is not the live
+ * one, and then checks that everything came back (NC-152).
  *
- * The `chronolens` role deliberately lacks CREATEDB, so a scratch database isn't an
- * option. Instead the dump's own SQL — DROP and CREATE included, exactly what a real
- * recovery runs — is executed inside a transaction that is then rolled back. Nothing
- * persists, and even in the impossible case of a commit the data written would be the
- * dump of this same database.
+ *   RESTORE_TARGET_URL=postgresql://…/news_charts_restore npm run db:verify-restore
+ *   npm run db:verify-restore -- --target postgresql://…/news_charts_restore --file backups/….dump
+ *
+ * This used to replay the dump's SQL against DATABASE_URL inside a transaction it then rolled
+ * back. That held exclusive locks on every production table for the whole reload — the DROPs
+ * come first — and, because the live database already had the roles and extensions, it proved
+ * nothing about restoring to a fresh host. It also never looked at what was restored. Now the
+ * target must be a separate, disposable database (it is overwritten), the restore is real, and
+ * the restored row counts are compared with the counts the backup recorded beside the dump.
+ *
+ * The `chronolens` role deliberately lacks CREATEDB, so the scratch database is created once by
+ * someone who has it (`createdb -U postgres news_charts_restore`), on this server or another.
  *
  * A backup nobody has ever restored is a guess, not a backup.
  */
-function findTool(name: "pg_restore" | "psql"): string {
+function findTool(name: "pg_restore"): string {
   const onPath = spawnSync(name, ["--version"], { encoding: "utf8" });
   if (onPath.status === 0) return name;
   for (const root of ["C:/Program Files/PostgreSQL", "C:/Program Files (x86)/PostgreSQL"]) {
@@ -37,9 +55,22 @@ function arg(name: string): string | undefined {
   return i >= 0 ? process.argv[i + 1] : undefined;
 }
 
-function main() {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not set — see .env.local");
+async function main() {
+  const live = process.env.DATABASE_URL;
+  const target = arg("target") ?? process.env.RESTORE_TARGET_URL;
+  if (!target) {
+    throw new Error(
+      "no restore target — set RESTORE_TARGET_URL (or pass --target) to a separate, disposable " +
+        "database; it will be overwritten. Create one with: createdb -U postgres news_charts_restore"
+    );
+  }
+  // The one thing this must never do is what it used to do.
+  if (live && sameDatabase(live, target)) {
+    throw new Error(
+      "the restore target is the live database (DATABASE_URL). A rehearsal overwrites its target " +
+        "and locks every table while it runs — point RESTORE_TARGET_URL at a scratch database"
+    );
+  }
 
   const dir = arg("dir") ?? "backups";
   const file =
@@ -56,56 +87,60 @@ function main() {
       return join(dir, dumps[dumps.length - 1]);
     })();
 
-  console.log(`rehearsing ${file}`);
+  const t = new URL(target);
+  console.log(`rehearsing ${file}\n     into ${t.hostname}:${t.port || "5432"}/${t.pathname.slice(1)}`);
 
-  // 1. expand the dump to the SQL a real restore would run
-  const work = mkdtempSync(join(tmpdir(), "news-charts-restore-"));
-  const sqlFile = join(work, "restore.sql");
-  const expand = spawnSync(
+  // A real restore, committed, exactly as recovery would run it. `--no-owner` because a fresh host
+  // need not have the roles the dump was taken under; `--single-transaction` so a failure leaves
+  // the scratch database as it was rather than half-loaded.
+  const restore = spawnSync(
     findTool("pg_restore"),
-    ["-f", sqlFile, "--clean", "--if-exists", file],
-    { encoding: "utf8" }
-  );
-  if (expand.status !== 0) {
-    throw new Error(`pg_restore could not read the dump: ${(expand.stderr || "").slice(0, 200)}`);
-  }
-
-  const sql = readFileSync(sqlFile, "utf8");
-  const statements = (sql.match(/^(CREATE|ALTER|DROP|COPY)\s/gim) ?? []).length;
-
-  // 2. run it for real, then throw it away
-  const wrapped = join(work, "wrapped.sql");
-  writeFileSync(wrapped, `BEGIN;\n${sql}\nROLLBACK;\n`, "utf8");
-
-  const db = new URL(url);
-  const run = spawnSync(
-    findTool("psql"),
     [
-      "-w", "-v", "ON_ERROR_STOP=1", "-q",
-      "-h", db.hostname,
-      "-p", db.port || "5432",
-      "-U", db.username,
-      "-d", db.pathname.slice(1),
-      "-f", wrapped,
+      "--clean", "--if-exists", "--no-owner", "--single-transaction", "--exit-on-error",
+      "-h", t.hostname,
+      "-p", t.port || "5432",
+      "-U", decodeURIComponent(t.username),
+      "-d", decodeURIComponent(t.pathname.slice(1)),
+      file,
     ],
-    { encoding: "utf8", env: { ...process.env, PGPASSWORD: decodeURIComponent(db.password) } }
+    { encoding: "utf8", env: { ...process.env, PGPASSWORD: decodeURIComponent(t.password) } }
   );
-
-  const err = (run.stderr || "").trim();
-  if (run.status !== 0) {
+  const err = (restore.stderr || "").trim();
+  if (restore.status !== 0) {
     console.error(`\nRESTORE FAILED — this backup would not have recovered:\n${err.slice(0, 600)}`);
     process.exit(1);
   }
 
-  console.log(`executed ${statements} DDL/COPY statements against the live server`);
-  console.log("transaction rolled back — nothing persisted");
-  if (err) console.log(`notices:\n${err.split("\n").slice(0, 3).join("\n")}`);
-  console.log("\nRESTORE VERIFIED — this dump is recoverable");
+  // Then the part the old rehearsal never did: did everything come back?
+  const pool = new Pool({ connectionString: target, max: 1, types: PG_TYPES });
+  let restored: TableCounts;
+  try {
+    const { rows } = await pool.query(COUNTS_SQL);
+    restored = countsFromRow(rows[0]);
+  } finally {
+    await pool.end();
+  }
+  console.log(`restored ${formatCounts(restored)}`);
+
+  const sidecar = countsFileFor(file);
+  if (!existsSync(sidecar)) {
+    console.log(
+      "\nRESTORED, NOT COMPARED — this dump has no recorded counts (taken before NC-152, or the\n" +
+        "backup could not read them). The restore ran; whether it holds everything is unchecked."
+    );
+    return;
+  }
+  const captured = (JSON.parse(readFileSync(sidecar, "utf8")) as { counts: TableCounts }).counts;
+  const mismatches = countMismatches(captured, restored);
+  if (mismatches.length) {
+    console.error(`\nRESTORE INCOMPLETE — the restored copy differs from what was backed up:\n  ${mismatches.join("\n  ")}`);
+    process.exit(1);
+  }
+  console.log(`backed up ${formatCounts(captured)}`);
+  console.log("\nRESTORE VERIFIED — the dump restores to a separate database, and every count matches");
 }
 
-try {
-  main();
-} catch (err) {
+main().catch((err) => {
   console.error("verify-restore failed:", (err as Error).message);
   process.exit(1);
-}
+});

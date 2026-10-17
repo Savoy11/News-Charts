@@ -5,7 +5,7 @@
 long one. This exists because that file is ~1,100 lines and mixes work that can be done in a
 build container with work only you can do. This is the second kind, in the order I'd do it.
 
-**Last updated:** 2026-08-12
+**Last updated:** 2026-10-17
 
 ---
 
@@ -44,7 +44,7 @@ Each feed reports one of three things, and the distinction is the point: `✓ N 
 
 | What | Why it matters |
 | --- | --- |
-| **Exploit amounts** | DefiLlama reports *millions* of USD. If that assumption is wrong every figure is off by 10⁶ — `$600` where `$600m` belongs. Glaring on screen, invisible offline. |
+| **Stablecoin + USDT supply** | Now on Etherscan's V2 API (the V1 address they used was retired — every supply timeline was empty, NC-054). Needs `ETHERSCAN_API_KEY`; run the ingest once with it and confirm rows arrive. |
 | **BYO feed keys** (NYT/Guardian) | Needs a browser, not `check:feeds`. Settings → News feed keys → paste a real key → load a company page. **A CORS rejection looks identical to a wrong key: no articles, no error.** |
 | **Governance + USDT** | `check:feeds` reports per space and per token, so a zero is visible rather than assumed. A wrong Snapshot space id returns an empty list that reads as a quiet month. |
 
@@ -52,16 +52,18 @@ Each feed reports one of three things, and the distinction is the point: `✓ N 
 
 `npm run refresh`, hourly. Cron, a GitHub Actions workflow, or the host's scheduler.
 
-**Nothing runs this automatically yet.** Pages now read the database and never fetch, so this is
-the only thing that refreshes a chart — and a scheduler that is not running looks exactly like a
+**Nothing runs this automatically yet.** Pages read the database — the only fetch on the page path
+is one bounded gather the first time a subject is visited — so this is the only thing that
+refreshes a chart — and a scheduler that is not running looks exactly like a
 quiet news week. Until it runs, the corpus only changes when you run it by hand.
+
+Before the first run on a new deploy, apply the schema: `npm run db:migrate` (db/021–024 came
+with the October ledger batches).
 
 ```bash
 npm run refresh -- --dry-run   # what it would touch, spending nothing
 npm run refresh                # for real
 npm run cost-report            # what it actually spent, against each free tier
-npm run rekey:gdelt -- --dry-run  # once after the NC-154 deploy: GDELT rows to re-key or merge
-npm run rekey:gdelt               # …then for real (one transaction, safe to repeat)
 ```
 
 ## 3. The licensing decisions (the real blocker)
@@ -75,12 +77,14 @@ upgrade, drop the key at launch, or — for NYT and the Guardian only — ship B
 | **Guardian** | Commercial key, drop, **or BYO-only** |
 | **NYT** | No self-serve commercial tier — negotiate, drop, **or BYO-only** |
 | **Yahoo Finance RSS** | Gray zone. Read the ToS and settle it — it is flagged `commercialOk: true` today, so it keeps fetching on the assumption you have decided |
+| **Yahoo Finance chart** (prices) | The same question for the price chart, which every company page leads with. Its own registry row since October (`yahoo_prices`), also `commercialOk: true` |
 
 Two things worth knowing before you spend:
 
-- **`npm run cost-report` already found EODHD at 100% of its free tier at five subjects.** GNews
-  covers ~25 subjects, Marketaux ~16. Subject capacity is the number that turns a quota into a
-  decision.
+- **`npm run cost-report` prices only what ingest actually calls.** The six aggregators are not
+  on the ingest path, so it reports what wiring each *would* cost rather than a bill. On
+  2026-08-12 that projection put EODHD at its whole free tier by about five subjects, GNews at
+  ~25 and Marketaux at ~16 — subject capacity is the number that turns a quota into a decision.
 - **`docs/COVERAGE-MAP.md`: the aggregators add breadth to the present, never depth to the past.**
   The 1963–2017 stretch is the biggest hole in the corpus, and none of these six fill it.
 
@@ -116,6 +120,30 @@ design sit under **Planned initiatives — free planner & referral board** in th
   links trigger this too, not just ads.**
 - **Beta launch** is blocked on §1 and §3 above, and on nothing else.
 
+- **Before the first ad or affiliate link.** The ad slots are blank placeholders — no ad network
+  script loads today. Before one does: switch on `COMMERCIAL_MODE`, settle §3, and keep visitors'
+  own API keys away from third-party scripts (they sit in the browser's local storage on the same
+  origin an ad script would run in — NC-164). The disclosure page the affiliate item calls for
+  ("How we make money") is not built, and there are no privacy or terms pages yet; settle what
+  is needed with the review in §4.
+
+## 6. One-time steps after deploying the October ledger fixes
+
+```bash
+npm run db:migrate                  # db/021–024
+npm run explain                     # regenerate AI explanations under prompt version 2
+npm run rekey:gdelt -- --dry-run    # GDELT rows to re-key or merge into the same story
+npm run rekey:gdelt
+```
+
+- **Purge junk topics** created before NC-157 under wording their article does not contain, and
+  their aliases.
+- **Add a host or WAF rate limit**, and make sure the host overwrites `X-Forwarded-For` — the
+  in-app limiter counts per server instance and trusts that header (NC-162).
+- **Rehearse a restore** into a scratch database: `createdb -U postgres news_charts_restore`,
+  then `RESTORE_TARGET_URL=… npm run db:verify-restore`. Never against the live database — the
+  rehearsal refuses it now (NC-152).
+
 ---
 
 ## Decisions I can't make for you
@@ -128,6 +156,19 @@ Not blocking launch, but they shape what gets built next:
 - **Affiliate links** — whether at all, and if so the neutrality rule and per-link disclosure.
   Nothing is built; the checklist records the constraints.
 - **Accounts, i18n, geo-access** — each is a product direction rather than a task.
+
+Raised by the October ledger batches, each recorded in the master checklist:
+
+- **Soft 404s (NC-160).** Miss pages answer HTTP 200 because the loading screen starts the
+  response first. A real 404 means dropping the loading skeleton on company, topic and industry
+  pages (a first search then waits up to ~8s on a blank screen) or the Next.js upgrade (NC-166).
+- **Seven stale browser checks.** The prompt-search tests in `check:ui` expect behaviour switched
+  off on 2026-08-08: rewrite them to today's behaviour, or keep them as the Prompt search v2 spec.
+- **Wikipedia attribution (NC-047).** Confirm the credit beside the topic summary meets CC BY-SA.
+- **Visitor Federal Register terms (NC-162).** Kept and rate-limited; the alternative is
+  server-chosen term lists only.
+- **Companies without prices (NC-103).** They now show their timeline with a "no price data"
+  note instead of "not on News Charts yet". Say if the old behaviour should come back.
 
 ## What I can keep building without you
 

@@ -179,6 +179,81 @@ with the seven failures noted under NC-132 below.
   skeleton on company/topic/industry pages — a visitor's first search for a new subject would
   then wait up to about 8s with no loading screen — or the Next upgrade (NC-166). Owner decision.
 
+## NC ledger — batch 4: bounded spend, bounded abuse (2026-10-17)
+
+Eight items: the last owed live test, ingest that stops asking a source that has throttled it,
+AI calls that are priced first and cannot be steered by a headline, and an anonymous visitor who
+can no longer flood the queue, spend the outbound budget, or mint a page under their own words.
+`npm run check` passes with two new suites (`check:ai`, `check:abuse`), `next lint` reports no
+warnings, `next build` compiles, and `check:ui` is 141/148 — the same seven stale prompt-search
+checks as batch 3, nothing new.
+
+- [x] **NC-001 — the advisory lock is proven across two OS processes.** Live against Postgres 16,
+      both directions, with the real code: with another process holding the subject's lock,
+      `firstPassTopic` returned `already_attempted` and made 0 fetches (control run without the
+      lock: 1 fetch); with a real first pass held mid-fetch, a real `npm run refresh` logged
+      "locked by a first-visit gather; skipping this cycle" and left the request pending.
+- [x] **NC-143 — a throttle backs off the whole source, not one subject.** `shouldBackOff` also
+      reads the source's latest row across every subject (new index, db/022), so the next subject
+      in the same run skips a source that just throttled. Live: after a throttled GDELT row for
+      Ford, ingesting "electric cars" printed "gdelt skipped last attempt throttled, within 10
+      min backoff".
+- [x] **NC-147 — on-chain ingest honours refresh windows and back-off.** Each feed (`onchain`,
+      `snapshot`, `defillama`, `yahoo_finance`) is checked with `dueSources` and `shouldBackOff`,
+      and `fetchOnchainFor` runs only the due ones. A crypto price fetch that fails is logged as
+      an error instead of ending the asset's run. Live: a fresh `onchain` row → "fresh inside its
+      1440 min window"; the failed price was logged and the next run backed off it.
+- [x] **NC-149 — AI spend is capped and counted.** `npm run explain` prices the whole run before
+      the first call (max_tokens as the ceiling), stops above the same $1 cap as `score`
+      (`--max-usd` raises it), and keeps a running guard. A refused reply's tokens are counted and
+      the refusal is stored (`synthesis_refusals`, db/023), so the same input is not paid for
+      again; `cost-report` includes it. `score --dry-run` no longer calls the model. Live with a
+      stand-in API: the cap stopped a $0.0042 run at $0.001; a refused reply was recorded with
+      800/60 tokens and the next run made no call.
+- [x] **NC-153 — fetched text goes into prompts as data.** Headlines (relevance) and event titles
+      and source labels (explain) are sent as one JSON object per line inside a tagged block the
+      model is told not to obey; `<`/`>` are escaped so a title cannot close the block. Replies are
+      validated: a score must name a headline that was sent and lie in [0, 1]; an explanation
+      citing an event it was not shown, carrying a link, or far over length is discarded whole. A
+      batch scoring 3+ headlines all 0 is held back unwritten (unscored rows still display).
+      Explanations stay labelled "AI-generated summary — may be wrong". `PROMPT_VERSION` is now 2,
+      and the "already explained" check reads the prompt version, which it ignored before.
+- [x] **NC-145 — the demand queue cannot be flooded by reloads.** A repeat ask counts at most
+      once an hour per slug (db/024 `counted_at`); nothing is recorded or re-opened while the first
+      pass has the target in failure back-off, and the scheduler skips those too; slugs over 80
+      characters are not stored; the refresh deletes unfulfilled requests nobody repeated in 90
+      days. Live: 5 reloads → 1 ask, one more an hour later → 2; a dead company slug was not
+      recorded and a pending one was held back.
+- [x] **NC-162 — rate limits on the API and `/search`.** New `middleware.ts`: 120 requests per
+      client per minute, and at most 15 *new* Federal Register terms per client per hour (repeats
+      come from the fetch cache, so moving a slider costs nothing). Terms are normalised, and the
+      signals route fetches from one fixed date floor and filters afterwards, so a term is one
+      cache entry whatever lookback a visitor picks. Live on a production build: request 121 got
+      429 with `Retry-After`, another client still got 200, and new term 16 got 429.
+      - In memory, per server instance, keyed on the first `X-Forwarded-For` hop — a host or WAF
+        rule is the durable version (owner action below).
+- [x] **NC-157 — a typed URL no longer mints a topic under its own words.** Minting now needs
+      *every* distinctive word of the slug to be in the article's title (`articleCoversSlug`);
+      a held subject still refreshes on the looser test. New topics are stored under the article's
+      name ("History of the bicycle" → `bicycle`), the typed form is kept as an alias, and the page
+      redirects an alias to the stored slug. Topic, company and sector social cards are built from
+      the stored name; a subject we do not hold gets a generic card. Live: `zorblax files for
+      bankruptcy` was refused and not queued; `zorblax motor` minted `zorblax motors` with the
+      alias; two junk `/topic/…` and `/company/…` cards rendered byte-identical generic images.
+      - The alias redirect arrives in-page (meta refresh), as the company redirect does, because
+        of `loading.tsx` — the same cause as NC-160.
+
+**Owner actions from this batch:**
+- Run `npm run db:migrate` — db/022, db/023 and db/024 (plus db/021 if batch 2's is still unapplied).
+- Run `npm run explain` once after deploying: explanations written under prompt version 1 stop
+  showing until they are regenerated under version 2 (a few cents at the current cap).
+- Purge topics minted before NC-157 under wording their article does not contain (for example a
+  "History of Tesla, Inc." subject reached by "tesla files for bankruptcy"), and their aliases.
+- Add a host or WAF rate limit, and make sure the host overwrites `X-Forwarded-For`; the
+  in-app limiter is per instance and trusts that header.
+- Decide whether visitor-chosen Federal Register terms stay. NC-162 suggested server-known term
+  lists only; this batch kept the feature and bounded it instead.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on
@@ -191,9 +266,9 @@ with the seven failures noted under NC-132 below.
         dedicated `max: 2` pool with 250ms connect timeout (third simultaneous miss sheds to
         the notice), advisory lock shared with `scripts/refresh.ts`, 8s deadline, and a DB
         outage produces zero fetches. `npm run check:ondemand` asserts all of it offline.
-      - ⚠ Manual verification still owed: the advisory lock excluding two OS processes
-        (first pass vs `npm run refresh`) needs a two-terminal test against a live database —
-        the offline check cannot prove it and does not claim to.
+      - ✓ Verified 2026-10-17 (NC-001, batch 4): the advisory lock excludes two OS processes
+        in both directions — first pass vs `npm run refresh` — against a live Postgres 16. The
+        offline check still cannot prove it and does not claim to.
       - Observed, bounded, and kept: homepage chip prefetch triggers first passes for
         suggested topics, so the seed pool self-fulfils (≤44 subjects, ledger-deduped).
 - [x] **Head-prefix salvage** (`salvaged_prefix` rung, db/018): "Netflix password sharing"

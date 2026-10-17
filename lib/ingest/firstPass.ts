@@ -1,5 +1,5 @@
 import { Pool, type PoolClient } from "pg";
-import { getTopicTimeline, articleAnswersSlug } from "../wiki";
+import { getTopicTimeline, articleCoversSlug, topicSlugFromTitle } from "../wiki";
 import { resolveCompany, getFilings, commonName } from "../sec";
 import { getDailyPrices } from "../prices";
 import { aliasesFor } from "../enrich/relevance";
@@ -181,7 +181,8 @@ export async function firstPassTopic(rawSlug: string): Promise<FirstPassOutcome>
        * Recorded as a real failure rather than a timeout, because it is one: this slug names
        * nothing we can chart, and the retry ladder should treat it that way.
        */
-      if (!articleAnswersSlug(slug, wiki.title)) {
+      // Every distinctive word, not one: these words become an address (NC-157).
+      if (!articleCoversSlug(slug, wiki.title)) {
         await recordFailure(client, slug);
         return "unresolvable";
       }
@@ -189,6 +190,7 @@ export async function firstPassTopic(rawSlug: string): Promise<FirstPassOutcome>
       await ensureSources(client);
       const subjectId = await upsertTopicSubject(client, {
         searchTerm: slug,
+        canonicalSlug: topicSlugFromTitle(wiki.title), // the article's name, not the URL's words
         wikipediaTitle: wiki.title,
         displayName: wiki.title,
         summary: wiki.summary,

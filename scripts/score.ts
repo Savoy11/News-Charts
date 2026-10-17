@@ -132,6 +132,11 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
     `  model pass: ${estimate.items} events in ${estimate.batches} batch(es), ` +
       `~${formatUsd(estimate.usd)} estimated`
   );
+  // A dry run that still called the model only skipped the write — and paid for the reply (NC-149).
+  if (has("dry-run")) {
+    console.log(`  dry-run: the model was not called`);
+    return;
+  }
   if (!verdict.allowed) {
     console.log(`  stopped — ${verdict.reason}`);
     return;
@@ -144,11 +149,17 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
     const chunk = remaining.slice(i, i + BATCH);
     try {
       const result = await scoreBatchWithModel(chunk, subject, apiKey);
-      const scores = [...result.scores].map(([eventId, score]) => ({ eventId, score }));
-      if (!has("dry-run")) await writeScores(client, subjectId, scores, MODEL);
-      scoredCount += scores.length;
       inTok += result.inputTokens;
       outTok += result.outputTokens;
+      if (result.rejected) console.log(`  batch ${i / BATCH + 1}: ${result.rejected} reply item(s) failed validation`);
+      if (result.suspect) {
+        // left unscored, which still displays: a steered batch must not hide anything (NC-153)
+        console.log(`  ⚠ batch ${i / BATCH + 1} held back — ${result.suspect}; check those headlines by hand`);
+        continue;
+      }
+      const scores = [...result.scores].map(([eventId, score]) => ({ eventId, score }));
+      await writeScores(client, subjectId, scores, MODEL);
+      scoredCount += scores.length;
     } catch (err) {
       console.log(`  batch ${i / BATCH + 1} failed: ${(err as Error).message}`);
     }

@@ -3,6 +3,7 @@ import { getPool } from "@/lib/db";
 import { computeSignals, type SignalOptions } from "@/lib/signals";
 import { fetchRegulations } from "@/lib/federalregister";
 import { loadExplanations } from "@/lib/store/read";
+import { frFetchSince, normaliseTerms } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -67,21 +68,23 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "pass industry or tickers" }, { status: 400 });
     }
 
-    const terms = (q.get("frTerms") ?? "")
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t.length > 2)
-      .slice(0, 5);
+    // Normalised, and fetched from one fixed floor, so a term is one cache entry however it is
+    // typed and whatever lookback the visitor has set (NC-162). Middleware bounds new terms.
+    const terms = normaliseTerms(q.get("frTerms"));
+    const frSince = frFetchSince();
 
     const [signals, extra, explanations] = await Promise.all([
       computeSignals(scopeIds, memberIds, sinceStr, opts),
-      Promise.all(terms.map((t) => fetchRegulations(t, sinceStr))),
+      Promise.all(terms.map((t) => fetchRegulations(t, frSince))),
       // explanations are stored against the industry subject, when one exists
       industrySlug && scopeIds.length ? loadExplanations(scopeIds[0]).catch(() => []) : [],
     ]);
 
     const extraEvents = extra.flatMap((r, i) =>
-      r.events.slice(0, 20).map((e) => ({ ...e, description: `${e.description} · “${terms[i]}”` }))
+      r.events
+        .filter((e) => e.date >= sinceStr)
+        .slice(0, 20)
+        .map((e) => ({ ...e, description: `${e.description} · “${terms[i]}”` }))
     );
 
     return NextResponse.json({

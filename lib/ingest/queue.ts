@@ -22,7 +22,38 @@ export interface PendingRequest {
 }
 
 /**
+ * Longer than any ticker or Wikipedia-sized topic name. Past it, a "request" is a pasted sentence
+ * or a crawler's junk path, and storing it only grows a table nothing purges by itself (NC-145).
+ */
+export const MAX_REQUEST_SLUG = 80;
+
+/** A repeat ask counts again at most this often, however many times the page is loaded. */
+export const COUNT_INTERVAL_MINUTES = 60;
+
+/** Unfulfilled requests nobody has asked for again in this long are deleted by the refresh. */
+export const REQUEST_RETENTION_DAYS = 90;
+
+/** The normalised key, or null when it is not worth storing at all. */
+export function requestKey(slug: string): string | null {
+  const key = slug.trim().toLowerCase();
+  if (!key || key.length > MAX_REQUEST_SLUG) return null;
+  return key;
+}
+
+/** The first-pass ledger row for the same target — companies are kept under `co:` there. */
+export function ledgerSlugFor(kind: "company" | "topic", key: string): string {
+  return kind === "company" ? `co:${key}` : key;
+}
+
+/**
  * Record a request, or count it again if someone already asked.
+ *
+ * Every not-indexed page view called this, and every call added one and re-opened the request.
+ * The scheduler works only the most-asked, so one script reloading a junk URL held those slots
+ * for good and spent free-tier quota on the attacker's choice (NC-145). Now a repeat ask counts
+ * at most once per `COUNT_INTERVAL_MINUTES`, and nothing is recorded or re-opened while the first
+ * pass has the target in failure back-off — the sources already said it names nothing, and the
+ * scheduled run would ask them the same question.
  *
  * Never throws: this runs inside a page or an API route that has already decided what to render,
  * and failing to note demand must not fail the response. A lost request costs one scheduling
@@ -33,19 +64,25 @@ export async function requestSubject(
   kind: "company" | "topic",
   ticker?: string | null
 ): Promise<void> {
-  const key = slug.trim().toLowerCase();
+  const key = requestKey(slug);
   if (!key) return;
   try {
     await getPool().query(
       `INSERT INTO subject_requests (slug, kind, ticker)
-       VALUES ($1,$2,$3)
+       SELECT $1, $2, $3
+        WHERE NOT EXISTS (SELECT 1 FROM first_pass_attempts
+                           WHERE slug = $4 AND dead_until > now())
        ON CONFLICT (slug) DO UPDATE
-          SET requests = subject_requests.requests + 1,
+          SET requests = subject_requests.requests
+                + CASE WHEN subject_requests.counted_at < now() - ($5 || ' minutes')::interval
+                       THEN 1 ELSE 0 END,
+              counted_at = CASE WHEN subject_requests.counted_at < now() - ($5 || ' minutes')::interval
+                                THEN now() ELSE subject_requests.counted_at END,
               last_asked = now(),
               -- a repeat ask re-opens something that failed before; the source may have recovered
               fulfilled_at = NULL,
               ticker = COALESCE(EXCLUDED.ticker, subject_requests.ticker)`,
-      [key, kind, ticker ?? null]
+      [key, kind, ticker ?? null, ledgerSlugFor(kind, key), String(COUNT_INTERVAL_MINUTES)]
     );
   } catch {
     /* demand is worth recording, never worth failing a page for */
@@ -59,10 +96,14 @@ export async function pendingRequests(limit = 25): Promise<PendingRequest[]> {
       // Untried requests before ones that already failed: a request that could not be filled
       // stays pending (it may answer next hour), and without this a popular unresolvable one
       // would take a slot every run ahead of everything that has never been tried (NC-144).
-      `SELECT id, slug, kind, ticker, requests
-         FROM subject_requests
-        WHERE fulfilled_at IS NULL
-        ORDER BY (last_error IS NOT NULL), requests DESC, last_asked DESC
+      // One the first pass has in failure back-off waits that out here too (NC-145).
+      `SELECT r.id, r.slug, r.kind, r.ticker, r.requests
+         FROM subject_requests r
+        WHERE r.fulfilled_at IS NULL
+          AND NOT EXISTS (SELECT 1 FROM first_pass_attempts f
+                           WHERE f.slug = CASE WHEN r.kind = 'company' THEN 'co:' || r.slug ELSE r.slug END
+                             AND f.dead_until > now())
+        ORDER BY (r.last_error IS NOT NULL), r.requests DESC, r.last_asked DESC
         LIMIT $1`,
       [limit]
     );
@@ -76,6 +117,24 @@ export async function pendingRequests(limit = 25): Promise<PendingRequest[]> {
   } catch {
     return [];
   }
+}
+
+/**
+ * Retention for requests that never became anything.
+ *
+ * A fulfilled request is kept — it stands for a subject on the site and shows what brought it
+ * there. An unfulfilled one nobody has repeated in `REQUEST_RETENTION_DAYS` is noise by then, and
+ * one longer than `MAX_REQUEST_SLUG` predates the limit. Run by the scheduled refresh, for the
+ * same reason as the search-log purge: a policy that waits for an operator is not one.
+ */
+export async function purgeStaleRequests(days = REQUEST_RETENTION_DAYS): Promise<number> {
+  const { rowCount } = await getPool().query(
+    `DELETE FROM subject_requests
+      WHERE fulfilled_at IS NULL
+        AND (last_asked < now() - ($1 || ' days')::interval OR char_length(slug) > $2)`,
+    [String(days), MAX_REQUEST_SLUG]
+  );
+  return rowCount ?? 0;
 }
 
 export async function markFulfilled(client: PoolClient | null, id: number): Promise<void> {

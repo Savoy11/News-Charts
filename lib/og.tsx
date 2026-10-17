@@ -1,10 +1,16 @@
 import { ImageResponse } from "next/og";
 
 /**
- * Shared Open Graph card. Rendered from route params only — no database or live fetch — so a
- * social card is always fast and never depends on the data layer being up. Satori (behind
- * next/og) supports only flexbox + inline styles, hence the verbose style objects.
+ * Shared Open Graph card. Satori (behind next/og) supports only flexbox + inline styles, hence
+ * the verbose style objects.
+ *
+ * The subject cards read the stored name rather than the route params (NC-157): a card built
+ * from the URL repeated whatever words anyone typed under the News Charts name, for subjects
+ * that did not exist. A subject we do not hold — or a database that cannot answer — gets
+ * `OG_UNKNOWN`, a degraded card rather than a failed one.
  */
+export const OG_UNKNOWN = "News Charts";
+
 export const OG_SIZE = { width: 1200, height: 630 };
 export const OG_CONTENT_TYPE = "image/png";
 
@@ -84,16 +90,15 @@ export function ogCard(eyebrow: string, title: string) {
 /**
  * The best title an opaque industry slug can honestly give on its own.
  *
- * Company and topic cards build their title from route params, because a ticker and a topic slug
- * are already names. An industry slug is not: ingest writes `sic-3711` (`linkToIndustry`) and
- * `sector-stablecoins` (`linkToSector`), so the same treatment would render "Sic 3711".
+ * An industry slug is not a name: ingest writes `sic-3711` (`linkToIndustry`) and
+ * `sector-stablecoins` (`linkToSector`), so title-casing it would render "Sic 3711".
  *
  * `sic-3711` becomes "SIC 3711" rather than "Sic 3711" — if the number is all we have it should
  * at least read as the classification code it is. A curated sector drops its `sector-` prefix,
  * recovering something close to the display name without inventing the curated wording.
  *
- * This is the fallback. The card prefers the real display name and only lands here when the
- * database cannot be reached.
+ * This is the fallback. The card prefers the real display name and only lands here, for a
+ * `sic-NNNN` code, when the database cannot be reached.
  */
 export function industryTitleFromSlug(slug: string): string {
   const s = slug.trim();

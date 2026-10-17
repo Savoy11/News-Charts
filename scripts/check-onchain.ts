@@ -550,6 +550,18 @@ async function outcomes(): Promise<void> {
   check("a feed that cannot connect is an error, and costs only itself", down.length === 2 && down.every((f) => f.result.outcome === "error"), down.map((f) => f.result.outcome).join(","));
   const btc = await fetchOnchainFor("btc");
   check("btc is one onchain feed", btc.length === 1 && btc[0].sourceKey === "onchain");
+
+  // NC-147: a feed inside its window is not started at all — not fetched and discarded.
+  let asked = 0;
+  globalThis.fetch = (async () => {
+    asked++;
+    return { ok: true, status: 200, json: async () => ({ data: { proposals: [] } }) } as unknown as Response;
+  }) as typeof fetch;
+  const onlyGovernance = await fetchOnchainFor("aave", new Set(["snapshot"]));
+  check("only the due feeds run", onlyGovernance.map((f) => f.sourceKey).join(",") === "snapshot", onlyGovernance.map((f) => f.sourceKey).join(","));
+  check("  …and the one that isn't due makes no request", asked === 1, `${asked} requests`);
+  const nothingDue = await fetchOnchainFor("aave", new Set());
+  check("nothing due, nothing asked", nothingDue.length === 0 && asked === 1);
 }
 
 async function main(): Promise<void> {

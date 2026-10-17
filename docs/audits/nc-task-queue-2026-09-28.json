@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 89,
-   "closed": 51,
+   "open": 81,
+   "closed": 59,
    "parked": 12,
    "blocked": 18
   },
@@ -43,7 +43,7 @@
    "owner-decision": 50
   },
   "counts_recomputed_on": "2026-10-17",
-  "closed_by_annotation": 51
+  "closed_by_annotation": 59
  },
  "blocking_decisions": [
   {
@@ -154,7 +154,7 @@
   {
    "id": "NC-001",
    "title": "Two-process test that the first-visit advisory lock excludes a concurrent `npm run refresh`",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "either",
    "category": "data-verification",
@@ -177,7 +177,18 @@
      "lines": "153",
      "quote": "SELECT pg_try_advisory_lock($1, $2) AS ok"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Proven live 2026-10-17 against Postgres 16 with the real code in separate OS processes, both directions. Another process held the subject's advisory lock (42, hash): firstPassTopic returned already_attempted with 0 fetches, while a control run without the lock made 1. A real first pass held mid-fetch: a real `npm run refresh` logged 'locked by a first-visit gather; skipping this cycle' and left the request pending. The checklist's 'manual verification still owed' note is marked done.",
+    "evidence": [
+     "lib/ingest/firstPass.ts:153",
+     "docs/MASTER-CHECKLIST.md:182-256"
+    ]
+   }
   },
   {
    "id": "NC-002",
@@ -4669,7 +4680,7 @@
   {
    "id": "NC-143",
    "title": "Back-off is per subject, so one run keeps hitting GDELT (and LoC) after they have throttled the whole IP",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "ops-infra",
@@ -4691,7 +4702,20 @@
      "lines": "32-45",
      "quote": "sleep(5500)"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "shouldBackOff reads both the subject's own latest outcome and the source's latest outcome across all subjects, and returns 'throttled' when the source-wide one is throttled, so every later subject in the same run skips the source inside the back-off window (index db/022_fetches_by_source.sql). Live 2026-10-17: after a throttled GDELT row for Ford, ingesting 'electric cars' printed 'gdelt skipped last attempt throttled, within 10 min backoff'. check:wiring asserts the source-wide test.",
+    "evidence": [
+     "lib/ingest/store.ts:348",
+     "db/022_fetches_by_source.sql",
+     "scripts/check-wiring.ts:213",
+     "docs/MASTER-CHECKLIST.md:182-256"
+    ]
+   }
   },
   {
    "id": "NC-144",
@@ -4737,7 +4761,7 @@
   {
    "id": "NC-145",
    "title": "Demand queue can be flooded: every miss view adds one and reopens the request, with no per-visitor dedupe, cooldown or retention",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "security",
@@ -4765,7 +4789,23 @@
      "lines": "139",
      "quote": "pendingRequests(Number(arg(\"requests\") ?? 10))"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "requestSubject counts a repeat ask at most once per COUNT_INTERVAL_MINUTES (60) using a new counted_at column (db/024), and records or re-opens nothing while first_pass_attempts has the target dead (companies under 'co:'). pendingRequests skips dead targets. Slugs over 80 characters are not stored. The scheduled refresh deletes unfulfilled requests not repeated in 90 days. Distinct-requester counting was not added: the per-slug hourly cap meets the 'or' in the next action without storing anything about visitors. Live 2026-10-17: 5 reloads gave 1 ask, one more after the interval gave 2; an over-long slug and a dead company were not stored; a pending dead one was held back; the purge removed the stale and over-long rows. check:abuse covers the SQL and helpers.",
+    "evidence": [
+     "lib/ingest/queue.ts:62",
+     "lib/ingest/queue.ts:93",
+     "lib/ingest/queue.ts:130",
+     "scripts/refresh.ts:182",
+     "db/024_request_counting.sql",
+     "scripts/check-abuse.ts",
+     "docs/MASTER-CHECKLIST.md:182-256"
+    ]
+   }
   },
   {
    "id": "NC-146",
@@ -4809,7 +4849,7 @@
   {
    "id": "NC-147",
    "title": "On-chain ingest ignores refresh windows and back-off — every crypto subject is re-fetched every hour",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "ops-infra",
@@ -4838,6 +4878,20 @@
     "noted_on": "2026-10-17",
     "note": "Batch 2 (NC-142, NC-148) made on-chain ingest log one fetch row per feed under its own source key with its real outcome, so per-feed windows and back-off can now be read from source_fetches the way runSource reads them. The windows and back-off themselves are still not applied.",
     "evidence": "scripts/ingest.ts ingestOnchain"
+   },
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "ingestOnchain checks each feed key (onchain, snapshot, defillama, yahoo_finance) with dueSources and shouldBackOff, and fetchOnchainFor runs only the due feeds — one outside its window is never started. A failing crypto price fetch is logged as an error instead of ending the asset's run. Same effect as routing through runSource. Live 2026-10-17: an ok onchain row gave 'onchain fresh inside its 1440 min window'; the failed price was logged and the next run printed 'yahoo_finance skipped last attempt error'. check:onchain and check:wiring cover it.",
+    "evidence": [
+     "scripts/ingest.ts:648",
+     "scripts/ingest.ts:667",
+     "scripts/check-onchain.ts:561",
+     "scripts/check-wiring.ts:208",
+     "docs/MASTER-CHECKLIST.md:182-256"
+    ]
    }
   },
   {
@@ -4887,7 +4941,7 @@
   {
    "id": "NC-149",
    "title": "AI spend has no cap in explain, refused replies are re-billed uncounted, and score --dry-run still pays",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -4914,7 +4968,24 @@
      "lines": "140",
      "quote": "scoreBatchWithModel"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "scripts/explain.ts gathers every call first, estimates the run with estimateBatched (max_tokens as the per-call ceiling), stops above the $1 DEFAULT_CAP_USD unless --max-usd raises it, and has a running guard. explainSignal always returns the call's tokens; a refused reply is counted and stored in synthesis_refusals (db/023), the 'already attempted' check reads it (and now the prompt version), and cost-report adds it. score --dry-run returns before the model call. Live 2026-10-17 with a stand-in API: --max-usd 0.001 stopped a $0.0042 run; a refused reply was recorded with 800/60 tokens and the next run made no call; dry-run made no call. check:ai covers it.",
+    "evidence": [
+     "scripts/explain.ts:110",
+     "scripts/explain.ts:134",
+     "scripts/explain.ts:158",
+     "lib/enrich/explain.ts:219",
+     "db/023_synthesis_refusals.sql",
+     "scripts/score.ts:136",
+     "scripts/check-ai.ts",
+     "docs/MASTER-CHECKLIST.md:182-256"
+    ]
+   }
   },
   {
    "id": "NC-150",
@@ -5013,7 +5084,7 @@
   {
    "id": "NC-153",
    "title": "Fetched headlines and wiki text go into model prompts undelimited (prompt injection into scores and published explanations)",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "security",
@@ -5033,7 +5104,23 @@
      "lines": "64-88",
      "quote": "source_label"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Both prompts send fetched text as one JSON object per line inside a tagged block (lib/enrich/untrusted.ts) that the model is told not to obey, with < and > escaped so a title cannot close it. parseScoreReply keeps only integer indices within the batch, once, with scores in [0,1]; a batch of 3+ scored all 0 is held back unwritten. parseExplanationReply refuses a reply citing an unlisted event, carrying a link, or far over length. The AI label is unchanged and checked. PROMPT_VERSION is 2, so explanations written from undelimited input stop showing until regenerated (owner action). check:ai covers prompts, validation and the label.",
+    "evidence": [
+     "lib/enrich/untrusted.ts",
+     "lib/enrich/relevance.ts:263",
+     "lib/enrich/relevance.ts:253",
+     "lib/enrich/explain.ts:118",
+     "lib/enrich/explain.ts:12",
+     "scripts/check-ai.ts",
+     "docs/MASTER-CHECKLIST.md:182-256"
+    ]
+   }
   },
   {
    "id": "NC-154",
@@ -5119,7 +5206,7 @@
   {
    "id": "NC-157",
    "title": "Any /topic/<words> URL mints a permanent public topic under the visitor's wording, with a News Charts preview card repeating it",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "security",
@@ -5148,7 +5235,25 @@
      "lines": "9-10",
      "quote": "ogCard(\"Topic timeline\", titleFromSlug(params.slug))"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Minting from a typed slug (first pass and the scheduler's topic ingest) requires every distinctive word of the slug to be in the article title (articleCoversSlug); a held subject still refreshes on the looser articleAnswersSlug. New topics are stored under topicSlugFromTitle (the article's name), the typed form is kept as an alias, and /topic/<alias> redirects to the stored slug. Topic, company and sector OG cards are built from stored names, with a generic card for anything not held. Live 2026-10-17 (real first pass, Wikipedia stubbed, real Postgres): 'zorblax files for bankruptcy' was refused, marked dead and not queued; 'zorblax motor' minted 'zorblax motors' with the alias; junk /topic and /company cards rendered byte-identical generic images on a production build. Purging subjects minted earlier is an owner action. The redirect arrives in-page because of loading.tsx (same cause as NC-160).",
+    "evidence": [
+     "lib/wiki.ts:476",
+     "lib/wiki.ts:489",
+     "lib/ingest/firstPass.ts:193",
+     "scripts/ingest.ts:304",
+     "lib/ingest/store.ts:473",
+     "app/topic/[slug]/page.tsx:54",
+     "app/topic/[slug]/opengraph-image.tsx",
+     "scripts/check-abuse.ts",
+     "docs/MASTER-CHECKLIST.md:182-256"
+    ]
+   }
   },
   {
    "id": "NC-158",
@@ -5273,7 +5378,7 @@
   {
    "id": "NC-162",
    "title": "No rate limiting anywhere: /api/signals lets anonymous requests fan out to 5 live Federal Register calls per request",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "security",
@@ -5295,7 +5400,23 @@
      "lines": "32",
      "quote": "next: { revalidate: 21600 }"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "middleware.ts limits /api/* and /search: 120 requests per client per minute (FixedWindowLimiter) and at most 15 new Federal Register terms per client per hour (DistinctLimiter; repeats are served from the fetch cache). Terms are normalised (case, spacing, length, max 5), and the route fetches from a fixed floor (frFetchSince) and filters to the visitor's window, so one term is one cache entry. Live 2026-10-17 on a production build: request 121 got 429 with Retry-After, another client got 200, new term 16 got 429, a repeat term did not, pages were untouched. Limits are per instance and trust the first X-Forwarded-For hop; a host/WAF rule and the decision on keeping visitor terms are owner actions.",
+    "evidence": [
+     "middleware.ts:32",
+     "lib/rateLimit.ts:23",
+     "lib/rateLimit.ts:70",
+     "lib/rateLimit.ts:134",
+     "app/api/signals/route.ts",
+     "scripts/check-abuse.ts",
+     "docs/MASTER-CHECKLIST.md:182-256"
+    ]
+   }
   },
   {
    "id": "NC-163",
@@ -5646,6 +5767,14 @@
     "basis_key": "Fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `next lint` (now no warnings), `next build`, a full `check:ui` run (141/148, the 7 failures stale since 2026-08-08), and live database runs for NC-131, NC-141 and NC-165.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:124-181"
+    ]
+   },
+   {
+    "on": "2026-10-17",
+    "what": "Batch 4: 8 items closed (NC-001, NC-143, NC-145, NC-147, NC-149, NC-153, NC-157, NC-162).",
+    "basis_key": "Fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (with the new check:ai and check:abuse), `next lint` (no warnings), `next build`, a full `check:ui` run (141/148, the same 7 stale failures as batch 3), and live runs against Postgres 16 and a production build. Model calls used a stand-in API; Wikipedia was stubbed where the session proxy refused it.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:182-256"
     ]
    }
   ]

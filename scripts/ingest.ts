@@ -22,8 +22,8 @@ import {
 import { aliasesFor } from "../lib/enrich/relevance";
 import { selectStaleSources, ttlFor } from "../lib/ingest/refresh";
 import { collapseNearDuplicates } from "../lib/newsQuality";
-import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
-import { getTopicTimeline, articleAnswersSlug, WikipediaUnavailable, wikiOutcome } from "../lib/wiki";
+import type { FetchResult, PricePoint, SourceKey, TimelineEvent } from "../lib/types";
+import { getTopicTimeline, articleAnswersSlug, articleCoversSlug, topicSlugFromTitle, WikipediaUnavailable, wikiOutcome } from "../lib/wiki";
 import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
 import { fetchNews } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
@@ -285,9 +285,11 @@ export async function ingestTopic(client: PoolClient, topic: string): Promise<In
      * `best buy earnings q3` it returns TaxAct with 21 events.
      *
      * This path is the scheduler's, so a junk slug that reached the request queue would be
-     * minted here on a timer rather than by a visitor — quieter, and no less wrong.
+     * minted here on a timer rather than by a visitor — quieter, and no less wrong. Minting holds
+     * the requested words to the stricter test, since they become an address (NC-157); a subject
+     * already held keeps the looser one, so the change cannot stop it refreshing.
      */
-    if (!articleAnswersSlug(topic, wiki.title)) {
+    if (!(existing ? articleAnswersSlug : articleCoversSlug)(topic, wiki.title)) {
       console.log(`  Wikipedia returned "${wiki.title}", which is not about "${topic}" — not minting`);
       return { ingested: false, reason: `Wikipedia returned "${wiki.title}", which is not about "${topic}"` };
     }
@@ -298,6 +300,8 @@ export async function ingestTopic(client: PoolClient, topic: string): Promise<In
     // second subject with identical events — the shape db/005 exists to clean up (NC-099).
     subjectId = await upsertTopicSubject(client, {
       searchTerm: topic,
+      // a requested slug is a visitor's words — the subject is named for its article (NC-157)
+      canonicalSlug: topicSlugFromTitle(wiki.title),
       wikipediaTitle: wiki.title,
       displayName: wiki.title,
       summary: wiki.summary,
@@ -604,6 +608,9 @@ async function linkCryptoSectors(client: PoolClient, slug: string): Promise<void
   }
 }
 
+/** Every source an on-chain subject draws from, prices included. */
+const ONCHAIN_SOURCES: readonly SourceKey[] = ["onchain", "snapshot", "defillama", "yahoo_finance"];
+
 export async function ingestOnchain(client: PoolClient, which: string): Promise<IngestOutcome> {
   const targets = which === "all" ? CRYPTO_SUBJECTS : CRYPTO_SUBJECTS.filter((c) => c.slug === which);
   if (!targets.length) {
@@ -633,12 +640,31 @@ export async function ingestOnchain(client: PoolClient, which: string): Promise<
       aliases: aliasesFor(assetCtx, asset.aliases),
     };
     /**
+     * Windows and back-off, as every other path has them. This path called neither, so every
+     * crypto subject re-fetched mempool.space, Etherscan, Snapshot, the whole DefiLlama hacks file
+     * and its Yahoo prices on every hourly run — about 24x the windows the quota report assumes
+     * (NC-147). A feed is asked only when it is due and not backing off.
+     */
+    const due = await dueSources(client, subjectId, ONCHAIN_SOURCES);
+    for (const key of ONCHAIN_SOURCES) {
+      if (!due.has(key)) {
+        line(key, `fresh     inside its ${ttlFor(key)} min window`);
+        continue;
+      }
+      const backoff = await shouldBackOff(client, key, subjectId, BACKOFF_MINUTES);
+      if (backoff) {
+        due.delete(key);
+        line(key, `skipped   last attempt ${backoff}, within ${BACKOFF_MINUTES} min backoff`);
+      }
+    }
+
+    /**
      * Each feed under its own source key: licence-checked as the key its rows are stored under
      * (governance is `snapshot`, incidents `defillama` — only `onchain` was ever checked, NC-148),
      * and logged with its real outcome, so an explorer outage is an error rather than an empty
      * fetch (NC-142).
      */
-    for (const { sourceKey, result } of await fetchOnchainFor(asset.slug)) {
+    for (const { sourceKey, result } of await fetchOnchainFor(asset.slug, due)) {
       await assertCommercialOk(client, sourceKey);
       const stats = emptyStats();
       await client.query("BEGIN");
@@ -666,9 +692,29 @@ export async function ingestOnchain(client: PoolClient, which: string): Promise<
     await linkCryptoSectors(client, asset.slug);
 
     // Yahoo quotes crypto under `BTC-USD` — the same chart endpoint companies use, so the
-    // price series and its overlays come for free.
-    if (asset.yahooSymbol) {
-      const { points } = await getDailyPrices(asset.yahooSymbol);
+    // price series and its overlays come for free. Windowed like a company's prices, and logged
+    // so the window has something to read.
+    if (asset.yahooSymbol && due.has("yahoo_finance")) {
+      // An unreachable Yahoo throws out of getDailyPrices; logged as an error (and backed off
+      // like any source) instead of ending this asset's run part-way.
+      let points: PricePoint[] = [];
+      let failed: string | null = null;
+      try {
+        ({ points } = await getDailyPrices(asset.yahooSymbol));
+      } catch (err) {
+        failed = (err as Error).message;
+      }
+      await logFetch(
+        client,
+        "yahoo_finance",
+        subjectId,
+        asset.yahooSymbol,
+        failed ? "error" : points.length ? "ok" : "empty",
+        points.length,
+        undefined,
+        failed?.slice(0, 200)
+      );
+      if (failed) line("prices", `FAILED    ${failed}`);
       if (points.length) {
         await client.query(
           `INSERT INTO prices (subject_id, on_date, close, volume)
@@ -679,7 +725,7 @@ export async function ingestOnchain(client: PoolClient, which: string): Promise<
           [subjectId, points.map((p) => p.time), points.map((p) => p.value), points.map((p) => p.volume ?? null)]
         );
       }
-      line("prices", `${points.length} daily closes for ${asset.yahooSymbol}`);
+      if (!failed) line("prices", `${points.length} daily closes for ${asset.yahooSymbol}`);
     }
   }
   return { ingested: true };

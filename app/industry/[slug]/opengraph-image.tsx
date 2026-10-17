@@ -1,4 +1,4 @@
-import { ogCard, OG_SIZE, OG_CONTENT_TYPE, industryTitleFromSlug } from "@/lib/og";
+import { ogCard, OG_SIZE, OG_CONTENT_TYPE, OG_UNKNOWN, industryTitleFromSlug } from "@/lib/og";
 import { loadIndustry } from "@/lib/store/read";
 
 export const runtime = "nodejs";
@@ -17,9 +17,15 @@ export const alt = "Sector timeline on News Charts";
  * to belong to. It is still a degradation and never a failure — an unreachable database falls
  * back to a readable title instead of throwing, on the schema doc's rule that enrichments
  * degrade pages rather than break them.
+ *
+ * A database that answered "no such industry" is not that case: the slug is then just words
+ * someone typed, and echoing them is the topic card's problem (NC-157). Only a `sic-NNNN` code
+ * is safe to show unconfirmed, since it is digits.
  */
 export default async function Image({ params }: { params: { slug: string } }) {
   const slug = decodeURIComponent(params.slug);
-  const industry = await loadIndustry(slug).catch(() => null);
-  return ogCard("Sector timeline", industry?.name ?? industryTitleFromSlug(slug));
+  const industry = await loadIndustry(slug).catch(() => undefined);
+  if (industry) return ogCard("Sector timeline", industry.name);
+  const unconfirmed = industry === undefined && /^sic-\d+$/i.test(slug);
+  return ogCard("Sector timeline", unconfirmed ? industryTitleFromSlug(slug) : OG_UNKNOWN);
 }

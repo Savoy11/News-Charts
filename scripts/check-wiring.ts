@@ -113,7 +113,7 @@ for (const key of Object.keys(OTHER_INGEST_PATHS) as SourceKey[]) {
     INGESTABLE_SOURCES.has(key) ? "" : "ingested but flagged commercialOk: false"
   );
 }
-const onchainFeeds = [...read("lib/onchain/index.ts").matchAll(/feed\("([a-z_]+)"/g)].map((m) => m[1] as SourceKey);
+const onchainFeeds = [...read("lib/onchain/index.ts").matchAll(/feeds\.push\(\[\s*"([a-z_]+)"/g)].map((m) => m[1] as SourceKey);
 check("the on-chain feeds were found", onchainFeeds.length >= 3, onchainFeeds.join(", "));
 for (const key of new Set(onchainFeeds)) {
   check(`on-chain feed ${key} is a recorded ingest path`, OTHER_INGEST_PATHS[key] !== undefined);
@@ -201,6 +201,19 @@ check(
   "a deterministic score is re-scored on re-ingest, a model's never (NC-131)",
   /WHERE \$5 AND event_subjects\.scored_by = 'deterministic'/.test(storeSrc)
 );
+// NC-147: the on-chain path consulted neither windows nor back-off, so every crypto feed was
+// re-fetched on every hourly run. NC-143: back-off was per subject, so a source that throttled
+// the whole IP was asked again for every subject after it.
+check(
+  "on-chain ingest consults windows and back-off for each feed (NC-147)",
+  /dueSources\(client, subjectId, ONCHAIN_SOURCES\)/.test(onchainIngest) &&
+    /shouldBackOff\(client, key, subjectId, BACKOFF_MINUTES\)/.test(onchainIngest) &&
+    /fetchOnchainFor\(asset\.slug, due\)/.test(onchainIngest)
+);
+check(
+  "a throttle backs off the whole source, not one subject (NC-143)",
+  /if \(rows\[0\]\?\.latest === "throttled"\) return "throttled";/.test(storeSrc)
+);
 // NC-151: pruning ran after a dump pg_restore could not even list.
 const backupSrc = read("scripts/backup.ts");
 check(
@@ -210,7 +223,7 @@ check(
 );
 check(
   "failed requests queue behind untried ones",
-  /ORDER BY \(last_error IS NOT NULL\), requests DESC/.test(read("lib/ingest/queue.ts"))
+  /ORDER BY \(r\.last_error IS NOT NULL\), r\.requests DESC/.test(read("lib/ingest/queue.ts"))
 );
 
 console.log("\nEvery event kind a page can hold has a control that shows it");

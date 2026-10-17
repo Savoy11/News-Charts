@@ -24,7 +24,7 @@ config({ path: ".env.local" });
 import { getPool, closePool, configProblem } from "../lib/db";
 import { COMPANY_SOURCES, TOPIC_SOURCES, ingestCompany, ingestOnchain, ingestTopic, type IngestOutcome } from "./ingest";
 import { ensureSources } from "../lib/ingest/store";
-import { markFailed, markFulfilled, pendingRequests } from "../lib/ingest/queue";
+import { markFailed, markFulfilled, pendingRequests, purgeStaleRequests } from "../lib/ingest/queue";
 import { subjectLockKey } from "../lib/ingest/firstPass";
 import { project } from "../lib/ingest/quota";
 import { CRYPTO_SUBJECTS } from "../lib/onchain";
@@ -179,6 +179,8 @@ async function main(): Promise<void> {
      */
     const purged = await purgeOldResolutions(90);
     if (purged) console.log(`  purged ${purged} search log row(s) past the 90-day retention`);
+    const stale = await purgeStaleRequests();
+    if (stale) console.log(`  purged ${stale} unfulfilled request(s) nobody repeated in 90 days`);
     /**
      * The quota check belongs here, where the requests were actually made — and over the sources
      * this run actually asks. It named GNews, Newsdata, EODHD, Marketaux and NYT, none of which

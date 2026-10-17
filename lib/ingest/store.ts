@@ -326,15 +326,28 @@ export async function shouldBackOff(
   subjectId: number,
   minutes: number
 ): Promise<FetchOutcome | null> {
-  const { rows } = await client.query<{ outcome: FetchOutcome }>(
-    `SELECT outcome FROM source_fetches
-      WHERE source_id = $1 AND subject_id = $2
-        AND fetched_at > now() - ($3 || ' minutes')::interval
-      ORDER BY fetched_at DESC LIMIT 1`,
+  /**
+   * A throttle is the whole source's, not one subject's: GDELT and LoC rate-limit by IP. Looked
+   * up per subject alone, one throttled run kept asking for every subject after it — about 600
+   * requests into an active GDELT ban per hourly run (NC-143). So the source's latest attempt,
+   * whichever subject it was for, decides first: throttled means everyone waits out the window,
+   * and the first subject after it is the probe that finds out whether the ban has lifted. An
+   * `error` stays per subject — one bad query is not the host refusing us.
+   */
+  const { rows } = await client.query<{ mine: FetchOutcome | null; latest: FetchOutcome | null }>(
+    `SELECT (SELECT outcome FROM source_fetches
+              WHERE source_id = $1 AND subject_id = $2
+                AND fetched_at > now() - ($3 || ' minutes')::interval
+              ORDER BY fetched_at DESC LIMIT 1) AS mine,
+            (SELECT outcome FROM source_fetches
+              WHERE source_id = $1
+                AND fetched_at > now() - ($3 || ' minutes')::interval
+              ORDER BY fetched_at DESC LIMIT 1) AS latest`,
     [SOURCE_ID.get(sourceKey), subjectId, String(minutes)]
   );
-  const last = rows[0]?.outcome;
-  return last === "throttled" || last === "error" ? last : null;
+  if (rows[0]?.latest === "throttled") return "throttled";
+  const mine = rows[0]?.mine;
+  return mine === "throttled" || mine === "error" ? mine : null;
 }
 
 export async function logFetch(
@@ -426,6 +439,12 @@ export async function upsertTopicSubject(
     displayName: string;
     summary?: string | null;
     firstEventOn?: string | null;
+    /**
+     * The slug to mint a new subject under, when it should not be the typed words — the paths
+     * that mint from what a visitor typed pass the article's name (NC-157). Taken only if no
+     * other subject holds it; otherwise the typed slug, as before.
+     */
+    canonicalSlug?: string;
   }
 ): Promise<number> {
   const slug = s.searchTerm.toLowerCase();
@@ -449,9 +468,15 @@ export async function upsertTopicSubject(
       [id, s.displayName, s.summary ?? null, s.firstEventOn ?? null]
     );
   } else {
+    // A slug another subject holds would make the upsert below update *that* subject.
+    let mintAs = slug;
+    if (s.canonicalSlug && s.canonicalSlug !== slug) {
+      const taken = await client.query(`SELECT 1 FROM subjects WHERE slug = $1`, [s.canonicalSlug]);
+      if (!taken.rows.length) mintAs = s.canonicalSlug;
+    }
     id = await upsertSubject(client, {
       kind: "topic",
-      slug,
+      slug: mintAs,
       displayName: s.displayName,
       wikipediaTitle: s.wikipediaTitle,
       summary: s.summary,

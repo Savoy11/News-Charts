@@ -12,7 +12,7 @@ import BiggestMoves from "./BiggestMoves";
 import EventList, { dateAnchorId } from "./EventList";
 import AiPanel, { type AiRanking } from "./AiPanel";
 import Annotations from "./Annotations";
-import { applyRanking } from "./TopicExplorer";
+import { applyRanking } from "@/lib/ai/client";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
 import { ANNOTATIONS_EVENT, annotationsAsEvents, loadAnnotations } from "@/lib/annotations";
 

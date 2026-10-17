@@ -1,7 +1,10 @@
 import { resolveCompany } from "./sec";
 import { findCandidates, findKnownCompany, loadSubject } from "./store/read";
+import { closeCandidates, optionFor, type SearchOption } from "./searchChoice";
+
+export type { SearchOption };
 import { headPrefixes } from "./prompt";
-import { logResolution, targetHasEvents, type ResolutionRung } from "./searchLog";
+import { MAX_QUERY, logResolution, targetHasEvents, type ResolutionRung } from "./searchLog";
 import { NETWORK_BUDGET_MS, timedOut, withTimeout } from "./timeout";
 
 /**
@@ -30,11 +33,15 @@ export type ResolvedSearch =
       /** `slug` is raw — callers encode it for the medium they put it in (URL path, JSON). */
       kind: "topic";
       slug: string;
-    };
+    }
+  | { kind: "choose"; options: SearchOption[] };
 
 export async function resolveSearch(q: string): Promise<ResolvedSearch> {
   const started = Date.now();
-  const query = q.replace(/\s+/g, " ").trim();
+  // Capped before any database work, not only before logging: the fuzzy match runs trigram
+  // similarity against every subject, and an unbounded query made that cost the caller's choice
+  // (NC-090). No ticker, name or alias comes near the limit.
+  const query = q.replace(/\s+/g, " ").trim().slice(0, MAX_QUERY);
   if (!query) {
     await logResolution({
       query: "",
@@ -64,6 +71,22 @@ export async function resolveSearch(q: string): Promise<ResolvedSearch> {
    * throttled. Exact identifiers still win outright; resemblance only decides among the rest.
    */
   const candidates = await findCandidates(query).catch(() => []);
+  const tied = closeCandidates(candidates);
+  if (tied.length >= 2) {
+    const top = tied[0];
+    await logResolution({
+      query,
+      subject: query,
+      focus: null,
+      influence: null,
+      resolvedBy: "ambiguous",
+      kind: top.kind === "company" ? "company" : "topic",
+      target: top.ticker ?? top.slug,
+      hasEvents: await targetHasEvents(top.ticker ?? top.slug),
+      durationMs: Date.now() - started,
+    });
+    return { kind: "choose", options: tied.map(optionFor) };
+  }
   const best = candidates[0] ?? null;
   const bestCompany = best?.kind === "company" && best.ticker ? best : null;
 

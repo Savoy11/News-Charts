@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   CONFIG_EVENT,
   PROVIDERS,
+  RANK_CUTOFF,
   type AiConfig,
   type RankableEvent,
   loadConfig,
@@ -14,6 +15,8 @@ import {
 export interface AiRanking {
   instruction: string;
   scores: Map<string, number>;
+  /** sent to the model, but its reply gave them no usable score — shown, not hidden */
+  unscored: Set<string>;
 }
 
 interface Props {
@@ -56,10 +59,10 @@ export default function AiPanel({ events, ranking, onRanking, initialInstruction
     setError(null);
     setProgress(`0 / ${events.length}`);
     try {
-      const scores = await rankEvents(config, events, instruction.trim(), (done, total) =>
+      const { scores, unscored } = await rankEvents(config, events, instruction.trim(), (done, total) =>
         setProgress(`${done} / ${total}`)
       );
-      onRanking({ instruction: instruction.trim(), scores });
+      onRanking({ instruction: instruction.trim(), scores, unscored });
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -121,8 +124,15 @@ export default function AiPanel({ events, ranking, onRanking, initialInstruction
       {ranking && !busy && (
         <p className="px-3 pb-2 text-xs text-slate-500">
           Ranked for <span className="text-fuchsia-300">“{ranking.instruction}”</span> — showing{" "}
-          {[...ranking.scores.values()].filter((s) => s >= 0.35).length} of {events.length} entries,
+          {[...ranking.scores.values()].filter((s) => s >= RANK_CUTOFF).length} of {events.length} entries,
           best matches first.
+          {ranking.unscored.size > 0 && (
+            <>
+              {" "}
+              The model returned no usable score for {ranking.unscored.size}; they are listed after
+              the matches rather than hidden.
+            </>
+          )}
         </p>
       )}
 

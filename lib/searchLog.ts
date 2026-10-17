@@ -44,6 +44,12 @@ export const RUNGS = [
    */
   "network_timeout",
   "empty",
+  /**
+   * Two held subjects matched about equally well ("Ford" → Ford Motor Co and Ford Motor Credit),
+   * so the visitor was offered both instead of being sent to whichever sorted first (NC-039).
+   * The logged target is the top-scored one; which one they picked is not recorded.
+   */
+  "ambiguous",
 ] as const;
 
 export type ResolutionRung = (typeof RUNGS)[number];

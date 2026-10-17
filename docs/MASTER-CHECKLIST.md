@@ -355,6 +355,47 @@ the code. `npm run check` passes and `next lint` reports no warnings. No page co
       week, and in full since NC-132: 141/148 on a production build at batches 3, 4 and 5, the
       seven failures being the stale prompt-search checks already flagged for the owner.
 
+## NC ledger — batch 7: search choices, AI ranking, hardening (2026-10-17)
+
+Four items closed and one advanced: a search that matches two subjects equally now asks instead
+of guessing; a visitor's model can no longer hide events by failing; on-chain reads retry
+politely and reach further back; the site has a written security review with baseline headers;
+and the business decisions made elsewhere are summarised here. `npm run check` passes, `next
+lint` reports no warnings, `next build` compiles, and `check:ui` is 141/148 — the same seven
+stale prompt-search checks.
+
+- [x] **NC-039 — a tied search offers a choice.** When the top two held subjects score within
+      0.03 and the best is not an exact ticker, `/api/resolve` returns `choose` with each option,
+      its ticker and how it matched, and the search box lists them. The no-script `/search` still
+      lands on the best match. Logged under a new `ambiguous` rung (db/025) and described in
+      `npm run search-report`. Live on a production build with a second "Ford" company: the box
+      offered "Ford Motor Company · F" and "Ford Motor Credit Co", the choice cleared when the
+      query changed, a click went to the chosen page, and `F` alone still went straight to Ford.
+- [x] **NC-055 — on-chain reads retry with back-off and reach further.** `getJson` retries a 429,
+      a 5xx or a dropped connection after 1 s and then 2 s, instead of once immediately. Pages are
+      spaced 250 ms apart (Etherscan allows 5 calls a second). The stablecoin reader pages
+      newest-first until it has enough material moves, up to Etherscan's 10-page ceiling, keeping
+      what earlier pages read if a later one fails. `docs/COVERAGE-MAP.md` gained a rate-limit
+      table.
+- [x] **NC-090 — security review written** (`docs/audits/2026-10-17-security-review.md`). Fixed
+      in it: baseline headers on every response (frame, base, plugin and form-action CSP, nosniff,
+      referrer, permissions, HSTS); JSON-LD escapes `<`, `>` and `&`, so a stored `</script>` in
+      an EDGAR, Wikipedia or Wikidata string cannot close the block; and the search query is
+      capped at 200 characters before the fuzzy match runs, not only before logging. Left open
+      and named: NC-164 (visitor keys versus ad scripts), NC-166 (the Next.js advisories) and host
+      controls.
+- [x] **NC-134 — business decisions summarised** in
+      `docs/decisions/2026-09-28-business-decisions.md`, linked from `CLAUDE.md`: D3, D13, D21,
+      D22, the affiliate stance and the working pricing plan. Each is labelled as the ledger's
+      summary, not the record, which lives in Finance Now's repo and was not read from here.
+      D22 is marked not yet applied here (NC-133).
+- [ ] **NC-087 — advanced, not closed.** A junk or partial reply from a visitor's own model no
+      longer hides its batch. Entries without a valid score are listed after the matches and
+      counted in the panel, instead of being read as 0 and filtered out. Replies go through the
+      same validator as the operator's scorer, headlines go in as a delimited block, and the 0.35
+      cut-off is one constant (`RANK_CUTOFF`). `check:ai` covers junk, partial and out-of-range
+      replies. **Still owed:** tuning ranking quality across subject types with a real key.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on

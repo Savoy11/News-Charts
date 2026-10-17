@@ -20,15 +20,30 @@ const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
  */
 export const ETHERSCAN_API = "https://api.etherscan.io/v2/api?chainid=1";
 
+/**
+ * Retry timing for the explorers, exposed so the offline checks can run it at zero.
+ *
+ * A blip used to get one immediate retry, which against a rate limit is the same request again
+ * inside the same second (NC-055). Now a 429, a 5xx or a dropped connection waits — 1s, then 2s —
+ * and `PAGE_GAP_MS` spaces out the pages of a multi-page read, so a backfill stays under
+ * Etherscan's five calls a second instead of tripping it on page two.
+ */
+export const RETRY = { attempts: 3, baseMs: 1000, pageGapMs: 250 };
+
+export const sleep = (ms: number): Promise<void> =>
+  ms > 0 ? new Promise((r) => setTimeout(r, ms)) : Promise.resolve();
+
 export async function getJson<T>(url: string): Promise<T | null> {
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < RETRY.attempts; attempt++) {
+    if (attempt > 0) await sleep(RETRY.baseMs * 2 ** (attempt - 1));
     try {
       const res = await fetch(url, { headers: UA, next: { revalidate: 86_400 } });
       if (res.ok) return (await res.json()) as T;
-      // 4xx is a bad request, not a blip — retrying just burns the rate limit
-      if (res.status >= 400 && res.status < 500) return null;
+      // Any other 4xx is a bad request, not a blip — retrying just burns the rate limit. A 429 is
+      // the one 4xx that means "later".
+      if (res.status >= 400 && res.status < 500 && res.status !== 429) return null;
     } catch {
-      /* network blip — fall through to the retry */
+      /* network blip — wait and retry */
     }
   }
   return null;

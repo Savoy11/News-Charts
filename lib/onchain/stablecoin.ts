@@ -1,4 +1,4 @@
-import { ETHERSCAN_API, dayFromEpoch, getJson, onchainEvent } from "./chain";
+import { ETHERSCAN_API, RETRY, dayFromEpoch, getJson, onchainEvent, sleep } from "./chain";
 import {
   NULL_ADDRESS,
   STABLECOINS,
@@ -20,6 +20,9 @@ import type { FetchResult, TimelineEvent } from "../types";
  * and the rest of the on-chain timeline is unaffected — the same degradation the news adapters
  * use, for the same reason: an optional source must never be able to empty a page.
  */
+/** Pages of 1,000 transfers read at most — Etherscan's own ceiling for this endpoint is 10. */
+export const TOKENTX_PAGES = 10;
+
 /** @deprecated per-token now — read `USDC.materialUsd`. Kept so nothing reads a stale constant. */
 export const MATERIAL_USDC = USDC.materialUsd;
 
@@ -64,24 +67,44 @@ export async function fetchStablecoinSupplyMoves(
   // Unreadable without a key — logged as such, not as a quiet month (NC-142).
   if (!key) return { events: [], outcome: "error", detail: "ETHERSCAN_API_KEY is not set" };
 
-  const url =
-    `${ETHERSCAN_API}&module=account&action=tokentx` +
-    `&contractaddress=${token.address}&address=${NULL_ADDRESS}` +
-    `&page=1&offset=1000&sort=desc&apikey=${encodeURIComponent(key)}`;
+  /**
+   * Newest first, a page at a time, until enough material moves are in hand (NC-055). One page of
+   * 1,000 transfers holds a handful of material ones for USDC — most mints are routine treasury
+   * operations below the bar — so a single page reached back weeks, not years. Etherscan serves at
+   * most 10,000 rows this way (page × offset), which is the ceiling here.
+   */
+  const transfers: TokenTx[] = [];
+  for (let page = 1; page <= TOKENTX_PAGES; page++) {
+    if (page > 1) await sleep(RETRY.pageGapMs);
+    const url =
+      `${ETHERSCAN_API}&module=account&action=tokentx` +
+      `&contractaddress=${token.address}&address=${NULL_ADDRESS}` +
+      `&page=${page}&offset=1000&sort=desc&apikey=${encodeURIComponent(key)}`;
 
-  const body = await getJson<{ status?: string; message?: string; result?: TokenTx[] | string }>(url);
-  // Etherscan answers errors with HTTP 200 and status "0", and puts the message where the
-  // rows go — so a failure is indistinguishable from an empty result unless both are checked.
-  // "No transactions found" is the one status-"0" answer that really is nothing.
-  if (!body) return { events: [], outcome: "error", detail: "Etherscan did not answer" };
-  if (body.status !== "1" || !Array.isArray(body.result)) {
-    const said = typeof body.result === "string" ? body.result : (body.message ?? "unexpected reply");
-    if (body.message === "No transactions found") return { events: [], outcome: "empty", httpStatus: 200 };
-    return { events: [], outcome: /rate limit/i.test(said) ? "throttled" : "error", detail: said.slice(0, 200) };
+    const body = await getJson<{ status?: string; message?: string; result?: TokenTx[] | string }>(url);
+    // Etherscan answers errors with HTTP 200 and status "0", and puts the message where the
+    // rows go — so a failure is indistinguishable from an empty result unless both are checked.
+    // "No transactions found" is the one status-"0" answer that really is nothing.
+    if (!body) {
+      if (page === 1) return { events: [], outcome: "error", detail: "Etherscan did not answer" };
+      break; // later pages failing cost depth, not what was already read
+    }
+    if (body.status !== "1" || !Array.isArray(body.result)) {
+      const said = typeof body.result === "string" ? body.result : (body.message ?? "unexpected reply");
+      if (body.message === "No transactions found") break;
+      if (page === 1) {
+        return { events: [], outcome: /rate limit/i.test(said) ? "throttled" : "error", detail: said.slice(0, 200) };
+      }
+      break;
+    }
+    transfers.push(...body.result);
+    const material = transfers.filter((tx) => toUnits(tx.value, token.decimals) >= minimum).length;
+    if (body.result.length < 1000 || material >= limit) break;
   }
+  if (!transfers.length) return { events: [], outcome: "empty", httpStatus: 200 };
 
   const out: TimelineEvent[] = [];
-  for (const tx of body.result) {
+  for (const tx of transfers) {
     const amount = toUnits(tx.value, token.decimals);
     if (amount < minimum) continue;
 

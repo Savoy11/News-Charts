@@ -1,8 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CLIENT_BUDGET_MS } from "@/lib/timeout";
+import type { SearchOption } from "@/lib/searchChoice";
+
+/** How a candidate matched, in words a reader can weigh. */
+const MATCHED: Record<SearchOption["via"], string> = {
+  ticker: "ticker",
+  name: "exact name",
+  alias: "also known as",
+  prefix: "name starts with your search",
+  fuzzy: "similar name",
+};
 
 export default function SearchBox({ large = false }: { large?: boolean }) {
   const router = useRouter();
@@ -20,12 +31,15 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
    * site, which is a worse claim than the truth.
    */
   const [error, setError] = useState<string | null>(null);
+  /** Several held subjects matched about equally — the visitor picks, not the sort order (NC-039). */
+  const [options, setOptions] = useState<SearchOption[] | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!q.trim() || busy) return;
     setBusy(true);
     setError(null);
+    setOptions(null);
     try {
       const res = await fetch(`/api/resolve?q=${encodeURIComponent(q)}`, {
         // The server bounds its own network rungs; this is the backstop for everything else —
@@ -36,6 +50,7 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
       const json = await res.json();
       if (json.kind === "company") router.push(`/company/${json.ticker}`);
       else if (json.kind === "topic") router.push(`/topic/${json.slug}`);
+      else if (json.kind === "choose") setOptions(json.options as SearchOption[]);
       // `none` is a real answer now, not just the empty-query case: the query named no listed
       // security and nothing the corpus holds. Say what the site is for instead of guessing.
       else
@@ -68,8 +83,10 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
           onChange={(e) => {
             setQ(e.target.value);
             // A stale failure sitting under a query the visitor has since changed is its own kind
-            // of lie: it describes an attempt that no longer matches what is in the box.
+            // of lie: it describes an attempt that no longer matches what is in the box. The same
+            // goes for a choice offered for a different query.
             if (error) setError(null);
+            if (options) setOptions(null);
           }}
           placeholder="AAPL, SPY, VTSAX, or a company or fund name…"
           // A placeholder is not a label: it vanishes on the first keystroke and many screen
@@ -91,6 +108,26 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
           {busy ? "…" : "Explore"}
         </button>
       </form>
+      {options && (
+        <div role="status" aria-live="polite" data-search-choices className="mt-2 rounded-lg border border-slate-700 bg-slate-900 p-2">
+          <p className="px-1 pb-1 text-xs text-slate-400">Several matches — which did you mean?</p>
+          <ul>
+            {options.map((o) => (
+              <li key={o.href}>
+                <Link
+                  href={o.href}
+                  className="flex items-baseline justify-between gap-3 rounded-md px-2 py-1.5 text-sm text-slate-100 hover:bg-slate-800"
+                >
+                  <span className="min-w-0 truncate">
+                    {o.label} <span className="text-slate-400">· {o.detail}</span>
+                  </span>
+                  <span className="shrink-0 text-[11px] text-slate-400">{MATCHED[o.via]}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {error && (
         // Announced rather than only drawn: the visitor's attention is on the button they just
         // pressed, and a message appearing silently below it can go unread while they press again.

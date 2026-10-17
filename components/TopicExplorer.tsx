@@ -10,18 +10,12 @@ import HorizontalTimeline from "./HorizontalTimeline";
 import EventList, { dateAnchorId } from "./EventList";
 import PriceTimeline from "./PriceTimeline";
 import AiPanel, { type AiRanking } from "./AiPanel";
+import { applyRanking } from "@/lib/ai/client";
 import Annotations from "./Annotations";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
 import { ANNOTATIONS_EVENT, annotationsAsEvents, loadAnnotations } from "@/lib/annotations";
 import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT } from "@/lib/prefs";
 
-/** Keep only what the visitor's model judged relevant, best matches first. */
-export function applyRanking(events: TimelineEvent[], ranking: AiRanking | null): TimelineEvent[] {
-  if (!ranking) return events;
-  return events
-    .filter((e) => (ranking.scores.get(e.id) ?? 0) >= 0.35)
-    .sort((a, b) => (ranking.scores.get(b.id) ?? 0) - (ranking.scores.get(a.id) ?? 0));
-}
 
 /**
  * Every event kind a topic can carry, each with the chip that turns it on.

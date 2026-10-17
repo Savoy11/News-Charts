@@ -29,6 +29,7 @@ import {
   type CitableEvent,
 } from "../lib/enrich/explain";
 import type { Signal } from "../lib/signals";
+import { RANK_CUTOFF, applyRanking, rankEvents } from "../lib/ai/client";
 
 let pass = 0;
 let fail = 0;
@@ -193,11 +194,63 @@ async function main(): Promise<void> {
     check("score --dry-run returns before the model is called", score.indexOf('if (has("dry-run")) {') > -1 && score.indexOf('if (has("dry-run")) {') < score.indexOf("await scoreBatchWithModel("));
   }
 
+  await visitorRanking();
+
   console.log("\nA published explanation still says a model wrote it");
   check("the signal panel labels it as AI output", /AI-generated summary — may be wrong/.test(read("components/SignalPanel.tsx")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);
+}
+
+/**
+ * NC-087: a visitor's own model narrowing a timeline. A junk reply left its whole batch unscored,
+ * and the filter read unscored as 0 — so the model's failure reached the page as its verdict,
+ * with forty events silently gone.
+ */
+async function visitorRanking(): Promise<void> {
+  console.log("\nA visitor's own model: a junk reply hides nothing (NC-087)");
+  const realFetch = globalThis.fetch;
+  const events = Array.from({ length: 50 }, (_, i) => ({ id: `e${i}`, date: "2024-03-04", title: `Headline ${i}` }));
+  const prompts: string[] = [];
+  let call = 0;
+  globalThis.fetch = (async (_url: unknown, init?: { body?: string }) => {
+    prompts.push(JSON.parse(init?.body ?? "{}").messages?.[0]?.content ?? "");
+    call++;
+    // first batch (40): a usable reply scoring the first ten high, the rest low; second: junk
+    const text =
+      call === 1
+        ? JSON.stringify(Array.from({ length: 40 }, (_, i) => ({ i: i + 1, s: i < 10 ? 0.9 : 0.1 })))
+        : "Sorry, I can't help with that.";
+    return { ok: true, status: 200, json: async () => ({ content: [{ type: "text", text }] }), text: async () => "" };
+  }) as unknown as typeof fetch;
+  try {
+    const result = await rankEvents({ provider: "anthropic", model: "m", apiKey: "k" }, events, "recalls");
+    check("a usable batch is scored", result.scores.size === 40, String(result.scores.size));
+    check("  …and the junk batch is reported unscored, not scored 0", result.unscored.size === 10 && !result.scores.has("e45"), `${result.unscored.size} unscored`);
+    const shown = applyRanking(events, { scores: result.scores, unscored: result.unscored });
+    check("the page keeps the matches and the unscored entries", shown.length === 20, String(shown.length));
+    check("  …matches first, unscored after", shown.slice(0, 10).every((e) => result.scores.get(e.id) === 0.9) && shown.slice(10).every((e) => result.unscored.has(e.id)));
+    check("  …and drops what the model judged unrelated", !shown.some((e) => result.scores.get(e.id) === 0.1));
+    check("an entry the ranking never covered stays outside it", applyRanking([...events, { id: "new", date: "2024-03-05", title: "x" }], result).every((e) => e.id !== "new"));
+    check("headlines reach the model as a delimited block", prompts[0].includes("\n<entries>\n") && count(prompts[0], "</entries>") === 1);
+
+    call = 0;
+    globalThis.fetch = (async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ content: [{ type: "text", text: '[{"i":1,"s":0.9},{"i":2,"s":7},{"i":99,"s":1}]' }] }),
+      text: async () => "",
+    })) as unknown as typeof fetch;
+    const partial = await rankEvents({ provider: "anthropic", model: "m", apiKey: "k" }, events.slice(0, 3), "x");
+    check("a partial reply scores what it validly covered", partial.scores.size === 1 && partial.scores.get("e0") === 0.9);
+    check("  …and the out-of-range and missing items stay unscored", partial.unscored.size === 2 && partial.unscored.has("e1") && partial.unscored.has("e2"));
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const panel = read("components/AiPanel.tsx");
+  check("the cut-off is one constant", RANK_CUTOFF === 0.35 && !/0\.35/.test(panel) && !/0\.35/.test(read("components/TopicExplorer.tsx")) && /RANK_CUTOFF/.test(panel));
+  check("the panel says how many could not be scored", /ranking\.unscored\.size/.test(panel));
 }
 
 main();

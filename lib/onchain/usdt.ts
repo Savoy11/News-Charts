@@ -1,4 +1,4 @@
-import { ETHERSCAN_API, getJson, onchainEvent } from "./chain";
+import { ETHERSCAN_API, RETRY, getJson, onchainEvent, sleep } from "./chain";
 import { USDT } from "./addresses";
 import { topicFor } from "./keccak";
 import type { FetchResult, TimelineEvent } from "../types";
@@ -59,6 +59,7 @@ async function readAllLogs(
   const seen = new Set<string>();
   let fromBlock = 0;
   for (let page = 0; page < MAX_LOG_PAGES; page++) {
+    if (page > 0) await sleep(RETRY.pageGapMs);
     const url =
       `${ETHERSCAN_API}&module=logs&action=getLogs&address=${USDT.address}` +
       `&topic0=${topic}&fromBlock=${fromBlock}&toBlock=latest&page=1&offset=${LOGS_PAGE}` +

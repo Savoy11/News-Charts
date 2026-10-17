@@ -32,6 +32,7 @@ import {
 import { MAX_REQUEST_SLUG, ledgerSlugFor, requestKey } from "../lib/ingest/queue";
 import { articleAnswersSlug, articleCoversSlug, topicSlugFromTitle } from "../lib/wiki";
 import { middleware, config as middlewareConfig } from "../middleware";
+import { jsonLdText } from "../components/JsonLd";
 
 let pass = 0;
 let fail = 0;
@@ -161,6 +162,20 @@ console.log("\nA typed URL does not become a topic under its own words (NC-157)"
   }
   const ind = read("app/industry/[slug]/opengraph-image.tsx");
   check("the sector card echoes a slug only when it is a SIC code and unconfirmed", /industry === undefined && \/\^sic-\\d\+\$\/i\.test\(slug\)/.test(ind));
+}
+
+console.log("\nBaseline hardening from the security review (NC-090)");
+{
+  const nextConfig = read("next.config.mjs");
+  for (const h of ["Content-Security-Policy", "X-Frame-Options", "X-Content-Type-Options", "Referrer-Policy", "Permissions-Policy", "Strict-Transport-Security"]) {
+    check(`every response carries ${h}`, nextConfig.includes(`key: "${h}"`));
+  }
+  check("  …applied to every path", /source: "\/:path\*"/.test(nextConfig));
+  check("the CSP forbids framing, <base> and plugins without touching scripts", /frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'/.test(nextConfig) && !/script-src/.test(nextConfig));
+  const ld = jsonLdText({ name: "Acme</script><script>alert(1)</script> & Co" });
+  check("stored text cannot close a JSON-LD block", !ld.includes("</script>") && !ld.includes("<script"), ld);
+  check("  …and still parses to the same value", JSON.parse(ld).name === "Acme</script><script>alert(1)</script> & Co");
+  check("a search is capped before the database sees it", /const query = q\.replace\(\/\\s\+\/g, " "\)\.trim\(\)\.slice\(0, MAX_QUERY\);/.test(read("lib/resolveSearch.ts")));
 }
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);

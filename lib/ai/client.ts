@@ -1,5 +1,8 @@
 "use client";
 
+import { parseScoreReply } from "../scoreReply";
+import { dataBlock, untrustedNotice } from "../enrich/untrusted";
+
 /**
  * Bring-your-own-model.
  *
@@ -161,49 +164,79 @@ export interface RankableEvent {
 }
 
 /**
+ * At or above this a ranked entry counts as a match. One constant, so the filter and the panel's
+ * "showing N of M" count can never disagree (NC-087).
+ */
+export const RANK_CUTOFF = 0.35;
+
+export interface RankResult {
+  scores: Map<string, number>;
+  /**
+   * Entries that were sent but came back without a usable score — a junk or truncated reply.
+   * Kept apart from a low score, because nobody judged them.
+   */
+  unscored: Set<string>;
+}
+
+/**
  * Score how well each event answers the visitor's question. Batched so a long
  * timeline costs a handful of requests rather than one per event.
+ *
+ * Headlines go in as a delimited data block (the same treatment the operator's scorer gets,
+ * NC-153), and the reply is read with the same strict validator: an item must name an entry that
+ * was sent and carry a score in [0, 1]. A batch whose reply is unusable used to leave all forty
+ * entries unscored, which the filter then read as 0 and hid — the model's failure shown to the
+ * visitor as its verdict (NC-087). Those entries are now reported as unscored instead.
  */
 export async function rankEvents(
   config: AiConfig,
   events: RankableEvent[],
   instruction: string,
   onProgress?: (done: number, total: number) => void
-): Promise<Map<string, number>> {
+): Promise<RankResult> {
   const BATCH = 40;
   const scores = new Map<string, number>();
+  const unscored = new Set<string>();
 
   for (let i = 0; i < events.length; i += BATCH) {
     const chunk = events.slice(i, i + BATCH);
-    const list = chunk
-      .map((e, n) => `${n + 1}. [${e.date}] ${e.title.replace(/\s+/g, " ").slice(0, 180)}`)
-      .join("\n");
+    const items = chunk.map((e, n) => ({ i: n + 1, date: e.date, title: e.title.replace(/\s+/g, " ").slice(0, 180) }));
 
     const prompt =
-      `A researcher is reading a timeline and wants: "${instruction}"\n\n` +
+      `A researcher is reading a timeline and wants: ${JSON.stringify(instruction)}\n\n` +
       `Score how well each entry matches that request.\n` +
       `1.0 = squarely what they asked for\n` +
       `0.5 = related but not central\n` +
       `0.0 = unrelated to the request\n\n` +
-      `${list}\n\n` +
+      `The entries, one JSON object per line, numbered by "i":\n` +
+      `${untrustedNotice("entries")}\n\n` +
+      `${dataBlock("entries", items)}\n\n` +
       `Reply with ONLY a JSON array, one object per entry: [{"i":1,"s":0.9}, ...]`;
 
-    const text = await callModel(config, prompt);
-    const match = text.match(/\[[\s\S]*\]/);
-    if (match) {
-      try {
-        for (const item of JSON.parse(match[0]) as { i: number; s: number }[]) {
-          const ev = chunk[item.i - 1];
-          if (ev && typeof item.s === "number") {
-            scores.set(ev.id, Math.min(1, Math.max(0, item.s)));
-          }
-        }
-      } catch {
-        /* unusable reply for this batch — leave those entries unscored */
-      }
-    }
+    const reply = parseScoreReply(await callModel(config, prompt), chunk.length);
+    chunk.forEach((ev, n) => {
+      const s = reply.scores.get(n + 1);
+      if (s === undefined) unscored.add(ev.id);
+      else scores.set(ev.id, s);
+    });
     onProgress?.(Math.min(i + BATCH, events.length), events.length);
   }
 
-  return scores;
+  return { scores, unscored };
+}
+
+/**
+ * Keep what the visitor's model judged relevant, best matches first — and what it never managed
+ * to judge, after them. Anything the ranking did not cover (an event type switched on after it
+ * ran) stays outside it, as before.
+ */
+export function applyRanking<T extends { id: string }>(
+  events: T[],
+  ranking: { scores: Map<string, number>; unscored: Set<string> } | null
+): T[] {
+  if (!ranking) return events;
+  const matched = events
+    .filter((e) => (ranking.scores.get(e.id) ?? -1) >= RANK_CUTOFF)
+    .sort((a, b) => (ranking.scores.get(b.id) ?? 0) - (ranking.scores.get(a.id) ?? 0));
+  return [...matched, ...events.filter((e) => ranking.unscored.has(e.id))];
 }

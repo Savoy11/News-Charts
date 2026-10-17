@@ -44,7 +44,11 @@ securities: as many reports and articles per security as the sources honestly al
 pages still exist for subjects already held (crypto assets, sector themes), but search resolves
 securities, and new enhancement work targets securities coverage first — see "Scope refocus"
 in the checklist. Built to drive traffic and ad revenue supporting the CAEP desktop app — a
-business relationship, not a code one (see the scope rule).
+business relationship, not a code one (see the scope rule). Business decisions made in Finance
+Now sessions that bear on this repo (US-only, the D22 launch trigger, the affiliate stance, the
+working pricing plan) are summarised in
+[`docs/decisions/2026-09-28-business-decisions.md`](docs/decisions/2026-09-28-business-decisions.md)
+— a summary, not the record.
 
 **Prompt search is shelved, not deleted.** The natural-language layer (`lib/prompt.ts`
 parsing, `lib/focus.ts` grading, FocusBar, BestMatches, `?focus=` links) is dormant, tested

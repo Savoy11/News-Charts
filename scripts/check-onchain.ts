@@ -1,7 +1,9 @@
 import { config } from "dotenv";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { chainRefOf, parseChainRef } from "../lib/onchain/attribution";
 import { FINALITY, chainOfRef, isFinal, withheldReason } from "../lib/onchain/finality";
-import { onchainEvent } from "../lib/onchain/chain";
+import { RETRY, getJson, onchainEvent } from "../lib/onchain/chain";
 config({ path: ".env.local" });
 
 /**
@@ -17,6 +19,7 @@ config({ path: ".env.local" });
 import { fetchBitcoinHalvings, getBitcoinHalvings } from "../lib/onchain/bitcoin";
 import { getEthereumMilestones } from "../lib/onchain/ethereum";
 import {
+  TOKENTX_PAGES,
   fetchStablecoinSupplyMoves,
   getAllStablecoinSupplyMoves,
   getStablecoinSupplyMoves,
@@ -588,6 +591,73 @@ async function etherscanV2(): Promise<void> {
   check("no key is an error, not a quiet month", (await fetchUsdtSupplyMoves()).outcome === "error");
 }
 
+/** NC-055: one immediate retry against a rate limit is the same request again in the same second. */
+async function backoffAndPaging(): Promise<void> {
+  console.log("\nRetries wait, and a backfill reads more than one page");
+  const saved = { ...RETRY };
+  RETRY.baseMs = 0;
+  RETRY.pageGapMs = 0;
+  try {
+    let calls = 0;
+    globalThis.fetch = (async () => {
+      calls++;
+      return calls < 3
+        ? ({ ok: false, status: calls === 1 ? 429 : 503, json: async () => ({}) } as unknown as Response)
+        : ({ ok: true, status: 200, json: async () => ({ answered: true }) } as unknown as Response);
+    }) as typeof fetch;
+    const got = await getJson<{ answered: boolean }>("https://example.test/x");
+    check("a 429 and a 503 are retried until an answer", got?.answered === true && calls === 3, String(calls));
+    calls = 0;
+    globalThis.fetch = (async () => {
+      calls++;
+      return { ok: false, status: 404, json: async () => ({}) } as unknown as Response;
+    }) as typeof fetch;
+    check("a plain 4xx is not retried", (await getJson("https://example.test/x")) === null && calls === 1, String(calls));
+    check("the waits grow", saved.baseMs >= 500 && saved.attempts >= 3);
+
+    process.env.ETHERSCAN_API_KEY = "test-key";
+    const settled = Math.floor(Date.now() / 1000) - 48 * 3600;
+    const word = (whole: number) => String(BigInt(whole) * BigInt(10) ** BigInt(6));
+    const tx = (hash: string, whole: number, ts = settled) => ({ hash, timeStamp: String(ts), from: NULL_ADDRESS, to: "0x55fe002aeff02f77364de339a1292923a15844b8", value: word(whole) });
+    const pages: number[] = [];
+    serve((url) => {
+      const page = Number(new URL(url).searchParams.get("page"));
+      pages.push(page);
+      // page 1: a full page of routine mints; page 2: two material ones and the end of history
+      if (page === 1) return { status: "1", result: Array.from({ length: 1000 }, (_, i) => tx(`0xr${i}`, 1_000_000)) };
+      return { status: "1", result: [tx("0xbig1", 300_000_000), tx("0xbig2", 400_000_000)] };
+    });
+    const deep = await fetchStablecoinSupplyMoves(USDC);
+    check("material moves past the first page are reached", deep.events.length === 2 && pages.join() === "1,2", `${deep.events.length} events, pages ${pages.join()}`);
+    pages.length = 0;
+    serve((url) => {
+      pages.push(Number(new URL(url).searchParams.get("page")));
+      return { status: "1", result: Array.from({ length: 1000 }, (_, i) => tx(`0xm${pages.length}-${i}`, 500_000_000)) };
+    });
+    await fetchStablecoinSupplyMoves(USDC, USDC.materialUsd, 40);
+    check("reading stops once enough material moves are in hand", pages.length === 1, String(pages.length));
+    pages.length = 0;
+    serve((url) => {
+      pages.push(Number(new URL(url).searchParams.get("page")));
+      return { status: "1", result: Array.from({ length: 1000 }, (_, i) => tx(`0xn${pages.length}-${i}`, 1_000_000)) };
+    });
+    await fetchStablecoinSupplyMoves(USDC);
+    check(`…and never past Etherscan's ${TOKENTX_PAGES}-page ceiling`, pages.length === TOKENTX_PAGES, String(pages.length));
+    serve((url) =>
+      Number(new URL(url).searchParams.get("page")) === 1
+        ? { status: "1", result: [...Array.from({ length: 999 }, (_, i) => tx(`0xs${i}`, 1_000_000)), tx("0xkeep", 300_000_000)] }
+        : { status: "0", message: "NOTOK", result: "Max rate limit reached" }
+    );
+    const partial = await fetchStablecoinSupplyMoves(USDC);
+    check("a later page failing keeps what the first one read", partial.events.some((e) => e.url?.includes("0xkeep")), `${partial.events.length} events`);
+    delete process.env.ETHERSCAN_API_KEY;
+    const ingest = readFileSync(join(process.cwd(), "lib/onchain/usdt.ts"), "utf8");
+    check("USDT pages are spaced out too", /if \(page > 0\) await sleep\(RETRY\.pageGapMs\)/.test(ingest));
+  } finally {
+    Object.assign(RETRY, saved);
+  }
+}
+
 async function sectors(): Promise<void> {
   console.log("\nCrypto sectors");
   // Reuses kind='industry' rather than adding a fourth subject kind: a distinction that is ours
@@ -674,6 +744,7 @@ async function main(): Promise<void> {
     await addressBook();
     await usdt();
     await etherscanV2();
+    await backoffAndPaging();
     await sectors();
     await outcomes();
   } finally {

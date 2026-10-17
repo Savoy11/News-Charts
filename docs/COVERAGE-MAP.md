@@ -89,6 +89,25 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
 - **Nothing here reaches non-US regulation**, and nothing reaches non-English press except
   incidentally through Wikipedia.
 
+## Rate limits — what each source will tolerate
+
+Reach says how far back a source goes; this says how hard it can be asked. Figures come from
+`QUOTAS` in `lib/ingest/quota.ts`, which `npm run cost-report` projects against the refresh
+windows — update both together.
+
+| Source | Limit | How it shows up |
+| --- | --- | --- |
+| GDELT | ~1 request per 5 s per IP | A throttle arrives as HTTP 200 with a text body; one throttle now backs off every subject for the run |
+| SEC EDGAR | 10 requests/s | Requires a contact `User-Agent` |
+| Etherscan (V2, free tier) | 5 requests/s, 100k/day | HTTP 200 with status "0"; multi-page reads are spaced 250 ms apart and retry after 1 s, then 2 s |
+| Chronicling America | No published cap | 503s under load are routine |
+| Wikipedia | No hard cap | The User-Agent policy is the real obligation |
+| Federal Register | No published cap | Generous in practice; visitor terms are capped per client (15 new terms/hour) |
+| Yahoo Finance (RSS and chart) | Undocumented | Unofficial — the licence question is the risk, not the quota |
+| Internet Archive, Snapshot, DefiLlama | No published cap | Keyless; asked on 12–24 h windows |
+| NYT · Guardian (visitor keys) | 500/day and 5/min · 5,000/day | Counted against the visitor's own key, in their browser |
+| Newsdata · GNews · Currents · Marketaux · EODHD · Finnhub | 200 · 100 · 600 · 100 · ~20 per day · 60/min | Not ingested (licences); listed so the cost of wiring one is visible |
+
 ## How to check a specific subject
 
 `npm run check:feeds <ticker-or-topic>` reports what each source actually returns for that

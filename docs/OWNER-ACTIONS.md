@@ -57,7 +57,7 @@ is one bounded gather the first time a subject is visited — so this is the onl
 refreshes a chart — and a scheduler that is not running looks exactly like a
 quiet news week. Until it runs, the corpus only changes when you run it by hand.
 
-Before the first run on a new deploy, apply the schema: `npm run db:migrate` (db/021–024 came
+Before the first run on a new deploy, apply the schema: `npm run db:migrate` (db/021–025 came
 with the October ledger batches).
 
 ```bash
@@ -130,7 +130,7 @@ design sit under **Planned initiatives — free planner & referral board** in th
 ## 6. One-time steps after deploying the October ledger fixes
 
 ```bash
-npm run db:migrate                  # db/021–024
+npm run db:migrate                  # db/021–025
 npm run explain                     # regenerate AI explanations under prompt version 2
 npm run rekey:gdelt -- --dry-run    # GDELT rows to re-key or merge into the same story
 npm run rekey:gdelt

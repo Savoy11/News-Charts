@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 66,
-   "closed": 74,
+   "open": 62,
+   "closed": 78,
    "parked": 12,
    "blocked": 18
   },
@@ -43,7 +43,7 @@
    "owner-decision": 50
   },
   "counts_recomputed_on": "2026-10-17",
-  "closed_by_annotation": 74
+  "closed_by_annotation": 78
  },
  "blocking_decisions": [
   {
@@ -1388,7 +1388,7 @@
   {
    "id": "NC-039",
    "title": "Disambiguate search on screen when the top two candidates score close (Ford, APPLE ties)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "feature",
@@ -1417,6 +1417,22 @@
     "noted_on": "2026-10-17",
     "note": "NC-040 closed the fund-name rung's guess, after which 'S&P 500' falls to head-prefix salvage and resolves to SPGI (S&P Global, the index's owner). The reader most likely means SPY or VOO: a case for this item's on-screen disambiguation.",
     "evidence": "live run 2026-10-17 /api/resolve?q=S%26P%20500"
+   },
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "closeCandidates (lib/searchChoice.ts) returns the held subjects within TIE_MARGIN (0.03) of the best when there are at least two and the best is not an exact ticker. resolveSearch then returns { kind: 'choose', options } with label, ticker or kind, an encoded href and the match type, and logs the new 'ambiguous' rung (db/025, search-report). SearchBox lists the options and clears them when the query changes. The no-script /search redirects to the best option. Live 2026-10-17 on a production build with a second held 'Ford' company: /api/resolve?q=Ford returned both; the box showed 'Ford Motor Company · F' and 'Ford Motor Credit Co · FMCCP'; a click navigated to the chosen page; q=F still resolved straight to F; the log row read 'ambiguous'. check:search-log covers the tie rules.",
+    "evidence": [
+     "lib/searchChoice.ts:30",
+     "lib/resolveSearch.ts",
+     "components/SearchBox.tsx:53",
+     "app/search/route.ts",
+     "db/025_ambiguous_rung.sql",
+     "scripts/check-search-log.ts:182",
+     "docs/MASTER-CHECKLIST.md:358-398"
+    ]
    }
   },
   {
@@ -2030,7 +2046,7 @@
   {
    "id": "NC-055",
    "title": "Backfill throughput: paginate eth_getLogs/tokentx with back-off; document per-source reach and rate limits",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "feature",
@@ -2058,7 +2074,21 @@
      "lines": "69-71",
      "quote": "&page=1&offset=1000&sort=desc"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "getJson (lib/onchain/chain.ts) now makes up to three attempts with exponential back-off (1 s, then 2 s) on a 429, a 5xx or a network error; any other 4xx is not retried. Multi-page reads are spaced RETRY.pageGapMs (250 ms) apart: USDT getLogs paging (batch 5) and the stablecoin tokentx reader, which now pages newest-first until it holds `limit` material moves, up to Etherscan's 10-page ceiling, keeping earlier pages if a later one fails. docs/COVERAGE-MAP.md has a per-source rate-limit table drawn from QUOTAS. check:onchain covers retries, the plain-4xx no-retry, paging depth, the stop-when-enough rule, the page ceiling and partial failure.",
+    "evidence": [
+     "lib/onchain/chain.ts:31",
+     "lib/onchain/stablecoin.ts:24",
+     "scripts/check-onchain.ts:595",
+     "docs/COVERAGE-MAP.md",
+     "docs/MASTER-CHECKLIST.md:358-398"
+    ]
+   }
   },
   {
    "id": "NC-056",
@@ -3006,6 +3036,13 @@
      "lines": "1871-1873",
      "quote": "check ranking quality across subject types, the 0.35 relevance cut-off, batch size,\n      and behaviour when a model returns junk"
     }
+   ],
+   "progress": [
+    {
+     "noted_on": "2026-10-17",
+     "note": "Batch 7: a junk or partial reply from a visitor's own model no longer hides its batch. rankEvents returns { scores, unscored }; applyRanking lists unscored entries after the matches; the panel counts them. Replies go through the shared validator (lib/scoreReply.ts), headlines go in as a delimited block, and the cut-off is one constant (RANK_CUTOFF). check:ai covers junk, partial and out-of-range replies. Still owed: tuning ranking quality across subject types with a real key.",
+     "evidence": "lib/ai/client.ts:170; scripts/check-ai.ts:211"
+    }
    ]
   },
   {
@@ -3078,7 +3115,7 @@
   {
    "id": "NC-090",
    "title": "Security deep-dive of the current accounts-free site",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "security",
@@ -3100,6 +3137,21 @@
     "noted_on": "2026-09-28",
     "note": "Concrete findings from the 2026-09-28 audit are filed separately: NC-145, NC-148, NC-153, NC-157, NC-162, NC-163, NC-164, NC-166.",
     "evidence": "this ledger, 2026-09-28 pass"
+   },
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "docs/audits/2026-10-17-security-review.md covers every visitor entry point, rendered surface and outbound fetch. Fixed in the same batch:\n- next.config.mjs sends a frame/base/object/form-action CSP, X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy and HSTS on every path (verified on a production build);\n- JsonLd escapes <, > and & (jsonLdText);\n- resolveSearch caps the query at MAX_QUERY (200) before the trigram match.\nStill open, by name: NC-164, NC-166 and host-level limits. check:abuse covers the headers, the escaping and the cap.",
+    "evidence": [
+     "docs/audits/2026-10-17-security-review.md",
+     "next.config.mjs",
+     "components/JsonLd.tsx:10",
+     "lib/resolveSearch.ts:44",
+     "scripts/check-abuse.ts:167",
+     "docs/MASTER-CHECKLIST.md:358-398"
+    ]
    }
   },
   {
@@ -4501,7 +4553,7 @@
   {
    "id": "NC-134",
    "title": "Record the business decisions made since 18 Aug in the News Charts repo (D3, D13, D21, D22, affiliate rule, pricing plan)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "docs",
@@ -4526,7 +4578,19 @@
      "lines": "a3923f9",
      "quote": "Tue Aug 18 20:25:33 2026 -0400 Merge pull request #36"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "docs/decisions/2026-09-28-business-decisions.md summarises D3, D13, D21, D22, the affiliate stance and the working pricing plan, each labelled as the ledger's summary rather than the record (Finance Now's records were not read from here, per the scope rule). D22 is marked not yet applied here (NC-133), and pricing is marked a working plan to be reassessed. It is linked from CLAUDE.md and the checklist. check:boundary still passes.",
+    "evidence": [
+     "docs/decisions/2026-09-28-business-decisions.md",
+     "CLAUDE.md",
+     "docs/MASTER-CHECKLIST.md:358-398"
+    ]
+   }
   },
   {
    "id": "NC-135",
@@ -5995,6 +6059,14 @@
     "basis_key": "Fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain and `next lint`, plus live backup and restore runs against Postgres 16 (a real dump restored into a scratch database, with mismatch, missing-counts, live-target and failed-dump cases). Documentation items were checked against the code they describe.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:317-357"
+    ]
+   },
+   {
+    "on": "2026-10-17",
+    "what": "Batch 7: 4 items closed (NC-039, NC-055, NC-090, NC-134); a progress note on NC-087.",
+    "basis_key": "Fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `next lint`, `next build`, a full `check:ui` run (141/148, the same 7 stale failures), and live runs on a production build: the search chooser in Chromium, the security headers, the query cap and the ambiguous-rung log.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:358-398"
     ]
    }
   ]

@@ -43,6 +43,9 @@ const MEANING: Record<ResolutionRung, string> = {
   network_timeout:
     "the ticker index did not answer in time — a guess we may not have needed. Read this as a" +
     " statement about EDGAR, not about the query",
+  ambiguous:
+    "two or more held subjects matched about equally, and the visitor was offered the choice." +
+    " A query recurring here is a name collision worth an alias",
   empty: "nothing was typed",
 };
 

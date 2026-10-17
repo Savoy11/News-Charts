@@ -13,6 +13,10 @@ config({ path: ".env.local" });
  * Offline: pure functions over hand-built rows, no database.
  */
 import { CLIENT_BUDGET_MS, NETWORK_BUDGET_MS, timedOut, withTimeout } from "../lib/timeout";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { TIE_MARGIN, closeCandidates, optionFor } from "../lib/searchChoice";
+import type { SubjectCandidate } from "../lib/store/read";
 import {
   MAX_QUERY,
   RUNGS,
@@ -173,6 +177,31 @@ async function main(): Promise<void> {
   check("a single sample is its own percentile", percentile([7], 95) === 7);
   check("no samples is 0", percentile([], 50) === 0);
   check("input is not mutated", (() => { const xs = [3, 1, 2]; percentile(xs, 50); return xs[0] === 3; })());
+
+  // NC-039: "Ford" matched Ford Motor Co and Ford Motor Credit equally, and the shorter name won.
+  console.log("\nA tie is offered as a choice, not settled by the sort order");
+  const cand = (displayName: string, score: number, via: SubjectCandidate["via"], ticker: string | null = null, kind: SubjectCandidate["kind"] = "company"): SubjectCandidate => ({
+    kind,
+    slug: (ticker ?? displayName).toLowerCase(),
+    ticker,
+    displayName,
+    score,
+    via,
+  });
+  const fordTie = [cand("Ford Motor Co", 0.9, "prefix", "F"), cand("Ford Motor Credit Co", 0.9, "prefix", "FMCC"), cand("Fordham Bank", 0.5, "fuzzy", "FBNK")];
+  check("two equal matches are both offered", closeCandidates(fordTie).length === 2, closeCandidates(fordTie).map((c) => c.displayName).join(" / "));
+  check("  …but not a clearly weaker third", !closeCandidates(fordTie).some((c) => c.displayName === "Fordham Bank"));
+  check("a clear winner is not a tie", closeCandidates([cand("Apple Inc.", 0.97, "name", "AAPL"), cand("Apple Hospitality REIT", 0.9, "prefix", "APLE")]).length === 0);
+  check(`scores within ${TIE_MARGIN} are`, closeCandidates([cand("A", 0.92, "prefix", "A"), cand("B", 0.9, "prefix", "B")]).length === 2);
+  check("an exact ticker is never a tie", closeCandidates([cand("Ford Motor Co", 1, "ticker", "F"), cand("F Corp", 1, "name", "FCRP")]).length === 0);
+  check("one candidate is not a tie", closeCandidates([cand("Ford Motor Co", 0.9, "prefix", "F")]).length === 0);
+  check("a security links to its ticker page", optionFor(fordTie[0]).href === "/company/F" && optionFor(fordTie[0]).detail === "F");
+  check("a topic links to its encoded slug", optionFor(cand("electric cars", 0.9, "prefix", null, "topic")).href === "/topic/electric%20cars");
+  const read = (f: string) => readFileSync(join(process.cwd(), f), "utf8");
+  check("the search box shows the choice", /json\.kind === "choose"\) setOptions/.test(read("components/SearchBox.tsx")) && /data-search-choices/.test(read("components/SearchBox.tsx")));
+  check("the no-script search still lands on the best match", /resolved\.options\[0\]\.href/.test(read("app/search/route.ts")));
+  const migration = read("db/025_ambiguous_rung.sql");
+  check("the database accepts every rung the code can log", RUNGS.every((r) => migration.includes(`'${r}'`)), RUNGS.filter((r) => !migration.includes(`'${r}'`)).join(", "));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) {

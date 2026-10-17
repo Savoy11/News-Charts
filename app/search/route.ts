@@ -24,7 +24,11 @@ export async function GET(req: NextRequest) {
       ? `/company/${resolved.ticker}`
       : resolved.kind === "topic"
         ? `/topic/${encodeURIComponent(resolved.slug)}`
-        : "/";
+        : resolved.kind === "choose"
+          ? // No script, no chooser: the best-scored option, which is what every search did before
+            // the hydrated box learned to offer a choice (NC-039).
+            resolved.options[0].href
+          : "/";
 
   // A relative Location, resolved by the browser against the address it actually requested.
   // Building it from req.nextUrl.origin sent visitors to localhost under `next start` behind a

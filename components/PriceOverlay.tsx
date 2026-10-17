@@ -11,6 +11,7 @@ import {
   type Time,
 } from "lightweight-charts";
 import { PricePoint, TimelineEvent } from "@/lib/types";
+import { growthOf100 } from "@/lib/growth";
 import {
   MARKER_STYLE,
   buildDayIndex,
@@ -28,27 +29,12 @@ interface Series {
   color: string;
 }
 
-/**
- * Rebase both series to 100 at their first *shared* trading day, so the lines answer "$100 in
- * each on the same day — where are they now?" Comparing raw prices would just show that one stock
- * is pricier, not which performed better. Returns null if the two never overlap in time.
- */
+/** lightweight-charts wants its own `Time` type; the rebase itself lives in lib/growth.ts. */
 function normalize(a: PricePoint[], b: PricePoint[]) {
-  if (a.length === 0 || b.length === 0) return null;
-  const start = a[0].time > b[0].time ? a[0].time : b[0].time;
-  const end = a[a.length - 1].time < b[b.length - 1].time ? a[a.length - 1].time : b[b.length - 1].time;
-  if (start > end) return null;
-
-  const clip = (s: PricePoint[]) => {
-    const win = s.filter((p) => p.time >= start && p.time <= end);
-    if (win.length === 0 || win[0].value === 0) return null;
-    const base = win[0].value;
-    return win.map((p) => ({ time: p.time as Time, value: (p.value / base) * 100 }));
-  };
-  const an = clip(a);
-  const bn = clip(b);
-  if (!an || !bn) return null;
-  return { an, bn, start, end };
+  const g = growthOf100(a, b);
+  if (!g) return null;
+  const asChart = (s: PricePoint[]) => s.map((p) => ({ time: p.time as Time, value: p.value }));
+  return { an: asChart(g.an), bn: asChart(g.bn), start: g.start, end: g.end };
 }
 
 /**

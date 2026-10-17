@@ -2,6 +2,7 @@ import type { PoolClient } from "pg";
 import { contentHash, dedupKey } from "./keys";
 import { FetchOutcome, SourceKey, TimelineEvent } from "../types";
 import { deterministicScore, type SubjectContext } from "../enrich/relevance";
+import { safeHref } from "../safeUrl";
 
 /**
  * Everything upsertEvent needs to score a row at link time: the subject it is being linked
@@ -554,9 +555,11 @@ export async function upsertEvent(
   const sourceId = SOURCE_ID.get(sourceKey);
 
   const key = dedupKey(ev.dedupBasis ?? ev.title);
+  // Only an http(s) link is ever stored: the read side renders it as an href (NC-163).
+  const url = safeHref(ev.url) ?? null;
   // image is part of the content fingerprint, so a newly-found thumbnail counts as a change and
   // the row updates instead of being skipped by the unchanged-hash guard below.
-  const hash = contentHash([ev.title, ev.description, ev.url, ev.imageUrl]);
+  const hash = contentHash([ev.title, ev.description, url, ev.imageUrl]);
 
   /**
    * Identity is the dedup_key; content changes only bump the hash and updated_at.
@@ -616,7 +619,7 @@ export async function upsertEvent(
      ON CONFLICT (event_id, source_id, external_id) DO UPDATE
         SET url = EXCLUDED.url, retrieved_at = now()
      RETURNING id, (xmax = 0) AS inserted`,
-    [eventId, sourceId, externalId, ev.url ?? null, ev.source]
+    [eventId, sourceId, externalId, url, ev.source]
   );
   stats.attestations++;
   if ((attested.rows[0] as unknown as { inserted: boolean })?.inserted) stats.newAttestations++;

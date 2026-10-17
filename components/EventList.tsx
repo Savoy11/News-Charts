@@ -5,6 +5,7 @@ import { EventType, TimelineEvent } from "@/lib/types";
 import { waybackUrl, waybackCouldHave } from "@/lib/wikidata";
 import { loadJSON, saveJSON } from "@/lib/viewState";
 import { toneOf } from "@/lib/sentiment";
+import { safeHref } from "@/lib/safeUrl";
 import ChainRef from "./ChainRef";
 import EventThumb from "./EventThumb";
 
@@ -55,6 +56,7 @@ function ToneDot({ ev }: { ev: TimelineEvent }) {
 
 /** The whole row is the click target, so there's no need to hit the title text exactly. */
 function EventRow({ ev }: { ev: TimelineEvent }) {
+  const href = safeHref(ev.url);
   const body = (
     <>
       <ToneDot ev={ev} />
@@ -68,7 +70,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
         <span className="mt-0.5 block text-xs text-slate-500">
           <ChainRef ev={ev} />
           {ev.source}
-          {ev.url ? " ↗" : ""}
+          {href ? " ↗" : ""}
           {ev.description ? ` · ${ev.description}` : ""}
         </span>
       </span>
@@ -81,11 +83,11 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
 
   // data-event-row is a handle for the browser checks and the list profiler: counting rows by
   // their utility classes broke the moment the classes changed, and silently passed.
-  if (!ev.url) return <div className={ROW_CLASS} data-event-row>{body}</div>;
+  if (!href) return <div className={ROW_CLASS} data-event-row>{body}</div>;
   return (
     <a
       data-event-row
-      href={ev.url}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       title={`Open ${ev.source} (new tab)`}
@@ -370,7 +372,7 @@ function FilingStack({ days }: { days: DayRow[] }) {
           {all.map((ev) => (
             <li key={ev.id}>
               <a
-                href={ev.url ?? "#"}
+                href={safeHref(ev.url) ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-baseline gap-2 rounded px-2 py-1 hover:bg-slate-800/50"
@@ -404,7 +406,7 @@ function FilingStack({ days }: { days: DayRow[] }) {
             ›
           </button>
           <a
-            href={cur.url ?? "#"}
+            href={safeHref(cur.url) ?? "#"}
             target="_blank"
             rel="noopener noreferrer"
             className="min-w-0 flex-1 rounded px-2 py-1 hover:bg-slate-800/50"

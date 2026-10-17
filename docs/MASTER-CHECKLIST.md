@@ -3,7 +3,7 @@
 The governing checklist for the **News Charts** project: a single place to track initiatives,
 priorities, and progress. Add to it, check things off, re-prioritise. This is a living doc.
 
-**Last updated:** 2026-08-12
+**Last updated:** 2026-10-17
 
 ## Scope & independence
 
@@ -19,6 +19,54 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
     checkout.
 - **Related News Charts docs:** `README.md` (feature notes), `docs/EVENTS-SCHEMA.md` (the events
   schema spec). This checklist tracks *work*; those describe *what exists*.
+
+## NC ledger — first batch of fixes (2026-10-17)
+
+Ten small, high-confidence items from the work ledger
+([`docs/audits/nc-task-queue-2026-09-28.json`](audits/nc-task-queue-2026-09-28.json)), each with a
+check that fails on the old code. Their ledger entries carry `closure` blocks dated 2026-10-17.
+All `npm run check` suites pass; lint shows only the three known warnings (NC-049). Verified live
+against a seeded Postgres 16 and `next dev` started with `TZ=Asia/Tokyo`.
+
+- [x] **NC-163 — third-party links are only ever http(s).** `lib/safeUrl.ts` `safeHref()` gates the
+      stored URL in `upsertEvent` and every rendered event link (event list, both timelines,
+      price-chart popup, compare, signal citations). New `npm run check:links` also scans every
+      component and page for an `href` built from a raw `.url`. Live: a `javascript:` URL planted
+      in a stored attestation rendered with no link.
+- [x] **NC-150 — one malformed Wikipedia citation no longer empties the next article.** The cite
+      regex is created per call. Reproduced first (0 citations instead of 2), now in
+      `check:parsers`.
+- [x] **NC-155 — dividends print as declared** (`$0.2775`, `$0.004`), never fewer than cents.
+      `dividendTitle()` in `lib/prices.ts`; a re-ingest heals stored titles, since the title is in
+      the content hash. Cases in `check:parsers`.
+- [x] **NC-059 — the DefiLlama `amount` comment** now says plain USD, verified live 2026-07-31.
+- [x] **NC-158 — topic canonical, `og:url` and breadcrumb come from the stored slug.** They were
+      double-encoded (`/topic/electric%2520cars`, a not-found page). Live: canonical is
+      `/topic/electric%20cars` and loads 200.
+- [x] **NC-100 — Postgres DATE values come back as the string stored.** `PG_TYPES` in `lib/db.ts`,
+      used by both pools (the shared one and the first-pass one). `check:dates` simulates a
+      Tokyo host: the old parser shifts a day, the new one does not. Live under `TZ=Asia/Tokyo`:
+      `/api/group` dates match the database.
+- [x] **NC-098 — `/compare` keeps a crypto topic's prices.** Live: `btc` vs `F` draws the
+      growth-of-100 overlay.
+- [x] **NC-048 — both `/compare` lines are rebased on the first day both have a row**
+      (`lib/growth.ts`). The old code put a Saturday-starting BTC at 100 on Saturday and the stock
+      on Monday; `check:compare` reproduces that.
+- [x] **NC-040 — a fund name that means several funds is not an answer.** The fund-name rung now
+      needs one fund, not first hit — for exact names too, since 214 exact series names belong to
+      several funds ("Balanced Fund" ×5). Two index rows for one fund still count as one
+      ("Vanguard 500" → VOO).
+      - ⚠ Observed live: "S&P 500" now falls to head-prefix salvage, where "S&P" uniquely prefixes
+        S&P Global → **SPGI**. Closer than an arbitrary fund, but not the index fund a reader
+        means. That needs on-screen disambiguation (NC-039) or an owner decision on an alias.
+- [x] **NC-170 — `/api/group` and `/api/signals` answer an outage with a generic 503** and log the
+      detail server-side (the pg error named the database host and port, with status 200). The
+      no-JavaScript `/search` redirects with a relative `Location` instead of the request origin.
+      New `npm run check:api` runs both routes against a closed port.
+- ⚠ `check:ui` re-run alongside: 100 pass, then the same harness crash as NC-132. One failure,
+  "GM is offered before a stand-in", is a timing flake in the check, not a regression: all three
+  seeded subjects show at load, and the chip row rotates one every 3.8s before the check reads it
+  on a slow dev compile. Recorded on NC-046.
 
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 

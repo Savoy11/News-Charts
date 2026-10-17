@@ -11,8 +11,10 @@ config({ path: ".env.local" });
  * two unrelated stories merge into a shared event that never happened, which is a stronger claim
  * than the truth. Neither looks wrong on screen.
  */
+import { readFileSync } from "node:fs";
 import { identity, intersect } from "../lib/compareEvents";
-import type { EventType, TimelineEvent } from "../lib/types";
+import { growthOf100 } from "../lib/growth";
+import type { EventType, PricePoint, TimelineEvent } from "../lib/types";
 
 let pass = 0;
 let fail = 0;
@@ -109,6 +111,38 @@ check(
   identity(ev("db-1", "2024-05-02", "Automakers Face New Tariffs")) ===
     identity(ev("db-2", "2024-05-02", "automakers face new tariffs"))
 );
+
+console.log("\nGrowth of 100 starts both lines on the same day");
+{
+  const series = (rows: [string, number][]): PricePoint[] => rows.map(([time, value]) => ({ time, value }));
+  // NC-048: the stock's history is longer, BTC's begins on a Saturday. The overlap started on
+  // BTC's first day, and each line took its own first point in it as 100 — BTC on Saturday, the
+  // stock (no weekend rows) on Monday — so "100" meant two different moments.
+  const coin = series([["2024-01-04", 140], ["2024-01-05", 145], ["2024-01-08", 150], ["2024-01-09", 165]]);
+  const btc = series([["2024-01-06", 44000], ["2024-01-07", 44500], ["2024-01-08", 47000], ["2024-01-09", 46000]]);
+  const g = growthOf100(btc, coin);
+  check("the base is the first day both have a row", g?.start === "2024-01-08", g?.start);
+  check("  …and both lines read exactly 100 on it", g?.an[0]?.value === 100 && g?.bn[0]?.value === 100, `${g?.an[0]?.value} / ${g?.bn[0]?.value}`);
+  check("  …so the next day compares like with like", Math.abs((g?.bn[1]?.value ?? 0) - 110) < 1e-9, `${g?.bn[1]?.value}`);
+  check("nothing is drawn before the base day", g?.an.every((p) => p.time >= "2024-01-08") === true);
+
+  // A holiday on one listing: the first overlapping day is missing from one side.
+  const gap = growthOf100(series([["2024-07-03", 10], ["2024-07-05", 11]]), series([["2024-07-03", 5], ["2024-07-04", 6], ["2024-07-05", 7]]));
+  check("a day only one side traded is not a base", gap?.start === "2024-07-03" && gap?.bn.length === 3, `${gap?.start} ${gap?.bn.length}`);
+  const late = growthOf100(series([["2024-07-04", 10], ["2024-07-05", 11]]), series([["2024-07-03", 5], ["2024-07-05", 7]]));
+  check("  …the base moves to the next shared day", late?.start === "2024-07-05", late?.start);
+
+  check("no shared day at all draws nothing", growthOf100(series([["2024-01-06", 1]]), series([["2024-01-08", 1]])) === null);
+  check("an empty side draws nothing", growthOf100([], coin) === null);
+  check("a zero close is never a base", growthOf100(series([["2024-01-08", 0], ["2024-01-09", 2]]), coin)?.start === "2024-01-09");
+}
+
+console.log("\nA priced topic keeps its prices on /compare");
+// NC-098: the topic branch hard-coded `prices: []`, so btc vs eth lost the growth-of-100 overlay
+// even though getTopicPageData returns the crypto series.
+const compareSrc = readFileSync("lib/compare.ts", "utf8");
+check("the topic branch passes topic.prices through", /prices: topic\.prices/.test(compareSrc));
+check("  …and no branch hard-codes an empty series", !/prices: \[\]/.test(compareSrc));
 
 console.log(`\n${pass}/${pass + fail} checks passed`);
 if (fail > 0) process.exit(1);

@@ -70,6 +70,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ events, resolved: tickers.length });
   } catch (err) {
-    return NextResponse.json({ events: [], error: (err as Error).message });
+    // The detail goes to the server log, not the visitor: a pg error names the database host and
+    // port, and a 200 hid the outage from anything watching status codes (NC-170).
+    console.error("[news-charts] /api/group failed:", (err as Error).message);
+    return NextResponse.json({ events: [], error: "Group timeline unavailable right now." }, { status: 503 });
   }
 }

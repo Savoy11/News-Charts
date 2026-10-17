@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { EventType, TimelineEvent } from "@/lib/types";
 import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT, type TimelinePrefs } from "@/lib/prefs";
+import { safeHref } from "@/lib/safeUrl";
 import ChainRef from "./ChainRef";
 import EventThumb from "./EventThumb";
 
@@ -129,6 +130,7 @@ function formatDate(ev: TimelineEvent): string {
 /** The whole card is the click target, so there's no need to hit the text exactly. */
 function EventCard({ ev, style }: { ev: TimelineEvent; style: React.CSSProperties }) {
   const s = STYLE[ev.type];
+  const href = safeHref(ev.url);
   const body = (
     <>
       <EventThumb
@@ -146,12 +148,12 @@ function EventCard({ ev, style }: { ev: TimelineEvent; style: React.CSSPropertie
       <span className="mt-1.5 block truncate text-[11px] text-slate-500">
         <ChainRef ev={ev} />
         {ev.source}
-        {ev.url ? " ↗" : ""}
+        {href ? " ↗" : ""}
       </span>
     </>
   );
 
-  if (!ev.url) {
+  if (!href) {
     return (
       <div className={CARD_CLASS} style={style}>
         {body}
@@ -160,7 +162,7 @@ function EventCard({ ev, style }: { ev: TimelineEvent; style: React.CSSPropertie
   }
   return (
     <a
-      href={ev.url}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       draggable={false}
@@ -862,6 +864,7 @@ function Stack({
 
 function StackRow({ ev }: { ev: TimelineEvent }) {
   const s = STYLE[ev.type];
+  const href = safeHref(ev.url);
   const body = (
     <div className="flex items-start gap-2">
       <div className="min-w-0 flex-1">
@@ -881,7 +884,7 @@ function StackRow({ ev }: { ev: TimelineEvent }) {
             list both carry it. */}
         <span className="mt-0.5 block truncate text-[10px] text-slate-500">
           {ev.source}
-          {ev.url ? " ↗" : ""}
+          {href ? " ↗" : ""}
         </span>
       </div>
       <EventThumb
@@ -891,12 +894,12 @@ function StackRow({ ev }: { ev: TimelineEvent }) {
     </div>
   );
 
-  if (!ev.url) {
+  if (!href) {
     return <div className="rounded-md border border-slate-800 bg-slate-900/60 p-2">{body}</div>;
   }
   return (
     <a
-      href={ev.url}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       draggable={false}

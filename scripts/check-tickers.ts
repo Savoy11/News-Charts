@@ -196,6 +196,22 @@ async function main(): Promise<void> {
   const shortQ = await resolveCompany("Va").catch(() => null);
   check("a two-character fragment is not treated as a fund name", shortQ === null || shortQ.ticker === "VA", JSON.stringify(shortQ));
 
+  console.log("\nA fund name that means several funds is not an answer");
+  // NC-040: seven series start "S&P 500 …" and the rung took the first, QCEQRX "S&P 500 Index
+  // Account"; 214 exact names are shared by several funds. The later rungs still run, so the
+  // live files are stubbed empty here — what must not happen is the fund-name rung guessing.
+  trapFetch((url) =>
+    url.includes("company_tickers.json") ? {} : { fields: ["cik", "seriesId", "classId", "symbol"], data: [] }
+  );
+  const sp = await resolveCompany("S&P 500").catch(() => null);
+  check("\"S&P 500\" no longer picks an arbitrary fund", sp === null, JSON.stringify(sp));
+  const balanced = await resolveCompany("Balanced Fund").catch(() => null);
+  check("an exact name shared by several funds picks none", balanced === null, JSON.stringify(balanced));
+  const v500again = await resolveCompany("Vanguard 500").catch(() => null);
+  check("two index rows for ONE fund still resolve", v500again?.ticker === "VOO", v500again?.ticker ?? "null");
+  const fidelity = await resolveCompany("Fidelity 500").catch(() => null);
+  check("a prefix only one fund has still resolves", fidelity?.ticker === "FUSVX", fidelity?.ticker ?? "null");
+
   console.log("\nA query that is nothing");
   trapFetch((url) =>
     url.includes("company_tickers.json") ? {} : { fields: ["cik", "seriesId", "classId", "symbol"], data: [] }

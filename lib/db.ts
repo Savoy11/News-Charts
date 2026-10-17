@@ -1,4 +1,15 @@
-import { Pool } from "pg";
+import { Pool, TypeOverrides, types } from "pg";
+
+/**
+ * How every pool here parses Postgres values — pass as `types` to `new Pool`.
+ *
+ * DATE comes back as the 'YYYY-MM-DD' Postgres sent, not a JS Date. node-pg's default builds a
+ * Date at *local* midnight, and the readers then took `toISOString().slice(0, 10)` — the previous
+ * day on any host east of UTC (NC-100). A calendar date has no time zone and should never pass
+ * through one. The readers' string branch (`String(v).slice(0, 10)`) is what now runs.
+ */
+export const PG_TYPES = new TypeOverrides();
+PG_TYPES.setTypeParser(types.builtins.DATE, (value: string) => value);
 
 /**
  * News Charts owns its own database and its own non-superuser role. It shares
@@ -14,7 +25,7 @@ export function getPool(): Pool {
     if (!connectionString) {
       throw new Error(MISSING_DATABASE_URL);
     }
-    pool = new Pool({ connectionString, max: 4 });
+    pool = new Pool({ connectionString, max: 4, types: PG_TYPES });
   }
   return pool;
 }

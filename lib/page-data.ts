@@ -28,6 +28,12 @@ export type RefreshedAt = Date | null;
 
 export interface TopicPageData {
   title: string;
+  /**
+   * The stored subject slug — the page's one canonical address. Not the URL segment the visitor
+   * arrived on: that may be an alias ("electric car" for "electric cars"), and Next hands it over
+   * still percent-encoded, so building links from it double-encoded them (NC-158).
+   */
+  slug: string;
   summary: string;
   events: TimelineEvent[];
   /**
@@ -80,6 +86,7 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
       if (events.length) {
         return {
           title: subject.displayName,
+          slug: subject.slug,
           summary: subject.summary ?? "",
           events,
           prices,
@@ -104,6 +111,7 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
           await requestSubject(topic, "topic"); // queue the deepening pass
           return {
             title: subject.displayName,
+            slug: subject.slug,
             summary: subject.summary ?? "",
             events,
             prices,

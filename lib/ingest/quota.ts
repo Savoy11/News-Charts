@@ -40,6 +40,7 @@ export const QUOTAS: Record<SourceKey, Quota> = {
   sec_edgar: { perDay: null, perSecond: 10, note: "10 req/s, and a contact User-Agent is required" },
   federal_register: { perDay: null, note: "no published cap; generous in practice" },
   yahoo_finance: { perDay: null, note: "undocumented and unofficial — the licence question, not the quota, is the risk" },
+  yahoo_prices: { perDay: null, note: "the same unofficial host as the RSS feed — the licence question, not the quota, is the risk" },
   internet_archive: { perDay: null, note: "no published cap; be a good citizen" },
   snapshot: { perDay: null, note: "public GraphQL hub, no published cap" },
   defillama: { perDay: null, note: "open API, no published cap" },

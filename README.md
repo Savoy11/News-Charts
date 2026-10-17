@@ -392,7 +392,8 @@ npm run score -- --strict-headline # see below
 Two tiers, cheapest first:
 
 1. **Deterministic (free).** Scores only what provenance makes certain: filings and earnings are
-   1.0 (indexed under the subject's own CIK), history sentences are 1.0 (extracted from the
+   1.0 (indexed under the subject's own CIK) — except a fund registrant's forms, 0.7, since a
+   trust files for every series it sells — history sentences are 1.0 (extracted from the
    subject's own article), press mentions 0.7. Everything ambiguous is left `NULL`.
 2. **Model (paid, batched).** Scores the remainder — in practice, news headlines. Set
    `ANTHROPIC_API_KEY` in `.env.local` to enable it; without a key the pass is skipped cleanly.

@@ -1,4 +1,4 @@
-import { dayFromEpoch, getJson, onchainEvent } from "./chain";
+import { ETHERSCAN_API, dayFromEpoch, getJson, onchainEvent } from "./chain";
 import {
   NULL_ADDRESS,
   STABLECOINS,
@@ -20,8 +20,6 @@ import type { FetchResult, TimelineEvent } from "../types";
  * and the rest of the on-chain timeline is unaffected — the same degradation the news adapters
  * use, for the same reason: an optional source must never be able to empty a page.
  */
-const ETHERSCAN = "https://api.etherscan.io/api";
-
 /** @deprecated per-token now — read `USDC.materialUsd`. Kept so nothing reads a stale constant. */
 export const MATERIAL_USDC = USDC.materialUsd;
 
@@ -67,7 +65,7 @@ export async function fetchStablecoinSupplyMoves(
   if (!key) return { events: [], outcome: "error", detail: "ETHERSCAN_API_KEY is not set" };
 
   const url =
-    `${ETHERSCAN}?module=account&action=tokentx` +
+    `${ETHERSCAN_API}&module=account&action=tokentx` +
     `&contractaddress=${token.address}&address=${NULL_ADDRESS}` +
     `&page=1&offset=1000&sort=desc&apikey=${encodeURIComponent(key)}`;
 

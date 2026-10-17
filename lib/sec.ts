@@ -334,7 +334,7 @@ interface FilingBlock {
   items?: string[];
 }
 
-function filingsFromBlock(block: FilingBlock, company: CompanyInfo): TimelineEvent[] {
+function filingsFromBlock(block: FilingBlock, company: CompanyInfo, registrant: string): TimelineEvent[] {
 
   /**
    * Operating-company forms AND registered-fund forms. The set used to cover companies only,
@@ -388,14 +388,26 @@ function filingsFromBlock(block: FilingBlock, company: CompanyInfo): TimelineEve
           : form === "8-K" && items.includes("2.02")
             ? "Earnings announcement (8-K)"
             : `${form} filing`);
+    /**
+     * A fund's CIK is its registrant's — the trust — and the trust files one 497, N-PORT or
+     * shareholder report for any of the series it sells. Prefixed with the fund's name, VOO's
+     * page showed every sibling's filings as VOO's own (NC-139). EDGAR's submissions list does
+     * not say which series a filing covers, so the honest title names who filed it.
+     */
+    const byRegistrant = fund !== undefined;
     events.push({
       id: `sec-${accession}`,
       date,
       type: isEarnings ? "earnings" : "filing",
-      title: `${company.name}: ${label}`,
+      title: `${byRegistrant ? registrant : company.name}: ${label}`,
       source: "SEC EDGAR",
       url: `https://www.sec.gov/Archives/edgar/data/${Number(company.cik)}/${accession}/${doc}`,
-      description: form === "8-K" && items ? `Items: ${items}` : undefined,
+      description: byRegistrant
+        ? `Filed by ${registrant}, the registrant behind ${company.name}. A registrant files for ` +
+          `every fund it sells, so this filing may concern a sibling fund.`
+        : form === "8-K" && items
+          ? `Items: ${items}`
+          : undefined,
       sourceKey: "sec_edgar",
       // the accession number is already globally unique, so document and event identity coincide
       externalId: accession,
@@ -438,7 +450,9 @@ export async function getFilingsDeep(
   const recent = json?.filings?.recent;
   if (!recent) return [];
 
-  const events = filingsFromBlock(recent, company);
+  // EDGAR's own name for the filer — for a fund, the trust rather than the series.
+  const registrant = typeof json?.name === "string" && json.name.trim() ? json.name.trim() : company.name;
+  const events = filingsFromBlock(recent, company, registrant);
   if (!includeOlder) return events;
 
   const shards: { name?: string }[] = json?.filings?.files ?? [];
@@ -452,7 +466,7 @@ export async function getFilingsDeep(
       // A shard that will not load costs its own years and nothing else — the recent block is
       // already in hand, and half a history beats none.
       if (!r.ok) continue;
-      events.push(...filingsFromBlock(await r.json(), company));
+      events.push(...filingsFromBlock(await r.json(), company, registrant));
     } catch {
       continue;
     }

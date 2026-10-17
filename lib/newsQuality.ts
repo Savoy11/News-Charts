@@ -16,7 +16,8 @@ const OUTLET_SUFFIX = /\s*[-–—|:]\s*(?:[A-Z][\w.&']*\s*){1,4}$/;
 /**
  * The identity of a *story*, as opposed to a document: its headline on a given day.
  *
- * GDELT has always keyed on this; every other adapter keyed on its URL, which is why one wire
+ * Every news adapter keys on this (GDELT joined in NC-154 — it had its own raw-title form that
+ * never matched anyone else's). They used to key on their URLs, which is why one wire
  * story syndicated to three outlets produced three events. Normalisation has to be aggressive
  * enough to survive the small edits aggregators make — case, punctuation, a trailing outlet
  * name, a leading exclusive tag — without being so aggressive that two genuinely different

@@ -1,4 +1,4 @@
-import { PricePoint, TimelineEvent } from "./types";
+import { FetchOutcome, PricePoint, TimelineEvent } from "./types";
 
 export interface DailyPrices {
   points: PricePoint[];
@@ -26,25 +26,53 @@ export function dividendTitle(amount: number): string {
 const day = (epochSeconds: number): string =>
   new Date(epochSeconds * 1000).toISOString().slice(0, 10);
 
+export interface FetchedPrices extends DailyPrices {
+  outcome: FetchOutcome;
+  httpStatus?: number;
+  detail?: string;
+}
+
 /**
- * Daily closes from the Yahoo Finance chart API (unofficial but stable, no key).
+ * Daily closes from the Yahoo Finance chart API (unofficial but stable, no key), with what
+ * happened kept.
  *
  * One request carries three things we want: closes, volume, and corporate actions
  * (`events=div,splits`) — so volume bars and dividend/split markers cost no extra fetch,
  * no extra key, and no extra rate-limit budget.
+ *
+ * A refusal used to come back as an empty series, so ingest could not tell "Yahoo had nothing"
+ * from "Yahoo said no" — and logged neither (NC-103). `range` is 10 years for routine refreshes;
+ * `max` is for re-reading a whole history after a split (NC-156).
  */
-export async function getDailyPrices(ticker: string): Promise<DailyPrices> {
+export async function fetchDailyPrices(ticker: string, range: "10y" | "max" = "10y"): Promise<FetchedPrices> {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
     ticker
-  )}?range=10y&interval=1d&events=div%2Csplits`;
-  const res = await fetch(url, {
-    headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-    next: { revalidate: 3600 },
-  });
-  if (!res.ok) return { points: [], actions: [] };
-  const json = await res.json();
+  )}?range=${range}&interval=1d&events=div%2Csplits`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      next: { revalidate: 3600 },
+    });
+  } catch (err) {
+    return { points: [], actions: [], outcome: "error", detail: String(err).slice(0, 200) };
+  }
+  if (res.status === 429 || res.status === 503) {
+    return { points: [], actions: [], outcome: "throttled", httpStatus: res.status };
+  }
+  const json = await res.json().catch(() => null);
   const result = json?.chart?.result?.[0];
-  if (!result) return { points: [], actions: [] };
+  if (!res.ok || !result) {
+    // Yahoo explains a refusal in chart.error ("No data found, symbol may be delisted").
+    const said: string | undefined = json?.chart?.error?.description;
+    return {
+      points: [],
+      actions: [],
+      outcome: res.ok && !said ? "empty" : "error",
+      httpStatus: res.status,
+      detail: (said ?? (res.ok ? undefined : `HTTP ${res.status}`))?.slice(0, 200),
+    };
+  }
 
   const timestamps: number[] = result.timestamp ?? [];
   const quote = result.indicators?.quote?.[0] ?? {};
@@ -63,7 +91,23 @@ export async function getDailyPrices(ticker: string): Promise<DailyPrices> {
     });
   }
 
-  return { points, actions: corporateActions(result?.events, ticker) };
+  return {
+    points,
+    actions: corporateActions(result?.events, ticker),
+    outcome: points.length ? "ok" : "empty",
+    httpStatus: res.status,
+  };
+}
+
+/** Just the series and the actions, for callers that do not log the fetch. */
+export async function getDailyPrices(ticker: string): Promise<DailyPrices> {
+  const { points, actions } = await fetchDailyPrices(ticker);
+  return { points, actions };
+}
+
+/** The split markers in a set of corporate actions — the ones that re-adjust a whole history. */
+export function splitsIn(actions: TimelineEvent[]): TimelineEvent[] {
+  return actions.filter((a) => a.dedupBasis?.includes(" split "));
 }
 
 /**

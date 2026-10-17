@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 81,
-   "closed": 59,
+   "open": 74,
+   "closed": 66,
    "parked": 12,
    "blocked": 18
   },
@@ -43,7 +43,7 @@
    "owner-decision": 50
   },
   "counts_recomputed_on": "2026-10-17",
-  "closed_by_annotation": 59
+  "closed_by_annotation": 66
  },
  "blocking_decisions": [
   {
@@ -1200,6 +1200,11 @@
      "noted_on": "2026-10-17",
      "note": "NC-154 (GDELT's dedup basis never matches storyKey) is still open and still answers this check: GDELT and Yahoo copies of one story cannot collapse until it ships.",
      "evidence": "lib/news.ts"
+    },
+    {
+     "noted_on": "2026-10-17",
+     "note": "NC-154 shipped in batch 5: GDELT now keys on storyKey, so a GDELT and a Yahoo copy of one story share one identity (check:news-quality with fixtures), and stored duplicates merge (live run on Postgres 16, plus `npm run rekey:gdelt`). The live check this item asks for — a real ingest of a busy ticker — is still owed; both feeds are blocked from the cloud session.",
+     "evidence": "lib/news.ts:87; scripts/rekey-gdelt.ts"
     }
    ]
   },
@@ -1938,7 +1943,7 @@
   {
    "id": "NC-054",
    "title": "Etherscan adapters use legacy V1 endpoint (api.etherscan.io/api); likely deprecated, fails silently as empty",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -1971,6 +1976,20 @@
     "noted_on": "2026-09-28",
     "note": "CONFIRMED LIVE 2026-09-28: https://api.etherscan.io/api returns status \"0\" with \"You are using a deprecated V1 endpoint, switch to Etherscan API V2\". Both adapters treat that as an empty result, so every stablecoin/USDT supply feed is silently empty today. The V2 URL (/v2/api?chainid=1) answers and asks for a key.",
     "evidence": "live run 2026-09-28"
+   },
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Both supply adapters build on ETHERSCAN_API = https://api.etherscan.io/v2/api?chainid=1 (lib/onchain/chain.ts). V1 answered 'deprecated V1 endpoint', confirmed live 2026-09-28. A refusal is now an error with Etherscan's message for USDT too; the transfer reader already did this from batch 2 (NC-142). check:onchain asserts every call goes to V2 and none to V1, and that the deprecation reply is an error for both readers. Etherscan is blocked from this session, so the keyed live run is an owner action.",
+    "evidence": [
+     "lib/onchain/chain.ts:21",
+     "lib/onchain/stablecoin.ts",
+     "lib/onchain/usdt.ts:54",
+     "scripts/check-onchain.ts:498",
+     "docs/MASTER-CHECKLIST.md:257-316"
+    ]
    }
   },
   {
@@ -2009,7 +2028,7 @@
   {
    "id": "NC-056",
    "title": "USDT Issue/Redeem query reads only the first 1,000 logs from block 0, so recent supply moves may be missing",
-   "status": "open",
+   "status": "closed",
    "confidence": "low",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -2027,7 +2046,21 @@
      "lines": "73-75",
      "quote": "&topic0=${topic}&fromBlock=0&toBlock=latest&page=1&offset=1000"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "readAllLogs pages getLogs forward by block. Each request starts at the last block seen, rows already read are skipped by transaction hash and log index, and a full page inside one block steps on. It stops after MAX_LOG_PAGES (20) and reports the read as an incomplete error rather than a quiet month. The newest `limit` material moves are kept. check:onchain covers it with fixtures: a newest mint past the first 1,000 logs is read via a second request from the last block; a 50-move history keeps the newest 40; a never-ending single-block history stops at 20 pages with an error.",
+    "evidence": [
+     "lib/onchain/usdt.ts:41",
+     "lib/onchain/usdt.ts:54",
+     "lib/onchain/usdt.ts:125",
+     "scripts/check-onchain.ts:498",
+     "docs/MASTER-CHECKLIST.md:257-316"
+    ]
+   }
   },
   {
    "id": "NC-057",
@@ -3401,7 +3434,7 @@
   {
    "id": "NC-103",
    "title": "Price fetch bypasses runSource (failures unlogged); a company with events but no prices shows 'not indexed'",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -3426,7 +3459,23 @@
      "lines": "136",
      "quote": "if (events.length && prices.length) {"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Prices have their own source key (yahoo_prices, 720-minute window, registry id 19). The company path checks dueSources and shouldBackOff for it and logs its real outcome; crypto prices and the first pass log under it too. fetchDailyPrices returns throttled/error/empty/ok with Yahoo's reason instead of an empty series. The render gate now needs events only: a held company without closes shows its timeline and 'No price data for this security yet'. The first pass mints on filings alone, so a Yahoo refusal no longer counts toward marking a real company dead. Live 2026-10-17 on a production build: a company with one filing and no prices rendered its timeline and the notice.",
+    "evidence": [
+     "lib/prices.ts:47",
+     "scripts/ingest.ts:517",
+     "lib/page-data.ts:186",
+     "components/CompanyExplorer.tsx:229",
+     "lib/ingest/firstPass.ts",
+     "scripts/check-parsers.ts:212",
+     "docs/MASTER-CHECKLIST.md:257-316"
+    ]
+   }
   },
   {
    "id": "NC-104",
@@ -4528,7 +4577,7 @@
   {
    "id": "NC-139",
    "title": "Fund pages list every filing of the whole fund trust, titled as if filed by that one fund",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "data-verification",
@@ -4553,7 +4602,21 @@
      "lines": "126-128",
      "quote": "return { score: 1, reason: \"filed under the subject's CIK\" };"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "EDGAR's submissions list carries no series id per filing, so per-fund filtering would cost a request per filing. The ledger's other option was taken. Fund-registrant forms (497, 497K, NPORT-P, N-CSR(S), N-30D, N-CEN, 485A/BPOS, N-1A) are titled with the registrant EDGAR names as the filer and say they may concern a sibling fund. deterministicScore gives them 0.7, 'filed by the fund's registrant, which files for every series it sells', instead of 1.0; they still clear the display floor. Operating-company forms keep the subject's name and 1.0. Stored rows re-title and re-score on their next ingest. check:relevance covers it.",
+    "evidence": [
+     "lib/sec.ts:397",
+     "lib/secForms.ts",
+     "lib/enrich/relevance.ts:136",
+     "scripts/check-relevance.ts:166",
+     "docs/MASTER-CHECKLIST.md:257-316"
+    ]
+   }
   },
   {
    "id": "NC-140",
@@ -5125,7 +5188,7 @@
   {
    "id": "NC-154",
    "title": "GDELT's story key never matches other feeds', so the same story from GDELT and Yahoo never collapses",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -5142,7 +5205,23 @@
      "lines": "83",
      "quote": "`${a.title}|${d.slice(0, 8)}`"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "GDELT's dedupBasis is now storyKey(title, YYYY-MM-DD), the same as every other news adapter, and it carries legacyDedupBasis. upsertEvent calls rekeyEvent before reading the key: a row under the old key takes the new one, or merges into the row already holding it. mergeEvents moves attestations as secondary sources, plus subject links and synthesis citations, then deletes the duplicate. `npm run rekey:gdelt` re-keys every stored GDELT-primary row in one transaction. Live 2026-10-17 on Postgres 16: a GDELT/Yahoo copy of one story merged (Yahoo stays primary, GDELT is a secondary source, the citation moved); a lone GDELT row was re-keyed; a second run found nothing; a re-served legacy row was re-keyed in place, not duplicated. check:news-quality covers both feeds with fixtures.",
+    "evidence": [
+     "lib/news.ts:87",
+     "lib/ingest/store.ts:637",
+     "lib/ingest/store.ts:667",
+     "lib/ingest/store.ts:709",
+     "scripts/rekey-gdelt.ts",
+     "scripts/check-news-quality.ts:139",
+     "docs/MASTER-CHECKLIST.md:257-316"
+    ]
+   }
   },
   {
    "id": "NC-155",
@@ -5179,7 +5258,7 @@
   {
    "id": "NC-156",
    "title": "Stored price history will step at a future split (10-year adjusted window, old rows never replaced)",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "data-verification",
@@ -5201,7 +5280,22 @@
      "lines": "461-467",
      "quote": "ON CONFLICT (subject_id, on_date) DO UPDATE\n          SET close = EXCLUDED.close,"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "splitNeedsFullHistory is true when the chart reports a split the database has not stored and stored closes exist before the new series starts. The company path then fetches range=max and replaces the subject's prices in one transaction (writePrices replace). If the full read fails it drops closes older than the window (dropBefore) instead of leaving a step. Live 2026-10-17, rolled back on Postgres 16: the check was true only for a new split with older rows, false for a known split, no split, or a series reaching past every stored close; replace and dropBefore wrote exactly what they say.",
+    "evidence": [
+     "lib/ingest/store.ts:587",
+     "lib/ingest/store.ts:616",
+     "scripts/ingest.ts:534",
+     "lib/prices.ts:109",
+     "scripts/check-parsers.ts:212",
+     "docs/MASTER-CHECKLIST.md:257-316"
+    ]
+   }
   },
   {
    "id": "NC-157",
@@ -5290,7 +5384,7 @@
   {
    "id": "NC-159",
    "title": "`revalidate = 900` has no effect: company, topic and industry pages re-render from the database on every view",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -5312,7 +5406,21 @@
      "lines": "11-19",
      "quote": "max: 4"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Sector pages are cached whole (generateStaticParams returning [] with revalidate 900): measured MISS then HIT with s-maxage=900. Company and topic pages cannot be. Measured on a production build: with ISR enabled, the miss path's noStore() is a 500, 'Page changed from static to dynamic at runtime'. A miss must not be cached, so those routes stay dynamic and their held-page reads go through unstable_cache for 900 s. A cached 'not held' is re-checked live, and the read after a first-visit gather bypasses the cache. Live: a held company and a held topic kept their cached names after a database rename; a missing company appeared as soon as it was inserted. Company and topic HTML still renders per request; the saving is the database queries.",
+    "evidence": [
+     "lib/page-data.ts:147",
+     "lib/page-data.ts:164",
+     "app/industry/[slug]/page.tsx:20",
+     "scripts/check-wiring.ts:224",
+     "docs/MASTER-CHECKLIST.md:257-316"
+    ]
+   }
   },
   {
    "id": "NC-160",
@@ -5775,6 +5883,14 @@
     "basis_key": "Fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (with the new check:ai and check:abuse), `next lint` (no warnings), `next build`, a full `check:ui` run (141/148, the same 7 stale failures as batch 3), and live runs against Postgres 16 and a production build. Model calls used a stand-in API; Wikipedia was stubbed where the session proxy refused it.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:182-256"
+    ]
+   },
+   {
+    "on": "2026-10-17",
+    "what": "Batch 5: 7 items closed (NC-054, NC-056, NC-103, NC-139, NC-154, NC-156, NC-159); a progress note on NC-033.",
+    "basis_key": "Fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `next lint` (no warnings), `next build`, a full `check:ui` run (141/148, the same 7 stale failures), and live runs against Postgres 16 and a production build. Etherscan, GDELT and Yahoo are blocked from the session, so those adapters were exercised with fixtures.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:257-316"
     ]
    }
   ]

@@ -221,6 +221,40 @@ check(
   /if \(entries < 0\) throw/.test(backupSrc) &&
     backupSrc.indexOf("if (entries < 0) throw") < backupSrc.indexOf("unlinkSync(join(outDir")
 );
+// NC-159: `revalidate = 900` did nothing — the subject routes were dynamic, so every view re-ran
+// every query. Company and topic pages cannot take full-page caching (a miss must never be
+// cached, and noStore() in a cached route is a 500 under Next 14), so their held reads are cached.
+{
+  const pageData = read("lib/page-data.ts");
+  check(
+    "held company and topic reads are cached for 15 minutes",
+    /const PAGE_CACHE_SECONDS = 900;/.test(pageData) &&
+      /unstable_cache\(\(key: string\) => heldCompanyPage\(key\)/.test(pageData) &&
+      /unstable_cache\(\(key: string\) => heldTopicPage\(key\)/.test(pageData)
+  );
+  check(
+    "a cached 'not held' is re-checked live, so a new subject is never hidden",
+    /return cached \? revive\(cached\) : heldCompanyPage\(k\);/.test(pageData) &&
+      /return cached \? revive\(cached\) : heldTopicPage\(k\);/.test(pageData)
+  );
+  check(
+    "the read after a first-visit gather bypasses the cache",
+    /const fresh = await heldCompanyPage\(ticker\);/.test(pageData) && /const fresh = await heldTopicPage\(topic\);/.test(pageData)
+  );
+  check("the cached Date is revived", /refreshedAt: page\.refreshedAt \? new Date\(page\.refreshedAt\) : null/.test(pageData));
+  for (const route of ["app/company/[ticker]/page.tsx", "app/topic/[slug]/page.tsx"]) {
+    const src = read(route);
+    check(
+      `${route.split("/")[1]} pages stay dynamic, so noStore() on a miss cannot become a 500`,
+      !/export const revalidate/.test(src) && !/generateStaticParams/.test(src) && /noStore\(\);/.test(src)
+    );
+  }
+  const industry = read("app/industry/[slug]/page.tsx");
+  check(
+    "sector pages are cached whole, and never call noStore()",
+    /export const revalidate = 900;/.test(industry) && /export async function generateStaticParams\(\)/.test(industry) && !/noStore/.test(industry)
+  );
+}
 check(
   "failed requests queue behind untried ones",
   /ORDER BY \(r\.last_error IS NOT NULL\), r\.requests DESC/.test(read("lib/ingest/queue.ts"))

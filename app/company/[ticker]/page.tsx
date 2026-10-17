@@ -12,7 +12,9 @@ import FollowBar from "@/components/FollowBar";
 import { getCompanyPageData } from "@/lib/page-data";
 import { absolute, breadcrumbLd, SITE_NAME } from "@/lib/seo";
 
-export const revalidate = 900;
+// No route-level revalidate: it never applied (the route is dynamic — a miss runs a first-visit
+// gather and must never be cached), and it read as if pages were cached. The held-page reads in
+// lib/page-data.ts carry the 15-minute cache instead (NC-159).
 
 const latestDate = (events: { date: string }[]) => events.reduce((m, e) => (e.date > m ? e.date : m), "");
 
@@ -38,11 +40,10 @@ export async function generateMetadata({
 export default async function CompanyPage({ params }: { params: { ticker: string } }) {
   const data = await getCompanyPageData(decodeURIComponent(params.ticker));
   /**
-   * A miss must never be cached. With `revalidate = 900`, a notFound render would be served
-   * statically for 15 minutes — so a first-visit gather that failed transiently (a throttled
-   * Yahoo, a slow proxy) pinned the miss page even after the attempt ledger's backoff had
-   * expired and a retry would have succeeded. `noStore()` opts THIS render out of the route
-   * cache; successful renders above it still cache for the full window.
+   * A miss must never be cached: a first-visit gather that failed transiently (a throttled Yahoo,
+   * a slow proxy) would pin the miss page after a retry could have succeeded. The route is
+   * dynamic for exactly this reason, and `noStore()` says so here as well; what is cached is the
+   * held-page read in lib/page-data.ts, never a miss (NC-159).
    */
   if (!data) {
     noStore();
@@ -126,16 +127,13 @@ export default async function CompanyPage({ params }: { params: { ticker: string
             width back as an explicit px value, so on a phone the two fed each other and the
             column settled ~2000px wide, scrolling the whole page sideways. */}
         <div className="min-w-0">
-          {data.prices.length > 0 ? (
-            <CompanyExplorer
-              prices={data.prices}
-              events={data.events}
-              siteDomain={data.siteDomain}
-              subject={data.name}
-            />
-          ) : (
-            <p className="text-slate-500">No price data available for {data.ticker}.</p>
-          )}
+          {/* Rendered without prices too: the explorer says the chart is missing (NC-103). */}
+          <CompanyExplorer
+            prices={data.prices}
+            events={data.events}
+            siteDomain={data.siteDomain}
+            subject={data.name}
+          />
         </div>
         <aside className="min-w-0 space-y-4">
           {/* which feeds actually contributed — a page with three feeds down looks fine

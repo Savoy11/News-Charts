@@ -1,4 +1,4 @@
-import { getJson, onchainEvent } from "./chain";
+import { ETHERSCAN_API, getJson, onchainEvent } from "./chain";
 import { USDT } from "./addresses";
 import { topicFor } from "./keccak";
 import type { FetchResult, TimelineEvent } from "../types";
@@ -17,12 +17,9 @@ import type { FetchResult, TimelineEvent } from "../types";
  * signature and is itself pinned against published digests.
  *
  * ⚠ **Still unverified live, and for a reason that has not changed: this needs `ETHERSCAN_API_KEY`,
- * which the build container does not have.** (Egress itself is open as of 2026-08-12 — several
- * adapters were exercised that day — so the key is the whole blocker here, and saying so is more
- * use than the blanket claim it replaces.) `npm run check:onchain` pins the parsing.
+ * which the build container does not have.** `npm run check:onchain` pins the parsing and the
+ * paging; the owner's live run is the confirmation.
  */
-
-const ETHERSCAN = "https://api.etherscan.io/api";
 
 export const ISSUE_TOPIC = topicFor("Issue(uint256)");
 export const REDEEM_TOPIC = topicFor("Redeem(uint256)");
@@ -34,6 +31,60 @@ interface EtherscanLog {
   /** hex, seconds */
   timeStamp?: string;
   transactionHash?: string;
+  /** hex */
+  blockNumber?: string;
+  /** hex, position within the block */
+  logIndex?: string;
+}
+
+/** Etherscan's getLogs page size, which is also its ceiling. */
+export const LOGS_PAGE = 1000;
+/** Pages read per event type before giving up and reporting the read as incomplete. */
+export const MAX_LOG_PAGES = 20;
+
+/**
+ * Every log for one topic, oldest to newest, paged forward by block.
+ *
+ * getLogs returns at most 1,000 rows in ascending block order and takes no sort. The adapter used
+ * to ask once from block 0, so once Tether had issued more than 1,000 times it read the oldest
+ * thousand and never saw a recent mint (NC-056). Paging by block rather than by `page` keeps
+ * every request a fresh 1,000-row window: the next one starts at the last block seen (again,
+ * since a block's logs can straddle the cut), and rows already read are skipped by identity.
+ */
+async function readAllLogs(
+  topic: string,
+  key: string
+): Promise<{ logs: EtherscanLog[]; failure: string | null }> {
+  const logs: EtherscanLog[] = [];
+  const seen = new Set<string>();
+  let fromBlock = 0;
+  for (let page = 0; page < MAX_LOG_PAGES; page++) {
+    const url =
+      `${ETHERSCAN_API}&module=logs&action=getLogs&address=${USDT.address}` +
+      `&topic0=${topic}&fromBlock=${fromBlock}&toBlock=latest&page=1&offset=${LOGS_PAGE}` +
+      `&apikey=${encodeURIComponent(key)}`;
+    const body = await getJson<{ status?: string; message?: string; result?: EtherscanLog[] | string }>(url);
+    // Etherscan answers errors with HTTP 200 and status "0", putting the message where the rows
+    // go — so a failure reads as an empty result unless both are checked.
+    if (!body) return { logs, failure: "Etherscan did not answer" };
+    if (body.status !== "1" || !Array.isArray(body.result)) {
+      if (body.message === "No records found") return { logs, failure: null };
+      const said = typeof body.result === "string" ? body.result : (body.message ?? "unexpected reply");
+      return { logs, failure: said.slice(0, 200) };
+    }
+    for (const log of body.result) {
+      const id = `${log.transactionHash}:${log.logIndex}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      logs.push(log);
+    }
+    if (body.result.length < LOGS_PAGE) return { logs, failure: null };
+    const last = Number(body.result[body.result.length - 1]?.blockNumber);
+    if (!Number.isFinite(last)) return { logs, failure: "a full page with no readable block number" };
+    // A full page inside a single block would ask the same window for ever; step past it.
+    fromBlock = last > fromBlock ? last : fromBlock + 1;
+  }
+  return { logs, failure: `more than ${MAX_LOG_PAGES * LOGS_PAGE} logs — read stopped early` };
 }
 
 /** A uint256 word of base units. BigInt because 18-decimal amounts exceed exact float range. */
@@ -62,24 +113,19 @@ export async function fetchUsdtSupplyMoves(
   limit = 40
 ): Promise<FetchResult> {
   const key = process.env.ETHERSCAN_API_KEY;
-  if (!key) return { events: [], outcome: "empty", detail: "no ETHERSCAN_API_KEY" };
+  // Unreadable without a key — logged as such, not as a quiet month (NC-142).
+  if (!key) return { events: [], outcome: "error", detail: "ETHERSCAN_API_KEY is not set" };
 
   const events: TimelineEvent[] = [];
+  const failures: string[] = [];
   for (const [topic, verb] of [
     [ISSUE_TOPIC, "minted"],
     [REDEEM_TOPIC, "burned"],
   ] as const) {
-    const url =
-      `${ETHERSCAN}?module=logs&action=getLogs&address=${USDT.address}` +
-      `&topic0=${topic}&fromBlock=0&toBlock=latest&page=1&offset=1000` +
-      `&apikey=${encodeURIComponent(key)}`;
+    const { logs, failure } = await readAllLogs(topic, key);
+    if (failure) failures.push(`${verb === "minted" ? "Issue" : "Redeem"}: ${failure}`);
 
-    const body = await getJson<{ status?: string; result?: EtherscanLog[] | string }>(url);
-    // Etherscan answers errors with HTTP 200 and status "0", putting the message where the rows
-    // go — so a failure reads as an empty result unless both are checked.
-    if (!body || body.status !== "1" || !Array.isArray(body.result)) continue;
-
-    for (const log of body.result) {
+    for (const log of logs) {
       if (log.topics?.[0]?.toLowerCase() !== topic.toLowerCase()) continue;
       const amount = amountFromData(log.data, USDT.decimals);
       if (amount === null || amount < minimum) continue;
@@ -103,11 +149,17 @@ export async function fetchUsdtSupplyMoves(
       });
       // withheld by the finality gate when the block has not settled
       if (event) events.push(event);
-      if (events.length >= limit) break;
     }
   }
+  // The newest material moves, the same choice the transfer reader makes with sort=desc.
   events.sort((a, b) => a.date.localeCompare(b.date));
-  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
+  const kept = events.slice(-limit);
+  // A read that stopped part-way is not a quiet month; what was read is still kept.
+  if (failures.length) {
+    const throttled = failures.every((f) => /rate limit/i.test(f));
+    return { events: kept, outcome: throttled ? "throttled" : "error", detail: failures.join("; ").slice(0, 300) };
+  }
+  return { events: kept, outcome: kept.length ? "ok" : "empty", httpStatus: 200 };
 }
 
 export async function getUsdtSupplyMoves(): Promise<TimelineEvent[]> {

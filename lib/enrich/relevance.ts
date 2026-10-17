@@ -1,6 +1,7 @@
 import { EventType, SourceKey } from "../types";
 import { WEAK_TOKENS } from "../newsQuality";
 import { dataBlock, untrustedNotice } from "./untrusted";
+import { REGISTRANT_FORM } from "../secForms";
 
 export const MODEL = "claude-haiku-4-5-20251001";
 
@@ -127,9 +128,14 @@ export function deterministicScore(
   strictHeadline = false
 ): Scored | null {
   switch (row.kind) {
-    // Indexed under the company's own CIK — it cannot be about anyone else.
+    // Indexed under the company's own CIK — it cannot be about anyone else. A fund's CIK is its
+    // trust's, though, and the trust files for every series it sells, so a registrant form is
+    // likely but not certainly about this fund (NC-139): still shown, no longer certain.
     case "filing":
     case "earnings":
+      if (REGISTRANT_FORM.test(row.title)) {
+        return { score: 0.7, reason: "filed by the fund's registrant, which files for every series it sells" };
+      }
       return { score: 1, reason: "filed under the subject's CIK" };
 
     // Extracted from the article the subject resolves to.

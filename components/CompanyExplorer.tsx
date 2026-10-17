@@ -215,10 +215,21 @@ export default function CompanyExplorer({ prices, events, siteDomain, subject }:
         </section>
       )}
 
-      {/* markers stay chronological; ranking narrows the list below */}
-      <PriceTimeline prices={prices} events={ranked} onSelectDate={handleSelectDate} />
-      {/* pairs each big move with the nearest displayed event, so it tracks the filters/search */}
-      <BiggestMoves prices={prices} events={ranked} onSelectDate={handleSelectDate} />
+      {prices.length > 0 ? (
+        <>
+          {/* markers stay chronological; ranking narrows the list below */}
+          <PriceTimeline prices={prices} events={ranked} onSelectDate={handleSelectDate} />
+          {/* pairs each big move with the nearest displayed event, so it tracks the filters/search */}
+          <BiggestMoves prices={prices} events={ranked} onSelectDate={handleSelectDate} />
+        </>
+      ) : (
+        // A company we hold with no closes yet renders its timeline rather than "not indexed"
+        // (NC-103); the gap is said where the chart would be.
+        <p className="mb-6 rounded-md border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-400">
+          No price data for this security yet. Its events are below; the chart appears once
+          prices have been fetched.
+        </p>
+      )}
       <Annotations path={pathname} />
       <div className="mt-6">
         <AiPanel

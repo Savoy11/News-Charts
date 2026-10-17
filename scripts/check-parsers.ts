@@ -12,7 +12,9 @@ config({ path: ".env.local" });
  * mode these guard.
  */
 import { extractYear, parseCitations } from "../lib/wiki";
-import { dividendTitle } from "../lib/prices";
+import { dividendTitle, fetchDailyPrices, splitsIn } from "../lib/prices";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { dropCompanyPrehistory } from "../lib/history";
 import { dropImplausiblePress, ABSOLUTE_FLOOR, fetchPressMentions } from "../lib/loc";
 import { waybackCouldHave, waybackUrl } from "../lib/wikidata";
@@ -203,7 +205,63 @@ async function newspaperTitles(): Promise<void> {
   }
 }
 
-newspaperTitles().then(() => {
+// NC-103: a refused chart fetch came back as an empty series and was never logged, so "Yahoo had
+// nothing" and "Yahoo said no" looked the same — and a company page needing prices said "not
+// indexed" over a timeline we held. NC-156: a new split left closes older than the 10-year window
+// on the old adjustment.
+async function priceFetch(): Promise<void> {
+  console.log("\nA price fetch says what happened");
+  const realFetch = globalThis.fetch;
+  let asked = "";
+  const answer = (status: number, body: unknown) => {
+    globalThis.fetch = (async (input: unknown) => {
+      asked = String(input);
+      return { ok: status < 400, status, json: async () => body } as unknown as Response;
+    }) as typeof fetch;
+  };
+  const chart = {
+    chart: {
+      result: [{
+        timestamp: [1709510400, 1709596800],
+        indicators: { quote: [{ close: [12.34, 12.5], volume: [100, 200] }] },
+        events: { splits: { "1709510400": { date: 1709510400, numerator: 2, denominator: 1 } } },
+      }],
+    },
+  };
+  try {
+    answer(200, chart);
+    const ok = await fetchDailyPrices("F");
+    check("closes come back as ok", ok.outcome === "ok" && ok.points.length === 2, ok.outcome);
+    check("  …with the 10-year range by default", /range=10y/.test(asked), asked);
+    await fetchDailyPrices("F", "max");
+    check("a full history can be asked for", /range=max/.test(asked), asked);
+    check("the split marker is picked out of the actions", splitsIn(ok.actions).length === 1 && splitsIn(ok.actions)[0].title === "2:1 stock split");
+    answer(429, {});
+    check("a 429 is throttled, not empty", (await fetchDailyPrices("F")).outcome === "throttled");
+    answer(404, { chart: { result: null, error: { code: "Not Found", description: "No data found, symbol may be delisted" } } });
+    const refused = await fetchDailyPrices("NOPE");
+    check("a refusal is an error that says why", refused.outcome === "error" && /delisted/.test(refused.detail ?? ""), `${refused.outcome}: ${refused.detail}`);
+    answer(200, { chart: { result: [{ timestamp: [], indicators: { quote: [{}] } }] } });
+    check("an answer with no closes is honestly empty", (await fetchDailyPrices("F")).outcome === "empty");
+    globalThis.fetch = (async () => {
+      throw new Error("socket hang up");
+    }) as unknown as typeof fetch;
+    const down = await fetchDailyPrices("F");
+    check("an unreachable host is an error, not a throw", down.outcome === "error" && /socket/.test(down.detail ?? ""));
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+
+  const read = (f: string) => readFileSync(join(process.cwd(), f), "utf8");
+  const ingest = read("scripts/ingest.ts");
+  check("company prices are windowed, backed off and logged under their own key", /due\.has\("yahoo_prices"\)/.test(ingest) && /shouldBackOff\(client, "yahoo_prices"/.test(ingest) && /"yahoo_prices",\s+subjectId,\s+company\.ticker,\s+daily\.outcome/.test(ingest));
+  check("a new split re-reads the whole history and replaces it", /splitNeedsFullHistory\(client, subjectId, daily\.points, splitsIn\(daily\.actions\)\)/.test(ingest) && /fetchDailyPrices\(company\.ticker, "max"\)/.test(ingest) && /writePrices\(client, subjectId, daily\.points, \{ replace, dropBefore \}\)/.test(ingest));
+  check("a company page needs events, not prices", /if \(!events\.length\) return null;/.test(read("lib/page-data.ts")));
+  check("  …and says the chart is missing where it would be", /No price data for this security yet/.test(read("components/CompanyExplorer.tsx")));
+  check("a first visit no longer counts a Yahoo refusal against a real company", /if \(!filings\.length\) \{/.test(read("lib/ingest/firstPass.ts")) && !/!daily\.points\.length/.test(read("lib/ingest/firstPass.ts")));
+}
+
+newspaperTitles().then(priceFetch).then(() => {
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);
 });

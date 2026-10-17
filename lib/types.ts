@@ -28,6 +28,7 @@ export type SourceKey =
   | "sec_edgar"
   | "federal_register"
   | "yahoo_finance"
+  | "yahoo_prices"
   | "nyt"
   | "guardian"
   | "newsdata"
@@ -59,6 +60,12 @@ export interface TimelineEvent {
   externalId?: string;
   /** identity of the *event* — two items with the same basis are the same happening */
   dedupBasis?: string;
+  /**
+   * The basis this source used before its identity changed. A row still stored under it is
+   * re-keyed — or merged into the row already holding the new identity — when the item is seen
+   * again, so a key change never duplicates what is already on the timeline.
+   */
+  legacyDedupBasis?: string;
   /**
    * How precise the source actually was. `date` is always a full day so it can be sorted and
    * plotted, but a month-precision date is normalised to the 1st and a year-precision one to

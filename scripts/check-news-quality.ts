@@ -19,6 +19,11 @@ import {
   titleNamesSubject,
 } from "../lib/newsQuality";
 import type { TimelineEvent } from "../lib/types";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fetchNews } from "../lib/news";
+import { fetchYahooFinanceNews } from "../lib/newsExtra";
+import { dedupKey } from "../lib/ingest/keys";
 
 let pass = 0;
 let fail = 0;
@@ -126,5 +131,47 @@ console.log("\nThe floor applies only where it was opted in");
   check("an event with no source key is never filtered", kept.some((e) => !e.sourceKey));
 }
 
-console.log(`\n${pass}/${pass + fail} checks passed\n`);
-if (fail) process.exit(1);
+/**
+ * NC-154: GDELT keyed a story on its raw headline and a compact date (`Title|20240304`) while
+ * every other feed used `storyKey`, so the same story from GDELT and Yahoo could never collapse
+ * into one event — which also answered the open NC-033 question of whether it did.
+ */
+async function crossFeed(): Promise<void> {
+  console.log("\nOne story from GDELT and Yahoo is one event");
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: unknown) => {
+    const url = String(input);
+    const body = url.includes("gdeltproject")
+      ? JSON.stringify({
+          articles: [
+            { title: "Ford recalls 500,000 SUVs over brake fault - Reuters", seendate: "20240304T121500Z", url: "https://www.reuters.com/x", domain: "reuters.com" },
+          ],
+        })
+      : `<rss><channel><item><title>Ford recalls 500,000 SUVs over brake fault</title><link>https://finance.yahoo.com/x</link>` +
+        `<pubDate>Mon, 04 Mar 2024 15:00:00 GMT</pubDate></item></channel></rss>`;
+    return { ok: true, status: 200, text: async () => body, json: async () => JSON.parse(body) } as unknown as Response;
+  }) as typeof fetch;
+  try {
+    const [g] = (await fetchNews("Ford")).events;
+    const [y] = (await fetchYahooFinanceNews("F")).events;
+    check("GDELT keys a story the way every other feed does", g?.dedupBasis === storyKey(g?.title ?? "", g?.date ?? ""), g?.dedupBasis);
+    check("  …so its copy and Yahoo's share one identity", !!g && !!y && dedupKey(g.dedupBasis!).equals(dedupKey(y.dedupBasis!)), `${g?.dedupBasis} / ${y?.dedupBasis}`);
+    check("  …while the article URL still identifies the document", g?.externalId === "https://www.reuters.com/x");
+    check("the old basis rides along, so a stored row is re-keyed rather than duplicated", g?.legacyDedupBasis === "Ford recalls 500,000 SUVs over brake fault - Reuters|20240304", g?.legacyDedupBasis);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+
+  const store = readFileSync(join(process.cwd(), "lib/ingest/store.ts"), "utf8");
+  const upsert = store.slice(store.indexOf("export async function upsertEvent("));
+  check("upsert moves a legacy row before reading the key", upsert.indexOf("rekeyEvent(client, dedupKey(ev.legacyDedupBasis), key)") > -1 && upsert.indexOf("rekeyEvent(") < upsert.indexOf("SELECT EXISTS"));
+  const merge = store.slice(store.indexOf("export async function mergeEvents("), store.indexOf("export async function upsertEvent("));
+  check("a merge carries citations across before the delete", merge.indexOf("UPDATE synthesis_citations") > -1 && merge.indexOf("UPDATE synthesis_citations") < merge.indexOf("DELETE FROM events"));
+  check("  …and moved attestations never take the survivor's primary", /SET event_id = \$1, is_primary = false/.test(merge));
+  check("stored rows can be moved in one pass", /"rekey:gdelt": "tsx scripts\/rekey-gdelt\.ts"/.test(readFileSync(join(process.cwd(), "package.json"), "utf8")));
+}
+
+crossFeed().then(() => {
+  console.log(`\n${pass}/${pass + fail} checks passed\n`);
+  if (fail) process.exit(1);
+});

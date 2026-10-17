@@ -11,6 +11,15 @@ import { chainOfRef, isFinal } from "./finality";
 const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 
 /** Explorers rate-limit modestly and we ask for very little; one retry is plenty. */
+/**
+ * Etherscan's V2 multichain API, pinned to Ethereum mainnet. Append `&module=…` to it.
+ *
+ * V1 (`api.etherscan.io/api`) was retired in 2025: it now answers every call with status "0" and
+ * "You are using a deprecated V1 endpoint", confirmed live 2026-09-28. Both supply feeds were
+ * built on it, so every stablecoin and USDT timeline had been empty since (NC-054).
+ */
+export const ETHERSCAN_API = "https://api.etherscan.io/v2/api?chainid=1";
+
 export async function getJson<T>(url: string): Promise<T | null> {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {

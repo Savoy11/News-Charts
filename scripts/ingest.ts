@@ -14,6 +14,8 @@ import {
   upsertTopicSubject,
   linkToIndustry,
   linkToSector,
+  writePrices,
+  splitNeedsFullHistory,
   emptyStats,
   loadLastFetched,
   type UpsertStats,
@@ -22,14 +24,14 @@ import {
 import { aliasesFor } from "../lib/enrich/relevance";
 import { selectStaleSources, ttlFor } from "../lib/ingest/refresh";
 import { collapseNearDuplicates } from "../lib/newsQuality";
-import type { FetchResult, PricePoint, SourceKey, TimelineEvent } from "../lib/types";
+import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
 import { getTopicTimeline, articleAnswersSlug, articleCoversSlug, topicSlugFromTitle, WikipediaUnavailable, wikiOutcome } from "../lib/wiki";
 import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
 import { fetchNews } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
 import { resolveCompany, getFilingsDeep, getIndustry, commonName } from "../lib/sec";
-import { getDailyPrices } from "../lib/prices";
+import { fetchDailyPrices, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
@@ -62,6 +64,7 @@ export const COMPANY_SOURCES = [
   "sec_edgar",
   "gdelt",
   "yahoo_finance",
+  "yahoo_prices",
   "loc_chronam",
   "internet_archive",
 ] as const satisfies readonly SourceKey[];
@@ -505,45 +508,68 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     collapseNearDuplicates(e)
   );
 
-  // Prices come off the same host and the same licence as the RSS feed above, so they share its
-  // window: closes are daily bars, and re-asking for them twice an hour buys nothing.
-  if (!due.has("yahoo_finance")) {
-    line("prices", `fresh     inside its ${ttlFor("yahoo_finance")} min window`);
+  /**
+   * Prices under a key of their own (NC-103). They shared the RSS feed's window and were never
+   * logged, so a refused or empty chart fetch left no trace: the Sources panel showed Yahoo as
+   * fine, nothing backed off, and the company page — which leads with the chart — had nothing to
+   * draw. Now the fetch is windowed, backed off and logged like every other source.
+   */
+  if (!due.has("yahoo_prices")) {
+    line("yahoo_prices", `fresh     inside its ${ttlFor("yahoo_prices")} min window`);
+    return { ingested: true };
+  }
+  await assertCommercialOk(client, "yahoo_prices");
+  const priceBackoff = await shouldBackOff(client, "yahoo_prices", subjectId, BACKOFF_MINUTES);
+  if (priceBackoff) {
+    line("yahoo_prices", `skipped   last attempt ${priceBackoff}, within ${BACKOFF_MINUTES} min backoff`);
     return { ingested: true };
   }
 
-  const { points, actions } = await getDailyPrices(company.ticker);
-  if (points.length) {
-    await client.query(
-      `INSERT INTO prices (subject_id, on_date, close, volume)
-       SELECT $1, d, c, v FROM unnest($2::date[], $3::numeric[], $4::bigint[]) AS t(d, c, v)
-       ON CONFLICT (subject_id, on_date) DO UPDATE
-          SET close = EXCLUDED.close,
-              volume = COALESCE(EXCLUDED.volume, prices.volume)`,
-      [
-        subjectId,
-        points.map((p) => p.time),
-        points.map((p) => p.value),
-        points.map((p) => p.volume ?? null),
-      ]
-    );
-  }
-  const withVolume = points.filter((p) => p.volume != null).length;
-  line("prices", `${points.length} daily closes (${withVolume} with volume)`);
-
-  // Dividends and splits ride the same chart response, so they cost no extra request.
-  if (actions.length) {
-    const stats = emptyStats();
-    await client.query("BEGIN");
-    try {
-      for (const ev of actions) await upsertEvent(client, ev, subjectId, stats, scoring);
-      await client.query("COMMIT");
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
+  let daily = await fetchDailyPrices(company.ticker);
+  // A split we have not seen re-adjusts every earlier close; re-read the whole history so rows
+  // older than the 10-year window do not keep the old adjustment (NC-156).
+  let replace = false;
+  let dropBefore: string | undefined;
+  if (await splitNeedsFullHistory(client, subjectId, daily.points, splitsIn(daily.actions))) {
+    const full = await fetchDailyPrices(company.ticker, "max");
+    if (full.outcome === "ok") {
+      daily = { ...full, actions: daily.actions };
+      replace = true;
+      line("yahoo_prices", `new split — re-read the full history (${full.points.length} closes)`);
+    } else {
+      dropBefore = daily.points[0].time;
+      line("yahoo_prices", `new split — full history unavailable (${full.outcome}); dropping closes before ${dropBefore}`);
     }
-    line("yahoo_finance", `${actions.length} corporate actions (dividends + splits)`);
   }
+
+  const stats = emptyStats();
+  await client.query("BEGIN");
+  try {
+    await writePrices(client, subjectId, daily.points, { replace, dropBefore });
+    // Dividends and splits ride the same chart response, so they cost no extra request.
+    for (const ev of daily.actions) await upsertEvent(client, ev, subjectId, stats, scoring);
+    await logFetch(
+      client,
+      "yahoo_prices",
+      subjectId,
+      company.ticker,
+      daily.outcome,
+      daily.points.length,
+      daily.httpStatus,
+      daily.detail
+    );
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  }
+  const withVolume = daily.points.filter((p) => p.volume != null).length;
+  line(
+    "yahoo_prices",
+    daily.outcome === "ok"
+      ? `ok        ${daily.points.length} daily closes (${withVolume} with volume), ${daily.actions.length} corporate actions`
+      : `${daily.outcome.padEnd(9)} ${daily.detail ?? "no closes"}`
+  );
   return { ingested: true };
 }
 
@@ -609,7 +635,7 @@ async function linkCryptoSectors(client: PoolClient, slug: string): Promise<void
 }
 
 /** Every source an on-chain subject draws from, prices included. */
-const ONCHAIN_SOURCES: readonly SourceKey[] = ["onchain", "snapshot", "defillama", "yahoo_finance"];
+const ONCHAIN_SOURCES: readonly SourceKey[] = ["onchain", "snapshot", "defillama", "yahoo_prices"];
 
 export async function ingestOnchain(client: PoolClient, which: string): Promise<IngestOutcome> {
   const targets = which === "all" ? CRYPTO_SUBJECTS : CRYPTO_SUBJECTS.filter((c) => c.slug === which);
@@ -694,38 +720,32 @@ export async function ingestOnchain(client: PoolClient, which: string): Promise<
     // Yahoo quotes crypto under `BTC-USD` — the same chart endpoint companies use, so the
     // price series and its overlays come for free. Windowed like a company's prices, and logged
     // so the window has something to read.
-    if (asset.yahooSymbol && due.has("yahoo_finance")) {
-      // An unreachable Yahoo throws out of getDailyPrices; logged as an error (and backed off
-      // like any source) instead of ending this asset's run part-way.
-      let points: PricePoint[] = [];
-      let failed: string | null = null;
+    if (asset.yahooSymbol && due.has("yahoo_prices")) {
+      const daily = await fetchDailyPrices(asset.yahooSymbol);
+      await client.query("BEGIN");
       try {
-        ({ points } = await getDailyPrices(asset.yahooSymbol));
-      } catch (err) {
-        failed = (err as Error).message;
-      }
-      await logFetch(
-        client,
-        "yahoo_finance",
-        subjectId,
-        asset.yahooSymbol,
-        failed ? "error" : points.length ? "ok" : "empty",
-        points.length,
-        undefined,
-        failed?.slice(0, 200)
-      );
-      if (failed) line("prices", `FAILED    ${failed}`);
-      if (points.length) {
-        await client.query(
-          `INSERT INTO prices (subject_id, on_date, close, volume)
-           SELECT $1, d, c, v FROM unnest($2::date[], $3::numeric[], $4::bigint[]) AS t(d, c, v)
-           ON CONFLICT (subject_id, on_date) DO UPDATE
-              SET close = EXCLUDED.close,
-                  volume = COALESCE(EXCLUDED.volume, prices.volume)`,
-          [subjectId, points.map((p) => p.time), points.map((p) => p.value), points.map((p) => p.volume ?? null)]
+        await writePrices(client, subjectId, daily.points);
+        await logFetch(
+          client,
+          "yahoo_prices",
+          subjectId,
+          asset.yahooSymbol,
+          daily.outcome,
+          daily.points.length,
+          daily.httpStatus,
+          daily.detail
         );
+        await client.query("COMMIT");
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
       }
-      if (!failed) line("prices", `${points.length} daily closes for ${asset.yahooSymbol}`);
+      line(
+        "yahoo_prices",
+        daily.outcome === "ok"
+          ? `ok        ${daily.points.length} daily closes for ${asset.yahooSymbol}`
+          : `${daily.outcome.padEnd(9)} ${daily.detail ?? "no closes"}`
+      );
     }
   }
   return { ingested: true };

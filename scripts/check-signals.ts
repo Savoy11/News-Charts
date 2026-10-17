@@ -13,6 +13,7 @@
  * the queries, and these are the separable parts. They were also module-private until 2026-08-12,
  * so no check could have reached them even if one had been written.
  */
+import { readFileSync } from "node:fs";
 import { median, mad, isSpike, weekEnd } from "../lib/signals";
 import { configProblem } from "../lib/db";
 
@@ -80,6 +81,22 @@ console.log("\nStartup failures an operator can fix");
   // The half that matters more: an unexpected error must NOT be swallowed into a tidy sentence.
   check("an unexpected error keeps its stack", configProblem(new Error("Cannot read properties of undefined")) === null);
   check("a non-Error is handled without throwing", configProblem("boom") === null);
+}
+
+console.log("\nThe queries behind the signals");
+{
+  // Read as text: these run against Postgres, which this suite never reaches. Verified live on
+  // 2026-10-17 against a scratch database — see the NC ledger closures for NC-101 and NC-102.
+  const src = readFileSync("lib/signals.ts", "utf8");
+  const fn = (name: string) => src.match(new RegExp(`async function ${name}\\([\\s\\S]*?\\n}\\n`))?.[0] ?? "";
+  // NC-101: crossPeerWeeks was the one signal query without the display gate.
+  for (const name of ["weeklyCounts", "crossPeerWeeks", "eventsForDivergence"]) {
+    check(`${name} applies the display gate`, /es\.relevance >= \$\{RELEVANCE_THRESHOLD\}/.test(fn(name)));
+  }
+  // NC-102: each member's return used its own first and last close since the window start.
+  const div = fn("priceDivergence");
+  check("price divergence measures every member over the same dates", /BETWEEN w\.d0 AND w\.d1/.test(div) && /common AS/.test(div));
+  check("  …and leaves out a member listed well inside the window", /comparable AS/.test(div));
 }
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);

@@ -162,6 +162,8 @@ export async function firstPassTopic(rawSlug: string): Promise<FirstPassOutcome>
         // Timed out is not "names nothing" — but for the visitor's purposes both mean the
         // notice today; the distinction lives in the ledger (a timeout retries sooner
         // than a dead slug because failures only accrue toward death on a real miss).
+        // A throttled or failing Wikipedia throws WikipediaUnavailable, which withTimeout
+        // resolves as a timeout — so it never counts toward death either (NC-146).
         if (!timedOut(wiki)) await recordFailure(client, slug);
         return "unresolvable";
       }

@@ -156,6 +156,59 @@ async function main(): Promise<void> {
   await getFilingsDeep(co, true);
   check("deep asks for the shard too", asked.some((u) => u.includes("submissions-001.json")), asked.join(" "));
 
+  console.log("\nA Wikipedia that cannot answer is not a Wikipedia with no article");
+  // NC-146: any non-OK status read as "no article", so a throttled Wikipedia pushed real topics
+  // toward the first pass's week-long block and gave the scheduler nothing to ingest.
+  const { getTopicTimeline, WikipediaUnavailable, wikiOutcome } = await import("../lib/wiki");
+  const { withTimeout, timedOut } = await import("../lib/timeout");
+  const wikiServes = (status: number, body: unknown = {}) => {
+    (globalThis as { fetch: unknown }).fetch = async () =>
+      ({ ok: status >= 200 && status < 300, status, json: async () => body }) as unknown as Response;
+  };
+  const outcomeOf = async (): Promise<string> => {
+    try {
+      return (await getTopicTimeline("penicillin")) === null ? "no article" : "article";
+    } catch (err) {
+      return err instanceof WikipediaUnavailable ? `unavailable:${wikiOutcome(err)}` : `threw:${(err as Error).message}`;
+    }
+  };
+  wikiServes(200, { query: { pages: { "-1": { title: "Penicillin", missing: "" } }, search: [] } });
+  check("a missing page is still no article", (await outcomeOf()) === "no article", await outcomeOf());
+  wikiServes(429);
+  check("a 429 is unavailable, and backs off as throttled", (await outcomeOf()) === "unavailable:throttled", await outcomeOf());
+  wikiServes(503);
+  check("a 503 is unavailable, and backs off as throttled", (await outcomeOf()) === "unavailable:throttled", await outcomeOf());
+  wikiServes(500);
+  check("a 500 is unavailable, logged as an error", (await outcomeOf()) === "unavailable:error", await outcomeOf());
+  (globalThis as { fetch: unknown }).fetch = async () => {
+    throw new TypeError("fetch failed");
+  };
+  check("a refused connection is unavailable too", (await outcomeOf()) === "unavailable:error", await outcomeOf());
+  wikiServes(429);
+  const raced = await withTimeout(getTopicTimeline("penicillin"), 1_000);
+  check("the first pass sees it as a timeout, never a miss", timedOut(raced));
+  check(
+    "  …and records a failure only on a real miss",
+    /if \(!timedOut\(wiki\)\) await recordFailure\(/.test(firstPassSrc)
+  );
+  // The main article answered; a companion that cannot be fetched this moment is left out.
+  (globalThis as { fetch: unknown }).fetch = async (input: RequestInfo | URL) => {
+    const url = decodeURIComponent(String(input));
+    const ok = !url.includes("Timeline of");
+    return {
+      ok,
+      status: ok ? 200 : 429,
+      json: async () =>
+        url.includes("action=parse")
+          ? { parse: { wikitext: { "*": "" } } }
+          : url.includes("History of")
+            ? { query: { pages: { "-1": { missing: "" } } } }
+            : { query: { pages: { "1": { title: "Penicillin", extract: "Penicillin was discovered in 1928 by Alexander Fleming." } } } },
+    } as unknown as Response;
+  };
+  const withCompanionDown = await getTopicTimeline("penicillin").catch(() => null);
+  check("a companion article Wikipedia cannot serve is only left out", withCompanionDown?.title === "Penicillin", String(withCompanionDown?.title));
+
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);
 }

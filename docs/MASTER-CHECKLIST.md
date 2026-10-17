@@ -20,6 +20,59 @@ priorities, and progress. Add to it, check things off, re-prioritise. This is a 
 - **Related News Charts docs:** `README.md` (feature notes), `docs/EVENTS-SCHEMA.md` (the events
   schema spec). This checklist tracks *work*; those describe *what exists*.
 
+## NC ledger — batch 2: the pipeline records what happened (2026-10-17)
+
+Eleven more ledger items, mostly about ingest telling the truth: a source that could not answer
+is logged as throttled or an error (not "no data"), a request is closed only when a subject
+exists behind it, and identity rules stop refusing or duplicating real subjects. Every `npm run
+check` suite passes; lint shows only the three known warnings (NC-049); `next build` compiles.
+Live checks ran against a seeded Postgres 16 and `next dev`. This session's egress proxy refuses
+Wikipedia, the SEC and Yahoo, so the live runs used that: an unreachable Wikipedia is a real
+outage case.
+
+- ⚠ **Owner action: run `npm run db:migrate`** wherever the database lives. `db/021_shared_cik.sql`
+  (NC-138) must be applied before a second share class can be ingested.
+- [x] **NC-142 — Internet Archive, Yahoo RSS and on-chain failures keep their outcome.** Ingest
+      calls `fetchArchiveItems` directly. Yahoo RSS gained `fetchYahooFinanceNews`, and on-chain
+      gained `fetchOnchainFor` with one result per feed (stablecoin feed and halvings now report
+      outages too). `asResult`, which re-derived ok/empty from the event count, is gone. Cases in
+      `check:archive` and `check:onchain`.
+- [x] **NC-146 — a Wikipedia that cannot answer is not a missing article.** Non-OK statuses and
+      refused connections throw `WikipediaUnavailable`. The first pass treats it as a timeout,
+      never a strike toward the week-long block. The scheduler logs it, keeps a held topic's
+      stored article and still runs LoC, GDELT and the Internet Archive. Companion "Timeline of"
+      articles degrade instead of failing the page. Cases in `check:ondemand`. Live: with
+      Wikipedia unreachable, a queued new topic stays pending with "Wikipedia unavailable".
+- [x] **NC-144 — demand requests are fulfilled only when something was ingested.** Every ingester
+      returns `IngestOutcome`; anything else is `markFailed` with the reason and stays pending.
+      Failed requests queue behind untried ones, so a popular unresolvable one cannot hold a
+      slot every run. Live: a request whose subject was locked was marked ✓ fulfilled on main;
+      on this branch it stays pending with "locked by a first-visit gather".
+- [x] **NC-148 — every on-chain feed is licence-checked under its own key** (`onchain`,
+      `snapshot`, `defillama`), and `check:wiring` covers the paths outside topic/company ingest.
+- [x] **NC-151 — backups never prune after an unverified dump.** Live: with a failing
+      `pg_restore`, 15 old dumps were all kept; with a working one, pruning ran as before.
+- [x] **NC-099 — the scheduler keys a new topic on its Wikipedia article** (`upsertTopicSubject`),
+      as the first pass does, so a second phrasing no longer mints a duplicate subject.
+- [x] **NC-138 — several securities can share one registrant CIK.** `db/021_shared_cik.sql` drops
+      `subjects_cik_uq` for a plain index; the ticker stays unique. The spec and `db/001` are
+      regenerated to match. Live: on main's schema GOOG after GOOGL fails on `subjects_cik_uq`;
+      on this branch both insert, and a duplicate ticker is still refused. `check:tickers` reads
+      the migrations in order and fails if the CIK ends up unique.
+- [x] **NC-161 — `/company/<name>` serves the company we hold.** The page path resolves the name
+      from the committed index (`resolveTickerLocally`, never a request) and redirects to the
+      ticker. Live: `/company/Ford` showed "Not on News Charts yet" on main, claimed a re-fetch
+      and queued a request for ticker "Ford"; on this branch it lands on `/company/F` with nothing
+      fetched or queued.
+- [x] **NC-101 — the cross-peer signal applies the display gate** its two siblings apply.
+- [x] **NC-102 — price divergence measures every member over the same dates.** A member listed
+      more than a week into the window is left out. Live, on a scratch database: main reported a
+      November listing as "outran the sector by 75 points" and an irrelevant shared story as a
+      cluster; this branch reports the real outlier (+30 over the full year) and no cluster.
+- [x] **NC-116 — `scratch-parse.ts` removed** (a one-off debug script reading `/tmp/s.html`).
+- Not in this batch: NC-147 (on-chain ignores refresh windows and back-off). Per-feed outcomes
+  are logged now, so that item can build on them.
+
 ## NC ledger — first batch of fixes (2026-10-17)
 
 Ten small, high-confidence items from the work ledger

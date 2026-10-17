@@ -20,6 +20,8 @@ config({ path: ".env.local" });
  * documentation-derived — that one caveat is real, and it is the only one.
  */
 import { fetchArchiveItems, fetchSiteSnapshots, parseArchiveDate } from "../lib/archive";
+import { fetchYahooFinanceNews } from "../lib/newsExtra";
+import { readFileSync } from "node:fs";
 
 let pass = 0;
 let fail = 0;
@@ -161,6 +163,36 @@ async function items(): Promise<void> {
   }) as typeof fetch;
   const thrown = await fetchArchiveItems("x");
   check("a thrown request is an error, not a crash", thrown.outcome === "error" && thrown.events.length === 0);
+
+  /**
+   * NC-142: the outcomes above were computed and then thrown away. Ingest wrapped the adapter in
+   * `asResult`, which re-derived ok/empty from the event count — so a throttled archive was logged
+   * as a successful fetch of nothing, with no back-off and a healthy-looking status.
+   */
+  const ingestSrc = readFileSync("scripts/ingest.ts", "utf8");
+  check("ingest hands runSource the archive's own outcome", /\(\) => fetchArchiveItems\(/.test(ingestSrc) && !/getArchiveItems/.test(ingestSrc));
+  check("  …and nothing re-derives an outcome from an event count", !/asResult/.test(ingestSrc));
+
+  console.log("\nYahoo Finance RSS keeps its outcome too");
+  const rss = (status: number, xml = "") => {
+    globalThis.fetch = (async () => ({ ok: status === 200, status, text: async () => xml })) as unknown as typeof fetch;
+  };
+  rss(200, "<rss><channel></channel></rss>");
+  check("no headlines is empty", (await fetchYahooFinanceNews("F")).outcome === "empty");
+  rss(200, `<rss><channel><item><title>Ford raises guidance</title><link>https://finance.yahoo.com/a</link><pubDate>Tue, 07 Jul 2026 12:00:00 GMT</pubDate></item></channel></rss>`);
+  const one = await fetchYahooFinanceNews("F");
+  check("a headline is ok", one.outcome === "ok" && one.events.length === 1, `${one.outcome} ${one.events.length}`);
+  rss(429);
+  check("a 429 is throttled", (await fetchYahooFinanceNews("F")).outcome === "throttled");
+  rss(503);
+  check("a 503 is throttled", (await fetchYahooFinanceNews("F")).outcome === "throttled");
+  rss(404);
+  check("any other status is an error", (await fetchYahooFinanceNews("F")).outcome === "error");
+  globalThis.fetch = (async () => {
+    throw new Error("network down");
+  }) as typeof fetch;
+  check("a thrown request is an error", (await fetchYahooFinanceNews("F")).outcome === "error");
+  check("ingest uses the outcome-keeping adapter", /\(\) => fetchYahooFinanceNews\(/.test(ingestSrc) && !/getYahooFinanceNews/.test(ingestSrc));
 }
 
 async function snapshots(): Promise<void> {

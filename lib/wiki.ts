@@ -10,13 +10,33 @@ interface Page {
   image?: string;
 }
 
+/**
+ * Wikipedia could not be asked — a 429, a 5xx, a refused connection. Not "there is no article".
+ *
+ * Both used to read as `null`, so a throttled Wikipedia told the first pass a real topic named
+ * nothing — four of those in a row marked it dead for a week — and told the scheduler there was
+ * nothing to ingest, with no fetch-log row and no try at the other sources (NC-146). A missing
+ * page is a 200 with `missing` set; any non-OK status is the API failing to answer.
+ */
+export class WikipediaUnavailable extends Error {
+  constructor(readonly status?: number) {
+    super(`Wikipedia unavailable${status ? ` (HTTP ${status})` : ""}`);
+    this.name = "WikipediaUnavailable";
+  }
+}
+
+/** What a scheduled path logs for an unanswered Wikipedia: 429/503 back off, anything else is an error. */
+export function wikiOutcome(err: WikipediaUnavailable): "throttled" | "error" {
+  return err.status === 429 || err.status === 503 ? "throttled" : "error";
+}
+
 async function getExtract(title: string): Promise<Page | null> {
   // pageimages rides along in the same request — one call gets the prose and the lead thumbnail.
   const url = `${API}?action=query&prop=extracts|pageimages&explaintext=1&piprop=thumbnail&pithumbsize=400&redirects=1&format=json&titles=${encodeURIComponent(
     title
   )}`;
-  const res = await fetch(url, { headers: UA, next: { revalidate: 86400 } });
-  if (!res.ok) return null;
+  const res = await fetch(url, { headers: UA, next: { revalidate: 86400 } }).catch(() => null);
+  if (!res?.ok) throw new WikipediaUnavailable(res?.status);
   const json = await res.json();
   const pages = json?.query?.pages ?? {};
   const page = Object.values(pages)[0] as {
@@ -35,8 +55,8 @@ async function searchTitle(query: string): Promise<string | null> {
   const url = `${API}?action=query&list=search&srsearch=${encodeURIComponent(
     query
   )}&srlimit=1&format=json`;
-  const res = await fetch(url, { headers: UA, next: { revalidate: 86400 } });
-  if (!res.ok) return null;
+  const res = await fetch(url, { headers: UA, next: { revalidate: 86400 } }).catch(() => null);
+  if (!res?.ok) throw new WikipediaUnavailable(res?.status);
   const json = await res.json();
   return json?.query?.search?.[0]?.title ?? null;
 }
@@ -438,6 +458,10 @@ export function articleAnswersSlug(slug: string, title: string): boolean {
   );
 }
 
+/**
+ * The topic's Wikipedia timeline, or `null` when Wikipedia has no article for it. Throws
+ * `WikipediaUnavailable` when it could not be asked — callers must not read that as a miss.
+ */
 export async function getTopicTimeline(topic: string): Promise<TopicResult | null> {
   const t = topic.trim();
   let page = (await getExtract(`History of the ${t}`)) ?? (await getExtract(`History of ${t}`));
@@ -456,11 +480,10 @@ export async function getTopicTimeline(topic: string): Promise<TopicResult | nul
       .find((p) => p.length > 40 && !p.startsWith("==")) ?? "";
 
   // "Timeline of ..." articles are already chronological and often cover events the prose
-  // article skips, so merge them in when one exists.
-  const companions = await Promise.all([
-    getExtract(`Timeline of the ${t}`),
-    getExtract(`Timeline of ${t}`),
-  ]);
+  // article skips, so merge them in when one exists. An enrichment: the main article already
+  // answered, so a companion Wikipedia cannot serve this moment is simply left out.
+  const companion = (title: string) => getExtract(title).catch(() => null);
+  const companions = await Promise.all([companion(`Timeline of the ${t}`), companion(`Timeline of ${t}`)]);
 
   const pages: Page[] = [page];
   for (const c of companions) {

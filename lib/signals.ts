@@ -119,6 +119,10 @@ async function crossPeerWeeks(memberIds: number[], since: string) {
            JOIN subjects m ON m.id = es.subject_id AND m.kind = 'company'
                           AND m.id = ANY($1::bigint[])
           WHERE e.occurred_on >= $2
+            -- the display gate its two siblings apply: a peer counts only where the link shows.
+            -- Without it a low-relevance event hidden from every page could still make a
+            -- "touching N peers" signal that the paid explain pass then narrates (NC-101)
+            AND (es.relevance IS NULL OR es.relevance >= ${RELEVANCE_THRESHOLD})
           GROUP BY e.id, e.occurred_on
          HAVING count(DISTINCT m.id) > 1
        ) e
@@ -156,24 +160,45 @@ async function eventsForDivergence(subjectId: number, since: string): Promise<nu
   return rows.map((r) => Number(r.id));
 }
 
-/** A member whose return over the window diverges most from its peers'. */
+/**
+ * A member whose return over the window diverges most from its peers'.
+ *
+ * Every member is measured over the SAME dates. Each used to take its own first and last close
+ * since the window start, so a member whose prices began late was compared over a shorter period
+ * than its peers and could "diverge" for no reason but arithmetic (NC-102). A member that starts
+ * or stops trading more than a week inside the window is left out rather than shrinking everyone
+ * else's window to fit it — a recent listing is not a sector outlier.
+ */
 async function priceDivergence(memberIds: number[], since: string) {
   const { rows } = await getPool().query(
     `WITH members AS (
        SELECT id, ticker FROM subjects WHERE id = ANY($1::bigint[])
-     ), bounds AS (
-       SELECT p.subject_id,
-              (array_agg(p.close ORDER BY p.on_date))[1]                      AS first_close,
-              (array_agg(p.close ORDER BY p.on_date DESC))[1]                 AS last_close,
-              min(p.on_date) AS d0, max(p.on_date) AS d1
+     ), span AS (
+       SELECT p.subject_id, min(p.on_date) AS d0, max(p.on_date) AS d1
          FROM prices p JOIN members m ON m.id = p.subject_id
         WHERE p.on_date >= $2
+        GROUP BY p.subject_id
+     ), comparable AS (
+       SELECT s.subject_id FROM span s
+        WHERE s.d0 <= (SELECT min(d0) FROM span) + 7
+          AND s.d1 >= (SELECT max(d1) FROM span) - 7
+     ), common AS (
+       SELECT max(s.d0) AS d0, min(s.d1) AS d1
+         FROM span s JOIN comparable c ON c.subject_id = s.subject_id
+     ), bounds AS (
+       SELECT p.subject_id,
+              (array_agg(p.close ORDER BY p.on_date))[1]      AS first_close,
+              (array_agg(p.close ORDER BY p.on_date DESC))[1] AS last_close
+         FROM prices p
+         JOIN comparable c ON c.subject_id = p.subject_id
+        CROSS JOIN common w
+        WHERE p.on_date BETWEEN w.d0 AND w.d1
         GROUP BY p.subject_id
      )
      SELECT m.id, m.ticker,
             round(((b.last_close - b.first_close) / b.first_close * 100)::numeric, 1) AS pct,
-            to_char(b.d0,'YYYY-MM-DD') AS d0, to_char(b.d1,'YYYY-MM-DD') AS d1
-       FROM bounds b JOIN members m ON m.id = b.subject_id
+            to_char(w.d0,'YYYY-MM-DD') AS d0, to_char(w.d1,'YYYY-MM-DD') AS d1
+       FROM bounds b JOIN members m ON m.id = b.subject_id CROSS JOIN common w
       WHERE b.first_close > 0`,
     [memberIds, since]
   );

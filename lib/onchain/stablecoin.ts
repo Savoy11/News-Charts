@@ -6,7 +6,7 @@ import {
   describeCounterparty,
   type Stablecoin,
 } from "./addresses";
-import type { TimelineEvent } from "../types";
+import type { FetchResult, TimelineEvent } from "../types";
 
 /**
  * USDC supply moves — mints and burns, read as ERC-20 `Transfer` events to and from the null
@@ -57,23 +57,30 @@ const money = (n: number): string =>
  * abstraction first: the only things that actually differ are the contract, the decimals and the
  * materiality bar, which is why those are the only things the table carries.
  */
-export async function getStablecoinSupplyMoves(
+export async function fetchStablecoinSupplyMoves(
   token: Stablecoin,
   minimum = token.materialUsd,
   limit = 40
-): Promise<TimelineEvent[]> {
+): Promise<FetchResult> {
   const key = process.env.ETHERSCAN_API_KEY;
-  if (!key) return [];
+  // Unreadable without a key — logged as such, not as a quiet month (NC-142).
+  if (!key) return { events: [], outcome: "error", detail: "ETHERSCAN_API_KEY is not set" };
 
   const url =
     `${ETHERSCAN}?module=account&action=tokentx` +
     `&contractaddress=${token.address}&address=${NULL_ADDRESS}` +
     `&page=1&offset=1000&sort=desc&apikey=${encodeURIComponent(key)}`;
 
-  const body = await getJson<{ status?: string; result?: TokenTx[] | string }>(url);
+  const body = await getJson<{ status?: string; message?: string; result?: TokenTx[] | string }>(url);
   // Etherscan answers errors with HTTP 200 and status "0", and puts the message where the
   // rows go — so a failure is indistinguishable from an empty result unless both are checked.
-  if (!body || body.status !== "1" || !Array.isArray(body.result)) return [];
+  // "No transactions found" is the one status-"0" answer that really is nothing.
+  if (!body) return { events: [], outcome: "error", detail: "Etherscan did not answer" };
+  if (body.status !== "1" || !Array.isArray(body.result)) {
+    const said = typeof body.result === "string" ? body.result : (body.message ?? "unexpected reply");
+    if (body.message === "No transactions found") return { events: [], outcome: "empty", httpStatus: 200 };
+    return { events: [], outcome: /rate limit/i.test(said) ? "throttled" : "error", detail: said.slice(0, 200) };
+  }
 
   const out: TimelineEvent[] = [];
   for (const tx of body.result) {
@@ -122,7 +129,16 @@ export async function getStablecoinSupplyMoves(
     out.push(event);
     if (out.length >= limit) break;
   }
-  return out.sort((a, b) => a.date.localeCompare(b.date));
+  out.sort((a, b) => a.date.localeCompare(b.date));
+  return { events: out, outcome: out.length ? "ok" : "empty", httpStatus: 200 };
+}
+
+export async function getStablecoinSupplyMoves(
+  token: Stablecoin,
+  minimum = token.materialUsd,
+  limit = 40
+): Promise<TimelineEvent[]> {
+  return (await fetchStablecoinSupplyMoves(token, minimum, limit)).events;
 }
 
 /** The Phase 0 entry point, kept so existing callers and checks are unaffected. */

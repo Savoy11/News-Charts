@@ -47,6 +47,9 @@ function check(name: string, ok: boolean, detail = ""): void {
 
 const root = join(__dirname, "..");
 const read = (rel: string): string => readFileSync(join(root, rel), "utf8");
+/** One exported function's source from scripts/ingest.ts, up to the next top-level declaration. */
+const ingestSrcFor = (name: string): string =>
+  read("scripts/ingest.ts").match(new RegExp(`export async function ${name}\\([\\s\\S]*?\\n}\\n`))?.[0] ?? "";
 
 /**
  * Sources reached by an ingester other than the two subject paths, with the reason. Listing them
@@ -100,6 +103,27 @@ for (const key of ingested) {
     INGESTABLE_SOURCES.has(key) ? "" : "ingested but flagged commercialOk: false"
   );
 }
+// NC-148: the paths outside ingestTopic/ingestCompany write rows too. Snapshot and DefiLlama
+// rows arrive through ingestOnchain, which used to check only `onchain` — so either could have
+// been flagged commercialOk: false after a terms reading and still been written, unnoticed here.
+for (const key of Object.keys(OTHER_INGEST_PATHS) as SourceKey[]) {
+  check(
+    `${key} is licensed for the corpus (${OTHER_INGEST_PATHS[key]?.split(" ")[0]})`,
+    INGESTABLE_SOURCES.has(key),
+    INGESTABLE_SOURCES.has(key) ? "" : "ingested but flagged commercialOk: false"
+  );
+}
+const onchainFeeds = [...read("lib/onchain/index.ts").matchAll(/feed\("([a-z_]+)"/g)].map((m) => m[1] as SourceKey);
+check("the on-chain feeds were found", onchainFeeds.length >= 3, onchainFeeds.join(", "));
+for (const key of new Set(onchainFeeds)) {
+  check(`on-chain feed ${key} is a recorded ingest path`, OTHER_INGEST_PATHS[key] !== undefined);
+}
+const onchainIngest = ingestSrcFor("ingestOnchain");
+check(
+  "ingestOnchain gates each feed under its own source key",
+  /assertCommercialOk\(client, sourceKey\)/.test(onchainIngest) && !/assertCommercialOk\(client, "onchain"\)/.test(onchainIngest)
+);
+
 for (const key of Object.keys(NOT_INGESTED_BY_LICENCE) as SourceKey[]) {
   check(
     `${key} is held off the ingest path`,
@@ -142,6 +166,39 @@ check(
 );
 // The licence gate reads a table nothing on this path used to write.
 check("refresh establishes the source registry before ingesting", /ensureSources\(/.test(refreshSrc));
+// NC-144: every ingester returned normally for "no article", "not minting" and "ticker not found",
+// and any normal return marked the request fulfilled — a request closed with no subject behind it.
+check(
+  "a request is fulfilled only when the ingester says it ingested",
+  /if \(outcome\.ingested\) \{\s*await markFulfilled\(/.test(refreshSrc) &&
+    /markFailed\(p\.id, outcome\.reason\)/.test(refreshSrc)
+);
+for (const name of ["ingestTopic", "ingestCompany", "ingestOnchain"]) {
+  const src = ingestSrcFor(name);
+  check(
+    `${name} reports whether it ingested`,
+    /Promise<IngestOutcome>/.test(src) && !/\n\s*return;\n/.test(src),
+    /\n\s*return;\n/.test(src) ? "a bare return reads as neither" : ""
+  );
+}
+// NC-099: the scheduler keyed a new topic on the typed slug while the first pass keys it on the
+// Wikipedia article, so a second phrasing minted a second subject with identical events.
+const topicIngest = ingestSrcFor("ingestTopic");
+check(
+  "the scheduler keys a topic on its Wikipedia article, as the first pass does",
+  /upsertTopicSubject\(client, \{[\s\S]*?wikipediaTitle: wiki\.title/.test(topicIngest) && !/upsertSubject\(/.test(topicIngest)
+);
+// NC-151: pruning ran after a dump pg_restore could not even list.
+const backupSrc = read("scripts/backup.ts");
+check(
+  "backup stops before pruning when the new dump could not be verified",
+  /if \(entries < 0\) throw/.test(backupSrc) &&
+    backupSrc.indexOf("if (entries < 0) throw") < backupSrc.indexOf("unlinkSync(join(outDir")
+);
+check(
+  "failed requests queue behind untried ones",
+  /ORDER BY \(last_error IS NOT NULL\), requests DESC/.test(read("lib/ingest/queue.ts"))
+);
 
 console.log("\nEvery event kind a page can hold has a control that shows it");
 /**

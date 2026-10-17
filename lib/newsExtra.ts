@@ -1,4 +1,4 @@
-import { TimelineEvent } from "./types";
+import { FetchResult, TimelineEvent } from "./types";
 import { sourceLabel } from "./sourceLabel";
 import { licensedKey } from "./ingest/store";
 import { storyKey } from "./newsQuality";
@@ -83,11 +83,20 @@ const toDay = (d: Date) =>
   Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 
 /** Recent company headlines from Yahoo Finance's per-ticker RSS. Keyless. */
-export async function getYahooFinanceNews(ticker: string): Promise<TimelineEvent[]> {
+/**
+ * Yahoo Finance's per-ticker RSS headlines, with the outcome kept: a 429/503 is "throttled" and
+ * any other failure "error", so ingest backs off and the per-source status shows it. This
+ * returned [] for all of them, which ingest logged as "empty" — a successful fetch of nothing
+ * (NC-142).
+ */
+export async function fetchYahooFinanceNews(ticker: string): Promise<FetchResult> {
   try {
     const url = `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(ticker)}&region=US&lang=en-US`;
     const res = await fetch(url, { headers: UA, ...REVAL });
-    if (!res.ok) return [];
+    if (res.status === 429 || res.status === 503) {
+      return { events: [], outcome: "throttled", httpStatus: res.status };
+    }
+    if (!res.ok) return { events: [], outcome: "error", httpStatus: res.status };
     const xml = await res.text();
     const events: TimelineEvent[] = [];
     for (const item of rssItems(xml)) {
@@ -107,10 +116,14 @@ export async function getYahooFinanceNews(ticker: string): Promise<TimelineEvent
       });
       if (events.length >= 25) break;
     }
-    return events;
-  } catch {
-    return [];
+    return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
+  } catch (err) {
+    return { events: [], outcome: "error", detail: (err as Error).message };
   }
+}
+
+export async function getYahooFinanceNews(ticker: string): Promise<TimelineEvent[]> {
+  return (await fetchYahooFinanceNews(ticker)).events;
 }
 
 /**

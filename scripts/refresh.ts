@@ -22,7 +22,7 @@ config({ path: ".env.local" });
  * eleven requests: `selectStaleSources` asks only what has actually aged out.
  */
 import { getPool, closePool, configProblem } from "../lib/db";
-import { COMPANY_SOURCES, TOPIC_SOURCES, ingestCompany, ingestOnchain, ingestTopic } from "./ingest";
+import { COMPANY_SOURCES, TOPIC_SOURCES, ingestCompany, ingestOnchain, ingestTopic, type IngestOutcome } from "./ingest";
 import { ensureSources } from "../lib/ingest/store";
 import { markFailed, markFulfilled, pendingRequests } from "../lib/ingest/queue";
 import { subjectLockKey } from "../lib/ingest/firstPass";
@@ -44,7 +44,7 @@ const ONCHAIN_SLUGS = new Set(CRYPTO_SUBJECTS.map((c) => c.slug));
 async function refreshSubject(
   client: import("pg").PoolClient,
   s: { slug: string; kind: string; ticker: string | null }
-): Promise<void> {
+): Promise<IngestOutcome> {
   /**
    * The same advisory lock the first-visit pass takes (lib/ingest/firstPass.ts), so the two
    * writers exclude each other — a lock excludes nothing unless both sides take it, and this
@@ -59,7 +59,7 @@ async function refreshSubject(
   );
   if (!rows[0]?.ok) {
     console.log(`  … ${s.ticker ?? s.slug} locked by a first-visit gather; skipping this cycle`);
-    return;
+    return { ingested: false, reason: "locked by a first-visit gather" };
   }
   try {
     if (s.kind === "company" && s.ticker) return await ingestCompany(client, s.ticker);
@@ -99,6 +99,7 @@ async function main(): Promise<void> {
   console.log(`\nRefreshing ${rows.length} subject(s)${dry ? " (dry run)" : ""}\n`);
 
   let ok = 0;
+  let skipped = 0;
   let failed = 0;
   const client = await pool.connect();
   try {
@@ -119,8 +120,9 @@ async function main(): Promise<void> {
       }
       try {
         // Each ingester applies its own per-source windows, so this is not eleven requests.
-        await refreshSubject(client, r);
-        ok++;
+        const outcome = await refreshSubject(client, r);
+        if (outcome.ingested) ok++;
+        else skipped++;
       } catch (err) {
         // One subject failing must not end the run: the next one may be perfectly fetchable, and
         // a scheduled job that stops at the first bad subject stops permanently.
@@ -145,9 +147,17 @@ async function main(): Promise<void> {
           continue;
         }
         try {
-          await refreshSubject(client, p);
-          await markFulfilled(null, p.id);
-          console.log(`  ✓ ${p.ticker ?? p.slug} (${p.requests} ask(s))`);
+          // Fulfilled means a subject now exists behind the request. "No Wikipedia article", "not
+          // minting" and "ticker not found" all returned normally, and were marked fulfilled —
+          // `npm run demand` then reported them as served (NC-144). Left pending with the reason.
+          const outcome = await refreshSubject(client, p);
+          if (outcome.ingested) {
+            await markFulfilled(null, p.id);
+            console.log(`  ✓ ${p.ticker ?? p.slug} (${p.requests} ask(s))`);
+          } else {
+            await markFailed(p.id, outcome.reason);
+            console.log(`  ✗ ${p.ticker ?? p.slug} — ${outcome.reason}`);
+          }
         } catch (err) {
           // Left pending on purpose — a source down this hour may answer the next.
           await markFailed(p.id, (err as Error).message);
@@ -160,7 +170,7 @@ async function main(): Promise<void> {
   }
 
   if (!dry) {
-    console.log(`\n  ${ok} refreshed, ${failed} failed`);
+    console.log(`\n  ${ok} refreshed, ${skipped} skipped, ${failed} failed`);
 
     /**
      * Search-log retention, applied here because this is the only thing that runs on a schedule.

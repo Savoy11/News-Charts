@@ -43,7 +43,9 @@ CREATE TABLE subjects (
     CHECK (kind <> 'company' OR (cik IS NOT NULL AND ticker IS NOT NULL))
 );
 CREATE UNIQUE INDEX subjects_ticker_uq ON subjects (ticker) WHERE ticker IS NOT NULL;
-CREATE UNIQUE INDEX subjects_cik_uq    ON subjects (cik)    WHERE cik IS NOT NULL;
+-- Not unique: one registrant can list several securities — GOOGL and GOOG, BRK-A and BRK-B,
+-- sibling share classes and series of a fund trust. The ticker is the identity (db/021).
+CREATE INDEX subjects_cik_idx          ON subjects (cik)    WHERE cik IS NOT NULL;
 
 -- Search terms that resolve to a subject ("electric cars" -> Electric car).
 CREATE TABLE subject_aliases (

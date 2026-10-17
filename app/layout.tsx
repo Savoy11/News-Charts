@@ -85,7 +85,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
         <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
         <footer className="mt-16 border-t border-slate-800/80 py-6">
-          <div className="mx-auto max-w-6xl px-4 text-xs text-slate-600">
+          {/* slate-400, not slate-600: the disclaimer and licence credits are the legally
+              important text, and slate-600 on slate-950 is 2.66:1 — below WCAG AA (NC-168). */}
+          <div className="mx-auto max-w-6xl px-4 text-xs text-slate-400">
             <p>
               News Charts is a research tool, not investment advice. Price data from Yahoo Finance,
               filings from SEC EDGAR, recent news from GDELT, historical newspapers from the

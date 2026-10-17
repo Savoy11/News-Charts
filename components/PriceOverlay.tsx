@@ -153,7 +153,7 @@ export default function PriceOverlay({ a, b }: { a: Series; b: Series }) {
       observer.disconnect();
       chart.remove();
     };
-  }, [norm, a.color, b.color, indexA, indexB, daysA, daysB]);
+  }, [norm, a.color, b.color, a.events, b.events, indexA, indexB, daysA, daysB]);
 
   if (!norm) {
     return (

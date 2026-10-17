@@ -24,7 +24,7 @@ export async function generateMetadata({
   const data = await getCompanyPageData(decodeURIComponent(params.ticker));
   if (!data) return { title: "Company not found", robots: { index: false } };
   const title = `${data.name} (${data.ticker}) timeline`;
-  const description = `${data.name} (${data.ticker}) news, SEC filings, and earnings on one timeline, pegged to the stock price — see what moved the stock.`;
+  const description = `${data.name} (${data.ticker}) news, SEC filings, and earnings on one timeline, pegged to the stock price — see what was happening around each move.`;
   const url = absolute(`/company/${data.ticker}`);
   return {
     title,

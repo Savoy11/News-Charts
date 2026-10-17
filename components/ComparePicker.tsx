@@ -23,16 +23,17 @@ export default function ComparePicker({ a = "", b = "" }: { a?: string; b?: stri
 
   return (
     <form onSubmit={submit} className="flex w-full flex-wrap items-center gap-2">
-      <Field value={av} onChange={setAv} color={A_COLOR} placeholder="First — ticker or topic" />
+      <Field value={av} onChange={setAv} color={A_COLOR} placeholder="First — ticker or topic" label="First subject to compare" />
       <button
         type="button"
         onClick={swap}
         title="Swap"
+        aria-label="Swap the two subjects"
         className="rounded-md border border-slate-700 px-2 py-2 text-sm text-slate-400 hover:border-slate-500 hover:text-slate-200"
       >
         ⇄
       </button>
-      <Field value={bv} onChange={setBv} color={B_COLOR} placeholder="Second — ticker or topic" />
+      <Field value={bv} onChange={setBv} color={B_COLOR} placeholder="Second — ticker or topic" label="Second subject to compare" />
       <button
         type="submit"
         disabled={!av.trim() || !bv.trim()}
@@ -49,11 +50,13 @@ function Field({
   onChange,
   color,
   placeholder,
+  label,
 }: {
   value: string;
   onChange: (v: string) => void;
   color: string;
   placeholder: string;
+  label: string;
 }) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 focus-within:border-sky-500">
@@ -62,6 +65,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        aria-label={label}
         className="min-w-0 flex-1 bg-transparent py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
       />
     </div>

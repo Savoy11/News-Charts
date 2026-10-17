@@ -570,7 +570,20 @@ export async function upsertEvent(
    * DefiLlama unit fix (2026-07-31) corrects figures that live *in the title*
    * ("Aave V3 exploited — $862.00bn"), and without this those rows could never be healed by
    * re-ingesting. A source that corrects itself must be able to correct us.
+   *
+   * The same holds for WHEN and WHAT: date, precision and kind were fixed at first insert, so a
+   * citation refined from a year to a day, a corrected archive date or a reclassified filing never
+   * reached the row (NC-141). They update only from the source that owns the event's primary
+   * attestation — two sources attesting one event with different dates must not take turns — and
+   * a date-only correction is its own reason to update, since it leaves the content hash alone.
    */
+  const { rows: owner } = await client.query<{ primary: boolean }>(
+    `SELECT EXISTS (SELECT 1 FROM events e
+                      JOIN event_attestations a ON a.event_id = e.id AND a.is_primary
+                     WHERE e.dedup_key = $1 AND a.source_id = $2) AS primary`,
+    [key, sourceId ?? null]
+  );
+  const ownsEvent = owner[0]?.primary ?? false;
   const upserted = await client.query<{ id: string; inserted: boolean }>(
     `INSERT INTO events (kind, occurred_on, date_precision, title, body, image_url, dedup_key, content_hash)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
@@ -579,8 +592,13 @@ export async function upsertEvent(
             body = EXCLUDED.body,
             image_url = COALESCE(EXCLUDED.image_url, events.image_url),
             content_hash = EXCLUDED.content_hash,
+            occurred_on = CASE WHEN $9 THEN EXCLUDED.occurred_on ELSE events.occurred_on END,
+            date_precision = CASE WHEN $9 THEN EXCLUDED.date_precision ELSE events.date_precision END,
+            kind = CASE WHEN $9 THEN EXCLUDED.kind ELSE events.kind END,
             updated_at = now()
       WHERE events.content_hash IS DISTINCT FROM EXCLUDED.content_hash
+         OR ($9 AND (events.occurred_on, events.date_precision, events.kind)
+                    IS DISTINCT FROM (EXCLUDED.occurred_on, EXCLUDED.date_precision, EXCLUDED.kind))
      RETURNING id, (xmax = 0) AS inserted`,
     [
       ev.type,
@@ -591,6 +609,7 @@ export async function upsertEvent(
       ev.imageUrl ?? null,
       key,
       hash,
+      ownsEvent,
     ]
   );
 
@@ -629,24 +648,33 @@ export async function upsertEvent(
    * a freshly ingested subject sat entirely unranked (NULL) until someone remembered to run
    * `npm run score` — which on a first-visit ingest means the page's whole first paint.
    *
-   * Non-strict mode on purpose: every non-null verdict there is 0.7–1.0, all above the
-   * display threshold, so the inline scorer can never hide what it just ingested. Null
-   * verdicts (oblique news, regulation) stay NULL and keep displaying. ON CONFLICT DO
-   * NOTHING is preserved, so a row a model already scored is never overwritten.
+   * Non-strict mode on purpose: almost every non-null verdict there is 0.7–1.0, above the
+   * display threshold. The one exception is an Internet Archive item that never names the
+   * subject, which scores 0.2 and is hidden — a keyword-search hit with nothing tying it to the
+   * subject is exactly what should not reach the page (NC-131). Null verdicts (oblique news,
+   * regulation) stay NULL and keep displaying.
+   *
+   * A row already scored deterministically is re-scored when the rules now say otherwise, so a
+   * corrected rule heals the rows it got wrong on their next ingest — the archive items once
+   * scored 0.9 as citations. A row a model scored is never overwritten.
    */
   const verdict = scoring
     ? deterministicScore(
-        { eventId: 0, kind: ev.type, title: ev.title },
+        { eventId: 0, kind: ev.type, title: ev.title, sourceKey, byline: ev.source },
         scoring.subject,
         scoring.aliases,
         false
       )
     : null;
-  const linked = await client.query(
+  const linked = await client.query<{ inserted: boolean }>(
     `INSERT INTO event_subjects (event_id, subject_id, relevance, scored_by, scored_at)
      VALUES ($1,$2,$3,$4, CASE WHEN $3::real IS NULL THEN NULL ELSE now() END)
-     ON CONFLICT DO NOTHING`,
-    [eventId, subjectId, verdict?.score ?? null, verdict ? "deterministic" : null]
+     ON CONFLICT (event_id, subject_id) DO UPDATE
+        SET relevance = EXCLUDED.relevance, scored_by = EXCLUDED.scored_by, scored_at = EXCLUDED.scored_at
+      WHERE $5 AND event_subjects.scored_by = 'deterministic'
+        AND event_subjects.relevance IS DISTINCT FROM EXCLUDED.relevance
+     RETURNING (xmax = 0) AS inserted`,
+    [eventId, subjectId, verdict?.score ?? null, verdict ? "deterministic" : null, Boolean(scoring)]
   );
-  stats.links += linked.rowCount ?? 0;
+  stats.links += linked.rows.filter((r) => r.inserted).length;
 }

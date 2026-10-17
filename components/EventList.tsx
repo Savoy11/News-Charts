@@ -46,6 +46,8 @@ function ToneDot({ ev }: { ev: TimelineEvent }) {
   if (tone === "neutral") return null;
   return (
     <span
+      role="img"
+      aria-label={`Headline reads as ${tone} — a keyword estimate`}
       title={`Headline reads as ${tone} — a keyword estimate, not a judgement of the news`}
       className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
         tone === "positive" ? "bg-emerald-400" : "bg-red-400"
@@ -493,6 +495,9 @@ function PeekPopover({
 
 export default function EventList({ events, order = "asc", siteDomain, persistKey, reveal }: Props) {
   const rows = useMemo(() => condenseFilings(buildRows(events, order)), [events, order]);
+  // The tone dot explained itself only in a hover title, which touch and keyboard users never
+  // see; a one-line key says what the colour means wherever a dot appears (NC-167).
+  const hasTone = useMemo(() => events.some((e) => toneOf(e) !== "neutral"), [events]);
 
   // Per-year/-month tallies (so a collapsed header still says how much it hides) plus a small
   // preview of each section's titles, used for the hover peek without expanding.
@@ -629,6 +634,14 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
             {allCollapsed ? "Expand all" : "Collapse all"}
           </button>
         </div>
+      )}
+      {hasTone && (
+        <p className="mb-2 flex items-center gap-1.5 text-[11px] text-slate-400">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
+          <span className="h-1.5 w-1.5 rounded-full bg-red-400" aria-hidden />
+          Dots show whether a headline reads positive or negative — a keyword estimate, not a
+          judgement of the news.
+        </p>
       )}
       <ol className="relative border-l border-slate-800 pl-6">
         {rows.map((row) => {

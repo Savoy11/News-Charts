@@ -30,8 +30,8 @@ export default async function Home() {
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-400">
           News Charts lines up news coverage, SEC filings, and earnings against the price chart for
-          any listed security — stocks, ETFs, and mutual funds — so you can see what actually
-          moved it.
+          any listed security — stocks, ETFs, and mutual funds — so you can see what was happening
+          around each move.
         </p>
         <div className="mt-8 flex w-full justify-center">
           <SearchBox large />

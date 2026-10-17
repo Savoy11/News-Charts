@@ -71,8 +71,12 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
   const aliases = aliasesFor(subject, aliasRows.map((r) => r.alias));
 
   const { rows } = await client.query(
-    `SELECT e.id, e.kind, e.title
+    // The primary attestation's source rides along: an Internet Archive "citation" is judged on
+    // whether it names the subject, a Wikipedia one is not (NC-131).
+    `SELECT e.id, e.kind, e.title, s.key AS source_key, a.source_label
        FROM events e JOIN event_subjects es ON es.event_id = e.id
+       LEFT JOIN event_attestations a ON a.event_id = e.id AND a.is_primary
+       LEFT JOIN sources s ON s.id = a.source_id
       WHERE es.subject_id = $1 AND es.relevance IS NULL
       ORDER BY e.occurred_on DESC
       LIMIT $2`,
@@ -82,6 +86,8 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
     eventId: Number(r.id),
     kind: r.kind,
     title: r.title,
+    sourceKey: r.source_key,
+    byline: r.source_label,
     subjectId,
   }));
 

@@ -68,6 +68,13 @@ let pass = 0;
 let fail = 0;
 const failures: string[] = [];
 const consoleErrors: string[] = [];
+/**
+ * Responses the suite fails on purpose. The browser logs a faked 500 like a real one, and the
+ * console check would blame the app for the test's own route — it went unnoticed only because the
+ * suite crashed before the console check ever ran (NC-132). Exact URLs, so a real failure on the
+ * same endpoint still counts.
+ */
+const deliberatelyFailed = new Set<string>();
 
 function check(name: string, ok: boolean, detail = ""): void {
   if (ok) pass++;
@@ -531,6 +538,14 @@ async function searchRouting(page: Page): Promise<void> {
  */
 async function homepageSuggestions(page: Page): Promise<void> {
   console.log("\nHomepage suggestions");
+  /**
+   * The pick is what the next checks assert, not the rotation — so the row is held still while
+   * it is read. The rotation swaps a chip every 3.8s, and on a slow dev compile it used to swap a
+   * held subject out before the row was read: "GM is offered before a stand-in" failed with GM
+   * on screen at load (NC-046). Reduced motion stops the rotation; the hover test below needs it
+   * running, so the page is reloaded without it afterwards.
+   */
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await go(page, "/");
 
   const chips = () =>
@@ -546,6 +561,8 @@ async function homepageSuggestions(page: Page): Promise<void> {
   for (const subject of ["F", "GM", "Electric car"]) {
     check(`${subject} is offered before a stand-in`, shown.includes(subject), shown.join(", "));
   }
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await go(page, "/");
 
   /**
    * Rotation must stop while someone is aiming at a chip. A swap takes 260ms and fires every
@@ -591,7 +608,10 @@ async function searchResilience(page: Page): Promise<void> {
   // A request that never answers. The client's own budget is what has to end it.
   await page.route("**/api/resolve*", async (route) => {
     await new Promise((r) => setTimeout(r, 14_000));
-    await route.abort();
+    // By now the client has given up and cancelled, and the route below has been replaced, so the
+    // abort can find the request already handled. Uncaught, that took the whole suite down here
+    // and every section after this one never ran (NC-132).
+    await route.abort().catch(() => {});
   });
   await input.fill("NVDA");
   await button.click();
@@ -607,7 +627,10 @@ async function searchResilience(page: Page): Promise<void> {
 
   // A failing route is a different message: retrying in a moment is unlikely to help.
   await page.unroute("**/api/resolve*");
-  await page.route("**/api/resolve*", (route) => route.fulfill({ status: 500, body: "boom" }));
+  await page.route("**/api/resolve*", (route) => {
+    deliberatelyFailed.add(route.request().url());
+    return route.fulfill({ status: 500, body: "boom" });
+  });
   await input.fill("Ford");
   await button.click();
   await page.waitForTimeout(1_500);
@@ -809,6 +832,61 @@ async function responsive(browser: Browser): Promise<void> {
   }
 }
 
+/**
+ * What a reader who cannot see a hover title, or a faint line, still has to be able to read.
+ *
+ * NC-167: the search and compare inputs were labelled only by placeholder text, and the tone dot
+ * only by a hover title. NC-168: the "not investment advice" line and licence credits were
+ * slate-600 on slate-950, 2.66:1. NC-169: the homepage promised to show "what actually moved
+ * it". NC-047: the Wikipedia lede on a topic page carried no credit beside it.
+ */
+async function readableToEveryone(page: Page): Promise<void> {
+  console.log("\nReadable to everyone");
+  await go(page, "/");
+  const name = (sel: string) =>
+    page.evaluate((s) => {
+      const el = document.querySelector(s);
+      return el?.getAttribute("aria-label") ?? (el?.id ? document.querySelector(`label[for="${el.id}"]`)?.textContent : null) ?? "";
+    }, sel);
+  check("the search box has a name a screen reader announces", (await name('form input[name="q"]')).length > 0, await name('form input[name="q"]'));
+  const body = await visible(page);
+  check("the homepage claims proximity, not causation", !/what actually moved/i.test(body) && /around each move/i.test(body));
+
+  // WCAG contrast of the footer text against the page, from the colours the browser renders. The
+  // arithmetic stays in Node: helpers defined inside page.evaluate pick up the bundler's __name
+  // wrapper, which does not exist in the page.
+  const [fgCss, bgCss] = await page.evaluate(() => {
+    const text = document.querySelector("footer p");
+    return [text ? getComputedStyle(text).color : "", getComputedStyle(document.body).backgroundColor];
+  });
+  const lum = (css: string) => {
+    const [r, g, b] = (css.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map((v) => {
+      const c = Number(v) / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const ratio = fgCss ? (Math.max(lum(fgCss), lum(bgCss)) + 0.05) / (Math.min(lum(fgCss), lum(bgCss)) + 0.05) : 0;
+  check("the disclaimer meets WCAG AA contrast (4.5:1)", ratio >= 4.5, ratio.toFixed(2));
+
+  await go(page, "/compare");
+  const compareNames = await page.evaluate(() =>
+    [...document.querySelectorAll("form input")].map((i) => i.getAttribute("aria-label") ?? "")
+  );
+  check("both compare inputs are labelled", compareNames.length >= 2 && compareNames.every(Boolean), compareNames.join(" | "));
+
+  await go(page, "/topic/electric%20cars");
+  const credit = page.locator("[data-wikipedia-credit]");
+  check("a topic's Wikipedia lede is credited beside it", (await credit.count()) === 1);
+  const links = (await credit.count()) ? await credit.locator("a").evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href)) : [];
+  check("  …linking the article and the licence", links.some((h) => h.includes("wikipedia.org/wiki/")) && links.some((h) => h.includes("creativecommons.org/licenses/by-sa")), links.join(" "));
+
+  await go(page, "/company/f");
+  const dots = await page.locator('[role="img"][aria-label^="Headline reads as"]').count();
+  const key = /keyword estimate, not a/i.test(await visible(page));
+  check("a tone dot is announced, and a visible key says what it means", dots === 0 || key, `${dots} dots, key ${key ? "shown" : "missing"}`);
+}
+
 async function main(): Promise<void> {
   const res = await fetch(BASE).catch(() => null);
   if (!res?.ok) {
@@ -844,6 +922,7 @@ async function main(): Promise<void> {
     const url = m.location()?.url ?? "";
     const thirdParty = url ? !url.startsWith(new URL(BASE!).origin) : false;
     if (thirdParty && BLOCKED_EGRESS.test(text)) return;
+    if (deliberatelyFailed.has(url)) return;
     consoleErrors.push(text);
   });
   page.on("pageerror", (e) => consoleErrors.push(`PAGEERROR ${String(e).slice(0, 200)}`));
@@ -862,6 +941,7 @@ async function main(): Promise<void> {
   await feedKeys(page);
   await searchRouting(page);
   await chromeAndRoutes(page);
+    await readableToEveryone(page);
     await ctx.close();
     await responsive(browser);
   } finally {

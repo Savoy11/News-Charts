@@ -26,15 +26,18 @@ export default function GroupView({ name }: { name: string }) {
 
   const group = prefs.groups.find((g) => g.name === name);
   const tickers = group?.tickers ?? [];
+  // A string, so the effect below depends on the group's membership rather than on the identity
+  // of an array rebuilt every render (NC-049).
+  const tickerKey = tickers.join(",");
 
   useEffect(() => {
-    if (!ready || !tickers.length) {
+    if (!ready || !tickerKey) {
       setLoading(false);
       return;
     }
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/group?tickers=${encodeURIComponent(tickers.join(","))}`)
+    fetch(`/api/group?tickers=${encodeURIComponent(tickerKey)}`)
       .then((r) => r.json())
       .then((json) => !cancelled && setEvents(json.events ?? []))
       .catch(() => !cancelled && setEvents([]))
@@ -42,7 +45,7 @@ export default function GroupView({ name }: { name: string }) {
     return () => {
       cancelled = true;
     };
-  }, [ready, tickers.join(",")]);
+  }, [ready, tickerKey]);
 
   if (!ready) return <p className="text-sm text-slate-500">Loading your groups…</p>;
 

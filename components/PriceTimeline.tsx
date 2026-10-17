@@ -13,6 +13,7 @@ import {
 } from "lightweight-charts";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
 import { MARKER_STYLE, markerEventsByDay, snapToTradingDay } from "@/lib/markers";
+import { safeHref } from "@/lib/safeUrl";
 import EventThumb from "./EventThumb";
 
 /** Legend wording, which is not always the badge wording ("SEC filing", not "Filing"). */
@@ -317,6 +318,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
             <div className="space-y-1">
               {hover.events.slice(0, POPUP_MAX).map((ev) => {
                 const s = MARKER_STYLE[ev.type];
+                const href = safeHref(ev.url);
                 const row = (
                   <span className="flex items-start gap-1.5">
                     <span
@@ -333,10 +335,10 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
                     />
                   </span>
                 );
-                return ev.url ? (
+                return href ? (
                   <a
                     key={ev.id}
-                    href={ev.url}
+                    href={href}
                     target="_blank"
                     rel="noreferrer"
                     className="block rounded px-1 py-0.5 hover:bg-slate-800/70"

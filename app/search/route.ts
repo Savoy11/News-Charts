@@ -26,5 +26,9 @@ export async function GET(req: NextRequest) {
         ? `/topic/${encodeURIComponent(resolved.slug)}`
         : "/";
 
-  return NextResponse.redirect(new URL(dest, req.nextUrl.origin));
+  // A relative Location, resolved by the browser against the address it actually requested.
+  // Building it from req.nextUrl.origin sent visitors to localhost under `next start` behind a
+  // proxy, and NEXT_PUBLIC_SITE_URL would only move the same failure to a host whose variable is
+  // unset (NC-170).
+  return new NextResponse(null, { status: 307, headers: { Location: dest } });
 }

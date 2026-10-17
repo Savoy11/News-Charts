@@ -5,6 +5,7 @@ import type { Signal, SignalKind } from "@/lib/signals";
 import type { StoredExplanation } from "@/lib/store/read";
 import { DEFAULT_PREFS, loadPrefs, openPrefs, PREFS_EVENT, type Prefs } from "@/lib/prefs";
 import type { TimelineEvent } from "@/lib/types";
+import { safeHref } from "@/lib/safeUrl";
 
 const STYLE: Record<SignalKind, { label: string; cls: string }> = {
   volume_spike: { label: "Volume spike", cls: "border-sky-700/50 bg-sky-500/10 text-sky-300" },
@@ -144,10 +145,10 @@ export default function SignalPanel({ industrySlug, tickers, onExtraEvents }: Pr
                       explained by {ex.model} · cites
                     </span>
                     {ex.citations.map((c, n) =>
-                      c.url ? (
+                      safeHref(c.url) ? (
                         <a
                           key={c.id}
-                          href={c.url}
+                          href={safeHref(c.url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           title={c.title}

@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 120,
-   "closed": 20,
+   "open": 110,
+   "closed": 30,
    "parked": 12,
    "blocked": 18
   },
@@ -42,8 +42,8 @@
    "owner-machine": 12,
    "owner-decision": 50
   },
-  "counts_recomputed_on": "2026-09-28",
-  "closed_by_annotation": 20
+  "counts_recomputed_on": "2026-10-17",
+  "closed_by_annotation": 30
  },
  "blocking_decisions": [
   {
@@ -1360,12 +1360,17 @@
      "lines": "66-67",
      "quote": "const best = candidates[0] ?? null;"
     }
-   ]
+   ],
+   "progress": {
+    "noted_on": "2026-10-17",
+    "note": "NC-040 closed the fund-name rung's guess, after which 'S&P 500' falls to head-prefix salvage and resolves to SPGI (S&P Global, the index's owner). The reader most likely means SPY or VOO: a case for this item's on-screen disambiguation.",
+    "evidence": "live run 2026-10-17 /api/resolve?q=S%26P%20500"
+   }
   },
   {
    "id": "NC-040",
    "title": "'S&P 500' resolves to an arbitrary fund (QCEQRX) via the fund-name prefix rung",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -1389,7 +1394,19 @@
      "lines": "191-192",
      "quote": "if (hit < 0) hit = names.findIndex((n) => n.toUpperCase().startsWith(q + \" \"));"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "matchFundName answers only when its candidates are one fund (distinct symbol): exact names first, then name prefix. Applied to exact names too, since 214 exact series names belong to several funds. 'S&P 500' and 'Balanced Fund' no longer resolve on this rung; 'Vanguard 500' (two index rows, one fund) still gives VOO and 'Fidelity 500' FUSVX. Observed live: 'S&P 500' now reaches head-prefix salvage and lands on SPGI (S&P Global) — a better miss than an arbitrary fund, but the index-fund answer needs NC-039 or an alias decision.",
+    "evidence": [
+     "lib/sec.ts:202",
+     "scripts/check-tickers.ts:199",
+     "docs/MASTER-CHECKLIST.md:23-70"
+    ]
+   }
   },
   {
    "id": "NC-041",
@@ -1608,11 +1625,18 @@
      "quote": "`check:ui` (64 browser checks) | `No server at http://localhost:3000`. Needs a seeded database as well as a dev server"
     }
    ],
-   "progress": {
-    "noted_on": "2026-09-28",
-    "note": "RUN 2026-09-28 against a seeded Postgres 16 and `next dev`: 101 checks passed, 0 failed, then the suite crashed in the search-resilience section, so every section after it (feed keys, search routing, site chrome, responsive, console errors) never ran — filed as NC-132.",
-    "evidence": "live run 2026-09-28 npm run check:ui"
-   }
+   "progress": [
+    {
+     "noted_on": "2026-09-28",
+     "note": "RUN 2026-09-28 against a seeded Postgres 16 and `next dev`: 101 checks passed, 0 failed, then the suite crashed in the search-resilience section, so every section after it (feed keys, search routing, site chrome, responsive, console errors) never ran — filed as NC-132.",
+     "evidence": "live run 2026-09-28 npm run check:ui"
+    },
+    {
+     "noted_on": "2026-10-17",
+     "note": "RE-RUN 2026-10-17 against a seeded Postgres 16 and `next dev`: 100 passed, 1 failed, then the same harness crash as NC-132. The failure ('GM is offered before a stand-in') is a timing flake in the check, not a regression: all three seeded subjects show at load, and the chip row rotates one chip every 3.8s before the check reads it on a slow dev compile.",
+     "evidence": "live run 2026-10-17 npm run check:ui -- --base http://localhost:3100"
+    }
+   ]
   },
   {
    "id": "NC-047",
@@ -1639,7 +1663,7 @@
   {
    "id": "NC-048",
    "title": "PriceOverlay.normalize can rebase the two /compare series on different days",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -1662,7 +1686,20 @@
      "lines": "42-44",
      "quote": "const base = win[0].value;"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "The rebase moved to lib/growth.ts growthOf100(), which bases both lines on the first day both series have a nonzero row and draws nothing before it. check:compare reproduces the old failure (a Saturday-starting BTC against a stock: old code based them on Saturday and Monday) and covers holidays, no overlap and zero closes.",
+    "evidence": [
+     "lib/growth.ts:21",
+     "components/PriceOverlay.tsx",
+     "scripts/check-compare.ts:115",
+     "docs/MASTER-CHECKLIST.md:23-70"
+    ]
+   }
   },
   {
    "id": "NC-049",
@@ -2022,7 +2059,7 @@
   {
    "id": "NC-059",
    "title": "Stale comment says DefiLlama `amount` is in millions of USD, contradicting the fix",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "docs",
@@ -2044,7 +2081,18 @@
      "lines": "81",
      "quote": "export const toUsd = (amount: number): number => amount;"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "The LlamaHack amount comment now reads plain USD, verified live 2026-07-31, and points at toUsd for the history of the 10^6 defect.",
+    "evidence": [
+     "lib/onchain/exploits.ts:34",
+     "docs/MASTER-CHECKLIST.md:23-70"
+    ]
+   }
   },
   {
    "id": "NC-060",
@@ -3099,7 +3147,7 @@
   {
    "id": "NC-098",
    "title": "/compare drops a crypto topic's price series (topic branch hard-codes prices: [])",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -3124,7 +3172,19 @@
      "lines": "33-37",
      "quote": "A crypto asset is modelled as a topic but has a continuous\n   * price series"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "loadCompareSubject's topic branch returns topic.prices. Live 2026-10-17: /compare?a=btc&b=F draws the growth-of-100 overlay ('growth of 100 · 2025-01-02 → 2026-07-24').",
+    "evidence": [
+     "lib/compare.ts:76",
+     "scripts/check-compare.ts:140",
+     "docs/MASTER-CHECKLIST.md:23-70"
+    ]
+   }
   },
   {
    "id": "NC-099",
@@ -3159,7 +3219,7 @@
   {
    "id": "NC-100",
    "title": "Postgres DATE values can shift a day on non-UTC hosts (no pg type parser registered)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -3184,7 +3244,20 @@
      "lines": "11-19",
      "quote": "pool = new Pool({ connectionString, max: 4 });"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "PG_TYPES (lib/db.ts) returns DATE as the 'YYYY-MM-DD' string Postgres sent, and both pools are built with it (the shared pool and the first-pass pool). The existing readers' string branch is what now runs. check:dates simulates a Tokyo host: the default parser shifts 2024-03-21 to 2024-03-20, PG_TYPES does not; it also fails if any pool is built without PG_TYPES. Live 2026-10-17 with next dev under TZ=Asia/Tokyo: /api/group dates match the database.",
+    "evidence": [
+     "lib/db.ts:11-12",
+     "lib/ingest/firstPass.ts:76",
+     "scripts/check-dates.ts:88",
+     "docs/MASTER-CHECKLIST.md:23-70"
+    ]
+   }
   },
   {
    "id": "NC-101",
@@ -4631,7 +4704,7 @@
   {
    "id": "NC-150",
    "title": "One malformed Wikipedia citation silently drops the citations of the next article parsed (shared /g regex)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -4651,7 +4724,19 @@
      "lines": "265",
      "quote": "if (depth !== 0) break; // unbalanced tail — stop rather than mis-parse"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "parseCitations builds its regex per call, so a lastIndex left mid-string by the unbalanced-tail break can no longer leak into the next article. Reproduced before the fix (0 citations instead of 2); check:parsers now holds the case.",
+    "evidence": [
+     "lib/wiki.ts:256",
+     "scripts/check-parsers.ts:155",
+     "docs/MASTER-CHECKLIST.md:23-70"
+    ]
+   }
   },
   {
    "id": "NC-151",
@@ -4748,7 +4833,7 @@
   {
    "id": "NC-155",
    "title": "Dividend amounts are rounded to cents on the timeline",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -4763,7 +4848,19 @@
      "lines": "77",
      "quote": "`Dividend of $${d.amount.toFixed(2)} per share`"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "dividendTitle() prints the declared amount to up to four places, never fewer than cents ($0.2775, $0.004, $0.50). Stored titles heal on re-ingest because the title is part of the content hash. Cases in check:parsers.",
+    "evidence": [
+     "lib/prices.ts:21",
+     "scripts/check-parsers.ts:168",
+     "docs/MASTER-CHECKLIST.md:23-70"
+    ]
+   }
   },
   {
    "id": "NC-156",
@@ -4829,7 +4926,7 @@
   {
    "id": "NC-158",
    "title": "Topic pages' canonical URL, og:url and breadcrumb are double-encoded and point at a 'Topic not found' page",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -4844,7 +4941,19 @@
      "lines": "31",
      "quote": "const url = absolute(`/topic/${encodeURIComponent(params.slug)}`);"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "TopicPageData carries the stored subject slug; canonical, og:url and the breadcrumb are built with subjectPath('topic', data.slug) instead of re-encoding params.slug. The OG image needed no change (titleFromSlug already decodes). Live 2026-10-17: /topic/electric%20cars declares /topic/electric%20cars canonical, and that URL loads 200.",
+    "evidence": [
+     "app/topic/[slug]/page.tsx:33",
+     "lib/page-data.ts:36",
+     "docs/MASTER-CHECKLIST.md:23-70"
+    ]
+   }
   },
   {
    "id": "NC-159",
@@ -4945,7 +5054,7 @@
   {
    "id": "NC-163",
    "title": "Third-party event URLs are rendered as links without an http(s) check (javascript: links would execute)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "security",
@@ -4967,7 +5076,20 @@
      "lines": "88",
      "quote": "href={ev.url}"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "safeHref() in lib/safeUrl.ts admits only absolute http(s); upsertEvent stores only what it admits, and every rendered event link (EventList, HorizontalTimeline, PriceTimeline, CompareView, SignalPanel) passes through it. check:links tests the rule (javascript:, mixed case, embedded newline/tab, data:, vbscript:, file:, relative) and scans components/ and app/ for any href built from a raw .url. Live 2026-10-17: a javascript: URL planted in a stored attestation rendered with no link.",
+    "evidence": [
+     "lib/safeUrl.ts:15",
+     "lib/ingest/store.ts:559",
+     "scripts/check-links.ts",
+     "docs/MASTER-CHECKLIST.md:23-70"
+    ]
+   }
   },
   {
    "id": "NC-164",
@@ -5146,7 +5268,7 @@
   {
    "id": "NC-170",
    "title": "API routes return raw database errors with status 200; /search redirects from the request origin",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -5168,7 +5290,21 @@
      "lines": "29",
      "quote": "new URL(dest, req.nextUrl.origin)"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "/api/group and /api/signals log the error server-side and answer a generic 503 with the same JSON shape the pages already read. /search redirects with a relative Location rather than req.nextUrl.origin (NEXT_PUBLIC_SITE_URL was not used: it would move the same failure to any host where it is unset). check:api runs all three against a closed database port; it fails 6 of 11 on the old routes (status 200, host/port/ECONNREFUSED in the body, localhost redirect).",
+    "evidence": [
+     "app/api/group/route.ts:76",
+     "app/api/signals/route.ts:99",
+     "app/search/route.ts:33",
+     "scripts/check-api.ts",
+     "docs/MASTER-CHECKLIST.md:23-70"
+    ]
+   }
   }
  ],
  "known_gaps_in_this_sweep": [
@@ -5185,6 +5321,14 @@
     "basis_key": "New items were confirmed against the code on main a3923f9 by reading it, and where marked 'live run 2026-09-28', by running it (local Postgres 16 + next dev, or live requests from the cloud session). The 'npm audit' advisory ids are as reported by npm, not independently checked.",
     "evidence": [
      "docs/audits/nc-task-queue-2026-09-28.json"
+    ]
+   },
+   {
+    "on": "2026-10-17",
+    "what": "First working batch: 10 items closed (NC-040, NC-048, NC-059, NC-098, NC-100, NC-150, NC-155, NC-158, NC-163, NC-170), each with a check that fails on the old code; progress notes on NC-039 and NC-046.",
+    "basis_key": "Closed items were fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (including the new check:links and check:api), plus a live run against a seeded Postgres 16 and `next dev` under TZ=Asia/Tokyo.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:23-70"
     ]
    }
   ]

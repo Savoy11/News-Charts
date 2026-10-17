@@ -4,6 +4,7 @@ import { resolveCompany, getFilings, commonName } from "../sec";
 import { getDailyPrices } from "../prices";
 import { aliasesFor } from "../enrich/relevance";
 import { withTimeout, timedOut } from "../timeout";
+import { PG_TYPES } from "../db";
 import {
   ensureSources,
   upsertEvent,
@@ -72,7 +73,7 @@ function getIngestPool(): Pool {
   if (!ingestPool) {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) throw new Error("DATABASE_URL is not set");
-    ingestPool = new Pool({ connectionString, max: 2, connectionTimeoutMillis: 250 });
+    ingestPool = new Pool({ connectionString, max: 2, connectionTimeoutMillis: 250, types: PG_TYPES });
   }
   return ingestPool;
 }

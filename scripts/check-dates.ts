@@ -10,7 +10,11 @@ config({ path: ".env.local" });
  * field the only thing standing between "the source said January 2015" and a page that prints
  * "Jan 1". An over-precise date is worse than a vague one: it reads as a fact.
  */
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { types } from "pg";
 import { parseCiteDate } from "../lib/wiki";
+import { PG_TYPES } from "../lib/db";
 import type { DatePrecision } from "../lib/types";
 
 let pass = 0;
@@ -79,6 +83,41 @@ console.log("\nOrdering still works across precisions");
     new Set(dates.map((d) => d.precision)).size === 3,
     dates.map((d) => d.precision).join(", ")
   );
+}
+
+console.log("\nA stored calendar date never passes through a time zone");
+{
+  // NC-100: node-pg's default turns a DATE into a JS Date at local midnight, and the readers took
+  // toISOString().slice(0, 10) — the day before, on any host east of UTC. Node re-reads TZ when
+  // it is assigned, so the host's zone can be simulated here.
+  const DATE = types.builtins.DATE;
+  const readerDay = (v: unknown) => (v instanceof Date ? v.toISOString().slice(0, 10) : String(v).slice(0, 10));
+  const was = process.env.TZ;
+  process.env.TZ = "Asia/Tokyo";
+  try {
+    const before = readerDay(types.getTypeParser(DATE, "text")("2024-03-21"));
+    check("the default parser shifts a day east of UTC (the bug this guards)", before === "2024-03-20", before);
+    // @types/pg types the returned parser as taking a number; at runtime it takes the text value
+    const ours = PG_TYPES.getTypeParser(DATE, "text") as unknown as (value: string) => unknown;
+    const after = readerDay(ours("2024-03-21"));
+    check("PG_TYPES hands the date back exactly as stored", after === "2024-03-21", after);
+  } finally {
+    if (was === undefined) delete process.env.TZ;
+    else process.env.TZ = was;
+  }
+
+  // The parser only helps a pool that is built with it.
+  const walk = (dir: string): string[] =>
+    readdirSync(dir).flatMap((name) => {
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) return walk(path);
+      return /\.tsx?$/.test(name) ? [path] : [];
+    });
+  const pools = ["lib", "scripts", "app"].flatMap(walk).flatMap((file) =>
+    [...readFileSync(file, "utf8").matchAll(/new (?:Pool|Client)\(\{[^}]*\}\)/g)].map((m) => ({ file, src: m[0] }))
+  );
+  const bare = pools.filter((p) => !p.src.includes("types: PG_TYPES"));
+  check(`every pool is built with PG_TYPES (${pools.length} found)`, pools.length >= 2 && bare.length === 0, bare.map((p) => p.file).join(", "));
 }
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);

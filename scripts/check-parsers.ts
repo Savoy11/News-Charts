@@ -11,7 +11,8 @@ config({ path: ".env.local" });
  * it, and leaves a page that looks fine to anyone not reading the axis. That is the failure
  * mode these guard.
  */
-import { extractYear } from "../lib/wiki";
+import { extractYear, parseCitations } from "../lib/wiki";
+import { dividendTitle } from "../lib/prices";
 import { dropCompanyPrehistory } from "../lib/history";
 import { dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
 import { waybackCouldHave, waybackUrl } from "../lib/wikidata";
@@ -149,6 +150,33 @@ console.log("\nImplausible press guard");
   check("the epoch itself is offered", waybackCouldHave("1996-01-01"));
   check("a modern event is offered", waybackCouldHave("2019-04-02"));
   check("the link still points at the date asked for", waybackUrl("ford.com", "2019-04-02").includes("/20190402/"), waybackUrl("ford.com", "2019-04-02"));
+}
+
+console.log("\nOne broken citation must not cost the next article its citations");
+{
+  // NC-150: the cite regex was a module-level /g regex, and the unbalanced-tail break left its
+  // lastIndex mid-string. History and Timeline companion articles are parsed back to back, so the
+  // second started part-way in and silently yielded nothing.
+  const cite = (n: number) =>
+    `{{cite news |title=A real headline number ${n} |url=https://example.com/${n} |date=2019-04-02 |work=Reuters}}`;
+  const broken = `Intro ${cite(1)} more {{cite web |title=Unterminated citation here |url=https://x.com |date=2020-01-01 `;
+  check("the broken article keeps what parsed before the break", parseCitations(broken).length === 1);
+  const next = parseCitations(`${cite(2)} and ${cite(3)}`);
+  check("the next article parsed still yields both citations", next.length === 2, `${next.length}`);
+}
+
+console.log("\nDividends print as declared, not rounded to cents");
+// NC-155: toFixed(2) showed $0.2775 as $0.28 and a $0.004 distribution as $0.00.
+for (const [amount, shown] of [
+  [0.2775, "$0.2775"],
+  [0.004, "$0.004"],
+  [0.5, "$0.50"],
+  [0.24, "$0.24"],
+  [1.0, "$1.00"],
+  [0.27749999, "$0.2775"],
+  [1250, "$1,250.00"],
+] as const) {
+  check(`${amount} → ${shown}`, dividendTitle(amount) === `Dividend of ${shown} per share`, dividendTitle(amount));
 }
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);

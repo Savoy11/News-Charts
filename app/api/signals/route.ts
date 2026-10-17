@@ -92,6 +92,11 @@ export async function GET(req: NextRequest) {
       memberCount: memberIds.length,
     });
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message, signals: [], extraEvents: [] });
+    // Logged here, generic to the visitor — see the same branch in /api/group (NC-170).
+    console.error("[news-charts] /api/signals failed:", (err as Error).message);
+    return NextResponse.json(
+      { error: "Signals unavailable right now.", signals: [], extraEvents: [] },
+      { status: 503 }
+    );
   }
 }

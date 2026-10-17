@@ -10,7 +10,7 @@ import StoredBadge from "@/components/StoredBadge";
 import JsonLd from "@/components/JsonLd";
 import FollowBar from "@/components/FollowBar";
 import { getTopicPageData } from "@/lib/page-data";
-import { absolute, breadcrumbLd, clampDescription, SITE_NAME } from "@/lib/seo";
+import { absolute, breadcrumbLd, clampDescription, SITE_NAME, subjectPath } from "@/lib/seo";
 
 const latestDate = (events: { date: string }[]) => events.reduce((m, e) => (e.date > m ? e.date : m), "");
 
@@ -28,7 +28,9 @@ export async function generateMetadata({
   const description = data.summary
     ? clampDescription(data.summary)
     : `A timeline of ${data.title}: history, news, and key events on one axis.`;
-  const url = absolute(`/topic/${encodeURIComponent(params.slug)}`);
+  // From the stored slug, never params.slug: Next passes the segment still percent-encoded, and
+  // encoding it again declared /topic/electric%2520cars — a not-found page — canonical (NC-158).
+  const url = absolute(subjectPath("topic", data.slug));
   return {
     title,
     description,
@@ -54,7 +56,7 @@ export default async function TopicPage({ params }: { params: { slug: string } }
         data={breadcrumbLd([
           { name: SITE_NAME, path: "/" },
           { name: "Explore", path: "/explore" },
-          { name: data.title, path: `/topic/${encodeURIComponent(params.slug)}` },
+          { name: data.title, path: subjectPath("topic", data.slug) },
         ])}
       />
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">

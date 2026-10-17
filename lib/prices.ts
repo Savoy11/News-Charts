@@ -13,6 +13,16 @@ function splitRatio(raw: { splitRatio?: string; numerator?: number; denominator?
   return "";
 }
 
+/**
+ * "Dividend of $0.2775 per share": the amount as declared, to the four places dividends are
+ * actually declared in, never fewer than cents. `toFixed(2)` printed $0.2775 as $0.28 and a
+ * $0.004 distribution as $0.00 (NC-155).
+ */
+export function dividendTitle(amount: number): string {
+  const shown = amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  return `Dividend of $${shown} per share`;
+}
+
 const day = (epochSeconds: number): string =>
   new Date(epochSeconds * 1000).toISOString().slice(0, 10);
 
@@ -74,7 +84,7 @@ function corporateActions(events: unknown, ticker: string): TimelineEvent[] {
       id: `yahoo-div-${ticker}-${date}`,
       date,
       type: "corporate_action",
-      title: `Dividend of $${d.amount.toFixed(2)} per share`,
+      title: dividendTitle(d.amount),
       description: "Cash dividend with this ex-dividend date. A mechanical change, not news.",
       source: "Yahoo Finance",
       sourceKey: "yahoo_finance",

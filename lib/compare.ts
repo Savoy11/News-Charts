@@ -71,7 +71,9 @@ export async function loadCompareSubject(query: string): Promise<CompareSubject 
         label: topic.title,
         href: `/topic/${encodeURIComponent(q)}`,
         events: topic.events,
-        prices: [],
+        // A crypto topic (BTC, ETH) carries a real price series; an ordinary topic's is empty and
+        // the overlay simply doesn't draw. Hard-coding [] here dropped the overlay for btc vs eth.
+        prices: topic.prices,
       };
     }
   } catch {

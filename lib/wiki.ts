@@ -250,9 +250,13 @@ const CITE_RE = /\{\{\s*cite\s+(?:news|web|press release|magazine|journal|report
  * articles is roughly chronological — but callers should sort by date anyway.
  */
 export function parseCitations(wikitext: string): WikiCitation[] {
+  // A fresh regex per call. A /g regex carries lastIndex between calls, and the unbalanced-tail
+  // break below leaves it mid-string, so the next article parsed — History and Timeline
+  // companions go back to back — started part-way in and lost its citations (NC-150).
+  const cite = new RegExp(CITE_RE.source, CITE_RE.flags);
   const out: WikiCitation[] = [];
   let m: RegExpExecArray | null;
-  while ((m = CITE_RE.exec(wikitext))) {
+  while ((m = cite.exec(wikitext))) {
     // walk to the matching close so nested templates don't truncate the block
     let depth = 0;
     let i = m.index;
@@ -264,7 +268,7 @@ export function parseCitations(wikitext: string): WikiCitation[] {
     }
     if (depth !== 0) break; // unbalanced tail — stop rather than mis-parse
     const params = templateParams(wikitext.slice(m.index, i));
-    CITE_RE.lastIndex = i;
+    cite.lastIndex = i;
 
     const url = params.get("url")?.trim() ?? "";
     if (!/^https?:\/\//i.test(url)) continue;

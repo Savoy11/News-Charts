@@ -173,14 +173,21 @@ function fundNameFor(symbol: string): string | null {
 /**
  * Funds by name — the rung "Vanguard 500" needed and could not have.
  *
- * Same shape as the company name rungs deliberately: exact name, then name prefix, taking the
- * first hit. What it resolves *to* is the fund's preferred share class, chosen at sync time —
+ * Same shape as the company name rungs: exact name, then name prefix. What it resolves *to* is
+ * the fund's preferred share class, chosen at sync time —
  * "Vanguard 500" is honestly VFINX, VFIAX and VOO, and the ETF class is the one this product is
  * about (2026-08-08 scope refocus). A person who wants a specific class still types its symbol,
  * which rung 2 answers exactly.
  *
  * The minimum length is the same guard the company prefix rung uses: two characters of a fund
  * name match half the industry.
+ *
+ * **Gated on one fund, not first hit.** Unlike company titles, fund names are generic: seven
+ * series start "S&P 500 …" and "S&P 500" answered whichever came first, S&P 500 Index Account
+ * (QCEQRX) — and 214 exact names ("Balanced Fund", "Money Market Fund") belong to several funds
+ * at once (NC-040). A name that means several funds is not an answer; it falls through to the
+ * later rungs and, failing those, to "didn't match". Duplicate rows for the SAME fund — the
+ * index lists "Vanguard 500 Index Fund" twice, both VOO — still count as one.
  */
 function matchFundName(q: string): CompanyInfo | null {
   const names = tickerIndex.seriesNames ?? [];
@@ -188,9 +195,12 @@ function matchFundName(q: string): CompanyInfo | null {
   const ciks = tickerIndex.seriesCiks ?? [];
   if (!names.length || q.length < 3) return null;
 
-  let hit = names.findIndex((n) => n.toUpperCase() === q);
-  if (hit < 0) hit = names.findIndex((n) => n.toUpperCase().startsWith(q + " "));
-  if (hit < 0) return null;
+  const matching = (test: (name: string) => boolean) =>
+    names.flatMap((n, i) => (test(n.toUpperCase()) ? [i] : []));
+  const exact = matching((n) => n === q);
+  const candidates = exact.length ? exact : matching((n) => n.startsWith(q + " "));
+  if (new Set(candidates.map((i) => symbols[i])).size !== 1) return null;
+  const hit = candidates[0];
 
   const symbol = symbols[hit];
   // The CIK comes from the series index, NOT from a `funds[symbol]` lookup: EDGAR's series

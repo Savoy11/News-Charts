@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import type { CompareSubject } from "@/lib/compare";
 import { identity, intersect } from "@/lib/compareEvents";
+import { safeHref } from "@/lib/safeUrl";
 import type { TimelineEvent } from "@/lib/types";
 import PriceOverlay, { A_COLOR, B_COLOR } from "./PriceOverlay";
 import PriceTimeline from "./PriceTimeline";
@@ -56,6 +57,7 @@ function OverlayStrip({
   const Row = ({ subject, color, align }: { subject: CompareSubject; color: string; align: "top" | "bottom" }) => (
     <div className="relative h-9">
       {subject.events.map((ev) => {
+        const href = safeHref(ev.url);
         const dot = (
           <span
             className="block h-2.5 w-2.5 rounded-full ring-2 ring-slate-950/70"
@@ -70,8 +72,8 @@ function OverlayStrip({
             style={{ left: `${xPct(ev.date)}%`, ...vpos }}
             title={`${ev.date} — ${ev.title}`}
           >
-            {ev.url ? (
-              <a href={ev.url} target="_blank" rel="noopener noreferrer" className="block">
+            {href ? (
+              <a href={href} target="_blank" rel="noopener noreferrer" className="block">
                 {dot}
               </a>
             ) : (
@@ -171,6 +173,7 @@ function InterleavedList({
         {shown.map(({ ev, side }) => {
           const c = chip[side];
           const isBoth = side === "both";
+          const href = safeHref(ev.url);
           const row = (
             <div
               className={`flex items-start gap-2 rounded-lg border bg-slate-900/60 p-2.5 transition-colors hover:border-slate-700 ${
@@ -201,15 +204,15 @@ function InterleavedList({
                 <span className="block text-sm font-medium text-slate-200">{ev.title}</span>
                 <span className="mt-0.5 block text-xs text-slate-500">
                   {ev.date} · {ev.source}
-                  {ev.url ? " ↗" : ""}
+                  {href ? " ↗" : ""}
                 </span>
               </span>
             </div>
           );
           return (
             <li key={`${side}-${ev.id}`}>
-              {ev.url ? (
-                <a href={ev.url} target="_blank" rel="noopener noreferrer" className="block">
+              {href ? (
+                <a href={href} target="_blank" rel="noopener noreferrer" className="block">
                   {row}
                 </a>
               ) : (

@@ -21,9 +21,9 @@ const latestDate = (events: { date: string }[]) => events.reduce((m, e) => (e.da
 export async function generateMetadata({
   params,
 }: {
-  params: { ticker: string };
+  params: Promise<{ ticker: string }>;
 }): Promise<Metadata> {
-  const data = await getCompanyPageData(decodeURIComponent(params.ticker));
+  const data = await getCompanyPageData(decodeURIComponent((await params).ticker));
   if (!data) return { title: "Company not found", robots: { index: false } };
   const title = `${data.name} (${data.ticker}) timeline`;
   const description = `${data.name} (${data.ticker}) news, SEC filings, and earnings on one timeline, pegged to the stock price — see what was happening around each move.`;
@@ -37,8 +37,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function CompanyPage({ params }: { params: { ticker: string } }) {
-  const data = await getCompanyPageData(decodeURIComponent(params.ticker));
+export default async function CompanyPage({ params }: { params: Promise<{ ticker: string }> }) {
+  const requested = decodeURIComponent((await params).ticker);
+  const data = await getCompanyPageData(requested);
   /**
    * A miss must never be cached: a first-visit gather that failed transiently (a throttled Yahoo,
    * a slow proxy) would pin the miss page after a retry could have succeeded. The route is
@@ -50,7 +51,7 @@ export default async function CompanyPage({ params }: { params: { ticker: string
     notFound();
   }
   // /company/Ford is served from F's rows; send the visitor to the page's one address (NC-161).
-  if (data.ticker.toLowerCase() !== decodeURIComponent(params.ticker).toLowerCase()) {
+  if (data.ticker.toLowerCase() !== requested.toLowerCase()) {
     redirect(`/company/${data.ticker}`);
   }
 

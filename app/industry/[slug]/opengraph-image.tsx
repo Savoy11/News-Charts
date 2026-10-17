@@ -22,8 +22,8 @@ export const alt = "Sector timeline on News Charts";
  * someone typed, and echoing them is the topic card's problem (NC-157). Only a `sic-NNNN` code
  * is safe to show unconfirmed, since it is digits.
  */
-export default async function Image({ params }: { params: { slug: string } }) {
-  const slug = decodeURIComponent(params.slug);
+export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
+  const slug = decodeURIComponent((await params).slug);
   const industry = await loadIndustry(slug).catch(() => undefined);
   if (industry) return ogCard("Sector timeline", industry.name);
   const unconfirmed = industry === undefined && /^sic-\d+$/i.test(slug);

@@ -60,7 +60,7 @@ the checklist's "Prompt search v2" entry before removing any of it.
 
 | Layer | Choice |
 |---|---|
-| Framework | Next.js 14 App Router |
+| Framework | Next.js 16 App Router, React 19 |
 | Language | TypeScript |
 | Styling | Tailwind CSS |
 | Database | Postgres via `pg` — plain SQL migrations in `db/` (`npm run db:migrate`) |

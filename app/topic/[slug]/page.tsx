@@ -21,9 +21,9 @@ const latestDate = (events: { date: string }[]) => events.reduce((m, e) => (e.da
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const data = await getTopicPageData(decodeURIComponent(params.slug));
+  const data = await getTopicPageData(decodeURIComponent((await params).slug));
   if (!data) return { title: "Topic not found", robots: { index: false } };
   const title = `${data.title} timeline`;
   const description = data.summary
@@ -41,8 +41,8 @@ export async function generateMetadata({
   };
 }
 
-export default async function TopicPage({ params }: { params: { slug: string } }) {
-  const topic = decodeURIComponent(params.slug);
+export default async function TopicPage({ params }: { params: Promise<{ slug: string }> }) {
+  const topic = decodeURIComponent((await params).slug);
   const data = await getTopicPageData(topic);
   // A miss must never be cached — same rule and reasoning as the company page: a transient
   // gather failure would otherwise pin the miss for the whole revalidate window.
@@ -88,7 +88,7 @@ export default async function TopicPage({ params }: { params: { slug: string } }
           and the source names and attribution lines are long enough to push a phone sideways
           even though they are individually truncated. */}
       <div className="mt-8 grid gap-4 lg:grid-cols-[2fr_1fr] [&>*]:min-w-0">
-        <SourcesPanel slug={decodeURIComponent(params.slug)} />
+        <SourcesPanel slug={topic} />
         <AdSlot />
       </div>
       <div className="mt-4">

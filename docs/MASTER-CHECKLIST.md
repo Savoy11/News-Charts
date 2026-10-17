@@ -396,6 +396,52 @@ stale prompt-search checks.
       cut-off is one constant (`RANK_CUTOFF`). `check:ai` covers junk, partial and out-of-range
       replies. **Still owed:** tuning ranking quality across subject types with a real key.
 
+## NC ledger — batch 8: Next.js 16 (2026-10-17)
+
+One item closed. The framework moves from Next.js 14.2.35 to 16.4.2, with React 19, which takes
+the site off the 24 advisories `npm audit` rated critical. `npm run check` passes with a new suite
+(`check:framework`), `npm run lint` (now ESLint 9) reports nothing, `next build` compiles, and
+`check:ui` is 141/148 — the same seven stale prompt-search checks.
+
+- [x] **NC-166 — upgraded to Next.js 16.4.2 and React 19.**
+      - `npm audit --omit=dev` went from 4 findings (critical: `next`, with 24 advisories) to
+        none. Next 15.5.28, the newest 15.x, was passed over: audit still flags the PostCSS it
+        bundles (high).
+      - Route params are Promises in Next 16. The company, topic, industry and group pages, their
+        metadata and preview images, and the compare page's search params now await them.
+      - `middleware.ts` is now `proxy.ts`, Next 16's name for it, on the Node runtime. It no
+        longer reads `req.ip`, which Next 16 removed and self-hosted Next never filled in.
+        Measured on both versions: when a request has no `X-Forwarded-For`, Next's own server
+        fills it with the socket address, so a direct visitor is still counted by their own
+        address.
+      - `next lint` is gone. `npm run lint` runs ESLint 9 over the same folders with the same Next
+        presets (`eslint.config.mjs`). Three rules new in eslint-plugin-react-hooks 7 are off, to
+        keep the lint like-for-like; adopting them is the follow-up below.
+      - `engines.node` is `>=20.9.0`, Next 16's floor. The build rewrote two tsconfig values
+        (`jsx: react-jsx`, plus the dev types path).
+      - `check:framework` fails 10 of its 14 checks on the old code. It covers the version floor;
+        an exact pin that the lockfile and the installed copy match; React 19; `proxy.ts` present
+        and `middleware.ts` gone; no route reading params without awaiting them; and no
+        `next lint`.
+      - Measured on production builds of both versions against the same database:
+        - every route answers with the same status codes and redirects as before;
+        - the security headers are on pages and API responses;
+        - the 121st API request in a minute is refused, while another client and pages are not;
+        - a held page is served from the 15-minute cache, and a miss is never cached;
+        - the preview images render.
+- [ ] **NC-160 — re-measured on Next 16, still open.** Company and topic misses still answer 200,
+      for a browser and for Googlebot alike. Calling `notFound()` from `generateMetadata` was
+      tried and reverted: it changed nothing. Sector misses now answer 404 (on 14.2 they answered
+      200). The fix left is dropping the loading skeleton on those two routes, which is an owner
+      decision.
+- [ ] `P2` **Follow-ups from the upgrade, not started.**
+      - Adopt the React Compiler lint rules (`react-hooks/set-state-in-effect`, `refs`,
+        `static-components`). They flag 18 existing sites, chiefly code that reads
+        `localStorage` after mount.
+      - Two dev-only audit findings remain: Tailwind 3's file watcher (`chokidar` → `braces`)
+        and the lint plugin's `fast-glob`. Clearing them means Tailwind 4, a breaking change of
+        its own. Neither ships to visitors.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on

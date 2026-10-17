@@ -61,7 +61,6 @@ export function validatePlans(raw: unknown, alreadyQueried: string[] = []): Quer
     if (typeof query !== "string") continue;
 
     // strip control characters (written as escapes: literal ones make the file binary)
-    // eslint-disable-next-line no-control-regex
     const q = query.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
     if (q.length < 3 || q.length > MAX_QUERY) continue;
     // a term, not an address or an injected instruction

@@ -2,11 +2,14 @@
   "name": "news-charts",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint app components lib proxy.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:gen": "node scripts/gen-migration.mjs",
     "db:seed-demo": "tsx scripts/seed-demo.ts",
@@ -34,6 +37,7 @@
     "check:feeds": "tsx scripts/check-feeds.ts",
     "check:ai": "tsx scripts/check-ai.ts",
     "check:abuse": "tsx scripts/check-abuse.ts",
+    "check:framework": "tsx scripts/check-framework.ts",
     "rekey:gdelt": "tsx scripts/rekey-gdelt.ts",
     "verify:addresses": "tsx scripts/verify-addresses.ts",
     "refresh": "tsx scripts/refresh.ts",
@@ -42,7 +46,7 @@
     "fix:exploit-amounts": "tsx scripts/fix-exploit-amounts.ts",
     "profile:list": "tsx scripts/profile-list.ts",
     "check:types": "tsc --noEmit",
-    "check": "npm run check:types && npm run check:parsers && npm run check:dates && npm run check:sentiment && npm run check:markers && npm run check:compare && npm run check:archive && npm run check:tickers && npm run check:feed-keys && npm run check:focus && npm run check:relevance && npm run check:cost && npm run check:ai && npm run check:signals && npm run check:source-labels && npm run check:index && npm run check:news-quality && npm run check:refresh && npm run check:wiring && npm run check:links && npm run check:api && npm run check:search-log && npm run check:prompt && npm run check:onchain && npm run check:governance && npm run check:exploits && npm run check:commercial-mode && npm run check:boundary && npm run check:recall && npm run check:ondemand && npm run check:abuse",
+    "check": "npm run check:types && npm run check:parsers && npm run check:dates && npm run check:sentiment && npm run check:markers && npm run check:compare && npm run check:archive && npm run check:tickers && npm run check:feed-keys && npm run check:focus && npm run check:relevance && npm run check:cost && npm run check:ai && npm run check:signals && npm run check:source-labels && npm run check:index && npm run check:news-quality && npm run check:refresh && npm run check:wiring && npm run check:links && npm run check:api && npm run check:search-log && npm run check:prompt && npm run check:onchain && npm run check:governance && npm run check:exploits && npm run check:commercial-mode && npm run check:boundary && npm run check:recall && npm run check:ondemand && npm run check:abuse && npm run check:framework",
     "check:dates": "tsx scripts/check-dates.ts",
     "check:news-quality": "tsx scripts/check-news-quality.ts",
     "check:parsers": "tsx scripts/check-parsers.ts",
@@ -64,18 +68,18 @@
   "dependencies": {
     "dotenv": "^17.4.2",
     "lightweight-charts": "^5.2.0",
-    "next": "14.2.35",
+    "next": "16.4.2",
     "pg": "^8.22.0",
-    "react": "^18",
-    "react-dom": "^18"
+    "react": "^19",
+    "react-dom": "^19"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.35",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.2",
     "playwright": "^1.62.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",

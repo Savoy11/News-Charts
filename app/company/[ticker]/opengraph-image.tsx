@@ -11,10 +11,11 @@ export const alt = "Company timeline on News Charts";
  * folder: /company/<anything> rendered <ANYTHING> in capitals under the News Charts name. The
  * page's <title> carries the full name; a company we do not hold gets the generic card.
  */
-export default async function Image({ params }: { params: { ticker: string } }) {
-  let key = params.ticker;
+export default async function Image({ params }: { params: Promise<{ ticker: string }> }) {
+  const { ticker } = await params;
+  let key = ticker;
   try {
-    key = decodeURIComponent(params.ticker);
+    key = decodeURIComponent(ticker);
   } catch {
     /* not valid percent-encoding — look it up as it came */
   }

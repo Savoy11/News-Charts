@@ -12,7 +12,7 @@ config({ path: ".env.local" });
  * /topic/<words> URL could mint a permanent topic under the visitor's wording, with a branded
  * preview card repeating it.
  *
- * Offline: the limiter and the slug rules are pure, the middleware runs on constructed requests,
+ * Offline: the limiter and the slug rules are pure, the proxy runs on constructed requests,
  * and the SQL is read as text. The queue's behaviour against a real Postgres is verified live and
  * recorded in docs/MASTER-CHECKLIST.md.
  */
@@ -31,7 +31,7 @@ import {
 } from "../lib/rateLimit";
 import { MAX_REQUEST_SLUG, ledgerSlugFor, requestKey } from "../lib/ingest/queue";
 import { articleAnswersSlug, articleCoversSlug, topicSlugFromTitle } from "../lib/wiki";
-import { middleware, config as middlewareConfig } from "../middleware";
+import { proxy, config as proxyConfig } from "../proxy";
 import { jsonLdText } from "../components/JsonLd";
 
 let pass = 0;
@@ -92,7 +92,7 @@ console.log("\nFederal Register terms: new ones are what cost (NC-162)");
   const route = read("app/api/signals/route.ts");
   check("the signals route fetches from the fixed floor", /fetchRegulations\(t, frSince\)/.test(route) && !/fetchRegulations\(t, sinceStr\)/.test(route));
   check("  …and trims to the visitor's window after", /\.filter\(\(e\) => e\.date >= sinceStr\)/.test(route));
-  check("  …with terms normalised the same way the middleware counts them", /const terms = normaliseTerms\(q\.get\("frTerms"\)\)/.test(route));
+  check("  …with terms normalised the same way the proxy counts them", /const terms = normaliseTerms\(q\.get\("frTerms"\)\)/.test(route));
 }
 
 console.log("\nWho a request is counted against");
@@ -100,30 +100,29 @@ console.log("\nWho a request is counted against");
   const h = (o: Record<string, string>) => new Headers(o);
   check("the first forwarded hop", clientKey(h({ "x-forwarded-for": "203.0.113.9, 10.0.0.1" })) === "203.0.113.9");
   check("else x-real-ip", clientKey(h({ "x-real-ip": "198.51.100.4" })) === "198.51.100.4");
-  check("else what the host saw", clientKey(h({}), "192.0.2.1") === "192.0.2.1");
   check("else one shared bucket", clientKey(h({})) === "unknown");
 }
 
-console.log("\nThe middleware");
+console.log("\nThe proxy (formerly middleware)");
 {
   const req = (path: string, ip: string) =>
     new NextRequest(`http://localhost${path}`, { headers: { "x-forwarded-for": ip } });
   let refused = -1;
   for (let i = 0; i <= REQUESTS_PER_MINUTE; i++) {
-    if (middleware(req("/api/resolve?q=ford", "203.0.113.50")).status === 429) {
+    if (proxy(req("/api/resolve?q=ford", "203.0.113.50")).status === 429) {
       refused = i;
       break;
     }
   }
   check(`request ${REQUESTS_PER_MINUTE + 1} in a minute is refused`, refused === REQUESTS_PER_MINUTE, String(refused));
-  const res = middleware(req("/api/resolve?q=ford", "203.0.113.50"));
+  const res = proxy(req("/api/resolve?q=ford", "203.0.113.50"));
   check("  …as 429 with Retry-After", res.status === 429 && Number(res.headers.get("retry-after")) > 0);
-  check("another client still gets through", middleware(req("/api/resolve?q=ford", "203.0.113.51")).status !== 429);
+  check("another client still gets through", proxy(req("/api/resolve?q=ford", "203.0.113.51")).status !== 429);
 
   const fresh = Array.from({ length: NEW_TERMS_PER_HOUR + 1 }, (_, i) => `term number ${i}`);
   let signalsRefused = -1;
   for (let i = 0; i < fresh.length; i++) {
-    const r = middleware(req(`/api/signals?industry=sic-3711&frTerms=${encodeURIComponent(fresh[i])}`, "203.0.113.60"));
+    const r = proxy(req(`/api/signals?industry=sic-3711&frTerms=${encodeURIComponent(fresh[i])}`, "203.0.113.60"));
     if (r.status === 429) {
       signalsRefused = i;
       break;
@@ -132,9 +131,9 @@ console.log("\nThe middleware");
   check(`new Federal Register term ${NEW_TERMS_PER_HOUR + 1} in an hour is refused`, signalsRefused === NEW_TERMS_PER_HOUR, String(signalsRefused));
   check(
     "a repeat of a term already used is not",
-    middleware(req(`/api/signals?industry=sic-3711&frTerms=${encodeURIComponent(fresh[0])}`, "203.0.113.60")).status !== 429
+    proxy(req(`/api/signals?industry=sic-3711&frTerms=${encodeURIComponent(fresh[0])}`, "203.0.113.60")).status !== 429
   );
-  check("it covers the API and /search", JSON.stringify(middlewareConfig.matcher) === '["/api/:path*","/search"]');
+  check("it covers the API and /search", JSON.stringify(proxyConfig.matcher) === '["/api/:path*","/search"]');
 }
 
 console.log("\nA typed URL does not become a topic under its own words (NC-157)");

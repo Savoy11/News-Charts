@@ -29,6 +29,7 @@ import { subjectLockKey } from "../lib/ingest/firstPass";
 import { project } from "../lib/ingest/quota";
 import { CRYPTO_SUBJECTS } from "../lib/onchain";
 import { purgeOldResolutions } from "../lib/searchLog";
+import { TICKER_INDEX_MAX_AGE_DAYS, TICKER_INDEX_SYNCED_ON, tickerIndexAgeDays } from "../lib/sec";
 import type { SourceKey } from "../lib/types";
 
 /**
@@ -194,6 +195,18 @@ async function main(): Promise<void> {
         `  ⚠ at ${rows.length} subjects these are at or past their free tier: ` +
           tight.map((t) => `${t.source} (${Math.round((t.utilisation ?? 0) * 100)}%)`).join(", ") +
           `\n    npm run cost-report for the full picture.`
+      );
+    }
+    /**
+     * The committed EDGAR index ages silently: a company that listed after the last sync resolves
+     * only through a live EDGAR request, which is the one a throttled EDGAR refuses. This is the
+     * only scheduled process, so it is where staleness gets said out loud (NC-051).
+     */
+    const indexAge = tickerIndexAgeDays();
+    if (indexAge > TICKER_INDEX_MAX_AGE_DAYS) {
+      console.log(
+        `  ⚠ the committed EDGAR ticker index is ${indexAge} days old (synced ${TICKER_INDEX_SYNCED_ON}).` +
+          `\n    From a host that reaches sec.gov: npm run sync:tickers, commit data/edgar-tickers.json, redeploy.`
       );
     }
   }

@@ -15,7 +15,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. Report on the demand queue — make `subject_requests` readable · proposed `P1` · target section: Scheduled refresh (needs a scheduler on the host)
 
-**Status:** PENDING
+**Status:** SHIPPED — `scripts/demand.ts`, run as `npm run demand` (commit d1ab0cd, 2026-08-15). Marked from the code on 2026-10-17 (NC-105): it was built rather than formally marked here.
 
 **What:** A `npm run demand` report over `subject_requests`: most-wanted unfulfilled subjects with
 their request counts and first/last-asked dates, plus a second block of requests carrying a
@@ -58,7 +58,7 @@ written · *Practicality:* high — no dependencies, no network, no risk to any 
 
 ## 2. Give industry pages their own OpenGraph card · proposed `P2` · target section: Initiative: Hardening & follow-ups from the feed/UX build-out (2026-07 session)
 
-**Status:** PENDING
+**Status:** SHIPPED — `app/industry/[slug]/opengraph-image.tsx` (commit 5324f01, 2026-08-12), reading the sector's stored name. Marked from the code on 2026-10-17 (NC-105).
 
 **What:** Add `app/industry/[slug]/opengraph-image.tsx`, mirroring the company and topic cards, so
 a shared sector-timeline link renders "<Industry name> · sector timeline" instead of the generic

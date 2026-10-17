@@ -1,6 +1,6 @@
 # Coverage map — how far back a timeline can actually go
 
-**Last updated:** 2026-07-28 · 18 sources
+**Last updated:** 2026-10-17 · 19 sources (11 on the ingest path; the 8 keyed ones are held back by their licences)
 
 The single question this answers: *given a subject, what is the earliest event News Charts could
 plausibly show, and which source would supply it?*
@@ -20,23 +20,24 @@ because it will be trusted.
 | Era | Source | Reach | Kind of thing |
 | --- | --- | --- | --- |
 | **1770 – 1963** | Chronicling America (Library of Congress) | ~1770 | Digitised US newspaper pages |
-| **1851 – now** | NYT Article Search | 1851 | Articles, keyed |
+| **1851 – now** | NYT Article Search | 1851 | Articles — only with a visitor's own key, in their browser; never stored |
 | **any** | Wikipedia prose | as far as the article goes | History sentences |
 | **any** | Wikipedia citations | as far as the references go | Dated external articles |
-| **any** | Internet Archive | no floor | Catalogued items: reports, catalogues, film |
+| **any** | Internet Archive | 1780 for companies (a bound on impossibility); topics effectively none | Catalogued items: reports, catalogues, film — relevance-ranked |
 | **1934 – now** | SEC EDGAR | electronic filings from ~1993 | Filings, earnings |
-| **1999 – now** | The Guardian Open Platform | 1999 | Articles, keyed |
+| **1999 – now** | The Guardian Open Platform | 1999 | Articles — only with a visitor's own key, in their browser; never stored |
 | **2015 – now** | Federal Register | 2015 (our query floor) | Sector rules |
 | **2017 – now** | GDELT | 2017 (our query floor) | Recent news |
-| **now** | Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | days to weeks | Recent news, keyed |
-| **now** | Yahoo Finance | prices go back decades; news is recent | Prices, corporate actions, news |
+| **—** | Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | not ingested | Free tiers are non-commercial; adapters exist for diagnostics only |
+| **10 years** | Yahoo Finance chart | 10 years of daily closes; the full history is re-read after a split | Prices, corporate actions |
+| **now** | Yahoo Finance RSS | recent headlines | News |
 
 ### On-chain, which has a hard floor
 
 | Chain / data | Reaches back to | Notes |
 | --- | --- | --- |
 | Bitcoin | **2009-01-03** | Genesis. Nothing on-chain predates it. |
-| Ethereum | **2015-07-30** | Frontier launch |
+| Ethereum | **2015-07-30** | Frontier launch. Milestone dates come from the chain via Blockscout; if the explorer cannot be reached, from each fork's published activation date, labelled as such |
 | USDC | 2018-09-26 | Contract deployment |
 | DAI | 2019-11-18 | Multi-collateral launch |
 | USDT | 2017-11-01 | Ethereum contract |
@@ -53,8 +54,10 @@ it with commentary written later would turn a young record into a fake old one.
 
 **A public company founded before 1900.** Wikipedia prose and its citations carry the founding and
 the early decades. Chronicling America covers roughly 1770–1963 in US newspapers — the only source
-that reaches the stretch between a company's invention and GDELT's 2017 floor. NYT reaches 1851 if
-a key is set. SEC filings begin when EDGAR went electronic, around 1993. Prices begin at listing.
+that reaches the stretch between a company's invention and GDELT's 2017 floor. NYT reaches 1851
+only for a visitor who adds their own key. SEC filings begin when EDGAR went electronic, around
+1993. Prices reach back ten years (the full history after a split). Internet Archive items dated
+before 1780 are dropped for companies — the oldest US public companies date from that decade.
 Everything from 2017 is dense; everything before it depends on how well the subject was covered by
 newspapers that happen to have been digitised.
 
@@ -63,7 +66,9 @@ with the company's own life.
 
 **A topic.** Wikipedia is the spine; its citations are usually the deepest dated material. Press
 scans reach further for anything that was in US newspapers before 1963. The Internet Archive has
-no floor at all but its metadata is uneven, so a bare year stays a bare year.
+almost no floor for topics (1500, so nothing a topic could legitimately hold is cut) and its
+metadata is uneven, so a bare year stays a bare year; results come back in the archive's own
+relevance order, since sorting by its uncurated date field promoted mis-catalogued rows.
 
 **A crypto asset or protocol.** Genesis is genesis. See the table above.
 
@@ -71,12 +76,14 @@ no floor at all but its metadata is uneven, so a bare year stays a bare year.
 
 ## The gaps worth knowing about
 
-- **1963 – 2017 is the thin stretch** for anything not in the NYT or the Guardian. Chronicling
+- **1963 – 2017 is the thin stretch** — and the NYT and the Guardian, which cover it, are not
+  ingested; they reach only a visitor who brings a key. Chronicling
   America stops around 1963 (copyright, not interest), GDELT starts in 2017, and the keyed
   aggregators only carry recent weeks. A subject whose most interesting decades sit in that
   window will look sparser than it was. **This is the single biggest hole in the corpus.**
-- **The keyed aggregators are days-to-weeks deep.** They add breadth to the present, never depth
-  to the past. Losing one costs recency, not history.
+- **The keyed aggregators are not ingested.** Their free tiers bar commercial use, so the
+  adapters exist for diagnostics only. Even licensed, they are days-to-weeks deep: breadth for the
+  present, never depth for the past.
 - **Our own floors are choices, not limits.** GDELT is queried from 2017 and the Federal Register
   from 2015 because that is what the queries ask for, not because the sources stop there.
 - **Nothing here reaches non-US regulation**, and nothing reaches non-English press except

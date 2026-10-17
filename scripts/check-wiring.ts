@@ -31,6 +31,7 @@ import { QUOTAS } from "../lib/ingest/quota";
 import { COMPANY_SOURCES, TOPIC_SOURCES } from "./ingest";
 import { CRYPTO_SUBJECTS } from "../lib/onchain";
 import type { SourceKey } from "../lib/types";
+import { countMismatches, sameDatabase } from "../lib/backupCounts";
 
 let pass = 0;
 let fail = 0;
@@ -254,6 +255,23 @@ check(
     "sector pages are cached whole, and never call noStore()",
     /export const revalidate = 900;/.test(industry) && /export async function generateStaticParams\(\)/.test(industry) && !/noStore/.test(industry)
   );
+}
+// NC-152: the rehearsal replayed the dump inside BEGIN…ROLLBACK against DATABASE_URL — exclusive
+// locks on every live table for the whole reload — and never compared what came back.
+{
+  const restoreSrc = read("scripts/verify-restore.ts");
+  check("a restore rehearsal refuses the live database", /if \(live && sameDatabase\(live, target\)\)/.test(restoreSrc));
+  check("  …and no longer wraps the dump in a rolled-back transaction", !/ROLLBACK/.test(restoreSrc) && !/BEGIN;/.test(restoreSrc));
+  check("  …restores for real, without the original roles", /"--no-owner"/.test(restoreSrc) && /"--single-transaction"/.test(restoreSrc));
+  check("  …and compares the restored counts with the backup's", /countMismatches\(captured, restored\)/.test(restoreSrc));
+  check("the backup records its counts beside the dump", /writeFileSync\(countsFileFor\(outFile\)/.test(backupSrc));
+  check("  …and leaves no empty dump behind when pg_dump fails", /discard\(\);\s+throw new Error\(`pg_dump failed/.test(backupSrc));
+  const live = "postgresql://chronolens:pw@localhost:5432/chronolens";
+  check("the live database is recognised under another spelling", sameDatabase(live, "postgresql://other:pw@127.0.0.1/chronolens"));
+  check("  …and a scratch database is not mistaken for it", !sameDatabase(live, "postgresql://chronolens:pw@localhost:5432/news_charts_restore"));
+  const backed = { subjects: 6, events: 101, attestations: 101, links: 100, scored: 0, prices: 2115 };
+  check("a short restore is caught table by table", JSON.stringify(countMismatches(backed, { ...backed, events: 96 })) === '["events: backed up 101, restored 96"]');
+  check("  …and a full one passes", countMismatches(backed, { ...backed }).length === 0);
 }
 check(
   "failed requests queue behind untried ones",

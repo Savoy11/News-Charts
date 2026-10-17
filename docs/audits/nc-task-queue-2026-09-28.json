@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 74,
-   "closed": 66,
+   "open": 66,
+   "closed": 74,
    "parked": 12,
    "blocked": 18
   },
@@ -43,7 +43,7 @@
    "owner-decision": 50
   },
   "counts_recomputed_on": "2026-10-17",
-  "closed_by_annotation": 66
+  "closed_by_annotation": 74
  },
  "blocking_decisions": [
   {
@@ -940,7 +940,7 @@
   {
    "id": "NC-026",
    "title": "Add a reviewed-on date to each SOURCES registry entry",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "feature",
@@ -963,7 +963,19 @@
      "lines": "15-23",
      "quote": "commercialOk: boolean;\n  notes?: string;"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "SOURCES entries carry reviewedOn (YYYY-MM-DD), set from the git blame date of each entry's licence and commercialOk lines: 2026-07-28 for 16 entries, 2026-07-29 for snapshot and defillama, 2026-10-17 for yahoo_prices. The field documents that it records when someone last looked, not that the terms are unchanged. check:commercial-mode requires a valid, non-future date on every entry and lists commercial sources unreviewed for over 180 days without failing the build. The checklist's 'Record when each source was last verified' item is ticked.",
+    "evidence": [
+     "lib/ingest/store.ts:30",
+     "scripts/check-commercial-mode.ts:93",
+     "docs/MASTER-CHECKLIST.md:317-357"
+    ]
+   }
   },
   {
    "id": "NC-027",
@@ -1247,7 +1259,7 @@
   {
    "id": "NC-035",
    "title": "Fix stale claim that page render calls the keyed news adapters (licensedKey doc and gate text)",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "docs",
@@ -1270,7 +1282,19 @@
      "lines": "244",
      "quote": "`lib/page-data.ts` calls these adapters directly on the page path"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "The licensedKey comment no longer claims lib/page-data.ts calls the keyed adapters. It says the gate guards the adapters wherever they are called from, and that today only the feed diagnostics reach them. A dated correction under the COMMERCIAL_MODE checklist entry says the same, and that the flag guards future wiring rather than anything a visitor triggers today.",
+    "evidence": [
+     "lib/ingest/store.ts:284",
+     "docs/MASTER-CHECKLIST.md:741",
+     "docs/MASTER-CHECKLIST.md:317-357"
+    ]
+   }
   },
   {
    "id": "NC-036",
@@ -1634,7 +1658,7 @@
   {
    "id": "NC-046",
    "title": "Run check:ui (64 browser checks) against a seeded database and dev server",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "either",
    "category": "data-verification",
@@ -1669,7 +1693,18 @@
      "note": "FULL RUN 2026-10-17 now that NC-132 is fixed: 141/148. The chip-rotation flake is fixed (the row is read under reduced motion). Seven failures remain, all stale since the 2026-08-08 scope refocus and previously hidden by the crash: six prompt-search routing checks ('how did X affect Ford stock' with a focus) and 'the search path still resolves it to a subject page' for an unknown ticker. Owner decision: rewrite to today's behaviour or keep as the Prompt search v2 spec.",
      "evidence": "live run 2026-10-17 npm run check:ui -- --base http://localhost:3100"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "check:ui has run in full against a seeded Postgres 16 and a production build three times since NC-132 fixed the harness crash: 141/148 at batches 3, 4 and 5 (2026-10-17). The seven failures are the prompt-search routing checks stale since the 2026-08-08 scope refocus, already raised as an owner decision.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:182-256",
+     "docs/MASTER-CHECKLIST.md:317-357"
+    ]
+   }
   },
   {
    "id": "NC-047",
@@ -2543,7 +2578,7 @@
   {
    "id": "NC-073",
    "title": "Update COVERAGE-MAP.md for post-07-28 changes (Internet Archive floors/relevance sort, ETH fallback dates)",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "docs",
@@ -2575,7 +2610,18 @@
      "lines": "13-14",
      "quote": "Keep this current when a source is added or dropped."
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "docs/COVERAGE-MAP.md updated 2026-10-17 with 19 sources, 11 of them on the ingest path. The Internet Archive row gives the 1780 company floor (1500 for topics) and relevance ranking. Ethereum notes the published activation-date fallback when Blockscout is unreachable. Prices cover 10 years, with the full history after a split. NYT and Guardian are visitor-key only, and the six other aggregators are marked not ingested. The per-subject text and the gaps section match.",
+    "evidence": [
+     "docs/COVERAGE-MAP.md",
+     "docs/MASTER-CHECKLIST.md:317-357"
+    ]
+   }
   },
   {
    "id": "NC-074",
@@ -3208,7 +3254,7 @@
   {
    "id": "NC-097",
    "title": "Refresh OWNER-ACTIONS.md — several statements are stale since 2026-08-12",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "docs",
@@ -3228,7 +3274,18 @@
      "lines": "455-456",
      "quote": "the keyed aggregators it used to price (EODHD at 100% of its tier at five\n      subjects, among them) are not on that path"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "docs/OWNER-ACTIONS.md was refreshed and dated 2026-10-17. Changes:\n- §1: the exploit-units row (fixed 2026-07-31) became the Etherscan V2 confirmation.\n- §2: notes db:migrate.\n- §3: the cost-report bullet now says it prices only ingested feeds and projects the rest; the Yahoo chart joins the licensing table.\n- §5: covers ads, affiliates, key isolation (NC-164) and the missing disclosure and legal pages.\n- New §6 lists the one-time post-deploy steps.\n- The decisions list adds NC-160, the stale check:ui tests, NC-047, the FR-terms choice and the no-price render decision.",
+    "evidence": [
+     "docs/OWNER-ACTIONS.md",
+     "docs/MASTER-CHECKLIST.md:317-357"
+    ]
+   }
   },
   {
    "id": "NC-098",
@@ -3480,7 +3537,7 @@
   {
    "id": "NC-104",
    "title": "README drift: stale confirmation-lag note, Structure section and data-sources table",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "docs",
@@ -3510,12 +3567,23 @@
      "lines": "15",
      "quote": "export const revalidate = 900;"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "README updated in three places:\n- The finality gate is described as shipped (lib/onchain/finality.ts, one hour on Ethereum).\n- The data-sources table lists every source on the ingest path, points at the SOURCES registry and COVERAGE-MAP, and explains why the keyed aggregators are not ingested.\n- The Structure section says pages read the database (first-visit gather aside), company and topic held-page reads are cached for 15 minutes, and industry pages are cached whole.",
+    "evidence": [
+     "README.md",
+     "docs/MASTER-CHECKLIST.md:317-357"
+    ]
+   }
   },
   {
    "id": "NC-105",
    "title": "Correct stale counts and status markers: checklist says 14 migrations (repo has 20); proposals still 'PENDING'",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "docs",
@@ -3540,7 +3608,20 @@
      "lines": "18",
      "quote": "**Status:** PENDING"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "The project-state paragraph now says the migration count was 14 when written and 24 as of 2026-10-17, and tells the reader to count db/. Both 2026-07-30 proposals are marked SHIPPED with their commits, d1ab0cd (npm run demand) and 5324f01 (industry OG card), noting they were built rather than formally approved.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md",
+     "docs/proposals/2026-07-30-proposals.md:18",
+     "docs/proposals/2026-07-30-proposals.md:61",
+     "docs/MASTER-CHECKLIST.md:317-357"
+    ]
+   }
   },
   {
    "id": "NC-106",
@@ -5127,7 +5208,7 @@
   {
    "id": "NC-152",
    "title": "Restore rehearsal runs against the live database, locks every table, and proves less than 'RESTORE VERIFIED' says",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "ops-infra",
@@ -5142,7 +5223,22 @@
      "lines": "76-82",
      "quote": "writeFileSync(wrapped, `BEGIN;\\n${sql}\\nROLLBACK;\\n`, \"utf8\");"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "verify-restore now requires RESTORE_TARGET_URL or --target, refuses a target that sameDatabase() matches to DATABASE_URL (localhost and 127.0.0.1 treated as one), and restores for real with pg_restore --clean --if-exists --no-owner --single-transaction. It then compares the restored row counts with the counts db:backup writes to <dump>.counts.json. backup.ts writes that sidecar, prunes it with its dump, and deletes a failed or empty dump instead of leaving it behind. Live 2026-10-17 on Postgres 16: a fresh dump restored into a scratch database with every count matching; a tampered sidecar reported the events mismatch and exited 1; a dump without a sidecar was reported as restored but not compared; the live database was refused; a backup with the server down left no file behind. README and .env.example document it.",
+    "evidence": [
+     "scripts/verify-restore.ts:68",
+     "scripts/verify-restore.ts:134",
+     "scripts/backup.ts:123",
+     "lib/backupCounts.ts",
+     "scripts/check-wiring.ts:259",
+     "docs/MASTER-CHECKLIST.md:317-357"
+    ]
+   }
   },
   {
    "id": "NC-153",
@@ -5891,6 +5987,14 @@
     "basis_key": "Fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `next lint` (no warnings), `next build`, a full `check:ui` run (141/148, the same 7 stale failures), and live runs against Postgres 16 and a production build. Etherscan, GDELT and Yahoo are blocked from the session, so those adapters were exercised with fixtures.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:257-316"
+    ]
+   },
+   {
+    "on": "2026-10-17",
+    "what": "Batch 6: 8 items closed (NC-026, NC-035, NC-046, NC-073, NC-097, NC-104, NC-105, NC-152).",
+    "basis_key": "Fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain and `next lint`, plus live backup and restore runs against Postgres 16 (a real dump restored into a scratch database, with mismatch, missing-counts, live-target and failed-dump cases). Documentation items were checked against the code they describe.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:317-357"
     ]
    }
   ]

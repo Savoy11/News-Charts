@@ -20,6 +20,14 @@ export const SOURCES: {
   license: string;
   attribution: string;
   commercialOk: boolean;
+  /**
+   * When this entry's licence and `commercialOk` judgement were last written down (YYYY-MM-DD),
+   * taken from the commit that set them (NC-026). It is the date someone last looked — not a
+   * promise the provider's terms still say the same. An undated flag was indistinguishable from
+   * one nobody had read in a year; re-reading the terms, on any trigger the release gate in
+   * docs/MASTER-CHECKLIST.md lists, is what moves this date.
+   */
+  reviewedOn: string;
   notes?: string;
 }[] = [
   {
@@ -29,6 +37,7 @@ export const SOURCES: {
     license: "CC BY-SA 4.0",
     attribution: "Wikipedia contributors",
     commercialOk: true,
+    reviewedOn: "2026-07-28",
   },
   {
     id: 2,
@@ -37,6 +46,7 @@ export const SOURCES: {
     license: "public domain",
     attribution: "Library of Congress, Chronicling America",
     commercialOk: true,
+    reviewedOn: "2026-07-28",
     notes: "503s under load; never sort by date — OCR misreads surface first",
   },
   {
@@ -46,6 +56,7 @@ export const SOURCES: {
     license: "open data",
     attribution: "The GDELT Project",
     commercialOk: true,
+    reviewedOn: "2026-07-28",
     notes: "~1 req/5s per IP; throttle replies arrive as HTTP 200 with a text body",
   },
   {
@@ -55,6 +66,7 @@ export const SOURCES: {
     license: "public domain",
     attribution: "U.S. Securities and Exchange Commission",
     commercialOk: true,
+    reviewedOn: "2026-07-28",
     notes: "requires a User-Agent with contact details",
   },
   {
@@ -64,6 +76,7 @@ export const SOURCES: {
     license: "public domain",
     attribution: "U.S. Government Publishing Office, Federal Register",
     commercialOk: true,
+    reviewedOn: "2026-07-28",
     notes: "industry-level rules, proposed rules and notices; no key, generous limits",
   },
   {
@@ -73,6 +86,7 @@ export const SOURCES: {
     license: "RSS headlines + links",
     attribution: "Yahoo Finance",
     commercialOk: true,
+    reviewedOn: "2026-07-28",
     notes: "per-ticker feed; headline/link/date only, article stays on yahoo.com",
   },
   {
@@ -82,6 +96,7 @@ export const SOURCES: {
     license: "NYT API terms — non-commercial",
     attribution: "The New York Times",
     commercialOk: false,
+    reviewedOn: "2026-07-28",
     notes: "archive to 1851; free key (NYT_API_KEY). Re-license before the ad-supported path uses it",
   },
   {
@@ -91,6 +106,7 @@ export const SOURCES: {
     license: "Guardian Open Platform terms — free tier is non-commercial",
     attribution: "Guardian News & Media",
     commercialOk: false,
+    reviewedOn: "2026-07-28",
     notes: "archive to 1999; free key (GUARDIAN_API_KEY). Re-license before the ad-supported path uses it",
   },
   {
@@ -100,6 +116,7 @@ export const SOURCES: {
     license: "Newsdata.io terms — free tier for personal/testing use",
     attribution: "Newsdata.io",
     commercialOk: false,
+    reviewedOn: "2026-07-28",
     notes: "multi-outlet aggregator, recent news; free key (NEWSDATA_API_KEY), 200 credits/day. Re-license before the ad-supported path uses it",
   },
   {
@@ -109,6 +126,7 @@ export const SOURCES: {
     license: "GNews terms — free tier is non-commercial",
     attribution: "GNews",
     commercialOk: false,
+    reviewedOn: "2026-07-28",
     notes: "Google News results as JSON, recent news; free key (GNEWS_API_KEY), 100 req/day, 10 articles/req. Re-license before the ad-supported path uses it",
   },
   {
@@ -118,6 +136,7 @@ export const SOURCES: {
     license: "Currents terms — free developer tier is non-commercial",
     attribution: "CurrentsAPI",
     commercialOk: false,
+    reviewedOn: "2026-07-28",
     notes: "multi-outlet aggregator, recent news; free key (CURRENTS_API_KEY). Re-license before the ad-supported path uses it",
   },
   {
@@ -127,6 +146,7 @@ export const SOURCES: {
     license: "Marketaux terms — free tier is non-commercial",
     attribution: "Marketaux",
     commercialOk: false,
+    reviewedOn: "2026-07-28",
     notes: "finance-native news tagged by ticker; free key (MARKETAUX_API_KEY), 100 req/day, 3 articles/req. Re-license before the ad-supported path uses it",
   },
   {
@@ -136,6 +156,7 @@ export const SOURCES: {
     license: "EODHD terms — free tier for personal/evaluation use",
     attribution: "EOD Historical Data",
     commercialOk: false,
+    reviewedOn: "2026-07-28",
     notes: "ticker-keyed financial news; free key (EODHD_API_KEY), ~20 req/day and news access varies by plan — adapter degrades to empty. Re-license before the ad-supported path uses it",
   },
   {
@@ -145,6 +166,7 @@ export const SOURCES: {
     license: "Finnhub terms — free tier is personal/non-commercial",
     attribution: "Finnhub",
     commercialOk: false,
+    reviewedOn: "2026-07-28",
     notes: "ticker-keyed company news, trailing year on the free tier; free key (FINNHUB_API_KEY), 60 req/min. Re-license before the ad-supported path uses it",
   },
   {
@@ -157,6 +179,7 @@ export const SOURCES: {
     // terms that permit commercial use. This stays true only while the sources stay raw:
     // Dune and Nansen sell *aggregations*, and their terms bar the ad-supported path.
     commercialOk: true,
+    reviewedOn: "2026-07-28",
     notes: "keyless for BTC/ETH milestones; ETHERSCAN_API_KEY only for token supply moves. No aggregator data — raw chain + public explorers only",
   },
   {
@@ -170,6 +193,7 @@ export const SOURCES: {
     // here, so the ad-supported path is clear on the metadata alone. Republishing item *content*
     // would be a different question and this adapter does not do it.
     commercialOk: true,
+    reviewedOn: "2026-07-28",
     notes: "keyless. advancedsearch for dated items, Wayback CDX for site captures. Metadata quality is uneven — bare years are common and stay year-precision",
   },
   {
@@ -181,6 +205,7 @@ export const SOURCES: {
     // What is read is the record of a public vote — who proposed what and how the tally landed.
     // Governance results are facts about a protocol, not anyone's copyrighted work.
     commercialOk: true,
+    reviewedOn: "2026-07-29",
     notes: "keyless GraphQL. Off-chain signed votes, NOT transactions — filed as 'governance', never 'onchain'",
   },
   {
@@ -192,6 +217,7 @@ export const SOURCES: {
     // A public record of incidents, republished with attribution and a link back. What is used
     // is the fact of the incident, not DefiLlama's analysis of it.
     commercialOk: true,
+    reviewedOn: "2026-07-29",
     notes: "incidents are ATTRIBUTED, not confirmed on-chain by us — the 'exploit' kind exists to keep that distinction visible",
   },
   {
@@ -204,6 +230,7 @@ export const SOURCES: {
     // all. A key of its own changes what is recorded, not what is used — the terms question in
     // the release gate is the same one the RSS row carries.
     commercialOk: true,
+    reviewedOn: "2026-10-17",
     notes: "daily closes for the price chart; its own window and outcome log, separate from the RSS headlines (NC-103)",
   },
 ];
@@ -253,9 +280,12 @@ export function commercialMode(): boolean {
 /**
  * The API key for a source, or null when the adapter must not run.
  *
- * `assertCommercialOk` below guards the ingest worker, but the site does not ingest to render:
- * `lib/page-data.ts` calls these adapters directly on the page path, so a non-commercial source
- * would keep serving visitors with nothing checking its licence. This closes that path.
+ * `assertCommercialOk` below guards the ingest worker; this guards the adapters themselves,
+ * wherever they are called from. When it was written the page path called the eight keyed
+ * adapters on every view. Since the scheduler cut-over pages read only the database, and today
+ * nothing on the ingest or page path calls them either: they are reached by the feed
+ * diagnostics (`scripts/check-feeds.ts`) alone, and `scripts/check-wiring.ts` records why each
+ * stays off (NC-035). The gate stays, so that wiring one up later cannot skip the licence check.
  *
  * Returning null rather than throwing is deliberate — it is the same signal as "no key
  * configured", which every adapter already degrades from cleanly, so switching the flag on can

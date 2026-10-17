@@ -19,6 +19,7 @@ config({ path: ".env.local" });
 
 import * as feeds from "../lib/newsExtra";
 import type { TimelineEvent } from "../lib/types";
+import { SOURCES } from "../lib/ingest/store";
 
 type Adapter = (query: string) => Promise<TimelineEvent[]>;
 
@@ -84,7 +85,24 @@ async function scenario(commercial: boolean): Promise<void> {
   }
 }
 
+/**
+ * NC-026: an undated `commercialOk` flag is indistinguishable from one nobody has read in a year.
+ * Structure only — a date going stale must not turn the build red on its own; the list below is
+ * what the release gate's re-check reads.
+ */
+function reviewDates(): void {
+  console.log("\nEvery licence judgement carries the date it was made");
+  const today = new Date().toISOString().slice(0, 10);
+  const undated = SOURCES.filter((s) => !/^\d{4}-\d{2}-\d{2}$/.test(s.reviewedOn ?? "") || Number.isNaN(Date.parse(s.reviewedOn)));
+  check("every SOURCES entry has a reviewedOn date", undated.length === 0, undated.map((s) => s.key).join(", "));
+  const future = SOURCES.filter((s) => s.reviewedOn > today);
+  check("  …none of them in the future", future.length === 0, future.map((s) => s.key).join(", "));
+  const old = SOURCES.filter((s) => s.commercialOk && Date.parse(today) - Date.parse(s.reviewedOn) > 180 * 86_400_000);
+  if (old.length) console.log(`  note  commercial sources last reviewed over 180 days ago: ${old.map((s) => `${s.key} (${s.reviewedOn})`).join(", ")}`);
+}
+
 async function main(): Promise<void> {
+  reviewDates();
   mockFetch();
   try {
     await scenario(true);

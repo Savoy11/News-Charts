@@ -203,15 +203,23 @@ pg_restore --clean --if-exists -d "$DATABASE_URL" backups/news-charts-<timestamp
 ### Rehearsing a restore
 
 ```
-npm run db:verify-restore              # newest dump
-npm run db:verify-restore -- --file backups/news-charts-....dump
+createdb -U postgres news_charts_restore             # once, by a role with CREATEDB
+RESTORE_TARGET_URL=postgresql://…/news_charts_restore npm run db:verify-restore
+npm run db:verify-restore -- --target postgresql://…/news_charts_restore --file backups/news-charts-….dump
 ```
 
-A backup nobody has restored is a guess. This runs the dump's **own SQL — DROP and CREATE
-included, exactly what real recovery executes** — inside a transaction that is then rolled
-back. The `chronolens` role deliberately lacks `CREATEDB`, so a scratch database isn't
-available; this needs no extra privileges and persists nothing. Even an impossible commit
-would write the dump of this same database.
+A backup nobody has restored is a guess. This **restores the dump for real into a separate,
+disposable database** — overwriting it — exactly as recovery would, with `--no-owner` so a
+fresh host needs none of the original roles, then compares the restored row counts with the
+counts `npm run db:backup` recorded beside the dump (`….dump.counts.json`). It refuses to run
+when the target is `DATABASE_URL`.
+
+It used to replay the dump inside a rolled-back transaction against the live database. That
+held exclusive locks on every production table for the whole reload, proved nothing about a
+fresh host (the roles and extensions were already there), and never checked what came back
+(NC-152). **Never point a rehearsal at the production database.** The `chronolens` role lacks
+`CREATEDB`, so the scratch database is created once by a role that has it, on this server or
+another one.
 
 It earned its keep on the first run:
 
@@ -223,7 +231,8 @@ It earned its keep on the first run:
 > statements).
 
 Contents were separately checked by expanding a dump to SQL and comparing row counts against
-the live database — all 12 tables matched exactly.
+the live database — all 12 tables matched exactly. The rehearsal now makes that comparison
+itself on every run.
 
 ## Database and ingest worker
 
@@ -314,9 +323,10 @@ and that stays true only while they stay raw: Dune and Nansen sell *aggregations
 bar the ad-supported path. Only the stablecoin adapter needs a key (`ETHERSCAN_API_KEY`); without
 it that one adapter sits out and the rest of the on-chain timeline is unaffected.
 
-Every Phase 0 event is years finalized, so there is no reorg risk to reason about yet. A
-confirmation-lag policy has to land before any live feed is added — an orphaned event that a
-synthesis already cites cannot be deleted, by design (`ON DELETE RESTRICT`).
+Live feeds — the stablecoin and USDT supply moves — read blocks minutes old, so a finality gate
+(`lib/onchain/finality.ts`) withholds any on-chain event younger than its chain's settling time
+(an hour on Ethereum) until a later run. It exists because an orphaned event that a synthesis
+already cites cannot be deleted, by design (`ON DELETE RESTRICT`).
 
 ### Seeding without the network
 
@@ -472,15 +482,31 @@ Two behaviours worth knowing:
   `throttled` *or* `error`, it is skipped rather than retried. A rate-limited host often stops
   answering entirely (GDELT returns 429, then drops the connection), and retrying deepens the ban.
 
-## Data sources (all free, no API keys)
+## Data sources
+
+The sources the scheduled ingest reads. All are free; only the stablecoin and USDT supply feeds
+need a key. The registry in `lib/ingest/store.ts` (`SOURCES`) is the authority — it also carries
+each source's licence, whether it is cleared for commercial use, and when that was last
+reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 
 | Source | Used for | Notes |
 | --- | --- | --- |
-| Yahoo Finance chart API | Daily prices (10y) | Unofficial; swap for a paid API before scale |
-| SEC EDGAR | Filings, earnings (10-K/10-Q/8-K 2.02) | Requires a `User-Agent` with contact email |
+| Yahoo Finance chart API | Daily prices (10y; full history after a split), dividends, splits | Unofficial; swap for a paid API before scale |
+| Yahoo Finance RSS | Company headlines | Headline, link and date only |
+| SEC EDGAR | Filings, earnings (10-K/10-Q/8-K 2.02), fund filings | Requires a `User-Agent` with contact email |
 | GDELT 2.0 | News headlines | English-filtered; 2017+. Throttles per IP — see note below |
-| Wikipedia | Topic histories | "History of ..." + "Timeline of ..." merged; search-index fallback |
+| Wikipedia | Topic histories and company backstory | "History of ..." + "Timeline of ..." merged; search-index fallback |
 | LoC Chronicling America | Historical newspapers ~1770–1963 | Public domain; fills the pre-2017 gap |
+| Internet Archive | Catalogued items (reports, catalogues, film) | Relevance-ranked; impossible dates dropped |
+| Federal Register | Sector-level rules and notices | Attached to industries, not companies |
+| mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
+| Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |
+| Snapshot | Protocol governance votes | Keyless GraphQL |
+| DefiLlama | Protocol exploits | Open hacks dataset |
+
+The eight keyed news aggregators (NYT, Guardian, Newsdata, GNews, Currents, Marketaux, EODHD,
+Finnhub) have adapters but are not ingested: their free tiers bar commercial use. NYT and the
+Guardian are available to a visitor who brings their own key, in their browser, never stored.
 
 Topic pages are **Wikipedia for the historical spine, GDELT for recent news**. There is no
 general-purpose historical event source beyond Wikipedia in the free tier — GDELT only reaches
@@ -548,9 +574,15 @@ publishers' own RSS feeds with attribution.
 
 ## Structure
 
-- `lib/` — data fetchers (`sec.ts`, `prices.ts`, `news.ts`, `wiki.ts`) with Next.js fetch caching
-- `app/company/[ticker]` — price chart + merged event timeline (server-rendered, 30 min revalidate)
+- `lib/` — source adapters (`sec.ts`, `prices.ts`, `news.ts`, `wiki.ts`, …), called by the
+  scheduled ingest (`scripts/ingest.ts`, `scripts/refresh.ts`); `lib/store/read.ts` is what pages
+  read. Pages read only the database — the one exception is a bounded first-visit gather
+  (`lib/ingest/firstPass.ts`) for a subject not yet held
+- `app/company/[ticker]` — price chart + merged event timeline (server-rendered per request; the
+  held-page database reads are cached for 15 minutes, a miss never is)
 - `app/topic/[slug]` — Wikipedia history + news, rendered as a horizontal left-to-right timeline
+  (cached the same way)
+- `app/industry/[slug]` — a sector's merged timeline and signals (the whole page cached for 15 minutes)
 - `components/HorizontalTimeline.tsx` — the scrolling time axis. Horizontal spacing is
   proportional to elapsed time (clamped to a min/max gap so cards never overlap and quiet
   centuries don't become miles of blank track), with quiet stretches labelled "N years".

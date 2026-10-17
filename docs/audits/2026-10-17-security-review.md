@@ -2,7 +2,7 @@
 
 **Scope (NC-090):**
 - every route a visitor can reach: `app/api/*`, `/search` and the page routes;
-- the middleware;
+- the middleware (`proxy.ts` since the Next.js 16 upgrade);
 - what the browser stores;
 - every fetch the server makes on a visitor's behalf;
 - the response headers;
@@ -67,9 +67,11 @@ A script policy belongs with NC-164.
   origin that will load ad scripts. Any script on the page can read them. Before the first ad,
   either isolate key storage and key-using calls in a separate-origin frame, or keep ads off pages
   that hold keys, and add a script policy.
-- **NC-166 — Next.js 14.2.35 advisories.** The App Router denial-of-service and cache-poisoning
-  advisories apply to this site, and the fixes need 15.5.24 or later. Until the upgrade, put a CDN
-  or WAF with request-size and rate limits in front.
+- ~~**NC-166 — Next.js 14.2.35 advisories.**~~ **Fixed in batch 8:** upgraded to Next.js 16.4.2
+  and React 19. `npm audit --omit=dev` went from 4 findings (1 critical: next, with 24 advisories)
+  to none; `check:framework` holds the version floor. What `npm audit` still reports is
+  development tooling only (Tailwind 3's file watcher, the lint plugin's glob helper), which never
+  reaches a visitor.
 - **Host controls.** The in-app limiter counts per instance and trusts the first
   `X-Forwarded-For` hop. The host must overwrite that header, and a host or WAF limit is the
   durable version (owner action, recorded in `docs/OWNER-ACTIONS.md`).

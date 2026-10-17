@@ -17,10 +17,11 @@ export const metadata: Metadata = {
 export default async function ComparePage({
   searchParams,
 }: {
-  searchParams: { a?: string; b?: string };
+  searchParams: Promise<{ a?: string; b?: string }>;
 }) {
-  const a = searchParams.a?.trim() ?? "";
-  const b = searchParams.b?.trim() ?? "";
+  const query = await searchParams;
+  const a = query.a?.trim() ?? "";
+  const b = query.b?.trim() ?? "";
   const wants = Boolean(a && b);
 
   const [subA, subB] = wants

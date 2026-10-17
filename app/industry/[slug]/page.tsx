@@ -26,9 +26,9 @@ const latestDate = (events: { date: string }[]) => events.reduce((m, e) => (e.da
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const slug = decodeURIComponent(params.slug);
+  const slug = decodeURIComponent((await params).slug);
   const industry = await loadIndustry(slug).catch(() => null);
   if (!industry) return { title: "Industry not found", robots: { index: false } };
   const title = `${industry.name} sector timeline`;
@@ -43,8 +43,8 @@ export async function generateMetadata({
   };
 }
 
-export default async function IndustryPage({ params }: { params: { slug: string } }) {
-  const slug = decodeURIComponent(params.slug);
+export default async function IndustryPage({ params }: { params: Promise<{ slug: string }> }) {
+  const slug = decodeURIComponent((await params).slug);
   const industry = await loadIndustry(slug).catch(() => null);
   if (!industry) notFound();
 

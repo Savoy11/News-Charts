@@ -12,10 +12,11 @@ export const alt = "Topic timeline on News Charts";
  * image repeating whatever someone typed, whether or not anything existed behind it. A topic we
  * do not hold, or a database that cannot answer, gets the generic card.
  */
-export default async function Image({ params }: { params: { slug: string } }) {
-  let slug = params.slug;
+export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
+  const raw = (await params).slug;
+  let slug = raw;
   try {
-    slug = decodeURIComponent(params.slug);
+    slug = decodeURIComponent(raw);
   } catch {
     /* not valid percent-encoding — look it up as it came */
   }

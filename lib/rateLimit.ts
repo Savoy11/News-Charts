@@ -11,7 +11,7 @@
  * it trusts the first `x-forwarded-for` hop, which only the host's proxy can make honest. A host or
  * WAF rule is the durable answer; this is the floor that holds wherever the app runs.
  *
- * Edge-safe on purpose — it runs in middleware — so no Node imports.
+ * Runs in `proxy.ts` and imports nothing from Node, so it would run on either runtime.
  */
 
 export interface Verdict {
@@ -97,10 +97,14 @@ export class DistinctLimiter {
   }
 }
 
-/** The client a request is counted against: the first forwarded hop, else what the host saw. */
-export function clientKey(headers: Headers, ip?: string | null): string {
+/**
+ * The client a request is counted against: the first forwarded hop, else `x-real-ip`. Next's own
+ * server sets `x-forwarded-for` to the socket address when a request arrives without one, so a
+ * direct visitor is counted by their own address; "unknown" is only reached outside it.
+ */
+export function clientKey(headers: Headers): string {
   const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return forwarded || headers.get("x-real-ip")?.trim() || ip || "unknown";
+  return forwarded || headers.get("x-real-ip")?.trim() || "unknown";
 }
 
 /** How many Federal Register terms `/api/signals` will fetch for one request. */

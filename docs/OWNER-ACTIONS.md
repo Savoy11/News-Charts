@@ -140,6 +140,8 @@ npm run rekey:gdelt
   their aliases.
 - **Add a host or WAF rate limit**, and make sure the host overwrites `X-Forwarded-For` — the
   in-app limiter counts per server instance and trusts that header (NC-162).
+- **Run Node 20.9 or later on the host**, and install fresh (`npm ci`) — Next.js 16 refuses
+  older Node (NC-166).
 - **Rehearse a restore** into a scratch database: `createdb -U postgres news_charts_restore`,
   then `RESTORE_TARGET_URL=… npm run db:verify-restore`. Never against the live database — the
   rehearsal refuses it now (NC-152).
@@ -159,9 +161,11 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the October ledger batches, each recorded in the master checklist:
 
-- **Soft 404s (NC-160).** Miss pages answer HTTP 200 because the loading screen starts the
-  response first. A real 404 means dropping the loading skeleton on company, topic and industry
-  pages (a first search then waits up to ~8s on a blank screen) or the Next.js upgrade (NC-166).
+- **Soft 404s (NC-160).** Company and topic miss pages answer HTTP 200 because the loading
+  screen starts the response first. The Next.js 16 upgrade (NC-166) did not change that, for
+  browsers or for search-engine crawlers; sector misses now answer 404. A real 404 on company and
+  topic pages means dropping their loading skeleton (a first search then waits up to ~8s on a
+  blank screen).
 - **Seven stale browser checks.** The prompt-search tests in `check:ui` expect behaviour switched
   off on 2026-08-08: rewrite them to today's behaviour, or keep them as the Prompt search v2 spec.
 - **Wikipedia attribution (NC-047).** Confirm the credit beside the topic summary meets CC BY-SA.

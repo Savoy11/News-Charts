@@ -8,6 +8,8 @@ Built to drive traffic and ad revenue supporting the CAEP desktop app.
 
 ## Run
 
+Needs Node 20.9 or later (Next.js 16).
+
 ```
 npm install
 npm run dev        # http://localhost:3000 (or -p 3001)
@@ -137,9 +139,9 @@ type can write into the shared corpus. Same rule as the BYO-model key.
 
 Federal Register terms are the one preference that reaches another service, so they are bounded:
 at most five per request, normalised so "Export Controls" and "export controls" are one cached
-fetch, and `middleware.ts` refuses a client's sixteenth *new* term in an hour (repeats come from
-the cache). The same middleware caps every client at 120 requests a minute to `/api/*` and
-`/search`. It is in memory and per server instance, so a host or WAF limit is the durable version.
+fetch, and `proxy.ts` (Next 16's name for middleware) refuses a client's sixteenth *new* term
+in an hour (repeats come from the cache). The same proxy caps every client at 120 requests a
+minute to `/api/*` and `/search`. It is in memory and per server instance, so a host or WAF limit is the durable version.
 
 `computeSignals` takes a scope of subject ids rather than an industry id, which is what lets a
 SIC industry and an ad-hoc ticker set run through identical code.

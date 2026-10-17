@@ -18,6 +18,10 @@ import {
  * used this hour, because a new term is what reaches another service on the visitor's behalf and
  * a repeat comes from the fetch cache. See lib/rateLimit.ts for what an in-memory limiter can and
  * cannot promise.
+ *
+ * Next 16 renamed middleware to proxy (`proxy.ts`, running on the Node runtime) and dropped
+ * `req.ip`, which self-hosted Next never filled in anyway — the client comes from the forwarded
+ * headers alone (NC-166).
  */
 const requests = new FixedWindowLimiter(REQUESTS_PER_MINUTE, 60_000);
 const newTerms = new DistinctLimiter(NEW_TERMS_PER_HOUR, 3_600_000);
@@ -29,8 +33,8 @@ function tooMany(retryAfterSeconds: number): NextResponse {
   );
 }
 
-export function middleware(req: NextRequest) {
-  const key = clientKey(req.headers, req.ip);
+export function proxy(req: NextRequest) {
+  const key = clientKey(req.headers);
   const first = requests.take(key);
   if (!first.allowed) return tooMany(first.retryAfterSeconds);
 

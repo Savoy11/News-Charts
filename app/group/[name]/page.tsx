@@ -5,8 +5,8 @@ import SearchBox from "@/components/SearchBox";
 
 // A group exists only in the visitor's own browser, so it's private by definition — keep it out
 // of search indexes and the sitemap. (Also blocked in robots.ts as a backstop.)
-export function generateMetadata({ params }: { params: { name: string } }): Metadata {
-  const name = decodeURIComponent(params.name);
+export async function generateMetadata({ params }: { params: Promise<{ name: string }> }): Promise<Metadata> {
+  const name = decodeURIComponent((await params).name);
   return { title: `${name} — custom group`, robots: { index: false, follow: false } };
 }
 
@@ -15,8 +15,8 @@ export function generateMetadata({ params }: { params: { name: string } }): Meta
  * reads the group from preferences and asks the server to compute over those tickers.
  * Nothing about a group is stored server-side.
  */
-export default function GroupPage({ params }: { params: { name: string } }) {
-  const name = decodeURIComponent(params.name);
+export default async function GroupPage({ params }: { params: Promise<{ name: string }> }) {
+  const name = decodeURIComponent((await params).name);
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-4">

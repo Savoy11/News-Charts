@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 62,
-   "closed": 78,
+   "open": 61,
+   "closed": 79,
    "parked": 12,
    "blocked": 18
   },
@@ -43,7 +43,7 @@
    "owner-decision": 50
   },
   "counts_recomputed_on": "2026-10-17",
-  "closed_by_annotation": 78
+  "closed_by_annotation": 79
  },
  "blocking_decisions": [
   {
@@ -5601,11 +5601,18 @@
      "quote": "`notFound()` still sets a 404"
     }
    ],
-   "progress": {
-    "noted_on": "2026-10-17",
-    "note": "MEASURED on a production build (next build + next start): with loading.tsx on the route, Next 14.2 returns 200 for /company/ZZZZQ, /topic/<miss> and /industry/<miss> even when notFound() is called from generateMetadata — the loading boundary streams first. Miss pages already carry <meta name=robots content=noindex>. A real 404 needs either dropping loading.tsx on these routes (a first search for a new subject would then wait up to ~8s with no loading screen) or the Next upgrade (NC-166). Left for an owner decision; the generateMetadata attempt was reverted.",
-    "evidence": "live run 2026-10-17 curl -w %{http_code} against next start"
-   }
+   "progress": [
+    {
+     "noted_on": "2026-10-17",
+     "note": "MEASURED on a production build (next build + next start): with loading.tsx on the route, Next 14.2 returns 200 for /company/ZZZZQ, /topic/<miss> and /industry/<miss> even when notFound() is called from generateMetadata — the loading boundary streams first. Miss pages already carry <meta name=robots content=noindex>. A real 404 needs either dropping loading.tsx on these routes (a first search for a new subject would then wait up to ~8s with no loading screen) or the Next upgrade (NC-166). Left for an owner decision; the generateMetadata attempt was reverted.",
+     "evidence": "live run 2026-10-17 curl -w %{http_code} against next start"
+    },
+    {
+     "noted_on": "2026-10-17",
+     "note": "Re-measured after the Next 16.4.2 upgrade (NC-166) on a production build: /company/ZZZZQ and /topic/<miss> still answer 200, for a browser and for a Googlebot user agent, including with notFound() called from generateMetadata (tried, reverted). /industry/<miss> now answers 404 (14.2: 200). The upgrade does not fix it; dropping loading.tsx on the company and topic routes remains the option, an owner decision.",
+     "evidence": "live run 2026-10-17 curl -w %{http_code} against next start, 14.2.35 and 16.4.2 side by side"
+    }
+   ]
   },
   {
    "id": "NC-161",
@@ -5674,12 +5681,12 @@
     "closed_on": "2026-10-17",
     "basis": "verified-here",
     "verdict": "close",
-    "reason": "middleware.ts limits /api/* and /search: 120 requests per client per minute (FixedWindowLimiter) and at most 15 new Federal Register terms per client per hour (DistinctLimiter; repeats are served from the fetch cache). Terms are normalised (case, spacing, length, max 5), and the route fetches from a fixed floor (frFetchSince) and filters to the visitor's window, so one term is one cache entry. Live 2026-10-17 on a production build: request 121 got 429 with Retry-After, another client got 200, new term 16 got 429, a repeat term did not, pages were untouched. Limits are per instance and trust the first X-Forwarded-For hop; a host/WAF rule and the decision on keeping visitor terms are owner actions.",
+    "reason": "middleware.ts limits /api/* and /search: 120 requests per client per minute (FixedWindowLimiter) and at most 15 new Federal Register terms per client per hour (DistinctLimiter; repeats are served from the fetch cache). Terms are normalised (case, spacing, length, max 5), and the route fetches from a fixed floor (frFetchSince) and filters to the visitor's window, so one term is one cache entry. Live 2026-10-17 on a production build: request 121 got 429 with Retry-After, another client got 200, new term 16 got 429, a repeat term did not, pages were untouched. Limits are per instance and trust the first X-Forwarded-For hop; a host/WAF rule and the decision on keeping visitor terms are owner actions. (Batch 8, NC-166: middleware.ts is now proxy.ts, Next 16's name for it; re-verified there: request 121 got 429.)",
     "evidence": [
-     "middleware.ts:32",
+     "proxy.ts:36",
      "lib/rateLimit.ts:23",
      "lib/rateLimit.ts:70",
-     "lib/rateLimit.ts:134",
+     "lib/rateLimit.ts:138",
      "app/api/signals/route.ts",
      "scripts/check-abuse.ts",
      "docs/MASTER-CHECKLIST.md:182-256"
@@ -5800,7 +5807,7 @@
   {
    "id": "NC-166",
    "title": "Upgrade Next.js off 14.2.35 — unpatched App Router DoS and cache-poisoning advisories",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "security",
@@ -5822,7 +5829,23 @@
      "lines": "npm audit --omit=dev",
      "quote": "next: GHSA-q4gf-8mx6-v5v3, GHSA-wfc6-r584-vfw7, GHSA-68g3-v927-f742"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Batch 8: next 14.2.35 -> 16.4.2 (exact pin), react/react-dom 19, eslint 9 + eslint-config-next 16.4.2. npm audit --omit=dev went from 4 findings (critical: next, 24 advisories) to 0; 15.5.28 was passed over because audit still flags its bundled PostCSS. Route params and searchParams are awaited (Promises in Next 16); middleware.ts became proxy.ts and no longer reads req.ip; next lint was replaced by eslint.config.mjs; engines.node >=20.9.0. check:framework fails 10 of 14 checks on the old code. Measured on production builds of both versions against one database: same status codes and redirects on every route, headers intact, the 121st API request refused, held pages cached and misses not, preview images render; check:ui 141/148 (the same seven stale prompt-search checks). Dev-only audit findings (Tailwind 3 watcher, lint plugin fast-glob) remain and are recorded as a follow-up.",
+    "evidence": [
+     "package.json:71",
+     "proxy.ts:36",
+     "app/company/[ticker]/page.tsx:40",
+     "eslint.config.mjs",
+     "scripts/check-framework.ts:25",
+     "docs/audits/2026-10-17-security-review.md:70",
+     "docs/MASTER-CHECKLIST.md:399-443"
+    ]
+   }
   },
   {
    "id": "NC-167",

@@ -14,10 +14,15 @@ config({ path: ".env.local" });
  * A halving dated from the wrong field, USDC read with 18 decimals instead of 6, or a dedup
  * basis that includes a re-wordable title would all pass a type check and a build.
  */
-import { getBitcoinHalvings } from "../lib/onchain/bitcoin";
+import { fetchBitcoinHalvings, getBitcoinHalvings } from "../lib/onchain/bitcoin";
 import { getEthereumMilestones } from "../lib/onchain/ethereum";
-import { getAllStablecoinSupplyMoves, getStablecoinSupplyMoves, getUsdcSupplyMoves } from "../lib/onchain/stablecoin";
-import { CRYPTO_SUBJECTS, STABLECOIN_SUBJECTS, ingestOnchainFor } from "../lib/onchain";
+import {
+  fetchStablecoinSupplyMoves,
+  getAllStablecoinSupplyMoves,
+  getStablecoinSupplyMoves,
+  getUsdcSupplyMoves,
+} from "../lib/onchain/stablecoin";
+import { CRYPTO_SUBJECTS, STABLECOIN_SUBJECTS, fetchOnchainFor, ingestOnchainFor } from "../lib/onchain";
 import { CRYPTO_SECTORS, sectorsFor } from "../lib/onchain/sectors";
 import {
   ADDRESS_BOOK,
@@ -505,6 +510,48 @@ async function sectors(): Promise<void> {
   check("a subject in no sector reports none", sectorsFor("electric cars").length === 0);
 }
 
+/**
+ * An outage is an error, not a quiet month (NC-142), and each feed carries the source key its
+ * rows are stored and licensed under (NC-148).
+ */
+async function outcomes(): Promise<void> {
+  console.log("\nOutages read as outages, under the right source key");
+  delete process.env.ETHERSCAN_API_KEY;
+  const noKey = await fetchStablecoinSupplyMoves(USDC);
+  check("no Etherscan key is an error, not an empty month", noKey.outcome === "error", `${noKey.outcome} ${noKey.detail}`);
+  process.env.ETHERSCAN_API_KEY = "test-key";
+  serve(() => ({ status: "0", message: "No transactions found", result: [] }));
+  check("Etherscan's 'No transactions found' is the one real empty", (await fetchStablecoinSupplyMoves(USDC)).outcome === "empty");
+  serve(() => ({ status: "0", message: "NOTOK", result: "Max rate limit reached" }));
+  check("Etherscan's rate limit is throttled", (await fetchStablecoinSupplyMoves(USDC)).outcome === "throttled");
+  serve(() => ({ status: "0", message: "NOTOK", result: "Invalid API Key" }));
+  const badKey = await fetchStablecoinSupplyMoves(USDC);
+  check("any other status-0 answer is an error, with its message", badKey.outcome === "error" && badKey.detail === "Invalid API Key", `${badKey.outcome} ${badKey.detail}`);
+  serve(() => undefined);
+  check("no answer at all is an error", (await fetchStablecoinSupplyMoves(USDC)).outcome === "error");
+  delete process.env.ETHERSCAN_API_KEY;
+
+  serve(() => undefined);
+  const halvings = await fetchBitcoinHalvings();
+  check("no explorer answering is an error — four halvings are history", halvings.outcome === "error", halvings.outcome);
+
+  // Governance is Snapshot's, incidents are DefiLlama's: logged and licence-checked as such.
+  serve((url) => (url.includes("snapshot") ? { data: { proposals: [] } } : []));
+  const aave = await fetchOnchainFor("aave");
+  check(
+    "a protocol's feeds are keyed snapshot and defillama",
+    aave.map((f) => f.sourceKey).sort().join(",") === "defillama,snapshot",
+    aave.map((f) => f.sourceKey).join(",")
+  );
+  globalThis.fetch = (async () => {
+    throw new TypeError("fetch failed");
+  }) as typeof fetch;
+  const down = await fetchOnchainFor("aave");
+  check("a feed that cannot connect is an error, and costs only itself", down.length === 2 && down.every((f) => f.result.outcome === "error"), down.map((f) => f.result.outcome).join(","));
+  const btc = await fetchOnchainFor("btc");
+  check("btc is one onchain feed", btc.length === 1 && btc[0].sourceKey === "onchain");
+}
+
 async function main(): Promise<void> {
   try {
     await bitcoin();
@@ -516,6 +563,7 @@ async function main(): Promise<void> {
     await addressBook();
     await usdt();
     await sectors();
+    await outcomes();
   } finally {
     globalThis.fetch = realFetch;
   }

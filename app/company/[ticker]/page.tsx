@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import CompanyExplorer from "@/components/CompanyExplorer";
 import AdSlot from "@/components/AdSlot";
@@ -47,6 +47,10 @@ export default async function CompanyPage({ params }: { params: { ticker: string
   if (!data) {
     noStore();
     notFound();
+  }
+  // /company/Ford is served from F's rows; send the visitor to the page's one address (NC-161).
+  if (data.ticker.toLowerCase() !== decodeURIComponent(params.ticker).toLowerCase()) {
+    redirect(`/company/${data.ticker}`);
   }
 
   const last = data.prices.at(-1);

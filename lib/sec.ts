@@ -212,6 +212,22 @@ function matchFundName(q: string): CompanyInfo | null {
 }
 
 /**
+ * The ticker a query names, from the committed index alone — rungs 1–3 below without the
+ * registrant enrichment or the live files, so it never makes a request.
+ *
+ * For a read path that must not spend the network before the first pass's attempt ledger has
+ * granted it: /company/Ford only needs to learn that Ford is F, and the index knows (NC-161).
+ */
+export function resolveTickerLocally(query: string): string | null {
+  const q = query.trim().toUpperCase();
+  if (!q) return null;
+  const company = matchCompany(localCompanies(), q);
+  if (company) return company.ticker;
+  if (SYMBOL_SHAPE(q) && tickerIndex.funds[q] !== undefined) return q;
+  return matchFundName(q)?.ticker ?? null;
+}
+
+/**
  * Resolve any exchange-traded security EDGAR knows: operating companies first, then ETFs and
  * mutual funds by symbol, then funds by name. One resolver on purpose — a fund is a subject
  * exactly the way a company is (a CIK with filings and a priced ticker), and two would drift.

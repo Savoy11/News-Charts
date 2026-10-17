@@ -11,6 +11,7 @@ import {
   logFetch,
   upsertEvent,
   upsertSubject,
+  upsertTopicSubject,
   linkToIndustry,
   linkToSector,
   emptyStats,
@@ -22,16 +23,16 @@ import { aliasesFor } from "../lib/enrich/relevance";
 import { selectStaleSources, ttlFor } from "../lib/ingest/refresh";
 import { collapseNearDuplicates } from "../lib/newsQuality";
 import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
-import { getTopicTimeline, articleAnswersSlug } from "../lib/wiki";
+import { getTopicTimeline, articleAnswersSlug, WikipediaUnavailable, wikiOutcome } from "../lib/wiki";
 import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
 import { fetchNews } from "../lib/news";
-import { getArchiveItems } from "../lib/archive";
-import { getYahooFinanceNews } from "../lib/newsExtra";
+import { fetchArchiveItems } from "../lib/archive";
+import { fetchYahooFinanceNews } from "../lib/newsExtra";
 import { resolveCompany, getFilingsDeep, getIndustry, commonName } from "../lib/sec";
 import { getDailyPrices } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
-import { CRYPTO_SUBJECTS, ingestOnchainFor } from "../lib/onchain";
+import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
 
 const BACKOFF_MINUTES = 10;
@@ -141,13 +142,14 @@ async function touchSubject(client: PoolClient, subjectId: number): Promise<void
   await client.query("UPDATE subjects SET refreshed_at = now() WHERE id = $1", [subjectId]);
 }
 
-/** Adapters that return events rather than a `FetchResult`, adapted to what `runSource` logs. */
-function asResult(fetch: () => Promise<TimelineEvent[]>): () => Promise<FetchResult> {
-  return async () => {
-    const events = await fetch();
-    return { events, outcome: events.length ? "ok" : "empty" };
-  };
-}
+/**
+ * What a run did for one subject, so the request queue closes only what was really served.
+ *
+ * Every ingester used to return normally for "no Wikipedia article", "not minting" and "ticker not
+ * found", and `refresh.ts` marked the request fulfilled on any normal return — so `npm run demand`
+ * reported subjects as served that were never created (NC-144).
+ */
+export type IngestOutcome = { ingested: true } | { ingested: false; reason: string };
 
 /** Fetch → store → log, with a back-off check so we don't hammer a throttled source. */
 async function runSource(
@@ -230,7 +232,7 @@ function runnerFor(
   };
 }
 
-export async function ingestTopic(client: PoolClient, topic: string) {
+export async function ingestTopic(client: PoolClient, topic: string): Promise<IngestOutcome> {
   console.log(`\ntopic: ${topic}`);
 
   // What we already have decides which sources are worth asking. A subject we have never seen
@@ -243,16 +245,39 @@ export async function ingestTopic(client: PoolClient, topic: string) {
   let title: string;
   let firstEventOn: string | null;
 
-  if (existing && !due.has("wikipedia")) {
+  // Wikipedia establishes that the subject exists, so it is asked whenever it is due — and a
+  // Wikipedia that could not answer is told apart from one that had no article (NC-146).
+  let wiki: Awaited<ReturnType<typeof getTopicTimeline>> = null;
+  let wikiDown: WikipediaUnavailable | null = null;
+  if (!existing || due.has("wikipedia")) {
+    try {
+      wiki = await getTopicTimeline(topic);
+    } catch (err) {
+      if (!(err instanceof WikipediaUnavailable)) throw err;
+      wikiDown = err;
+    }
+  }
+
+  if (existing && (!due.has("wikipedia") || wikiDown)) {
     ({ id: subjectId, displayName: title, firstEventOn } = existing);
     line("subject", `#${subjectId} ${title}`);
-    line("wikipedia", `fresh     inside its ${ttlFor("wikipedia")} min window`);
+    if (wikiDown) {
+      // A subject we already hold keeps its stored article, and the other sources still run:
+      // one throttled host is no reason to skip three that may well answer.
+      await logFetch(client, "wikipedia", subjectId, topic, wikiOutcome(wikiDown), 0, wikiDown.status, wikiDown.message);
+      line("wikipedia", `${wikiOutcome(wikiDown).padEnd(9)} ${wikiDown.message} — keeping the stored article`);
+    } else {
+      line("wikipedia", `fresh     inside its ${ttlFor("wikipedia")} min window`);
+    }
     await touchSubject(client, subjectId);
   } else {
-    const wiki = await getTopicTimeline(topic);
+    if (wikiDown) {
+      console.log(`  ${wikiDown.message} — nothing to mint until it answers`);
+      return { ingested: false, reason: wikiDown.message };
+    }
     if (!wiki) {
       console.log("  no Wikipedia article found — nothing to ingest");
-      return;
+      return { ingested: false, reason: "no Wikipedia article found" };
     }
     /**
      * The same guard the first pass applies, for the same reason: Wikipedia's search always
@@ -264,15 +289,17 @@ export async function ingestTopic(client: PoolClient, topic: string) {
      */
     if (!articleAnswersSlug(topic, wiki.title)) {
       console.log(`  Wikipedia returned "${wiki.title}", which is not about "${topic}" — not minting`);
-      return;
+      return { ingested: false, reason: `Wikipedia returned "${wiki.title}", which is not about "${topic}"` };
     }
     title = wiki.title;
     firstEventOn = wiki.events[0]?.date ?? null;
-    subjectId = await upsertSubject(client, {
-      kind: "topic",
-      slug: topic.toLowerCase(),
-      displayName: wiki.title,
+    // Keyed on the Wikipedia article, exactly as the first pass keys it: keyed on the typed
+    // slug, a request under another phrasing ("electric car" after "electric cars") minted a
+    // second subject with identical events — the shape db/005 exists to clean up (NC-099).
+    subjectId = await upsertTopicSubject(client, {
+      searchTerm: topic,
       wikipediaTitle: wiki.title,
+      displayName: wiki.title,
       summary: wiki.summary,
       firstEventOn,
     });
@@ -314,17 +341,18 @@ export async function ingestTopic(client: PoolClient, topic: string) {
   // Keyless, and the only historical source not exposed to a key expiry or a licence change.
   // Same plausibility floor as the newspaper scans: an archive item predating the subject is a
   // keyword collision, not early coverage.
-  await run("internet_archive", topic, asResult(() => getArchiveItems(topic)), (evts) =>
+  await run("internet_archive", topic, () => fetchArchiveItems(topic), (evts) =>
     dropImplausiblePress(evts, floor)
   );
+  return { ingested: true };
 }
 
-export async function ingestCompany(client: PoolClient, ticker: string) {
+export async function ingestCompany(client: PoolClient, ticker: string): Promise<IngestOutcome> {
   console.log(`\ncompany: ${ticker}`);
   const company = await resolveCompany(ticker);
   if (!company) {
     console.log("  ticker not found in the SEC ticker index");
-    return;
+    return { ingested: false, reason: "ticker not found in the SEC ticker index" };
   }
 
   const [siteDomain, industry] = await Promise.all([
@@ -400,12 +428,35 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
    * It doubles as the plausibility floor for the two historical sources below: "Apple" in an
    * 1890 newspaper is the fruit, and without a founding year there is no way to tell.
    */
-  const story = due.has("wikipedia") ? await getTopicTimeline(name).catch(() => null) : null;
+  let story: Awaited<ReturnType<typeof getTopicTimeline>> = null;
+  let storyDown: WikipediaUnavailable | null = null;
+  if (due.has("wikipedia")) {
+    try {
+      story = await getTopicTimeline(name);
+    } catch (err) {
+      // An unanswered Wikipedia is logged and backed off like any throttled source (NC-146);
+      // anything else stays what it always was here — an enrichment that did not arrive.
+      if (err instanceof WikipediaUnavailable) storyDown = err;
+    }
+  }
   if (!due.has("wikipedia")) {
     line("wikipedia", `fresh     inside its ${ttlFor("wikipedia")} min window`);
+  } else if (storyDown) {
+    const down = storyDown;
+    await run("wikipedia", name, async () => ({
+      events: [],
+      outcome: wikiOutcome(down),
+      httpStatus: down.status,
+      detail: down.message,
+    }));
   } else if (story) {
-    line("wikipedia", `resolved  “${story.title}” (${story.events.length} events)`);
-    await run("wikipedia", name, asResult(async () => story.events));
+    const found = story;
+    line("wikipedia", `resolved  “${found.title}” (${found.events.length} events)`);
+    await run("wikipedia", name, async () => ({
+      events: found.events,
+      outcome: found.events.length ? "ok" : "empty",
+      httpStatus: 200,
+    }));
   } else {
     line("wikipedia", "no article resolved for this company");
   }
@@ -424,7 +475,7 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
       dropImplausiblePress(evts, firstStoryYear)
     );
     // Archived material about the company itself — annual reports, catalogues, advertising.
-    await run("internet_archive", name, asResult(() => getArchiveItems(name)), (evts) =>
+    await run("internet_archive", name, () => fetchArchiveItems(name), (evts) =>
       dropImplausiblePress(evts, firstStoryYear)
     );
   } else if (story) {
@@ -438,7 +489,7 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
      * 1770. The same `dropImplausiblePress` the branch above uses now applies here, against the
      * weakest floor that is still true of every company.
      */
-    await run("internet_archive", name, asResult(() => getArchiveItems(name)), (evts) =>
+    await run("internet_archive", name, () => fetchArchiveItems(name), (evts) =>
       dropImplausiblePress(evts, ABSOLUTE_FLOOR.company)
     );
   }
@@ -446,7 +497,7 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
   // Headline/link/date under the ticker's own feed. Licensed for the ad-supported path (the
   // registry's `commercialOk: true`), unlike the keyed aggregators, which is why it is here and
   // they are not.
-  await run("yahoo_finance", company.ticker, asResult(() => getYahooFinanceNews(company.ticker)), (e) =>
+  await run("yahoo_finance", company.ticker, () => fetchYahooFinanceNews(company.ticker), (e) =>
     collapseNearDuplicates(e)
   );
 
@@ -454,7 +505,7 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
   // window: closes are daily bars, and re-asking for them twice an hour buys nothing.
   if (!due.has("yahoo_finance")) {
     line("prices", `fresh     inside its ${ttlFor("yahoo_finance")} min window`);
-    return;
+    return { ingested: true };
   }
 
   const { points, actions } = await getDailyPrices(company.ticker);
@@ -489,6 +540,7 @@ export async function ingestCompany(client: PoolClient, ticker: string) {
     }
     line("yahoo_finance", `${actions.length} corporate actions (dividends + splits)`);
   }
+  return { ingested: true };
 }
 
 /**
@@ -552,14 +604,12 @@ async function linkCryptoSectors(client: PoolClient, slug: string): Promise<void
   }
 }
 
-export async function ingestOnchain(client: PoolClient, which: string) {
+export async function ingestOnchain(client: PoolClient, which: string): Promise<IngestOutcome> {
   const targets = which === "all" ? CRYPTO_SUBJECTS : CRYPTO_SUBJECTS.filter((c) => c.slug === which);
   if (!targets.length) {
     console.error(`unknown on-chain subject "${which}"`);
     process.exit(2);
   }
-
-  await assertCommercialOk(client, "onchain");
 
   for (const asset of targets) {
     console.log(`\n${asset.displayName} (${asset.slug})`);
@@ -577,23 +627,40 @@ export async function ingestOnchain(client: PoolClient, which: string) {
       );
     }
 
-    const events = await ingestOnchainFor(asset.slug);
-    const stats = emptyStats();
     const assetCtx = { kind: "topic" as const, displayName: asset.displayName };
     const assetScoring: ScoringContext = {
       subject: assetCtx,
       aliases: aliasesFor(assetCtx, asset.aliases),
     };
-    await client.query("BEGIN");
-    try {
-      for (const ev of events) await upsertEvent(client, ev, subjectId, stats, assetScoring);
-      await client.query("COMMIT");
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
+    /**
+     * Each feed under its own source key: licence-checked as the key its rows are stored under
+     * (governance is `snapshot`, incidents `defillama` — only `onchain` was ever checked, NC-148),
+     * and logged with its real outcome, so an explorer outage is an error rather than an empty
+     * fetch (NC-142).
+     */
+    for (const { sourceKey, result } of await fetchOnchainFor(asset.slug)) {
+      await assertCommercialOk(client, sourceKey);
+      const stats = emptyStats();
+      await client.query("BEGIN");
+      try {
+        for (const ev of result.events) await upsertEvent(client, ev, subjectId, stats, assetScoring);
+        await logFetch(
+          client,
+          sourceKey,
+          subjectId,
+          asset.slug,
+          result.outcome,
+          result.events.length,
+          result.httpStatus,
+          result.detail
+        );
+        await client.query("COMMIT");
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      }
+      report(sourceKey, result.outcome, stats);
     }
-    await logFetch(client, "onchain", subjectId, asset.slug, events.length ? "ok" : "empty", events.length);
-    report("onchain", events.length ? "ok" : "empty", stats);
 
     // Sector membership, so /industry/sector-stablecoins aggregates every issuer's supply moves.
     await linkCryptoSectors(client, asset.slug);
@@ -615,6 +682,7 @@ export async function ingestOnchain(client: PoolClient, which: string) {
       line("prices", `${points.length} daily closes for ${asset.yahooSymbol}`);
     }
   }
+  return { ingested: true };
 }
 
 async function main() {

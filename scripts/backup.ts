@@ -106,7 +106,13 @@ async function main() {
   console.log(`captured ${contents}`);
   console.log(entries >= 0 ? `verified ${entries} restorable objects` : "verified could not run pg_restore -l");
 
-  if (entries === 0) throw new Error("dump contains no restorable objects");
+  /**
+   * Nothing is pruned unless the new dump was read back. `entries` is -1 when pg_restore -l could
+   * not run at all, and only 0 used to stop the run — so a fortnight of unreadable dumps would
+   * have pruned every good one before it, leaving no restorable backup (NC-151).
+   */
+  if (entries < 0) throw new Error("could not verify the new dump with pg_restore -l — older dumps kept");
+  if (entries === 0) throw new Error("dump contains no restorable objects — older dumps kept");
 
   /**
    * Retention spans every name this project's dumps have carried.

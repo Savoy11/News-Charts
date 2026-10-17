@@ -56,10 +56,13 @@ export async function requestSubject(
 export async function pendingRequests(limit = 25): Promise<PendingRequest[]> {
   try {
     const { rows } = await getPool().query(
+      // Untried requests before ones that already failed: a request that could not be filled
+      // stays pending (it may answer next hour), and without this a popular unresolvable one
+      // would take a slot every run ahead of everything that has never been tried (NC-144).
       `SELECT id, slug, kind, ticker, requests
          FROM subject_requests
         WHERE fulfilled_at IS NULL
-        ORDER BY requests DESC, last_asked DESC
+        ORDER BY (last_error IS NOT NULL), requests DESC, last_asked DESC
         LIMIT $1`,
       [limit]
     );

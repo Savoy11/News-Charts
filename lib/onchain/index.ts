@@ -1,18 +1,19 @@
-import { getBitcoinHalvings } from "./bitcoin";
+import { fetchBitcoinHalvings } from "./bitcoin";
 import { getEthereumMilestones } from "./ethereum";
-import { getStablecoinSupplyMoves } from "./stablecoin";
+import { fetchStablecoinSupplyMoves } from "./stablecoin";
 import { DAI, PYUSD, USDC, type Stablecoin } from "./addresses";
-import { GOVERNANCE_SPACES, getGovernanceFor } from "./governance";
-import { EXPLOIT_TARGETS, getExploitsFor } from "./exploits";
-import { getUsdtSupplyMoves } from "./usdt";
-import type { TimelineEvent } from "../types";
+import { GOVERNANCE_SPACES, fetchGovernance } from "./governance";
+import { EXPLOIT_TARGETS, fetchExploits } from "./exploits";
+import { fetchUsdtSupplyMoves } from "./usdt";
+import type { FetchResult, SourceKey, TimelineEvent } from "../types";
 
-export { getBitcoinHalvings } from "./bitcoin";
+export { fetchBitcoinHalvings, getBitcoinHalvings } from "./bitcoin";
 export { GOVERNANCE_SPACES, fetchGovernance, getGovernanceFor, tally } from "./governance";
 export { EXPLOIT_TARGETS, claims, fetchExploits, getExploitsFor } from "./exploits";
 export { fetchUsdtSupplyMoves, getUsdtSupplyMoves, ISSUE_TOPIC, REDEEM_TOPIC } from "./usdt";
 export { getEthereumMilestones, ETH_MILESTONES } from "./ethereum";
 export {
+  fetchStablecoinSupplyMoves,
   getAllStablecoinSupplyMoves,
   getStablecoinSupplyMoves,
   getUsdcSupplyMoves,
@@ -153,35 +154,63 @@ const PROTOCOL_SUBJECTS = GOVERNANCE_SPACES.map((g) => ({
 CRYPTO_SUBJECTS.push(...PROTOCOL_SUBJECTS);
 
 /**
- * Every on-chain-adjacent feed a subject draws from, merged.
+ * One feed's answer for a subject, under the source key its events are stored — and licensed — as.
+ *
+ * The merged list this replaced lost both facts: an explorer outage came back as `[]` and was
+ * logged as an empty fetch (NC-142), and every event was licence-checked as `onchain` although
+ * governance rows carry `snapshot` and incident rows `defillama` (NC-148).
+ */
+export interface OnchainFeed {
+  sourceKey: SourceKey;
+  result: FetchResult;
+}
+
+/** A feed that throws costs its own events and nothing else — and says so. */
+async function feed(sourceKey: SourceKey, work: Promise<FetchResult>): Promise<OnchainFeed> {
+  try {
+    return { sourceKey, result: await work };
+  } catch (err) {
+    return { sourceKey, result: { events: [], outcome: "error", detail: (err as Error).message } };
+  }
+}
+
+/**
+ * Every feed a subject draws from, each with its own outcome.
  *
  * Exploits are additive rather than exclusive: Ethereum has milestones *and* incidents, and a
  * protocol has governance *and* incidents. One feed failing costs only its own events.
  */
-async function alsoExploits(slug: string, base: Promise<TimelineEvent[]>): Promise<TimelineEvent[]> {
-  const [own, hacks] = await Promise.all([
-    base.catch(() => []),
-    EXPLOIT_TARGETS.some((t) => t.slug === slug) ? getExploitsFor(slug).catch(() => []) : Promise.resolve([]),
-  ]);
-  return [...own, ...hacks];
-}
+export async function fetchOnchainFor(slug: string): Promise<OnchainFeed[]> {
+  const exploitTarget = EXPLOIT_TARGETS.find((t) => t.slug === slug);
+  const withExploits = (own: Promise<OnchainFeed>): Promise<OnchainFeed[]> =>
+    Promise.all(exploitTarget ? [own, feed("defillama", fetchExploits(exploitTarget))] : [own]);
 
-export async function ingestOnchainFor(slug: string): Promise<TimelineEvent[]> {
   switch (slug) {
     case "btc":
-      return getBitcoinHalvings().catch(() => []);
+      return Promise.all([feed("onchain", fetchBitcoinHalvings())]);
     case "eth":
-      return alsoExploits(slug, getEthereumMilestones());
+      // Milestones fall back to their published dates when the explorer is down, so an empty
+      // list here really is empty rather than an outage in disguise.
+      return withExploits(
+        feed(
+          "onchain",
+          getEthereumMilestones().then((events): FetchResult => ({ events, outcome: events.length ? "ok" : "empty" }))
+        )
+      );
     default: {
       // USDT first: it is a stablecoin subject but not a transfer-readable one, so it must not
       // fall through to the table that would ask the wrong question and find nothing.
-      if (slug === "usdt") return alsoExploits(slug, getUsdtSupplyMoves());
+      if (slug === "usdt") return withExploits(feed("onchain", fetchUsdtSupplyMoves()));
       const token = STABLECOIN_SUBJECTS[slug];
-      if (token) return getStablecoinSupplyMoves(token).catch(() => []);
-      if (GOVERNANCE_SPACES.some((g) => g.slug === slug)) {
-        return alsoExploits(slug, getGovernanceFor(slug));
-      }
+      if (token) return Promise.all([feed("onchain", fetchStablecoinSupplyMoves(token))]);
+      const space = GOVERNANCE_SPACES.find((g) => g.slug === slug);
+      if (space) return withExploits(feed("snapshot", fetchGovernance(space)));
       return [];
     }
   }
+}
+
+/** Every on-chain event for a subject, merged — for callers that only want the events. */
+export async function ingestOnchainFor(slug: string): Promise<TimelineEvent[]> {
+  return (await fetchOnchainFor(slug)).flatMap((f) => f.result.events);
 }

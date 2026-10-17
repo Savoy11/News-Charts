@@ -4,6 +4,7 @@ import { PricePoint, TimelineEvent } from "./types";
 import { requestSubject } from "./ingest/queue";
 import { firstPassCompany, firstPassTopic } from "./ingest/firstPass";
 import { dropCompanyPrehistory } from "./history";
+import { resolveTickerLocally } from "./sec";
 
 
 // Request-memoised so a page and its generateMetadata share one load instead of fetching twice.
@@ -132,48 +133,57 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
 }
 
 /** Database-only, for the reasons set out above `getTopicPageDataImpl`. */
-async function getCompanyPageDataImpl(ticker: string): Promise<CompanyPageData | null> {
+/** A company we hold, if it holds enough to render (filings or news, and prices). */
+async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
+  const subject = await loadSubject(key);
+  if (!subject?.ticker) return null;
+  const [events, prices, industry] = await Promise.all([
+    loadEvents(subject.id),
+    loadPrices(subject.id),
+    loadIndustryFor(subject.id),
+  ]);
+  if (!events.length || !prices.length) return null;
+  const sector = industry ? await loadSectorEvents(industry.id).catch(() => []) : [];
+  return {
+    name: subject.displayName,
+    ticker: subject.ticker,
+    siteDomain: subject.siteDomain,
+    prices,
+    events: dropCompanyPrehistory([...events, ...sector]),
+    industry,
+    refreshedAt: subject.refreshedAt,
+  };
+}
+
+async function getCompanyPageDataImpl(query: string): Promise<CompanyPageData | null> {
   try {
-    const subject = await loadSubject(ticker);
-    if (subject?.ticker) {
-      const [events, prices, industry] = await Promise.all([
-        loadEvents(subject.id),
-        loadPrices(subject.id),
-        loadIndustryFor(subject.id),
-      ]);
-      if (events.length && prices.length) {
-        const sector = industry ? await loadSectorEvents(industry.id).catch(() => []) : [];
-        return {
-          name: subject.displayName,
-          ticker: subject.ticker,
-          siteDomain: subject.siteDomain,
-          prices,
-          events: dropCompanyPrehistory([...events, ...sector]),
-          industry,
-          refreshedAt: subject.refreshedAt,
-        };
-      }
+    const held = await heldCompanyPage(query);
+    if (held) return held;
+
+    /**
+     * A name rather than a symbol — /company/Ford. The corpus is keyed by ticker, so this read
+     * missed even with F on the site; the first pass then resolved Ford to F and re-fetched EDGAR
+     * and Yahoo for a company we already held, re-read by "Ford", missed again, and queued a
+     * request for a ticker named "Ford" (NC-161). Resolve first: a held company is served as it
+     * is (the page redirects to its ticker), and anything else is gathered and queued under the
+     * ticker the name resolved to. The committed index alone: anything it cannot name goes to
+     * the first pass unchanged, whose attempt ledger is what may spend a request on it.
+     */
+    const ticker = resolveTickerLocally(query) ?? query;
+    if (ticker.toLowerCase() !== query.toLowerCase()) {
+      const byTicker = await heldCompanyPage(ticker);
+      if (byTicker) return byTicker;
     }
+
     // Not indexed — the bounded first pass (EDGAR + the price chart, the two sources whose
     // conjunction flips this page's render gate), then one re-read. Same contract as the
     // topic path above; lib/ingest/firstPass.ts carries the argument.
     const outcome = await firstPassCompany(ticker);
     if (outcome === "ingested" || outcome === "already_attempted") {
-      const subject = await loadSubject(ticker);
-      if (subject?.ticker) {
-        const [events, prices] = await Promise.all([loadEvents(subject.id), loadPrices(subject.id)]);
-        if (events.length && prices.length) {
-          await requestSubject(ticker, "company", ticker); // queue the deepening pass
-          return {
-            name: subject.displayName,
-            ticker: subject.ticker,
-            siteDomain: subject.siteDomain,
-            prices,
-            events: dropCompanyPrehistory(events),
-            industry: null,
-            refreshedAt: subject.refreshedAt,
-          };
-        }
+      const fresh = await heldCompanyPage(ticker);
+      if (fresh) {
+        await requestSubject(ticker, "company", ticker); // queue the deepening pass
+        return fresh;
       }
     }
     // Record the demand for the scheduled run rather than fetching more under a visitor.

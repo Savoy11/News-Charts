@@ -1,5 +1,5 @@
 import { dayFromEpoch, getJson, getText, onchainEvent } from "./chain";
-import type { TimelineEvent } from "../types";
+import type { FetchResult, TimelineEvent } from "../types";
 
 /**
  * Bitcoin halvings — the cleanest possible on-chain event, and the reason this is Phase 0.
@@ -48,6 +48,18 @@ async function blockAt(height: number): Promise<{ hash: string; time: number; we
  * so the next halving drops out on its own — there is no "is it in the future" date arithmetic
  * to get wrong, and no scheduled event is ever published as though it had occurred.
  */
+/**
+ * The halvings with an outcome. Halvings one to four are years in the past, so finding none means
+ * no explorer answered, not that nothing has happened — `getBitcoinHalvings` cannot tell those
+ * apart on its own, and ingest logged the outage as an empty fetch (NC-142).
+ */
+export async function fetchBitcoinHalvings(maxEpochs = 6): Promise<FetchResult> {
+  const events = await getBitcoinHalvings(maxEpochs);
+  return events.length
+    ? { events, outcome: "ok" }
+    : { events, outcome: "error", detail: "no block explorer answered" };
+}
+
 export async function getBitcoinHalvings(maxEpochs = 6): Promise<TimelineEvent[]> {
   const out: TimelineEvent[] = [];
   for (let n = 1; n <= maxEpochs; n++) {

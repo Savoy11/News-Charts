@@ -34,7 +34,7 @@ function trapFetch(handler?: (url: string) => unknown): void {
 }
 
 async function main(): Promise<void> {
-  const { resolveCompany, TICKER_INDEX_SYNCED_ON } = await import("../lib/sec");
+  const { resolveCompany, resolveTickerLocally, TICKER_INDEX_SYNCED_ON } = await import("../lib/sec");
   type TickerIndex = import("../lib/sec").TickerIndex;
 
   console.log("\nThe committed index");
@@ -211,6 +211,33 @@ async function main(): Promise<void> {
   check("two index rows for ONE fund still resolve", v500again?.ticker === "VOO", v500again?.ticker ?? "null");
   const fidelity = await resolveCompany("Fidelity 500").catch(() => null);
   check("a prefix only one fund has still resolves", fidelity?.ticker === "FUSVX", fidelity?.ticker ?? "null");
+
+  console.log("\nA name on a read path resolves from the index alone");
+  // NC-161: /company/Ford missed because the corpus is keyed by ticker. The page path now learns
+  // Ford is F from the committed index — and must spend nothing to do it.
+  trapFetch(); // any request now throws
+  check("\"Ford\" is F", resolveTickerLocally("Ford") === "F", String(resolveTickerLocally("Ford")));
+  check("a fund symbol is itself", resolveTickerLocally("VOO") === "VOO");
+  check("a fund name is its ETF class", resolveTickerLocally("Vanguard 500") === "VOO", String(resolveTickerLocally("Vanguard 500")));
+  check("junk is nothing", resolveTickerLocally("zzqqxxnotathing") === null);
+  check("  …and none of it asked anybody", asked.length === 0, asked.join(", "));
+
+  console.log("\nTwo securities can share one registrant");
+  // NC-138: subjects_cik_uq made the CIK an identity, so GOOG after GOOGL — or BRK-A after BRK-B,
+  // or any second series of a fund trust — failed on insert and was never ingested. Read the
+  // migrations in the order they apply and ask what the schema ends up enforcing.
+  const { readdirSync, readFileSync } = await import("node:fs");
+  let cikUnique = false;
+  for (const file of readdirSync("db").filter((f) => f.endsWith(".sql")).sort()) {
+    const sql = readFileSync(`db/${file}`, "utf8").replace(/--.*$/gm, "");
+    if (/CREATE UNIQUE INDEX[^;]*ON subjects \(cik\)/i.test(sql)) cikUnique = true;
+    if (/DROP INDEX[^;]*subjects_cik_uq/i.test(sql)) cikUnique = false;
+  }
+  check("no migration leaves the CIK unique", !cikUnique);
+  const shared = Object.entries(
+    Object.entries(index.funds).reduce<Record<number, number>>((acc, [, cik]) => ((acc[cik] = (acc[cik] ?? 0) + 1), acc), {})
+  ).filter(([, n]) => n > 1).length;
+  check("…which the index needs: fund CIKs carry several symbols", shared > 100, `${shared} shared fund CIKs`);
 
   console.log("\nA query that is nothing");
   trapFetch((url) =>

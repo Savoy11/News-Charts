@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 110,
-   "closed": 30,
+   "open": 99,
+   "closed": 41,
    "parked": 12,
    "blocked": 18
   },
@@ -43,7 +43,7 @@
    "owner-decision": 50
   },
   "counts_recomputed_on": "2026-10-17",
-  "closed_by_annotation": 30
+  "closed_by_annotation": 41
  },
  "blocking_decisions": [
   {
@@ -1174,11 +1174,18 @@
      "quote": "const key = dedupKey(ev.dedupBasis ?? ev.title);"
     }
    ],
-   "progress": {
-    "noted_on": "2026-09-28",
-    "note": "Code finding 2026-09-28: GDELT's dedup basis (raw title | compact date) can never equal other feeds' storyKey, so cross-feed collapse cannot happen for GDELT — filed as NC-154.",
-    "evidence": "lib/news.ts:83"
-   }
+   "progress": [
+    {
+     "noted_on": "2026-09-28",
+     "note": "Code finding 2026-09-28: GDELT's dedup basis (raw title | compact date) can never equal other feeds' storyKey, so cross-feed collapse cannot happen for GDELT — filed as NC-154.",
+     "evidence": "lib/news.ts:83"
+    },
+    {
+     "noted_on": "2026-10-17",
+     "note": "NC-154 (GDELT's dedup basis never matches storyKey) is still open and still answers this check: GDELT and Yahoo copies of one story cannot collapse until it ships.",
+     "evidence": "lib/news.ts"
+    }
+   ]
   },
   {
    "id": "NC-034",
@@ -1404,7 +1411,7 @@
     "evidence": [
      "lib/sec.ts:202",
      "scripts/check-tickers.ts:199",
-     "docs/MASTER-CHECKLIST.md:23-70"
+     "docs/MASTER-CHECKLIST.md:76-123"
     ]
    }
   },
@@ -1697,7 +1704,7 @@
      "lib/growth.ts:21",
      "components/PriceOverlay.tsx",
      "scripts/check-compare.ts:115",
-     "docs/MASTER-CHECKLIST.md:23-70"
+     "docs/MASTER-CHECKLIST.md:76-123"
     ]
    }
   },
@@ -2090,7 +2097,7 @@
     "reason": "The LlamaHack amount comment now reads plain USD, verified live 2026-07-31, and points at toUsd for the history of the 10^6 defect.",
     "evidence": [
      "lib/onchain/exploits.ts:34",
-     "docs/MASTER-CHECKLIST.md:23-70"
+     "docs/MASTER-CHECKLIST.md:76-123"
     ]
    }
   },
@@ -3182,14 +3189,14 @@
     "evidence": [
      "lib/compare.ts:76",
      "scripts/check-compare.ts:140",
-     "docs/MASTER-CHECKLIST.md:23-70"
+     "docs/MASTER-CHECKLIST.md:76-123"
     ]
    }
   },
   {
    "id": "NC-099",
    "title": "Scheduled ingestTopic can mint duplicate topic subjects (keys on typed slug, not Wikipedia article)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -3214,7 +3221,19 @@
      "lines": "412-420",
      "quote": "Keying on the search string instead is what produced duplicate subjects"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "The scheduled ingestTopic mints through upsertTopicSubject(searchTerm, wikipediaTitle), the same identity the first pass uses, so a second phrasing joins the existing subject as an alias. check:wiring asserts it.",
+    "evidence": [
+     "scripts/ingest.ts:299",
+     "scripts/check-wiring.ts:184",
+     "docs/MASTER-CHECKLIST.md:23-75"
+    ]
+   }
   },
   {
    "id": "NC-100",
@@ -3255,14 +3274,14 @@
      "lib/db.ts:11-12",
      "lib/ingest/firstPass.ts:76",
      "scripts/check-dates.ts:88",
-     "docs/MASTER-CHECKLIST.md:23-70"
+     "docs/MASTER-CHECKLIST.md:76-123"
     ]
    }
   },
   {
    "id": "NC-101",
    "title": "crossPeerWeeks sector signal has no relevance filter",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -3282,12 +3301,24 @@
      "lines": "109-126",
      "quote": "WHERE e.occurred_on >= $2\n          GROUP BY e.id, e.occurred_on"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "crossPeerWeeks applies the same (es.relevance IS NULL OR >= RELEVANCE_THRESHOLD) gate as weeklyCounts and eventsForDivergence. Live 2026-10-17 on a scratch database: an event linked to two peers at relevance 0.1 produced a cross_peer_cluster on main and none on this branch. check:signals asserts all three queries carry the gate.",
+    "evidence": [
+     "lib/signals.ts:125",
+     "scripts/check-signals.ts:86",
+     "docs/MASTER-CHECKLIST.md:23-75"
+    ]
+   }
   },
   {
    "id": "NC-102",
    "title": "price_divergence compares member returns over different date windows",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -3307,7 +3338,19 @@
      "lines": "160-179",
      "quote": "min(p.on_date) AS d0, max(p.on_date) AS d1"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "priceDivergence measures every comparable member over one common window (latest first date to earliest last date), and leaves out a member that starts or stops trading more than a week inside the window. Live 2026-10-17 on a scratch database: main reported a November listing as 'outran the sector by 75 points'; this branch reports the real outlier, +30 over the full year.",
+    "evidence": [
+     "lib/signals.ts:181",
+     "scripts/check-signals.ts:86",
+     "docs/MASTER-CHECKLIST.md:23-75"
+    ]
+   }
   },
   {
    "id": "NC-103",
@@ -3709,7 +3752,7 @@
   {
    "id": "NC-116",
    "title": "Remove the stray scratch-parse.ts debug script from the repo root",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "tooling",
@@ -3724,7 +3767,17 @@
      "lines": "1-4",
      "quote": "const html = readFileSync(\"/tmp/s.html\", \"utf8\");"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "scratch-parse.ts deleted; nothing referenced it.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:23-75"
+    ]
+   }
   },
   {
    "id": "NC-117",
@@ -4356,7 +4409,7 @@
   {
    "id": "NC-138",
    "title": "A second share class or fund sharing a CIK can never be ingested (GOOG after GOOGL, BRK-A after BRK-B, sibling funds)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -4384,7 +4437,20 @@
      "lines": "n/a",
      "quote": "1652044 → GOOGL, GOOG, GOOGM, GOOGN"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "db/021_shared_cik.sql drops subjects_cik_uq for a plain index (the ticker stays unique); docs/EVENTS-SCHEMA.md and the generated db/001 match. Live 2026-10-17: on main's schema GOOG after GOOGL fails on subjects_cik_uq; after the migration (existing and fresh databases) both insert and a duplicate ticker is still refused. check:tickers reads the migrations in order and fails if the CIK ends unique. Owner action: run npm run db:migrate.",
+    "evidence": [
+     "db/021_shared_cik.sql",
+     "docs/EVENTS-SCHEMA.md",
+     "scripts/check-tickers.ts:225",
+     "docs/MASTER-CHECKLIST.md:23-75"
+    ]
+   }
   },
   {
    "id": "NC-139",
@@ -4469,7 +4535,7 @@
   {
    "id": "NC-142",
    "title": "Internet Archive, Yahoo RSS and on-chain failures are logged as 'empty', so there is no back-off and no visible error",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -4494,7 +4560,24 @@
      "lines": "163-164",
      "quote": ".catch(() => [])"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Ingest passes fetchArchiveItems straight to runSource; Yahoo RSS gained fetchYahooFinanceNews (429/503 throttled, other failures error); on-chain ingest uses fetchOnchainFor, one FetchResult per feed, with new outcome-keeping fetchStablecoinSupplyMoves (no key, Etherscan status-0 errors and rate limits distinguished from 'No transactions found') and fetchBitcoinHalvings (no halving found means no explorer answered). asResult, which re-derived ok/empty from the event count, is removed.",
+    "evidence": [
+     "lib/newsExtra.ts:92",
+     "lib/onchain/index.ts:183",
+     "lib/onchain/stablecoin.ts:60",
+     "lib/onchain/bitcoin.ts:56",
+     "scripts/ingest.ts:344",
+     "scripts/check-archive.ts:173-176",
+     "scripts/check-onchain.ts:518",
+     "docs/MASTER-CHECKLIST.md:23-75"
+    ]
+   }
   },
   {
    "id": "NC-143",
@@ -4526,7 +4609,7 @@
   {
    "id": "NC-144",
    "title": "Demand requests are marked fulfilled even when nothing was ingested",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -4548,7 +4631,21 @@
      "lines": "325-327",
      "quote": "ticker not found"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "ingestTopic, ingestCompany and ingestOnchain return IngestOutcome; refresh.ts marks a request fulfilled only on { ingested: true } and otherwise markFailed with the reason (left pending). Failed requests sort behind untried ones so an unresolvable request cannot take a slot every run. check:wiring asserts all three. Live 2026-10-17: a request whose subject was locked by another session was marked fulfilled on main and stays pending with 'locked by a first-visit gather' on this branch.",
+    "evidence": [
+     "scripts/ingest.ts:152",
+     "scripts/refresh.ts:154-158",
+     "lib/ingest/queue.ts:65",
+     "scripts/check-wiring.ts:169",
+     "docs/MASTER-CHECKLIST.md:23-75"
+    ]
+   }
   },
   {
    "id": "NC-145",
@@ -4586,7 +4683,7 @@
   {
    "id": "NC-146",
    "title": "Wikipedia 429/5xx is treated as 'no article', pushing real topics toward a week-long block",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -4606,7 +4703,21 @@
      "lines": "160-165",
      "quote": "recordFailure"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "getExtract and searchTitle throw WikipediaUnavailable on any non-OK status or refused connection; a missing page (200 with missing) is still null. The first pass resolves the throw as a timeout through withTimeout, so it never counts toward dead_until; the scheduler logs throttled/error, keeps a held topic's stored article and still runs LoC, GDELT and the Internet Archive; the company backstory logs it through runSource; companion 'Timeline of' articles degrade to absent. check:ondemand covers missing/429/503/500/refused and the companion case. Live 2026-10-17 (Wikipedia unreachable through the session proxy): a queued new topic stays pending with 'Wikipedia unavailable'.",
+    "evidence": [
+     "lib/wiki.ts:21",
+     "lib/wiki.ts:485",
+     "scripts/ingest.ts:257",
+     "scripts/check-ondemand.ts:159",
+     "docs/MASTER-CHECKLIST.md:23-75"
+    ]
+   }
   },
   {
    "id": "NC-147",
@@ -4635,12 +4746,17 @@
      "lines": "33",
      "quote": "onchain: 1440,"
     }
-   ]
+   ],
+   "progress": {
+    "noted_on": "2026-10-17",
+    "note": "Batch 2 (NC-142, NC-148) made on-chain ingest log one fetch row per feed under its own source key with its real outcome, so per-feed windows and back-off can now be read from source_fetches the way runSource reads them. The windows and back-off themselves are still not applied.",
+    "evidence": "scripts/ingest.ts ingestOnchain"
+   }
   },
   {
    "id": "NC-148",
    "title": "Licence gate is skipped for Snapshot and DefiLlama, and check:wiring doesn't cover them",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "security",
@@ -4667,7 +4783,19 @@
      "lines": "95-101",
      "quote": "TOPIC_SOURCES"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "ingestOnchain calls assertCommercialOk for each feed's own source key (onchain, snapshot, defillama) instead of 'onchain' once; check:wiring asserts licence status for every OTHER_INGEST_PATHS source, that every feed key in lib/onchain/index.ts is a recorded ingest path, and that ingestOnchain gates per feed.",
+    "evidence": [
+     "scripts/ingest.ts:642",
+     "scripts/check-wiring.ts:106",
+     "docs/MASTER-CHECKLIST.md:23-75"
+    ]
+   }
   },
   {
    "id": "NC-149",
@@ -4734,14 +4862,14 @@
     "evidence": [
      "lib/wiki.ts:256",
      "scripts/check-parsers.ts:155",
-     "docs/MASTER-CHECKLIST.md:23-70"
+     "docs/MASTER-CHECKLIST.md:76-123"
     ]
    }
   },
   {
    "id": "NC-151",
    "title": "Backups prune older good dumps even when the new dump could not be verified",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "ops-infra",
@@ -4761,7 +4889,19 @@
      "lines": "122-129",
      "quote": "prune"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "backup.ts throws before pruning when pg_restore -l could not run (entries < 0) as well as when it lists nothing. Live 2026-10-17: with a failing pg_restore all 15 older dumps were kept; with a working one pruning ran to 14 as before. check:wiring asserts the guard precedes the unlink.",
+    "evidence": [
+     "scripts/backup.ts:114",
+     "scripts/check-wiring.ts:191",
+     "docs/MASTER-CHECKLIST.md:23-75"
+    ]
+   }
   },
   {
    "id": "NC-152",
@@ -4858,7 +4998,7 @@
     "evidence": [
      "lib/prices.ts:21",
      "scripts/check-parsers.ts:168",
-     "docs/MASTER-CHECKLIST.md:23-70"
+     "docs/MASTER-CHECKLIST.md:76-123"
     ]
    }
   },
@@ -4951,7 +5091,7 @@
     "evidence": [
      "app/topic/[slug]/page.tsx:33",
      "lib/page-data.ts:36",
-     "docs/MASTER-CHECKLIST.md:23-70"
+     "docs/MASTER-CHECKLIST.md:76-123"
     ]
    }
   },
@@ -5005,7 +5145,7 @@
   {
    "id": "NC-161",
    "title": "/company/<name> re-ingests a company we already hold, then still shows 'Not on News Charts yet'",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "bug",
@@ -5022,7 +5162,21 @@
      "lines": "152-172",
      "quote": "firstPassCompany(ticker)"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "The company page path resolves a name from the committed index (resolveTickerLocally — rungs 1-3, never a request), serves the held company and redirects to /company/<ticker>; the first pass and requestSubject get the resolved ticker. Live 2026-10-17: /company/Ford showed 'Not on News Charts yet' on main, claimed co:ford and queued ticker 'Ford'; on this branch it lands on /company/F with nothing claimed or queued. check:tickers asserts the lookup makes no request.",
+    "evidence": [
+     "lib/sec.ts:221",
+     "lib/page-data.ts:172",
+     "app/company/[ticker]/page.tsx:53",
+     "scripts/check-tickers.ts:215",
+     "docs/MASTER-CHECKLIST.md:23-75"
+    ]
+   }
   },
   {
    "id": "NC-162",
@@ -5087,7 +5241,7 @@
      "lib/safeUrl.ts:15",
      "lib/ingest/store.ts:559",
      "scripts/check-links.ts",
-     "docs/MASTER-CHECKLIST.md:23-70"
+     "docs/MASTER-CHECKLIST.md:76-123"
     ]
    }
   },
@@ -5302,7 +5456,7 @@
      "app/api/signals/route.ts:99",
      "app/search/route.ts:33",
      "scripts/check-api.ts",
-     "docs/MASTER-CHECKLIST.md:23-70"
+     "docs/MASTER-CHECKLIST.md:76-123"
     ]
    }
   }
@@ -5328,7 +5482,15 @@
     "what": "First working batch: 10 items closed (NC-040, NC-048, NC-059, NC-098, NC-100, NC-150, NC-155, NC-158, NC-163, NC-170), each with a check that fails on the old code; progress notes on NC-039 and NC-046.",
     "basis_key": "Closed items were fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (including the new check:links and check:api), plus a live run against a seeded Postgres 16 and `next dev` under TZ=Asia/Tokyo.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:23-70"
+     "docs/MASTER-CHECKLIST.md:76-123"
+    ]
+   },
+   {
+    "on": "2026-10-17",
+    "what": "Batch 2: 11 items closed (NC-099, NC-101, NC-102, NC-116, NC-138, NC-142, NC-144, NC-146, NC-148, NC-151, NC-161); progress notes on NC-033 and NC-147; batch 1's checklist references moved to lines 76-123 when the batch 2 section was added above them.",
+    "basis_key": "Fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, plus live runs against a seeded Postgres 16 and `next dev` (the session proxy refused Wikipedia, the SEC and Yahoo, which the runs used as a real outage).",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:23-75"
     ]
    }
   ]

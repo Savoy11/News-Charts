@@ -269,6 +269,26 @@ async function main(): Promise<void> {
   check("the score is pg_trgm's word_similarity", off.length === 0, off.map(([a, b]) => `${a} / ${b}`).join("; "));
   check("  …and none of it asked anybody", asked.length === 0, asked.join(", "));
 
+  // 2026-10-17 proposal 8: every fund filing says it "may concern a sibling fund" and the page
+  // never said which funds those are, though the index carries each series' registrant.
+  console.log("\nA fund's siblings, from the index alone");
+  const { siblingFunds } = await import("../lib/sec");
+  trapFetch();
+  const family = siblingFunds("VOO");
+  check("VOO's registrant files eleven other funds", family?.funds.length === 11 && family.registrantCik === "0000036405",
+    `${family?.registrantCik} ${family?.funds.map((f) => f.ticker).join(" ")}`);
+  check("  …VTI among them, under its own name",
+    family?.funds.some((f) => f.ticker === "VTI" && /Total Stock Market/.test(f.name)) === true);
+  check("  …and never VOO itself", !family?.funds.some((f) => f.ticker === "VOO"));
+  check("a share class finds the same family as the ETF",
+    JSON.stringify(siblingFunds("VFIAX")?.funds) === JSON.stringify(family?.funds));
+  check("an operating company has no fund family", siblingFunds("F") === null && siblingFunds("AAPL") === null);
+  check("each sibling is listed once", (() => {
+    const all = siblingFunds("IVV")?.funds.map((f) => f.ticker) ?? [];
+    return all.length > 100 && new Set(all).size === all.length;
+  })());
+  check("  …and none of it asked anybody", asked.length === 0, asked.join(", "));
+
   console.log("\nTwo securities can share one registrant");
   // NC-138: subjects_cik_uq made the CIK an identity, so GOOG after GOOGL — or BRK-A after BRK-B,
   // or any second series of a fund trust — failed on insert and was never ingested. Read the

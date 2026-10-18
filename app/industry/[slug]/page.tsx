@@ -5,10 +5,12 @@ import EventList from "@/components/EventList";
 import AdSlot from "@/components/AdSlot";
 import SearchBox from "@/components/SearchBox";
 import SignalPanel from "@/components/SignalPanel";
+import SectorStanding from "@/components/SectorStanding";
 import JsonLd from "@/components/JsonLd";
 import FollowBar from "@/components/FollowBar";
 import { loadIndustry, loadIndustryEvents } from "@/lib/store/read";
 import { absolute, breadcrumbLd, SITE_NAME } from "@/lib/seo";
+import { loadSectorStanding } from "@/lib/signals";
 
 export const revalidate = 900;
 /**
@@ -48,7 +50,10 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
   const industry = await loadIndustry(slug).catch(() => null);
   if (!industry) notFound();
 
-  const events = await loadIndustryEvents(industry.id);
+  const [events, standing] = await Promise.all([
+    loadIndustryEvents(industry.id),
+    loadSectorStanding(industry.id).catch(() => null),
+  ]);
   const shared = events.filter((e) => e.description?.includes("peers")).length;
 
   return (
@@ -89,6 +94,9 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
           </Link>
         ))}
       </div>
+
+      {/* Every member against the median — the divergence signal below names only the furthest. */}
+      {standing && <SectorStanding standing={standing} />}
 
       <SignalPanel industrySlug={slug} />
 

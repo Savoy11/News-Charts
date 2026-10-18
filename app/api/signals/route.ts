@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
-import { computeSignals, type SignalOptions } from "@/lib/signals";
+import { DEFAULT_SINCE_MONTHS, computeSignals, sinceMonthsAgo, type SignalOptions } from "@/lib/signals";
 import { fetchRegulations } from "@/lib/federalregister";
 import { loadExplanations } from "@/lib/store/read";
 import { frFetchSince, normaliseTerms } from "@/lib/rateLimit";
@@ -34,10 +34,7 @@ export async function GET(req: NextRequest) {
     sigma: num("sigma", 2, 0, 6),
     divergencePct: num("divergencePct", 15, 1, 500),
   };
-  const sinceMonths = num("sinceMonths", 30, 1, 240);
-  const since = new Date();
-  since.setMonth(since.getMonth() - sinceMonths);
-  const sinceStr = since.toISOString().slice(0, 10);
+  const sinceStr = sinceMonthsAgo(num("sinceMonths", DEFAULT_SINCE_MONTHS, 1, 240));
 
   try {
     const pool = getPool();

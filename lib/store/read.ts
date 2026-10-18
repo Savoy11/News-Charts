@@ -388,6 +388,18 @@ export async function loadIndustryFor(subjectId: number): Promise<IndustryRef | 
   };
 }
 
+/** Which of these tickers the site holds as a company page — for marking a link honestly. */
+export async function heldTickers(tickers: string[]): Promise<Set<string>> {
+  if (!tickers.length) return new Set();
+  const { rows } = await getPool().query<{ ticker: string }>(
+    `SELECT DISTINCT s.ticker FROM subjects s
+       JOIN event_subjects es ON es.subject_id = s.id
+      WHERE s.kind = 'company' AND s.ticker = ANY($1::text[])`,
+    [tickers]
+  );
+  return new Set(rows.map((r) => r.ticker));
+}
+
 export interface IndustryPage {
   id: number;
   name: string;

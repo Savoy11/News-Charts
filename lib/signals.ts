@@ -169,7 +169,7 @@ async function eventsForDivergence(subjectId: number, since: string): Promise<nu
  * or stops trading more than a week inside the window is left out rather than shrinking everyone
  * else's window to fit it — a recent listing is not a sector outlier.
  */
-async function priceDivergence(memberIds: number[], since: string) {
+export async function memberReturns(memberIds: number[], since: string): Promise<MemberReturn[]> {
   const { rows } = await getPool().query(
     `WITH members AS (
        SELECT id, ticker FROM subjects WHERE id = ANY($1::bigint[])
@@ -205,6 +205,71 @@ async function priceDivergence(memberIds: number[], since: string) {
   return rows.map((r) => ({ id: Number(r.id), ticker: r.ticker, pct: Number(r.pct), d0: r.d0, d1: r.d1 }));
 }
 
+/** One member's return over the window every member shares (`memberReturns`). */
+export interface MemberReturn {
+  id: number;
+  ticker: string;
+  pct: number;
+  d0: string;
+  d1: string;
+}
+
+/**
+ * Below this many members with comparable prices, "the sector median" is the midpoint of a pair,
+ * which both members are equidistant from — there is no sector to compare against. Shared by the
+ * divergence signal and the standings, so neither can quote a figure the other would withhold.
+ */
+export const MIN_SECTOR_MEMBERS = 3;
+
+/** The signals API's lookback unless a visitor sets their own, and the one standings are given over. */
+export const DEFAULT_SINCE_MONTHS = 30;
+
+/** The first day of a lookback of `months`, as YYYY-MM-DD. */
+export function sinceMonthsAgo(months: number, now = new Date()): string {
+  const d = new Date(now);
+  d.setMonth(d.getMonth() - months);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Every member's return against the sector median, over dates they all share. */
+export interface SectorStanding {
+  from: string;
+  to: string;
+  median: number;
+  /** most ahead of the median first */
+  members: { ticker: string; pct: number; gap: number }[];
+}
+
+/**
+ * The whole sector, not only its outlier.
+ *
+ * `memberReturns` measures every member over one common window and the divergence signal used to
+ * publish just the member furthest from the median — so "INTC lagged the sector by 172.3 points"
+ * appeared on the sector page and never on INTC's own (2026-10-17 proposal 6). Null below
+ * `MIN_SECTOR_MEMBERS`, so a two-company "sector" is never quoted as one.
+ */
+export function sectorStanding(returns: MemberReturn[]): SectorStanding | null {
+  if (returns.length < MIN_SECTOR_MEMBERS) return null;
+  const med = median(returns.map((r) => r.pct));
+  const members = returns
+    .map((r) => ({ ticker: r.ticker, pct: r.pct, gap: Number((r.pct - med).toFixed(1)) }))
+    .sort((a, b) => b.gap - a.gap || a.ticker.localeCompare(b.ticker));
+  return { from: returns[0].d0, to: returns[0].d1, median: med, members };
+}
+
+/** A sector's standings over the default lookback, from its members' stored prices. */
+export async function loadSectorStanding(
+  industryId: number,
+  since = sinceMonthsAgo(DEFAULT_SINCE_MONTHS)
+): Promise<SectorStanding | null> {
+  const { rows } = await getPool().query<{ member_id: string }>(
+    "SELECT member_id FROM subject_members WHERE industry_id = $1",
+    [industryId]
+  );
+  if (rows.length < MIN_SECTOR_MEMBERS) return null;
+  return sectorStanding(await memberReturns(rows.map((r) => Number(r.member_id)), since));
+}
+
 export function weekEnd(wk: string): string {
   const d = new Date(`${wk}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + 6);
@@ -226,7 +291,7 @@ export async function computeSignals(
   const [weeks, shared, prices] = await Promise.all([
     weeklyCounts(scopeIds, since),
     crossPeerWeeks(memberIds, since),
-    priceDivergence(memberIds, since),
+    memberReturns(memberIds, since),
   ]);
 
   const signals: Signal[] = [];
@@ -281,7 +346,7 @@ export async function computeSignals(
    * A two-member "sector median" is just the midpoint of the pair, so there is no sector to
    * diverge *from*. Withholding the signal is the correct answer, not a conservative one.
    */
-  if (prices.length >= 3) {
+  if (prices.length >= MIN_SECTOR_MEMBERS) {
     const med = median(prices.map((p) => p.pct));
     const worst = [...prices].sort(
       (a, b) => Math.abs(b.pct - med) - Math.abs(a.pct - med)

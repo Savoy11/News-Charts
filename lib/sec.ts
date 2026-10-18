@@ -391,6 +391,43 @@ export function suggestSecurities(query: string, limit = SUGGEST_LIMIT): Securit
   return scored.slice(0, limit);
 }
 
+/** The other fund series a registrant files — what a fund's page offers as related. */
+export interface SiblingFunds {
+  /** the registrant's CIK, zero-padded, for a link to its EDGAR listing */
+  registrantCik: string;
+  /** one entry per series, under its preferred share class, in the index's order */
+  funds: { ticker: string; name: string }[];
+}
+
+/**
+ * The other series filed by a fund's registrant, from the committed index — or null for a symbol
+ * that is not a fund series, or a registrant with nothing else.
+ *
+ * Every fund filing tells the reader it "may concern a sibling fund" (NC-139) and never said which
+ * funds those are, though `seriesCiks` has carried every series' registrant since the 2026-08-12
+ * sync (2026-10-17 proposal 8). Same registrant per EDGAR is the one "related" a fund page can
+ * claim without a judgement: VOO's trust also files VTI, VTV, VUG and eight more.
+ */
+export function siblingFunds(symbol: string): SiblingFunds | null {
+  const at = tickerIndex.symbolSeries?.[symbol.trim().toUpperCase()];
+  const names = tickerIndex.seriesNames ?? [];
+  const symbols = tickerIndex.seriesSymbols ?? [];
+  const ciks = tickerIndex.seriesCiks ?? [];
+  if (at === undefined || ciks[at] === undefined) return null;
+  const cik = ciks[at];
+  // the page's own series, under whichever class it was reached by — VFIAX and VOO are one fund
+  const self = new Set([symbols[at], symbol.trim().toUpperCase()]);
+  const seen = new Set<string>();
+  const funds: SiblingFunds["funds"] = [];
+  names.forEach((name, i) => {
+    const ticker = symbols[i];
+    if (ciks[i] !== cik || !ticker || self.has(ticker) || seen.has(ticker)) return;
+    seen.add(ticker);
+    funds.push({ ticker, name });
+  });
+  return funds.length ? { registrantCik: String(cik).padStart(10, "0"), funds } : null;
+}
+
 /**
  * The ticker a query names, from the committed index alone — rungs 1–3 below without the
  * registrant enrichment or the live files, so it never makes a request.

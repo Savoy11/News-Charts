@@ -758,8 +758,10 @@ stricter first. No ledger item closes; this is proposal 4 from the 2026-10-17 sc
 
 `npm run check` passes, `npm run lint` is clean, `next build` compiles, and `check:ui` is
 154/161: no new browser checks this batch, and the seven failures are the same stale prompt-search
-checks. **Not run here:** the live Ford case below — www.federalregister.gov doesn't answer from
-this cloud session, so the first real run is the owner's.
+checks. The live Ford case below can't run from this cloud session (www.federalregister.gov
+doesn't answer here); **the owner ran `npm run check:live` on their machine the same day: 13 pass,
+0 fail, 0 unreachable, 1 skipped** (Etherscan, no key). The new Ford case passed, and so did
+EDGAR's, which includes the ticker index's age check that failed in batch 13.
 
 - [x] **The company feed (`lib/frCompany.ts` `fetchCompanyRegulations`).** `npm run ingest --
       --ticker F` now also asks the Federal Register for the company's everyday name as a whole
@@ -1002,8 +1004,8 @@ already held, but new investment goes to securities coverage first.
         live count and one owner choice first).*
 - [x] `P1` **Federal Register documents that name the company, on the company's page.**
       ✅ **Done 2026-10-18 (batch 14)** — without airworthiness directives and with the stricter
-      match, as the owner chose; see that section. The live noise check is the owner's first
-      `npm run check:live` run. The original entry follows. The
+      match, as the owner chose; see that section. The live check passed on the owner's machine
+      (2026-10-18). The original entry follows. The
       adapter runs only from `ingestIndustry` (`scripts/ingest.ts:585`; the single call site
       `check:wiring` records), and `COMPANY_SOURCES` (`scripts/ingest.ts:62`) omits it. Add it
       for companies: query the common name and keep a document only when its **title** names the

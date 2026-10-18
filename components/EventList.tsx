@@ -315,7 +315,8 @@ function condenseFilings(rows: Row[]): RenderRow[] {
   return out;
 }
 
-const FORM_RE = /\b(10-K\/?A?|10-Q\/?A?|8-K\/?A?|6-K\/?A?|20-F|40-F|S-\d\w*|F-\d\w*|13[DG]\/?A?|DEF 14A|424B\d|SC 13[DG])\b/i;
+const FORM_RE =
+  /\b(10-K405|10-K\/?A?|10-Q\/?A?|8-K\/?A?|6-K\/?A?|20-F|40-F|S-\d\w*|F-\d\w*|13[DG]\/?A?|DEFM14A|DEF 14A|424B\d|SC 13[DG]|SC TO-T|SC 14D9|25-NSE|15-12[BG]|25(?=\)))\b/i;
 
 /** "6-K ×4 · 8-K ×2" — which forms are in the stack, most frequent first. */
 function formSummary(items: TimelineEvent[]): string {

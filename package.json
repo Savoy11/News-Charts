@@ -46,6 +46,7 @@
     "cost-report": "tsx scripts/cost-report.ts",
     "search-report": "tsx scripts/search-report.ts",
     "overlap-report": "tsx scripts/overlap-report.ts",
+    "fr-company-report": "tsx scripts/fr-company-report.ts",
     "fix:exploit-amounts": "tsx scripts/fix-exploit-amounts.ts",
     "profile:list": "tsx scripts/profile-list.ts",
     "check:types": "tsc --noEmit",

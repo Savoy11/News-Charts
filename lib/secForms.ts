@@ -97,3 +97,52 @@ export function describeItems(items: string): string | undefined {
   });
   return `${codes.length > 1 ? "Items" : "Item"} ${named.join(" · ")}`;
 }
+
+/**
+ * The material forms a company files beyond its periodic reports — corrections, mergers, large
+ * stakes, offerings and exits — chosen by the owner on 2026-10-18 (proposal 2). They were already
+ * in every submissions record the scheduler downloads, and the form filter dropped them: roughly
+ * three rows in four of Ford's record never reached the database.
+ *
+ * Insider-trade forms (3, 4, 5 and 144) are left out on the owner's call: they are likely the
+ * largest pile of what is discarded, and insiders file them so often they would bury a timeline.
+ * 8-K/A is not here — it takes the 8-K's item naming — and nor are 424B prospectuses, which are
+ * grouped by day (`PROSPECTUS`).
+ */
+export const MATERIAL_FORMS: Record<string, { label: string; earnings?: true }> = {
+  // corrections — a 10-K/A is often a restatement
+  "10-K/A": { label: "Amended annual report" },
+  "10-Q/A": { label: "Amended quarterly report" },
+  "20-F/A": { label: "Amended annual report" },
+  "40-F/A": { label: "Amended annual report" },
+  // the annual report's own form until 2002, which the older shards reach
+  "10-K405": { label: "Annual report", earnings: true },
+  // mergers and buyouts
+  "S-4": { label: "Merger or exchange registration" },
+  DEFM14A: { label: "Merger vote proxy" },
+  "SC TO-T": { label: "Tender offer by an outside bidder" },
+  "SC 14D9": { label: "Board's response to a tender offer" },
+  // large stakes — the SEC renamed these "SCHEDULE 13D/G" in December 2024; both spellings occur
+  "SC 13D": { label: "Investor stake over 5%" },
+  "SC 13D/A": { label: "Change to a 5%+ investor stake" },
+  "SC 13G": { label: "Passive investor stake over 5%" },
+  "SC 13G/A": { label: "Change to a passive 5%+ stake" },
+  "SCHEDULE 13D": { label: "Investor stake over 5%" },
+  "SCHEDULE 13D/A": { label: "Change to a 5%+ investor stake" },
+  "SCHEDULE 13G": { label: "Passive investor stake over 5%" },
+  "SCHEDULE 13G/A": { label: "Change to a passive 5%+ stake" },
+  // offerings
+  "S-3": { label: "Shelf registration for new securities" },
+  // exits
+  "25": { label: "Delisting notice" },
+  "25-NSE": { label: "Removed from an exchange" },
+  "15-12B": { label: "Deregistration — stops SEC reporting" },
+  "15-12G": { label: "Deregistration — stops SEC reporting" },
+};
+
+/**
+ * Prospectuses for new securities. Kept, but grouped into one row per form per day: a bank files
+ * dozens of 424B2 structured-note supplements in a day, and one row each would bury its page and
+ * multiply its rows in the database for no extra meaning.
+ */
+export const PROSPECTUS = /^424B[1-8]$/;

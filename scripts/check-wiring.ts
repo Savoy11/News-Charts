@@ -34,6 +34,7 @@ import type { SourceKey } from "../lib/types";
 import { countMismatches, sameDatabase } from "../lib/backupCounts";
 import { companyLede } from "../lib/wiki";
 import { OVERLAP_SQL, STRIP_MIN_SHARED, summariseOverlap } from "../lib/overlap";
+import { fetchCompanyMentions, tallyCompanyMentions, titleNamesCompany } from "../lib/frCompany";
 
 let pass = 0;
 let fail = 0;
@@ -369,10 +370,52 @@ console.log("\nThe go/no-go count for topic ↔ security links");
     Boolean(pkg.scripts["overlap-report"]) && !/overlap-report/.test(pkg.scripts.check));
 }
 
-console.log(`\n${pass}/${pass + fail} checks passed\n`);
-if (fail) {
-  console.log("Failed:");
-  for (const f of failures) console.log(`  - ${f}`);
-  console.log("");
-  process.exit(1);
+// 2026-10-17 proposal 4: the owner chose numbers before Federal Register documents reach company
+// pages (2026-10-18). The count has to use the rule a company feed would, or it measures nothing.
+console.log("\nThe Federal Register count, before anything is ingested");
+check("a title naming the company is its document",
+  titleNamesCompany("Airworthiness Directives; The Boeing Company Airplanes", "BOEING CO") &&
+    titleNamesCompany("Ford Motor Company, Denial of Petition for Decision of Inconsequential Noncompliance", "FORD MOTOR CO"));
+check("  …but not a namesake or a near word",
+  !titleNamesCompany("Gerald R. Ford Presidential Library; Notice", "FORD MOTOR CO") &&
+    !titleNamesCompany("Fresh Apples From Chile Into the Continental United States", "Apple Inc."));
+const frHits = [
+  { title: "Airworthiness Directives; The Boeing Company Airplanes", publication_date: "2026-05-01", agencies: [{ name: "Federal Aviation Administration" }] },
+  { title: "Airworthiness Directives; The Boeing Company Airplanes", publication_date: "2025-03-01", agencies: [{ name: "Federal Aviation Administration" }] },
+  { title: "The Boeing Company; Export Privileges Order", publication_date: "2024-07-09", agencies: [{ name: "Industry and Security Bureau" }] },
+  { title: "Commercial Space Launch Requirements", publication_date: "2026-01-02", agencies: [{ name: "Federal Aviation Administration" }] },
+];
+const frTally = tallyCompanyMentions(frHits, "BOEING CO");
+check("the tally counts title-naming documents, not every full-text hit", frTally.searched === 4 && frTally.named === 3);
+check("  …airworthiness directives apart, agencies most first",
+  frTally.airworthiness === 2 && frTally.byAgency[0][0] === "Federal Aviation Administration" && frTally.byAgency[0][1] === 2);
+// The file is a top-level script (no async main), so this one async check finishes before the summary.
+const frSearch = (async () => {
+  const realFetch = globalThis.fetch;
+  let asked = "";
+  globalThis.fetch = (async (u: RequestInfo | URL) => {
+    asked = String(u);
+    return new Response(JSON.stringify({ count: 1, results: frHits.slice(0, 1) }), { status: 200 });
+  }) as typeof fetch;
+  try {
+    const r = await fetchCompanyMentions("FORD MOTOR CO", "2015-01-01");
+    check("the search asks for the everyday name as a phrase", /conditions%5Bterm%5D=%22FORD\+MOTOR%22/.test(asked) && "hits" in r, asked.slice(0, 160));
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+})();
+{
+  const pkg = JSON.parse(read("package.json"));
+  check("the count is a report, outside the offline chain",
+    Boolean(pkg.scripts["fr-company-report"]) && !/fr-company-report/.test(pkg.scripts.check));
 }
+
+frSearch.then(() => {
+  console.log(`\n${pass}/${pass + fail} checks passed\n`);
+  if (fail) {
+    console.log("Failed:");
+    for (const f of failures) console.log(`  - ${f}`);
+    console.log("");
+    process.exit(1);
+  }
+});

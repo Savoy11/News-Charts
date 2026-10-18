@@ -27,7 +27,8 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. Read what EDGAR already says about each filing — name the 8-K item, and count foreign issuers' annual reports as earnings · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING — mark `APPROVED` / `REJECTED` / `DEFERRED`
+**Status:** APPROVED — by the owner, 2026-10-18
+**Filed:** 2026-10-18 — as an open item in `docs/MASTER-CHECKLIST.md`, in the target section named above.
 **Owner's reason (if rejected):**
 
 **Anchor:** data already ingested but never shown (the 8-K items) · a capability present for one
@@ -94,7 +95,8 @@ already stored · *Practicality:* high — offline, additive, and the re-ingest 
 
 ## 2. Keep the material forms EDGAR already sends — amendments, M&A, ownership stakes, offerings, delistings · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING — mark `APPROVED` / `REJECTED` / `DEFERRED`
+**Status:** APPROVED — by the owner, 2026-10-18
+**Filed:** 2026-10-18 — as an open item in `docs/MASTER-CHECKLIST.md`, in the target section named above.
 **Owner's reason (if rejected):**
 
 **Anchor:** data already ingested but never shown · an explicit gap named in a strategy document.
@@ -153,7 +155,8 @@ count and one owner choice
 
 ## 3. "Did you mean": fuzzy-match the committed EDGAR index when a search finds nothing · proposed `P1` · target section: Initiative: Search accuracy · `P1`
 
-**Status:** PENDING — mark `APPROVED` / `REJECTED` / `DEFERRED`
+**Status:** APPROVED — by the owner, 2026-10-18
+**Filed:** 2026-10-18 — as an open item in `docs/MASTER-CHECKLIST.md`, in the target section named above.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present for one subject type and missing for a comparable one (held
@@ -208,7 +211,8 @@ suggests rather than routes, a weak match costs one extra click instead of a wro
 
 ## 4. Federal Register documents that name the company, on the company's page · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING — mark `APPROVED` / `REJECTED` / `DEFERRED`
+**Status:** APPROVED — by the owner, 2026-10-18
+**Filed:** 2026-10-18 — as an open item in `docs/MASTER-CHECKLIST.md`, in the target section named above.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present for one subject type and missing for a comparable one (industries
@@ -263,7 +267,8 @@ medium-high — adapter, window and scorer exist; the new work is the filter · 
 
 ## 5. Company pages show the Wikipedia lede their ingest already fetches · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING — mark `APPROVED` / `REJECTED` / `DEFERRED`
+**Status:** APPROVED — by the owner, 2026-10-18
+**Filed:** 2026-10-18 — as an open item in `docs/MASTER-CHECKLIST.md`, in the target section named above.
 **Owner's reason (if rejected):**
 
 **Anchor:** data already ingested but never shown · a capability present for one subject type and
@@ -311,7 +316,8 @@ today's page
 
 ## 6. Sector-relative performance on company and sector pages · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING — mark `APPROVED` / `REJECTED` / `DEFERRED`
+**Status:** APPROVED — by the owner, 2026-10-18
+**Filed:** 2026-10-18 — as an open item in `docs/MASTER-CHECKLIST.md`, in the target section named above.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present for one subject type and missing for a comparable one (the sector
@@ -359,7 +365,8 @@ into `/compare`, which is reachable today only from the site header.
 
 ## 7. Route topic pages to the securities they share events with · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08), beside NC-008
 
-**Status:** PENDING — mark `APPROVED` / `REJECTED` / `DEFERRED`
+**Status:** APPROVED — by the owner, 2026-10-18
+**Filed:** 2026-10-18 — as an open item in `docs/MASTER-CHECKLIST.md`, in the target section named above.
 **Owner's reason (if rejected):**
 
 **Anchor:** data already ingested but never shown · a dead-end user path.
@@ -402,7 +409,8 @@ go/no-go count needs the owner's database.
 
 ## 8. Fund pages name their sibling funds · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING — mark `APPROVED` / `REJECTED` / `DEFERRED`
+**Status:** APPROVED — by the owner, 2026-10-18
+**Filed:** 2026-10-18 — as an open item in `docs/MASTER-CHECKLIST.md`, in the target section named above.
 **Owner's reason (if rejected):**
 
 **Anchor:** data already ingested but never shown · a dead-end user path.

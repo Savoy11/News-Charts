@@ -25,7 +25,7 @@ import { aliasesFor } from "../lib/enrich/relevance";
 import { selectStaleSources, ttlFor } from "../lib/ingest/refresh";
 import { collapseNearDuplicates } from "../lib/newsQuality";
 import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
-import { getTopicTimeline, articleAnswersSlug, articleCoversSlug, topicSlugFromTitle, WikipediaUnavailable, wikiOutcome } from "../lib/wiki";
+import { getTopicTimeline, articleAnswersSlug, companyLede, articleCoversSlug, topicSlugFromTitle, WikipediaUnavailable, wikiOutcome } from "../lib/wiki";
 import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
 import { fetchNews } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
@@ -464,6 +464,23 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
       outcome: found.events.length ? "ok" : "empty",
       httpStatus: 200,
     }));
+    // The lede was fetched with the story and thrown away (2026-10-17 proposal 5).
+    const lede = companyLede(name, found);
+    if (lede) {
+      await client.query("UPDATE subjects SET summary = $2, wikipedia_title = $3 WHERE id = $1", [
+        subjectId,
+        lede.summary,
+        lede.title,
+      ]);
+    }
+    line(
+      "lede",
+      lede
+        ? `kept from “${lede.title}”`
+        : found.summary.trim()
+          ? `not kept — “${found.title}” does not answer “${name}”`
+          : "none in the article"
+    );
   } else {
     line("wikipedia", "no article resolved for this company");
   }

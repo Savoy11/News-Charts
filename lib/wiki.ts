@@ -456,6 +456,25 @@ export function articleAnswersSlug(slug: string, title: string): boolean {
   return asked.some((a) => got.some((g) => tokensMatch(a, g)));
 }
 
+/**
+ * The lede a company page may quote, or null.
+ *
+ * `ingestCompany` asks Wikipedia for the company's story and used to keep only its events, so
+ * company pages — the site's most numerous — carried no prose at all, while every other kind of
+ * subject showed its lede. The company path never checked that the article answered the name
+ * before using it, which a buried history row survives and a paragraph at the top of the page
+ * would not, so the lede is kept only when `articleAnswersSlug` agrees. It is often the first
+ * paragraph of "History of …", since the story prefers that article; the credit names the article
+ * it came from, which keeps it truthful.
+ */
+export function companyLede(
+  name: string,
+  found: Pick<TopicResult, "title" | "summary"> | null
+): { title: string; summary: string } | null {
+  if (!found?.summary.trim() || !articleAnswersSlug(name, found.title)) return null;
+  return { title: found.title, summary: found.summary.trim() };
+}
+
 /** Stem-tolerant token equality — see `articleAnswersSlug`. */
 function tokensMatch(a: string, g: string): boolean {
   return a.length >= 4 || g.length >= 4 ? g.startsWith(a) || a.startsWith(g) : a === g;

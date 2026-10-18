@@ -179,6 +179,20 @@ export const CASES: LiveCase[] = [
       if (filings.some((f) => !f.url?.startsWith("https://www.sec.gov/Archives/"))) {
         out.push("a filing link outside https://www.sec.gov/Archives/");
       }
+      // Apple reports a shareholder vote (5.07) on an 8-K every year, so a recent block with no
+      // 8-K named by its item means EDGAR's `items` column stopped arriving (proposal 1).
+      if (!filings.some((f) => /\(8-K \d\.\d\d\)$/.test(f.title))) {
+        out.push("no 8-K titled by its item — is EDGAR still sending `items`?");
+      }
+      // A foreign private issuer's annual report is earnings the way a 10-K is. TSM files a 20-F
+      // every spring and few enough 6-Ks that the recent block always reaches back to one.
+      const tsm = await resolveCompany("TSM");
+      const annual = tsm ? (await getFilings(tsm)).filter((f) => /\(20-F\)$/.test(f.title)) : [];
+      if (!annual.length) out.push("no 20-F among TSM's recent filings");
+      else if (annual.some((f) => f.type !== "earnings")) out.push("a TSM 20-F not typed earnings");
+      else if (daysAgo(annual.map((f) => f.date).sort().at(-1)!) > 400) {
+        out.push(`TSM's newest 20-F is ${annual.map((f) => f.date).sort().at(-1)} — it files one a year`);
+      }
       // Asked here because the fix needs sec.gov, which this case has just shown answers.
       const age = tickerIndexAgeDays();
       if (age > TICKER_INDEX_MAX_AGE_DAYS) {

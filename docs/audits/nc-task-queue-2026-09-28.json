@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 59,
-   "closed": 81,
+   "open": 58,
+   "closed": 82,
    "parked": 12,
    "blocked": 18
   },
@@ -42,8 +42,8 @@
    "owner-machine": 12,
    "owner-decision": 50
   },
-  "counts_recomputed_on": "2026-10-17",
-  "closed_by_annotation": 81
+  "counts_recomputed_on": "2026-10-18",
+  "closed_by_annotation": 82
  },
  "blocking_decisions": [
   {
@@ -4049,7 +4049,7 @@
   {
    "id": "NC-117",
    "title": "Delete stale remote branches (22 branches; 19 fully merged, 3 superseded)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "either",
    "category": "process",
@@ -4064,7 +4064,17 @@
      "lines": "n/a",
      "quote": "git log origin/main..<branch> is empty for 19 of 22 branches"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-18",
+    "basis": "owner-decision",
+    "verdict": "moot",
+    "reason": "Batch 11: asked whether to delete the 22 old remote branches, the owner chose to keep them (2026-10-18). Nothing is left to do; a later session should not delete them unprompted.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:565"
+    ]
+   }
   },
   {
    "id": "NC-118",
@@ -6136,6 +6146,14 @@
     "basis_key": "Fixed and verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `next lint`, `next build`, a full `check:ui` run (141/148, the same 7 stale failures), and live runs on a production build: the search chooser in Chromium, the security headers, the query cap and the ambiguous-rung log.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:358-398"
+    ]
+   },
+   {
+    "on": "2026-10-18",
+    "what": "Batch 11: NC-117 closed by the owner's decision (keep the old branches). Three of the 2026-10-17 scout's approved proposals built — 8-K item names and foreign annual reports as earnings, \"did you mean\" from the committed EDGAR index, and the Wikipedia summary on company pages; they are checklist items, not ledger items.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (with the new check:sec-forms), `npm run lint`, `next build`, and a check:ui run on a production build; the in-process word similarity was compared with Postgres's word_similarity on twelve pairs (all equal).",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:565"
     ]
    }
   ]

@@ -28,7 +28,9 @@ export async function GET(req: NextRequest) {
           ? // No script, no chooser: the best-scored option, which is what every search did before
             // the hydrated box learned to offer a choice (NC-039).
             resolved.options[0].href
-          : "/";
+          : // A `suggest` only resembles the query, and with no script there is nobody to ask —
+            // home, where the box can be tried again, rather than a page the visitor did not name.
+            "/";
 
   // A relative Location, resolved by the browser against the address it actually requested.
   // Building it from req.nextUrl.origin sent visitors to localhost under `next start` behind a

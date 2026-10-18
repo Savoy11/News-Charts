@@ -51,6 +51,10 @@ export interface TopicPageData {
 export interface CompanyPageData {
   name: string;
   ticker: string;
+  /** Wikipedia's lede, kept by `ingestCompany` only when the article answers the name; "" if none */
+  summary: string;
+  /** the Wikipedia article the summary is quoted from, for its CC BY-SA credit */
+  wikipediaTitle: string | null;
   siteDomain: string | null;
   prices: PricePoint[];
   events: TimelineEvent[];
@@ -145,7 +149,7 @@ async function heldTopicPage(topic: string): Promise<TopicPageData | null> {
  * Date is revived on the way out.
  */
 const PAGE_CACHE_SECONDS = 900;
-const cachedHeldCompany = unstable_cache((key: string) => heldCompanyPage(key), ["held-company-page", "v1"], {
+const cachedHeldCompany = unstable_cache((key: string) => heldCompanyPage(key), ["held-company-page", "v2"], {
   revalidate: PAGE_CACHE_SECONDS,
   tags: ["subject-pages"],
 });
@@ -188,6 +192,8 @@ async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
   return {
     name: subject.displayName,
     ticker: subject.ticker,
+    summary: subject.summary ?? "",
+    wikipediaTitle: subject.wikipediaTitle ?? null,
     siteDomain: subject.siteDomain,
     prices,
     events: dropCompanyPrehistory([...events, ...sector]),

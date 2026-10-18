@@ -7,10 +7,11 @@ import AdSlot from "@/components/AdSlot";
 import SourcesPanel from "@/components/SourcesPanel";
 import SearchBox from "@/components/SearchBox";
 import StoredBadge from "@/components/StoredBadge";
+import TopicSummary from "@/components/TopicSummary";
 import JsonLd from "@/components/JsonLd";
 import FollowBar from "@/components/FollowBar";
 import { getCompanyPageData } from "@/lib/page-data";
-import { absolute, breadcrumbLd, SITE_NAME } from "@/lib/seo";
+import { absolute, breadcrumbLd, clampDescription, SITE_NAME } from "@/lib/seo";
 
 // No route-level revalidate: it never applied (the route is dynamic — a miss runs a first-visit
 // gather and must never be cached), and it read as if pages were cached. The held-page reads in
@@ -75,6 +76,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
           name: data.name,
           tickerSymbol: data.ticker,
           url: absolute(`/company/${data.ticker}`),
+          ...(data.summary ? { description: clampDescription(data.summary, 500) } : {}),
           ...(data.siteDomain ? { sameAs: `https://${data.siteDomain}` } : {}),
         }}
       />
@@ -128,6 +130,8 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
             width back as an explicit px value, so on a phone the two fed each other and the
             column settled ~2000px wide, scrolling the whole page sideways. */}
         <div className="min-w-0">
+          {/* What the company is, before forty filings — credited where the text is (NC-047). */}
+          {data.summary && <TopicSummary text={data.summary} wikipediaTitle={data.wikipediaTitle} />}
           {/* Rendered without prices too: the explorer says the chart is missing (NC-103). */}
           <CompanyExplorer
             prices={data.prices}

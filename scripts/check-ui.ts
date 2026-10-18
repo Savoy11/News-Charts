@@ -522,6 +522,19 @@ async function searchRouting(page: Page): Promise<void> {
   // Plain subjects are untouched by any of this.
   const plain = await search("Ford");
   check("a plain company search is unchanged", /^\/company\/F$/i.test(plain.pathname), plain.pathname);
+
+  // 2026-10-17 proposal 3: a typo of a security nobody has ingested ended at "didn't match a
+  // listed security". It is now offered — and only offered: the visitor stays put until they pick.
+  await go(page, "/");
+  await page.locator("input").first().fill("nvidea");
+  await page.locator("button", { hasText: /Explore/ }).first().click();
+  const offered = page.locator("[data-search-suggested]");
+  await offered.waitFor({ timeout: 30_000 }).catch(() => {});
+  check("a near miss is offered, not followed", (await offered.count()) === 1 && new URL(page.url()).pathname === "/", page.url());
+  check("  …under a \"did you mean\" heading", /Did you mean/.test((await offered.textContent().catch(() => "")) ?? ""));
+  const firstOffer = offered.locator("a").first();
+  check("  …NVIDIA first", (await firstOffer.getAttribute("href").catch(() => null)) === "/company/NVDA",
+    String(await firstOffer.getAttribute("href").catch(() => null)));
 }
 
 /**
@@ -882,6 +895,12 @@ async function readableToEveryone(page: Page): Promise<void> {
   check("  …linking the article and the licence", links.some((h) => h.includes("wikipedia.org/wiki/")) && links.some((h) => h.includes("creativecommons.org/licenses/by-sa")), links.join(" "));
 
   await go(page, "/company/f");
+  // 2026-10-17 proposal 5: the company page carried no prose, though its ingest fetched the lede.
+  const companyCredit = page.locator("[data-wikipedia-credit]");
+  check("a company's Wikipedia lede is shown, credited beside it", (await companyCredit.count()) === 1);
+  const ld = await page.locator('script[type="application/ld+json"]').allTextContents();
+  check("  …and is the company's structured-data description",
+    ld.some((t) => /"@type":"Corporation"/.test(t) && /"description":"Ford/.test(t)), ld.find((t) => t.includes("Corporation")) ?? "no Corporation block");
   const dots = await page.locator('[role="img"][aria-label^="Headline reads as"]').count();
   const key = /keyword estimate, not a/i.test(await visible(page));
   check("a tone dot is announced, and a visible key says what it means", dots === 0 || key, `${dots} dots, key ${key ? "shown" : "missing"}`);

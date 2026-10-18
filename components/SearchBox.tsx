@@ -33,6 +33,8 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
   const [error, setError] = useState<string | null>(null);
   /** Several held subjects matched about equally — the visitor picks, not the sort order (NC-039). */
   const [options, setOptions] = useState<SearchOption[] | null>(null);
+  /** The options only resemble the query — nothing matched, so they are offered as a question. */
+  const [suggested, setSuggested] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +42,7 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
     setBusy(true);
     setError(null);
     setOptions(null);
+    setSuggested(false);
     try {
       const res = await fetch(`/api/resolve?q=${encodeURIComponent(q)}`, {
         // The server bounds its own network rungs; this is the backstop for everything else —
@@ -51,6 +54,10 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
       if (json.kind === "company") router.push(`/company/${json.ticker}`);
       else if (json.kind === "topic") router.push(`/topic/${json.slug}`);
       else if (json.kind === "choose") setOptions(json.options as SearchOption[]);
+      else if (json.kind === "suggest") {
+        setOptions(json.options as SearchOption[]);
+        setSuggested(true);
+      }
       // `none` is a real answer now, not just the empty-query case: the query named no listed
       // security and nothing the corpus holds. Say what the site is for instead of guessing.
       else
@@ -109,8 +116,16 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
         </button>
       </form>
       {options && (
-        <div role="status" aria-live="polite" data-search-choices className="mt-2 rounded-lg border border-slate-700 bg-slate-900 p-2">
-          <p className="px-1 pb-1 text-xs text-slate-400">Several matches — which did you mean?</p>
+        <div
+          role="status"
+          aria-live="polite"
+          data-search-choices
+          data-search-suggested={suggested || undefined}
+          className="mt-2 rounded-lg border border-slate-700 bg-slate-900 p-2"
+        >
+          <p className="px-1 pb-1 text-xs text-slate-400">
+            {suggested ? "No exact match. Did you mean…" : "Several matches — which did you mean?"}
+          </p>
           <ul>
             {options.map((o) => (
               <li key={o.href}>

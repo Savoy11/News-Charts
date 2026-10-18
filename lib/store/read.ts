@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { getPool } from "../db";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
-import { WEAK_TOKENS } from "../newsQuality";
+import { SIMILARITY_FLOOR, worthFuzzyMatching } from "../fuzzy";
 import { DatePrecision, EventType, PricePoint, SourceKey, TimelineEvent } from "../types";
 import { PROMPT_VERSION } from "../enrich/explain";
 
@@ -138,33 +138,10 @@ export interface SubjectCandidate {
  * than left to `similarity()`, which would rank a short ticker below a long fuzzy name purely
  * because trigram overlap favours length. Below them, `similarity()` is the whole ordering.
  *
- * `SIMILARITY_FLOOR` is deliberately not `pg_trgm`'s default 0.3: at 0.3 a three-letter query
- * matches a surprising amount of a real corpus. The caller decides what to do with the list —
- * this function ranks, it does not choose.
+ * `SIMILARITY_FLOOR` (lib/fuzzy.ts, shared with the index's "did you mean") is deliberately not
+ * `pg_trgm`'s default 0.3. The caller decides what to do with the list — this function ranks, it
+ * does not choose.
  */
-export const SIMILARITY_FLOOR = 0.5;
-
-/**
- * Is this query distinctive enough to match on resemblance rather than on identity?
- *
- * Two ways it is not, both measured against a real corpus rather than imagined:
- *
- *  - **Too short.** `word_similarity` compares the query against the best-matching run inside the
- *    target, so `"co"` scores 0.67 against "Ford Motor Company" — a partial hit on *Company*.
- *  - **Nothing but filler.** `"company"`, `"motor"`, `"inc"`, `"group"` and `"holding"` each score
- *    a perfect 1.00, because they genuinely are words in the name. This repo already settled that
- *    question for headlines: the bar is a *distinctive* token, and matching on "motor" or
- *    "company" would let almost anything through. `WEAK_TOKENS` is that list, reused here rather
- *    than restated, so the two places cannot drift.
- *
- * Exact identifiers are unaffected — a ticker or an exact name is still an answer however short
- * or common it looks, which is why this gates only the fuzzy arms of the query below.
- */
-function worthFuzzyMatching(q: string): boolean {
-  if (q.length < 3) return false;
-  const tokens = q.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-  return tokens.some((t) => t.length >= 3 && !WEAK_TOKENS.has(t));
-}
 
 export async function findCandidates(query: string, limit = 5): Promise<SubjectCandidate[]> {
   const q = query.trim();

@@ -161,6 +161,21 @@ export function outcomeProblems(outcome: string, detail?: string): string[] {
   return outcome === "ok" ? [] : [`adapter outcome "${outcome}"${detail ? ` (${detail})` : ""}`];
 }
 
+/**
+ * DefiLlama's amount unit, pinned on one known incident: the Ronin Bridge lost about $624m in March
+ * 2022, and the feed carries it as `624000000`. Its docs said millions of USD, and believing them
+ * put every exploit figure 10^6 too high until a live run caught it (2026-07-31). The canned
+ * payloads in `check:exploits` assert whatever unit they were written with, so only the live feed
+ * can say the unit still holds — the point of the owner's 2026-08-05 `check:exploit-units`, kept here.
+ */
+export function exploitUnitProblems(rows: { name?: string; amount?: number }[]): string[] {
+  const ronin = rows.find((r) => /\bronin\b/i.test(r.name ?? ""));
+  if (!ronin || typeof ronin.amount !== "number") return ["no Ronin Bridge row to pin the amount unit on"];
+  return ronin.amount >= 5e8 && ronin.amount <= 7e8
+    ? []
+    : [`Ronin Bridge amount ${ronin.amount}, expected about 624000000 (plain USD) — the unit may have changed`];
+}
+
 export const CASES: LiveCase[] = [
   {
     name: "EDGAR — Apple's filings and the committed index",
@@ -310,6 +325,9 @@ export const CASES: LiveCase[] = [
         if (r.outcome !== "empty") out.push(...outcomeProblems(r.outcome, r.detail).map((w) => `${t.slug}: ${w}`));
         out.push(...eventProblems(r.events, 0).map((w) => `${t.slug}: ${w}`));
       }
+      const raw = await fetch("https://api.llama.fi/hacks");
+      if (!raw.ok) out.push(`hacks feed answered HTTP ${raw.status}`);
+      else out.push(...exploitUnitProblems(await raw.json()));
       return out;
     },
   },

@@ -1,5 +1,5 @@
 import { CompanyInfo, TimelineEvent } from "./types";
-import { describeItems, leadItem, reportsResults } from "./secForms";
+import { MATERIAL_FORMS, PROSPECTUS, describeItems, leadItem, reportsResults } from "./secForms";
 import {
   SIMILARITY_FLOOR,
   distinctiveWords,
@@ -554,7 +554,20 @@ interface FilingBlock {
   items?: string[];
 }
 
-function filingsFromBlock(block: FilingBlock, company: CompanyInfo, registrant: string): TimelineEvent[] {
+/** One 424B prospectus, held back so a day's worth can become one row (`prospectusEvents`). */
+interface Prospectus {
+  form: string;
+  date: string;
+  accession: string;
+  doc: string;
+}
+
+function filingsFromBlock(
+  block: FilingBlock,
+  company: CompanyInfo,
+  registrant: string,
+  prospectuses: Prospectus[]
+): TimelineEvent[] {
 
   /**
    * Operating-company forms AND registered-fund forms. The set used to cover companies only,
@@ -588,35 +601,55 @@ function filingsFromBlock(block: FilingBlock, company: CompanyInfo, registrant: 
   const n = block.form?.length ?? 0;
   for (let i = 0; i < n; i++) {
     const form = block.form?.[i] ?? "";
-    if (!wanted.has(form)) continue;
+    const material = MATERIAL_FORMS[form];
+    const prospectus = PROSPECTUS.test(form);
+    if (!wanted.has(form) && !material && form !== "8-K/A" && !prospectus) continue;
     const date = block.filingDate?.[i] ?? "";
     const accession = (block.accessionNumber?.[i] ?? "").replace(/-/g, "");
     // A shard row missing either is unusable: no date is nowhere to put it, and no accession is
     // no stable identity, so it would re-insert as a new event on every refresh.
     if (!date || !accession) continue;
     const doc = block.primaryDocument?.[i] ?? "";
+    if (prospectus) {
+      prospectuses.push({ form, date, accession, doc });
+      continue;
+    }
     const items = block.items?.[i] ?? "";
     const fund = FUND_LABELS[form];
-    const results = form === "8-K" && reportsResults(items);
+    const eightK = form === "8-K" || form === "8-K/A";
+    const results = eightK && reportsResults(items);
     /**
      * A 20-F or 40-F is the annual report of a foreign private issuer — BABA, TSM, ASML, SAP, SHOP
      * — and the counterpart of a 10-K, so it is earnings the way a 10-K is. A 6-K stays a filing:
      * it carries anything a home market required, and the submissions list does not say which.
      */
     const annual = form === "10-K" || form === "20-F" || form === "40-F";
-    const isEarnings = fund?.earnings ?? (annual || form === "10-Q" || results);
-    const lead = form === "8-K" && !results ? leadItem(items) : null;
+    /**
+     * An amended 8-K is named the way an 8-K is, and marked as an amendment. One that amends a
+     * results release stays a filing: the release itself is already the earnings event, and a
+     * second marker would count one quarter twice.
+     */
+    const amended = form === "8-K/A";
+    const isEarnings =
+      fund?.earnings ?? material?.earnings ?? (annual || form === "10-Q" || (results && !amended));
+    const lead = eightK && !results ? leadItem(items) : null;
     const label =
       fund?.label ??
-      (annual
-        ? `Annual report (${form})`
-        : form === "10-Q"
-          ? "Quarterly report (10-Q)"
-          : results
-            ? "Earnings announcement (8-K)"
-            : lead
-              ? `${lead.label} (8-K ${lead.code})`
-              : `${form} filing`);
+      (material
+        ? `${material.label} (${form})`
+        : annual
+          ? `Annual report (${form})`
+          : form === "10-Q"
+            ? "Quarterly report (10-Q)"
+            : results
+              ? amended
+                ? "Amended earnings announcement (8-K/A)"
+                : "Earnings announcement (8-K)"
+              : lead
+                ? `${amended ? "Amended: " : ""}${lead.label} (${form} ${lead.code})`
+                : amended
+                  ? "Amended current report (8-K/A)"
+                  : `${form} filing`);
     /**
      * A fund's CIK is its registrant's — the trust — and the trust files one 497, N-PORT or
      * shareholder report for any of the series it sells. Prefixed with the fund's name, VOO's
@@ -634,7 +667,7 @@ function filingsFromBlock(block: FilingBlock, company: CompanyInfo, registrant: 
       description: byRegistrant
         ? `Filed by ${registrant}, the registrant behind ${company.name}. A registrant files for ` +
           `every fund it sells, so this filing may concern a sibling fund.`
-        : form === "8-K"
+        : eightK
           ? describeItems(items)
           : undefined,
       sourceKey: "sec_edgar",
@@ -644,6 +677,41 @@ function filingsFromBlock(block: FilingBlock, company: CompanyInfo, registrant: 
     });
   }
   return events;
+}
+
+/**
+ * A day's prospectuses of one form, as one row — a single one links its document, several link
+ * the company's EDGAR list of that form up to that day. Grouped after every block is read, so a
+ * day split across the recent block and an older shard is still one row with one count.
+ */
+function prospectusEvents(prospectuses: Prospectus[], company: CompanyInfo): TimelineEvent[] {
+  const byDay = new Map<string, Prospectus[]>();
+  for (const p of prospectuses) {
+    const key = `${p.date}|${p.form}`;
+    byDay.set(key, [...(byDay.get(key) ?? []), p]);
+  }
+  const cik = Number(company.cik);
+  return [...byDay.values()].map((day) => {
+    const [{ form, date }] = day;
+    const one = day.length === 1 ? day[0] : null;
+    const basis = `sec:${cik}:${form}:${date}`;
+    return {
+      id: `sec-${cik}-${form}-${date}`,
+      date,
+      type: "filing" as const,
+      title: `${company.name}: ${one ? "Prospectus" : `Prospectuses ×${day.length}`} (${form})`,
+      source: "SEC EDGAR",
+      url: one
+        ? `https://www.sec.gov/Archives/edgar/data/${cik}/${one.accession}/${one.doc}`
+        : `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${company.cik}&type=${encodeURIComponent(form)}&dateb=${date.replace(/-/g, "")}&owner=include&count=40`,
+      description: one
+        ? "An offering document for new securities."
+        : `${day.length} offering documents for new securities filed this day under ${form}, grouped into one row.`,
+      sourceKey: "sec_edgar" as const,
+      externalId: basis,
+      dedupBasis: basis,
+    };
+  });
 }
 
 /** The recent block only — what every read path wants, and what the first pass is bounded to. */
@@ -681,8 +749,9 @@ export async function getFilingsDeep(
 
   // EDGAR's own name for the filer — for a fund, the trust rather than the series.
   const registrant = typeof json?.name === "string" && json.name.trim() ? json.name.trim() : company.name;
-  const events = filingsFromBlock(recent, company, registrant);
-  if (!includeOlder) return events;
+  const prospectuses: Prospectus[] = [];
+  const events = filingsFromBlock(recent, company, registrant, prospectuses);
+  if (!includeOlder) return [...events, ...prospectusEvents(prospectuses, company)];
 
   const shards: { name?: string }[] = json?.filings?.files ?? [];
   for (const shard of shards) {
@@ -695,10 +764,10 @@ export async function getFilingsDeep(
       // A shard that will not load costs its own years and nothing else — the recent block is
       // already in hand, and half a history beats none.
       if (!r.ok) continue;
-      events.push(...filingsFromBlock(await r.json(), company, registrant));
+      events.push(...filingsFromBlock(await r.json(), company, registrant, prospectuses));
     } catch {
       continue;
     }
   }
-  return events;
+  return [...events, ...prospectusEvents(prospectuses, company)];
 }

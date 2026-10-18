@@ -107,12 +107,87 @@ async function main(): Promise<void> {
 
   console.log("\nThe filing stack still reads the form out of the new titles");
   const src = readFileSync("components/EventList.tsx", "utf8");
-  const reSrc = src.match(/const FORM_RE = \/(.+)\/i;/)?.[1];
+  const reSrc = src.match(/const FORM_RE =\s*\/(.+)\/i;/)?.[1];
   check("EventList's form pattern is where this check expects it", Boolean(reSrc));
   if (reSrc) {
     const FORM_RE = new RegExp(reSrc, "i");
     const forms = events.map((e) => e.title.match(FORM_RE)?.[1].toUpperCase() ?? "?");
     check("every title yields its form", forms.every((f, i) => f === rows[i][0]), forms.join(" "));
+  }
+
+  // 2026-10-17 proposal 2: the material forms already in every record, as the owner chose them
+  // on 2026-10-18 — corrections, mergers, large stakes, offerings and exits; no insider trades.
+  console.log("\nThe material forms EDGAR already sends");
+  const more: [form: string, date: string, items: string][] = [
+    ["10-K/A", "2026-03-02", ""],
+    ["8-K/A", "2026-03-03", "5.02,9.01"],
+    ["8-K/A", "2026-03-04", "2.02"],
+    ["10-K405", "1999-03-30", ""],
+    ["DEFM14A", "2026-03-05", ""],
+    ["SC TO-T", "2026-03-06", ""],
+    ["SCHEDULE 13D", "2026-03-09", ""],
+    ["SC 13G/A", "2024-02-09", ""],
+    ["S-3", "2026-03-10", ""],
+    ["25-NSE", "2026-03-11", ""],
+    ["15-12B", "2026-03-12", ""],
+    ["25", "2026-03-13", ""],
+    ["424B2", "2026-03-16", ""],
+    ["424B2", "2026-03-16", ""],
+    ["424B2", "2026-03-16", ""],
+    ["424B5", "2026-03-16", ""],
+    ["424B5", "2026-03-17", ""],
+    ["4", "2026-03-18", ""],
+    ["3", "2026-03-18", ""],
+    ["5", "2026-03-18", ""],
+    ["144", "2026-03-18", ""],
+  ];
+  const record = (list: typeof more, offset: number) => ({
+    form: list.map((r) => r[0]),
+    filingDate: list.map((r) => r[1]),
+    accessionNumber: list.map((_, i) => `0000000001-26-${String(offset + i).padStart(6, "0")}`),
+    primaryDocument: list.map(() => "a.htm"),
+    items: list.map((r) => r[2]),
+  });
+  // the third 424B2 of the day sits in an older shard: a day split across blocks is still one row
+  const shard: typeof more = [["424B2", "2026-03-16", ""]];
+  let wide: TimelineEvent[] = [];
+  try {
+    globalThis.fetch = (async (input: RequestInfo | URL) =>
+      new Response(
+        JSON.stringify(
+          String(input).includes("submissions-001")
+            ? record(shard, 500)
+            : { name: "TEST CO", filings: { recent: record(more.filter((_, i) => i !== 14), 100), files: [{ name: "CIK0000000001-submissions-001.json" }] } }
+        ),
+        { status: 200 }
+      )) as typeof fetch;
+    const { getFilingsDeep } = await import("../lib/sec");
+    wide = await getFilingsDeep({ ticker: "TST", cik: "0000000001", name: "Test Co" }, true);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const titled = (t: string) => wide.find((e) => e.title === `Test Co: ${t}`);
+  check("an amended annual report is kept, as a filing", titled("Amended annual report (10-K/A)")?.type === "filing");
+  check("an amended 8-K is named by its item", Boolean(titled("Amended: Officer or director change (8-K/A 5.02)")));
+  check("  …and an amended results release is not a second earnings event",
+    titled("Amended earnings announcement (8-K/A)")?.type === "filing");
+  check("the pre-2002 annual report is earnings, like a 10-K", titled("Annual report (10-K405)")?.type === "earnings");
+  check("mergers, stakes, offerings and exits are kept",
+    ["Merger vote proxy (DEFM14A)", "Tender offer by an outside bidder (SC TO-T)", "Investor stake over 5% (SCHEDULE 13D)",
+      "Change to a passive 5%+ stake (SC 13G/A)", "Shelf registration for new securities (S-3)", "Removed from an exchange (25-NSE)",
+      "Deregistration — stops SEC reporting (15-12B)", "Delisting notice (25)"].every((t) => titled(t)),
+    wide.map((e) => e.title).join(" | "));
+  const p2 = wide.filter((e) => /\(424B2\)$/.test(e.title));
+  check("a day's prospectuses of one form are one row, counted across blocks",
+    p2.length === 1 && p2[0].title === "Test Co: Prospectuses ×3 (424B2)", p2.map((e) => e.title).join(" | "));
+  check("  …with a stable identity per form and day", p2[0]?.dedupBasis === "sec:1:424B2:2026-03-16");
+  check("  …and a single one links its own document",
+    wide.some((e) => e.title === "Test Co: Prospectus (424B5)" && e.date === "2026-03-17" && /\/Archives\/edgar\/data\/1\//.test(e.url ?? "")));
+  check("insider-trade forms stay out", !wide.some((e) => /\((?:3|4|5|144)\)$/.test(e.title) || e.date === "2026-03-18"));
+  if (reSrc) {
+    const FORM_RE = new RegExp(reSrc, "i");
+    const unread = wide.filter((e) => !FORM_RE.test(e.title)).map((e) => e.title);
+    check("the filing stack reads a form out of every new title", unread.length === 0, unread.join(" | "));
   }
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);

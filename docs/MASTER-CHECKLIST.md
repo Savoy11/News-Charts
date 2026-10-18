@@ -429,7 +429,8 @@ the site off the 24 advisories `npm audit` rated critical. `npm run check` passe
         - the 121st API request in a minute is refused, while another client and pages are not;
         - a held page is served from the 15-minute cache, and a miss is never cached;
         - the preview images render.
-- [ ] **NC-160 — re-measured on Next 16, still open.** Company and topic misses still answer 200,
+- [x] **NC-160 — closed by the owner's decision (2026-10-18, batch 13): keep the loading screen.**
+      Miss pages already tell search engines not to index them. Company and topic misses still answer 200,
       for a browser and for Googlebot alike. Calling `notFound()` from `generateMetadata` was
       tried and reverted: it changed nothing. Sector misses now answer 404 (on 14.2 they answered
       200). The fix left is dropping the loading skeleton on those two routes, which is an owner
@@ -474,7 +475,10 @@ passes with a new suite (`check:live-harness`), and `npm run lint` reports nothi
       - Run here: 12 unreachable and 1 skipped (no Etherscan key); exit 0, and 1 with `--strict`.
         **The first answering run is owed from the production host** (OWNER-ACTIONS §1); an
         assertion may need tuning against a real answer then.
-- [ ] **NC-051 — the ticker index says its age; the re-sync is still owed.**
+- [x] **NC-051 — the ticker index says its age, and was re-synced 2026-10-18.** The owner ran
+      `npm run sync:tickers` from their machine (after batch 13 paced it): 10,443 companies,
+      28,592 fund symbols, 19,540 named fund series, 0 registrants failed. Every offline check
+      passes against the new file.
       - `tickerIndexAgeDays` and a 35-day limit live in `lib/sec.ts`.
       - `npm run refresh` warns past the limit. A live run printed "66 days old (synced
         2026-08-12)".
@@ -676,6 +680,76 @@ same stale prompt-search checks as before.
       zero. Next step: the owner runs it and decides; the page strips follow if the numbers are
       worth it. Checks: 4 in `check:wiring`.
 
+## NC ledger — batch 13: more SEC filing types, and a count for federal rules (2026-10-18)
+
+The owner made four decisions on 2026-10-18:
+- Keep all four groups of extra SEC filing types, and leave insider trades out.
+- Count Federal Register documents naming a company before any reach company pages.
+- Keep the loading screen on company and topic pages, which closes **NC-160**.
+- Keep the old branches (recorded in batch 11).
+
+`npm run check` passes, `npm run lint` is clean, `next build` compiles, and `check:ui` is 154/161:
+no new browser checks this batch, and the seven failures are the same stale prompt-search checks.
+
+- [x] **More of what EDGAR already sends (proposal 2).** The filter now also keeps:
+      - **Corrections:** 10-K/A, 10-Q/A, 20-F/A, 40-F/A and 8-K/A, plus 10-K405, the annual report's
+        form before 2002. An amended 8-K is named by its item, like an 8-K. One that amends a
+        results release stays a filing, so a quarter isn't counted twice.
+      - **Mergers and buyouts:** S-4, DEFM14A, SC TO-T, SC 14D9.
+      - **Large stakes and offerings:** 13D and 13G under both their old (`SC 13D`) and current
+        (`SCHEDULE 13D`) names, S-3 and 424B prospectuses.
+      - **Exits:** 25, 25-NSE, 15-12B, 15-12G.
+
+      Each gets a plain name, e.g. "Merger vote proxy (DEFM14A)", "Removed from an exchange
+      (25-NSE)".
+      - Insider-trade forms (3, 4, 5, 144) stay out.
+      - **Prospectuses are grouped:** one row per form per day ("Prospectuses ×37 (424B2)"),
+        linked to the company's EDGAR list for that day. A bank files dozens of structured-note
+        supplements a day, and a row each would bury its page. The grouping happens after every
+        block of the record is read, so a day split across two blocks is still one row.
+      - The filing stack's form count now reads all the new names.
+      - Not run: the live count of which forms the records really carry (needs sec.gov). In
+        particular, whether EDGAR lists 13D/G filings under the company itself is unconfirmed;
+        if it doesn't, those rows simply never arrive.
+      - Checks: 10 more in `check:sec-forms` (8 fail on the old code).
+- [x] **Federal rules naming a company — the count first (proposal 4).** `npm run
+      fr-company-report` (for every held company, or `-- BA F AAPL`) prints, per company, how
+      many Federal Register documents name it in their title, of how many full-text hits. It
+      breaks them down by agency and year, shows how many are airworthiness directives, and lists
+      the newest few titles. The match is the company's everyday name as a whole phrase, so
+      "Ford Motor" doesn't pick up a Gerald R. Ford library notice. Read-only, and it needs a host
+      that reaches www.federalregister.gov: from here it reports "could not ask". Nothing is
+      ingested until the owner has read the numbers and set the rule. Checks: 6 in `check:wiring`.
+- [x] **NC-160 — closed by the owner's decision.** Company and topic misses keep answering 200
+      behind the loading screen. They already carry a noindex tag.
+- [x] **The owner's live runs, 2026-10-18 (from their machine, after this batch was opened).**
+      - `npm run overlap-report`: 0 of 22 topics share a single story with a held company. The
+        owner shelved the topic ↔ stock strips (proposal 7); the count stays, to re-run later.
+      - `npm run fr-company-report`: Boeing 596 title-naming documents, 539 of them airworthiness
+        directives (about 100 a year); GE 248, 190 of them directives. Ford 32 and GM 51 are
+        mostly NHTSA petitions; GM also has a 2025 FTC consent order. Intel 13 is mostly
+        trade-zone notices. Apple's 34 are mostly fruit ("Light Brown Apple Moth", "Apple
+        Juice"), and GE's count includes "Portland General Electric". **The owner chose: build
+        it, without airworthiness directives, after tightening the match** — next batch.
+      - `npm run check:live`: 10 pass. The new SEC assertions from batch 11 — Apple's 8-Ks
+        named by item, TSM's 20-F typed earnings — passed. The one FAIL is the ticker index's
+        age, GDELT was unreachable (its usual throttle), and Etherscan was skipped (no key).
+- [x] **`npm run sync:tickers` paces itself.** Run on the owner's machine, it went past the SEC's
+      10 requests a second. Six workers with no ceiling on how fast they start, on a fast
+      connection, did that. The SEC refused the client, and the one retry two seconds later met
+      the same block: 889 of 1,159 registrants failed. The script refused to overwrite the index,
+      as designed. Now (`lib/pace.ts`):
+      - requests start at most 4 a second;
+      - a 429 pauses every worker for 30 seconds, doubling up to 10 minutes;
+      - up to 5 retries per registrant.
+      Checks: 3 in `check:tickers`.
+- [x] **The owner's August unit check, kept.** An unsaved local edit from 2026-08-05 had a live
+      check that DefiLlama hack amounts are plain USD. The fix itself reached the project on
+      2026-07-31 by another route; the live check had not. `check:live`'s DefiLlama case now
+      pins the unit on the Ronin Bridge (about 624,000,000). Checks: 3 in `check:live-harness`.
+- [x] **NC-051 — the ticker index re-synced (closes it).** The owner reran the paced sync:
+      0 failures, and the new `data/edgar-tickers.json` (dated 2026-10-18) is on this branch.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on
@@ -853,8 +927,9 @@ already held, but new investment goes to securities coverage first.
         the production host.
       - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
         #1, approved 2026-10-18. Importance high · Efficiency very high · Practicality high.*
-- [ ] `P1` **Keep the material forms EDGAR already sends — amendments, M&A, ownership stakes,
-      offerings, delistings.** The deep ingest downloads a filer's whole record — for Ford, the
+- [x] `P1` **Keep the material forms EDGAR already sends — amendments, M&A, ownership stakes,
+      offerings, delistings.** ✅ **Done 2026-10-18 (batch 13)** — the owner picked the list
+      without waiting for the live count; see that section. The deep ingest downloads a filer's whole record — for Ford, the
       recent block plus two shards of 3,431 more (`lib/sec.ts:446-448`) — and keeps 937 filings:
       the 17-form `wanted` filter (`lib/sec.ts:365-370`) drops roughly three rows in four.
       `EventList`'s `FORM_RE` already parses 13D/G, 424B, 40-F and S-/F- registrations, and of
@@ -900,7 +975,12 @@ already held, but new investment goes to securities coverage first.
         and check it against fixtures in the existing adapter's shape meanwhile.
       - ⚠ **Before it ships — the owner sets the materiality rule.** Airworthiness directives
         alone could run to hundreds a year on one manufacturer: cap them, give them their own
-        chip, or exclude the agency.
+        chip, or exclude the agency. **The owner chose numbers first (2026-10-18):** batch 13
+        built `npm run fr-company-report`, which prints, per company, the title-naming documents
+        by agency and year and how many are airworthiness directives. Nothing is ingested yet.
+        **Counted and decided (2026-10-18):** Boeing gets about 100 directives a year (539 of 596);
+        the owner chose to build it without airworthiness directives, after tightening the match
+        so "Light Brown Apple Moth" isn't Apple's and "Portland General Electric" isn't GE's.
       - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
         #4, approved 2026-10-18. Importance high · Efficiency medium-high · Practicality medium
         (a live measurement and a materiality rule first).*
@@ -961,6 +1041,8 @@ already held, but new investment goes to securities coverage first.
       company pages as "Topics that share events". **Related to Prompt search v2 (NC-008) above,
       not part of it:** that makes *search* produce a security narrowed by a concern; this is a
       navigational entry to the same intersection, from stored links, with no parsing.
+      - **Shelved by the owner, 2026-10-18:** `npm run overlap-report` on their database found 0
+        of 22 topics sharing a story with a held company. Re-run it when the corpus has grown.
       - ⚠ **Before building any UI — a production count, as the go/no-go.** The overlap depends on
         how many relevance-passing events carry both a topic and a company link; one SQL count on
         the production database answers it. Needs the owner's database. Worth building, but

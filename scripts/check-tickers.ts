@@ -289,6 +289,20 @@ async function main(): Promise<void> {
   })());
   check("  …and none of it asked anybody", asked.length === 0, asked.join(", "));
 
+  // 2026-10-18: run from the owner's machine, the sync went past the SEC's 10/s, was refused, and
+  // its one retry two seconds later met the same block — 889 of 1,159 registrants failed.
+  console.log("\nThe sync paces itself and waits out a refusal");
+  const { backoffMs, createPacer } = await import("../lib/pace");
+  check("a refusal waits 30s, then doubles, at most 10 minutes",
+    backoffMs(0) === 30_000 && backoffMs(1) === 60_000 && backoffMs(9) === 600_000);
+  const gate = createPacer(25);
+  const t0 = Date.now();
+  await Promise.all([gate(), gate(), gate(), gate()]);
+  check("four waiting workers start a pace apart, not at once", Date.now() - t0 >= 70, `${Date.now() - t0}ms`);
+  const syncSrc = (await import("node:fs")).readFileSync("scripts/sync-tickers.ts", "utf8");
+  check("the sync uses both, and a refusal pauses every worker",
+    /createPacer\(250\)/.test(syncSrc) && /backoffMs\(attempt\)/.test(syncSrc) && /pausedUntil = Date\.now\(\) \+ ms/.test(syncSrc));
+
   console.log("\nTwo securities can share one registrant");
   // NC-138: subjects_cik_uq made the CIK an identity, so GOOG after GOOGL — or BRK-A after BRK-B,
   // or any second series of a fund trust — failed on insert and was never ingested. Read the

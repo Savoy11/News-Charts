@@ -1,6 +1,7 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { parseSeriesPage, preferredClass, FundSeries } from "../lib/edgarSeries";
+import { backoffMs, createPacer } from "../lib/pace";
 
 /**
  * Rebuild the local EDGAR ticker index.
@@ -120,6 +121,33 @@ async function main(): Promise<void> {
    * site's front door going quiet, so the ceiling is worth respecting with room to spare).
    */
   const POOL = 6;
+  /**
+   * …and no more than 4 request starts a second between them. The pool alone put no ceiling on the
+   * rate: on a fast connection six workers went past the SEC's 10/s, the SEC refused the client,
+   * and 889 of 1,159 registrants failed in one run (2026-10-18, from the owner's machine).
+   */
+  const pace = createPacer(250);
+  /** The SEC refuses the whole client, not one URL, so a 429 pauses every worker. */
+  let pausedUntil = 0;
+  const MAX_RETRIES = 5;
+  async function fetchSeriesPage(url: string): Promise<string> {
+    for (let attempt = 0; ; attempt++) {
+      const wait = pausedUntil - Date.now();
+      if (wait > 0) await sleep(wait);
+      await pace();
+      const res = await fetch(url, { headers: UA });
+      if (res.ok) return res.text();
+      if ((res.status === 429 || res.status === 503) && attempt < MAX_RETRIES) {
+        const ms = backoffMs(attempt);
+        if (Date.now() + ms > pausedUntil) {
+          pausedUntil = Date.now() + ms;
+          console.warn(`  … the SEC asked us to slow down (HTTP ${res.status}); pausing ${ms / 1000}s`);
+        }
+        continue;
+      }
+      throw new Error(`HTTP ${res.status}${attempt ? ` after ${attempt} retries` : ""}`);
+    }
+  }
   let next = 0;
   let done = 0;
   // Each registrant's series land in ITS slot, not in completion order. With a pool, appending as
@@ -134,18 +162,7 @@ async function main(): Promise<void> {
       const cik = String(cikList[i]).padStart(10, "0");
       const url = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}&scd=series&count=100`;
       try {
-        const res = await fetch(url, { headers: UA });
-        // Back off and retry once rather than dropping a registrant's whole catalogue on one 429.
-        if (res.status === 429 || res.status === 503) {
-          await sleep(2000);
-          const retry = await fetch(url, { headers: UA });
-          if (!retry.ok) throw new Error(`HTTP ${retry.status} after retry`);
-          perCik[i] = parseSeriesPage(await retry.text());
-        } else if (res.ok) {
-          perCik[i] = parseSeriesPage(await res.text());
-        } else {
-          throw new Error(`HTTP ${res.status}`);
-        }
+        perCik[i] = parseSeriesPage(await fetchSeriesPage(url));
       } catch (err) {
         failed++;
         if (failed <= 5) console.warn(`  ⚠ CIK ${cik}: ${(err as Error).message}`);

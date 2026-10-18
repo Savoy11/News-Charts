@@ -21,6 +21,7 @@ import {
   NoAnswer,
   classify,
   eventProblems,
+  exploitUnitProblems,
   exitCode,
   halvingProblems,
   outcomeProblems,
@@ -115,6 +116,10 @@ async function main(): Promise<void> {
   check("a halving a day off fails",
     halvingProblems(["2012-11-28", "2016-07-10", "2020-05-11", "2024-04-20"].map(ev)).length === 1);
   check("a missing halving fails", halvingProblems(KNOWN_HALVINGS.slice(0, 3).map(ev)).length === 1);
+
+  check("hack amounts read as plain USD pass", exploitUnitProblems([{ name: "Ronin", amount: 624_000_000 }]).length === 0);
+  check("…and the unit DefiLlama documented, millions, fails", exploitUnitProblems([{ name: "Ronin", amount: 624 }]).length === 1);
+  check("…as does a feed with nothing to pin it on", exploitUnitProblems([{ name: "Other", amount: 1 }]).length === 1);
 
   console.log("\nCoverage");
   check("every source the site may publish from has a live case", uncovered().length === 0, uncovered().join(", "));

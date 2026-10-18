@@ -719,6 +719,31 @@ no new browser checks this batch, and the seven failures are the same stale prom
       ingested until the owner has read the numbers and set the rule. Checks: 6 in `check:wiring`.
 - [x] **NC-160 — closed by the owner's decision.** Company and topic misses keep answering 200
       behind the loading screen. They already carry a noindex tag.
+- [x] **The owner's live runs, 2026-10-18 (from their machine, after this batch was opened).**
+      - `npm run overlap-report`: 0 of 22 topics share a single story with a held company. The
+        owner shelved the topic ↔ stock strips (proposal 7); the count stays, to re-run later.
+      - `npm run fr-company-report`: Boeing 596 title-naming documents, 539 of them airworthiness
+        directives (about 100 a year); GE 248, 190 of them directives. Ford 32 and GM 51 are
+        mostly NHTSA petitions; GM also has a 2025 FTC consent order. Intel 13 is mostly
+        trade-zone notices. Apple's 34 are mostly fruit ("Light Brown Apple Moth", "Apple
+        Juice"), and GE's count includes "Portland General Electric". **The owner chose: build
+        it, without airworthiness directives, after tightening the match** — next batch.
+      - `npm run check:live`: 10 pass. The new SEC assertions from batch 11 — Apple's 8-Ks
+        named by item, TSM's 20-F typed earnings — passed. The one FAIL is the ticker index's
+        age, GDELT was unreachable (its usual throttle), and Etherscan was skipped (no key).
+- [x] **`npm run sync:tickers` paces itself.** Run on the owner's machine, it went past the SEC's
+      10 requests a second. Six workers with no ceiling on how fast they start, on a fast
+      connection, did that. The SEC refused the client, and the one retry two seconds later met
+      the same block: 889 of 1,159 registrants failed. The script refused to overwrite the index,
+      as designed. Now (`lib/pace.ts`):
+      - requests start at most 4 a second;
+      - a 429 pauses every worker for 30 seconds, doubling up to 10 minutes;
+      - up to 5 retries per registrant.
+      Checks: 3 in `check:tickers`.
+- [x] **The owner's August unit check, kept.** An unsaved local edit from 2026-08-05 had a live
+      check that DefiLlama hack amounts are plain USD. The fix itself reached the project on
+      2026-07-31 by another route; the live check had not. `check:live`'s DefiLlama case now
+      pins the unit on the Ronin Bridge (about 624,000,000). Checks: 3 in `check:live-harness`.
 
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
@@ -948,6 +973,9 @@ already held, but new investment goes to securities coverage first.
         chip, or exclude the agency. **The owner chose numbers first (2026-10-18):** batch 13
         built `npm run fr-company-report`, which prints, per company, the title-naming documents
         by agency and year and how many are airworthiness directives. Nothing is ingested yet.
+        **Counted and decided (2026-10-18):** Boeing gets about 100 directives a year (539 of 596);
+        the owner chose to build it without airworthiness directives, after tightening the match
+        so "Light Brown Apple Moth" isn't Apple's and "Portland General Electric" isn't GE's.
       - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
         #4, approved 2026-10-18. Importance high · Efficiency medium-high · Practicality medium
         (a live measurement and a materiality rule first).*
@@ -1008,6 +1036,8 @@ already held, but new investment goes to securities coverage first.
       company pages as "Topics that share events". **Related to Prompt search v2 (NC-008) above,
       not part of it:** that makes *search* produce a security narrowed by a concern; this is a
       navigational entry to the same intersection, from stored links, with no parsing.
+      - **Shelved by the owner, 2026-10-18:** `npm run overlap-report` on their database found 0
+        of 22 topics sharing a story with a held company. Re-run it when the corpus has grown.
       - ⚠ **Before building any UI — a production count, as the go/no-go.** The overlap depends on
         how many relevance-passing events carry both a topic and a company link; one SQL count on
         the production database answers it. Needs the owner's database. Worth building, but

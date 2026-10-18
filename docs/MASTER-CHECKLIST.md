@@ -475,7 +475,10 @@ passes with a new suite (`check:live-harness`), and `npm run lint` reports nothi
       - Run here: 12 unreachable and 1 skipped (no Etherscan key); exit 0, and 1 with `--strict`.
         **The first answering run is owed from the production host** (OWNER-ACTIONS §1); an
         assertion may need tuning against a real answer then.
-- [ ] **NC-051 — the ticker index says its age; the re-sync is still owed.**
+- [x] **NC-051 — the ticker index says its age, and was re-synced 2026-10-18.** The owner ran
+      `npm run sync:tickers` from their machine (after batch 13 paced it): 10,443 companies,
+      28,592 fund symbols, 19,540 named fund series, 0 registrants failed. Every offline check
+      passes against the new file.
       - `tickerIndexAgeDays` and a 35-day limit live in `lib/sec.ts`.
       - `npm run refresh` warns past the limit. A live run printed "66 days old (synced
         2026-08-12)".
@@ -744,6 +747,8 @@ no new browser checks this batch, and the seven failures are the same stale prom
       check that DefiLlama hack amounts are plain USD. The fix itself reached the project on
       2026-07-31 by another route; the live check had not. `check:live`'s DefiLlama case now
       pins the unit on the Ronin Bridge (about 624,000,000). Checks: 3 in `check:live-harness`.
+- [x] **NC-051 — the ticker index re-synced (closes it).** The owner reran the paced sync:
+      0 failures, and the new `data/edgar-tickers.json` (dated 2026-10-18) is on this branch.
 
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 

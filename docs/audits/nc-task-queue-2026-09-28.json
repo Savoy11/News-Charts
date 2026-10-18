@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 57,
-   "closed": 83,
+   "open": 56,
+   "closed": 84,
    "parked": 12,
    "blocked": 18
   },
@@ -43,7 +43,7 @@
    "owner-decision": 50
   },
   "counts_recomputed_on": "2026-10-18",
-  "closed_by_annotation": 83
+  "closed_by_annotation": 84
  },
  "blocking_decisions": [
   {
@@ -1896,7 +1896,7 @@
   {
    "id": "NC-051",
    "title": "Refresh the committed EDGAR ticker index (syncedOn 2026-08-12) and schedule re-syncs",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "ops-infra",
@@ -1931,7 +1931,19 @@
      "note": "Batch 9: staleness is now said, not just recorded. lib/sec.ts gains tickerIndexAgeDays and TICKER_INDEX_MAX_AGE_DAYS (35); npm run refresh warns past it (live run: '66 days old (synced 2026-08-12)'); check:live fails EDGAR on it once sec.gov answers; check:tickers pins the arithmetic and the wiring. The index is imported at build time, so a server-side re-sync changes nothing until a rebuild: re-syncing is npm run sync:tickers from a host that reaches sec.gov, commit, redeploy (OWNER-ACTIONS). sec.gov refuses this cloud session (it answered one on 2026-09-28), so the refresh itself is still owed.",
      "evidence": "lib/sec.ts:79; scripts/refresh.ts:206; scripts/check-tickers.ts:45"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-18",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "The re-sync was the half still owed after batch 9 made staleness visible (npm run refresh warns past 35 days; check:live fails EDGAR on it). The owner ran npm run sync:tickers from their machine on 2026-10-18: the first run was refused by the SEC (no pacing; 889 of 1,159 registrants failed, and the script rightly refused to overwrite), batch 13 added pacing and long back-off (lib/pace.ts), and the rerun wrote 10,443 companies, 28,592 fund symbols and 19,540 named series with 0 failures. The file is committed on the batch 13 branch and every offline check passes against it. Re-syncing stays a manual step when the warning appears, because the index is imported at build time.",
+    "evidence": [
+     "data/edgar-tickers.json",
+     "lib/pace.ts",
+     "scripts/sync-tickers.ts"
+    ]
+   }
   },
   {
    "id": "NC-052",

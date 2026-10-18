@@ -80,7 +80,7 @@ export default function Annotations({ path }: { path: string }) {
             value={date}
             onChange={(e) => setDate(e.target.value)}
             aria-label="Date this note is about"
-            className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+            className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 focus:border-cyan-500 focus:outline-hidden"
           />
           <div className="flex rounded-md border border-slate-700">
             {KINDS.map((k) => (
@@ -102,7 +102,7 @@ export default function Annotations({ path }: { path: string }) {
             onChange={(e) => setText(e.target.value.slice(0, MAX_TEXT))}
             placeholder="Why this date matters to you…"
             aria-label="Note text"
-            className="min-w-0 flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
+            className="min-w-0 flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-hidden"
           />
           <button
             type="submit"
@@ -118,16 +118,16 @@ export default function Annotations({ path }: { path: string }) {
         <ul className="mt-3 space-y-1.5">
           {list.map((a) => (
             <li key={a.id} className="flex items-start gap-2 text-xs">
-              <span className="mt-0.5 shrink-0 rounded border border-cyan-700/50 bg-cyan-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-300">
+              <span className="mt-0.5 shrink-0 rounded-sm border border-cyan-700/50 bg-cyan-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-300">
                 {a.kind}
               </span>
               <span className="shrink-0 font-mono text-slate-500">{a.date}</span>
-              <span className="min-w-0 flex-1 break-words text-slate-300">{a.text}</span>
+              <span className="min-w-0 flex-1 wrap-break-word text-slate-300">{a.text}</span>
               <button
                 onClick={() => setList(removeAnnotation(path, a.id))}
                 title="Delete this note"
                 aria-label={`Delete note from ${a.date}`}
-                className="shrink-0 rounded px-1 text-slate-600 transition-colors hover:text-red-400"
+                className="shrink-0 rounded-sm px-1 text-slate-600 transition-colors hover:text-red-400"
               >
                 ×
               </button>

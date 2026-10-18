@@ -66,7 +66,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={label}
-        className="min-w-0 flex-1 bg-transparent py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+        className="min-w-0 flex-1 bg-transparent py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-hidden"
       />
     </div>
   );

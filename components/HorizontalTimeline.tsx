@@ -138,7 +138,7 @@ function EventCard({ ev, style }: { ev: TimelineEvent; style: React.CSSPropertie
         className="mb-2 h-20 w-full rounded-md border border-slate-800 object-cover"
       />
       <span
-        className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.badge}`}
+        className={`inline-block rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.badge}`}
       >
         {s.label}
       </span>
@@ -167,7 +167,7 @@ function EventCard({ ev, style }: { ev: TimelineEvent; style: React.CSSPropertie
       rel="noopener noreferrer"
       draggable={false}
       title={`Open ${ev.source} at this passage (new tab)`}
-      className={`${CARD_CLASS} cursor-pointer hover:border-sky-600/70 hover:bg-slate-800/70 focus-visible:border-sky-500 focus-visible:outline-none`}
+      className={`${CARD_CLASS} cursor-pointer hover:border-sky-600/70 hover:bg-slate-800/70 focus-visible:border-sky-500 focus-visible:outline-hidden`}
       style={style}
     >
       {body}
@@ -588,11 +588,11 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
       <div
         ref={scrollerRef}
         tabIndex={0}
-        className="chrono-scroller relative cursor-grab overflow-x-auto overflow-y-hidden focus:outline-none"
+        className="chrono-scroller relative cursor-grab overflow-x-auto overflow-y-hidden focus:outline-hidden"
       >
         <div className="relative h-[420px] select-none" style={{ width }}>
           {/* the axis */}
-          <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-slate-800 via-slate-600 to-slate-800" />
+          <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-linear-to-r/srgb from-slate-800 via-slate-600 to-slate-800" />
 
           {clusters.map((c) => {
             const isStack = c.events.length > 1;
@@ -728,7 +728,7 @@ function MiniMap({
         />
       ))}
       <div
-        className="pointer-events-none absolute inset-y-0 rounded-sm border border-sky-500/70 bg-sky-500/15"
+        className="pointer-events-none absolute inset-y-0 rounded-xs border border-sky-500/70 bg-sky-500/15"
         style={{ left: `${viewport.left * 100}%`, width: `${Math.max(2, viewport.width * 100)}%` }}
       />
     </div>
@@ -807,7 +807,7 @@ function Stack({
         <div className="relative rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-lg">
           <div className="flex items-center justify-between gap-2">
             <span
-              className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.badge}`}
+              className={`inline-block rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.badge}`}
             >
               {s.label}
             </span>
@@ -848,7 +848,7 @@ function Stack({
                 <button
                   onClick={onCloseNow}
                   aria-label="Close"
-                  className="rounded px-1 text-base leading-none text-slate-500 hover:text-slate-200"
+                  className="rounded-sm px-1 text-base leading-none text-slate-500 hover:text-slate-200"
                 >
                   ×
                 </button>
@@ -876,7 +876,7 @@ function StackRow({ ev }: { ev: TimelineEvent }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span
-            className={`inline-block rounded border px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${s.badge}`}
+            className={`inline-block rounded-sm border px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${s.badge}`}
           >
             {s.label}
           </span>
@@ -895,7 +895,7 @@ function StackRow({ ev }: { ev: TimelineEvent }) {
       </div>
       <EventThumb
         src={ev.imageUrl}
-        className="h-11 w-11 shrink-0 rounded border border-slate-800 object-cover"
+        className="h-11 w-11 shrink-0 rounded-sm border border-slate-800 object-cover"
       />
     </div>
   );

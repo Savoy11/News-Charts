@@ -63,7 +63,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
     <>
       <ToneDot ev={ev} />
       <span
-        className={`mt-0.5 shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${BADGE[ev.type].cls}`}
+        className={`mt-0.5 shrink-0 rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${BADGE[ev.type].cls}`}
       >
         {BADGE[ev.type].label}
       </span>
@@ -93,7 +93,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
       target="_blank"
       rel="noopener noreferrer"
       title={`Open ${ev.source} (new tab)`}
-      className={`${ROW_CLASS} cursor-pointer rounded-lg hover:bg-slate-800/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-500`}
+      className={`${ROW_CLASS} cursor-pointer rounded-lg hover:bg-slate-800/50 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-sky-500`}
     >
       {body}
     </a>
@@ -118,7 +118,7 @@ function SiteSnapshotLink({ domain, date }: { domain: string; date: string }) {
       // how far that is, so the label promised a precision the mechanism never had. What the link
       // actually delivers is the closest capture the archive holds, and it now says so.
       title={`See the closest archived capture of ${domain} to ${date} (Wayback Machine, new tab)`}
-      className="mr-2 mt-2 shrink-0 self-start rounded border border-slate-800 px-2 py-1 text-[10px] font-semibold text-slate-500 transition-colors hover:border-teal-600 hover:text-teal-300"
+      className="mr-2 mt-2 shrink-0 self-start rounded-sm border border-slate-800 px-2 py-1 text-[10px] font-semibold text-slate-500 transition-colors hover:border-teal-600 hover:text-teal-300"
     >
       nearest capture ↗
     </a>
@@ -353,7 +353,7 @@ function FilingStack({ days }: { days: DayRow[] }) {
       ))}
       <div className="flex flex-wrap items-center gap-2 px-3 pt-3">
         <span
-          className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${BADGE.filing.cls}`}
+          className={`shrink-0 rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${BADGE.filing.cls}`}
         >
           {all.length} filings
         </span>
@@ -363,7 +363,7 @@ function FilingStack({ days }: { days: DayRow[] }) {
         </span>
         <button
           onClick={() => setExpanded((e) => !e)}
-          className="ml-auto rounded border border-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-500 transition-colors hover:border-sky-700 hover:text-sky-300"
+          className="ml-auto rounded-sm border border-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-500 transition-colors hover:border-sky-700 hover:text-sky-300"
         >
           {expanded ? "Collapse" : "Show all"}
         </button>
@@ -377,7 +377,7 @@ function FilingStack({ days }: { days: DayRow[] }) {
                 href={safeHref(ev.url) ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-baseline gap-2 rounded px-2 py-1 hover:bg-slate-800/50"
+                className="flex items-baseline gap-2 rounded-sm px-2 py-1 hover:bg-slate-800/50"
               >
                 <time dateTime={ev.date} className="w-14 shrink-0 text-[11px] text-slate-500">
                   {dayLabel(ev.date)}
@@ -411,7 +411,7 @@ function FilingStack({ days }: { days: DayRow[] }) {
             href={safeHref(cur.url) ?? "#"}
             target="_blank"
             rel="noopener noreferrer"
-            className="min-w-0 flex-1 rounded px-2 py-1 hover:bg-slate-800/50"
+            className="min-w-0 flex-1 rounded-sm px-2 py-1 hover:bg-slate-800/50"
           >
             <span className="block truncate text-sm font-medium text-slate-200">{cur.title}</span>
             <span className="mt-0.5 block text-xs text-slate-500">
@@ -616,7 +616,7 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
   return (
     <div>
       {years.length > 1 && (
-        <div className="sticky top-0 z-10 mb-2 flex items-center gap-1 overflow-x-auto rounded-md border border-slate-800 bg-slate-950/85 px-2 py-1.5 backdrop-blur">
+        <div className="sticky top-0 z-10 mb-2 flex items-center gap-1 overflow-x-auto rounded-md border border-slate-800 bg-slate-950/85 px-2 py-1.5 backdrop-blur-sm">
           <span className="mr-1 shrink-0 text-[10px] font-bold uppercase tracking-widest text-slate-600">
             Jump
           </span>
@@ -624,14 +624,14 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
             <button
               key={y}
               onClick={() => jumpToYear(y)}
-              className="shrink-0 rounded px-1.5 py-0.5 text-[11px] tabular-nums text-slate-400 transition-colors hover:bg-slate-800 hover:text-sky-300"
+              className="shrink-0 rounded-sm px-1.5 py-0.5 text-[11px] tabular-nums text-slate-400 transition-colors hover:bg-slate-800 hover:text-sky-300"
             >
               {y}
             </button>
           ))}
           <button
             onClick={toggleAll}
-            className="ml-auto shrink-0 rounded border border-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-500 transition-colors hover:border-sky-700 hover:text-sky-300"
+            className="ml-auto shrink-0 rounded-sm border border-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-500 transition-colors hover:border-sky-700 hover:text-sky-300"
           >
             {allCollapsed ? "Expand all" : "Collapse all"}
           </button>
@@ -728,7 +728,7 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
             }
             return (
               <li key={row.key} className="mb-6 scroll-mt-24">
-                <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
+                <span className="absolute left-[-5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
                 <FilingStack days={row.days} />
               </li>
             );
@@ -746,7 +746,7 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
                 id={monthPrecision ? `d-${row.monthKey}-month` : `d-${row.date.slice(0, 4)}-year`}
                 className="mb-6 scroll-mt-24"
               >
-                <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
+                <span className="absolute left-[-5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
                 <span
                   className="text-xs font-semibold italic text-slate-500"
                   title={
@@ -778,7 +778,7 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
           }
           return (
             <li key={row.key} id={dateAnchorId(row.date)} className="mb-6 scroll-mt-24">
-              <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
+              <span className="absolute left-[-5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-slate-600" />
               <time dateTime={row.date} className="text-xs font-semibold text-slate-400">
                 {dayLabel(row.date)}
               </time>

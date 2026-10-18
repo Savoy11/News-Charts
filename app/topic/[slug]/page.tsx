@@ -87,7 +87,7 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
       {/* min-w-0 on both items: a grid item cannot shrink below its own content by default,
           and the source names and attribution lines are long enough to push a phone sideways
           even though they are individually truncated. */}
-      <div className="mt-8 grid gap-4 lg:grid-cols-[2fr_1fr] [&>*]:min-w-0">
+      <div className="mt-8 grid gap-4 lg:grid-cols-[2fr_1fr] *:min-w-0">
         <SourcesPanel slug={topic} />
         <AdSlot />
       </div>

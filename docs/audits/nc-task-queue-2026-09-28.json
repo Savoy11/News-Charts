@@ -5884,7 +5884,14 @@
      "docs/audits/2026-10-17-security-review.md:70",
      "docs/MASTER-CHECKLIST.md:399-443"
     ]
-   }
+   },
+   "progress": [
+    {
+     "noted_on": "2026-10-18",
+     "note": "Batch 10 follow-ups: the three React Compiler lint rules batch 8 switched off are on again (9 sites restructured, 9 kept with a reason on the line), and Tailwind 3 → 4 cleared the file-watcher audit chain with no visible change (screenshots pixel-identical against the v3 build). npm audit: 9 → 5, all one lint-plugin chain ending in braces, which has no fixed release; --omit=dev stays 0.",
+     "evidence": "eslint.config.mjs; app/globals.css; app/v3-palette.css; docs/MASTER-CHECKLIST.md (batch 10)"
+    }
+   ]
   },
   {
    "id": "NC-167",

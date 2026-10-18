@@ -104,7 +104,7 @@ function OverlayStrip({
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
       <StripRow subject={a} color={A_COLOR} align="top" xPct={xPct} />
-      <div className="relative h-px bg-gradient-to-r from-slate-800 via-slate-600 to-slate-800">
+      <div className="relative h-px bg-linear-to-r/srgb from-slate-800 via-slate-600 to-slate-800">
         <span className="absolute left-0 -top-2 text-[10px] font-semibold text-slate-600">
           {yearOf(new Date(domain.min).toISOString())}
         </span>
@@ -197,7 +197,7 @@ function InterleavedList({
               }`}
             >
               <span
-                className="mt-0.5 flex shrink-0 items-center gap-1 rounded border border-slate-700 px-1.5 py-0.5 text-[10px] font-semibold text-slate-300"
+                className="mt-0.5 flex shrink-0 items-center gap-1 rounded-sm border border-slate-700 px-1.5 py-0.5 text-[10px] font-semibold text-slate-300"
                 title={
                   isBoth
                     ? `${a.label} and ${b.label} — the same event on both`

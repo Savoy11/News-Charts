@@ -310,7 +310,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
               setHover(null);
             }}
             style={{ left: popupLeft(hover), top: Math.min(hover.y + 16, 250), width: POPUP_W }}
-            className="absolute z-20 rounded-lg border border-slate-700 bg-slate-900/95 p-2 shadow-xl backdrop-blur"
+            className="absolute z-20 rounded-lg border border-slate-700 bg-slate-900/95 p-2 shadow-xl backdrop-blur-sm"
           >
             <p className="mb-1.5 flex items-baseline justify-between px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
               <span>{shortDate(hover.day)}</span>
@@ -334,7 +334,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
                     </span>
                     <EventThumb
                       src={ev.imageUrl}
-                      className="ml-1 h-9 w-9 shrink-0 rounded border border-slate-800 object-cover"
+                      className="ml-1 h-9 w-9 shrink-0 rounded-sm border border-slate-800 object-cover"
                     />
                   </span>
                 );
@@ -344,7 +344,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
                     href={href}
                     target="_blank"
                     rel="noreferrer"
-                    className="block rounded px-1 py-0.5 hover:bg-slate-800/70"
+                    className="block rounded-sm px-1 py-0.5 hover:bg-slate-800/70"
                   >
                     {row}
                   </a>
@@ -358,7 +358,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
             {hover.events.length > POPUP_MAX && (
               <button
                 onClick={() => onSelectDate?.(hover.day)}
-                className="mt-1 w-full rounded px-1 py-0.5 text-left text-[10px] text-slate-500 hover:bg-slate-800/70 hover:text-sky-300"
+                className="mt-1 w-full rounded-sm px-1 py-0.5 text-left text-[10px] text-slate-500 hover:bg-slate-800/70 hover:text-sky-300"
               >
                 +{hover.events.length - POPUP_MAX} more — jump to this date below
               </button>

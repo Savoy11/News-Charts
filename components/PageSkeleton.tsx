@@ -23,19 +23,19 @@ export default function PageSkeleton({
     <div className="animate-pulse motion-reduce:animate-none" aria-hidden>
       {/* header */}
       <div className="mb-6">
-        <div className="h-3 w-32 rounded bg-slate-800/70" />
-        <div className="mt-2 h-7 w-72 max-w-full rounded bg-slate-800" />
+        <div className="h-3 w-32 rounded-sm bg-slate-800/70" />
+        <div className="mt-2 h-7 w-72 max-w-full rounded-sm bg-slate-800" />
       </div>
 
       {withChart ? (
         <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
-          <div className="h-[360px] w-full rounded-lg bg-gradient-to-b from-slate-800/40 to-slate-900/20" />
+          <div className="h-[360px] w-full rounded-lg bg-linear-to-b/srgb from-slate-800/40 to-slate-900/20" />
         </div>
       ) : (
         <div className="rounded-xl border border-slate-800 bg-slate-900/40">
           <div className="flex items-center justify-between border-b border-slate-800 px-3 py-2">
-            <div className="h-3 w-40 rounded bg-slate-800/70" />
-            <div className="h-6 w-52 rounded bg-slate-800/70" />
+            <div className="h-3 w-40 rounded-sm bg-slate-800/70" />
+            <div className="h-6 w-52 rounded-sm bg-slate-800/70" />
           </div>
           <div className="relative h-[420px] overflow-hidden">
             <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-slate-800" />
@@ -58,9 +58,9 @@ export default function PageSkeleton({
                     [c.above ? "bottom" : "top"]: "calc(50% + 26px)",
                   }}
                 >
-                  <div className="h-3 w-14 rounded bg-slate-800" />
-                  <div className="mt-2 h-3 w-full rounded bg-slate-800/70" />
-                  <div className="mt-1.5 h-3 w-3/4 rounded bg-slate-800/70" />
+                  <div className="h-3 w-14 rounded-sm bg-slate-800" />
+                  <div className="mt-2 h-3 w-full rounded-sm bg-slate-800/70" />
+                  <div className="mt-1.5 h-3 w-3/4 rounded-sm bg-slate-800/70" />
                 </div>
               </div>
             ))}

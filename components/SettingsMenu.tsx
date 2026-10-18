@@ -87,7 +87,7 @@ export default function SettingsMenu() {
         mounted &&
         createPortal(
           <div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-sm sm:items-center"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-xs sm:items-center"
             onClick={() => setOpen(false)}
           >
           <div
@@ -102,7 +102,7 @@ export default function SettingsMenu() {
               <button
                 onClick={() => setOpen(false)}
                 aria-label="Close settings"
-                className="rounded px-2 text-lg leading-none text-slate-500 hover:text-slate-200"
+                className="rounded-sm px-2 text-lg leading-none text-slate-500 hover:text-slate-200"
               >
                 ×
               </button>
@@ -124,7 +124,7 @@ export default function SettingsMenu() {
               </p>
               <AiSettingsForm config={config} onSaved={setConfig} />
 
-              <div className="mt-6 border-t border-slate-800 pt-5">
+              <div className="border-t border-slate-800 pt-5">
                 <h3 className="text-sm font-bold text-slate-200">News feed keys</h3>
                 <p className="pb-2 pt-1 text-xs leading-relaxed text-slate-500">
                   Optional. The New York Times and Guardian archives are free to read with your own
@@ -134,7 +134,7 @@ export default function SettingsMenu() {
                 <FeedKeysForm />
               </div>
 
-              <div className="mt-6 border-t border-slate-800 pt-5">
+              <div className="border-t border-slate-800 pt-5">
                 <PrefsSettings prefs={prefs} onChange={setPrefs} />
               </div>
             </div>

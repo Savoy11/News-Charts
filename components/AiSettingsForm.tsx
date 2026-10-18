@@ -88,7 +88,7 @@ export default function AiSettingsForm({
             value={model}
             onChange={(e) => setModel(e.target.value)}
             spellCheck={false}
-            className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-slate-200 focus:border-fuchsia-600 focus:outline-none"
+            className="mt-1 w-full rounded-sm border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-slate-200 focus:border-fuchsia-600 focus:outline-hidden"
           />
         </label>
         <label className="text-xs font-medium text-slate-400">
@@ -100,7 +100,7 @@ export default function AiSettingsForm({
             autoComplete="off"
             spellCheck={false}
             placeholder={PROVIDERS[provider].keyOptional ? "not needed locally" : "sk-…"}
-            className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-slate-200 focus:border-fuchsia-600 focus:outline-none"
+            className="mt-1 w-full rounded-sm border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-slate-200 focus:border-fuchsia-600 focus:outline-hidden"
           />
         </label>
         {PROVIDERS[provider].defaultBaseUrl && (
@@ -110,7 +110,7 @@ export default function AiSettingsForm({
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
               spellCheck={false}
-              className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-slate-200 focus:border-fuchsia-600 focus:outline-none"
+              className="mt-1 w-full rounded-sm border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-slate-200 focus:border-fuchsia-600 focus:outline-hidden"
             />
           </label>
         )}

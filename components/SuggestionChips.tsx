@@ -94,7 +94,7 @@ export default function SuggestionChips({ initial = INITIAL }: { initial?: Sugge
 
   return (
     <div
-      className="mt-4 flex min-h-[2rem] flex-wrap items-center justify-center gap-2"
+      className="mt-4 flex min-h-8 flex-wrap items-center justify-center gap-2"
       onMouseEnter={() => setEngaged(true)}
       onMouseLeave={() => setEngaged(false)}
       onFocusCapture={() => setEngaged(true)}

@@ -47,7 +47,7 @@ export default function FocusBar({
       <button
         type="button"
         onClick={onClear}
-        className="rounded border border-current/30 px-2 py-0.5 font-semibold opacity-80 hover:opacity-100"
+        className="rounded-sm border border-current/30 px-2 py-0.5 font-semibold opacity-80 hover:opacity-100"
       >
         {none ? "Dismiss" : "Show everything"}
       </button>
@@ -56,7 +56,7 @@ export default function FocusBar({
           it is offered rather than chosen for the reader. */}
       <a
         href={`/compare?a=${encodeURIComponent(focus)}&b=${encodeURIComponent(subject)}`}
-        className="rounded border border-current/30 px-2 py-0.5 font-semibold opacity-80 hover:opacity-100"
+        className="rounded-sm border border-current/30 px-2 py-0.5 font-semibold opacity-80 hover:opacity-100"
       >
         “{focus}” on its own timeline →
       </a>

@@ -62,7 +62,7 @@ the checklist's "Prompt search v2" entry before removing any of it.
 |---|---|
 | Framework | Next.js 16 App Router, React 19 |
 | Language | TypeScript |
-| Styling | Tailwind CSS |
+| Styling | Tailwind CSS 4 — v3's colours, fonts and line heights pinned in `app/globals.css` |
 | Database | Postgres via `pg` — plain SQL migrations in `db/` (`npm run db:migrate`) |
 | Charts | lightweight-charts + hand-rolled SVG timelines |
 

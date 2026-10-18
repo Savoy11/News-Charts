@@ -54,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               'try{for(var k of Object.keys(localStorage)){if(k.slice(0,11)==="chronolens:"){var n="news-charts:"+k.slice(11);if(localStorage.getItem(n)===null)localStorage.setItem(n,localStorage.getItem(k));localStorage.removeItem(k)}}}catch(e){}',
           }}
         />
-        <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur">
+        <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-sm">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
             <Link href="/" className="text-lg font-black tracking-tight text-slate-100">
               news <span className="text-sky-400">charts</span>

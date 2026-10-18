@@ -32,6 +32,18 @@ const check = (name: string, ok: boolean, detail = ""): void => {
 console.log("\nThe query is the common name, not the legal title");
 check(`commonName strips the legal suffix`, commonName("Ford Motor Co") === "Ford Motor", commonName("Ford Motor Co"));
 check(`  ...iteratively`, commonName("Alibaba Group Holding Limited") === "Alibaba Group", commonName("Alibaba Group Holding Limited"));
+// The owner's 2026-10-18 Federal Register count found 0 of 0 hits for Wells Fargo and Bank of
+// America: the search phrase still carried EDGAR's state tag.
+for (const [legal, everyday] of [
+  ["WELLS FARGO & COMPANY/MN", "WELLS FARGO"],
+  ["BANK OF AMERICA CORP /DE/", "BANK OF AMERICA"],
+  ["COSTCO WHOLESALE CORP /NEW", "COSTCO WHOLESALE"],
+  ["ELI LILLY & Co", "ELI LILLY"],
+  ["AT&T INC.", "AT&T"],
+  ["JOHNSON & JOHNSON", "JOHNSON & JOHNSON"],
+]) {
+  check(`  "${legal}" is "${everyday}"`, commonName(legal) === everyday, commonName(legal));
+}
 
 // Source-text assert, the check-wiring pattern: the fix is one identifier, and reverting it
 // would compile fine and fail nothing else. GDELT must be queried under `name` (the computed

@@ -37,6 +37,7 @@ import {
 } from "../lib/sec";
 import { fetchDailyPrices } from "../lib/prices";
 import { fetchRegulations } from "../lib/federalregister";
+import { FR_COMPANY_CAP, FR_COMPANY_SINCE, fetchCompanyRegulations, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
 import { getTopicTimeline } from "../lib/wiki";
 import { fetchNews } from "../lib/news";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
@@ -176,6 +177,24 @@ export function exploitUnitProblems(rows: { name?: string; amount?: number }[]):
     : [`Ronin Bridge amount ${ronin.amount}, expected about 624000000 (plain USD) — the unit may have changed`];
 }
 
+/**
+ * What a company's Federal Register feed must hold (proposal #4): documents whose title names the
+ * company, never an airworthiness directive (the owner's 2026-10-18 call — hundreds a year, each
+ * about one aircraft part), none older than the floor asked for, and no more than the cap. The
+ * filter is offline-tested in `check:wiring`; only the live feed can say it still lets something
+ * through, because the API's phrase search is the part that changes under us.
+ */
+export function companyRegulationProblems(events: TimelineEvent[], edgarName: string, min = 1): string[] {
+  const out = eventProblems(events, min);
+  const unnamed = events.filter((e) => !titleNamesCompany(e.title, edgarName));
+  if (unnamed.length) out.push(`${unnamed.length} titles that don't name ${edgarName}, e.g. "${unnamed[0].title}"`);
+  const directives = events.filter((e) => isAirworthinessDirective(e.title));
+  if (directives.length) out.push(`${directives.length} airworthiness directives, e.g. "${directives[0].title}"`);
+  if (events.some((e) => e.date < FR_COMPANY_SINCE)) out.push(`a document dated before the ${FR_COMPANY_SINCE} floor`);
+  if (events.length > FR_COMPANY_CAP) out.push(`${events.length} documents, over the cap of ${FR_COMPANY_CAP}`);
+  return out;
+}
+
 export const CASES: LiveCase[] = [
   {
     name: "EDGAR — Apple's filings and the committed index",
@@ -256,6 +275,16 @@ export const CASES: LiveCase[] = [
       const out = [...outcomeProblems(r.outcome, r.detail), ...eventProblems(r.events, 10)];
       if (r.events.some((e) => e.date < "2015-01-01")) out.push("a rule dated before the 2015 floor it was asked for");
       return out;
+    },
+  },
+  {
+    name: "Federal Register — documents naming Ford Motor",
+    covers: ["federal_register"],
+    hosts: ["www.federalregister.gov"],
+    async run() {
+      // Ford petitions NHTSA over recalls several times a year, so the feed is never honestly empty.
+      const r = await fetchCompanyRegulations("FORD MOTOR CO");
+      return [...outcomeProblems(r.outcome, r.detail), ...companyRegulationProblems(r.events, "FORD MOTOR CO", 3)];
     },
   },
   {

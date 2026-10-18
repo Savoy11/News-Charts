@@ -34,7 +34,8 @@ import type { SourceKey } from "../lib/types";
 import { countMismatches, sameDatabase } from "../lib/backupCounts";
 import { companyLede } from "../lib/wiki";
 import { OVERLAP_SQL, STRIP_MIN_SHARED, summariseOverlap } from "../lib/overlap";
-import { fetchCompanyMentions, tallyCompanyMentions, titleNamesCompany } from "../lib/frCompany";
+import { FR_COMPANY_CAP, fetchCompanyMentions, fetchCompanyRegulations, tallyCompanyMentions, titleNamesCompany } from "../lib/frCompany";
+import { withoutSharedSectorRows } from "../lib/eventMerge";
 
 let pass = 0;
 let fail = 0;
@@ -61,7 +62,6 @@ const ingestSrcFor = (name: string): string =>
  * it is written down as deliberately not.
  */
 const OTHER_INGEST_PATHS: Partial<Record<SourceKey, string>> = {
-  federal_register: "ingestIndustry — sector rules attach to the industry subject",
   onchain: "ingestOnchain — chain milestones and stablecoin supply moves",
   snapshot: "ingestOnchain via lib/onchain — governance votes",
   defillama: "ingestOnchain via lib/onchain — attributed incidents",
@@ -410,7 +410,57 @@ const frSearch = (async () => {
     Boolean(pkg.scripts["fr-company-report"]) && !/fr-company-report/.test(pkg.scripts.check));
 }
 
-frSearch.then(() => {
+// 2026-10-18: the owner's count, read, set the rule — company pages get these documents, without
+// airworthiness directives, once the match stops taking fruit and namesakes.
+console.log("\nFederal Register documents on a company's page");
+check("a one-word name needs a company word after it",
+  titleNamesCompany("Certain Mobile Devices; Notice of Request for Comments; Apple Inc.", "Apple Inc.") &&
+    !titleNamesCompany("Notice of Decision To Deregulate Light Brown Apple Moth for Fruit Imported From New Zealand", "Apple Inc.") &&
+    !titleNamesCompany("Action Level for Inorganic Arsenic in Apple Juice: Guidance for Industry", "Apple Inc."));
+check("a longer listed name owns the mention",
+  !titleNamesCompany("Portland General Electric Company; Notice of Application", "GENERAL ELECTRIC CO") &&
+    titleNamesCompany("Portland General Electric Company; Notice of Application", "PORTLAND GENERAL ELECTRIC CO /OR/") &&
+    titleNamesCompany("Foreign-Trade Zone 46; Authorization of Production Activity; General Electric Company", "GENERAL ELECTRIC CO"));
+check("  …and the two-word names the count got right still match",
+  titleNamesCompany("Ford Motor Company, Receipt of Petition for Decision of Inconsequential Noncompliance", "FORD MOTOR CO") &&
+    titleNamesCompany("General Motors and OnStar, LLC; Analysis of Proposed Consent Order To Aid Public Comment", "General Motors Co"));
+const frDoc = (n: number, title: string) => ({
+  document_number: `2026-${String(n).padStart(5, "0")}`, title, publication_date: "2026-05-01", type: "Notice",
+  html_url: `https://www.federalregister.gov/d/${n}`, agencies: [{ name: "Transportation Department" }],
+});
+const frSearch2 = (async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response(JSON.stringify({ results: [
+      frDoc(1, "Airworthiness Directives; The Boeing Company Airplanes"),
+      frDoc(2, "The Boeing Company; Export Privileges Order"),
+      frDoc(3, "Commercial Space Launch Requirements"),
+      ...Array.from({ length: 60 }, (_, i) => frDoc(100 + i, `Petition for Exemption; The Boeing Company; Docket ${i}`)),
+    ] }), { status: 200 })) as typeof fetch;
+  try {
+    const r = await fetchCompanyRegulations("BOEING CO");
+    check("airworthiness directives never reach the company feed", !r.events.some((e) => /^Airworthiness/.test(e.title)));
+    check("  …nor a document whose title does not name the company", !r.events.some((e) => /Space Launch/.test(e.title)));
+    check(`  …and a run keeps at most ${FR_COMPANY_CAP}`, r.events.length === FR_COMPANY_CAP, String(r.events.length));
+    check("  …each one the sector feed's identity, so a shared document is one event",
+      r.events[0]?.dedupBasis === "fr:2026-00002" && r.events.every((e) => e.type === "regulation" && e.sourceKey === "federal_register"));
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+})();
+check("the company sources include it, and ingestCompany asks for the company's own documents",
+  (COMPANY_SOURCES as readonly string[]).includes("federal_register") &&
+    /run\("federal_register", company\.name, \(\) => fetchCompanyRegulations\(company\.name\)\)/.test(ingestSrcFor("ingestCompany")));
+const ownRows = [{ id: "db-7", date: "2026-01-01", type: "regulation" as const, title: "t", source: "s" }];
+const sectorRows = [
+  { id: "sector-7", date: "2026-01-01", type: "regulation" as const, title: "t", source: "s" },
+  { id: "sector-8", date: "2026-01-02", type: "regulation" as const, title: "u", source: "s" },
+];
+check("a document on both the company and its sector is listed once",
+  withoutSharedSectorRows(ownRows, sectorRows).map((e) => e.id).join() === "sector-8");
+check("  …and the company page uses that", /withoutSharedSectorRows\(events, sector\)/.test(read("lib/page-data.ts")));
+
+Promise.all([frSearch, frSearch2]).then(() => {
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) {
     console.log("Failed:");

@@ -26,7 +26,7 @@ because it will be trusted.
 | **any** | Internet Archive | 1780 for companies (a bound on impossibility); topics effectively none | Catalogued items: reports, catalogues, film — relevance-ranked |
 | **1934 – now** | SEC EDGAR | electronic filings from ~1993 | Filings, earnings |
 | **1999 – now** | The Guardian Open Platform | 1999 | Articles — only with a visitor's own key, in their browser; never stored |
-| **2015 – now** | Federal Register | 2015 (our query floor) | Sector rules |
+| **2015 – now** | Federal Register | 2015 (our query floor) | Sector rules; documents whose title names a company |
 | **2017 – now** | GDELT | 2017 (our query floor) | Recent news |
 | **—** | Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | not ingested | Free tiers are non-commercial; adapters exist for diagnostics only |
 | **10 years** | Yahoo Finance chart | 10 years of daily closes; the full history is re-read after a split | Prices, corporate actions |

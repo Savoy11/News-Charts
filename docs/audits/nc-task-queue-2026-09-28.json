@@ -6185,6 +6185,14 @@
     "evidence": [
      "docs/MASTER-CHECKLIST.md"
     ]
+   },
+   {
+    "on": "2026-10-18",
+    "what": "Batch 14: proposal 4 built as the owner chose after the counts — Federal Register documents whose title names the company go on its page, with no airworthiness directives and a stricter name match; EDGAR state tags dropped from everyday company names. No ledger item closes; it is a checklist item, not a ledger item.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build` and a check:ui run on a production build. The live Federal Register case could not reach www.federalregister.gov from the cloud session and is left for the owner's machine.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:753"
+    ]
    }
   ]
  }

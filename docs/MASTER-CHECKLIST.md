@@ -750,6 +750,53 @@ no new browser checks this batch, and the seven failures are the same stale prom
 - [x] **NC-051 — the ticker index re-synced (closes it).** The owner reran the paced sync:
       0 failures, and the new `data/edgar-tickers.json` (dated 2026-10-18) is on this branch.
 
+## NC ledger — batch 14: federal documents that name the company, on its page (2026-10-18)
+
+Built the way the owner chose after reading batch 13's counts: Federal Register documents whose
+title names the company go on its page, airworthiness directives never do, and the name match is
+stricter first. No ledger item closes; this is proposal 4 from the 2026-10-17 scout run.
+
+`npm run check` passes, `npm run lint` is clean, `next build` compiles, and `check:ui` is
+154/161: no new browser checks this batch, and the seven failures are the same stale prompt-search
+checks. **Not run here:** the live Ford case below — www.federalregister.gov doesn't answer from
+this cloud session, so the first real run is the owner's.
+
+- [x] **The company feed (`lib/frCompany.ts` `fetchCompanyRegulations`).** `npm run ingest --
+      --ticker F` now also asks the Federal Register for the company's everyday name as a whole
+      phrase, from 2015. It keeps a document only when its **title** names the company, drops
+      every airworthiness directive, and stores at most 40 a run (newest first). Each row has
+      the same identity as the sector feed's (`fr:<document number>`), so a document both feeds
+      find is one stored event linked to both. Checks: 5 in `check:wiring` — 4 against a mocked
+      answer, 1 that company ingest calls it.
+- [x] **A stricter name match.** Batch 13's count showed two kinds of false hits:
+      - **A one-word name** ("Apple") now needs a company word within three words after it —
+        Inc., Corp., Company, LLC, Holdings and the like. "Apple Inc.; Analysis of Proposed
+        Consent Order" counts; "Light Brown Apple Moth" and "Apple Juice" don't.
+      - **A longer listed name owns the mention.** If the title holds a longer company name from
+        the committed EDGAR index that contains this one, the document is the other company's:
+        "Portland General Electric" isn't GE's.
+      - Checks: 3 in `check:wiring`.
+- [x] **Scored without the model.** A regulation on a *company* whose title names it scores 0.95
+      in the free tier (`lib/enrich/relevance.ts`); the title is the evidence. A sector's
+      keyword rule is still left for the model, as `README.md` explains. Checks: 3 in
+      `check:relevance` (2 fail on the old code).
+- [x] **Listed once on the company page.** The page merges the company's own events with its
+      sector's, which name the same stored row differently (`db-<id>` and `sector-<id>`).
+      `lib/eventMerge.ts` drops the sector copy of a row the company already holds; the cached
+      page's key moved to v4 so no old merge is served. Checks: 2 in `check:wiring`.
+- [x] **Fixed on the way: EDGAR's state tags in company names.** `commonName` left "WELLS FARGO &
+      COMPANY/MN" as "WELLS FARGO & COMPANY/MN" and "BANK OF AMERICA CORP /DE/" whole, so their
+      phrase searches found nothing. It now drops the `/MN`, `/DE/`, `/NEW` tag and a trailing
+      "&" before the legal suffix. The same name feeds every news query and alias at ingest, so
+      those companies' news searches improve too. Checks: 6 in `check:recall`, 4 failing on the
+      old code ("AT&T" and "Johnson & Johnson" were already right and must stay so).
+- [x] **A live case.** `check:live` asks for Ford's documents and fails if any title doesn't name
+      Ford, any is an airworthiness directive, any predates 2015, the run exceeds 40, or fewer
+      than 3 come back (Ford petitions NHTSA several times a year). Its rules have 5 offline
+      checks in `check:live-harness`.
+- [x] `README.md` and `docs/COVERAGE-MAP.md` now say company pages carry the documents that name
+      the company.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on
@@ -953,7 +1000,10 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
         #2, approved 2026-10-18. Importance high · Efficiency high · Practicality medium (one
         live count and one owner choice first).*
-- [ ] `P1` **Federal Register documents that name the company, on the company's page.** The
+- [x] `P1` **Federal Register documents that name the company, on the company's page.**
+      ✅ **Done 2026-10-18 (batch 14)** — without airworthiness directives and with the stricter
+      match, as the owner chose; see that section. The live noise check is the owner's first
+      `npm run check:live` run. The original entry follows. The
       adapter runs only from `ingestIndustry` (`scripts/ingest.ts:585`; the single call site
       `check:wiring` records), and `COMPANY_SOURCES` (`scripts/ingest.ts:62`) omits it. Add it
       for companies: query the common name and keep a document only when its **title** names the

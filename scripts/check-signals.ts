@@ -14,7 +14,7 @@
  * so no check could have reached them even if one had been written.
  */
 import { readFileSync } from "node:fs";
-import { median, mad, isSpike, weekEnd } from "../lib/signals";
+import { median, mad, isSpike, weekEnd, sectorStanding, MIN_SECTOR_MEMBERS, sinceMonthsAgo, type MemberReturn } from "../lib/signals";
 import { configProblem } from "../lib/db";
 
 let pass = 0;
@@ -94,7 +94,7 @@ console.log("\nThe queries behind the signals");
     check(`${name} applies the display gate`, /es\.relevance >= \$\{RELEVANCE_THRESHOLD\}/.test(fn(name)));
   }
   // NC-102: each member's return used its own first and last close since the window start.
-  const div = fn("priceDivergence");
+  const div = fn("memberReturns");
   check("price divergence measures every member over the same dates", /BETWEEN w\.d0 AND w\.d1/.test(div) && /common AS/.test(div));
   check("  …and leaves out a member listed well inside the window", /comparable AS/.test(div));
 
@@ -105,6 +105,28 @@ console.log("\nThe queries behind the signals");
   check("stored explanations are keyed on kind, start and end", /key: `\$\{r\.kind\}\|\$\{r\.ws\}\|\$\{r\.we\}`/.test(read));
   check("  …and the panel looks them up by the same three", /e\.key === `\$\{s\.kind\}\|\$\{s\.windowStart\}\|\$\{s\.windowEnd\}`/.test(panel));
   check("  …newest per window, current prompt only", /DISTINCT ON \(sy\.kind, sy\.window_start, sy\.window_end\)/.test(read) && /sy\.prompt_version = \$2/.test(read));
+}
+
+// 2026-10-17 proposal 6: every member's return was computed and only the furthest published, so a
+// company's standing against its sector appeared on the sector page and never on its own.
+console.log("\nEvery member against the sector median");
+{
+  const r = (ticker: string, pct: number): MemberReturn => ({ id: 0, ticker, pct, d0: "2025-01-02", d1: "2026-07-24" });
+  const three = sectorStanding([r("F", -6.2), r("GM", 35.2), r("TSLA", 34.8)]);
+  check("three members give a standing", three !== null);
+  check("  …against their median", three?.median === 34.8, String(three?.median));
+  check("  …every member, most ahead first", three?.members.map((m) => m.ticker).join(" ") === "GM TSLA F", three?.members.map((m) => m.ticker).join(" "));
+  check("  …each with its gap to one decimal", three?.members.find((m) => m.ticker === "F")?.gap === -41, String(three?.members.find((m) => m.ticker === "F")?.gap));
+  check("  …and the window it was measured over", three?.from === "2025-01-02" && three?.to === "2026-07-24");
+  check("two members are not a sector", sectorStanding([r("F", 1), r("GM", 2)]) === null);
+  check("the divergence signal withholds at the same count",
+    MIN_SECTOR_MEMBERS === 3 && /prices\.length >= MIN_SECTOR_MEMBERS/.test(readFileSync("lib/signals.ts", "utf8")));
+  check("a lookback is counted back from today", sinceMonthsAgo(30, new Date("2026-10-18T12:00:00Z")) === "2024-04-18");
+  const company = readFileSync("app/company/[ticker]/page.tsx", "utf8");
+  check("the company page shows its standing", /<SectorStanding[\s\S]*?ticker=\{data\.ticker\}/.test(company));
+  check("  …and its own signals", /<SignalPanel tickers=\{\[data\.ticker\]\} \/>/.test(company));
+  check("the sector page shows every member", /<SectorStanding standing=\{standing\} \/>/.test(readFileSync("app/industry/[slug]/page.tsx", "utf8")));
+  check("the signals API counts back from the same default", /num\("sinceMonths", DEFAULT_SINCE_MONTHS/.test(readFileSync("app/api/signals/route.ts", "utf8")));
 }
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);

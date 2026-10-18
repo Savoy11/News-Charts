@@ -33,6 +33,7 @@ import { CRYPTO_SUBJECTS } from "../lib/onchain";
 import type { SourceKey } from "../lib/types";
 import { countMismatches, sameDatabase } from "../lib/backupCounts";
 import { companyLede } from "../lib/wiki";
+import { OVERLAP_SQL, STRIP_MIN_SHARED, summariseOverlap } from "../lib/overlap";
 
 let pass = 0;
 let fail = 0;
@@ -340,6 +341,33 @@ check("the company page data carries it", /summary: subject\.summary/.test(heldC
 const companyPage = read("app/company/[ticker]/page.tsx");
 check("the company page renders it, credited", /<TopicSummary text=\{data\.summary\}/.test(companyPage));
 check("  …and gives it to search engines", /description: clampDescription\(data\.summary/.test(companyPage));
+
+// 2026-10-17 proposal 8: the index knew every fund's registrant and only resolution read it.
+console.log("\nA fund page names its siblings");
+check("the company page data carries them, held ones marked", /siblings,/.test(heldCompanySrc) && /heldTickers\(/.test(pageData));
+check("the company page renders them", /<FundSiblings registrantCik=\{data\.siblings\.registrantCik\}/.test(companyPage));
+const siblingsSrc = read("components/FundSiblings.tsx");
+check("  …an unheld one is nofollow, a held one a plain link", /rel=\{f\.held \? undefined : "nofollow"\}/.test(siblingsSrc));
+
+// 2026-10-17 proposal 7 waits on a production count; the count has to measure what the strip
+// would show, or it decides nothing.
+console.log("\nThe go/no-go count for topic ↔ security links");
+{
+  const sum = summariseOverlap(
+    [
+      { topic: "electric cars", ticker: "F", shared: 3 },
+      { topic: "electric cars", ticker: "GM", shared: 1 },
+      { topic: "btc", ticker: "COIN", shared: 2 },
+    ],
+    5
+  );
+  check(`a pair is listed at ${STRIP_MIN_SHARED} shared events, not 1`, sum.listed.length === 2 && !sum.listed.some((p) => p.ticker === "GM"));
+  check("  …and topics and securities are counted once each", sum.topicsWithStrip === 2 && sum.securitiesWithStrip === 2 && sum.topicsHeld === 5);
+  check("both links pass the timeline's display gate", /FROM gated t\s+JOIN gated c/.test(OVERLAP_SQL) && /es\.relevance >= /.test(OVERLAP_SQL));
+  const pkg = JSON.parse(read("package.json"));
+  check("the count is a report, outside the offline chain",
+    Boolean(pkg.scripts["overlap-report"]) && !/overlap-report/.test(pkg.scripts.check));
+}
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);
 if (fail) {

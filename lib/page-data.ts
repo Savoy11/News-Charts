@@ -1,11 +1,12 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
-import { loadEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, type IndustryRef } from "./store/read";
+import { heldTickers, loadEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, type IndustryRef } from "./store/read";
 import { PricePoint, TimelineEvent } from "./types";
 import { requestSubject } from "./ingest/queue";
 import { firstPassCompany, firstPassTopic } from "./ingest/firstPass";
 import { dropCompanyPrehistory } from "./history";
-import { resolveTickerLocally } from "./sec";
+import { resolveTickerLocally, siblingFunds } from "./sec";
+import { loadSectorStanding, type SectorStanding } from "./signals";
 
 
 // Request-memoised so a page and its generateMetadata share one load instead of fetching twice.
@@ -59,6 +60,10 @@ export interface CompanyPageData {
   prices: PricePoint[];
   events: TimelineEvent[];
   industry: IndustryRef | null;
+  /** every member's return against the sector median; null below three members with prices */
+  standing: SectorStanding | null;
+  /** for a fund, the other series its registrant files, those the site holds first; else null */
+  siblings: { registrantCik: string; funds: { ticker: string; name: string; held: boolean }[] } | null;
   refreshedAt: RefreshedAt;
 }
 
@@ -149,7 +154,7 @@ async function heldTopicPage(topic: string): Promise<TopicPageData | null> {
  * Date is revived on the way out.
  */
 const PAGE_CACHE_SECONDS = 900;
-const cachedHeldCompany = unstable_cache((key: string) => heldCompanyPage(key), ["held-company-page", "v2"], {
+const cachedHeldCompany = unstable_cache((key: string) => heldCompanyPage(key), ["held-company-page", "v3"], {
   revalidate: PAGE_CACHE_SECONDS,
   tags: ["subject-pages"],
 });
@@ -188,7 +193,14 @@ async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
     loadIndustryFor(subject.id),
   ]);
   if (!events.length) return null;
-  const sector = industry ? await loadSectorEvents(industry.id).catch(() => []) : [];
+  const siblings = await fundSiblings(subject.ticker);
+  const [sector, standing] = industry
+    ? await Promise.all([
+        loadSectorEvents(industry.id).catch(() => []),
+        // an enrichment: a page without its sector comparison still renders
+        loadSectorStanding(industry.id).catch(() => null),
+      ])
+    : [[], null];
   return {
     name: subject.displayName,
     ticker: subject.ticker,
@@ -198,7 +210,26 @@ async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
     prices,
     events: dropCompanyPrehistory([...events, ...sector]),
     industry,
+    standing,
+    siblings,
     refreshedAt: subject.refreshedAt,
+  };
+}
+
+/**
+ * A fund's siblings, marked by whether the site holds each: a held one is a page, an unheld one
+ * is a first-visit gather, and the link has to say which (2026-10-17 proposal 8). If the database
+ * cannot answer, all are shown as unheld — the cautious reading, since that only costs a crawler
+ * hint, where the other would promise pages that may not exist.
+ */
+async function fundSiblings(ticker: string): Promise<CompanyPageData["siblings"]> {
+  const found = siblingFunds(ticker);
+  if (!found) return null;
+  const held = await heldTickers(found.funds.map((f) => f.ticker)).catch(() => new Set<string>());
+  const funds = found.funds.map((f) => ({ ...f, held: held.has(f.ticker) }));
+  return {
+    registrantCik: found.registrantCik,
+    funds: [...funds.filter((f) => f.held), ...funds.filter((f) => !f.held)],
   };
 }
 

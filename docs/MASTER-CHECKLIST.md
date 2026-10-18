@@ -629,6 +629,53 @@ checks as before.
 - [x] **NC-117 — closed by the owner's decision.** Asked whether to delete the 22 old remote
       branches, the owner said keep them.
 
+## NC ledger — batch 12: sector standings, fund families, and a count to decide on topic links (2026-10-18)
+
+Three more of the scout's approved proposals. Two are built; the third waits on a count only the
+owner's database can give, so this batch builds the count and stops there, as its checklist entry
+asks. No ledger item opens or closes. `npm run check` passes, `npm run lint` is clean, `next build`
+compiles, and `check:ui` is 154/161 — the eight new checks pass, and the seven failures are the
+same stale prompt-search checks as before.
+
+- [x] **A company against its sector (proposal 6).** The code already measured every member's
+      return over one shared window, then published only the member furthest from the median.
+      - Company pages now say, for example: "F returned -6.2% from 2025-01-02 to 2026-07-24,
+        against a median of +34.8% across the 3 members of Motor Vehicles & Passenger Car
+        Bodies with prices over those dates — 41.0 points behind the median". Each peer links
+        to `/compare` with this company.
+      - Sector pages list every member against the median, not just the outlier.
+      - Below three members with prices nothing is shown, the same rule the divergence signal
+        already used, now one shared constant. The window (the signals' default 30 months) and
+        the member count are stated with every figure.
+      - Company pages also show their own signals panel (news-volume spikes) for that one
+        ticker.
+      - The demo data gains Tesla as a third car maker, so a comparison exists to test.
+      - Checks: 12 in `check:signals`, 3 in `check:ui`.
+- [x] **A fund's family (proposal 8).** A fund page lists the other funds its registrant files,
+      from the built-in SEC list — VOO's trust files 11 more, VTI among them.
+      - Funds the site already has are plain links, shown first. Ones it doesn't are dashed,
+        marked as not on News Charts yet, and `nofollow`, so crawlers don't walk a whole trust
+        into first-visit gathers.
+      - Ten are shown, then "and N more"; iShares' trust has 533.
+      - The registrant is named by its EDGAR number, linked to its SEC listing. The built-in list
+        has no trust names to show instead.
+      - The demo data gains VOO and VTI, two funds from one Vanguard trust.
+      - Checks: 7 in `check:tickers` (no request made), 3 in `check:wiring`, 5 in `check:ui`.
+- [x] **`check:ui` no longer stops at the notes test.** Its reload waited for the network to go
+      quiet, and after a reload Chromium never reports the header links' background prefetches
+      as finished, though the server answers them at once and clicking the links works. The wait
+      ran out and the run stopped there, hiding every later check. That was batch 11's first-run
+      failure, and it reproduces on the batch 10 build, so it is not new code. The reload now waits
+      for the page to load; the test still checks that the note survives it.
+- [ ] **Topic ↔ security links (proposal 7) — waiting on the owner's count.** Its checklist
+      entry says to count, on the production database, how many stories link both a topic and a
+      company before building any page UI. `npm run overlap-report` does that, read-only. It
+      uses the same relevance bar the timeline uses, on both links, and lists a pair only at 2+
+      shared stories. It was tried against a temporary shared story locally: correct count, and
+      a below-bar link left out. The demo data has no shared stories, so locally it reports
+      zero. Next step: the owner runs it and decides; the page strips follow if the numbers are
+      worth it. Checks: 4 in `check:wiring`.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on
@@ -885,7 +932,8 @@ already held, but new investment goes to securities coverage first.
         looking at a few real ledes needs Wikipedia, so the owner's host.
       - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
         #5, approved 2026-10-18. Importance medium · Efficiency very high · Practicality high.*
-- [ ] `P2` **Sector-relative performance on company and sector pages.** `priceDivergence` returns
+- [x] `P2` **Sector-relative performance on company and sector pages.** ✅ **Done 2026-10-18
+      (batch 12)** — see that section for what shipped. `priceDivergence` returns
       every member's return over a common window and `computeSignals` publishes only the worst
       (`lib/signals.ts:284-301`), so "INTC lagged the sector by 172.3 points" (`README.md:176`)
       appears on `/industry/sic-3674` and never on `/company/INTC`. `SignalPanel` is mounted on
@@ -916,13 +964,16 @@ already held, but new investment goes to securities coverage first.
       - ⚠ **Before building any UI — a production count, as the go/no-go.** The overlap depends on
         how many relevance-passing events carry both a topic and a company link; one SQL count on
         the production database answers it. Needs the owner's database. Worth building, but
-        unsized until counted.
+        unsized until counted. **The count is built (batch 12): `npm run overlap-report`** on the
+        production host prints how many topics and securities would show a strip. No UI until
+        the owner has run it and decided.
       - Then one grouped query, one strip per page and a shared event in the seed; a cloud session
         builds and verifies it offline. No key, licence or recurring cost.
       - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
         #7, approved 2026-10-18. Importance medium, uncertain until counted · Efficiency high ·
         Practicality high.*
-- [ ] `P2` **Fund pages name their sibling funds.** The committed index's `seriesCiks` gives every
+- [x] `P2` **Fund pages name their sibling funds.** ✅ **Done 2026-10-18 (batch 12)** — see that
+      section for what shipped. The committed index's `seriesCiks` gives every
       fund series' registrant and is read only for resolution (`lib/sec.ts:208-228`): 829 of
       1,163 registrants have more than one series, and VOO's (CIK 36405) has eleven — VTV, VXF,
       VUG, VV, VO, VB, VBK, VBR, VTI, VOT, VOE. Every fund filing tells the reader it "may concern

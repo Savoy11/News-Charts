@@ -217,7 +217,11 @@ async function annotations(page: Page): Promise<void> {
   check("never sent to a server", posted.length === 0, posted.slice(0, 2).join(" "));
 
   // it survives a reload, and can be removed again
-  await page.reload({ waitUntil: "networkidle" });
+  // "load", not "networkidle": after a reload Chromium never reports the header links' background
+  // prefetches as finished, though the server answers them at once and clicking them navigates —
+  // so a network-idle wait here hung for its full timeout and took every later check down with it.
+  // Reproduced on the 2026-10-18 batch 10 build too; the note's survival is still what is asserted.
+  await page.reload({ waitUntil: "load" });
   await settle(page);
   check("survives a reload", (await visible(page)).includes(secret));
   await page.locator('button[aria-label^="Delete note"]').first().click();
@@ -901,9 +905,41 @@ async function readableToEveryone(page: Page): Promise<void> {
   const ld = await page.locator('script[type="application/ld+json"]').allTextContents();
   check("  …and is the company's structured-data description",
     ld.some((t) => /"@type":"Corporation"/.test(t) && /"description":"Ford/.test(t)), ld.find((t) => t.includes("Corporation")) ?? "no Corporation block");
+  // 2026-10-17 proposal 6: was it the stock or the sector? Seeded: F, GM and TSLA in SIC 3711.
+  const standingText = (await page.locator("[data-sector-standing]").first().textContent().catch(() => "")) ?? "";
+  check("a company's standing against its sector is shown, window and member count with it",
+    /F returned −?-?\d/.test(standingText) && /across the 3 members/.test(standingText) && /\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}/.test(standingText),
+    standingText.slice(0, 160));
+  const compareLinks = await page.locator('[data-sector-standing] a[href^="/compare?a=F&b="]').count();
+  check("  …each peer a link into compare", compareLinks === 2, String(compareLinks));
   const dots = await page.locator('[role="img"][aria-label^="Headline reads as"]').count();
   const key = /keyword estimate, not a/i.test(await visible(page));
   check("a tone dot is announced, and a visible key says what it means", dots === 0 || key, `${dots} dots, key ${key ? "shown" : "missing"}`);
+}
+
+/**
+ * What a security is measured against and related to — the sector's standings and a fund's family
+ * (2026-10-17 proposals 6 and 8). Seeded: F, GM and TSLA in SIC 3711; VOO and VTI, two series of
+ * one Vanguard trust, of which the site holds only those two.
+ */
+async function relatedSecurities(page: Page): Promise<void> {
+  console.log("\nSector standings and fund families");
+  await go(page, "/industry/sic-3711");
+  const rows = await page.locator("[data-sector-standing] tbody tr").count();
+  check("the sector page lists every member against the median", rows === 3, String(rows));
+
+  await go(page, "/company/VOO");
+  const family = page.locator("[data-fund-siblings]");
+  check("a fund page names its registrant's other funds", (await family.count()) === 1);
+  const vti = family.locator('a[href="/company/VTI"]');
+  check("  …a sibling the site holds is a plain link",
+    (await vti.getAttribute("data-held").catch(() => null)) === "true" && (await vti.getAttribute("rel").catch(() => "x")) === null);
+  const unheld = await family.locator('a[data-held="false"]').evaluateAll((as) => as.map((a) => a.getAttribute("rel")));
+  check("  …and one it does not is nofollow", unheld.length > 0 && unheld.every((r) => r === "nofollow"), unheld.join(","));
+  check("  …held first", (await family.locator("a[data-held]").first().getAttribute("href").catch(() => null)) === "/company/VTI");
+
+  await go(page, "/company/f");
+  check("an operating company has no fund family", (await page.locator("[data-fund-siblings]").count()) === 0);
 }
 
 async function main(): Promise<void> {
@@ -960,6 +996,7 @@ async function main(): Promise<void> {
   await feedKeys(page);
   await searchRouting(page);
   await chromeAndRoutes(page);
+  await relatedSecurities(page);
     await readableToEveryone(page);
     await ctx.close();
     await responsive(browser);

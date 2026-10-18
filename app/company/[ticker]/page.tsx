@@ -8,6 +8,9 @@ import SourcesPanel from "@/components/SourcesPanel";
 import SearchBox from "@/components/SearchBox";
 import StoredBadge from "@/components/StoredBadge";
 import TopicSummary from "@/components/TopicSummary";
+import SectorStanding from "@/components/SectorStanding";
+import FundSiblings from "@/components/FundSiblings";
+import SignalPanel from "@/components/SignalPanel";
 import JsonLd from "@/components/JsonLd";
 import FollowBar from "@/components/FollowBar";
 import { getCompanyPageData } from "@/lib/page-data";
@@ -124,6 +127,18 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
         </div>
       </div>
 
+      {/* Was it the stock or the sector? Every member against the median, this one first. */}
+      {data.standing && (
+        <SectorStanding
+          standing={data.standing}
+          ticker={data.ticker}
+          sector={data.industry ? { name: data.industry.name, slug: data.industry.slug } : undefined}
+        />
+      )}
+
+      {/* A fund's family, per EDGAR — every fund filing below says it "may concern a sibling fund". */}
+      {data.siblings && <FundSiblings registrantCik={data.siblings.registrantCik} funds={data.siblings.funds} />}
+
       <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
         {/* min-w-0: a grid item defaults to min-width:auto, so it cannot shrink below its
             content. The price chart sizes itself from this column's width and then writes that
@@ -139,6 +154,10 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
             siteDomain={data.siteDomain}
             subject={data.name}
           />
+          {/* The company's own news-volume spikes — the sector page's panel, scoped to one ticker. */}
+          <div className="mt-6">
+            <SignalPanel tickers={[data.ticker]} />
+          </div>
         </div>
         <aside className="min-w-0 space-y-4">
           {/* which feeds actually contributed — a page with three feeds down looks fine

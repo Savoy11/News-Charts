@@ -283,6 +283,24 @@ const GM_EVENTS: Seed[] = [
   { date: "2026-02-05", title: "GM outperforms rivals on truck demand", description: "Bloomberg coverage of the day's developments.", type: "news", source: "Bloomberg", url: "https://example.com/gm-news-2", sourceKey: "gdelt", externalId: "news-gm-2026-02-05" },
 ];
 
+// A third member of SIC 3711. A sector comparison needs three companies with prices — with two, the
+// median is just their midpoint — so without this the seed could never show one (proposal 6).
+const TSLA_EVENTS: Seed[] = [
+  { date: "2025-04-22", title: "Q1 2025 results miss on deliveries", description: "Quarterly results released after the close.", type: "earnings", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "earnings-tsla-2025-04-22" },
+  { date: "2025-10-22", title: "Q3 2025 results: record deliveries", description: "Quarterly results released after the close.", type: "earnings", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "earnings-tsla-2025-10-22" },
+  { date: "2026-01-29", title: "10-K — Annual report for the fiscal year ended December 31, 2025", description: "Filed with the U.S. Securities and Exchange Commission.", type: "filing", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "edgar-tsla-2026-01-29" },
+];
+
+// Two series of one fund trust (Vanguard Index Funds, CIK 36405), so a fund page has a sibling the
+// site holds (VTI) beside ten it does not (proposal 8).
+const VOO_EVENTS: Seed[] = [
+  { date: "2026-02-26", title: "VANGUARD INDEX FUNDS: Shareholder report (N-CSR)", description: "Filed by VANGUARD INDEX FUNDS, the registrant behind Vanguard 500 Index Fund. A registrant files for every fund it sells, so this filing may concern a sibling fund.", type: "earnings", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "edgar-voo-2026-02-26" },
+  { date: "2026-04-28", title: "VANGUARD INDEX FUNDS: Summary prospectus (497K)", description: "Filed by VANGUARD INDEX FUNDS, the registrant behind Vanguard 500 Index Fund. A registrant files for every fund it sells, so this filing may concern a sibling fund.", type: "filing", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "edgar-voo-2026-04-28" },
+];
+const VTI_EVENTS: Seed[] = [
+  { date: "2026-03-30", title: "VANGUARD INDEX FUNDS: Portfolio holdings (NPORT-P)", description: "Filed by VANGUARD INDEX FUNDS, the registrant behind Vanguard Total Stock Market Index Fund. A registrant files for every fund it sells, so this filing may concern a sibling fund.", type: "filing", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "edgar-vti-2026-03-30" },
+];
+
 // ---------------------------------------------------------------- topic
 // Deliberately crowded around 2008–2012 and 2017–2022 so the horizontal timeline has
 // something to stack, and so the mini-map has an uneven distribution to show.
@@ -402,6 +420,37 @@ async function main(): Promise<void> {
     for (const e of GM_EVENTS) await upsertEvent(client, ev(e, "gm"), gmId, stats);
     await client.query("COMMIT");
 
+    // ---------------------------------------------------------- Tesla
+    const tslaId = await upsertSubject(client, {
+      kind: "company",
+      slug: "tsla",
+      displayName: "Tesla, Inc.",
+      ticker: "TSLA",
+      cik: "0001318605",
+      sic: "3711",
+      siteDomain: "tesla.com",
+    });
+    await client.query("BEGIN");
+    for (const e of TSLA_EVENTS) await upsertEvent(client, ev(e, "tsla"), tslaId, stats);
+    await client.query("COMMIT");
+
+    // ---------------------------------------------------------- funds
+    for (const [ticker, name, events] of [
+      ["VOO", "Vanguard 500 Index Fund", VOO_EVENTS],
+      ["VTI", "Vanguard Total Stock Market Index Fund", VTI_EVENTS],
+    ] as const) {
+      const fundId = await upsertSubject(client, {
+        kind: "company",
+        slug: ticker.toLowerCase(),
+        displayName: name,
+        ticker,
+        cik: "0000036405",
+      });
+      await client.query("BEGIN");
+      for (const e of events) await upsertEvent(client, ev(e, ticker.toLowerCase()), fundId, stats);
+      await client.query("COMMIT");
+    }
+
     await seedFetchLog(fordId, [
       ["wikipedia", "ok", 13],
       ["loc_chronam", "ok", 4],
@@ -418,6 +467,7 @@ async function main(): Promise<void> {
     const SIC_3711 = { sic: "3711", description: "Motor Vehicles & Passenger Car Bodies" };
     const { slug: industrySlug, industryId } = await linkToIndustry(client, fordId, SIC_3711);
     await linkToIndustry(client, gmId, SIC_3711);
+    await linkToIndustry(client, tslaId, SIC_3711);
 
     // The rule lands on the industry, so both members read it off the same row — which is what
     // lets /compare say one regulation hit both rather than showing two coincidental markers.
@@ -503,9 +553,18 @@ async function main(): Promise<void> {
       14_000_000
     );
 
+    const tslaPrices = priceSeries(
+      days,
+      380.0,
+      31_105,
+      { "2025-04-23": -0.071, "2025-10-23": 0.094 },
+      95_000_000
+    );
+
     for (const [subjectId, series] of [
       [fordId, fordPrices],
       [gmId, gmPrices],
+      [tslaId, tslaPrices],
     ] as const) {
       await client.query(
         `INSERT INTO prices (subject_id, on_date, close, volume)
@@ -637,11 +696,12 @@ async function main(): Promise<void> {
     );
 
     console.log(
-      `\n  Seeded 5 subjects — /company/f, /company/gm, /topic/electric%20cars, /topic/btc, ` +
+      `\n  Seeded 8 subjects — /company/f, /company/gm, /company/tsla, /company/voo, /company/vti, ` +
+        `/topic/electric%20cars, /topic/btc, ` +
         `/industry/${industrySlug}\n` +
         (STRESS ? `  plus /topic/stress%20test — ${STRESS_EVENTS} events, for profiling\n` : "") +
         `  ${stats.events} events (${stats.newEvents} new), ${stats.attestations} attestations, ` +
-        `${days.length} trading days of prices for two tickers.\n`
+        `${days.length} trading days of prices for three tickers.\n`
     );
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});

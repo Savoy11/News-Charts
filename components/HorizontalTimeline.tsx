@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { EventType, TimelineEvent } from "@/lib/types";
 import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT, type TimelinePrefs } from "@/lib/prefs";
@@ -138,7 +138,7 @@ function EventCard({ ev, style }: { ev: TimelineEvent; style: React.CSSPropertie
         className="mb-2 h-20 w-full rounded-md border border-slate-800 object-cover"
       />
       <span
-        className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.badge}`}
+        className={`inline-block rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.badge}`}
       >
         {s.label}
       </span>
@@ -167,7 +167,7 @@ function EventCard({ ev, style }: { ev: TimelineEvent; style: React.CSSPropertie
       rel="noopener noreferrer"
       draggable={false}
       title={`Open ${ev.source} at this passage (new tab)`}
-      className={`${CARD_CLASS} cursor-pointer hover:border-sky-600/70 hover:bg-slate-800/70 focus-visible:border-sky-500 focus-visible:outline-none`}
+      className={`${CARD_CLASS} cursor-pointer hover:border-sky-600/70 hover:bg-slate-800/70 focus-visible:border-sky-500 focus-visible:outline-hidden`}
       style={style}
     >
       {body}
@@ -203,9 +203,9 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
   const pendingScroll = useRef<number | null>(null);
   // saving must wait for the restore pass, or the default state overwrites what was stored
   const hydrated = useRef(false);
-  // scroll fires before a zoom change re-attaches its listener, so read zoom from a ref
+  // scroll fires before a zoom change re-attaches its listener, so read zoom from a ref — kept
+  // current in a layout effect (below), which runs before any scroll the new zoom could cause
   const zoomRef = useRef(zoom);
-  zoomRef.current = zoom;
   // the restore's own scroll fires an event; ignore it or it saves pre-restore state
   const suppressSave = useRef(false);
   // read inside persist(), which must not re-create itself when the override flips
@@ -250,6 +250,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
       const saved = JSON.parse(sessionStorage.getItem(storeKey) || "{}");
       const fallback = loadPrefs().timeline.defaultZoom;
       const initial = typeof saved.zoom === "number" && ZOOMS[saved.zoom] ? saved.zoom : fallback;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restored from session storage after mount, so server and first render agree
       if (ZOOMS[initial]) setZoom(initial);
       if (typeof saved.stacked === "boolean") setStackOverride(saved.stacked);
       pendingScroll.current = typeof saved.scrollLeft === "number" ? saved.scrollLeft : null;
@@ -260,7 +261,12 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
   }, [storeKey]);
 
   const stacked = stackOverride ?? tl.stack;
-  stackOverrideRef.current = stackOverride;
+  // Refs are written after render, not during it: a render React throws away must not leave a
+  // value behind that the scroll and persist handlers would then read.
+  useLayoutEffect(() => {
+    zoomRef.current = zoom;
+    stackOverrideRef.current = stackOverride;
+  }, [zoom, stackOverride]);
 
   const { clusters, width } = useMemo(() => {
     const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));
@@ -582,11 +588,11 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
       <div
         ref={scrollerRef}
         tabIndex={0}
-        className="chrono-scroller relative cursor-grab overflow-x-auto overflow-y-hidden focus:outline-none"
+        className="chrono-scroller relative cursor-grab overflow-x-auto overflow-y-hidden focus:outline-hidden"
       >
         <div className="relative h-[420px] select-none" style={{ width }}>
           {/* the axis */}
-          <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-slate-800 via-slate-600 to-slate-800" />
+          <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-linear-to-r/srgb from-slate-800 via-slate-600 to-slate-800" />
 
           {clusters.map((c) => {
             const isStack = c.events.length > 1;
@@ -722,7 +728,7 @@ function MiniMap({
         />
       ))}
       <div
-        className="pointer-events-none absolute inset-y-0 rounded-sm border border-sky-500/70 bg-sky-500/15"
+        className="pointer-events-none absolute inset-y-0 rounded-xs border border-sky-500/70 bg-sky-500/15"
         style={{ left: `${viewport.left * 100}%`, width: `${Math.max(2, viewport.width * 100)}%` }}
       />
     </div>
@@ -801,7 +807,7 @@ function Stack({
         <div className="relative rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-lg">
           <div className="flex items-center justify-between gap-2">
             <span
-              className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.badge}`}
+              className={`inline-block rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.badge}`}
             >
               {s.label}
             </span>
@@ -842,7 +848,7 @@ function Stack({
                 <button
                   onClick={onCloseNow}
                   aria-label="Close"
-                  className="rounded px-1 text-base leading-none text-slate-500 hover:text-slate-200"
+                  className="rounded-sm px-1 text-base leading-none text-slate-500 hover:text-slate-200"
                 >
                   ×
                 </button>
@@ -870,7 +876,7 @@ function StackRow({ ev }: { ev: TimelineEvent }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span
-            className={`inline-block rounded border px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${s.badge}`}
+            className={`inline-block rounded-sm border px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${s.badge}`}
           >
             {s.label}
           </span>
@@ -889,7 +895,7 @@ function StackRow({ ev }: { ev: TimelineEvent }) {
       </div>
       <EventThumb
         src={ev.imageUrl}
-        className="h-11 w-11 shrink-0 rounded border border-slate-800 object-cover"
+        className="h-11 w-11 shrink-0 rounded-sm border border-slate-800 object-cover"
       />
     </div>
   );

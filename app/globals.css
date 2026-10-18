@@ -1,9 +1,76 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import './v3-palette.css';
 
-body {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  /* v3's font stacks: v4.3 ships different defaults, and the upgrade is not a redesign */
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  /*
+    v3's fixed line heights. v4 makes them ratios, which a smaller child (the counts in chips,
+    the badges in rows) then inherits at its own size, so rows came out a pixel or two shorter.
+  */
+  --text-xs--line-height: 1rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+/*
+  Tailwind v4's preflight gives buttons the default cursor, where v3 gave them a pointer. Kept as
+  it was, so the upgrade changes nothing a visitor can see or feel.
+*/
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* v3's placeholder colour; v4 uses the text colour at half opacity, which reads dimmer here */
+@layer base {
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+}
+
+/*
+  In the base layer, as it effectively was under v3: there the body's `font-sans` class outranked
+  this element rule, so pages have always rendered in the system font stack (which carries the
+  colour-emoji fonts the settings gear relies on). Left unlayered, v4 would let this rule beat
+  every utility and switch the site to Geist. Changing the font is a design decision, not part
+  of an upgrade.
+*/
+@layer base {
+  body {
+    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  }
 }
 
 /* horizontal timeline track */

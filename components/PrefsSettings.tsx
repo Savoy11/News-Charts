@@ -153,11 +153,11 @@ function Chips({
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), add())}
           placeholder={placeholder}
-          className="min-w-0 flex-1 rounded border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 placeholder-slate-600 focus:border-sky-600 focus:outline-none"
+          className="min-w-0 flex-1 rounded-sm border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 placeholder-slate-600 focus:border-sky-600 focus:outline-hidden"
         />
         <button
           onClick={add}
-          className="rounded border border-slate-700 px-2.5 text-xs font-semibold text-slate-300 hover:border-sky-600"
+          className="rounded-sm border border-slate-700 px-2.5 text-xs font-semibold text-slate-300 hover:border-sky-600"
         >
           Add
         </button>
@@ -355,7 +355,7 @@ export default function PrefsSettings({
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
             placeholder="new group name"
-            className="min-w-0 flex-1 rounded border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 placeholder-slate-600 focus:border-emerald-600 focus:outline-none"
+            className="min-w-0 flex-1 rounded-sm border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 placeholder-slate-600 focus:border-emerald-600 focus:outline-hidden"
           />
           <button
             onClick={() => {
@@ -364,7 +364,7 @@ export default function PrefsSettings({
               set({ groups: [...prefs.groups, { name, tickers: [] }] });
               setGroupName("");
             }}
-            className="rounded border border-slate-700 px-2.5 text-xs font-semibold text-slate-300 hover:border-emerald-600"
+            className="rounded-sm border border-slate-700 px-2.5 text-xs font-semibold text-slate-300 hover:border-emerald-600"
           >
             Create
           </button>

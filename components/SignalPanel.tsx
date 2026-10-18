@@ -119,7 +119,7 @@ export default function SignalPanel({ industrySlug, tickers, onExtraEvents }: Pr
             className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2.5"
           >
             <span
-              className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STYLE[s.kind].cls}`}
+              className={`shrink-0 rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STYLE[s.kind].cls}`}
             >
               {STYLE[s.kind].label}
             </span>
@@ -139,7 +139,7 @@ export default function SignalPanel({ industrySlug, tickers, onExtraEvents }: Pr
               const ex = explanations.find((e) => e.key === `${s.kind}|${s.windowStart}|${s.windowEnd}`);
               if (!ex) return null;
               return (
-                <div className="mt-1.5 w-full rounded-md border border-fuchsia-900/40 bg-fuchsia-500/[0.04] p-2.5">
+                <div className="mt-1.5 w-full rounded-md border border-fuchsia-900/40 bg-fuchsia-500/4 p-2.5">
                   <p className="text-xs leading-relaxed text-slate-300">{ex.body}</p>
                   {/* Said plainly and legibly: a reader should not need to recognise a model id to
                       know this paragraph was written by a model, and could be wrong (NC-168). */}

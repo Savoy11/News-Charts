@@ -114,6 +114,7 @@ export default function TopicExplorer({
     try {
       const sp = new URLSearchParams(window.location.search);
       const f = sp.get("focus");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restored from the URL after mount, so server and first render agree
       if (f) setFocusHint(f);
       const v = sp.get("view");
       const t = sp.get("types");

@@ -174,7 +174,7 @@ export default function BiggestMoves({
               {m.event && badge ? (
                 <div className="mt-1.5 flex items-start gap-1.5">
                   <span
-                    className={`mt-0.5 shrink-0 rounded border px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${badge.cls}`}
+                    className={`mt-0.5 shrink-0 rounded-sm border px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${badge.cls}`}
                   >
                     {badge.label}
                   </span>

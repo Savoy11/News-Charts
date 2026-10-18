@@ -173,11 +173,11 @@ export default function PriceOverlay({ a, b }: { a: Series; b: Series }) {
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-4 text-xs">
           <span className="flex items-center gap-1.5 text-slate-300">
-            <span className="h-2 w-3 rounded-sm" style={{ background: a.color }} />
+            <span className="h-2 w-3 rounded-xs" style={{ background: a.color }} />
             {a.label} <span className={`font-mono font-bold ${tone(aRet)}`}>{fmt(aRet)}</span>
           </span>
           <span className="flex items-center gap-1.5 text-slate-300">
-            <span className="h-2 w-3 rounded-sm" style={{ background: b.color }} />
+            <span className="h-2 w-3 rounded-xs" style={{ background: b.color }} />
             {b.label} <span className={`font-mono font-bold ${tone(bRet)}`}>{fmt(bRet)}</span>
           </span>
         </div>

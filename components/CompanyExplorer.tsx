@@ -68,6 +68,7 @@ export default function CompanyExplorer({ prices, events, siteDomain, subject }:
     try {
       const sp = new URLSearchParams(window.location.search);
       const f = sp.get("focus");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restored from the URL and storage after mount, so server and first render agree
       if (f) setFocusHint(f);
       const t = sp.get("types");
       if (t !== null) {

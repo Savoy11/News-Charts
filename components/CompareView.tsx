@@ -22,6 +22,53 @@ function handle(s: CompareSubject): string {
   return s.label.length > 22 ? `${s.label.slice(0, 21)}…` : s.label;
 }
 
+/**
+ * One subject's dots along the strip. Declared at module level: defined inside OverlayStrip it was
+ * a new component type on every render, so React threw away and rebuilt both rows each time.
+ */
+function StripRow({
+  subject,
+  color,
+  align,
+  xPct,
+}: {
+  subject: CompareSubject;
+  color: string;
+  align: "top" | "bottom";
+  xPct: (date: string) => number;
+}) {
+  return (
+    <div className="relative h-9">
+      {subject.events.map((ev) => {
+        const href = safeHref(ev.url);
+        const dot = (
+          <span
+            className="block h-2.5 w-2.5 rounded-full ring-2 ring-slate-950/70"
+            style={{ background: color }}
+          />
+        );
+        const vpos = align === "top" ? { bottom: 4 } : { top: 4 };
+        return (
+          <span
+            key={ev.id}
+            className="absolute -translate-x-1/2"
+            style={{ left: `${xPct(ev.date)}%`, ...vpos }}
+            title={`${ev.date} — ${ev.title}`}
+          >
+            {href ? (
+              <a href={href} target="_blank" rel="noopener noreferrer" className="block">
+                {dot}
+              </a>
+            ) : (
+              dot
+            )}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function OverlayStrip({
   a,
   b,
@@ -54,41 +101,10 @@ function OverlayStrip({
 
   const xPct = (date: string) => ((ms(date) - domain.min) / domain.span) * 100;
 
-  const Row = ({ subject, color, align }: { subject: CompareSubject; color: string; align: "top" | "bottom" }) => (
-    <div className="relative h-9">
-      {subject.events.map((ev) => {
-        const href = safeHref(ev.url);
-        const dot = (
-          <span
-            className="block h-2.5 w-2.5 rounded-full ring-2 ring-slate-950/70"
-            style={{ background: color }}
-          />
-        );
-        const vpos = align === "top" ? { bottom: 4 } : { top: 4 };
-        return (
-          <span
-            key={ev.id}
-            className="absolute -translate-x-1/2"
-            style={{ left: `${xPct(ev.date)}%`, ...vpos }}
-            title={`${ev.date} — ${ev.title}`}
-          >
-            {href ? (
-              <a href={href} target="_blank" rel="noopener noreferrer" className="block">
-                {dot}
-              </a>
-            ) : (
-              dot
-            )}
-          </span>
-        );
-      })}
-    </div>
-  );
-
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
-      <Row subject={a} color={A_COLOR} align="top" />
-      <div className="relative h-px bg-gradient-to-r from-slate-800 via-slate-600 to-slate-800">
+      <StripRow subject={a} color={A_COLOR} align="top" xPct={xPct} />
+      <div className="relative h-px bg-linear-to-r/srgb from-slate-800 via-slate-600 to-slate-800">
         <span className="absolute left-0 -top-2 text-[10px] font-semibold text-slate-600">
           {yearOf(new Date(domain.min).toISOString())}
         </span>
@@ -104,7 +120,7 @@ function OverlayStrip({
           />
         ))}
       </div>
-      <Row subject={b} color={B_COLOR} align="bottom" />
+      <StripRow subject={b} color={B_COLOR} align="bottom" xPct={xPct} />
       {both.length > 0 && (
         <p className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-500">
           <span className="h-2 w-2 rotate-45" style={{ background: BOTH_COLOR }} />
@@ -181,7 +197,7 @@ function InterleavedList({
               }`}
             >
               <span
-                className="mt-0.5 flex shrink-0 items-center gap-1 rounded border border-slate-700 px-1.5 py-0.5 text-[10px] font-semibold text-slate-300"
+                className="mt-0.5 flex shrink-0 items-center gap-1 rounded-sm border border-slate-700 px-1.5 py-0.5 text-[10px] font-semibold text-slate-300"
                 title={
                   isBoth
                     ? `${a.label} and ${b.label} — the same event on both`

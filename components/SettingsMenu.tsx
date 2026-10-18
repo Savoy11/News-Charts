@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import AiSettingsForm from "./AiSettingsForm";
 import PrefsSettings from "./PrefsSettings";
 import FeedKeysForm from "./FeedKeysForm";
+import { useHydrated } from "@/lib/useHydrated";
 import { loadPrefs, PREFS_EVENT, type Prefs, DEFAULT_PREFS } from "@/lib/prefs";
 import {
   CONFIG_EVENT,
@@ -16,11 +17,10 @@ import {
 
 export default function SettingsMenu() {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  // the portal needs document.body, which exists only once the page is live
+  const mounted = useHydrated();
   const [config, setConfig] = useState<AiConfig | null>(null);
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
-
-  useEffect(() => setMounted(true), []);
 
   const refresh = useCallback(() => {
     setConfig(loadConfig());
@@ -28,6 +28,7 @@ export default function SettingsMenu() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read from storage after mount and on every change, so server and first render agree
     refresh();
     const openHandler = () => setOpen(true);
     window.addEventListener(CONFIG_EVENT, refresh);
@@ -86,7 +87,7 @@ export default function SettingsMenu() {
         mounted &&
         createPortal(
           <div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-sm sm:items-center"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-xs sm:items-center"
             onClick={() => setOpen(false)}
           >
           <div
@@ -101,7 +102,7 @@ export default function SettingsMenu() {
               <button
                 onClick={() => setOpen(false)}
                 aria-label="Close settings"
-                className="rounded px-2 text-lg leading-none text-slate-500 hover:text-slate-200"
+                className="rounded-sm px-2 text-lg leading-none text-slate-500 hover:text-slate-200"
               >
                 ×
               </button>
@@ -123,7 +124,7 @@ export default function SettingsMenu() {
               </p>
               <AiSettingsForm config={config} onSaved={setConfig} />
 
-              <div className="mt-6 border-t border-slate-800 pt-5">
+              <div className="border-t border-slate-800 pt-5">
                 <h3 className="text-sm font-bold text-slate-200">News feed keys</h3>
                 <p className="pb-2 pt-1 text-xs leading-relaxed text-slate-500">
                   Optional. The New York Times and Guardian archives are free to read with your own
@@ -133,7 +134,7 @@ export default function SettingsMenu() {
                 <FeedKeysForm />
               </div>
 
-              <div className="mt-6 border-t border-slate-800 pt-5">
+              <div className="border-t border-slate-800 pt-5">
                 <PrefsSettings prefs={prefs} onChange={setPrefs} />
               </div>
             </div>

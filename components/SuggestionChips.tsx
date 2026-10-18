@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { INITIAL, pickMix, type Suggestion } from "@/lib/suggestions";
+import { useHydrated } from "@/lib/useHydrated";
 
 const ROTATE_MS = 3800;
 const FADE_MS = 260;
@@ -18,7 +19,7 @@ export default function SuggestionChips({ initial = INITIAL }: { initial?: Sugge
   const [fading, setFading] = useState<number | null>(null);
   const pool = useRef<Suggestion[]>(initial);
   const lastSlot = useRef<number>(-1);
-  const [ready, setReady] = useState(false);
+  const ready = useHydrated();
 
   const reducedMotion =
     typeof window !== "undefined" &&
@@ -36,7 +37,6 @@ export default function SuggestionChips({ initial = INITIAL }: { initial?: Sugge
    * from a five-item pool would only churn the same five.
    */
   useEffect(() => {
-    setReady(true);
     let cancelled = false;
     fetch("/api/suggestions")
       .then((r) => (r.ok ? r.json() : null))
@@ -94,7 +94,7 @@ export default function SuggestionChips({ initial = INITIAL }: { initial?: Sugge
 
   return (
     <div
-      className="mt-4 flex min-h-[2rem] flex-wrap items-center justify-center gap-2"
+      className="mt-4 flex min-h-8 flex-wrap items-center justify-center gap-2"
       onMouseEnter={() => setEngaged(true)}
       onMouseLeave={() => setEngaged(false)}
       onFocusCapture={() => setEngaged(true)}

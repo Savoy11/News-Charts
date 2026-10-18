@@ -53,7 +53,7 @@ export default function FollowingList() {
             key={s.href}
             className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900/60 p-3 transition-colors hover:border-slate-700"
           >
-            <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${k.cls}`}>
+            <span className={`shrink-0 rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${k.cls}`}>
               {k.label}
             </span>
             <Link href={s.href} className="min-w-0 flex-1 text-sm font-semibold text-slate-200 hover:text-sky-300">

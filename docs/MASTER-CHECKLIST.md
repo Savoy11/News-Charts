@@ -434,13 +434,14 @@ the site off the 24 advisories `npm audit` rated critical. `npm run check` passe
       tried and reverted: it changed nothing. Sector misses now answer 404 (on 14.2 they answered
       200). The fix left is dropping the loading skeleton on those two routes, which is an owner
       decision.
-- [ ] `P2` **Follow-ups from the upgrade, not started.**
+- [x] `P2` **Follow-ups from the upgrade** — both done in batch 10 (2026-10-18), below.
       - Adopt the React Compiler lint rules (`react-hooks/set-state-in-effect`, `refs`,
         `static-components`). They flag 18 existing sites, chiefly code that reads
         `localStorage` after mount.
       - Two dev-only audit findings remain: Tailwind 3's file watcher (`chokidar` → `braces`)
         and the lint plugin's `fast-glob`. Clearing them means Tailwind 4, a breaking change of
-        its own. Neither ships to visitors.
+        its own. Neither ships to visitors. ↳ Tailwind's half is cleared; the lint plugin's
+        `braces` chain has no fixed release upstream yet.
 
 ## NC ledger — batch 9: live assertions, a ticker index that says its age (2026-10-17)
 
@@ -507,6 +508,58 @@ passes with a new suite (`check:live-harness`), and `npm run lint` reports nothi
 - [ ] **NC-033 — wording corrected; the live check is still owed.** The release-gate line said
       "URL dedup". The match is a normalised headline plus its day (`storyKey`), which is what
       lets two outlets' copies of one story collapse.
+
+## NC ledger — batch 10: follow-ups from the Next.js upgrade (2026-10-18)
+
+No ledger item closes here: these are the two `P2` follow-ups batch 8 left in this file. The
+scout's ten proposals wait for the owner's marks, and nothing else open can be built and verified
+from a cloud session that every outside source refuses. `npm run check` passes, `npm run lint`
+reports nothing with the new rules on, `next build` compiles, and `check:ui` is 141/148 — the
+same seven stale prompt-search checks.
+
+- [x] **The React Compiler lint rules are on.** Batch 8 had switched off three rules new in
+      eslint-plugin-react-hooks 7, which flagged 18 sites. Nine are restructured:
+      - refs written during render — the timeline's zoom and stack override, and the price
+        chart's select callback — now update in a layout effect, after render;
+      - the price popup carries the chart width with its hover instead of reading a ref during
+        render, which went stale after a resize;
+      - the compare strip's row is a module-level component, no longer a new component type on
+        every render;
+      - the settings menu's and suggestion chips' "mounted" flags use `useHydrated`
+        (`lib/useHydrated.ts`, on `useSyncExternalStore`);
+      - the feed-keys form reads its keys on first render; it only renders inside the
+        client-only settings dialog.
+
+      The other nine restore browser-only state after mount on purpose, so the server and the
+      first client render agree. Each says why on the line, and a new instance must do the
+      same. `check:ui` 141/148 on that build.
+- [x] **Tailwind 3 → 4, with nothing a reader can see changed.**
+      - The official upgrade tool did the mechanical part: class renames, CSS-first
+        configuration, `@tailwindcss/postcss`.
+      - Then each v4 default that changes the page was put back to v3's value:
+        - **colours** — v4's OKLCH palette renders accents more saturated, so v3's hex values
+          are pinned for every family in use (`app/v3-palette.css`, generated from
+          tailwindcss@3.4.19);
+        - **fonts** — the body's Geist rule had always lost to `font-sans`, so pages render in
+          the system stack; v4's layers would have flipped that, and v4.3 also changed the
+          default stack;
+        - **line heights** — fixed again, not ratios;
+        - **gradients** — blended in sRGB;
+        - **placeholder colour**, and the **pointer cursor** on buttons;
+        - **two settings sections** carried an `mt-6` that v3's `space-y` had silently
+          overridden, and v4 would have honoured.
+      - Measured with full-page screenshots of nine pages at desktop and phone widths, plus the
+        open settings dialog, against the v3 build: every one pixel-identical. The exceptions are
+        the homepage's shuffled suggestion chips, which differ between two v3 runs too, and an
+        "Xh ago" label the clock had moved.
+      - `npm audit` went from 9 findings to 5. Tailwind's file-watcher chain is gone. The 5
+        left are one chain under `eslint-config-next` (`fast-glob` → `micromatch` → `braces`),
+        and every `braces` release is flagged with no fix yet. It is lint tooling only, and
+        `--omit=dev` stays at 0.
+- [ ] **Not done: funds in JSON-LD.** The company page calls every security a `Corporation`.
+      Telling a fund from a company is not reliable from what is stored: the SEC files SPY and
+      GLD as companies, while VOO appears only as a fund. Left for a fund-page pass, as batch 9
+      said.
 
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 

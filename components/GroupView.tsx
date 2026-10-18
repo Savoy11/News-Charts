@@ -32,6 +32,7 @@ export default function GroupView({ name }: { name: string }) {
 
   useEffect(() => {
     if (!ready || !tickerKey) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the loading flag of a fetch this effect starts
       setLoading(false);
       return;
     }

@@ -48,7 +48,7 @@ export default function BestMatches({
             <button
               type="button"
               onClick={() => onJump(ev.date)}
-              className="group flex w-full items-baseline gap-2 rounded px-1 py-0.5 text-left hover:bg-sky-900/20"
+              className="group flex w-full items-baseline gap-2 rounded-sm px-1 py-0.5 text-left hover:bg-sky-900/20"
               title={`Jump to ${ev.date} in the timeline`}
             >
               <span className="shrink-0 font-mono text-xs text-slate-500">{ev.date}</span>

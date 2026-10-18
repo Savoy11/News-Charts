@@ -28,6 +28,7 @@ export default function FollowBar({
 
   useEffect(() => {
     const prev = loadFollows()[subject.href];
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read from storage after mount, so server and first render agree
     setFollowing(Boolean(prev));
     if (prev) {
       setFresh(newSince(prev, signature));

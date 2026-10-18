@@ -46,6 +46,7 @@ export default function AiPanel({ events, ranking, onRanking, initialInstruction
   // pre-fill (never overwrite) with the focus a search prompt carried in, so the
   // visitor's angle is one click from being applied rather than silently dropped
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a prop that can arrive after mount; it fills an empty box and never overwrites typing
     if (initialInstruction) setInstruction((cur) => cur || initialInstruction);
   }, [initialInstruction]);
 
@@ -74,7 +75,7 @@ export default function AiPanel({ events, ranking, onRanking, initialInstruction
   return (
     <div className="mb-3 rounded-lg border border-slate-800 bg-slate-900/40">
       <div className="flex flex-wrap items-center gap-2 p-2">
-        <span className="rounded bg-fuchsia-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-fuchsia-300">
+        <span className="rounded-sm bg-fuchsia-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-fuchsia-300">
           AI search
         </span>
 
@@ -90,7 +91,7 @@ export default function AiPanel({ events, ranking, onRanking, initialInstruction
           }
           disabled={busy}
           aria-label="Narrow this timeline with AI"
-          className="min-w-[14rem] flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-200 placeholder-slate-600 focus:border-fuchsia-600 focus:outline-none disabled:opacity-60"
+          className="min-w-56 flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-200 placeholder-slate-600 focus:border-fuchsia-600 focus:outline-hidden disabled:opacity-60"
         />
 
         <button

@@ -70,8 +70,9 @@ A script policy belongs with NC-164.
 - ~~**NC-166 — Next.js 14.2.35 advisories.**~~ **Fixed in batch 8:** upgraded to Next.js 16.4.2
   and React 19. `npm audit --omit=dev` went from 4 findings (1 critical: next, with 24 advisories)
   to none; `check:framework` holds the version floor. What `npm audit` still reports is
-  development tooling only (Tailwind 3's file watcher, the lint plugin's glob helper), which never
-  reaches a visitor.
+  development tooling only, which never reaches a visitor: after the Tailwind 4 upgrade (batch 10),
+  one chain under the lint plugin (`fast-glob` → `micromatch` → `braces`), with no fixed `braces`
+  release yet.
 - **Host controls.** The in-app limiter counts per instance and trusts the first
   `X-Forwarded-For` hop. The host must overwrite that header, and a host or WAF limit is the
   durable version (owner action, recorded in `docs/OWNER-ACTIONS.md`).

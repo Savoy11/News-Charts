@@ -46,6 +46,7 @@ export default function AiPanel({ events, ranking, onRanking, initialInstruction
   // pre-fill (never overwrite) with the focus a search prompt carried in, so the
   // visitor's angle is one click from being applied rather than silently dropped
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a prop that can arrive after mount; it fills an empty box and never overwrites typing
     if (initialInstruction) setInstruction((cur) => cur || initialInstruction);
   }, [initialInstruction]);
 

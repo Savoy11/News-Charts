@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { BYO_FEEDS, clearFeedKeys, loadFeedKeys, saveFeedKeys, type FeedKeys } from "@/lib/feedKeys";
 
 /**
@@ -12,10 +12,10 @@ import { BYO_FEEDS, clearFeedKeys, loadFeedKeys, saveFeedKeys, type FeedKeys } f
  * which an ad-supported product is not allowed to be. Read through the visitor's key, they are.
  */
 export default function FeedKeysForm() {
-  const [keys, setKeys] = useState<FeedKeys>({});
+  // Read on first render: this form only ever renders inside the open settings dialog, a portal
+  // that exists only in the browser, so there is no server render for it to disagree with.
+  const [keys, setKeys] = useState<FeedKeys>(loadFeedKeys);
   const [status, setStatus] = useState("");
-
-  useEffect(() => setKeys(loadFeedKeys()), []);
 
   const stored = loadFeedKeys();
   const anyStored = BYO_FEEDS.some((f) => stored[f.id]);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { EventType, TimelineEvent } from "@/lib/types";
 import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT, type TimelinePrefs } from "@/lib/prefs";
@@ -203,9 +203,9 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
   const pendingScroll = useRef<number | null>(null);
   // saving must wait for the restore pass, or the default state overwrites what was stored
   const hydrated = useRef(false);
-  // scroll fires before a zoom change re-attaches its listener, so read zoom from a ref
+  // scroll fires before a zoom change re-attaches its listener, so read zoom from a ref — kept
+  // current in a layout effect (below), which runs before any scroll the new zoom could cause
   const zoomRef = useRef(zoom);
-  zoomRef.current = zoom;
   // the restore's own scroll fires an event; ignore it or it saves pre-restore state
   const suppressSave = useRef(false);
   // read inside persist(), which must not re-create itself when the override flips
@@ -250,6 +250,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
       const saved = JSON.parse(sessionStorage.getItem(storeKey) || "{}");
       const fallback = loadPrefs().timeline.defaultZoom;
       const initial = typeof saved.zoom === "number" && ZOOMS[saved.zoom] ? saved.zoom : fallback;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restored from session storage after mount, so server and first render agree
       if (ZOOMS[initial]) setZoom(initial);
       if (typeof saved.stacked === "boolean") setStackOverride(saved.stacked);
       pendingScroll.current = typeof saved.scrollLeft === "number" ? saved.scrollLeft : null;
@@ -260,7 +261,12 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
   }, [storeKey]);
 
   const stacked = stackOverride ?? tl.stack;
-  stackOverrideRef.current = stackOverride;
+  // Refs are written after render, not during it: a render React throws away must not leave a
+  // value behind that the scroll and persist handlers would then read.
+  useLayoutEffect(() => {
+    zoomRef.current = zoom;
+    stackOverrideRef.current = stackOverride;
+  }, [zoom, stackOverride]);
 
   const { clusters, width } = useMemo(() => {
     const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));

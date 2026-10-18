@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   createChart,
   createSeriesMarkers,
@@ -52,6 +52,8 @@ const POPUP_MAX = 5; // articles listed before "+N more"
 interface Hover {
   x: number;
   y: number;
+  /** the chart's width when the pointer arrived, so the popup can be kept inside it */
+  width: number;
   day: string;
   events: TimelineEvent[];
 }
@@ -86,13 +88,14 @@ type OverlayKey = (typeof OVERLAYS)[number]["key"];
 export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const onSelectRef = useRef(onSelectDate);
-  onSelectRef.current = onSelectDate;
+  useLayoutEffect(() => {
+    onSelectRef.current = onSelectDate;
+  }, [onSelectDate]);
 
   // crosshair-follow popup: the nearest event day's articles, at the pointer
   const [hover, setHover] = useState<Hover | null>(null);
   // pointer is on the popup itself — freeze updates so its links can be clicked
   const pinned = useRef(false);
-  const widthRef = useRef(0);
 
   // Overlays are off by default: the price line and its event markers are what the page is
   // for, and three more series on top of them is a busier chart than most readers want.
@@ -208,7 +211,6 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
     // Sweep the line → the nearest event day (within reach) pops its articles up at the cursor.
     chart.subscribeCrosshairMove((param) => {
       if (pinned.current) return; // reader is on the popup — don't move it out from under them
-      widthRef.current = el.clientWidth;
       if (!param.time || !param.point) {
         setHover(null);
         return;
@@ -235,7 +237,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
         return;
       }
       const day = tradingDays[best];
-      setHover({ x: param.point.x, y: param.point.y, day, events: eventsByDay.get(day) ?? [] });
+      setHover({ x: param.point.x, y: param.point.y, width: el.clientWidth, day, events: eventsByDay.get(day) ?? [] });
     });
 
     chart.subscribeClick((param) => {
@@ -248,7 +250,6 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
 
     const resize = () => {
       chart.applyOptions({ width: el.clientWidth });
-      widthRef.current = el.clientWidth;
     };
     resize();
     const observer = new ResizeObserver(resize);
@@ -263,8 +264,10 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
     // hand, and cheap at this data size
   }, [prices, events, on, hasVolume]);
 
-  const popupLeft = (x: number) =>
-    Math.min(Math.max(x + 14, 8), Math.max((widthRef.current || POPUP_W) - POPUP_W - 8, 8));
+  // The width travels with the hover it belongs to: read from a ref during render, it was
+  // whatever the last resize left there, and nothing re-rendered when it changed.
+  const popupLeft = (h: Hover) =>
+    Math.min(Math.max(h.x + 14, 8), Math.max((h.width || POPUP_W) - POPUP_W - 8, 8));
 
   return (
     <div>
@@ -306,7 +309,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
               pinned.current = false;
               setHover(null);
             }}
-            style={{ left: popupLeft(hover.x), top: Math.min(hover.y + 16, 250), width: POPUP_W }}
+            style={{ left: popupLeft(hover), top: Math.min(hover.y + 16, 250), width: POPUP_W }}
             className="absolute z-20 rounded-lg border border-slate-700 bg-slate-900/95 p-2 shadow-xl backdrop-blur"
           >
             <p className="mb-1.5 flex items-baseline justify-between px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">

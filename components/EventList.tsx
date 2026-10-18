@@ -539,6 +539,7 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
     hydrated.current = false;
     if (!persistKey) return;
     const saved = loadJSON<{ years?: string[]; months?: string[] }>(persistKey, {});
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- restored from storage after mount, so server and first render agree
     setCollapsedYears(new Set(saved.years ?? []));
     setCollapsedMonths(new Set(saved.months ?? []));
     hydrated.current = true;
@@ -563,6 +564,7 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
     if (!reveal?.date) return;
     const year = reveal.date.slice(0, 4);
     const monthKey = reveal.date.slice(0, 7);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the section a jump landed in; returns the same set when nothing changes
     setCollapsedYears((prev) => {
       if (!prev.has(year)) return prev;
       const next = new Set(prev);

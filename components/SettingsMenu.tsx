@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import AiSettingsForm from "./AiSettingsForm";
 import PrefsSettings from "./PrefsSettings";
 import FeedKeysForm from "./FeedKeysForm";
+import { useHydrated } from "@/lib/useHydrated";
 import { loadPrefs, PREFS_EVENT, type Prefs, DEFAULT_PREFS } from "@/lib/prefs";
 import {
   CONFIG_EVENT,
@@ -16,11 +17,10 @@ import {
 
 export default function SettingsMenu() {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  // the portal needs document.body, which exists only once the page is live
+  const mounted = useHydrated();
   const [config, setConfig] = useState<AiConfig | null>(null);
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
-
-  useEffect(() => setMounted(true), []);
 
   const refresh = useCallback(() => {
     setConfig(loadConfig());
@@ -28,6 +28,7 @@ export default function SettingsMenu() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read from storage after mount and on every change, so server and first render agree
     refresh();
     const openHandler = () => setOpen(true);
     window.addEventListener(CONFIG_EVENT, refresh);

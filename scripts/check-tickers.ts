@@ -231,6 +231,44 @@ async function main(): Promise<void> {
   check("junk is nothing", resolveTickerLocally("zzqqxxnotathing") === null);
   check("  …and none of it asked anybody", asked.length === 0, asked.join(", "));
 
+  console.log("\n\"Did you mean\": near matches from the index, with no network");
+  // 2026-10-17 proposal 3: the index matched exactly or by prefix, so a misspelling or "and" for
+  // "&" ended at "didn't match" for every security not yet held.
+  const { suggestSecurities, fundNameIsShared, SUGGEST_LIMIT } = await import("../lib/sec");
+  const { trigrams, wordSimilarity } = await import("../lib/fuzzy");
+  trapFetch(); // any request now throws
+  const first = (q: string) => suggestSecurities(q)[0];
+  check("\"Johnson and Johnson\" offers JNJ — \"&\" read as \"and\"",
+    first("Johnson and Johnson")?.ticker === "JNJ" && first("Johnson and Johnson")?.via === "name",
+    JSON.stringify(first("Johnson and Johnson")));
+  check("\"Procter and Gamble\" offers PG", first("Procter and Gamble")?.ticker === "PG");
+  check("a typo in a name not yet held is forgiven", first("berkshire hathway")?.ticker === "BRK-B" && first("nvidea")?.ticker === "NVDA");
+  check("a fund misspelt is found by its series name", first("vanguard total stock markt")?.ticker === "VTI");
+  check("an everyday name inside a longer query is found", first("tesla motors")?.ticker === "TSLA", JSON.stringify(first("tesla motors")));
+  check("…but never ahead of a name holding every word typed",
+    first("apple hospitalty")?.ticker === "APLE", JSON.stringify(first("apple hospitalty")));
+  check("a name missing a word typed is not offered", suggestSecurities("electric cars").length === 0,
+    suggestSecurities("electric cars").map((s) => s.name).join(" / "));
+  check("junk is offered nothing", suggestSecurities("zzqqxxnotathing").length === 0);
+  check("filler alone is offered nothing", suggestSecurities("holdings").length === 0 && suggestSecurities("co").length === 0);
+  check(`never more than ${SUGGEST_LIMIT}`, suggestSecurities("bitcoin").length === SUGGEST_LIMIT);
+  check("a name several funds share is recognised", fundNameIsShared("S&P 500") && fundNameIsShared("Balanced Fund"));
+  check("  …but not one fund listed twice, or a company", !fundNameIsShared("Vanguard 500") && !fundNameIsShared("Ford"));
+  check("\"S&P 500\" offers funds named for it, not S&P Global",
+    suggestSecurities("S&P 500").every((s) => s.ticker !== "SPGI" && /^S&P 500/.test(s.name)),
+    suggestSecurities("S&P 500").map((s) => s.ticker).join(" "));
+  // Pinned against Postgres's own word_similarity, so the floor means the same on both paths.
+  const pg: [string, string, number][] = [
+    ["forde", "Ford Motor Company", 0.667],
+    ["word", "two words", 0.8],
+    ["alibba", "Alibaba Group Holding Ltd", 0.571],
+    ["vanguard total stock markt", "Vanguard Institutional Total Stock Market Index Fund", 0.625],
+    ["electric cars", "GENERAL ELECTRIC CO", 0.714],
+  ];
+  const off = pg.filter(([a, b, w]) => Math.abs(wordSimilarity(new Set(trigrams(a)), trigrams(b)) - w) > 0.001);
+  check("the score is pg_trgm's word_similarity", off.length === 0, off.map(([a, b]) => `${a} / ${b}`).join("; "));
+  check("  …and none of it asked anybody", asked.length === 0, asked.join(", "));
+
   console.log("\nTwo securities can share one registrant");
   // NC-138: subjects_cik_uq made the CIK an identity, so GOOG after GOOGL — or BRK-A after BRK-B,
   // or any second series of a fund trust — failed on insert and was never ingested. Read the

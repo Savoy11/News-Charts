@@ -32,6 +32,7 @@ import { COMPANY_SOURCES, TOPIC_SOURCES } from "./ingest";
 import { CRYPTO_SUBJECTS } from "../lib/onchain";
 import type { SourceKey } from "../lib/types";
 import { countMismatches, sameDatabase } from "../lib/backupCounts";
+import { companyLede } from "../lib/wiki";
 
 let pass = 0;
 let fail = 0;
@@ -322,6 +323,23 @@ for (const kind of eventTypes) {
 for (const kind of ["governance", "exploit"]) {
   check(`${kind} is on the topic explorer`, topicFilters.includes(kind), topicFilters.join(", "));
 }
+
+// 2026-10-17 proposal 5: ingestCompany fetched the company's Wikipedia lede with its story and
+// kept only the events, so the site's most numerous page carried no prose at all.
+console.log("\nA company's Wikipedia lede reaches its page");
+const ford = { title: "History of Ford Motor Company", summary: "Ford Motor Company is an American automaker…" };
+check("a lede from the company's own article is kept", companyLede("Ford Motor", ford)?.title === ford.title);
+check("  …and one from an article about something else is not",
+  companyLede("Best Buy", { title: "TaxAct", summary: "TaxAct is a tax preparation service…" }) === null);
+check("  …nor an empty one", companyLede("Ford Motor", { title: "Ford Motor Company", summary: "  " }) === null);
+const companyBody = ingestSrcFor("ingestCompany");
+check("ingestCompany keeps the gated lede", /companyLede\(name, found\)/.test(companyBody) && /UPDATE subjects SET summary/.test(companyBody));
+const pageData = read("lib/page-data.ts");
+const heldCompanySrc = pageData.slice(pageData.indexOf("async function heldCompanyPage"));
+check("the company page data carries it", /summary: subject\.summary/.test(heldCompanySrc) && /wikipediaTitle: subject\.wikipediaTitle/.test(heldCompanySrc));
+const companyPage = read("app/company/[ticker]/page.tsx");
+check("the company page renders it, credited", /<TopicSummary text=\{data\.summary\}/.test(companyPage));
+check("  …and gives it to search engines", /description: clampDescription\(data\.summary/.test(companyPage));
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);
 if (fail) {

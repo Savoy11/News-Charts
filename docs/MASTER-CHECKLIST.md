@@ -494,7 +494,8 @@ passes with a new suite (`check:live-harness`), and `npm run lint` reports nothi
       4. Federal Register documents naming the company.
 
       Spot-checked against the code. **Next: the owner marks each proposal, then a session runs
-      the scout in FILE mode.** It noticed three things in passing:
+      the scout in FILE mode.** ✅ Marked 2026-10-18: 1–8 approved and filed, 9 and 10 still
+      pending; batch 11 built 1, 3 and 5. It noticed three things in passing:
       - **Fixed here:** `npm run refresh` selected only companies and topics, so a sector's
         Federal Register rules never refreshed after the CLI's first `--industry` run. Industries
         now refresh on the schedule, inside the source's one-day window. A sector is stamped as
@@ -512,7 +513,7 @@ passes with a new suite (`check:live-harness`), and `npm run lint` reports nothi
 ## NC ledger — batch 10: follow-ups from the Next.js upgrade (2026-10-18)
 
 No ledger item closes here: these are the two `P2` follow-ups batch 8 left in this file. The
-scout's ten proposals wait for the owner's marks, and nothing else open can be built and verified
+scout's ten proposals waited for the owner's marks (given 2026-10-18 — see batch 11), and nothing else open can be built and verified
 from a cloud session that every outside source refuses. `npm run check` passes, `npm run lint`
 reports nothing with the new rules on, `next build` compiles, and `check:ui` is 141/148 — the
 same seven stale prompt-search checks.
@@ -560,6 +561,73 @@ same seven stale prompt-search checks.
       Telling a fund from a company is not reliable from what is stored: the SEC files SPY and
       GLD as companies, while VOO appears only as a fund. Left for a fund-page pass, as batch 9
       said.
+
+## NC ledger — batch 11: three of the scout's approved proposals (2026-10-18)
+
+The owner marked the scout's proposals on 2026-10-18: 1–8 approved, 9 and 10 still pending. A
+FILE pass put the eight approved ones into this checklist, each in the section its proposal named.
+This batch builds three of them, all offline. One ledger item closes, by the owner's decision:
+**NC-117**, deleting the old remote branches — the owner chose to keep them, so there is nothing
+left to do. `npm run check` passes, `npm run lint` is clean, `next build` compiles, and `check:ui`
+is 146/153 — the five new checks pass, and the seven failures are the same stale prompt-search
+checks as before.
+
+- [x] **Each 8-K is named by what it announces (proposal 1).** The title used to say "8-K
+      filing" for everything but an earnings release.
+      - A table of the SEC's 8-K item list (`lib/secForms.ts`), in order of how much each item
+        tends to matter. The most important item reported names the filing: "Ford Motor Co:
+        Officer or director change (8-K 5.02)". Item 9.01 (the exhibit list) never does. An
+        8-K with only old, pre-2004 item numbers keeps "8-K filing" rather than a guess.
+      - The line under the row now names each item and keeps the codes: "Items 5.02 Officer or
+        director change · 9.01 Financial statements and exhibits".
+      - 20-F and 40-F (a foreign company's annual report) are titled "Annual report (…)" and
+        count as earnings, like a 10-K. 40-F filings are kept now; they were dropped before.
+        6-K stays a plain filing, since nothing says which 6-Ks carry results.
+      - Stored rows pick up the new titles and types on the next scheduled refresh.
+      - New `check:sec-forms` (20 checks, 5 of them fail on the old code). The filing stack's
+        form count still reads "8-K" from the new titles.
+      - `check:live` gains two cases for the production host: Apple has an 8-K named by its
+        item, and TSM's yearly 20-F counts as earnings. No live 40-F case yet — it needs a
+        confirmed 40-F filer whose recent filings reach back to one, picked from a host that
+        reaches EDGAR.
+- [x] **"Did you mean" when a search finds nothing (proposal 3).**
+      - Up to three near matches from the built-in list of about 26,500 company and fund names (one per security).
+        No request and no database, so it works with both down. Offered, never followed: the
+        no-JavaScript `/search` sends the visitor home rather than picking one for them.
+      - Matched the same way the database matches names already held — Postgres's
+        `word_similarity`, rebuilt in `lib/fuzzy.ts` and pinned to Postgres's own answers. "&"
+        counts as "and". Two additions: every distinctive word typed must be in the name
+        ("electric cars" no longer offers General Electric). And a company whose everyday name
+        sits inside the query is offered when nothing else matched — "tesla motors" → Tesla, but
+        "apple hospitalty" still → Apple Hospitality REIT, not Apple Inc.
+      - Measured: "nvidea" → NVIDIA, "alibba" → Alibaba, "tesla motors" → Tesla. "Johnson and
+        Johnson" and "Procter and Gamble" already reached JNJ and PG through the existing
+        first-words rescue, so suggestions mostly catch typos and queries whose first words
+        match nothing.
+      - A name several funds share is offered as a choice too. "S&P 500" now offers RYSOX, SPFIX
+        and QCEQRX (funds whose names start with it) instead of landing on S&P Global — the case
+        NC-040 left open. SPY is not among them, because its name doesn't start "S&P 500"; an
+        alias for it would be an owner call.
+      - Speed: 1–20 ms for typical queries. The slowest seen is about 120 ms, for one common
+        word like "fund" that appears in 18,000 names. A word typed many times over is counted
+        once, so a padded query costs no more than the word.
+      - Logged under a new `suggested` search rung (`db/026_suggested_rung.sql`), which
+        `npm run search-report` explains.
+      - Checks: 15 new in `check:tickers` (no request made), 7 in `check:search-log` (including
+        the whole search run with the database down), 3 in `check:ui`.
+- [x] **Company pages show the Wikipedia summary (proposal 5).** Company ingest already fetched
+      it with the company's story and threw it away.
+      - It is kept only when the article really is about the company (`companyLede`, on
+        `articleAnswersSlug`).
+      - Shown above the timeline with the same credited summary block topic pages use, and used
+        as the company's structured-data `description`.
+      - Often the first paragraph of "History of …", since the story prefers that article; the
+        credit names the article it came from.
+      - Real summaries were not looked at here, since Wikipedia is blocked from this container.
+        The first refresh on the owner's host fills them in.
+      - Checks: 7 in `check:wiring`, 2 in `check:ui`.
+- [x] **NC-117 — closed by the owner's decision.** Asked whether to delete the 22 old remote
+      branches, the owner said keep them.
 
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
@@ -715,6 +783,80 @@ already held, but new investment goes to securities coverage first.
         asserts both halves of that split, and that the shallow path makes exactly one request.
       - A shard that fails to load costs its own years and nothing else — the recent block is
         already in hand, and half a history beats none.
+- [x] `P1` **Name each 8-K by its item, and count foreign issuers' annual reports as earnings.**
+      ✅ **Done 2026-10-18 (batch 11)** — see that section for what shipped.
+      Every 8-K except item 2.02 is titled "`<form>` filing" (`lib/sec.ts:406`), while its item
+      codes are stored and printed raw under the row (`Items: 5.02,9.01` — `lib/sec.ts:425`,
+      `components/EventList.tsx:76`). An officer change, a material contract, a restatement
+      warning (4.02) and a bankruptcy (1.03) all read "8-K filing", and a run of them collapses
+      into "8-K ×4". And `earnings` means 10-K, 10-Q or 8-K 2.02 (`lib/sec.ts:397`), so a 20-F
+      filer — BABA, TSM, ASML, SAP, TM, SONY, SHOP — can never carry an earnings event, and 40-F
+      is not in `wanted` at all (`lib/sec.ts:365-370`) though `EventList`'s `FORM_RE` parses it.
+      - Map the current Form 8-K item list (1.01–9.01) to plain labels in `filingsFromBlock`:
+        the most material item leads the title ("Ford Motor Co: Officer or director change
+        (8-K 5.02)"), 9.01 never does, and the raw codes stay in the description. A code outside
+        the table (pre-2004 numbering) keeps today's "8-K filing" rather than a guess.
+      - 20-F and 40-F become "Annual report (…)" typed `earnings`, as a 10-K is; admit 40-F.
+        **6-K stays a `filing`** — the submissions list does not say which 6-Ks carry results.
+      - Cases in `check:parsers` (or a new `check:sec-forms`). The title is in the content hash,
+        so the next scheduled refresh re-titles stored rows, as NC-155 did for dividends;
+        explanations citing a re-titled 8-K regenerate on the next `npm run explain`.
+      - No key, licence or recurring cost. Offline, about half a session: the `items` field is
+        already proven live by the 2.02 rule. A `check:live` case for a real 40-F can follow on
+        the production host.
+      - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
+        #1, approved 2026-10-18. Importance high · Efficiency very high · Practicality high.*
+- [ ] `P1` **Keep the material forms EDGAR already sends — amendments, M&A, ownership stakes,
+      offerings, delistings.** The deep ingest downloads a filer's whole record — for Ford, the
+      recent block plus two shards of 3,431 more (`lib/sec.ts:446-448`) — and keeps 937 filings:
+      the 17-form `wanted` filter (`lib/sec.ts:365-370`) drops roughly three rows in four.
+      `EventList`'s `FORM_RE` already parses 13D/G, 424B, 40-F and S-/F- registrations, and of
+      those only S-1 can arrive. These are the company's own primary documents, from a cleared
+      public-domain source, at zero extra requests.
+      - Candidates, to be tested against the count below: 10-K/A, 10-Q/A, 8-K/A (a 10-K/A is
+        often a restatement); 10-K405 (the pre-2002 annual report the shards reach); S-4,
+        DEFM14A, SC TO-T, SC 14D9; SC 13D(/A), if EDGAR lists it under the issuer; 424B*, S-3;
+        25-NSE (delisting) and 15-12B (deregistration).
+      - ⚠ **Before building — a live count of which forms the records actually carry.** Tally
+        `form` across a handful of real records (F, AAPL, BABA, SHOP, VOO, SPY; recent block
+        plus shards). Needs a host that reaches data.sec.gov: the owner's, or a cloud session
+        whose proxy allows sec.gov.
+      - ⚠ **Before building — the owner picks the list, and decides the insider-trade forms.**
+        Forms 3, 4, 5 and 144 are probably the bulk of what is discarded and genuinely
+        informative, but would swamp a timeline: exclude them, or admit them under their own chip
+        or aggregated by week. A separate call from the rest of the list.
+      - Then offline: labels, `earnings`/`filing` typing and `check:parsers` cases; the existing
+        filing-stack condensation absorbs the extra rows. Land it after the 8-K item labels
+        above, so new 8-K/A rows inherit them. No key, licence or recurring cost.
+      - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
+        #2, approved 2026-10-18. Importance high · Efficiency high · Practicality medium (one
+        live count and one owner choice first).*
+- [ ] `P1` **Federal Register documents that name the company, on the company's page.** The
+      adapter runs only from `ingestIndustry` (`scripts/ingest.ts:585`; the single call site
+      `check:wiring` records), and `COMPANY_SOURCES` (`scripts/ingest.ts:62`) omits it. Add it
+      for companies: query the common name and keep a document only when its **title** names the
+      company — an ITC investigation naming it as respondent, an FTC or SEC order, an
+      export-control listing, a FERC or NRC order on a utility, an airworthiness directive on a
+      manufacturer's aircraft. A full-text-only hit is dropped, not stored unscored. This does
+      not reopen `README.md:56-58`: a sector keyword hit stays the industry's, but a document
+      whose title names Nvidia *is* an Nvidia event, and the relevance layer's existing mention
+      rules can score it deterministically.
+      - Work: a per-company query, the title filter and a per-run cap; read company and sector
+        events by event id, so a document linked to both is listed once (`lib/page-data.ts`
+        merges `loadEvents` and `loadSectorEvents`, which key the same row differently); an
+        updated `check:wiring` reason and a `check:live` case. The adapter, its 24-hour window
+        and its quota note already exist. No key, licence or recurring cost; ingest only, never
+        the visitor path.
+      - ⚠ **Before it ships — measure noise and volume live.** Fixtures cannot size it: aircraft
+        makers, utilities and frequent ITC respondents will have many documents, most companies
+        few. Needs live Federal Register access (the owner's host); a cloud session can build
+        and check it against fixtures in the existing adapter's shape meanwhile.
+      - ⚠ **Before it ships — the owner sets the materiality rule.** Airworthiness directives
+        alone could run to hundreds a year on one manufacturer: cap them, give them their own
+        chip, or exclude the agency.
+      - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
+        #4, approved 2026-10-18. Importance high · Efficiency medium-high · Practicality medium
+        (a live measurement and a materiality rule first).*
 - [ ] `P2` The rest of the securities-coverage depth set: **GDELT year-window backfill** (GDELT
       answers from this container but throttles hard — 429/503 — so this needs the production
       host to develop against) and **richer paid-tier evidence** (needs a paid key). The LoC
@@ -722,6 +864,78 @@ already held, but new investment goes to securities coverage first.
       ⚠ Wikidata is **unreachable from this container** (`query.wikidata.org`), so that one needs
       a different environment rather than a different design. Topic-only recall items rank behind
       all of these until the scope changes again.
+- [x] `P2` **Company pages show the Wikipedia lede their ingest already fetches.**
+      ✅ **Done 2026-10-18 (batch 11)** — see that section for what shipped.
+      `ingestCompany` calls `getTopicTimeline(name)` (`scripts/ingest.ts:442`), which returns a
+      `summary` and `title` (`lib/wiki.ts:121-128`), and uses only `found.events`; the company
+      upsert (`scripts/ingest.ts:369-377`) receives neither. Topics, sectors and crypto assets
+      all store one, `loadSubject` already reads it (`lib/store/read.ts:232`), and only topic
+      pages render it, credited (NC-047). Store it for companies, render it above the timeline
+      with the existing `TopicSummary`, and add it to the page's JSON-LD `description`: one
+      paragraph of "what is this company" before forty filings, and the only unique prose on the
+      site's most numerous page type.
+      - Store it only when the title passes `articleAnswersSlug(commonName, title)`
+        (`lib/wiki.ts:451`). The company path applies no such check today, and a prominent lede
+        makes a wrong match far more visible than a buried history row.
+      - `getTopicTimeline` prefers a "History of …" article, so the lede will often be that
+        article's first paragraph. The credit names the article it came from, which keeps it
+        truthful; the owner may want it framed as history.
+      - No key, licence or recurring cost; the CC BY-SA credit comes with the component.
+        Offline with the seed, `check:ui` (credit present, as for topics) and `check:index`;
+        looking at a few real ledes needs Wikipedia, so the owner's host.
+      - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
+        #5, approved 2026-10-18. Importance medium · Efficiency very high · Practicality high.*
+- [ ] `P2` **Sector-relative performance on company and sector pages.** `priceDivergence` returns
+      every member's return over a common window and `computeSignals` publishes only the worst
+      (`lib/signals.ts:284-301`), so "INTC lagged the sector by 172.3 points" (`README.md:176`)
+      appears on `/industry/sic-3674` and never on `/company/INTC`. `SignalPanel` is mounted on
+      the industry page and on custom groups but not on the company page, though `/api/signals`
+      already takes `tickers=`.
+      - Company page: its return against the sector median over a stated window, with the member
+        count beside it and each peer linked to `/compare?a=<ticker>&b=<peer>` (the company
+        page's first route into `/compare`), plus `SignalPanel tickers={[ticker]}` for its own
+        news-volume spikes.
+      - Sector page: every member's return against the median, not only the single outlier.
+      - Data honesty: the existing three-member rule withholds the figure below three members,
+        and the member count and window travel with every number, so "the sector" never silently
+        means two companies. The seed needs a third `sic-3711` member to exercise it. Offline
+        against a seeded Postgres (`check:signals`, `check:ui`); no key, licence or recurring
+        cost.
+      - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
+        #6, approved 2026-10-18. Importance medium · Efficiency high · Practicality high.*
+- [ ] `P2` **Route topic pages to the securities they share events with.** Cross-subject links
+      live in `event_subjects` and are counted — "280 events carry 351 subject links"
+      (`README.md:480-482`) — but no page reads an event's *other* subjects, and the topic page
+      offers no route to any security (`app/topic/[slug]/page.tsx`: summary, explorer, sources,
+      ads). Add a "Securities in these stories" line built from the topic's events that are also
+      linked to a held company, relevance-gated on both links; each entry goes to the company page
+      and to the existing topic-over-price compose, `/compare?a=<topic>&b=<ticker>`. Mirror it on
+      company pages as "Topics that share events". **Related to Prompt search v2 (NC-008) above,
+      not part of it:** that makes *search* produce a security narrowed by a concern; this is a
+      navigational entry to the same intersection, from stored links, with no parsing.
+      - ⚠ **Before building any UI — a production count, as the go/no-go.** The overlap depends on
+        how many relevance-passing events carry both a topic and a company link; one SQL count on
+        the production database answers it. Needs the owner's database. Worth building, but
+        unsized until counted.
+      - Then one grouped query, one strip per page and a shared event in the seed; a cloud session
+        builds and verifies it offline. No key, licence or recurring cost.
+      - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
+        #7, approved 2026-10-18. Importance medium, uncertain until counted · Efficiency high ·
+        Practicality high.*
+- [ ] `P2` **Fund pages name their sibling funds.** The committed index's `seriesCiks` gives every
+      fund series' registrant and is read only for resolution (`lib/sec.ts:208-228`): 829 of
+      1,163 registrants have more than one series, and VOO's (CIK 36405) has eleven — VTV, VXF,
+      VUG, VV, VO, VB, VBK, VBR, VTI, VOT, VOE. Every fund filing tells the reader it "may concern
+      a sibling fund" (NC-139) and never says which. List the registrant's other series on the
+      fund page — "Other funds from Vanguard Index Funds: VTI, VTV, VUG, …" — the one honest
+      "related" relationship the data supports (same registrant, per EDGAR), not "similar funds".
+      - Held siblings are plain links. Unheld ones are marked as not yet held and carry
+        `rel="nofollow"`: a suggestion is a promise about what is here, and crawlers should not
+        walk the index into first-visit gathers (which the attempt ledger bounds anyway).
+      - Small and fully offline (committed index, a seeded fund); no key, licence or recurring
+        cost.
+      - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
+        #8, approved 2026-10-18. Importance low-medium · Efficiency high · Practicality high.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 
@@ -1140,8 +1354,8 @@ closed PR #15, whose findings are otherwise all shipped.
       **10 findings, 4 of them `P1`**, filed as their own items below. ✅ **Scout half done
       2026-10-17** (NC-037, batch 9): the first uncapped `opportunity-scout` pass, in
       [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md) — 10
-      proposals, 4 `P1`, waiting for the owner's APPROVED / REJECTED / DEFERRED marks before a
-      FILE pass. The 2026-07-30 run had been capped at 2 by instruction.
+      proposals, 4 `P1`. The owner marked them 2026-10-18: 1–8 approved and filed into this
+      checklist, 9 and 10 still pending. The 2026-07-30 run had been capped at 2 by instruction.
       - What the pass confirms about method, not just about defects: **every finding came from
         pointing an adapter at a live service.** The offline suites (25, all passing) could not
         have produced one of them. Findings 1, 2 and 7 share a shape — a live source whose real
@@ -1444,6 +1658,30 @@ the items under it can be argued for or against without one.
       - Conservative where it cannot judge: a slug of nothing but filler ("q3 earnings") is
         accepted, because being wrong that way costs a thin page while the other way deletes a
         real subject.
+- [x] `P1` **"Did you mean": offer near matches from the committed EDGAR index when a search
+      finds nothing.** ✅ **Done 2026-10-18 (batch 11)** — see that section for what shipped. Fuzzy matching exists only for subjects already held — `findCandidates`
+      (`lib/store/read.ts:169`, `word_similarity`, db/020) recovers "forde" → Ford only when Ford
+      is in the corpus — while the committed index, where every not-yet-ingested security is
+      found, is matched exactly or by prefix (`lib/sec.ts:156-177`, `:208-228`). 352 of 10,387
+      company titles contain "&" ("JOHNSON & JOHNSON", "PROCTER & GAMBLE Co", "AT&T INC."), so
+      "Johnson and Johnson" matches nothing unless JNJ is held, and nor does any misspelling of a
+      company not yet ingested. Those queries end at `unresolved` and "That didn't match a listed
+      security" — a dead end at the front door, for a security the site could have answered.
+      - Offer up to three near matches — companies and fund series — through the chooser NC-039
+        built, which today lists only held candidates. **Never route on resemblance alone**, and
+        treat "&" and "and" as the same. When the fund-name rung finds several funds
+        (`lib/sec.ts:218`), offer them rather than falling through to prefix salvage — the case
+        NC-040 left open, where "S&P 500" lands on S&P Global (SPGI).
+      - Trigram or word similarity in-process over about 29,500 names (10,387 company titles,
+        19,141 series names), milliseconds per unresolved query, so the index still answers with
+        the database down. A `suggested` search rung (one migration shaped like db/025); cases in
+        `check:tickers` (still no request made) and `check:search-log`, plus a `check:ui` case for
+        the offered list. `npm run search-report` already counts these misses, so the effect is
+        measurable after launch.
+      - Offline, one session; no key, licence or recurring cost. Improves as NC-051 keeps the
+        index fresh.
+      - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
+        #3, approved 2026-10-18. Importance high · Efficiency high · Practicality high.*
 - [ ] `P2` **Feed every real bad query into `check:prompt`.** The report's "rewrites that then
       landed on nothing" block exists to produce these. Cheapest accuracy work in the repo.
 - [x] ~~`P1` **Bound the network on the search path, and say so when it runs out.**~~ — done

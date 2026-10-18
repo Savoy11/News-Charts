@@ -4,3 +4,96 @@
  * EDGAR ticker index that `lib/sec.ts` carries.
  */
 export const REGISTRANT_FORM = /\((?:N-CSRS?|N-30D|N-CEN|NPORT-P|485APOS|485BPOS|497K?|N-1A)\)$/;
+
+/**
+ * The SEC's fixed list of Form 8-K items (the numbering in force since August 2004), each with a
+ * plain name, **in order of how much the item tends to matter to the price** — the order is what
+ * picks which item names a filing that reports several.
+ *
+ * Every 8-K title used to read "8-K filing" with the codes underneath as "Items: 5.02,9.01": the
+ * one form that announces things — a bankruptcy, a restatement warning, an officer leaving, a deal
+ * closing — was the one a reader could not tell apart without looking the numbers up.
+ *
+ * 2.02 is not here: an 8-K carrying results is typed and titled as an earnings announcement before
+ * this list is consulted. 9.01 is last and never leads — it is the exhibit index attached to most
+ * 8-Ks, so naming a filing after it would name nearly every filing the same thing.
+ */
+const EIGHT_K_ITEMS: [code: string, label: string][] = [
+  ["1.03", "Bankruptcy or receivership"],
+  ["4.02", "Past financial statements no longer reliable"],
+  ["5.01", "Change in control"],
+  ["3.01", "Delisting notice or listing transfer"],
+  ["1.05", "Cybersecurity incident"],
+  ["2.04", "Debt obligation accelerated"],
+  ["6.04", "Missed required distribution"],
+  ["2.01", "Acquisition or sale of assets completed"],
+  ["1.01", "Material agreement"],
+  ["1.02", "Material agreement ended"],
+  ["2.06", "Material impairment"],
+  ["2.05", "Exit or restructuring costs"],
+  ["4.01", "Auditor change"],
+  ["5.02", "Officer or director change"],
+  ["2.03", "New debt or financial obligation"],
+  ["3.03", "Change to shareholder rights"],
+  ["3.02", "Unregistered sale of shares"],
+  ["5.06", "Change in shell company status"],
+  ["1.04", "Mine safety shutdown or violations"],
+  ["5.03", "Bylaws or fiscal year change"],
+  ["5.07", "Shareholder vote results"],
+  ["5.05", "Code of ethics change or waiver"],
+  ["5.04", "Employee plan trading suspended"],
+  ["5.08", "Shareholder director nominations"],
+  ["6.02", "Servicer or trustee change"],
+  ["6.03", "Credit enhancement change"],
+  ["6.01", "Asset-backed securities material"],
+  ["6.05", "Securities Act updating disclosure"],
+  ["6.06", "Static pool information"],
+  ["7.01", "Regulation FD disclosure"],
+  ["8.01", "Other events"],
+  ["9.01", "Financial statements and exhibits"],
+];
+
+const ITEM_LABEL = new Map(EIGHT_K_ITEMS);
+const ITEM_RANK = new Map(EIGHT_K_ITEMS.map(([code], i) => [code, i]));
+
+/** The item codes EDGAR lists for an 8-K ("5.02,9.01"), in the order it lists them. */
+export function eightKItems(items: string): string[] {
+  return items
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Whether an 8-K reports results — EDGAR's item 2.02 — which makes it an earnings event. */
+export function reportsResults(items: string): boolean {
+  return eightKItems(items).includes("2.02");
+}
+
+/**
+ * The item that names an 8-K: the most material one it reports, never 9.01. Null when no code is
+ * in the current list — an 8-K filed before August 2004 used the old item numbers ("5", "7"),
+ * which mean different things, and a guess at them would be a wrong title rather than a vague one.
+ */
+export function leadItem(items: string): { code: string; label: string } | null {
+  let best: string | null = null;
+  for (const code of eightKItems(items)) {
+    if (code === "9.01" || !ITEM_RANK.has(code)) continue;
+    if (best === null || ITEM_RANK.get(code)! < ITEM_RANK.get(best)!) best = code;
+  }
+  return best === null ? null : { code: best, label: ITEM_LABEL.get(best)! };
+}
+
+/**
+ * Every item an 8-K reports, codes kept and named where the list knows them —
+ * "Items 5.02 Officer or director change · 9.01 Financial statements and exhibits". The codes stay
+ * so a reader can trace the title back to EDGAR; a code outside the list is shown bare.
+ */
+export function describeItems(items: string): string | undefined {
+  const codes = eightKItems(items);
+  if (!codes.length) return undefined;
+  const named = codes.map((c) => {
+    const label = c === "2.02" ? "Results of operations" : ITEM_LABEL.get(c);
+    return label ? `${c} ${label}` : c;
+  });
+  return `${codes.length > 1 ? "Items" : "Item"} ${named.join(" · ")}`;
+}

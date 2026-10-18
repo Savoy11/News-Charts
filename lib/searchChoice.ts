@@ -1,3 +1,4 @@
+import type { SecuritySuggestion } from "./sec";
 import type { SubjectCandidate } from "./store/read";
 
 /**
@@ -44,3 +45,7 @@ export function optionFor(c: SubjectCandidate): SearchOption {
   return { label: c.displayName, detail: c.ticker ?? c.kind, href, via: c.via };
 }
 
+/** A near match from the committed index, offered when a search found nothing (a `suggest`). */
+export function optionForSuggestion(s: SecuritySuggestion): SearchOption {
+  return { label: s.name, detail: s.ticker, href: `/company/${s.ticker}`, via: s.via };
+}

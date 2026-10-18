@@ -1,6 +1,6 @@
-import { resolveCompany } from "./sec";
+import { fundNameIsShared, resolveCompany, suggestSecurities, type SecuritySuggestion } from "./sec";
 import { findCandidates, findKnownCompany, loadSubject } from "./store/read";
-import { closeCandidates, optionFor, type SearchOption } from "./searchChoice";
+import { closeCandidates, optionFor, optionForSuggestion, type SearchOption } from "./searchChoice";
 
 export type { SearchOption };
 import { headPrefixes } from "./prompt";
@@ -34,7 +34,13 @@ export type ResolvedSearch =
       kind: "topic";
       slug: string;
     }
-  | { kind: "choose"; options: SearchOption[] };
+  | { kind: "choose"; options: SearchOption[] }
+  /**
+   * Nothing matched, but the committed index holds names close to what was typed. Offered, never
+   * followed: unlike `choose`, whose options each matched, these only resemble the query, so a
+   * caller that cannot ask the visitor (the no-script `/search`) must not pick one for them.
+   */
+  | { kind: "suggest"; options: SearchOption[] };
 
 export async function resolveSearch(q: string): Promise<ResolvedSearch> {
   const started = Date.now();
@@ -87,6 +93,22 @@ export async function resolveSearch(q: string): Promise<ResolvedSearch> {
     });
     return { kind: "choose", options: tied.map(optionFor) };
   }
+  /** "Did you mean": near matches from the committed index, logged under their own rung. */
+  const suggest = async (offered: SecuritySuggestion[]): Promise<ResolvedSearch> => {
+    await logResolution({
+      query,
+      subject: query,
+      focus: null,
+      influence: null,
+      resolvedBy: "suggested",
+      kind: "company",
+      target: offered[0].ticker,
+      hasEvents: await targetHasEvents(offered[0].ticker),
+      durationMs: Date.now() - started,
+    });
+    return { kind: "suggest", options: offered.map(optionForSuggestion) };
+  };
+
   const best = candidates[0] ?? null;
   const bestCompany = best?.kind === "company" && best.ticker ? best : null;
 
@@ -132,6 +154,15 @@ export async function resolveSearch(q: string): Promise<ResolvedSearch> {
    * ("forde motor earnings") resolves where an exact-only test dropped it. The corpus decides
    * what is a subject name; no list of English patterns is consulted anywhere on this path.
    */
+  /**
+   * A name several funds share is a question, not a head to salvage: "S&P 500" starts seven
+   * series' names, and salvage took "S&P" alone to S&P Global (NC-040's open case).
+   */
+  if (!ticker && !known && !tickerIndexSlow && fundNameIsShared(query)) {
+    const offered = suggestSecurities(query);
+    if (offered.length) return suggest(offered);
+  }
+
   let salvaged: { kind: "company" | "topic"; slug?: string } | null = null;
   let salvagedTopicSlug: string | null = null;
   if (!ticker && !known && !tickerIndexSlow) {
@@ -169,6 +200,16 @@ export async function resolveSearch(q: string): Promise<ResolvedSearch> {
           : tickerIndexSlow
             ? "network_timeout"
             : "unresolved";
+
+  /**
+   * Before admitting a miss, the names it nearly matched. The corpus search forgives a typo only
+   * for what the site holds; this is the same forgiveness for every security the index knows, in
+   * process, so it answers with the database down too.
+   */
+  if (resolvedBy === "unresolved") {
+    const offered = suggestSecurities(query);
+    if (offered.length) return suggest(offered);
+  }
 
   const kind = ticker ? "company" : knownTopicSlug ? "topic" : null;
   const target = ticker ?? knownTopicSlug;

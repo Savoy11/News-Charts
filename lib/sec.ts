@@ -1,4 +1,14 @@
 import { CompanyInfo, TimelineEvent } from "./types";
+import { describeItems, leadItem, reportsResults } from "./secForms";
+import {
+  SIMILARITY_FLOOR,
+  distinctiveWords,
+  everyWordIn,
+  matchWords,
+  trigrams,
+  wordSimilarity,
+  worthFuzzyMatching,
+} from "./fuzzy";
 
 const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 
@@ -209,12 +219,7 @@ function matchFundName(q: string): CompanyInfo | null {
   const names = tickerIndex.seriesNames ?? [];
   const symbols = tickerIndex.seriesSymbols ?? [];
   const ciks = tickerIndex.seriesCiks ?? [];
-  if (!names.length || q.length < 3) return null;
-
-  const matching = (test: (name: string) => boolean) =>
-    names.flatMap((n, i) => (test(n.toUpperCase()) ? [i] : []));
-  const exact = matching((n) => n === q);
-  const candidates = exact.length ? exact : matching((n) => n.startsWith(q + " "));
+  const candidates = fundNameCandidates(q);
   if (new Set(candidates.map((i) => symbols[i])).size !== 1) return null;
   const hit = candidates[0];
 
@@ -225,6 +230,165 @@ function matchFundName(q: string): CompanyInfo | null {
   const cik = ciks[hit];
   if (!symbol || cik === undefined) return null;
   return { ticker: symbol, cik: String(cik).padStart(10, "0"), name: names[hit] };
+}
+
+/** The series a fund name matches exactly, else by name prefix — indexes into `seriesNames`. */
+function fundNameCandidates(q: string): number[] {
+  const names = tickerIndex.seriesNames ?? [];
+  if (!names.length || q.length < 3) return [];
+  const matching = (test: (name: string) => boolean) =>
+    names.flatMap((n, i) => (test(n.toUpperCase()) ? [i] : []));
+  const exact = matching((n) => n === q);
+  return exact.length ? exact : matching((n) => n.startsWith(q + " "));
+}
+
+/**
+ * Whether a query names several funds at once — "S&P 500" starts seven series' names, and
+ * "Balanced Fund" is the whole name of several. `matchFundName` declines those (NC-040), and the
+ * search ladder used to fall through to head-prefix salvage, which took "S&P" alone to S&P Global.
+ * A name that means several funds is a question for the visitor, so the ladder offers them.
+ */
+export function fundNameIsShared(query: string): boolean {
+  const symbols = tickerIndex.seriesSymbols ?? [];
+  return new Set(fundNameCandidates(query.trim().toUpperCase()).map((i) => symbols[i])).size > 1;
+}
+
+/** One near match offered when a search finds nothing — never a route on its own. */
+export interface SecuritySuggestion {
+  ticker: string;
+  name: string;
+  score: number;
+  /** "name" and "prefix" once "&" is read as "and"; anything else is resemblance */
+  via: "name" | "prefix" | "fuzzy";
+}
+
+/** At most this many — a "did you mean" is a short list or it is a second search page. */
+export const SUGGEST_LIMIT = 3;
+
+interface SuggestEntry {
+  ticker: string;
+  name: string;
+  grams: string[];
+  /**
+   * A company's everyday name ("TESLA" for "Tesla, Inc."), to match the other way round: inside
+   * the query. "Tesla Motors" is how people still say it, and the extra word sinks the forward
+   * score to 0.46. Companies only — a fund name is too generic to be found inside a phrase.
+   * Absent when the everyday name has no distinctive word.
+   */
+  core?: { grams: Set<string>; words: string[] };
+}
+
+interface SuggestIndex {
+  entries: SuggestEntry[];
+  /** trigram → the entries that contain it, so a query scores only names it shares enough with */
+  byGram: Map<string, number[]>;
+}
+
+let suggestIndex: SuggestIndex | null = null;
+
+/**
+ * Every security the committed index can name, one entry each: a company under its first ticker
+ * (the SEC lists the common share first — GOOGL before GOOG, BRK-B before BRK-A), then each fund
+ * series under its preferred share class. Built on first use and kept: it is the same file for
+ * the life of the process.
+ */
+function getSuggestIndex(): SuggestIndex {
+  if (suggestIndex) return suggestIndex;
+  const entries: SuggestIndex["entries"] = [];
+  const tickers = new Set<string>();
+  const ciks = new Set<number>();
+  for (const [cik, ticker, title] of tickerIndex.companies) {
+    if (ciks.has(cik) || tickers.has(ticker)) continue;
+    ciks.add(cik);
+    tickers.add(ticker);
+    const everyday = commonName(title);
+    const words = distinctiveWords(everyday);
+    const grams = new Set(trigrams(everyday));
+    entries.push({
+      ticker,
+      name: title,
+      grams: trigrams(title),
+      core: words.length ? { grams, words } : undefined,
+    });
+  }
+  const names = tickerIndex.seriesNames ?? [];
+  const symbols = tickerIndex.seriesSymbols ?? [];
+  names.forEach((name, i) => {
+    const symbol = symbols[i];
+    // the index lists some series twice under one symbol; once is enough to offer it
+    if (!symbol || tickers.has(symbol)) return;
+    tickers.add(symbol);
+    entries.push({ ticker: symbol, name, grams: trigrams(name) });
+  });
+  const byGram = new Map<string, number[]>();
+  entries.forEach((e, id) => {
+    for (const g of new Set(e.grams)) {
+      const ids = byGram.get(g);
+      if (ids) ids.push(id);
+      else byGram.set(g, [id]);
+    }
+  });
+  suggestIndex = { entries, byGram };
+  return suggestIndex;
+}
+
+/**
+ * Near matches for a query the ladder could not answer, from the committed index alone — no
+ * request, no database, so a misspelt or "and"-for-"&" name gets an answer when both are down.
+ *
+ * The corpus search already forgives typos (`findCandidates`, db/020), but only for what the site
+ * holds; every security not yet ingested is found here, where matching was exact or by prefix, so
+ * "Johnson and Johnson" and "Procter and Gamble" ended at "didn't match a listed security".
+ *
+ * Scored with the corpus search's own measure and floor and gated by the same distinctive-word
+ * test, with one addition: every distinctive word typed has to be in the name (`everyWordIn`).
+ * Ranked by score, then how the name matched, then the shorter name — `findCandidates`' own
+ * tie-break, because with equal scores the shorter name is the more exact answer.
+ *
+ * Only when no name holds what was typed does it look the other way, for a company whose everyday
+ * name is in the query word for word — "tesla motors" → Tesla. Never ahead of a name that does:
+ * "apple hospitalty" is Apple Hospitality REIT misspelt, not Apple Inc with a word added.
+ */
+export function suggestSecurities(query: string, limit = SUGGEST_LIMIT): SecuritySuggestion[] {
+  const q = query.trim();
+  if (!worthFuzzyMatching(q)) return [];
+  const grams = new Set(trigrams(q));
+  const ordered = trigrams(q);
+  const words = distinctiveWords(q);
+  const { entries, byGram } = getSuggestIndex();
+
+  // A name sharing fewer than this many of the query's trigrams cannot reach the floor.
+  const need = Math.ceil(SIMILARITY_FLOOR * grams.size);
+  const shared = new Uint16Array(entries.length);
+  for (const g of grams) for (const id of byGram.get(g) ?? []) shared[id]++;
+
+  const typed = matchWords(q);
+  const phrase = typed.join(" ");
+  const scored: SecuritySuggestion[] = [];
+  for (let id = 0; id < entries.length; id++) {
+    const e = entries[id];
+    if (shared[id] < need || !everyWordIn(words, e.grams)) continue;
+    const score = wordSimilarity(grams, e.grams);
+    if (score < SIMILARITY_FLOOR) continue;
+    const nameWords = matchWords(e.name).join(" ");
+    const via = nameWords === phrase ? "name" : nameWords.startsWith(phrase + " ") ? "prefix" : "fuzzy";
+    scored.push({ ticker: e.ticker, name: e.name, score: Math.round(score * 100) / 100, via });
+  }
+  if (!scored.length) {
+    const inQuery = new Set(typed);
+    for (const e of entries) {
+      if (!e.core || !e.core.words.every((w) => inQuery.has(w))) continue;
+      const score = wordSimilarity(e.core.grams, ordered);
+      if (score >= SIMILARITY_FLOOR) {
+        scored.push({ ticker: e.ticker, name: e.name, score: Math.round(score * 100) / 100, via: "fuzzy" });
+      }
+    }
+  }
+  const RANK = { name: 0, prefix: 1, fuzzy: 2 } as const;
+  scored.sort(
+    (a, b) => b.score - a.score || RANK[a.via] - RANK[b.via] || a.name.length - b.name.length
+  );
+  return scored.slice(0, limit);
 }
 
 /**
@@ -336,7 +500,10 @@ export async function getIndustry(company: CompanyInfo): Promise<Industry | null
   return { sic: sic.padStart(4, "0"), description };
 }
 
-/** Filings from EDGAR. 10-K/10-Q become "earnings" events; other material forms become "filing" events. */
+/**
+ * Filings from EDGAR. Annual and quarterly reports, results 8-Ks and fund shareholder reports
+ * become "earnings" events; other material forms become "filing" events.
+ */
 /**
  * One block of EDGAR's parallel filing arrays — `filings.recent`, or an older shard, which carry
  * the same columns. Split out so both go through identical typing and labelling: two copies would
@@ -363,8 +530,8 @@ function filingsFromBlock(block: FilingBlock, company: CompanyInfo, registrant: 
    * announcement — typed `earnings` so it sits on the same chip a company's 10-K does.
    */
   const wanted = new Set([
-    // operating companies
-    "8-K", "10-K", "10-Q", "S-1", "DEF 14A", "20-F", "6-K",
+    // operating companies — 20-F and 40-F are a foreign private issuer's annual report
+    "8-K", "10-K", "10-Q", "S-1", "DEF 14A", "20-F", "40-F", "6-K",
     // registered funds
     "N-CSR", "N-CSRS", "N-30D", "N-CEN", "NPORT-P", "485APOS", "485BPOS", "497", "497K", "N-1A",
   ]);
@@ -393,17 +560,26 @@ function filingsFromBlock(block: FilingBlock, company: CompanyInfo, registrant: 
     const doc = block.primaryDocument?.[i] ?? "";
     const items = block.items?.[i] ?? "";
     const fund = FUND_LABELS[form];
-    const isEarnings =
-      fund?.earnings ?? (form === "10-K" || form === "10-Q" || (form === "8-K" && items.includes("2.02")));
+    const results = form === "8-K" && reportsResults(items);
+    /**
+     * A 20-F or 40-F is the annual report of a foreign private issuer — BABA, TSM, ASML, SAP, SHOP
+     * — and the counterpart of a 10-K, so it is earnings the way a 10-K is. A 6-K stays a filing:
+     * it carries anything a home market required, and the submissions list does not say which.
+     */
+    const annual = form === "10-K" || form === "20-F" || form === "40-F";
+    const isEarnings = fund?.earnings ?? (annual || form === "10-Q" || results);
+    const lead = form === "8-K" && !results ? leadItem(items) : null;
     const label =
       fund?.label ??
-      (form === "10-K"
-        ? "Annual report (10-K)"
+      (annual
+        ? `Annual report (${form})`
         : form === "10-Q"
           ? "Quarterly report (10-Q)"
-          : form === "8-K" && items.includes("2.02")
+          : results
             ? "Earnings announcement (8-K)"
-            : `${form} filing`);
+            : lead
+              ? `${lead.label} (8-K ${lead.code})`
+              : `${form} filing`);
     /**
      * A fund's CIK is its registrant's — the trust — and the trust files one 497, N-PORT or
      * shareholder report for any of the series it sells. Prefixed with the fund's name, VOO's
@@ -421,8 +597,8 @@ function filingsFromBlock(block: FilingBlock, company: CompanyInfo, registrant: 
       description: byRegistrant
         ? `Filed by ${registrant}, the registrant behind ${company.name}. A registrant files for ` +
           `every fund it sells, so this filing may concern a sibling fund.`
-        : form === "8-K" && items
-          ? `Items: ${items}`
+        : form === "8-K"
+          ? describeItems(items)
           : undefined,
       sourceKey: "sec_edgar",
       // the accession number is already globally unique, so document and event identity coincide

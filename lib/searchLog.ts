@@ -50,6 +50,12 @@ export const RUNGS = [
    * The logged target is the top-scored one; which one they picked is not recorded.
    */
   "ambiguous",
+  /**
+   * Nothing matched, and the visitor was offered up to three near matches from the committed
+   * EDGAR index — a misspelling, "and" for "&", or a name several funds share. The logged target
+   * is the first one offered; which one they picked, if any, is not recorded.
+   */
+  "suggested",
 ] as const;
 
 export type ResolutionRung = (typeof RUNGS)[number];

@@ -46,6 +46,9 @@ const MEANING: Record<ResolutionRung, string> = {
   ambiguous:
     "two or more held subjects matched about equally, and the visitor was offered the choice." +
     " A query recurring here is a name collision worth an alias",
+  suggested:
+    "nothing matched, and near matches from the EDGAR index were offered instead of a dead end." +
+    " A query recurring here with the same first suggestion is a spelling worth an alias",
   empty: "nothing was typed",
 };
 

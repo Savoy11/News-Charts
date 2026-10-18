@@ -15,7 +15,7 @@ config({ path: ".env.local" });
 import { CLIENT_BUDGET_MS, NETWORK_BUDGET_MS, timedOut, withTimeout } from "../lib/timeout";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { TIE_MARGIN, closeCandidates, optionFor } from "../lib/searchChoice";
+import { TIE_MARGIN, closeCandidates, optionFor, optionForSuggestion } from "../lib/searchChoice";
 import type { SubjectCandidate } from "../lib/store/read";
 import {
   MAX_QUERY,
@@ -200,8 +200,48 @@ async function main(): Promise<void> {
   const read = (f: string) => readFileSync(join(process.cwd(), f), "utf8");
   check("the search box shows the choice", /json\.kind === "choose"\) setOptions/.test(read("components/SearchBox.tsx")) && /data-search-choices/.test(read("components/SearchBox.tsx")));
   check("the no-script search still lands on the best match", /resolved\.options\[0\]\.href/.test(read("app/search/route.ts")));
-  const migration = read("db/025_ambiguous_rung.sql");
+  // The constraint is replaced whole by each migration that adds a rung, so the last one to set
+  // it is what the database enforces.
+  const { readdirSync } = await import("node:fs");
+  const setting = readdirSync("db")
+    .filter((f) => f.endsWith(".sql"))
+    .sort()
+    .filter((f) => /ADD CONSTRAINT search_resolutions_resolved_by_check/.test(read(`db/${f}`)));
+  const migration = read(`db/${setting.at(-1)}`);
   check("the database accepts every rung the code can log", RUNGS.every((r) => migration.includes(`'${r}'`)), RUNGS.filter((r) => !migration.includes(`'${r}'`)).join(", "));
+
+  // 2026-10-17 proposal 3: a query that matched nothing ended at "didn't match a listed security"
+  // even when it was one typo from a security the index knows.
+  console.log("\n\"Did you mean\" is offered, never followed");
+  const near = optionForSuggestion({ ticker: "NVDA", name: "NVIDIA CORP", score: 0.57, via: "fuzzy" });
+  check("a suggestion links to its ticker page", near.href === "/company/NVDA" && near.detail === "NVDA" && near.label === "NVIDIA CORP");
+  check("the search box offers suggestions under their own heading",
+    /json\.kind === "suggest"\)/.test(read("components/SearchBox.tsx")) && /data-search-suggested/.test(read("components/SearchBox.tsx")) && /Did you mean/.test(read("components/SearchBox.tsx")));
+  const route = read("app/search/route.ts");
+  check("the no-script search follows a choice but not a suggestion",
+    /resolved\.kind === "choose"\s*\?/.test(route) && !/"suggest"/.test(route));
+
+  // The ladder end to end, with the database down and every request refused: the index is all
+  // that can answer, which is the case the suggestions exist for.
+  process.env.DATABASE_URL = "postgresql://nobody:nothing@127.0.0.1:59999/absent";
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () => {
+    throw new TypeError("fetch failed");
+  }) as typeof fetch;
+  try {
+    const { resolveSearch } = await import("../lib/resolveSearch");
+    const typo = await resolveSearch("nvidea");
+    check("a typo of a security not yet held is offered it",
+      typo.kind === "suggest" && typo.options[0]?.href === "/company/NVDA", JSON.stringify(typo));
+    const sp = await resolveSearch("S&P 500");
+    check("a name several funds share offers them, not S&P Global by salvage",
+      sp.kind === "suggest" && sp.options.length > 1 && !sp.options.some((o) => o.href === "/company/SPGI"),
+      JSON.stringify(sp));
+    check("junk is still told it matched nothing", (await resolveSearch("zzqqxxnotathing")).kind === "none");
+    check("an exact name still routes without asking", (await resolveSearch("Ford")).kind === "company");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) {

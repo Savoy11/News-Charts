@@ -39,6 +39,15 @@ async function main(): Promise<void> {
 
   console.log("\nThe committed index");
   check("records when it was built", /^\d{4}-\d{2}-\d{2}$/.test(TICKER_INDEX_SYNCED_ON), TICKER_INDEX_SYNCED_ON);
+  // Staleness is computed and said, not just recorded (NC-051): the date sat 66 days old with
+  // nothing reading it but the format check above.
+  const { tickerIndexAgeDays, TICKER_INDEX_MAX_AGE_DAYS } = await import("../lib/sec");
+  check("its age is counted in whole days", tickerIndexAgeDays(new Date("2026-10-17T12:00:00Z"), "2026-08-12") === 66);
+  check("…and a same-day sync is 0 days old", tickerIndexAgeDays(new Date("2026-08-12T23:59:00Z"), "2026-08-12") === 0);
+  check("the age limit is about a month", TICKER_INDEX_MAX_AGE_DAYS >= 28 && TICKER_INDEX_MAX_AGE_DAYS <= 45, `${TICKER_INDEX_MAX_AGE_DAYS}`);
+  const refreshSrc = (await import("node:fs")).readFileSync("scripts/refresh.ts", "utf8");
+  check("the scheduled refresh warns when the index is past it",
+    /tickerIndexAgeDays\(\)/.test(refreshSrc) && /indexAge > TICKER_INDEX_MAX_AGE_DAYS/.test(refreshSrc));
   // Through the same declared contract the resolver uses, not the JSON's inferred literal type —
   // which is 49,000 key names wide and makes `index.funds[someString]` an implicit-any error.
   const index = (await import("../data/edgar-tickers.json")).default as unknown as TickerIndex;

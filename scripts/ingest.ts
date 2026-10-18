@@ -577,8 +577,12 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
  * Regulatory events for a whole sector. These link to the industry subject, not to any
  * member company — an export-control rule is a semiconductor event that happens to
  * matter to Nvidia, not an Nvidia event.
+ *
+ * Inside its window the Federal Register is not re-asked, as on every other path — this runs on
+ * the hourly schedule now, and the source's window is a day. Either way the subject is stamped as
+ * worked, or `refresh.ts`'s oldest-first order would keep every sector at the head of the queue.
  */
-export async function ingestIndustry(client: PoolClient, slug: string) {
+export async function ingestIndustry(client: PoolClient, slug: string): Promise<IngestOutcome> {
   console.log(`\nindustry: ${slug}`);
   const { rows } = await client.query(
     `SELECT id, display_name, sic FROM subjects WHERE slug = $1 AND kind = 'industry'`,
@@ -586,9 +590,14 @@ export async function ingestIndustry(client: PoolClient, slug: string) {
   );
   if (!rows[0]) {
     console.log("  no such industry — ingest a member company first to create it");
-    return;
+    return { ingested: false, reason: "no such industry" };
   }
   const subjectId = Number(rows[0].id);
+  if (!(await dueSources(client, subjectId, ["federal_register"])).has("federal_register")) {
+    line("federal_register", `fresh     inside its ${ttlFor("federal_register")} min window`);
+    await touchSubject(client, subjectId);
+    return { ingested: true };
+  }
   const { rows: aliasRows } = await client.query(
     "SELECT alias FROM subject_aliases WHERE subject_id = $1",
     [subjectId]
@@ -606,6 +615,8 @@ export async function ingestIndustry(client: PoolClient, slug: string) {
   line("query", `"${query}"`);
 
   await runSource(client, "federal_register", subjectId, query, () => fetchRegulations(query));
+  await touchSubject(client, subjectId);
+  return { ingested: true };
 }
 
 /**

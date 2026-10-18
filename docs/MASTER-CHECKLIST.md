@@ -442,6 +442,72 @@ the site off the 24 advisories `npm audit` rated critical. `npm run check` passe
         and the lint plugin's `fast-glob`. Clearing them means Tailwind 4, a breaking change of
         its own. Neither ships to visitors.
 
+## NC ledger — batch 9: live assertions, a ticker index that says its age (2026-10-17)
+
+Tooling and upkeep, chosen because every outside source is refused from the cloud session, so
+work that needs a live answer cannot be verified here. Two items closed (NC-037, NC-038), two
+advanced (NC-051, NC-033), and a scheduled-refresh gap the scout found is fixed. `npm run check`
+passes with a new suite (`check:live-harness`), and `npm run lint` reports nothing.
+
+- [x] **NC-038 — a live-assertion suite: `npm run check:live`.** It stays out of the offline
+      chain. Each keyless source the site may publish from is asked a question with a known
+      answer, through the app's own adapter:
+      - Apple's filings are recent and resolve to CIK 320193;
+      - ten years of AAPL closes are ordered, positive and fresh;
+      - every Snapshot space id resolves and holds proposals;
+      - the Internet Archive reaches material from the last decade (the 2026-08-12 finding);
+      - Library of Congress results stay before 1964;
+      - the four halvings land on their dates;
+      - every Ethereum milestone's chain date matches its curated date.
+
+      Results are sorted into four outcomes:
+      - PASS;
+      - FAIL — it answered wrong;
+      - UNREACHABLE — no connection, or a throttle;
+      - SKIPPED — no key.
+
+      Only FAIL fails a run; `--strict` fails anything but PASS, which is the bar for the
+      production host. `check:live-harness` (32 checks, offline) proves the sorting and the
+      assertions. It also fails when a commercial source in `SOURCES` has no live case, which is
+      the shape of the 2026-08-12 finding that `check:feeds` never asked three gate sources.
+      - Run here: 12 unreachable and 1 skipped (no Etherscan key); exit 0, and 1 with `--strict`.
+        **The first answering run is owed from the production host** (OWNER-ACTIONS §1); an
+        assertion may need tuning against a real answer then.
+- [ ] **NC-051 — the ticker index says its age; the re-sync is still owed.**
+      - `tickerIndexAgeDays` and a 35-day limit live in `lib/sec.ts`.
+      - `npm run refresh` warns past the limit. A live run printed "66 days old (synced
+        2026-08-12)".
+      - `check:live` fails EDGAR on it once sec.gov is shown to answer.
+      - `check:tickers` pins the arithmetic and the wiring.
+      - The index is imported at build time, so a server-side re-sync would change nothing
+        until a rebuild. Re-syncing means `npm run sync:tickers` from a host that reaches
+        sec.gov, then commit and redeploy (now in OWNER-ACTIONS). sec.gov answered a cloud
+        session on 2026-09-28 but refuses this one.
+- [x] **NC-037 — the first uncapped opportunity-scout pass.** It wrote
+      [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md): 10
+      proposals, ranked securities-first. Each is tied to one of the allowed anchors with
+      file:line evidence and says whether a cloud session could build it. The top four, all `P1`:
+      1. 8-K item labels, and 20-F/40-F typed as earnings;
+      2. the material forms EDGAR already sends;
+      3. "did you mean" from the committed index;
+      4. Federal Register documents naming the company.
+
+      Spot-checked against the code. **Next: the owner marks each proposal, then a session runs
+      the scout in FILE mode.** It noticed three things in passing:
+      - **Fixed here:** `npm run refresh` selected only companies and topics, so a sector's
+        Federal Register rules never refreshed after the CLI's first `--industry` run. Industries
+        now refresh on the schedule, inside the source's one-day window. A sector is stamped as
+        worked either way, because otherwise refresh's oldest-first order would keep it at the
+        head of the queue. `check:wiring` pins all three (it fails on the old code). A run against
+        Postgres showed skip-when-fresh, fetch-when-due and the stamp.
+      - **Fixed here:** the checklist's on-screen disambiguation `P1` was still open, though NC-039
+        shipped it in batch 7. The box is now ticked.
+      - **Not fixed:** the company page's JSON-LD calls every security a `Corporation`, funds
+        included. It's a structured-data nicety, left for a fund-page pass.
+- [ ] **NC-033 — wording corrected; the live check is still owed.** The release-gate line said
+      "URL dedup". The match is a normalised headline plus its day (`storyKey`), which is what
+      lets two outlets' copies of one story collapse.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on
@@ -714,6 +780,8 @@ proposals), **DefiLlama exploits ✓** (20 rows, all figures verified — see th
   every *licensing* decision is untouched, and the keyed feeds still cannot be tested without
   keys. `npm run check:feeds` should still be run from the production host, because several
   sources behave differently from datacenter IPs — GDELT's throttling here may be exactly that.
+  Since 2026-10-17 (NC-038) the same host should also pass `npm run check:live -- --strict`, the
+  pass/fail half: each keyless source is asked a question with a known answer.
 - The entries below keep their original "unverified live" wording rather than being rewritten,
   because each records what was true when the work shipped. Read them against this table.
 
@@ -917,7 +985,12 @@ non-compliant. The `commercialOk` flags in `SOURCES` are a practical reading of 
       SEC filings, Federal Register, prices.
 - [ ] Keys valid under production quotas (Newsdata 200/day, GNews 100/day, NYT/Guardian limits)
       with the 6h/1h cache windows doing the rate-limiting.
-- [ ] Dedup sanity: the same story from two repositories collapses to one event (URL dedup).
+- [ ] Dedup sanity: the same story from two repositories collapses to one event. Wording
+      corrected 2026-10-17 (NC-033): the match is a normalised headline plus its day
+      (`storyKey` in `lib/newsQuality.ts`, stored as `dedupBasis`), not the URL — the same
+      story from two outlets arrives under two URLs. GDELT joined that key in batch 5 (NC-154),
+      with fixtures and a live merge on Postgres; the live check a busy ticker would give is
+      still owed from a host that reaches GDELT and Yahoo.
 - [x] Attribution renders on every surface — **all three verified 2026-07-28** against the
       seeded corpus. List rows and cards: 84 outward links on one company page, each with its
       source label. Chart crosshair popup: sweeping the price line pops the day's events, each
@@ -1009,15 +1082,19 @@ section of `docs/PRELIMINARY-FINDINGS-2026-07-30.md`.
 Installed on PR #14. What has run so far is **not a baseline** — items carried over from the
 closed PR #15, whose findings are otherwise all shipped.
 
-- [ ] `P1` **Re-run both agents properly.** ✅ **Auditor half done 2026-08-12** — the first
+- [x] `P1` **Re-run both agents properly.** ✅ **Auditor half done 2026-08-12** — the first
       uncapped pass, reported in [`docs/audits/2026-08-12-audit.md`](audits/2026-08-12-audit.md):
-      **10 findings, 4 of them `P1`**, filed as their own items below. Still open: the
-      **`opportunity-scout`** half, whose 2026-07-30 run was capped at 2 proposals by instruction.
+      **10 findings, 4 of them `P1`**, filed as their own items below. ✅ **Scout half done
+      2026-10-17** (NC-037, batch 9): the first uncapped `opportunity-scout` pass, in
+      [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md) — 10
+      proposals, 4 `P1`, waiting for the owner's APPROVED / REJECTED / DEFERRED marks before a
+      FILE pass. The 2026-07-30 run had been capped at 2 by instruction.
       - What the pass confirms about method, not just about defects: **every finding came from
         pointing an adapter at a live service.** The offline suites (25, all passing) could not
         have produced one of them. Findings 1, 2 and 7 share a shape — a live source whose real
         behaviour nothing asserts against — and the auditor's closing note proposes a live
         assertion suite distinct from the offline ones. That proposal belongs to the scout.
+        ↳ Built directly instead, as NC-038 in batch 9: `npm run check:live`.
 
 ### Findings from the 2026-08-12 audit
 
@@ -1280,7 +1357,10 @@ the items under it can be argued for or against without one.
         already uses**, reused rather than restated so the two cannot drift.
       - **Verified against a real Postgres**: cluster stood up in this container, db/020 applied,
         and the whole matrix above run against seeded subjects including two Fords and two Apples.
-- [ ] `P1` **Disambiguate on screen when the top two candidates are close.** The other half of the
+- [x] ~~`P1` **Disambiguate on screen when the top two candidates are close.**~~ — shipped
+      2026-10-17 as NC-039 (batch 7): within 0.03 and not an exact ticker, the search box lists
+      the choices and the search log records an `ambiguous` rung. Box ticked 2026-10-17, when the
+      opportunity scout found it still open. The other half of the
       item above, and the half that needs a UI. `"Ford"` scores **1.00 against both Ford Motor
       Company and Ford Motor Credit Company**; `"APPLE"` likewise ties Apple Inc. with Apple
       Hospitality REIT. Today the shorter name wins silently, which is a better rule than rung
@@ -1376,6 +1456,10 @@ the items under it can be argued for or against without one.
         upstream response would otherwise replace a good index with a broken one, and every
         dropped ticker would then resolve as "not a listed security" rather than as an error.
         The file records `syncedOn` so staleness is visible in the data rather than remembered.
+        ↳ 2026-10-17 (NC-051): recorded was not visible — nothing read the date but a format
+        check, and the file sat 66 days old. `npm run refresh` now warns past 35 days, and
+        `check:live` fails EDGAR on it once sec.gov is shown to answer. The re-sync itself still
+        needs a host that reaches sec.gov, plus a rebuild, because the index is built into the site.
       - ⚠ Fund *names* still cost one request (`data.sec.gov/submissions/CIK….json`) because the
         fund file carries no names — the open fund-NAME-resolution item. It is an enrichment and
         degrades to the symbol, which `check:tickers` pins.

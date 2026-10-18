@@ -64,6 +64,22 @@ function localCompanies(): TickerRow[] {
 /** When the committed index was built — surfaced so staleness is visible rather than assumed. */
 export const TICKER_INDEX_SYNCED_ON: string = tickerIndex.syncedOn;
 
+/**
+ * How old the committed index may get before something says so (NC-051).
+ *
+ * The date was recorded and read only by `check:tickers`, which asks whether it is a date, not
+ * whether it is recent — the file sat 66 days old with nothing anywhere mentioning it. The index
+ * is imported at build time, so re-syncing it on the server changes nothing until the site is
+ * rebuilt; what can run on a schedule is the warning. A month of new listings is what this lets
+ * through before `npm run refresh` starts naming it.
+ */
+export const TICKER_INDEX_MAX_AGE_DAYS = 35;
+
+/** Whole days between the index's sync date and `now`. */
+export function tickerIndexAgeDays(now = new Date(), syncedOn = TICKER_INDEX_SYNCED_ON): number {
+  return Math.floor((now.getTime() - Date.parse(`${syncedOn}T00:00:00Z`)) / 86_400_000);
+}
+
 async function getTickerMap(): Promise<TickerRow[]> {
   const res = await fetch("https://www.sec.gov/files/company_tickers.json", {
     headers: UA,

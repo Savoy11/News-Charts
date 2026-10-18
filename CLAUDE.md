@@ -88,9 +88,11 @@ npm run db:migrate       # apply db/*.sql in order
 npm run ingest -- …      # pull events for a subject (see README)
 ```
 
-The `check-*.ts` scripts are offline by construction (network/fetch is mocked where needed) —
-safe anywhere, including CI. When adding a verification, follow that pattern: a
-`scripts/check-<thing>.ts` wired into the `check` chain in `package.json`.
+The `check-*.ts` scripts in the `check` chain are offline by construction (network/fetch is
+mocked where needed) — safe anywhere, including CI. When adding a verification, follow that
+pattern: a `scripts/check-<thing>.ts` wired into the `check` chain in `package.json`. Three are
+deliberately outside the chain because they need more than the code: `check:live` and
+`check:feeds` call the real services, and `check:ui` drives a browser against a running server.
 
 ## Key invariants
 

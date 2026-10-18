@@ -28,11 +28,18 @@ checks prove the parsing, not the endpoints.
 > top of the master checklist.
 
 ```bash
+npm run check:live -- --strict # pass/fail: each keyless source asked a question with a known answer
 npm run check:feeds            # defaults to BABA
 npm run check:feeds NVDA       # a second company
 npm run check:feeds bicycle    # a topic — different code path
 npm run verify:addresses       # the on-chain address book, against the chain
 ```
+
+`check:live` is the one that can fail (NC-038). It sorts every source into PASS, FAIL (it
+answered wrong: a bug or a changed API), UNREACHABLE (no connection or a throttle) or SKIPPED (a
+key is not set). `--strict` makes anything but PASS fail the run. On the production host that is
+the bar: a source that cannot be reached from where the site runs is a launch problem.
+`check:feeds` stays the per-subject report of what each feed returns.
 
 Run from the **production host, not a laptop** — several sources behave differently from
 datacenter IPs, and that is a checklist item in its own right.
@@ -140,6 +147,10 @@ npm run rekey:gdelt
   their aliases.
 - **Add a host or WAF rate limit**, and make sure the host overwrites `X-Forwarded-For` — the
   in-app limiter counts per server instance and trusts that header (NC-162).
+- **Re-sync the EDGAR ticker index about monthly.** From a host that reaches sec.gov:
+  `npm run sync:tickers`, commit `data/edgar-tickers.json`, redeploy. The index is built into the
+  site, so this needs a rebuild; `npm run refresh` prints a warning once the file is more than 35
+  days old (NC-051). It is 66 days old today.
 - **Run Node 20.9 or later on the host**, and install fresh (`npm ci`) — Next.js 16 refuses
   older Node (NC-166).
 - **Rehearse a restore** into a scratch database: `createdb -U postgres news_charts_restore`,

@@ -22,13 +22,22 @@ config({ path: ".env.local" });
  * eleven requests: `selectStaleSources` asks only what has actually aged out.
  */
 import { getPool, closePool, configProblem } from "../lib/db";
-import { COMPANY_SOURCES, TOPIC_SOURCES, ingestCompany, ingestOnchain, ingestTopic, type IngestOutcome } from "./ingest";
+import {
+  COMPANY_SOURCES,
+  TOPIC_SOURCES,
+  ingestCompany,
+  ingestIndustry,
+  ingestOnchain,
+  ingestTopic,
+  type IngestOutcome,
+} from "./ingest";
 import { ensureSources } from "../lib/ingest/store";
 import { markFailed, markFulfilled, pendingRequests, purgeStaleRequests } from "../lib/ingest/queue";
 import { subjectLockKey } from "../lib/ingest/firstPass";
 import { project } from "../lib/ingest/quota";
 import { CRYPTO_SUBJECTS } from "../lib/onchain";
 import { purgeOldResolutions } from "../lib/searchLog";
+import { TICKER_INDEX_MAX_AGE_DAYS, TICKER_INDEX_SYNCED_ON, tickerIndexAgeDays } from "../lib/sec";
 import type { SourceKey } from "../lib/types";
 
 /**
@@ -63,6 +72,9 @@ async function refreshSubject(
   }
   try {
     if (s.kind === "company" && s.ticker) return await ingestCompany(client, s.ticker);
+    // Sector rules: only the CLI's --industry ran this, so a sector's regulation rows were never
+    // refreshed after the first ingest — picked up by the 2026-10-17 opportunity scout.
+    if (s.kind === "industry") return await ingestIndustry(client, s.slug);
     if (ONCHAIN_SLUGS.has(s.slug)) return await ingestOnchain(client, s.slug);
     return await ingestTopic(client, s.slug);
   } finally {
@@ -89,7 +101,7 @@ async function main(): Promise<void> {
 
   const { rows } = await pool.query<Row>(
     `SELECT slug, kind, ticker FROM subjects
-      WHERE kind IN ('company','topic')
+      WHERE kind IN ('company','topic','industry')
       -- oldest first, so a run that cannot finish still makes progress on the stalest
       ORDER BY refreshed_at NULLS FIRST
       LIMIT $1`,
@@ -194,6 +206,18 @@ async function main(): Promise<void> {
         `  ⚠ at ${rows.length} subjects these are at or past their free tier: ` +
           tight.map((t) => `${t.source} (${Math.round((t.utilisation ?? 0) * 100)}%)`).join(", ") +
           `\n    npm run cost-report for the full picture.`
+      );
+    }
+    /**
+     * The committed EDGAR index ages silently: a company that listed after the last sync resolves
+     * only through a live EDGAR request, which is the one a throttled EDGAR refuses. This is the
+     * only scheduled process, so it is where staleness gets said out loud (NC-051).
+     */
+    const indexAge = tickerIndexAgeDays();
+    if (indexAge > TICKER_INDEX_MAX_AGE_DAYS) {
+      console.log(
+        `  ⚠ the committed EDGAR ticker index is ${indexAge} days old (synced ${TICKER_INDEX_SYNCED_ON}).` +
+          `\n    From a host that reaches sec.gov: npm run sync:tickers, commit data/edgar-tickers.json, redeploy.`
       );
     }
   }

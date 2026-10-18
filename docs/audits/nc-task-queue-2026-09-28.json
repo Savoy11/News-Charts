@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 61,
-   "closed": 79,
+   "open": 59,
+   "closed": 81,
    "parked": 12,
    "blocked": 18
   },
@@ -43,7 +43,7 @@
    "owner-decision": 50
   },
   "counts_recomputed_on": "2026-10-17",
-  "closed_by_annotation": 79
+  "closed_by_annotation": 81
  },
  "blocking_decisions": [
   {
@@ -1217,6 +1217,11 @@
      "noted_on": "2026-10-17",
      "note": "NC-154 shipped in batch 5: GDELT now keys on storyKey, so a GDELT and a Yahoo copy of one story share one identity (check:news-quality with fixtures), and stored duplicates merge (live run on Postgres 16, plus `npm run rekey:gdelt`). The live check this item asks for — a real ingest of a busy ticker — is still owed; both feeds are blocked from the cloud session.",
      "evidence": "lib/news.ts:87; scripts/rekey-gdelt.ts"
+    },
+    {
+     "noted_on": "2026-10-17",
+     "note": "Batch 9: the release-gate wording is corrected — the match is a normalised headline plus its day (storyKey in lib/newsQuality.ts, stored as dedupBasis), not the URL. The live check against a busy ticker is still owed from a host that reaches GDELT and Yahoo.",
+     "evidence": "docs/MASTER-CHECKLIST.md (⛔ pre-release gate, Dedup sanity)"
     }
    ]
   },
@@ -1333,7 +1338,7 @@
   {
    "id": "NC-037",
    "title": "Run the opportunity-scout agent uncapped (the unfinished half of 'Re-run both agents')",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "process",
@@ -1352,12 +1357,25 @@
      "lines": "580-583",
      "quote": "Still open: the **`opportunity-scout`** half, whose 2026-07-30 run was capped at 2 proposals by instruction."
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Batch 9: the first uncapped opportunity-scout pass (PROPOSE mode) wrote docs/proposals/2026-10-17-proposals.md — 10 proposals (4 P1, 6 P2), ranked securities-first, each anchored with file:line evidence and marked with whether a cloud session can build it; top claims spot-checked against the code (lib/sec.ts 8-K labels, 20-F/40-F handling). The owner's APPROVED/REJECTED/DEFERRED marks and the FILE pass that follows them are the next step and are not part of this item. Two things it noticed in passing were fixed in the same batch: scripts/refresh.ts never refreshed industries (sector Federal Register rules went stale after the CLI's first run), and the checklist's on-screen disambiguation P1 was still open after NC-039 shipped it.",
+    "evidence": [
+     "docs/proposals/2026-10-17-proposals.md",
+     "scripts/refresh.ts:77",
+     "scripts/check-wiring.ts:161",
+     "docs/MASTER-CHECKLIST.md:1084"
+    ]
+   }
   },
   {
    "id": "NC-038",
    "title": "Build a live-assertion check suite for live sources, separate from the offline suites",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "tooling",
@@ -1383,7 +1401,21 @@
      "lines": "213",
      "quote": "the cheapest instrument is a live-assertion suite distinct from the offline ones"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-17",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Batch 9: scripts/check-live.ts (npm run check:live), outside the offline chain, asks each keyless commercial source a question with a known answer through the app's own adapter: AAPL filings recent and CIK 320193; ten years of AAPL closes ordered, positive and fresh; Yahoo RSS and GDELT headlines; Federal Register within its 2015 floor; Wikipedia's Ford history; Internet Archive reaching the last decade (the 2026-08-12 finding 1); LoC press before 1964; every Snapshot id resolving with proposals (finding 2); DefiLlama exploit records; the four halvings on their dates; Ethereum milestone chain dates matching the curated ones; Etherscan when a key is set. Verdicts are PASS / FAIL / UNREACHABLE (no connection or a throttle) / SKIPPED (no key); only FAIL fails a run, --strict fails anything but PASS. check:live-harness (offline, 32 checks, in npm run check) proves the sorting, the assertions, and that every commercialOk source in SOURCES has a case (finding 7's shape). Run here: 12 unreachable, 1 skipped, exit 0; exit 1 with --strict. The first answering run is owed from the production host, where an assertion may need tuning.",
+    "evidence": [
+     "scripts/check-live.ts:81",
+     "scripts/check-live.ts:164",
+     "scripts/check-live.ts:345",
+     "scripts/check-live-harness.ts",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-039",
@@ -1888,11 +1920,18 @@
      "quote": "syncedOn: 2026-08-12"
     }
    ],
-   "progress": {
-    "noted_on": "2026-09-28",
-    "note": "sec.gov answers from the cloud session (2026-09-28), so `npm run sync:tickers` can be run by a remote session now.",
-    "evidence": "live run 2026-09-28"
-   }
+   "progress": [
+    {
+     "noted_on": "2026-09-28",
+     "note": "sec.gov answers from the cloud session (2026-09-28), so `npm run sync:tickers` can be run by a remote session now.",
+     "evidence": "live run 2026-09-28"
+    },
+    {
+     "noted_on": "2026-10-17",
+     "note": "Batch 9: staleness is now said, not just recorded. lib/sec.ts gains tickerIndexAgeDays and TICKER_INDEX_MAX_AGE_DAYS (35); npm run refresh warns past it (live run: '66 days old (synced 2026-08-12)'); check:live fails EDGAR on it once sec.gov answers; check:tickers pins the arithmetic and the wiring. The index is imported at build time, so a server-side re-sync changes nothing until a rebuild: re-syncing is npm run sync:tickers from a host that reaches sec.gov, commit, redeploy (OWNER-ACTIONS). sec.gov refuses this cloud session (it answered one on 2026-09-28), so the refresh itself is still owed.",
+     "evidence": "lib/sec.ts:79; scripts/refresh.ts:206; scripts/check-tickers.ts:45"
+    }
+   ]
   },
   {
    "id": "NC-052",

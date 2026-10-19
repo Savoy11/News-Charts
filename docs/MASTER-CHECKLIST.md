@@ -845,6 +845,47 @@ this cloud session.
   the deep filings call now reads the intent, so an added argument doesn't break it. `check:ui`'s
   legend check now looks for "Corporate action".
 
+## NC ledger — batch 16: keys kept from ad scripts, crypto moves, six feeds dropped (2026-10-19)
+
+The owner made three calls on 2026-10-19:
+- A browser holding a visitor's key loads no ads at all, which closes **NC-164**. The other design
+  offered was isolating the keys on a second origin.
+- Build proposal 10.
+- Drop the six non-commercial news aggregators at launch, which closes **NC-013–NC-018**, and
+  **NC-064** with them.
+
+Batch 15's PR is still open, waiting on the owner's EDGAR report, so this batch rides the same
+branch and PR.
+
+`npm run check` passes, `npm run lint` is clean, `next build` compiles, and `check:ui` is 157/164:
+two new browser checks, both passing; no console errors under the new CSP; and the seven failures
+are the same stale prompt-search checks.
+
+- [x] **NC-164 — no ads in a browser holding a key.** An ad script on our origin could read the
+      AI, NYT and Guardian keys in localStorage. Now:
+      - `lib/adGate.ts` is the one gate. It answers no when either feature holds a key, when a
+        stored entry won't parse, when "reload without ads" was used in this tab, or when storage
+        can't be read. A local model with no key doesn't count as a key.
+      - `components/AdScript.tsx` is the only ad loader. It does nothing until
+        `NEXT_PUBLIC_AD_SCRIPT_URL` names a network (none is chosen, NC-121), and it injects after
+        load, because only the browser can see whether a key is stored.
+      - A key typed beside a running ad script could be read as it is typed, so on such a page
+        both key forms are replaced by a "Reload without ads" button. It turns ads off for the
+        tab before the key is entered.
+      - **The CSP now limits scripts** to this site and the configured ad loader; development
+        also allows eval. Connections stay open, because a visitor's own model endpoint can be
+        any host.
+      - The settings copy says a browser holding a key loads no ads, and `docs/OWNER-ACTIONS.md`
+        says how to add a network.
+      - Checks: 12 in `check:abuse` (the old "CSP leaves scripts alone" check is replaced). On the
+        old code, three fail and the gate's tests can't load.
+- [x] **Biggest moves on priced topic pages (proposal 10).** BTC and ETH now show the panel below
+      their chart. The seeded halving-day move is paired with the halving. Checks: 2 in `check:ui`.
+- [x] **The six aggregators — dropped at launch (owner's decision).** Newsdata, GNews, Currents,
+      Marketaux, EODHD and Finnhub are ticked in the pre-release feed gate. None was on the ingest
+      path and `COMMERCIAL_MODE` already refused them; their keys stay out of production. NYT,
+      the Guardian and Yahoo remain open there.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on
@@ -1364,13 +1405,18 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
 
 ### Licensing / keys (monetization turns several free tiers non-compliant)
 
-- [ ] **Newsdata.io** — free tier is personal/testing. Upgrade to a paid plan (explicitly allows
-      commercial use); swap key in `.env.local`. No code change.
-- [ ] **GNews** — free tier is non-commercial. Upgrade to a paid tier; swap key. No code change.
-- [ ] **Currents API** — free developer tier is non-commercial. Upgrade or drop the key at launch.
-- [ ] **Marketaux** — free tier is non-commercial. Upgrade or drop the key at launch.
-- [ ] **EODHD** — free tier is personal/evaluation. Upgrade or drop the key at launch.
-- [ ] **Finnhub** — free tier is personal/non-commercial. Upgrade or drop the key at launch.
+- [x] **The six news aggregators below — dropped at launch, by the owner's decision
+      (2026-10-19).** None is on the ingest path, `COMMERCIAL_MODE` already refuses all six, and
+      none has a visitor-key route, so paying would buy nothing the live site shows until one was
+      also wired into ingest. Their adapters stay, for `check:feeds` diagnostics only, and their
+      keys stay out of the production environment. Closes NC-013–NC-018, and NC-064 (their
+      free-tier capacity) with them.
+- [x] **Newsdata.io** — free tier is personal/testing. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
+- [x] **GNews** — free tier is non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
+- [x] **Currents API** — free developer tier is non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
+- [x] **Marketaux** — free tier is non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
+- [x] **EODHD** — free tier is personal/evaluation. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
+- [x] **Finnhub** — free tier is personal/non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
 - [ ] **Guardian** — free developer key is non-commercial. Request a commercial license/key from
       Guardian Open Platform; swap key.
 - [ ] **NYT Article Search** — public API terms are non-commercial and there is **no self-serve
@@ -2245,6 +2291,14 @@ machine closes that gap.
 
 ### Cross-cutting for this initiative
 
+- [x] `P2` **"Biggest moves" on priced topic pages.** ✅ **Done 2026-10-19 (batch 16).** A topic
+      with a price series (BTC, ETH) now shows the panel a company page has, below its chart. Its
+      catalyst table already weighted exploits, halvings and governance votes, kinds that never
+      occur on a company page, so that logic was unreachable until now. Check: 2 in `check:ui`, on
+      the seeded halving-day move.
+      - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
+        #10, approved 2026-10-19. Importance low (outside the current scope) · Efficiency very
+        high · Practicality high.*
 - [ ] `P0` **Licensing gate:** keep all sources `commercialOk: true` — raw chain facts + public
       explorers only. **No Dune/Nansen aggregations in the ad-supported path** (TOS), same
       discipline as the Google-News-RSS bar.

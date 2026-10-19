@@ -76,11 +76,12 @@ npm run cost-report            # what it actually spent, against each free tier
 ## 3. The licensing decisions (the real blocker)
 
 **Every free tier you are on is non-commercial.** Nine calls, each with three possible answers:
-upgrade, drop the key at launch, or — for NYT and the Guardian only — ship BYO-key.
+upgrade, drop the key at launch, or — for NYT and the Guardian only — ship BYO-key. Six are
+decided (the aggregators, dropped on 2026-10-19); NYT, the Guardian and Yahoo remain.
 
 | Source | Options |
 | --- | --- |
-| Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | Upgrade to paid, or drop at launch |
+| Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | **Decided 2026-10-19: drop at launch** — keep their keys out of production |
 | **Guardian** | Commercial key, drop, **or BYO-only** |
 | **NYT** | No self-serve commercial tier — negotiate, drop, **or BYO-only** |
 | **Yahoo Finance RSS** | Gray zone. Read the ToS and settle it — it is flagged `commercialOk: true` today, so it keeps fetching on the assumption you have decided |
@@ -128,9 +129,10 @@ design sit under **Planned initiatives — free planner & referral board** in th
 - **Beta launch** is blocked on §1 and §3 above, and on nothing else.
 
 - **Before the first ad or affiliate link.** The ad slots are blank placeholders — no ad network
-  script loads today. Before one does: switch on `COMMERCIAL_MODE`, settle §3, and keep visitors'
-  own API keys away from third-party scripts (they sit in the browser's local storage on the same
-  origin an ad script would run in — NC-164). The disclosure page the affiliate item calls for
+  script loads today. Before one does: switch on `COMMERCIAL_MODE` and settle §3. Visitors' own
+  API keys are handled (NC-164, 2026-10-19): set the network's script as `NEXT_PUBLIC_AD_SCRIPT_URL`
+  and it loads only in browsers holding no key — never load an ad script any other way. Add the
+  frame and connect hosts the network documents to the CSP in `next.config.mjs` with it. The disclosure page the affiliate item calls for
   ("How we make money") is not built, and there are no privacy or terms pages yet; settle what
   is needed with the review in §4.
 

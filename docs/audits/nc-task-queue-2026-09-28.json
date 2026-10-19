@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 56,
-   "closed": 84,
+   "open": 48,
+   "closed": 92,
    "parked": 12,
    "blocked": 18
   },
@@ -42,8 +42,8 @@
    "owner-machine": 12,
    "owner-decision": 50
   },
-  "counts_recomputed_on": "2026-10-18",
-  "closed_by_annotation": 84
+  "counts_recomputed_on": "2026-10-19",
+  "closed_by_annotation": 92
  },
  "blocking_decisions": [
   {
@@ -530,7 +530,7 @@
   {
    "id": "NC-013",
    "title": "Licensing decision: pay for a commercial Newsdata.io tier or drop its key at launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "terms-review",
@@ -563,12 +563,23 @@
      "lines": "535",
      "quote": "**The other eight are not, by decision rather than by omission.**"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 16: the owner decided to drop Newsdata.io at launch rather than buy a commercial tier (2026-10-19). Its key stays out of the production environment; COMMERCIAL_MODE already refuses the source, nothing ingests it, and the adapter remains for check:feeds diagnostics only. Reopen only if the owner later buys a commercial plan, which would also mean wiring it into ingest.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-014",
    "title": "Licensing decision: pay for a commercial GNews tier or drop its key at launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "terms-review",
@@ -591,12 +602,23 @@
      "lines": "71-80",
      "quote": "no visitor-key path yet"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 16: the owner decided to drop GNews at launch rather than buy a commercial tier (2026-10-19). Its key stays out of the production environment; COMMERCIAL_MODE already refuses the source, nothing ingests it, and the adapter remains for check:feeds diagnostics only. Reopen only if the owner later buys a commercial plan, which would also mean wiring it into ingest.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-015",
    "title": "Licensing decision: pay for a commercial Currents API tier or drop its key at launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "terms-review",
@@ -619,12 +641,23 @@
      "lines": "71-80",
      "quote": "no visitor-key path yet"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 16: the owner decided to drop Currents API at launch rather than buy a commercial tier (2026-10-19). Its key stays out of the production environment; COMMERCIAL_MODE already refuses the source, nothing ingests it, and the adapter remains for check:feeds diagnostics only. Reopen only if the owner later buys a commercial plan, which would also mean wiring it into ingest.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-016",
    "title": "Licensing decision: pay for a commercial Marketaux tier or drop its key at launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "terms-review",
@@ -647,12 +680,23 @@
      "lines": "71-80",
      "quote": "no visitor-key path yet"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 16: the owner decided to drop Marketaux at launch rather than buy a commercial tier (2026-10-19). Its key stays out of the production environment; COMMERCIAL_MODE already refuses the source, nothing ingests it, and the adapter remains for check:feeds diagnostics only. Reopen only if the owner later buys a commercial plan, which would also mean wiring it into ingest.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-017",
    "title": "Licensing decision: pay for a commercial EODHD tier or drop its key at launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "terms-review",
@@ -675,12 +719,23 @@
      "lines": "71-80",
      "quote": "no visitor-key path yet"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 16: the owner decided to drop EODHD at launch rather than buy a commercial tier (2026-10-19). Its key stays out of the production environment; COMMERCIAL_MODE already refuses the source, nothing ingests it, and the adapter remains for check:feeds diagnostics only. Reopen only if the owner later buys a commercial plan, which would also mean wiring it into ingest.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-018",
    "title": "Licensing decision: pay for a commercial Finnhub tier or drop its key at launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "terms-review",
@@ -703,7 +758,18 @@
      "lines": "71-80",
      "quote": "no visitor-key path yet"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 16: the owner decided to drop Finnhub at launch rather than buy a commercial tier (2026-10-19). Its key stays out of the production environment; COMMERCIAL_MODE already refuses the source, nothing ingests it, and the adapter remains for check:feeds diagnostics only. Reopen only if the owner later buys a commercial plan, which would also mean wiring it into ingest.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-019",
@@ -2427,7 +2493,7 @@
   {
    "id": "NC-064",
    "title": "Act on cost-report capacity findings: EODHD at 100% of free tier at 5 subjects; GNews ~25, Marketaux ~16",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "decision",
@@ -2450,7 +2516,17 @@
      "lines": "31",
      "quote": "eodhd: { perDay: 20, note: \"free tier is ~20 API calls/day and may exclude news entirely\" }"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "moot",
+    "reason": "Batch 16: the free-tier capacity findings were the data behind a buy-or-drop call for EODHD, GNews and Marketaux; the owner dropped all six aggregators at launch (NC-013–NC-018), so there is no tier left to size.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848"
+    ]
+   }
   },
   {
    "id": "NC-065",
@@ -5807,7 +5883,7 @@
   {
    "id": "NC-164",
    "title": "Visitors' AI and news API keys sit in plain localStorage on the same origin that is meant to load ad scripts; no CSP",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "security",
@@ -5835,7 +5911,20 @@
      "lines": "8-9",
      "quote": "When the site is approved for AdSense, replace the inner block"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Batch 16, the owner's choice of the two designs offered: a browser holding a visitor key loads no ads at all. lib/adGate.ts is the one gate and components/AdScript.tsx the one loader (dormant until NEXT_PUBLIC_AD_SCRIPT_URL names a network); the key forms are replaced by a 'reload without ads' button on a page where an ad already runs; the CSP now lets scripts come only from this site and the configured ad loader; the settings copy says so. Checked in check:abuse and on a production build with check:ui.",
+    "evidence": [
+     "lib/adGate.ts",
+     "components/AdScript.tsx",
+     "next.config.mjs",
+     "scripts/check-abuse.ts"
+    ]
+   }
   },
   {
    "id": "NC-165",
@@ -6200,6 +6289,14 @@
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, a check:ui run on a production build, and a local Postgres probe of the alias search. The fixture is provisional until the owner's former-names-report run; data.sec.gov does not answer from the cloud session.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:802"
+    ]
+   },
+   {
+    "on": "2026-10-19",
+    "what": "Batch 16: NC-164 closed (no ads in a browser holding a visitor key; scripts limited to this site and the configured ad loader). NC-013–NC-018 closed by the owner's decision to drop the six non-commercial aggregators at launch, and NC-064 with them as moot. Proposal 10 built: biggest moves on priced topic pages.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build serving the new CSP.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848"
     ]
    }
   ]

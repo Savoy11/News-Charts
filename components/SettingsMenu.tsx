@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import AiSettingsForm from "./AiSettingsForm";
 import PrefsSettings from "./PrefsSettings";
 import FeedKeysForm from "./FeedKeysForm";
+import AdFreeKeyEntry from "./AdFreeKeyEntry";
 import { useHydrated } from "@/lib/useHydrated";
 import { loadPrefs, PREFS_EVENT, type Prefs, DEFAULT_PREFS } from "@/lib/prefs";
 import {
@@ -122,7 +123,9 @@ export default function SettingsMenu() {
                 regulation”, “product launches”. News Charts works fully without this; it only adds
                 the AI search box.
               </p>
-              <AiSettingsForm config={config} onSaved={setConfig} />
+              <AdFreeKeyEntry>
+                <AiSettingsForm config={config} onSaved={setConfig} />
+              </AdFreeKeyEntry>
 
               <div className="border-t border-slate-800 pt-5">
                 <h3 className="text-sm font-bold text-slate-200">News feed keys</h3>
@@ -131,7 +134,9 @@ export default function SettingsMenu() {
                   API key, and their terms make the key holder the licensee — so these are yours,
                   not ours. Without them the timeline still works; it just reaches less far back.
                 </p>
-                <FeedKeysForm />
+                <AdFreeKeyEntry>
+                  <FeedKeysForm />
+                </AdFreeKeyEntry>
               </div>
 
               <div className="border-t border-slate-800 pt-5">

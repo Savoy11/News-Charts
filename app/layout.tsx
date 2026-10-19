@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import localFont from "next/font/local";
 import SettingsMenu from "@/components/SettingsMenu";
+import AdScript from "@/components/AdScript";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
@@ -106,6 +107,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </p>
           </div>
         </footer>
+        {/* the ad network's loader — dormant until one is configured, never in a browser holding a key */}
+        <AdScript />
       </body>
     </html>
   );

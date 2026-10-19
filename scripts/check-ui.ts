@@ -383,6 +383,18 @@ async function cryptoTopic(page: Page): Promise<void> {
   check("the charted halving is present", /3\.125 BTC/.test(body));
   check("older halvings kept", /25 BTC/.test(body) && /6\.25 BTC/.test(body));
   check("legend names the on-chain marker", body.includes("On-chain"));
+  // 2026-10-17 proposal 10: the company page's panel, on a priced topic. The seeded series jumps
+  // on the 2024 halving, and the panel's catalyst table — written for exploits, halvings and votes,
+  // kinds a company page never has — pairs that move with the halving.
+  const cryptoMoves = await page.evaluate(() => {
+    const h = [...document.querySelectorAll("h3")].find((x) => x.textContent?.trim() === "Biggest moves");
+    const sec = h?.closest("section");
+    return sec ? [...sec.querySelectorAll("button")].map((b) => b.innerText.replace(/\n+/g, " ")) : [];
+  });
+  check("a priced topic gets the biggest-moves panel", cryptoMoves.length > 0, `${cryptoMoves.length} cards`);
+  check("  …pairing the halving-day move with the halving",
+    cryptoMoves.some((c) => /Apr 20, 2024/.test(c) && /halving/i.test(c)),
+    cryptoMoves.find((c) => /2024/.test(c)) ?? cryptoMoves.join(" | "));
 
   // Attribution. The claim an on-chain row makes is only as good as the reader's ability to go
   // and check it, so the block has to be on the row — not only inside the link's href.

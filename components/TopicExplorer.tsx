@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import HorizontalTimeline from "./HorizontalTimeline";
 import EventList, { dateAnchorId } from "./EventList";
 import PriceTimeline from "./PriceTimeline";
+import BiggestMoves from "./BiggestMoves";
 import AiPanel, { type AiRanking } from "./AiPanel";
 import { applyRanking } from "@/lib/ai/client";
 import Annotations from "./Annotations";
@@ -292,6 +293,9 @@ export default function TopicExplorer({
       {prices.length > 0 && (
         <div className="mb-4">
           <PriceTimeline prices={prices} events={ranked} onSelectDate={jumpToDate} />
+          {/* the panel a company page has — its catalyst table already ranks exploits, halvings
+              and governance votes, kinds that only ever occur here (2026-10-17 proposal 10) */}
+          <BiggestMoves prices={prices} events={ranked} onSelectDate={jumpToDate} />
         </div>
       )}
 

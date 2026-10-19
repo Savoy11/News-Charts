@@ -33,6 +33,7 @@ import { MAX_REQUEST_SLUG, ledgerSlugFor, requestKey } from "../lib/ingest/queue
 import { articleAnswersSlug, articleCoversSlug, topicSlugFromTitle } from "../lib/wiki";
 import { proxy, config as proxyConfig } from "../proxy";
 import { jsonLdText } from "../components/JsonLd";
+import { ADS_OFF_FLAG, KEY_STORAGE, holdsVisitorKeys, mayLoadAds } from "../lib/adGate";
 
 let pass = 0;
 let fail = 0;
@@ -170,10 +171,37 @@ console.log("\nBaseline hardening from the security review (NC-090)");
     check(`every response carries ${h}`, nextConfig.includes(`key: "${h}"`));
   }
   check("  …applied to every path", /source: "\/:path\*"/.test(nextConfig));
-  check("the CSP forbids framing, <base> and plugins without touching scripts", /frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'/.test(nextConfig) && !/script-src/.test(nextConfig));
+  check("the CSP forbids framing, <base> and plugins", /frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'/.test(nextConfig));
+  // NC-164: scripts from this site, and from the ad network's loader once one is configured — no
+  // other host, no wildcard, no scheme-wide source.
+  const scriptList = nextConfig.match(/const scriptSrc = \[([\s\S]*?)\]\.join/)?.[1] ?? "";
+  check("  …and lets scripts come only from this site and the configured ad loader",
+    /script-src \$\{scriptSrc\}/.test(nextConfig) && /"'self'",\s*"'unsafe-inline'"/.test(scriptList) &&
+      /\.\.\.\(adOrigin \? \[adOrigin\] : \[\]\)/.test(scriptList) && !/"https?:"|"\*"|\*\./.test(scriptList),
+    scriptList.replace(/\s+/g, " "));
+  check("  …with eval only in development", /process\.env\.NODE_ENV === "production" \? \[\] : \["'unsafe-eval'"\]/.test(nextConfig));
   const ld = jsonLdText({ name: "Acme</script><script>alert(1)</script> & Co" });
   check("stored text cannot close a JSON-LD block", !ld.includes("</script>") && !ld.includes("<script"), ld);
   check("  …and still parses to the same value", JSON.parse(ld).name === "Acme</script><script>alert(1)</script> & Co");
+
+  // NC-164, the owner's call (2026-10-19): a browser holding a visitor's key loads no ads.
+  const fake = (entries: Record<string, string>) => ({ getItem: (k: string) => entries[k] ?? null });
+  check("an AI key means no ads", !mayLoadAds(fake({ [KEY_STORAGE.ai]: JSON.stringify({ provider: "openai", model: "m", apiKey: "sk-1" }) }), fake({})));
+  check("  …as does a newspaper key", !mayLoadAds(fake({ [KEY_STORAGE.feeds]: JSON.stringify({ nyt: "k" }) }), fake({})));
+  check("  …and a stored entry that will not parse", holdsVisitorKeys(fake({ [KEY_STORAGE.feeds]: "{not json" })));
+  check("  …but a local model with no key does not", mayLoadAds(fake({ [KEY_STORAGE.ai]: JSON.stringify({ provider: "compatible", model: "llama", apiKey: "" }) }), fake({})));
+  check("no keys, no flag: ads may load", mayLoadAds(fake({}), fake({})));
+  check("\"reload without ads\" holds for the tab", !mayLoadAds(fake({}), fake({ [ADS_OFF_FLAG]: "1" })));
+  check("  …and storage that throws loads none", !mayLoadAds({ getItem: () => { throw new Error("blocked"); } }, fake({})));
+  const adScript = read("components/AdScript.tsx");
+  check("the ad loader asks the gate before it injects anything",
+    /if \(!\/\^https:\\\/\\\/\/\.test\(AD_SCRIPT_URL\) \|\| !mayLoadAds\(\)\) return;/.test(adScript) &&
+      adScript.indexOf("mayLoadAds()") < adScript.indexOf("createElement"));
+  const injectors = ["app/layout.tsx", "components/AdSlot.tsx", "components/SettingsMenu.tsx"].filter((f) => /createElement\(["']script/.test(read(f)));
+  check("  …and is the only script injector beside the layout", injectors.length === 0, injectors.join(", "));
+  const settings = read("components/SettingsMenu.tsx");
+  check("both key forms are replaced where an ad is already running",
+    /<AdFreeKeyEntry>\s*<AiSettingsForm/.test(settings) && /<AdFreeKeyEntry>\s*<FeedKeysForm/.test(settings));
   check("a search is capped before the database sees it", /const query = q\.replace\(\/\\s\+\/g, " "\)\.trim\(\)\.slice\(0, MAX_QUERY\);/.test(read("lib/resolveSearch.ts")));
 }
 

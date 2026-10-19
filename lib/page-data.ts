@@ -48,6 +48,12 @@ export interface TopicPageData {
    */
   prices: PricePoint[];
   refreshedAt: RefreshedAt;
+  /**
+   * Set when the address found a company rather than a topic — by its slug ("/topic/f"), or by an
+   * alias such as an old name ("/topic/facebook" for Meta). The page sends the visitor to the
+   * company's own page instead of drawing a company's timeline as a topic.
+   */
+  companyTicker: string | null;
 }
 
 export interface CompanyPageData {
@@ -126,6 +132,18 @@ async function getTopicPageDataImpl(topic: string): Promise<TopicPageData | null
 async function heldTopicPage(topic: string): Promise<TopicPageData | null> {
   const subject = await loadSubject(topic);
   if (!subject) return null;
+  if (subject.kind === "company" && subject.ticker) {
+    return {
+      title: subject.displayName,
+      slug: subject.slug,
+      summary: "",
+      wikipediaTitle: null,
+      events: [],
+      prices: [],
+      refreshedAt: subject.refreshedAt,
+      companyTicker: subject.ticker,
+    };
+  }
   const [events, prices] = await Promise.all([loadEvents(subject.id), loadPrices(subject.id)]);
   if (!events.length) return null;
   return {
@@ -136,6 +154,7 @@ async function heldTopicPage(topic: string): Promise<TopicPageData | null> {
     events,
     prices,
     refreshedAt: subject.refreshedAt,
+    companyTicker: null,
   };
 }
 
@@ -159,7 +178,7 @@ const cachedHeldCompany = unstable_cache((key: string) => heldCompanyPage(key), 
   revalidate: PAGE_CACHE_SECONDS,
   tags: ["subject-pages"],
 });
-const cachedHeldTopic = unstable_cache((key: string) => heldTopicPage(key), ["held-topic-page", "v1"], {
+const cachedHeldTopic = unstable_cache((key: string) => heldTopicPage(key), ["held-topic-page", "v2"], {
   revalidate: PAGE_CACHE_SECONDS,
   tags: ["subject-pages"],
 });

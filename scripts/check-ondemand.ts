@@ -131,7 +131,7 @@ async function main(): Promise<void> {
   const firstPassSrc = fs.readFileSync("lib/ingest/firstPass.ts", "utf8");
   const ingestSrc = fs.readFileSync("scripts/ingest.ts", "utf8");
   check("the first pass takes the recent block only", /\bgetFilings\(/.test(firstPassSrc) && !/getFilingsDeep/.test(firstPassSrc));
-  check("the scheduler takes the older shards", /getFilingsDeep\([^)]*true\)/.test(ingestSrc));
+  check("the scheduler takes the older shards", /getFilingsDeep\([^,)]+,\s*true\b/.test(ingestSrc));
 
   const { getFilings, getFilingsDeep } = await import("../lib/sec");
   let asked: string[] = [];

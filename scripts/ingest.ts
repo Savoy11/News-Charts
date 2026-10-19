@@ -30,7 +30,7 @@ import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib
 import { fetchNews } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
-import { resolveCompany, getFilingsDeep, getIndustry, commonName } from "../lib/sec";
+import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, type Rename } from "../lib/sec";
 import { fetchDailyPrices, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
@@ -402,6 +402,7 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     line("industry", "no SIC code from EDGAR");
   }
 
+  const renames: Rename[] = [];
   await run("sec_edgar", company.ticker, async () => {
     /**
      * The scheduler takes the WHOLE history, not just EDGAR's recent block.
@@ -415,9 +416,21 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
      * Deep here and shallow in the first pass, deliberately: this path has no deadline and runs
      * on a refresh window, while the first pass runs with a visitor waiting on an 8s budget.
      */
-    const events = await getFilingsDeep(company, true);
+    const events = await getFilingsDeep(company, true, renames);
     return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
   });
+
+  /**
+   * The names the company used to file under, as search aliases — so "Facebook" finds a held
+   * Meta Platforms (2026-10-17 proposal 9). They come from the record the filings step just read,
+   * and only on a run that read it; the rename itself is already on the timeline from that step.
+   */
+  for (const alias of formerNameAliases(renames, company.name)) {
+    await client.query(
+      `INSERT INTO subject_aliases (subject_id, alias) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+      [subjectId, alias]
+    );
+  }
 
   /**
    * Federal Register documents that name the company in their title — an FTC order, an NHTSA

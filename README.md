@@ -275,6 +275,14 @@ Dividends and stock splits arrive on that same request (`events=div,splits`) and
 split-adjusted, so the line does not step on a split — the marker is the only thing that says it
 happened. That is the point: a mechanical change should never read as a reaction to news.
 
+Renames share that chip, now called **Corporate actions**. EDGAR's company record lists every
+name a filer has used and the day it stopped (`formerNames`), and it arrives with the filings at
+no extra request: "Renamed from FACEBOOK INC to Meta Platforms, Inc." goes on the timeline, and
+the ingest stores each old everyday name as a search alias, so "facebook" finds a held Meta. A
+change of case, punctuation or state tag isn't a rename, a fund doesn't inherit its trust's old
+names, and a rename that came with a new CIK (Google → Alphabet) isn't in the record.
+`npm run former-names-report -- META AAPL` prints what the record says.
+
 ### Checks
 
 ```

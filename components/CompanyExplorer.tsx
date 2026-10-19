@@ -23,8 +23,10 @@ const FILTERS: { key: EventType; label: string }[] = [
   { key: "earnings", label: "Earnings" },
   { key: "filing", label: "Filings" },
   { key: "news", label: "News" },
-  { key: "regulation", label: "Sector rules" },
-  { key: "corporate_action", label: "Splits & dividends" },
+  // sector rules, and federal documents whose title names the company (2026-10-17 proposal 4)
+  { key: "regulation", label: "Regulation" },
+  // splits, dividends, and renames from EDGAR's own record (2026-10-17 proposal 9)
+  { key: "corporate_action", label: "Corporate actions" },
 ];
 
 const ALL_TYPES = FILTERS.map((f) => f.key);

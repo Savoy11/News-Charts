@@ -749,6 +749,72 @@ function prospectusEvents(prospectuses: Prospectus[], company: CompanyInfo): Tim
   });
 }
 
+/** One entry of a submissions record's `formerNames`: a name and the timestamps it was used between. */
+export interface FormerName {
+  name?: string;
+  from?: string;
+  to?: string;
+}
+
+/** A change of the filer's name: on `on`, `from` became `to`. */
+export interface Rename {
+  on: string;
+  from: string;
+  to: string;
+}
+
+/**
+ * The real renames in a submissions record (2026-10-17 proposal 9). EDGAR keeps every name a
+ * filer has used under `formerNames`, each with the day it stopped — "FACEBOOK INC" until
+ * 2021-10-28 — and the site downloaded the record for its filings and read none of it.
+ *
+ * Oldest first, each paired with the name that replaced it: the next former name, or the current
+ * one. A change of case, punctuation, legal suffix or state tag ("APPLE INC" → "Apple Inc.",
+ * "XYZ CORP /DE/" → "XYZ CORP") is not a rename and is dropped, by comparing everyday names.
+ * A rename that came with a new CIK (Google → Alphabet) is not in the record and isn't covered.
+ */
+export function renamesFrom(current: string, formerNames: FormerName[] | undefined, today = new Date()): Rename[] {
+  const until = today.toISOString().slice(0, 10);
+  const dated = (formerNames ?? [])
+    .map((f) => ({ name: String(f?.name ?? "").trim(), on: String(f?.to ?? "").slice(0, 10) }))
+    .filter((f) => f.name && /^\d{4}-\d{2}-\d{2}$/.test(f.on) && f.on <= until)
+    .sort((a, b) => a.on.localeCompare(b.on));
+  const same = (a: string, b: string) => phrase(commonName(a)) === phrase(commonName(b));
+  return dated
+    .map((f, i) => ({ on: f.on, from: f.name, to: dated[i + 1]?.name ?? current.trim() }))
+    .filter((r) => r.to && !same(r.from, r.to));
+}
+
+/** A rename as a dated corporate action — the chip a split or a dividend already sits on. */
+export function renameEvents(renames: Rename[], company: CompanyInfo): TimelineEvent[] {
+  return renames.map((r) => {
+    const basis = `sec:${company.cik}:rename:${r.on}`;
+    return {
+      id: `sec-rename-${company.cik}-${r.on}`,
+      date: r.on,
+      type: "corporate_action" as const,
+      title: `Renamed from ${r.from} to ${r.to}`,
+      source: "SEC EDGAR",
+      url: `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${company.cik}&owner=include&count=40`,
+      description: `EDGAR's company record lists ${r.from} as a former name of this filer, in use until this day.`,
+      sourceKey: "sec_edgar" as const,
+      externalId: basis,
+      dedupBasis: basis,
+    };
+  });
+}
+
+/** The everyday former names a company is still searched by — "facebook" for Meta Platforms. */
+export function formerNameAliases(renames: Rename[], current: string): string[] {
+  const own = phrase(commonName(current));
+  const out = new Set<string>();
+  for (const r of renames) {
+    const alias = commonName(r.from).toLowerCase().replace(/\s+/g, " ").trim();
+    if (alias.length >= 3 && phrase(alias) !== own) out.add(alias);
+  }
+  return [...out];
+}
+
 /** The recent block only — what every read path wants, and what the first pass is bounded to. */
 export async function getFilings(company: CompanyInfo): Promise<TimelineEvent[]> {
   return getFilingsDeep(company, false);
@@ -771,7 +837,9 @@ export async function getFilings(company: CompanyInfo): Promise<TimelineEvent[]>
  */
 export async function getFilingsDeep(
   company: CompanyInfo,
-  includeOlder: boolean
+  includeOlder: boolean,
+  /** filled with the filer's renames, for a caller that also stores them as search aliases */
+  renames: Rename[] = []
 ): Promise<TimelineEvent[]> {
   const res = await fetch(`https://data.sec.gov/submissions/CIK${company.cik}.json`, {
     headers: UA,
@@ -786,6 +854,13 @@ export async function getFilingsDeep(
   const registrant = typeof json?.name === "string" && json.name.trim() ? json.name.trim() : company.name;
   const prospectuses: Prospectus[] = [];
   const events = filingsFromBlock(recent, company, registrant, prospectuses);
+  // Renames are in the record already in hand, so they cost nothing. A fund's record is its
+  // trust's, and the trust's old names are not the fund's — those are left out.
+  if (tickerIndex.funds[company.ticker.toUpperCase()] === undefined) {
+    const found = renamesFrom(registrant, json?.formerNames);
+    renames.push(...found);
+    events.push(...renameEvents(found, company));
+  }
   if (!includeOlder) return [...events, ...prospectusEvents(prospectuses, company)];
 
   const shards: { name?: string }[] = json?.filings?.files ?? [];

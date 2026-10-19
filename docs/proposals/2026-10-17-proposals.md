@@ -450,7 +450,8 @@ anyway.
 
 ## 9. EDGAR's own former names — dated rename events and search aliases · proposed `P2` · target section: Search engine — first-visit ingest, recall, relevance (2026-08-07), beside the alias-harvesting item (NC-004)
 
-**Status:** PENDING — mark `APPROVED` / `REJECTED` / `DEFERRED`
+**Status:** APPROVED — by the owner, 2026-10-19. Event kind: `corporate_action`, with the chip
+renamed "Corporate actions". Built in batch 15.
 **Owner's reason (if rejected):**
 
 **Anchor:** data already ingested but never shown.

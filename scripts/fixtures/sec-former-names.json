@@ -1,0 +1,23 @@
+{
+ "provenance": "PROVISIONAL — written from knowledge of the SEC API, not copied from a real record. Replace `records` with the block `npm run former-names-report` prints on a host that reaches data.sec.gov, and set this to the date and host it came from.",
+ "provisional": true,
+ "records": [
+  {
+   "ticker": "META",
+   "cik": "0001326801",
+   "name": "Meta Platforms, Inc.",
+   "formerNames": [
+    { "name": "FACEBOOK INC", "from": "2012-02-01T00:00:00.000Z", "to": "2021-10-28T00:00:00.000Z" }
+   ]
+  },
+  {
+   "ticker": "AAPL",
+   "cik": "0000320193",
+   "name": "Apple Inc.",
+   "formerNames": [
+    { "name": "APPLE INC", "from": "2007-01-10T00:00:00.000Z", "to": "2019-08-05T00:00:00.000Z" },
+    { "name": "APPLE COMPUTER INC", "from": "1994-01-26T00:00:00.000Z", "to": "2007-01-04T00:00:00.000Z" }
+   ]
+  }
+ ]
+}

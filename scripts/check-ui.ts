@@ -309,7 +309,7 @@ async function chartOverlays(page: Page): Promise<void> {
   // started crediting the explorers, at which point a check about a chart legend was being
   // decided by the site's boilerplate.
   const legend = await page.locator("[data-chart-legend]").first().innerText();
-  check("legend lists split / dividend", legend.includes("Split / dividend"), legend.replace(/\n/g, " · "));
+  check("legend lists corporate actions (splits, dividends, renames)", legend.includes("Corporate action"), legend.replace(/\n/g, " · "));
   check("legend omits kinds this page lacks", !legend.includes("On-chain"), legend.replace(/\n/g, " · "));
 }
 
@@ -361,6 +361,12 @@ async function topicPage(page: Page): Promise<void> {
     !/Jun 1\b[\s\S]{0,120}Electric Car Sales Climb/.test(listBody),
     "a 'Jun 1' day node appeared above the month-only citation"
   );
+
+  // A company reached through a topic address — its slug here, an old name stored as an alias in
+  // life ("/topic/facebook") — goes to its own page rather than a topic layout without its chart.
+  await go(page, "/topic/f");
+  check("a topic address that finds a company goes to the company page",
+    new URL(page.url()).pathname === "/company/F", new URL(page.url()).pathname);
 }
 
 async function cryptoTopic(page: Page): Promise<void> {

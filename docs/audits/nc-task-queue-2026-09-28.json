@@ -6193,6 +6193,14 @@
     "evidence": [
      "docs/MASTER-CHECKLIST.md:753"
     ]
+   },
+   {
+    "on": "2026-10-19",
+    "what": "Batch 15: proposal 9 built as the owner chose — EDGAR's former names as dated corporate-action renames and as search aliases, with the chip renamed \"Corporate actions\"; batch 14's \"Sector rule(s)\" labels corrected to \"Regulation\". No ledger item closes; it is a checklist item, not a ledger item.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, a check:ui run on a production build, and a local Postgres probe of the alias search. The fixture is provisional until the owner's former-names-report run; data.sec.gov does not answer from the cloud session.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:802"
+    ]
    }
   ]
  }

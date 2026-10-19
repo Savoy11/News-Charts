@@ -799,6 +799,52 @@ EDGAR's, which includes the ticker index's age check that failed in batch 13.
 - [x] `README.md` and `docs/COVERAGE-MAP.md` now say company pages carry the documents that name
       the company.
 
+## NC ledger — batch 15: companies' old names (2026-10-19)
+
+The owner merged batch 14 and chose proposal 9 next, with renames on the splits-and-dividends
+chip, renamed "Corporate actions". No ledger item closes; this is a checklist item.
+
+`npm run check` passes, `npm run lint` is clean, `next build` compiles, and `check:ui` is 155/162:
+one new browser check, passing, and the seven failures are the same stale prompt-search checks.
+**Not yet done:** pinning the fixture from a real EDGAR record — data.sec.gov doesn't answer from
+this cloud session.
+
+- [x] **Renames on the timeline (`lib/sec.ts` `renamesFrom`, `renameEvents`).** EDGAR's company
+      record lists every name a filer has used and the day it stopped. The filings reader already
+      downloads that record and now reads the field too, so it costs no request:
+      - each old name is paired with the one that replaced it, oldest first;
+      - a change of case, punctuation, legal suffix or state tag is not a rename ("APPLE INC" →
+        "Apple Inc.");
+      - an entry with no date, or a date in the future, is dropped;
+      - a fund doesn't inherit its trust's old names.
+
+      A rename is a corporate action, e.g. "Renamed from FACEBOOK INC to Meta Platforms, Inc.",
+      linked to the company's EDGAR page. It reaches the first pass too.
+- [x] **Old names as search aliases.** Company ingest stores each old everyday name ("facebook")
+      as an alias. Checked against the local database: "facebook", "Facebook" and "FACEBOOK" all
+      find a held Meta by alias, score 1.00.
+- [x] **The chip and legend.** The company page's "Splits & dividends" filter is now "Corporate
+      actions", and the chart legend says "Corporate action".
+      - **Fixed on the way, from batch 14:** the filter "Sector rules" and the legend's "Sector
+        rule" now say "Regulation". Company pages carry federal documents naming the company
+        itself since batch 14, so "sector" was no longer true.
+- [x] **A topic address that finds a company goes to the company page.** Found while checking the
+      aliases: `/topic/f` drew Ford's timeline in a topic layout, with no price chart or filings,
+      because the topic loader takes any subject by slug or alias. An old name stored as an alias
+      would have done the same for `/topic/facebook`. The topic page now redirects to
+      `/company/<ticker>`, and `/compare` no longer takes that placeholder as a topic. The redirect
+      reaches the browser inside the page (a meta refresh and Next's client redirect), like the
+      site's other alias redirects, because the loading screen has already started the response.
+      The held-topic cache key moved to v2. Checks: 1 in `check:ui`.
+- [x] **`npm run former-names-report`** (`-- META AAPL XYZ` by default) prints what the record says
+      and the block to pin as the fixture. Read-only; needs data.sec.gov.
+- [ ] **Pin the fixture from a real record.** `scripts/fixtures/sec-former-names.json` is written
+      from knowledge of the SEC API, and `check:sec-forms` says so while it is. The owner runs the
+      report and the printed block replaces it.
+- Checks: 12 in `check:sec-forms` (they crash on the old code). `check:ondemand`'s text check for
+  the deep filings call now reads the intent, so an added argument doesn't break it. `check:ui`'s
+  legend check now looks for "Corporate action".
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on
@@ -838,6 +884,17 @@ EDGAR's, which includes the ticker index's age check that failed in batch 13.
       Wikidata (⚠ `query.wikidata.org` is unreachable from the build container); GDELT
       year-window backfill (⚠ answers but throttles hard, 429/503); richer paid-tier evidence
       with an aggregate spend cap (needs a paid key).
+- [ ] `P2` **EDGAR's own former names — dated renames and search aliases.** Built 2026-10-19
+      (batch 15; see that section): renames from the submissions record's `formerNames` go on
+      the timeline as corporate actions, and the old everyday names become search aliases, so
+      "facebook" finds a held Meta. Free, and needs no Wikidata.
+      - ⚠ **Open until the fixture is pinned from a real record.** The field had never been
+        read here, so `scripts/fixtures/sec-former-names.json` is written from knowledge of the
+        SEC API and marked provisional. The owner runs `npm run former-names-report` (needs
+        data.sec.gov) and the printed block replaces it.
+      - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
+        #9, approved 2026-10-19 with `corporate_action` as the event kind. Importance
+        low-medium · Efficiency high · Practicality medium (an unverified field).*
 - [ ] `P2` **LoC decade walk — measured 2026-08-12, and it is a real trade-off rather than a
       clear win. Do not build it without deciding the two questions below.**
       - **It does reach material relevance ranking never returns.** An unfiltered `"bicycle"`

@@ -67,6 +67,15 @@ in passing looks identical to an ITC ruling on DRAM devices. All 60 are left `NU
 model tier, which means they display until something can actually judge them. That is the
 relevance problem the AI layer exists for, now with real material to work on.
 
+The one exception is a document whose **title** names the company — an FTC consent order, an
+NHTSA petition, an ITC investigation naming it as respondent. `npm run ingest -- --ticker F` asks
+for those too (`lib/frCompany.ts`): up to 40 a run, from 2015, never an airworthiness directive
+(an aircraft maker gets about a hundred a year, each on one part). A one-word name needs a
+company word after it ("Apple Inc.", not "Light Brown Apple Moth"), and a longer listed name
+owns the mention ("Portland General Electric" isn't GE's). A document linked to both the company
+and its sector is listed once on the company's page. These are scored without the model: the
+title naming the company is the evidence.
+
 ### Source planning (`lib/enrich/plan.ts`)
 
 ```
@@ -500,7 +509,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Wikipedia | Topic histories and company backstory | "History of ..." + "Timeline of ..." merged; search-index fallback |
 | LoC Chronicling America | Historical newspapers ~1770–1963 | Public domain; fills the pre-2017 gap |
 | Internet Archive | Catalogued items (reports, catalogues, film) | Relevance-ranked; impossible dates dropped |
-| Federal Register | Sector-level rules and notices | Attached to industries, not companies |
+| Federal Register | Sector-level rules and notices; documents naming a company | Keyword hits attach to industries; a title naming the company attaches to it (no airworthiness directives) |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |
 | Snapshot | Protocol governance votes | Keyless GraphQL |

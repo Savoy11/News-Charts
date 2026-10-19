@@ -5,6 +5,7 @@ import { PricePoint, TimelineEvent } from "./types";
 import { requestSubject } from "./ingest/queue";
 import { firstPassCompany, firstPassTopic } from "./ingest/firstPass";
 import { dropCompanyPrehistory } from "./history";
+import { withoutSharedSectorRows } from "./eventMerge";
 import { resolveTickerLocally, siblingFunds } from "./sec";
 import { loadSectorStanding, type SectorStanding } from "./signals";
 
@@ -154,7 +155,7 @@ async function heldTopicPage(topic: string): Promise<TopicPageData | null> {
  * Date is revived on the way out.
  */
 const PAGE_CACHE_SECONDS = 900;
-const cachedHeldCompany = unstable_cache((key: string) => heldCompanyPage(key), ["held-company-page", "v3"], {
+const cachedHeldCompany = unstable_cache((key: string) => heldCompanyPage(key), ["held-company-page", "v4"], {
   revalidate: PAGE_CACHE_SECONDS,
   tags: ["subject-pages"],
 });
@@ -208,7 +209,7 @@ async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
     wikipediaTitle: subject.wikipediaTitle ?? null,
     siteDomain: subject.siteDomain,
     prices,
-    events: dropCompanyPrehistory([...events, ...sector]),
+    events: dropCompanyPrehistory([...events, ...withoutSharedSectorRows(events, sector)]),
     industry,
     standing,
     siblings,

@@ -501,13 +501,48 @@ export async function resolveCompany(query: string): Promise<CompanyInfo | null>
 const LEGAL_SUFFIX =
   /\b(?:incorporated|inc|corporation|corp|company|co|limited|ltd|plc|holdings?|s\.a\.|n\.v\.|ag|se)\.?$/i;
 
-/** The everyday name of a company, for looking it up outside SEC filings. */
+const containingCache = new Map<string, string[]>();
+const phrase = (s: string) =>
+  s.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
+
+/**
+ * The everyday names of other listed companies that contain this one's as a phrase — "portland
+ * general electric" for "general electric", "ford motor credit" for "ford motor". When a title
+ * carries the longer name, the mention belongs to that company, not this one.
+ */
+export function listedNamesContaining(everyday: string): string[] {
+  const own = phrase(everyday);
+  const cached = containingCache.get(own);
+  if (cached) return cached;
+  const found = new Set<string>();
+  for (const r of localCompanies()) {
+    const theirs = phrase(commonName(r.title));
+    if (theirs !== own && ` ${theirs} `.includes(` ${own} `)) found.add(theirs);
+  }
+  const list = [...found];
+  containingCache.set(own, list);
+  return list;
+}
+
+/**
+ * The everyday name of a company, for looking it up outside SEC filings.
+ *
+ * EDGAR also tags many titles with a state or re-registration marker — "BANK OF AMERICA CORP
+ * /DE/", "WELLS FARGO & COMPANY/MN", "COSTCO WHOLESALE CORP /NEW" — and leaves a bare "&" once the
+ * suffix after it goes ("ELI LILLY & Co"). Both used to survive into the name, so news and
+ * Federal Register searches asked for "Wells Fargo & Company/MN" and found nothing: the owner's
+ * 2026-10-18 count returned 0 of 0 hits for Wells Fargo and Bank of America.
+ */
 export function commonName(title: string): string {
   let s = title.trim();
   let prev = "";
   while (prev !== s) {
     prev = s;
-    s = s.replace(/[,.]\s*$/, "").replace(LEGAL_SUFFIX, "").trim();
+    s = s
+      .replace(/\s*\/[a-z]{2,5}\/?$/i, "")
+      .replace(/[,.&]\s*$/, "")
+      .replace(LEGAL_SUFFIX, "")
+      .trim();
   }
   return s || title;
 }

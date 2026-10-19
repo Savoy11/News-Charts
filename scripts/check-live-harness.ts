@@ -21,6 +21,7 @@ import {
   NoAnswer,
   classify,
   eventProblems,
+  companyRegulationProblems,
   exploitUnitProblems,
   exitCode,
   halvingProblems,
@@ -120,6 +121,18 @@ async function main(): Promise<void> {
   check("hack amounts read as plain USD pass", exploitUnitProblems([{ name: "Ronin", amount: 624_000_000 }]).length === 0);
   check("…and the unit DefiLlama documented, millions, fails", exploitUnitProblems([{ name: "Ronin", amount: 624 }]).length === 1);
   check("…as does a feed with nothing to pin it on", exploitUnitProblems([{ name: "Other", amount: 1 }]).length === 1);
+
+  const doc = (title: string, date = "2026-03-02"): TimelineEvent =>
+    ({ id: `fr-${title}`, date, type: "regulation", title, source: "Federal Register", url: "https://www.federalregister.gov/d/x" });
+  const petition = doc("Ford Motor Company, Receipt of Petition for Decision of Inconsequential Noncompliance");
+  check("a company's own Federal Register documents pass", companyRegulationProblems([petition], "FORD MOTOR CO").length === 0);
+  check("…one whose title doesn't name it fails",
+    companyRegulationProblems([petition, doc("Fuel Economy Standards for Light Trucks")], "FORD MOTOR CO").length === 1);
+  check("…as does an airworthiness directive",
+    companyRegulationProblems([petition, doc("Airworthiness Directives; Ford Motor Company Airplanes")], "FORD MOTOR CO").length === 1);
+  check("…a document older than the floor",
+    companyRegulationProblems([doc(petition.title, "2009-06-01")], "FORD MOTOR CO").length === 1);
+  check("…and an empty feed", companyRegulationProblems([], "FORD MOTOR CO").length > 0);
 
   console.log("\nCoverage");
   check("every source the site may publish from has a live case", uncovered().length === 0, uncovered().join(", "));

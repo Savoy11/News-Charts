@@ -128,6 +128,17 @@ console.log("\nLeft for the model, deliberately");
  * the judgement provenance cannot make.
  */
 check("a regulation is not scored from provenance", score("regulation") === null);
+/**
+ * The exception (proposal #4). On a company's page a Federal Register document arrives because its
+ * TITLE names the company — fetchCompanyRegulations filters on exactly that — so the naming is the
+ * evidence, and paying a model to re-read it would buy nothing.
+ */
+check("…but a document whose title names the company is scored without a model",
+  score("regulation", "Ford Motor Company; Receipt of Petition for Decision of Inconsequential Noncompliance")?.score === 0.95);
+check("  …and the short name is enough",
+  score("regulation", "Ford Motor, Receipt of Petition")?.score === 0.95);
+check("  …while a sector's keyword rule is still left for the model",
+  deterministicScore(row("regulation", "Semiconductor Export Controls"), { kind: "topic", displayName: "Semiconductors" }, ["semiconductors"]) === null);
 
 console.log("\nNothing falls through by accident");
 /**

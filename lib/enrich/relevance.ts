@@ -216,6 +216,11 @@ export function deterministicScore(
      * cannot make from provenance. Scoring it here would be inventing certainty.
      */
     case "regulation":
+      // …but a company's own document reaches it only when the title names it (lib/frCompany.ts),
+      // so on a company subject that title is the evidence (2026-10-17 proposal 4).
+      if (subject.kind === "company" && mentions(row.title, aliases) === "named") {
+        return { score: 0.95, reason: "the document's title names the company" };
+      }
       return null;
 
     /**

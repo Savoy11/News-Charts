@@ -34,6 +34,7 @@ import { resolveCompany, getFilingsDeep, getIndustry, commonName } from "../lib/
 import { fetchDailyPrices, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
+import { fetchCompanyRegulations } from "../lib/frCompany";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
 
@@ -62,6 +63,8 @@ export const TOPIC_SOURCES = [
 export const COMPANY_SOURCES = [
   "wikipedia",
   "sec_edgar",
+  // documents whose title names the company — not the sector's keyword rules (2026-10-17 proposal 4)
+  "federal_register",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -415,6 +418,14 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     const events = await getFilingsDeep(company, true);
     return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
   });
+
+  /**
+   * Federal Register documents that name the company in their title — an FTC order, an NHTSA
+   * petition, a trade-zone or export notice — and never airworthiness directives (the owner's rule
+   * from the 2026-10-18 count). A sector's keyword rules stay the industry's; these are the
+   * company's own. Scored at link time: the title names the subject, so no model is needed.
+   */
+  await run("federal_register", company.name, () => fetchCompanyRegulations(company.name));
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
   // headline that says "Ford" — the common name is the query, exactly as the comment above

@@ -41,7 +41,7 @@ function Num({
         onChange={(e) => onChange(Number(e.target.value))}
         className="mt-1 w-full accent-sky-500"
       />
-      <span className="text-[11px] font-normal text-slate-600">{hint}</span>
+      <span className="text-[11px] font-normal text-slate-500">{hint}</span>
     </label>
   );
 }
@@ -62,7 +62,7 @@ function Toggle({
     <label className="flex cursor-pointer items-start justify-between gap-3">
       <span className="min-w-0">
         <span className="block text-xs font-medium text-slate-400">{label}</span>
-        <span className="text-[11px] text-slate-600">{hint}</span>
+        <span className="text-[11px] text-slate-500">{hint}</span>
       </span>
       <button
         type="button"
@@ -121,7 +121,7 @@ function Segmented<T extends string | number>({
           </button>
         ))}
       </div>
-      <span className="mt-1 block text-[11px] text-slate-600">{hint}</span>
+      <span className="mt-1 block text-[11px] text-slate-500">{hint}</span>
     </div>
   );
 }
@@ -153,7 +153,7 @@ function Chips({
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), add())}
           placeholder={placeholder}
-          className="min-w-0 flex-1 rounded-sm border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 placeholder-slate-600 focus:border-sky-600 focus:outline-hidden"
+          className="min-w-0 flex-1 rounded-sm border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 placeholder-slate-500 focus:border-sky-600 focus:outline-hidden"
         />
         <button
           onClick={add}
@@ -334,7 +334,7 @@ export default function PrefsSettings({
               </a>
               <button
                 onClick={() => set({ groups: prefs.groups.filter((_, i) => i !== gi) })}
-                className="text-xs font-semibold text-slate-600 hover:text-red-400"
+                className="text-xs font-semibold text-slate-500 hover:text-red-400"
               >
                 delete group
               </button>
@@ -355,7 +355,7 @@ export default function PrefsSettings({
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
             placeholder="new group name"
-            className="min-w-0 flex-1 rounded-sm border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 placeholder-slate-600 focus:border-emerald-600 focus:outline-hidden"
+            className="min-w-0 flex-1 rounded-sm border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 placeholder-slate-500 focus:border-emerald-600 focus:outline-hidden"
           />
           <button
             onClick={() => {

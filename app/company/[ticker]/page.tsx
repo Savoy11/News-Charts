@@ -112,7 +112,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
               >
                 {data.industry.name}
               </Link>{" "}
-              <span className="text-slate-600">
+              <span className="text-slate-500">
                 (SIC {data.industry.sic} · {data.industry.memberCount} tracked)
               </span>
             </p>

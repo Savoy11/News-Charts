@@ -272,7 +272,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
   return (
     <div>
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+        <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
           Overlay
         </span>
         {OVERLAYS.map((o) => {
@@ -314,7 +314,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
           >
             <p className="mb-1.5 flex items-baseline justify-between px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
               <span>{shortDate(hover.day)}</span>
-              <span className="font-normal normal-case text-slate-600">
+              <span className="font-normal normal-case text-slate-500">
                 {hover.events.length} event{hover.events.length > 1 ? "s" : ""}
               </span>
             </p>

@@ -97,8 +97,9 @@ deliberately outside the chain because they need more than the code: `check:live
 ## Key invariants
 
 - **Licensing:** several news sources are on non-commercial free tiers. `COMMERCIAL_MODE=true`
-  withholds them (enforced by `check:commercial-mode`); it must be on in production the same
-  day anything earns money (open `P0` in the checklist).
+  withholds them (enforced by `check:commercial-mode`); it must be on in any environment
+  someone other than the owner can load — a private preview included — before the first such
+  page load (D22, applied 2026-10-19; open `P0` in the checklist).
 - **Events schema:** `docs/EVENTS-SCHEMA.md` is the spec — subjects, events, documents are
   three separate axes; enrichments degrade pages, never break them.
 - **Money is numeric, never float** — same rule as the schema doc states.

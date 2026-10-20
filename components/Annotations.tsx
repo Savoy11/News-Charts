@@ -102,7 +102,7 @@ export default function Annotations({ path }: { path: string }) {
             onChange={(e) => setText(e.target.value.slice(0, MAX_TEXT))}
             placeholder="Why this date matters to you…"
             aria-label="Note text"
-            className="min-w-0 flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-hidden"
+            className="min-w-0 flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-hidden"
           />
           <button
             type="submit"
@@ -127,7 +127,7 @@ export default function Annotations({ path }: { path: string }) {
                 onClick={() => setList(removeAnnotation(path, a.id))}
                 title="Delete this note"
                 aria-label={`Delete note from ${a.date}`}
-                className="shrink-0 rounded-sm px-1 text-slate-600 transition-colors hover:text-red-400"
+                className="shrink-0 rounded-sm px-1 text-slate-500 transition-colors hover:text-red-400"
               >
                 ×
               </button>

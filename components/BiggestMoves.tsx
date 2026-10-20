@@ -183,7 +183,7 @@ export default function BiggestMoves({
                   </span>
                 </div>
               ) : (
-                <p className="mt-1.5 text-xs text-slate-600">No event within {CATALYST_LOOKBACK_DAYS} days.</p>
+                <p className="mt-1.5 text-xs text-slate-500">No event within {CATALYST_LOOKBACK_DAYS} days.</p>
               )}
             </button>
           );

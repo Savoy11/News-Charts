@@ -108,7 +108,7 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
         <button
           type="submit"
           disabled={busy}
-          className={`rounded-lg bg-sky-600 font-semibold text-white hover:bg-sky-500 disabled:opacity-50 ${
+          className={`rounded-lg bg-sky-700 font-semibold text-white hover:bg-sky-800 disabled:opacity-50 ${
             large ? "px-6 py-4 text-lg" : "px-4 py-2 text-sm"
           }`}
         >

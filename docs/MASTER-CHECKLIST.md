@@ -388,7 +388,7 @@ stale prompt-search checks.
       `docs/decisions/2026-09-28-business-decisions.md`, linked from `CLAUDE.md`: D3, D13, D21,
       D22, the affiliate stance and the working pricing plan. Each is labelled as the ledger's
       summary, not the record, which lives in Finance Now's repo and was not read from here.
-      D22 is marked not yet applied here (NC-133).
+      D22 is marked not yet applied here (NC-133). *(Applied 2026-10-19, batch 17.)*
 - [ ] **NC-087 — advanced, not closed.** A junk or partial reply from a visitor's own model no
       longer hides its batch. Entries without a valid score are listed after the matches and
       counted in the panel, instead of being read as 0 and filtered out. Replies go through the
@@ -885,6 +885,53 @@ are the same stale prompt-search checks.
       Marketaux, EODHD and Finnhub are ticked in the pre-release feed gate. None was on the ingest
       path and `COMMERCIAL_MODE` already refused them; their keys stay out of production. NYT,
       the Guardian and Yahoo remain open there.
+
+## NC ledger — batch 17: the launch rule, accessibility, two cleanups (2026-10-19)
+
+The owner made four calls on 2026-10-19:
+- D22 covers News Charts. The site is commercial from its first outside visitor, which closes
+  **NC-133**.
+- Delete the unused Wayback snapshot reader, which closes **NC-043**.
+- Keep the search log as it is, which closes **NC-042**.
+- Aim for WCAG 2.2 AA, which closes **NC-137**.
+
+This batch rides the same branch and PR as 15 and 16.
+
+`npm run check` passes, `npm run lint` is clean, `next build` compiles, and `check:ui` is 168/175:
+eleven new accessibility scans, all passing; no console errors; and the seven failures are the
+same stale prompt-search checks.
+
+- [x] **The launch rule (NC-133).** `COMMERCIAL_MODE`, the feed gate and the launch set now trip at
+      the first page load by anyone other than the owner — a private preview included — instead of
+      "the day anything earns money". Rewritten in `CLAUDE.md`, the feed gate and its
+      `COMMERCIAL_MODE` `P0` above, `docs/OWNER-ACTIONS.md`, `README.md` (the step now comes
+      first), the business-decisions summary and two code comments. Turning the flag on in an
+      environment others can reach is still **NC-022**, the owner's.
+- [x] **The unused snapshot reader is gone (NC-043).** `fetchSiteSnapshots` and its
+      `check:archive` cases are deleted. The "this site on that date" link on events needs no
+      lookup and is unaffected.
+- [x] **Search-log policy confirmed (NC-042).** Raw query text, nothing else, 90 days — recorded on
+      the search-log entry, for the privacy policy to repeat.
+- [x] **WCAG 2.2 AA: an automatic scan, and every page brought to zero findings (NC-137).**
+      `check:ui` now runs axe-core (a new dev dependency; it was already installed through the
+      linter) on ten page types and the open settings dialog. The first scan failed every page:
+      - **Muted text was too faint.** Slate-500 measured 3.75–4.24 against the backgrounds it
+        sits on; the standard asks 4.5. It is now `#8392a8` (≥ 4.6 everywhere, still darker than
+        slate-400), set once in `app/v3-palette.css` because 104 of its 110 uses are text.
+        Slate-600 and slate-700 are no longer used for text (2.5 and 1.85); their 29 text uses,
+        and five placeholders, moved to slate-500.
+      - **White on the blue buttons was 4.09.** The three solid buttons are sky-700 now (5.9),
+        hovering darker rather than lighter. A faded count in the topic filter chips is less
+        faded.
+      - **The compare strip's dots were unnamed 10px links.** Every dot's event is a full-size
+        link in the list below, which is 2.5.8's "equivalent control" exception, so the strip is
+        hidden from keyboard and screen readers and still works with a mouse. The scan skips it
+        for that reason.
+      - Checks: 11 in `check:ui`, all failing on the old code.
+- [ ] **A manual keyboard and screen-reader pass.** axe measures what it can — contrast, names,
+      roles, target sizes — and a clean scan is the floor, not conformance. The price chart and
+      the horizontal timeline are the parts least likely to work by keyboard alone; walk them
+      with a keyboard and a screen reader (NVDA on Windows is free) and file what fails.
 
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
@@ -1399,7 +1446,8 @@ build`, or the offline parser tests — they only appear with data on screen):
 
 ## ⛔ Pre-release gate: check ALL feeds before the website ships · `P0 · release blocker`
 
-**Do not release until every data feed has been checked on two axes — does it work, and are we
+**"Release" means the first page load by anyone other than the owner, a private preview included
+(D22, applied 2026-10-19).** **Do not release until every data feed has been checked on two axes — does it work, and are we
 allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SOURCES`) carries a
 `commercialOk` flag + license note per source and is the single place to verify against.
 
@@ -1459,10 +1507,14 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
       - ⚠ The flag enforces the `commercialOk` flags; it does not judge them. Yahoo Finance RSS
         is flagged `true` today (the "gray zone" item above), so it keeps fetching — settle that
         call rather than assuming the flag covers it.
-- [ ] `P0` **Turn `COMMERCIAL_MODE=true` on in production the same day anything earns money.**
-      The flag is built and tested but is **off by default**, which is right for development and
-      wrong the moment an ad renders. Pair it with the affiliate item further down — that item's
-      "recognise what this triggers" note is this switch.
+- [ ] `P0` **Turn `COMMERCIAL_MODE=true` on before anyone other than the owner loads the site** —
+      a private preview included, not only the production launch. **The trigger changed on
+      2026-10-19 (D22, NC-133):** it used to be "the day anything earns money". The site is
+      ad-supported by design, so it is commercial in intent from its first outside visitor, and
+      the feed gate above has to be settled by then, not by the first ad. The flag is built and
+      tested but is **off by default**, which is right for development and wrong for any
+      environment someone else can reach. The affiliate item's "recognise what this triggers"
+      note is this switch too.
 - [ ] Get a real legal review of the above before revenue flows — the flags encode a practical
       reading of published terms, not legal advice.
 
@@ -1874,6 +1926,8 @@ the items under it can be argued for or against without one.
       characters; no page or API reads the table; 90-day retention applied by the scheduled
       refresh rather than by whoever remembers. **Confirm this is the trade you want** — measuring
       accuracy needs the raw query, and hashing it would make the miss list useless.
+      ✅ **Confirmed 2026-10-19 (owner, NC-042): keep it as is** — raw query text, 90 days, nothing
+      else. The privacy policy, when written (NC-124), should say exactly this.
 - [x] ~~`P1` **Invert parse and resolve.**~~ — done 2026-08-12, and **the premise was already
       half-stale when it was written down.**
       - **The regex stripping this item describes is not on the search path at all.**
@@ -3117,6 +3171,9 @@ look like") went to a **separate business checklist** worked independently of bo
         `check:archive` imports it — an instance of the wiring lesson, and the reason the bug
         could sit fully checked and entirely unexercised. Either the snapshot strip gets built or
         the function goes; a third state where it is maintained but unreachable is the worst one.
+      - ✅ **Settled 2026-10-19 (owner, NC-043): the function went** — deleted with its
+        `check:archive` cases in batch 17, since the strip is outside the securities focus. The
+        "this site on that date" link on events is unaffected; it needs no lookup.
 
 ## Other initiatives
 

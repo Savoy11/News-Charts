@@ -127,7 +127,7 @@ export default function SuggestionChips({ initial = INITIAL }: { initial?: Sugge
         onClick={reshuffle}
         title="Show different suggestions"
         aria-label="Show different suggestions"
-        className="ml-1 rounded-full border border-slate-800 px-2 py-1 text-sm text-slate-600 transition-colors hover:border-slate-600 hover:text-slate-300"
+        className="ml-1 rounded-full border border-slate-800 px-2 py-1 text-sm text-slate-500 transition-colors hover:border-slate-600 hover:text-slate-300"
       >
         ↻
       </button>

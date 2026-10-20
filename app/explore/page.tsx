@@ -49,7 +49,7 @@ function Group({ heading, blurb, entries }: { heading: string; blurb: string; en
           >
             {e.name}
             {e.count !== null && (
-              <span className="ml-1.5 text-[11px] text-slate-600 group-hover:text-slate-500">
+              <span className="ml-1.5 text-[11px] text-slate-500 group-hover:text-slate-400">
                 {e.count}
               </span>
             )}

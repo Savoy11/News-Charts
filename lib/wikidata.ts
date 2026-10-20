@@ -50,9 +50,9 @@ export function waybackUrl(domain: string, date: string): string {
  * anyway is how a 1926 Ford event came to advertise "the site that day".
  *
  * A local constant rather than a lookup on purpose: this is the half that can be decided without
- * asking anyone, on a render path that must not acquire a network call. `fetchSiteSnapshots`
- * answers the sharper question (*does this domain have a capture near this date*) and is the
- * upgrade if the snapshot strip is ever built.
+ * asking anyone, on a render path that must not acquire a network call. The sharper question
+ * (*does this domain have a capture near this date*) needed a CDX lookup, deleted with the
+ * snapshot strip it was for (NC-043, 2026-10-19).
  */
 export const WAYBACK_EPOCH = "1996-01-01";
 

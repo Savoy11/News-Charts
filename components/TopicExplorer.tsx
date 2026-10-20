@@ -313,7 +313,7 @@ export default function TopicExplorer({
                   : "border-slate-700 bg-slate-900 text-slate-500"
               }`}
             >
-              {f.label} <span className="opacity-60">{count}</span>
+              {f.label} <span className="opacity-75">{count}</span>
             </button>
           );
         })}

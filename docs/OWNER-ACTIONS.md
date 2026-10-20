@@ -123,9 +123,10 @@ design sit under **Planned initiatives — free planner & referral board** in th
 ## 5. Launch mechanics
 
 - **Buy the domain.** The name is settled.
-- **Set `COMMERCIAL_MODE=true` in production the same day anything earns money.** Built and
-  tested, off by default — right for development, wrong the moment an ad renders. **Affiliate
-  links trigger this too, not just ads.**
+- **Set `COMMERCIAL_MODE=true` before anyone but you loads the site** — any host others can
+  reach, a private preview included. Your D22 call, applied here on 2026-10-19: the trigger is
+  the first outside page load, not the first dollar, so the feed decisions in §3 have to be
+  settled by then too. Built and tested, off by default — right on your own machine only.
 - **Beta launch** is blocked on §1 and §3 above, and on nothing else.
 
 - **Before the first ad or affiliate link.** The ad slots are blank placeholders — no ad network

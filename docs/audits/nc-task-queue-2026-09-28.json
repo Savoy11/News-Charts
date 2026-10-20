@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 48,
-   "closed": 92,
+   "open": 44,
+   "closed": 96,
    "parked": 12,
    "blocked": 18
   },
@@ -43,7 +43,7 @@
    "owner-decision": 50
   },
   "counts_recomputed_on": "2026-10-19",
-  "closed_by_annotation": 92
+  "closed_by_annotation": 96
  },
  "blocking_decisions": [
   {
@@ -919,11 +919,18 @@
      "quote": "# COMMERCIAL_MODE=false"
     }
    ],
-   "progress": {
-    "noted_on": "2026-09-28",
-    "note": "D22 (Finance Now, 23 Sep) moves the trigger to the first page load by anyone other than the owner — see NC-133. Under it, COMMERCIAL_MODE should be on in any environment others can reach, not only once ads earn.",
-    "evidence": "Business & Compliance Starting Point (28 Sep 2026)"
-   }
+   "progress": [
+    {
+     "noted_on": "2026-09-28",
+     "note": "D22 (Finance Now, 23 Sep) moves the trigger to the first page load by anyone other than the owner — see NC-133. Under it, COMMERCIAL_MODE should be on in any environment others can reach, not only once ads earn.",
+     "evidence": "Business & Compliance Starting Point (28 Sep 2026)"
+    },
+    {
+     "noted_on": "2026-10-19",
+     "note": "Applied with NC-133 (D22, owner-confirmed): COMMERCIAL_MODE must be on before anyone other than the owner loads the site, a private preview included — not on the day anything earns money. The checklist, OWNER-ACTIONS and CLAUDE.md now say so.",
+     "evidence": "docs/MASTER-CHECKLIST.md"
+    }
+   ]
   },
   {
    "id": "NC-023",
@@ -1612,7 +1619,7 @@
   {
    "id": "NC-042",
    "title": "Owner to confirm the search-log privacy trade-off (raw query text kept 90 days, unhashed)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "owner-decision",
    "category": "legal",
@@ -1631,12 +1638,22 @@
      "lines": "809-812",
      "quote": "**Confirm this is the trade you want** — measuring accuracy needs the raw query, and hashing it would make the miss list useless."
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 17: the owner confirmed the search-log trade-off as it stands (2026-10-19): raw query text, no IP, user agent or session, 200-character cap, 90-day retention applied by the scheduled refresh. The privacy policy (NC-124) should state exactly this.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:889"
+    ]
+   }
   },
   {
    "id": "NC-043",
    "title": "Decide: build the Wayback snapshot strip or delete fetchSiteSnapshots (no production caller)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "owner-decision",
    "category": "decision",
@@ -1665,7 +1682,19 @@
      "lines": "2013-2016",
      "quote": "**this function has no production caller.**"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 17: the owner chose to delete fetchSiteSnapshots rather than build the snapshot strip (2026-10-19). The function and its check:archive cases are gone; the 'this site on that date' link on events needs no lookup and is unaffected.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:889",
+     "lib/archive.ts",
+     "scripts/check-archive.ts"
+    ]
+   }
   },
   {
    "id": "NC-044",
@@ -4656,7 +4685,7 @@
   {
    "id": "NC-133",
    "title": "Apply D22 to News Charts: the licence and launch gate trips at the first outside page load, not the first dollar",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "either",
    "category": "decision",
@@ -4685,7 +4714,20 @@
      "lines": "intro",
      "quote": "Everything is sorted by one trigger from D22: the first time anyone other than you can load a page."
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 17: the owner confirmed D22 covers News Charts (2026-10-19). The trigger for COMMERCIAL_MODE, the feed gate and the launch set is now the first page load by anyone other than the owner, a private preview included, and CLAUDE.md, the checklist's feed gate and COMMERCIAL_MODE P0, OWNER-ACTIONS, README, the business-decisions summary and the code comments say so. Switching the flag on in a reachable environment is NC-022, still open.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:889",
+     "CLAUDE.md",
+     "docs/OWNER-ACTIONS.md",
+     "docs/decisions/2026-09-28-business-decisions.md"
+    ]
+   }
   },
   {
    "id": "NC-134",
@@ -4790,7 +4832,7 @@
   {
    "id": "NC-137",
    "title": "Decide the accessibility target for News Charts (e.g. WCAG 2.2 AA) before launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "owner-decision",
    "category": "decision",
@@ -4808,7 +4850,20 @@
      "lines": "§4",
      "quote": "Accessibility — Whether a public web app needs to meet WCAG, and to what level"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Batch 17: the owner set WCAG 2.2 AA as the target (2026-10-19). check:ui now scans ten page types and the settings dialog with axe-core; the first scan failed every page (low-contrast muted text, white on sky-600 buttons, and unnamed 10px links on the compare strip), and all were fixed: slate-500 lightened to #8392a8, darker greys no longer used for text, buttons on sky-700, the strip hidden from keyboard and screen readers under 2.5.8's equivalent-control exception. axe catches only what can be measured; the manual keyboard and screen-reader pass of the price chart and horizontal timeline is a checklist item.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:889",
+     "scripts/check-ui.ts",
+     "app/v3-palette.css",
+     "components/CompareView.tsx"
+    ]
+   }
   },
   {
    "id": "NC-138",
@@ -6297,6 +6352,14 @@
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build serving the new CSP.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:848"
+    ]
+   },
+   {
+    "on": "2026-10-19",
+    "what": "Batch 17: four owner calls applied — D22 governs News Charts (NC-133), the snapshot reader deleted (NC-043), the search-log policy confirmed (NC-042), WCAG 2.2 AA as the target with an axe scan in check:ui and every page brought to zero findings (NC-137).",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build including the new WCAG 2.2 AA scan.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:889"
     ]
    }
   ]

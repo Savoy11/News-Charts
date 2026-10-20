@@ -17,7 +17,7 @@ import { storyKey } from "./newsQuality";
  *
  * Keys come from `licensedKey`, not `process.env` directly: eight of these sources are on
  * non-commercial tiers today, and `COMMERCIAL_MODE=true` withholds their key so a forgotten
- * `.env.local` entry cannot quietly serve them once the site earns money.
+ * `.env.local` entry cannot quietly serve them once anyone else can load the site (D22).
  *
  *   Yahoo Finance RSS  — keyless, per-ticker company headlines (recent)
  *   NYT Article Search — archive back to 1851, free key: NYT_API_KEY

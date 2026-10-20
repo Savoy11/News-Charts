@@ -125,7 +125,7 @@ export default function SignalPanel({ industrySlug, tickers, onExtraEvents }: Pr
             </span>
             <span className="text-sm font-medium text-slate-200">{s.headline}</span>
             <span className="text-xs text-slate-500">{s.detail}</span>
-            <span className="ml-auto shrink-0 text-right text-[11px] text-slate-600">
+            <span className="ml-auto shrink-0 text-right text-[11px] text-slate-500">
               {s.windowStart === s.windowEnd ? s.windowStart : `${s.windowStart} → ${s.windowEnd}`}
               {s.eventIds.length > 0 && (
                 <>

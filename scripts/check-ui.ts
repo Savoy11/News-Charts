@@ -15,7 +15,7 @@ config({ path: ".env.local" });
  *
  * Chromium comes from Playwright. On a fresh machine: `npx playwright install chromium`.
  */
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { chromium, type Browser, type Page } from "playwright";
 
@@ -933,6 +933,40 @@ async function readableToEveryone(page: Page): Promise<void> {
   const dots = await page.locator('[role="img"][aria-label^="Headline reads as"]').count();
   const key = /keyword estimate, not a/i.test(await visible(page));
   check("a tone dot is announced, and a visible key says what it means", dots === 0 || key, `${dots} dots, key ${key ? "shown" : "missing"}`);
+
+  /**
+   * WCAG 2.2 AA, the owner's target (NC-137, 2026-10-19), scanned with axe-core on every page type
+   * and the settings dialog. axe catches what can be measured — contrast, names, roles, target
+   * size — not everything the standard asks, so a clean scan is the floor, not the finish.
+   *
+   * The compare page's dot strip is the one exclusion: every dot's event is a full-size link in the
+   * list below it, which is 2.5.8's "equivalent control" exception, and the strip is hidden from
+   * keyboard and screen readers for that reason (components/CompareView.tsx).
+   */
+  const AXE = readFileSync("node_modules/axe-core/axe.min.js", "utf8");
+  const WCAG22AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+  const scan = async (): Promise<string[]> => {
+    await page.addScriptTag({ content: AXE });
+    return page.evaluate(async (tags) => {
+      const res = await (window as unknown as { axe: { run: (ctx: unknown, opts: unknown) => Promise<{ violations: { id: string; nodes: unknown[] }[] }> } }).axe.run(
+        { exclude: [["[data-overview-strip]"]] },
+        { runOnly: { type: "tag", values: tags } }
+      );
+      return res.violations.map((v) => `${v.id} ×${v.nodes.length}`);
+    }, WCAG22AA);
+  };
+  // the not-found page answers 404 on purpose, which the browser logs like any failed load
+  deliberatelyFailed.add(`${BASE}/no-such-page`);
+  for (const path of ["/", "/company/F", "/company/VOO", "/topic/electric%20cars", "/topic/btc", "/compare?a=F&b=GM", "/explore", "/following", "/industry/sic-3711", "/no-such-page"]) {
+    await go(page, path);
+    const found = await scan();
+    check(`WCAG 2.2 AA: ${path}`, found.length === 0, found.join(", "));
+  }
+  await go(page, "/");
+  await page.locator('button[aria-label="Settings"]').first().click();
+  await page.waitForTimeout(600);
+  const inDialog = await scan();
+  check("WCAG 2.2 AA: the settings dialog, key forms included", inDialog.length === 0, inDialog.join(", "));
 }
 
 /**

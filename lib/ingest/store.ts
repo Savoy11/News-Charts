@@ -270,8 +270,10 @@ export const INGESTABLE_SOURCES: ReadonlySet<SourceKey> = new Set(
 );
 
 /**
- * Set `COMMERCIAL_MODE=true` once anything on the site earns money — ads, affiliate links, a
- * paid tier. See the pre-release feed gate in docs/MASTER-CHECKLIST.md.
+ * Set `COMMERCIAL_MODE=true` in any environment someone other than the owner can load — a
+ * private preview included — before the first such visit (D22, applied 2026-10-19). The site is
+ * ad-supported by design, so it is commercial from its first outside visitor, not its first ad.
+ * See the pre-release feed gate in docs/MASTER-CHECKLIST.md.
  */
 export function commercialMode(): boolean {
   return process.env.COMMERCIAL_MODE === "true";

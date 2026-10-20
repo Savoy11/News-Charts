@@ -37,7 +37,7 @@ export default function ComparePicker({ a = "", b = "" }: { a?: string; b?: stri
       <button
         type="submit"
         disabled={!av.trim() || !bv.trim()}
-        className="rounded-lg bg-sky-600 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
+        className="rounded-lg bg-sky-700 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50"
       >
         Compare
       </button>

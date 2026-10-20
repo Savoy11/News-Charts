@@ -628,9 +628,12 @@ makes this viable in production — if traffic grows, move news to a keyed API.
 
 ## Monetization TODO
 
-1. Deploy (Vercel free tier works for MVP)
-2. Buy domain, apply for Google AdSense, replace `AdSlot` placeholders — each one declares the
+1. ⚠ Turn on `COMMERCIAL_MODE` before anyone but the owner can load the deployment — a private
+   preview counts (D22, applied 2026-10-19). Several news sources are licensed for
+   non-commercial use only (open `P0` in `docs/MASTER-CHECKLIST.md`)
+2. Deploy (Vercel free tier works for MVP)
+3. Buy domain, apply for Google AdSense, replace `AdSlot` placeholders — each one declares the
    IAB format it is standing in for (`leaderboard` 728×90, `billboard` 970×250, `rectangle`
-   300×250), so the live unit drops into a space the page has already reserved
-3. ⚠ Before any of those carries a real ad, turn on `COMMERCIAL_MODE` — several news sources are
-   licensed for non-commercial use only (open `P0` in `docs/MASTER-CHECKLIST.md`)
+   300×250), so the live unit drops into a space the page has already reserved. Set the
+   network's script as `NEXT_PUBLIC_AD_SCRIPT_URL`; it never loads in a browser holding a
+   visitor's key (NC-164)

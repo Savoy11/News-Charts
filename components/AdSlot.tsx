@@ -38,8 +38,8 @@ export default function AdSlot({
       data-ad-slot={format}
       className={`flex w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-700 bg-slate-900/50 ${className}`}
     >
-      <span className="text-xs uppercase tracking-widest text-slate-600">{label}</span>
-      <span className="text-[10px] tracking-wider text-slate-700">{nominal}</span>
+      <span className="text-xs uppercase tracking-widest text-slate-500">{label}</span>
+      <span className="text-[10px] tracking-wider text-slate-500">{nominal}</span>
     </div>
   );
 }

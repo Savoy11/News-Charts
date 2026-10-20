@@ -531,7 +531,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
         <span className="text-xs font-semibold text-slate-400">
           {firstYear} – {lastYear}
         </span>
-        <span className="text-xs text-slate-600">·</span>
+        <span className="text-xs text-slate-500">·</span>
         <span className="text-xs text-slate-500">{eventCount} events</span>
 
         {/* wraps: the toolbar now carries condense + three zooms + four track buttons, which is
@@ -602,7 +602,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
               <div key={c.id}>
                 {c.gapYears > 0 && (
                   <span
-                    className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-slate-800 bg-slate-950 px-2 py-0.5 text-[10px] font-medium text-slate-600"
+                    className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-slate-800 bg-slate-950 px-2 py-0.5 text-[10px] font-medium text-slate-500"
                     style={{ left: c.gapMidX }}
                   >
                     {c.gapYears} years
@@ -627,7 +627,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
                   }}
                 >
                   {c.label}
-                  {isStack && <span className="text-slate-600"> · {c.events.length}</span>}
+                  {isStack && <span className="text-slate-500"> · {c.events.length}</span>}
                 </span>
 
                 {/* connector */}
@@ -668,7 +668,7 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
         <MiniMap clusters={clusters} width={width} viewport={viewport} onSeek={seekTo} />
       )}
 
-      <p className="border-t border-slate-800 px-3 py-2 text-[11px] text-slate-600">
+      <p className="border-t border-slate-800 px-3 py-2 text-[11px] text-slate-500">
         Drag the track or scroll to move through time — or drag the mini-map below to jump. Busy
         periods stack into one card — hover a stack to browse everything from that period. Click any
         card to open its source; your place is remembered if you come back.

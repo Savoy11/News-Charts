@@ -10,7 +10,13 @@
   --color-slate-200: #e2e8f0;
   --color-slate-300: #cbd5e1;
   --color-slate-400: #94a3b8;
-  --color-slate-500: #64748b;
+  /*
+    Lighter than v3's #64748b on purpose (NC-137, WCAG 2.2 AA, 2026-10-19). Slate-500 is this
+    site's muted-text colour — 104 of its 110 uses are text — and v3's value measured 3.75–4.24
+    against the backgrounds it sits on, under the 4.5 the standard asks. #8392a8 is ≥ 4.6 on all
+    of them, slate-800 included, and still darker than slate-400 so muted text stays muted.
+  */
+  --color-slate-500: #8392a8;
   --color-slate-600: #475569;
   --color-slate-700: #334155;
   --color-slate-800: #1e293b;

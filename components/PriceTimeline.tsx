@@ -299,6 +299,16 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
         })}
       </div>
       <div className="relative">
+        {/* A canvas says nothing to a screen reader. What it shows is in text below — the
+            biggest moves and the event list, which the date buttons jump through — so a hidden
+            line says what the chart is and points there (NC-137 keyboard pass). Not role="img" on
+            the container: the chart library puts its attribution link inside it, and a link
+            inside an image is one a screen reader cannot reach. */}
+        <p data-chart-summary className="sr-only">
+          {prices.length
+            ? `Price chart, ${prices[0].time} to ${prices[prices.length - 1].time}, with ${events.length} events marked. The same events are listed below.`
+            : "Price chart"}
+        </p>
         <div ref={containerRef} className="w-full" />
         {hover && hover.events.length > 0 && (
           <div

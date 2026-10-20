@@ -56,7 +56,7 @@ async function main(): Promise<void> {
   const days = Number(process.argv[2]) || 7;
 
   if (process.argv.includes("--purge")) {
-    const gone = await purgeOldResolutions(90);
+    const gone = await purgeOldResolutions();
     console.log(`\n  purged ${gone} row(s) older than 90 days\n`);
     await closePool();
     return;

@@ -4395,6 +4395,13 @@
      "lines": "90",
      "quote": "News Charts is a research tool, not investment advice."
     }
+   ],
+   "progress": [
+    {
+     "noted_on": "2026-10-20",
+     "note": "Batch 18: drafts of /legal/terms, /legal/privacy and /legal/disclaimer exist, linked from the footer, marked as drafts and noindexed while LEGAL_DRAFT is true. Written from what the code does; check:legal ties the privacy page's numbers and browser-storage list to the code. Still owed: the bracketed placeholders (operator, contact, governing law, host log retention, ad network and consent, liability cap), a lawyer's review, then LEGAL_DRAFT=false. The 'How we make money' disclosure remains separate.",
+     "evidence": "docs/MASTER-CHECKLIST.md:938"
+    }
    ]
   },
   {
@@ -6360,6 +6367,14 @@
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build including the new WCAG 2.2 AA scan.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:889"
+    ]
+   },
+   {
+    "on": "2026-10-20",
+    "what": "Batch 18: a keyboard pass (settings dialog focus in/trap/return, a visible focus ring on the timeline's scroll area, a text name for the price chart) and drafts of the three legal pages with check:legal; NC-124 advanced, not closed.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (with check:legal), `npm run lint`, `next build`, and a check:ui run on a production build.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:938"
     ]
    }
   ]

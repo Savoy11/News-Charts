@@ -585,10 +585,12 @@ export default function HorizontalTimeline({ events }: { events: TimelineEvent[]
         </div>
       </div>
 
+      {/* focusable so arrow keys scroll it; the ring shows only for keyboard focus, not a drag */}
       <div
         ref={scrollerRef}
         tabIndex={0}
-        className="chrono-scroller relative cursor-grab overflow-x-auto overflow-y-hidden focus:outline-hidden"
+        aria-label="Timeline — use the arrow keys to scroll"
+        className="chrono-scroller relative cursor-grab overflow-x-auto overflow-y-hidden rounded-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-sky-500"
       >
         <div className="relative h-[420px] select-none" style={{ width }}>
           {/* the axis */}

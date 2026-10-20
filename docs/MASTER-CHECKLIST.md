@@ -932,6 +932,54 @@ same stale prompt-search checks.
       roles, target sizes — and a clean scan is the floor, not conformance. The price chart and
       the horizontal timeline are the parts least likely to work by keyboard alone; walk them
       with a keyboard and a screen reader (NVDA on Windows is free) and file what fails.
+      - ✅ **The keyboard half was done in batch 18** — see that section. Still open: **the
+        screen-reader half**, which needs a person listening (the owner, with NVDA).
+
+## NC ledger — batch 18: a keyboard pass, and draft legal pages (2026-10-20)
+
+The owner chose these two while batch 15 waits on the EDGAR report; same branch and PR.
+
+`npm run check` passes (34 suites, with the new `check:legal`), `npm run lint` is clean, `next
+build` compiles, and `check:ui` is 179/186: eleven new browser checks and three more pages in the
+WCAG scan, all passing; no console errors; and the seven failures are the same stale prompt-search
+checks.
+
+- [x] **The site walked by keyboard alone.** Most of it already worked: the header, filters,
+      timeline cards, grouped stacks (they open on focus), biggest-moves cards, date buttons and
+      list headings are all reachable, with visible focus. Three things were not:
+      - **The settings dialog** opened with focus left on the button behind it, and Escape
+        dropped focus to the top of the page. Focus now moves into the dialog, Tab and Shift+Tab
+        stay inside it, and closing hands focus back to whatever opened it.
+      - **The horizontal timeline's scroll area** took focus with its outline switched off. It
+        now shows a ring for keyboard focus (not for a mouse drag), and says the arrow keys
+        scroll it.
+      - **The price chart** is a canvas, which a screen reader can't read. A hidden line before
+        it now says what it is — its date range and how many events are marked — and points to
+        the list below, which holds the same events. (Labelling the container as an image was
+        tried first; the scan caught that it would hide the chart library's attribution link.)
+      - Checks: 5 in `check:ui`. The probe on the old build showed all three failures.
+- [x] **Draft Terms, Privacy and Not-investment-advice pages (NC-124 — drafted, not closed).**
+      `/legal/terms`, `/legal/privacy` and `/legal/disclaimer`, linked from every page's footer.
+      - They are written from what the code does: no accounts and no cookies of our own;
+        searches kept 200 characters long for 90 days with nothing that identifies anyone;
+        page requests kept 90 days; IP addresses counted in memory for rate limiting only;
+        settings, follows, notes and keys kept in the browser; keys sent straight to their
+        provider; no ads in a browser holding a key; publisher images loaded from the
+        publisher; not directed at children; US-only.
+      - **Each page says it is a draft** and asks search engines not to index it while
+        `LEGAL_DRAFT` (`lib/legal.ts`) is true. Placeholders in brackets are the owner's: the
+        operator's name (no entity yet, D13), a contact address, the governing law, the host's
+        log retention, the ad network and consent (NC-125), and a liability cap.
+      - **`npm run check:legal`** keeps the privacy page honest. Its numbers are imported from
+        the code that enforces them — the search-log retention is now one named constant used
+        by the purge, the page and the report script. The check fails if the code stores a
+        browser key the page doesn't list, or the page lists one nothing writes. Checks: 13 in
+        `check:legal` (they cannot run on the old code, which had no pages), and 3 in `check:ui`
+        plus the three pages added to the WCAG scan.
+      - **Still the owner's:** fill the placeholders, have a lawyer read all three, then set
+        `LEGAL_DRAFT` to false. The "How we make money" disclosure stays its own item.
+- [x] The footer's source line now says the Federal Register supplies federal rules and notices,
+      not only sector rules (batch 14 made company pages carry them).
 
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 

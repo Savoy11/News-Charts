@@ -189,7 +189,7 @@ async function main(): Promise<void> {
      * A 90-day policy that depends on an operator remembering to run a command is not a policy,
      * and the rows are visitor queries — the one kind of data worth deleting on time.
      */
-    const purged = await purgeOldResolutions(90);
+    const purged = await purgeOldResolutions();
     if (purged) console.log(`  purged ${purged} search log row(s) past the 90-day retention`);
     const stale = await purgeStaleRequests();
     if (stale) console.log(`  purged ${stale} unfulfilled request(s) nobody repeated in 90 days`);

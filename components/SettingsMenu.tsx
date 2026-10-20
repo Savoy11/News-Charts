@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import AiSettingsForm from "./AiSettingsForm";
 import PrefsSettings from "./PrefsSettings";
@@ -18,6 +18,8 @@ import {
 
 export default function SettingsMenu() {
   const [open, setOpen] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   // the portal needs document.body, which exists only once the page is live
   const mounted = useHydrated();
   const [config, setConfig] = useState<AiConfig | null>(null);
@@ -45,16 +47,47 @@ export default function SettingsMenu() {
     };
   }, [refresh]);
 
-  // escape to close, and don't let the page scroll behind the dialog
+  /**
+   * A modal dialog, kept to the keyboard contract its aria-modal promises (NC-137 keyboard pass):
+   * focus moves in when it opens, Tab and Shift+Tab stay inside it, Escape closes it, and focus
+   * goes back to whatever opened it — the header button, or a "set up" link elsewhere. Before,
+   * focus stayed on the button behind the dialog and fell to the top of the page on close.
+   * Also: the page doesn't scroll behind it.
+   */
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const returnTo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== "Tab" || !dialogRef.current) return;
+      const focusable = [
+        ...dialogRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ),
+      ].filter((el) => el.offsetParent !== null);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const inside = dialogRef.current.contains(document.activeElement);
+      if (e.shiftKey && (document.activeElement === first || !inside)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (document.activeElement === last || !inside)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", onKey);
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = previous;
+      if (returnTo?.isConnected) returnTo.focus();
     };
   }, [open]);
 
@@ -92,6 +125,7 @@ export default function SettingsMenu() {
             onClick={() => setOpen(false)}
           >
           <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-label="Settings"
@@ -101,6 +135,7 @@ export default function SettingsMenu() {
             <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
               <h2 className="text-sm font-bold text-slate-100">Settings</h2>
               <button
+                ref={closeRef}
                 onClick={() => setOpen(false)}
                 aria-label="Close settings"
                 className="rounded-sm px-2 text-lg leading-none text-slate-500 hover:text-slate-200"

@@ -957,7 +957,7 @@ async function readableToEveryone(page: Page): Promise<void> {
   };
   // the not-found page answers 404 on purpose, which the browser logs like any failed load
   deliberatelyFailed.add(`${BASE}/no-such-page`);
-  for (const path of ["/", "/company/F", "/company/VOO", "/topic/electric%20cars", "/topic/btc", "/compare?a=F&b=GM", "/explore", "/following", "/industry/sic-3711", "/no-such-page"]) {
+  for (const path of ["/", "/company/F", "/company/VOO", "/topic/electric%20cars", "/topic/btc", "/compare?a=F&b=GM", "/explore", "/following", "/industry/sic-3711", "/no-such-page", "/legal/terms", "/legal/privacy", "/legal/disclaimer"]) {
     await go(page, path);
     const found = await scan();
     check(`WCAG 2.2 AA: ${path}`, found.length === 0, found.join(", "));
@@ -967,6 +967,51 @@ async function readableToEveryone(page: Page): Promise<void> {
   await page.waitForTimeout(600);
   const inDialog = await scan();
   check("WCAG 2.2 AA: the settings dialog, key forms included", inDialog.length === 0, inDialog.join(", "));
+
+  // NC-124: the legal drafts, reachable from every page and honest about being drafts.
+  await go(page, "/legal/privacy");
+  const legalBody = await visible(page);
+  check("the legal pages say they are drafts", (await page.locator("[data-legal-draft]").count()) === 1);
+  check("  …and the privacy page lists what the browser keeps", /news-charts:feed-keys:/.test(legalBody) && /until you close the tab/.test(legalBody));
+  const footerLinks = await page.locator('footer nav[aria-label="Legal"] a').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+  check("  …linked from the footer", ["/legal/terms", "/legal/privacy", "/legal/disclaimer"].every((h) => footerLinks.includes(h)), footerLinks.join(" "));
+
+  // The keyboard pass (batch 18): what axe cannot measure — where focus goes, and whether it shows.
+  console.log("\nBy keyboard alone");
+  await go(page, "/");
+  const settingsBtn = page.locator('button[aria-label="Settings"]').first();
+  await settingsBtn.focus();
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(600);
+  const focusIn = await page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]')));
+  check("opening the settings dialog moves focus into it", focusIn);
+  let escaped = false;
+  for (let i = 0; i < 120 && !escaped; i++) {
+    await page.keyboard.press("Tab");
+    escaped = await page.evaluate(() => !document.activeElement?.closest('[role="dialog"]'));
+  }
+  check("  …Tab never leaves it", !escaped);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(500);
+  const back = await page.evaluate(() => ({
+    open: Boolean(document.querySelector('[role="dialog"]')),
+    on: document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.tagName ?? "",
+  }));
+  check("  …and Escape closes it, handing focus back to the button that opened it", !back.open && back.on === "Settings", JSON.stringify(back));
+
+  await go(page, COMPANY);
+  const chartLabel = (await page.locator("[data-chart-summary]").first().textContent().catch(() => null)) ?? "";
+  check("the price chart names itself to a screen reader and points to the list", /\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}/.test(chartLabel) && /listed below/.test(chartLabel), chartLabel);
+  let ringed = "";
+  for (let i = 0; i < 60 && !ringed; i++) {
+    await page.keyboard.press("Tab");
+    ringed = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el?.classList.contains("chrono-scroller")) return "";
+      return getComputedStyle(el).boxShadow || "none";
+    });
+  }
+  check("the timeline's scroll area shows where keyboard focus is", Boolean(ringed) && ringed !== "none", ringed || "never focused");
 }
 
 /**

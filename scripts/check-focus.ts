@@ -12,7 +12,8 @@ config({ path: ".env.local" });
  * that matters most: an empty page reads as "no data on IBM", not "no overlap".
  */
 import { readFileSync } from "node:fs";
-import { applyFocus, composableFocus, focusScore, focusTerms, focusWindow, matchesFocus } from "../lib/focus";
+import { applyFocus, composableFocus, focusScore, focusTerms, focusWindow, matchesFocus, relatedWords } from "../lib/focus";
+import { CONCEPTS } from "../lib/concepts";
 import type { EventType, TimelineEvent } from "../lib/types";
 
 let pass = 0;
@@ -178,6 +179,50 @@ check("  …the influence part of a focus that also has a qualifier", composable
 check("a qualifier is not", composableFocus("in 2020") === null && composableFocus("after the export rules") === null);
 check("the focus bar only links the compare when there is one",
   /\{composeWith && \(/.test(readFileSync("components/FocusBar.tsx", "utf8")));
+
+// The concern a visitor names is printed other ways in headlines: covid coverage says "pandemic"
+// and "lockdown" at least as often. Before lib/concepts.ts, a covid focus found none of it.
+console.log("\nOther words for the same concern count, below the word typed");
+const covid = focusTerms("covid");
+const pandemic = ev("Pandemic shuts stores nationwide");
+const lockdown = ev("Quarterly results", "earnings", "Lockdowns weighed on traffic");
+const direct = ev("Covid cases slow store reopening");
+check("a headline that says \"pandemic\" matches a covid focus", matchesFocus(pandemic, covid));
+check("  …and one that says \"lockdowns\" in its description", matchesFocus(lockdown, covid));
+check("the typed word still ranks first", focusScore(direct, covid) > focusScore(pandemic, covid),
+  `${focusScore(direct, covid).toFixed(2)} vs ${focusScore(pandemic, covid).toFixed(2)}`);
+check("  …and a related word in the headline beats the typed word only in the description",
+  focusScore(pandemic, covid) > focusScore(ev("Store update", "news", "covid mentioned"), covid));
+check("an unrelated headline still does not match", !matchesFocus(ev("New store opens in Ohio"), covid));
+const rates = focusTerms("interest rates");
+check("a listed phrase is one term, not two loose words", rates.length === 1 && rates[0] === "interest rate", rates.join(","));
+check("  …so \"Fed raises rates\" matches it", matchesFocus(ev("Fed raises rates again"), rates));
+check("  …and a headline with \"interest\" and \"rate\" apart does not",
+  !matchesFocus(ev("Interest in the stock grows at a rate few expected"), rates));
+check("a short concern word is kept: \"how did AI affect\" narrows on AI",
+  focusTerms("AI").join(",") === "ai" && matchesFocus(ev("Artificial intelligence spending surges"), focusTerms("AI")));
+check("  …but other short words are still dropped", !focusTerms("AI in the US").includes("us"));
+check("a phrase partly made of weak words is kept whole", focusTerms("consumer price index").join(",") === "consumer price index");
+check("a focus outside the list is unchanged", relatedWords(focusTerms("Donald Trumps presidency")).length === 0 &&
+  focusTerms("Donald Trumps presidency").length === 3);
+const shown = applyFocus([pandemic, direct, ev("New store opens in Ohio")], "covid");
+check("the result names the related words, for the focus bar to show",
+  shown.related.join(",") === "coronavirus,pandemic,lockdown,quarantine" && shown.matched === 2, `${shown.related.join(",")} / ${shown.matched}`);
+
+console.log("\nThe list keeps its own rules");
+const owner = new Map<string, number>();
+const twice: string[] = [];
+CONCEPTS.forEach((g, i) => g.forEach((w) => {
+  const key = w.toLowerCase().replace(/[^a-z0-9 ]+/g, " ").trim().split(" ").map((t) => (t.length > 4 && t.endsWith("s") ? t.slice(0, -1) : t)).join(" ");
+  if (owner.has(key) && owner.get(key) !== i) twice.push(w);
+  owner.set(key, i);
+}));
+check("no word belongs to two concerns", twice.length === 0, twice.join(", "));
+check("every concern has at least two ways to say it", CONCEPTS.every((g) => new Set(g.map((w) => w.toLowerCase())).size >= 2));
+check("no left-out ambiguous word crept in", !CONCEPTS.flat().some((w) => ["deal", "duty", "duties", "settlement", "rule", "rules", "vaccine"].includes(w)));
+check("the focus bar says which related words counted", /alsoMatched/.test(readFileSync("components/FocusBar.tsx", "utf8")) &&
+  /result\.related/.test(readFileSync("components/FocusBar.tsx", "utf8")));
+check("  …and the best-matches strip names one when it is what matched", /result\.related\.filter/.test(readFileSync("components/BestMatches.tsx", "utf8")));
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);
 if (fail) process.exit(1);

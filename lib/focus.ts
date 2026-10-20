@@ -1,3 +1,4 @@
+import { CONCEPTS } from "./concepts";
 import type { TimelineEvent } from "./types";
 
 /**
@@ -47,14 +48,80 @@ const normalise = (s: string): string =>
  */
 const stem = (w: string): string => (w.length > 4 && w.endsWith("s") ? w.slice(0, -1) : w);
 
-/** The parts of a focus phrase worth matching on. Empty when the phrase says nothing specific. */
+/** One concern from lib/concepts.ts: its members as stemmed token phrases, each with the word shown. */
+interface Concept {
+  phrases: { toks: string[]; label: string }[];
+}
+
+/** Built once. Forms that stem alike ("tariff", "tariffs") collapse to the first one listed. */
+const CONCEPT_LIST: Concept[] = CONCEPTS.map((words) => {
+  const byKey = new Map<string, { toks: string[]; label: string }>();
+  for (const label of words) {
+    const toks = normalise(label).split(" ").map(stem);
+    if (!byKey.has(toks.join(" "))) byKey.set(toks.join(" "), { toks, label });
+  }
+  return { phrases: [...byKey.values()] };
+});
+/** A member's stemmed key ("interest rate") → its concern. */
+const CONCEPT_OF = new Map<string, Concept>(
+  CONCEPT_LIST.flatMap((c) => c.phrases.map((p) => [p.toks.join(" "), c] as const))
+);
+
+/** The longest concept member starting at token `i`, or null. */
+function memberAt(toks: string[], i: number): string[] | null {
+  let best: string[] | null = null;
+  for (const c of CONCEPT_LIST) {
+    for (const { toks: p } of c.phrases) {
+      if ((!best || p.length > best.length) && p.every((t, k) => toks[i + k] === t)) best = p;
+    }
+  }
+  return best;
+}
+
+/**
+ * The parts of a focus phrase worth matching on. Empty when the phrase says nothing specific.
+ *
+ * A concern listed in lib/concepts.ts is kept whole, as one term — "interest rates" is
+ * "interest rate", not two words that may each turn up anywhere — and is kept even when short
+ * ("ai") or partly made of weak words ("consumer price index").
+ */
 export function focusTerms(focus: string): string[] {
+  const words = normalise(focus).split(" ").filter(Boolean);
+  const stems = words.map(stem);
   const seen = new Set<string>();
-  for (const w of normalise(focus).split(" ")) {
+  for (let i = 0; i < words.length; ) {
+    const member = memberAt(stems, i);
+    if (member) {
+      seen.add(member.join(" "));
+      i += member.length;
+      continue;
+    }
+    const w = words[i++];
     if (w.length < 3 || WEAK.has(w) || YEAR.test(w)) continue;
     seen.add(stem(w));
   }
   return [...seen];
+}
+
+/**
+ * The other words for the concerns a focus names, as a headline prints them — "covid" →
+ * coronavirus, pandemic, lockdown, quarantine. Shown by the focus bar, so the reader can see why
+ * an event that never says "covid" is in their results.
+ */
+export function relatedWords(terms: string[]): string[] {
+  const out = new Set<string>();
+  for (const t of terms) {
+    for (const p of CONCEPT_OF.get(t)?.phrases ?? []) if (p.toks.join(" ") !== t) out.add(p.label);
+  }
+  return [...out];
+}
+
+/** The phrase appears in the tokens, in order and adjacent. */
+function hasPhrase(toks: string[], phrase: string[]): boolean {
+  for (let j = 0; j + phrase.length <= toks.length; j++) {
+    if (phrase.every((t, k) => toks[j + k] === t)) return true;
+  }
+  return false;
 }
 
 /** The dates a focus confines the timeline to — either end open — and how to say so. */
@@ -107,18 +174,24 @@ function inWindow(ev: TimelineEvent, w: FocusWindow | null): boolean {
  * is worth double one in the description or source line, and consecutive focus terms appearing
  * as an adjacent pair ("battery fire") earn a bonus — the phrase the reader typed, not two
  * words that both happen to occur.
+ *
+ * A related word for a listed concern ("pandemic" for "covid") counts, at three quarters of the
+ * typed word in the same place — so the visitor's own word ranks first, and a headline that
+ * names the concern another way still outranks one that mentions it only in passing below.
  */
 export function focusScore(ev: TimelineEvent, terms: string[]): number {
   if (terms.length === 0) return 0;
   const titleToks = normalise(ev.title).split(" ").map(stem);
   const restToks = normalise(`${ev.description ?? ""} ${ev.source ?? ""}`).split(" ").map(stem);
-  const inTitle = new Set(titleToks);
-  const inRest = new Set(restToks);
 
   let weight = 0;
   for (const t of terms) {
-    if (inTitle.has(t)) weight += 2;
-    else if (inRest.has(t)) weight += 1;
+    const typed = t.split(" ");
+    const related = (CONCEPT_OF.get(t)?.phrases ?? []).map((p) => p.toks).filter((p) => p.join(" ") !== t);
+    if (hasPhrase(titleToks, typed)) weight += 2;
+    else if (related.some((p) => hasPhrase(titleToks, p))) weight += 1.5;
+    else if (hasPhrase(restToks, typed)) weight += 1;
+    else if (related.some((p) => hasPhrase(restToks, p))) weight += 0.75;
   }
   if (weight === 0) return 0;
   let score = weight / (2 * terms.length); // 1.0 = every term, all in the title
@@ -153,6 +226,8 @@ export interface FocusResult {
   /** true when the filter is actually narrowing the view */
   active: boolean;
   terms: string[];
+  /** other words for the concerns the terms name, which matched too (lib/concepts.ts) */
+  related: string[];
   /** the dates the focus confines the view to, when it names a year */
   window: FocusWindow | null;
   /**
@@ -174,9 +249,10 @@ export interface FocusResult {
  */
 export function applyFocus(events: TimelineEvent[], focus: string | null): FocusResult {
   const terms = focus ? focusTerms(focus) : [];
+  const related = relatedWords(terms);
   const window = focus ? focusWindow(focus) : null;
   if (!focus || (terms.length === 0 && !window)) {
-    return { events, matched: events.length, total: events.length, active: false, terms, window, ranked: [] };
+    return { events, matched: events.length, total: events.length, active: false, terms, related, window, ranked: [] };
   }
   // Both, when both are named: "tariffs in 2025" is 2025's tariff events, not either alone.
   const hits = events.filter((e) => inWindow(e, window) && matchesFocus(e, terms));
@@ -196,6 +272,7 @@ export function applyFocus(events: TimelineEvent[], focus: string | null): Focus
     total: events.length,
     active: hits.length > 0,
     terms,
+    related,
     window,
     ranked,
   };

@@ -227,6 +227,7 @@ async function main(): Promise<void> {
   check("  …and so does the search box",
     /router\.push\(focusHref\(`\/company\/\$\{json\.ticker\}`, json\.focus\)\)/.test(box) &&
       /router\.push\(focusHref\(`\/topic\/\$\{json\.slug\}`, json\.focus\)\)/.test(box));
+  check("the search box says a question can be asked", /placeholder="[^"]*\bask\b[^"]*\?"/.test(box), (box.match(/placeholder="[^"]*"/) ?? [""])[0]);
   check("a focus is written onto a link one way", focusHref("/company/F", "covid & vaccines") === "/company/F?focus=covid%20%26%20vaccines" &&
     focusHref("/compare?a=x", "y") === "/compare?a=x&focus=y" && focusHref("/company/F", null) === "/company/F");
 

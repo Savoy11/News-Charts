@@ -55,8 +55,9 @@ working pricing plan) are summarised in
 timeline narrowed and ranked by the concern. `lib/resolveSearch.ts` runs `parseSearchPrompt`
 (`lib/prompt.ts`) before the ladder, but never on a query that is already a security's or a held
 subject's name ("Jack in the Box"); `lib/focus.ts` grades events by the focus words and reads
-years as a date window; FocusBar and BestMatches show it. Keywords only — "covid" does not find
-"pandemic" (the synonyms line in the checklist).
+years as a date window; FocusBar and BestMatches show it. Other words for a common concern
+("covid" → pandemic, lockdown) come from the curated list in `lib/concepts.ts` — read its rules
+before adding to it; a loose synonym fills a narrowed page with unrelated events.
 
 ## Stack & layout
 

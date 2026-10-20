@@ -422,7 +422,7 @@
      "scripts/check-search-log.ts",
      "scripts/check-focus.ts",
      "scripts/check-ui.ts",
-     "docs/MASTER-CHECKLIST.md:984"
+     "docs/MASTER-CHECKLIST.md:1015"
     ]
    }
   },
@@ -6397,6 +6397,14 @@
    {
     "on": "2026-10-20",
     "what": "Batch 19: Prompt search v2 (NC-008 closed) — a question naming a security and a concern opens the security's page with ?focus=, never splitting a real name; salvage keeps its tail; years in a focus narrow by date; the seven stale check:ui failures resolved.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:1015"
+    ]
+   },
+   {
+    "on": "2026-10-20",
+    "what": "Batch 20: question search matches other words for 15 common concerns (lib/concepts.ts — covid/pandemic/lockdown, tariffs, interest rates …), graded below the typed word and named on the focus bar; the search box hint invites a question. No ledger item opened or closed (a follow-up to NC-008, tracked in the checklist).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:984"

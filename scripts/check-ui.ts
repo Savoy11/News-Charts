@@ -787,6 +787,13 @@ async function focusFilter(page: Page): Promise<void> {
   const stillThere = await page.locator("[data-event-row]").count();
   check("and shows everything rather than an empty page", stillThere > 10, `${stillThere} rows`);
 
+  // A listed concern is printed other ways in headlines; the bar says which other words counted,
+  // or an event that never says "electric vehicles" would look like it is there by mistake.
+  await go(page, "/company/F?focus=electric%20vehicles");
+  const relatedText = (await page.locator("[data-focus-bar]").first().innerText()).replace(/\n/g, " ");
+  check("a focus on a listed concern names the related words it also matched", /or a related word \(EV, EVs/.test(relatedText), relatedText.slice(0, 140));
+  await go(page, "/company/F?focus=Vladimir%20Putin");
+
   // This morning's compose is the other honest reading; it stays one click away.
   const compose = page.locator("[data-focus-bar] a");
   check("the two-subject compose is still offered", (await compose.count()) > 0);

@@ -981,6 +981,37 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 20: question search knows other words for a concern (2026-10-20)
+
+The owner chose this next; same branch and PR.
+
+`npm run check` passes (34 suites), `npm run lint` is clean, `next build` compiles, and `check:ui`
+is 188/188, with no console errors.
+
+- [x] **"covid" also finds "pandemic", "lockdown" and "coronavirus".** A committed list of 15
+      common concerns (`lib/concepts.ts`): covid, tariffs, recession, inflation, interest rates
+      and the Fed, layoffs, strikes, supply chain, lawsuits, mergers, recalls, bankruptcy, AI,
+      electric vehicles, elections. A focus that names any word in a group also matches the
+      others.
+      - **The typed word still ranks first.** A related word counts three quarters as much as
+        the typed word in the same place. A related word in the headline still beats the typed
+        word only in the description.
+      - **Phrases stay phrases.** "interest rates" is one term, matched only as those two words
+        together — not "interest" in one place and "rate" in another. "AI" and "EV" are kept
+        even though focus words are normally three letters or more, so "how did AI affect
+        Nvidia" now narrows on something.
+      - **The page says which words counted.** The focus bar reads "… that mention “covid” or a
+        related word (coronavirus, pandemic, lockdown, quarantine)". The best-matches strip names
+        the related word when that is what matched ("“pandemic” in the headline").
+      - **The list has rules, written at its top and enforced in `check:focus`:** only words a
+        headline uses for the same concern ("vaccine" is not another word for covid); no names;
+        no word in two groups; no word that commonly means something else in market news
+        ("deal", "duty", "settlement", "rule").
+- [x] **The search box says you can ask.** Its hint now reads "AAPL, SPY, a company or fund — or
+      ask: how did covid affect Best Buy?", and its screen-reader label says the same.
+- Checks: 18 new in `check:focus`, 1 in `check:search-log`, 1 in `check:ui`. On the old code
+  `check:focus` crashes on the missing list and `check:search-log` fails the hint check.
+
 ## NC ledger — batch 19: prompt search v2 (2026-10-20)
 
 The owner chose this next; same branch and PR.
@@ -1160,12 +1191,15 @@ already held, but new investment goes to securities coverage first.
       ladder) → carry the concern as focus (restore two lines in SearchBox//search) → grade
       with focusScore → consider the paid tier for concepts keywords can't reach ("covid" vs
       "pandemic" vs "lockdown" in headlines).
-- [ ] `P2` **Prompt search: concerns keywords can't reach.** "how did covid affect Best Buy" finds
+- [x] `P2` **Prompt search: concerns keywords can't reach.** "how did covid affect Best Buy" finds
       the BBY events whose words include "covid", and not the ones that say "pandemic" or
       "lockdown". Two ways in, both open: a small committed synonym list for the commonest
       concerns (free, coarse), or the visitor's own AI model doing the matching where they have
       connected one (the BYO ranking already exists). Owner's call which, if either; nothing is
       lost meanwhile — the focus bar says how many events matched and offers everything.
+      *Done 2026-10-20 (batch 20): the owner chose the committed list — `lib/concepts.ts`, 15
+      concerns. The AI route is not built; the BYO ranking panel already re-ranks by meaning for
+      a visitor who connects a model.*
 - [x] ~~`P2` Fund NAME resolution ("Vanguard 500" → VFINX/VOO)~~ — done 2026-08-12. **"Vanguard
       500" now resolves to VOO, named "Vanguard 500 Index Fund", with no request at all.**
       - **Neither candidate this entry guessed was the source.** Registrant names are the wrong

@@ -34,6 +34,13 @@ export default function BestMatches({
   const evidence = (ev: TimelineEvent): string => {
     const inTitle = result.terms.filter((t) => ev.title.toLowerCase().includes(t));
     if (inTitle.length) return `“${inTitle.join("”, “")}” in the headline`;
+    // Matched by another word for the concern ("pandemic" for "covid") — name it, or the row
+    // looks like it is here by mistake.
+    const relatedInTitle = result.related.filter((w) =>
+      // whole words: "EV" is in "EV sales", not in "every"
+      new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(ev.title)
+    );
+    if (relatedInTitle.length) return `“${relatedInTitle[0]}” in the headline`;
     if (result.terms.length) return `matches ${result.terms.slice(0, 3).join(", ")}`;
     // A focus of only a year ("Apple in 2020") narrows by date; there is no word to point at.
     return result.window ? `dated ${result.window.label}` : "";

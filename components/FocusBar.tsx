@@ -28,6 +28,14 @@ export default function FocusBar({
   const worded = result.terms.length > 0;
   // A qualifier ("in 2020") has no timeline of its own, so there is nothing to compose with.
   const composeWith = composableFocus(focus);
+  /**
+   * Say which other words counted, or an event that never says "covid" looks like a mistake in
+   * a covid-narrowed view. A few are enough to show the idea; the full list is lib/concepts.ts.
+   */
+  const alsoMatched =
+    worded && result.related.length > 0
+      ? ` or a related word (${result.related.slice(0, 4).join(", ")}${result.related.length > 4 ? ", …" : ""})`
+      : "";
   return (
     <div
       data-focus-bar
@@ -42,6 +50,7 @@ export default function FocusBar({
           {worded ? (
             <>
               Nothing on this timeline mentions <strong>“{focus}”</strong>
+              {alsoMatched}
             </>
           ) : (
             <>
@@ -60,6 +69,7 @@ export default function FocusBar({
           ) : (
             <>
               {dated ? <>dated {dated} that match</> : "that mention"} <strong>“{focus}”</strong>
+              {alsoMatched}
             </>
           )}
           , against the price.

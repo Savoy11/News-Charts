@@ -151,6 +151,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
           <CompanyExplorer
             prices={data.prices}
             events={data.events}
+            macro={data.macro}
             siteDomain={data.siteDomain}
             subject={data.name}
           />

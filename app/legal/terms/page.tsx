@@ -38,7 +38,8 @@ export default function TermsPage() {
       <h2>Other people&apos;s content</h2>
       <p>
         Much of what the site shows belongs to others or is public record: filings from the SEC,
-        historical newspapers from the Library of Congress, rules from the Federal Register,
+        historical newspapers from the Library of Congress, rules from the Federal Register, policy
+        decisions from the Federal Reserve, inflation reports from the Bureau of Labor Statistics,
         material from the Internet Archive, text from Wikipedia under CC BY-SA, and headlines that
         link to their publishers. Those sources&apos; own terms and licences apply to their content.
         We link to the original wherever we can.

@@ -27,6 +27,7 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
   // and a transaction is exactly what a reader needs to see at a glance
   governance: { label: "Governance", cls: "bg-indigo-500/15 text-indigo-400 border-indigo-700/50" },
   exploit: { label: "Exploit", cls: "bg-red-500/15 text-red-400 border-red-700/50" },
+  macro: { label: "Economy", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-700/50" },
 };
 
 export function dateAnchorId(date: string) {
@@ -457,6 +458,7 @@ const DOT: Record<EventType, string> = {
   annotation: "bg-cyan-400",
   governance: "bg-indigo-400",
   exploit: "bg-red-500",
+  macro: "bg-emerald-400",
 };
 
 /** Preview of a collapsed section's contents, shown on hover so it can be read without a click. */

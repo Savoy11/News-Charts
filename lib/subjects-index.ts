@@ -1,4 +1,5 @@
 import { getPool } from "./db";
+import { MACRO_SUBJECT } from "./macro";
 import type { SubjectKind } from "./seo";
 import type { Suggestion } from "./suggestions";
 
@@ -74,6 +75,10 @@ export async function listIndexedSubjects(
  * Ordered by how much there is to see rather than by recency: the chips are a shop window, and
  * the subject with 400 events shows the product better than the one ingested most recently.
  *
+ * The economy subject (lib/macro.ts) is left out: with ~470 Fed and CPI dates it would win the
+ * one topic slot on every homepage, and it is the backdrop the securities are read against, not
+ * a subject to start from. It has a page, and every stock page offers it behind a chip.
+ *
  * Returns `[]` rather than null on failure. The distinction `listIndexedSubjects` preserves
  * matters there because an empty `/explore` is a false claim; here the caller pads from the seed
  * pool either way, so "could not ask" and "nothing yet" genuinely take the same action.
@@ -90,11 +95,12 @@ export async function loadSuggestibleSubjects(limit = 24): Promise<Suggestion[]>
          FROM subjects s
          JOIN event_subjects es ON es.subject_id = s.id
         WHERE s.kind IN ('company', 'topic')
+          AND s.slug <> $2
         GROUP BY s.id
        HAVING count(es.event_id) >= 10
         ORDER BY count(es.event_id) DESC
         LIMIT $1`,
-      [limit]
+      [limit, MACRO_SUBJECT.slug]
     );
     return rows.map((r) => {
       const isCompany = r.kind === "company" && r.ticker;

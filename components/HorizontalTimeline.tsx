@@ -85,6 +85,11 @@ const STYLE: Record<EventType, { dot: string; badge: string; label: string }> = 
     badge: "border-red-700/50 bg-red-500/15 text-red-300",
     label: "Exploit",
   },
+  macro: {
+    dot: "bg-emerald-400 ring-emerald-400/30",
+    badge: "border-emerald-700/50 bg-emerald-500/15 text-emerald-300",
+    label: "Economy",
+  },
 };
 
 const CARD_CLASS =

@@ -238,6 +238,11 @@ export function deterministicScore(
      */
     case "exploit":
       return { score: 1, reason: "an incident recorded against the subject itself" };
+
+    // Linked only to the curated economy subject that holds them (lib/macro.ts), which is what
+    // they are about by construction; no company is ever their subject.
+    case "macro":
+      return { score: 1, reason: "a Fed decision or CPI release, held by the economy subject" };
   }
 }
 

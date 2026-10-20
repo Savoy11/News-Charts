@@ -25,6 +25,8 @@ because it will be trusted.
 | **any** | Wikipedia citations | as far as the references go | Dated external articles |
 | **any** | Internet Archive | 1780 for companies (a bound on impossibility); topics effectively none | Catalogued items: reports, catalogues, film — relevance-ranked |
 | **1934 – now** | SEC EDGAR | electronic filings from ~1993 | Filings, earnings |
+| **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |
+| **2008 – now** | BLS CPI release archive | February 2008, the oldest archived release | Monthly CPI releases — on company pages behind the Economy chip, off by default |
 | **1999 – now** | The Guardian Open Platform | 1999 | Articles — only with a visitor's own key, in their browser; never stored |
 | **2015 – now** | Federal Register | 2015 (our query floor) | Sector rules; documents whose title names a company |
 | **2017 – now** | GDELT | 2017 (our query floor) | Recent news |
@@ -103,6 +105,7 @@ windows — update both together.
 | Chronicling America | No published cap | 503s under load are routine |
 | Wikipedia | No hard cap | The User-Agent policy is the real obligation |
 | Federal Register | No published cap | Generous in practice; visitor terms are capped per client (15 new terms/hour) |
+| Federal Reserve, BLS | No published cap | One page each a day; the FOMC history (~27 year pages, 1 s apart) is read once. bls.gov refuses requests without a contact `User-Agent` |
 | Yahoo Finance (RSS and chart) | Undocumented | Unofficial — the licence question is the risk, not the quota |
 | Internet Archive, Snapshot, DefiLlama | No published cap | Keyless; asked on 12–24 h windows |
 | NYT · Guardian (visitor keys) | 500/day and 5/min · 5,000/day | Counted against the visitor's own key, in their browser |

@@ -544,7 +544,8 @@ export function listedNamesContaining(everyday: string): string[] {
  * The everyday name of a company, for looking it up outside SEC filings.
  *
  * EDGAR also tags many titles with a state or re-registration marker — "BANK OF AMERICA CORP
- * /DE/", "WELLS FARGO & COMPANY/MN", "COSTCO WHOLESALE CORP /NEW" — and leaves a bare "&" once the
+ * /DE/", "WELLS FARGO & COMPANY/MN", "COSTCO WHOLESALE CORP /NEW", and with a space, "APPLE
+ * COMPUTER INC/ FA" in Apple's own former names — and leaves a bare "&" once the
  * suffix after it goes ("ELI LILLY & Co"). Both used to survive into the name, so news and
  * Federal Register searches asked for "Wells Fargo & Company/MN" and found nothing: the owner's
  * 2026-10-18 count returned 0 of 0 hits for Wells Fargo and Bank of America.
@@ -555,7 +556,7 @@ export function commonName(title: string): string {
   while (prev !== s) {
     prev = s;
     s = s
-      .replace(/\s*\/[a-z]{2,5}\/?$/i, "")
+      .replace(/\s*\/\s*[a-z]{2,5}\/?$/i, "")
       .replace(/[,.&]\s*$/, "")
       .replace(LEGAL_SUFFIX, "")
       .trim();

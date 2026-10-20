@@ -24,6 +24,7 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
   annotation: { label: "Your note", cls: "border-cyan-700/50 bg-cyan-500/15 text-cyan-300" },
   governance: { label: "Governance", cls: "border-indigo-700/50 bg-indigo-500/15 text-indigo-300" },
   exploit: { label: "Exploit", cls: "border-red-700/50 bg-red-500/15 text-red-300" },
+  macro: { label: "Economy", cls: "border-emerald-700/50 bg-emerald-500/15 text-emerald-300" },
 };
 
 // A move on day D can be sparked by an item dated D itself (intraday news) or a few days before
@@ -50,6 +51,9 @@ const CATALYST_PRIORITY: Record<EventType, number> = {
   press: 1,
   news: 1,
   citation: 1,
+  // A Fed decision or CPI print on the day of a big move is often the explanation for the whole
+  // market's move — above coverage, below anything the subject itself did or filed.
+  macro: 2,
 };
 const MIN_PCT = 2; // ignore ordinary days — a "biggest move" under 2% isn't worth a callout
 const MAX_MOVES = 6;

@@ -838,9 +838,11 @@ this cloud session.
       The held-topic cache key moved to v2. Checks: 1 in `check:ui`.
 - [x] **`npm run former-names-report`** (`-- META AAPL XYZ` by default) prints what the record says
       and the block to pin as the fixture. Read-only; needs data.sec.gov.
-- [ ] **Pin the fixture from a real record.** `scripts/fixtures/sec-former-names.json` is written
+- [x] **Pin the fixture from a real record.** `scripts/fixtures/sec-former-names.json` is written
       from knowledge of the SEC API, and `check:sec-forms` says so while it is. The owner runs the
-      report and the printed block replaces it.
+      report and the printed block replaces it. *Done 2026-10-20 (batch 21), from the cloud
+      session once its network allowed data.sec.gov — and the real record found a bug the guessed
+      one could not; see batch 21.*
 - Checks: 12 in `check:sec-forms` (they crash on the old code). `check:ondemand`'s text check for
   the deep filings call now reads the intent, so an added argument doesn't break it. `check:ui`'s
   legend check now looks for "Corporate action".
@@ -981,6 +983,67 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 21: Fed decisions and inflation reports on the charts; real EDGAR names (2026-10-20)
+
+The owner chose this next, and opened the network for it: the Fed, BLS, SEC and Yahoo hosts were
+blocked from the cloud session until the owner added them to its allowed domains. Same branch and PR.
+
+`npm run check` passes (35 suites, with the new `check:macro`), `npm run lint` is clean, `next
+build` compiles, `check:ui` is 195/195 with no console errors, and the two new `check:live` cases pass against the live
+sites.
+
+- [x] **Fed policy decisions and CPI releases on every stock page (NC-080).** A curated subject,
+      `us-economy` (`lib/macro.ts`), holds every FOMC policy statement since February 1994, when
+      the Fed began announcing its decisions (246 to date), and every CPI release in the BLS
+      archive since February 2008 (224). Imported into the local database from the live sites.
+      - **On a stock page they sit behind an "Economy" chip that starts off** — about twenty a
+        year would bury the company's own story. They are kept in a field of their own, not
+        mixed into the company's events, so they never count as something two companies share on
+        /compare, never mark a followed page as changed, and never appear in "Before the ticker".
+      - **A search about them turns the chip on**: "how did rate hikes affect Apple" opens Apple
+        with the Fed's statements showing (the interest-rate and inflation words from batch 20
+        match "Fed", "FOMC", "CPI" and "consumer prices"). A reader's own chip choice wins.
+      - **The dates are read from the Fed's and BLS's own document addresses, and the decisions by
+        their label.** The Fed's addresses change by era (four formats since 1994) and the suffix
+        is not always "a" — the January 2008 emergency cut is "b". What holds across every year
+        is that a decision is the link labelled "Statement". That rule keeps out the Fed's other
+        releases on the same pages: the August 2025 strategy statement (which a first,
+        address-only version counted as a ninth 2025 meeting), the March 2020 swap-line and
+        repo-facility releases, minutes and press conferences. Checked against all 33 years.
+      - **CPI months come from the release's own link text**, so a delayed release keeps its
+        month (the September 2025 CPI, out on 24 October after the shutdown), and the October
+        2025 release that never came is not invented.
+      - Titles say what the address can prove: "Fed policy statement (FOMC)", never "rate cut" or
+        "hike". The emerald marker sits below the bar with the other scheduled dates, and loses
+        the day's glyph to anything the company itself did (the hover still lists it).
+      - **Kept current**: the hourly refresh sends the subject to its own ingester (never to
+        Wikipedia), reads the calendar and the CPI archive once a day, creates the subject on a
+        database that lacks it, and backfills the FOMC history on the first run by itself.
+        `npm run ingest -- --macro` does it by hand; `--macro history` re-reads every year.
+      - `/topic/us-economy` is the subject's own page, with every date on it. It is kept out of
+        the homepage suggestions: with ~470 dates it took the one topic slot on the first run.
+      - Public domain (U.S. government works); credited in the footer and the terms.
+      - **`npm run macro-report`** prints what the live pages hold and, with `--pin`, re-captures
+        the trimmed pages the checks run on — for the day the Fed or BLS redesigns them.
+      - Checks: 51 in the new `check:macro` (on pages captured from the live sites, and a stubbed
+        network), 2 cases in `check:live` (both pass live), 7 in `check:ui`. The kind is registered
+        everywhere `check-wiring`, `check-relevance` and the compiler require.
+- [x] **Batch 15's EDGAR fixture is real now, and it found a bug.** With data.sec.gov reachable, the
+      former-names report ran here (META, AAPL, XYZ, GE, F, GOOGL) and its output replaced the
+      provisional fixture. Apple's real record lists "APPLE COMPUTER INC/ FA" — an EDGAR filer
+      annotation in use for no days at all — and the site read it as a 1997 rename and offered
+      "apple computer inc/ fa" as a search alias. The name cleaner already stripped "/DE/"-style
+      tags but not one with a space after the slash; it does now. That also tidies the names used
+      to search news and the Federal Register. Checks: 2 more in `check:sec-forms` (the
+      annotation one fails on the old code).
+- [x] **`check:ui`'s feed-key check expects the provider's refusal.** It saves a made-up NYT key to
+      prove keys never reach our server; with the network open, NYT now answers that key with a
+      401, which the console-error check counted as the app failing. It is the visitor's browser
+      being told no by the publisher — the design working — so those requests are marked as
+      expected, the way blocked hosts already were.
+- Note for this cloud session only: Node's built-in fetch needs `NODE_USE_ENV_PROXY=1` to use
+  its network gateway. The owner's PC and a normal host do not.
+
 ## NC ledger — batch 20: question search knows other words for a concern (2026-10-20)
 
 The owner chose this next; same branch and PR.
@@ -1104,14 +1167,13 @@ is 187/187 — every check green for the first time since the seven went stale, 
       Wikidata (⚠ `query.wikidata.org` is unreachable from the build container); GDELT
       year-window backfill (⚠ answers but throttles hard, 429/503); richer paid-tier evidence
       with an aggregate spend cap (needs a paid key).
-- [ ] `P2` **EDGAR's own former names — dated renames and search aliases.** Built 2026-10-19
+- [x] `P2` **EDGAR's own former names — dated renames and search aliases.** Built 2026-10-19
       (batch 15; see that section): renames from the submissions record's `formerNames` go on
       the timeline as corporate actions, and the old everyday names become search aliases, so
       "facebook" finds a held Meta. Free, and needs no Wikidata.
-      - ⚠ **Open until the fixture is pinned from a real record.** The field had never been
-        read here, so `scripts/fixtures/sec-former-names.json` is written from knowledge of the
-        SEC API and marked provisional. The owner runs `npm run former-names-report` (needs
-        data.sec.gov) and the printed block replaces it.
+      - ~~Open until the fixture is pinned from a real record.~~ Pinned 2026-10-20 (batch 21)
+        from data.sec.gov for META, AAPL, XYZ, GE, F and GOOGL; Apple's real record carried an
+        EDGAR annotation ("APPLE COMPUTER INC/ FA") that made a false 1997 rename, now fixed.
       - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
         #9, approved 2026-10-19 with `corporate_action` as the event kind. Importance
         low-medium · Efficiency high · Practicality medium (an unverified field).*
@@ -2937,10 +2999,12 @@ Each idea checked against the codebase before listing — several were cheaper t
       collapsing (hardening list) — do the heuristic clustering there first; the DB's existing
       syntheses layer (synthesis + synthesis_citations tables) is the natural home for an
       AI-written summary node over a cluster. Sequence: cluster → then summarize.
-- [ ] `P2` **Macro-event overlay (Fed decisions, CPI prints).** Architecture already supports
+- [x] `P2` **Macro-event overlay (Fed decisions, CPI prints).** Architecture already supports
       it: sector events merge into company timelines via subject membership — a curated "macro"
       subject whose events overlay any company page is the same pattern. FOMC/CPI calendars are
-      public and keyless. Toggle off by default.
+      public and keyless. Toggle off by default. *Done 2026-10-20 (batch 21, NC-080): a curated
+      `us-economy` subject holds every FOMC statement since 1994 and every archived CPI release
+      since 2008; company pages show them behind an Economy chip that starts off.*
 - [x] ~~`P2` **Compare: per-side event markers on the price overlay**~~ — done 2026-07-28.
       Each subject's events now hang off its own line in its own colour: A's above the line,
       B's below, shaped by kind so a filing still looks like a filing. Side deciding position

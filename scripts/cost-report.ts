@@ -39,6 +39,8 @@ const INGESTED: ReadonlySet<SourceKey> = new Set<SourceKey>([
   "onchain",
   "snapshot",
   "defillama",
+  "fed_fomc",
+  "bls_cpi",
 ]);
 
 async function main(): Promise<void> {

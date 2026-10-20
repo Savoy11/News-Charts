@@ -94,7 +94,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               filings from SEC EDGAR, recent news from GDELT, historical newspapers from the
               Library of Congress (Chronicling America), historical context from Wikipedia
               (CC BY-SA), federal rules and notices from the Federal Register, archived material
-              from the Internet Archive.
+              from the Internet Archive, Fed policy decisions from the Federal Reserve, and
+              inflation reports from the U.S. Bureau of Labor Statistics.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

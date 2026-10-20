@@ -1,15 +1,21 @@
 /**
- * Reading Federal Reserve rate decisions and CPI releases out of the official pages (NC-080).
+ * Reading Federal Reserve policy statements and CPI releases out of the official pages (NC-080).
  *
- * Pure string work, no network — the fetching lives in lib/macro.ts, and the checks run these on
- * fixtures. Both parsers read **the dates the publishers put in their own document addresses**,
- * not the layout around them, because a page redesign moves headings and tables but leaves a
- * document's address alone:
+ * Pure string work, no network — the fetching lives in lib/macro.ts, and `check:macro` runs these
+ * on pages captured from federalreserve.gov and bls.gov. What each parser trusts was measured on
+ * those pages (2026-10-20), and is the part a redesign is least likely to move:
  *
- *  - an FOMC statement is `…/monetary20240131a.htm` (since the 2008-era site; older years link
- *    `/boarddocs/press/monetary/2001/20010103/`) — the date the decision was announced;
- *  - a CPI news release in the BLS archive is `…/news.release/archives/cpi_02132024.htm` — the
- *    date it was published, MMDDYYYY.
+ *  - **FOMC statements are found by their label, dated by their address.** The address formats
+ *    change by era — `/fomc/19940204default.htm`, `/boarddocs/press/general/2001/20010103/`,
+ *    `/newsevents/press/monetary/20080122b.htm`, `/newsevents/pressreleases/monetary20200129a.htm`
+ *    — and the suffix is not always "a" (the 22 January 2008 emergency cut is "b"). But every one
+ *    carries its date, and every policy statement is labelled as one: "Statement" on a year page,
+ *    the HTML link under "Statement:" on the current calendar. Going by the label is what keeps
+ *    out the Fed's other releases on the same pages that are not decisions — the Statement on
+ *    Longer-Run Goals and Monetary Policy Strategy (22 August 2025), swap-line and repo-facility
+ *    press releases (March 2020), minutes, press conferences and implementation notes.
+ *  - **CPI releases are dated by their archive address** (`cpi_MMDDYYYY.htm`) and named by their
+ *    link text ("September 2026 Consumer Price Index").
  */
 
 /** One decision or release, as a dated fact with its source document. */
@@ -23,6 +29,9 @@ export interface MacroDate {
 const FED = "https://www.federalreserve.gov";
 const BLS = "https://www.bls.gov";
 
+/** FOMC statements began in February 1994; before that the Committee announced nothing. */
+export const FIRST_FOMC_STATEMENT = "1994-02-01";
+
 /** A real calendar day, or null — "20240231" is not one, and must not become 2024-03-02. */
 function isoDay(y: string, m: string, d: string): string | null {
   const iso = `${y}-${m}-${d}`;
@@ -34,36 +43,46 @@ function absolute(base: string, href: string): string {
   return href.startsWith("http") ? href : `${base}${href.startsWith("/") ? "" : "/"}${href}`;
 }
 
-/** One per date, earliest first: a page links a statement more than once, and pages overlap. */
-function byDate(found: MacroDate[]): MacroDate[] {
-  const seen = new Map<string, MacroDate>();
+/** One per date, earliest first: a page can link a statement twice, and pages overlap. */
+function byDate<T extends MacroDate>(found: T[]): T[] {
+  const seen = new Map<string, T>();
   for (const f of found) if (!seen.has(f.date)) seen.set(f.date, f);
   return [...seen.values()].sort((a, b) => a.date.localeCompare(b.date));
 }
 
+/** The statement a link points at, dated by the first full date in its address. */
+function statementAt(href: string): MacroDate | null {
+  const m = href.match(/(19\d{2}|20\d{2})(\d{2})(\d{2})/);
+  const date = m ? isoDay(m[1], m[2], m[3]) : null;
+  return date && date >= FIRST_FOMC_STATEMENT ? { date, url: absolute(FED, href) } : null;
+}
+
 /**
- * FOMC policy statements on a Federal Reserve calendar page — the current calendar or a
- * historical year. Each statement is a decision announced that day, scheduled or not (the
- * 15 March 2020 cut was a Sunday). Minutes, press conferences, projections and implementation
- * notes (`…a1.htm`) are other documents and are not read as decisions.
- *
- * FOMC statements began in February 1994; before that the Committee announced nothing, so a
- * date before 1994 is not taken even if a page links one.
+ * FOMC policy statements on a Federal Reserve page — the current calendar
+ * (`fomccalendars.htm`) or a year page (`fomchistorical2008.htm`). Each is a decision announced
+ * that day, scheduled or not: the 15 March 2020 cut was a Sunday conference call.
  */
 export function parseFomcStatements(html: string): MacroDate[] {
   const found: MacroDate[] = [];
-  for (const m of html.matchAll(/href="([^"]*?monetary\/?(\d{4})(\d{2})(\d{2})a\.htm)"/gi)) {
-    const date = isoDay(m[2], m[3], m[4]);
-    if (date && date >= "1994-02-01") found.push({ date, url: absolute(FED, m[1]) });
+  // Year pages: the link whose whole text is "Statement".
+  for (const m of html.matchAll(/<a\b[^>]*\bhref="([^"]+)"[^>]*>\s*Statement\s*<\/a>/gi)) {
+    const s = statementAt(m[1]);
+    if (s) found.push(s);
   }
-  for (const m of html.matchAll(/href="([^"]*?\/boarddocs\/press\/monetary\/\d{4}\/(\d{4})(\d{2})(\d{2})\/[^"]*)"/gi)) {
-    const date = isoDay(m[2], m[3], m[4]);
-    if (date && date >= "1994-02-01") found.push({ date, url: absolute(FED, m[1]) });
+  // The current calendar: "Statement:" then "PDF | HTML" — the HTML one, before the next label
+  // or meeting row.
+  for (const m of html.matchAll(/<strong>\s*Statement:\s*<\/strong>/gi)) {
+    let block = html.slice(m.index! + m[0].length, m.index! + m[0].length + 800);
+    const end = block.search(/<strong>|fomc-meeting__month/i);
+    if (end >= 0) block = block.slice(0, end);
+    const htm = block.match(/href="([^"]+?\.htm)"/i);
+    const s = htm ? statementAt(htm[1]) : null;
+    if (s) found.push(s);
   }
   return byDate(found);
 }
 
-/** The historical-year pages a calendar page links ("fomchistorical2019.htm"), newest first. */
+/** The year pages the history index links (`fomchistorical2008.htm`), newest first. */
 export function parseFomcHistoricalYears(html: string): number[] {
   const years = new Set<number>();
   for (const m of html.matchAll(/fomchistorical(\d{4})\.htm/gi)) years.add(Number(m[1]));
@@ -71,22 +90,24 @@ export function parseFomcHistoricalYears(html: string): number[] {
 }
 
 /**
- * CPI news releases in the BLS archive. The address carries the publication date; the month the
- * release is *about* is the month before, which is how the CPI has been published since long
- * before the oldest archived release.
+ * CPI news releases in the BLS archive: the publication date from the address, the month the
+ * release covers from its link text. A link without a month in its text falls back to the month
+ * before publication, which is when the CPI comes out — but the text is preferred, because a
+ * release can slip (the September 2025 CPI came out on 24 October, after a shutdown).
  */
 export function parseCpiReleases(html: string): (MacroDate & { referenceMonth: string })[] {
-  const found: MacroDate[] = [];
-  for (const m of html.matchAll(/href="([^"]*?\/news\.release\/archives\/cpi_(\d{2})(\d{2})(\d{4})\.htm)"/gi)) {
+  const found: (MacroDate & { referenceMonth: string })[] = [];
+  for (const m of html.matchAll(/<a\b[^>]*\bhref="([^"]*?\/news\.release\/archives\/cpi_(\d{2})(\d{2})(\d{4})\.htm)"[^>]*>([^<]*)<\/a>/gi)) {
     const date = isoDay(m[4], m[2], m[3]);
-    if (date) found.push({ date, url: absolute(BLS, m[1]) });
+    if (!date) continue;
+    const named = m[5].match(/\b(January|February|March|April|May|June|July|August|September|October|November|December) (\d{4})\b/);
+    found.push({ date, url: absolute(BLS, m[1]), referenceMonth: named ? `${named[1]} ${named[2]}` : previousMonth(date) });
   }
-  return byDate(found).map((f) => ({ ...f, referenceMonth: previousMonth(f.date) }));
+  return byDate(found);
 }
 
 /** "2024-02-13" → "January 2024" */
 function previousMonth(date: string): string {
   const [y, m] = date.split("-").map(Number);
-  const d = new Date(Date.UTC(y, m - 2, 1));
-  return d.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  return new Date(Date.UTC(y, m - 2, 1)).toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
 }

@@ -1,13 +1,17 @@
 {
- "provenance": "PROVISIONAL — written from knowledge of the SEC API, not copied from a real record. Replace `records` with the block `npm run former-names-report` prints on a host that reaches data.sec.gov, and set this to the date and host it came from.",
- "provisional": true,
+ "provenance": "Pinned 2026-10-20 from data.sec.gov by `npm run former-names-report -- META AAPL XYZ GE F GOOGL`, run from the cloud session once its network policy allowed the host. The `formerNames` field exactly as EDGAR sent it.",
+ "provisional": false,
  "records": [
   {
    "ticker": "META",
    "cik": "0001326801",
    "name": "Meta Platforms, Inc.",
    "formerNames": [
-    { "name": "FACEBOOK INC", "from": "2012-02-01T00:00:00.000Z", "to": "2021-10-28T00:00:00.000Z" }
+    {
+     "name": "Facebook Inc",
+     "from": "2005-05-06T04:00:00.000Z",
+     "to": "2021-10-27T04:00:00.000Z"
+    }
    ]
   },
   {
@@ -15,9 +19,52 @@
    "cik": "0000320193",
    "name": "Apple Inc.",
    "formerNames": [
-    { "name": "APPLE INC", "from": "2007-01-10T00:00:00.000Z", "to": "2019-08-05T00:00:00.000Z" },
-    { "name": "APPLE COMPUTER INC", "from": "1994-01-26T00:00:00.000Z", "to": "2007-01-04T00:00:00.000Z" }
+    {
+     "name": "APPLE INC",
+     "from": "2007-01-10T05:00:00.000Z",
+     "to": "2019-08-05T04:00:00.000Z"
+    },
+    {
+     "name": "APPLE COMPUTER INC",
+     "from": "1994-01-26T05:00:00.000Z",
+     "to": "2007-01-04T05:00:00.000Z"
+    },
+    {
+     "name": "APPLE COMPUTER INC/ FA",
+     "from": "1997-07-28T04:00:00.000Z",
+     "to": "1997-07-28T04:00:00.000Z"
+    }
    ]
+  },
+  {
+   "ticker": "XYZ",
+   "cik": "0001512673",
+   "name": "Block, Inc.",
+   "formerNames": [
+    {
+     "name": "Square, Inc.",
+     "from": "2011-03-02T00:00:00.000Z",
+     "to": "2021-12-08T00:00:00.000Z"
+    }
+   ]
+  },
+  {
+   "ticker": "GE",
+   "cik": "0000040545",
+   "name": "GENERAL ELECTRIC CO",
+   "formerNames": []
+  },
+  {
+   "ticker": "F",
+   "cik": "0000037996",
+   "name": "FORD MOTOR CO",
+   "formerNames": []
+  },
+  {
+   "ticker": "GOOGL",
+   "cik": "0001652044",
+   "name": "Alphabet Inc.",
+   "formerNames": []
   }
  ]
 }

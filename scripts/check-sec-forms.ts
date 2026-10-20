@@ -216,6 +216,15 @@ async function main(): Promise<void> {
   check("  …but a change of case alone (APPLE INC → Apple Inc.) is not",
     !appleRenames.some((r) => r.from.toUpperCase() === "APPLE INC"), JSON.stringify(appleRenames));
   check("  …and the current name is never an alias of itself", !formerNameAliases(appleRenames, apple.name).includes("apple"));
+  // Pinned from the real record (2026-10-20): Apple's lists "APPLE COMPUTER INC/ FA", in use for
+  // no days at all — an EDGAR filer annotation, not a name. Read as one, it made a 1997 "rename"
+  // to the same name and the search alias "apple computer inc/ fa".
+  check("  …and an EDGAR annotation (\"APPLE COMPUTER INC/ FA\") is neither a rename nor an alias",
+    !appleRenames.some((r) => /\/\s*FA/i.test(r.from)) && !formerNameAliases(appleRenames, apple.name).some((a) => a.includes("/")) &&
+      appleRenames.length === 1 && appleRenames[0].on === "2007-01-04",
+    JSON.stringify(appleRenames));
+  check("a company that never changed its name has no renames (GE, Ford)",
+    renamesFrom(rec("GE").name, rec("GE").formerNames).length === 0 && renamesFrom(rec("F").name, rec("F").formerNames).length === 0);
 
   const chain = renamesFrom("CHARLIE HOLDINGS INC", [
     { name: "BRAVO CORP /DE/", to: "2015-03-02T00:00:00.000Z" },

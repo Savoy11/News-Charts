@@ -36,6 +36,8 @@ const FILTERS: { key: EventType; label: string }[] = [
   { key: "onchain", label: "On-chain" },
   { key: "governance", label: "Governance" },
   { key: "exploit", label: "Incidents" },
+  // the economy subject's own page (lib/macro.ts): there it is the whole timeline, so on
+  { key: "macro", label: "Fed & inflation" },
 ];
 
 const ALL_TYPES = FILTERS.map((f) => f.key);

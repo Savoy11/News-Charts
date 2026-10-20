@@ -192,6 +192,6 @@ On-chain `P2` work (Tally governance, DefiLlama TVL, paginated backfill), NYT ke
 AI summary nodes. **I'd hold off**: each is another adapter shipped against an unverified payload,
 and six are already waiting on §1. Validating those beats adding to the pile.
 
-Two are genuinely blocked, not deferred: the **macro-event overlay** needs FOMC/CPI dates I cannot
-verify from here, and **confirming exploits on-chain** needs a transaction reference DefiLlama may
-not carry.
+One is genuinely blocked, not deferred: **confirming exploits on-chain** needs a transaction
+reference DefiLlama may not carry. (The macro-event overlay, blocked here before for want of
+verifiable FOMC/CPI dates, was built and verified against both live sites on 2026-10-20 — batch 21.)

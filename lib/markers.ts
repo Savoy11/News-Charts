@@ -31,6 +31,9 @@ export const MARKER_STYLE = {
   // the thing a reader scanning a crypto timeline is looking for, and it should not need a
   // legend lookup to be found
   exploit: { color: "#ef4444", position: "belowBar", shape: "arrowDown", text: "!" },
+  // emerald, below the bar with the other scheduled facts: a Fed statement or a CPI release is a
+  // date on the calendar, and it is the backdrop to the move rather than the company's own news
+  macro: { color: "#34d399", position: "belowBar", shape: "square", text: "" },
 } as const;
 
 /** Which kind wins when several share a day — the market-moving ones first. */
@@ -51,6 +54,9 @@ export const PRIORITY: Record<EventType, number> = {
   governance: 2,
   // the highest-signal event a protocol can have; nothing else on the day outranks it
   exploit: 5,
+  // anything the company itself did that day is the story; the economy is the backdrop, and the
+  // hover still lists it under the winning glyph
+  macro: 0,
 };
 
 /** Snap an event date to the nearest trading day at or before it (weekends/holidays have no bar). */

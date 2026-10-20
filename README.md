@@ -518,6 +518,8 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | LoC Chronicling America | Historical newspapers ~1770–1963 | Public domain; fills the pre-2017 gap |
 | Internet Archive | Catalogued items (reports, catalogues, film) | Relevance-ranked; impossible dates dropped |
 | Federal Register | Sector-level rules and notices; documents naming a company | Keyword hits attach to industries; a title naming the company attaches to it (no airworthiness directives) |
+| Federal Reserve | FOMC policy statements since 1994 | Economy subject; on company pages behind the Economy chip (off by default). `npm run ingest -- --macro` |
+| BLS | CPI release dates since 2008 | Same subject and chip; needs a contact `User-Agent` |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |
 | Snapshot | Protocol governance votes | Keyless GraphQL |

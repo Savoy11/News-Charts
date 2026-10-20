@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
-import { heldTickers, loadEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, type IndustryRef } from "./store/read";
+import { heldTickers, loadEvents, loadMacroEvents, loadPrices, loadSubject, loadIndustryFor, loadSectorEvents, type IndustryRef } from "./store/read";
+import { MACRO_SUBJECT } from "./macro";
 import { PricePoint, TimelineEvent } from "./types";
 import { requestSubject } from "./ingest/queue";
 import { firstPassCompany, firstPassTopic } from "./ingest/firstPass";
@@ -66,6 +67,13 @@ export interface CompanyPageData {
   siteDomain: string | null;
   prices: PricePoint[];
   events: TimelineEvent[];
+  /**
+   * Fed policy statements and CPI releases (NC-080), apart from `events` on purpose: they belong
+   * to no company, so they stay out of what /compare finds two companies share, what the follow
+   * badge counts as new on this page, and the "before the ticker" strip. The explorer shows them
+   * behind an "Economy" chip that starts off.
+   */
+  macro: TimelineEvent[];
   industry: IndustryRef | null;
   /** every member's return against the sector median; null below three members with prices */
   standing: SectorStanding | null;
@@ -174,7 +182,7 @@ async function heldTopicPage(topic: string): Promise<TopicPageData | null> {
  * Date is revived on the way out.
  */
 const PAGE_CACHE_SECONDS = 900;
-const cachedHeldCompany = unstable_cache((key: string) => heldCompanyPage(key), ["held-company-page", "v4"], {
+const cachedHeldCompany = unstable_cache((key: string) => heldCompanyPage(key), ["held-company-page", "v5"], {
   revalidate: PAGE_CACHE_SECONDS,
   tags: ["subject-pages"],
 });
@@ -207,10 +215,12 @@ async function heldTopic(topic: string): Promise<TopicPageData | null> {
 async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
   const subject = await loadSubject(key);
   if (!subject?.ticker) return null;
-  const [events, prices, industry] = await Promise.all([
+  const [events, prices, industry, macro] = await Promise.all([
     loadEvents(subject.id),
     loadPrices(subject.id),
     loadIndustryFor(subject.id),
+    // an enrichment: a page without the economy overlay still renders
+    loadMacroEvents(MACRO_SUBJECT.slug).catch(() => []),
   ]);
   if (!events.length) return null;
   const siblings = await fundSiblings(subject.ticker);
@@ -229,6 +239,7 @@ async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
     siteDomain: subject.siteDomain,
     prices,
     events: dropCompanyPrehistory([...events, ...withoutSharedSectorRows(events, sector)]),
+    macro,
     industry,
     standing,
     siblings,

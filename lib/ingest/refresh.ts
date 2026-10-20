@@ -29,6 +29,10 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   // Reference material. A company's encyclopedia article is not an hourly feed.
   wikipedia: 1440,
   federal_register: 1440,
+  // A Fed statement or a CPI release lands at most a few times a month, on a published calendar;
+  // a daily look finds each one the day it is out.
+  fed_fomc: 1440,
+  bls_cpi: 1440,
   // Digitised newspapers from before 1963. These will never change again.
   loc_chronam: 10080,
   // Halvings and network upgrades are settled history; Phase 0 holds nothing live.

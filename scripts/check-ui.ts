@@ -704,6 +704,12 @@ async function feedKeys(page: Page): Promise<void> {
     const url = r.url();
     const body = r.postData() ?? "";
     if (url.startsWith(ourOrigin) && (url.includes(secret) || body.includes(secret))) leaked.push(url);
+    // The key is made up, so a provider that can be reached refuses it (NYT answers 401). That is
+    // the visitor's browser asking the publisher directly and being told no — the design working,
+    // not the app failing — and it was only invisible while the network blocked those hosts.
+    else if (!url.startsWith(ourOrigin) && (url.includes(secret) || Object.values(r.headers()).some((v) => v.includes(secret)))) {
+      deliberatelyFailed.add(url);
+    }
   });
 
   const gear = page.locator("button[aria-label*='ettings'], button:has-text('⚙')").first();
@@ -802,6 +808,37 @@ async function focusFilter(page: Page): Promise<void> {
     (await compose.first().getAttribute("href"))?.startsWith("/compare?a=") === true,
     String(await compose.first().getAttribute("href"))
   );
+}
+
+/**
+ * Fed decisions and CPI releases on a stock page (NC-080): behind an Economy chip that starts
+ * off, there when asked for, and turned on by a search that is about them. Needs the economy
+ * subject in the database (`npm run ingest -- --macro`); skipped, and said so, without it.
+ */
+async function economyOverlay(page: Page): Promise<void> {
+  console.log("\nEconomy overlay");
+  await go(page, "/company/F");
+  const chip = page.locator('[data-chip="macro"]');
+  if ((await chip.count()) === 0) {
+    console.log("  (no economy subject in this database — run `npm run ingest -- --macro`; skipped)");
+    return;
+  }
+  check("a stock page offers the Economy chip, off", (await chip.getAttribute("aria-pressed")) === "false");
+  check("  …and shows no Fed or CPI rows until asked", !/Fed policy statement|CPI report/.test(await visible(page)));
+  await chip.click();
+  await page.waitForTimeout(800);
+  check("turning it on shows them", (await chip.getAttribute("aria-pressed")) === "true" && /Fed policy statement \(FOMC\)/.test(await visible(page)));
+  check("  …and the link says so", /[?&]types=[^&]*macro/.test(page.url()), page.url());
+  // a fresh visit, without the chips this browser just remembered for this page — that key
+  // only: clearing all storage took the follow list a later check reads with it
+  await page.evaluate(() => localStorage.removeItem("news-charts:filters:/company/F"));
+  await go(page, "/company/F?focus=interest%20rates");
+  const asked = page.locator('[data-chip="macro"]');
+  check("a search about interest rates turns it on by itself", (await asked.getAttribute("aria-pressed")) === "true");
+  check("  …and the focus finds the Fed's statements", /Fed policy statement/.test(await visible(page)));
+  await go(page, "/topic/us-economy");
+  const topic = await visible(page);
+  check("the economy subject has a page of its own", /CPI report: consumer prices for/.test(topic) && /Fed policy statement/.test(topic), topic.slice(0, 80));
 }
 
 async function chromeAndRoutes(page: Page): Promise<void> {
@@ -1107,6 +1144,7 @@ async function main(): Promise<void> {
     await cryptoTopic(page);
     await comparePage(page);
     await focusFilter(page);
+    await economyOverlay(page);
     await homepageSuggestions(page);
     await searchResilience(page);
   await feedKeys(page);

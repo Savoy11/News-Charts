@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 43,
-   "closed": 97,
+   "open": 42,
+   "closed": 98,
    "parked": 12,
    "blocked": 18
   },
@@ -43,7 +43,7 @@
    "owner-decision": 50
   },
   "counts_recomputed_on": "2026-10-20",
-  "closed_by_annotation": 97
+  "closed_by_annotation": 98
  },
  "blocking_decisions": [
   {
@@ -422,7 +422,7 @@
      "scripts/check-search-log.ts",
      "scripts/check-focus.ts",
      "scripts/check-ui.ts",
-     "docs/MASTER-CHECKLIST.md:1015"
+     "docs/MASTER-CHECKLIST.md:1072"
     ]
    }
   },
@@ -2992,7 +2992,7 @@
   {
    "id": "NC-080",
    "title": "Macro-event overlay (FOMC decisions, CPI prints) as a curated subject",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "feature",
@@ -3024,6 +3024,22 @@
     "noted_on": "2026-09-28",
     "note": "federalreserve.gov/monetarypolicy/fomccalendars.htm and bls.gov/schedule/news_release/cpi.htm both answer 200 from the cloud session (2026-09-28), so a remote session can build and verify the dates.",
     "evidence": "live run 2026-09-28"
+   },
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-20",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "A curated topic subject `us-economy` (lib/macro.ts) holds every FOMC policy statement since 1994 (246) and every archived CPI release since 2008 (224), ingested into the local database from www.federalreserve.gov and www.bls.gov after the owner allowed both hosts. Decisions are the links labelled 'Statement' (one rule across four address eras), so strategy statements, swap-line and repo releases are excluded; CPI months come from link text. Company pages carry them as a separate `macro` field behind an Economy chip that starts off (turned on by a focus that matches them); the refresh routes, windows (daily) and creates the subject and backfills history. check:macro (51, on pages pinned from the live sites by `npm run macro-report -- --pin`), 2 check:live cases passing live, 7 check:ui checks.",
+    "evidence": [
+     "lib/macro.ts",
+     "lib/macroParse.ts",
+     "scripts/check-macro.ts",
+     "scripts/fixtures/macro-pages.json",
+     "components/CompanyExplorer.tsx",
+     "lib/page-data.ts",
+     "docs/MASTER-CHECKLIST.md:986"
+    ]
    }
   },
   {
@@ -6399,7 +6415,7 @@
     "what": "Batch 19: Prompt search v2 (NC-008 closed) — a question naming a security and a concern opens the security's page with ?focus=, never splitting a real name; salvage keeps its tail; years in a focus narrow by date; the seven stale check:ui failures resolved.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1015"
+     "docs/MASTER-CHECKLIST.md:1072"
     ]
    },
    {
@@ -6407,7 +6423,15 @@
     "what": "Batch 20: question search matches other words for 15 common concerns (lib/concepts.ts — covid/pandemic/lockdown, tariffs, interest rates …), graded below the typed word and named on the focus bar; the search box hint invites a question. No ledger item opened or closed (a follow-up to NC-008, tracked in the checklist).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:984"
+     "docs/MASTER-CHECKLIST.md:1041"
+    ]
+   },
+   {
+    "on": "2026-10-20",
+    "what": "Batch 21: NC-080 closed — Fed policy statements (1994–) and CPI releases (2008–) on a curated economy subject, shown on company pages behind an Economy chip that starts off; batch 15's former-names fixture pinned from the real EDGAR record, which exposed and fixed an annotation bug ('APPLE COMPUTER INC/ FA').",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea with the Fed, BLS and SEC hosts reachable: the full `npm run check` chain, `npm run lint`, `next build`, the two new check:live cases, a live ingest into the local database, and a check:ui run on a production build.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:986"
     ]
    }
   ]

@@ -981,6 +981,59 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 19: prompt search v2 (2026-10-20)
+
+The owner chose this next; same branch and PR.
+
+`npm run check` passes (34 suites), `npm run lint` is clean, `next build` compiles, and `check:ui`
+is 187/187 — every check green for the first time since the seven went stale, with no console errors.
+
+- [x] **A question opens the security's page, narrowed to what it asked about (NC-008).** "how
+      did covid affect Best Buy's stock price" now lands on BBY with `?focus=covid`: the page
+      shows the BBY events that mention covid, best matches first, with a bar that says so and a
+      button to show everything. The owner's goal from 2026-08-08, built on the parts kept for it.
+      - `lib/resolveSearch.ts` runs the parser (`parseSearchPrompt`) before the ladder. The
+        security goes through the same ladder as before; the concern rides on the answer as
+        `focus`. The search box, the no-script `/search` redirect, and the "did you mean" and
+        choice links all put it on the URL, through one helper (`focusHref`).
+      - **Names are not sentences.** The parse is believed only when it changed something and
+        the whole query is not already a name. "Jack in the Box" (the parser reads "Jack" plus
+        "in the Box") and fund names ending in a stock word ("Transamerica Global Equity",
+        "Selected American Shares") are tried as typed against the committed index first
+        (`namesSecurity` in `lib/sec.ts`), and so are held subjects' exact names, tickers and
+        aliases. Measured: 10 company names and 136 fund names in the index would otherwise be
+        split.
+      - **Possessives.** "Best Buy's" is tried as typed, then without the apostrophe
+        ("McDonalds" — how EDGAR spells McDonald's), then without the 's ("Best Buy").
+      - **Misses stay honest.** A question whose security isn't found ("how did covid affect
+        <nothing>") answers for that security — near names or "didn't match" — rather than
+        salvaging a junk head out of the sentence. A qualifier split that finds nothing ("<name>
+        in 2020") falls back to the query as typed.
+      - **Salvage keeps its tail.** "Best Buy earnings" → BBY narrowed to earnings; "Tesla
+        battery fires" → TSLA, "battery fires". It used to drop the tail.
+      - **The search log records both halves**: what was typed (`query`) and what it was read as
+        (`subject`, `focus`, `influence`). The columns existed and were always empty.
+      - The parser learned "what happened to/with <security> …".
+- [x] **Years narrow by date.** A focus such as "in 2020" was matched as a word in headlines, which
+      found whatever happened to print "2020". `lib/focus.ts` now reads years as a date window:
+      one year is that year, two span between them, and "since", "after" or "before" a year opens
+      one end. Words and a year together are the intersection — "tariffs in 2025" is 2025's tariff
+      events. Qualifier words ("after", "during", "since" …) no longer count as search words:
+      "after" alone matched every "shares fall after earnings" headline. The focus bar says
+      "dated in 2020" when that is what it did, and offers "… on its own timeline" only for
+      something that has one (an influence, not "in 2020").
+- [x] **The seven stale browser checks are gone.** The six prompt-search checks pass as written,
+      through the real search box. The seventh expected search to send an unknown ticker (ZZQQ)
+      to a page — what the 2026-08-08 refocus switched off. It now checks what matters: opening
+      `/company/ZZQQ` really queues the request, and search answers honestly instead of minting a
+      page.
+- Checks: 15 new in `check:search-log` (the resolver end to end with the database off and the
+  network refused, plus where the focus goes on the URL), 13 in `check:focus`, 3 parser cases in
+  `check:prompt`, 1 more in `check:ui`. On the old code `check:search-log` and `check:focus`
+  crash on the missing pieces and `check:prompt` fails 2 of its cases.
+- Not done, split out as its own `P2` line under the v2 entry: synonyms. "covid" doesn't find
+  headlines that say "pandemic" or "lockdown" — the focus is keywords only.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on
@@ -1085,11 +1138,16 @@ already held, but new investment goes to securities coverage first.
       an off-scope query now gets "that didn't match a listed security" instead of a guessed
       topic page and a Wikipedia gather spent on a random string. Corpus subjects of any kind
       stay searchable — a page we hold is a page worth finding. Head-prefix salvage stays
-      ("Best Buy earnings" → BBY) with the tail dropped for now and logged.
+      ("Best Buy earnings" → BBY) with the tail dropped for now and logged. *(2026-10-20, batch
+      19: the tail is carried as the focus now — "Best Buy earnings" → BBY narrowed to earnings.)*
 - [x] **Prompt search removed from the search path** — `parseSearchPrompt` no longer runs on
       queries; no focus/influence is derived or carried. Homepage, placeholder, SEO and OG
       copy are securities-first; the suggestion mix is 4 securities + 1 market-adjacent topic.
-- [ ] `P1` **Prompt search v2 — peg topics to exchange-traded securities.** The owner's stated
+      *(Superseded 2026-10-20 by Prompt search v2, below — the parser runs again, ahead of the
+      ladder.)*
+- [x] `P1` **Prompt search v2 — peg topics to exchange-traded securities.** *Done 2026-10-20
+      (batch 19, NC-008): a question opens the security's page narrowed and ranked by its
+      concern; the synonym idea at the end is split out as its own line below.* The owner's stated
       goal (2026-08-08, recorded verbatim): *"revisit a prompt search that will peg specific
       topics to exchange traded securities (ex. I want to see how covid affected Best Buy's
       stock price)."* The shape: a prompt names a security and a concern; the answer is the
@@ -1102,6 +1160,12 @@ already held, but new investment goes to securities coverage first.
       ladder) → carry the concern as focus (restore two lines in SearchBox//search) → grade
       with focusScore → consider the paid tier for concepts keywords can't reach ("covid" vs
       "pandemic" vs "lockdown" in headlines).
+- [ ] `P2` **Prompt search: concerns keywords can't reach.** "how did covid affect Best Buy" finds
+      the BBY events whose words include "covid", and not the ones that say "pandemic" or
+      "lockdown". Two ways in, both open: a small committed synonym list for the commonest
+      concerns (free, coarse), or the visitor's own AI model doing the matching where they have
+      connected one (the BYO ranking already exists). Owner's call which, if either; nothing is
+      lost meanwhile — the focus bar says how many events matched and offers everything.
 - [x] ~~`P2` Fund NAME resolution ("Vanguard 500" → VFINX/VOO)~~ — done 2026-08-12. **"Vanguard
       500" now resolves to VOO, named "Vanguard 500 Index Fund", with no request at all.**
       - **Neither candidate this entry guessed was the source.** Registrant names are the wrong
@@ -2904,7 +2968,8 @@ Each idea checked against the codebase before listing — several were cheaper t
         earlier wording floated — highlighting saved-focus matches on return — is **deliberately
         not queued**: focus is part of the *shelved* prompt-search substrate, so it would be
         speculative work on dormant machinery for a product with no users. It becomes sensible
-        after **Prompt search v2** lands, not before.
+        after **Prompt search v2** lands, not before. *(v2 landed 2026-10-20, batch 19; the "no users"
+        half of the reason still holds.)*
       - ⚠ Nothing here is a coding problem. Not buildable until (1) is decided.
 
 ## Initiative: Affiliate links on relevant surfaces · `P2`

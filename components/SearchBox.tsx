@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CLIENT_BUDGET_MS } from "@/lib/timeout";
-import type { SearchOption } from "@/lib/searchChoice";
+import { focusHref, type SearchOption } from "@/lib/searchChoice";
 
 /** How a candidate matched, in words a reader can weigh. */
 const MATCHED: Record<SearchOption["via"], string> = {
@@ -51,8 +51,10 @@ export default function SearchBox({ large = false }: { large?: boolean }) {
       });
       if (!res.ok) throw new Error(`resolve responded ${res.status}`);
       const json = await res.json();
-      if (json.kind === "company") router.push(`/company/${json.ticker}`);
-      else if (json.kind === "topic") router.push(`/topic/${json.slug}`);
+      // A question ("how did covid affect Best Buy") lands on the security narrowed to what it
+      // asked about (NC-008); a plain name carries no focus and lands on the whole page.
+      if (json.kind === "company") router.push(focusHref(`/company/${json.ticker}`, json.focus));
+      else if (json.kind === "topic") router.push(focusHref(`/topic/${json.slug}`, json.focus));
       else if (json.kind === "choose") setOptions(json.options as SearchOption[]);
       else if (json.kind === "suggest") {
         setOptions(json.options as SearchOption[]);

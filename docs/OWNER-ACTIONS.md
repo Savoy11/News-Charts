@@ -180,8 +180,6 @@ Raised by the October ledger batches, each recorded in the master checklist:
   browsers or for search-engine crawlers; sector misses now answer 404. A real 404 on company and
   topic pages means dropping their loading skeleton (a first search then waits up to ~8s on a
   blank screen).
-- **Seven stale browser checks.** The prompt-search tests in `check:ui` expect behaviour switched
-  off on 2026-08-08: rewrite them to today's behaviour, or keep them as the Prompt search v2 spec.
 - **Wikipedia attribution (NC-047).** Confirm the credit beside the topic summary meets CC BY-SA.
 - **Visitor Federal Register terms (NC-162).** Kept and rate-limited; the alternative is
   server-chosen term lists only.

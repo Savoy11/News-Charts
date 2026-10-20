@@ -253,6 +253,22 @@ export function fundNameIsShared(query: string): boolean {
   return new Set(fundNameCandidates(query.trim().toUpperCase()).map((i) => symbols[i])).size > 1;
 }
 
+/**
+ * Whether the committed index already answers the whole query — the same in-process rungs
+ * `resolveCompany` runs before it touches the network, so no request is made.
+ *
+ * Prompt search asks this before reading a query as a sentence. "Jack in the Box" is a company's
+ * name, not "Jack" with the qualifier "in the Box", and "Transamerica Global Equity" is a fund,
+ * not "Transamerica Global" with a stock suffix to strip — the parser would split both.
+ */
+export function namesSecurity(query: string): boolean {
+  const q = query.trim().toUpperCase();
+  if (!q) return false;
+  return Boolean(
+    matchCompany(localCompanies(), q) || (SYMBOL_SHAPE(q) && tickerIndex.funds[q] !== undefined) || matchFundName(q)
+  );
+}
+
 /** One near match offered when a search finds nothing — never a route on its own. */
 export interface SecuritySuggestion {
   ticker: string;

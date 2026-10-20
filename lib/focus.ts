@@ -25,7 +25,15 @@ const WEAK = new Set([
   "how", "did", "does", "do", "has", "have", "had", "was", "were", "is", "are", "be",
   "effect", "effects", "impact", "impacts", "influence", "affected", "affect",
   "stock", "stocks", "share", "shares", "price", "prices", "company", "inc", "corp",
+  // The parser's qualifier markers and question words, which a search now carries in (NC-008):
+  // "what happened to Nvidia after the export rules" must narrow on "export rules", and "after"
+  // alone would match every "shares fall after earnings" headline on the page.
+  "after", "before", "during", "since", "until", "between", "throughout", "across",
+  "what", "happened", "about",
 ]);
+
+/** A year, which narrows by date rather than by a word in a headline. */
+const YEAR = /^(?:1[89]|20)\d{2}$/;
 
 const normalise = (s: string): string =>
   s.toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
@@ -43,10 +51,51 @@ const stem = (w: string): string => (w.length > 4 && w.endsWith("s") ? w.slice(0
 export function focusTerms(focus: string): string[] {
   const seen = new Set<string>();
   for (const w of normalise(focus).split(" ")) {
-    if (w.length < 3 || WEAK.has(w)) continue;
+    if (w.length < 3 || WEAK.has(w) || YEAR.test(w)) continue;
     seen.add(stem(w));
   }
   return [...seen];
+}
+
+/** The dates a focus confines the timeline to — either end open — and how to say so. */
+export interface FocusWindow {
+  /** first day inside, YYYY-MM-DD, or null for no lower bound */
+  from: string | null;
+  /** last day inside, YYYY-MM-DD, or null for no upper bound */
+  to: string | null;
+  /** "in 2020", "2019–2021", "since 2020", "before 2020" */
+  label: string;
+}
+
+/**
+ * The years a focus names, read as a window on the timeline.
+ *
+ * "Impact of tariffs on Ford in 2025" asks for 2025's tariff events, and a headline rarely says
+ * "2025" — matched as a word, the year narrowed to whatever happened to print it. So a year is a
+ * date range: one year is that year, two or more span from the first to the last ("between 2019
+ * and 2021"), and a lone year after "since"/"after"/"from" or "before"/"until" opens one end.
+ */
+export function focusWindow(focus: string): FocusWindow | null {
+  const words = normalise(focus).split(" ");
+  const years = words.filter((w) => YEAR.test(w)).map(Number);
+  if (years.length === 0) return null;
+  const lo = Math.min(...years);
+  const hi = Math.max(...years);
+  if (lo === hi) {
+    const before = words[words.indexOf(String(lo)) - 1];
+    if (before === "since" || before === "from") return { from: `${lo}-01-01`, to: null, label: `since ${lo}` };
+    if (before === "after") return { from: `${lo + 1}-01-01`, to: null, label: `after ${lo}` };
+    if (before === "before" || before === "until") return { from: null, to: `${lo - 1}-12-31`, label: `before ${lo}` };
+    return { from: `${lo}-01-01`, to: `${lo}-12-31`, label: `in ${lo}` };
+  }
+  return { from: `${lo}-01-01`, to: `${hi}-12-31`, label: `${lo}–${hi}` };
+}
+
+/** An event dated to a month or a year counts from its first day. */
+function inWindow(ev: TimelineEvent, w: FocusWindow | null): boolean {
+  if (!w) return true;
+  const day = `${ev.date}-01-01`.slice(0, 10);
+  return (w.from === null || day >= w.from) && (w.to === null || day <= w.to);
 }
 
 /**
@@ -104,6 +153,8 @@ export interface FocusResult {
   /** true when the filter is actually narrowing the view */
   active: boolean;
   terms: string[];
+  /** the dates the focus confines the view to, when it names a year */
+  window: FocusWindow | null;
   /**
    * The matches again, best-first: focus grade, then stored subject-relevance (unscored rows
    * take a neutral 0.7 prior — never treated as evidence against the event), then recency.
@@ -123,10 +174,12 @@ export interface FocusResult {
  */
 export function applyFocus(events: TimelineEvent[], focus: string | null): FocusResult {
   const terms = focus ? focusTerms(focus) : [];
-  if (!focus || terms.length === 0) {
-    return { events, matched: events.length, total: events.length, active: false, terms, ranked: [] };
+  const window = focus ? focusWindow(focus) : null;
+  if (!focus || (terms.length === 0 && !window)) {
+    return { events, matched: events.length, total: events.length, active: false, terms, window, ranked: [] };
   }
-  const hits = events.filter((e) => matchesFocus(e, terms));
+  // Both, when both are named: "tariffs in 2025" is 2025's tariff events, not either alone.
+  const hits = events.filter((e) => inWindow(e, window) && matchesFocus(e, terms));
   const ranked =
     hits.length > 0
       ? [...hits].sort((a, b) => {
@@ -143,6 +196,20 @@ export function applyFocus(events: TimelineEvent[], focus: string | null): Focus
     total: events.length,
     active: hits.length > 0,
     terms,
+    window,
     ranked,
   };
+}
+
+/**
+ * The part of a focus that could be a subject in its own right, for the focus bar's "on its own
+ * timeline" compare — or null. "Donald Trumps presidency" can be drawn on its own; "in 2020" and
+ * "after the export rules" are qualifiers of the question, not things with a timeline. A focus
+ * that carries both ("tariffs · in 2025") offers its first part, which is where the parser puts
+ * the influence.
+ */
+export function composableFocus(focus: string): string | null {
+  const first = focus.split(" · ")[0].trim();
+  if (/^(?:in|during|since|until|before|after|between|throughout|across|from|as)\b/i.test(first)) return null;
+  return focusTerms(first).length > 0 ? first : null;
 }

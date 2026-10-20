@@ -50,11 +50,13 @@ working pricing plan) are summarised in
 [`docs/decisions/2026-09-28-business-decisions.md`](docs/decisions/2026-09-28-business-decisions.md)
 — a summary, not the record.
 
-**Prompt search is shelved, not deleted.** The natural-language layer (`lib/prompt.ts`
-parsing, `lib/focus.ts` grading, FocusBar, BestMatches, `?focus=` links) is dormant, tested
-substrate for the planned v2: pegging specific topics to exchange-traded securities — e.g.
-"how did covid affect Best Buy's stock price" → BBY's page narrowed to its covid events. See
-the checklist's "Prompt search v2" entry before removing any of it.
+**Prompt search is live (v2, 2026-10-20).** A question that names a security and a concern —
+"how did covid affect Best Buy's stock price" — opens BBY's page with `?focus=covid`, its
+timeline narrowed and ranked by the concern. `lib/resolveSearch.ts` runs `parseSearchPrompt`
+(`lib/prompt.ts`) before the ladder, but never on a query that is already a security's or a held
+subject's name ("Jack in the Box"); `lib/focus.ts` grades events by the focus words and reads
+years as a date window; FocusBar and BestMatches show it. Keywords only — "covid" does not find
+"pandemic" (the synonyms line in the checklist).
 
 ## Stack & layout
 

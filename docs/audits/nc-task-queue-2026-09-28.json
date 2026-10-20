@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 44,
-   "closed": 96,
+   "open": 43,
+   "closed": 97,
    "parked": 12,
    "blocked": 18
   },
@@ -42,8 +42,8 @@
    "owner-machine": 12,
    "owner-decision": 50
   },
-  "counts_recomputed_on": "2026-10-19",
-  "closed_by_annotation": 96
+  "counts_recomputed_on": "2026-10-20",
+  "closed_by_annotation": 97
  },
  "blocking_decisions": [
   {
@@ -379,7 +379,7 @@
   {
    "id": "NC-008",
    "title": "Prompt search v2 — peg a topic/concern to a security's timeline (e.g. covid → Best Buy)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "feature",
@@ -407,6 +407,23 @@
     "noted_on": "2026-10-17",
     "note": "scripts/check-ui.ts 'Search routing' still asserts the v2 behaviour (a prompt routes to the affected security with ?focus=). Those six checks fail today by design and are the closest thing to an executable spec for this item.",
     "evidence": "scripts/check-ui.ts searchRouting"
+   },
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-20",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "lib/resolveSearch.ts runs parseSearchPrompt before the ladder and carries the concern as focus on company/topic answers and on choice/suggestion hrefs; /api/resolve, /search and SearchBox put it on the URL (focusHref). A query that is already a security's or held subject's name is never split (namesSecurity; 10 company and 136 fund names in the index would be). Possessives try as typed, apostrophe-free, then without 's. Salvage returns its tail as focus. Years in a focus are a date window (lib/focus.ts). The six check:ui prompt-search checks pass through the real search box; the stale ZZQQ check is replaced by a queue check. check:search-log (+15, end to end with the database down and fetch refused) and check:focus (+13) crash on the old code; check:prompt fails 2 cases. Synonyms (covid vs pandemic) split out as a P2 checklist line.",
+    "evidence": [
+     "lib/resolveSearch.ts",
+     "lib/focus.ts",
+     "lib/searchChoice.ts",
+     "lib/sec.ts",
+     "scripts/check-search-log.ts",
+     "scripts/check-focus.ts",
+     "scripts/check-ui.ts",
+     "docs/MASTER-CHECKLIST.md:984"
+    ]
    }
   },
   {
@@ -6375,6 +6392,14 @@
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (with check:legal), `npm run lint`, `next build`, and a check:ui run on a production build.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:938"
+    ]
+   },
+   {
+    "on": "2026-10-20",
+    "what": "Batch 19: Prompt search v2 (NC-008 closed) — a question naming a security and a concern opens the security's page with ?focus=, never splitting a real name; salvage keeps its tail; years in a focus narrow by date; the seven stale check:ui failures resolved.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:984"
     ]
    }
   ]

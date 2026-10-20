@@ -835,11 +835,23 @@ async function chromeAndRoutes(page: Page): Promise<void> {
   check("and says the request was noted", /been noted/.test(missing));
   check("and does not claim nothing was found", !/Nothing found/.test(missing));
   // The demand has to actually reach the queue, or the message is a promise nothing keeps.
-  const queued = await page.evaluate(async (base) => {
+  const rows = await (async () => {
+    const { getPool } = await import("../lib/db");
+    const sql = `SELECT 1 FROM subject_requests WHERE slug = 'zzqq' AND kind = 'company' AND last_asked > now() - interval '10 minutes'`;
+    return (await getPool().query(sql)).rows;
+  })().catch(() => [] as unknown[]);
+  check("and the request actually reached the queue", rows.length === 1, `${rows.length} rows`);
+  /**
+   * Search does not invent the page. Since the 2026-08-08 scope refocus an unknown string is not
+   * a subject: "ZZQQ" is no listed security, so search says so (or offers near names) rather
+   * than routing to a page the address bar can still reach. This check used to expect a subject
+   * page — the behaviour the refocus switched off — and failed on every run since.
+   */
+  const searched = await page.evaluate(async (base) => {
     const r = await fetch(`${base}/api/resolve?q=ZZQQ`);
     return (await r.json()) as { kind?: string };
   }, BASE);
-  check("the search path still resolves it to a subject page", queued.kind === "company" || queued.kind === "topic", JSON.stringify(queued));
+  check("and search does not mint a page for it", searched.kind === "none" || searched.kind === "suggest", JSON.stringify(searched));
 }
 
 /**

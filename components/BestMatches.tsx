@@ -34,7 +34,9 @@ export default function BestMatches({
   const evidence = (ev: TimelineEvent): string => {
     const inTitle = result.terms.filter((t) => ev.title.toLowerCase().includes(t));
     if (inTitle.length) return `“${inTitle.join("”, “")}” in the headline`;
-    return `matches ${result.terms.slice(0, 3).join(", ")}`;
+    if (result.terms.length) return `matches ${result.terms.slice(0, 3).join(", ")}`;
+    // A focus of only a year ("Apple in 2020") narrows by date; there is no word to point at.
+    return result.window ? `dated ${result.window.label}` : "";
   };
 
   return (

@@ -273,6 +273,21 @@ async function main(): Promise<void> {
     const mcd = await resolveSearch("how did covid affect McDonald's stock");
     check("  …and a possessive that is part of the name is kept, as EDGAR spells it",
       same(mcd, { kind: "company", ticker: "MCD", focus: "covid" }), JSON.stringify(mcd).slice(0, 160));
+
+    // Audit 2026-10-21 #2: with nothing held, the committed index answers, and its name rungs
+    // let punctuation decide — "Coca-Cola" opened CCEP, "BlackRock" a closed-end trust, a bare
+    // "Lowe's" offered three Fidelity funds, and "Home Depot" was salvaged as "Home" with an
+    // unasked "Depot" filter that hid dividends and the Fed from the page.
+    console.log("\nA household name reaches its company, punctuation and all");
+    const ko = await resolveSearch("how did covid affect Coca-Cola");
+    check("a question about Coca-Cola reaches KO, not Coca-Cola Europacific",
+      same(ko, { kind: "company", ticker: "KO", focus: "covid" }), JSON.stringify(ko));
+    const blk = await resolveSearch("BlackRock");
+    check("  …\"BlackRock\" reaches BLK, not BlackRock Science & Technology Term Trust", same(blk, { kind: "company", ticker: "BLK" }), JSON.stringify(blk));
+    const hd = await resolveSearch("Home Depot");
+    check("  …\"Home Depot\" is the whole name, with no filter it never asked for", same(hd, { kind: "company", ticker: "HD" }), JSON.stringify(hd));
+    const low = await resolveSearch("Lowe's");
+    check("  …and a bare \"Lowe's\" reaches Lowe's, not a list of low-volatility funds", same(low, { kind: "company", ticker: "LOW" }), JSON.stringify(low).slice(0, 160));
     const offered = await resolveSearch("how did covid affect Nvidea");
     check("a near match offered for a question keeps the question on its link",
       offered.kind === "suggest" && offered.options[0]?.href === "/company/NVDA?focus=covid", JSON.stringify(offered).slice(0, 160));

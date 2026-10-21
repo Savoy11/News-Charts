@@ -661,8 +661,10 @@ export async function writePrices(
 
 /**
  * Whether this subject's whole daily history has been read — a successful full-history fetch in
- * the log (NC-077). Until it has, ingest asks for every close since listing; after, ten years
- * keep it current. The log is never purged, so this is read once per subject, not once per run.
+ * the log (NC-077). Until it has, ingest asks for every close Yahoo holds; after, ten years keep
+ * it current. The log is never purged, so this is read once per subject, not once per run — and
+ * a read logged under an older marker (`fullHistoryQuery`) does not count, so changing the marker
+ * is how every subject is made to read its history again.
  */
 export async function hasFullPriceHistory(client: PoolClient, subjectId: number, symbol: string): Promise<boolean> {
   const { rows } = await client.query(

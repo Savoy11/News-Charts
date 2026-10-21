@@ -108,7 +108,7 @@ function ev(e: Seed, scope = ""): TimelineEvent {
 }
 
 // ------------------------------------------------------------------ Ford
-// Founded 1903, listed 1956 — the gap is the "Before the ticker" run-up, and the
+// Founded 1903, listed 1956 — the gap is the "Before the chart" run-up, and the
 // 120-year continuity guard in lib/history.ts leaves it intact.
 const FORD_HISTORY: Seed[] = [
   ["1903-06-16", "Ford Motor Company is incorporated in Detroit", "Twelve investors put up $28,000 to found the company in a converted wagon factory on Mack Avenue."],

@@ -12,7 +12,8 @@ config({ path: ".env.local" });
  * mode these guard.
  */
 import { extractYear, parseCitations } from "../lib/wiki";
-import { dividendTitle, fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
+import { dividendTitle, exactClose, fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
+import { formatPrice } from "../lib/priceFormat";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { dropCompanyPrehistory } from "../lib/history";
@@ -234,7 +235,7 @@ async function priceFetch(): Promise<void> {
     check("closes come back as ok", ok.outcome === "ok" && ok.points.length === 2, ok.outcome);
     check("  …with the 10-year range by default", /range=10y/.test(asked), asked);
     await fetchDailyPrices("F", "full");
-    // NC-077: `range=max` is answered with monthly closes; a full history is asked for by date
+    // NC-077: `range=max` is answered with quarterly closes; a full history is asked for by date
     check("a full history is asked for by date, from before any listing to now",
       /period1=-2208988800&period2=\d{10}&interval=1d/.test(asked) && !/range=/.test(asked), asked);
     answer(200, { chart: { result: [{ ...chart.chart.result[0], meta: { dataGranularity: "1mo" } }] } });
@@ -256,6 +257,53 @@ async function priceFetch(): Promise<void> {
     }) as unknown as typeof fetch;
     const down = await fetchDailyPrices("F");
     check("an unreachable host is an error, not a throw", down.outcome === "error" && /socket/.test(down.detail ?? ""));
+
+    // Audit 2026-10-21 #1: every close was rounded to cents. Split-adjusted closes from the
+    // 1970s–90s are fractions of a cent to a few cents, where a rounded cent is a 25–100% "move".
+    // NVDA's real 1999-06-02/03 closes, and a sub-cent MNST-scale close that was stored as $0.00.
+    answer(200, { chart: { result: [{
+      timestamp: [928330200, 928416600, 928503000],
+      indicators: { quote: [{ close: [0.034375, 0.035286, 0.0039062] }] },
+    }] } });
+    const old = await fetchDailyPrices("NVDA", "full");
+    const [a, b, c] = old.points.map((p) => p.value);
+    check("a close is stored to the six places the column holds, not rounded to cents",
+      a === 0.034375 && b === 0.035286 && c === 0.003906, old.points.map((p) => p.value).join(", "));
+    check("  …so a +2.6% day stays +2.6%, not the +33.3% that 0.03 → 0.04 made it",
+      Math.abs((b / a - 1) * 100 - 2.65) < 0.05, `${((b / a - 1) * 100).toFixed(2)}%`);
+    check("  …and no real close is stored as $0.00", old.points.every((p) => p.value > 0));
+    check("  …while float noise past six places is dropped", exactClose(12.430000305175781) === 12.43);
+    check("a close reads at the places it needs: cents from a dollar up, more below",
+      formatPrice(230.1) === "230.10" && formatPrice(0.034375) === "0.0344" && formatPrice(0.003906) === "0.003906" && formatPrice(0) === "0.00",
+      [formatPrice(230.1), formatPrice(0.034375), formatPrice(0.003906)].join(" "));
+
+    // End-of-day only: while a session trades, Yahoo's daily series already carries today's bar
+    // at the latest trade (measured 2026-10-21 on London, Mumbai and bitcoin). A US session:
+    // 2026-10-20 13:30Z closed; 2026-10-21 13:30Z–20:00Z, with the exchange at UTC-4.
+    const usSession = (now: number) => {
+      answer(200, { chart: { result: [{
+        meta: { dataGranularity: "1d", gmtoffset: -14400, currentTradingPeriod: { regular: { start: 1792589400, end: 1792612800, gmtoffset: -14400 } } },
+        timestamp: [1792503000, 1792589400],
+        indicators: { quote: [{ close: [12.15, 12.31] }] },
+      }] } });
+      return fetchDailyPrices("F", "10y", now * 1000);
+    };
+    const open = await usSession(1792594800); // 15:00Z, mid-session
+    check("a session still trading is left out — its bar is an intraday price, not a close",
+      open.points.length === 1 && open.points[0].time === "2026-10-20", open.points.map((p) => p.time).join(", "));
+    const bell = await usSession(1792613400); // 20:10Z, ten minutes after the bell
+    check("  …until the close has settled, half an hour after the bell", bell.points.length === 1, `${bell.points.length}`);
+    const settled = await usSession(1792615500); // 20:45Z
+    check("  …and then the day's close is kept", settled.points.length === 2 && settled.points[1].value === 12.31, `${settled.points.length}`);
+    check("  …and before the bell yesterday's close is the last one, untouched",
+      (await usSession(1792580400)).points.length === 1); // 11:00Z, pre-market: the session has not begun
+    answer(200, { chart: { result: [{
+      meta: { dataGranularity: "1d", gmtoffset: 0, currentTradingPeriod: { regular: { start: 1792540800, end: 1792627140, gmtoffset: 0 } } },
+      timestamp: [1792454400, 1792540800],
+      indicators: { quote: [{ close: [82941, 83008.76] }] },
+    }] } });
+    const btc = await fetchDailyPrices("BTC-USD", "10y", 1792570665 * 1000); // 2026-10-21 08:17Z
+    check("  …and a 24-hour market's day is unfinished until midnight UTC", btc.points.length === 1 && btc.points[0].time === "2026-10-20", btc.points.map((p) => p.time).join(", "));
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -272,8 +320,16 @@ async function priceFetch(): Promise<void> {
       /replace \? fullHistoryQuery\(company\.ticker\) : company\.ticker/.test(ingest));
   check("  …crypto prices too", /fetchDailyPrices\(asset\.yahooSymbol, complete \? "10y" : "full"\)/.test(ingest) && /whole \? fullHistoryQuery\(asset\.yahooSymbol\)/.test(ingest));
   check("  …and the marker is a successful full read in the fetch log, one per symbol",
-    fullHistoryQuery("F") === "F full history" &&
+    fullHistoryQuery("F") === "F full history (exact)" &&
       /f\.query = \$2 AND f\.outcome = 'ok'/.test(read("lib/ingest/store.ts")) && /s\.key = 'yahoo_prices'/.test(read("lib/ingest/store.ts")));
+  // Audit 2026-10-21 #1: the first full reads (batch 22) stored cent-rounded closes and are
+  // logged as "<sym> full history". That marker must not count, or those histories stay wrong.
+  check("a full read logged before closes were exact does not count, so it is read once more",
+    fullHistoryQuery("F") !== "F full history" && /fullHistoryQuery\(symbol\)/.test(read("lib/ingest/store.ts")));
+  check("the chart and the page header format prices for display; nothing rounds what is stored",
+    /priceFormat: \{ type: "custom", formatter: formatPrice/.test(read("components/PriceTimeline.tsx")) &&
+      /\$\{formatPrice\(last\.value\)\}/.test(read("app/company/[ticker]/page.tsx")) &&
+      !/Math\.round\(c \* 100\)/.test(read("lib/prices.ts")) && !/Math\.round\(\(sum \/ period\) \* 100\)/.test(read("components/PriceTimeline.tsx")));
   check("a company page needs events, not prices", /if \(!events\.length\) return null;/.test(read("lib/page-data.ts")));
   check("  …and says the chart is missing where it would be", /No price data for this security yet/.test(read("components/CompanyExplorer.tsx")));
   check("a first visit no longer counts a Yahoo refusal against a real company", /if \(!filings\.length\) \{/.test(read("lib/ingest/firstPass.ts")) && !/!daily\.points\.length/.test(read("lib/ingest/firstPass.ts")));

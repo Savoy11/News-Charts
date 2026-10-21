@@ -1,5 +1,5 @@
 import { CompanyInfo, TimelineEvent } from "./types";
-import { MATERIAL_FORMS, PROSPECTUS, describeItems, leadItem, reportsResults } from "./secForms";
+import { MATERIAL_FORMS, PROSPECTUS, STAKE_FORM, describeItems, leadItem, reportsResults } from "./secForms";
 import {
   SIMILARITY_FLOOR,
   distinctiveWords,
@@ -163,10 +163,64 @@ async function registrantName(cik: string): Promise<string | null> {
  * the only reason "APPLE" reaches Apple Inc rather than Apple Hospitality REIT, and why
  * `check:tickers` asserts that ordering survives every rebuild.
  */
-function prefixHit(rows: TickerRow[], q: string): TickerRow | null {
-  const matches = rows.filter((r) => r.title.toUpperCase().startsWith(q + " "));
+function prefixHit(rows: TickerRow[], titles: string[], fq: string, form: NameForm): TickerRow | null {
+  if (!fq) return null;
+  const matches = rows.filter((r, i) =>
+    form === "words" ? titles[i].startsWith(fq + " ") : titles[i].startsWith(fq) && startsWithWords(r.title, fq)
+  );
   if (matches.length === 1) return matches[0];
-  return matches.length > 1 && q.length >= 3 ? matches[0] : null;
+  return matches.length > 1 && fq.length >= 3 ? matches[0] : null;
+}
+
+/**
+ * The two forms a name is compared in, so punctuation never decides the answer.
+ *
+ * EDGAR's titles punctuate however the filer did: "COCA COLA CO" beside "COCA-COLA EUROPACIFIC
+ * PARTNERS plc", "MCDONALDS CORP" beside "Macy's, Inc.", "O REILLY AUTOMOTIVE INC". Matched on
+ * the raw title, the comma in "BlackRock, Inc." kept "BlackRock" from ever reaching BLK, so the
+ * first title that did begin "BLACKROCK " — a closed-end trust, BSTZ — answered; "Coca-Cola" went
+ * to CCEP, and 2,727 of 2,794 "Name, Inc." titles could not be found by their own name (audit
+ * 2026-10-21 #2).
+ *
+ * - `words`: punctuation folded, word breaks kept — "BlackRock, Inc." → "BLACKROCK INC",
+ *   "Macy's" → "MACYS". Tried first, because a space a person typed is meant: "Pure Cycle" is
+ *   Pure Cycle Corp, not PureCycle Technologies, and "Black Stone" is Black Stone Minerals.
+ * - `compact`: spaces folded too — "U.S. Bancorp" → "USBANCORP" finds "US BANCORP DE", "Exxon
+ *   Mobil" finds "ExxonMobil Holdings Corp", "O'Reilly" finds "O REILLY AUTOMOTIVE". Only when the
+ *   words form finds nothing.
+ */
+type NameForm = "words" | "compact";
+const NAME_FORMS: Record<NameForm, (s: string) => string> = {
+  words: (s) => s.toUpperCase().replace(/['’]/g, "").replace(/[^A-Z0-9&]+/g, " ").trim(),
+  compact: (s) => s.toUpperCase().replace(/[^A-Z0-9&]/g, ""),
+};
+
+/** Each index's titles in each form, worked out once rather than on every search. */
+const formCache = new WeakMap<TickerRow[], Record<NameForm, string[]>>();
+function titlesIn(rows: TickerRow[], form: NameForm): string[] {
+  let forms = formCache.get(rows);
+  if (!forms) {
+    forms = { words: rows.map((r) => NAME_FORMS.words(r.title)), compact: rows.map((r) => NAME_FORMS.compact(r.title)) };
+    formCache.set(rows, forms);
+  }
+  return forms[form];
+}
+
+const WORD_CHAR = /[A-Z0-9&]/;
+
+/**
+ * Whether `title` begins with the compact query and the query ends where one of the title's words
+ * does — so "OREILLY" finds "O REILLY AUTOMOTIVE INC", while "META" does not find "METALLA".
+ */
+function startsWithWords(title: string, cq: string): boolean {
+  const t = title.toUpperCase();
+  let k = 0;
+  for (let i = 0; i < t.length; i++) {
+    if (!WORD_CHAR.test(t[i])) continue;
+    if (t[i] !== cq[k]) return false;
+    if (++k === cq.length) return i + 1 === t.length || !WORD_CHAR.test(t[i + 1]);
+  }
+  return false;
 }
 
 /**
@@ -177,7 +231,14 @@ function prefixHit(rows: TickerRow[], q: string): TickerRow | null {
  * every query, so a divergence would only ever show up for a newly listed company.
  */
 function matchCompany(rows: TickerRow[], q: string): CompanyInfo | null {
-  const hit = rows.find((r) => r.ticker === q) ?? rows.find((r) => r.title.toUpperCase() === q) ?? prefixHit(rows, q);
+  let hit = rows.find((r) => r.ticker === q) ?? null;
+  for (const form of ["words", "compact"] as const) {
+    if (hit) break;
+    const titles = titlesIn(rows, form);
+    const fq = NAME_FORMS[form](q);
+    const exact = fq ? titles.indexOf(fq) : -1;
+    hit = exact >= 0 ? rows[exact] : prefixHit(rows, titles, fq, form);
+  }
   if (!hit) return null;
   return {
     ticker: hit.ticker,
@@ -604,6 +665,7 @@ interface FilingBlock {
   accessionNumber?: string[];
   primaryDocument?: string[];
   items?: string[];
+  fileNumber?: string[];
 }
 
 /** One 424B prospectus, held back so a day's worth can become one row (`prospectusEvents`). */
@@ -618,7 +680,8 @@ function filingsFromBlock(
   block: FilingBlock,
   company: CompanyInfo,
   registrant: string,
-  prospectuses: Prospectus[]
+  prospectuses: Prospectus[],
+  othersStakes: string[]
 ): TimelineEvent[] {
 
   /**
@@ -661,6 +724,20 @@ function filingsFromBlock(
     // A shard row missing either is unusable: no date is nowhere to put it, and no accession is
     // no stable identity, so it would re-insert as a new event on every refresh.
     if (!date || !accession) continue;
+    /**
+     * A company's record lists the filings it is the subject of *and* the ones it made, and a
+     * Schedule 13D or 13G is an investor's stake in an issuer. One about this company carries its
+     * own file number (Ford's are all 005-30156); one this company made about another issuer
+     * carries none here. Read as stakes in the company, JPMorgan's page showed 190 of its 192
+     * recent ones — its stakes in 3M, DigitalOcean and the rest — and Coca-Cola's its stakes in
+     * Coca-Cola Consolidated and CCEP (found measuring audit 2026-10-21 #4; 15 sampled filing
+     * headers, every one agreeing). They are another issuer's events, and are not kept here. A
+     * record with no file numbers at all says nothing either way, and keeps them.
+     */
+    if (STAKE_FORM.test(form) && block.fileNumber && !block.fileNumber[i]) {
+      othersStakes.push(accession);
+      continue;
+    }
     const doc = block.primaryDocument?.[i] ?? "";
     if (prospectus) {
       prospectuses.push({ form, date, accession, doc });
@@ -782,8 +859,8 @@ export interface Rename {
 
 /**
  * The real renames in a submissions record (2026-10-17 proposal 9). EDGAR keeps every name a
- * filer has used under `formerNames`, each with the day it stopped — "FACEBOOK INC" until
- * 2021-10-28 — and the site downloaded the record for its filings and read none of it.
+ * filer has used under `formerNames`, each with the day it stopped — "Facebook Inc" until
+ * 2021-10-27 — and the site downloaded the record for its filings and read none of it.
  *
  * Oldest first, each paired with the name that replaced it: the next former name, or the current
  * one. A change of case, punctuation, legal suffix or state tag ("APPLE INC" → "Apple Inc.",
@@ -856,7 +933,9 @@ export async function getFilingsDeep(
   company: CompanyInfo,
   includeOlder: boolean,
   /** filled with the filer's renames, for a caller that also stores them as search aliases */
-  renames: Rename[] = []
+  renames: Rename[] = [],
+  /** filled with the accessions of the filer's own stakes in other issuers, left out of the events */
+  othersStakes: string[] = []
 ): Promise<TimelineEvent[]> {
   const res = await fetch(`https://data.sec.gov/submissions/CIK${company.cik}.json`, {
     headers: UA,
@@ -870,7 +949,7 @@ export async function getFilingsDeep(
   // EDGAR's own name for the filer — for a fund, the trust rather than the series.
   const registrant = typeof json?.name === "string" && json.name.trim() ? json.name.trim() : company.name;
   const prospectuses: Prospectus[] = [];
-  const events = filingsFromBlock(recent, company, registrant, prospectuses);
+  const events = filingsFromBlock(recent, company, registrant, prospectuses, othersStakes);
   // Renames are in the record already in hand, so they cost nothing. A fund's record is its
   // trust's, and the trust's old names are not the fund's — those are left out.
   if (tickerIndex.funds[company.ticker.toUpperCase()] === undefined) {
@@ -891,7 +970,7 @@ export async function getFilingsDeep(
       // A shard that will not load costs its own years and nothing else — the recent block is
       // already in hand, and half a history beats none.
       if (!r.ok) continue;
-      events.push(...filingsFromBlock(await r.json(), company, registrant, prospectuses));
+      events.push(...filingsFromBlock(await r.json(), company, registrant, prospectuses, othersStakes));
     } catch {
       continue;
     }

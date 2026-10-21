@@ -14,6 +14,7 @@ import {
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
 import { MARKER_STYLE, markerEventsByDay, snapToTradingDay } from "@/lib/markers";
 import { safeHref } from "@/lib/safeUrl";
+import { formatPrice } from "@/lib/priceFormat";
 import EventThumb from "./EventThumb";
 
 /** Legend wording, which is not always the badge wording ("SEC filing", not "Filing"). */
@@ -72,7 +73,7 @@ function sma(prices: PricePoint[], period: number): { time: Time; value: number 
     sum += prices[i].value;
     if (i >= period) sum -= prices[i - period].value;
     if (i >= period - 1) {
-      out.push({ time: prices[i].time as Time, value: Math.round((sum / period) * 100) / 100 });
+      out.push({ time: prices[i].time as Time, value: sum / period });
     }
   }
   return out;
@@ -135,6 +136,8 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
       topColor: "rgba(56, 189, 248, 0.25)",
       bottomColor: "rgba(56, 189, 248, 0.02)",
       lineWidth: 2,
+      // The default format is two places, which reads a 1975 close of $0.0153 as $0.02.
+      priceFormat: { type: "custom", formatter: formatPrice, minMove: 0.000001 },
     });
     series.setData(prices.map((p) => ({ time: p.time as Time, value: p.value })));
 

@@ -31,7 +31,7 @@ because it will be trusted.
 | **2015 – now** | Federal Register | 2015 (our query floor) | Sector rules; documents whose title names a company |
 | **2017 – now** | GDELT | 2017 (our query floor) | Recent news |
 | **—** | Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | not ingested | Free tiers are non-commercial; adapters exist for diagnostics only |
-| **since listing** | Yahoo Finance chart | every daily close since the security listed (Ford from 1972, IBM from 1962), read once; ten years on routine refreshes; the whole history again after a split | Prices, corporate actions |
+| **Yahoo's whole daily series** | Yahoo Finance chart | every daily close Yahoo holds, to six decimal places — the listing for a younger security, but where Yahoo's daily data begins for an older one (IBM, GE, KO from 1962-01-02; Ford from 1972, though it listed in 1956); read once, ten years on routine refreshes, the whole series again after a split; a session still trading is never stored | Prices, corporate actions |
 | **now** | Yahoo Finance RSS | recent headlines | News |
 
 ### On-chain, which has a hard floor
@@ -58,7 +58,8 @@ it with commentary written later would turn a young record into a fake old one.
 the early decades. Chronicling America covers roughly 1770–1963 in US newspapers — the only source
 that reaches the stretch between a company's invention and GDELT's 2017 floor. NYT reaches 1851
 only for a visitor who adds their own key. SEC filings begin when EDGAR went electronic, around
-1993. Prices reach back ten years (the full history after a split). Internet Archive items dated
+1993. Prices reach back as far as Yahoo's daily data goes — 1962-01-02 at the earliest, so for
+these companies the chart starts there rather than at the listing. Internet Archive items dated
 before 1780 are dropped for companies — the oldest US public companies date from that decade.
 Everything from 2017 is dense; everything before it depends on how well the subject was covered by
 newspapers that happen to have been digitised.

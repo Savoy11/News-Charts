@@ -7,6 +7,7 @@ import { requestSubject } from "./ingest/queue";
 import { firstPassCompany, firstPassTopic } from "./ingest/firstPass";
 import { dropCompanyPrehistory } from "./history";
 import { withoutSharedSectorRows } from "./eventMerge";
+import { pageFilings } from "./secForms";
 import { resolveTickerLocally, siblingFunds } from "./sec";
 import { loadSectorStanding, type SectorStanding } from "./signals";
 
@@ -182,10 +183,28 @@ async function heldTopicPage(topic: string): Promise<TopicPageData | null> {
  * Date is revived on the way out.
  */
 const PAGE_CACHE_SECONDS = 900;
-const cachedHeldCompany = unstable_cache((key: string) => heldCompanyPage(key), ["held-company-page", "v5"], {
-  revalidate: PAGE_CACHE_SECONDS,
-  tags: ["subject-pages"],
-});
+/**
+ * A company page is cached as two entries, its prices apart from the rest. Next caches nothing
+ * over 2 MB, and a company listed since the 1970s carries 11,000–16,000 closes, about 0.7 MB,
+ * while its filings and stories keep growing: JPMorgan's page came to 1.9 MB before a single news
+ * row even after its filing rows were trimmed (audit 2026-10-21 #4). Split, each has room.
+ */
+const cachedHeldCompany = unstable_cache(
+  async (key: string) => {
+    const page = await heldCompanyPage(key);
+    return page && { ...page, prices: [] };
+  },
+  ["held-company-page", "v6"],
+  { revalidate: PAGE_CACHE_SECONDS, tags: ["subject-pages"] }
+);
+const cachedHeldPrices = unstable_cache(
+  async (key: string) => {
+    const subject = await loadSubject(key);
+    return subject?.ticker ? loadPrices(subject.id) : [];
+  },
+  ["held-company-prices", "v1"],
+  { revalidate: PAGE_CACHE_SECONDS, tags: ["subject-pages"] }
+);
 const cachedHeldTopic = unstable_cache((key: string) => heldTopicPage(key), ["held-topic-page", "v2"], {
   revalidate: PAGE_CACHE_SECONDS,
   tags: ["subject-pages"],
@@ -198,7 +217,7 @@ function revive<T extends { refreshedAt: RefreshedAt }>(page: T): T {
 async function heldCompany(key: string): Promise<CompanyPageData | null> {
   const k = key.trim().toLowerCase();
   const cached = await cachedHeldCompany(k);
-  return cached ? revive(cached) : heldCompanyPage(k);
+  return cached ? { ...revive(cached), prices: await cachedHeldPrices(k) } : heldCompanyPage(k);
 }
 
 async function heldTopic(topic: string): Promise<TopicPageData | null> {
@@ -238,7 +257,7 @@ async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
     wikipediaTitle: subject.wikipediaTitle ?? null,
     siteDomain: subject.siteDomain,
     prices,
-    events: dropCompanyPrehistory([...events, ...withoutSharedSectorRows(events, sector)]),
+    events: dropCompanyPrehistory(pageFilings([...events, ...withoutSharedSectorRows(events, sector)], subject.cik)),
     macro,
     industry,
     standing,

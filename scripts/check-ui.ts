@@ -129,7 +129,7 @@ async function companyPage(page: Page): Promise<void> {
   // Year → month → day grouping, and the bucket for dates the source only gave a year for.
   check("month headers in the list", /\b(January|February|October) 20\d\d\b/.test(body));
   check("year-only bucket", body.includes("Year only"));
-  check("pre-IPO run-up section", body.includes("Before the ticker"));
+  check("pre-chart section, never called the first trading day", body.includes("Before the chart") && body.includes("our earliest daily price") && !body.includes("first trading day"));
   check("filing runs condense", (await page.locator("text=/^Show all$/").count()) > 0);
   check("corporate actions render", /Dividend of|stock split/.test(body));
 

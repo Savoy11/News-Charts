@@ -280,11 +280,18 @@
      "quote": "record the phrasing that was searched"
     }
    ],
-   "progress": {
-    "noted_on": "2026-09-28",
-    "note": "UNBLOCKED 2026-09-28. www.wikidata.org/w/api.php answers from the cloud session: wbgetentities&ids=Q44294&props=aliases returned four English aliases for Ford (Ford Motor Corporation, FoMoCo, Ford Motors, Ford). SPARQL (query.wikidata.org) is still unreachable but is not needed for aliases.",
-    "evidence": "live run 2026-09-28"
-   }
+   "progress": [
+    {
+     "noted_on": "2026-09-28",
+     "note": "UNBLOCKED 2026-09-28. www.wikidata.org/w/api.php answers from the cloud session: wbgetentities&ids=Q44294&props=aliases returned four English aliases for Ford (Ford Motor Corporation, FoMoCo, Ford Motors, Ford). SPARQL (query.wikidata.org) is still unreachable but is not needed for aliases.",
+     "evidence": "live run 2026-09-28"
+    },
+    {
+     "noted_on": "2026-10-21",
+     "note": "Batch 23 (audit 2026-10-21 #2): with nothing held, 'Google' resolves to a Google-themed ETF (DEPW), because EDGAR's ticker index does not know Alphabet was Google. Wikidata aliases are what would answer it before Alphabet is held; once it is, its EDGAR former name supplies the alias (batch 15).",
+     "evidence": "docs/MASTER-CHECKLIST.md:987"
+    }
+   ]
   },
   {
    "id": "NC-005",
@@ -422,7 +429,7 @@
      "scripts/check-search-log.ts",
      "scripts/check-focus.ts",
      "scripts/check-ui.ts",
-     "docs/MASTER-CHECKLIST.md:1118"
+     "docs/MASTER-CHECKLIST.md:1234"
     ]
    }
   },
@@ -1345,7 +1352,7 @@
     "verdict": "superseded",
     "reason": "Later checklist entry marks 'Label every source on screen' done 2026-07-28; GDELT domains are tidied but deliberately not embellished. Code present.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1960-1974",
+     "docs/MASTER-CHECKLIST.md:2076-2090",
      "lib/sourceLabel.ts:55",
      "package.json:40"
     ]
@@ -1458,7 +1465,7 @@
      "docs/proposals/2026-10-17-proposals.md",
      "scripts/refresh.ts:77",
      "scripts/check-wiring.ts:161",
-     "docs/MASTER-CHECKLIST.md:1084"
+     "docs/MASTER-CHECKLIST.md:1200"
     ]
    }
   },
@@ -2695,7 +2702,7 @@
      "lib/feedKeys.ts:65",
      "lib/feeds/browser.ts:43",
      "lib/feeds/browser.ts:88",
-     "docs/MASTER-CHECKLIST.md:1351"
+     "docs/MASTER-CHECKLIST.md:1467"
     ]
    }
   },
@@ -2930,13 +2937,14 @@
     "closed_on": "2026-10-21",
     "basis": "verified-here",
     "verdict": "close",
-    "reason": "Measured with Yahoo reachable: range=10y gave 2,511 closes from 2016, and range=max is answered with MONTHLY closes (Ford 169 points from 1984) — which the NC-156 split re-read had been storing over daily series. Full history is now asked for by date (period1/period2: Ford 13,709 daily closes from 1972-06-01, IBM 16,309 from 1962, AAPL from 1980-12-12), read once per company and crypto asset (a successful read logged as '<ticker> full history'), then ten years on routine refreshes; a non-daily answer is refused. /compare topic events now have prices decades back. check:parsers +7 (fail on old code), check:live AAPL full-history case passing live; Ford backfilled live in a local database.",
+    "reason": "Measured with Yahoo reachable: range=10y gave 2,511 closes from 2016, and range=max is answered with quarterly closes (Yahoo reports '3mo'; Ford 169 points from 1984 — first recorded as monthly) — which the NC-156 split re-read had been storing over daily series. Full history is now asked for by date (period1/period2: Ford 13,709 daily closes from 1972-06-01, IBM 16,309 from 1962, AAPL from 1980-12-12), read once per company and crypto asset (a successful read logged as '<ticker> full history'), then ten years on routine refreshes; a non-daily answer is refused. /compare topic events now have prices decades back. check:parsers +7 (fail on old code), check:live AAPL full-history case passing live; Ford backfilled live in a local database. Later (2026-10-21, batch 23): the first full reads stored every close rounded to cents, which invented 25–100% moves in split-adjusted 1970s–90s closes (audit 2026-10-21 #1). Closes are now stored to six places and the marker is '<ticker> full history (exact)', so each subject re-reads its history once; 'since listing' is where Yahoo's daily data begins, 1962 at the earliest (audit #3).",
     "evidence": [
      "lib/prices.ts",
      "scripts/ingest.ts",
      "lib/ingest/store.ts",
      "scripts/check-parsers.ts",
      "scripts/check-live.ts",
+     "docs/MASTER-CHECKLIST.md:1098",
      "docs/MASTER-CHECKLIST.md:987"
     ]
    }
@@ -3053,7 +3061,7 @@
      "scripts/fixtures/macro-pages.json",
      "components/CompanyExplorer.tsx",
      "lib/page-data.ts",
-     "docs/MASTER-CHECKLIST.md:1026"
+     "docs/MASTER-CHECKLIST.md:1142"
     ]
    }
   },
@@ -4299,8 +4307,8 @@
     "reason": "Their content (feed gate, affiliate initiative, owner backlog, on-chain checklist) is present in main's MASTER-CHECKLIST in later form.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:359",
-     "docs/MASTER-CHECKLIST.md:1705",
-     "docs/MASTER-CHECKLIST.md:1814"
+     "docs/MASTER-CHECKLIST.md:1821",
+     "docs/MASTER-CHECKLIST.md:1930"
     ]
    }
   },
@@ -4449,6 +4457,11 @@
      "noted_on": "2026-10-20",
      "note": "Batch 18: drafts of /legal/terms, /legal/privacy and /legal/disclaimer exist, linked from the footer, marked as drafts and noindexed while LEGAL_DRAFT is true. Written from what the code does; check:legal ties the privacy page's numbers and browser-storage list to the code. Still owed: the bracketed placeholders (operator, contact, governing law, host log retention, ad network and consent, liability cap), a lawyer's review, then LEGAL_DRAFT=false. The 'How we make money' disclosure remains separate.",
      "evidence": "docs/MASTER-CHECKLIST.md:938"
+    },
+    {
+     "noted_on": "2026-10-21",
+     "note": "Batch 23: the privacy page said per-IP rate-limit counts 'disappear within an hour' while the limiters kept them until 10,000 clients piled up (audit 2026-10-21 #5). The limiters now clear expired windows every minute, and the page states the windows from lib/rateLimit.ts; check:legal ties the two.",
+     "evidence": "docs/MASTER-CHECKLIST.md:987"
     }
    ]
   },
@@ -5819,13 +5832,14 @@
     "closed_on": "2026-10-17",
     "basis": "verified-here",
     "verdict": "close",
-    "reason": "Sector pages are cached whole (generateStaticParams returning [] with revalidate 900): measured MISS then HIT with s-maxage=900. Company and topic pages cannot be. Measured on a production build: with ISR enabled, the miss path's noStore() is a 500, 'Page changed from static to dynamic at runtime'. A miss must not be cached, so those routes stay dynamic and their held-page reads go through unstable_cache for 900 s. A cached 'not held' is re-checked live, and the read after a first-visit gather bypasses the cache. Live: a held company and a held topic kept their cached names after a database rename; a missing company appeared as soon as it was inserted. Company and topic HTML still renders per request; the saving is the database queries.",
+    "reason": "Sector pages are cached whole (generateStaticParams returning [] with revalidate 900): measured MISS then HIT with s-maxage=900. Company and topic pages cannot be. Measured on a production build: with ISR enabled, the miss path's noStore() is a 500, 'Page changed from static to dynamic at runtime'. A miss must not be cached, so those routes stay dynamic and their held-page reads go through unstable_cache for 900 s. A cached 'not held' is re-checked live, and the read after a first-visit gather bypasses the cache. Live: a held company and a held topic kept their cached names after a database rename; a missing company appeared as soon as it was inserted. Company and topic HTML still renders per request; the saving is the database queries. Later (2026-10-21, batch 23): for the largest filers the cached page was 3.9–5.4 MB, over Next's 2 MB limit, so the cache never applied to them (audit 2026-10-21 #4). A filer's own stakes in other issuers are now left out, a month of routine prospectuses is one row, and prices are cached as their own entry: JPM 4.20 → 1.89 MB across two entries. What bounds the timeline entry as news accumulates is still open.",
     "evidence": [
      "lib/page-data.ts:147",
      "lib/page-data.ts:164",
      "app/industry/[slug]/page.tsx:20",
      "scripts/check-wiring.ts:224",
-     "docs/MASTER-CHECKLIST.md:257-316"
+     "docs/MASTER-CHECKLIST.md:257-316",
+     "docs/MASTER-CHECKLIST.md:987"
     ]
    }
   },
@@ -6430,7 +6444,7 @@
     "what": "Batch 19: Prompt search v2 (NC-008 closed) — a question naming a security and a concern opens the security's page with ?focus=, never splitting a real name; salvage keeps its tail; years in a focus narrow by date; the seven stale check:ui failures resolved.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1118"
+     "docs/MASTER-CHECKLIST.md:1234"
     ]
    },
    {
@@ -6438,7 +6452,7 @@
     "what": "Batch 20: question search matches other words for 15 common concerns (lib/concepts.ts — covid/pandemic/lockdown, tariffs, interest rates …), graded below the typed word and named on the focus bar; the search box hint invites a question. No ledger item opened or closed (a follow-up to NC-008, tracked in the checklist).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1087"
+     "docs/MASTER-CHECKLIST.md:1203"
     ]
    },
    {
@@ -6446,7 +6460,7 @@
     "what": "Batch 21: NC-080 closed — Fed policy statements (1994–) and CPI releases (2008–) on a curated economy subject, shown on company pages behind an Economy chip that starts off; batch 15's former-names fixture pinned from the real EDGAR record, which exposed and fixed an annotation bug ('APPLE COMPUTER INC/ FA').",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea with the Fed, BLS and SEC hosts reachable: the full `npm run check` chain, `npm run lint`, `next build`, the two new check:live cases, a live ingest into the local database, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1026"
+     "docs/MASTER-CHECKLIST.md:1142"
     ]
    },
    {
@@ -6454,7 +6468,16 @@
     "what": "Batch 22: NC-077 closed — every daily close since listing, read once (asked by date; range=max is monthly), then ten-year refreshes; fixed the split re-read that replaced daily charts with monthly closes; two live checks corrected (EDGAR rename links, Wikipedia throttle as UNREACHABLE).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, check:live (14 pass, 0 fail, 2 unreachable, 1 skipped), a live backfill of F into a local database, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:987"
+     "docs/MASTER-CHECKLIST.md:1098"
+    ]
+   },
+   {
+    "on": "2026-10-21",
+    "what": "Batch 23: the 2026-10-21 code audit's six findings fixed — exact closes and a one-time re-read of every full history (P0); punctuation-tolerant name matching on the committed index, 36 → 2,789 of 2,794 'Name, Inc.' titles found by name (P1); 'Before the chart' instead of a false first trading day; a filer's own stakes in other issuers left out, routine prospectus months as one row and prices cached apart, so the biggest banks' pages fit Next's 2 MB cache; the rate limiter forgets expired windows as the privacy page now says; prose corrected. Also: a trading session still in progress is never stored as a close.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea with SEC and Yahoo reachable: the full `npm run check` chain, `npm run lint`, `next build`, a check:ui run on a production build, check:live, whole-index before/after comparisons of name resolution, and live page-size measurements for six bank filers.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:987",
+     "docs/audits/2026-10-21-audit.md"
     ]
    }
   ]

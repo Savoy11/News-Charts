@@ -356,12 +356,12 @@ keys, no egress, or a rate-limited feed otherwise has nothing to look at.
 
 It seeds *shapes*, not volume: year-only dates (which bucket under the year instead of inventing
 a January day), a clean run of filing-only days (which condense into one cyclable card), a
-pre-IPO era (the "Before the ticker" run-up), and planted >2% single-day price moves with an
+pre-IPO era (the "Before the chart" run-up), and planted >2% single-day price moves with an
 after-close earnings the session before (which is what "Biggest moves" pairs against). It is
 idempotent, never deletes, and only touches the four subjects it owns.
 
-Because the price series only runs 18 months, every seeded history event predates the first
-trading day, so the "Before the ticker" section is larger than it would be against real prices.
+Because the price series only runs 18 months, every seeded history event predates the earliest
+close, so the "Before the chart" section is larger than it would be against real prices.
 
 ### Bring your own model (visitor-side AI search)
 
@@ -510,7 +510,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 
 | Source | Used for | Notes |
 | --- | --- | --- |
-| Yahoo Finance chart API | Daily prices since listing (read once, then 10y refreshes; whole history again after a split), dividends, splits | Unofficial; swap for a paid API before scale. Full history is asked for by date — `range=max` comes back monthly |
+| Yahoo Finance chart API | Every daily close Yahoo holds, to six places (from 1962 at the earliest; read once, then 10y refreshes; whole history again after a split), dividends, splits. End of day only: a session still trading is left out | Unofficial; swap for a paid API before scale. Full history is asked for by date — `range=max` comes back quarterly (`3mo`) |
 | Yahoo Finance RSS | Company headlines | Headline, link and date only |
 | SEC EDGAR | Filings, earnings (10-K/10-Q/8-K 2.02), fund filings | Requires a `User-Agent` with contact email |
 | GDELT 2.0 | News headlines | English-filtered; 2017+. Throttles per IP — see note below |
@@ -564,7 +564,7 @@ items as `citation` events on both the topic and company ingest paths. What chan
 handling, not the data: a bare year now stays year-precision instead of being normalised to
 1 January, a `collection` is not treated as an event, and items predating the subject's first
 recorded year are dropped by the same `dropImplausiblePress` floor the newspaper scans use.
-`npm run check:archive` (55 cases) is aimed squarely at that parsing — and, since 2026-08-12, at what the request asks for, which is where a defect sat that every parsing case passed.
+`npm run check:archive` (48 cases) is aimed squarely at that parsing — and, since 2026-08-12, at what the request asks for, which is where a defect sat that every parsing case passed.
 
 Rejected as *event* sources after testing:
 

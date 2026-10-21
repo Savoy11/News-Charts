@@ -14,6 +14,7 @@ import SignalPanel from "@/components/SignalPanel";
 import JsonLd from "@/components/JsonLd";
 import FollowBar from "@/components/FollowBar";
 import { getCompanyPageData } from "@/lib/page-data";
+import { formatPrice } from "@/lib/priceFormat";
 import { absolute, breadcrumbLd, clampDescription, SITE_NAME } from "@/lib/seo";
 
 // No route-level revalidate: it never applied (the route is dynamic — a miss runs a first-visit
@@ -91,7 +92,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
           </h1>
           {last && (
             <p className="mt-1 text-lg font-semibold text-slate-300">
-              ${last.value.toFixed(2)}{" "}
+              ${formatPrice(last.value)}{" "}
               {change !== null && (
                 <span className={change >= 0 ? "text-emerald-400" : "text-red-400"}>
                   {change >= 0 ? "+" : ""}

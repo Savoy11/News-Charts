@@ -32,14 +32,32 @@ export interface FetchedPrices extends DailyPrices {
   detail?: string;
 }
 
-/** What a fetch asks for: the last ten years, or every daily close since the security listed. */
+/** What a fetch asks for: the last ten years, or every daily close Yahoo holds for the symbol. */
 export type PriceSpan = "10y" | "full";
 
 /**
  * The fetch-log query a full-history read is recorded under. Ingest reads it back to know a
  * series is complete, so routine refreshes can go back to ten years (NC-077).
+ *
+ * "(exact)" because the first full reads, on 2026-10-20 and 21, stored every close rounded to
+ * cents (audit 2026-10-21 #1). Those are logged as plain "full history", which no longer counts,
+ * so each such subject reads its history once more at the precision the column holds.
  */
-export const fullHistoryQuery = (symbol: string): string => `${symbol} full history`;
+export const fullHistoryQuery = (symbol: string): string => `${symbol} full history (exact)`;
+
+/**
+ * A close at the precision `prices.close` holds, `numeric(18,6)`. Cents are a display choice,
+ * not a storage one: split-adjusted closes from the 1970s–90s are fractions of a cent to a few
+ * cents, where one rounded cent is a 25–100% "move" — Walmart showed six +100% days in 1973–75
+ * that never happened, and MNST stored 110 closes as $0.00 (audit 2026-10-21 #1).
+ */
+export const exactClose = (close: number): number => Math.round(close * 1e6) / 1e6;
+
+/**
+ * How long after the bell a session's last bar is left alone, so the closing auction's print is
+ * the one stored rather than the last trade before it.
+ */
+const SETTLE_MS = 30 * 60 * 1000;
 
 /** 1900-01-01: before any listing Yahoo carries, so "from here" means "from the first close". */
 const BEFORE_ANY_LISTING = -2208988800;
@@ -56,14 +74,24 @@ const BEFORE_ANY_LISTING = -2208988800;
  * from "Yahoo said no" — and logged neither (NC-103).
  *
  * **Full history is asked for by date, never as `range=max`.** Yahoo answers `range=max` with one
- * close a *month* whatever interval is requested — measured 2026-10-21: Ford's "max" was 169
- * points from 1984, IBM's 261 from 1962 — while the same request by date returns every daily
- * close (13,710 for Ford since June 1972). The split re-read (NC-156) asked for `max`, so a split
- * replaced a company's daily chart with a monthly one. An answer that is not daily is now an
- * error rather than a series.
+ * close a *quarter* whatever interval is requested — it reports `dataGranularity: "3mo"`;
+ * measured 2026-10-21: Ford's "max" was 169 points from 1984, 90 days apart — while the same
+ * request by date returns every daily close (13,710 for Ford since June 1972). The split re-read
+ * (NC-156) asked for `max`, so a split replaced a company's daily chart with a quarterly one. An
+ * answer that is not daily is now an error rather than a series.
+ *
+ * **A session still trading is left out.** While a market is open Yahoo's daily series already
+ * carries today's bar, priced at the latest trade — measured 2026-10-21 on London, Mumbai and
+ * bitcoin while they traded. That is an intraday price, and News Charts stores end-of-day closes
+ * only, so the bar is dropped until the session has closed and settled; the next refresh after
+ * that stores the real close.
  */
-export async function fetchDailyPrices(ticker: string, span: PriceSpan = "10y"): Promise<FetchedPrices> {
-  const window = span === "full" ? `period1=${BEFORE_ANY_LISTING}&period2=${Math.floor(Date.now() / 1000)}` : "range=10y";
+export async function fetchDailyPrices(
+  ticker: string,
+  span: PriceSpan = "10y",
+  now: number = Date.now()
+): Promise<FetchedPrices> {
+  const window = span === "full" ? `period1=${BEFORE_ANY_LISTING}&period2=${Math.floor(now / 1000)}` : "range=10y";
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
     ticker
   )}?${window}&interval=1d&events=div%2Csplits`;
@@ -109,14 +137,24 @@ export async function fetchDailyPrices(ticker: string, span: PriceSpan = "10y"):
   const closes: (number | null)[] = quote.close ?? [];
   const volumes: (number | null)[] = quote.volume ?? [];
 
+  // The day of the session in progress, by the exchange's calendar, or null once it has settled.
+  const session: { start?: number; end?: number; gmtoffset?: number } | undefined =
+    result.meta?.currentTradingPeriod?.regular;
+  const offset = session?.gmtoffset ?? result.meta?.gmtoffset ?? 0;
+  const unfinished =
+    session?.start != null && session.end != null && now < session.end * 1000 + SETTLE_MS
+      ? day(session.start + offset)
+      : null;
+
   const points: PricePoint[] = [];
   for (let i = 0; i < timestamps.length; i++) {
     const c = closes[i];
     if (c == null) continue;
+    if (unfinished && day(timestamps[i] + offset) === unfinished) continue;
     const v = volumes[i];
     points.push({
       time: day(timestamps[i]),
-      value: Math.round(c * 100) / 100,
+      value: exactClose(c),
       ...(v == null ? {} : { volume: Math.round(v) }),
     });
   }

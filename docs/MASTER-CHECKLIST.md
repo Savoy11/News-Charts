@@ -984,6 +984,120 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 23: the 2026-10-21 code audit, fixed (2026-10-21)
+
+The owner chose a full code audit next. The `code-auditor` agent ran on `d36636d` (main after
+PR #53) and wrote [`docs/audits/2026-10-21-audit.md`](audits/2026-10-21-audit.md): six findings,
+one `P0`, one `P1` and four `P2`. All six are fixed here, with two more defects found while
+fixing them.
+
+`npm run check` passes (35 suites) and `npm run lint` is clean. `next build` compiles. `check:ui` is
+195/195 on a production build. `check:live` is 15 pass, 0 fail, 2 unreachable (Wikipedia and GDELT
+throttling this cloud session), 1 skipped (needs an Etherscan key). HawkScan could not run:
+`HAWK_API_KEY` is not set.
+
+- [x] **Audit #1 (`P0`): old prices were rounded to the cent, which invented huge moves. They are
+      now stored exactly, and every full history is read once more.** `lib/prices.ts` rounded every
+      close to cents, while the column holds six places.
+      - Split-adjusted closes from the 1970s–90s are fractions of a cent to a few cents, so one
+        rounded cent is a 25–100% "move". Walmart's "Biggest moves" showed six +100% days in 1973–75
+        that never happened (its largest real move then was −16.8%). NVIDIA showed three +33.3%
+        days in 1999; one was really +2.6%. MNST stored 110 closes as $0.00.
+      - Closes are now stored to six places (`exactClose`). Cents are chosen only for display, by
+        `formatPrice`: $0.0344, not $0.03, on the chart and in the page header. The moving
+        averages are no longer rounded either.
+      - Batch 22 reads a full history only once, so its rounded histories would never have healed.
+        The fetch-log marker is now `<ticker> full history (exact)`. A read logged under the old
+        marker no longer counts, so each held company and crypto asset re-reads its whole history
+        once, at full precision, on its next refresh. No hand-editing of the database.
+      - Live: WMT 13,650 closes from 1972-08-25, none zero, largest daily move 16.8%.
+- [x] **End of day only: a trading session still in progress is no longer stored.** The audit
+      could not test this, because the US market was closed. Measured instead on markets that were
+      open (London, Mumbai, bitcoin): while a session trades, Yahoo's daily series already carries
+      today's bar, priced at the latest trade. An hourly refresh during US hours would have stored
+      a mid-day price as that day's close. A bar whose session has not closed (and settled for half
+      an hour) is now left out; the next refresh after the bell stores the real close.
+- [x] **Audit #2 (`P1`): search sent household names to the wrong security.** The committed
+      ticker index compared raw titles, so punctuation decided the answer:
+      - "Coca-Cola" went to CCEP (KO's title is `COCA COLA CO`), and "BlackRock" to a closed-end
+        trust (BLK's is `BlackRock, Inc.`).
+      - "Home Depot" was salvaged as "Home" plus an unrequested "Depot" filter, and a bare "Lowe's"
+        offered three Fidelity funds.
+      - Names are now compared twice. First with punctuation folded and spaces kept, so "Pure
+        Cycle" stays Pure Cycle Corp and "Black Stone" stays Black Stone Minerals. Only if that
+        finds nothing, with spaces folded too, so "U.S. Bancorp" finds `US BANCORP DE` and "Exxon
+        Mobil" finds `ExxonMobil Holdings Corp`.
+      - Of the index's 2,794 "Name, Inc."-shaped titles, **2,789** now find their own company by
+        name, against **36** before. The other five are names shared with a larger filer
+        ("Citizens", "First Bancorp"), which now win.
+      - A whole-index comparison of 23,422 name queries changed 42 answers: 36 moved (nearly all
+        to the company over a fund or trust of the same name) and 6 one- or two-letter fragments
+        ("C.", "La") became ambiguous, so they now offer choices.
+      - Not fixed: with nothing held, "Google" still opens a Google-themed ETF (DEPW). EDGAR's index
+        does not know Alphabet was Google. Once Alphabet is held, its EDGAR former name makes
+        "Google" an alias (batch 15). Wikidata aliases (NC-004) would cover it before that.
+- [x] **Audit #3 (`P2`): "Before the ticker" called the start of Yahoo's data the first trading
+      day.** IBM, GE, KO, BA and DIS all showed 1962-01-02, and Ford 1972, though it listed in
+      1956. The section is now "Before the chart": events before *our earliest daily price*,
+      described as the run-up to listing or years before our price data begins. The docs no longer
+      say "since listing".
+- [x] **Audit #4 (`P2`): the biggest banks' pages were too large to cache.** Their page data came
+      to 3.9–5.4 MB, but Next caches nothing over 2 MB, so NC-159's cache never applied to them.
+      Batch 22's "well under 2 MB" was measured on the demo data. Three changes:
+      - **A company's own stakes in other issuers are left out (a defect found while measuring).**
+        A company's EDGAR record lists the filings it made as well as those about it. 190 of
+        JPMorgan's 192 recent stake filings were its own stakes in 3M, DigitalOcean and the rest,
+        each labelled "Passive investor stake over 5%" as if it were a stake in JPM. Coca-Cola's
+        page did the same with its stakes in Coca-Cola Consolidated and CCEP.
+      - How they are told apart: in a company's record, a stake filing about the company carries
+        the company's own file number (Ford's: 005-30156), and one it made about another issuer
+        carries none. All 15 filing headers sampled agreed. Ingest now skips those, and unlinks the
+        ones earlier runs stored, from this company only: the same filing is correctly a stake in
+        the issuer it names.
+      - **A bank's note programme is one row a month.** Some prospectus form was filed on most
+        business days: JPMorgan had 5,022 days of 424B2s. A month with one form on five or more
+        days becomes one row ("Prospectuses ×2,931 on 21 days (424B2)"). A company raising money
+        files on a day or two, and keeps its dated rows. This happens when the page is read, so
+        stored rows are covered and the database keeps every day.
+      - **Prices are their own cache entry.** A company listed since the 1970s carries
+        11,000–16,000 closes, about 0.7 MB.
+      - Measured with live SEC and Yahoo data, filings plus prices plus the 470 economy rows:
+        JPM 4.20 → 1.89 MB, C 3.54 → 1.66, BAC 3.03 → 1.70, WFC 2.48 → 1.79, MS 3.01 → 1.16 and
+        GS 3.19 → 1.17. Each is split into a timeline entry and a prices entry, both now well
+        under the limit.
+      - [ ] **Open:** the timeline entry still grows with stored news, and nothing bounds it.
+            JPMorgan's is about 1.2 MB before any news row. Cap or page what a company page
+            carries before a heavy page's timeline approaches 2 MB.
+- [x] **Audit #5 (`P2`): the privacy draft said per-IP counts "disappear within an hour"; they
+      stayed until 10,000 clients piled up.** On a quiet site an IP address, and in the Federal
+      Register limiter the search terms it sent, stayed in memory until a restart.
+      - Both limiters now clear expired windows every minute.
+      - The page states the real windows, imported from `lib/rateLimit.ts`: a minute for page
+        requests, an hour for Federal Register searches, cleared within a minute of ending.
+      - `check:legal` now holds the sentence to the code.
+- [x] **Audit #6 (`P2`): prose that contradicted the code or live services, corrected:**
+      - `check-feeds.ts` said DefiLlama reports exploit amounts in millions. That was the belief
+        behind the 10⁶ bug; they are plain dollars.
+      - `COVERAGE-MAP.md` still said prices reach back ten years.
+      - The README counted 55 `check:archive` cases; there are 48.
+      - `verify-addresses.ts` said egress is blocked; today only the RPC hosts are.
+      - Five places said `range=max` comes back monthly. Yahoo reports `"3mo"`: quarterly.
+      - The Facebook rename date was given as 10-28; the record says 10-27.
+      - Batch 22's own record below is annotated where it was wrong, as is NC-077's closure.
+- Checks: 50 new.
+  - `check:parsers` +12: exact closes, display format, the re-read marker, unfinished sessions.
+    Nine fail on the old code; the other three pin what must stay true.
+  - `check:tickers` +18: 14 fail on the old code. It scores the whole index: 36 → 2,789 of 2,794.
+  - `check:search-log` +4, all failing on the old code.
+  - `check:sec-forms` +10: own stakes, month bundling, a heavy filer's page under 2 MB as two
+    entries.
+  - `check:legal` +5: the limiter sweep and the privacy wording.
+  - `check:live` +1: Walmart's 1970s closes keep their fractions of a cent.
+  - `check:ui`, `check:wiring` and `check:macro` updated for the new heading and the split cache.
+- **For the owner:** after pulling there is no migration. The next refresh re-reads each held
+  company's price history once (logged as `<ticker> full history (exact)`), and each company's
+  next filings refresh unlinks its own stakes in other issuers.
+
 ## NC ledger — batch 22: every daily close since listing, and a monthly-chart bug (2026-10-21)
 
 The owner chose this next. Batches 15–21 were merged first (PR #52); this batch starts a new PR.
@@ -1005,9 +1119,14 @@ cloud session), 1 skipped (needs an Etherscan key).
         adjustment. It also brings the older dividends and splits: Ford's page gained 193.
       - **Measured cost**: Ford's page carries about 830 KB more price data, ~104 KB after the
         compression every browser asks for. The cached page stays well under the 2 MB cache limit.
+        *(Corrected 2026-10-21, batch 23: true for Ford, but measured on the demo data. The largest
+        banks came to 3.9–5.4 MB and were never cached; audit #4. "Since listing" is also where
+        Yahoo's daily data begins, 1962 at the earliest, and these first full reads stored closes
+        rounded to cents; audit #1 and #3.)*
 - [x] **Fixed: a stock split turned a company's daily chart into a monthly one.** The NC-156 split
       re-read asked Yahoo for `range=max`, which Yahoo answers with **one close a month** whatever
-      interval is requested (Ford's "max": 169 points from 1984), and replaced the stored daily
+      interval is requested (Ford's "max": 169 points from 1984 — *a quarter, in fact: Yahoo
+      reports `"3mo"`, corrected 2026-10-21*), and replaced the stored daily
       series with it. Full history is now asked for by date, which returns every daily close, and
       an answer that is not daily is refused rather than stored. Nothing asks for `range=max`.
 - [x] **Two live checks corrected** now that the session reaches the SEC and Wikipedia:

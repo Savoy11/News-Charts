@@ -1,3 +1,5 @@
+import type { TimelineEvent } from "./types";
+
 /**
  * The forms only a fund registrant files, matched against the label `lib/sec.ts` writes at the
  * end of a filing's title. Its own module so the relevance floor can read it without loading the
@@ -146,3 +148,64 @@ export const MATERIAL_FORMS: Record<string, { label: string; earnings?: true }> 
  * multiply its rows in the database for no extra meaning.
  */
 export const PROSPECTUS = /^424B[1-8]$/;
+
+/** The large-stake schedules, 13D and 13G, under both of the SEC's spellings, and their amendments. */
+export const STAKE_FORM = /^(?:SC 13[DG]|SCHEDULE 13[DG])(?:\/A)?$/;
+
+/** A month with a prospectus form on at least this many days is routine issuance, not an offering. */
+export const BUSY_PROSPECTUS_DAYS = 5;
+
+const PROSPECTUS_ROW = /^(.*): Prospectus(?:es ×(\d+))? \((424B[1-8])\)$/;
+
+/**
+ * A company page's filing rows, as the page should carry them (audit 2026-10-21 #4).
+ *
+ * Banks file prospectus supplements for structured notes nearly every business day: JPMorgan's
+ * record holds 5,022 days of 424B2s, one grouped row each, and with its own stakes in other
+ * companies (now left out at ingest, `lib/sec.ts`) they made 11,637 filing rows. Its page data
+ * came to 5.4 MB, over the 2 MB Next will cache, so the 15-minute page cache (NC-159) never
+ * applied to the site's heaviest pages — and every visitor downloaded all of it.
+ *
+ * A month in which one prospectus form was filed on `BUSY_PROSPECTUS_DAYS` or more days becomes
+ * one month-precision row carrying the month's total. A company raising money files on a day or
+ * two, and keeps its dated rows; a note programme is routine, and a row a day is noise. Done when
+ * the page is read, not at ingest, so what is already stored is covered and the database keeps
+ * each day's row.
+ */
+export function pageFilings(events: TimelineEvent[], cik: string | null): TimelineEvent[] {
+  const months = new Map<string, TimelineEvent[]>();
+  const kept: TimelineEvent[] = [];
+  for (const e of events) {
+    const prospectus = e.type === "filing" ? PROSPECTUS_ROW.exec(e.title) : null;
+    if (prospectus) {
+      const key = `${prospectus[3]}|${e.date.slice(0, 7)}`;
+      months.set(key, [...(months.get(key) ?? []), e]);
+      continue;
+    }
+    kept.push(e);
+  }
+  for (const [key, rows] of months) {
+    if (rows.length < BUSY_PROSPECTUS_DAYS) {
+      kept.push(...rows);
+      continue;
+    }
+    const [form, month] = key.split("|");
+    const [, name] = PROSPECTUS_ROW.exec(rows[0].title)!;
+    const total = rows.reduce((n, r) => n + Number(PROSPECTUS_ROW.exec(r.title)?.[2] ?? 1), 0);
+    const last = rows.reduce((d, r) => (r.date > d ? r.date : d), rows[0].date);
+    kept.push({
+      id: `sec-prospectus-${form}-${month}`,
+      date: `${month}-01`,
+      precision: "month",
+      type: "filing",
+      title: `${name}: Prospectuses ×${total.toLocaleString("en-US")} on ${rows.length} days (${form})`,
+      source: "SEC EDGAR",
+      url: cik
+        ? `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}&type=${encodeURIComponent(form)}&dateb=${last.replace(/-/g, "")}&owner=include&count=40`
+        : rows[0].url,
+      description: `${total.toLocaleString("en-US")} offering documents for new securities, filed on ${rows.length} days this month under ${form}: routine issuance, grouped into one row for the month.`,
+      sourceKey: "sec_edgar",
+    });
+  }
+  return kept.sort((a, b) => a.date.localeCompare(b.date));
+}

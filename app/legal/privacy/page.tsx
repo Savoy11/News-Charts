@@ -3,6 +3,13 @@ import LegalPage from "@/components/LegalPage";
 import { BROWSER_STORAGE, CONTACT, LEGAL_DRAFT, OPERATOR } from "@/lib/legal";
 import { MAX_QUERY, SEARCH_LOG_RETENTION_DAYS } from "@/lib/searchLog";
 import { REQUEST_RETENTION_DAYS } from "@/lib/ingest/queue";
+import { REQUEST_WINDOW_MS, SWEEP_EVERY_MS, TERMS_WINDOW_MS } from "@/lib/rateLimit";
+
+/** "a minute", "an hour", "5 minutes" — a limiter window as the page says it. */
+function span(ms: number): string {
+  const [n, unit] = ms >= 3_600_000 ? [ms / 3_600_000, "hour"] : [ms / 60_000, "minute"];
+  return n === 1 ? `${unit === "hour" ? "an" : "a"} ${unit}` : `${n} ${unit}s`;
+}
 
 export const metadata: Metadata = {
   title: "Privacy",
@@ -40,9 +47,11 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Your IP address, briefly.</strong> To stop any one visitor overloading the site,
-          the server counts recent requests per IP address, in memory only. Those counts are never
-          written down and disappear within an hour. The company that hosts the site may keep its
-          own access logs; [hosting provider and its log retention, once chosen].
+          the server counts recent requests per IP address, in memory only: page requests over{" "}
+          {span(REQUEST_WINDOW_MS)}, and Federal Register searches, with the search terms, over{" "}
+          {span(TERMS_WINDOW_MS)}. Each count is cleared within {span(SWEEP_EVERY_MS)} of its window
+          ending and is never written down. The company that hosts the site may keep its own access
+          logs; [hosting provider and its log retention, once chosen].
         </li>
       </ul>
 

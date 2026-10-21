@@ -10,6 +10,7 @@
  * Offline: it reads source files and nothing else.
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
+import { DistinctLimiter, FixedWindowLimiter, SWEEP_EVERY_MS, TERMS_WINDOW_MS } from "../lib/rateLimit";
 import { join } from "node:path";
 import { BROWSER_STORAGE, LEGAL_DRAFT } from "../lib/legal";
 import { ADS_OFF_FLAG } from "../lib/adGate";
@@ -54,6 +55,35 @@ check("the privacy page takes the search log's retention and cap from lib/search
   /import \{[^}]*MAX_QUERY[^}]*SEARCH_LOG_RETENTION_DAYS[^}]*\} from "@\/lib\/searchLog"/.test(privacy));
 check("  …and the request queue's retention from lib/ingest/queue.ts", /REQUEST_RETENTION_DAYS[^;]*from "@\/lib\/ingest\/queue"/.test(privacy));
 check("  …with no day counts typed into the prose", !/\b\d+ days\b/.test(privacy.replace(/\{[A-Z_]+\} days/g, "")));
+// Audit 2026-10-21 #5: the page said the per-IP counts "disappear within an hour", while the
+// limiters cleared expired windows only once 10,000 clients had piled up — so on a quiet site an
+// address, and the Federal Register terms it sent, stayed in memory until a restart.
+check("the privacy page takes the rate-limit windows from lib/rateLimit.ts, and says what clears them",
+  /import \{[^}]*REQUEST_WINDOW_MS[^}]*SWEEP_EVERY_MS[^}]*TERMS_WINDOW_MS[^}]*\} from "@\/lib\/rateLimit"/.test(privacy) &&
+    /cleared within \{span\(SWEEP_EVERY_MS\)\}/.test(privacy) && !/disappear within an hour/.test(privacy));
+check("  …and the proxy counts over those same windows",
+  /new FixedWindowLimiter\(REQUESTS_PER_MINUTE, REQUEST_WINDOW_MS\)/.test(read("proxy.ts")) &&
+    /new DistinctLimiter\(NEW_TERMS_PER_HOUR, TERMS_WINDOW_MS\)/.test(read("proxy.ts")));
+{
+  const every = SWEEP_EVERY_MS;
+  const hour = TERMS_WINDOW_MS;
+  const scheduled: { sweep: () => void; everyMs: number }[] = [];
+  const schedule = (sweep: () => void, everyMs: number) => void scheduled.push({ sweep, everyMs });
+  const requests = new FixedWindowLimiter(120, 60_000, 10_000, schedule);
+  const terms = new DistinctLimiter(15, hour, 10_000, schedule);
+  const t0 = Date.parse("2026-10-21T08:00:00Z");
+  requests.take("203.0.113.7", 1, t0);
+  terms.take("203.0.113.7", ["export controls"], t0);
+  check("each limiter sets a sweep at least once a minute", scheduled.length === 2 && scheduled.every((x) => x.everyMs <= every),
+    scheduled.map((x) => x.everyMs).join(", "));
+  requests.sweepExpired(t0 + 60_000 + every);
+  terms.sweepExpired(t0 + hour + every);
+  check("  …which forgets an address, and the terms it sent, once its window has ended",
+    requests.size === 0 && terms.size === 0, `${requests.size} request window(s), ${terms.size} term window(s) still held`);
+  terms.take("198.51.100.9", ["tariffs"], t0);
+  terms.sweepExpired(t0 + hour - 1);
+  check("  …and keeps one still counting", terms.size === 1);
+}
 const searchLog = read("lib/searchLog.ts");
 check("the purge defaults to that same constant", /purgeOldResolutions\(days = SEARCH_LOG_RETENTION_DAYS\)/.test(searchLog));
 check("  …and its scheduled caller passes no number of its own",

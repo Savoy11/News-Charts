@@ -154,6 +154,10 @@ npm run rekey:gdelt
   `npm run sync:tickers`, commit `data/edgar-tickers.json`, redeploy. The index is built into the
   site, so this needs a rebuild; `npm run refresh` prints a warning once the file is more than 35
   days old (NC-051). It is 66 days old today.
+- **Re-sync the company alias index after the ticker index.** `npm run sync:aliases` reads
+  Wikidata and writes `data/company-aliases.json` ("Google" → Alphabet, "Facebook" → Meta); it
+  keeps only names for companies the ticker index lists, so run it second. Read the "overrides" it
+  prints — names that will now find a different company — before committing (NC-004).
 - **Run Node 20.9 or later on the host**, and install fresh (`npm ci`) — Next.js 16 refuses
   older Node (NC-166).
 - **Rehearse a restore** into a scratch database: `createdb -U postgres news_charts_restore`,

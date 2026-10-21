@@ -262,6 +262,33 @@ export function titleMatch(name: string): { cik: number; exact: boolean } | null
   return hit ? { cik: hit.row.cik_str, exact: hit.exact } : null;
 }
 
+/** The tickers the committed index lists for a company. */
+export function companyTickers(cik: number): string[] {
+  return tickerIndex.companies.filter(([c]) => c === cik).map(([, ticker]) => ticker);
+}
+
+/**
+ * A company's other names that may find and score its news (batch 25): its own former names and
+ * a predecessor whose ticker it carries — "Google" for Alphabet, "Facebook" for Meta — never an
+ * acquisition's or a loose alias (`lib/companyAliases.ts`). Lower-cased, shortest first; a name
+ * containing another, or the name the feeds already ask for, is left out ("facebook inc" beside
+ * "facebook", "oracle corporation" beside "Oracle"); at most three, so a query stays one request.
+ */
+export function newsNamesFor(cik: number | string): string[] {
+  const want = Number(cik);
+  const title = tickerIndex.companies.find(([c]) => c === want)?.[2];
+  // the name the feeds are already asked for; one containing it ("oracle corporation") adds nothing
+  const asked = title ? ` ${nameKey(commonName(title)).toLowerCase()} ` : null;
+  const names = Object.entries(companyAliases.aliases)
+    .filter(([, [c, , , news]]) => c === want && news === 1)
+    .map(([key]) => key.toLowerCase())
+    .filter((n) => !asked || !` ${n} `.includes(asked))
+    .sort((a, b) => a.length - b.length || a.localeCompare(b));
+  const kept: string[] = [];
+  for (const n of names) if (!kept.some((k) => ` ${n} `.includes(` ${k} `))) kept.push(n);
+  return kept.slice(0, 3);
+}
+
 /** Every company the committed index lists, CIK and title, in the SEC's order. */
 export const TICKER_INDEX_COMPANIES: [number, string][] = tickerIndex.companies.map(([cik, , title]) => [cik, title]);
 

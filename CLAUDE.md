@@ -60,7 +60,11 @@ years as a date window; FocusBar and BestMatches show it. Other words for a comm
 before adding to it; a loose synonym fills a narrowed page with unrelated events. A company's
 other names — "Google" for Alphabet, "Facebook" for Meta, "P&G" — come from Wikidata through the
 committed `data/company-aliases.json` (`npm run sync:aliases`); every rule about what may become a
-name is in `lib/companyAliases.ts`, and an exact EDGAR title always outranks an alias.
+name is in `lib/companyAliases.ts`, and an exact EDGAR title always outranks an alias. News may use
+only the strongest of them — the company's own former names and a predecessor whose ticker it
+carries, never an acquisition's or a loose alias (`newsNamesFor`): Sun's 1990s news is not Oracle's.
+"Google" scores Alphabet's headlines but is never put in a GDELT query, which matches it in page
+furniture everywhere (`gdeltNames` in `lib/news.ts`).
 
 ## Stack & layout
 

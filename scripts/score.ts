@@ -18,6 +18,7 @@ import {
   type ScorableRow,
   type SubjectContext,
 } from "../lib/enrich/relevance";
+import { newsNamesFor } from "../lib/sec";
 
 const BATCH = 25;
 
@@ -49,7 +50,7 @@ async function writeScores(
 
 async function scoreSubject(client: PoolClient, slug: string, strict: boolean, limit: number) {
   const { rows: subjectRows } = await client.query(
-    `SELECT id, kind, display_name, ticker FROM subjects WHERE slug = $1`,
+    `SELECT id, kind, display_name, ticker, cik FROM subjects WHERE slug = $1`,
     [slug.toLowerCase()]
   );
   if (!subjectRows[0]) {
@@ -68,7 +69,9 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
     `SELECT alias FROM subject_aliases WHERE subject_id = $1`,
     [subjectId]
   );
-  const aliases = aliasesFor(subject, aliasRows.map((r) => r.alias));
+  // …and a company's other names that news may use, the ones ingest searched under (batch 25)
+  const alsoKnownAs = subject.kind === "company" && subjectRows[0].cik ? newsNamesFor(subjectRows[0].cik) : [];
+  const aliases = aliasesFor(subject, [...aliasRows.map((r) => r.alias), ...alsoKnownAs]);
 
   const { rows } = await client.query(
     // The primary attestation's source rides along: an Internet Archive "citation" is judged on

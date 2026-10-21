@@ -47,12 +47,13 @@ for (const [legal, everyday] of [
 
 // Source-text assert, the check-wiring pattern: the fix is one identifier, and reverting it
 // would compile fine and fail nothing else. GDELT must be queried under `name` (the computed
-// commonName), never under `company.name` (the SEC legal title).
+// commonName), never under `company.name` (the SEC legal title) — with the company's own other
+// names OR'd in since batch 25 ("goldman sachs" for Goldman Sachs Group; see check:aliases).
 const ingestSrc = readFileSync(path.join(__dirname, "ingest.ts"), "utf8");
 check(
   "ingest queries GDELT under the common name",
-  /run\("gdelt",\s*name,\s*\(\)\s*=>\s*fetchNews\(name\)/.test(ingestSrc),
-  'expected run("gdelt", name, () => fetchNews(name), …) in scripts/ingest.ts'
+  /run\("gdelt",\s*gdeltNames\(name, alsoKnownAs\)\.join\(" \| "\),\s*\(\)\s*=>\s*fetchNews\(name, alsoKnownAs\)/.test(ingestSrc),
+  'expected run("gdelt", gdeltNames(name, alsoKnownAs).join(" | "), () => fetchNews(name, alsoKnownAs), …) in scripts/ingest.ts'
 );
 check(
   "  ...and never under the raw legal title",

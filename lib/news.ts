@@ -23,9 +23,46 @@ export async function getNews(query: string): Promise<TimelineEvent[]> {
   return (await fetchNews(query)).events;
 }
 
+/**
+ * Words news sites print around the article itself — "Follow us on Google News", share buttons,
+ * app-store badges. GDELT matches a word anywhere on the page and returns the newest 100, so one of
+ * these in a query fills the result with pages that merely carry it. Measured 2026-10-21:
+ * "Alphabet" returned 100 pages, 1 with the company in the headline; "Alphabet" OR "google"
+ * returned 97 pages from the last few minutes, none. Such a name still scores headlines.
+ */
+const PAGE_FURNITURE = new Set(
+  "google facebook amazon apple twitter youtube instagram linkedin whatsapp pinterest reddit tiktok snapchat spotify telegram".split(" ")
+);
+
+/** The names a GDELT query asks for: the subject's, then its other names but page furniture. */
+export function gdeltNames(query: string, alsoKnownAs: string[] = []): string[] {
+  const seen = new Set([query.toLowerCase()]);
+  const names = [query];
+  for (const n of alsoKnownAs) {
+    const key = n.toLowerCase();
+    if (seen.has(key) || PAGE_FURNITURE.has(key)) continue;
+    seen.add(key);
+    names.push(n);
+  }
+  return names;
+}
+
+/**
+ * The GDELT query for a subject and its other names, as one request: GDELT allows about one
+ * request every five seconds, so each name is an `OR` inside the same query, never a call of its
+ * own. "GOLDMAN SACHS GROUP", the everyday form of its SEC title, misses every headline that says
+ * "Goldman Sachs" (batch 25).
+ */
+export function gdeltQuery(query: string, alsoKnownAs: string[] = []): string {
+  const names = gdeltNames(query, alsoKnownAs);
+  return names.length === 1
+    ? `"${query}" sourcelang:english`
+    : `(${names.map((n) => `"${n}"`).join(" OR ")}) sourcelang:english`;
+}
+
 /** Same fetch, but reporting *why* it came back empty so ingest can back off. */
-export async function fetchNews(query: string): Promise<FetchResult> {
-  const q = `"${query}" sourcelang:english`;
+export async function fetchNews(query: string, alsoKnownAs: string[] = []): Promise<FetchResult> {
+  const q = gdeltQuery(query, alsoKnownAs);
   const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(
     q
   )}&mode=artlist&maxrecords=100&format=json&sort=datedesc&startdatetime=20170101000000`;
@@ -56,6 +93,15 @@ export async function fetchNews(query: string): Promise<FetchResult> {
             continue;
           }
           return { events: [], outcome: "throttled", httpStatus: 200, detail: "GDELT rate limit" };
+        }
+        // GDELT refuses a query it cannot parse with a line of text. An other name is the likelier
+        // cause than the everyday name it has always been asked for, so ask again without them:
+        // a refused name never costs the company the news it found before.
+        if (gdeltNames(query, alsoKnownAs).length > 1) {
+          await sleep(5500);
+          const plain = await fetchNews(query);
+          const refused = `other names refused: ${text.trim().slice(0, 80)}`;
+          return { ...plain, detail: plain.detail ? `${refused}; ${plain.detail}` : refused };
         }
         return { events: [], outcome: "error", httpStatus: 200, detail: "non-JSON body" };
       }

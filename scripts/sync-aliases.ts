@@ -1,6 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { buildCompanyAliases, type AliasIndexFile, type WikidataCompany } from "../lib/companyAliases";
-import { commonName, titleMatch, TICKER_INDEX_COMPANIES } from "../lib/sec";
+import { commonName, companyTickers, titleMatch, TICKER_INDEX_COMPANIES } from "../lib/sec";
 
 /**
  * Rebuild the committed index of other names for listed companies (NC-004).
@@ -14,7 +14,7 @@ import { commonName, titleMatch, TICKER_INDEX_COMPANIES } from "../lib/sec";
  *
  * Read the "overrides" it prints before committing: each is a name that will now find a
  * different company than the title rungs alone did. `npm run sync:aliases -- --report <file>`
- * also writes every dropped name with its reason.
+ * also writes every dropped name with its reason, and the Wikidata items it read.
  */
 
 const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com", Accept: "application/sparql-results+json" };
@@ -45,7 +45,8 @@ const FORMER = `SELECT ?item ?cik ?pcik ?n ?kind ?links WHERE {
   ?parent wdt:P5531 ?pcik .
   { ?item rdfs:label ?n . BIND("label" AS ?kind) } UNION { ?item skos:altLabel ?n . BIND("alias" AS ?kind) }
   UNION { ?item p:P1448/ps:P1448 ?n . BIND("official" AS ?kind) }
-  ${LANGS}
+  UNION { ?item p:P414/pq:P249 ?n . BIND("ticker" AS ?kind) }
+  FILTER(LANG(?n) = "en" || LANG(?n) = "mul" || ?kind = "ticker")
 }`;
 
 type Binding = Record<string, { value: string }>;
@@ -92,6 +93,11 @@ async function main(): Promise<void> {
     if (listed.has(cik) || !listed.has(parent)) continue;
     const it = item(qidOf(b), parent, "former");
     links(it, b);
+    if (b.kind.value === "ticker") {
+      // the tickers it traded under: GOOG and GOOGL carried on under Alphabet (news may use the name)
+      (it.tickers ??= []).push(b.n.value);
+      continue;
+    }
     const list = b.kind.value === "label" ? it.labels : b.kind.value === "official" ? it.officialNames : it.aliases;
     list.push(b.n.value);
   }
@@ -105,6 +111,7 @@ async function main(): Promise<void> {
     companies: TICKER_INDEX_COMPANIES,
     titleMatch,
     commonName,
+    tickersOf: companyTickers,
   });
   const file: AliasIndexFile = {
     syncedOn: new Date().toISOString().slice(0, 10),
@@ -115,7 +122,7 @@ async function main(): Promise<void> {
   writeFileSync(OUT, JSON.stringify(file, null, 0) + "\n");
   const reportAt = process.argv.indexOf("--report");
   if (reportAt >= 0 && process.argv[reportAt + 1]) {
-    writeFileSync(process.argv[reportAt + 1], JSON.stringify({ dropped, overrides }, null, 1));
+    writeFileSync(process.argv[reportAt + 1], JSON.stringify({ dropped, overrides, items: [...items.values()] }, null, 1));
   }
 
   const byReason = dropped.reduce<Record<string, number>>((n, d) => ((n[d.reason] = (n[d.reason] ?? 0) + 1), n), {});

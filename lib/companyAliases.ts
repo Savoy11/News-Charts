@@ -37,13 +37,23 @@ export interface WikidataCompany {
   aliases: string[];
   /** how many Wikipedias have an article on the item: a measure of how well known it is */
   sitelinks: number;
+  /** the tickers the item traded under, from Wikidata — read for a former registrant only */
+  tickers?: string[];
 }
+
+/**
+ * Where a name came from: one of the company's own names, current or former ("name"); a looser
+ * Wikidata alias ("alias"); or a former registrant now under it ("former").
+ */
+export type AliasKind = "name" | "alias" | "former";
+
+/** name key → [listed company's CIK, the Wikidata item, where the name came from, 1 if news may use it] */
+export type AliasEntry = [number, string, AliasKind, 0 | 1];
 
 export interface AliasIndexFile {
   syncedOn: string;
   source: string;
-  /** name key → [listed company's CIK, the Wikidata item the name came from] */
-  aliases: Record<string, [number, string]>;
+  aliases: Record<string, AliasEntry>;
 }
 
 export type DropReason =
@@ -69,6 +79,17 @@ export const KNOWN_WRONG: Record<string, string> = {
   // Still lists AT&T as parent organization; WarnerMedia was spun off and merged into Warner
   // Bros. Discovery on 2022-04-08.
   Q191715: "WarnerMedia left AT&T in 2022",
+};
+
+/**
+ * Items whose names still find the company in search but may not claim its news, because the
+ * brand went elsewhere when the company kept the filings. Same rule as `KNOWN_WRONG`: a class of
+ * cases belongs in `newsMay`, and only the exceptions here.
+ */
+export const KNOWN_NOT_NEWS: Record<string, string> = {
+  // Motorola, Inc. renamed itself Motorola Solutions in 2011 and spun the phones off as Motorola
+  // Mobility (Lenovo's since 2014): a "Motorola" headline since then is nearly always a phone.
+  Q259011: "the Motorola brand went with Motorola Mobility in 2011",
 };
 
 /**
@@ -151,6 +172,37 @@ export interface EdgarIndexView {
   titleMatch: (name: string) => { cik: number; exact: boolean } | null;
   /** a title's everyday name — "Ingersoll Rand Inc." → "Ingersoll Rand" (`commonName`) */
   commonName: (title: string) => string;
+  /** the tickers the index lists for a company */
+  tickersOf: (cik: number) => string[];
+}
+
+/**
+ * A one-word name finds news only when the word is the company's: a very well-known company
+ * ("Google", "Facebook"), or a coined word with a capital inside it ("MicroStrategy",
+ * "DowDuPont"). "Square" for Block and "Anthem" for Elevance are words first — searched for, they
+ * would bring back every Times Square story and every national anthem.
+ */
+export const NEWS_ONE_WORD_MIN_SITELINKS = 50;
+const coined = (name: string) => /[a-z][A-Z]/.test(name) || /[\d&]/.test(name);
+
+/**
+ * Whether a name may find and score a company's news, not only resolve a search (batch 25).
+ *
+ * News is dated, and a name may only claim it when the company behind the name *is* this one:
+ * - its own names, current and former — Meta's "Facebook, Inc." until 2021 is Meta's own
+ *   history, so a 2018 Facebook headline belongs on META;
+ * - a former registrant whose ticker carried on under the listed company — Google Inc.'s GOOG
+ *   and GOOGL became Alphabet's in 2015, and Google's news from 2004 is Alphabet's history;
+ * - never an acquired company's: Sun Microsystems' 1990s news is not Oracle's, nor Red Hat's
+ *   IBM's (measured: the former registrants whose tickers carried on are Google, the American,
+ *   United and Alaska airlines, US Foods, and three subsidiaries filed under their parent's
+ *   ticker; every acquisition fails the test). Nor a looser alias, nor an item in
+ *   `KNOWN_NOT_NEWS`.
+ */
+function newsMay(name: string, kind: AliasKind, item: WikidataCompany, carriedOn: boolean): boolean {
+  if (kind === "alias" || (kind === "former" && !carriedOn) || KNOWN_NOT_NEWS[item.qid] !== undefined) return false;
+  if (nameKey(name).includes(" ")) return true;
+  return item.sitelinks >= NEWS_ONE_WORD_MIN_SITELINKS || coined(name);
 }
 
 /**
@@ -170,14 +222,14 @@ export interface EdgarIndexView {
  *   order: "J&J" is Johnson & Johnson rather than J&J Snack Foods, while "United", "Constellation"
  *   and "Prudential" keep the larger company the prefix finds. The kept ones are returned in
  *   `overrides`, so a sync can be read before it is committed.
- * - A name that already finds its own company is redundant, and one claimed for two companies is
- *   nobody's.
+ * - A name that already finds its own company is redundant — unless news may use it and it is not
+ *   the name the feeds are already asked for — and one claimed for two companies is nobody's.
  */
 export function buildCompanyAliases(
   items: WikidataCompany[],
   index: EdgarIndexView
 ): {
-  aliases: Record<string, [number, string]>;
+  aliases: Record<string, AliasEntry>;
   dropped: { name: string; qid: string; reason: DropReason }[];
   overrides: { key: string; to: number; prefixHit: number }[];
 } {
@@ -191,7 +243,9 @@ export function buildCompanyAliases(
   });
 
   const dropped: { name: string; qid: string; reason: DropReason }[] = [];
-  const claims = new Map<string, Map<number, string>>();
+  type Claim = { qid: string; kind: AliasKind; news: boolean };
+  const claims = new Map<string, Map<number, Claim>>();
+  const rank: Record<AliasKind, number> = { name: 0, former: 1, alias: 2 };
   for (const item of items) {
     const names = [...item.labels, ...item.officialNames];
     const all = [...names, ...item.aliases];
@@ -216,6 +270,8 @@ export function buildCompanyAliases(
       ...everydayToo(names).map((n) => ({ n, loose: false })),
       ...everydayToo(item.aliases).map((n) => ({ n, loose: true })),
     ];
+    const tickers = new Set(index.tickersOf(item.targetCik).map((t) => t.toUpperCase()));
+    const carriedOn = (item.tickers ?? []).some((t) => tickers.has(t.toUpperCase()));
     for (const { n, loose } of candidates) {
       const reason =
         junk(n, [...names, title]) ?? (loose && !related(n, [...names, title]) ? "unrelated" : null) ?? obscure(n, item.sitelinks);
@@ -224,17 +280,23 @@ export function buildCompanyAliases(
         continue;
       }
       const key = nameKey(n);
-      const byCik = claims.get(key) ?? new Map<number, string>();
-      if (!byCik.has(item.targetCik)) byCik.set(item.targetCik, item.qid);
+      const kind: AliasKind = item.kind === "former" ? "former" : loose ? "alias" : "name";
+      const claim: Claim = { qid: item.qid, kind, news: newsMay(n, kind, item, carriedOn) };
+      const byCik = claims.get(key) ?? new Map<number, Claim>();
+      const had = byCik.get(item.targetCik);
+      byCik.set(
+        item.targetCik,
+        had ? { ...(rank[had.kind] <= rank[kind] ? had : claim), news: had.news || claim.news } : claim
+      );
       claims.set(key, byCik);
     }
   }
 
-  const aliases: Record<string, [number, string]> = {};
+  const aliases: Record<string, AliasEntry> = {};
   const overrides: { key: string; to: number; prefixHit: number }[] = [];
   for (const key of [...claims.keys()].sort()) {
     const byCik = claims.get(key)!;
-    const [[cik, qid]] = [...byCik];
+    const [[cik, { qid, kind, news }]] = [...byCik];
     const drop = (reason: DropReason) => dropped.push({ name: key, qid, reason });
     if (byCik.size > 1) {
       drop("ambiguous");
@@ -242,22 +304,31 @@ export function buildCompanyAliases(
     }
     const hit = index.titleMatch(key);
     if (hit?.cik === cik) {
-      drop("redundant");
-      continue;
+      // Search already finds the company by this name, but news may still need it: Wikidata's
+      // "American Airlines" is what headlines say, and the feeds are asked for the everyday form
+      // of the title, "American Airlines Group". Kept for news only when it does not contain
+      // that form — a longer name finds nothing the feed's own query does not.
+      const title = titleOf.get(cik) ?? "";
+      const asked = nameKey(index.commonName(title));
+      // "Oracle Corporation" adds nothing to a feed already asked for "Oracle"
+      if (!news || hit.exact || ` ${key} `.includes(` ${asked} `)) {
+        drop("redundant");
+        continue;
+      }
     }
     const owner = everyday.get(key);
     if (hit?.exact || (owner !== undefined && owner !== cik)) {
       drop("another company's name");
       continue;
     }
-    if (hit) {
+    if (hit && hit.cik !== cik) {
       if ((order.get(cik) ?? Infinity) > (order.get(hit.cik) ?? Infinity)) {
         drop("ambiguous");
         continue;
       }
       overrides.push({ key, to: cik, prefixHit: hit.cik });
     }
-    aliases[key] = [cik, qid];
+    aliases[key] = [cik, qid, kind, news ? 1 : 0];
   }
   return { aliases, dropped, overrides };
 }

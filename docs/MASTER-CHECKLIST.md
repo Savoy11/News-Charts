@@ -991,7 +991,10 @@ Register searches ask for its everyday name, which `commonName` in `lib/sec.ts` 
 SEC title. Measured across the whole index, 302 of those names still ended in a mark or a legal
 form, and an accented name was stored split at its accent.
 
-VERIFICATION_LINE
+`npm run check` passes (36 suites) and `npm run lint` is clean. `next build` compiles. `check:ui` is
+195/195 on a production build. `check:live` was not re-run: nothing here calls a service, and the
+name list was rebuilt from batch 25's saved Wikidata read. HawkScan could not run: `HAWK_API_KEY`
+is not set.
 
 - [x] **Everyday names lose the marks and legal forms the SEC title carries.** 313 of the 8,028
       titles get a cleaner name, and 315 companies' GDELT queries change with it. Examples:

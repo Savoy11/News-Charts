@@ -94,6 +94,15 @@ export async function fetchNews(query: string, alsoKnownAs: string[] = []): Prom
           }
           return { events: [], outcome: "throttled", httpStatus: 200, detail: "GDELT rate limit" };
         }
+        // GDELT refuses a query it cannot parse with a line of text. An other name is the likelier
+        // cause than the everyday name it has always been asked for, so ask again without them:
+        // a refused name never costs the company the news it found before.
+        if (gdeltNames(query, alsoKnownAs).length > 1) {
+          await sleep(5500);
+          const plain = await fetchNews(query);
+          const refused = `other names refused: ${text.trim().slice(0, 80)}`;
+          return { ...plain, detail: plain.detail ? `${refused}; ${plain.detail}` : refused };
+        }
         return { events: [], outcome: "error", httpStatus: 200, detail: "non-JSON body" };
       }
       const articles: GdeltArticle[] = JSON.parse(text)?.articles ?? [];

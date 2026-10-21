@@ -1005,6 +1005,10 @@ VERIFICATION_LINE
       - Block: "square inc". Elevance: "anthem inc". American Airlines Group: "american airlines".
       - Measured on 2026-10-21, once GDELT answered: "GOLDMAN SACHS GROUP" returned 100 pages,
         5 with Goldman Sachs in the headline. With "goldman sachs" OR'd in, 12 of 100 did.
+      - If GDELT refuses the wider query, the company is asked again under its everyday name
+        alone, and the fetch log says the other names were refused. A refused name never costs
+        a company the news it found before. (Whether GDELT takes a phrase with one-letter words,
+        like "d r horton", could not be tried: it dropped every such request this session.)
 - [x] **Words printed around every article only score headlines.** GDELT matches a word anywhere
       on a page and returns the newest 100 pages. Measured on 2026-10-21:
       - "Alphabet" returned 100 pages. One had the company in its headline: "OpenAI to sell its top
@@ -1059,18 +1063,18 @@ VERIFICATION_LINE
 - Not done here: the Federal Register's documents naming a company are still searched under one
   name. It takes a request per name, and Google's FTC orders say "Google LLC". The historical
   sources are untouched too.
-- Checks: `check:aliases` 44 → 70.
+- Checks: `check:aliases` 44 → 72.
   - The news rules, run on Wikidata-shaped items, Motorola included.
   - The committed file: news only from own or predecessor names, and never from
     `KNOWN_NOT_NEWS`.
   - `newsNamesFor` for GOOGL, META, AMZN, MSI and ORCL.
   - The GDELT query, both as built and as sent: OR'd for Goldman Sachs and RTX, and never with
-    "google" in it.
+    "google" in it. A refused wider query falls back to the everyday name.
   - Headline scoring: a "Google" headline counts for Alphabet, while Times Square does not count
     for Block.
   - The ingest and re-score wiring. `check:recall`'s GDELT wiring assert follows `gdeltNames`.
   - Each fix was removed in turn: the platform-word list, the Motorola rule, the rebuilt name
-    file, and the ingest label. Each time, its checks failed.
+    file, the fallback, and the ingest label. Each time, its checks failed.
 
 ## NC ledger — batch 24: other names for companies, from Wikidata (2026-10-21)
 

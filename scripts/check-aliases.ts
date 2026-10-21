@@ -223,6 +223,28 @@ async function main(): Promise<void> {
     check("  …which is what the GDELT request carries",
       orred.includes('("RTX" OR "raytheon technologies") sourcelang:english') && decodeURIComponent(asked).includes('query="Alphabet" sourcelang:english&'),
       `${orred.slice(45, 120)} | ${decodeURIComponent(asked).slice(45, 110)}`);
+    // GDELT refuses a query it cannot parse with a line of text; the company keeps the news the
+    // everyday name alone found before
+    const queries: string[] = [];
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const q = decodeURIComponent(String(input)).match(/query=([^&]*)/)![1];
+      queries.push(q);
+      if (q.includes(" OR ")) return new Response("The specified phrase is too short.", { status: 200 });
+      const article = { url: "https://example.com/a", title: "D.R. Horton beats estimates", seendate: "20261021T120000Z", domain: "example.com", language: "English" };
+      return new Response(JSON.stringify({ articles: [article] }), { status: 200 });
+    }) as typeof fetch;
+    const fallback = await fetchNews("HORTON D R", ["d r horton"]);
+    check("  …and a refused other name falls back to the everyday name alone, saying so",
+      fallback.outcome === "ok" && fallback.events.length === 1 && /other names refused/.test(fallback.detail ?? "") &&
+        queries.length === 2 && queries[1] === '"HORTON D R" sourcelang:english',
+      `${fallback.outcome} ${fallback.events.length} ${fallback.detail} | ${queries.join(" | ")}`);
+    queries.length = 0;
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      queries.push(String(input));
+      return new Response("The specified phrase is too short.", { status: 200 });
+    }) as typeof fetch;
+    const plain = await fetchNews("Ford");
+    check("  …while a refused single name is still an error, asked once", plain.outcome === "error" && queries.length === 1, `${plain.outcome} ${queries.length}`);
   }
   const alphabet = { kind: "company" as const, displayName: "Alphabet Inc.", ticker: "GOOGL" };
   const headline = "Google unveils its next Pixel phone";

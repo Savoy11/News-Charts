@@ -984,6 +984,64 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 26: company names cleaned up for news, federal documents and search (2026-10-21)
+
+The owner chose this next: batch 25's first open follow-up. A company's news and Federal
+Register searches ask for its everyday name, which `commonName` in `lib/sec.ts` makes from the
+SEC title. Measured across the whole index, 302 of those names still ended in a mark or a legal
+form, and an accented name was stored split at its accent.
+
+`npm run check` passes (36 suites) and `npm run lint` is clean. `next build` compiles. `check:ui` is
+195/195 on a production build. `check:live` was not re-run: nothing here calls a service, and the
+name list was rebuilt from batch 25's saved Wikidata read. HawkScan could not run: `HAWK_API_KEY`
+is not set.
+
+- [x] **Everyday names lose the marks and legal forms the SEC title carries.** 313 of the 8,028
+      titles get a cleaner name, and 315 companies' GDELT queries change with it. Examples:
+      - A stray mark: "TOYOTA MOTOR CORP/" is now "TOYOTA MOTOR", "RUSH ENTERPRISES INC \TX\" is
+        "RUSH ENTERPRISES", "Blue Acquisition Corp/Cayman" is "Blue Acquisition", and "Alight,
+        Inc. / Delaware" is "Alight".
+      - A legal form the list missed: "GENMAB A/S", "EQUINOR ASA", "Energy Transfer LP", "AMERICA
+        MOVIL SAB DE CV/", "Embracer Group AB".
+      - A legal form the list could no longer see: the cleanup removed the final full stop first,
+        so "S.A." arrived as "S.A" and never matched. "Spotify Technology S.A" is now "Spotify
+        Technology", "Ferrari N.V" is "Ferrari", "Banco Santander, S.A" is "Banco Santander", and
+        "ASML HOLDING NV" is "ASML".
+      - A slash inside a name stays: "CULLEN/FROST BANKERS", "M/I HOMES", "DATA I/O".
+      - Two cases the cleanup used to get wrong are fixed: "ASSOCIATED BANC-CORP" was cut to
+        "ASSOCIATED BANC-", and a name is never cut down to digits ("1847 Holdings" stays, since
+        "1847" finds the year).
+      - Some names are now everyday words ("Light", "Vale", "Orion"). Their page titles already made
+        those words count when headlines are scored, so only the news request changes.
+- [x] **Accents are folded, not treated as word breaks.** "Estée Lauder" was stored as "est e
+      lauder", which neither a search nor a headline could match. `foldAccents` (`lib/fold.ts`) now
+      runs in the stored-name key (`nameKey`), the Federal Register title matcher and the headline
+      matcher. So "estee lauder" names an "Estée Lauder" headline, and "Mondelēz International",
+      "Bǎidù" and "Jumià" now open their companies; they found nothing before.
+- [x] **Sapiens no longer opens Formula Systems.** Wikidata still lists Formula Systems as
+      Sapiens' parent. Advent International's purchase of Sapiens closed on 2025-12-17, its shares
+      left Nasdaq, and Formula kept a minority stake. It joins WarnerMedia in `KNOWN_WRONG`.
+- [x] **The name list rebuilt offline** from the same Wikidata read as batch 25 (no new download):
+      1,533 → 1,528 names, 558 → 546 for news.
+      - 12 news names left the list because the cleaned everyday name now is that name: "nxp
+        semiconductors" beside "NXP Semiconductors", "asml holding" beside "ASML".
+      - 4 stay in the list but are no longer sent with the news query, because they only extend
+        the cleaned name: "energy transfer equity" beside "Energy Transfer", "amarin
+        corporation" beside "AMARIN".
+      - The accent-split keys became whole ones: "estee lauder", "petroleo brasileiro".
+- [x] **Search, compared in full:** 27,992 queries against main. 41 now find a company and 24 find
+      nothing, and none moved to a different company. The 24 are the split spellings nobody types
+      ("est e lauder", "toyota jid sha") and Sapiens.
+- Checks:
+  - `check:recall` 14 → 34: 20 legal titles with their everyday names, and a sweep of every
+    company the index lists.
+  - `check:wiring` 176 → 177: the Federal Register matcher finds "Toyota Motor Corporation" and
+    "Estée Lauder Companies".
+  - `check:aliases` 72 → 81: the accent fold, accented searches, accented headlines, and Sapiens.
+  - Run against main's code, 16 + 1 + 6 of them fail. The rest guard what must not change (real
+    slashes, "Estée Lauder" still opening Estée Lauder). Each fold was also removed in turn, and
+    its check failed.
+
 ## NC ledger — batch 25: a company's news found by its other names (2026-10-21)
 
 The owner chose this next. Batch 24 taught search that "Google" means Alphabet. News gathering
@@ -1050,7 +1108,8 @@ between its refusals (below). HawkScan could not run: `HAWK_API_KEY` is not set.
         not that form: "american airlines" beside "American Airlines Group".
       - 558 of the 1,533 names may be used for news. Search answers are unchanged: a comparison
         of 23,741 name queries found 0 differences against batch 24.
-      - [ ] **Open:** some everyday names keep a stray mark from the SEC title, so their news and
+      - [x] **Done in batch 26** (above), which found 302 such names, most of them legal forms.
+        Some everyday names keep a stray mark from the SEC title, so their news and
         Federal Register searches ask for the wrong thing. "TOYOTA MOTOR CORP/", "AMETEK INC/",
         "RUSH ENTERPRISES INC \TX\" and "Blue Acquisition Corp/Cayman" are among about 30
         (`commonName` in `lib/sec.ts`). Separately, an accented letter splits a stored name:

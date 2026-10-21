@@ -21,9 +21,14 @@
  * by construction — it filed with the SEC — and that is the line.
  */
 
-/** A name with punctuation folded and word breaks kept: "BlackRock, Inc." → "BLACKROCK INC". */
+import { foldAccents } from "./fold";
+
+/**
+ * A name with punctuation and accents folded and word breaks kept: "BlackRock, Inc." →
+ * "BLACKROCK INC", "Estée Lauder" → "ESTEE LAUDER".
+ */
 export const nameKey = (s: string): string =>
-  s.toUpperCase().replace(/['’]/g, "").replace(/[^A-Z0-9&]+/g, " ").trim();
+  foldAccents(s).toUpperCase().replace(/['’]/g, "").replace(/[^A-Z0-9&]+/g, " ").trim();
 
 /** One Wikidata item's names and where they point. */
 export interface WikidataCompany {
@@ -79,6 +84,9 @@ export const KNOWN_WRONG: Record<string, string> = {
   // Still lists AT&T as parent organization; WarnerMedia was spun off and merged into Warner
   // Bros. Discovery on 2022-04-08.
   Q191715: "WarnerMedia left AT&T in 2022",
+  // Still lists Formula Systems as parent organization; Advent International's purchase of
+  // Sapiens closed on 2025-12-17, its shares left Nasdaq, and Formula kept a minority stake.
+  Q7420971: "Sapiens left Formula Systems in 2025",
 };
 
 /**

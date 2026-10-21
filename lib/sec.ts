@@ -638,9 +638,17 @@ export async function resolveCompany(query: string): Promise<CompanyInfo | null>
 }
 
 // legal suffixes that Wikipedia titles don't carry — stripped iteratively, so
-// "Alibaba Group Holding Limited" → "Alibaba Group", "Tesla, Inc." → "Tesla"
+// "Alibaba Group Holding Limited" → "Alibaba Group", "Tesla, Inc." → "Tesla". The dots are
+// optional because the loop strips a final "." first: "S.A." arrives as "S.A", which the old
+// "s\.a\." could never match, and companies were searched as "Spotify Technology S.A" and the
+// like. Only a whole word goes: "ASSOCIATED BANC-CORP" keeps its "CORP", "XChange TEC.INC" does not.
 const LEGAL_SUFFIX =
-  /\b(?:incorporated|inc|corporation|corp|company|co|limited|ltd|plc|holdings?|s\.a\.|n\.v\.|ag|se)\.?$/i;
+  /(?<=^|[\s,.])(?:incorporated|inc|corporation|corp|company|co|limited|ltd|plc|llc|l\.l\.c|holdings?|s\.?a\.?(?:b|p\.?i)?\.?\s+de\s+c\.?v|s\.?a\.?b|s\.?a|n\.?v|l\.?p|s\.?p\.?a|a\/s|ab|asa|oyj|tbk|ag|se)\.?$/i;
+
+// a slash straight after a legal suffix starts a place: "Blue Acquisition Corp/Cayman",
+// "Imperial Petroleum Inc./Marshall Islands", "Melar Acquisition Corp. I/Cayman"
+const TAG_AFTER_SUFFIX =
+  /^(.*(?:^|[\s,])(?:incorporated|inc|corporation|corp|company|co|limited|ltd|plc|llc|lp)\.?(?:\s+[ivx]+)?)\/.*$/i;
 
 const containingCache = new Map<string, string[]>();
 const phrase = (s: string) =>
@@ -674,17 +682,28 @@ export function listedNamesContaining(everyday: string): string[] {
  * suffix after it goes ("ELI LILLY & Co"). Both used to survive into the name, so news and
  * Federal Register searches asked for "Wells Fargo & Company/MN" and found nothing: the owner's
  * 2026-10-18 count returned 0 of 0 hits for Wells Fargo and Bank of America.
+ *
+ * Batch 26 measured what still survived across the index: a bare trailing slash ("TOYOTA MOTOR
+ * CORP/"), a backslash tag ("RUSH ENTERPRISES INC \TX\", "AMARIN CORP PLC\UK"), a place after a
+ * slash ("Blue Acquisition Corp/Cayman", "Alight, Inc. / Delaware"), and the legal forms in
+ * `LEGAL_SUFFIX` ("Ferrari N.V", "Energy Transfer LP", "GENMAB A/S"). A slash inside a name
+ * stays: "CULLEN/FROST BANKERS", "M/I HOMES", "DATA I/O". Nor is a name cut down to digits:
+ * "1847 Holdings LLC" stays "1847 Holdings", since a news search for "1847" finds the year.
  */
 export function commonName(title: string): string {
   let s = title.trim();
   let prev = "";
   while (prev !== s) {
     prev = s;
-    s = s
+    const next = s
+      .replace(/\s*\\.*$/, "") // a backslash never belongs to a name: "INC \TX\", "PLC\UK"
+      .replace(/\s+\/.*$/, "") // nor does a slash after a space: "Inc. / Delaware", "BANCSHARES /"
+      .replace(TAG_AFTER_SUFFIX, "$1")
       .replace(/\s*\/\s*[a-z]{2,5}\/?$/i, "")
-      .replace(/[,.&]\s*$/, "")
+      .replace(/[,.&/]\s*$/, "")
       .replace(LEGAL_SUFFIX, "")
       .trim();
+    if (/[a-z]/i.test(next)) s = next;
   }
   return s || title;
 }

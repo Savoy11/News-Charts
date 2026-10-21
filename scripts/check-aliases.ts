@@ -3,6 +3,7 @@ import aliasFile from "../data/company-aliases.json";
 import tickerIndex from "../data/edgar-tickers.json";
 import {
   KNOWN_NOT_NEWS,
+  KNOWN_WRONG,
   ONE_WORD_MIN_SITELINKS,
   buildCompanyAliases,
   nameKey,
@@ -82,6 +83,10 @@ async function main(): Promise<void> {
       // two companies claiming one name
       item("Q0000002", 1050797, "own", { labels: ["Columbia Sportswear"], aliases: ["Columbia Sportswear Group"] }),
       item("Q0000003", 887343, "own", { labels: ["Columbia Banking System"], aliases: ["Columbia Sportswear Group"] }),
+      // an accented name (batch 26): it used to be kept as "EST E LAUDER"
+      item("Q1260606", 1001250, "own", { labels: ["Estée Lauder Companies", "Estée Lauder"], aliases: ["Estee Lauder"], sitelinks: 28 }),
+      // Advent bought Sapiens in 2025; Wikidata still has Formula Systems as its parent
+      item("Q7420971", 1045986, "former", { labels: ["Sapiens International Corporation N.V."], sitelinks: 3 }),
     ],
     view
   );
@@ -108,6 +113,11 @@ async function main(): Promise<void> {
   check("  …while \"United\" keeps UPS, which the prefix finds and which is larger", why("United") === "ambiguous" && !built.aliases["UNITED"]);
   check("a name two companies claim is nobody's", why("Columbia Sportswear Group") === "ambiguous");
   check("a name that already finds its company is not stored twice", why("Meta Platforms") === "redundant");
+  check("an accent is folded, not a word break: \"Estée Lauder\" is kept as ESTEE LAUDER",
+    nameKey("Estée Lauder") === "ESTEE LAUDER" && built.aliases["ESTEE LAUDER"]?.[0] === 1001250 && !built.aliases["EST E LAUDER"],
+    nameKey("Estée Lauder"));
+  check("a parent Wikidata still lists after a sale is not read: Sapiens left Formula Systems in 2025",
+    why("Sapiens International Corporation N.V.") === "known wrong");
 
   console.log("\nNews may use a company's own names, never an acquisition's (batch 25)");
   const news = (key: string) => built.aliases[key]?.[3];
@@ -135,6 +145,10 @@ async function main(): Promise<void> {
   const stolen = entries.filter(([k, [cik]]) => (everyday.get(k) ?? cik) !== cik).map(([k]) => k);
   check("no name is another listed company's title or everyday name", stolen.length === 0, stolen.slice(0, 5).join(", "));
   check("every name points at its Wikidata item", entries.every(([, [, qid]]) => /^Q\d+$/.test(qid)));
+  check("no name comes from a statement known to be wrong (WarnerMedia, Sapiens)",
+    entries.every(([, [, qid]]) => KNOWN_WRONG[qid] === undefined), entries.filter(([, [, q]]) => KNOWN_WRONG[q] !== undefined).map(([k]) => k).join(", "));
+  check("no accented name is split at its accent: ESTEE LAUDER, never EST E LAUDER",
+    file.aliases["ESTEE LAUDER"]?.[0] === 1001250 && !file.aliases["EST E LAUDER"] && !file.aliases["ITA UNIBANCO"]);
   check("news may use only a company's own names or a predecessor's, never a loose alias",
     entries.every(([, [, , kind, news]]) => news === 0 || kind !== "alias"));
   check("  …so \"Google\" and \"Facebook\" search news, and \"Whole Foods\" and \"Sun Microsystems\" do not",
@@ -159,6 +173,10 @@ async function main(): Promise<void> {
     ["Red Hat", "IBM"],
     ["P&G", "PG"],
     ["Aetna", "CVS"],
+    // typed with their accents (batch 26)
+    ["Mondelēz International", "MDLZ"],
+    ["Estée Lauder", "EL"],
+    ["Itaú Unibanco", "ITUB"],
   ] as const) {
     const got = resolveTickerLocally(query);
     check(`"${query}" finds ${want}`, got === want, got ?? "null");
@@ -167,6 +185,8 @@ async function main(): Promise<void> {
     check(`"${query}" is still ${want}`, resolveTickerLocally(query) === want, resolveTickerLocally(query) ?? "null");
   }
   check("\"Rejoice\" does not find Procter & Gamble", resolveTickerLocally("Rejoice") !== "PG");
+  check("\"Sapiens International\" no longer opens Formula Systems, its parent until 2025",
+    resolveTickerLocally("Sapiens International Corporation N.V.") !== "FORTY", resolveTickerLocally("Sapiens International Corporation N.V.") ?? "null");
   {
     // An exact EDGAR title always answers for itself, whatever the alias index holds.
     const cikOfTicker = new Map(tickerRows.map(([cik, ticker]) => [ticker, cik]));
@@ -251,6 +271,9 @@ async function main(): Promise<void> {
   check("a headline naming Google is about Alphabet once Alphabet carries the name",
     mentions(headline, aliasesFor(alphabet, ["Alphabet", ...newsNamesFor(cikOf("GOOGL"))])) === "named" &&
       mentions(headline, aliasesFor(alphabet, ["Alphabet"])) !== "named");
+  check("an accent does not keep a headline from naming its company: \"estee lauder\" names \"Estée Lauder\"",
+    newsNamesFor(cikOf("EL")).includes("estee lauder") && mentions("Estée Lauder cuts 7,000 jobs", ["estee lauder"]) === "named" &&
+      mentions("Nestle recalls baby formula", ["nestlé"]) === "named", JSON.stringify(newsNamesFor(cikOf("EL"))));
   const block = { kind: "company" as const, displayName: "Block, Inc.", ticker: "XYZ" };
   check("  …while Times Square is not Block's", mentions("Crowds pack Times Square for the countdown", aliasesFor(block, ["Block", ...newsNamesFor(cikOf("XYZ"))])) !== "named");
   const ingestSrc = readFileSync("scripts/ingest.ts", "utf8");

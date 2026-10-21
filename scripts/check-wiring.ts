@@ -379,6 +379,9 @@ console.log("\nThe Federal Register count, before anything is ingested");
 check("a title naming the company is its document",
   titleNamesCompany("Airworthiness Directives; The Boeing Company Airplanes", "BOEING CO") &&
     titleNamesCompany("Ford Motor Company, Denial of Petition for Decision of Inconsequential Noncompliance", "FORD MOTOR CO"));
+check("  …under its everyday name, without EDGAR's marks or accents (batch 26)",
+  titleNamesCompany("Toyota Motor Corporation, Grant of Petition for Decision of Inconsequential Noncompliance", "TOYOTA MOTOR CORP/") &&
+    titleNamesCompany("Estée Lauder Companies Inc.; Order Granting Exemption", "ESTEE LAUDER COMPANIES INC"));
 check("  …but not a namesake or a near word",
   !titleNamesCompany("Gerald R. Ford Presidential Library; Notice", "FORD MOTOR CO") &&
     !titleNamesCompany("Fresh Apples From Chile Into the Continental United States", "Apple Inc."));

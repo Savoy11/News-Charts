@@ -1,4 +1,5 @@
 import { EventType, SourceKey } from "../types";
+import { foldAccents } from "../fold";
 import { WEAK_TOKENS } from "../newsQuality";
 import { dataBlock, untrustedNotice } from "./untrusted";
 import { REGISTRANT_FORM } from "../secForms";
@@ -69,11 +70,13 @@ const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 export type Mention = "named" | "oblique" | "none";
 
 /**
- * Unicode-aware naming test over the ORIGINAL title.
+ * Unicode-aware naming test over the ORIGINAL title, accents folded on both sides.
  *
  * `\b` without the `u` flag made accented aliases structurally unmatchable — "nestlé" ends in a
  * non-word character to ASCII `\b`, which then demands a word character right after it. The
- * lookarounds below define a boundary as "not a letter or digit" in any script.
+ * lookarounds below define a boundary as "not a letter or digit" in any script. Folding lets a
+ * stored name without its accent ("estee lauder", as the alias index keeps it) name a headline
+ * that has one, and the other way round.
  *
  * Short aliases (single-letter tickers like F, or GM) match only as a standalone UPPERCASE
  * token in the original title, and never one followed by "." or "-" — "F beats estimates"
@@ -83,7 +86,9 @@ export type Mention = "named" | "oblique" | "none";
  * name — "Harrison Ford", "Gerald Ford" — which is a judgement call, not a naming, so it is
  * reported `oblique` and left for the model rather than scored as certain.
  */
-export function mentions(title: string, aliases: string[]): Mention {
+export function mentions(original: string, names: string[]): Mention {
+  const title = foldAccents(original);
+  const aliases = names.map(foldAccents);
   const lower = title.toLowerCase();
   let sawOblique = false;
   for (const a of aliases) {

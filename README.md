@@ -510,7 +510,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 
 | Source | Used for | Notes |
 | --- | --- | --- |
-| Yahoo Finance chart API | Daily prices (10y; full history after a split), dividends, splits | Unofficial; swap for a paid API before scale |
+| Yahoo Finance chart API | Daily prices since listing (read once, then 10y refreshes; whole history again after a split), dividends, splits | Unofficial; swap for a paid API before scale. Full history is asked for by date — `range=max` comes back monthly |
 | Yahoo Finance RSS | Company headlines | Headline, link and date only |
 | SEC EDGAR | Filings, earnings (10-K/10-Q/8-K 2.02), fund filings | Requires a `User-Agent` with contact email |
 | GDELT 2.0 | News headlines | English-filtered; 2017+. Throttles per IP — see note below |

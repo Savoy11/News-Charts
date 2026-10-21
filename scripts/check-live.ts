@@ -39,7 +39,7 @@ import { fetchDailyPrices } from "../lib/prices";
 import { fetchRegulations } from "../lib/federalregister";
 import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
 import { FR_COMPANY_CAP, FR_COMPANY_SINCE, fetchCompanyRegulations, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
-import { getTopicTimeline } from "../lib/wiki";
+import { WikipediaUnavailable, getTopicTimeline, wikiOutcome } from "../lib/wiki";
 import { fetchNews } from "../lib/news";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
 import { fetchArchiveItems } from "../lib/archive";
@@ -211,7 +211,14 @@ export const CASES: LiveCase[] = [
       out.push(...eventProblems(filings, 20));
       const newest = filings.map((f) => f.date).sort().at(-1);
       if (newest && daysAgo(newest) > 120) out.push(`newest filing ${newest} — Apple files at least quarterly`);
-      if (filings.some((f) => !f.url?.startsWith("https://www.sec.gov/Archives/"))) {
+      // A filing links its document; a rename (batch 15) links the company's EDGAR record, which is
+      // where a former name is written down — both on sec.gov, nothing else. Apple's 2007 rename
+      // was the first live record to carry one, once the session could reach EDGAR (2026-10-21).
+      const renames = filings.filter((f) => f.type === "corporate_action" && /^Renamed from /.test(f.title));
+      if (renames.some((f) => !f.url?.startsWith("https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK="))) {
+        out.push("a rename linking somewhere other than the company's EDGAR record");
+      }
+      if (filings.some((f) => !renames.includes(f) && !f.url?.startsWith("https://www.sec.gov/Archives/"))) {
         out.push("a filing link outside https://www.sec.gov/Archives/");
       }
       // Apple reports a shareholder vote (5.07) on an 8-K every year, so a recent block with no
@@ -243,6 +250,18 @@ export const CASES: LiveCase[] = [
     async run() {
       const r = await fetchDailyPrices("AAPL");
       return [...outcomeProblems(r.outcome, r.detail), ...seriesProblems(r.points, 2000, 7)];
+    },
+  },
+  {
+    name: "Yahoo chart — AAPL's whole daily history, back to its 1980 listing",
+    covers: ["yahoo_prices"],
+    hosts: ["query1.finance.yahoo.com"],
+    async run() {
+      // NC-077: asked by date this is every daily close; `range=max` came back monthly (169 points).
+      const r = await fetchDailyPrices("AAPL", "full");
+      const out = [...outcomeProblems(r.outcome, r.detail), ...seriesProblems(r.points, 11_000, 7)];
+      if (r.points[0] && r.points[0].time > "1981-01-01") out.push(`history starts ${r.points[0].time}, not at the December 1980 listing`);
+      return out;
     },
   },
   {
@@ -327,7 +346,12 @@ export const CASES: LiveCase[] = [
     covers: ["wikipedia"],
     hosts: ["en.wikipedia.org"],
     async run() {
-      const story = await getTopicTimeline("Ford Motor Company");
+      // A 429 from Wikipedia is a throttle — UNREACHABLE, as for every other source — not a wrong
+      // answer; it was reported as FAIL because the adapter throws it rather than returning it.
+      const story = await getTopicTimeline("Ford Motor Company").catch((err) => {
+        if (err instanceof WikipediaUnavailable && wikiOutcome(err) === "throttled") throw new NoAnswer(err.message);
+        throw err;
+      });
       if (!story) return ["no article resolved"];
       const out = eventProblems(story.events.filter((e) => e.type === "history"), 5);
       if (!/ford/i.test(story.title)) out.push(`resolved to "${story.title}"`);

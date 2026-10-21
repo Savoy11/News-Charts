@@ -15,6 +15,7 @@ import {
   linkToIndustry,
   linkToSector,
   writePrices,
+  hasFullPriceHistory,
   splitNeedsFullHistory,
   emptyStats,
   loadLastFetched,
@@ -31,7 +32,7 @@ import { fetchNews } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
 import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, type Rename } from "../lib/sec";
-import { fetchDailyPrices, splitsIn } from "../lib/prices";
+import { fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { fetchCompanyRegulations } from "../lib/frCompany";
@@ -567,13 +568,20 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     return { ingested: true };
   }
 
-  let daily = await fetchDailyPrices(company.ticker);
+  /**
+   * Every daily close since listing, read once; routine refreshes then read ten years, which is
+   * all a new close needs (NC-077). A chart used to begin ten years before the company's first
+   * ingest and never earlier, so a 2001 filing or a 1994 Fed decision had no price under it.
+   * Read whole, the history replaces what was stored, so every close carries one adjustment.
+   */
+  const complete = await hasFullPriceHistory(client, subjectId, company.ticker);
+  let daily = await fetchDailyPrices(company.ticker, complete ? "10y" : "full");
+  let replace = !complete && daily.outcome === "ok";
+  let dropBefore: string | undefined;
   // A split we have not seen re-adjusts every earlier close; re-read the whole history so rows
   // older than the 10-year window do not keep the old adjustment (NC-156).
-  let replace = false;
-  let dropBefore: string | undefined;
-  if (await splitNeedsFullHistory(client, subjectId, daily.points, splitsIn(daily.actions))) {
-    const full = await fetchDailyPrices(company.ticker, "max");
+  if (complete && (await splitNeedsFullHistory(client, subjectId, daily.points, splitsIn(daily.actions)))) {
+    const full = await fetchDailyPrices(company.ticker, "full");
     if (full.outcome === "ok") {
       daily = { ...full, actions: daily.actions };
       replace = true;
@@ -594,7 +602,8 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
       client,
       "yahoo_prices",
       subjectId,
-      company.ticker,
+      // a whole history is logged as one, which is how the next run knows it need not ask again
+      replace ? fullHistoryQuery(company.ticker) : company.ticker,
       daily.outcome,
       daily.points.length,
       daily.httpStatus,
@@ -774,15 +783,18 @@ export async function ingestOnchain(client: PoolClient, which: string): Promise<
     // price series and its overlays come for free. Windowed like a company's prices, and logged
     // so the window has something to read.
     if (asset.yahooSymbol && due.has("yahoo_prices")) {
-      const daily = await fetchDailyPrices(asset.yahooSymbol);
+      // the whole series once, then ten years — as companies do (NC-077); Bitcoin's starts in 2014
+      const complete = await hasFullPriceHistory(client, subjectId, asset.yahooSymbol);
+      const daily = await fetchDailyPrices(asset.yahooSymbol, complete ? "10y" : "full");
+      const whole = !complete && daily.outcome === "ok";
       await client.query("BEGIN");
       try {
-        await writePrices(client, subjectId, daily.points);
+        await writePrices(client, subjectId, daily.points, { replace: whole });
         await logFetch(
           client,
           "yahoo_prices",
           subjectId,
-          asset.yahooSymbol,
+          whole ? fullHistoryQuery(asset.yahooSymbol) : asset.yahooSymbol,
           daily.outcome,
           daily.points.length,
           daily.httpStatus,

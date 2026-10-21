@@ -290,7 +290,8 @@ same seven stale prompt-search checks as batches 3 and 4.
       prices rendered its timeline and the notice.
 - [x] **NC-156 — a split re-reads the whole price history.** When the chart reports a split the
       database has not seen, and older closes are stored than the 10-year window covers, the full
-      history (`range=max`) replaces the stored series in one transaction; if that fails, closes
+      history (`range=max` — *which Yahoo answers with monthly closes; found and fixed in batch 22,
+      which asks by date*) replaces the stored series in one transaction; if that fails, closes
       older than the window are dropped rather than left on the old adjustment. Live (rolled back):
       the check fired only for a new split with older rows, and replace/drop wrote what they say.
 - [x] **NC-139 — a fund's filings name who filed them.** EDGAR's submissions list does not say
@@ -982,6 +983,45 @@ checks.
         `LEGAL_DRAFT` to false. The "How we make money" disclosure stays its own item.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
+
+## NC ledger — batch 22: every daily close since listing, and a monthly-chart bug (2026-10-21)
+
+The owner chose this next. Batches 15–21 were merged first (PR #52); this batch starts a new PR.
+
+`npm run check` passes (35 suites), `npm run lint` is clean, `next build` compiles, `check:ui` is
+195/195 with no console errors, and `check:live` is 14 pass, 0 fail, 2 unreachable (Wikipedia and GDELT throttling this
+cloud session), 1 skipped (needs an Etherscan key).
+
+- [x] **Charts carry the whole daily history, not the last ten years (NC-077).** Ingest asked Yahoo
+      for ten years, so a chart began ten years before the company's first ingest and never
+      earlier: a 2001 filing, a 1994 Fed decision or an old topic on /compare had no price under
+      it. Now a company's (and a crypto asset's) **every daily close since listing is read once** —
+      Ford 13,709 closes from June 1972, IBM 16,309 from 1962, Apple from its December 1980
+      listing — and routine refreshes go back to ten years, which is all a new close needs. A
+      successful full read is logged as `<ticker> full history` and that is how the next run knows;
+      a company listed under ten years ago simply reads its whole short history each time, which
+      costs the same.
+      - Read whole, the history replaces what was stored, so every close carries one split
+        adjustment. It also brings the older dividends and splits: Ford's page gained 193.
+      - **Measured cost**: Ford's page carries about 830 KB more price data, ~104 KB after the
+        compression every browser asks for. The cached page stays well under the 2 MB cache limit.
+- [x] **Fixed: a stock split turned a company's daily chart into a monthly one.** The NC-156 split
+      re-read asked Yahoo for `range=max`, which Yahoo answers with **one close a month** whatever
+      interval is requested (Ford's "max": 169 points from 1984), and replaced the stored daily
+      series with it. Full history is now asked for by date, which returns every daily close, and
+      an answer that is not daily is refused rather than stored. Nothing asks for `range=max`.
+- [x] **Two live checks corrected** now that the session reaches the SEC and Wikipedia:
+      - The EDGAR case required every link under `/Archives/`; batch 15's rename events link the
+        company's EDGAR record instead — Apple's 2007 rename was the first live one it saw. It now
+        holds renames to that record and filings to `/Archives/`.
+      - A Wikipedia 429 was reported as FAIL, because the adapter throws its throttle instead of
+        returning it; it is UNREACHABLE now, like every other source's throttle.
+- Checks: 7 new in `check:parsers`, replacing the one that asked for `range=max` (the date-asked
+  full history, the monthly answer refused, no `range=max` anywhere, the backfill rule for
+  companies and crypto, the fetch-log marker — all fail on the old code), 1 more `check:live` case
+  (AAPL's whole daily history, passing live).
+- Live, in the local database: Ford backfilled 13,709 daily closes from 1972-06-01 and logged the
+  full read; the sample data was then restored for the browser checks.
 
 ## NC ledger — batch 21: Fed decisions and inflation reports on the charts; real EDGAR names (2026-10-20)
 
@@ -3236,6 +3276,8 @@ look like") went to a **separate business checklist** worked independently of bo
         history reaching back as far as the events. Against the seed's 18-month series most of a
         topic's history falls off the left edge; against a real decades-long series it would not.
         Worth checking with `npm run ingest -- --ticker F` before judging the feature.
+        *(2026-10-21, batch 22, NC-077: ingest now reads every daily close since listing — Ford's
+        13,709 since June 1972 — where it read ten years, so a decades-old event has a price.)*
 - [ ] `P1` **Test and fine-tune the AI tools.** The BYO-key ranking panel is the only AI surface
       here: check ranking quality across subject types, the 0.35 relevance cut-off, batch size,
       and behaviour when a model returns junk. (CAEP's 11 agents are tracked separately.)

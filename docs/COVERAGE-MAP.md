@@ -31,7 +31,7 @@ because it will be trusted.
 | **2015 – now** | Federal Register | 2015 (our query floor) | Sector rules; documents whose title names a company |
 | **2017 – now** | GDELT | 2017 (our query floor) | Recent news |
 | **—** | Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | not ingested | Free tiers are non-commercial; adapters exist for diagnostics only |
-| **10 years** | Yahoo Finance chart | 10 years of daily closes; the full history is re-read after a split | Prices, corporate actions |
+| **since listing** | Yahoo Finance chart | every daily close since the security listed (Ford from 1972, IBM from 1962), read once; ten years on routine refreshes; the whole history again after a split | Prices, corporate actions |
 | **now** | Yahoo Finance RSS | recent headlines | News |
 
 ### On-chain, which has a hard floor

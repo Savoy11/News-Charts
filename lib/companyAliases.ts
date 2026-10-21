@@ -82,6 +82,17 @@ export const KNOWN_WRONG: Record<string, string> = {
 };
 
 /**
+ * Items whose names still find the company in search but may not claim its news, because the
+ * brand went elsewhere when the company kept the filings. Same rule as `KNOWN_WRONG`: a class of
+ * cases belongs in `newsMay`, and only the exceptions here.
+ */
+export const KNOWN_NOT_NEWS: Record<string, string> = {
+  // Motorola, Inc. renamed itself Motorola Solutions in 2011 and spun the phones off as Motorola
+  // Mobility (Lenovo's since 2014): a "Motorola" headline since then is nearly always a phone.
+  Q259011: "the Motorola brand went with Motorola Mobility in 2011",
+};
+
+/**
  * A one-word name means one company only when that company is well known: "Google" and "Aetna"
  * do, while Wikidata's "English" for a bank TriCo bought, or "Credible" for a Fox unit, are words
  * first. Measured by the Wikipedias with an article on the item; a two-letter ampersand name
@@ -185,10 +196,11 @@ const coined = (name: string) => /[a-z][A-Z]/.test(name) || /[\d&]/.test(name);
  * - never an acquired company's: Sun Microsystems' 1990s news is not Oracle's, nor Red Hat's
  *   IBM's (measured: the former registrants whose tickers carried on are Google, the American,
  *   United and Alaska airlines, US Foods, and three subsidiaries filed under their parent's
- *   ticker; every acquisition fails the test). Nor a looser alias.
+ *   ticker; every acquisition fails the test). Nor a looser alias, nor an item in
+ *   `KNOWN_NOT_NEWS`.
  */
 function newsMay(name: string, kind: AliasKind, item: WikidataCompany, carriedOn: boolean): boolean {
-  if (kind === "alias" || (kind === "former" && !carriedOn)) return false;
+  if (kind === "alias" || (kind === "former" && !carriedOn) || KNOWN_NOT_NEWS[item.qid] !== undefined) return false;
   if (nameKey(name).includes(" ")) return true;
   return item.sitelinks >= NEWS_ONE_WORD_MIN_SITELINKS || coined(name);
 }

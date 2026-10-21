@@ -28,7 +28,7 @@ import { collapseNearDuplicates } from "../lib/newsQuality";
 import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
 import { getTopicTimeline, articleAnswersSlug, companyLede, articleCoversSlug, topicSlugFromTitle, WikipediaUnavailable, wikiOutcome } from "../lib/wiki";
 import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
-import { fetchNews } from "../lib/news";
+import { fetchNews, gdeltNames } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
 import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, newsNamesFor, type Rename } from "../lib/sec";
@@ -466,8 +466,8 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
   // headline that says "Ford" — the common name is the query, exactly as the comment above
   // promised and the historical sources below already do.
-  if (alsoKnownAs.length) line("names", `also searched as ${alsoKnownAs.map((n) => `"${n}"`).join(", ")}`);
-  await run("gdelt", [name, ...alsoKnownAs].join(" | "), () => fetchNews(name, alsoKnownAs), (e) =>
+  if (alsoKnownAs.length) line("names", `headlines also scored by ${alsoKnownAs.map((n) => `"${n}"`).join(", ")}`);
+  await run("gdelt", gdeltNames(name, alsoKnownAs).join(" | "), () => fetchNews(name, alsoKnownAs), (e) =>
     // dedupe BEFORE capping: syndicated copies of one wire story must not burn cap slots
     collapseNearDuplicates(e).slice(0, 75)
   );

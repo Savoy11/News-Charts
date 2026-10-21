@@ -24,12 +24,37 @@ export async function getNews(query: string): Promise<TimelineEvent[]> {
 }
 
 /**
+ * Words news sites print around the article itself — "Follow us on Google News", share buttons,
+ * app-store badges. GDELT matches a word anywhere on the page and returns the newest 100, so one of
+ * these in a query fills the result with pages that merely carry it. Measured 2026-10-21:
+ * "Alphabet" returned 100 pages, 1 with the company in the headline; "Alphabet" OR "google"
+ * returned 97 pages from the last few minutes, none. Such a name still scores headlines.
+ */
+const PAGE_FURNITURE = new Set(
+  "google facebook amazon apple twitter youtube instagram linkedin whatsapp pinterest reddit tiktok snapchat spotify telegram".split(" ")
+);
+
+/** The names a GDELT query asks for: the subject's, then its other names but page furniture. */
+export function gdeltNames(query: string, alsoKnownAs: string[] = []): string[] {
+  const seen = new Set([query.toLowerCase()]);
+  const names = [query];
+  for (const n of alsoKnownAs) {
+    const key = n.toLowerCase();
+    if (seen.has(key) || PAGE_FURNITURE.has(key)) continue;
+    seen.add(key);
+    names.push(n);
+  }
+  return names;
+}
+
+/**
  * The GDELT query for a subject and its other names, as one request: GDELT allows about one
  * request every five seconds, so each name is an `OR` inside the same query, never a call of its
- * own. "Alphabet" alone missed every headline that says "Google" (batch 25).
+ * own. "GOLDMAN SACHS GROUP", the everyday form of its SEC title, misses every headline that says
+ * "Goldman Sachs" (batch 25).
  */
 export function gdeltQuery(query: string, alsoKnownAs: string[] = []): string {
-  const names = [query, ...alsoKnownAs.filter((n) => n.toLowerCase() !== query.toLowerCase())];
+  const names = gdeltNames(query, alsoKnownAs);
   return names.length === 1
     ? `"${query}" sourcelang:english`
     : `(${names.map((n) => `"${n}"`).join(" OR ")}) sourcelang:english`;

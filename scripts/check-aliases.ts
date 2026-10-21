@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import aliasFile from "../data/company-aliases.json";
 import tickerIndex from "../data/edgar-tickers.json";
 import {
+  KNOWN_NOT_NEWS,
   ONE_WORD_MIN_SITELINKS,
   buildCompanyAliases,
   nameKey,
@@ -9,7 +10,7 @@ import {
   type WikidataCompany,
 } from "../lib/companyAliases";
 import { commonName, companyTickers, newsNamesFor, resolveTickerLocally, titleMatch, TICKER_INDEX_COMPANIES } from "../lib/sec";
-import { fetchNews, gdeltQuery } from "../lib/news";
+import { fetchNews, gdeltNames, gdeltQuery } from "../lib/news";
 import { aliasesFor, mentions } from "../lib/enrich/relevance";
 
 /**
@@ -64,6 +65,8 @@ async function main(): Promise<void> {
       item("Q110778747", 1512673, "own", { labels: ["Block"], officialNames: ["Block, Inc.", "Square, Inc."], sitelinks: 30 }),
       // a coined one-word former name of Strategy Inc.
       item("Q1192211", 1050446, "own", { labels: ["Strategy"], officialNames: ["MicroStrategy Incorporated"], sitelinks: 25 }),
+      // the pre-2011 Motorola, Inc., which carries Motorola Solutions' CIK; the phones went to Lenovo
+      item("Q259011", 68505, "own", { labels: ["Motorola"], officialNames: ["Galvin Manufacturing Corporation", "Motorola, Inc."], sitelinks: 78 }),
       // an item carrying Snowflake's CIK, labelled with another company's name
       item("Q0000001", 1640147, "own", { labels: ["Castor Maritime"], sitelinks: 5 }),
       // SeaWorld is listed itself; Wikidata still has it under Blackstone
@@ -115,6 +118,8 @@ async function main(): Promise<void> {
   check("a one-word name that is a word first does not search news: \"Square\"", news("SQUARE") === 0 && news("SQUARE INC") === 1,
     `${news("SQUARE")} / ${news("SQUARE INC")}`);
   check("  …while a coined one does: \"MicroStrategy\"", news("MICROSTRATEGY") === 1);
+  check("a brand that went to another company does not: \"Motorola\" has meant a Lenovo phone since 2011",
+    news("MOTOROLA INC") === 0 && why("Motorola") === "redundant" && !built.aliases["MOTOROLA"], `${news("MOTOROLA INC")} / ${why("Motorola")}`);
 
   console.log("\nThe committed index agrees with the EDGAR index beside it");
   const file = aliasFile as unknown as AliasIndexFile;
@@ -135,6 +140,9 @@ async function main(): Promise<void> {
   check("  …so \"Google\" and \"Facebook\" search news, and \"Whole Foods\" and \"Sun Microsystems\" do not",
     file.aliases["GOOGLE"]?.[3] === 1 && file.aliases["FACEBOOK"]?.[3] === 1 &&
       file.aliases["WHOLE FOODS"]?.[3] === 0 && file.aliases["SUN MICROSYSTEMS"]?.[3] === 0);
+  const notNews = entries.filter(([, [, qid]]) => KNOWN_NOT_NEWS[qid] !== undefined);
+  check("  …nor an item whose brand went elsewhere (Motorola, Inc.)", notNews.length > 0 && notNews.every(([, [, , , news]]) => news === 0),
+    notNews.map(([k, v]) => `${k}:${v[3]}`).join(", "));
 
   console.log("\nThe resolver finds a company by another name, never ahead of a title");
   // every request refused: aliases are answered from the committed file
@@ -155,7 +163,7 @@ async function main(): Promise<void> {
     const got = resolveTickerLocally(query);
     check(`"${query}" finds ${want}`, got === want, got ?? "null");
   }
-  for (const [query, want] of [["Apple", "AAPL"], ["Ford", "F"], ["Pure Cycle", "PCYO"], ["Coca-Cola", "KO"]] as const) {
+  for (const [query, want] of [["Apple", "AAPL"], ["Ford", "F"], ["Pure Cycle", "PCYO"], ["Coca-Cola", "KO"], ["Motorola", "MSI"]] as const) {
     check(`"${query}" is still ${want}`, resolveTickerLocally(query) === want, resolveTickerLocally(query) ?? "null");
   }
   check("\"Rejoice\" does not find Procter & Gamble", resolveTickerLocally("Rejoice") !== "PG");
@@ -185,14 +193,23 @@ async function main(): Promise<void> {
 
   console.log("\nNews is asked for, and scored by, those names");
   const cikOf = (t: string) => tickerRows.find(([, ticker]) => ticker === t)![0];
-  check("Alphabet's news is also searched as \"google\"", newsNamesFor(cikOf("GOOGL")).includes("google"), JSON.stringify(newsNamesFor(cikOf("GOOGL"))));
-  check("  …Meta's as \"facebook\", Amazon's as \"amazon\" (its feeds were asked for \"AMAZON COM\")",
+  const titleOf = (t: string) => TICKER_INDEX_COMPANIES.find(([cik]) => cik === cikOf(t))![1];
+  check("Goldman Sachs's news is also searched as \"goldman sachs\" (its feeds were asked for \"GOLDMAN SACHS GROUP\")",
+    gdeltQuery(commonName(titleOf("GS")), newsNamesFor(cikOf("GS"))) === '("GOLDMAN SACHS GROUP" OR "goldman sachs") sourcelang:english',
+    gdeltQuery(commonName(titleOf("GS")), newsNamesFor(cikOf("GS"))));
+  check("Alphabet's headlines are also scored by \"google\"", newsNamesFor(cikOf("GOOGL")).includes("google"), JSON.stringify(newsNamesFor(cikOf("GOOGL"))));
+  check("  …Meta's by \"facebook\", Amazon's by \"amazon\" (its feeds were asked for \"AMAZON COM\")",
     newsNamesFor(cikOf("META")).includes("facebook") && newsNamesFor(cikOf("AMZN")).includes("amazon"));
+  check("  …and Motorola Solutions' never by \"motorola\"", newsNamesFor(cikOf("MSI")).length === 0, JSON.stringify(newsNamesFor(cikOf("MSI"))));
   check("  …but never a longer form of the name already asked for: no \"oracle corporation\" beside \"Oracle\"",
     newsNamesFor(cikOf("ORCL")).length === 0, JSON.stringify(newsNamesFor(cikOf("ORCL"))));
   check("  …and at most three, so the query stays one request",
     tickerRows.every(([cik]) => newsNamesFor(cik).length <= 3));
-  check("the names are one GDELT request, OR'd", gdeltQuery("Alphabet", ["google"]) === '("Alphabet" OR "google") sourcelang:english', gdeltQuery("Alphabet", ["google"]));
+  check("the names are one GDELT request, OR'd", gdeltQuery("RTX", ["raytheon technologies"]) === '("RTX" OR "raytheon technologies") sourcelang:english', gdeltQuery("RTX", ["raytheon technologies"]));
+  check("  …never with a word printed around every article: \"google\" scores Alphabet's headlines but stays out of its query",
+    gdeltQuery("Alphabet", ["google"]) === '"Alphabet" sourcelang:english' &&
+      JSON.stringify(gdeltNames("Meta Platforms", ["facebook", "thefacebook"])) === '["Meta Platforms","thefacebook"]',
+    gdeltQuery("Alphabet", ["google"]));
   check("  …and a company without any is asked exactly as before", gdeltQuery("Ford") === '"Ford" sourcelang:english' && gdeltQuery("Ford", ["ford"]) === '"Ford" sourcelang:english');
   {
     let asked = "";
@@ -200,8 +217,12 @@ async function main(): Promise<void> {
       asked = String(input);
       return new Response(JSON.stringify({ articles: [] }), { status: 200 });
     }) as typeof fetch;
+    await fetchNews("RTX", ["raytheon technologies"]);
+    const orred = decodeURIComponent(asked);
     await fetchNews("Alphabet", ["google"]);
-    check("  …which is what the GDELT request carries", decodeURIComponent(asked).includes('("Alphabet" OR "google") sourcelang:english'), asked.slice(0, 120));
+    check("  …which is what the GDELT request carries",
+      orred.includes('("RTX" OR "raytheon technologies") sourcelang:english') && decodeURIComponent(asked).includes('query="Alphabet" sourcelang:english&'),
+      `${orred.slice(45, 120)} | ${decodeURIComponent(asked).slice(45, 110)}`);
   }
   const alphabet = { kind: "company" as const, displayName: "Alphabet Inc.", ticker: "GOOGL" };
   const headline = "Google unveils its next Pixel phone";

@@ -513,7 +513,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Yahoo Finance chart API | Every daily close Yahoo holds, to six places (from 1962 at the earliest; read once, then 10y refreshes; whole history again after a split), dividends, splits. End of day only: a session still trading is left out | Unofficial; swap for a paid API before scale. Full history is asked for by date — `range=max` comes back quarterly (`3mo`) |
 | Yahoo Finance RSS | Company headlines | Headline, link and date only |
 | SEC EDGAR | Filings, earnings (10-K/10-Q/8-K 2.02), fund filings | Requires a `User-Agent` with contact email |
-| GDELT 2.0 | News headlines | English-filtered; 2017+. Throttles per IP — see note below |
+| GDELT 2.0 | News headlines | English-filtered; 2017+. A company is searched under its everyday name and its own other names in one query ("Goldman Sachs Group" OR "Goldman Sachs"; `newsNamesFor`), except words printed around every article ("Google"), which only score headlines. Throttles per IP — see note below |
 | Wikipedia | Topic histories and company backstory | "History of ..." + "Timeline of ..." merged; search-index fallback |
 | LoC Chronicling America | Historical newspapers ~1770–1963 | Public domain; fills the pre-2017 gap |
 | Internet Archive | Catalogued items (reports, catalogues, film) | Relevance-ranked; impossible dates dropped |

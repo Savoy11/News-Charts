@@ -984,6 +984,94 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 25: a company's news found by its other names (2026-10-21)
+
+The owner chose this next. Batch 24 taught search that "Google" means Alphabet. News gathering
+still asked GDELT only for the everyday form of the company's SEC title ("GOLDMAN SACHS GROUP",
+"SCHWAB CHARLES", "CISCO SYSTEMS"). It also scored a headline as being about the company only when
+the headline used that name. So most of what is written about these companies never reached
+their pages.
+
+VERIFICATION_LINE
+
+- [x] **GDELT is searched, and headlines are scored, by the company's own other names.** The
+      everyday name is still the query. Up to three other names are OR'd into the same request,
+      so GDELT's one-request-every-five-seconds limit is not spent twice. Re-scoring
+      (`npm run score`) uses the same names. 190 companies have such names, and for 188 of them
+      the GDELT query is wider. Examples:
+      - Goldman Sachs Group: "goldman sachs". Charles Schwab: "charles schwab". Cisco: "cisco".
+        Toyota: "toyota". Verizon: "verizon".
+      - RTX: "raytheon technologies". Strategy: "microstrategy". TSMC: "tsmc".
+      - Block: "square inc". Elevance: "anthem inc". American Airlines Group: "american airlines".
+      - Measured on 2026-10-21, once GDELT answered: "GOLDMAN SACHS GROUP" returned 100 pages,
+        5 with Goldman Sachs in the headline. With "goldman sachs" OR'd in, 12 of 100 did.
+- [x] **Words printed around every article only score headlines.** GDELT matches a word anywhere
+      on a page and returns the newest 100 pages. Measured on 2026-10-21:
+      - "Alphabet" returned 100 pages. One had the company in its headline: "OpenAI to sell its top
+        models on Google Cloud", which only the name "Google" recognises.
+      - "Alphabet" OR "google" returned 97 pages from the last few minutes, and none had the
+        company in its headline. "Google" is on nearly every news page, most likely in lines like
+        "Follow us on Google News".
+      - So "google", "facebook", "amazon" and other web-platform words (`gdeltNames` in
+        `lib/news.ts`) stay out of the query. They still score headlines. Alphabet and Amazon are
+        asked for as before, and their stories that say "Google" or "Amazon" now count.
+- [x] **Only names that are the same company's.** News is dated, so a name may claim it only when
+      the company behind the name *is* this one. These rules are in `lib/companyAliases.ts`,
+      and each entry in `data/company-aliases.json` now records its kind and whether news may
+      use it.
+      - **Its own names, current and former.** Meta's "Facebook, Inc." until 2021 is Meta's own
+        history.
+      - **A predecessor whose ticker carried on.** Google Inc.'s GOOG and GOOGL became Alphabet's
+        in 2015, so Google's news from 2004 is Alphabet's. Measured: the former registrants whose
+        tickers carried on are Google, the American, United and Alaska airlines and US Foods,
+        plus three subsidiaries filed under their parent's ticker.
+      - **Never an acquired company's.** Every acquisition fails the ticker test: Sun
+        Microsystems' 1990s news is not Oracle's, nor Red Hat's IBM's, nor Whole Foods'
+        Amazon's. These names stay search-only, and so do the looser Wikidata aliases ("P&G").
+        Wikidata's start dates could not tell the two cases apart: they make Cisco younger than
+        AppDynamics, and would count Fox buying Credible as a predecessor.
+      - **Never a brand that went to another company.** Motorola, Inc. became Motorola Solutions
+        in 2011, and its phones became Motorola Mobility (Lenovo's since 2014). A "Motorola"
+        headline since then is nearly always a phone. So the old Motorola item's names stay
+        search-only (`KNOWN_NOT_NEWS`), and "Motorola" still opens Motorola Solutions.
+      - **A one-word name** finds news only when the company is very well known (Wikipedia
+        articles in 50+ languages: "google", "cisco") or the word is coined, with a capital inside
+        it ("MicroStrategy"). "Square" and "Anthem" are words first. Block's "square inc" and
+        Elevance's "anthem inc" are used instead.
+      - **No name that only extends the one already asked for.** "oracle corporation" adds
+        nothing beside "Oracle". A name search already resolves is kept for news only when it is
+        not that form: "american airlines" beside "American Airlines Group".
+      - 558 of the 1,533 names may be used for news. Search answers are unchanged: a comparison
+        of 23,741 name queries found 0 differences against batch 24.
+      - [ ] **Open:** some everyday names keep a stray mark from the SEC title, so their news and
+        Federal Register searches ask for the wrong thing. "TOYOTA MOTOR CORP/", "AMETEK INC/",
+        "RUSH ENTERPRISES INC \TX\" and "Blue Acquisition Corp/Cayman" are among about 30
+        (`commonName` in `lib/sec.ts`). Separately, an accented letter splits a stored name:
+        "Estée Lauder" is kept as "est e lauder", which no headline matches (`nameKey` in
+        `lib/companyAliases.ts`). Both clean-ups change search answers too, so they need their
+        own whole-index comparison.
+      - [ ] **Open:** GDELT returns the newest 100 matching pages, so a company whose name is also
+        a common word gets mostly unrelated pages: 1 in 100 for "Alphabet", 5 in 100 for "GOLDMAN
+        SACHS GROUP". Scoring keeps the unrelated pages off the page, but they still use up the
+        100 places. GDELT's relevance sort and its `repeat3:` operator (the word at least three
+        times on the page) are worth measuring from a host GDELT answers; this session was refused
+        most of the day.
+- Not done here: the Federal Register's documents naming a company are still searched under one
+  name. It takes a request per name, and Google's FTC orders say "Google LLC". The historical
+  sources are untouched too.
+- Checks: `check:aliases` 44 → 70.
+  - The news rules, run on Wikidata-shaped items, Motorola included.
+  - The committed file: news only from own or predecessor names, and never from
+    `KNOWN_NOT_NEWS`.
+  - `newsNamesFor` for GOOGL, META, AMZN, MSI and ORCL.
+  - The GDELT query, both as built and as sent: OR'd for Goldman Sachs and RTX, and never with
+    "google" in it.
+  - Headline scoring: a "Google" headline counts for Alphabet, while Times Square does not count
+    for Block.
+  - The ingest and re-score wiring. `check:recall`'s GDELT wiring assert follows `gdeltNames`.
+  - Each fix was removed in turn: the platform-word list, the Motorola rule, the rebuilt name
+    file, and the ingest label. Each time, its checks failed.
+
 ## NC ledger — batch 24: other names for companies, from Wikidata (2026-10-21)
 
 The owner chose this next. It closes **NC-004**. It also corrects batch 23's note on "Google":

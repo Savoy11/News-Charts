@@ -12,7 +12,26 @@
  * WAF rule is the durable answer; this is the floor that holds wherever the app runs.
  *
  * Runs in `proxy.ts` and imports nothing from Node, so it would run on either runtime.
+ *
+ * **Nothing outlives its window by more than a minute.** Expired windows used to be cleared only
+ * once 10,000 clients had piled up, so on a quiet site an IP address — and, in the Federal Register
+ * limiter, the search terms it sent — stayed in memory until a restart, while the privacy page said
+ * the counts "disappear within an hour" (audit 2026-10-21 #5). A timer now clears every expired
+ * window each minute, and `check:legal` holds the page to it.
  */
+
+/** The page-request window, and the Federal Register terms window — the privacy page reads both. */
+export const REQUEST_WINDOW_MS = 60_000;
+export const TERMS_WINDOW_MS = 3_600_000;
+/** How often expired windows are cleared: the most a client's entry outlives its window. */
+export const SWEEP_EVERY_MS = 60_000;
+
+/** Runs `sweep` every `everyMs`; a timer that never keeps a process alive on its own. */
+export type SweepSchedule = (sweep: () => void, everyMs: number) => void;
+const sweepTimer: SweepSchedule = (sweep, everyMs) => {
+  const timer = setInterval(sweep, everyMs) as unknown as { unref?: () => void };
+  timer.unref?.();
+};
 
 export interface Verdict {
   allowed: boolean;
@@ -26,15 +45,18 @@ export class FixedWindowLimiter {
   constructor(
     readonly limit: number,
     readonly windowMs: number,
-    /** past this many tracked clients, expired windows are swept before a new one is added */
-    private readonly maxKeys = 10_000
-  ) {}
+    /** past this many tracked clients, the oldest window is dropped before a new one is added */
+    private readonly maxKeys = 10_000,
+    schedule: SweepSchedule = sweepTimer
+  ) {
+    schedule(() => this.sweepExpired(Date.now()), Math.min(windowMs, SWEEP_EVERY_MS));
+  }
 
   /** Spend `cost` units for `key`; refused (and nothing spent) when that would pass the limit. */
   take(key: string, cost = 1, now = Date.now()): Verdict {
     let w = this.windows.get(key);
     if (!w || now - w.start >= this.windowMs) {
-      if (!w && this.windows.size >= this.maxKeys) this.sweep(now);
+      if (!w && this.windows.size >= this.maxKeys) this.makeRoom(now);
       w = { start: now, used: 0 };
       this.windows.set(key, w);
     }
@@ -44,8 +66,13 @@ export class FixedWindowLimiter {
     return { allowed: true, retryAfterSeconds };
   }
 
-  private sweep(now: number): void {
+  /** Forget every client whose window has ended. */
+  sweepExpired(now: number): void {
     for (const [k, w] of this.windows) if (now - w.start >= this.windowMs) this.windows.delete(k);
+  }
+
+  private makeRoom(now: number): void {
+    this.sweepExpired(now);
     // Every window still live: drop the oldest rather than grow without bound. A client forgotten
     // early gets a fresh window — the failure is a little leniency, never a refusal.
     if (this.windows.size >= this.maxKeys) {
@@ -73,14 +100,26 @@ export class DistinctLimiter {
   constructor(
     readonly limit: number,
     readonly windowMs: number,
-    private readonly maxKeys = 10_000
-  ) {}
+    private readonly maxKeys = 10_000,
+    schedule: SweepSchedule = sweepTimer
+  ) {
+    schedule(() => this.sweepExpired(Date.now()), Math.min(windowMs, SWEEP_EVERY_MS));
+  }
+
+  /** Forget every client whose window has ended — and the terms it sent with it. */
+  sweepExpired(now: number): void {
+    for (const [k, w] of this.windows) if (now - w.start >= this.windowMs) this.windows.delete(k);
+  }
+
+  get size(): number {
+    return this.windows.size;
+  }
 
   take(key: string, items: string[], now = Date.now()): Verdict {
     let w = this.windows.get(key);
     if (!w || now - w.start >= this.windowMs) {
       if (!w && this.windows.size >= this.maxKeys) {
-        for (const [k, x] of this.windows) if (now - x.start >= this.windowMs) this.windows.delete(k);
+        this.sweepExpired(now);
         if (this.windows.size >= this.maxKeys) {
           const oldest = this.windows.keys().next().value;
           if (oldest !== undefined) this.windows.delete(oldest);

@@ -10,7 +10,7 @@
  */
 
 import { readFileSync } from "node:fs";
-import { describeItems, leadItem, reportsResults } from "../lib/secForms";
+import { BUSY_PROSPECTUS_DAYS, describeItems, leadItem, pageFilings, reportsResults } from "../lib/secForms";
 import type { TimelineEvent } from "../lib/types";
 
 let pass = 0;
@@ -118,7 +118,7 @@ async function main(): Promise<void> {
   // 2026-10-17 proposal 2: the material forms already in every record, as the owner chose them
   // on 2026-10-18 — corrections, mergers, large stakes, offerings and exits; no insider trades.
   console.log("\nThe material forms EDGAR already sends");
-  const more: [form: string, date: string, items: string][] = [
+  const more: [form: string, date: string, items: string, fileNumber?: string][] = [
     ["10-K/A", "2026-03-02", ""],
     ["8-K/A", "2026-03-03", "5.02,9.01"],
     ["8-K/A", "2026-03-04", "2.02"],
@@ -140,6 +140,9 @@ async function main(): Promise<void> {
     ["3", "2026-03-18", ""],
     ["5", "2026-03-18", ""],
     ["144", "2026-03-18", ""],
+    // The company's own stake in another issuer: in its record such a filing has no file number
+    // (a stake in the company carries the company's 005- number, as EDGAR's records do).
+    ["SC 13G/A", "2025-02-10", "", ""],
   ];
   const record = (list: typeof more, offset: number) => ({
     form: list.map((r) => r[0]),
@@ -147,10 +150,12 @@ async function main(): Promise<void> {
     accessionNumber: list.map((_, i) => `0000000001-26-${String(offset + i).padStart(6, "0")}`),
     primaryDocument: list.map(() => "a.htm"),
     items: list.map((r) => r[2]),
+    fileNumber: list.map((r) => r[3] ?? (/13[DG]/.test(r[0]) ? "005-00001" : "001-00001")),
   });
   // the third 424B2 of the day sits in an older shard: a day split across blocks is still one row
   const shard: typeof more = [["424B2", "2026-03-16", ""]];
   let wide: TimelineEvent[] = [];
+  const othersStakes: string[] = [];
   try {
     globalThis.fetch = (async (input: RequestInfo | URL) =>
       new Response(
@@ -162,7 +167,7 @@ async function main(): Promise<void> {
         { status: 200 }
       )) as typeof fetch;
     const { getFilingsDeep } = await import("../lib/sec");
-    wide = await getFilingsDeep({ ticker: "TST", cik: "0000000001", name: "Test Co" }, true);
+    wide = await getFilingsDeep({ ticker: "TST", cik: "0000000001", name: "Test Co" }, true, [], othersStakes);
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -184,6 +189,18 @@ async function main(): Promise<void> {
   check("  …and a single one links its own document",
     wide.some((e) => e.title === "Test Co: Prospectus (424B5)" && e.date === "2026-03-17" && /\/Archives\/edgar\/data\/1\//.test(e.url ?? "")));
   check("insider-trade forms stay out", !wide.some((e) => /\((?:3|4|5|144)\)$/.test(e.title) || e.date === "2026-03-18"));
+  // Found measuring audit 2026-10-21 #4: JPMorgan's page called 190 of its 192 recent 13Gs — its
+  // own stakes in 3M, DigitalOcean and the rest — "Passive investor stake over 5%", as if in JPM.
+  check("a company's own stake in another issuer is not shown as a stake in it",
+    !wide.some((e) => e.date === "2025-02-10"), wide.filter((e) => e.date === "2025-02-10").map((e) => e.title).join(" | "));
+  check("  …and is handed back, so ingest can unlink what an earlier run stored",
+    othersStakes.length === 1 &&
+      othersStakes[0] === `000000000126${String(100 + more.filter((_, i) => i !== 14).findIndex((r) => r[3] === "")).padStart(6, "0")}`,
+    othersStakes.join(","));
+  const ingestStakes = readFileSync("scripts/ingest.ts", "utf8");
+  check("  …which it does, for this company only",
+    /getFilingsDeep\(company, true, renames, othersStakes\)/.test(ingestStakes) &&
+      /DELETE FROM event_subjects es[\s\S]{0,200}?es\.subject_id = \$1[\s\S]{0,200}?s\.key = 'sec_edgar' AND a\.external_id = ANY\(\$2::text\[\]\)/.test(ingestStakes));
   if (reSrc) {
     const FORM_RE = new RegExp(reSrc, "i");
     const unread = wide.filter((e) => !FORM_RE.test(e.title)).map((e) => e.title);
@@ -268,7 +285,67 @@ async function main(): Promise<void> {
     fundEvents.map((e) => e.title).join(" | "));
   const ingestSrc = readFileSync("scripts/ingest.ts", "utf8");
   check("company ingest stores the old names as search aliases",
-    /getFilingsDeep\(company, true, renames\)/.test(ingestSrc) && /formerNameAliases\(renames, company\.name\)/.test(ingestSrc));
+    /getFilingsDeep\(company, true, renames, othersStakes\)/.test(ingestSrc) && /formerNameAliases\(renames, company\.name\)/.test(ingestSrc));
+
+  /**
+   * Audit 2026-10-21 #4: a bank files structured-note prospectuses nearly every business day, so
+   * JPMorgan's page carried 5,022 dated 424B2 rows and came to 5.4 MB — over the 2 MB Next caches,
+   * so its page was rebuilt for every visitor. Rows shaped the way `loadEvents` returns them.
+   */
+  console.log("\nA note programme is one row a month; an offering keeps its day");
+  const stored = (date: string, title: string, i: number): TimelineEvent => ({
+    id: `db-${i}`, date, type: "filing", title, source: "SEC EDGAR", precision: "day", relevance: 0.9,
+    url: `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000019617&type=424B2&dateb=${date.replace(/-/g, "")}&owner=include&count=40`,
+    description: "148 offering documents for new securities filed this day under 424B2, grouped into one row.",
+    externalId: `sec:19617:424B2:${date}`,
+  });
+  const october = ["2026-10-01", "2026-10-02", "2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08"];
+  const bankRows: TimelineEvent[] = [
+    ...october.map((d, i) => stored(d, `BIG BANK: Prospectuses ×${10 + i} (424B2)`, i)),
+    stored("2026-09-15", "BIG BANK: Prospectus (424B5)", 50), // an offering priced on one day
+    stored("2026-09-16", "BIG BANK: Prospectuses ×2 (424B5)", 51),
+    { ...stored("2026-10-03", "BIG BANK: Quarterly report (10-Q)", 52), type: "earnings" },
+    { ...stored("2026-10-04", "Fed policy statement (FOMC)", 53), type: "macro" },
+  ];
+  const paged = pageFilings(bankRows, "0000019617");
+  const month = paged.filter((e) => /424B2/.test(e.title));
+  check(`a form filed on ${BUSY_PROSPECTUS_DAYS}+ days of a month becomes one row for the month`,
+    month.length === 1 && month[0].title === "BIG BANK: Prospectuses ×75 on 6 days (424B2)" && month[0].date === "2026-10-01" && month[0].precision === "month",
+    month.map((e) => `${e.date} ${e.title}`).join(" | "));
+  check("  …linking EDGAR's list of that form up to the month's last filing",
+    /type=424B2&dateb=20261008/.test(month[0]?.url ?? ""), month[0]?.url);
+  check("  …while an offering's dated rows are kept as they are",
+    paged.filter((e) => /424B5/.test(e.title)).map((e) => e.date).join(",") === "2026-09-15,2026-09-16");
+  check("  …and every other row passes through, in date order",
+    paged.some((e) => /10-Q/.test(e.title)) && paged.some((e) => e.type === "macro") &&
+      paged.every((e, i) => i === 0 || paged[i - 1].date <= e.date), paged.map((e) => e.date).join(","));
+  {
+    // Twenty years of a bank's daily note programme, its other filings, every close since 1972
+    // and the economy rows, as a held page carries them.
+    const filings: TimelineEvent[] = [];
+    for (let y = 2006; y < 2026; y++)
+      for (let m = 1; m <= 12; m++)
+        for (let d = 1; d <= 21; d++) {
+          const date = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+          filings.push(stored(date, `JPMORGAN CHASE & CO: Prospectuses ×${d * 7} (424B2)`, filings.length));
+        }
+    // JPMorgan's measured shape once trimmed: 2,903 filing rows, 11,744 closes, 470 economy rows.
+    for (let i = 0; i < 2700; i++) filings.push(stored(`2010-01-${String((i % 28) + 1).padStart(2, "0")}`, "JPMORGAN CHASE & CO: Other events (8-K 8.01)", 90_000 + i));
+    const prices = Array.from({ length: 11_744 }, (_, i) => ({ time: "1980-03-17", value: 0.123456 + (i % 250), volume: 12_345_678 }));
+    const macro = Array.from({ length: 470 }, (_, i) => stored("2000-01-01", `CPI report: consumer prices for month ${i}`, 80_000 + i));
+    const mb = (n: number) => `${(n / 1e6).toFixed(2)} MB`;
+    const whole = JSON.stringify({ events: filings, prices, macro }).length;
+    const timeline = JSON.stringify({ events: pageFilings(filings, "0000019617"), prices: [], macro }).length;
+    const closes = JSON.stringify(prices).length;
+    check("a heavy filer's page fits the 2 MB Next will cache, as two entries",
+      whole > 2_000_000 && timeline < 2_000_000 && closes < 1_000_000, `${mb(whole)} → timeline ${mb(timeline)} + prices ${mb(closes)}`);
+  }
+  const pageData = readFileSync("lib/page-data.ts", "utf8");
+  check("  …the held company page is built through it",
+    /pageFilings\(\[\.\.\.events, \.\.\.withoutSharedSectorRows\(events, sector\)\], subject\.cik\)/.test(pageData));
+  check("  …and its prices are cached as an entry of their own",
+    /return page && \{ \.\.\.page, prices: \[\] \};/.test(pageData) && /\["held-company-prices", "v1"\]/.test(pageData) &&
+      /prices: await cachedHeldPrices\(k\)/.test(pageData));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);

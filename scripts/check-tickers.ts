@@ -97,6 +97,52 @@ async function main(): Promise<void> {
   check("an ambiguous prefix still takes the largest", apple?.ticker === "AAPL", apple?.ticker ?? "null");
   check("nothing was fetched for either", asked.length === 0, asked.join(", "));
 
+  // Audit 2026-10-21 #2: the name rungs compared raw titles, so a comma, hyphen or apostrophe
+  // decided the answer — "BlackRock" reached a closed-end trust because BLK's title is
+  // "BlackRock, Inc.", and "Coca-Cola" reached CCEP because KO's is "COCA COLA CO".
+  console.log("\nPunctuation never decides which company a name finds");
+  for (const [query, want] of [
+    ["BlackRock", "BLK"], // not BSTZ, BlackRock Science & Technology Term Trust
+    ["Coca-Cola", "KO"], // not CCEP, "COCA-COLA EUROPACIFIC PARTNERS plc"
+    ["Home Depot", "HD"], // "HOME DEPOT, INC."
+    ["Lowe's", "LOW"], // "LOWES COMPANIES INC"
+    ["McDonald's", "MCD"], // "MCDONALDS CORP"
+    ["Macy's", "M"], // "Macy's, Inc."
+    ["Nike", "NKE"], // "NIKE, Inc."
+    ["Cheniere Energy", "LNG"], // not CQP, "Cheniere Energy Partners, L.P."
+    ["Banco Santander", "SAN"], // not BSBR, "Banco Santander (Brasil) S.A."
+    ["Amazon.com", "AMZN"], // "AMAZON COM INC"
+    ["U.S. Bancorp", "USB"], // "US BANCORP DE" — found with the spaces folded too
+    ["O'Reilly Automotive", "ORLY"], // "O REILLY AUTOMOTIVE INC"
+    ["Wal-Mart", "WMT"], // "Walmart Inc."
+  ] as const) {
+    const got = resolveTickerLocally(query);
+    check(`"${query}" finds ${want}`, got === want, got ?? "null");
+  }
+  // …while a space the visitor typed still counts: these were right before, and folding spaces
+  // first would have sent them to PureCycle Technologies and Blackstone.
+  check("a typed space is meant: \"Pure Cycle\" is Pure Cycle Corp, not PureCycle", resolveTickerLocally("Pure Cycle") === "PCYO", resolveTickerLocally("Pure Cycle") ?? "null");
+  check("  …and \"Black Stone\" is Black Stone Minerals, not Blackstone", resolveTickerLocally("Black Stone") === "BSM", resolveTickerLocally("Black Stone") ?? "null");
+  check("  …and a name still ends at a word: \"Meta\" is not \"Metalla\"", resolveTickerLocally("Meta") === "META", resolveTickerLocally("Meta") ?? "null");
+  {
+    // Every "Name, Inc."-shaped title in the index, looked up by the name before its comma: 36 of
+    // 2,794 found their own company before this; a handful of shared names ("First Bancorp",
+    // "Citizens") rightly go to the larger filer.
+    const rows = index.companies as [number, string, string][];
+    const cikOf = new Map(rows.map(([c, t]) => [t, c]));
+    let shaped = 0;
+    let own = 0;
+    for (const [cik, , title] of rows) {
+      const m = /^(.+?),\s*(inc|corp|co|ltd|llc|plc|lp|l\.p|n\.v|s\.a|sa|ag|se)\b\.?/i.exec(title);
+      if (!m) continue;
+      shaped++;
+      const got = resolveTickerLocally(m[1]);
+      if (got && cikOf.get(got) === cik) own++;
+    }
+    check("nearly every \"Name, Inc.\" company is found by its own name", shaped > 2000 && own / shaped > 0.99, `${own}/${shaped}`);
+  }
+  check("  …and none of that asked the network", asked.length === 0, asked.join(", "));
+
   console.log("\nA fund resolves from the index, name included");
   // This used to cost a request: the fund files carry no names, so a fund page fetched the
   // REGISTRANT record just to have something to call it — and got the trust ("VANGUARD INDEX

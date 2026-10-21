@@ -7,8 +7,9 @@ import { configProblem } from "../lib/db";
  *
  *   npm run verify:addresses
  *
- * **Run this on a networked machine, not in CI here.** Egress is blocked from the build
- * container, so every entry would report "unreachable" — which looks like a finding and is not.
+ * **Run it where the RPC hosts answer.** A container whose network policy does not allow them
+ * reports every entry "unreachable" — which looks like a finding and is not. On 2026-10-21 the
+ * cloud session reached the network but none of `RPC_ENDPOINTS`, so all four came back that way.
  *
  * The point is that a wrong address fails quietly. It either never matches, so a counterparty
  * silently goes unnamed, or it matches the wrong contract, so events are filed under the wrong

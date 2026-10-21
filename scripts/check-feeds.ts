@@ -168,8 +168,9 @@ async function main() {
     const known = c?.proposalsCount != null ? ` (space holds ${c.proposalsCount} proposals)` : "";
     report(`Snapshot ${g.space}`, await safe(getGovernanceFor(g.slug)), `(closed proposals only)${known}`);
   }
-  // ⚠ Check the amounts on the first real run: DefiLlama reports millions, and a unit error
-  // shows here as "$600" where "$600m" belongs — obvious on screen, invisible offline.
+  // DefiLlama reports exploit amounts in plain dollars (Ronin ≈ 624,000,000, pinned by
+  // check:live). Read as millions they were once published 10^6 too high; "$624m" is right, and
+  // "$624000000m" or "$0m" is the unit error back — obvious on screen, invisible offline.
   report("USDT supply (Issue/Redeem)", await safe(getUsdtSupplyMoves()), "(needs ETHERSCAN_API_KEY)");
   for (const t of EXPLOIT_TARGETS) {
     report(`Exploits (${t.slug})`, await safe(getExploitsFor(t.slug)), "(attributed, not confirmed on-chain)");

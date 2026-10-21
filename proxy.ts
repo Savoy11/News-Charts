@@ -3,7 +3,9 @@ import {
   DistinctLimiter,
   FixedWindowLimiter,
   NEW_TERMS_PER_HOUR,
+  REQUEST_WINDOW_MS,
   REQUESTS_PER_MINUTE,
+  TERMS_WINDOW_MS,
   clientKey,
   normaliseTerms,
 } from "./lib/rateLimit";
@@ -23,8 +25,8 @@ import {
  * `req.ip`, which self-hosted Next never filled in anyway — the client comes from the forwarded
  * headers alone (NC-166).
  */
-const requests = new FixedWindowLimiter(REQUESTS_PER_MINUTE, 60_000);
-const newTerms = new DistinctLimiter(NEW_TERMS_PER_HOUR, 3_600_000);
+const requests = new FixedWindowLimiter(REQUESTS_PER_MINUTE, REQUEST_WINDOW_MS);
+const newTerms = new DistinctLimiter(NEW_TERMS_PER_HOUR, TERMS_WINDOW_MS);
 
 function tooMany(retryAfterSeconds: number): NextResponse {
   return NextResponse.json(

@@ -243,12 +243,13 @@ check(
   check(
     "held company and topic reads are cached for 15 minutes",
     /const PAGE_CACHE_SECONDS = 900;/.test(pageData) &&
-      /unstable_cache\(\(key: string\) => heldCompanyPage\(key\)/.test(pageData) &&
+      // a company page's prices are their own entry (audit 2026-10-21 #4), the rest one entry
+      /unstable_cache\(\s*async \(key: string\) => \{\s*const page = await heldCompanyPage\(key\);/.test(pageData) &&
       /unstable_cache\(\(key: string\) => heldTopicPage\(key\)/.test(pageData)
   );
   check(
     "a cached 'not held' is re-checked live, so a new subject is never hidden",
-    /return cached \? revive\(cached\) : heldCompanyPage\(k\);/.test(pageData) &&
+    /return cached \? \{ \.\.\.revive\(cached\), prices: await cachedHeldPrices\(k\) \} : heldCompanyPage\(k\);/.test(pageData) &&
       /return cached \? revive\(cached\) : heldTopicPage\(k\);/.test(pageData)
   );
   check(

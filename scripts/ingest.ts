@@ -405,6 +405,7 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   }
 
   const renames: Rename[] = [];
+  const othersStakes: string[] = [];
   await run("sec_edgar", company.ticker, async () => {
     /**
      * The scheduler takes the WHOLE history, not just EDGAR's recent block.
@@ -418,9 +419,25 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
      * Deep here and shallow in the first pass, deliberately: this path has no deadline and runs
      * on a refresh window, while the first pass runs with a visitor waiting on an 8s budget.
      */
-    const events = await getFilingsDeep(company, true, renames);
+    const events = await getFilingsDeep(company, true, renames, othersStakes);
     return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
   });
+
+  /**
+   * The company's own stakes in other issuers are left out of its filings (`filingsFromBlock`),
+   * but an ingest before 2026-10-21 linked them here, as stakes *in* it. Unlink those from this
+   * company only: the same filing is, correctly, a stake in the issuer it names.
+   */
+  if (othersStakes.length) {
+    const { rowCount } = await client.query(
+      `DELETE FROM event_subjects es
+         USING event_attestations a, sources s
+        WHERE es.subject_id = $1 AND a.event_id = es.event_id
+          AND s.id = a.source_id AND s.key = 'sec_edgar' AND a.external_id = ANY($2::text[])`,
+      [subjectId, othersStakes]
+    );
+    if (rowCount) line("sec_edgar", `unlinked ${rowCount} of its own stakes in other issuers`);
+  }
 
   /**
    * The names the company used to file under, as search aliases — so "Facebook" finds a held
@@ -454,7 +471,7 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    * The company's story predates its ticker.
    *
    * Wikipedia history and its cited articles cover the run-up to going public, which filings and
-   * news feeds cannot reach — it is what fills the "Before the ticker" section. The page path
+   * news feeds cannot reach — it is what fills the "Before the chart" section. The page path
    * fetched this on every company render and the scheduler cut-over dropped it, so a company
    * ingested since has had no history at all.
    *
@@ -569,8 +586,9 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   }
 
   /**
-   * Every daily close since listing, read once; routine refreshes then read ten years, which is
-   * all a new close needs (NC-077). A chart used to begin ten years before the company's first
+   * Every daily close Yahoo holds, read once; routine refreshes then read ten years, which is
+   * all a new close needs (NC-077). Yahoo's daily data begins in 1962, so for an older company
+   * that is where the chart starts, not its listing. A chart used to begin ten years before the company's first
    * ingest and never earlier, so a 2001 filing or a 1994 Fed decision had no price under it.
    * Read whole, the history replaces what was stored, so every close carries one adjustment.
    */

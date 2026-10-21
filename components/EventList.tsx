@@ -107,7 +107,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
  */
 function SiteSnapshotLink({ domain, date }: { domain: string; date: string }) {
   // Nothing was archived before 1996, so for an earlier event there is no capture to be near and
-  // no honest link to offer. This rendered on every pre-web row — the whole "Before the ticker"
+  // no honest link to offer. This rendered on every pre-web row — the whole "Before the chart"
   // section of a company like Ford — each one promising a page that does not exist.
   if (!waybackCouldHave(date)) return null;
   return (

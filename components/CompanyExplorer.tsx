@@ -152,8 +152,10 @@ export default function CompanyExplorer({ prices, events, macro = NO_EVENTS, sit
   );
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);
 
-  // The story before the ticker: events older than the first trading day can never sit
-  // on the price chart, so they get their own timeline — the run-up to going public.
+  // The story before the chart: events older than the earliest close can never sit on the price
+  // chart, so they get their own timeline. That close is where Yahoo's daily data begins — the
+  // listing for a younger company, but 1962-01-02 for IBM, GE, KO, BA and DIS alike, and 1972 for
+  // a Ford listed in 1956 — so it is never called the first trading day (audit 2026-10-21 #3).
   const firstTrade = prices[0]?.time ?? null;
   const preIpo = useMemo(
     () =>
@@ -240,10 +242,10 @@ export default function CompanyExplorer({ prices, events, macro = NO_EVENTS, sit
       {preIpo.length > 0 && (
         <section className="mb-6">
           <div className="mb-1.5 flex flex-wrap items-baseline gap-x-2">
-            <h2 className="text-lg font-bold text-slate-100">Before the ticker</h2>
+            <h2 className="text-lg font-bold text-slate-100">Before the chart</h2>
             <span className="text-xs text-slate-500">
-              {preIpo.length} events before the first trading day ({firstTrade}) — the run-up to
-              going public
+              {preIpo.length} events before our earliest daily price ({firstTrade}) — the run-up to
+              listing, or years before our price data begins
             </span>
           </div>
           <HorizontalTimeline events={preIpo} />

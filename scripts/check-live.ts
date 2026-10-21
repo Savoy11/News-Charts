@@ -257,10 +257,27 @@ export const CASES: LiveCase[] = [
     covers: ["yahoo_prices"],
     hosts: ["query1.finance.yahoo.com"],
     async run() {
-      // NC-077: asked by date this is every daily close; `range=max` came back monthly (169 points).
+      // NC-077: asked by date this is every daily close; `range=max` came back quarterly ("3mo").
       const r = await fetchDailyPrices("AAPL", "full");
       const out = [...outcomeProblems(r.outcome, r.detail), ...seriesProblems(r.points, 11_000, 7)];
       if (r.points[0] && r.points[0].time > "1981-01-01") out.push(`history starts ${r.points[0].time}, not at the December 1980 listing`);
+      return out;
+    },
+  },
+  {
+    name: "Yahoo chart — Walmart's 1970s closes keep their fractions of a cent",
+    covers: ["yahoo_prices"],
+    hosts: ["query1.finance.yahoo.com"],
+    async run() {
+      // Audit 2026-10-21 #1: rounded to cents, WMT's split-adjusted 1973–75 closes moved
+      // 0.01 → 0.02 six times — six "+100%" days. Its largest real daily move then was −16.8%.
+      const r = await fetchDailyPrices("WMT", "full");
+      const out = [...outcomeProblems(r.outcome, r.detail), ...seriesProblems(r.points, 13_000, 7)];
+      const early = r.points.filter((p) => p.time < "1976-01-01");
+      if (!early.some((p) => Math.round(p.value * 100) !== p.value * 100)) out.push("every pre-1976 close is a whole number of cents — rounded again");
+      let worst = 0;
+      for (let i = 1; i < early.length; i++) worst = Math.max(worst, Math.abs(early[i].value / early[i - 1].value - 1));
+      if (worst > 0.5) out.push(`a ${Math.round(worst * 100)}% day before 1976 — rounding makes moves like that`);
       return out;
     },
   },

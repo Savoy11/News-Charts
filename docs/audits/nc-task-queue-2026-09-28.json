@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 42,
-   "closed": 98,
+   "open": 41,
+   "closed": 99,
    "parked": 12,
    "blocked": 18
   },
@@ -42,8 +42,8 @@
    "owner-machine": 12,
    "owner-decision": 50
   },
-  "counts_recomputed_on": "2026-10-20",
-  "closed_by_annotation": 98
+  "counts_recomputed_on": "2026-10-21",
+  "closed_by_annotation": 99
  },
  "blocking_decisions": [
   {
@@ -422,7 +422,7 @@
      "scripts/check-search-log.ts",
      "scripts/check-focus.ts",
      "scripts/check-ui.ts",
-     "docs/MASTER-CHECKLIST.md:1072"
+     "docs/MASTER-CHECKLIST.md:1118"
     ]
    }
   },
@@ -2907,7 +2907,7 @@
   {
    "id": "NC-077",
    "title": "Check topic-over-company compare against real price history depth",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "data-verification",
@@ -2924,7 +2924,22 @@
      "lines": "1867-1870",
      "quote": "Events outside the price window cannot be plotted"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-21",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Measured with Yahoo reachable: range=10y gave 2,511 closes from 2016, and range=max is answered with MONTHLY closes (Ford 169 points from 1984) — which the NC-156 split re-read had been storing over daily series. Full history is now asked for by date (period1/period2: Ford 13,709 daily closes from 1972-06-01, IBM 16,309 from 1962, AAPL from 1980-12-12), read once per company and crypto asset (a successful read logged as '<ticker> full history'), then ten years on routine refreshes; a non-daily answer is refused. /compare topic events now have prices decades back. check:parsers +7 (fail on old code), check:live AAPL full-history case passing live; Ford backfilled live in a local database.",
+    "evidence": [
+     "lib/prices.ts",
+     "scripts/ingest.ts",
+     "lib/ingest/store.ts",
+     "scripts/check-parsers.ts",
+     "scripts/check-live.ts",
+     "docs/MASTER-CHECKLIST.md:987"
+    ]
+   }
   },
   {
    "id": "NC-078",
@@ -3038,7 +3053,7 @@
      "scripts/fixtures/macro-pages.json",
      "components/CompanyExplorer.tsx",
      "lib/page-data.ts",
-     "docs/MASTER-CHECKLIST.md:986"
+     "docs/MASTER-CHECKLIST.md:1026"
     ]
    }
   },
@@ -6415,7 +6430,7 @@
     "what": "Batch 19: Prompt search v2 (NC-008 closed) — a question naming a security and a concern opens the security's page with ?focus=, never splitting a real name; salvage keeps its tail; years in a focus narrow by date; the seven stale check:ui failures resolved.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1072"
+     "docs/MASTER-CHECKLIST.md:1118"
     ]
    },
    {
@@ -6423,7 +6438,7 @@
     "what": "Batch 20: question search matches other words for 15 common concerns (lib/concepts.ts — covid/pandemic/lockdown, tariffs, interest rates …), graded below the typed word and named on the focus bar; the search box hint invites a question. No ledger item opened or closed (a follow-up to NC-008, tracked in the checklist).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1041"
+     "docs/MASTER-CHECKLIST.md:1087"
     ]
    },
    {
@@ -6431,7 +6446,15 @@
     "what": "Batch 21: NC-080 closed — Fed policy statements (1994–) and CPI releases (2008–) on a curated economy subject, shown on company pages behind an Economy chip that starts off; batch 15's former-names fixture pinned from the real EDGAR record, which exposed and fixed an annotation bug ('APPLE COMPUTER INC/ FA').",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea with the Fed, BLS and SEC hosts reachable: the full `npm run check` chain, `npm run lint`, `next build`, the two new check:live cases, a live ingest into the local database, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:986"
+     "docs/MASTER-CHECKLIST.md:1026"
+    ]
+   },
+   {
+    "on": "2026-10-21",
+    "what": "Batch 22: NC-077 closed — every daily close since listing, read once (asked by date; range=max is monthly), then ten-year refreshes; fixed the split re-read that replaced daily charts with monthly closes; two live checks corrected (EDGAR rename links, Wikipedia throttle as UNREACHABLE).",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, check:live (14 pass, 0 fail, 2 unreachable, 1 skipped), a live backfill of F into a local database, and a check:ui run on a production build.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:987"
     ]
    }
   ]

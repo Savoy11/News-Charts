@@ -12,7 +12,7 @@ config({ path: ".env.local" });
  * mode these guard.
  */
 import { extractYear, parseCitations } from "../lib/wiki";
-import { dividendTitle, fetchDailyPrices, splitsIn } from "../lib/prices";
+import { dividendTitle, fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { dropCompanyPrehistory } from "../lib/history";
@@ -233,8 +233,16 @@ async function priceFetch(): Promise<void> {
     const ok = await fetchDailyPrices("F");
     check("closes come back as ok", ok.outcome === "ok" && ok.points.length === 2, ok.outcome);
     check("  …with the 10-year range by default", /range=10y/.test(asked), asked);
-    await fetchDailyPrices("F", "max");
-    check("a full history can be asked for", /range=max/.test(asked), asked);
+    await fetchDailyPrices("F", "full");
+    // NC-077: `range=max` is answered with monthly closes; a full history is asked for by date
+    check("a full history is asked for by date, from before any listing to now",
+      /period1=-2208988800&period2=\d{10}&interval=1d/.test(asked) && !/range=/.test(asked), asked);
+    answer(200, { chart: { result: [{ ...chart.chart.result[0], meta: { dataGranularity: "1mo" } }] } });
+    const monthly = await fetchDailyPrices("F", "full");
+    check("an answer of monthly closes is refused, never stored as the daily series",
+      monthly.outcome === "error" && monthly.points.length === 0 && /1mo/.test(monthly.detail ?? ""), `${monthly.outcome} ${monthly.points.length} ${monthly.detail}`);
+    answer(200, { chart: { result: [{ ...chart.chart.result[0], meta: { dataGranularity: "1d" } }] } });
+    check("  …while a daily answer that says so is kept", (await fetchDailyPrices("F", "full")).points.length === 2);
     check("the split marker is picked out of the actions", splitsIn(ok.actions).length === 1 && splitsIn(ok.actions)[0].title === "2:1 stock split");
     answer(429, {});
     check("a 429 is throttled, not empty", (await fetchDailyPrices("F")).outcome === "throttled");
@@ -254,8 +262,18 @@ async function priceFetch(): Promise<void> {
 
   const read = (f: string) => readFileSync(join(process.cwd(), f), "utf8");
   const ingest = read("scripts/ingest.ts");
-  check("company prices are windowed, backed off and logged under their own key", /due\.has\("yahoo_prices"\)/.test(ingest) && /shouldBackOff\(client, "yahoo_prices"/.test(ingest) && /"yahoo_prices",\s+subjectId,\s+company\.ticker,\s+daily\.outcome/.test(ingest));
-  check("a new split re-reads the whole history and replaces it", /splitNeedsFullHistory\(client, subjectId, daily\.points, splitsIn\(daily\.actions\)\)/.test(ingest) && /fetchDailyPrices\(company\.ticker, "max"\)/.test(ingest) && /writePrices\(client, subjectId, daily\.points, \{ replace, dropBefore \}\)/.test(ingest));
+  check("company prices are windowed, backed off and logged under their own key", /due\.has\("yahoo_prices"\)/.test(ingest) && /shouldBackOff\(client, "yahoo_prices"/.test(ingest) && /"yahoo_prices",\s+subjectId,[\s\S]{0,160}?company\.ticker,\s+daily\.outcome/.test(ingest));
+  check("a new split re-reads the whole history, daily, and replaces it", /splitNeedsFullHistory\(client, subjectId, daily\.points, splitsIn\(daily\.actions\)\)/.test(ingest) && /fetchDailyPrices\(company\.ticker, "full"\)/.test(ingest) && /writePrices\(client, subjectId, daily\.points, \{ replace, dropBefore \}\)/.test(ingest));
+  check("nothing asks Yahoo for range=max any more", !/"max"|range=max/.test(ingest) && !/range=max"|\?range=\$\{range\}/.test(read("lib/prices.ts")));
+  // NC-077: a chart began ten years before the company's first ingest and never earlier.
+  check("a company's whole daily history is read once, then ten years keep it current",
+    /const complete = await hasFullPriceHistory\(client, subjectId, company\.ticker\);/.test(ingest) &&
+      /fetchDailyPrices\(company\.ticker, complete \? "10y" : "full"\)/.test(ingest) &&
+      /replace \? fullHistoryQuery\(company\.ticker\) : company\.ticker/.test(ingest));
+  check("  …crypto prices too", /fetchDailyPrices\(asset\.yahooSymbol, complete \? "10y" : "full"\)/.test(ingest) && /whole \? fullHistoryQuery\(asset\.yahooSymbol\)/.test(ingest));
+  check("  …and the marker is a successful full read in the fetch log, one per symbol",
+    fullHistoryQuery("F") === "F full history" &&
+      /f\.query = \$2 AND f\.outcome = 'ok'/.test(read("lib/ingest/store.ts")) && /s\.key = 'yahoo_prices'/.test(read("lib/ingest/store.ts")));
   check("a company page needs events, not prices", /if \(!events\.length\) return null;/.test(read("lib/page-data.ts")));
   check("  …and says the chart is missing where it would be", /No price data for this security yet/.test(read("components/CompanyExplorer.tsx")));
   check("a first visit no longer counts a Yahoo refusal against a real company", /if \(!filings\.length\) \{/.test(read("lib/ingest/firstPass.ts")) && !/!daily\.points\.length/.test(read("lib/ingest/firstPass.ts")));

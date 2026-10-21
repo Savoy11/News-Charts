@@ -32,6 +32,18 @@ export interface FetchedPrices extends DailyPrices {
   detail?: string;
 }
 
+/** What a fetch asks for: the last ten years, or every daily close since the security listed. */
+export type PriceSpan = "10y" | "full";
+
+/**
+ * The fetch-log query a full-history read is recorded under. Ingest reads it back to know a
+ * series is complete, so routine refreshes can go back to ten years (NC-077).
+ */
+export const fullHistoryQuery = (symbol: string): string => `${symbol} full history`;
+
+/** 1900-01-01: before any listing Yahoo carries, so "from here" means "from the first close". */
+const BEFORE_ANY_LISTING = -2208988800;
+
 /**
  * Daily closes from the Yahoo Finance chart API (unofficial but stable, no key), with what
  * happened kept.
@@ -41,13 +53,20 @@ export interface FetchedPrices extends DailyPrices {
  * no extra key, and no extra rate-limit budget.
  *
  * A refusal used to come back as an empty series, so ingest could not tell "Yahoo had nothing"
- * from "Yahoo said no" — and logged neither (NC-103). `range` is 10 years for routine refreshes;
- * `max` is for re-reading a whole history after a split (NC-156).
+ * from "Yahoo said no" — and logged neither (NC-103).
+ *
+ * **Full history is asked for by date, never as `range=max`.** Yahoo answers `range=max` with one
+ * close a *month* whatever interval is requested — measured 2026-10-21: Ford's "max" was 169
+ * points from 1984, IBM's 261 from 1962 — while the same request by date returns every daily
+ * close (13,710 for Ford since June 1972). The split re-read (NC-156) asked for `max`, so a split
+ * replaced a company's daily chart with a monthly one. An answer that is not daily is now an
+ * error rather than a series.
  */
-export async function fetchDailyPrices(ticker: string, range: "10y" | "max" = "10y"): Promise<FetchedPrices> {
+export async function fetchDailyPrices(ticker: string, span: PriceSpan = "10y"): Promise<FetchedPrices> {
+  const window = span === "full" ? `period1=${BEFORE_ANY_LISTING}&period2=${Math.floor(Date.now() / 1000)}` : "range=10y";
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
     ticker
-  )}?range=${range}&interval=1d&events=div%2Csplits`;
+  )}?${window}&interval=1d&events=div%2Csplits`;
   let res: Response;
   try {
     res = await fetch(url, {
@@ -71,6 +90,17 @@ export async function fetchDailyPrices(ticker: string, range: "10y" | "max" = "1
       outcome: res.ok && !said ? "empty" : "error",
       httpStatus: res.status,
       detail: (said ?? (res.ok ? undefined : `HTTP ${res.status}`))?.slice(0, 200),
+    };
+  }
+
+  const granularity: string | undefined = result.meta?.dataGranularity;
+  if (granularity && granularity !== "1d") {
+    return {
+      points: [],
+      actions: [],
+      outcome: "error",
+      httpStatus: res.status,
+      detail: `Yahoo answered with ${granularity} closes, not daily — not stored`,
     };
   }
 

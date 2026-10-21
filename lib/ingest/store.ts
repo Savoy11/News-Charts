@@ -3,6 +3,7 @@ import { contentHash, dedupKey } from "./keys";
 import { FetchOutcome, PricePoint, SourceKey, TimelineEvent } from "../types";
 import { deterministicScore, type SubjectContext } from "../enrich/relevance";
 import { safeHref } from "../safeUrl";
+import { fullHistoryQuery } from "../prices";
 
 /**
  * Everything upsertEvent needs to score a row at link time: the subject it is being linked
@@ -656,6 +657,23 @@ export async function writePrices(
             volume = COALESCE(EXCLUDED.volume, prices.volume)`,
     [subjectId, points.map((p) => p.time), points.map((p) => p.value), points.map((p) => p.volume ?? null)]
   );
+}
+
+/**
+ * Whether this subject's whole daily history has been read — a successful full-history fetch in
+ * the log (NC-077). Until it has, ingest asks for every close since listing; after, ten years
+ * keep it current. The log is never purged, so this is read once per subject, not once per run.
+ */
+export async function hasFullPriceHistory(client: PoolClient, subjectId: number, symbol: string): Promise<boolean> {
+  const { rows } = await client.query(
+    `SELECT 1
+       FROM source_fetches f
+       JOIN sources s ON s.id = f.source_id AND s.key = 'yahoo_prices'
+      WHERE f.subject_id = $1 AND f.query = $2 AND f.outcome = 'ok'
+      LIMIT 1`,
+    [subjectId, fullHistoryQuery(symbol)]
+  );
+  return rows.length > 0;
 }
 
 /**

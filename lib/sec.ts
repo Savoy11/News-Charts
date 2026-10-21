@@ -31,6 +31,8 @@ interface TickerRow {
  * that the common case (every security EDGAR knew at sync time) now costs no request at all.
  */
 import rawTickerIndex from "../data/edgar-tickers.json";
+import rawCompanyAliases from "../data/company-aliases.json";
+import { nameKey, type AliasIndexFile } from "./companyAliases";
 
 /**
  * The index's contract, declared rather than inferred.
@@ -56,6 +58,9 @@ export interface TickerIndex {
 }
 
 const tickerIndex = rawTickerIndex as unknown as TickerIndex;
+const companyAliases = rawCompanyAliases as unknown as AliasIndexFile;
+/** When the alias index was built (`npm run sync:aliases`). */
+export const COMPANY_ALIASES_SYNCED_ON: string = companyAliases.syncedOn;
 
 let localRows: TickerRow[] | null = null;
 function localCompanies(): TickerRow[] {
@@ -191,7 +196,7 @@ function prefixHit(rows: TickerRow[], titles: string[], fq: string, form: NameFo
  */
 type NameForm = "words" | "compact";
 const NAME_FORMS: Record<NameForm, (s: string) => string> = {
-  words: (s) => s.toUpperCase().replace(/['’]/g, "").replace(/[^A-Z0-9&]+/g, " ").trim(),
+  words: nameKey,
   compact: (s) => s.toUpperCase().replace(/[^A-Z0-9&]/g, ""),
 };
 
@@ -224,6 +229,43 @@ function startsWithWords(title: string, cq: string): boolean {
 }
 
 /**
+ * A company by its EDGAR title: the whole title in either form, else a title prefix. The two
+ * are told apart because an alias — another whole name — ranks between them.
+ */
+function titleHit(rows: TickerRow[], q: string): { row: TickerRow; exact: boolean } | null {
+  for (const form of ["words", "compact"] as const) {
+    const fq = NAME_FORMS[form](q);
+    const at = fq ? titlesIn(rows, form).indexOf(fq) : -1;
+    if (at >= 0) return { row: rows[at], exact: true };
+  }
+  for (const form of ["words", "compact"] as const) {
+    const row = prefixHit(rows, titlesIn(rows, form), NAME_FORMS[form](q), form);
+    if (row) return { row, exact: false };
+  }
+  return null;
+}
+
+/**
+ * A company by another of its names — "Google" for Alphabet, "Facebook" for Meta, "P&G" — from
+ * the committed alias index (`lib/companyAliases.ts`, NC-004). Ranked after an exact title and
+ * before a title prefix: a whole name beats part of one, so "Google" no longer reaches a
+ * Google-themed ETF through the fund-name rung, while "Apple" is still Apple Inc.
+ */
+function aliasHit(rows: TickerRow[], q: string): TickerRow | null {
+  const entry = companyAliases.aliases[nameKey(q)];
+  return entry ? (rows.find((r) => r.cik_str === entry[0]) ?? null) : null;
+}
+
+/** The title rungs alone, against the committed index — what `npm run sync:aliases` compares with. */
+export function titleMatch(name: string): { cik: number; exact: boolean } | null {
+  const hit = titleHit(localCompanies(), name.trim().toUpperCase());
+  return hit ? { cik: hit.row.cik_str, exact: hit.exact } : null;
+}
+
+/** Every company the committed index lists, CIK and title, in the SEC's order. */
+export const TICKER_INDEX_COMPANIES: [number, string][] = tickerIndex.companies.map(([cik, , title]) => [cik, title]);
+
+/**
  * The company rungs, against whichever copy of the index the caller has.
  *
  * Split out so the local snapshot and the live file go through identical matching — two copies
@@ -231,14 +273,9 @@ function startsWithWords(title: string, cq: string): boolean {
  * every query, so a divergence would only ever show up for a newly listed company.
  */
 function matchCompany(rows: TickerRow[], q: string): CompanyInfo | null {
-  let hit = rows.find((r) => r.ticker === q) ?? null;
-  for (const form of ["words", "compact"] as const) {
-    if (hit) break;
-    const titles = titlesIn(rows, form);
-    const fq = NAME_FORMS[form](q);
-    const exact = fq ? titles.indexOf(fq) : -1;
-    hit = exact >= 0 ? rows[exact] : prefixHit(rows, titles, fq, form);
-  }
+  const byTicker = rows.find((r) => r.ticker === q);
+  const named = byTicker ? null : titleHit(rows, q);
+  const hit = byTicker ?? (named?.exact ? named.row : null) ?? aliasHit(rows, q) ?? named?.row ?? null;
   if (!hit) return null;
   return {
     ticker: hit.ticker,

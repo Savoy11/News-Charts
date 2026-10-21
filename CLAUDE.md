@@ -57,7 +57,10 @@ timeline narrowed and ranked by the concern. `lib/resolveSearch.ts` runs `parseS
 subject's name ("Jack in the Box"); `lib/focus.ts` grades events by the focus words and reads
 years as a date window; FocusBar and BestMatches show it. Other words for a common concern
 ("covid" → pandemic, lockdown) come from the curated list in `lib/concepts.ts` — read its rules
-before adding to it; a loose synonym fills a narrowed page with unrelated events.
+before adding to it; a loose synonym fills a narrowed page with unrelated events. A company's
+other names — "Google" for Alphabet, "Facebook" for Meta, "P&G" — come from Wikidata through the
+committed `data/company-aliases.json` (`npm run sync:aliases`); every rule about what may become a
+name is in `lib/companyAliases.ts`, and an exact EDGAR title always outranks an alias.
 
 ## Stack & layout
 
@@ -89,6 +92,7 @@ npm run check            # full offline check suite (parsers, dates, markers, �
 npm run check:boundary   # repo-boundary checks alone
 npm run db:migrate       # apply db/*.sql in order
 npm run ingest -- …      # pull events for a subject (see README)
+npm run sync:aliases     # rebuild data/company-aliases.json from Wikidata (after sync:tickers)
 ```
 
 The `check-*.ts` scripts in the `check` chain are offline by construction (network/fetch is

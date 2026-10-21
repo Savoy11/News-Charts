@@ -520,6 +520,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Federal Register | Sector-level rules and notices; documents naming a company | Keyword hits attach to industries; a title naming the company attaches to it (no airworthiness directives) |
 | Federal Reserve | FOMC policy statements since 1994 | Economy subject; on company pages behind the Economy chip (off by default). `npm run ingest -- --macro` |
 | BLS | CPI release dates since 2008 | Same subject and chip; needs a contact `User-Agent` |
+| Wikidata | Other names for listed companies, for search only ("Google" → Alphabet, "Facebook" → Meta, "P&G") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |
 | Snapshot | Protocol governance votes | Keyless GraphQL |

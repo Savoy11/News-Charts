@@ -984,6 +984,67 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 24: other names for companies, from Wikidata (2026-10-21)
+
+The owner chose this next. It closes **NC-004**. It also corrects batch 23's note on "Google":
+Alphabet's EDGAR record has no former names, so holding Alphabet would not have fixed it.
+
+`npm run check` passes (36 suites, with the new `check:aliases`) and `npm run lint` is clean.
+`next build` compiles. `check:ui` is 195/195 on a production build. `check:live` is 16 pass, 0 fail,
+2 unreachable (Wikipedia and GDELT throttling this cloud session), 1 skipped (needs an Etherscan
+key). HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **Search finds a company by the names people use, before the site holds it (NC-004).**
+      With nothing held, a search is answered from the committed EDGAR index, which knows only
+      legal titles. "Google" opened a Google-themed ETF, "Facebook" matched nothing, "Red Hat"
+      opened a company called RRR with a "Hat" filter, and "Sun Microsystems" went to Sunoco.
+      Now `npm run sync:aliases` reads Wikidata (CC0) and writes **1,465 names** to
+      `data/company-aliases.json`, and the company rungs read them:
+      - **Whose names.** A listed company's own label and official names, current and former
+        ("Facebook, Inc." is Meta's, ended 2021). Its Wikidata aliases too, but only when they
+        share a word with those names or are their initials ("IBM", "P&G"). Also the names of a
+        **former SEC registrant whose parent is now listed**: Google Inc. → Alphabet, Sun
+        Microsystems → Oracle, Red Hat → IBM, Whole Foods Market → Amazon, Aetna → CVS.
+      - **Not read:** Wikidata's "owned by" and "manufacturer" links. Measured, they map zinc to
+        Pfizer, the Titanic to Carnival and Suzuki to JPMorgan.
+      - **Rules, each from a name the sync actually met** (all in `lib/companyAliases.ts`):
+        - No nicknames ("Big G"), misspellings ("Wallmart") or a shampoo filed as P&G's alias
+          ("Rejoice"). No web addresses, bracketed places or stray digits.
+        - A one-word name needs a company with Wikipedia articles in 10+ languages, so not
+          "English" for a bank. A two-letter ampersand name needs 30+, so not "D&B" for Dave &
+          Buster's.
+        - An item must be the company: one carrying Snowflake's CIK was named only "Castor
+          Maritime".
+        - Another listed company's name stays its own. Trane's former name "Ingersoll-Rand" is
+          today's Ingersoll Rand. Wikidata still has SeaWorld under Blackstone, which sold it
+          in 2017.
+        - A name two companies claim is nobody's, and one known-wrong statement (WarnerMedia
+          under AT&T) is not read.
+      - **Ranking.** An exact EDGAR title still wins, an alias comes next, and a title prefix
+        after that. So "Apple" is Apple Inc. and "Google" no longer reaches a fund through the
+        fund-name rung. An alias beats a prefix only for the larger company: "J&J" is Johnson &
+        Johnson, while "United" stays UPS.
+      - **Measured.** Of 23,422 name queries built from the index, **4 answers changed**: "J&J",
+        "BNY Mellon" (twice) and "T. Rowe Price", each from a fund or a smaller namesake to the
+        company. No query lost its answer.
+      - Search only. These names do not feed the relevance scoring that decides whether a story
+        is about a company: a loose name there would pull unrelated stories onto a page.
+- Checks: `check:aliases` is new and in the chain, with 44 checks.
+  - The rules, run on names Wikidata really holds.
+  - The committed file against the ticker index beside it.
+  - The resolver: every exact EDGAR title still finds its own company.
+  - Search end to end with the database down.
+  - The sync's own queries.
+  - Against the old resolver, every alias search failed (shown above). The builder is new.
+  - `check:live` +1: Wikidata still has Google Inc. under Alphabet, and "Facebook, Inc." among
+    Meta's official names.
+- **For the owner:** pull, no migration. Run `npm run sync:aliases` after each `npm run
+  sync:tickers` (now in `docs/OWNER-ACTIONS.md`), and read the overrides it prints before
+  committing.
+- Ledger housekeeping: batch 23 repointed the ledger's line references into this file before
+  its results paragraph went in above them, so every later reference pointed 3 lines early. They are
+  repointed by content now, and each lands on the text it named before batch 23.
+
 ## NC ledger — batch 23: the 2026-10-21 code audit, fixed (2026-10-21)
 
 The owner chose a full code audit next. The `code-auditor` agent ran on `d36636d` (main after
@@ -1036,6 +1097,9 @@ throttling this cloud session), 1 skipped (needs an Etherscan key). HawkScan cou
       - Not fixed: with nothing held, "Google" still opens a Google-themed ETF (DEPW). EDGAR's index
         does not know Alphabet was Google. Once Alphabet is held, its EDGAR former name makes
         "Google" an alias (batch 15). Wikidata aliases (NC-004) would cover it before that.
+        *(Corrected 2026-10-21, batch 24: the middle sentence was wrong. Alphabet's EDGAR record
+        has no former names; Google Inc. is a separate registrant now under Alphabet. Batch 24's
+        Wikidata alias index fixes "Google" whether or not Alphabet is held.)*
 - [x] **Audit #3 (`P2`): "Before the ticker" called the start of Yahoo's data the first trading
       day.** IBM, GE, KO, BA and DIS all showed 1962-01-02, and Ford 1972, though it listed in
       1956. The section is now "Before the chart": events before *our earliest daily price*,
@@ -1321,11 +1385,11 @@ is 187/187 — every check green for the first time since the seven went stale, 
       fired, and check-relevance's own ALL list was missing two kinds.
 - [ ] `P2` Remaining from the recall/relevance design (judge-approved). **Corrected 2026-08-12:
       EDGAR older-history shards are now BUILT** (Ford 209 → 937 filings, back to 1994); this
-      entry listed them as unbuilt for a few hours after they shipped. Still open: graded focus
-      scoring + a "Best matches" strip; SSR focus via a dynamic sub-route; alias harvesting from
-      Wikidata (⚠ `query.wikidata.org` is unreachable from the build container); GDELT
-      year-window backfill (⚠ answers but throttles hard, 429/503); richer paid-tier evidence
-      with an aggregate spend cap (needs a paid key).
+      entry listed them as unbuilt for a few hours after they shipped. Still open: SSR focus via a
+      dynamic sub-route; GDELT year-window backfill (⚠ answers but throttles hard, 429/503);
+      richer paid-tier evidence with an aggregate spend cap (needs a paid key). *(Corrected
+      2026-10-21: graded focus scoring and the "Best matches" strip shipped in batch 19, and alias
+      harvesting from Wikidata in batch 24, once `query.wikidata.org` answered.)*
 - [x] `P2` **EDGAR's own former names — dated renames and search aliases.** Built 2026-10-19
       (batch 15; see that section): renames from the submissions record's `formerNames` go on
       the timeline as corporate actions, and the old everyday names become search aliases, so
@@ -1551,10 +1615,9 @@ already held, but new investment goes to securities coverage first.
 - [ ] `P2` The rest of the securities-coverage depth set: **GDELT year-window backfill** (GDELT
       answers from this container but throttles hard — 429/503 — so this needs the production
       host to develop against) and **richer paid-tier evidence** (needs a paid key). The LoC
-      decade walk and Wikidata alias harvesting serve companies too and keep their place —
-      ⚠ Wikidata is **unreachable from this container** (`query.wikidata.org`), so that one needs
-      a different environment rather than a different design. Topic-only recall items rank behind
-      all of these until the scope changes again.
+      decade walk serves companies too and keeps its place; Wikidata alias harvesting shipped in
+      batch 24 once `query.wikidata.org` answered from the cloud session. Topic-only recall items
+      rank behind all of these until the scope changes again.
 - [x] `P2` **Company pages show the Wikipedia lede their ingest already fetches.**
       ✅ **Done 2026-10-18 (batch 11)** — see that section for what shipped.
       `ingestCompany` calls `getTopicTimeline(name)` (`scripts/ingest.ts:442`), which returns a

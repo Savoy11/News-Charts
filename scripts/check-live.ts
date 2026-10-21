@@ -344,6 +344,30 @@ export const CASES: LiveCase[] = [
     },
   },
   {
+    name: "Wikidata — the names search borrows (Google is Alphabet's, Facebook was Meta's)",
+    // not an event source: these names only resolve searches (data/company-aliases.json)
+    covers: [],
+    hosts: ["query.wikidata.org"],
+    async run() {
+      // NC-004: the two names neither EDGAR record carries. Google Inc. (CIK 1288776) must still sit
+      // under Alphabet (CIK 1652044), and "Facebook, Inc." must still be one of Meta's official names.
+      const query = `SELECT ?parent ?name WHERE {
+        { ?g wdt:P5531 "0001288776" . ?g p:P749 ?st . ?st ps:P749 ?p . FILTER NOT EXISTS { ?st pq:P582 ?e } ?p wdt:P5531 ?parent }
+        UNION { ?m wdt:P5531 "0001326801" . ?m p:P1448/ps:P1448 ?name }
+      }`;
+      const res = await fetch(`https://query.wikidata.org/sparql?${new URLSearchParams({ query, format: "json" })}`, {
+        headers: { "User-Agent": "News Charts Research marcusowens94@gmail.com", Accept: "application/sparql-results+json" },
+      });
+      if (res.status === 429 || res.status === 503) throw new NoAnswer(`HTTP ${res.status}`);
+      if (!res.ok) return [`HTTP ${res.status}`];
+      const rows = ((await res.json()) as { results: { bindings: Record<string, { value: string }>[] } }).results.bindings;
+      const out: string[] = [];
+      if (!rows.some((r) => r.parent?.value === "0001652044")) out.push("Google Inc. is no longer under Alphabet in Wikidata");
+      if (!rows.some((r) => r.name?.value === "Facebook, Inc.")) out.push('"Facebook, Inc." is no longer among Meta\'s official names');
+      return out;
+    },
+  },
+  {
     name: "BLS — CPI release archive",
     covers: ["bls_cpi"],
     hosts: ["www.bls.gov"],

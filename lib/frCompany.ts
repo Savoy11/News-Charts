@@ -1,3 +1,4 @@
+import { foldAccents } from "./fold";
 import { commonName, listedNamesContaining } from "./sec";
 import type { FetchResult, TimelineEvent } from "./types";
 
@@ -20,7 +21,7 @@ export interface FrHit {
 }
 
 const words = (s: string) =>
-  ` ${s.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim()} `;
+  ` ${foldAccents(s).toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim()} `;
 
 /** Words that mark a name as a company's in a title: "Apple Inc.", "Intel Foundry Corporation". */
 const CORPORATE = new Set([

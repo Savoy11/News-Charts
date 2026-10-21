@@ -18,7 +18,7 @@ config({ path: ".env.local" });
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { collapseNearDuplicates } from "../lib/newsQuality";
-import { commonName } from "../lib/sec";
+import { commonName, TICKER_INDEX_COMPANIES } from "../lib/sec";
 import type { TimelineEvent } from "../lib/types";
 
 let pass = 0;
@@ -41,8 +41,36 @@ for (const [legal, everyday] of [
   ["ELI LILLY & Co", "ELI LILLY"],
   ["AT&T INC.", "AT&T"],
   ["JOHNSON & JOHNSON", "JOHNSON & JOHNSON"],
+  // batch 26: the marks and legal forms that still survived, measured across the whole index
+  ["TOYOTA MOTOR CORP/", "TOYOTA MOTOR"],
+  ["RUSH ENTERPRISES INC \\TX\\", "RUSH ENTERPRISES"],
+  ["AMARIN CORP PLC\\UK", "AMARIN"],
+  ["Blue Acquisition Corp/Cayman", "Blue Acquisition"],
+  ["Alight, Inc. / Delaware", "Alight"],
+  ["TRICO BANCSHARES /", "TRICO BANCSHARES"],
+  ["Spotify Technology S.A.", "Spotify Technology"],
+  ["Ferrari N.V.", "Ferrari"],
+  ["Energy Transfer LP", "Energy Transfer"],
+  ["GENMAB A/S", "GENMAB"],
+  ["EQUINOR ASA", "EQUINOR"],
+  ["AMERICA MOVIL SAB DE CV/", "AMERICA MOVIL"],
+  ["Vista Energy, S.A.B. de C.V.", "Vista Energy"],
+  ["XChange TEC.INC", "XChange TEC"],
+  // …while a slash inside a name, a hyphenated word and a number stay
+  ["CULLEN/FROST BANKERS, INC.", "CULLEN/FROST BANKERS"],
+  ["DATA I/O CORP", "DATA I/O"],
+  ["M/I HOMES, INC.", "M/I HOMES"],
+  ["ASSOCIATED BANC-CORP", "ASSOCIATED BANC-CORP"],
+  ["1847 Holdings LLC", "1847 Holdings"],
 ]) {
   check(`  "${legal}" is "${everyday}"`, commonName(legal) === everyday, commonName(legal));
+}
+{
+  // Every company the index lists, not only the cases above: on 2026-10-21, 302 everyday names
+  // still ended in a mark or a legal form, so news and Federal Register searches asked for them.
+  const LEFT_OVER = /[\\]|\/$|[\s,.](?:S\.?A|N\.?V|L\.?P|LLC|A\/S|ASA|AB|S\.?P\.?A|OYJ|TBK|S\.?A\.?B|DE C\.?V)\.?$/i;
+  const left = [...new Set(TICKER_INDEX_COMPANIES.map(([, title]) => commonName(title)))].filter((n) => LEFT_OVER.test(n));
+  check("no everyday name in the committed index keeps a mark or a legal form", left.length === 0, `${left.length} — ${left.slice(0, 4).join(" | ")}`);
 }
 
 // Source-text assert, the check-wiring pattern: the fix is one identifier, and reverting it

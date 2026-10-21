@@ -65,6 +65,8 @@ const OTHER_INGEST_PATHS: Partial<Record<SourceKey, string>> = {
   onchain: "ingestOnchain — chain milestones and stablecoin supply moves",
   snapshot: "ingestOnchain via lib/onchain — governance votes",
   defillama: "ingestOnchain via lib/onchain — attributed incidents",
+  fed_fomc: "ingestMacro via lib/macro — FOMC policy statements on the economy subject",
+  bls_cpi: "ingestMacro via lib/macro — CPI releases on the economy subject",
 };
 
 /**

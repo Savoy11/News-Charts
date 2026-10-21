@@ -36,7 +36,7 @@ export default function FeedKeysForm() {
             value={keys[feed.id] ?? ""}
             onChange={(e) => setKeys({ ...keys, [feed.id]: e.target.value })}
             placeholder="paste your key"
-            className="w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:border-sky-500 focus:outline-hidden"
+            className="w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:outline-hidden"
           />
           <span className="mt-1 block text-[11px] text-slate-500">{feed.hint}</span>
         </label>
@@ -49,7 +49,7 @@ export default function FeedKeysForm() {
             saveFeedKeys(keys);
             setStatus("Saved. Reload a timeline to see your feeds.");
           }}
-          className="rounded-md bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-500"
+          className="rounded-md bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800"
         >
           Save keys
         </button>
@@ -72,7 +72,8 @@ export default function FeedKeysForm() {
 
       <p className="rounded-md border border-slate-800 bg-slate-950/60 p-3 text-[11px] leading-relaxed text-slate-500">
         Your keys are stored in <strong className="text-slate-400">this browser only</strong> and
-        are sent directly to the publisher — they never reach a News Charts server. Articles
+        are sent directly to the publisher — they never reach a News Charts server, and a browser
+        holding one loads no ads here, so no ad script runs beside them. Articles
         fetched with them are shown to you and{" "}
         <strong className="text-slate-400">never saved</strong>: they were fetched under your
         licence, not ours, so keeping them would make this site the redistributor. That is the

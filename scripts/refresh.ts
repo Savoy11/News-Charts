@@ -27,10 +27,12 @@ import {
   TOPIC_SOURCES,
   ingestCompany,
   ingestIndustry,
+  ingestMacro,
   ingestOnchain,
   ingestTopic,
   type IngestOutcome,
 } from "./ingest";
+import { MACRO_SUBJECT } from "../lib/macro";
 import { ensureSources } from "../lib/ingest/store";
 import { markFailed, markFulfilled, pendingRequests, purgeStaleRequests } from "../lib/ingest/queue";
 import { subjectLockKey } from "../lib/ingest/firstPass";
@@ -76,6 +78,8 @@ async function refreshSubject(
     // refreshed after the first ingest — picked up by the 2026-10-17 opportunity scout.
     if (s.kind === "industry") return await ingestIndustry(client, s.slug);
     if (ONCHAIN_SLUGS.has(s.slug)) return await ingestOnchain(client, s.slug);
+    // a topic by kind, but its feeds are the Fed and BLS, not Wikipedia (NC-080)
+    if (s.slug === MACRO_SUBJECT.slug) return await ingestMacro(client);
     return await ingestTopic(client, s.slug);
   } finally {
     await client.query("SELECT pg_advisory_unlock($1, $2)", [k1, k2]).catch(() => {});
@@ -107,6 +111,14 @@ async function main(): Promise<void> {
       LIMIT $1`,
     [limit]
   );
+
+  /**
+   * The economy subject is curated, not requested: nothing would ever ask for it, so a database
+   * without it gets it here — history included — and from then on it is one more subject in the
+   * rotation, refreshed inside its daily windows.
+   */
+  const { rows: held } = await pool.query("SELECT 1 FROM subjects WHERE slug = $1", [MACRO_SUBJECT.slug]);
+  if (!held.length) rows.push({ slug: MACRO_SUBJECT.slug, kind: "topic", ticker: null });
 
   console.log(`\nRefreshing ${rows.length} subject(s)${dry ? " (dry run)" : ""}\n`);
 
@@ -189,7 +201,7 @@ async function main(): Promise<void> {
      * A 90-day policy that depends on an operator remembering to run a command is not a policy,
      * and the rows are visitor queries — the one kind of data worth deleting on time.
      */
-    const purged = await purgeOldResolutions(90);
+    const purged = await purgeOldResolutions();
     if (purged) console.log(`  purged ${purged} search log row(s) past the 90-day retention`);
     const stale = await purgeStaleRequests();
     if (stale) console.log(`  purged ${stale} unfulfilled request(s) nobody repeated in 90 days`);

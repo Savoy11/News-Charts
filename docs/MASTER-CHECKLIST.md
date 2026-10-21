@@ -388,7 +388,7 @@ stale prompt-search checks.
       `docs/decisions/2026-09-28-business-decisions.md`, linked from `CLAUDE.md`: D3, D13, D21,
       D22, the affiliate stance and the working pricing plan. Each is labelled as the ledger's
       summary, not the record, which lives in Finance Now's repo and was not read from here.
-      D22 is marked not yet applied here (NC-133).
+      D22 is marked not yet applied here (NC-133). *(Applied 2026-10-19, batch 17.)*
 - [ ] **NC-087 — advanced, not closed.** A junk or partial reply from a visitor's own model no
       longer hides its batch. Entries without a valid score are listed after the matches and
       counted in the panel, instead of being read as 0 and filtered out. Replies go through the
@@ -799,6 +799,335 @@ EDGAR's, which includes the ticker index's age check that failed in batch 13.
 - [x] `README.md` and `docs/COVERAGE-MAP.md` now say company pages carry the documents that name
       the company.
 
+## NC ledger — batch 15: companies' old names (2026-10-19)
+
+The owner merged batch 14 and chose proposal 9 next, with renames on the splits-and-dividends
+chip, renamed "Corporate actions". No ledger item closes; this is a checklist item.
+
+`npm run check` passes, `npm run lint` is clean, `next build` compiles, and `check:ui` is 155/162:
+one new browser check, passing, and the seven failures are the same stale prompt-search checks.
+**Not yet done:** pinning the fixture from a real EDGAR record — data.sec.gov doesn't answer from
+this cloud session.
+
+- [x] **Renames on the timeline (`lib/sec.ts` `renamesFrom`, `renameEvents`).** EDGAR's company
+      record lists every name a filer has used and the day it stopped. The filings reader already
+      downloads that record and now reads the field too, so it costs no request:
+      - each old name is paired with the one that replaced it, oldest first;
+      - a change of case, punctuation, legal suffix or state tag is not a rename ("APPLE INC" →
+        "Apple Inc.");
+      - an entry with no date, or a date in the future, is dropped;
+      - a fund doesn't inherit its trust's old names.
+
+      A rename is a corporate action, e.g. "Renamed from FACEBOOK INC to Meta Platforms, Inc.",
+      linked to the company's EDGAR page. It reaches the first pass too.
+- [x] **Old names as search aliases.** Company ingest stores each old everyday name ("facebook")
+      as an alias. Checked against the local database: "facebook", "Facebook" and "FACEBOOK" all
+      find a held Meta by alias, score 1.00.
+- [x] **The chip and legend.** The company page's "Splits & dividends" filter is now "Corporate
+      actions", and the chart legend says "Corporate action".
+      - **Fixed on the way, from batch 14:** the filter "Sector rules" and the legend's "Sector
+        rule" now say "Regulation". Company pages carry federal documents naming the company
+        itself since batch 14, so "sector" was no longer true.
+- [x] **A topic address that finds a company goes to the company page.** Found while checking the
+      aliases: `/topic/f` drew Ford's timeline in a topic layout, with no price chart or filings,
+      because the topic loader takes any subject by slug or alias. An old name stored as an alias
+      would have done the same for `/topic/facebook`. The topic page now redirects to
+      `/company/<ticker>`, and `/compare` no longer takes that placeholder as a topic. The redirect
+      reaches the browser inside the page (a meta refresh and Next's client redirect), like the
+      site's other alias redirects, because the loading screen has already started the response.
+      The held-topic cache key moved to v2. Checks: 1 in `check:ui`.
+- [x] **`npm run former-names-report`** (`-- META AAPL XYZ` by default) prints what the record says
+      and the block to pin as the fixture. Read-only; needs data.sec.gov.
+- [x] **Pin the fixture from a real record.** `scripts/fixtures/sec-former-names.json` is written
+      from knowledge of the SEC API, and `check:sec-forms` says so while it is. The owner runs the
+      report and the printed block replaces it. *Done 2026-10-20 (batch 21), from the cloud
+      session once its network allowed data.sec.gov — and the real record found a bug the guessed
+      one could not; see batch 21.*
+- Checks: 12 in `check:sec-forms` (they crash on the old code). `check:ondemand`'s text check for
+  the deep filings call now reads the intent, so an added argument doesn't break it. `check:ui`'s
+  legend check now looks for "Corporate action".
+
+## NC ledger — batch 16: keys kept from ad scripts, crypto moves, six feeds dropped (2026-10-19)
+
+The owner made three calls on 2026-10-19:
+- A browser holding a visitor's key loads no ads at all, which closes **NC-164**. The other design
+  offered was isolating the keys on a second origin.
+- Build proposal 10.
+- Drop the six non-commercial news aggregators at launch, which closes **NC-013–NC-018**, and
+  **NC-064** with them.
+
+Batch 15's PR is still open, waiting on the owner's EDGAR report, so this batch rides the same
+branch and PR.
+
+`npm run check` passes, `npm run lint` is clean, `next build` compiles, and `check:ui` is 157/164:
+two new browser checks, both passing; no console errors under the new CSP; and the seven failures
+are the same stale prompt-search checks.
+
+- [x] **NC-164 — no ads in a browser holding a key.** An ad script on our origin could read the
+      AI, NYT and Guardian keys in localStorage. Now:
+      - `lib/adGate.ts` is the one gate. It answers no when either feature holds a key, when a
+        stored entry won't parse, when "reload without ads" was used in this tab, or when storage
+        can't be read. A local model with no key doesn't count as a key.
+      - `components/AdScript.tsx` is the only ad loader. It does nothing until
+        `NEXT_PUBLIC_AD_SCRIPT_URL` names a network (none is chosen, NC-121), and it injects after
+        load, because only the browser can see whether a key is stored.
+      - A key typed beside a running ad script could be read as it is typed, so on such a page
+        both key forms are replaced by a "Reload without ads" button. It turns ads off for the
+        tab before the key is entered.
+      - **The CSP now limits scripts** to this site and the configured ad loader; development
+        also allows eval. Connections stay open, because a visitor's own model endpoint can be
+        any host.
+      - The settings copy says a browser holding a key loads no ads, and `docs/OWNER-ACTIONS.md`
+        says how to add a network.
+      - Checks: 12 in `check:abuse` (the old "CSP leaves scripts alone" check is replaced). On the
+        old code, three fail and the gate's tests can't load.
+- [x] **Biggest moves on priced topic pages (proposal 10).** BTC and ETH now show the panel below
+      their chart. The seeded halving-day move is paired with the halving. Checks: 2 in `check:ui`.
+- [x] **The six aggregators — dropped at launch (owner's decision).** Newsdata, GNews, Currents,
+      Marketaux, EODHD and Finnhub are ticked in the pre-release feed gate. None was on the ingest
+      path and `COMMERCIAL_MODE` already refused them; their keys stay out of production. NYT,
+      the Guardian and Yahoo remain open there.
+
+## NC ledger — batch 17: the launch rule, accessibility, two cleanups (2026-10-19)
+
+The owner made four calls on 2026-10-19:
+- D22 covers News Charts. The site is commercial from its first outside visitor, which closes
+  **NC-133**.
+- Delete the unused Wayback snapshot reader, which closes **NC-043**.
+- Keep the search log as it is, which closes **NC-042**.
+- Aim for WCAG 2.2 AA, which closes **NC-137**.
+
+This batch rides the same branch and PR as 15 and 16.
+
+`npm run check` passes, `npm run lint` is clean, `next build` compiles, and `check:ui` is 168/175:
+eleven new accessibility scans, all passing; no console errors; and the seven failures are the
+same stale prompt-search checks.
+
+- [x] **The launch rule (NC-133).** `COMMERCIAL_MODE`, the feed gate and the launch set now trip at
+      the first page load by anyone other than the owner — a private preview included — instead of
+      "the day anything earns money". Rewritten in `CLAUDE.md`, the feed gate and its
+      `COMMERCIAL_MODE` `P0` above, `docs/OWNER-ACTIONS.md`, `README.md` (the step now comes
+      first), the business-decisions summary and two code comments. Turning the flag on in an
+      environment others can reach is still **NC-022**, the owner's.
+- [x] **The unused snapshot reader is gone (NC-043).** `fetchSiteSnapshots` and its
+      `check:archive` cases are deleted. The "this site on that date" link on events needs no
+      lookup and is unaffected.
+- [x] **Search-log policy confirmed (NC-042).** Raw query text, nothing else, 90 days — recorded on
+      the search-log entry, for the privacy policy to repeat.
+- [x] **WCAG 2.2 AA: an automatic scan, and every page brought to zero findings (NC-137).**
+      `check:ui` now runs axe-core (a new dev dependency; it was already installed through the
+      linter) on ten page types and the open settings dialog. The first scan failed every page:
+      - **Muted text was too faint.** Slate-500 measured 3.75–4.24 against the backgrounds it
+        sits on; the standard asks 4.5. It is now `#8392a8` (≥ 4.6 everywhere, still darker than
+        slate-400), set once in `app/v3-palette.css` because 104 of its 110 uses are text.
+        Slate-600 and slate-700 are no longer used for text (2.5 and 1.85); their 29 text uses,
+        and five placeholders, moved to slate-500.
+      - **White on the blue buttons was 4.09.** The three solid buttons are sky-700 now (5.9),
+        hovering darker rather than lighter. A faded count in the topic filter chips is less
+        faded.
+      - **The compare strip's dots were unnamed 10px links.** Every dot's event is a full-size
+        link in the list below, which is 2.5.8's "equivalent control" exception, so the strip is
+        hidden from keyboard and screen readers and still works with a mouse. The scan skips it
+        for that reason.
+      - Checks: 11 in `check:ui`, all failing on the old code.
+- [ ] **A manual keyboard and screen-reader pass.** axe measures what it can — contrast, names,
+      roles, target sizes — and a clean scan is the floor, not conformance. The price chart and
+      the horizontal timeline are the parts least likely to work by keyboard alone; walk them
+      with a keyboard and a screen reader (NVDA on Windows is free) and file what fails.
+      - ✅ **The keyboard half was done in batch 18** — see that section. Still open: **the
+        screen-reader half**, which needs a person listening (the owner, with NVDA).
+
+## NC ledger — batch 18: a keyboard pass, and draft legal pages (2026-10-20)
+
+The owner chose these two while batch 15 waits on the EDGAR report; same branch and PR.
+
+`npm run check` passes (34 suites, with the new `check:legal`), `npm run lint` is clean, `next
+build` compiles, and `check:ui` is 179/186: eleven new browser checks and three more pages in the
+WCAG scan, all passing; no console errors; and the seven failures are the same stale prompt-search
+checks.
+
+- [x] **The site walked by keyboard alone.** Most of it already worked: the header, filters,
+      timeline cards, grouped stacks (they open on focus), biggest-moves cards, date buttons and
+      list headings are all reachable, with visible focus. Three things were not:
+      - **The settings dialog** opened with focus left on the button behind it, and Escape
+        dropped focus to the top of the page. Focus now moves into the dialog, Tab and Shift+Tab
+        stay inside it, and closing hands focus back to whatever opened it.
+      - **The horizontal timeline's scroll area** took focus with its outline switched off. It
+        now shows a ring for keyboard focus (not for a mouse drag), and says the arrow keys
+        scroll it.
+      - **The price chart** is a canvas, which a screen reader can't read. A hidden line before
+        it now says what it is — its date range and how many events are marked — and points to
+        the list below, which holds the same events. (Labelling the container as an image was
+        tried first; the scan caught that it would hide the chart library's attribution link.)
+      - Checks: 5 in `check:ui`. The probe on the old build showed all three failures.
+- [x] **Draft Terms, Privacy and Not-investment-advice pages (NC-124 — drafted, not closed).**
+      `/legal/terms`, `/legal/privacy` and `/legal/disclaimer`, linked from every page's footer.
+      - They are written from what the code does: no accounts and no cookies of our own;
+        searches kept 200 characters long for 90 days with nothing that identifies anyone;
+        page requests kept 90 days; IP addresses counted in memory for rate limiting only;
+        settings, follows, notes and keys kept in the browser; keys sent straight to their
+        provider; no ads in a browser holding a key; publisher images loaded from the
+        publisher; not directed at children; US-only.
+      - **Each page says it is a draft** and asks search engines not to index it while
+        `LEGAL_DRAFT` (`lib/legal.ts`) is true. Placeholders in brackets are the owner's: the
+        operator's name (no entity yet, D13), a contact address, the governing law, the host's
+        log retention, the ad network and consent (NC-125), and a liability cap.
+      - **`npm run check:legal`** keeps the privacy page honest. Its numbers are imported from
+        the code that enforces them — the search-log retention is now one named constant used
+        by the purge, the page and the report script. The check fails if the code stores a
+        browser key the page doesn't list, or the page lists one nothing writes. Checks: 13 in
+        `check:legal` (they cannot run on the old code, which had no pages), and 3 in `check:ui`
+        plus the three pages added to the WCAG scan.
+      - **Still the owner's:** fill the placeholders, have a lawyer read all three, then set
+        `LEGAL_DRAFT` to false. The "How we make money" disclosure stays its own item.
+- [x] The footer's source line now says the Federal Register supplies federal rules and notices,
+      not only sector rules (batch 14 made company pages carry them).
+
+## NC ledger — batch 21: Fed decisions and inflation reports on the charts; real EDGAR names (2026-10-20)
+
+The owner chose this next, and opened the network for it: the Fed, BLS, SEC and Yahoo hosts were
+blocked from the cloud session until the owner added them to its allowed domains. Same branch and PR.
+
+`npm run check` passes (35 suites, with the new `check:macro`), `npm run lint` is clean, `next
+build` compiles, `check:ui` is 195/195 with no console errors, and the two new `check:live` cases pass against the live
+sites.
+
+- [x] **Fed policy decisions and CPI releases on every stock page (NC-080).** A curated subject,
+      `us-economy` (`lib/macro.ts`), holds every FOMC policy statement since February 1994, when
+      the Fed began announcing its decisions (246 to date), and every CPI release in the BLS
+      archive since February 2008 (224). Imported into the local database from the live sites.
+      - **On a stock page they sit behind an "Economy" chip that starts off** — about twenty a
+        year would bury the company's own story. They are kept in a field of their own, not
+        mixed into the company's events, so they never count as something two companies share on
+        /compare, never mark a followed page as changed, and never appear in "Before the ticker".
+      - **A search about them turns the chip on**: "how did rate hikes affect Apple" opens Apple
+        with the Fed's statements showing (the interest-rate and inflation words from batch 20
+        match "Fed", "FOMC", "CPI" and "consumer prices"). A reader's own chip choice wins.
+      - **The dates are read from the Fed's and BLS's own document addresses, and the decisions by
+        their label.** The Fed's addresses change by era (four formats since 1994) and the suffix
+        is not always "a" — the January 2008 emergency cut is "b". What holds across every year
+        is that a decision is the link labelled "Statement". That rule keeps out the Fed's other
+        releases on the same pages: the August 2025 strategy statement (which a first,
+        address-only version counted as a ninth 2025 meeting), the March 2020 swap-line and
+        repo-facility releases, minutes and press conferences. Checked against all 33 years.
+      - **CPI months come from the release's own link text**, so a delayed release keeps its
+        month (the September 2025 CPI, out on 24 October after the shutdown), and the October
+        2025 release that never came is not invented.
+      - Titles say what the address can prove: "Fed policy statement (FOMC)", never "rate cut" or
+        "hike". The emerald marker sits below the bar with the other scheduled dates, and loses
+        the day's glyph to anything the company itself did (the hover still lists it).
+      - **Kept current**: the hourly refresh sends the subject to its own ingester (never to
+        Wikipedia), reads the calendar and the CPI archive once a day, creates the subject on a
+        database that lacks it, and backfills the FOMC history on the first run by itself.
+        `npm run ingest -- --macro` does it by hand; `--macro history` re-reads every year.
+      - `/topic/us-economy` is the subject's own page, with every date on it. It is kept out of
+        the homepage suggestions: with ~470 dates it took the one topic slot on the first run.
+      - Public domain (U.S. government works); credited in the footer and the terms.
+      - **`npm run macro-report`** prints what the live pages hold and, with `--pin`, re-captures
+        the trimmed pages the checks run on — for the day the Fed or BLS redesigns them.
+      - Checks: 51 in the new `check:macro` (on pages captured from the live sites, and a stubbed
+        network), 2 cases in `check:live` (both pass live), 7 in `check:ui`. The kind is registered
+        everywhere `check-wiring`, `check-relevance` and the compiler require.
+- [x] **Batch 15's EDGAR fixture is real now, and it found a bug.** With data.sec.gov reachable, the
+      former-names report ran here (META, AAPL, XYZ, GE, F, GOOGL) and its output replaced the
+      provisional fixture. Apple's real record lists "APPLE COMPUTER INC/ FA" — an EDGAR filer
+      annotation in use for no days at all — and the site read it as a 1997 rename and offered
+      "apple computer inc/ fa" as a search alias. The name cleaner already stripped "/DE/"-style
+      tags but not one with a space after the slash; it does now. That also tidies the names used
+      to search news and the Federal Register. Checks: 2 more in `check:sec-forms` (the
+      annotation one fails on the old code).
+- [x] **`check:ui`'s feed-key check expects the provider's refusal.** It saves a made-up NYT key to
+      prove keys never reach our server; with the network open, NYT now answers that key with a
+      401, which the console-error check counted as the app failing. It is the visitor's browser
+      being told no by the publisher — the design working — so those requests are marked as
+      expected, the way blocked hosts already were.
+- Note for this cloud session only: Node's built-in fetch needs `NODE_USE_ENV_PROXY=1` to use
+  its network gateway. The owner's PC and a normal host do not.
+
+## NC ledger — batch 20: question search knows other words for a concern (2026-10-20)
+
+The owner chose this next; same branch and PR.
+
+`npm run check` passes (34 suites), `npm run lint` is clean, `next build` compiles, and `check:ui`
+is 188/188, with no console errors.
+
+- [x] **"covid" also finds "pandemic", "lockdown" and "coronavirus".** A committed list of 15
+      common concerns (`lib/concepts.ts`): covid, tariffs, recession, inflation, interest rates
+      and the Fed, layoffs, strikes, supply chain, lawsuits, mergers, recalls, bankruptcy, AI,
+      electric vehicles, elections. A focus that names any word in a group also matches the
+      others.
+      - **The typed word still ranks first.** A related word counts three quarters as much as
+        the typed word in the same place. A related word in the headline still beats the typed
+        word only in the description.
+      - **Phrases stay phrases.** "interest rates" is one term, matched only as those two words
+        together — not "interest" in one place and "rate" in another. "AI" and "EV" are kept
+        even though focus words are normally three letters or more, so "how did AI affect
+        Nvidia" now narrows on something.
+      - **The page says which words counted.** The focus bar reads "… that mention “covid” or a
+        related word (coronavirus, pandemic, lockdown, quarantine)". The best-matches strip names
+        the related word when that is what matched ("“pandemic” in the headline").
+      - **The list has rules, written at its top and enforced in `check:focus`:** only words a
+        headline uses for the same concern ("vaccine" is not another word for covid); no names;
+        no word in two groups; no word that commonly means something else in market news
+        ("deal", "duty", "settlement", "rule").
+- [x] **The search box says you can ask.** Its hint now reads "AAPL, SPY, a company or fund — or
+      ask: how did covid affect Best Buy?", and its screen-reader label says the same.
+- Checks: 18 new in `check:focus`, 1 in `check:search-log`, 1 in `check:ui`. On the old code
+  `check:focus` crashes on the missing list and `check:search-log` fails the hint check.
+
+## NC ledger — batch 19: prompt search v2 (2026-10-20)
+
+The owner chose this next; same branch and PR.
+
+`npm run check` passes (34 suites), `npm run lint` is clean, `next build` compiles, and `check:ui`
+is 187/187 — every check green for the first time since the seven went stale, with no console errors.
+
+- [x] **A question opens the security's page, narrowed to what it asked about (NC-008).** "how
+      did covid affect Best Buy's stock price" now lands on BBY with `?focus=covid`: the page
+      shows the BBY events that mention covid, best matches first, with a bar that says so and a
+      button to show everything. The owner's goal from 2026-08-08, built on the parts kept for it.
+      - `lib/resolveSearch.ts` runs the parser (`parseSearchPrompt`) before the ladder. The
+        security goes through the same ladder as before; the concern rides on the answer as
+        `focus`. The search box, the no-script `/search` redirect, and the "did you mean" and
+        choice links all put it on the URL, through one helper (`focusHref`).
+      - **Names are not sentences.** The parse is believed only when it changed something and
+        the whole query is not already a name. "Jack in the Box" (the parser reads "Jack" plus
+        "in the Box") and fund names ending in a stock word ("Transamerica Global Equity",
+        "Selected American Shares") are tried as typed against the committed index first
+        (`namesSecurity` in `lib/sec.ts`), and so are held subjects' exact names, tickers and
+        aliases. Measured: 10 company names and 136 fund names in the index would otherwise be
+        split.
+      - **Possessives.** "Best Buy's" is tried as typed, then without the apostrophe
+        ("McDonalds" — how EDGAR spells McDonald's), then without the 's ("Best Buy").
+      - **Misses stay honest.** A question whose security isn't found ("how did covid affect
+        <nothing>") answers for that security — near names or "didn't match" — rather than
+        salvaging a junk head out of the sentence. A qualifier split that finds nothing ("<name>
+        in 2020") falls back to the query as typed.
+      - **Salvage keeps its tail.** "Best Buy earnings" → BBY narrowed to earnings; "Tesla
+        battery fires" → TSLA, "battery fires". It used to drop the tail.
+      - **The search log records both halves**: what was typed (`query`) and what it was read as
+        (`subject`, `focus`, `influence`). The columns existed and were always empty.
+      - The parser learned "what happened to/with <security> …".
+- [x] **Years narrow by date.** A focus such as "in 2020" was matched as a word in headlines, which
+      found whatever happened to print "2020". `lib/focus.ts` now reads years as a date window:
+      one year is that year, two span between them, and "since", "after" or "before" a year opens
+      one end. Words and a year together are the intersection — "tariffs in 2025" is 2025's tariff
+      events. Qualifier words ("after", "during", "since" …) no longer count as search words:
+      "after" alone matched every "shares fall after earnings" headline. The focus bar says
+      "dated in 2020" when that is what it did, and offers "… on its own timeline" only for
+      something that has one (an influence, not "in 2020").
+- [x] **The seven stale browser checks are gone.** The six prompt-search checks pass as written,
+      through the real search box. The seventh expected search to send an unknown ticker (ZZQQ)
+      to a page — what the 2026-08-08 refocus switched off. It now checks what matters: opening
+      `/company/ZZQQ` really queues the request, and search answers honestly instead of minting a
+      page.
+- Checks: 15 new in `check:search-log` (the resolver end to end with the database off and the
+  network refused, plus where the focus goes on the URL), 13 in `check:focus`, 3 parser cases in
+  `check:prompt`, 1 more in `check:ui`. On the old code `check:search-log` and `check:focus`
+  crash on the missing pieces and `check:prompt` fails 2 of its cases.
+- Not done, split out as its own `P2` line under the v2 entry: synonyms. "covid" doesn't find
+  headlines that say "pandemic" or "lockdown" — the focus is keywords only.
+
 ## Search engine — first-visit ingest, recall, relevance (2026-08-07)
 
 - [x] **A first search yields a result the first time.** `lib/ingest/firstPass.ts`: a miss on
@@ -838,6 +1167,16 @@ EDGAR's, which includes the ticker index's age check that failed in batch 13.
       Wikidata (⚠ `query.wikidata.org` is unreachable from the build container); GDELT
       year-window backfill (⚠ answers but throttles hard, 429/503); richer paid-tier evidence
       with an aggregate spend cap (needs a paid key).
+- [x] `P2` **EDGAR's own former names — dated renames and search aliases.** Built 2026-10-19
+      (batch 15; see that section): renames from the submissions record's `formerNames` go on
+      the timeline as corporate actions, and the old everyday names become search aliases, so
+      "facebook" finds a held Meta. Free, and needs no Wikidata.
+      - ~~Open until the fixture is pinned from a real record.~~ Pinned 2026-10-20 (batch 21)
+        from data.sec.gov for META, AAPL, XYZ, GE, F and GOOGL; Apple's real record carried an
+        EDGAR annotation ("APPLE COMPUTER INC/ FA") that made a false 1997 rename, now fixed.
+      - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
+        #9, approved 2026-10-19 with `corporate_action` as the event kind. Importance
+        low-medium · Efficiency high · Practicality medium (an unverified field).*
 - [ ] `P2` **LoC decade walk — measured 2026-08-12, and it is a real trade-off rather than a
       clear win. Do not build it without deciding the two questions below.**
       - **It does reach material relevance ranking never returns.** An unfiltered `"bicycle"`
@@ -892,11 +1231,16 @@ already held, but new investment goes to securities coverage first.
       an off-scope query now gets "that didn't match a listed security" instead of a guessed
       topic page and a Wikipedia gather spent on a random string. Corpus subjects of any kind
       stay searchable — a page we hold is a page worth finding. Head-prefix salvage stays
-      ("Best Buy earnings" → BBY) with the tail dropped for now and logged.
+      ("Best Buy earnings" → BBY) with the tail dropped for now and logged. *(2026-10-20, batch
+      19: the tail is carried as the focus now — "Best Buy earnings" → BBY narrowed to earnings.)*
 - [x] **Prompt search removed from the search path** — `parseSearchPrompt` no longer runs on
       queries; no focus/influence is derived or carried. Homepage, placeholder, SEO and OG
       copy are securities-first; the suggestion mix is 4 securities + 1 market-adjacent topic.
-- [ ] `P1` **Prompt search v2 — peg topics to exchange-traded securities.** The owner's stated
+      *(Superseded 2026-10-20 by Prompt search v2, below — the parser runs again, ahead of the
+      ladder.)*
+- [x] `P1` **Prompt search v2 — peg topics to exchange-traded securities.** *Done 2026-10-20
+      (batch 19, NC-008): a question opens the security's page narrowed and ranked by its
+      concern; the synonym idea at the end is split out as its own line below.* The owner's stated
       goal (2026-08-08, recorded verbatim): *"revisit a prompt search that will peg specific
       topics to exchange traded securities (ex. I want to see how covid affected Best Buy's
       stock price)."* The shape: a prompt names a security and a concern; the answer is the
@@ -909,6 +1253,15 @@ already held, but new investment goes to securities coverage first.
       ladder) → carry the concern as focus (restore two lines in SearchBox//search) → grade
       with focusScore → consider the paid tier for concepts keywords can't reach ("covid" vs
       "pandemic" vs "lockdown" in headlines).
+- [x] `P2` **Prompt search: concerns keywords can't reach.** "how did covid affect Best Buy" finds
+      the BBY events whose words include "covid", and not the ones that say "pandemic" or
+      "lockdown". Two ways in, both open: a small committed synonym list for the commonest
+      concerns (free, coarse), or the visitor's own AI model doing the matching where they have
+      connected one (the BYO ranking already exists). Owner's call which, if either; nothing is
+      lost meanwhile — the focus bar says how many events matched and offers everything.
+      *Done 2026-10-20 (batch 20): the owner chose the committed list — `lib/concepts.ts`, 15
+      concerns. The AI route is not built; the BYO ranking panel already re-ranks by meaning for
+      a visitor who connects a model.*
 - [x] ~~`P2` Fund NAME resolution ("Vanguard 500" → VFINX/VOO)~~ — done 2026-08-12. **"Vanguard
       500" now resolves to VOO, named "Vanguard 500 Index Fund", with no request at all.**
       - **Neither candidate this entry guessed was the source.** Registrant names are the wrong
@@ -1301,19 +1654,25 @@ build`, or the offline parser tests — they only appear with data on screen):
 
 ## ⛔ Pre-release gate: check ALL feeds before the website ships · `P0 · release blocker`
 
-**Do not release until every data feed has been checked on two axes — does it work, and are we
+**"Release" means the first page load by anyone other than the owner, a private preview included
+(D22, applied 2026-10-19).** **Do not release until every data feed has been checked on two axes — does it work, and are we
 allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SOURCES`) carries a
 `commercialOk` flag + license note per source and is the single place to verify against.
 
 ### Licensing / keys (monetization turns several free tiers non-compliant)
 
-- [ ] **Newsdata.io** — free tier is personal/testing. Upgrade to a paid plan (explicitly allows
-      commercial use); swap key in `.env.local`. No code change.
-- [ ] **GNews** — free tier is non-commercial. Upgrade to a paid tier; swap key. No code change.
-- [ ] **Currents API** — free developer tier is non-commercial. Upgrade or drop the key at launch.
-- [ ] **Marketaux** — free tier is non-commercial. Upgrade or drop the key at launch.
-- [ ] **EODHD** — free tier is personal/evaluation. Upgrade or drop the key at launch.
-- [ ] **Finnhub** — free tier is personal/non-commercial. Upgrade or drop the key at launch.
+- [x] **The six news aggregators below — dropped at launch, by the owner's decision
+      (2026-10-19).** None is on the ingest path, `COMMERCIAL_MODE` already refuses all six, and
+      none has a visitor-key route, so paying would buy nothing the live site shows until one was
+      also wired into ingest. Their adapters stay, for `check:feeds` diagnostics only, and their
+      keys stay out of the production environment. Closes NC-013–NC-018, and NC-064 (their
+      free-tier capacity) with them.
+- [x] **Newsdata.io** — free tier is personal/testing. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
+- [x] **GNews** — free tier is non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
+- [x] **Currents API** — free developer tier is non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
+- [x] **Marketaux** — free tier is non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
+- [x] **EODHD** — free tier is personal/evaluation. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
+- [x] **Finnhub** — free tier is personal/non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
 - [ ] **Guardian** — free developer key is non-commercial. Request a commercial license/key from
       Guardian Open Platform; swap key.
 - [ ] **NYT Article Search** — public API terms are non-commercial and there is **no self-serve
@@ -1356,10 +1715,14 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
       - ⚠ The flag enforces the `commercialOk` flags; it does not judge them. Yahoo Finance RSS
         is flagged `true` today (the "gray zone" item above), so it keeps fetching — settle that
         call rather than assuming the flag covers it.
-- [ ] `P0` **Turn `COMMERCIAL_MODE=true` on in production the same day anything earns money.**
-      The flag is built and tested but is **off by default**, which is right for development and
-      wrong the moment an ad renders. Pair it with the affiliate item further down — that item's
-      "recognise what this triggers" note is this switch.
+- [ ] `P0` **Turn `COMMERCIAL_MODE=true` on before anyone other than the owner loads the site** —
+      a private preview included, not only the production launch. **The trigger changed on
+      2026-10-19 (D22, NC-133):** it used to be "the day anything earns money". The site is
+      ad-supported by design, so it is commercial in intent from its first outside visitor, and
+      the feed gate above has to be settled by then, not by the first ad. The flag is built and
+      tested but is **off by default**, which is right for development and wrong for any
+      environment someone else can reach. The affiliate item's "recognise what this triggers"
+      note is this switch too.
 - [ ] Get a real legal review of the above before revenue flows — the flags encode a practical
       reading of published terms, not legal advice.
 
@@ -1771,6 +2134,8 @@ the items under it can be argued for or against without one.
       characters; no page or API reads the table; 90-day retention applied by the scheduled
       refresh rather than by whoever remembers. **Confirm this is the trade you want** — measuring
       accuracy needs the raw query, and hashing it would make the miss list useless.
+      ✅ **Confirmed 2026-10-19 (owner, NC-042): keep it as is** — raw query text, 90 days, nothing
+      else. The privacy policy, when written (NC-124), should say exactly this.
 - [x] ~~`P1` **Invert parse and resolve.**~~ — done 2026-08-12, and **the premise was already
       half-stale when it was written down.**
       - **The regex stripping this item describes is not on the search path at all.**
@@ -2188,6 +2553,14 @@ machine closes that gap.
 
 ### Cross-cutting for this initiative
 
+- [x] `P2` **"Biggest moves" on priced topic pages.** ✅ **Done 2026-10-19 (batch 16).** A topic
+      with a price series (BTC, ETH) now shows the panel a company page has, below its chart. Its
+      catalyst table already weighted exploits, halvings and governance votes, kinds that never
+      occur on a company page, so that logic was unreachable until now. Check: 2 in `check:ui`, on
+      the seeded halving-day move.
+      - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
+        #10, approved 2026-10-19. Importance low (outside the current scope) · Efficiency very
+        high · Practicality high.*
 - [ ] `P0` **Licensing gate:** keep all sources `commercialOk: true` — raw chain facts + public
       explorers only. **No Dune/Nansen aggregations in the ad-supported path** (TOS), same
       discipline as the Google-News-RSS bar.
@@ -2626,10 +2999,12 @@ Each idea checked against the codebase before listing — several were cheaper t
       collapsing (hardening list) — do the heuristic clustering there first; the DB's existing
       syntheses layer (synthesis + synthesis_citations tables) is the natural home for an
       AI-written summary node over a cluster. Sequence: cluster → then summarize.
-- [ ] `P2` **Macro-event overlay (Fed decisions, CPI prints).** Architecture already supports
+- [x] `P2` **Macro-event overlay (Fed decisions, CPI prints).** Architecture already supports
       it: sector events merge into company timelines via subject membership — a curated "macro"
       subject whose events overlay any company page is the same pattern. FOMC/CPI calendars are
-      public and keyless. Toggle off by default.
+      public and keyless. Toggle off by default. *Done 2026-10-20 (batch 21, NC-080): a curated
+      `us-economy` subject holds every FOMC statement since 1994 and every archived CPI release
+      since 2008; company pages show them behind an Economy chip that starts off.*
 - [x] ~~`P2` **Compare: per-side event markers on the price overlay**~~ — done 2026-07-28.
       Each subject's events now hang off its own line in its own colour: A's above the line,
       B's below, shaped by kind so a filing still looks like a filing. Side deciding position
@@ -2691,7 +3066,8 @@ Each idea checked against the codebase before listing — several were cheaper t
         earlier wording floated — highlighting saved-focus matches on return — is **deliberately
         not queued**: focus is part of the *shelved* prompt-search substrate, so it would be
         speculative work on dormant machinery for a product with no users. It becomes sensible
-        after **Prompt search v2** lands, not before.
+        after **Prompt search v2** lands, not before. *(v2 landed 2026-10-20, batch 19; the "no users"
+        half of the reason still holds.)*
       - ⚠ Nothing here is a coding problem. Not buildable until (1) is decided.
 
 ## Initiative: Affiliate links on relevant surfaces · `P2`
@@ -3006,6 +3382,9 @@ look like") went to a **separate business checklist** worked independently of bo
         `check:archive` imports it — an instance of the wiring lesson, and the reason the bug
         could sit fully checked and entirely unexercised. Either the snapshot strip gets built or
         the function goes; a third state where it is maintained but unreachable is the worst one.
+      - ✅ **Settled 2026-10-19 (owner, NC-043): the function went** — deleted with its
+        `check:archive` cases in batch 17, since the strip is outside the securities focus. The
+        "this site on that date" link on events is unaffected; it needs no lookup.
 
 ## Other initiatives
 

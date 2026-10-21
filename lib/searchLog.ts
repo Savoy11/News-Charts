@@ -168,7 +168,10 @@ export async function targetHasEvents(target: string): Promise<boolean | null> {
  * Returns how many rows went. A retention policy that depends on someone running a command is
  * not a retention policy.
  */
-export async function purgeOldResolutions(days = 90): Promise<number> {
+/** How long a search is kept — the number the privacy page states, so the two cannot drift. */
+export const SEARCH_LOG_RETENTION_DAYS = 90;
+
+export async function purgeOldResolutions(days = SEARCH_LOG_RETENTION_DAYS): Promise<number> {
   try {
     const { rowCount } = await getPool().query(
       `DELETE FROM search_resolutions WHERE asked_at < now() - ($1 || ' days')::interval`,

@@ -31,8 +31,8 @@
   "total": 170,
   "outstanding": 170,
   "by_status": {
-   "open": 56,
-   "closed": 84,
+   "open": 42,
+   "closed": 98,
    "parked": 12,
    "blocked": 18
   },
@@ -42,8 +42,8 @@
    "owner-machine": 12,
    "owner-decision": 50
   },
-  "counts_recomputed_on": "2026-10-18",
-  "closed_by_annotation": 84
+  "counts_recomputed_on": "2026-10-20",
+  "closed_by_annotation": 98
  },
  "blocking_decisions": [
   {
@@ -379,7 +379,7 @@
   {
    "id": "NC-008",
    "title": "Prompt search v2 — peg a topic/concern to a security's timeline (e.g. covid → Best Buy)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "feature",
@@ -407,6 +407,23 @@
     "noted_on": "2026-10-17",
     "note": "scripts/check-ui.ts 'Search routing' still asserts the v2 behaviour (a prompt routes to the affected security with ?focus=). Those six checks fail today by design and are the closest thing to an executable spec for this item.",
     "evidence": "scripts/check-ui.ts searchRouting"
+   },
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-20",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "lib/resolveSearch.ts runs parseSearchPrompt before the ladder and carries the concern as focus on company/topic answers and on choice/suggestion hrefs; /api/resolve, /search and SearchBox put it on the URL (focusHref). A query that is already a security's or held subject's name is never split (namesSecurity; 10 company and 136 fund names in the index would be). Possessives try as typed, apostrophe-free, then without 's. Salvage returns its tail as focus. Years in a focus are a date window (lib/focus.ts). The six check:ui prompt-search checks pass through the real search box; the stale ZZQQ check is replaced by a queue check. check:search-log (+15, end to end with the database down and fetch refused) and check:focus (+13) crash on the old code; check:prompt fails 2 cases. Synonyms (covid vs pandemic) split out as a P2 checklist line.",
+    "evidence": [
+     "lib/resolveSearch.ts",
+     "lib/focus.ts",
+     "lib/searchChoice.ts",
+     "lib/sec.ts",
+     "scripts/check-search-log.ts",
+     "scripts/check-focus.ts",
+     "scripts/check-ui.ts",
+     "docs/MASTER-CHECKLIST.md:1072"
+    ]
    }
   },
   {
@@ -530,7 +547,7 @@
   {
    "id": "NC-013",
    "title": "Licensing decision: pay for a commercial Newsdata.io tier or drop its key at launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "terms-review",
@@ -563,12 +580,23 @@
      "lines": "535",
      "quote": "**The other eight are not, by decision rather than by omission.**"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 16: the owner decided to drop Newsdata.io at launch rather than buy a commercial tier (2026-10-19). Its key stays out of the production environment; COMMERCIAL_MODE already refuses the source, nothing ingests it, and the adapter remains for check:feeds diagnostics only. Reopen only if the owner later buys a commercial plan, which would also mean wiring it into ingest.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-014",
    "title": "Licensing decision: pay for a commercial GNews tier or drop its key at launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "terms-review",
@@ -591,12 +619,23 @@
      "lines": "71-80",
      "quote": "no visitor-key path yet"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 16: the owner decided to drop GNews at launch rather than buy a commercial tier (2026-10-19). Its key stays out of the production environment; COMMERCIAL_MODE already refuses the source, nothing ingests it, and the adapter remains for check:feeds diagnostics only. Reopen only if the owner later buys a commercial plan, which would also mean wiring it into ingest.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-015",
    "title": "Licensing decision: pay for a commercial Currents API tier or drop its key at launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "terms-review",
@@ -619,12 +658,23 @@
      "lines": "71-80",
      "quote": "no visitor-key path yet"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 16: the owner decided to drop Currents API at launch rather than buy a commercial tier (2026-10-19). Its key stays out of the production environment; COMMERCIAL_MODE already refuses the source, nothing ingests it, and the adapter remains for check:feeds diagnostics only. Reopen only if the owner later buys a commercial plan, which would also mean wiring it into ingest.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-016",
    "title": "Licensing decision: pay for a commercial Marketaux tier or drop its key at launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "terms-review",
@@ -647,12 +697,23 @@
      "lines": "71-80",
      "quote": "no visitor-key path yet"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 16: the owner decided to drop Marketaux at launch rather than buy a commercial tier (2026-10-19). Its key stays out of the production environment; COMMERCIAL_MODE already refuses the source, nothing ingests it, and the adapter remains for check:feeds diagnostics only. Reopen only if the owner later buys a commercial plan, which would also mean wiring it into ingest.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-017",
    "title": "Licensing decision: pay for a commercial EODHD tier or drop its key at launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "terms-review",
@@ -675,12 +736,23 @@
      "lines": "71-80",
      "quote": "no visitor-key path yet"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 16: the owner decided to drop EODHD at launch rather than buy a commercial tier (2026-10-19). Its key stays out of the production environment; COMMERCIAL_MODE already refuses the source, nothing ingests it, and the adapter remains for check:feeds diagnostics only. Reopen only if the owner later buys a commercial plan, which would also mean wiring it into ingest.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-018",
    "title": "Licensing decision: pay for a commercial Finnhub tier or drop its key at launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "terms-review",
@@ -703,7 +775,18 @@
      "lines": "71-80",
      "quote": "no visitor-key path yet"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 16: the owner decided to drop Finnhub at launch rather than buy a commercial tier (2026-10-19). Its key stays out of the production environment; COMMERCIAL_MODE already refuses the source, nothing ingests it, and the adapter remains for check:feeds diagnostics only. Reopen only if the owner later buys a commercial plan, which would also mean wiring it into ingest.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848",
+     "docs/OWNER-ACTIONS.md"
+    ]
+   }
   },
   {
    "id": "NC-019",
@@ -853,11 +936,18 @@
      "quote": "# COMMERCIAL_MODE=false"
     }
    ],
-   "progress": {
-    "noted_on": "2026-09-28",
-    "note": "D22 (Finance Now, 23 Sep) moves the trigger to the first page load by anyone other than the owner — see NC-133. Under it, COMMERCIAL_MODE should be on in any environment others can reach, not only once ads earn.",
-    "evidence": "Business & Compliance Starting Point (28 Sep 2026)"
-   }
+   "progress": [
+    {
+     "noted_on": "2026-09-28",
+     "note": "D22 (Finance Now, 23 Sep) moves the trigger to the first page load by anyone other than the owner — see NC-133. Under it, COMMERCIAL_MODE should be on in any environment others can reach, not only once ads earn.",
+     "evidence": "Business & Compliance Starting Point (28 Sep 2026)"
+    },
+    {
+     "noted_on": "2026-10-19",
+     "note": "Applied with NC-133 (D22, owner-confirmed): COMMERCIAL_MODE must be on before anyone other than the owner loads the site, a private preview included — not on the day anything earns money. The checklist, OWNER-ACTIONS and CLAUDE.md now say so.",
+     "evidence": "docs/MASTER-CHECKLIST.md"
+    }
+   ]
   },
   {
    "id": "NC-023",
@@ -1546,7 +1636,7 @@
   {
    "id": "NC-042",
    "title": "Owner to confirm the search-log privacy trade-off (raw query text kept 90 days, unhashed)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "owner-decision",
    "category": "legal",
@@ -1565,12 +1655,22 @@
      "lines": "809-812",
      "quote": "**Confirm this is the trade you want** — measuring accuracy needs the raw query, and hashing it would make the miss list useless."
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 17: the owner confirmed the search-log trade-off as it stands (2026-10-19): raw query text, no IP, user agent or session, 200-character cap, 90-day retention applied by the scheduled refresh. The privacy policy (NC-124) should state exactly this.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:889"
+    ]
+   }
   },
   {
    "id": "NC-043",
    "title": "Decide: build the Wayback snapshot strip or delete fetchSiteSnapshots (no production caller)",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "owner-decision",
    "category": "decision",
@@ -1599,7 +1699,19 @@
      "lines": "2013-2016",
      "quote": "**this function has no production caller.**"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 17: the owner chose to delete fetchSiteSnapshots rather than build the snapshot strip (2026-10-19). The function and its check:archive cases are gone; the 'this site on that date' link on events needs no lookup and is unaffected.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:889",
+     "lib/archive.ts",
+     "scripts/check-archive.ts"
+    ]
+   }
   },
   {
    "id": "NC-044",
@@ -2427,7 +2539,7 @@
   {
    "id": "NC-064",
    "title": "Act on cost-report capacity findings: EODHD at 100% of free tier at 5 subjects; GNews ~25, Marketaux ~16",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "owner-decision",
    "category": "decision",
@@ -2450,7 +2562,17 @@
      "lines": "31",
      "quote": "eodhd: { perDay: 20, note: \"free tier is ~20 API calls/day and may exclude news entirely\" }"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "moot",
+    "reason": "Batch 16: the free-tier capacity findings were the data behind a buy-or-drop call for EODHD, GNews and Marketaux; the owner dropped all six aggregators at launch (NC-013–NC-018), so there is no tier left to size.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848"
+    ]
+   }
   },
   {
    "id": "NC-065",
@@ -2870,7 +2992,7 @@
   {
    "id": "NC-080",
    "title": "Macro-event overlay (FOMC decisions, CPI prints) as a curated subject",
-   "status": "open",
+   "status": "closed",
    "confidence": "medium",
    "owner_role": "remote-dev",
    "category": "feature",
@@ -2902,6 +3024,22 @@
     "noted_on": "2026-09-28",
     "note": "federalreserve.gov/monetarypolicy/fomccalendars.htm and bls.gov/schedule/news_release/cpi.htm both answer 200 from the cloud session (2026-09-28), so a remote session can build and verify the dates.",
     "evidence": "live run 2026-09-28"
+   },
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-20",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "A curated topic subject `us-economy` (lib/macro.ts) holds every FOMC policy statement since 1994 (246) and every archived CPI release since 2008 (224), ingested into the local database from www.federalreserve.gov and www.bls.gov after the owner allowed both hosts. Decisions are the links labelled 'Statement' (one rule across four address eras), so strategy statements, swap-line and repo releases are excluded; CPI months come from link text. Company pages carry them as a separate `macro` field behind an Economy chip that starts off (turned on by a focus that matches them); the refresh routes, windows (daily) and creates the subject and backfills history. check:macro (51, on pages pinned from the live sites by `npm run macro-report -- --pin`), 2 check:live cases passing live, 7 check:ui checks.",
+    "evidence": [
+     "lib/macro.ts",
+     "lib/macroParse.ts",
+     "scripts/check-macro.ts",
+     "scripts/fixtures/macro-pages.json",
+     "components/CompanyExplorer.tsx",
+     "lib/page-data.ts",
+     "docs/MASTER-CHECKLIST.md:986"
+    ]
    }
   },
   {
@@ -4290,6 +4428,13 @@
      "lines": "90",
      "quote": "News Charts is a research tool, not investment advice."
     }
+   ],
+   "progress": [
+    {
+     "noted_on": "2026-10-20",
+     "note": "Batch 18: drafts of /legal/terms, /legal/privacy and /legal/disclaimer exist, linked from the footer, marked as drafts and noindexed while LEGAL_DRAFT is true. Written from what the code does; check:legal ties the privacy page's numbers and browser-storage list to the code. Still owed: the bracketed placeholders (operator, contact, governing law, host log retention, ad network and consent, liability cap), a lawyer's review, then LEGAL_DRAFT=false. The 'How we make money' disclosure remains separate.",
+     "evidence": "docs/MASTER-CHECKLIST.md:938"
+    }
    ]
   },
   {
@@ -4580,7 +4725,7 @@
   {
    "id": "NC-133",
    "title": "Apply D22 to News Charts: the licence and launch gate trips at the first outside page load, not the first dollar",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "either",
    "category": "decision",
@@ -4609,7 +4754,20 @@
      "lines": "intro",
      "quote": "Everything is sorted by one trigger from D22: the first time anyone other than you can load a page."
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "owner-decision",
+    "verdict": "close",
+    "reason": "Batch 17: the owner confirmed D22 covers News Charts (2026-10-19). The trigger for COMMERCIAL_MODE, the feed gate and the launch set is now the first page load by anyone other than the owner, a private preview included, and CLAUDE.md, the checklist's feed gate and COMMERCIAL_MODE P0, OWNER-ACTIONS, README, the business-decisions summary and the code comments say so. Switching the flag on in a reachable environment is NC-022, still open.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:889",
+     "CLAUDE.md",
+     "docs/OWNER-ACTIONS.md",
+     "docs/decisions/2026-09-28-business-decisions.md"
+    ]
+   }
   },
   {
    "id": "NC-134",
@@ -4714,7 +4872,7 @@
   {
    "id": "NC-137",
    "title": "Decide the accessibility target for News Charts (e.g. WCAG 2.2 AA) before launch",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "owner-decision",
    "category": "decision",
@@ -4732,7 +4890,20 @@
      "lines": "§4",
      "quote": "Accessibility — Whether a public web app needs to meet WCAG, and to what level"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Batch 17: the owner set WCAG 2.2 AA as the target (2026-10-19). check:ui now scans ten page types and the settings dialog with axe-core; the first scan failed every page (low-contrast muted text, white on sky-600 buttons, and unnamed 10px links on the compare strip), and all were fixed: slate-500 lightened to #8392a8, darker greys no longer used for text, buttons on sky-700, the strip hidden from keyboard and screen readers under 2.5.8's equivalent-control exception. axe catches only what can be measured; the manual keyboard and screen-reader pass of the price chart and horizontal timeline is a checklist item.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:889",
+     "scripts/check-ui.ts",
+     "app/v3-palette.css",
+     "components/CompareView.tsx"
+    ]
+   }
   },
   {
    "id": "NC-138",
@@ -5807,7 +5978,7 @@
   {
    "id": "NC-164",
    "title": "Visitors' AI and news API keys sit in plain localStorage on the same origin that is meant to load ad scripts; no CSP",
-   "status": "open",
+   "status": "closed",
    "confidence": "high",
    "owner_role": "remote-dev",
    "category": "security",
@@ -5835,7 +6006,20 @@
      "lines": "8-9",
      "quote": "When the site is approved for AdSense, replace the inner block"
     }
-   ]
+   ],
+   "closure": {
+    "status_was": "open",
+    "closed_on": "2026-10-19",
+    "basis": "verified-here",
+    "verdict": "close",
+    "reason": "Batch 16, the owner's choice of the two designs offered: a browser holding a visitor key loads no ads at all. lib/adGate.ts is the one gate and components/AdScript.tsx the one loader (dormant until NEXT_PUBLIC_AD_SCRIPT_URL names a network); the key forms are replaced by a 'reload without ads' button on a page where an ad already runs; the CSP now lets scripts come only from this site and the configured ad loader; the settings copy says so. Checked in check:abuse and on a production build with check:ui.",
+    "evidence": [
+     "lib/adGate.ts",
+     "components/AdScript.tsx",
+     "next.config.mjs",
+     "scripts/check-abuse.ts"
+    ]
+   }
   },
   {
    "id": "NC-165",
@@ -6192,6 +6376,62 @@
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build` and a check:ui run on a production build. The live Federal Register case can't reach www.federalregister.gov from the cloud session; the owner ran `npm run check:live` on their machine the same day: 13 pass, 0 fail, 1 skipped (Etherscan, no key), the new Ford case included.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:753"
+    ]
+   },
+   {
+    "on": "2026-10-19",
+    "what": "Batch 15: proposal 9 built as the owner chose — EDGAR's former names as dated corporate-action renames and as search aliases, with the chip renamed \"Corporate actions\"; batch 14's \"Sector rule(s)\" labels corrected to \"Regulation\". No ledger item closes; it is a checklist item, not a ledger item.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, a check:ui run on a production build, and a local Postgres probe of the alias search. The fixture is provisional until the owner's former-names-report run; data.sec.gov does not answer from the cloud session.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:802"
+    ]
+   },
+   {
+    "on": "2026-10-19",
+    "what": "Batch 16: NC-164 closed (no ads in a browser holding a visitor key; scripts limited to this site and the configured ad loader). NC-013–NC-018 closed by the owner's decision to drop the six non-commercial aggregators at launch, and NC-064 with them as moot. Proposal 10 built: biggest moves on priced topic pages.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build serving the new CSP.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:848"
+    ]
+   },
+   {
+    "on": "2026-10-19",
+    "what": "Batch 17: four owner calls applied — D22 governs News Charts (NC-133), the snapshot reader deleted (NC-043), the search-log policy confirmed (NC-042), WCAG 2.2 AA as the target with an axe scan in check:ui and every page brought to zero findings (NC-137).",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build including the new WCAG 2.2 AA scan.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:889"
+    ]
+   },
+   {
+    "on": "2026-10-20",
+    "what": "Batch 18: a keyboard pass (settings dialog focus in/trap/return, a visible focus ring on the timeline's scroll area, a text name for the price chart) and drafts of the three legal pages with check:legal; NC-124 advanced, not closed.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (with check:legal), `npm run lint`, `next build`, and a check:ui run on a production build.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:938"
+    ]
+   },
+   {
+    "on": "2026-10-20",
+    "what": "Batch 19: Prompt search v2 (NC-008 closed) — a question naming a security and a concern opens the security's page with ?focus=, never splitting a real name; salvage keeps its tail; years in a focus narrow by date; the seven stale check:ui failures resolved.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:1072"
+    ]
+   },
+   {
+    "on": "2026-10-20",
+    "what": "Batch 20: question search matches other words for 15 common concerns (lib/concepts.ts — covid/pandemic/lockdown, tariffs, interest rates …), graded below the typed word and named on the focus bar; the search box hint invites a question. No ledger item opened or closed (a follow-up to NC-008, tracked in the checklist).",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:1041"
+    ]
+   },
+   {
+    "on": "2026-10-20",
+    "what": "Batch 21: NC-080 closed — Fed policy statements (1994–) and CPI releases (2008–) on a curated economy subject, shown on company pages behind an Economy chip that starts off; batch 15's former-names fixture pinned from the real EDGAR record, which exposed and fixed an annotation bug ('APPLE COMPUTER INC/ FA').",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea with the Fed, BLS and SEC hosts reachable: the full `npm run check` chain, `npm run lint`, `next build`, the two new check:live cases, a live ingest into the local database, and a check:ui run on a production build.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:986"
     ]
    }
   ]

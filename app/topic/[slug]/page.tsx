@@ -50,6 +50,9 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
     noStore();
     notFound();
   }
+  // A company reached through a topic address (its slug, or an old name stored as an alias) has
+  // its own page, with its price chart and filings; a topic layout would drop both.
+  if (data.companyTicker) redirect(subjectPath("company", data.slug, data.companyTicker));
   // Another phrasing of a held topic is served from the same rows; send the visitor to the one
   // address the topic is stored under, so a typed wording never stands as a page (NC-157).
   if (data.slug !== topic.trim().toLowerCase()) redirect(subjectPath("topic", data.slug));

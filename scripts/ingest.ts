@@ -30,13 +30,14 @@ import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib
 import { fetchNews } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
-import { resolveCompany, getFilingsDeep, getIndustry, commonName } from "../lib/sec";
+import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, type Rename } from "../lib/sec";
 import { fetchDailyPrices, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { fetchCompanyRegulations } from "../lib/frCompany";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
+import { MACRO_SUBJECT, fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
 
 const BACKOFF_MINUTES = 10;
 
@@ -402,6 +403,7 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     line("industry", "no SIC code from EDGAR");
   }
 
+  const renames: Rename[] = [];
   await run("sec_edgar", company.ticker, async () => {
     /**
      * The scheduler takes the WHOLE history, not just EDGAR's recent block.
@@ -415,9 +417,21 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
      * Deep here and shallow in the first pass, deliberately: this path has no deadline and runs
      * on a refresh window, while the first pass runs with a visitor waiting on an 8s budget.
      */
-    const events = await getFilingsDeep(company, true);
+    const events = await getFilingsDeep(company, true, renames);
     return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
   });
+
+  /**
+   * The names the company used to file under, as search aliases — so "Facebook" finds a held
+   * Meta Platforms (2026-10-17 proposal 9). They come from the record the filings step just read,
+   * and only on a run that read it; the rename itself is already on the timeline from that step.
+   */
+  for (const alias of formerNameAliases(renames, company.name)) {
+    await client.query(
+      `INSERT INTO subject_aliases (subject_id, alias) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+      [subjectId, alias]
+    );
+  }
 
   /**
    * Federal Register documents that name the company in their title — an FTC order, an NHTSA
@@ -790,15 +804,62 @@ export async function ingestOnchain(client: PoolClient, which: string): Promise<
   return { ingested: true };
 }
 
+/** Both economy feeds, onto the one subject that holds them (lib/macro.ts). */
+const MACRO_SOURCES: readonly SourceKey[] = ["fed_fomc", "bls_cpi"];
+
+/**
+ * Fed policy statements and CPI releases (NC-080). A scheduled run reads the current calendar and
+ * the CPI archive inside their daily windows. The FOMC years before the calendar's — back to
+ * 1994 — are read once: when the subject holds no statement from before 1995, or when asked
+ * (`--macro history`), in which case the window is not waited on.
+ */
+export async function ingestMacro(client: PoolClient, opts: { history?: boolean } = {}): Promise<IngestOutcome> {
+  console.log(`\n${MACRO_SUBJECT.displayName} (${MACRO_SUBJECT.slug})`);
+  const subjectId = await upsertSubject(client, {
+    kind: "topic",
+    slug: MACRO_SUBJECT.slug,
+    displayName: MACRO_SUBJECT.displayName,
+    summary: MACRO_SUBJECT.summary,
+  });
+  const ctx = { kind: "topic" as const, displayName: MACRO_SUBJECT.displayName };
+  const scoring: ScoringContext = { subject: ctx, aliases: aliasesFor(ctx, []) };
+
+  const { rows } = await client.query<{ n: string }>(
+    `SELECT count(*) AS n
+       FROM events e
+       JOIN event_subjects es ON es.event_id = e.id AND es.subject_id = $1
+       JOIN event_attestations a ON a.event_id = e.id
+       JOIN sources s ON s.id = a.source_id AND s.key = 'fed_fomc'
+      WHERE e.occurred_on < '1995-01-01'`,
+    [subjectId]
+  );
+  const history = Boolean(opts.history) || Number(rows[0]?.n ?? 0) === 0;
+
+  const due = await dueSources(client, subjectId, MACRO_SOURCES);
+  const run = runnerFor(client, subjectId, due, scoring);
+  if (opts.history) {
+    await runSource(client, "fed_fomc", subjectId, "FOMC calendar + history", () => fetchFomcStatements({ history: true }), undefined, scoring);
+  } else {
+    await run("fed_fomc", history ? "FOMC calendar + history" : "FOMC calendar", () => fetchFomcStatements({ history }));
+  }
+  await run("bls_cpi", "CPI release archive", fetchCpiReleases);
+  await touchSubject(client, subjectId);
+  return { ingested: true };
+}
+
 async function main() {
   const topic = arg("topic");
   const ticker = arg("ticker");
   const industry = arg("industry");
   const onchain = arg("onchain");
-  if (!topic && !ticker && !industry && !onchain) {
+  // `--macro` alone reads what is due; `--macro history` re-reads every FOMC year since 1994
+  const macroAt = process.argv.indexOf("--macro");
+  const macro = macroAt >= 0 ? { history: process.argv[macroAt + 1] === "history" } : null;
+  if (!topic && !ticker && !industry && !onchain && !macro) {
     console.error(
       "usage: npm run ingest -- --topic <name> | --ticker <SYMBOL> | --industry <sic-slug>\n" +
-        `                       | --onchain <${CRYPTO_SUBJECTS.map((c) => c.slug).join("|")}|all>`
+        `                       | --onchain <${CRYPTO_SUBJECTS.map((c) => c.slug).join("|")}|all>\n` +
+        "                       | --macro [history]"
     );
     process.exit(2);
   }
@@ -810,6 +871,7 @@ async function main() {
     if (ticker) await ingestCompany(client, ticker.toUpperCase());
     if (industry) await ingestIndustry(client, industry);
     if (onchain) await ingestOnchain(client, onchain.toLowerCase());
+    if (macro) await ingestMacro(client, macro);
   } finally {
     client.release();
     await closePool();

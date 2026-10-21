@@ -15,7 +15,7 @@ config({ path: ".env.local" });
 import { CLIENT_BUDGET_MS, NETWORK_BUDGET_MS, timedOut, withTimeout } from "../lib/timeout";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { TIE_MARGIN, closeCandidates, optionFor, optionForSuggestion } from "../lib/searchChoice";
+import { TIE_MARGIN, closeCandidates, focusHref, optionFor, optionForSuggestion } from "../lib/searchChoice";
 import type { SubjectCandidate } from "../lib/store/read";
 import {
   MAX_QUERY,
@@ -220,6 +220,16 @@ async function main(): Promise<void> {
   const route = read("app/search/route.ts");
   check("the no-script search follows a choice but not a suggestion",
     /resolved\.kind === "choose"\s*\?/.test(route) && !/"suggest"/.test(route));
+  check("the no-script search puts the focus on the page it redirects to",
+    /focusHref\(`\/company\/\$\{resolved\.ticker\}`, resolved\.focus\)/.test(route) &&
+      /focusHref\(`\/topic\/\$\{encodeURIComponent\(resolved\.slug\)\}`, resolved\.focus\)/.test(route));
+  const box = read("components/SearchBox.tsx");
+  check("  …and so does the search box",
+    /router\.push\(focusHref\(`\/company\/\$\{json\.ticker\}`, json\.focus\)\)/.test(box) &&
+      /router\.push\(focusHref\(`\/topic\/\$\{json\.slug\}`, json\.focus\)\)/.test(box));
+  check("the search box says a question can be asked", /placeholder="[^"]*\bask\b[^"]*\?"/.test(box), (box.match(/placeholder="[^"]*"/) ?? [""])[0]);
+  check("a focus is written onto a link one way", focusHref("/company/F", "covid & vaccines") === "/company/F?focus=covid%20%26%20vaccines" &&
+    focusHref("/compare?a=x", "y") === "/compare?a=x&focus=y" && focusHref("/company/F", null) === "/company/F");
 
   // The ladder end to end, with the database down and every request refused: the index is all
   // that can answer, which is the case the suggestions exist for.
@@ -239,6 +249,47 @@ async function main(): Promise<void> {
       JSON.stringify(sp));
     check("junk is still told it matched nothing", (await resolveSearch("zzqqxxnotathing")).kind === "none");
     check("an exact name still routes without asking", (await resolveSearch("Ford")).kind === "company");
+
+    // NC-008: a question names a security and a concern; the answer is the security, carrying the
+    // concern as `focus` for the page to narrow by. Before v2 the parser did not run on searches,
+    // and these either missed or landed on the security with the question thrown away.
+    console.log("\nPrompt search: the security, with the concern carried");
+    const same = (r: unknown, want: object) => JSON.stringify(r) === JSON.stringify(want);
+    const asked = await resolveSearch("I want to see how Donald Trumps presidency affected Ford stock");
+    check("the reported phrasing reaches Ford with the influence as its focus",
+      same(asked, { kind: "company", ticker: "F", focus: "Donald Trumps presidency" }), JSON.stringify(asked));
+    const covid = await resolveSearch("how did covid affect Best Buy's stock price");
+    check("the owner's own example: covid, Best Buy — the possessive tried without its 's",
+      same(covid, { kind: "company", ticker: "BBY", focus: "covid" }), JSON.stringify(covid));
+    const unknown = await resolveSearch("zzqqxx effect on Ford stock");
+    check("an influence nothing knows still reaches the subject, and is still carried",
+      same(unknown, { kind: "company", ticker: "F", focus: "zzqqxx" }), JSON.stringify(unknown));
+    const both = await resolveSearch("impact of tariffs on Ford in 2025");
+    check("a relation and a qualifier both ride along",
+      same(both, { kind: "company", ticker: "F", focus: "tariffs · in 2025" }), JSON.stringify(both));
+    const tail = await resolveSearch("Best Buy earnings");
+    check("head-prefix salvage gives its tail back as the focus, no longer dropping it",
+      same(tail, { kind: "company", ticker: "BBY", focus: "earnings" }), JSON.stringify(tail));
+    const mcd = await resolveSearch("how did covid affect McDonald's stock");
+    check("  …and a possessive that is part of the name is kept, as EDGAR spells it",
+      same(mcd, { kind: "company", ticker: "MCD", focus: "covid" }), JSON.stringify(mcd).slice(0, 160));
+    const offered = await resolveSearch("how did covid affect Nvidea");
+    check("a near match offered for a question keeps the question on its link",
+      offered.kind === "suggest" && offered.options[0]?.href === "/company/NVDA?focus=covid", JSON.stringify(offered).slice(0, 160));
+    check("a relational miss is answered for the subject, not salvaged out of the sentence",
+      (await resolveSearch("how did covid affect zzqqxxnotathing")).kind === "none");
+
+    console.log("\nPrompt search: names are not sentences");
+    const jack = await resolveSearch("Jack in the Box");
+    check("\"Jack in the Box\" is a company, not \"Jack\" in a box", same(jack, { kind: "company", ticker: "JACK" }), JSON.stringify(jack));
+    const fund = await resolveSearch("Transamerica Global Equity");
+    const { resolveCompany } = await import("../lib/sec");
+    const asTyped = await resolveCompany("Transamerica Global Equity");
+    check("a fund whose name ends in a stock word keeps it",
+      asTyped !== null && same(fund, { kind: "company", ticker: asTyped.ticker }), `${JSON.stringify(fund)} vs ${asTyped?.ticker}`);
+    const plain = await resolveSearch("Ford");
+    check("a plain name carries no focus at all", same(plain, { kind: "company", ticker: "F" }), JSON.stringify(plain));
+    check("\"Ford stock\" is Ford, with nothing to narrow by", same(await resolveSearch("Ford stock"), { kind: "company", ticker: "F" }));
   } finally {
     globalThis.fetch = realFetch;
   }

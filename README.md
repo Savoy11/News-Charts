@@ -275,6 +275,14 @@ Dividends and stock splits arrive on that same request (`events=div,splits`) and
 split-adjusted, so the line does not step on a split — the marker is the only thing that says it
 happened. That is the point: a mechanical change should never read as a reaction to news.
 
+Renames share that chip, now called **Corporate actions**. EDGAR's company record lists every
+name a filer has used and the day it stopped (`formerNames`), and it arrives with the filings at
+no extra request: "Renamed from FACEBOOK INC to Meta Platforms, Inc." goes on the timeline, and
+the ingest stores each old everyday name as a search alias, so "facebook" finds a held Meta. A
+change of case, punctuation or state tag isn't a rename, a fund doesn't inherit its trust's old
+names, and a rename that came with a new CIK (Google → Alphabet) isn't in the record.
+`npm run former-names-report -- META AAPL` prints what the record says.
+
 ### Checks
 
 ```
@@ -510,6 +518,8 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | LoC Chronicling America | Historical newspapers ~1770–1963 | Public domain; fills the pre-2017 gap |
 | Internet Archive | Catalogued items (reports, catalogues, film) | Relevance-ranked; impossible dates dropped |
 | Federal Register | Sector-level rules and notices; documents naming a company | Keyword hits attach to industries; a title naming the company attaches to it (no airworthiness directives) |
+| Federal Reserve | FOMC policy statements since 1994 | Economy subject; on company pages behind the Economy chip (off by default). `npm run ingest -- --macro` |
+| BLS | CPI release dates since 2008 | Same subject and chip; needs a contact `User-Agent` |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |
 | Snapshot | Protocol governance votes | Keyless GraphQL |
@@ -620,9 +630,12 @@ makes this viable in production — if traffic grows, move news to a keyed API.
 
 ## Monetization TODO
 
-1. Deploy (Vercel free tier works for MVP)
-2. Buy domain, apply for Google AdSense, replace `AdSlot` placeholders — each one declares the
+1. ⚠ Turn on `COMMERCIAL_MODE` before anyone but the owner can load the deployment — a private
+   preview counts (D22, applied 2026-10-19). Several news sources are licensed for
+   non-commercial use only (open `P0` in `docs/MASTER-CHECKLIST.md`)
+2. Deploy (Vercel free tier works for MVP)
+3. Buy domain, apply for Google AdSense, replace `AdSlot` placeholders — each one declares the
    IAB format it is standing in for (`leaderboard` 728×90, `billboard` 970×250, `rectangle`
-   300×250), so the live unit drops into a space the page has already reserved
-3. ⚠ Before any of those carries a real ad, turn on `COMMERCIAL_MODE` — several news sources are
-   licensed for non-commercial use only (open `P0` in `docs/MASTER-CHECKLIST.md`)
+   300×250), so the live unit drops into a space the page has already reserved. Set the
+   network's script as `NEXT_PUBLIC_AD_SCRIPT_URL`; it never loads in a browser holding a
+   visitor's key (NC-164)

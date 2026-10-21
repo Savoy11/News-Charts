@@ -76,11 +76,12 @@ npm run cost-report            # what it actually spent, against each free tier
 ## 3. The licensing decisions (the real blocker)
 
 **Every free tier you are on is non-commercial.** Nine calls, each with three possible answers:
-upgrade, drop the key at launch, or — for NYT and the Guardian only — ship BYO-key.
+upgrade, drop the key at launch, or — for NYT and the Guardian only — ship BYO-key. Six are
+decided (the aggregators, dropped on 2026-10-19); NYT, the Guardian and Yahoo remain.
 
 | Source | Options |
 | --- | --- |
-| Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | Upgrade to paid, or drop at launch |
+| Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | **Decided 2026-10-19: drop at launch** — keep their keys out of production |
 | **Guardian** | Commercial key, drop, **or BYO-only** |
 | **NYT** | No self-serve commercial tier — negotiate, drop, **or BYO-only** |
 | **Yahoo Finance RSS** | Gray zone. Read the ToS and settle it — it is flagged `commercialOk: true` today, so it keeps fetching on the assumption you have decided |
@@ -122,15 +123,17 @@ design sit under **Planned initiatives — free planner & referral board** in th
 ## 5. Launch mechanics
 
 - **Buy the domain.** The name is settled.
-- **Set `COMMERCIAL_MODE=true` in production the same day anything earns money.** Built and
-  tested, off by default — right for development, wrong the moment an ad renders. **Affiliate
-  links trigger this too, not just ads.**
+- **Set `COMMERCIAL_MODE=true` before anyone but you loads the site** — any host others can
+  reach, a private preview included. Your D22 call, applied here on 2026-10-19: the trigger is
+  the first outside page load, not the first dollar, so the feed decisions in §3 have to be
+  settled by then too. Built and tested, off by default — right on your own machine only.
 - **Beta launch** is blocked on §1 and §3 above, and on nothing else.
 
 - **Before the first ad or affiliate link.** The ad slots are blank placeholders — no ad network
-  script loads today. Before one does: switch on `COMMERCIAL_MODE`, settle §3, and keep visitors'
-  own API keys away from third-party scripts (they sit in the browser's local storage on the same
-  origin an ad script would run in — NC-164). The disclosure page the affiliate item calls for
+  script loads today. Before one does: switch on `COMMERCIAL_MODE` and settle §3. Visitors' own
+  API keys are handled (NC-164, 2026-10-19): set the network's script as `NEXT_PUBLIC_AD_SCRIPT_URL`
+  and it loads only in browsers holding no key — never load an ad script any other way. Add the
+  frame and connect hosts the network documents to the CSP in `next.config.mjs` with it. The disclosure page the affiliate item calls for
   ("How we make money") is not built, and there are no privacy or terms pages yet; settle what
   is needed with the review in §4.
 
@@ -177,8 +180,6 @@ Raised by the October ledger batches, each recorded in the master checklist:
   browsers or for search-engine crawlers; sector misses now answer 404. A real 404 on company and
   topic pages means dropping their loading skeleton (a first search then waits up to ~8s on a
   blank screen).
-- **Seven stale browser checks.** The prompt-search tests in `check:ui` expect behaviour switched
-  off on 2026-08-08: rewrite them to today's behaviour, or keep them as the Prompt search v2 spec.
 - **Wikipedia attribution (NC-047).** Confirm the credit beside the topic summary meets CC BY-SA.
 - **Visitor Federal Register terms (NC-162).** Kept and rate-limited; the alternative is
   server-chosen term lists only.
@@ -191,6 +192,6 @@ On-chain `P2` work (Tally governance, DefiLlama TVL, paginated backfill), NYT ke
 AI summary nodes. **I'd hold off**: each is another adapter shipped against an unverified payload,
 and six are already waiting on §1. Validating those beats adding to the pile.
 
-Two are genuinely blocked, not deferred: the **macro-event overlay** needs FOMC/CPI dates I cannot
-verify from here, and **confirming exploits on-chain** needs a transaction reference DefiLlama may
-not carry.
+One is genuinely blocked, not deferred: **confirming exploits on-chain** needs a transaction
+reference DefiLlama may not carry. (The macro-event overlay, blocked here before for want of
+verifiable FOMC/CPI dates, was built and verified against both live sites on 2026-10-20 — batch 21.)

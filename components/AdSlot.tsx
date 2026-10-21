@@ -6,7 +6,9 @@
  * it is how a live ad ends up shoving the paragraph a reader is mid-sentence in.
  *
  * When the site is approved for AdSense, replace the inner block with the `<ins>` snippet for
- * the matching format and load the script in `layout.tsx`. Nothing else about the page changes.
+ * the matching format and set `NEXT_PUBLIC_AD_SCRIPT_URL` to the network's script: `AdScript`
+ * loads it, and only in a browser that holds no visitor key (NC-164, `lib/adGate.ts`). Never load
+ * an ad script any other way — it could read those keys. Nothing else about the page changes.
  *
  * ⚠ Ads make the site commercial, which turns on the `COMMERCIAL_MODE` obligation in
  * `lib/ingest/store.ts` — several news sources are licensed for non-commercial use only. See the
@@ -36,8 +38,8 @@ export default function AdSlot({
       data-ad-slot={format}
       className={`flex w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-700 bg-slate-900/50 ${className}`}
     >
-      <span className="text-xs uppercase tracking-widest text-slate-600">{label}</span>
-      <span className="text-[10px] tracking-wider text-slate-700">{nominal}</span>
+      <span className="text-xs uppercase tracking-widest text-slate-500">{label}</span>
+      <span className="text-[10px] tracking-wider text-slate-500">{nominal}</span>
     </div>
   );
 }

@@ -233,6 +233,27 @@ export const SOURCES: {
     reviewedOn: "2026-10-17",
     notes: "daily closes for the price chart; its own window and outcome log, separate from the RSS headlines (NC-103)",
   },
+  {
+    id: 20,
+    key: "fed_fomc",
+    name: "Federal Reserve FOMC calendar",
+    license: "public domain",
+    attribution: "Board of Governors of the Federal Reserve System",
+    // A U.S. government work. What is used is the date of each policy statement and a link to it.
+    commercialOk: true,
+    reviewedOn: "2026-10-20",
+    notes: "FOMC policy statements since 1994 from the calendar and year pages; no key (NC-080)",
+  },
+  {
+    id: 21,
+    key: "bls_cpi",
+    name: "BLS CPI release archive",
+    license: "public domain",
+    attribution: "U.S. Bureau of Labor Statistics",
+    commercialOk: true,
+    reviewedOn: "2026-10-20",
+    notes: "Consumer Price Index release dates since 2008; refuses requests without a contact User-Agent (NC-080)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));
@@ -270,8 +291,10 @@ export const INGESTABLE_SOURCES: ReadonlySet<SourceKey> = new Set(
 );
 
 /**
- * Set `COMMERCIAL_MODE=true` once anything on the site earns money — ads, affiliate links, a
- * paid tier. See the pre-release feed gate in docs/MASTER-CHECKLIST.md.
+ * Set `COMMERCIAL_MODE=true` in any environment someone other than the owner can load — a
+ * private preview included — before the first such visit (D22, applied 2026-10-19). The site is
+ * ad-supported by design, so it is commercial from its first outside visitor, not its first ad.
+ * See the pre-release feed gate in docs/MASTER-CHECKLIST.md.
  */
 export function commercialMode(): boolean {
   return process.env.COMMERCIAL_MODE === "true";

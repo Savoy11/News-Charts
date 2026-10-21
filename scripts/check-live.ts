@@ -37,6 +37,7 @@ import {
 } from "../lib/sec";
 import { fetchDailyPrices } from "../lib/prices";
 import { fetchRegulations } from "../lib/federalregister";
+import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
 import { FR_COMPANY_CAP, FR_COMPANY_SINCE, fetchCompanyRegulations, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
 import { getTopicTimeline } from "../lib/wiki";
 import { fetchNews } from "../lib/news";
@@ -285,6 +286,40 @@ export const CASES: LiveCase[] = [
       // Ford petitions NHTSA over recalls several times a year, so the feed is never honestly empty.
       const r = await fetchCompanyRegulations("FORD MOTOR CO");
       return [...outcomeProblems(r.outcome, r.detail), ...companyRegulationProblems(r.events, "FORD MOTOR CO", 3)];
+    },
+  },
+  {
+    name: "Federal Reserve — FOMC policy statements, with the history back to 1994",
+    covers: ["fed_fomc"],
+    hosts: ["www.federalreserve.gov"],
+    async run() {
+      const r = await fetchFomcStatements({ history: true });
+      const out = [...outcomeProblems(r.outcome, r.detail), ...eventProblems(r.events, 200)];
+      const dates = new Set(r.events.map((e) => e.date));
+      // Decisions that must be there, one per era of the Fed's addresses, emergencies included;
+      // and releases on the same pages that are not decisions and must not be.
+      for (const d of ["1994-02-04", "2001-09-17", "2008-01-22", "2008-12-16", "2020-03-15"]) {
+        if (!dates.has(d)) out.push(`no statement on ${d}`);
+      }
+      for (const d of ["2020-03-19", "2020-08-27", "2025-08-22"]) {
+        if (dates.has(d)) out.push(`${d} read as a decision — it is another kind of release`);
+      }
+      return out;
+    },
+  },
+  {
+    name: "BLS — CPI release archive",
+    covers: ["bls_cpi"],
+    hosts: ["www.bls.gov"],
+    async run() {
+      const r = await fetchCpiReleases();
+      const out = [...outcomeProblems(r.outcome, r.detail), ...eventProblems(r.events, 200)];
+      const jan2024 = r.events.find((e) => e.date === "2024-02-13");
+      if (!jan2024) out.push("no release on 2024-02-13");
+      else if (!/January 2024/.test(jan2024.title)) out.push(`2024-02-13 named "${jan2024.title}", not January 2024`);
+      const newest = r.events.at(-1)?.date;
+      if (newest && daysAgo(newest) > 45) out.push(`newest release ${newest} — expected within the last month or so`);
+      return out;
     },
   },
   {

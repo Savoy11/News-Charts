@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import localFont from "next/font/local";
 import SettingsMenu from "@/components/SettingsMenu";
+import AdScript from "@/components/AdScript";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
@@ -92,8 +93,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               News Charts is a research tool, not investment advice. Price data from Yahoo Finance,
               filings from SEC EDGAR, recent news from GDELT, historical newspapers from the
               Library of Congress (Chronicling America), historical context from Wikipedia
-              (CC BY-SA), sector rules from the Federal Register, archived material from the
-              Internet Archive.
+              (CC BY-SA), federal rules and notices from the Federal Register, archived material
+              from the Internet Archive, Fed policy decisions from the Federal Reserve, and
+              inflation reports from the U.S. Bureau of Labor Statistics.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain
@@ -104,8 +106,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               fallback), Ethereum via Blockscout — and each row names the block or transaction it came from,
               so any explorer can be used to check it.
             </p>
+            <nav aria-label="Legal" className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+              <Link href="/legal/terms" className="underline hover:text-slate-200">Terms</Link>
+              <Link href="/legal/privacy" className="underline hover:text-slate-200">Privacy</Link>
+              <Link href="/legal/disclaimer" className="underline hover:text-slate-200">Not investment advice</Link>
+            </nav>
           </div>
         </footer>
+        {/* the ad network's loader — dormant until one is configured, never in a browser holding a key */}
+        <AdScript />
       </body>
     </html>
   );

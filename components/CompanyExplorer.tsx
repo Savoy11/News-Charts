@@ -23,17 +23,26 @@ const FILTERS: { key: EventType; label: string }[] = [
   { key: "earnings", label: "Earnings" },
   { key: "filing", label: "Filings" },
   { key: "news", label: "News" },
-  { key: "regulation", label: "Sector rules" },
-  { key: "corporate_action", label: "Splits & dividends" },
+  // sector rules, and federal documents whose title names the company (2026-10-17 proposal 4)
+  { key: "regulation", label: "Regulation" },
+  // splits, dividends, and renames from EDGAR's own record (2026-10-17 proposal 9)
+  { key: "corporate_action", label: "Corporate actions" },
+  // Fed policy statements and CPI releases — the economy, not the company (NC-080). Off until
+  // asked for: about twenty a year on every page would bury the company's own story.
+  { key: "macro", label: "Economy" },
 ];
 
 const ALL_TYPES = FILTERS.map((f) => f.key);
+const NO_EVENTS: TimelineEvent[] = [];
+/** Kinds whose chip starts off. Everything else is on, as it always was. */
+const DEFAULT_OFF: ReadonlySet<EventType> = new Set<EventType>(["macro"]);
+const DEFAULT_TYPES = ALL_TYPES.filter((t) => !DEFAULT_OFF.has(t));
 
-/** Encode the active type filters as ?types= — omitted entirely when all are on (the default). */
+/** Encode the active type filters as ?types= — omitted entirely for the default selection. */
 function encodeTypes(active: Set<EventType>, focus: string | null): string {
   const p = new URLSearchParams();
   const on = ALL_TYPES.filter((t) => active.has(t));
-  if (on.length !== ALL_TYPES.length) p.set("types", on.join(","));
+  if (ALL_TYPES.some((t) => active.has(t) !== DEFAULT_TYPES.includes(t))) p.set("types", on.join(","));
   if (focus) p.set("focus", focus); // survives filter toggles — it came from the search prompt
   const qs = p.toString();
   return qs ? `?${qs}` : "";
@@ -42,17 +51,23 @@ function encodeTypes(active: Set<EventType>, focus: string | null): string {
 interface Props {
   prices: PricePoint[];
   events: TimelineEvent[];
+  /** Fed decisions and CPI releases, shown when the Economy chip is on (lib/page-data.ts) */
+  macro?: TimelineEvent[];
   siteDomain?: string | null;
   /** what the visitor's own feed keys should be asked about — the company's common name */
   subject: string;
 }
 
-export default function CompanyExplorer({ prices, events, siteDomain, subject }: Props) {
+export default function CompanyExplorer({ prices, events, macro = NO_EVENTS, siteDomain, subject }: Props) {
   // Derived from FILTERS, never a second hand-written list: this defaulted to a literal of the
   // seven kinds that existed when it was written, so adding an eighth left it filtered out by
   // default — its chip rendered, inactive, and its rows never appeared. `Set<EventType>` cannot
-  // be checked for exhaustiveness, so the type system could not catch that.
-  const [active, setActive] = useState<Set<EventType>>(() => new Set<EventType>(ALL_TYPES));
+  // be checked for exhaustiveness, so the type system could not catch that. A kind that should
+  // start off says so in DEFAULT_OFF, by name.
+  const [active, setActive] = useState<Set<EventType>>(() => new Set<EventType>(DEFAULT_TYPES));
+  // Whether the reader has set the chips themselves (a click, or a shared ?types= link). Until
+  // they have, a focused search that is about the economy turns the Economy chip on for them.
+  const [chosen, setChosen] = useState(false);
   const pathname = usePathname();
   const [copied, setCopied] = useState(false);
   // the date the chart last jumped to, so the list can open whatever contains it
@@ -76,6 +91,7 @@ export default function CompanyExplorer({ prices, events, siteDomain, subject }:
           t.split(",").filter((x): x is EventType => (ALL_TYPES as string[]).includes(x))
         );
         if (set.size) setActive(set);
+        setChosen(true);
         return;
       }
       const saved = JSON.parse(localStorage.getItem(filterKey) || "null");
@@ -111,13 +127,28 @@ export default function CompanyExplorer({ prices, events, siteDomain, subject }:
   // concern the influence the visitor asked about. That intersection is what "how did X affect Y"
   // is actually asking for — Y's story, limited to the part X is in.
   const [showAll, setShowAll] = useState(false);
+  /**
+   * "How did rate hikes affect Apple" asks about the Fed. The Economy chip starts off, so a focus
+   * that matches Fed or CPI rows turns it on — unless the reader set the chips themselves, in
+   * which case their choice stands.
+   */
+  const macroMatchesFocus = useMemo(
+    () => applyFocus(macro, showAll ? null : focusHint).active,
+    [macro, focusHint, showAll]
+  );
+  const shown = useMemo(
+    () => (macroMatchesFocus && !chosen ? new Set<EventType>([...active, "macro"]) : active),
+    [active, chosen, macroMatchesFocus]
+  );
   const focusResult = useMemo(
-    () => applyFocus([...events, ...mine], showAll ? null : focusHint),
-    [events, mine, focusHint, showAll]
+    // the economy rows count toward the focus only while they are shown, so "5 of 60 events"
+    // does not quietly include several hundred Fed and CPI dates behind a chip that is off
+    () => applyFocus([...events, ...mine, ...(shown.has("macro") ? macro : [])], showAll ? null : focusHint),
+    [events, mine, macro, shown, focusHint, showAll]
   );
   const filtered = useMemo(
-    () => [...focusResult.events.filter((e) => active.has(e.type)), ...notes],
-    [focusResult, active, notes]
+    () => [...focusResult.events.filter((e) => shown.has(e.type)), ...notes],
+    [focusResult, shown, notes]
   );
   const ranked = useMemo(() => applyRanking(filtered, ranking), [filtered, ranking]);
 
@@ -128,7 +159,8 @@ export default function CompanyExplorer({ prices, events, siteDomain, subject }:
     () =>
       firstTrade
         ? ranked
-            .filter((e) => e.date < firstTrade)
+            // the economy before the IPO is not the company's run-up to it
+            .filter((e) => e.date < firstTrade && e.type !== "macro")
             .sort((a, b) => a.date.localeCompare(b.date))
         : [],
     [ranked, firstTrade]
@@ -160,10 +192,12 @@ export default function CompanyExplorer({ prices, events, siteDomain, subject }:
   );
 
   function toggle(type: EventType) {
-    const next = new Set(active);
+    // from what is on screen, so a click on an Economy chip the focus turned on turns it off
+    const next = new Set(shown);
     if (next.has(type)) next.delete(type);
     else next.add(type);
     setActive(next);
+    setChosen(true);
     // reflect the selection in the URL (replaceState: no history spam, no navigation)
     try {
       window.history.replaceState(null, "", pathname + encodeTypes(next, focusHint));
@@ -201,7 +235,7 @@ export default function CompanyExplorer({ prices, events, siteDomain, subject }:
 
       {/* Best-first over the focus matches, additive: the chronological views below still
           render every match. Type chips apply so the strip never offers a hidden kind. */}
-      <BestMatches result={focusResult} activeTypes={active} onJump={handleSelectDate} />
+      <BestMatches result={focusResult} activeTypes={shown} onJump={handleSelectDate} />
 
       {preIpo.length > 0 && (
         <section className="mb-6">
@@ -247,14 +281,17 @@ export default function CompanyExplorer({ prices, events, siteDomain, subject }:
         {FILTERS.map((f) => {
           // hide chips with nothing behind them — a company with no Wikipedia story
           // shouldn't advertise History/Cited filters that can't do anything
-          const count = events.filter((e) => e.type === f.key).length;
+          const count = (f.key === "macro" ? macro : events).filter((e) => e.type === f.key).length;
           if (count === 0) return null;
           return (
             <button
               key={f.key}
               onClick={() => toggle(f.key)}
+              aria-pressed={shown.has(f.key)}
+              title={f.key === "macro" ? "Federal Reserve policy statements and CPI inflation reports" : undefined}
+              data-chip={f.key}
               className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-                active.has(f.key)
+                shown.has(f.key)
                   ? "border-sky-600 bg-sky-600/20 text-sky-300"
                   : "border-slate-700 bg-slate-900 text-slate-500"
               }`}

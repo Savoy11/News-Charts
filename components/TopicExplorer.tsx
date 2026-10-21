@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import HorizontalTimeline from "./HorizontalTimeline";
 import EventList, { dateAnchorId } from "./EventList";
 import PriceTimeline from "./PriceTimeline";
+import BiggestMoves from "./BiggestMoves";
 import AiPanel, { type AiRanking } from "./AiPanel";
 import { applyRanking } from "@/lib/ai/client";
 import Annotations from "./Annotations";
@@ -35,6 +36,8 @@ const FILTERS: { key: EventType; label: string }[] = [
   { key: "onchain", label: "On-chain" },
   { key: "governance", label: "Governance" },
   { key: "exploit", label: "Incidents" },
+  // the economy subject's own page (lib/macro.ts): there it is the whole timeline, so on
+  { key: "macro", label: "Fed & inflation" },
 ];
 
 const ALL_TYPES = FILTERS.map((f) => f.key);
@@ -292,6 +295,9 @@ export default function TopicExplorer({
       {prices.length > 0 && (
         <div className="mb-4">
           <PriceTimeline prices={prices} events={ranked} onSelectDate={jumpToDate} />
+          {/* the panel a company page has — its catalyst table already ranks exploits, halvings
+              and governance votes, kinds that only ever occur here (2026-10-17 proposal 10) */}
+          <BiggestMoves prices={prices} events={ranked} onSelectDate={jumpToDate} />
         </div>
       )}
 
@@ -309,7 +315,7 @@ export default function TopicExplorer({
                   : "border-slate-700 bg-slate-900 text-slate-500"
               }`}
             >
-              {f.label} <span className="opacity-60">{count}</span>
+              {f.label} <span className="opacity-75">{count}</span>
             </button>
           );
         })}

@@ -23,13 +23,14 @@ const LEGEND_LABEL: Record<EventType, string> = {
   news: "News",
   history: "History",
   press: "Historical press",
-  regulation: "Sector rule",
+  regulation: "Regulation",
   citation: "Cited",
-  corporate_action: "Split / dividend",
+  corporate_action: "Corporate action",
   onchain: "On-chain",
   annotation: "Your notes",
   governance: "Governance vote",
   exploit: "Exploit",
+  macro: "Fed & inflation",
 };
 
 interface Props {
@@ -272,7 +273,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
   return (
     <div>
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+        <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
           Overlay
         </span>
         {OVERLAYS.map((o) => {
@@ -299,6 +300,16 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
         })}
       </div>
       <div className="relative">
+        {/* A canvas says nothing to a screen reader. What it shows is in text below — the
+            biggest moves and the event list, which the date buttons jump through — so a hidden
+            line says what the chart is and points there (NC-137 keyboard pass). Not role="img" on
+            the container: the chart library puts its attribution link inside it, and a link
+            inside an image is one a screen reader cannot reach. */}
+        <p data-chart-summary className="sr-only">
+          {prices.length
+            ? `Price chart, ${prices[0].time} to ${prices[prices.length - 1].time}, with ${events.length} events marked. The same events are listed below.`
+            : "Price chart"}
+        </p>
         <div ref={containerRef} className="w-full" />
         {hover && hover.events.length > 0 && (
           <div
@@ -314,7 +325,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
           >
             <p className="mb-1.5 flex items-baseline justify-between px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
               <span>{shortDate(hover.day)}</span>
-              <span className="font-normal normal-case text-slate-600">
+              <span className="font-normal normal-case text-slate-500">
                 {hover.events.length} event{hover.events.length > 1 ? "s" : ""}
               </span>
             </p>

@@ -50,6 +50,12 @@ const CASES: Case[] = [
   // ---- relation plus a qualifier: both angles survive
   { q: "impact of tariffs on Ford in 2025", subject: "Ford", focus: "tariffs · in 2025" },
 
+  // ---- NC-008: shapes search now carries in
+  { q: "what happened to Nvidia after the export rules", subject: "Nvidia", focus: "after the export rules" },
+  { q: "what happened with Boeing during the strike", subject: "Boeing", focus: "during the strike" },
+  { q: "how did covid affect Best Buy's stock price", subject: "Best Buy's", focus: "covid",
+    note: "the possessive is left for the resolver, which tries it as typed and then without — McDonald's is a name" },
+
   // ---- things that must NOT be mangled
   { q: "rolling stock", subject: "rolling stock", note: "a real topic that ends in 'stock'" },
   { q: "stock", subject: "stock", note: "stripping would leave nothing" },

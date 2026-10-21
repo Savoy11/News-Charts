@@ -314,6 +314,39 @@ export async function loadSectorEvents(industryId: number): Promise<TimelineEven
   }));
 }
 
+/**
+ * The economy-wide events a company page can show (NC-080): Fed policy statements and CPI
+ * releases, held by the one curated subject in lib/macro.ts and linked to no company. Read by
+ * that subject's slug, and uncapped — about twenty a year back to 1994, where the sector feed's
+ * 120 would stop a few years ago. Each carries its own sentence (`body`), since "sector-wide"
+ * would say nothing about what a CPI release is.
+ */
+export async function loadMacroEvents(slug: string): Promise<TimelineEvent[]> {
+  const { rows } = await getPool().query(
+    `SELECT e.id, e.occurred_on, e.date_precision, e.title, e.body, a.url, a.source_label
+       FROM subjects s
+       JOIN event_subjects es ON es.subject_id = s.id
+       JOIN events e ON e.id = es.event_id AND e.kind = 'macro'
+       LEFT JOIN event_attestations a ON a.event_id = e.id AND a.is_primary
+      WHERE s.slug = $1
+      ORDER BY e.occurred_on`,
+    [slug]
+  );
+  return rows.map((r) => ({
+    id: `macro-${r.id}`,
+    date:
+      r.occurred_on instanceof Date
+        ? r.occurred_on.toISOString().slice(0, 10)
+        : String(r.occurred_on).slice(0, 10),
+    type: "macro" as EventType,
+    title: r.title,
+    source: r.source_label ?? "News Charts",
+    url: r.url ?? undefined,
+    description: r.body ?? "economy-wide",
+    precision: r.date_precision as DatePrecision,
+  }));
+}
+
 export interface StoredExplanation {
   /** matches a signal by kind + the whole window: `${kind}|${windowStart}|${windowEnd}` */
   key: string;

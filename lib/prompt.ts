@@ -43,6 +43,8 @@ const FILLERS = [
   /^bring\s+up\s+/i,
   /^what(?:'s|’s|\s+is)\s+/i,
   /^what\s+(?:was|were|are)\s+/i,
+  /** "what happened to Nvidia after the export rules" — the subject follows, the qualifier after it */
+  /^what\s+happened\s+(?:to|with)\s+/i,
 ];
 
 // "the history of X", "a timeline of X", "origins of X" — the noun is the wrapper, X is the subject

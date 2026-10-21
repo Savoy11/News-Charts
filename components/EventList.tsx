@@ -27,6 +27,7 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
   // and a transaction is exactly what a reader needs to see at a glance
   governance: { label: "Governance", cls: "bg-indigo-500/15 text-indigo-400 border-indigo-700/50" },
   exploit: { label: "Exploit", cls: "bg-red-500/15 text-red-400 border-red-700/50" },
+  macro: { label: "Economy", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-700/50" },
 };
 
 export function dateAnchorId(date: string) {
@@ -359,7 +360,7 @@ function FilingStack({ days }: { days: DayRow[] }) {
           {all.length} filings
         </span>
         <span className="text-xs text-slate-400">{formSummary(all)}</span>
-        <span className="text-xs text-slate-600">
+        <span className="text-xs text-slate-500">
           {dayLabel(days[0].date)} – {dayLabel(days[days.length - 1].date)}
         </span>
         <button
@@ -384,7 +385,7 @@ function FilingStack({ days }: { days: DayRow[] }) {
                   {dayLabel(ev.date)}
                 </time>
                 <span className="min-w-0 flex-1 truncate text-sm text-slate-300">{ev.title}</span>
-                <span className="shrink-0 text-[10px] text-slate-600">{ev.source} ↗</span>
+                <span className="shrink-0 text-[10px] text-slate-500">{ev.source} ↗</span>
               </a>
             </li>
           ))}
@@ -457,6 +458,7 @@ const DOT: Record<EventType, string> = {
   annotation: "bg-cyan-400",
   governance: "bg-indigo-400",
   exploit: "bg-red-500",
+  macro: "bg-emerald-400",
 };
 
 /** Preview of a collapsed section's contents, shown on hover so it can be read without a click. */
@@ -618,7 +620,7 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
     <div>
       {years.length > 1 && (
         <div className="sticky top-0 z-10 mb-2 flex items-center gap-1 overflow-x-auto rounded-md border border-slate-800 bg-slate-950/85 px-2 py-1.5 backdrop-blur-sm">
-          <span className="mr-1 shrink-0 text-[10px] font-bold uppercase tracking-widest text-slate-600">
+          <span className="mr-1 shrink-0 text-[10px] font-bold uppercase tracking-widest text-slate-500">
             Jump
           </span>
           {years.map((y) => (
@@ -664,14 +666,14 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
                   aria-expanded={!yc}
                   className="group flex w-full items-center gap-2.5 text-left"
                 >
-                  <span className="w-2 shrink-0 text-[9px] text-slate-600 group-hover:text-slate-400">
+                  <span className="w-2 shrink-0 text-[9px] text-slate-500 group-hover:text-slate-400">
                     {yc ? "▶" : "▼"}
                   </span>
                   <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 group-hover:text-slate-300">
                     {row.year}
                   </span>
                   <span className="h-px flex-1 bg-slate-800/70" />
-                  <span className="shrink-0 text-[10px] tabular-nums text-slate-600">
+                  <span className="shrink-0 text-[10px] tabular-nums text-slate-500">
                     {plural(yearCount.get(row.year) ?? 0)}
                   </span>
                 </button>
@@ -702,13 +704,13 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
                   aria-expanded={!mc}
                   className="group flex w-full items-center gap-2 text-left"
                 >
-                  <span className="w-2 shrink-0 text-[9px] text-slate-600 group-hover:text-slate-400">
+                  <span className="w-2 shrink-0 text-[9px] text-slate-500 group-hover:text-slate-400">
                     {mc ? "▶" : "▼"}
                   </span>
                   <span className="text-sm font-bold text-slate-200 group-hover:text-sky-300">
                     {row.label}
                   </span>
-                  <span className="text-[10px] font-normal text-slate-600">
+                  <span className="text-[10px] font-normal text-slate-500">
                     · {plural(monthCount.get(row.monthKey) ?? 0)}
                   </span>
                 </button>

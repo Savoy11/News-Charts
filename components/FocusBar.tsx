@@ -1,6 +1,6 @@
 "use client";
 
-import type { FocusResult } from "@/lib/focus";
+import { composableFocus, type FocusResult } from "@/lib/focus";
 
 /**
  * Says what the timeline is currently showing, and offers the way out.
@@ -24,6 +24,18 @@ export default function FocusBar({
   onClear: () => void;
 }) {
   const none = result.matched === 0;
+  const dated = result.window?.label;
+  const worded = result.terms.length > 0;
+  // A qualifier ("in 2020") has no timeline of its own, so there is nothing to compose with.
+  const composeWith = composableFocus(focus);
+  /**
+   * Say which other words counted, or an event that never says "covid" looks like a mistake in
+   * a covid-narrowed view. A few are enough to show the idea; the full list is lib/concepts.ts.
+   */
+  const alsoMatched =
+    worded && result.related.length > 0
+      ? ` or a related word (${result.related.slice(0, 4).join(", ")}${result.related.length > 4 ? ", …" : ""})`
+      : "";
   return (
     <div
       data-focus-bar
@@ -35,13 +47,32 @@ export default function FocusBar({
     >
       {none ? (
         <span>
-          Nothing on this timeline mentions <strong>“{focus}”</strong> — showing everything
-          instead. That is an answer too: no overlap in what we have.
+          {worded ? (
+            <>
+              Nothing on this timeline mentions <strong>“{focus}”</strong>
+              {alsoMatched}
+            </>
+          ) : (
+            <>
+              Nothing on this timeline is dated <strong>{dated}</strong>
+            </>
+          )}{" "}
+          — showing everything instead. That is an answer too: no overlap in what we have.
         </span>
       ) : (
         <span>
-          Showing the <strong>{result.matched}</strong> of {result.total} events that mention{" "}
-          <strong>“{focus}”</strong>, against the price.
+          Showing the <strong>{result.matched}</strong> of {result.total} events{" "}
+          {dated && !worded ? (
+            <>
+              dated <strong>{dated}</strong>
+            </>
+          ) : (
+            <>
+              {dated ? <>dated {dated} that match</> : "that mention"} <strong>“{focus}”</strong>
+              {alsoMatched}
+            </>
+          )}
+          , against the price.
         </span>
       )}
       <button
@@ -54,12 +85,14 @@ export default function FocusBar({
       {/* The other honest reading of the same question: the influence's own timeline against this
           price. It answers "what was he doing" rather than "what did he do to this company", so
           it is offered rather than chosen for the reader. */}
-      <a
-        href={`/compare?a=${encodeURIComponent(focus)}&b=${encodeURIComponent(subject)}`}
-        className="rounded-sm border border-current/30 px-2 py-0.5 font-semibold opacity-80 hover:opacity-100"
-      >
-        “{focus}” on its own timeline →
-      </a>
+      {composeWith && (
+        <a
+          href={`/compare?a=${encodeURIComponent(composeWith)}&b=${encodeURIComponent(subject)}`}
+          className="rounded-sm border border-current/30 px-2 py-0.5 font-semibold opacity-80 hover:opacity-100"
+        >
+          “{composeWith}” on its own timeline →
+        </a>
+      )}
     </div>
   );
 }

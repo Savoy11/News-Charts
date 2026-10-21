@@ -59,10 +59,10 @@ export default function FollowingList() {
             <Link href={s.href} className="min-w-0 flex-1 text-sm font-semibold text-slate-200 hover:text-sky-300">
               {s.label}
             </Link>
-            <span className="hidden text-[11px] text-slate-600 sm:inline">followed {since(s.followedAt)}</span>
+            <span className="hidden text-[11px] text-slate-500 sm:inline">followed {since(s.followedAt)}</span>
             <button
               onClick={() => unfollow(s.href)}
-              className="shrink-0 text-[11px] font-semibold text-slate-600 hover:text-red-400"
+              className="shrink-0 text-[11px] font-semibold text-slate-500 hover:text-red-400"
             >
               unfollow
             </button>

@@ -1,7 +1,7 @@
 import { FetchResult, TimelineEvent, DatePrecision } from "./types";
 
 /**
- * The Internet Archive: `advancedsearch` for dated items, Wayback CDX for a site's own history.
+ * The Internet Archive: `advancedsearch` for dated items.
  *
  * This is the only source here that is *structurally* safe. Every other historical feed is one
  * key expiry, price change or licence revision away from going dark — NYT and Guardian already
@@ -14,9 +14,9 @@ import { FetchResult, TimelineEvent, DatePrecision } from "./types";
  * `date asc` sort selecting the archive's worst-catalogued rows. The `advancedsearch` fixtures in
  * `npm run check:archive` now match responses captured that day.
  *
- * ⚠ The Wayback **CDX** half below is still documentation-derived — `web.archive.org` is
- * unreachable from this container even though `archive.org` is not. That one caveat is real, and
- * it is the only one.
+ * A Wayback CDX reader for a company's own site history sat here unused until 2026-10-19, when
+ * the owner chose to delete it rather than build the snapshot strip it was for (NC-043). The
+ * "this site on that date" link on events needs no lookup (`waybackUrl` in lib/wikidata.ts).
  */
 
 const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
@@ -186,102 +186,4 @@ export async function fetchArchiveItems(term: string, rows = 50): Promise<FetchR
 
 export async function getArchiveItems(term: string): Promise<TimelineEvent[]> {
   return (await fetchArchiveItems(term)).events;
-}
-
-/** One CDX row after the header: [urlkey, timestamp, original, mimetype, statuscode, digest, length]. */
-type CdxRow = string[];
-
-export interface SiteSnapshot {
-  /** YYYY-MM-DD of the capture */
-  date: string;
-  url: string;
-}
-
-/**
- * Snapshots plus *why* there are none — the distinction an array cannot carry.
- *
- * This used to return a bare `SiteSnapshot[]`, so "the Wayback Machine has never captured this
- * domain" and "we could not reach the Wayback Machine" were both `[]`. Demonstrated rather than
- * theorised on 2026-08-12: from a container where `web.archive.org` is blocked, this reported
- * **zero captures for ford.com** — a domain with tens of thousands of them. A caller reading
- * that number has been told a fact about Ford, and it is false.
- *
- * The same mistake `check:index` exists to prevent for the subject index, in the same shape:
- * an empty answer that a failure is indistinguishable from. `FetchResult` already carries this
- * vocabulary for events, so the outcomes are its outcomes.
- */
-export interface SnapshotResult {
-  snapshots: SiteSnapshot[];
-  outcome: "ok" | "empty" | "error" | "throttled";
-  httpStatus?: number;
-  detail?: string;
-}
-
-/**
- * The first capture of a company's own site in each year it was archived.
- *
- * The point is not to plot 40,000 crawls — it is that "the site that day" already exists as a
- * per-event link, and this is the same evidence at the level of the subject: a visible record of
- * when the company first had a web presence and roughly how often it was being crawled.
- *
- * Collapsed to one per year here rather than by the caller, because the raw CDX response for a
- * large site is tens of thousands of rows and the collapse is what makes it a timeline instead
- * of a log.
- */
-export async function fetchSiteSnapshots(domain: string, limit = 40): Promise<SnapshotResult> {
-  const d = domain.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-  // Nothing was asked, so nothing was learned — not "this domain has no captures".
-  if (!d) return { snapshots: [], outcome: "empty" };
-  const params = new URLSearchParams({
-    url: d,
-    output: "json",
-    fl: "timestamp,original,statuscode",
-    // only successful captures: a 404 snapshot is a record of the crawler's disappointment
-    filter: "statuscode:200",
-    collapse: "timestamp:4", // 4 leading digits = one row per year, done server-side
-    limit: String(limit),
-  });
-
-  try {
-    const res = await fetch(`https://web.archive.org/cdx/search/cdx?${params}`, {
-      headers: UA,
-      next: { revalidate: 86400 },
-    });
-    // The Wayback Machine sheds load the same way the rest of archive.org does, and "come back"
-    // is a different fact from "there is nothing here".
-    if (res.status === 429 || res.status === 503) {
-      return { snapshots: [], outcome: "throttled", httpStatus: res.status };
-    }
-    if (!res.ok) return { snapshots: [], outcome: "error", httpStatus: res.status };
-    const rows: CdxRow[] = await res.json();
-    // Something that is not an array at all is an answer we do not understand. Reporting it as
-    // an empty archive would be the original bug wearing different clothes.
-    if (!Array.isArray(rows)) {
-      return { snapshots: [], outcome: "error", httpStatus: 200, detail: "response was not an array" };
-    }
-    // The first row is the column header, not data. Treating it as a capture produced a snapshot
-    // dated "timestamp", which parses to nothing and renders as an empty row.
-    const [header, ...body] = rows;
-    // CDX answers a domain it has never captured with an empty array — no header, no rows. That
-    // one really is "there is nothing here".
-    if (!header) return { snapshots: [], outcome: "empty", httpStatus: 200 };
-    if (header[0] !== "timestamp") {
-      return { snapshots: [], outcome: "error", httpStatus: 200, detail: `unexpected columns: ${header.join(",")}` };
-    }
-
-    const out: SiteSnapshot[] = [];
-    for (const row of body) {
-      const ts = row[0];
-      if (!/^\d{14}$/.test(ts ?? "")) continue;
-      out.push({
-        date: `${ts.slice(0, 4)}-${ts.slice(4, 6)}-${ts.slice(6, 8)}`,
-        url: `https://web.archive.org/web/${ts}/${row[1]}`,
-      });
-    }
-    return { snapshots: out, outcome: out.length ? "ok" : "empty", httpStatus: 200 };
-  } catch (err) {
-    // A snapshot strip is a nice-to-have; an unreachable Wayback must never take a page down.
-    // It must not be reported as an empty archive either — hence `error` rather than `empty`.
-    return { snapshots: [], outcome: "error", detail: (err as Error).message };
-  }
 }

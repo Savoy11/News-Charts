@@ -39,6 +39,8 @@ export const QUOTAS: Record<SourceKey, Quota> = {
   loc_chronam: { perDay: null, note: "no published cap, but 503s under load are routine" },
   sec_edgar: { perDay: null, perSecond: 10, note: "10 req/s, and a contact User-Agent is required" },
   federal_register: { perDay: null, note: "no published cap; generous in practice" },
+  fed_fomc: { perDay: null, note: "public pages, no published cap; one page a day, about 27 once for the history" },
+  bls_cpi: { perDay: null, note: "public archive page, no published cap; one page a day" },
   yahoo_finance: { perDay: null, note: "undocumented and unofficial — the licence question, not the quota, is the risk" },
   yahoo_prices: { perDay: null, note: "the same unofficial host as the RSS feed — the licence question, not the quota, is the risk" },
   internet_archive: { perDay: null, note: "no published cap; be a good citizen" },

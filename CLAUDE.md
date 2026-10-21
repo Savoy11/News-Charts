@@ -50,11 +50,14 @@ working pricing plan) are summarised in
 [`docs/decisions/2026-09-28-business-decisions.md`](docs/decisions/2026-09-28-business-decisions.md)
 — a summary, not the record.
 
-**Prompt search is shelved, not deleted.** The natural-language layer (`lib/prompt.ts`
-parsing, `lib/focus.ts` grading, FocusBar, BestMatches, `?focus=` links) is dormant, tested
-substrate for the planned v2: pegging specific topics to exchange-traded securities — e.g.
-"how did covid affect Best Buy's stock price" → BBY's page narrowed to its covid events. See
-the checklist's "Prompt search v2" entry before removing any of it.
+**Prompt search is live (v2, 2026-10-20).** A question that names a security and a concern —
+"how did covid affect Best Buy's stock price" — opens BBY's page with `?focus=covid`, its
+timeline narrowed and ranked by the concern. `lib/resolveSearch.ts` runs `parseSearchPrompt`
+(`lib/prompt.ts`) before the ladder, but never on a query that is already a security's or a held
+subject's name ("Jack in the Box"); `lib/focus.ts` grades events by the focus words and reads
+years as a date window; FocusBar and BestMatches show it. Other words for a common concern
+("covid" → pandemic, lockdown) come from the curated list in `lib/concepts.ts` — read its rules
+before adding to it; a loose synonym fills a narrowed page with unrelated events.
 
 ## Stack & layout
 
@@ -97,8 +100,9 @@ deliberately outside the chain because they need more than the code: `check:live
 ## Key invariants
 
 - **Licensing:** several news sources are on non-commercial free tiers. `COMMERCIAL_MODE=true`
-  withholds them (enforced by `check:commercial-mode`); it must be on in production the same
-  day anything earns money (open `P0` in the checklist).
+  withholds them (enforced by `check:commercial-mode`); it must be on in any environment
+  someone other than the owner can load — a private preview included — before the first such
+  page load (D22, applied 2026-10-19; open `P0` in the checklist).
 - **Events schema:** `docs/EVENTS-SCHEMA.md` is the spec — subjects, events, documents are
   three separate axes; enrichments degrade pages, never break them.
 - **Money is numeric, never float** — same rule as the schema doc states.

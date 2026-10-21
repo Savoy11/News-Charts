@@ -37,8 +37,11 @@ function StripRow({
   align: "top" | "bottom";
   xPct: (date: string) => number;
 }) {
+  // An overview for the eye. Every dot's event is a full-size link in the list below, so keyboard
+  // and screen-reader users are sent there rather than through dozens of 10px targets — WCAG 2.2's
+  // "equivalent control on the same page" (2.5.8), and the reason check:ui's scan skips the strip.
   return (
-    <div className="relative h-9">
+    <div className="relative h-9" aria-hidden="true" data-overview-strip>
       {subject.events.map((ev) => {
         const href = safeHref(ev.url);
         const dot = (
@@ -56,7 +59,7 @@ function StripRow({
             title={`${ev.date} — ${ev.title}`}
           >
             {href ? (
-              <a href={href} target="_blank" rel="noopener noreferrer" className="block">
+              <a href={href} target="_blank" rel="noopener noreferrer" tabIndex={-1} className="block">
                 {dot}
               </a>
             ) : (
@@ -105,10 +108,10 @@ function OverlayStrip({
     <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
       <StripRow subject={a} color={A_COLOR} align="top" xPct={xPct} />
       <div className="relative h-px bg-linear-to-r/srgb from-slate-800 via-slate-600 to-slate-800">
-        <span className="absolute left-0 -top-2 text-[10px] font-semibold text-slate-600">
+        <span className="absolute left-0 -top-2 text-[10px] font-semibold text-slate-500">
           {yearOf(new Date(domain.min).toISOString())}
         </span>
-        <span className="absolute right-0 -top-2 text-[10px] font-semibold text-slate-600">
+        <span className="absolute right-0 -top-2 text-[10px] font-semibold text-slate-500">
           {yearOf(new Date(domain.max).toISOString())}
         </span>
         {both.map((ev) => (

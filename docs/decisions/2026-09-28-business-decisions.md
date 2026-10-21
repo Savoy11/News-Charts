@@ -16,7 +16,7 @@ against those records. Where the two disagree, the Finance Now record wins.
 | **D3** | US-only. | Answers country access for now: no geo-gating work beyond US scope. |
 | **D13** | Company formation is deferred, along with the rollout. | Nothing in this repo should assume an operating entity yet. |
 | **D21** | Price the paid options now; buy nothing yet. No single provider may be the only source for a surface. | Licensing items stay priced rather than purchased. A page must never depend on one feed alone, which is the existing failure-isolation rule, now a business rule too. |
-| **D22** | The first page load by anyone other than the owner is the trigger. Dated 23 September in the ledger. | **Not yet applied here — see NC-133.** This repo still ties `COMMERCIAL_MODE`, the feed gate and the launch set to "the day anything earns money". Under D22 they would trip at the first outside page load, including a private preview. Applying it is an open owner decision. |
+| **D22** | The first page load by anyone other than the owner is the trigger. Dated 23 September in the ledger. | **Applied here on 2026-10-19 by the owner (NC-133).** `COMMERCIAL_MODE`, the feed gate and the launch set now trip at the first outside page load, a private preview included, rather than "the day anything earns money". |
 | Affiliate stance | Planned, built dark, no paid placement in anything ranked. | Matches the affiliate initiative in `docs/MASTER-CHECKLIST.md`: links may exist only where ranking cannot read them. |
 | Pricing | Free / Core $9.99 / Pro $29 / Advisor $99, plus a $299 bring-your-own-key desktop edition. | **A working plan, to be reassessed — not a decision to build against.** Which product each tier belongs to is in the Finance Now record. |
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveSearch } from "@/lib/resolveSearch";
+import { focusHref } from "@/lib/searchChoice";
 
 /**
  * The search that works before the JavaScript does.
@@ -21,9 +22,9 @@ export async function GET(req: NextRequest) {
 
   const dest =
     resolved.kind === "company"
-      ? `/company/${resolved.ticker}`
+      ? focusHref(`/company/${resolved.ticker}`, resolved.focus)
       : resolved.kind === "topic"
-        ? `/topic/${encodeURIComponent(resolved.slug)}`
+        ? focusHref(`/topic/${encodeURIComponent(resolved.slug)}`, resolved.focus)
         : resolved.kind === "choose"
           ? // No script, no chooser: the best-scored option, which is what every search did before
             // the hydrated box learned to offer a choice (NC-039).

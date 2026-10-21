@@ -64,7 +64,8 @@ export async function loadCompareSubject(query: string): Promise<CompareSubject 
     }
 
     const topic = await getTopicPageData(q);
-    if (topic) {
+    // a company found this way was answered above, or holds nothing to compare
+    if (topic && !topic.companyTicker) {
       return {
         kind: "topic",
         key: q,

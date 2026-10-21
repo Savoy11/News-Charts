@@ -15,7 +15,7 @@ config({ path: ".env.local" });
  *
  * Chromium comes from Playwright. On a fresh machine: `npx playwright install chromium`.
  */
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { chromium, type Browser, type Page } from "playwright";
 
@@ -309,7 +309,7 @@ async function chartOverlays(page: Page): Promise<void> {
   // started crediting the explorers, at which point a check about a chart legend was being
   // decided by the site's boilerplate.
   const legend = await page.locator("[data-chart-legend]").first().innerText();
-  check("legend lists split / dividend", legend.includes("Split / dividend"), legend.replace(/\n/g, " · "));
+  check("legend lists corporate actions (splits, dividends, renames)", legend.includes("Corporate action"), legend.replace(/\n/g, " · "));
   check("legend omits kinds this page lacks", !legend.includes("On-chain"), legend.replace(/\n/g, " · "));
 }
 
@@ -361,6 +361,12 @@ async function topicPage(page: Page): Promise<void> {
     !/Jun 1\b[\s\S]{0,120}Electric Car Sales Climb/.test(listBody),
     "a 'Jun 1' day node appeared above the month-only citation"
   );
+
+  // A company reached through a topic address — its slug here, an old name stored as an alias in
+  // life ("/topic/facebook") — goes to its own page rather than a topic layout without its chart.
+  await go(page, "/topic/f");
+  check("a topic address that finds a company goes to the company page",
+    new URL(page.url()).pathname === "/company/F", new URL(page.url()).pathname);
 }
 
 async function cryptoTopic(page: Page): Promise<void> {
@@ -377,6 +383,18 @@ async function cryptoTopic(page: Page): Promise<void> {
   check("the charted halving is present", /3\.125 BTC/.test(body));
   check("older halvings kept", /25 BTC/.test(body) && /6\.25 BTC/.test(body));
   check("legend names the on-chain marker", body.includes("On-chain"));
+  // 2026-10-17 proposal 10: the company page's panel, on a priced topic. The seeded series jumps
+  // on the 2024 halving, and the panel's catalyst table — written for exploits, halvings and votes,
+  // kinds a company page never has — pairs that move with the halving.
+  const cryptoMoves = await page.evaluate(() => {
+    const h = [...document.querySelectorAll("h3")].find((x) => x.textContent?.trim() === "Biggest moves");
+    const sec = h?.closest("section");
+    return sec ? [...sec.querySelectorAll("button")].map((b) => b.innerText.replace(/\n+/g, " ")) : [];
+  });
+  check("a priced topic gets the biggest-moves panel", cryptoMoves.length > 0, `${cryptoMoves.length} cards`);
+  check("  …pairing the halving-day move with the halving",
+    cryptoMoves.some((c) => /Apr 20, 2024/.test(c) && /halving/i.test(c)),
+    cryptoMoves.find((c) => /2024/.test(c)) ?? cryptoMoves.join(" | "));
 
   // Attribution. The claim an on-chain row makes is only as good as the reader's ability to go
   // and check it, so the block has to be on the row — not only inside the link's href.
@@ -686,6 +704,12 @@ async function feedKeys(page: Page): Promise<void> {
     const url = r.url();
     const body = r.postData() ?? "";
     if (url.startsWith(ourOrigin) && (url.includes(secret) || body.includes(secret))) leaked.push(url);
+    // The key is made up, so a provider that can be reached refuses it (NYT answers 401). That is
+    // the visitor's browser asking the publisher directly and being told no — the design working,
+    // not the app failing — and it was only invisible while the network blocked those hosts.
+    else if (!url.startsWith(ourOrigin) && (url.includes(secret) || Object.values(r.headers()).some((v) => v.includes(secret)))) {
+      deliberatelyFailed.add(url);
+    }
   });
 
   const gear = page.locator("button[aria-label*='ettings'], button:has-text('⚙')").first();
@@ -769,6 +793,13 @@ async function focusFilter(page: Page): Promise<void> {
   const stillThere = await page.locator("[data-event-row]").count();
   check("and shows everything rather than an empty page", stillThere > 10, `${stillThere} rows`);
 
+  // A listed concern is printed other ways in headlines; the bar says which other words counted,
+  // or an event that never says "electric vehicles" would look like it is there by mistake.
+  await go(page, "/company/F?focus=electric%20vehicles");
+  const relatedText = (await page.locator("[data-focus-bar]").first().innerText()).replace(/\n/g, " ");
+  check("a focus on a listed concern names the related words it also matched", /or a related word \(EV, EVs/.test(relatedText), relatedText.slice(0, 140));
+  await go(page, "/company/F?focus=Vladimir%20Putin");
+
   // This morning's compose is the other honest reading; it stays one click away.
   const compose = page.locator("[data-focus-bar] a");
   check("the two-subject compose is still offered", (await compose.count()) > 0);
@@ -777,6 +808,37 @@ async function focusFilter(page: Page): Promise<void> {
     (await compose.first().getAttribute("href"))?.startsWith("/compare?a=") === true,
     String(await compose.first().getAttribute("href"))
   );
+}
+
+/**
+ * Fed decisions and CPI releases on a stock page (NC-080): behind an Economy chip that starts
+ * off, there when asked for, and turned on by a search that is about them. Needs the economy
+ * subject in the database (`npm run ingest -- --macro`); skipped, and said so, without it.
+ */
+async function economyOverlay(page: Page): Promise<void> {
+  console.log("\nEconomy overlay");
+  await go(page, "/company/F");
+  const chip = page.locator('[data-chip="macro"]');
+  if ((await chip.count()) === 0) {
+    console.log("  (no economy subject in this database — run `npm run ingest -- --macro`; skipped)");
+    return;
+  }
+  check("a stock page offers the Economy chip, off", (await chip.getAttribute("aria-pressed")) === "false");
+  check("  …and shows no Fed or CPI rows until asked", !/Fed policy statement|CPI report/.test(await visible(page)));
+  await chip.click();
+  await page.waitForTimeout(800);
+  check("turning it on shows them", (await chip.getAttribute("aria-pressed")) === "true" && /Fed policy statement \(FOMC\)/.test(await visible(page)));
+  check("  …and the link says so", /[?&]types=[^&]*macro/.test(page.url()), page.url());
+  // a fresh visit, without the chips this browser just remembered for this page — that key
+  // only: clearing all storage took the follow list a later check reads with it
+  await page.evaluate(() => localStorage.removeItem("news-charts:filters:/company/F"));
+  await go(page, "/company/F?focus=interest%20rates");
+  const asked = page.locator('[data-chip="macro"]');
+  check("a search about interest rates turns it on by itself", (await asked.getAttribute("aria-pressed")) === "true");
+  check("  …and the focus finds the Fed's statements", /Fed policy statement/.test(await visible(page)));
+  await go(page, "/topic/us-economy");
+  const topic = await visible(page);
+  check("the economy subject has a page of its own", /CPI report: consumer prices for/.test(topic) && /Fed policy statement/.test(topic), topic.slice(0, 80));
 }
 
 async function chromeAndRoutes(page: Page): Promise<void> {
@@ -817,11 +879,23 @@ async function chromeAndRoutes(page: Page): Promise<void> {
   check("and says the request was noted", /been noted/.test(missing));
   check("and does not claim nothing was found", !/Nothing found/.test(missing));
   // The demand has to actually reach the queue, or the message is a promise nothing keeps.
-  const queued = await page.evaluate(async (base) => {
+  const rows = await (async () => {
+    const { getPool } = await import("../lib/db");
+    const sql = `SELECT 1 FROM subject_requests WHERE slug = 'zzqq' AND kind = 'company' AND last_asked > now() - interval '10 minutes'`;
+    return (await getPool().query(sql)).rows;
+  })().catch(() => [] as unknown[]);
+  check("and the request actually reached the queue", rows.length === 1, `${rows.length} rows`);
+  /**
+   * Search does not invent the page. Since the 2026-08-08 scope refocus an unknown string is not
+   * a subject: "ZZQQ" is no listed security, so search says so (or offers near names) rather
+   * than routing to a page the address bar can still reach. This check used to expect a subject
+   * page — the behaviour the refocus switched off — and failed on every run since.
+   */
+  const searched = await page.evaluate(async (base) => {
     const r = await fetch(`${base}/api/resolve?q=ZZQQ`);
     return (await r.json()) as { kind?: string };
   }, BASE);
-  check("the search path still resolves it to a subject page", queued.kind === "company" || queued.kind === "topic", JSON.stringify(queued));
+  check("and search does not mint a page for it", searched.kind === "none" || searched.kind === "suggest", JSON.stringify(searched));
 }
 
 /**
@@ -915,6 +989,85 @@ async function readableToEveryone(page: Page): Promise<void> {
   const dots = await page.locator('[role="img"][aria-label^="Headline reads as"]').count();
   const key = /keyword estimate, not a/i.test(await visible(page));
   check("a tone dot is announced, and a visible key says what it means", dots === 0 || key, `${dots} dots, key ${key ? "shown" : "missing"}`);
+
+  /**
+   * WCAG 2.2 AA, the owner's target (NC-137, 2026-10-19), scanned with axe-core on every page type
+   * and the settings dialog. axe catches what can be measured — contrast, names, roles, target
+   * size — not everything the standard asks, so a clean scan is the floor, not the finish.
+   *
+   * The compare page's dot strip is the one exclusion: every dot's event is a full-size link in the
+   * list below it, which is 2.5.8's "equivalent control" exception, and the strip is hidden from
+   * keyboard and screen readers for that reason (components/CompareView.tsx).
+   */
+  const AXE = readFileSync("node_modules/axe-core/axe.min.js", "utf8");
+  const WCAG22AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+  const scan = async (): Promise<string[]> => {
+    await page.addScriptTag({ content: AXE });
+    return page.evaluate(async (tags) => {
+      const res = await (window as unknown as { axe: { run: (ctx: unknown, opts: unknown) => Promise<{ violations: { id: string; nodes: unknown[] }[] }> } }).axe.run(
+        { exclude: [["[data-overview-strip]"]] },
+        { runOnly: { type: "tag", values: tags } }
+      );
+      return res.violations.map((v) => `${v.id} ×${v.nodes.length}`);
+    }, WCAG22AA);
+  };
+  // the not-found page answers 404 on purpose, which the browser logs like any failed load
+  deliberatelyFailed.add(`${BASE}/no-such-page`);
+  for (const path of ["/", "/company/F", "/company/VOO", "/topic/electric%20cars", "/topic/btc", "/compare?a=F&b=GM", "/explore", "/following", "/industry/sic-3711", "/no-such-page", "/legal/terms", "/legal/privacy", "/legal/disclaimer"]) {
+    await go(page, path);
+    const found = await scan();
+    check(`WCAG 2.2 AA: ${path}`, found.length === 0, found.join(", "));
+  }
+  await go(page, "/");
+  await page.locator('button[aria-label="Settings"]').first().click();
+  await page.waitForTimeout(600);
+  const inDialog = await scan();
+  check("WCAG 2.2 AA: the settings dialog, key forms included", inDialog.length === 0, inDialog.join(", "));
+
+  // NC-124: the legal drafts, reachable from every page and honest about being drafts.
+  await go(page, "/legal/privacy");
+  const legalBody = await visible(page);
+  check("the legal pages say they are drafts", (await page.locator("[data-legal-draft]").count()) === 1);
+  check("  …and the privacy page lists what the browser keeps", /news-charts:feed-keys:/.test(legalBody) && /until you close the tab/.test(legalBody));
+  const footerLinks = await page.locator('footer nav[aria-label="Legal"] a').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+  check("  …linked from the footer", ["/legal/terms", "/legal/privacy", "/legal/disclaimer"].every((h) => footerLinks.includes(h)), footerLinks.join(" "));
+
+  // The keyboard pass (batch 18): what axe cannot measure — where focus goes, and whether it shows.
+  console.log("\nBy keyboard alone");
+  await go(page, "/");
+  const settingsBtn = page.locator('button[aria-label="Settings"]').first();
+  await settingsBtn.focus();
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(600);
+  const focusIn = await page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]')));
+  check("opening the settings dialog moves focus into it", focusIn);
+  let escaped = false;
+  for (let i = 0; i < 120 && !escaped; i++) {
+    await page.keyboard.press("Tab");
+    escaped = await page.evaluate(() => !document.activeElement?.closest('[role="dialog"]'));
+  }
+  check("  …Tab never leaves it", !escaped);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(500);
+  const back = await page.evaluate(() => ({
+    open: Boolean(document.querySelector('[role="dialog"]')),
+    on: document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.tagName ?? "",
+  }));
+  check("  …and Escape closes it, handing focus back to the button that opened it", !back.open && back.on === "Settings", JSON.stringify(back));
+
+  await go(page, COMPANY);
+  const chartLabel = (await page.locator("[data-chart-summary]").first().textContent().catch(() => null)) ?? "";
+  check("the price chart names itself to a screen reader and points to the list", /\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}/.test(chartLabel) && /listed below/.test(chartLabel), chartLabel);
+  let ringed = "";
+  for (let i = 0; i < 60 && !ringed; i++) {
+    await page.keyboard.press("Tab");
+    ringed = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el?.classList.contains("chrono-scroller")) return "";
+      return getComputedStyle(el).boxShadow || "none";
+    });
+  }
+  check("the timeline's scroll area shows where keyboard focus is", Boolean(ringed) && ringed !== "none", ringed || "never focused");
 }
 
 /**
@@ -991,6 +1144,7 @@ async function main(): Promise<void> {
     await cryptoTopic(page);
     await comparePage(page);
     await focusFilter(page);
+    await economyOverlay(page);
     await homepageSuggestions(page);
     await searchResilience(page);
   await feedKeys(page);

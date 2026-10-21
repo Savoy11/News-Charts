@@ -49,3 +49,17 @@ export function optionFor(c: SubjectCandidate): SearchOption {
 export function optionForSuggestion(s: SecuritySuggestion): SearchOption {
   return { label: s.name, detail: s.ticker, href: `/company/${s.ticker}`, via: s.via };
 }
+
+/**
+ * The option's page, narrowed to what the query asked about (NC-008). A search that offered a
+ * choice still asked its question — "how did covid affect Ford" settles on one of two Fords, and
+ * whichever is picked opens on its covid events.
+ */
+export function withFocus(option: SearchOption, focus: string | null): SearchOption {
+  return focus ? { ...option, href: focusHref(option.href, focus) } : option;
+}
+
+/** A page address with the focus on it — the one way every caller writes `?focus=`. */
+export function focusHref(href: string, focus: string | null | undefined): string {
+  return focus ? `${href}${href.includes("?") ? "&" : "?"}focus=${encodeURIComponent(focus)}` : href;
+}

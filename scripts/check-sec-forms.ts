@@ -190,6 +190,86 @@ async function main(): Promise<void> {
     check("the filing stack reads a form out of every new title", unread.length === 0, unread.join(" | "));
   }
 
+  /**
+   * 2026-10-17 proposal 9. The fixture is the record's own `formerNames` field, pinned from
+   * `npm run former-names-report`; while it is still the provisional one this says so, because a
+   * fixture written from an assumption can only confirm that assumption.
+   */
+  console.log("\nFormer names — renames on the timeline, old names as search aliases");
+  const { renamesFrom, renameEvents, formerNameAliases } = await import("../lib/sec");
+  const fixture = JSON.parse(readFileSync("scripts/fixtures/sec-former-names.json", "utf8")) as {
+    provisional?: boolean;
+    records: { ticker: string; cik: string; name: string; formerNames: { name?: string; from?: string; to?: string }[] }[];
+  };
+  if (fixture.provisional) console.log("  (the fixture is still PROVISIONAL — not yet pinned from a real record)");
+  const rec = (t: string) => fixture.records.find((r) => r.ticker === t)!;
+  const meta = rec("META");
+  const metaRenames = renamesFrom(meta.name, meta.formerNames);
+  check("Meta's record holds one rename, from Facebook to its current name",
+    metaRenames.length === 1 && /^FACEBOOK\b/i.test(metaRenames[0].from) && metaRenames[0].to === meta.name,
+    JSON.stringify(metaRenames));
+  check("  …and \"facebook\" becomes a search alias", formerNameAliases(metaRenames, meta.name).includes("facebook"),
+    formerNameAliases(metaRenames, meta.name).join(", "));
+  const apple = rec("AAPL");
+  const appleRenames = renamesFrom(apple.name, apple.formerNames);
+  check("Apple Computer → Apple is a rename", appleRenames.some((r) => /^APPLE COMPUTER\b/i.test(r.from)), JSON.stringify(appleRenames));
+  check("  …but a change of case alone (APPLE INC → Apple Inc.) is not",
+    !appleRenames.some((r) => r.from.toUpperCase() === "APPLE INC"), JSON.stringify(appleRenames));
+  check("  …and the current name is never an alias of itself", !formerNameAliases(appleRenames, apple.name).includes("apple"));
+  // Pinned from the real record (2026-10-20): Apple's lists "APPLE COMPUTER INC/ FA", in use for
+  // no days at all — an EDGAR filer annotation, not a name. Read as one, it made a 1997 "rename"
+  // to the same name and the search alias "apple computer inc/ fa".
+  check("  …and an EDGAR annotation (\"APPLE COMPUTER INC/ FA\") is neither a rename nor an alias",
+    !appleRenames.some((r) => /\/\s*FA/i.test(r.from)) && !formerNameAliases(appleRenames, apple.name).some((a) => a.includes("/")) &&
+      appleRenames.length === 1 && appleRenames[0].on === "2007-01-04",
+    JSON.stringify(appleRenames));
+  check("a company that never changed its name has no renames (GE, Ford)",
+    renamesFrom(rec("GE").name, rec("GE").formerNames).length === 0 && renamesFrom(rec("F").name, rec("F").formerNames).length === 0);
+
+  const chain = renamesFrom("CHARLIE HOLDINGS INC", [
+    { name: "BRAVO CORP /DE/", to: "2015-03-02T00:00:00.000Z" },
+    { name: "ALPHA CORP", to: "2010-06-01T00:00:00.000Z" },
+    { name: "BRAVO CORP", to: "2012-01-05T00:00:00.000Z" },
+    { name: "DELTA INC", to: "2099-01-01T00:00:00.000Z" },
+    { name: "ECHO INC" },
+  ]);
+  check("a chain pairs each old name with the one that replaced it, oldest first",
+    chain.map((r) => `${r.on} ${r.from} > ${r.to}`).join(" | ") ===
+      "2010-06-01 ALPHA CORP > BRAVO CORP | 2015-03-02 BRAVO CORP /DE/ > CHARLIE HOLDINGS INC",
+    chain.map((r) => `${r.on} ${r.from} > ${r.to}`).join(" | "));
+  check("  …dropping a state tag change, a future date and an undated entry", chain.length === 2);
+  const [rename] = renameEvents(chain.slice(0, 1), { ticker: "TST", cik: "0000000001", name: "Test Co" });
+  check("a rename is a dated corporate action with its own identity",
+    rename?.type === "corporate_action" && rename.date === "2010-06-01" &&
+      rename.title === "Renamed from ALPHA CORP to BRAVO CORP" && rename.dedupBasis === "sec:0000000001:rename:2010-06-01",
+    JSON.stringify(rename));
+
+  // The record is already in hand for the filings, so renames cost no request; a fund's record is
+  // its trust's, whose old names are not the fund's.
+  const served = (body: object) =>
+    (globalThis.fetch = (async () => new Response(JSON.stringify(body), { status: 200 })) as typeof fetch);
+  const metaRecord = { name: meta.name, formerNames: meta.formerNames, filings: { recent: record([["10-K", "2026-01-29", ""]], 900) } };
+  let metaEvents: TimelineEvent[] = [];
+  let fundEvents: TimelineEvent[] = [];
+  const collected: { on: string; from: string; to: string }[] = [];
+  try {
+    const { getFilings, getFilingsDeep } = await import("../lib/sec");
+    served(metaRecord);
+    metaEvents = await getFilingsDeep({ ticker: "META", cik: meta.cik, name: meta.name }, false, collected);
+    served({ ...metaRecord, name: "VANGUARD INDEX FUNDS", formerNames: [{ name: "VANGUARD INDEX TRUST", to: "1999-01-01T00:00:00.000Z" }] });
+    fundEvents = await getFilings({ ticker: "VOO", cik: "0000036405", name: "Vanguard 500 Index Fund" });
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  check("a company's filings carry its rename", metaEvents.some((e) => e.type === "corporate_action" && /^Renamed from FACEBOOK/i.test(e.title)),
+    metaEvents.map((e) => e.title).join(" | "));
+  check("  …and hand the renames to a caller that stores aliases", collected.length === metaRenames.length && collected.length > 0);
+  check("a fund's page does not inherit its trust's old names", !fundEvents.some((e) => e.type === "corporate_action"),
+    fundEvents.map((e) => e.title).join(" | "));
+  const ingestSrc = readFileSync("scripts/ingest.ts", "utf8");
+  check("company ingest stores the old names as search aliases",
+    /getFilingsDeep\(company, true, renames\)/.test(ingestSrc) && /formerNameAliases\(renames, company\.name\)/.test(ingestSrc));
+
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);
 }

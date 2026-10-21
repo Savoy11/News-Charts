@@ -992,7 +992,9 @@ still asked GDELT only for the everyday form of the company's SEC title ("GOLDMA
 the headline used that name. So most of what is written about these companies never reached
 their pages.
 
-VERIFICATION_LINE
+`npm run check` passes (36 suites) and `npm run lint` is clean. `next build` compiles. `check:ui` is
+195/195 on a production build. `check:live` was not re-run: GDELT was measured directly instead,
+between its refusals (below). HawkScan could not run: `HAWK_API_KEY` is not set.
 
 - [x] **GDELT is searched, and headlines are scored, by the company's own other names.** The
       everyday name is still the query. Up to three other names are OR'd into the same request,

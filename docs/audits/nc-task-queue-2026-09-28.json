@@ -289,7 +289,7 @@
     {
      "noted_on": "2026-10-21",
      "note": "Batch 23 (audit 2026-10-21 #2): with nothing held, 'Google' resolves to a Google-themed ETF (DEPW), because EDGAR's ticker index does not know Alphabet was Google. Wikidata aliases are what would answer it before Alphabet is held; once it is, its EDGAR former name supplies the alias (batch 15). (Corrected 2026-10-21, batch 24: the last sentence was wrong — Alphabet's EDGAR record has no former names; Google Inc. is a separate registrant, CIK 1288776, now under Alphabet.)",
-     "evidence": "docs/MASTER-CHECKLIST.md:1048"
+     "evidence": "docs/MASTER-CHECKLIST.md:1144"
     }
    ],
    "closure": {
@@ -305,7 +305,7 @@
      "lib/sec.ts",
      "scripts/check-aliases.ts",
      "scripts/check-live.ts",
-     "docs/MASTER-CHECKLIST.md:987"
+     "docs/MASTER-CHECKLIST.md:1083"
     ]
    }
   },
@@ -445,7 +445,7 @@
      "scripts/check-search-log.ts",
      "scripts/check-focus.ts",
      "scripts/check-ui.ts",
-     "docs/MASTER-CHECKLIST.md:1301"
+     "docs/MASTER-CHECKLIST.md:1397"
     ]
    }
   },
@@ -1368,7 +1368,7 @@
     "verdict": "superseded",
     "reason": "Later checklist entry marks 'Label every source on screen' done 2026-07-28; GDELT domains are tidied but deliberately not embellished. Code present.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2142-2156",
+     "docs/MASTER-CHECKLIST.md:2238-2252",
      "lib/sourceLabel.ts:55",
      "package.json:40"
     ]
@@ -1481,7 +1481,7 @@
      "docs/proposals/2026-10-17-proposals.md",
      "scripts/refresh.ts:77",
      "scripts/check-wiring.ts:161",
-     "docs/MASTER-CHECKLIST.md:1267"
+     "docs/MASTER-CHECKLIST.md:1363"
     ]
    }
   },
@@ -2718,7 +2718,7 @@
      "lib/feedKeys.ts:65",
      "lib/feeds/browser.ts:43",
      "lib/feeds/browser.ts:88",
-     "docs/MASTER-CHECKLIST.md:1534"
+     "docs/MASTER-CHECKLIST.md:1630"
     ]
    }
   },
@@ -2960,8 +2960,8 @@
      "lib/ingest/store.ts",
      "scripts/check-parsers.ts",
      "scripts/check-live.ts",
-     "docs/MASTER-CHECKLIST.md:1165",
-     "docs/MASTER-CHECKLIST.md:1048"
+     "docs/MASTER-CHECKLIST.md:1261",
+     "docs/MASTER-CHECKLIST.md:1144"
     ]
    }
   },
@@ -3077,7 +3077,7 @@
      "scripts/fixtures/macro-pages.json",
      "components/CompanyExplorer.tsx",
      "lib/page-data.ts",
-     "docs/MASTER-CHECKLIST.md:1209"
+     "docs/MASTER-CHECKLIST.md:1305"
     ]
    }
   },
@@ -4323,8 +4323,8 @@
     "reason": "Their content (feed gate, affiliate initiative, owner backlog, on-chain checklist) is present in main's MASTER-CHECKLIST in later form.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:359",
-     "docs/MASTER-CHECKLIST.md:1887",
-     "docs/MASTER-CHECKLIST.md:1996"
+     "docs/MASTER-CHECKLIST.md:1983",
+     "docs/MASTER-CHECKLIST.md:2092"
     ]
    }
   },
@@ -4477,7 +4477,7 @@
     {
      "noted_on": "2026-10-21",
      "note": "Batch 23: the privacy page said per-IP rate-limit counts 'disappear within an hour' while the limiters kept them until 10,000 clients piled up (audit 2026-10-21 #5). The limiters now clear expired windows every minute, and the page states the windows from lib/rateLimit.ts; check:legal ties the two.",
-     "evidence": "docs/MASTER-CHECKLIST.md:1048"
+     "evidence": "docs/MASTER-CHECKLIST.md:1144"
     }
    ]
   },
@@ -5855,7 +5855,7 @@
      "app/industry/[slug]/page.tsx:20",
      "scripts/check-wiring.ts:224",
      "docs/MASTER-CHECKLIST.md:257-316",
-     "docs/MASTER-CHECKLIST.md:1048"
+     "docs/MASTER-CHECKLIST.md:1144"
     ]
    }
   },
@@ -6460,7 +6460,7 @@
     "what": "Batch 19: Prompt search v2 (NC-008 closed) — a question naming a security and a concern opens the security's page with ?focus=, never splitting a real name; salvage keeps its tail; years in a focus narrow by date; the seven stale check:ui failures resolved.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1301"
+     "docs/MASTER-CHECKLIST.md:1397"
     ]
    },
    {
@@ -6468,7 +6468,7 @@
     "what": "Batch 20: question search matches other words for 15 common concerns (lib/concepts.ts — covid/pandemic/lockdown, tariffs, interest rates …), graded below the typed word and named on the focus bar; the search box hint invites a question. No ledger item opened or closed (a follow-up to NC-008, tracked in the checklist).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1270"
+     "docs/MASTER-CHECKLIST.md:1366"
     ]
    },
    {
@@ -6476,7 +6476,7 @@
     "what": "Batch 21: NC-080 closed — Fed policy statements (1994–) and CPI releases (2008–) on a curated economy subject, shown on company pages behind an Economy chip that starts off; batch 15's former-names fixture pinned from the real EDGAR record, which exposed and fixed an annotation bug ('APPLE COMPUTER INC/ FA').",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea with the Fed, BLS and SEC hosts reachable: the full `npm run check` chain, `npm run lint`, `next build`, the two new check:live cases, a live ingest into the local database, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1209"
+     "docs/MASTER-CHECKLIST.md:1305"
     ]
    },
    {
@@ -6484,7 +6484,7 @@
     "what": "Batch 22: NC-077 closed — every daily close since listing, read once (asked by date; range=max is monthly), then ten-year refreshes; fixed the split re-read that replaced daily charts with monthly closes; two live checks corrected (EDGAR rename links, Wikipedia throttle as UNREACHABLE).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, check:live (14 pass, 0 fail, 2 unreachable, 1 skipped), a live backfill of F into a local database, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1165"
+     "docs/MASTER-CHECKLIST.md:1261"
     ]
    },
    {
@@ -6492,7 +6492,7 @@
     "what": "Batch 23: the 2026-10-21 code audit's six findings fixed — exact closes and a one-time re-read of every full history (P0); punctuation-tolerant name matching on the committed index, 36 → 2,789 of 2,794 'Name, Inc.' titles found by name (P1); 'Before the chart' instead of a false first trading day; a filer's own stakes in other issuers left out, routine prospectus months as one row and prices cached apart, so the biggest banks' pages fit Next's 2 MB cache; the rate limiter forgets expired windows as the privacy page now says; prose corrected. Also: a trading session still in progress is never stored as a close.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea with SEC and Yahoo reachable: the full `npm run check` chain, `npm run lint`, `next build`, a check:ui run on a production build, check:live, whole-index before/after comparisons of name resolution, and live page-size measurements for six bank filers.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1048",
+     "docs/MASTER-CHECKLIST.md:1144",
      "docs/audits/2026-10-21-audit.md"
     ]
    },
@@ -6500,6 +6500,14 @@
     "on": "2026-10-21",
     "what": "Batch 24: NC-004 closed — other names for listed companies from Wikidata (labels, official names, related aliases, and former SEC registrants now under a listed parent) as a committed alias index read by the company name rungs: 'Google' → Alphabet, 'Facebook' → Meta, 'P&G', 'Sun Microsystems' → Oracle; exact titles still outrank aliases. Batch 23's note that holding Alphabet would supply 'Google' corrected.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea with query.wikidata.org reachable: the full `npm run check` chain (36 suites), `npm run lint`, `next build`, check:live (Wikidata case passing), a check:ui run on a production build, the running site's /api/resolve, and a whole-index before/after comparison of 23,422 name queries.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:1083"
+    ]
+   },
+   {
+    "on": "2026-10-21",
+    "what": "Batch 25: a company's news searched and scored by its own other names. GDELT is asked for the everyday name OR up to three of them in one request (GOLDMAN SACHS GROUP OR goldman sachs: headlines naming the company 5 -> 12 of 100, measured), and headlines naming them count as naming the company. Words printed around every article (google, facebook, amazon) only score headlines: measured, Alphabet OR google returned 0 of 97 on-topic pages. Only the company's own names and a predecessor whose ticker carried on may claim news; an acquired company's names, loose aliases and the Motorola brand (Lenovo's phones since 2011) stay search-only.",
+    "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (36 suites; check:aliases 72), `npm run lint`, `next build`, a check:ui run on a production build, a comparison of 23,741 search queries showing every answer unchanged, and live GDELT measurements of the old and new queries for Alphabet and Goldman Sachs.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:987"
     ]

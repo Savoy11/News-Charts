@@ -31,7 +31,7 @@ import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib
 import { fetchNews } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
-import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, type Rename } from "../lib/sec";
+import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, newsNamesFor, type Rename } from "../lib/sec";
 import { fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
@@ -387,10 +387,14 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   // Headlines say "Ford", not "Ford Motor Company" — every keyword-searched feed gets the
   // common name, and only EDGAR and the price endpoint get the ticker.
   const name = commonName(company.name);
+  // Its other names that news may use — "Google" for Alphabet, "Facebook" for Meta — never an
+  // acquired company's (`newsNamesFor`, batch 25). Headlines use them, so the feed is asked for
+  // them and a headline naming one counts as naming the company.
+  const alsoKnownAs = newsNamesFor(company.cik);
   // Score at link time, with the common name as an extra whole-phrase alias — the same name
   // the feeds were queried under is the name their headlines will use.
   const companyCtx = { kind: "company" as const, displayName: company.name, ticker: company.ticker };
-  const scoring: ScoringContext = { subject: companyCtx, aliases: aliasesFor(companyCtx, [name]) };
+  const scoring: ScoringContext = { subject: companyCtx, aliases: aliasesFor(companyCtx, [name, ...alsoKnownAs]) };
   const run = runnerFor(client, subjectId, due, scoring);
 
   if (industry) {
@@ -462,7 +466,8 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
   // headline that says "Ford" — the common name is the query, exactly as the comment above
   // promised and the historical sources below already do.
-  await run("gdelt", name, () => fetchNews(name), (e) =>
+  if (alsoKnownAs.length) line("names", `also searched as ${alsoKnownAs.map((n) => `"${n}"`).join(", ")}`);
+  await run("gdelt", [name, ...alsoKnownAs].join(" | "), () => fetchNews(name, alsoKnownAs), (e) =>
     // dedupe BEFORE capping: syndicated copies of one wire story must not burn cap slots
     collapseNearDuplicates(e).slice(0, 75)
   );

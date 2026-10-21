@@ -23,9 +23,21 @@ export async function getNews(query: string): Promise<TimelineEvent[]> {
   return (await fetchNews(query)).events;
 }
 
+/**
+ * The GDELT query for a subject and its other names, as one request: GDELT allows about one
+ * request every five seconds, so each name is an `OR` inside the same query, never a call of its
+ * own. "Alphabet" alone missed every headline that says "Google" (batch 25).
+ */
+export function gdeltQuery(query: string, alsoKnownAs: string[] = []): string {
+  const names = [query, ...alsoKnownAs.filter((n) => n.toLowerCase() !== query.toLowerCase())];
+  return names.length === 1
+    ? `"${query}" sourcelang:english`
+    : `(${names.map((n) => `"${n}"`).join(" OR ")}) sourcelang:english`;
+}
+
 /** Same fetch, but reporting *why* it came back empty so ingest can back off. */
-export async function fetchNews(query: string): Promise<FetchResult> {
-  const q = `"${query}" sourcelang:english`;
+export async function fetchNews(query: string, alsoKnownAs: string[] = []): Promise<FetchResult> {
+  const q = gdeltQuery(query, alsoKnownAs);
   const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(
     q
   )}&mode=artlist&maxrecords=100&format=json&sort=datedesc&startdatetime=20170101000000`;

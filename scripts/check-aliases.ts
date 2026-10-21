@@ -8,7 +8,9 @@ import {
   type AliasIndexFile,
   type WikidataCompany,
 } from "../lib/companyAliases";
-import { commonName, resolveTickerLocally, titleMatch, TICKER_INDEX_COMPANIES } from "../lib/sec";
+import { commonName, companyTickers, newsNamesFor, resolveTickerLocally, titleMatch, TICKER_INDEX_COMPANIES } from "../lib/sec";
+import { fetchNews, gdeltQuery } from "../lib/news";
+import { aliasesFor, mentions } from "../lib/enrich/relevance";
 
 /**
  * Other names for listed companies, from Wikidata (NC-004).
@@ -30,7 +32,7 @@ function check(name: string, ok: boolean, detail = ""): void {
   console.log(`  ${ok ? "PASS" : "FAIL"}  ${name}${detail ? " — " + detail : ""}`);
 }
 
-const view = { companies: TICKER_INDEX_COMPANIES, titleMatch, commonName };
+const view = { companies: TICKER_INDEX_COMPANIES, titleMatch, commonName, tickersOf: companyTickers };
 const tickerRows = (tickerIndex as unknown as { companies: [number, string, string][] }).companies;
 const item = (qid: string, targetCik: number, kind: WikidataCompany["kind"], o: Partial<WikidataCompany>): WikidataCompany => ({
   qid,
@@ -50,14 +52,18 @@ async function main(): Promise<void> {
       // Meta's item has no English alias; "Facebook, Inc." is a former official name
       item("Q380", 1326801, "own", { labels: ["Meta Platforms"], officialNames: ["Meta Platforms, Inc.", "Facebook, Inc."], aliases: ["meta.com"], sitelinks: 87 }),
       // Google Inc., an SEC registrant of its own (CIK 1288776), now under Alphabet
-      item("Q95", 1652044, "former", { labels: ["Google"], aliases: ["Big G"], sitelinks: 212 }),
+      item("Q95", 1652044, "former", { labels: ["Google"], aliases: ["Big G"], sitelinks: 212, tickers: ["GOOG", "GOOGL"] }),
       item("Q212405", 80424, "own", {
         labels: ["Procter & Gamble"],
         aliases: ["P&G", "Rejoice", "Proctor and Gamble", "The Procter & Gamble Company (Cincinnati, OH)"],
         sitelinks: 100,
       }),
       item("Q37156", 51143, "own", { labels: ["IBM"], aliases: ["18M", "ibm.com", "IBM Corp."], sitelinks: 150 }),
-      item("Q14647", 1341439, "former", { labels: ["Sun Microsystems"], aliases: ["Sun", "Stanford University Network"], sitelinks: 74 }),
+      item("Q14647", 1341439, "former", { labels: ["Sun Microsystems"], aliases: ["Sun", "Stanford University Network"], sitelinks: 74, tickers: ["JAVA"] }),
+      // Block's former official name; a one-word name that is a word first
+      item("Q110778747", 1512673, "own", { labels: ["Block"], officialNames: ["Block, Inc.", "Square, Inc."], sitelinks: 30 }),
+      // a coined one-word former name of Strategy Inc.
+      item("Q1192211", 1050446, "own", { labels: ["Strategy"], officialNames: ["MicroStrategy Incorporated"], sitelinks: 25 }),
       // an item carrying Snowflake's CIK, labelled with another company's name
       item("Q0000001", 1640147, "own", { labels: ["Castor Maritime"], sitelinks: 5 }),
       // SeaWorld is listed itself; Wikidata still has it under Blackstone
@@ -100,6 +106,16 @@ async function main(): Promise<void> {
   check("a name two companies claim is nobody's", why("Columbia Sportswear Group") === "ambiguous");
   check("a name that already finds its company is not stored twice", why("Meta Platforms") === "redundant");
 
+  console.log("\nNews may use a company's own names, never an acquisition's (batch 25)");
+  const news = (key: string) => built.aliases[key]?.[3];
+  check("a former name of the same company finds its news: \"Facebook\" for Meta", news("FACEBOOK") === 1 && built.aliases["FACEBOOK"]?.[2] === "name");
+  check("  …and so does a predecessor whose ticker carried on: Google's GOOG and GOOGL are Alphabet's", news("GOOGLE") === 1 && built.aliases["GOOGLE"]?.[2] === "former");
+  check("  …while an acquired company's does not: Sun's 1990s news is not Oracle's", news("SUN MICROSYSTEMS") === 0);
+  check("  …nor a looser alias, however good for search: \"P&G\"", built.aliases["P&G"]?.[2] === "alias" && news("P&G") === 0);
+  check("a one-word name that is a word first does not search news: \"Square\"", news("SQUARE") === 0 && news("SQUARE INC") === 1,
+    `${news("SQUARE")} / ${news("SQUARE INC")}`);
+  check("  …while a coined one does: \"MicroStrategy\"", news("MICROSTRATEGY") === 1);
+
   console.log("\nThe committed index agrees with the EDGAR index beside it");
   const file = aliasFile as unknown as AliasIndexFile;
   const entries = Object.entries(file.aliases);
@@ -114,6 +130,11 @@ async function main(): Promise<void> {
   const stolen = entries.filter(([k, [cik]]) => (everyday.get(k) ?? cik) !== cik).map(([k]) => k);
   check("no name is another listed company's title or everyday name", stolen.length === 0, stolen.slice(0, 5).join(", "));
   check("every name points at its Wikidata item", entries.every(([, [, qid]]) => /^Q\d+$/.test(qid)));
+  check("news may use only a company's own names or a predecessor's, never a loose alias",
+    entries.every(([, [, , kind, news]]) => news === 0 || kind !== "alias"));
+  check("  …so \"Google\" and \"Facebook\" search news, and \"Whole Foods\" and \"Sun Microsystems\" do not",
+    file.aliases["GOOGLE"]?.[3] === 1 && file.aliases["FACEBOOK"]?.[3] === 1 &&
+      file.aliases["WHOLE FOODS"]?.[3] === 0 && file.aliases["SUN MICROSYSTEMS"]?.[3] === 0);
 
   console.log("\nThe resolver finds a company by another name, never ahead of a title");
   // every request refused: aliases are answered from the committed file
@@ -162,6 +183,39 @@ async function main(): Promise<void> {
   const fb = await resolveSearch("Facebook stock");
   check("\"Facebook stock\" opens Meta", same(fb, { kind: "company", ticker: "META" }), JSON.stringify(fb));
 
+  console.log("\nNews is asked for, and scored by, those names");
+  const cikOf = (t: string) => tickerRows.find(([, ticker]) => ticker === t)![0];
+  check("Alphabet's news is also searched as \"google\"", newsNamesFor(cikOf("GOOGL")).includes("google"), JSON.stringify(newsNamesFor(cikOf("GOOGL"))));
+  check("  …Meta's as \"facebook\", Amazon's as \"amazon\" (its feeds were asked for \"AMAZON COM\")",
+    newsNamesFor(cikOf("META")).includes("facebook") && newsNamesFor(cikOf("AMZN")).includes("amazon"));
+  check("  …but never a longer form of the name already asked for: no \"oracle corporation\" beside \"Oracle\"",
+    newsNamesFor(cikOf("ORCL")).length === 0, JSON.stringify(newsNamesFor(cikOf("ORCL"))));
+  check("  …and at most three, so the query stays one request",
+    tickerRows.every(([cik]) => newsNamesFor(cik).length <= 3));
+  check("the names are one GDELT request, OR'd", gdeltQuery("Alphabet", ["google"]) === '("Alphabet" OR "google") sourcelang:english', gdeltQuery("Alphabet", ["google"]));
+  check("  …and a company without any is asked exactly as before", gdeltQuery("Ford") === '"Ford" sourcelang:english' && gdeltQuery("Ford", ["ford"]) === '"Ford" sourcelang:english');
+  {
+    let asked = "";
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      asked = String(input);
+      return new Response(JSON.stringify({ articles: [] }), { status: 200 });
+    }) as typeof fetch;
+    await fetchNews("Alphabet", ["google"]);
+    check("  …which is what the GDELT request carries", decodeURIComponent(asked).includes('("Alphabet" OR "google") sourcelang:english'), asked.slice(0, 120));
+  }
+  const alphabet = { kind: "company" as const, displayName: "Alphabet Inc.", ticker: "GOOGL" };
+  const headline = "Google unveils its next Pixel phone";
+  check("a headline naming Google is about Alphabet once Alphabet carries the name",
+    mentions(headline, aliasesFor(alphabet, ["Alphabet", ...newsNamesFor(cikOf("GOOGL"))])) === "named" &&
+      mentions(headline, aliasesFor(alphabet, ["Alphabet"])) !== "named");
+  const block = { kind: "company" as const, displayName: "Block, Inc.", ticker: "XYZ" };
+  check("  …while Times Square is not Block's", mentions("Crowds pack Times Square for the countdown", aliasesFor(block, ["Block", ...newsNamesFor(cikOf("XYZ"))])) !== "named");
+  const ingestSrc = readFileSync("scripts/ingest.ts", "utf8");
+  check("company ingest searches and scores with them",
+    /const alsoKnownAs = newsNamesFor\(company\.cik\);/.test(ingestSrc) &&
+      /aliasesFor\(companyCtx, \[name, \.\.\.alsoKnownAs\]\)/.test(ingestSrc) && /fetchNews\(name, alsoKnownAs\)/.test(ingestSrc));
+  check("  …and so does re-scoring", /newsNamesFor\(subjectRows\[0\]\.cik\)/.test(readFileSync("scripts/score.ts", "utf8")));
+
   console.log("\nThe sync reads what it says it reads");
   const sync = readFileSync("scripts/sync-aliases.ts", "utf8");
   const pkg = JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> };
@@ -169,6 +223,7 @@ async function main(): Promise<void> {
   check("every official name, former ones included, not only the preferred current one",
     (sync.match(/p:P1448\/ps:P1448/g) ?? []).length === 2 && !/wdt:P1448/.test(sync));
   check("a parent organization only while it still is one", /FILTER NOT EXISTS \{ \?st pq:P582 \?end \}/.test(sync));
+  check("a former registrant's tickers, to tell a predecessor from an acquisition", /p:P414\/pq:P249 \?n \. BIND\("ticker" AS \?kind\)/.test(sync) && /tickersOf: companyTickers/.test(sync));
   check("no \"owned by\" or \"manufacturer\" links, which map zinc to Pfizer", !/P127|P176/.test(sync));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);

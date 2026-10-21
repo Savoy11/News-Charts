@@ -35,7 +35,7 @@ import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAlia
 import { fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
-import { fetchCompanyRegulations } from "../lib/frCompany";
+import { FR_COMPANY_SINCE, fetchCompanyRegulations, frSearchTerm } from "../lib/frCompany";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
 import { MACRO_SUBJECT, fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
@@ -461,7 +461,9 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    * from the 2026-10-18 count). A sector's keyword rules stay the industry's; these are the
    * company's own. Scored at link time: the title names the subject, so no model is needed.
    */
-  await run("federal_register", company.name, () => fetchCompanyRegulations(company.name));
+  await run("federal_register", frSearchTerm(company.name, alsoKnownAs), () =>
+    fetchCompanyRegulations(company.name, FR_COMPANY_SINCE, alsoKnownAs)
+  );
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
   // headline that says "Ford" — the common name is the query, exactly as the comment above

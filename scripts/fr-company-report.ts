@@ -14,7 +14,7 @@ config({ path: ".env.local" });
  * and it needs a host that reaches www.federalregister.gov.
  */
 import { getPool, closePool, configProblem } from "../lib/db";
-import { resolveTickerLocally, resolveCompany } from "../lib/sec";
+import { newsNamesFor, resolveTickerLocally, resolveCompany } from "../lib/sec";
 import { fetchCompanyMentions, tallyCompanyMentions } from "../lib/frCompany";
 
 const arg = (name: string) => {
@@ -22,21 +22,21 @@ const arg = (name: string) => {
   return i >= 0 ? process.argv[i + 1] : undefined;
 };
 
-async function companies(): Promise<{ ticker: string; name: string }[]> {
+async function companies(): Promise<{ ticker: string; name: string; cik: string | null }[]> {
   const asked = process.argv.slice(2).filter((a, i, all) => !a.startsWith("--") && all[i - 1] !== "--since");
   if (asked.length) {
-    const out: { ticker: string; name: string }[] = [];
+    const out: { ticker: string; name: string; cik: string | null }[] = [];
     for (const t of asked) {
       const c = resolveTickerLocally(t) ? await resolveCompany(t) : null;
-      if (c) out.push({ ticker: c.ticker, name: c.name });
+      if (c) out.push({ ticker: c.ticker, name: c.name, cik: c.cik });
       else console.log(`  ${t}: not in the committed EDGAR index — skipped`);
     }
     return out;
   }
-  const { rows } = await getPool().query<{ ticker: string; display_name: string }>(
-    "SELECT ticker, display_name FROM subjects WHERE kind = 'company' AND ticker IS NOT NULL ORDER BY ticker"
+  const { rows } = await getPool().query<{ ticker: string; display_name: string; cik: string | null }>(
+    "SELECT ticker, display_name, cik FROM subjects WHERE kind = 'company' AND ticker IS NOT NULL ORDER BY ticker"
   );
-  return rows.map((r) => ({ ticker: r.ticker, name: r.display_name }));
+  return rows.map((r) => ({ ticker: r.ticker, name: r.display_name, cik: r.cik }));
 }
 
 async function main(): Promise<void> {
@@ -45,12 +45,14 @@ async function main(): Promise<void> {
   console.log(`\nFederal Register documents naming each company in their title, since ${since}\n`);
   let totalNamed = 0;
   for (const c of list) {
-    const r = await fetchCompanyMentions(c.name, since);
+    // the names the company feed searches under, so the count measures what a page would carry
+    const alsoKnownAs = c.cik ? newsNamesFor(c.cik) : [];
+    const r = await fetchCompanyMentions(c.name, since, alsoKnownAs);
     if ("error" in r) {
       console.log(`  ${c.ticker.padEnd(6)} could not ask: ${r.error}`);
       continue;
     }
-    const t = tallyCompanyMentions(r.hits, c.name);
+    const t = tallyCompanyMentions(r.hits, c.name, alsoKnownAs);
     totalNamed += t.named;
     const capped = r.total > r.hits.length ? ` (first ${r.hits.length} of ${r.total} read)` : "";
     console.log(`  ${c.ticker.padEnd(6)} ${String(t.named).padStart(4)} name it in the title, of ${r.total} full-text hits${capped}`);

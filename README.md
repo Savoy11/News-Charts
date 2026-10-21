@@ -72,9 +72,12 @@ NHTSA petition, an ITC investigation naming it as respondent. `npm run ingest --
 for those too (`lib/frCompany.ts`): up to 40 a run, from 2015, never an airworthiness directive
 (an aircraft maker gets about a hundred a year, each on one part). A one-word name needs a
 company word after it ("Apple Inc.", not "Light Brown Apple Moth"), and a longer listed name
-owns the mention ("Portland General Electric" isn't GE's). A document linked to both the company
-and its sector is listed once on the company's page. These are scored without the model: the
-title naming the company is the evidence.
+owns the mention ("Portland General Electric" isn't GE's). The company's own other names are
+searched in the same request (`newsNamesFor`; the API ORs phrases joined by `|`), so Alphabet's
+page gets Google LLC's FTC orders; a one-word other name needs its company word straight after it
+("Google LLC", not "Amazon Produce Network, LLC"). A document linked to both the company and its
+sector is listed once on the company's page. These are scored without the model: the title
+naming the company is the evidence.
 
 ### Source planning (`lib/enrich/plan.ts`)
 
@@ -517,7 +520,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Wikipedia | Topic histories and company backstory | "History of ..." + "Timeline of ..." merged; search-index fallback |
 | LoC Chronicling America | Historical newspapers ~1770–1963 | Public domain; fills the pre-2017 gap |
 | Internet Archive | Catalogued items (reports, catalogues, film) | Relevance-ranked; impossible dates dropped |
-| Federal Register | Sector-level rules and notices; documents naming a company | Keyword hits attach to industries; a title naming the company attaches to it (no airworthiness directives) |
+| Federal Register | Sector-level rules and notices; documents naming a company | Keyword hits attach to industries; a title naming the company, or one of its own other names ("Google LLC"), attaches to it (no airworthiness directives) |
 | Federal Reserve | FOMC policy statements since 1994 | Economy subject; on company pages behind the Economy chip (off by default). `npm run ingest -- --macro` |
 | BLS | CPI release dates since 2008 | Same subject and chip; needs a contact `User-Agent` |
 | Wikidata | Other names for listed companies, for search only ("Google" → Alphabet, "Facebook" → Meta, "P&G") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |

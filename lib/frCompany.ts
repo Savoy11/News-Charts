@@ -30,7 +30,27 @@ const CORPORATE = new Set([
 ]);
 
 /**
- * Whether a title names the company — its everyday name, whole, as a phrase. The everyday name
+ * The names a company's documents are searched and matched under: its everyday name, then its own
+ * other names (`newsNamesFor` — "google" for Alphabet, "goldman sachs" for Goldman Sachs Group,
+ * never an acquired company's), each once.
+ */
+function companyNames(edgarName: string, alsoKnownAs: string[]): string[] {
+  const names = [commonName(edgarName)];
+  for (const n of alsoKnownAs) if (!names.some((m) => words(m) === words(n))) names.push(n);
+  return names;
+}
+
+/**
+ * One full-text search for all of them. The API ORs quoted phrases joined by "|" — measured
+ * 2026-10-21: "Alphabet" 98 documents, "Google LLC" 111, the two together 197 — while a written
+ * "OR" is just another word to match (12).
+ */
+export const frSearchTerm = (edgarName: string, alsoKnownAs: string[] = []): string =>
+  companyNames(edgarName, alsoKnownAs).map((n) => `"${n}"`).join(" | ");
+
+/**
+ * Whether a title names the company — its everyday name or one of its own other names, whole, as a
+ * phrase: Google's FTC orders say "Google LLC", never "Alphabet" (batch 27). The everyday name
  * keeps "Motor" in "Ford Motor", so a Gerald R. Ford presidential library notice is not Ford's;
  * whole words keep "Apples From Chile" from being Apple's.
  *
@@ -41,14 +61,25 @@ const CORPORATE = new Set([
  *  - **a longer listed company's name owns the mention** — a title carrying "Portland General
  *    Electric" is that utility's, not General Electric's, because both are in the EDGAR index.
  */
-export function titleNamesCompany(title: string, edgarName: string): boolean {
-  const name = words(commonName(edgarName)).trim();
+export function titleNamesCompany(title: string, edgarName: string, alsoKnownAs: string[] = []): boolean {
   const t = words(title);
+  return companyNames(edgarName, alsoKnownAs).some((n, i) => phraseNamesCompany(t, words(n).trim(), i === 0 ? 3 : 1));
+}
+
+/**
+ * The rules above, for one name against a title already in `words` form. A one-word other name
+ * needs its company word straight after it ("Google LLC", "Facebook, Inc."): a famous brand also
+ * starts other companies' names, and measured 2026-10-21 the three-word window let in "Amazon
+ * Produce Network, LLC", a produce firm, and "Toyota Material Handling, Inc.", a Toyota Industries
+ * unit. The company's own documents still match under its everyday name ("Amazon.com Services
+ * LLC" carries "AMAZON COM").
+ */
+function phraseNamesCompany(t: string, name: string, within: number): boolean {
   if (name.length < 2 || !t.includes(` ${name} `)) return false;
   if (!name.includes(" ")) {
     const tokens = t.trim().split(" ");
     const corporate = tokens.some(
-      (tok, i) => tok === name && tokens.slice(i + 1, i + 4).some((w) => CORPORATE.has(w))
+      (tok, i) => tok === name && tokens.slice(i + 1, i + 1 + within).some((w) => CORPORATE.has(w))
     );
     if (!corporate) return false;
   }
@@ -71,8 +102,8 @@ export interface CompanyMentions {
   examples: string[];
 }
 
-export function tallyCompanyMentions(hits: FrHit[], edgarName: string): CompanyMentions {
-  const named = hits.filter((h) => titleNamesCompany(h.title, edgarName));
+export function tallyCompanyMentions(hits: FrHit[], edgarName: string, alsoKnownAs: string[] = []): CompanyMentions {
+  const named = hits.filter((h) => titleNamesCompany(h.title, edgarName, alsoKnownAs));
   const count = (key: (h: FrHit) => string) => {
     const m = new Map<string, number>();
     for (const h of named) m.set(key(h), (m.get(key(h)) ?? 0) + 1);
@@ -91,15 +122,16 @@ export function tallyCompanyMentions(hits: FrHit[], edgarName: string): CompanyM
   };
 }
 
-/** The Federal Register's full-text hits for a company's everyday name, as a phrase. */
+/** The Federal Register's full-text hits for a company's names, each as a phrase. */
 export async function fetchCompanyMentions(
   edgarName: string,
-  since: string
+  since: string,
+  alsoKnownAs: string[] = []
 ): Promise<{ hits: FrHit[]; total: number } | { error: string }> {
   const params = new URLSearchParams({
     per_page: "1000",
     order: "newest",
-    "conditions[term]": `"${commonName(edgarName)}"`,
+    "conditions[term]": frSearchTerm(edgarName, alsoKnownAs),
     "conditions[publication_date][gte]": since,
   });
   for (const f of ["title", "publication_date", "type", "agencies"]) params.append("fields[]", f);
@@ -126,17 +158,21 @@ interface FrDocument extends FrHit {
 
 /**
  * The company's own Federal Register documents, as timeline events: full-text hits for its
- * everyday name, kept only when the title names it (`titleNamesCompany`) and never airworthiness
+ * names, kept only when the title names it (`titleNamesCompany`) and never airworthiness
  * directives — the owner's rule from the live count, where they were 539 of Boeing's 596.
  *
  * Same identity as the sector feed (`fr:<document number>`), so a document that is both a sector
  * rule and this company's is one event linked to both subjects, not two.
  */
-export async function fetchCompanyRegulations(edgarName: string, since = FR_COMPANY_SINCE): Promise<FetchResult> {
+export async function fetchCompanyRegulations(
+  edgarName: string,
+  since = FR_COMPANY_SINCE,
+  alsoKnownAs: string[] = []
+): Promise<FetchResult> {
   const params = new URLSearchParams({
     per_page: "1000",
     order: "newest",
-    "conditions[term]": `"${commonName(edgarName)}"`,
+    "conditions[term]": frSearchTerm(edgarName, alsoKnownAs),
     "conditions[publication_date][gte]": since,
   });
   for (const f of ["document_number", "title", "publication_date", "type", "html_url", "agencies"]) {
@@ -154,7 +190,7 @@ export async function fetchCompanyRegulations(edgarName: string, since = FR_COMP
         (d) =>
           d.document_number &&
           /^\d{4}-\d{2}-\d{2}$/.test(d.publication_date ?? "") &&
-          titleNamesCompany(d.title, edgarName) &&
+          titleNamesCompany(d.title, edgarName, alsoKnownAs) &&
           !isAirworthinessDirective(d.title)
       )
       .slice(0, FR_COMPANY_CAP)

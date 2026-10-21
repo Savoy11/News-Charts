@@ -34,7 +34,7 @@ import type { SourceKey } from "../lib/types";
 import { countMismatches, sameDatabase } from "../lib/backupCounts";
 import { companyLede } from "../lib/wiki";
 import { OVERLAP_SQL, STRIP_MIN_SHARED, summariseOverlap } from "../lib/overlap";
-import { FR_COMPANY_CAP, fetchCompanyMentions, fetchCompanyRegulations, tallyCompanyMentions, titleNamesCompany } from "../lib/frCompany";
+import { FR_COMPANY_CAP, FR_COMPANY_SINCE, fetchCompanyMentions, fetchCompanyRegulations, frSearchTerm, tallyCompanyMentions, titleNamesCompany } from "../lib/frCompany";
 import { withoutSharedSectorRows } from "../lib/eventMerge";
 
 let pass = 0;
@@ -430,6 +430,18 @@ check("a longer listed name owns the mention",
 check("  …and the two-word names the count got right still match",
   titleNamesCompany("Ford Motor Company, Receipt of Petition for Decision of Inconsequential Noncompliance", "FORD MOTOR CO") &&
     titleNamesCompany("General Motors and OnStar, LLC; Analysis of Proposed Consent Order To Aid Public Comment", "General Motors Co"));
+// batch 27: a company's own other names (`newsNamesFor`), measured live on 15 companies: 50 → 87
+check("a company's own other names count too: Google's FTC order says \"Google LLC\", never \"Alphabet\"",
+  titleNamesCompany("iHeartMedia, Inc. and Google LLC; Analysis of Proposed Consent Order to Aid Public Comment", "Alphabet Inc.", ["google"]) &&
+    !titleNamesCompany("iHeartMedia, Inc. and Google LLC; Analysis of Proposed Consent Order to Aid Public Comment", "Alphabet Inc.") &&
+    titleNamesCompany("Petition for Exemption; Summary of Petition Received; American Airlines, Inc.", "American Airlines Group Inc.", ["american airlines"]));
+check("  …but a one-word other name needs its company word straight after it, not a produce firm or a sister company",
+  !titleNamesCompany("Coast Citrus Distributors d/b/a Olympic Fruit & Vegetable, Amazon Produce Network, LLC, Refin Tropical", "AMAZON COM INC", ["amazon"]) &&
+    !titleNamesCompany("Foreign-Trade Zone (FTZ) 72; Authorization of Production Activity; Toyota Material Handling, Inc.", "TOYOTA MOTOR CORP/", ["toyota"]) &&
+    titleNamesCompany("China United Lines, Ltd., Complainant v. Amazon.com Services LLC; Amazon Logistics Inc.", "AMAZON COM INC", ["amazon"]));
+check("  …and every name goes in one search, OR'd with \"|\"",
+  frSearchTerm("Alphabet Inc.", ["google"]) === '"Alphabet" | "google"' && frSearchTerm("FORD MOTOR CO") === '"FORD MOTOR"' &&
+    frSearchTerm("FORD MOTOR CO", ["ford motor"]) === '"FORD MOTOR"', frSearchTerm("Alphabet Inc.", ["google"]));
 const frDoc = (n: number, title: string) => ({
   document_number: `2026-${String(n).padStart(5, "0")}`, title, publication_date: "2026-05-01", type: "Notice",
   html_url: `https://www.federalregister.gov/d/${n}`, agencies: [{ name: "Transportation Department" }],
@@ -450,13 +462,29 @@ const frSearch2 = (async () => {
     check(`  …and a run keeps at most ${FR_COMPANY_CAP}`, r.events.length === FR_COMPANY_CAP, String(r.events.length));
     check("  …each one the sector feed's identity, so a shared document is one event",
       r.events[0]?.dedupBasis === "fr:2026-00002" && r.events.every((e) => e.type === "regulation" && e.sourceKey === "federal_register"));
+    let asked = "";
+    globalThis.fetch = (async (u: RequestInfo | URL) => {
+      asked = decodeURIComponent(String(u).replace(/\+/g, " "));
+      return new Response(JSON.stringify({ results: [
+        frDoc(200, "Google LLC and iHeartMedia, Inc.; Analysis of Proposed Consent Order To Aid Public Comment"),
+        frDoc(201, "Google Maps Data Standards; Request for Information"),
+      ] }), { status: 200 });
+    }) as typeof fetch;
+    const g = await fetchCompanyRegulations("Alphabet Inc.", FR_COMPANY_SINCE, ["google"]);
+    check("  …and Alphabet's search carries \"google\", keeping Google LLC's order and not Google Maps",
+      asked.includes('conditions[term]="Alphabet" | "google"') && g.events.length === 1 && /Google LLC/.test(g.events[0].title),
+      `${g.events.length} — ${asked.slice(55, 140)}`);
   } finally {
     globalThis.fetch = realFetch;
   }
 })();
 check("the company sources include it, and ingestCompany asks for the company's own documents",
   (COMPANY_SOURCES as readonly string[]).includes("federal_register") &&
-    /run\("federal_register", company\.name, \(\) => fetchCompanyRegulations\(company\.name\)\)/.test(ingestSrcFor("ingestCompany")));
+    /run\("federal_register", frSearchTerm\(company\.name, alsoKnownAs\), \(\) =>\s*fetchCompanyRegulations\(company\.name, FR_COMPANY_SINCE, alsoKnownAs\)/.test(ingestSrcFor("ingestCompany")));
+check("  …under the company's other names, and the count report searches the same names",
+  /fetchCompanyMentions\(c\.name, since, alsoKnownAs\)/.test(read("scripts/fr-company-report.ts")) &&
+    /tallyCompanyMentions\(r\.hits, c\.name, alsoKnownAs\)/.test(read("scripts/fr-company-report.ts")) &&
+    /const alsoKnownAs = c\.cik \? newsNamesFor\(c\.cik\) : \[\];/.test(read("scripts/fr-company-report.ts")));
 const ownRows = [{ id: "db-7", date: "2026-01-01", type: "regulation" as const, title: "t", source: "s" }];
 const sectorRows = [
   { id: "sector-7", date: "2026-01-01", type: "regulation" as const, title: "t", source: "s" },

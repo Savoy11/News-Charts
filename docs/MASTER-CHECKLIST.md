@@ -984,6 +984,50 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 27: federal documents found by a company's other names (2026-10-21)
+
+The owner chose this next: what batch 25 left undone. A company's page carries the Federal
+Register documents whose title names it (batch 14). They were searched, and their titles
+matched, under the everyday name alone, so Alphabet's page could never carry Google LLC's FTC
+orders.
+
+`npm run check` passes (36 suites) and `npm run lint` is clean. `check:live` is 16 pass, 0 fail,
+2 unreachable (GDELT and the Internet Archive refusing this cloud session), 1 skipped (needs an
+Etherscan key); its live Federal Register company search passes. `check:ui` was not re-run: no file
+the site loads changed (`lib/frCompany.ts` serves ingest and the count report only). HawkScan
+could not run: `HAWK_API_KEY` is not set.
+
+- [x] **Searched and matched under the company's own other names, in one request.** These are the
+      same names news uses (`newsNamesFor`), so an acquired company's and the Motorola brand stay
+      out. Batch 25 thought this took a request per name. It doesn't: the API ORs quoted phrases
+      joined by "|" (measured: "Alphabet" 98 documents, "Google LLC" 111, both 197), while a written
+      "OR" is just another word (12). `frSearchTerm` builds it; ingest and `npm run
+      fr-company-report` both pass the names.
+- [x] **A one-word other name needs its company word straight after it.** The everyday name keeps
+      the owner's three-word window ("Apple Inc."). For other names it let in "Amazon Produce
+      Network, LLC", a produce firm, and "Toyota Material Handling, Inc.", a Toyota Industries unit.
+      Amazon's and Toyota's own documents still match under their everyday names ("Amazon.com
+      Services LLC" carries "AMAZON COM").
+- [x] **Measured live on 15 companies:** documents whose title names the company went from 50 to
+      87, every one read and the right company's:
+      - Alphabet 0 → 4 (Google LLC's FTC orders and ITC interventions).
+      - Amazon 0 → 3. Goldman Sachs 5 → 17. Charles Schwab 0 → 2.
+      - American Airlines Group 0 → 16 (petitions and pipeline complaints by "American Airlines,
+        Inc.").
+      - Unchanged: Meta, Cisco, Toyota, Verizon, RTX, Block, Elevance, Strategy, TSMC, and
+        Motorola Solutions (no other names).
+      - The stricter rule costs three that the looser one found correctly: two "TSMC Arizona
+        Corporation" notices and a "Verizon Connect" exemption. That is the trade for no
+        produce firms.
+- Checks: `check:wiring` 177 → 182.
+  - A "Google LLC" title counts for Alphabet only with its other names.
+  - The produce firm and the sister company stay out.
+  - One search for all the names, both as built and as sent, and Google Maps stays out.
+  - The ingest and report wiring.
+  - Against main's code, the first fails and the suite then stops: `frSearchTerm` does not exist.
+    With the three-word window for other names, the produce-firm check fails; with ingest's old
+    call, the wiring check fails.
+
 ## NC ledger — batch 26: company names cleaned up for news, federal documents and search (2026-10-21)
 
 The owner chose this next: batch 25's first open follow-up. A company's news and Federal
@@ -1125,7 +1169,8 @@ between its refusals (below). HawkScan could not run: `HAWK_API_KEY` is not set.
         before the platform words go back into queries this way.
 - Not done here: the Federal Register's documents naming a company are still searched under one
   name. It takes a request per name, and Google's FTC orders say "Google LLC". The historical
-  sources are untouched too.
+  sources are untouched too. (Done in batch 27, above, in one request after all: the API ORs
+  phrases joined by "|".)
 - Checks: `check:aliases` 44 → 72.
   - The news rules, run on Wikidata-shaped items, Motorola included.
   - The committed file: news only from own or predecessor names, and never from

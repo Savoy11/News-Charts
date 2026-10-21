@@ -1007,8 +1007,9 @@ VERIFICATION_LINE
         5 with Goldman Sachs in the headline. With "goldman sachs" OR'd in, 12 of 100 did.
       - If GDELT refuses the wider query, the company is asked again under its everyday name
         alone, and the fetch log says the other names were refused. A refused name never costs
-        a company the news it found before. (Whether GDELT takes a phrase with one-letter words,
-        like "d r horton", could not be tried: it dropped every such request this session.)
+        a company the news it found before. GDELT took a two-letter word in a phrase:
+        "GENERAL ELECTRIC" OR "ge aerospace" returned 100 pages, 17 with GE in the headline.
+        One-letter words ("d r horton") could not be tried: GDELT dropped every such request.
 - [x] **Words printed around every article only score headlines.** GDELT matches a word anywhere
       on a page and returns the newest 100 pages. Measured on 2026-10-21:
       - "Alphabet" returned 100 pages. One had the company in its headline: "OpenAI to sell its top

@@ -1058,9 +1058,10 @@ VERIFICATION_LINE
       - [ ] **Open:** GDELT returns the newest 100 matching pages, so a company whose name is also
         a common word gets mostly unrelated pages: 1 in 100 for "Alphabet", 5 in 100 for "GOLDMAN
         SACHS GROUP". Scoring keeps the unrelated pages off the page, but they still use up the
-        100 places. GDELT's relevance sort and its `repeat3:` operator (the word at least three
-        times on the page) are worth measuring from a host GDELT answers; this session was refused
-        most of the day.
+        100 places. One lead, measured once: GDELT's `repeat3:` operator (the word at least three
+        times on the page) works, and "Alphabet" OR `repeat3:"google"` returned 5 in 100 against
+        "Alphabet" alone's 1. It, and GDELT's relevance sort, are worth measuring on more companies
+        before the platform words go back into queries this way.
 - Not done here: the Federal Register's documents naming a company are still searched under one
   name. It takes a request per name, and Google's FTC orders say "Google LLC". The historical
   sources are untouched too.

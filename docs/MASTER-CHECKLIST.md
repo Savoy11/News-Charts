@@ -984,6 +984,71 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 33: short company names — IBM, and Visa's news (2026-10-22)
+
+The owner said to merge batch 32 and continue. Batch 32's open item noted that companies known by
+a short name get no Justice Department releases; IBM had none, because it was searched only as
+"International Business Machines". Looking into why turned up a larger hole: GDELT refuses a
+phrase under five characters, so every company with a short everyday name — Visa, NIKE, AT&T, 3M,
+eBay, HSBC, SAP — was asked a news query GDELT refused, on every run.
+
+`npm run check` passes (39 suites) and `npm run lint` is clean. `check:live` gains a GDELT case
+for Visa, but GDELT throttled this session's every few requests, so it was measured by hand
+instead (below). A real `npm run ingest -- --ticker IBM` got 75 GDELT articles under its unchanged
+long-name query, in one request. `check:ui` is 203/203 on a production build, re-run because the site's search reads the name
+index. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **A company's own initials are a name** (`lib/companyAliases.ts`). The alias builder dropped
+      every three-letter one-word name as "too short", which keeps out "Sun" but also threw away
+      42 initialisms Wikidata holds. One in capitals that spells the company's own initials now
+      passes; the other tests still apply after it. Rebuilt from the same Wikidata answer (no
+      drift since the last sync), the index gains exactly 25 names and loses none:
+      - **News may use two**, Wikidata's own labels: "IBM" and "AMD".
+      - **Search gains** BMS (Bristol Myers Squibb), RDS (Shell), WDP (Disney), FBR (Warner
+        Music's Fueled by Ramen) and PAN (Palo Alto Networks, which the larger-company rule now
+        prefers to Pan American Silver's title prefix). The rest, such as AIG, UPS, ADP and ITW, are
+        their own tickers already. Another company's ticker still wins: "RBC" is RBC Bearings, not
+        Royal Bank of Canada.
+      - Still out: letters that are not initials (Moody's "MCO", Constellation's "STZ"), a
+        little-known company's initials (Community Health Systems' "CHS"), and "Sun".
+- [x] **GDELT is never asked a phrase it refuses** (`lib/news.ts`). "CSX" and "Visa" each came
+      back "The specified phrase is too short."; unquoted, "Visa" matched the word ("Trump revokes
+      over 300,000 visas"). So:
+      - a name under five characters stays out of the OR'd query and only scores headlines (IBM's
+        query is unchanged, so "IBM" costs it no refused request);
+      - a short everyday name is asked with the legal form its SEC title carries, the way an
+        article names the company at first mention: "VISA Inc", "CSX Corp", "NIKE Inc", "3M Co",
+        "AT&T Inc", "News Corp", "HSBC Holdings", "SAP SE". 106 of the 107 short names among the
+        1,500 largest companies now get a query GDELT takes; CRH ("CRH PUBLIC LTD CO") does not.
+      - Measured by hand, spaced a minute apart around the throttle: "visa inc" returned 7
+        articles from the last two weeks (among them "…Owed a Share of Visa and Mastercard $167.5M
+        Settlement"), "csx corp" 1 ("CSX Corp. Announces Third Quarter 2026 Results"), "nike inc" 8
+        ("Nike Stands By Converse As Sales Keep Sinking"). Each had been none. Not every one
+        helps: "ebay inc" returned none in the two weeks, and two of "hess corp"'s 3 were about
+        Hess Midstream, a separate listed company, which headline scoring then has to judge.
+        "Apple", five letters, was taken (25 articles) where four-letter "Visa" and "Nike" were
+        refused: the limit is five.
+- [x] **The Justice Department feed** now asks for IBM by "IBM" too, and its rule takes "Claim
+      Against" as it took "Claims Against": IBM gets its 3 releases (a real
+      `npm run ingest -- --ticker IBM` stored them), and the 912-title set gains two real AT&T
+      releases ("Justice Department Settles Civil Antitrust Claim Against AT&T and DIRECTV…"). The
+      40 held-out companies are unchanged.
+- [ ] **Open:**
+      - Whether to send GDELT a short name unquoted for companies whose name is not a word ("Etsy",
+        "Roku"). Measured, it works but matches every use of the word, so for "Visa", "Gap" or
+        "Snap" it would bring in unrelated news. The legal form is the safe default; this is the
+        owner's call.
+      - Most initialisms Wikidata files as an alias, not a label (AIG, UPS, ADP), so they find the
+        company in search but do not claim its news. Promoting them is a rule change for the name
+        index, also the owner's.
+      - When Wikidata lists two written forms of one name, which one is kept depends on the order
+        it answers in ("Mellanox Technologies, Ltd." or "…Ltd."): a re-sync can flip it with no real
+        change. Harmless, but it makes a sync diff noisy.
+- Checks: new `check:short-names` (18), on the real Wikidata items and GDELT's real refusal. On
+  main's code 9 fail before it stops (`gdeltEverydayName` does not exist). `check:aliases` and
+  `check:recall` now expect the GDELT call through `gdeltEverydayName`; `check:recall` keeps its
+  guard that a long name is asked as the everyday name ("FORD MOTOR"), never the legal title.
+
 ## NC ledger — batch 32: Justice Department releases on company pages (2026-10-22)
 
 The owner chose this next, approving the second candidate on batch 29's shortlist: the Justice
@@ -1036,7 +1101,9 @@ build had been pointed at the development database; rebuilt against the demo one
       joint ventures ("Chevron Phillips Chemical", "General Electric Hitachi"); a subsidiary named
       without its parent ("Merck Sharp & Dohme"); and companies whose releases use a short name the
       app does not hold, "PNC" or "AIG", since only a company's own names are searched. A common
-      word ("Target") is read only to its newest 500 titles.
+      word ("Target") is read only to its newest 500 titles. ✅ **Partly done in batch 33:** IBM
+      is searched as "IBM" now and gets its 3 releases; AIG's initials remain a search name only,
+      and "PNC" is not PNC's initials.
 - [x] The shortlist note marks the Justice Department `APPROVED`. FDA enforcement reports and
       CPSC product recalls still wait there.
 - Checks: new `check:doj` (37), on real releases read from justice.gov

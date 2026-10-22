@@ -42,7 +42,7 @@ import { fetchRecalls } from "../lib/recalls";
 import { fetchJusticeReleases } from "../lib/doj";
 import { FR_COMPANY_CAP, FR_COMPANY_SINCE, fetchCompanyRegulations, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
 import { WikipediaUnavailable, getTopicTimeline, wikiOutcome } from "../lib/wiki";
-import { fetchNews } from "../lib/news";
+import { GDELT_MIN_PHRASE, fetchNews, gdeltEverydayName } from "../lib/news";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchPressMentions } from "../lib/loc";
@@ -302,6 +302,19 @@ export const CASES: LiveCase[] = [
       const out = [...outcomeProblems(r.outcome, r.detail), ...eventProblems(r.events, 1)];
       const newest = r.events.map((e) => e.date).sort().at(-1);
       if (newest && daysAgo(newest) > 30) out.push(`newest article ${newest} — expected this month`);
+      return out;
+    },
+  },
+  {
+    // "Visa" alone is refused as too short (batch 33); "visa inc" returned 7 articles in two weeks
+    name: "GDELT — Visa, under a name it takes",
+    covers: ["gdelt"],
+    hosts: ["api.gdeltproject.org"],
+    async run() {
+      const query = gdeltEverydayName("VISA INC.");
+      const r = await fetchNews(query);
+      const out = [...outcomeProblems(r.outcome, r.detail), ...eventProblems(r.events, 1)];
+      if (query.length < GDELT_MIN_PHRASE) out.push(`asked "${query}", shorter than GDELT takes`);
       return out;
     },
   },

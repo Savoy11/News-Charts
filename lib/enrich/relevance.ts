@@ -70,7 +70,7 @@ export function aliasesFor(subject: SubjectContext, extraAliases: string[] = [])
 const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** Three or four capitals: a company's initials, as `newsNamesFor` writes them ("IBM", "AIG"). */
-const INITIALISM = /^[A-Z]{3,4}$/;
+export const INITIALISM = /^[A-Z]{3,4}$/;
 
 /** What a headline says about the subject: named outright, obliquely, or not at all. */
 export type Mention = "named" | "oblique" | "none";

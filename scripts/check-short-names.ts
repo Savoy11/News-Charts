@@ -99,15 +99,20 @@ async function main(): Promise<void> {
     `${resolveTickerLocally("RBC")} ${resolveTickerLocally("CNR")}`);
 
   console.log("\nGDELT is never asked a phrase it refuses, and a bare name only for what it means");
-  const yes = ["IBM", "AIG", "ETSY", "ROKU", "CSX", "Okta"];
-  const no = ["VISA", "GAP", "UPS", "PAN", "Snap", "RTX", "CGI", "TIM", "NOV", "HP", "AT&T", "3M"];
+  const yes = ["IBM", "ETSY", "ROKU", "CSX", "Okta"];
+  // AIG, AMD and ADM measured: GDELT's newest week brought Nigerian police officers, Judi Dench's
+  // eyesight and an Australian defence magazine
+  const no = ["VISA", "GAP", "UPS", "PAN", "Snap", "RTX", "CGI", "AIG", "AMD", "ADM", "TIM", "DIDI", "NOV", "HP", "AT&T", "3M"];
   check("a short name goes bare only when it is no English word, stands for nothing else first, and has three or four letters",
     yes.every(unquotable) && no.every((n) => !unquotable(n)), `${yes.filter((n) => !unquotable(n))} | ${no.filter(unquotable)}`);
   check(`an other name under ${GDELT_MIN_PHRASE} characters joins the query bare when it may, and stays out when it may not`,
     gdeltQuery("INTERNATIONAL BUSINESS MACHINES", ["IBM"]) === '("INTERNATIONAL BUSINESS MACHINES" OR ibm) sourcelang:english' &&
       JSON.stringify(gdeltNames("RTX Corp", ["RTX", "Raytheon Technologies"])) === '["RTX Corp","raytheon technologies"]' &&
-      JSON.stringify(gdeltNames("UNITED PARCEL SERVICE", ["UPS"])) === '["UNITED PARCEL SERVICE"]',
-    gdeltQuery("INTERNATIONAL BUSINESS MACHINES", ["IBM"]));
+      JSON.stringify(gdeltNames("UNITED PARCEL SERVICE", ["UPS"])) === '["UNITED PARCEL SERVICE"]' &&
+      JSON.stringify(gdeltNames("AMERICAN INTERNATIONAL GROUP", newsNamesFor(5272))) === '["AMERICAN INTERNATIONAL GROUP"]' &&
+      JSON.stringify(gdeltNames("ADVANCED MICRO DEVICES", newsNamesFor(2488))) === '["ADVANCED MICRO DEVICES"]' &&
+      JSON.stringify(gdeltNames(gdeltEverydayName(titleOf("ADM")[2]), newsNamesFor(7084))) === '["Archer-Daniels-Midland"]',
+    `${gdeltQuery("INTERNATIONAL BUSINESS MACHINES", ["IBM"])} | ${gdeltNames("AMERICAN INTERNATIONAL GROUP", newsNamesFor(5272))} | ${gdeltNames("ADVANCED MICRO DEVICES", newsNamesFor(2488))}`);
   const asked: [string, string][] = [
     ["VISA INC.", "VISA Inc"],
     ["CSX CORP", "CSX"],
@@ -147,6 +152,10 @@ async function main(): Promise<void> {
   check("with a bare name, an article stays only when its headline names the company",
     headlineNames("IBM beats Q3 earnings on software rebound , guides full - year revenue growth", ["INTERNATIONAL BUSINESS MACHINES", "ibm"]) &&
       !headlineNames("Aionos Appoints Hemant Lamba as Chief Business Officer to Accelerate Global Growth", ["INTERNATIONAL BUSINESS MACHINES", "ibm"]));
+  check("  …and the company's initials name a headline only in capitals, as in scoring: \"ADM\" is not \"Adm. Paparo\"",
+    headlineNames("ADM cuts profit outlook as crush margins shrink", ["Archer-Daniels-Midland", "adm"], ["ADM"]) &&
+      !headlineNames("Adm. Paparo warns of China's buildup in the Pacific", ["Archer-Daniels-Midland", "adm"], ["ADM"]) &&
+      headlineNames("Archer-Daniels-Midland to sell its stake", ["Archer-Daniels-Midland", "adm"], ["ADM"]));
 
   const realFetch = globalThis.fetch;
   const queries: string[] = [];
@@ -231,6 +240,8 @@ async function main(): Promise<void> {
   console.log("\nWired");
   check("company ingest asks GDELT for the everyday name it can take",
     /const newsQuery = gdeltEverydayName\(company\.name\);\s*await run\("gdelt", gdeltNames\(newsQuery, alsoKnownAs\)\.join\(" \| "\), \(\) => fetchNews\(newsQuery, alsoKnownAs\)/.test(read("scripts/ingest.ts")));
+  check("  …and its headline filter is handed the company's initials, so they count only in capitals",
+    /const initials = alsoKnownAs\.filter\(\(n\) => INITIALISM\.test\(n\)\);[\s\S]*headlineNames\(a\.title \?\? "", names, initials\)/.test(read("lib/news.ts")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   process.exit(fail ? 1 : 0);

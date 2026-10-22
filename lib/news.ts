@@ -3,6 +3,7 @@ import { cleanDomain, sourceLabel } from "./sourceLabel";
 import { storyKey } from "./newsQuality";
 import { nameKey } from "./companyAliases";
 import { commonName } from "./sec";
+import { INITIALISM, mentions } from "./enrich/relevance";
 import shortWords from "../data/english-short-words.json";
 
 interface GdeltArticle {
@@ -51,10 +52,19 @@ const ENGLISH_SHORT: ReadonlySet<string> = new Set(shortWords.words);
 /**
  * Short names that are not English words but mean something else first in the news, so GDELT is
  * never asked for them unquoted. Kept short on purpose, each with what it would bring in instead.
+ * AIG, AMD, ADM and CGI were measured against GDELT's newest week (2026-10-22); the rest come from
+ * what the letters commonly mean.
  */
 export const GDELT_NOT_UNQUOTED: Record<string, string> = {
   RTX: "Nvidia's GeForce RTX graphics cards",
+  // none of the thirty newest headlines was CGI Inc's: film reviews and PHP security flaws
   CGI: "computer-generated imagery",
+  // the two headlines naming "AIG" were Nigeria's assistant inspectors-general of police, not the insurer
+  AIG: "Nigeria's assistant inspectors-general of police",
+  // 28 of the thirty newest articles were about Judi Dench's failing sight
+  AMD: "age-related macular degeneration, in health news",
+  // of seven headlines naming "ADM", three were not the company: a defence magazine, an expo, a party
+  ADM: "Australian Defence Magazine, a Montreal manufacturing expo and other initials",
   BCE: "Before Common Era, in every date",
   APA: "the American Psychological Association and its citation style",
   PTC: "the production tax credit, in energy news",
@@ -71,6 +81,7 @@ export const GDELT_NOT_UNQUOTED: Record<string, string> = {
   COPA: "the Copa América football tournament",
   TIM: "a first name",
   DAVE: "a first name",
+  DIDI: "a first name",
 };
 
 /**
@@ -78,7 +89,7 @@ export const GDELT_NOT_UNQUOTED: Record<string, string> = {
  * GDELT takes a bare word of three letters ("IBM" returned 30 articles in a day) where it refuses a
  * quoted one, but a bare word matches every use of it: "Visa" brought back "Trump revokes over
  * 300,000 visas". So only three or four letters that are no English word and stand for nothing
- * else first: "IBM", "AIG", "ETSY", "ROKU" — and never "VISA", "GAP", "UPS" or "RTX".
+ * else first: "IBM", "CSX", "ETSY", "ROKU" — and never "VISA", "GAP", "UPS", "RTX" or "AIG".
  */
 export function unquotable(name: string): boolean {
   const key = nameKey(name);
@@ -149,11 +160,17 @@ export function gdeltQuery(query: string, alsoKnownAs: string[] = []): string {
 /**
  * Whether a headline names the company by one of the names asked for, whole: "IBM beats Q3
  * earnings" does, "Aionos Appoints Hemant Lamba as Chief Business Officer" — an article that
- * mentions IBM in passing — does not.
+ * mentions IBM in passing — does not. The company's `initials` count only in capitals, the way
+ * headline scoring counts them (`mentions`), so "Adm. Paparo warns…" is no headline of ADM's.
  */
-export function headlineNames(title: string, names: readonly string[]): boolean {
+export function headlineNames(title: string, names: readonly string[], initials: readonly string[] = []): boolean {
+  const caps = new Set(initials.map(nameKey));
   const t = ` ${nameKey(title)} `;
-  return names.some((n) => nameKey(n).length > 0 && t.includes(` ${nameKey(n)} `));
+  if (mentions(title, [...caps]) === "named") return true;
+  return names.some((n) => {
+    const key = nameKey(n);
+    return key.length > 0 && !caps.has(key) && t.includes(` ${key} `);
+  });
 }
 
 /** Same fetch, but reporting *why* it came back empty so ingest can back off. */
@@ -206,8 +223,9 @@ export async function fetchNews(query: string, alsoKnownAs: string[] = []): Prom
       // only the articles whose headline names the company are kept (batch 34).
       const names = gdeltNames(query, alsoKnownAs);
       const headlineOnly = names.some(bare);
+      const initials = alsoKnownAs.filter((n) => INITIALISM.test(n));
       const articles: GdeltArticle[] = (JSON.parse(text)?.articles ?? []).filter(
-        (a: GdeltArticle) => !headlineOnly || headlineNames(a.title ?? "", names)
+        (a: GdeltArticle) => !headlineOnly || headlineNames(a.title ?? "", names, initials)
       );
       const seenTitles = new Set<string>();
       const events: TimelineEvent[] = [];

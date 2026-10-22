@@ -88,7 +88,10 @@ names a maker, never a listed company, and files every recall under the maker's 
 `RECALL_MAKERS` maps makers to companies by hand, each with the day it became that company's:
 "Chrysler (FCA US, LLC)" counts for Stellantis from 2014-10-12, when today's Stellantis N.V. (then
 FCA N.V.) became Chrysler's parent, and "General Motors, LLC" counts for GM back to 1966 because
-today's GM carries old GM's ticker. Scored without the model, as a filing is.
+today's GM carries old GM's ticker. A maker a listed company bought counts from the closing date
+the buyer's own SEC filing gives: Thor's Keystone from 2001-11-09, Jayco from 2016-06-30, Winnebago's
+Grand Design from 2016-11-08, Berkshire Hathaway's Forest River from 2005-08-31. Scored without the
+model, as a filing is.
 
 ### Source planning (`lib/enrich/plan.ts`)
 

@@ -130,5 +130,88 @@
   "recall_type": "Equipment",
   "potentially_affected": "172000",
   "defect_summary": "THREADED INFLATOR COMPONENTS MAY HAVE BEEN DAMAGED DURING ASSEMBLY WHICH MAY ALLOW COMPONENTS TO SEPARATE WHEN INFLATOR RECEIVES A SIGNAL TO DEPLOY THE AIR BAG."
+ },
+ {
+  "nhtsa_id": "13V585000",
+  "report_received_date": "2013-11-22T00:00:00.000",
+  "manufacturer": "Jayco, Inc.",
+  "subject": "Interior Side Door Lock May Become Inoperable",
+  "recall_type": "Vehicle",
+  "potentially_affected": "226560",
+  "defect_summary": "Jayco Corporation (Jayco) is recalling all model year 2006-2014 Jayco, Starcraft, and Entegra towable travel, fifth wheel and camping trailers manufactured January 1, 2006, through April 30, 2013 and equipped with Fastec-brand door locks.  It may be possible to remove the key from the lock in a way "
+ },
+ {
+  "nhtsa_id": "17V746000",
+  "report_received_date": "2017-11-21T00:00:00.000",
+  "manufacturer": "Jayco, Inc.",
+  "subject": "Fire Extinguisher May Be Clogged or Inoperable",
+  "recall_type": "Vehicle",
+  "potentially_affected": "49563",
+  "defect_summary": "Jayco, Inc. (Jayco) is recalling various 2002-2016 recreational vehicles equipped with Kidde Plastic-Handle or Push Button 'Pindicator' Fire Extinguishers.  A list of the affected trailer models is available at: https://static.nhtsa.gov/odi/rcl/2017/RMISC-17V746-9524.pdf.  These extinguishers may be"
+ },
+ {
+  "nhtsa_id": "13V490000",
+  "report_received_date": "2013-10-17T00:00:00.000",
+  "manufacturer": "K.Z., Inc.",
+  "subject": "Interior Side Door Lock May Become Inoperable",
+  "recall_type": "Vehicle",
+  "potentially_affected": "41415",
+  "defect_summary": "KZRV, L.P. is recalling certain model year 2006-2013 towable travel trailers manufactured January 1, 2006, through April 25, 2013 and equipped with Fastec-Brand door locks.  It may be possible to remove the key from the lock in a way that potentially jams the deadbolt."
+ },
+ {
+  "nhtsa_id": "17V749000",
+  "report_received_date": "2017-11-21T00:00:00.000",
+  "manufacturer": "K.Z., Inc.",
+  "subject": "Fire Extinguisher May Be Clogged or Inoperable",
+  "recall_type": "Vehicle",
+  "potentially_affected": "134046",
+  "defect_summary": "KZRV, L.P. (KZRV) is recalling various 2002-2018 recreational trailers equipped with Kidde Plastic-Handle or Push Button 'Pindicator' Fire Extinguishers.  See a list of the affected trailer models at: https://static.nhtsa.gov/odi/rcl/2017/RMISC-17V749-9547.pdf.  These extinguishers may become clogge"
+ },
+ {
+  "nhtsa_id": "17V841000",
+  "report_received_date": "2017-12-22T00:00:00.000",
+  "manufacturer": "Tiffin Motorhomes, Inc.",
+  "subject": "Fire Extinguisher May Be Clogged or Inoperable",
+  "recall_type": "Vehicle",
+  "potentially_affected": "36005",
+  "defect_summary": "Tiffin Motorhomes, Inc. (Tiffin) is recalling certain 2009-2018 Allegro and Allegro RED, Bus and Phaeton vehicles, 2009-2010 Bay vehicles, 2011-2018 Breeze vehicles, and 2009-2015, and 2017-2018 Zephyr vehicles.  These motorhomes are equipped with Kidde Plastic-Handle or Push Button 'Pindicator' Fir"
+ },
+ {
+  "nhtsa_id": "21V680000",
+  "report_received_date": "2021-11-05T00:00:00.000",
+  "manufacturer": "Tiffin Motorhomes, Inc.",
+  "subject": "Seat Belts Not Installed Properly/FMVSS 210",
+  "component": "SEAT BELTS",
+  "recall_type": "Vehicle",
+  "potentially_affected": "10409",
+  "defect_summary": "Tiffin Motorhomes, Inc. (Tiffin) is recalling certain 2018-2022 Allegro Breeze, Allegro Red, Allegro, Allegro Bus, Phaeton, and 2018-2021 Zephyr recreational vehicles.  The sofa seat belts may not have been installed correctly, which could result in unsecured passengers.  As such, these vehicles fai"
+ },
+ {
+  "nhtsa_id": "17V755000",
+  "report_received_date": "2017-11-22T00:00:00.000",
+  "manufacturer": "Keystone RV Company",
+  "subject": "Fire Extinguisher May Be Clogged or Inoperable",
+  "recall_type": "Vehicle",
+  "potentially_affected": "1205997",
+  "defect_summary": "Keystone RV Company (Keystone) is recalling various 2003-2018 Crossroads, Dutchmen, and Keystone recreational trailers equipped with Kidde Plastic-Handle or Push Button 'Pindicator' Fire Extinguishers.  A list of the affected trailer models is available at: https://static.nhtsa.gov/odi/rcl/2017/RMIS"
+ },
+ {
+  "nhtsa_id": "17V756000",
+  "report_received_date": "2017-11-22T00:00:00.000",
+  "manufacturer": "Forest River, Inc.",
+  "subject": "Fire Extinguisher May Be Clogged or Inoperable",
+  "recall_type": "Vehicle",
+  "potentially_affected": "365885",
+  "defect_summary": "Forest River, Inc. (Forest River) is recalling certain 2003-2018 Forest River Berkshire, Charleston, Rockport, Cedar Creek, Cherokee, Riverstone, Salem, Sandpiper, Sierra, Vengeance, Wildcat, Wildwood, XLR Boost, Cargo Mate, Continental Cargo, motorhomes, recreational trailers, toyhaulers, cargo tra"
+ },
+ {
+  "nhtsa_id": "21V393000",
+  "report_received_date": "2021-05-26T00:00:00.000",
+  "manufacturer": "Grand Design RV, LLC",
+  "subject": "LP Gas Pressure Regulator May Fail",
+  "component": "EQUIPMENT",
+  "recall_type": "Vehicle",
+  "potentially_affected": "55508",
+  "defect_summary": "Grand Design RV, LLC (Grand Design) is recalling certain 2016-2021 Imagine, Transcend, and Momentum travel trailers.  The LP regulator that controls the LP gas pressure may fail, allowing excessive gas pressure that causes the appliance flame to increase."
  }
 ]

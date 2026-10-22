@@ -984,6 +984,47 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 31: the vehicle makers listed companies bought (2026-10-22)
+
+The owner said to continue. Batch 30 left one item open: makers a mapped company bought, whose
+purchase dates needed checking before their recalls could be dated. Every date below comes from
+the buyer's own SEC filing, read through EDGAR's full-text search, not from memory. The first one
+checked would have been wrong: K.Z. closed on 2014-05-01, not in 2016.
+
+`npm run check` passes (37 suites) and `npm run lint` is clean. `next build` compiles. `check:ui` was
+not re-run: no file the site loads changed (`lib/recalls.ts` serves ingest, the demo seed and the
+checks only). `check:live` is 17 pass, 0 fail, 2 unreachable, 1 skipped, its NHTSA case passing.
+HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **Nine makers added, each from its closing date:**
+      - Thor: Dutchmen from May 1991 (its 1995 10-K: "In May, 1991, the Company acquired the
+        business and assets of Dutchmen"), Keystone RV from 2001-11-09, Heartland from 2010-09-16,
+        K.Z. from 2014-05-01, Jayco from 2016-06-30, Starcraft RV with Jayco (a Jayco company in
+        Thor's 2016 10-K), and Tiffin from 2020-12-18.
+      - Winnebago: Grand Design from 2016-11-08.
+      - Berkshire Hathaway: Forest River from 2005-08-31 (its 10-Q: "On August 31, 2005, Berkshire
+        acquired 100% of Forest River, Inc."). A new company on the map, so 20 now.
+      - Each `why` names the filing that gives its date, and `check:vehicle-recalls` requires it.
+- [x] **Measured live:** recalls of 10,000 vehicles or more go from 2 to 29 for Thor, from 8 to 16
+      for Winnebago and from 0 to 9 for Berkshire Hathaway. A real `npm run ingest -- --ticker THO`
+      stored the 29, from 2003-11-12, all scored 1 without the model.
+      - Recalls from before a purchase stay off: Jayco's 226,560-vehicle door-lock recall of
+        2013-11-22, K.Z.'s of 2013-10-17, Tiffin's of 2017-12-22.
+- [x] **Looked at and left out, because nothing would change:** none of these has a recall of
+      10,000 vehicles or more since its buyer bought it. REV Group's brands (E-One, Collins Bus,
+      Kovatch and the others), Oshkosh's Pierce, Newmar (Winnebago bought it in 2019; its large
+      recalls are from 2007 and 2017), and Meritor (all its large recalls are from before Cummins
+      bought it in 2022). Shyft Group stays out until its pre-1975 records can be separated.
+- [ ] **Open:** smaller brand names inside the mapped companies (Highland Ridge, Entegra Coach,
+      DRV Suites, Livin' Lite, CrossRoads, Cruiser RV) need their own dates before they can count.
+      Brands a mapped company *sold* (Ford's Volvo, Jaguar and Land Rover; GM's Saab) are not
+      mapped either: whether a former subsidiary's recalls belong on the seller's page is a
+      question the rule does not settle.
+- Checks: `check:vehicle-recalls` 35 → 39, with real rows from both sides of Jayco's, K.Z.'s and
+  Tiffin's purchase dates, Keystone's 1.2-million-vehicle recall of 2017, Forest River's and
+  Grand Design's. Against main's code the first three new cases fail, and the fourth stops the
+  suite (Berkshire Hathaway is not on the map).
+
 ## NC ledger — batch 30: vehicle recalls on carmakers' pages (2026-10-22)
 
 The owner chose this next, approving the first candidate on batch 29's shortlist (NC-095): the
@@ -1033,12 +1074,14 @@ new NHTSA case passes live. HawkScan could not run: `HAWK_API_KEY` is not set.
       F` stored Ford's 861, all scored 1 without the model. Apple's ingest made no recall request.
       Ford's cached page entry came to 1.09 MB with them, inside Next's 2 MB limit (audit
       2026-10-21 #4).
-- [ ] **Open — not mapped yet:** makers bought by a mapped company whose purchase date needs
+- [x] **Open — not mapped yet:** makers bought by a mapped company whose purchase date needs
       checking before their recalls can be dated: Thor's Keystone, Jayco, Heartland and Tiffin;
       Winnebago's Grand Design and Newmar; Oshkosh's Pierce; REV Group's brands. Also Shyft Group:
       its records start in 1973, two years before Spartan Motors was founded, so they mix in a
       company it bought. Carmakers with no SEC listing (Volkswagen, BMW, Mercedes-Benz, Nissan,
-      Hyundai) have no page to carry theirs.
+      Hyundai) have no page to carry theirs. ✅ **Done in batch 31 (above)** for every maker with a
+      large recall since its purchase, each dated from the buyer's own filing; the rest are left
+      out there with the reason, and Shyft Group stays out.
 - Checks: `check:vehicle-recalls` 35 (new, in the chain, so 37 suites), `check:ui` +4, `check:live`
   +1, and the new kind in `check:relevance`'s list.
   - Real rows from the dataset (`scripts/fixtures/nhtsa-recalls.json`) for every era of subject

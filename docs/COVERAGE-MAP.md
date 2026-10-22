@@ -25,7 +25,7 @@ because it will be trusted.
 | **any** | Wikipedia citations | as far as the references go | Dated external articles |
 | **any** | Internet Archive | 1780 for companies (a bound on impossibility); topics effectively none | Catalogued items: reports, catalogues, film — relevance-ranked |
 | **1934 – now** | SEC EDGAR | electronic filings from ~1993 | Filings, earnings |
-| **1966 – now** | NHTSA vehicle recalls | 1966, the first campaigns | Safety recalls of 10,000 vehicles or more, for the vehicle and tyre makers `lib/recalls.ts` maps (Ford, GM, Stellantis from 2014, Toyota, Honda, Tesla, Harley-Davidson, PACCAR and others) |
+| **1966 – now** | NHTSA vehicle recalls | 1966, the first campaigns | Safety recalls of 10,000 vehicles or more, for the vehicle and tyre makers `lib/recalls.ts` maps (Ford, GM, Stellantis from 2014, Toyota, Honda, Tesla, Harley-Davidson, PACCAR, the RV makers Thor and Winnebago with the brands they bought, Berkshire Hathaway's Forest River, and others) |
 | **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |
 | **2008 – now** | BLS CPI release archive | February 2008, the oldest archived release | Monthly CPI releases — on company pages behind the Economy chip, off by default |
 | **1999 – now** | The Guardian Open Platform | 1999 | Articles — only with a visitor's own key, in their browser; never stored |

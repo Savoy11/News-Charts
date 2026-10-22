@@ -1,5 +1,6 @@
 import { EventType, SourceKey } from "../types";
 import { foldAccents } from "../fold";
+import { nameKey } from "../companyAliases";
 import { WEAK_TOKENS } from "../newsQuality";
 import { dataBlock, untrustedNotice } from "./untrusted";
 import { REGISTRANT_FORM } from "../secForms";
@@ -76,7 +77,9 @@ export type Mention = "named" | "oblique" | "none";
  * non-word character to ASCII `\b`, which then demands a word character right after it. The
  * lookarounds below define a boundary as "not a letter or digit" in any script. Folding lets a
  * stored name without its accent ("estee lauder", as the alias index keeps it) name a headline
- * that has one, and the other way round.
+ * that has one, and the other way round. A name of two words or more also matches with its
+ * punctuation folded, as the alias index keys it: "D.R. Horton" names "D . R . Horton beats" (as
+ * GDELT writes it) and "Angie's List" names "Angies List" (batch 28).
  *
  * Short aliases (single-letter tickers like F, or GM) match only as a standalone UPPERCASE
  * token in the original title, and never one followed by "." or "-" — "F beats estimates"
@@ -90,6 +93,7 @@ export function mentions(original: string, names: string[]): Mention {
   const title = foldAccents(original);
   const aliases = names.map(foldAccents);
   const lower = title.toLowerCase();
+  const keyed = ` ${nameKey(title)} `;
   let sawOblique = false;
   for (const a of aliases) {
     if (a.length < 3) {
@@ -99,7 +103,11 @@ export function mentions(original: string, names: string[]): Mention {
     }
     const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(a)}(?![\\p{L}\\p{N}])`, "gu");
     const m = re.exec(lower);
-    if (!m) continue;
+    if (!m) {
+      const key = nameKey(a);
+      if (key.includes(" ") && keyed.includes(` ${key} `)) return "named";
+      continue;
+    }
     // Multi-word aliases ("ford motor company") can't be a surname; only single tokens can.
     if (!a.includes(" ")) {
       const before = title.slice(0, m.index);

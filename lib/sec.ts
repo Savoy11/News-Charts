@@ -33,6 +33,7 @@ interface TickerRow {
 import rawTickerIndex from "../data/edgar-tickers.json";
 import rawCompanyAliases from "../data/company-aliases.json";
 import { nameKey, type AliasIndexFile } from "./companyAliases";
+import { foldAccents } from "./fold";
 
 /**
  * The index's contract, declared rather than inferred.
@@ -270,23 +271,38 @@ export function companyTickers(cik: number): string[] {
 /**
  * A company's other names that may find and score its news (batch 25): its own former names and
  * a predecessor whose ticker it carries — "Google" for Alphabet, "Facebook" for Meta — never an
- * acquisition's or a loose alias (`lib/companyAliases.ts`). Lower-cased, shortest first; a name
- * containing another, or the name the feeds already ask for, is left out ("facebook inc" beside
- * "facebook", "oracle corporation" beside "Oracle"); at most three, so a query stays one request.
+ * acquisition's or a loose alias (`lib/companyAliases.ts`). Shortest first; a name containing
+ * another, or the name the feeds already ask for, is left out ("facebook inc" beside "facebook",
+ * "oracle corporation" beside "Oracle"); at most three, so a query stays one request.
+ *
+ * Returned as written, accents folded and a leading "The" dropped — "U.S. Bancorp", not the
+ * matching key "u s bancorp", which a Federal Register search does not find (batch 28).
+ *
+ * When the name asked for is one word, a longer name that adds a real word stays: "Acuity Brands"
+ * beside "ACUITY", "Tesla Motors" beside "TESLA". Searched alone, a one-word name that is also a
+ * word ("acuity", as in visual acuity) crowds the company's own federal documents out of the
+ * results: without "Acuity Brands", Acuity's went from 2 to 1 on a live query (batch 28). A name
+ * that only adds a legal form still adds nothing ("Oracle Corporation").
  */
 export function newsNamesFor(cik: number | string): string[] {
   const want = Number(cik);
   const title = tickerIndex.companies.find(([c]) => c === want)?.[2];
   // the name the feeds are already asked for; one containing it ("oracle corporation") adds nothing
-  const asked = title ? ` ${nameKey(commonName(title)).toLowerCase()} ` : null;
+  const askedKey = title ? nameKey(commonName(title)) : "";
+  const asked = askedKey ? ` ${askedKey} ` : null;
+  const addsAWord = (written: string) =>
+    !askedKey.includes(" ") && nameKey(commonName(written)).replace(/^THE /, "") !== askedKey;
   const names = Object.entries(companyAliases.aliases)
     .filter(([, [c, , , news]]) => c === want && news === 1)
-    .map(([key]) => key.toLowerCase())
-    .filter((n) => !asked || !` ${n} `.includes(asked))
-    .sort((a, b) => a.length - b.length || a.localeCompare(b));
-  const kept: string[] = [];
-  for (const n of names) if (!kept.some((k) => ` ${n} `.includes(` ${k} `))) kept.push(n);
-  return kept.slice(0, 3);
+    .map(([key, [, , , , written]]) => ({
+      key: key.replace(/^THE /, ""),
+      written: foldAccents(written ?? key).replace(/^the\s+/i, ""),
+    }))
+    .filter(({ key, written }) => !asked || !` ${key} `.includes(asked) || addsAWord(written))
+    .sort((a, b) => a.key.length - b.key.length || a.key.localeCompare(b.key));
+  const kept: typeof names = [];
+  for (const n of names) if (!kept.some((k) => ` ${n.key} `.includes(` ${k.key} `))) kept.push(n);
+  return kept.slice(0, 3).map((n) => n.written);
 }
 
 /** Every company the committed index lists, CIK and title, in the SEC's order. */
@@ -491,7 +507,8 @@ function getSuggestIndex(): SuggestIndex {
  * "apple hospitalty" is Apple Hospitality REIT misspelt, not Apple Inc with a word added.
  */
 export function suggestSecurities(query: string, limit = SUGGEST_LIMIT): SecuritySuggestion[] {
-  const q = query.trim();
+  // folded first, or "Zürich" is matched as "z" and "rich" (batch 28)
+  const q = foldAccents(query).trim();
   if (!worthFuzzyMatching(q)) return [];
   const grams = new Set(trigrams(q));
   const ordered = trigrams(q);
@@ -577,7 +594,8 @@ export function siblingFunds(symbol: string): SiblingFunds | null {
  * granted it: /company/Ford only needs to learn that Ford is F, and the index knows (NC-161).
  */
 export function resolveTickerLocally(query: string): string | null {
-  const q = query.trim().toUpperCase();
+  // the index's names carry no accents, so neither does the query: "L'Oréal" is "L'Oreal" (batch 28)
+  const q = foldAccents(query).trim().toUpperCase();
   if (!q) return null;
   const company = matchCompany(localCompanies(), q);
   if (company) return company.ticker;
@@ -594,7 +612,7 @@ export function resolveTickerLocally(query: string): string | null {
  * machine, and only for a listing newer than the last `npm run sync:tickers`.
  */
 export async function resolveCompany(query: string): Promise<CompanyInfo | null> {
-  const q = query.trim().toUpperCase();
+  const q = foldAccents(query).trim().toUpperCase();
 
   // 1. The committed index — no request at all, which is the point of this rung.
   const local = matchCompany(localCompanies(), q);
@@ -642,13 +660,41 @@ export async function resolveCompany(query: string): Promise<CompanyInfo | null>
 // optional because the loop strips a final "." first: "S.A." arrives as "S.A", which the old
 // "s\.a\." could never match, and companies were searched as "Spotify Technology S.A" and the
 // like. Only a whole word goes: "ASSOCIATED BANC-CORP" keeps its "CORP", "XChange TEC.INC" does not.
+// The letters may also be spaced, as some older titles write them: "TELEFONICA S A", "HEINEKEN
+// HOLDING N V", "DEUTSCHE LUFTHANSA A G", "NATUZZI S P A" — and the public company's forms, which
+// left "CRH PUBLIC" (CRH PUBLIC LTD CO), "Osotspa Public" (Osotspa Public Co Ltd) and "Medtronic
+// Public" (batch 28).
 const LEGAL_SUFFIX =
-  /(?<=^|[\s,.])(?:incorporated|inc|corporation|corp|company|co|limited|ltd|plc|llc|l\.l\.c|holdings?|s\.?a\.?(?:b|p\.?i)?\.?\s+de\s+c\.?v|s\.?a\.?b|s\.?a|n\.?v|l\.?p|s\.?p\.?a|a\/s|ab|asa|oyj|tbk|ag|se)\.?$/i;
+  /(?<=^|[\s,.])(?:public(?:[\s,]+(?:limited|ltd|company|co)\.?)+|incorporated|inc|corporation|corp|company|co|limited|ltd|plc|llc|l\.l\.c|holdings?|s\.?\s?a\.?\s?(?:b|p\.?\s?i)?\.?\s+de\s+c\.?\s?v|s\.?\s?a\.?\s?b|s\.?\s?a|n\.?\s?v|l\.?\s?p|s\.?\s?p\.?\s?a|a\/s|ab|asa|oyj|tbk|a\s?g|se)\.?$/i;
+
+/** The legal suffixes a registration tag can follow. */
+const SUFFIX_BEFORE_TAG = "(?:incorporated|inc|corporation|corp|company|co|limited|ltd|plc|llc|lp|ag|ab)";
 
 // a slash straight after a legal suffix starts a place: "Blue Acquisition Corp/Cayman",
 // "Imperial Petroleum Inc./Marshall Islands", "Melar Acquisition Corp. I/Cayman"
-const TAG_AFTER_SUFFIX =
-  /^(.*(?:^|[\s,])(?:incorporated|inc|corporation|corp|company|co|limited|ltd|plc|llc|lp)\.?(?:\s+[ivx]+)?)\/.*$/i;
+const TAG_AFTER_SUFFIX = new RegExp(`^(.*(?:^|[\\s,])${SUFFIX_BEFORE_TAG}\\.?(?:\\s+[ivx]+)?)\\/.*$`, "i");
+
+// …and so does a bracket after one: "ACUITY INC. (DE)", "TREES Corp (Colorado)", "Eco Wave Power
+// Global AB (publ)". One before the suffix is the name's own: "Banco Santander (Brasil) S.A." is
+// told from Banco Santander by it.
+const BRACKET_AFTER_SUFFIX = new RegExp(`^(.*(?:^|[\\s,])${SUFFIX_BEFORE_TAG}\\.?)\\s*\\([^)]*\\)$`, "i");
+
+/**
+ * The cleanup steps, in order. Each one applies only when the name keeps a letter, so a name is
+ * never cut down to digits: "1847 Holdings LLC" stays "1847 Holdings", since a news search for
+ * "1847" finds the year.
+ */
+const CLEANUP: [RegExp, string][] = [
+  [/\s*\\.*$/, ""], // a backslash never belongs to a name: "INC \TX\", "PLC\UK"
+  [/\s+\/.*$/, ""], // nor does a slash after a space: "Inc. / Delaware", "BANCSHARES /"
+  [TAG_AFTER_SUFFIX, "$1"],
+  [BRACKET_AFTER_SUFFIX, "$1"],
+  [/\s*\/\s*[a-z]{2,5}\/?$/i, ""],
+  [/\s+DE$/, ""], // Delaware, without the slash: "US BANCORP DE", "BROADWAY FINANCIAL CORP DE"
+  [/[,.&/]\s*$/, ""],
+  [/\s+and$/i, ""], // what "& Co" leaves as "&", "and Company" leaves as "and": "Eli Lilly and Company"
+  [LEGAL_SUFFIX, ""],
+];
 
 const containingCache = new Map<string, string[]>();
 const phrase = (s: string) =>
@@ -687,23 +733,18 @@ export function listedNamesContaining(everyday: string): string[] {
  * CORP/"), a backslash tag ("RUSH ENTERPRISES INC \TX\", "AMARIN CORP PLC\UK"), a place after a
  * slash ("Blue Acquisition Corp/Cayman", "Alight, Inc. / Delaware"), and the legal forms in
  * `LEGAL_SUFFIX` ("Ferrari N.V", "Energy Transfer LP", "GENMAB A/S"). A slash inside a name
- * stays: "CULLEN/FROST BANKERS", "M/I HOMES", "DATA I/O". Nor is a name cut down to digits:
- * "1847 Holdings LLC" stays "1847 Holdings", since a news search for "1847" finds the year.
+ * stays: "CULLEN/FROST BANKERS", "M/I HOMES", "DATA I/O". Batch 28 added the spaced forms, a
+ * bracketed tag after the suffix and a bare trailing "DE" (`CLEANUP`).
  */
 export function commonName(title: string): string {
   let s = title.trim();
   let prev = "";
   while (prev !== s) {
     prev = s;
-    const next = s
-      .replace(/\s*\\.*$/, "") // a backslash never belongs to a name: "INC \TX\", "PLC\UK"
-      .replace(/\s+\/.*$/, "") // nor does a slash after a space: "Inc. / Delaware", "BANCSHARES /"
-      .replace(TAG_AFTER_SUFFIX, "$1")
-      .replace(/\s*\/\s*[a-z]{2,5}\/?$/i, "")
-      .replace(/[,.&/]\s*$/, "")
-      .replace(LEGAL_SUFFIX, "")
-      .trim();
-    if (/[a-z]/i.test(next)) s = next;
+    for (const [re, to] of CLEANUP) {
+      const next = s.replace(re, to).trim();
+      if (/[a-z]/i.test(next)) s = next;
+    }
   }
   return s || title;
 }

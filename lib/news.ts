@@ -1,6 +1,7 @@
 import { FetchResult, TimelineEvent } from "./types";
 import { cleanDomain, sourceLabel } from "./sourceLabel";
 import { storyKey } from "./newsQuality";
+import { nameKey } from "./companyAliases";
 
 interface GdeltArticle {
   url: string;
@@ -34,15 +35,19 @@ const PAGE_FURNITURE = new Set(
   "google facebook amazon apple twitter youtube instagram linkedin whatsapp pinterest reddit tiktok snapchat spotify telegram".split(" ")
 );
 
-/** The names a GDELT query asks for: the subject's, then its other names but page furniture. */
+/**
+ * The names a GDELT query asks for: the subject's, then its other names but page furniture. The
+ * other names go in their matching form ("u s bancorp" for "U.S. Bancorp"), which GDELT is
+ * measured to take: ("HORTON D R" OR "d r horton") returned 36 articles (batch 28 audit).
+ */
 export function gdeltNames(query: string, alsoKnownAs: string[] = []): string[] {
-  const seen = new Set([query.toLowerCase()]);
+  const seen = new Set([nameKey(query).toLowerCase()]);
   const names = [query];
   for (const n of alsoKnownAs) {
-    const key = n.toLowerCase();
+    const key = nameKey(n).toLowerCase();
     if (seen.has(key) || PAGE_FURNITURE.has(key)) continue;
     seen.add(key);
-    names.push(n);
+    names.push(key);
   }
   return names;
 }

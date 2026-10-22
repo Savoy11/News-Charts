@@ -20,14 +20,26 @@ export interface FrHit {
   agencies?: { name?: string }[];
 }
 
+// apostrophes go, as the alias index's keys drop them: "Angie's List" reads "angies list"
 const words = (s: string) =>
-  ` ${foldAccents(s).toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim()} `;
+  ` ${foldAccents(s).toLowerCase().replace(/['’]/g, "").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim()} `;
 
 /** Words that mark a name as a company's in a title: "Apple Inc.", "Intel Foundry Corporation". */
 const CORPORATE = new Set([
   "inc", "incorporated", "corp", "corporation", "company", "co", "llc", "ltd", "limited", "plc",
-  "holdings", "holding", "group", "lp", "sa", "nv", "ag", "se",
+  "holdings", "holding", "group", "lp", "sa", "nv", "ag", "se", "asa", "ab", "oyj", "tbk", "sab", "spa",
 ]);
+
+/**
+ * The legal forms `words` splits into letters: "Embraer S.A." reads "embraer s a". Batch 26 took
+ * these off the everyday name, which left "EMBRAER" one word, and a one-word name must be followed
+ * by a company word — so its own "Embraer S.A." documents stopped matching (22 → 2 live, batch 28).
+ */
+const SPELLED_FORMS = [["s", "a"], ["n", "v"], ["a", "s"], ["a", "g"], ["l", "p"], ["s", "p", "a"], ["s", "a", "b"]];
+
+/** Whether a company word, or a spelled-out legal form, starts at `tokens[j]`. */
+const companyWordAt = (tokens: string[], j: number): boolean =>
+  CORPORATE.has(tokens[j]) || SPELLED_FORMS.some((form) => form.every((w, k) => tokens[j + k] === w));
 
 /**
  * The names a company's documents are searched and matched under: its everyday name, then its own
@@ -35,8 +47,12 @@ const CORPORATE = new Set([
  * never an acquired company's), each once.
  */
 function companyNames(edgarName: string, alsoKnownAs: string[]): string[] {
-  const names = [commonName(edgarName)];
-  for (const n of alsoKnownAs) if (!names.some((m) => words(m) === words(n))) names.push(n);
+  // a leading "the" is the article, not part of the name: "the Hartford Core Bond ETF" (batch 28)
+  const names = [commonName(edgarName).replace(/^the\s+/i, "")];
+  for (const raw of alsoKnownAs) {
+    const n = raw.replace(/^the\s+/i, "");
+    if (!names.some((m) => words(m) === words(n))) names.push(n);
+  }
   return names;
 }
 
@@ -46,7 +62,17 @@ function companyNames(edgarName: string, alsoKnownAs: string[]): string[] {
  * "OR" is just another word to match (12).
  */
 export const frSearchTerm = (edgarName: string, alsoKnownAs: string[] = []): string =>
-  companyNames(edgarName, alsoKnownAs).map((n) => `"${n}"`).join(" | ");
+  companyNames(edgarName, alsoKnownAs)
+    .flatMap((n) => [...new Set([n, joinInitials(n)])])
+    .map((n) => `"${n}"`)
+    .join(" | ");
+
+/**
+ * Initials as federal documents write them: Wikidata's "J. B. Hunt" is "J.B. Hunt" there, and the
+ * search treats the two apart — measured 2026-10-22: "J. B. Hunt" 6 documents, "J.B. Hunt" 13;
+ * "D. R. Horton" 0, "D.R. Horton" 4 (batch 28).
+ */
+const joinInitials = (n: string): string => n.replace(/\b([A-Z])\.\s+(?=[A-Z]\.)/g, "$1.");
 
 /**
  * Whether a title names the company — its everyday name or one of its own other names, whole, as a
@@ -78,9 +104,11 @@ function phraseNamesCompany(t: string, name: string, within: number): boolean {
   if (name.length < 2 || !t.includes(` ${name} `)) return false;
   if (!name.includes(" ")) {
     const tokens = t.trim().split(" ");
-    const corporate = tokens.some(
-      (tok, i) => tok === name && tokens.slice(i + 1, i + 1 + within).some((w) => CORPORATE.has(w))
-    );
+    const corporate = tokens.some((tok, i) => {
+      if (tok !== name) return false;
+      for (let j = i + 1; j <= i + within && j < tokens.length; j++) if (companyWordAt(tokens, j)) return true;
+      return false;
+    });
     if (!corporate) return false;
   }
   return !listedNamesContaining(name).some((longer) => t.includes(` ${longer} `));

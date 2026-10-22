@@ -439,6 +439,25 @@ check("  …but a one-word other name needs its company word straight after it, 
   !titleNamesCompany("Coast Citrus Distributors d/b/a Olympic Fruit & Vegetable, Amazon Produce Network, LLC, Refin Tropical", "AMAZON COM INC", ["amazon"]) &&
     !titleNamesCompany("Foreign-Trade Zone (FTZ) 72; Authorization of Production Activity; Toyota Material Handling, Inc.", "TOYOTA MOTOR CORP/", ["toyota"]) &&
     titleNamesCompany("China United Lines, Ltd., Complainant v. Amazon.com Services LLC; Amazon Logistics Inc.", "AMAZON COM INC", ["amazon"]));
+// batch 28 audit: batch 26's cleanup cut "EMBRAER S.A." to "EMBRAER", and the company-word test
+// did not know "s a" — Embraer's documents went from 22 to 2 on a live query, and 66 companies
+// whose documents carry their legal form were in the same place
+check("a one-word name followed by its legal form in letters is the company",
+  titleNamesCompany("Petition for Exemption; Summary of Petition Received; Embraer S.A.", "EMBRAER S.A.") &&
+    titleNamesCompany("Special Conditions: Embraer S.A. Model ERJ 190-300 Airplane; Electronic Flight Control System", "EMBRAER S.A.") &&
+    titleNamesCompany("Ferrari N.V.; Receipt of Petition for Decision of Inconsequential Noncompliance", "Ferrari N.V.") &&
+    titleNamesCompany("Natuzzi S.p.A.; Order", "NATUZZI S P A") && titleNamesCompany("Genmab A/S; Order", "GENMAB A/S") &&
+    titleNamesCompany("Equinor ASA; Notice of Application", "EQUINOR ASA"));
+check("  …while \"the\" before a name is never half of it: the Hartford's ETF filings and the Hartford area are not the insurer's",
+  !titleNamesCompany("Self-Regulatory Organizations; NYSE Arca, Inc.; Notice of Filing of a Proposed Rule Change To List and Trade Shares of the Hartford Core Bond ETF of the Hartford Funds Exchange-Traded Trust", "HARTFORD INSURANCE GROUP, INC.", ["The Hartford"]) &&
+    !titleNamesCompany("Air Plan Approval; Connecticut; Reasonably Available Control Technology for the Hartford Area", "HARTFORD INSURANCE GROUP, INC.", ["The Hartford"]) &&
+    titleNamesCompany("The Hartford Financial Services Group, Inc.; Notice of Application", "HARTFORD INSURANCE GROUP, INC.", ["Hartford Financial Services Group"]));
+check("  …and an apostrophe is dropped, as the alias index drops it: \"angies list\" is \"Angie's List, Inc.\"",
+  titleNamesCompany("Angie's List, Inc.; Order", "Angi Inc.", ["angies list"]) && titleNamesCompany("Angie's List, Inc.; Order", "Angi Inc.", ["Angie's List"]));
+check("the search asks for a name as written, and with its initials closed up: \"D.R. Horton\" finds what \"D. R. Horton\" misses",
+  frSearchTerm("HORTON D R INC /DE/", ["D. R. Horton"]) === '"HORTON D R" | "D. R. Horton" | "D.R. Horton"' &&
+    frSearchTerm("US BANCORP DE", ["U.S. Bancorp"]) === '"US BANCORP" | "U.S. Bancorp"',
+  `${frSearchTerm("HORTON D R INC /DE/", ["D. R. Horton"])} / ${frSearchTerm("US BANCORP DE", ["U.S. Bancorp"])}`);
 check("  …and every name goes in one search, OR'd with \"|\"",
   frSearchTerm("Alphabet Inc.", ["google"]) === '"Alphabet" | "google"' && frSearchTerm("FORD MOTOR CO") === '"FORD MOTOR"' &&
     frSearchTerm("FORD MOTOR CO", ["ford motor"]) === '"FORD MOTOR"', frSearchTerm("Alphabet Inc.", ["google"]));

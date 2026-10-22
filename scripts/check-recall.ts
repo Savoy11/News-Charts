@@ -19,6 +19,7 @@ import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { collapseNearDuplicates } from "../lib/newsQuality";
 import { commonName, TICKER_INDEX_COMPANIES } from "../lib/sec";
+import { gdeltEverydayName } from "../lib/news";
 import type { TimelineEvent } from "../lib/types";
 
 let pass = 0;
@@ -95,14 +96,16 @@ for (const [legal, everyday] of [
 }
 
 // Source-text assert, the check-wiring pattern: the fix is one identifier, and reverting it
-// would compile fine and fail nothing else. GDELT must be queried under `name` (the computed
-// commonName), never under `company.name` (the SEC legal title) — with the company's own other
-// names OR'd in since batch 25 ("goldman sachs" for Goldman Sachs Group; see check:aliases).
+// would compile fine and fail nothing else. GDELT must be queried under the common name, never
+// under `company.name` (the SEC legal title) — with the company's own other names OR'd in since
+// batch 25 ("goldman sachs" for Goldman Sachs Group; see check:aliases). Since batch 33 the query
+// is `gdeltEverydayName`, which is that common name unless GDELT would refuse it as too short.
 const ingestSrc = readFileSync(path.join(__dirname, "ingest.ts"), "utf8");
 check(
   "ingest queries GDELT under the common name",
-  /run\("gdelt",\s*gdeltNames\(name, alsoKnownAs\)\.join\(" \| "\),\s*\(\)\s*=>\s*fetchNews\(name, alsoKnownAs\)/.test(ingestSrc),
-  'expected run("gdelt", gdeltNames(name, alsoKnownAs).join(" | "), () => fetchNews(name, alsoKnownAs), …) in scripts/ingest.ts'
+  /const newsQuery = gdeltEverydayName\(company\.name\);\s*await run\("gdelt",\s*gdeltNames\(newsQuery, alsoKnownAs\)\.join\(" \| "\),\s*\(\)\s*=>\s*fetchNews\(newsQuery, alsoKnownAs\)/.test(ingestSrc) &&
+    gdeltEverydayName("FORD MOTOR CO") === "FORD MOTOR" && gdeltEverydayName("Apple Inc.") === "Apple",
+  'expected newsQuery = gdeltEverydayName(company.name) and run("gdelt", gdeltNames(newsQuery, alsoKnownAs)…, () => fetchNews(newsQuery, alsoKnownAs)) in scripts/ingest.ts, the common name for "FORD MOTOR CO"'
 );
 check(
   "  ...and never under the raw legal title",

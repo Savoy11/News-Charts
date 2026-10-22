@@ -2,6 +2,7 @@ import { FetchResult, TimelineEvent } from "./types";
 import { cleanDomain, sourceLabel } from "./sourceLabel";
 import { storyKey } from "./newsQuality";
 import { nameKey } from "./companyAliases";
+import { commonName } from "./sec";
 
 interface GdeltArticle {
   url: string;
@@ -36,20 +37,55 @@ const PAGE_FURNITURE = new Set(
 );
 
 /**
- * The names a GDELT query asks for: the subject's, then its other names but page furniture. The
- * other names go in their matching form ("u s bancorp" for "U.S. Bancorp"), which GDELT is
- * measured to take: ("HORTON D R" OR "d r horton") returned 36 articles (batch 28 audit).
+ * GDELT refuses a quoted phrase under five characters, and with it the whole query: "CSX" and
+ * "Visa" each came back as "The specified phrase is too short." (2026-10-22, batch 33), while an
+ * unquoted Visa matched the word — "Trump revokes over 300,000 visas". Measured with the phrase as
+ * sent, spaces counted.
+ */
+export const GDELT_MIN_PHRASE = 5;
+
+/**
+ * The names a GDELT query asks for: the subject's, then its other names but page furniture and any
+ * GDELT would refuse as too short ("IBM", "AMD" — still used to score headlines). The other names
+ * go in their matching form ("u s bancorp" for "U.S. Bancorp"), which GDELT is measured to take:
+ * ("HORTON D R" OR "d r horton") returned 36 articles (batch 28 audit).
  */
 export function gdeltNames(query: string, alsoKnownAs: string[] = []): string[] {
   const seen = new Set([nameKey(query).toLowerCase()]);
   const names = [query];
   for (const n of alsoKnownAs) {
     const key = nameKey(n).toLowerCase();
-    if (seen.has(key) || PAGE_FURNITURE.has(key)) continue;
+    if (seen.has(key) || PAGE_FURNITURE.has(key) || key.length < GDELT_MIN_PHRASE) continue;
     seen.add(key);
     names.push(key);
   }
   return names;
+}
+
+/** Legal forms an SEC title carries after the everyday name: "VISA INC.", "HSBC HOLDINGS PLC". */
+const LEGAL_FORM = new Set("INC CORP CO PLC LTD LIMITED HOLDING HOLDINGS GROUP".split(" "));
+/** …and those written in capitals: "SAP SE", "Vale S.A.", "ASML HOLDING NV". */
+const LEGAL_INITIALS = new Set("SE SA SPA NV AG AB ASA LLC LP".split(" "));
+
+/**
+ * The everyday name to ask GDELT for. One it would refuse as too short is asked with the legal form
+ * its SEC title carries — "Visa Inc", "CSX Corp", "NIKE Inc", "3M Co", "News Corp" — the way an
+ * article names the company at first mention, and never the bare word: 107 of the 1,500 largest
+ * companies have an everyday name under five characters, and each was asked a query GDELT refused.
+ * A title with no legal form after the name keeps the name as it is.
+ */
+export function gdeltEverydayName(edgarTitle: string): string {
+  const everyday = commonName(edgarTitle);
+  if (everyday.length >= GDELT_MIN_PHRASE) return everyday;
+  const own = nameKey(everyday);
+  const full = nameKey(edgarTitle);
+  const after = full.startsWith(`${own} `) ? full.slice(own.length + 1).split(" ") : [];
+  // "KKR & Co. Inc." is "KKR & Co"; "TIM S.A." spells its form out letter by letter
+  if (after[0] === "&" && after[1] === "CO") return `${everyday} & Co`;
+  let next = after[0] ?? "";
+  for (let i = 1; next.length < 3 && after[i]?.length === 1 && after[i - 1].length === 1; i++) next += after[i];
+  if (LEGAL_INITIALS.has(next)) return `${everyday} ${next}`;
+  return LEGAL_FORM.has(next) ? `${everyday} ${next.charAt(0)}${next.slice(1).toLowerCase()}` : everyday;
 }
 
 /**

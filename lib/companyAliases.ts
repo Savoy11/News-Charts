@@ -153,6 +153,19 @@ function related(alias: string, names: string[]): boolean {
   });
 }
 
+/**
+ * A three-letter name in capitals that spells the company's own initials — "IBM" for International
+ * Business Machines, "AIG" for American International Group, "AMD" for Advanced Micro Devices — is
+ * a name, not a word like "Sun" (batch 33). The three-letter rule below dropped every one — 42 in
+ * the 2026-10-22 sync — so IBM's news, federal documents and Justice Department releases were
+ * searched only as "International Business Machines". The usual tests still apply after it: a little-known
+ * company's initials stay out, and only a company's own label may claim news.
+ */
+const ownInitials = (name: string, beside: string[]): boolean => {
+  const letters = name.replace(/\./g, "");
+  return /^[A-Z]{3}$/.test(letters) && beside.some((b) => initials(nameKey(b)) === letters);
+};
+
 /** Whether a one-word name belongs to an item too little known for the word to mean it. */
 function obscure(name: string, sitelinks: number): DropReason | null {
   const key = nameKey(name);
@@ -171,7 +184,7 @@ function junk(name: string, beside: string[]): DropReason | null {
   const compact = key.replace(/ /g, "");
   if (compact.length < 3) return "too short";
   const words = key.split(" ");
-  if (words.length === 1 && compact.length < 4 && !key.includes("&")) return "too short"; // "Sun"
+  if (words.length === 1 && compact.length < 4 && !key.includes("&") && !ownInitials(name, beside)) return "too short"; // "Sun"
   if (!significant(key).length) return "generic";
   return null;
 }

@@ -47,7 +47,7 @@ const PLURAL_VERB = String.raw`(?:${PARTY_VERB}|Pay\b)`;
  * "Settles With Microsoft", "Requires General Electric to Divest", "U.S. v. JPMorgan Chase Bank",
  * "Hungary Subsidiary of Microsoft Corporation Agrees".
  */
-const ACTION = String.raw`(?:(?:Settlements?|Agreements?|Consent\s+Decree|Lawsuit|Suits?|Complaint|Charges|Claims|Case|Resolution|Investigations?|Action|Settles?)\s+(?:Filed\s+)?(?:With|Against|Of)|Sues|Sue|Indicts|Requires|Blocks?|Challenges?|Acquisition\s+of|Purchase\s+of|Merger\s+(?:With|of)|(?:Subsidiary|Subsidiaries|Unit|Affiliate|Division)\s+of|v\.|vs\.)`;
+const ACTION = String.raw`(?:(?:Settlements?|Agreements?|Consent\s+Decree|Lawsuit|Suits?|Complaint|Charges|Claims?|Case|Resolution|Investigations?|Action|Settles?)\s+(?:Filed\s+)?(?:With|Against|Of)|Sues|Sue|Indicts|Requires|Blocks?|Challenges?|Acquisition\s+of|Purchase\s+of|Merger\s+(?:With|of)|(?:Subsidiary|Subsidiaries|Unit|Affiliate|Division)\s+of|v\.|vs\.)`;
 
 /**
  * Other companies named alongside it — "Settlements with CarMax, Axis Analytics, Capital One Bank

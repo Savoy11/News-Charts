@@ -311,7 +311,7 @@ async function main(): Promise<void> {
   const ingestSrc = readFileSync("scripts/ingest.ts", "utf8");
   check("company ingest searches and scores with them",
     /const alsoKnownAs = newsNamesFor\(company\.cik\);/.test(ingestSrc) &&
-      /aliasesFor\(companyCtx, \[name, \.\.\.alsoKnownAs\]\)/.test(ingestSrc) && /fetchNews\(name, alsoKnownAs\)/.test(ingestSrc));
+      /aliasesFor\(companyCtx, \[name, \.\.\.alsoKnownAs\]\)/.test(ingestSrc) && /fetchNews\(newsQuery, alsoKnownAs\)/.test(ingestSrc));
   check("  …and so does re-scoring", /newsNamesFor\(subjectRows\[0\]\.cik\)/.test(readFileSync("scripts/score.ts", "utf8")));
 
   console.log("\nThe sync reads what it says it reads");

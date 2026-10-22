@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import TopicExplorer from "@/components/TopicExplorer";
+import NewsLeftOut from "@/components/NewsLeftOut";
 import AdSlot from "@/components/AdSlot";
 import SourcesPanel from "@/components/SourcesPanel";
 import SearchBox from "@/components/SearchBox";
@@ -85,6 +86,7 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
 
       {data.summary && <TopicSummary text={data.summary} wikipediaTitle={data.wikipediaTitle} />}
 
+      <NewsLeftOut events={data.events} leftOut={data.newsLeftOut} priced={data.prices.length > 1} />
       <TopicExplorer events={data.events} prices={data.prices} subject={data.title} />
 
       {/* min-w-0 on both items: a grid item cannot shrink below its own content by default,

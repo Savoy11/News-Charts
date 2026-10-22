@@ -10,6 +10,7 @@ import { withoutSharedSectorRows } from "./eventMerge";
 import { pageFilings } from "./secForms";
 import { resolveTickerLocally, siblingFunds } from "./sec";
 import { loadSectorStanding, type SectorStanding } from "./signals";
+import { boundPageNews, cachedWeight } from "./pageNews";
 
 
 // Request-memoised so a page and its generateMetadata share one load instead of fetching twice.
@@ -49,6 +50,8 @@ export interface TopicPageData {
    * price series, so its page renders the same chart a company page does.
    */
   prices: PricePoint[];
+  /** stored news stories left off the page to keep its cached entry under 2 MB (`boundPageNews`) */
+  newsLeftOut: number;
   refreshedAt: RefreshedAt;
   /**
    * Set when the address found a company rather than a topic — by its slug ("/topic/f"), or by an
@@ -80,6 +83,8 @@ export interface CompanyPageData {
   standing: SectorStanding | null;
   /** for a fund, the other series its registrant files, those the site holds first; else null */
   siblings: { registrantCik: string; funds: { ticker: string; name: string; held: boolean }[] } | null;
+  /** stored news stories left off the page to keep its cached entry under 2 MB (`boundPageNews`) */
+  newsLeftOut: number;
   refreshedAt: RefreshedAt;
 }
 
@@ -149,22 +154,25 @@ async function heldTopicPage(topic: string): Promise<TopicPageData | null> {
       wikipediaTitle: null,
       events: [],
       prices: [],
+      newsLeftOut: 0,
       refreshedAt: subject.refreshedAt,
       companyTicker: subject.ticker,
     };
   }
-  const [events, prices] = await Promise.all([loadEvents(subject.id), loadPrices(subject.id)]);
-  if (!events.length) return null;
-  return {
+  const [stored, prices] = await Promise.all([loadEvents(subject.id), loadPrices(subject.id)]);
+  if (!stored.length) return null;
+  const rest = {
     title: subject.displayName,
     slug: subject.slug,
     summary: subject.summary ?? "",
     wikipediaTitle: subject.wikipediaTitle ?? null,
-    events,
     prices,
     refreshedAt: subject.refreshedAt,
     companyTicker: null,
   };
+  // a topic's prices (a crypto asset's) share its cached entry
+  const { events, newsLeftOut } = boundPageNews(stored, prices, cachedWeight(rest));
+  return { ...rest, events, newsLeftOut };
 }
 
 /**
@@ -194,7 +202,7 @@ const cachedHeldCompany = unstable_cache(
     const page = await heldCompanyPage(key);
     return page && { ...page, prices: [] };
   },
-  ["held-company-page", "v6"],
+  ["held-company-page", "v7"],
   { revalidate: PAGE_CACHE_SECONDS, tags: ["subject-pages"] }
 );
 const cachedHeldPrices = unstable_cache(
@@ -205,7 +213,7 @@ const cachedHeldPrices = unstable_cache(
   ["held-company-prices", "v1"],
   { revalidate: PAGE_CACHE_SECONDS, tags: ["subject-pages"] }
 );
-const cachedHeldTopic = unstable_cache((key: string) => heldTopicPage(key), ["held-topic-page", "v2"], {
+const cachedHeldTopic = unstable_cache((key: string) => heldTopicPage(key), ["held-topic-page", "v3"], {
   revalidate: PAGE_CACHE_SECONDS,
   tags: ["subject-pages"],
 });
@@ -250,20 +258,25 @@ async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
         loadSectorStanding(industry.id).catch(() => null),
       ])
     : [[], null];
-  return {
+  const rest = {
     name: subject.displayName,
     ticker: subject.ticker,
     summary: subject.summary ?? "",
     wikipediaTitle: subject.wikipediaTitle ?? null,
     siteDomain: subject.siteDomain,
-    prices,
-    events: dropCompanyPrehistory(pageFilings([...events, ...withoutSharedSectorRows(events, sector)], subject.cik)),
     macro,
     industry,
     standing,
     siblings,
     refreshedAt: subject.refreshedAt,
   };
+  // prices are a cache entry of their own (`cachedHeldPrices`), but they still rank the days
+  const bounded = boundPageNews(
+    dropCompanyPrehistory(pageFilings([...events, ...withoutSharedSectorRows(events, sector)], subject.cik)),
+    prices,
+    cachedWeight(rest)
+  );
+  return { ...rest, prices, ...bounded };
 }
 
 /**

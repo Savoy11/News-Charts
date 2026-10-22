@@ -509,6 +509,13 @@ function of how many subjects exist (a number we choose) rather than of how much
 
 Measured on this machine: `/topic/bicycle` went from ~11–16s live to **0.6s** from the database.
 
+**A page carries what fits in Next's cache.** Next caches no entry over 2 MB, measured as the
+entry's JSON with the page inside it as a string, so every quote counts twice. News is what
+grows, so `boundPageNews` (`lib/pageNews.ts`) lets it fill the room the rest of a page leaves,
+under a 1.8 MB budget: the newest stories first, then the strongest story of each earlier day,
+the days the price moved most first. Every filing and other record stays, the database keeps
+every story, and a page that leaves stories out says how many.
+
 A small `stored` badge on each page carries the date that copy was last refreshed. It replaced a
 `stored` / `live` badge, which after the cut-over had one reachable value and implied a
 comparison the code no longer performed.

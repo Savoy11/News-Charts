@@ -100,9 +100,9 @@ async function main(): Promise<void> {
 
   console.log("\nGDELT is never asked a phrase it refuses, and a bare name only for what it means");
   const yes = ["IBM", "ETSY", "ROKU", "CSX", "Okta"];
-  // AIG, AMD and ADM measured: GDELT's newest week brought Nigerian police officers, Judi Dench's
-  // eyesight and an Australian defence magazine
-  const no = ["VISA", "GAP", "UPS", "PAN", "Snap", "RTX", "CGI", "AIG", "AMD", "ADM", "TIM", "DIDI", "NOV", "HP", "AT&T", "3M"];
+  // AIG, AMD, ADM, BMS and RBC measured: GDELT's newest week brought Nigerian police officers, Judi
+  // Dench's eyesight, an Australian defence magazine, an office in Pulwama and RBC Bearings
+  const no = ["VISA", "GAP", "UPS", "PAN", "Snap", "RTX", "CGI", "AIG", "AMD", "ADM", "BMS", "RBC", "TIM", "DIDI", "NOV", "HP", "AT&T", "3M"];
   check("a short name goes bare only when it is no English word, stands for nothing else first, and has three or four letters",
     yes.every(unquotable) && no.every((n) => !unquotable(n)), `${yes.filter((n) => !unquotable(n))} | ${no.filter(unquotable)}`);
   check(`an other name under ${GDELT_MIN_PHRASE} characters joins the query bare when it may, and stays out when it may not`,

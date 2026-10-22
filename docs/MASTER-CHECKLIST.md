@@ -1009,18 +1009,20 @@ HawkScan could not run: `HAWK_API_KEY` is not set.
       - **What may go bare:** three or four letters that are not one of the 4,971 English words of
         two to four letters in ENABLE (public domain, committed as `data/english-short-words.json`),
         and not on a short list of letters that mean something else first (`GDELT_NOT_UNQUOTED`):
-        RTX (Nvidia's graphics cards), CGI, AIG, AMD, ADM, BCE, APA, PTC, AES, ATI, EQT, FNB, RDS,
-        TSM, CNR, SPIE, MOOG, NOV, COPA, TIM, DAVE, DIDI. AIG, AMD, ADM and CGI are measured
-        (below); the rest are from what the letters commonly mean.
+        RTX (Nvidia's graphics cards), CGI, AIG, AMD, ADM, BMS, RBC, BCE, APA, PTC, AES, ATI, EQT,
+        FNB, RDS, TSM, CNR, SPIE, MOOG, NOV, COPA, TIM, DAVE, DIDI. AIG, AMD, ADM, BMS, RBC and CGI
+        are measured (below); the rest are from what the letters commonly mean.
       - **The headline filter:** with a bare name in the query, an article is kept only when its
         headline names the company by one of the names asked for. On 2026-10-22 a bare "IBM"
         returned 30 articles in a day; 9 named IBM in the headline and the rest in passing
         ("Aionos Appoints Hemant Lamba…"). The company's initials count there only in capitals, as
         in headline scoring, so "Adm. Paparo warns…" is never a headline of ADM's.
       - **Measured after the first push**, from GDELT's newest week for each bare name, 2026-10-22:
-        - **Kept bare:** "IBM", "CSX" and "Roku" — every headline naming the letters was the
-          company's ("CSX (NASDAQ: CSX) Stock Price Up 6.1% on Earnings Beat", "Roku Pro Series OLED
-          TV Review").
+        - **Kept bare:** "IBM", "CSX", "Roku", "ADP", "AEP", "HII", "HPE", "ITW", "JLL", "SLF" and
+          "WMG" — every headline naming the letters was the company's ("CSX (NASDAQ: CSX) Stock
+          Price Up 6.1% on Earnings Beat", "AEP Increases Quarterly Dividend to 97 Cents a Share",
+          "HII receives US Navy contract for Lyndon B Johnson sea trials"; 15 of 15 for HPE, 10 of 10
+          for AEP). "JCI" brought 15 articles and no headline naming it either way.
         - **"AIG":** both headlines naming it were Nigeria's assistant inspectors-general of police
           ("AIG Ewah assures students of police protection"), none the insurer's. The first push
           would have put them on AIG's page. Now on the list.
@@ -1029,6 +1031,11 @@ HawkScan could not run: `HAWK_API_KEY` is not set.
           have passed the filter. Now on the list.
         - **"ADM":** of 7 headlines naming it, 3 were not the company: Australian Defence
           Magazine, a Montreal manufacturing expo, a political story. Now on the list.
+        - **"BMS":** the one headline naming it was an Indian organisation opening an office in
+          Pulwama, not Bristol Myers Squibb. Now on the list.
+        - **"RBC":** 7 of 8 headlines were Royal Bank of Canada's, but one was RBC Bearings' stock
+          ("Reviewing RBC Bearings (NYSE: RBC)…"), a listed company whose ticker it is, and such
+          stock-site headlines recur. Now on the list.
         - **Already kept out:** "CGI" (no headline of CGI Inc's among 30: film reviews and PHP
           security flaws), "UPS" (an English word; no headline of the company's among 30) and
           "PMI" (10 of 30 were Philip Morris's, the rest the Project Management Institute, a fund
@@ -1052,10 +1059,10 @@ HawkScan could not run: `HAWK_API_KEY` is not set.
         in 273, held four, so UPS goes from 2 releases to 6 ("UPS Agrees To Forfeit $40 Million…",
         2013), and HPE gains its Juniper acquisition case. A real `npm run ingest -- --ticker UPS`
         stored the 6.
-- [ ] **Open:** the other bare names are unmeasured: the initials ADP, AEP, BMS, HII, HPE, ITW, JCI,
-      JLL, RBC, SLF, WDP and WMG (a probe of each had not answered by this push; GDELT answers this
-      session every few minutes), the other names TSMC and UBER, and the short everyday names but
-      CSX, Roku and Etsy. A name found wanting goes on `GDELT_NOT_UNQUOTED` with what it brought in.
+- [ ] **Open:** still unmeasured as bare names: Disney's "WDP" (GDELT refused its probe fourteen
+      times; Warehouses De Pauw, a Belgian listed company, goes by WDP), the other names TSMC and
+      UBER, and the short everyday names but CSX, Roku and Etsy. A name found wanting goes on
+      `GDELT_NOT_UNQUOTED` with what it brought in.
       Tickers that are words ("ups", "are") still score a headline in any letter case, as before;
       only initials that are news names became capitals-only.
 - Checks: `check:short-names` 18 → 27, its batch 33 cases rewritten for the owner's calls. On

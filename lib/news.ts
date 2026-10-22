@@ -52,8 +52,8 @@ const ENGLISH_SHORT: ReadonlySet<string> = new Set(shortWords.words);
 /**
  * Short names that are not English words but mean something else first in the news, so GDELT is
  * never asked for them unquoted. Kept short on purpose, each with what it would bring in instead.
- * AIG, AMD, ADM and CGI were measured against GDELT's newest week (2026-10-22); the rest come from
- * what the letters commonly mean.
+ * AIG, AMD, ADM, BMS, RBC and CGI were measured against GDELT's newest week (2026-10-22); the rest
+ * come from what the letters commonly mean.
  */
 export const GDELT_NOT_UNQUOTED: Record<string, string> = {
   RTX: "Nvidia's GeForce RTX graphics cards",
@@ -65,6 +65,10 @@ export const GDELT_NOT_UNQUOTED: Record<string, string> = {
   AMD: "age-related macular degeneration, in health news",
   // of seven headlines naming "ADM", three were not the company: a defence magazine, an expo, a party
   ADM: "Australian Defence Magazine, a Montreal manufacturing expo and other initials",
+  // the one headline naming "BMS" was an Indian organisation opening an office in Pulwama
+  BMS: "other organisations' initials, not Bristol Myers Squibb's",
+  // one of eight headlines naming "RBC" was RBC Bearings' stock, not Royal Bank of Canada's
+  RBC: "RBC Bearings, whose ticker it is",
   BCE: "Before Common Era, in every date",
   APA: "the American Psychological Association and its citation style",
   PTC: "the production tax credit, in energy news",

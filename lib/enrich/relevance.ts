@@ -59,13 +59,18 @@ export function aliasesFor(subject: SubjectContext, extraAliases: string[] = [])
   aliases.add(subject.displayName.toLowerCase());
   if (subject.ticker) aliases.add(subject.ticker.toLowerCase());
   for (const phrase of extraAliases) {
-    const p = phrase.trim().toLowerCase();
+    // a company's initials keep their capitals, so they name a headline only written that way:
+    // "PAN" is Palo Alto Networks, "pan-European" is not (batch 34)
+    const p = INITIALISM.test(phrase.trim()) ? phrase.trim() : phrase.trim().toLowerCase();
     if (p.length >= 3) aliases.add(p);
   }
   return [...aliases];
 }
 
 const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Three or four capitals: a company's initials, as `newsNamesFor` writes them ("IBM", "AIG"). */
+export const INITIALISM = /^[A-Z]{3,4}$/;
 
 /** What a headline says about the subject: named outright, obliquely, or not at all. */
 export type Mention = "named" | "oblique" | "none";
@@ -81,9 +86,9 @@ export type Mention = "named" | "oblique" | "none";
  * punctuation folded, as the alias index keys it: "D.R. Horton" names "D . R . Horton beats" (as
  * GDELT writes it) and "Angie's List" names "Angies List" (batch 28).
  *
- * Short aliases (single-letter tickers like F, or GM) match only as a standalone UPPERCASE
- * token in the original title, and never one followed by "." or "-" — "F beats estimates"
- * names Ford; "John F. Kennedy Airport reopens" does not.
+ * Short aliases (single-letter tickers like F, or GM) and a company's initials ("PAN", batch 34)
+ * match only as a standalone UPPERCASE token in the original title, and never one followed by "."
+ * or "-" — "F beats estimates" names Ford; "John F. Kennedy Airport reopens" does not.
  *
  * A single-token alias immediately preceded by a different capitalized word reads as a person's
  * name — "Harrison Ford", "Gerald Ford" — which is a judgement call, not a naming, so it is
@@ -96,7 +101,7 @@ export function mentions(original: string, names: string[]): Mention {
   const keyed = ` ${nameKey(title)} `;
   let sawOblique = false;
   for (const a of aliases) {
-    if (a.length < 3) {
+    if (a.length < 3 || INITIALISM.test(a)) {
       const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(a.toUpperCase())}(?![\\p{L}\\p{N}.-])`, "u");
       if (re.test(title)) return "named";
       continue;

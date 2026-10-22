@@ -3,6 +3,8 @@ import { cleanDomain, sourceLabel } from "./sourceLabel";
 import { storyKey } from "./newsQuality";
 import { nameKey } from "./companyAliases";
 import { commonName } from "./sec";
+import { INITIALISM, mentions } from "./enrich/relevance";
+import shortWords from "../data/english-short-words.json";
 
 interface GdeltArticle {
   url: string;
@@ -44,9 +46,68 @@ const PAGE_FURNITURE = new Set(
  */
 export const GDELT_MIN_PHRASE = 5;
 
+/** English words of two to four letters (ENABLE, public domain), committed in data/. */
+const ENGLISH_SHORT: ReadonlySet<string> = new Set(shortWords.words);
+
+/**
+ * Short names that are not English words but mean something else first in the news, so GDELT is
+ * never asked for them unquoted. Kept short on purpose, each with what it would bring in instead.
+ * AIG, AMD, ADM, BMS, RBC, UBER and CGI were measured against GDELT's newest week (2026-10-22);
+ * the rest come from what the letters commonly mean.
+ */
+export const GDELT_NOT_UNQUOTED: Record<string, string> = {
+  RTX: "Nvidia's GeForce RTX graphics cards",
+  // none of the thirty newest headlines was CGI Inc's: film reviews and PHP security flaws
+  CGI: "computer-generated imagery",
+  // the two headlines naming "AIG" were Nigeria's assistant inspectors-general of police, not the insurer
+  AIG: "Nigeria's assistant inspectors-general of police",
+  // 28 of the thirty newest articles were about Judi Dench's failing sight
+  AMD: "age-related macular degeneration, in health news",
+  // of seven headlines naming "ADM", three were not the company: a defence magazine, an expo, a party
+  ADM: "Australian Defence Magazine, a Montreal manufacturing expo and other initials",
+  // the one headline naming "BMS" was an Indian organisation opening an office in Pulwama
+  BMS: "other organisations' initials, not Bristol Myers Squibb's",
+  // one of eight headlines naming "RBC" was RBC Bearings' stock, not Royal Bank of Canada's
+  RBC: "RBC Bearings, whose ticker it is",
+  // one headline in the hundred newest named Uber, so the bare word crowds out "Uber Technologies"
+  UBER: "über, as in uber-rich, and passing mentions everywhere",
+  BCE: "Before Common Era, in every date",
+  APA: "the American Psychological Association and its citation style",
+  PTC: "the production tax credit, in energy news",
+  AES: "the Advanced Encryption Standard",
+  ATI: "ATI graphics cards",
+  EQT: "EQT AB, the Swedish investment firm",
+  FNB: "the name of many unrelated banks",
+  RDS: "Amazon's database service",
+  TSM: "the esports team",
+  CNR: "Italy's national research council",
+  SPIE: "the optics society",
+  MOOG: "Moog synthesizers",
+  NOV: "November",
+  COPA: "the Copa América football tournament",
+  TIM: "a first name",
+  DAVE: "a first name",
+  DIDI: "a first name",
+};
+
+/**
+ * Whether a short name may go to GDELT without quotes — the owner's call, 2026-10-22 (batch 34).
+ * GDELT takes a bare word of three letters ("IBM" returned 30 articles in a day) where it refuses a
+ * quoted one, but a bare word matches every use of it: "Visa" brought back "Trump revokes over
+ * 300,000 visas". So only three or four letters that are no English word and stand for nothing
+ * else first: "IBM", "CSX", "ETSY", "ROKU" — and never "VISA", "GAP", "UPS", "RTX" or "AIG".
+ */
+export function unquotable(name: string): boolean {
+  const key = nameKey(name);
+  return /^[A-Z0-9]{3,4}$/.test(key) && !ENGLISH_SHORT.has(key.toLowerCase()) && GDELT_NOT_UNQUOTED[key] === undefined;
+}
+
+const bare = (name: string) => name.length < GDELT_MIN_PHRASE && unquotable(name);
+
 /**
  * The names a GDELT query asks for: the subject's, then its other names but page furniture and any
- * GDELT would refuse as too short ("IBM", "AMD" — still used to score headlines). The other names
+ * GDELT would refuse as too short that cannot go unquoted ("UPS" — still used to score headlines;
+ * "IBM" goes bare, see `unquotable`). The other names
  * go in their matching form ("u s bancorp" for "U.S. Bancorp"), which GDELT is measured to take:
  * ("HORTON D R" OR "d r horton") returned 36 articles (batch 28 audit).
  */
@@ -55,7 +116,7 @@ export function gdeltNames(query: string, alsoKnownAs: string[] = []): string[] 
   const names = [query];
   for (const n of alsoKnownAs) {
     const key = nameKey(n).toLowerCase();
-    if (seen.has(key) || PAGE_FURNITURE.has(key) || key.length < GDELT_MIN_PHRASE) continue;
+    if (seen.has(key) || PAGE_FURNITURE.has(key) || (key.length < GDELT_MIN_PHRASE && !unquotable(key))) continue;
     seen.add(key);
     names.push(key);
   }
@@ -68,15 +129,18 @@ const LEGAL_FORM = new Set("INC CORP CO PLC LTD LIMITED HOLDING HOLDINGS GROUP".
 const LEGAL_INITIALS = new Set("SE SA SPA NV AG AB ASA LLC LP".split(" "));
 
 /**
- * The everyday name to ask GDELT for. One it would refuse as too short is asked with the legal form
- * its SEC title carries — "Visa Inc", "CSX Corp", "NIKE Inc", "3M Co", "News Corp" — the way an
- * article names the company at first mention, and never the bare word: 107 of the 1,500 largest
- * companies have an everyday name under five characters, and each was asked a query GDELT refused.
- * A title with no legal form after the name keeps the name as it is.
+ * The everyday name to ask GDELT for. 107 of the 1,500 largest companies have one under five
+ * characters, and each was asked a query GDELT refused (batch 33). A short name that may go
+ * unquoted (`unquotable`: "ETSY", "CSX") is asked bare, its articles kept only when the headline
+ * names the company (`fetchNews`, batch 34); any other — a word, or letters that mean something else
+ * first — with the legal form its SEC title carries, the way an article names the company at first
+ * mention: "VISA Inc", "CGI Inc", "3M Co", "NEWS Corp". A title with no legal form after the name
+ * keeps the name as it is.
  */
 export function gdeltEverydayName(edgarTitle: string): string {
   const everyday = commonName(edgarTitle);
-  if (everyday.length >= GDELT_MIN_PHRASE) return everyday;
+  // long enough to quote, or short and safe to send bare ("ETSY", "ROKU"; batch 34)
+  if (everyday.length >= GDELT_MIN_PHRASE || unquotable(everyday)) return everyday;
   const own = nameKey(everyday);
   const full = nameKey(edgarTitle);
   const after = full.startsWith(`${own} `) ? full.slice(own.length + 1).split(" ") : [];
@@ -95,10 +159,24 @@ export function gdeltEverydayName(edgarTitle: string): string {
  * "Goldman Sachs" (batch 25).
  */
 export function gdeltQuery(query: string, alsoKnownAs: string[] = []): string {
-  const names = gdeltNames(query, alsoKnownAs);
-  return names.length === 1
-    ? `"${query}" sourcelang:english`
-    : `(${names.map((n) => `"${n}"`).join(" OR ")}) sourcelang:english`;
+  const terms = gdeltNames(query, alsoKnownAs).map((n) => (bare(n) ? n : `"${n}"`));
+  return terms.length === 1 ? `${terms[0]} sourcelang:english` : `(${terms.join(" OR ")}) sourcelang:english`;
+}
+
+/**
+ * Whether a headline names the company by one of the names asked for, whole: "IBM beats Q3
+ * earnings" does, "Aionos Appoints Hemant Lamba as Chief Business Officer" — an article that
+ * mentions IBM in passing — does not. The company's `initials` count only in capitals, the way
+ * headline scoring counts them (`mentions`), so "Adm. Paparo warns…" is no headline of ADM's.
+ */
+export function headlineNames(title: string, names: readonly string[], initials: readonly string[] = []): boolean {
+  const caps = new Set(initials.map(nameKey));
+  const t = ` ${nameKey(title)} `;
+  if (mentions(title, [...caps]) === "named") return true;
+  return names.some((n) => {
+    const key = nameKey(n);
+    return key.length > 0 && !caps.has(key) && t.includes(` ${key} `);
+  });
 }
 
 /** Same fetch, but reporting *why* it came back empty so ingest can back off. */
@@ -146,7 +224,15 @@ export async function fetchNews(query: string, alsoKnownAs: string[] = []): Prom
         }
         return { events: [], outcome: "error", httpStatus: 200, detail: "non-JSON body" };
       }
-      const articles: GdeltArticle[] = JSON.parse(text)?.articles ?? [];
+      // A bare short name matches the word anywhere in an article — IBM's thirty articles of
+      // 2026-10-22 named it in nine headlines and in passing in the rest — so with one in the query
+      // only the articles whose headline names the company are kept (batch 34).
+      const names = gdeltNames(query, alsoKnownAs);
+      const headlineOnly = names.some(bare);
+      const initials = alsoKnownAs.filter((n) => INITIALISM.test(n));
+      const articles: GdeltArticle[] = (JSON.parse(text)?.articles ?? []).filter(
+        (a: GdeltArticle) => !headlineOnly || headlineNames(a.title ?? "", names, initials)
+      );
       const seenTitles = new Set<string>();
       const events: TimelineEvent[] = [];
       for (const a of articles) {

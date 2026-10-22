@@ -264,6 +264,10 @@ export async function fetchJusticeReleases(edgarName: string, alsoKnownAs: strin
         const rows: DojRelease[] = Array.isArray(json?.results) ? json.results : [];
         releases.push(...rows);
         if (rows.length < PAGE_SIZE) break;
+        // A short name matches inside other words — "AIG" in 1,600 titles ("Craig"), "ADM" in 8,333
+        // ("admin") — and the newest 500 of those held none of its company's releases; "UPS" in 273
+        // held four. One page, then, when there are more than the pages read (batch 34).
+        if (name.length < 5 && Number(json?.metadata?.resultset?.count) > MAX_PAGES * PAGE_SIZE) break;
       }
     }
   } catch (err) {

@@ -62,13 +62,34 @@ for (const [legal, everyday] of [
   ["M/I HOMES, INC.", "M/I HOMES"],
   ["ASSOCIATED BANC-CORP", "ASSOCIATED BANC-CORP"],
   ["1847 Holdings LLC", "1847 Holdings"],
+  // batch 28: legal forms written with spaced letters, a tag after the form, a bare "DE", a
+  // dangling "and" and the public company's forms — each kept a word no headline carries
+  ["US BANCORP DE", "US BANCORP"],
+  ["ACUITY INC. (DE)", "ACUITY"],
+  ["BROADWAY FINANCIAL CORP DE", "BROADWAY FINANCIAL"],
+  ["TELEFONICA S A", "TELEFONICA"],
+  ["HEINEKEN HOLDING N V", "HEINEKEN"],
+  ["DEUTSCHE LUFTHANSA A G", "DEUTSCHE LUFTHANSA"],
+  ["NATUZZI S P A", "NATUZZI"],
+  ["FERRELLGAS PARTNERS L P", "FERRELLGAS PARTNERS"],
+  ["Eli Lilly and Company", "Eli Lilly"],
+  ["CRH PUBLIC LTD CO", "CRH"],
+  ["Osotspa Public Co Limited/ADR", "Osotspa"],
+  ["Medtronic Public Limited Company", "Medtronic"],
+  // …while a bracket that is part of the name, a name that starts with "Public" and a name that
+  // is nothing but a number stay
+  ["Banco Santander (Brasil) S.A.", "Banco Santander (Brasil)"],
+  ["Public Storage", "Public Storage"],
+  ["111, Inc.", "111, Inc"],
 ]) {
   check(`  "${legal}" is "${everyday}"`, commonName(legal) === everyday, commonName(legal));
 }
 {
   // Every company the index lists, not only the cases above: on 2026-10-21, 302 everyday names
-  // still ended in a mark or a legal form, so news and Federal Register searches asked for them.
-  const LEFT_OVER = /[\\]|\/$|[\s,.](?:S\.?A|N\.?V|L\.?P|LLC|A\/S|ASA|AB|S\.?P\.?A|OYJ|TBK|S\.?A\.?B|DE C\.?V)\.?$/i;
+  // still ended in a mark or a legal form, so news and Federal Register searches asked for them —
+  // and after that fix, 34 more in the spaced, tagged and public company forms (batch 28 audit).
+  const LEFT_OVER =
+    /[\\]|\/$|[\s,.](?:S\.?A|N\.?V|L\.?P|LLC|A\/S|ASA|AB|S\.?P\.?A|OYJ|TBK|S\.?A\.?B|DE C\.?V)\.?$|\s(?:S A|N V|A G|S P A|L P|S A B|DE|AND|PUBLIC)$|(?:INC|CORP|LTD|PLC|CO|N\.?V|S\.?A)\.?\s*\([^)]*\)$/i;
   const left = [...new Set(TICKER_INDEX_COMPANIES.map(([, title]) => commonName(title)))].filter((n) => LEFT_OVER.test(n));
   check("no everyday name in the committed index keeps a mark or a legal form", left.length === 0, `${left.length} — ${left.slice(0, 4).join(" | ")}`);
 }

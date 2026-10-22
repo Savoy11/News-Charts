@@ -52,8 +52,12 @@ export interface WikidataCompany {
  */
 export type AliasKind = "name" | "alias" | "former";
 
-/** name key → [listed company's CIK, the Wikidata item, where the name came from, 1 if news may use it] */
-export type AliasEntry = [number, string, AliasKind, 0 | 1];
+/**
+ * name key → [listed company's CIK, the Wikidata item, where the name came from, 1 if news may use
+ * it, the name as written]. The key is for matching only: "U S BANCORP" finds nothing in a
+ * Federal Register search, while "U.S. Bancorp" finds 108 documents (batch 28).
+ */
+export type AliasEntry = [number, string, AliasKind, 0 | 1, string];
 
 export interface AliasIndexFile {
   syncedOn: string;
@@ -209,7 +213,9 @@ const coined = (name: string) => /[a-z][A-Z]/.test(name) || /[\d&]/.test(name);
  */
 function newsMay(name: string, kind: AliasKind, item: WikidataCompany, carriedOn: boolean): boolean {
   if (kind === "alias" || (kind === "former" && !carriedOn) || KNOWN_NOT_NEWS[item.qid] !== undefined) return false;
-  if (nameKey(name).includes(" ")) return true;
+  // "The Hartford" is one word for this: the article matches "the Hartford area" and every "the
+  // Hartford ... ETF" (batch 28)
+  if (nameKey(name).replace(/^THE /, "").includes(" ")) return true;
   return item.sitelinks >= NEWS_ONE_WORD_MIN_SITELINKS || coined(name);
 }
 
@@ -251,7 +257,7 @@ export function buildCompanyAliases(
   });
 
   const dropped: { name: string; qid: string; reason: DropReason }[] = [];
-  type Claim = { qid: string; kind: AliasKind; news: boolean };
+  type Claim = { qid: string; kind: AliasKind; news: boolean; written: string };
   const claims = new Map<string, Map<number, Claim>>();
   const rank: Record<AliasKind, number> = { name: 0, former: 1, alias: 2 };
   for (const item of items) {
@@ -289,7 +295,7 @@ export function buildCompanyAliases(
       }
       const key = nameKey(n);
       const kind: AliasKind = item.kind === "former" ? "former" : loose ? "alias" : "name";
-      const claim: Claim = { qid: item.qid, kind, news: newsMay(n, kind, item, carriedOn) };
+      const claim: Claim = { qid: item.qid, kind, news: newsMay(n, kind, item, carriedOn), written: n };
       const byCik = claims.get(key) ?? new Map<number, Claim>();
       const had = byCik.get(item.targetCik);
       byCik.set(
@@ -304,7 +310,7 @@ export function buildCompanyAliases(
   const overrides: { key: string; to: number; prefixHit: number }[] = [];
   for (const key of [...claims.keys()].sort()) {
     const byCik = claims.get(key)!;
-    const [[cik, { qid, kind, news }]] = [...byCik];
+    const [[cik, { qid, kind, news, written }]] = [...byCik];
     const drop = (reason: DropReason) => dropped.push({ name: key, qid, reason });
     if (byCik.size > 1) {
       drop("ambiguous");
@@ -336,7 +342,7 @@ export function buildCompanyAliases(
       }
       overrides.push({ key, to: cik, prefixHit: hit.cik });
     }
-    aliases[key] = [cik, qid, kind, news ? 1 : 0];
+    aliases[key] = [cik, qid, kind, news ? 1 : 0, written];
   }
   return { aliases, dropped, overrides };
 }

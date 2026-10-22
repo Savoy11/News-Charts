@@ -141,6 +141,13 @@ async function main(): Promise<void> {
   check("records when it was built, and from what", /^\d{4}-\d{2}-\d{2}$/.test(file.syncedOn) && /Wikidata \(CC0\)/.test(file.source), file.syncedOn);
   check("holds the whole sync, not a sample", entries.length > 1000, `${entries.length} names`);
   check("every name is stored in its matching form", entries.every(([k]) => k === nameKey(k)));
+  // batch 28 audit: only the key was kept, so "u s bancorp" went to the Federal Register, which
+  // found nothing; "U.S. Bancorp" finds 108 documents
+  check("  …beside the name as written, whose matching form it is",
+    entries.every(([k, e]) => typeof e[4] === "string" && nameKey(e[4]) === k) && file.aliases["U S BANCORP"]?.[4] === "U.S. Bancorp",
+    JSON.stringify(file.aliases["U S BANCORP"]));
+  check("a name that is the article and one word does not search news: \"The Hartford\" matches the Hartford area",
+    file.aliases["THE HARTFORD"]?.[3] === 0, JSON.stringify(file.aliases["THE HARTFORD"]));
   check("every name finds a company the ticker index lists", entries.every(([, [cik]]) => listed.has(cik)));
   const stolen = entries.filter(([k, [cik]]) => (everyday.get(k) ?? cik) !== cik).map(([k]) => k);
   check("no name is another listed company's title or everyday name", stolen.length === 0, stolen.slice(0, 5).join(", "));
@@ -210,6 +217,14 @@ async function main(): Promise<void> {
   check("  …and a question about Google carries its concern there", same(covid, { kind: "company", ticker: "GOOGL", focus: "covid" }), JSON.stringify(covid));
   const fb = await resolveSearch("Facebook stock");
   check("\"Facebook stock\" opens Meta", same(fb, { kind: "company", ticker: "META" }), JSON.stringify(fb));
+  // batch 28 audit: "Nestlé" offered a NestYield ETF, "L'Oréal" found nothing and "Zürich"
+  // offered Rich Sparkle Holdings
+  const accented: string[] = [];
+  for (const [withAccent, without] of [["Nestlé", "Nestle"], ["L'Oréal", "L'Oreal"], ["Zürich", "Zurich"]]) {
+    const [a, b] = [await resolveSearch(withAccent), await resolveSearch(without)];
+    if (!same(a, b)) accented.push(`${withAccent} ${JSON.stringify(a)} vs ${JSON.stringify(b)}`);
+  }
+  check("a name typed with its accent gets the answer it gets without one", accented.length === 0, accented.join(" | "));
 
   console.log("\nNews is asked for, and scored by, those names");
   const cikOf = (t: string) => tickerRows.find(([, ticker]) => ticker === t)![0];
@@ -217,9 +232,9 @@ async function main(): Promise<void> {
   check("Goldman Sachs's news is also searched as \"goldman sachs\" (its feeds were asked for \"GOLDMAN SACHS GROUP\")",
     gdeltQuery(commonName(titleOf("GS")), newsNamesFor(cikOf("GS"))) === '("GOLDMAN SACHS GROUP" OR "goldman sachs") sourcelang:english',
     gdeltQuery(commonName(titleOf("GS")), newsNamesFor(cikOf("GS"))));
-  check("Alphabet's headlines are also scored by \"google\"", newsNamesFor(cikOf("GOOGL")).includes("google"), JSON.stringify(newsNamesFor(cikOf("GOOGL"))));
-  check("  …Meta's by \"facebook\", Amazon's by \"amazon\" (its feeds were asked for \"AMAZON COM\")",
-    newsNamesFor(cikOf("META")).includes("facebook") && newsNamesFor(cikOf("AMZN")).includes("amazon"));
+  check("Alphabet's headlines are also scored by \"Google\"", newsNamesFor(cikOf("GOOGL")).includes("Google"), JSON.stringify(newsNamesFor(cikOf("GOOGL"))));
+  check("  …Meta's by \"Facebook\", Amazon's by \"Amazon\" (its feeds were asked for \"AMAZON COM\")",
+    newsNamesFor(cikOf("META")).includes("Facebook") && newsNamesFor(cikOf("AMZN")).includes("Amazon"));
   check("  …and Motorola Solutions' never by \"motorola\"", newsNamesFor(cikOf("MSI")).length === 0, JSON.stringify(newsNamesFor(cikOf("MSI"))));
   check("  …but never a longer form of the name already asked for: no \"oracle corporation\" beside \"Oracle\"",
     newsNamesFor(cikOf("ORCL")).length === 0, JSON.stringify(newsNamesFor(cikOf("ORCL"))));
@@ -272,8 +287,25 @@ async function main(): Promise<void> {
     mentions(headline, aliasesFor(alphabet, ["Alphabet", ...newsNamesFor(cikOf("GOOGL"))])) === "named" &&
       mentions(headline, aliasesFor(alphabet, ["Alphabet"])) !== "named");
   check("an accent does not keep a headline from naming its company: \"estee lauder\" names \"Estée Lauder\"",
-    newsNamesFor(cikOf("EL")).includes("estee lauder") && mentions("Estée Lauder cuts 7,000 jobs", ["estee lauder"]) === "named" &&
+    newsNamesFor(cikOf("EL")).includes("Estee Lauder") && mentions("Estée Lauder cuts 7,000 jobs", ["estee lauder"]) === "named" &&
       mentions("Nestle recalls baby formula", ["nestlé"]) === "named", JSON.stringify(newsNamesFor(cikOf("EL"))));
+  // batch 28 audit: in 18 of 18 headlines a punctuated name was not recognised, so they went to
+  // the paid model or scored below the display floor
+  check("news gets a name as it is written: \"U.S. Bancorp\", \"D. R. Horton\", \"Angie's List\"",
+    newsNamesFor(cikOf("USB")).includes("U.S. Bancorp") && newsNamesFor(cikOf("DHI")).includes("D. R. Horton") &&
+      newsNamesFor(cikOf("ANGI")).includes("Angie's List"),
+    `${newsNamesFor(cikOf("USB"))} | ${newsNamesFor(cikOf("DHI"))} | ${newsNamesFor(cikOf("ANGI"))}`);
+  check("  …and a headline names it however its dots, hyphens and apostrophes are written",
+    mentions("D.R. Horton beats estimates", ["D. R. Horton"]) === "named" &&
+      mentions("D . R . Horton beats estimates", ["D. R. Horton"]) === "named" &&
+      mentions("Angie's List rebrands as Angi", ["angies list"]) === "named" &&
+      mentions("Owens Illinois to close plant", ["Owens-Illinois"]) === "named");
+  check("  …while a one-word name still needs its own spelling: \"Hunt\" is not \"J.B. Hunt\"",
+    mentions("Hunt for the missing hikers resumes", ["J. B. Hunt"]) !== "named");
+  check("  …nor does a name that merely ends in a longer one: Acuity Brands is kept beside \"ACUITY\"",
+    commonName(titleOf("AYI")) === "ACUITY" && newsNamesFor(cikOf("AYI")).includes("Acuity Brands"), JSON.stringify(newsNamesFor(cikOf("AYI"))));
+  check("  …and \"The Hartford\" never searches the insurer's news",
+    !newsNamesFor(cikOf("HIG")).some((n) => /^the hartford$/i.test(n)), JSON.stringify(newsNamesFor(cikOf("HIG"))));
   const block = { kind: "company" as const, displayName: "Block, Inc.", ticker: "XYZ" };
   check("  …while Times Square is not Block's", mentions("Crowds pack Times Square for the countdown", aliasesFor(block, ["Block", ...newsNamesFor(cikOf("XYZ"))])) !== "named");
   const ingestSrc = readFileSync("scripts/ingest.ts", "utf8");

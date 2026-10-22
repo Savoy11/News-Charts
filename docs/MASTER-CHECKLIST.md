@@ -984,6 +984,112 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 28: the names audit, fixed (2026-10-22)
+
+The owner chose this next: a code health check of batches 24–27. The `code-auditor` agent's report
+is saved as [`docs/audits/2026-10-21-names-audit.md`](audits/2026-10-21-names-audit.md): seven
+findings, three of them `P1`, one a regression from batch 26. All seven are dealt with here.
+
+`npm run check` passes (36 suites) and `npm run lint` is clean. `next build` compiles. `check:ui` is
+195/195 on a production build. `check:live` is 15 pass, 1 fail, 2 unreachable, 1 skipped: the
+fail is the Library of Congress, whose site answered 2 of 3 direct requests with "error 520" (a
+failure on its side) at the time, and nothing here touches it. GDELT and Wikipedia refused this
+session; the skip needs an Etherscan key. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **Finding 1 (`P1`, a batch 26 regression): a one-word company's legal name counts again.**
+      Batch 26 cut "EMBRAER S.A." to "EMBRAER", and a one-word name needs a company word after it
+      in a Federal Register title. The matcher read "S.A." as the letters "s a" and did not know
+      them. It now reads the legal forms the cleanup strips — "S.A.", "N.V.", "S.p.A.", "A/S",
+      "ASA", "AB", "Oyj", "Tbk", "SAB" — as company words (`companyWordAt` in `lib/frCompany.ts`).
+      - Whole index, a title made from each company's own legal name: 66 were recognised before
+        batch 26 and not after. Now 0 are lost and 11 more are recognised.
+      - Live: Embraer 2 → 24 documents, its FAA special conditions and exemption petitions back.
+- [x] **Finding 2 (`P1`): other names are kept as they are written.** The alias file kept only
+      the matching form ("u s bancorp"). That went to the Federal Register, which finds nothing
+      for it, and to headline scoring, which did not recognise "U.S. Bancorp". Each entry now
+      carries the name as written, `[cik, qid, kind, news, written]`, and `newsNamesFor` returns
+      that form: "U.S. Bancorp" finds 108 documents.
+      - Headline scoring also compares matching forms for names of two words or more, so "D.R.
+        Horton beats…", GDELT's "D . R . Horton beats…" and "Owens Illinois…" count as naming the
+        company. A one-word name still needs its own spelling: "Hunt" is not J.B. Hunt.
+      - The Federal Register matcher drops apostrophes, as the alias file does: "angies list"
+        matches "Angie's List, Inc.".
+      - The Federal Register search also asks for spaced initials closed up: "D. R. Horton" |
+        "D.R. Horton".
+      - GDELT keeps the matching form, which it is measured to take: the audit's
+        ("HORTON D R" OR "d r horton") returned 36 articles.
+      - On the auditor's 18 punctuated companies, company Federal Register titles scored without
+        the model went from 9 to 18. Live: U.S. Bancorp 0 → 2 documents, J.B. Hunt 0 → 2.
+- [x] **Finding 3 (`P1`): a leading "the" is never half a name.** "The Hartford" matched "the
+      Hartford Core Bond ETF" and "the Hartford Area". A leading "the" is now dropped before
+      matching, and a name that is "the" and one word no longer searches news.
+      - Live: Hartford's 13 documents → 0. All 13 were fund filings — 12 exchange rule changes to
+        list Hartford Funds ETFs and one exemptive order for Hartford Mutual Funds — none the
+        insurer's.
+      - Its news is now also asked for as "Hartford Financial Services Group".
+- [x] **Finding 4: the everyday names the cleanup missed.** 34 everyday names still ended in a
+      legal form or tag: spaced letters ("TELEFONICA S A", "HEINEKEN HOLDING N V", "NATUZZI S P
+      A"), a tag after the form ("ACUITY INC. (DE)"), a bare "DE" ("US BANCORP DE", which the
+      Federal Register finds 0 documents for), and the public company's forms ("CRH PUBLIC LTD CO"
+      was "CRH PUBLIC", and 16 more like it, most of them Thai). "Eli Lilly and Company" was "Eli
+      Lilly and".
+      - The cleanup now handles each of these, and its digits guard works step by step, so a name
+        that is only a number keeps its legal form ("111, Inc").
+      - 38 everyday names change in all. No two companies share an everyday name that did not
+        before.
+      - `check:recall`'s whole-index sweep now sees these forms. Run against main's code, it finds
+        the 34.
+- [x] **Finding 5: an accent no longer changes a search answer.** "Nestlé", "L'Oréal" and
+      "Zürich" now get the answer their unaccented spelling gets. Before, "Nestlé" offered a list
+      with a NestYield ETF in it where "Nestle" opens Nestlé, "L'Oréal" found nothing, and "Zürich"
+      offered Rich Sparkle Holdings. The query is folded where the committed index is searched (its
+      names carry no accents), and `lib/fold.ts` now lists which paths fold and which do not.
+- [x] **Finding 6: looked at, left as it is.** The auditor suggested filtering page furniture
+      before the names are trimmed, so Meta's GDELT query would carry "facebook inc" and
+      Alphabet's "google llc". Not done. "Google LLC" is the name privacy and cookie notices use,
+      so it may be furniture too, and GDELT refused this session, so the change could not be
+      measured. Scoring is unaffected: "Google" and "Facebook" still score headlines. Added to the
+      open GDELT item in batch 25.
+- [x] **Finding 7: README.** The Wikidata row no longer says the other names are "for search
+      only". The line saying a company's Federal Register documents are scored without the model
+      is now true (18 of 18 above).
+- [x] **Found while fixing: a one-word name keeps a longer name that adds a word.** The cleanup
+      made "ACUITY INC. (DE)" the one word "ACUITY". Batch 25's rule then dropped "Acuity Brands"
+      for containing it, and "acuity" alone (as in visual acuity) crowded Acuity's documents out of
+      the Federal Register results: 2 → 1 live. So when the name asked for is one word, a longer
+      name that adds a real word stays. A name that only adds a legal form is still dropped (no
+      "Oracle Corporation" beside "Oracle").
+      - 27 more companies get a name this way, among them "Apple Computer", "Tesla Motors", "Royal
+        Dutch Shell", "Corning Glass Works" and "Newmont Mining".
+      - GDELT results do not change: every page with "apple computer" already has "apple". Live,
+        Apple and Tesla kept their 14 and 33 Federal Register documents.
+      - Heineken Holding is now "HEINEKEN", and "Heineken Holding" is dropped as the same name.
+        Its news query now also finds the brewer's news, which is the holding company's one asset.
+- What else moved, measured against main:
+  - Search: of 27,972 name queries, 42 answers change: 24 gain, 18 lose, none moves to another
+    company. The gains are a subsidiary's name finding its parent ("Hartford Fire Insurance" →
+    HIG, "FedEx Corporate Services" → FDX). The 18 lost are half-names the old cleanup made, in
+    both cases ("eli lilly and", "medtronic public"). The full names and the short ones still find
+    their companies.
+  - The alias file, rebuilt offline from batch 25's saved Wikidata read: 1,528 → 1,530 names, 546
+    → 537 for news. 174 → 200 companies have names for news, and 68 GDELT queries change.
+  - Live Federal Register, 17 companies: 105 → 118 documents (Embraer, U.S. Bancorp and J.B. Hunt
+    up, Hartford's fund filings out, the other 13 unchanged).
+- [ ] **Open:** GDELT appears to drop apostrophes and a possessive "'s" with them. In the audit's
+      saved results, "Buffett's Berkshire … Here's Why I'm" came back as "Buffett Berkshire … Here
+      Why Im". If so, "Angie's List", "Papa John's" and "Dave & Buster's" are asked for in a form
+      GDELT never prints, and their GDELT headlines do not match. One headline is too little to
+      build on; measure it when GDELT answers.
+- Checks: `check:wiring` 182 → 186, `check:aliases` 81 → 89, `check:recall` 34 → 49.
+  - Each audit finding has its case: Embraer's and Ferrari's legal names, the Hartford's ETF
+    filings, the apostrophe, closed-up initials, the written form in the file, D.R. Horton's
+    headlines, Acuity Brands, the accented searches, and 15 more everyday names.
+  - Run against main's code, all 4 new `check:wiring` cases fail, 7 of the 8 new `check:aliases`
+    cases fail (plus 3 batch 25 checks now written as "Google", "Facebook" and "Estee Lauder"), and
+    13 of the 15 new `check:recall` cases fail with its sweep. The ones that pass on main are guards
+    for what must not change: "Hunt" is not J.B. Hunt, and "Public Storage" and "Banco Santander
+    (Brasil)" keep their names.
+
 ## NC ledger — batch 27: federal documents found by a company's other names (2026-10-21)
 
 The owner chose this next: what batch 25 left undone. A company's page carries the Federal
@@ -1114,6 +1220,7 @@ between its refusals (below). HawkScan could not run: `HAWK_API_KEY` is not set.
         a company the news it found before. GDELT took a two-letter word in a phrase:
         "GENERAL ELECTRIC" OR "ge aerospace" returned 100 pages, 17 with GE in the headline.
         One-letter words ("d r horton") could not be tried: GDELT dropped every such request.
+        (Answered by the batch 28 audit: ("HORTON D R" OR "d r horton") returned 36 articles.)
 - [x] **Words printed around every article only score headlines.** GDELT matches a word anywhere
       on a page and returns the newest 100 pages. Measured on 2026-10-21:
       - "Alphabet" returned 100 pages. One had the company in its headline: "OpenAI to sell its top
@@ -1166,7 +1273,9 @@ between its refusals (below). HawkScan could not run: `HAWK_API_KEY` is not set.
         100 places. One lead, measured once: GDELT's `repeat3:` operator (the word at least three
         times on the page) works, and "Alphabet" OR `repeat3:"google"` returned 5 in 100 against
         "Alphabet" alone's 1. It, and GDELT's relevance sort, are worth measuring on more companies
-        before the platform words go back into queries this way.
+        before the platform words go back into queries this way. The same measurement settles the
+        batch 28 audit's suggestion to send the longer forms instead ("facebook inc", "google
+        llc"): "Google LLC" is the name privacy and cookie notices use, so it may be furniture too.
 - Not done here: the Federal Register's documents naming a company are still searched under one
   name. It takes a request per name, and Google's FTC orders say "Google LLC". The historical
   sources are untouched too. (Done in batch 27, above, in one request after all: the API ORs

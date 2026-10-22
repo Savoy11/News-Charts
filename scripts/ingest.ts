@@ -35,8 +35,9 @@ import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAlia
 import { fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
-import { FR_COMPANY_SINCE, fetchCompanyRegulations, frSearchTerm } from "../lib/frCompany";
+import { FR_COMPANY_SINCE, companyNames, fetchCompanyRegulations, frSearchTerm } from "../lib/frCompany";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
+import { dojQueryNames, fetchJusticeReleases } from "../lib/doj";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
 import { MACRO_SUBJECT, fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
@@ -70,6 +71,8 @@ export const COMPANY_SOURCES = [
   "federal_register",
   // safety recalls, asked only for the vehicle makers lib/recalls.ts maps (batch 30)
   "nhtsa_recalls",
+  // releases whose title makes the company a party: it pays, pleads, is sued (batch 32)
+  "doj_press",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -478,6 +481,17 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   if (makers) {
     await run("nhtsa_recalls", `${makers.map((m) => m.name).join(" | ")} ≥${RECALL_FLOOR} vehicles`, () => fetchRecalls(company.cik));
   }
+
+  /**
+   * Justice Department press releases in which the company is a party — a settlement, a plea, a
+   * suit against it, an antitrust case over its merger — back to 2009 (batch 32). The API matches
+   * a name anywhere in a title, so most hits are about someone else ("Wells Fargo Personal Banker
+   * Indicted for Money Laundering"); `releaseNamesParty` keeps a release only when the title makes the company the one
+   * acting or acted against. Scored without the model, as a filing is.
+   */
+  await run("doj_press", dojQueryNames(companyNames(company.name, alsoKnownAs)).join(" | "), () =>
+    fetchJusticeReleases(company.name, alsoKnownAs)
+  );
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
   // headline that says "Ford" — the common name is the query, exactly as the comment above

@@ -984,6 +984,67 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 32: Justice Department releases on company pages (2026-10-22)
+
+The owner chose this next, approving the second candidate on batch 29's shortlist: the Justice
+Department's press releases, 2009 on, in which a listed company is a party. Unlike vehicle
+recalls they reach companies in every industry. Batch 31's pull request was still open, so this
+batch joins it.
+
+`npm run check` passes (38 suites) and `npm run lint` is clean. `next build` compiles. `check:ui`
+is 203/203 on a production build against the demo database, re-seeded with Ford's release. (A
+first run failed one check, the explore page, because that page is built ahead of time and the
+build had been pointed at the development database; rebuilt against the demo one, all pass.)
+`check:live` is 18 pass, 0 fail, 2 unreachable (GDELT and Wikipedia refusing this session), 1 skipped
+(needs an Etherscan key); the new Justice Department case passes live. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **A company's page carries the releases in which it is a party** (`lib/doj.ts`). They are
+      read from justice.gov's keyless JSON API under the company's own names, kept only when the
+      title makes the company a party, one a day, as regulation events scored without the model.
+      Public domain by the Department's policy page ("Unless otherwise indicated, information on
+      Department of Justice websites is in the public domain…"); only the title, date, teaser and
+      link are used. Registered as source 23 (`doj_press`), read daily, credited in the footer,
+      the terms page, the README and the coverage map.
+- [x] **The name rule is stricter than the Federal Register's.** The API matches a name anywhere
+      in a title, even inside a word ("Intel" in "Intelligence", "Cisco" in "San Francisco").
+      Of the 912 titles naming 41 large companies as whole words, most were about someone else:
+      a former employee, a bank robbery, a crime committed on Facebook, an Apple Valley resident.
+      A release is kept when its title makes the company:
+      - the subject of the verb — it pays, pleads, settles, is charged ("Boeing Pays $18
+        Million…", "Drug Maker Pfizer Agrees…", "Wyeth and Pfizer Agree…");
+      - the object of an action — a suit against it, a settlement with it, "U.S. v."
+        ("Department of Justice Files Nationwide Lawsuit Against Walmart Inc.");
+      - or the owner of a deal ("Justice Department Sues to Block UnitedHealth Group's
+        Acquisition of Change Healthcare").
+      - A title opening with "Former", or naming the company after "who", is about a person. A
+        one-word name counts only where a clause starts. A longer listed company's name owns the
+        mention, as in the Federal Register rule.
+- [x] **Measured.** On the 41 companies the rule was written against: 188 titles kept, 142
+      events (one a day) for 34 of them, 71 before 2017. Then on 40 companies not used to write
+      it: 53 events for 24 of them, 22 before 2017. That second test found two holes, both fixed:
+      "Visa" kept immigration cases ("Israeli National in U.S. on Work VISA Sentenced") and "3M"
+      kept dollar amounts ("$5.3M to Settle"). After the fixes, every release either set keeps is
+      about the company.
+      - Live, the adapter gives Boeing 6 (2009-08-13 to 2023-09-28, the 737 MAX charge among
+        them), Visa 5, Ford 1 and Meta 5 (found under "Facebook" too). A real
+        `npm run ingest -- --ticker AAPL` stored Apple's 3, each scored 0.95 without the model.
+- [x] **One story, one event.** The national office and U.S. Attorneys' offices often post the
+      same release; McKesson's 2017 settlement went up eight times. The national office's copy
+      wins. A release is identified by its own id, not its address, because the Department moves
+      a past administration's releases to an archive address.
+- [ ] **Open — what the rule misses:** the Spanish copy of a release (the English one is kept);
+      joint ventures ("Chevron Phillips Chemical", "General Electric Hitachi"); a subsidiary named
+      without its parent ("Merck Sharp & Dohme"); and companies whose releases use a short name the
+      app does not hold, "PNC" or "AIG", since only a company's own names are searched. A common
+      word ("Target") is read only to its newest 500 titles.
+- [x] The shortlist note marks the Justice Department `APPROVED`. FDA enforcement reports and
+      CPSC product recalls still wait there.
+- Checks: new `check:doj` (37), on real releases read from justice.gov
+  (`scripts/fixtures/doj-releases.json`): parties and passers-by from both sets, McKesson's eight
+  copies, the paging, a refusal and a failure. It cannot run on main's code (`lib/doj.ts` does not
+  exist). `check:ui` gains 4 (Ford's release on its page, credited, linked, under the Regulation
+  chip), and `check:live` a Justice Department case (Boeing, and Visa without visa fraud).
+
 ## NC ledger — batch 31: the vehicle makers listed companies bought (2026-10-22)
 
 The owner said to continue. Batch 30 left one item open: makers a mapped company bought, whose
@@ -1130,8 +1191,8 @@ Nothing was built, so no check changed; `npm run check` passes (36 suites).
       `DEFERRED`. NC-095 stays open until then. Building the first approved one is its own batch,
       with the usual checks: an adapter, a `SOURCES` entry with its licence, and a checked map from
       each source's company names to listed companies. ✅ **Settled 2026-10-22:** the owner picked
-      NHTSA vehicle recalls, built in batch 30 (above), which closes NC-095. The other three wait
-      in the note, unmarked.
+      NHTSA vehicle recalls, built in batch 30 (above), which closes NC-095. The second, Justice
+      Department releases, was approved and built in batch 32; the other two wait in the note.
 
 ## NC ledger — batch 28: the names audit, fixed (2026-10-22)
 
@@ -4027,7 +4088,7 @@ look like") went to a **separate business checklist** worked independently of bo
       obligation that disappears at a narrow viewport is not met. Wikipedia's credit no longer
       truncates; public-domain and open-data credit still does, because there it is accuracy
       rather than a condition. `check:ui` asserts both.
-- [x] `P2` **Research more news repositories.** Feeds the article-resurfacing initiative. ✅ **Done 2026-10-22:** shortlisted in batch 29, and the owner's pick, NHTSA vehicle recalls, built in batch 30.
+- [x] `P2` **Research more news repositories.** Feeds the article-resurfacing initiative. ✅ **Done 2026-10-22:** shortlisted in batch 29; the owner's picks built, NHTSA vehicle recalls in batch 30 and Justice Department releases in batch 32.
       - **Correction 2026-08-12: the Internet Archive adapter this entry called "the top unbuilt
         candidate" has been built for some time.** `lib/archive.ts` holds both halves
         (advancedsearch items, Wayback CDX snapshots), `internet_archive` is in `SOURCES`,
@@ -4038,8 +4099,9 @@ look like") went to a **separate business checklist** worked independently of bo
         Justice Department press releases (2009 on), FDA enforcement reports (2012 on) and CPSC
         product recalls (1973 on), all public domain and measured live, in
         [`docs/proposals/2026-10-22-news-sources.md`](proposals/2026-10-22-news-sources.md).
-        The owner picked NHTSA vehicle recalls; built in batch 30 (`lib/recalls.ts`). The other
-        three wait in the note.
+        The owner picked NHTSA vehicle recalls; built in batch 30 (`lib/recalls.ts`). Then the
+        Justice Department releases; built in batch 32 (`lib/doj.ts`). The other two wait in the
+        note.
 - [x] **The Internet Archive adapter, exercised against the live service for the first time.**
       Done 2026-08-12. Its header warned that every payload shape came from documentation and had
       never met the real server; egress reaches `archive.org` from the build container now, so it

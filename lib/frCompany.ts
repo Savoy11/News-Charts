@@ -46,7 +46,7 @@ const companyWordAt = (tokens: string[], j: number): boolean =>
  * other names (`newsNamesFor` — "google" for Alphabet, "goldman sachs" for Goldman Sachs Group,
  * never an acquired company's), each once.
  */
-function companyNames(edgarName: string, alsoKnownAs: string[]): string[] {
+export function companyNames(edgarName: string, alsoKnownAs: readonly string[] = []): string[] {
   // a leading "the" is the article, not part of the name: "the Hartford Core Bond ETF" (batch 28)
   const names = [commonName(edgarName).replace(/^the\s+/i, "")];
   for (const raw of alsoKnownAs) {
@@ -112,6 +112,16 @@ function phraseNamesCompany(t: string, name: string, within: number): boolean {
     if (!corporate) return false;
   }
   return !listedNamesContaining(name).some((longer) => t.includes(` ${longer} `));
+}
+
+/**
+ * Whether the title carries a longer listed company's name that contains this one — "Portland
+ * General Electric" for "General Electric" — so the mention is that company's (the second rule
+ * above, for callers holding a raw title and name; batch 32's Justice Department releases).
+ */
+export function longerListedNameIn(title: string, name: string): boolean {
+  const t = words(title);
+  return listedNamesContaining(words(name).trim()).some((longer) => t.includes(` ${longer} `));
 }
 
 /** Airworthiness directives — the one class the owner has to rule on, so counted on its own. */

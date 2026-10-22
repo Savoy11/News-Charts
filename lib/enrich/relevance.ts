@@ -229,6 +229,12 @@ export function deterministicScore(
      * cannot make from provenance. Scoring it here would be inventing certainty.
      */
     case "regulation":
+      // A Justice Department release reaches a company only when its title makes the company a
+      // party — it pays, it is sued, its merger is blocked (lib/doj.ts, batch 32) — a stricter test
+      // than naming it, and one "Justice Department Sues Monopolist Google" fails as a headline.
+      if (subject.kind === "company" && row.sourceKey === "doj_press") {
+        return { score: 0.95, reason: "a Justice Department release naming the company as a party" };
+      }
       // …but a company's own document reaches it only when the title names it (lib/frCompany.ts),
       // so on a company subject that title is the evidence (2026-10-17 proposal 4).
       if (subject.kind === "company" && mentions(row.title, aliases) === "named") {

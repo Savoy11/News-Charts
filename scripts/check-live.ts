@@ -39,6 +39,7 @@ import { fetchDailyPrices } from "../lib/prices";
 import { fetchRegulations } from "../lib/federalregister";
 import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
 import { fetchRecalls } from "../lib/recalls";
+import { fetchJusticeReleases } from "../lib/doj";
 import { FR_COMPANY_CAP, FR_COMPANY_SINCE, fetchCompanyRegulations, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
 import { WikipediaUnavailable, getTopicTimeline, wikiOutcome } from "../lib/wiki";
 import { fetchNews } from "../lib/news";
@@ -400,6 +401,28 @@ export const CASES: LiveCase[] = [
       out.push(...outcomeProblems(stla.outcome, stla.detail).map((p) => `Stellantis: ${p}`));
       const early = stla.events.filter((e) => e.date < "2014-10-12");
       if (early.length) out.push(`${early.length} Stellantis recalls before 2014-10-12, e.g. ${early[0].date}`);
+      return out;
+    },
+  },
+  {
+    name: "Justice Department — Boeing's settlements and 737 MAX charge; Visa's suits, not visa fraud",
+    covers: ["doj_press"],
+    hosts: ["www.justice.gov"],
+    async run() {
+      const boeing = await fetchJusticeReleases("BOEING CO");
+      const out = [...outcomeProblems(boeing.outcome, boeing.detail), ...eventProblems(boeing.events, 5)];
+      // 2021-01-07: "Boeing Charged with 737 Max Fraud Conspiracy and Agrees to Pay over $2.5 Billion"
+      if (!boeing.events.some((e) => e.date === "2021-01-07" && /737 Max/i.test(e.title))) out.push("no 2021-01-07 737 MAX release");
+      const first = boeing.events.map((e) => e.date).sort()[0];
+      if (first && first > "2010-01-01") out.push(`Boeing's earliest release is ${first}, expected 2009`);
+      const person = boeing.events.find((e) => /^Former\b/i.test(e.title));
+      if (person) out.push(`kept a release about a person: "${person.title}"`);
+      // "Visa" is also a travel document: hundreds of immigration cases carry the word
+      const visa = await fetchJusticeReleases("VISA INC.");
+      out.push(...outcomeProblems(visa.outcome, visa.detail).map((p) => `Visa: ${p}`));
+      if (!visa.events.some((e) => e.date === "2024-09-24" && /Sues Visa/.test(e.title))) out.push("Visa: no 2024-09-24 debit-monopoly suit");
+      const word = visa.events.find((e) => /\b(?:student|work|her|his)\s+visa\b/i.test(e.title));
+      if (word) out.push(`Visa: kept "${word.title}"`);
       return out;
     },
   },

@@ -865,6 +865,28 @@ async function vehicleRecalls(page: Page): Promise<void> {
   check("a company that makes no vehicles has no Recalls chip", (await page.locator('[data-chip="recall"]').count()) === 0);
 }
 
+/**
+ * Justice Department releases on a company page (batch 32): Ford's 2024 customs settlement, from
+ * the demo seed, credited to the Department's office, linked to the release, under the Regulation
+ * chip.
+ */
+async function justiceReleases(page: Page): Promise<void> {
+  console.log("\nJustice Department releases");
+  await page.evaluate(() => localStorage.removeItem("news-charts:filters:/company/F"));
+  await go(page, "/company/F?focus=customs");
+  const settled = /Ford Motor Company Agrees to Pay \$365M to Settle Customs Civil Penalty Claims/;
+  const text = await visible(page);
+  check("a company's page carries the release in which it is a party", settled.test(text));
+  check("  …credited to the Department's office", /Justice Department · Civil Division/.test(text));
+  check("  …and linked to the release itself",
+    (await page.locator('a[href="https://www.justice.gov/archives/opa/pr/ford-motor-company-agrees-pay-365m-settle-customs-civil-penalty-claims-relating"]').count()) > 0);
+  const chip = page.locator('[data-chip="regulation"]');
+  await chip.click();
+  await page.waitForTimeout(800);
+  check("  …a regulation event: the Regulation chip hides it", (await chip.getAttribute("aria-pressed")) === "false" && !settled.test(await visible(page)));
+  await page.evaluate(() => localStorage.removeItem("news-charts:filters:/company/F"));
+}
+
 async function chromeAndRoutes(page: Page): Promise<void> {
   console.log("\nSite chrome");
   await go(page, "/explore");
@@ -1170,6 +1192,7 @@ async function main(): Promise<void> {
     await focusFilter(page);
     await economyOverlay(page);
     await vehicleRecalls(page);
+    await justiceReleases(page);
     await homepageSuggestions(page);
     await searchResilience(page);
   await feedKeys(page);

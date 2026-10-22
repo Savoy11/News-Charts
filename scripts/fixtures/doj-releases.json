@@ -1,0 +1,1053 @@
+{
+ "_note": "Real Justice Department press releases as justice.gov's API returned them on 2026-10-22 (api/v1/press_releases.json, title filter), fields trimmed to title, date (Unix seconds), url, teaser (first 600 characters), uuid and component. Chosen to show what lib/doj.ts keeps and what it leaves out; see scripts/check-doj.ts.",
+ "BA": {
+  "edgar": "BOEING CO",
+  "releases": [
+   {
+    "title": "Boeing Pays $18 Million to Settle False Claims Act Allegations",
+    "date": "1444824000",
+    "url": "https://www.justice.gov/archives/opa/pr/boeing-pays-18-million-settle-false-claims-act-allegations",
+    "teaser": "",
+    "uuid": "498da961-7da9-49a4-8ff7-2c780b450adb",
+    "component": [
+     {
+      "uuid": "dbbe4f45-4e70-4db6-88ec-c35012cac37d",
+      "name": "Civil Division"
+     }
+    ]
+   },
+   {
+    "title": "Boeing Company to Pay U.S. $25 Million to Resolve Allegations<br />\r\nRelated to Defective Work on KC-10 Aerial Refueling Aircraft",
+    "date": "1250164800",
+    "url": "https://www.justice.gov/archives/opa/pr/boeing-company-pay-us-25-million-resolve-allegations-related-defective-work-kc-10-aerial",
+    "teaser": "The Boeing Company will pay the United States $25 million to resolve allegations that the company performed defective work on the entire KC-10 Extender fleet.  The KC-10 Extender is a mainstay of the Air Force’s aerial refueling fleet in the Iraq and Afghanistan war theaters.",
+    "uuid": "a74267f2-ce7f-496e-b409-194047384c39",
+    "component": [
+     {
+      "uuid": "dbbe4f45-4e70-4db6-88ec-c35012cac37d",
+      "name": "Civil Division"
+     }
+    ]
+   },
+   {
+    "title": "Former Boeing Engineer Convicted of Economic Espionage<br />\r\nin Theft of Space Shuttle Secrets for China",
+    "date": "1247745600",
+    "url": "https://www.justice.gov/archives/opa/pr/former-boeing-engineer-convicted-economic-espionage-theft-space-shuttle-secrets-china",
+    "teaser": "A former Rockwell and Boeing engineer from Orange County, Calif., was remanded into custody this morning after a federal judge convicted him of charges of economic espionage and acting as an agent of the Peoples Republic of China, for whom he stole restricted technology and Boeing trade secrets, including information related to the Space Shuttle program and Delta IV rocket.",
+    "uuid": "75c531b5-3aab-4768-b063-7e7c907d883f",
+    "component": [
+     {
+      "uuid": "9ea9772c-c483-4584-b958-b3cfe1741539",
+      "name": "National Security Division (NSD)"
+     }
+    ]
+   }
+  ]
+ },
+ "PFE": {
+  "edgar": "PFIZER INC",
+  "releases": [
+   {
+    "title": "Drug Maker Pfizer Agrees to Pay $23.85 Million to Resolve False Claims Act Liability for Paying Kickbacks",
+    "date": "1527163200",
+    "url": "https://www.justice.gov/archives/opa/pr/drug-maker-pfizer-agrees-pay-2385-million-resolve-false-claims-act-liability-paying-kickbacks",
+    "teaser": "<p>“Kickbacks undermine the independence of physician and patient decision-making, and raise healthcare costs,” said Acting Assistant Attorney General Chad A. Readler of the Justice Department’s Civil Division.  “As today’s settlement makes clear, the Department will hold accountable drug companies that pay illegal kickbacks—whether directly or indirectly—to undermine taxpayer funded healthcare programs, including Medicare.”</p>\n",
+    "uuid": "325b0083-59fb-47e1-959f-9de9afc13508",
+    "component": [
+     {
+      "uuid": "dbbe4f45-4e70-4db6-88ec-c35012cac37d",
+      "name": "Civil Division"
+     },
+     {
+      "uuid": "dca09ceb-4978-4466-9c30-ce9f5ada2f0a",
+      "name": "Federal Bureau of Investigation (FBI)"
+     },
+     {
+      "uuid": "8842e83c-ddc2-4710-b819-99ad3473b01a",
+      "name": "USAO - Massachusetts"
+     }
+    ]
+   },
+   {
+    "title": "Wyeth and Pfizer Agree to Pay $784.6 Million to Resolve Lawsuit Alleging that Wyeth Underpaid Drug Rebates to Medicaid ",
+    "date": "1461758400",
+    "url": "https://www.justice.gov/usao-ma/pr/wyeth-and-pfizer-agree-pay-7846-million-resolve-lawsuit-alleging-wyeth-underpaid-drug",
+    "teaser": "<p>BOSTON – United States Attorney Carmen M. Ortiz announced today that drug companies Wyeth and Pfizer, Inc., have agreed to pay $784.6 million to resolve allegations that Wyeth failed to give the government the same discounts it provided to private purchasers of its drugs, as required by the Medicaid program.</p>\n",
+    "uuid": "a0592257-daec-4e2b-a669-14011562066d",
+    "component": [
+     {
+      "uuid": "8842e83c-ddc2-4710-b819-99ad3473b01a",
+      "name": "USAO - Massachusetts"
+     }
+    ]
+   },
+   {
+    "title": "Pfizer Agrees to Pay Nearly 60M to Resolve False Claims Allegations Relating to Improper Physician Payments by Subsidiary",
+    "date": "1737720000",
+    "url": "https://www.justice.gov/opa/pr/pfizer-agrees-pay-nearly-60m-resolve-false-claims-allegations-relating-improper-physician",
+    "teaser": "<p>Pharmaceutical company Pfizer Inc. (Pfizer), on behalf of its wholly-owned subsidiary Biohaven Pharmaceutical Holding Company Ltd. (Biohaven), has agreed to pay $59,746,277 to resolve allegations that, prior to Pfizer’s acquisition of the company, Biohaven knowingly caused the submission of false claims to Medicare and other federal health care programs by paying kickbacks to health care providers to induce prescriptions of Biohaven’s drug Nurtec ODT.</p>",
+    "uuid": "1dccacd7-2ab2-4f23-a2ce-48bd0adb05e4",
+    "component": [
+     {
+      "uuid": "dbbe4f45-4e70-4db6-88ec-c35012cac37d",
+      "name": "Civil Division"
+     },
+     {
+      "uuid": "73ee331b-c9db-4f9c-90d8-d22026560563",
+      "name": "USAO - New York, Western"
+     }
+    ]
+   },
+   {
+    "title": "Pfizer agrees to pay nearly $60 million to resolve false claims allegations relating to improper physician payments by subsidiary",
+    "date": "1737720000",
+    "url": "https://www.justice.gov/usao-wdny/pr/pfizer-agrees-pay-nearly-60-million-resolve-false-claims-allegations-relating-improper",
+    "teaser": "<p>U.S. Attorney Trini E. Ross announced today that Pharmaceutical company Pfizer Inc. (Pfizer), on behalf of its wholly-owned subsidiary Biohaven Pharmaceutical Holding Company Ltd. (Biohaven), has agreed to pay $59,746,277 to resolve allegations that, prior to Pfizer’s acquisition of the company, Biohaven knowingly caused the submission of false claims to Medicare and other federal health care programs by paying kickbacks to health care providers to induce prescriptions of Biohaven’s drug Nurtec ODT.</p><p>&nbsp;</p>",
+    "uuid": "0b7ce696-17cc-43d0-9ce4-63c730c5c7db",
+    "component": [
+     {
+      "uuid": "73ee331b-c9db-4f9c-90d8-d22026560563",
+      "name": "USAO - New York, Western"
+     }
+    ]
+   }
+  ]
+ },
+ "WMT": {
+  "edgar": "Walmart Inc.",
+  "releases": [
+   {
+    "title": "Department of Justice Files Nationwide Lawsuit Against Walmart Inc. for Controlled Substances Act Violations",
+    "date": "1608638400",
+    "url": "https://www.justice.gov/usao-mdfl/pr/department-justice-files-nationwide-lawsuit-against-walmart-inc-controlled-substances",
+    "teaser": "",
+    "uuid": "71a2e1d2-fd6c-469e-9e3d-7d39ee936396",
+    "component": [
+     {
+      "uuid": "544d3323-77d6-4482-917e-ff6c9b4a2fae",
+      "name": "USAO - Florida, Middle"
+     }
+    ]
+   },
+   {
+    "title": "Justice Department Secures Settlements with CarMax, Axis Analytics, Capital One Bank and Walmart for Posting Discriminatory Job Advertisements on College Recruiting Platforms ",
+    "date": "1663761600",
+    "url": "https://www.justice.gov/archives/opa/pr/justice-department-secures-settlements-carmax-axis-analytics-capital-one-bank-and-walmart",
+    "teaser": "<p>The Department of Justice today announced that it entered into another four settlements to resolve claims that companies discriminated against non-U.S. citizens by posting job opportunities with unlawful citizenship status restrictions on college job recruiting platforms.</p>\n",
+    "uuid": "fd0c7a36-4901-40a9-9fb7-f55cdec05b76",
+    "component": [
+     {
+      "uuid": "da7df438-b3e4-4b73-9250-9974ae754efc",
+      "name": "Civil Rights Division"
+     },
+     {
+      "uuid": "0f7130e6-36b1-45db-8006-9235ad8602b8",
+      "name": "Civil Rights - Immigrant and Employee Rights Section"
+     }
+    ]
+   },
+   {
+    "title": "Kohl’s and Walmart Agree to Pay $5.5 Million in Combined Penalties for Alleged Deceptive Violations of the Textile Act and Rules and FTC Act Around the Use of Bamboo",
+    "date": "1651752000",
+    "url": "https://www.justice.gov/archives/opa/pr/kohl-s-and-walmart-agree-pay-55-million-combined-penalties-alleged-deceptive-violations",
+    "teaser": "<p>Today, the Department of Justice, together with the Federal Trade Commission (FTC), announced that Kohl’s Inc. (Kohl’s) and Walmart Inc. (Walmart) have agreed to pay $2.5 million and $3 million in civil penalties, respectively, in as part of settlements to resolve allegations that Kohl’s and Walmart violated the Textile Fiber Products Identification Act (Textile Act) and associated rules (Textile Rules) and the Federal Trade Commission Act (FTC Act) by making deceptive claims about products supposedly made of bamboo. </p>\n",
+    "uuid": "e660dbc5-d0bf-444d-97c6-d510879674cc",
+    "component": [
+     {
+      "uuid": "dbbe4f45-4e70-4db6-88ec-c35012cac37d",
+      "name": "Civil Division"
+     }
+    ]
+   },
+   {
+    "title": "Romanian Illegal Alien Charged with Wire Fraud in Scheme to Defraud Walmart ",
+    "date": "1787918400",
+    "url": "https://www.justice.gov/usao-wdmo/pr/romanian-illegal-alien-charged-wire-fraud-scheme-defraud-walmart",
+    "teaser": "<p>Hozu Rostas, 25, of Romania, has been charged by a federal grand jury with one count of wire fraud involving a scheme to defraud Walmart of thousands of dollars.&nbsp;</p>",
+    "uuid": "7474d497-4caf-4a1b-836c-098287683d0b",
+    "component": [
+     {
+      "uuid": "ad71fc95-287d-47f8-b7bc-bdb68e73159c",
+      "name": "USAO - Missouri, Western"
+     }
+    ]
+   }
+  ]
+ },
+ "GOOGL": {
+  "edgar": "Alphabet Inc.",
+  "releases": [
+   {
+    "title": "Justice Department Sues Monopolist Google For Violating Antitrust Laws",
+    "date": "1603195200",
+    "url": "https://www.justice.gov/archives/opa/pr/justice-department-sues-monopolist-google-violating-antitrust-laws",
+    "teaser": "<p>Today, the Department of Justice — along with eleven state Attorneys General — filed a civil antitrust lawsuit in the U.S. District Court for the District of Columbia to stop Google from unlawfully maintaining monopolies through anticompetitive and exclusionary practices in the search and search advertising markets and to remedy the competitive harms. The participating state Attorneys General offices represent Arkansas, Florida, Georgia, Indiana, Kentucky, Louisiana, Mississippi, Missouri, Montana, South Carolina, and Texas.</p>\n",
+    "uuid": "1a2fe8b3-d54e-4c24-936a-e59025e86650",
+    "component": [
+     {
+      "uuid": "ff94f093-0dd5-455c-afa6-37feafca2f1b",
+      "name": "Antitrust Division"
+     },
+     {
+      "uuid": "e99b9547-7d65-42c6-9404-68fab0db9543",
+      "name": "Office of the Attorney General"
+     }
+    ]
+   },
+   {
+    "title": "Convicted sex offender heads to prison for uploading child pornography to Google accounts",
+    "date": "1711540800",
+    "url": "https://www.justice.gov/usao-sdtx/pr/convicted-sex-offender-heads-prison-uploading-child-pornography-google-accounts",
+    "teaser": "<p>A 38-year-old McAllen resident has been sentenced for transporting child pornography</p>",
+    "uuid": "edbe79fd-ccc8-44ed-814f-d50297f9e0fc",
+    "component": [
+     {
+      "uuid": "9df3ecc7-70b1-4129-a052-089bce8b2ba2",
+      "name": "USAO - Texas, Southern"
+     }
+    ]
+   }
+  ]
+ },
+ "T": {
+  "edgar": "AT&T INC.",
+  "releases": [
+   {
+    "title": "Justice Department Files Antitrust Lawsuit to Block  AT&amp;T’s Acquisition of T-Mobile",
+    "date": "1314792000",
+    "url": "https://www.justice.gov/archives/opa/pr/justice-department-files-antitrust-lawsuit-block-att-s-acquisition-t-mobile",
+    "teaser": "The Department of Justice today filed a civil antitrust lawsuit to block AT&amp;T Inc.’s proposed acquisition of T-Mobile USA Inc.",
+    "uuid": "66ab3e67-bd81-45e9-a46f-063eae58f194",
+    "component": [
+     {
+      "uuid": "ff94f093-0dd5-455c-afa6-37feafca2f1b",
+      "name": "Antitrust Division"
+     }
+    ]
+   },
+   {
+    "title": "Justice Department Challenges AT&amp;T/DirecTV’s Acquisition of Time Warner",
+    "date": "1511179200",
+    "url": "https://www.justice.gov/archives/opa/pr/justice-department-challenges-attdirectv-s-acquisition-time-warner",
+    "teaser": "<p>The United States Department of Justice today filed a civil antitrust lawsuit to block AT&amp;T/DirecTV’s proposed acquisition of Time Warner Inc. The $108 billion acquisition would substantially lessen competition, resulting in higher prices and less innovation for millions of Americans.</p>\n",
+    "uuid": "2d08e6b6-5c9d-4223-a1e3-b845f69c4d12",
+    "component": [
+     {
+      "uuid": "ff94f093-0dd5-455c-afa6-37feafca2f1b",
+      "name": "Antitrust Division"
+     }
+    ]
+   }
+  ]
+ },
+ "JPM": {
+  "edgar": "JPMORGAN CHASE & CO",
+  "releases": [
+   {
+    "title": "JPMorgan Chase &amp; Co. Agrees To Pay $920 Million in Connection with Schemes to Defraud Precious Metals and U.S. Treasuries Markets",
+    "date": "1601380800",
+    "url": "https://www.justice.gov/archives/opa/pr/jpmorgan-chase-co-agrees-pay-920-million-connection-schemes-defraud-precious-metals-and-us",
+    "teaser": "<p>JPMorgan Chase &amp; Co. (JPMorgan), a New York, New York-based global banking and financial services firm, has entered into a resolution with the Department of Justice to resolve criminal charges related to two distinct schemes to defraud: the first involving tens of thousands of episodes of unlawful trading in the markets for precious metals futures contracts, and the second involving thousands of episodes of unlawful trading in the markets for U.S. Treasury futures contracts and in the secondary (cash) market for U.S. Treasury notes and bonds.</p>\n",
+    "uuid": "9d9278f1-6a4e-43ab-855c-6ff785adfcde",
+    "component": [
+     {
+      "uuid": "46370d9f-afee-4408-a29b-48812154bc0c",
+      "name": "Criminal Division"
+     },
+     {
+      "uuid": "a618801c-2b1e-4ce0-b47e-4db0bce55ac2",
+      "name": "Criminal - Criminal White Collar and Corporate Enforcement"
+     },
+     {
+      "uuid": "dca09ceb-4978-4466-9c30-ce9f5ada2f0a",
+      "name": "Federal Bureau of Investigation (FBI)"
+     },
+     {
+      "uuid": "ff874cc1-ca76-4aa4-8013-d253aca40328",
+      "name": "USAO - Connecticut"
+     }
+    ]
+   }
+  ]
+ },
+ "WFC": {
+  "edgar": "WELLS FARGO & COMPANY/MN",
+  "releases": [
+   {
+    "title": "Manhattan U.S. Attorney Announces $1.2 Billion Settlement Of Its Claims Against Wells Fargo Bank, N.A., For Improper Mortgage Lending Practices",
+    "date": "1460116800",
+    "url": "https://www.justice.gov/usao-sdny/pr/manhattan-us-attorney-announces-12-billion-settlement-its-claims-against-wells-fargo",
+    "teaser": "",
+    "uuid": "6f48ae7b-2b18-441c-81e7-9e8f351639ab",
+    "component": [
+     {
+      "uuid": "74a73c45-5b18-4be8-8a98-5faa6e3d44e7",
+      "name": "USAO - New York, Southern"
+     }
+    ]
+   },
+   {
+    "title": "Justice Department Reaches $4 Million Settlement with Wells Fargo Dealer Services for Illegally Repossessing Servicemembers’ Cars",
+    "date": "1475150400",
+    "url": "https://www.justice.gov/archives/opa/pr/justice-department-reaches-4-million-settlement-wells-fargo-dealer-services-illegally",
+    "teaser": "",
+    "uuid": "347f3af6-c0df-489e-b813-4ca3e5b4b266",
+    "component": [
+     {
+      "uuid": "da7df438-b3e4-4b73-9250-9974ae754efc",
+      "name": "Civil Rights Division"
+     },
+     {
+      "uuid": "e9648710-e283-4999-be99-8a186a9eb90b",
+      "name": "Civil Rights - Housing and Civil Enforcement Section"
+     },
+     {
+      "uuid": "2dd23226-fdaa-483b-bbc5-81233ed79643",
+      "name": "Office of the Associate Attorney General"
+     },
+     {
+      "uuid": "ab636464-816a-4a67-967e-00eb15e40ff3",
+      "name": "USAO - California, Central"
+     }
+    ]
+   },
+   {
+    "title": "Organizer of Bank Fraud Scheme that Used Information Stolen by Wells Fargo Employees to Access Customer Accounts Pleads Guilty",
+    "date": "1458302400",
+    "url": "https://www.justice.gov/usao-cdca/pr/organizer-bank-fraud-scheme-used-information-stolen-wells-fargo-employees-access",
+    "teaser": "<p>The lead defendant in a bank fraud case who oversaw a scheme in which Wells Fargo Bank employees stole customer account data – information that was used to impersonate customers and steal money from their accounts – has pleaded guilty to federal fraud charges.</p>\n",
+    "uuid": "c3f67fc9-35ca-4c2c-9949-1bd63531f5f4",
+    "component": [
+     {
+      "uuid": "ab636464-816a-4a67-967e-00eb15e40ff3",
+      "name": "USAO - California, Central"
+     }
+    ]
+   },
+   {
+    "title": "Wells Fargo Personal Banker Indicted for Money Laundering",
+    "date": "1542283200",
+    "url": "https://www.justice.gov/usao-sdca/pr/wells-fargo-personal-banker-indicted-money-laundering",
+    "teaser": "",
+    "uuid": "f247336d-1f75-4ae2-9df8-0ee25ceb44df",
+    "component": [
+     {
+      "uuid": "fdad26ae-a50e-41f0-90c6-0e0f10c69b9c",
+      "name": "USAO - California, Southern"
+     }
+    ]
+   },
+   {
+    "title": "Ex-Wells Fargo Manager Pleads Guilty to Bank Fraud for Role in Scheme that Laundered $14 Million in Tax Fraud Proceeds",
+    "date": "1565006400",
+    "url": "https://www.justice.gov/usao-cdca/pr/ex-wells-fargo-manager-pleads-guilty-bank-fraud-role-scheme-laundered-14-million-tax",
+    "teaser": "<p>A former bank branch manager at Wells Fargo pleaded guilty today to one felony count of bank fraud for using his position to help launder proceeds of a tax fraud and identity theft scheme that used false identities and bogus Republic of Armenia passports to fraudulently obtain $14 million in tax refunds from the Internal Revenue Service.</p>\n",
+    "uuid": "72cec1a7-287b-4a1d-af4e-bd08e8f606d2",
+    "component": [
+     {
+      "uuid": "ab636464-816a-4a67-967e-00eb15e40ff3",
+      "name": "USAO - California, Central"
+     }
+    ]
+   }
+  ]
+ },
+ "JNJ": {
+  "edgar": "JOHNSON & JOHNSON",
+  "releases": [
+   {
+    "title": "Johnson &amp; Johnson Subsidiary Scios Pleads Guilty to Misbranding Heart Failure Drug Natrecor",
+    "date": "1317816000",
+    "url": "https://www.justice.gov/archives/opa/pr/johnson-johnson-subsidiary-scios-pleads-guilty-misbranding-heart-failure-drug-natrecor",
+    "teaser": "Scios Inc., a subsidiary of pharmaceutical giant Johnson &amp; Johnson, pleaded guilty today to a misdemeanor violation of the Food, Drug and Cosmetic Act for introducing into interstate commerce its heart failure drug, Natrecor, for a use that was not approved by the Food and Drug Administration.",
+    "uuid": "73102808-b95c-47ec-9031-6012a18c47e8",
+    "component": [
+     {
+      "uuid": "dbbe4f45-4e70-4db6-88ec-c35012cac37d",
+      "name": "Civil Division"
+     }
+    ]
+   }
+  ]
+ },
+ "MSFT": {
+  "edgar": "MICROSOFT CORP",
+  "releases": [
+   {
+    "title": "Hungary Subsidiary Of Microsoft Corporation Agrees To Pay $8.7 Million Criminal Fine To Resolve Foreign Bribery Case",
+    "date": "1563796800",
+    "url": "https://www.justice.gov/usao-sdny/pr/hungary-subsidiary-microsoft-corporation-agrees-pay-87-million-criminal-fine-resolve-0",
+    "teaser": "",
+    "uuid": "8b1e8ad8-ffa9-4d81-bd98-7924bfdeda17",
+    "component": [
+     {
+      "uuid": "74a73c45-5b18-4be8-8a98-5faa6e3d44e7",
+      "name": "USAO - New York, Southern"
+     }
+    ]
+   }
+  ]
+ },
+ "CVS": {
+  "edgar": "CVS HEALTH Corp",
+  "releases": [
+   {
+    "title": "Coalition of U.S. Attorneys Announce $15.3 Million Settlement With Omnicare, Inc., a CVS Health Company, For Improper Dispensing of Controlled Substances",
+    "date": "1589371200",
+    "url": "https://www.justice.gov/usao-co/pr/coalition-us-attorneys-announce-153-million-settlement-omnicare-inc-cvs-health-company",
+    "teaser": "",
+    "uuid": "ebed8ab6-3c4e-4d5b-96fc-7bd25e898471",
+    "component": [
+     {
+      "uuid": "b0c7769a-77d7-4efb-bf83-effd6581f741",
+      "name": "USAO - Colorado"
+     }
+    ]
+   }
+  ]
+ },
+ "META": {
+  "edgar": "Meta Platforms, Inc.",
+  "releases": [
+   {
+    "title": "United States Attorney Implements Groundbreaking Settlement With Meta Platforms, Inc., Formerly Known As Facebook, To Address Discrimination In The Delivery Of Housing Ads",
+    "date": "1673265600",
+    "url": "https://www.justice.gov/usao-sdny/pr/united-states-attorney-implements-groundbreaking-settlement-meta-platforms-inc-formerly",
+    "teaser": "",
+    "uuid": "34cc305f-7076-4639-b7d4-71f3ebbbda3e",
+    "component": [
+     {
+      "uuid": "da7df438-b3e4-4b73-9250-9974ae754efc",
+      "name": "Civil Rights Division"
+     },
+     {
+      "uuid": "74a73c45-5b18-4be8-8a98-5faa6e3d44e7",
+      "name": "USAO - New York, Southern"
+     }
+    ]
+   },
+   {
+    "title": "Facebook Agrees to Pay $5 Billion and Implement Robust New Protections of User Information in Settlement of Data-Privacy Claims",
+    "date": "1563969600",
+    "url": "https://www.justice.gov/archives/opa/pr/facebook-agrees-pay-5-billion-and-implement-robust-new-protections-user-information",
+    "teaser": "<p>The Department of Justice, together with the Federal Trade Commission (FTC), today announced a settlement that requires Facebook to implement a comprehensive, multi-faceted set of compliance measures designed to improve user privacy and provide additional protections for user information. The settlement also requires Facebook to pay an unprecedented $5 billion civil penalty — the most ever imposed in an FTC case and among the largest civil penalties ever obtained by the federal government.</p>\n",
+    "uuid": "14aa9872-ef72-4b71-b9a6-a718c04626b0",
+    "component": [
+     {
+      "uuid": "dbbe4f45-4e70-4db6-88ec-c35012cac37d",
+      "name": "Civil Division"
+     }
+    ]
+   },
+   {
+    "title": "Former global diversity executive at Facebook pleads guilty to defrauding company out of more than $4 million",
+    "date": "1702382400",
+    "url": "https://www.justice.gov/usao-ndga/pr/former-global-diversity-executive-facebook-pleads-guilty-defrauding-company-out-more-4",
+    "teaser": "<p>Barbara Furlow-Smiles, a former global diversity executive at Facebook, has pleaded guilty to stealing more than $4 million from the company utilizing an elaborate scheme involving fraudulent vendors, fictitious charges, and cash kickbacks.</p>",
+    "uuid": "5d1f1edf-c106-4690-b67f-9726c211cee9",
+    "component": [
+     {
+      "uuid": "9bfdb66b-8d35-40b9-b229-30571df66ef6",
+      "name": "USAO - Georgia, Northern"
+     }
+    ]
+   },
+   {
+    "title": "Myrtle Beach Felon Who Threatened Police on Facebook Pleads Guilty to Gun Charge in Federal Court ",
+    "date": "1528718400",
+    "url": "https://www.justice.gov/usao-sc/pr/myrtle-beach-felon-who-threatened-police-facebook-pleads-guilty-gun-charge-federal-court",
+    "teaser": "",
+    "uuid": "e20378d7-3217-4f01-be08-08a15533fcc6",
+    "component": [
+     {
+      "uuid": "e21ed86f-8c15-410a-9875-2ffeda1475cc",
+      "name": "USAO - South Carolina"
+     }
+    ]
+   }
+  ]
+ },
+ "V": {
+  "edgar": "VISA INC.",
+  "releases": [
+   {
+    "title": "Visa and Plaid Abandon Merger After Antitrust Division’s Suit to Block",
+    "date": "1610452800",
+    "url": "https://www.justice.gov/archives/opa/pr/visa-and-plaid-abandon-merger-after-antitrust-division-s-suit-block",
+    "teaser": "<p>The Department of Justice announced today that Visa Inc. and Plaid Inc. have abandoned their planned $5.3 billion merger.</p>\n",
+    "uuid": "8280b2c4-133d-4cbe-9fdc-e3e1e25095de",
+    "component": [
+     {
+      "uuid": "ff94f093-0dd5-455c-afa6-37feafca2f1b",
+      "name": "Antitrust Division"
+     }
+    ]
+   },
+   {
+    "title": "Israeli National in U.S. on Work VISA Sentenced for Rape",
+    "date": "1693224000",
+    "url": "https://www.justice.gov/usao-ndok/pr/israeli-national-us-work-visa-sentenced-rape",
+    "teaser": "<p>An Israeli national on a work VISA from Denver was sentenced to more than 4 years in federal prison for aggravated sexual abuse by force and threat in Indian County announced U.S. Attorney Clint Johnson.</p>",
+    "uuid": "eb6d5956-b84c-495c-8e38-c890f3a2302d",
+    "component": [
+     {
+      "uuid": "55929f4b-7f27-4550-a43e-46621532d901",
+      "name": "USAO - Oklahoma, Northern"
+     }
+    ]
+   },
+   {
+    "title": "Woman That Overstayed Her Visa Pleads Guilty to ID Theft, Fraud Charges",
+    "date": "1580904000",
+    "url": "https://www.justice.gov/usao-ri/pr/woman-overstayed-her-visa-pleads-guilty-id-theft-fraud-charges",
+    "teaser": "<p>PROVIDENCE – A Dominican national that remained in the United States without permission after her six-month visa expired in June 2003, today admitted that while remaining in the country illegally, she used the stolen identity and Social Security number of a woman living in Puerto Rico to obtain a Rhode Island driver’s license and government financed health care, unemployment, disability, and food stamp benefits.</p>\n",
+    "uuid": "4c59f04a-e1aa-44cd-be83-872fa8b5455d",
+    "component": [
+     {
+      "uuid": "e17ec19f-b1c6-4c6d-a849-6de60c8a12ef",
+      "name": "USAO - Rhode Island"
+     }
+    ]
+   }
+  ]
+ },
+ "XOM": {
+  "edgar": "ExxonMobil Holdings Corp",
+  "releases": [
+   {
+    "title": "Under Agreement With the Justice Department and Environmental Protection Agency, Exxonmobil to Reduce Harmful Air Pollution at Eight U.S. Chemical Plants",
+    "date": "1509451200",
+    "url": "https://www.justice.gov/archives/opa/pr/under-agreement-justice-department-and-environmental-protection-agency-exxonmobil-reduce",
+    "teaser": "<p>The Department of Justice, the U.S. Environmental Protection Agency (EPA), and the Louisiana Department of Environmental Quality (LDEQ) announced a settlement today with Exxon Mobil Corp. and ExxonMobil Oil Corp.</p>",
+    "uuid": "016f7cfd-0ec6-4261-a486-69cb9de0aeeb",
+    "component": [
+     {
+      "uuid": "034d161d-6ac9-4dff-8362-616a47d3ecb7",
+      "name": "Energy and Natural Resources Division"
+     },
+     {
+      "uuid": "2356156f-999c-4471-9e87-d68da06dc79f",
+      "name": "ENRD - Environmental Enforcement Section"
+     }
+    ]
+   }
+  ]
+ },
+ "GE": {
+  "edgar": "GENERAL ELECTRIC CO",
+  "releases": [
+   {
+    "title": "Justice Department Files Antitrust Lawsuit to Stop Electrolux from Buying General Electric&#039;s Appliance Business",
+    "date": "1435752000",
+    "url": "https://www.justice.gov/archives/opa/pr/justice-department-files-antitrust-lawsuit-stop-electrolux-buying-general-electrics-appliance",
+    "teaser": "",
+    "uuid": "6be173df-6b26-437e-b130-d5229d4d5565",
+    "component": [
+     {
+      "uuid": "ff94f093-0dd5-455c-afa6-37feafca2f1b",
+      "name": "Antitrust Division"
+     }
+    ]
+   }
+  ]
+ },
+ "UNH": {
+  "edgar": "UNITEDHEALTH GROUP INC",
+  "releases": [
+   {
+    "title": "Statement from Assistant Attorney General Jonathan Kanter on the District Court’s Decision in U.S. v. UnitedHealth Group and Change Healthcare ",
+    "date": "1663588800",
+    "url": "https://www.justice.gov/archives/opa/pr/statement-assistant-attorney-general-jonathan-kanter-district-court-s-decision-us-v",
+    "teaser": "<p>Assistant Attorney General Jonathan Kanter for the Antitrust Division issued the following statement regarding the District Court’s decision in U.S. v. UnitedHealth Group and Change Healthcare.  </p>\n",
+    "uuid": "434c79dd-96bd-4c80-b7dc-d970a146861a",
+    "component": [
+     {
+      "uuid": "ff94f093-0dd5-455c-afa6-37feafca2f1b",
+      "name": "Antitrust Division"
+     }
+    ]
+   }
+  ]
+ },
+ "AAPL": {
+  "edgar": "Apple Inc.",
+  "releases": [
+   {
+    "title": "Justice Department Settles with Apple Tree Children’s Center in Norwalk, Iowa",
+    "date": "1366200000",
+    "url": "https://www.justice.gov/archives/opa/pr/justice-department-settles-apple-tree-children-s-center-norwalk-iowa",
+    "teaser": "<p>The Justice Department announced today that it reached a settlement with Apple Tree Children&amp;#8217;s Center of Norwalk, Iowa, to remedy alleged violations of the Americans with Disabilities Act.</p>\n",
+    "uuid": "29580cd6-ecef-4b85-a8f1-3da3d49c2a07",
+    "component": [
+     {
+      "uuid": "da7df438-b3e4-4b73-9250-9974ae754efc",
+      "name": "Civil Rights Division"
+     },
+     {
+      "uuid": "7c065630-1377-4141-9aca-1619ecc860bf",
+      "name": "Civil Rights - Disability Rights Section"
+     }
+    ]
+   },
+   {
+    "title": "Miami Man Pleads Guilty To Participating In $1.5 Million Apple Pay Fraud Conspiracy",
+    "date": "1558008000",
+    "url": "https://www.justice.gov/usao-mdfl/pr/miami-man-pleads-guilty-participating-15-million-apple-pay-fraud-conspiracy",
+    "teaser": "<p>Jacksonville, Florida – United States Attorney Maria Chapa Lopez announces that Daniel Butler (29, Miami) today pleaded guilty to conspiracy to commit wire fraud and aggravated identity theft. Butler faces a minimum mandatory sentence of 2 years in federal prison for the aggravated identity theft count and up to 20 years in federal prison for the wire fraud count. A sentencing date has not yet been set.</p>\n",
+    "uuid": "ec1dc8f0-a790-403f-be31-1379654c6a8d",
+    "component": [
+     {
+      "uuid": "544d3323-77d6-4482-917e-ff6c9b4a2fae",
+      "name": "USAO - Florida, Middle"
+     }
+    ]
+   },
+   {
+    "title": "Two Foreign Nationals Convicted of Multimillion-Dollar Scheme to Defraud Apple Inc. Out of 5,000 iPhones",
+    "date": "1708430400",
+    "url": "https://www.justice.gov/archives/opa/pr/two-foreign-nationals-convicted-multimillion-dollar-scheme-defraud-apple-inc-out-5000",
+    "teaser": "<p>A federal jury in the District of Columbia convicted two Chinese nationals today for participating in a sophisticated scheme in which they submitted more than 5,000 inauthentic phones to Apple&nbsp;Inc., intending to cause a loss of more than $3 million to Apple.</p>",
+    "uuid": "ff9d4e4d-5bc4-4716-9a53-27dc509da930",
+    "component": [
+     {
+      "uuid": "46370d9f-afee-4408-a29b-48812154bc0c",
+      "name": "Criminal Division"
+     },
+     {
+      "uuid": "dd191d73-186e-423a-9743-61426e600623",
+      "name": "Criminal - Computer Crime and Intellectual Property Section"
+     },
+     {
+      "uuid": "74477cbc-f238-43ba-9479-f99f4788f858",
+      "name": "USAO - District of Columbia"
+     }
+    ]
+   },
+   {
+    "title": "Bellevue Man who Defrauded Bank, Shipping Companies, Apple and IRS Sentenced to Prison",
+    "date": "1490616000",
+    "url": "https://www.justice.gov/usao-wdwa/pr/bellevue-man-who-defrauded-bank-shipping-companies-apple-and-irs-sentenced-prison",
+    "teaser": "<p>A Bellevue man who defrauded a small bank, Apple Inc., and various shippers of more than $3 million was sentenced today in U.S. District Court in Seattle to five years in prison, announced U.S. Attorney Annette L. Hayes</p>\n",
+    "uuid": "f39ea6ac-a860-4dcf-b6ed-56de7c33e50b",
+    "component": [
+     {
+      "uuid": "b2f637ac-6743-4ff2-95ed-b078f601ea82",
+      "name": "USAO - Washington, Western"
+     }
+    ]
+   }
+  ]
+ },
+ "AMZN": {
+  "edgar": "AMAZON COM INC",
+  "releases": [
+   {
+    "title": "Hartford Man Who Defrauded Amazon Sentenced to Prison",
+    "date": "1767700800",
+    "url": "https://www.justice.gov/usao-ct/pr/hartford-man-who-defrauded-amazon-sentenced-prison",
+    "teaser": "<p>TERRELL KIMBLE, 45, of Hartford, was sentenced today by U.S. District Judge Omar A. Williams in Hartford to 18 months of imprisonment and three years of supervised release for defrauding Amazon.</p>",
+    "uuid": "94e5dfd3-d6f8-4c07-9d6f-00b02b7c1f93",
+    "component": [
+     {
+      "uuid": "ff874cc1-ca76-4aa4-8013-d253aca40328",
+      "name": "USAO - Connecticut"
+     }
+    ]
+   }
+  ]
+ },
+ "TSLA": {
+  "edgar": "Tesla, Inc.",
+  "releases": [
+   {
+    "title": "Attorney General Pamela Bondi Announces Severe Charges Against Violent Tesla Arsonists",
+    "date": "1742472000",
+    "url": "https://www.justice.gov/opa/pr/attorney-general-pamela-bondi-announces-severe-charges-against-violent-tesla-arsonists",
+    "teaser": "<p>Today, Attorney General Pamela Bondi announced charges against three individuals responsible for the violent destruction of Tesla properties. All three defendants will face the full force of the law for using Molotov cocktails to set fire to Tesla cars and charging stations.</p>",
+    "uuid": "6580464f-31a0-414c-9fd0-06f556a1a267",
+    "component": [
+     {
+      "uuid": "e99b9547-7d65-42c6-9404-68fab0db9543",
+      "name": "Office of the Attorney General"
+     }
+    ]
+   },
+   {
+    "title": "Akron Man Charged with Buying House and Tesla with Drug Trafficking Proceeds and Defrauding SBA",
+    "date": "1659528000",
+    "url": "https://www.justice.gov/usao-ndoh/pr/akron-man-charged-buying-house-and-tesla-drug-trafficking-proceeds-and-defrauding-sba",
+    "teaser": "<p>An Akron man was arrested today and charged in a 26-count indictment with using proceeds obtained from the sale of controlled substances and a wire fraud scheme to purchase a residence in Akron and a Tesla vehicle on separate occasions.</p>",
+    "uuid": "f3ff65f9-341e-4c56-97ac-e32183be3399",
+    "component": [
+     {
+      "uuid": "611b8488-271c-4241-bf7d-6cfc133e1a8d",
+      "name": "USAO - Ohio, Northern"
+     }
+    ]
+   }
+  ]
+ },
+ "HD": {
+  "edgar": "HOME DEPOT, INC.",
+  "releases": [
+   {
+    "title": "St. Louis County Man Who Stole Nearly $600,000 from The Home Depot Sentenced to 9 Years in Prison",
+    "date": "1664280000",
+    "url": "https://www.justice.gov/usao-edmo/pr/st-louis-county-man-who-stole-nearly-600000-home-depot-sentenced-9-years-prison",
+    "teaser": "",
+    "uuid": "a47f513c-2c83-43f8-abea-1a2522ba059a",
+    "component": [
+     {
+      "uuid": "dca09ceb-4978-4466-9c30-ce9f5ada2f0a",
+      "name": "Federal Bureau of Investigation (FBI)"
+     },
+     {
+      "uuid": "09ed58e6-1717-4167-b27e-c129638cff11",
+      "name": "USAO - Missouri, Eastern"
+     }
+    ]
+   }
+  ]
+ },
+ "KO": {
+  "edgar": "COCA COLA CO",
+  "releases": [
+   {
+    "title": "Former Employee of the Coca-Cola Company Sentenced for Embezzlement",
+    "date": "1582286400",
+    "url": "https://www.justice.gov/usao-ndga/pr/former-employee-coca-cola-company-sentenced-embezzlement",
+    "teaser": "<p>Anne Gronek-Gibbs, a former sales director for the Coca-Cola Company, has been sentenced for embezzling over $750,000 from the company.  The defendant ordered luxury goods, tickets, gift cards, first class travel, and luxury hotel accommodations for personal trips, all paid for by the company.</p>\n",
+    "uuid": "9a3dd34f-9a5e-48ff-af42-ccd17d555610",
+    "component": [
+     {
+      "uuid": "9bfdb66b-8d35-40b9-b229-30571df66ef6",
+      "name": "USAO - Georgia, Northern"
+     }
+    ]
+   }
+  ]
+ },
+ "BAC": {
+  "edgar": "BANK OF AMERICA CORP /DE/",
+  "releases": [
+   {
+    "title": "Former Client Relationship Manager at Bank of America Pleads Guilty To Embezzling From Client Company",
+    "date": "1601640000",
+    "url": "https://www.justice.gov/usao-ma/pr/former-client-relationship-manager-bank-america-pleads-guilty-embezzling-client-company",
+    "teaser": "<p>BOSTON – A former client relationship manager at Bank of America pleaded guilty today in connection with embezzling $1.5 million from a client company and using a portion of those funds to purchase luxury items.</p>\n",
+    "uuid": "f05c2d12-3f07-493f-867b-3651bf305433",
+    "component": [
+     {
+      "uuid": "8842e83c-ddc2-4710-b819-99ad3473b01a",
+      "name": "USAO - Massachusetts"
+     }
+    ]
+   }
+  ]
+ },
+ "MMM": {
+  "edgar": "3M CO",
+  "releases": [
+   {
+    "title": "3M Company Abandons Its Proposed Acquisition of Avery Dennison’s Office and <br />\r\nConsumer Products Group After Justice Department Threatens Lawsuit",
+    "date": "1346760000",
+    "url": "https://www.justice.gov/archives/opa/pr/3m-company-abandons-its-proposed-acquisition-avery-dennison-s-office-and-consumer-products",
+    "teaser": "3M Co. abandoned its plan to acquire Avery Dennison Corp.’s Office and Consumer Products Group, its closest competitor in the sale of adhesive-backed labels and sticky notes, after the Department of Justice informed the companies that it would file a civil antitrust lawsuit to block the deal.",
+    "uuid": "5b87a816-d00e-426b-9eed-eef84cc801b9",
+    "component": [
+     {
+      "uuid": "ff94f093-0dd5-455c-afa6-37feafca2f1b",
+      "name": "Antitrust Division"
+     }
+    ]
+   },
+   {
+    "title": "Defense Contractor to Pay $3.3M to Resolve False Claims Act Allegations ",
+    "date": "1565265600",
+    "url": "https://www.justice.gov/usao-edpa/pr/defense-contractor-pay-33m-resolve-false-claims-act-allegations",
+    "teaser": "",
+    "uuid": "2bdf1448-aa56-45dc-bd2d-dd66362abb5c",
+    "component": [
+     {
+      "uuid": "6290ca32-97b0-4c9b-b072-26fe2d7544ba",
+      "name": "USAO - Pennsylvania, Eastern"
+     }
+    ]
+   }
+  ]
+ },
+ "DIS": {
+  "edgar": "Walt Disney Co",
+  "releases": [
+   {
+    "title": "Bay Area Man Pleads Guilty To Securities Fraud By Insider Trading In The Walt Disney Company’s Acquisition Of Marvel Entertainment In August 2009",
+    "date": "1398081600",
+    "url": "https://www.justice.gov/usao-cdca/pr/bay-area-man-pleads-guilty-securities-fraud-insider-trading-walt-disney-company-s",
+    "teaser": "",
+    "uuid": "7a9f0396-4a9c-4720-aaa6-3d9d7b0a1af4",
+    "component": [
+     {
+      "uuid": "ab636464-816a-4a67-967e-00eb15e40ff3",
+      "name": "USAO - California, Central"
+     }
+    ]
+   }
+  ]
+ },
+ "CSCO": {
+  "edgar": "CISCO SYSTEMS, INC.",
+  "releases": [
+   {
+    "title": "Justice Department Will Not Challenge Cisco’s Acquisition of Tandberg",
+    "date": "1269864000",
+    "url": "https://www.justice.gov/archives/opa/pr/justice-department-will-not-challenge-cisco-s-acquisition-tandberg",
+    "teaser": "“This investigation was a model of international cooperation between the United States and the European Commission,” said Christine Varney, Assistant Attorney General in charge of the Department’s Antitrust Division.",
+    "uuid": "671eab09-4551-4b81-ae28-77d4f2666588",
+    "component": [
+     {
+      "uuid": "ff94f093-0dd5-455c-afa6-37feafca2f1b",
+      "name": "Antitrust Division"
+     }
+    ]
+   },
+   {
+    "title": "Man Posing as San Francisco 49er Indicted in Wire Fraud Scheme",
+    "date": "1791979200",
+    "url": "https://www.justice.gov/usao-or/pr/man-posing-san-francisco-49er-indicted-wire-fraud-scheme",
+    "teaser": "<p>A Sacramento County, California, man charged in a wire fraud scheme made his initial appearance in federal court Tuesday before a U.S. magistrate judge. A federal grand jury in Portland has returned an indictment charging 35‑year‑old Daejon Labrayae Delenar Love with conspiracy to commit wire fraud, announced U.S. Attorney Scott E. Bradford for the District of Oregon.</p>",
+    "uuid": "a77b815b-dac3-4730-8e64-dcba78b38d34",
+    "component": [
+     {
+      "uuid": "dca09ceb-4978-4466-9c30-ce9f5ada2f0a",
+      "name": "Federal Bureau of Investigation (FBI)"
+     },
+     {
+      "uuid": "d50b78df-a13b-4519-9b32-00aae6e21409",
+      "name": "National Fraud Enforcement Division"
+     },
+     {
+      "uuid": "3c38d032-2199-40bd-9062-4e5453cae5a5",
+      "name": "USAO - Oregon"
+     }
+    ]
+   },
+   {
+    "title": "Saudi National Arrested For Installing Surreptitious Audio Recording Device At OpenAI In San Francisco",
+    "date": "1791892800",
+    "url": "https://www.justice.gov/usao-ndca/pr/saudi-national-arrested-installing-surreptitious-audio-recording-device-openai-san",
+    "teaser": "<p>SAN FRANCISCO – An employee of OpenAI, a super intelligence (SI), also known as artificial intelligence, company headquartered in San Francisco, has been arrested for and charged with using or endeavoring to use an electronic, mechanical, or other device to intercept oral communications</p>",
+    "uuid": "4c0ca431-9f41-4508-a890-f1ff8766326a",
+    "component": [
+     {
+      "uuid": "9562bf08-d474-4f10-a607-87ba645cee03",
+      "name": "USAO - California, Northern"
+     }
+    ]
+   }
+  ]
+ },
+ "MCK": {
+  "edgar": "MCKESSON CORP",
+  "releases": [
+   {
+    "title": "McKesson Agrees to Pay Record $150 Million Settlement for Failure to Report Suspicious Orders of Pharmaceutical Drugs",
+    "date": "1484654400",
+    "url": "https://www.justice.gov/archives/opa/pr/mckesson-agrees-pay-record-150-million-settlement-failure-report-suspicious-orders",
+    "teaser": "",
+    "uuid": "8cb2652d-339b-4a52-9e0f-8ad8fa9a5503",
+    "component": [
+     {
+      "uuid": "46370d9f-afee-4408-a29b-48812154bc0c",
+      "name": "Criminal Division"
+     },
+     {
+      "uuid": "4f03e6af-f2cb-40c6-89c8-6871fdd8aa47",
+      "name": "Drug Enforcement Administration (DEA)"
+     },
+     {
+      "uuid": "ab636464-816a-4a67-967e-00eb15e40ff3",
+      "name": "USAO - California, Central"
+     },
+     {
+      "uuid": "783bd771-c8bc-425a-b381-bc7942bfd7e0",
+      "name": "USAO - California, Eastern"
+     },
+     {
+      "uuid": "b0c7769a-77d7-4efb-bf83-effd6581f741",
+      "name": "USAO - Colorado"
+     },
+     {
+      "uuid": "544d3323-77d6-4482-917e-ff6c9b4a2fae",
+      "name": "USAO - Florida, Middle"
+     },
+     {
+      "uuid": "f157cfe4-d5d0-4d1a-89c7-48047a07005f",
+      "name": "USAO - Illinois, Northern"
+     },
+     {
+      "uuid": "f4eaf2ff-2595-4bee-bcfd-90d9bd09435d",
+      "name": "USAO - Kentucky, Eastern"
+     },
+     {
+      "uuid": "8842e83c-ddc2-4710-b819-99ad3473b01a",
+      "name": "USAO - Massachusetts"
+     },
+     {
+      "uuid": "b67ce1d4-10d6-4ea1-b582-444dec4e8c1e",
+      "name": "USAO - Michigan, Eastern"
+     },
+     {
+      "uuid": "3a2b7f0f-5c64-4686-a268-8c05a4865227",
+      "name": "USAO - Nebraska"
+     },
+     {
+      "uuid": "b1284e54-1a64-49f4-82c3-b02081ffee19",
+      "name": "USAO - New Jersey"
+     },
+     {
+      "uuid": "b2a654da-3abd-4317-aec0-c05c193094cf",
+      "name": "USAO - West Virginia, Northern"
+     },
+     {
+      "uuid": "09a924bc-9cee-4351-b52d-e1c0801de0ce",
+      "name": "USAO - Wisconsin, Western"
+     }
+    ]
+   },
+   {
+    "title": "McKesson Agrees To Pay Record $150 Million Settlement For Failure To Report Suspicious Orders Of Pharmaceutical Drugs",
+    "date": "1484654400",
+    "url": "https://www.justice.gov/usao-mdfl/pr/mckesson-agrees-pay-record-150-million-settlement-failure-report-suspicious-orders",
+    "teaser": "<p>Tampa, FL – McKesson Corporation (McKesson), one of the nation’s largest distributors of pharmaceutical drugs, agreed to pay a record $150 million civil penalty for alleged violations of the Controlled Substances Act (CSA), U.S. Attorney A. Lee Bentley, III and Special Agent in Charge Adolphus P. Wright, DEA Miami Field Division announced today.</p>\n",
+    "uuid": "dca70243-d4af-4daf-bcd4-00ecd31314ed",
+    "component": [
+     {
+      "uuid": "544d3323-77d6-4482-917e-ff6c9b4a2fae",
+      "name": "USAO - Florida, Middle"
+     }
+    ]
+   },
+   {
+    "title": "McKesson Argrees to Pay Record $150 Million Settlement for Failure to Report Suspicious Orders of Pharmaceutical Drugs",
+    "date": "1484654400",
+    "url": "https://www.justice.gov/usao-co/pr/mckesson-argrees-pay-record-150-million-settlement-failure-report-suspicious-orders",
+    "teaser": "",
+    "uuid": "90c5d315-21b2-4dbd-b3af-23756f0bb69a",
+    "component": [
+     {
+      "uuid": "b0c7769a-77d7-4efb-bf83-effd6581f741",
+      "name": "USAO - Colorado"
+     }
+    ]
+   },
+   {
+    "title": "McKesson Agrees to Pay Record $150 Million Settlement for Failure to Report Suspicious Orders of Pharmaceutical Drugs",
+    "date": "1484654400",
+    "url": "https://www.justice.gov/usao-ma/pr/mckesson-agrees-pay-record-150-million-settlement-failure-report-suspicious-orders",
+    "teaser": "<p>BOSTON – McKesson Corporation, one of the nation’s largest distributors of pharmaceutical drugs to pharmacies and other health care providers, agreed to pay a record $150 million civil penalty for alleged violations of the Controlled Substances Act (CSA).</p>\n",
+    "uuid": "847e5ef4-fcb7-4da1-99c2-28e6473b9d71",
+    "component": [
+     {
+      "uuid": "8842e83c-ddc2-4710-b819-99ad3473b01a",
+      "name": "USAO - Massachusetts"
+     }
+    ]
+   },
+   {
+    "title": "McKesson agrees to pay record $150 million settlement for failure to report suspicious orders of pharmaceutical drugs ",
+    "date": "1484654400",
+    "url": "https://www.justice.gov/usao-ndwv/pr/mckesson-agrees-pay-record-150-million-settlement-failure-report-suspicious-orders",
+    "teaser": "<p>WHEELING, WEST VIRGINIA – McKesson Corporation (McKesson), one of the nation’s largest distributors of pharmaceutical drugs, agreed to pay a record $150 million civil penalty for alleged violations of the Controlled Substances Act (CSA), Acting United States Attorney Betsy Steinfeld Jividen and Special Agent in Charge of the Drug Enforcement Administration Karl C. Colder announced today. The Drug Enforcement Administration and the United States Attorney’s Office describe the settlement of the civil penalty claims historic and unprecedented.</p>\n<p>Acting U.S. Attorney Betsy Steinfeld Jivide",
+    "uuid": "d45b88fa-13ff-42cd-8a29-d2c9a0182abc",
+    "component": [
+     {
+      "uuid": "b2a654da-3abd-4317-aec0-c05c193094cf",
+      "name": "USAO - West Virginia, Northern"
+     }
+    ]
+   },
+   {
+    "title": "McKesson Agrees To Pay Record $150 Million Settlement For Failure To Report Suspicious Orders Of Pharmaceutical Drugs",
+    "date": "1484654400",
+    "url": "https://www.justice.gov/usao-nj/pr/mckesson-agrees-pay-record-150-million-settlement-failure-report-suspicious-orders",
+    "teaser": "",
+    "uuid": "fd63caf4-9c83-419e-a96b-461ad80931fb",
+    "component": [
+     {
+      "uuid": "b1284e54-1a64-49f4-82c3-b02081ffee19",
+      "name": "USAO - New Jersey"
+     }
+    ]
+   },
+   {
+    "title": "McKesson Agrees to Pay Record $150 Million Settlement for Failure to Report Suspicious Orders of Pharmaceutical Drugs",
+    "date": "1484654400",
+    "url": "https://www.justice.gov/usao-edca/pr/mckesson-agrees-pay-record-150-million-settlement-failure-report-suspicious-orders",
+    "teaser": "",
+    "uuid": "553c5191-0686-4401-b4a7-a731d8b3ef46",
+    "component": [
+     {
+      "uuid": "783bd771-c8bc-425a-b381-bc7942bfd7e0",
+      "name": "USAO - California, Eastern"
+     }
+    ]
+   },
+   {
+    "title": "McKesson Agrees to Pay Record $150 Million Settlement for Failure to Report Suspicious Orders of Pharmaceutical Drugs",
+    "date": "1484654400",
+    "url": "https://www.justice.gov/usao-cdca/pr/mckesson-agrees-pay-record-150-million-settlement-failure-report-suspicious-orders",
+    "teaser": "<p>McKesson Corporation, one of the nation’s largest distributors of pharmaceutical drugs, has agreed to pay a record $150 million civil penalty for alleged violations of the Controlled Substances Act (CSA), the Justice Department announced today.</p>\n",
+    "uuid": "456e30d1-f2fa-40c1-967a-cf0590ee8148",
+    "component": [
+     {
+      "uuid": "ab636464-816a-4a67-967e-00eb15e40ff3",
+      "name": "USAO - California, Central"
+     }
+    ]
+   }
+  ]
+ },
+ "INTC": {
+  "edgar": "INTEL CORP",
+  "releases": [
+   {
+    "title": "North Carolina Man Sentenced To 18 Months In Prison For Super Intelligence-Assisted Music Streaming Fraud",
+    "date": "1791288000",
+    "url": "https://www.justice.gov/usao-sdny/pr/north-carolina-man-sentenced-18-months-prison-super-intelligence-assisted-music",
+    "teaser": "<p>Jamie McDonald, the United States Attorney for the Southern District of New York, announced today that MICHAEL SMITH was sentenced to 18 months in prison for his role in a scheme to defraud music streaming platforms and musicians of royalty payments.&nbsp;</p>",
+    "uuid": "f053f69c-9ff6-4b6b-9d48-b3af2ff5abc6",
+    "component": [
+     {
+      "uuid": "74a73c45-5b18-4be8-8a98-5faa6e3d44e7",
+      "name": "USAO - New York, Southern"
+     }
+    ]
+   },
+   {
+    "title": "Members of Russian Intelligence Services Network Charged with Conspiring to Finance Terrorism and Commit Murder for Hire in the United States",
+    "date": "1789473600",
+    "url": "https://www.justice.gov/opa/pr/members-russian-intelligence-services-network-charged-conspiring-finance-terrorism-and",
+    "teaser": "<p>The Department of Justice announced today the unsealing of charges against five individuals working for the intelligence services of the Russian Federation to conduct attacks and murders around the world, including in the United States. As detailed in the unsealed indictment, the network is alleged to have, among other things, paid and attempted to pay individuals within the United States and elsewhere to conduct pre-operational surveillance and carry out targeted killings, and commissioned associates to commit and attempt to commit acts of terrorism against civilian and military infrastruc",
+    "uuid": "e88e1ae2-6ba5-43a6-a3e1-28af1be12f7b",
+    "component": [
+     {
+      "uuid": "e99b9547-7d65-42c6-9404-68fab0db9543",
+      "name": "Office of the Attorney General"
+     },
+     {
+      "uuid": "dca09ceb-4978-4466-9c30-ce9f5ada2f0a",
+      "name": "Federal Bureau of Investigation (FBI)"
+     },
+     {
+      "uuid": "9ea9772c-c483-4584-b958-b3cfe1741539",
+      "name": "National Security Division (NSD)"
+     },
+     {
+      "uuid": "74a73c45-5b18-4be8-8a98-5faa6e3d44e7",
+      "name": "USAO - New York, Southern"
+     }
+    ]
+   }
+  ]
+ }
+}

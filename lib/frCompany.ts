@@ -63,6 +63,10 @@ export function companyNames(edgarName: string, alsoKnownAs: readonly string[] =
  */
 export const frSearchTerm = (edgarName: string, alsoKnownAs: string[] = []): string =>
   companyNames(edgarName, alsoKnownAs)
+    // an other name under five characters stays out of the search, though it still names the
+    // company in a title: "UPS" is in 2,031 documents since 2015, "United Parcel Service" in 374,
+    // and the feed reads the newest 1,000 (batch 34)
+    .filter((n, i) => i === 0 || n.length >= 5)
     .flatMap((n) => [...new Set([n, joinInitials(n)])])
     .map((n) => `"${n}"`)
     .join(" | ");

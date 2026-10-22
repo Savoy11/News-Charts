@@ -94,6 +94,16 @@ export const KNOWN_WRONG: Record<string, string> = {
 };
 
 /**
+ * A company's initials that news uses for something else first, so they find the company in
+ * search but claim no headline. Kept short on purpose, with the evidence.
+ */
+export const INITIALS_NOT_NEWS: Record<string, string> = {
+  // Philip Morris International: in the news "PMI" is the purchasing managers' index, in every
+  // monthly factory and services report
+  PMI: "the purchasing managers' index",
+};
+
+/**
  * Items whose names still find the company in search but may not claim its news, because the
  * brand went elsewhere when the company kept the filings. Same rule as `KNOWN_WRONG`: a class of
  * cases belongs in `newsMay`, and only the exceptions here.
@@ -221,11 +231,15 @@ const coined = (name: string) => /[a-z][A-Z]/.test(name) || /[\d&]/.test(name);
  * - never an acquired company's: Sun Microsystems' 1990s news is not Oracle's, nor Red Hat's
  *   IBM's (measured: the former registrants whose tickers carried on are Google, the American,
  *   United and Alaska airlines, US Foods, and three subsidiaries filed under their parent's
- *   ticker; every acquisition fails the test). Nor a looser alias, nor an item in
- *   `KNOWN_NOT_NEWS`.
+ *   ticker; every acquisition fails the test). Nor a looser alias, save the company's own
+ *   initials (batch 34), nor an item in `KNOWN_NOT_NEWS`.
  */
-function newsMay(name: string, kind: AliasKind, item: WikidataCompany, carriedOn: boolean): boolean {
-  if (kind === "alias" || (kind === "former" && !carriedOn) || KNOWN_NOT_NEWS[item.qid] !== undefined) return false;
+function newsMay(name: string, kind: AliasKind, item: WikidataCompany, carriedOn: boolean, beside: string[]): boolean {
+  if ((kind === "former" && !carriedOn) || KNOWN_NOT_NEWS[item.qid] !== undefined) return false;
+  // The company's own initials claim its news even where Wikidata files them as an alias — "AIG",
+  // "UPS", "ADP": the owner's call, 2026-10-22 (batch 34) — unless they mean something else first
+  if (!nameKey(name).includes(" ") && ownInitials(name, beside)) return INITIALS_NOT_NEWS[nameKey(name)] === undefined;
+  if (kind === "alias") return false;
   // "The Hartford" is one word for this: the article matches "the Hartford area" and every "the
   // Hartford ... ETF" (batch 28)
   if (nameKey(name).replace(/^THE /, "").includes(" ")) return true;
@@ -308,7 +322,7 @@ export function buildCompanyAliases(
       }
       const key = nameKey(n);
       const kind: AliasKind = item.kind === "former" ? "former" : loose ? "alias" : "name";
-      const claim: Claim = { qid: item.qid, kind, news: newsMay(n, kind, item, carriedOn), written: n };
+      const claim: Claim = { qid: item.qid, kind, news: newsMay(n, kind, item, carriedOn, [...names, title]), written: n };
       const byCik = claims.get(key) ?? new Map<number, Claim>();
       const had = byCik.get(item.targetCik);
       byCik.set(

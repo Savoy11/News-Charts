@@ -319,6 +319,19 @@ export const CASES: LiveCase[] = [
     },
   },
   {
+    // "ibm" goes bare (batch 34): thirty articles in a day, nine naming IBM in the headline
+    name: "GDELT — IBM under its bare initials, headlines naming it only",
+    covers: ["gdelt"],
+    hosts: ["api.gdeltproject.org"],
+    async run() {
+      const r = await fetchNews("INTERNATIONAL BUSINESS MACHINES", ["IBM"]);
+      const out = [...outcomeProblems(r.outcome, r.detail), ...eventProblems(r.events, 1)];
+      const stray = r.events.find((e) => !/\b(?:IBM|International Business Machines)\b/i.test(e.title));
+      if (stray) out.push(`kept "${stray.title}", whose headline does not name IBM`);
+      return out;
+    },
+  },
+  {
     name: "Federal Register — semiconductor rules",
     covers: ["federal_register"],
     hosts: ["www.federalregister.gov"],

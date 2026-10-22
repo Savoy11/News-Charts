@@ -156,8 +156,10 @@ async function main(): Promise<void> {
     entries.every(([, [, qid]]) => KNOWN_WRONG[qid] === undefined), entries.filter(([, [, q]]) => KNOWN_WRONG[q] !== undefined).map(([k]) => k).join(", "));
   check("no accented name is split at its accent: ESTEE LAUDER, never EST E LAUDER",
     file.aliases["ESTEE LAUDER"]?.[0] === 1001250 && !file.aliases["EST E LAUDER"] && !file.aliases["ITA UNIBANCO"]);
-  check("news may use only a company's own names or a predecessor's, never a loose alias",
-    entries.every(([, [, , kind, news]]) => news === 0 || kind !== "alias"));
+  // since batch 34 a company's own initials are the one kind of alias that may (the owner's call)
+  check("news may use only a company's own names or a predecessor's, never a loose alias but its initials",
+    entries.every(([key, [, , kind, news]]) => news === 0 || kind !== "alias" || /^[A-Z]{3}$/.test(key)),
+    entries.filter(([key, [, , kind, news]]) => news === 1 && kind === "alias" && !/^[A-Z]{3}$/.test(key)).map(([k]) => k).slice(0, 5).join(", "));
   check("  …so \"Google\" and \"Facebook\" search news, and \"Whole Foods\" and \"Sun Microsystems\" do not",
     file.aliases["GOOGLE"]?.[3] === 1 && file.aliases["FACEBOOK"]?.[3] === 1 &&
       file.aliases["WHOLE FOODS"]?.[3] === 0 && file.aliases["SUN MICROSYSTEMS"]?.[3] === 0);

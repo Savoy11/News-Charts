@@ -31,7 +31,7 @@ because it will be trusted.
 | **2009 – now** | Justice Department press releases | 2009, the oldest releases the API holds | Settlements, pleas, suits and merger cases whose title makes the company a party (`lib/doj.ts`) — a few to ten per large company, about half before 2017 |
 | **1999 – now** | The Guardian Open Platform | 1999 | Articles — only with a visitor's own key, in their browser; never stored |
 | **2015 – now** | Federal Register | 2015 (our query floor) | Sector rules; documents whose title names a company |
-| **2017 – now** | GDELT | 2017 (our query floor) | Recent news. A short everyday name is asked with its legal form ("Visa Inc"): GDELT refuses a phrase under five characters, and until 2026-10-22 107 of the 1,500 largest companies got none |
+| **2017 – now** | GDELT | 2017 (our query floor) | Recent news. GDELT refuses a quoted phrase under five characters, and until 2026-10-22 107 of the 1,500 largest companies got none. Now 59 of them are asked bare ("ETSY"), keeping only headlines that name them, and 48 with their legal form ("VISA Inc") |
 | **—** | Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | not ingested | Free tiers are non-commercial; adapters exist for diagnostics only |
 | **Yahoo's whole daily series** | Yahoo Finance chart | every daily close Yahoo holds, to six decimal places — the listing for a younger security, but where Yahoo's daily data begins for an older one (IBM, GE, KO from 1962-01-02; Ford from 1972, though it listed in 1956); read once, ten years on routine refreshes, the whole series again after a split; a session still trading is never stored | Prices, corporate actions |
 | **now** | Yahoo Finance RSS | recent headlines | News |

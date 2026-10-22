@@ -984,6 +984,66 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 34: short names claim news, and go to GDELT bare (2026-10-22)
+
+The owner answered batch 33's two questions with yes ("shorter names work fine"): a company's own
+initials claim its news even where Wikidata files them as an alias (AIG, UPS, ADP), and a short
+name that is not a word goes to GDELT unquoted (Etsy, Roku). Both were built with guards, because
+a news item whose headline does not name the company is displayed, not hidden (it waits for the
+model), so a bare word that brings in unrelated articles puts them on the page.
+
+`npm run check` passes (39 suites) and `npm run lint` is clean. `check:ui` was not re-run: no
+page, component or route changed, the name index gains no search names this time (21 entries only
+start claiming news), and the one route that imports the scoring module reads a constant from it.
+HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **A company's own initials claim its news** (`lib/companyAliases.ts`). The rebuilt index has
+      the same 1,555 names; 21 now claim news: AIG, UPS, ADP, ADM, AEP, BMS, CNR, DAL, HII, HPE,
+      IFF, ITW, JCI, JLL, PAN, RBC, RDS, SLF, TSM, WDP and WMG.
+      - **Excepted:** Philip Morris's "PMI", which is the purchasing managers' index in every monthly
+        economic report (`INITIALS_NOT_NEWS`). It still finds the company in search.
+      - **Capitals only:** in headline scoring a company's initials count only in capitals, so "PAN
+        shares jump" names Palo Alto Networks and "Pan-European stocks slip" does not.
+- [x] **A short name that is no word goes to GDELT bare, keeping only headlines that name the
+      company** (`lib/news.ts`). GDELT takes a bare three-letter word where it refuses a quoted one.
+      - **What may go bare:** three or four letters that are not one of the 4,971 English words of
+        two to four letters in ENABLE (public domain, committed as `data/english-short-words.json`),
+        and not on a short list of letters that mean something else first (`GDELT_NOT_UNQUOTED`):
+        RTX (Nvidia's graphics cards), CGI, BCE, APA, PTC, AES, ATI, EQT, FNB, RDS, TSM, CNR, SPIE,
+        MOOG, NOV, COPA, TIM, DAVE. That list is from what the letters commonly mean, not measured
+        one by one.
+      - **The headline filter:** with a bare name in the query, an article is kept only when its
+        headline names the company by one of the names asked for. On 2026-10-22 a bare "IBM"
+        returned 30 articles in a day; 9 named IBM in the headline and the rest in passing
+        ("Aionos Appoints Hemant Lamba…").
+      - **The 107 short everyday names** among the 1,500 largest companies now all get a query
+        GDELT takes: 59 bare ("ETSY", "CSX", "HSBC", "NIKE"), 48 with the legal form because they
+        are words or listed letters ("VISA Inc", "CGI Inc", "SAP SE"). CRH, last batch's one gap, now
+        goes bare.
+      - A real `npm run ingest -- --ticker IBM` stored 24 GDELT articles under the bare name, every
+        headline naming IBM ("IBM beats Q3 earnings on software rebound…").
+      - **The cost, measured:** a bare brand mentioned in passing everywhere fills GDELT's 100
+        newest with those mentions. A bare "Etsy" returned 30 articles in three days and none named
+        Etsy in its headline, so Etsy's page gains headlines slowly, run by run, rather than none.
+- [x] **The federal feeds take short names where they help, and not where they drown:**
+      - The Federal Register search leaves out an other name under five characters, though it still
+        names the company in a title. "UPS" is in 2,031 documents since 2015 against 374 for
+        "United Parcel Service", and the feed reads the newest 1,000.
+      - The Justice Department feed asks for the initials, and reads a short name's titles only one
+        page when there are more than it reads: "AIG" is inside 1,600 titles ("Craig"), "ADM" inside
+        8,333, "DAL" inside 1,559, and their newest 500 held none of the company's releases. "UPS",
+        in 273, held four, so UPS goes from 2 releases to 6 ("UPS Agrees To Forfeit $40 Million…",
+        2013), and HPE gains its Juniper acquisition case. A real `npm run ingest -- --ticker UPS`
+        stored the 6.
+- [ ] **Open:** the not-for-bare list was written from what the letters commonly mean; a live count
+      per name would refine it, but GDELT throttles this session to an answer every few minutes.
+      Tickers that are words ("ups", "are") still score a headline in any letter case, as before;
+      only initials that are news names became capitals-only.
+- Checks: `check:short-names` 18 → 25, its batch 33 cases rewritten for the owner's calls. On
+  main's code 2 fail before it stops (`unquotable` does not exist). `check:aliases` now allows a
+  company's own initials as the one alias that claims news. `check:live` gains a case that IBM's
+  bare-name articles all name IBM in the headline.
+
 ## NC ledger — batch 33: short company names — IBM, and Visa's news (2026-10-22)
 
 The owner said to merge batch 32 and continue. Batch 32's open item noted that companies known by
@@ -1037,10 +1097,10 @@ index. HawkScan could not run: `HAWK_API_KEY` is not set.
       - Whether to send GDELT a short name unquoted for companies whose name is not a word ("Etsy",
         "Roku"). Measured, it works but matches every use of the word, so for "Visa", "Gap" or
         "Snap" it would bring in unrelated news. The legal form is the safe default; this is the
-        owner's call.
+        owner's call. ✅ **Owner: yes (2026-10-22); built in batch 34**, with a headline filter.
       - Most initialisms Wikidata files as an alias, not a label (AIG, UPS, ADP), so they find the
         company in search but do not claim its news. Promoting them is a rule change for the name
-        index, also the owner's.
+        index, also the owner's. ✅ **Owner: yes; built in batch 34**, PMI excepted.
       - When Wikidata lists two written forms of one name, which one is kept depends on the order
         it answers in ("Mellanox Technologies, Ltd." or "…Ltd."): a re-sync can flip it with no real
         change. Harmless, but it makes a sync diff noisy.

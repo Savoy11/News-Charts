@@ -984,6 +984,42 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 29: a new news source, researched and measured (2026-10-22)
+
+The owner chose this next (NC-095): find a free news source, test what it returns for a few
+companies, and report its licence before building. The full note, with every measurement and
+licence quote, is [`docs/proposals/2026-10-22-news-sources.md`](proposals/2026-10-22-news-sources.md).
+Nothing was built, so no check changed; `npm run check` passes (36 suites).
+
+- [x] **No free news-article archive for 1963–2017 clears the commercial bar.** That stretch is
+      the corpus's biggest hole (`docs/COVERAGE-MAP.md`), and the archives that cover it (NYT, the
+      Guardian) are non-commercial on their free tiers. Every candidate found is a primary record —
+      a government release or a recall notice — dated, naming the company, and public domain.
+- [x] **Shortlist, measured live on 2026-10-22:**
+      1. **NHTSA vehicle recalls, 1966 on** (public domain; two files, 22 MB, no key). Recall
+         campaigns from 1966 to 2016: Ford 1,118, GM 1,428, Stellantis's predecessors 1,115, Honda
+         303, Toyota 267. Ford has 402 campaigns of 100,000 vehicles or more. The only candidate
+         that fills the hole, though for one sector. Recommended first.
+      2. **Justice Department press releases, 2009 on** (public domain by its own policy page;
+         keyless API). Titles naming Wells Fargo 68, Boeing 29, Exxon 18, Pfizer 12, Goldman
+         Sachs 12. Every sector, but only the end of the hole, and a title match takes namesakes
+         ("Apple Tree Children's Center").
+      3. **FDA enforcement reports, mid-2012 on** (CC0; keyless API). Medtronic 1,270 device-recall
+         records, Abbott 434 across drug, device and food, Pfizer 161. Depth for health and food
+         companies, not the hole.
+      4. **CPSC product recalls, 1973 on** (public domain; keyless). Tens per company as the maker:
+         Polaris 104, Mattel 33, Stanley Black & Decker 30.
+- [x] **Not new sources:** the press release inside each 8-K would give the 8-Ks already on the
+      timeline a real headline. About half carry one, but picking the headline out is unreliable.
+      Wikipedia's daily "Current events" pages could not be tested: Wikipedia refused this session.
+- [x] **Not shortlisted:** SEC enforcement releases (the search ignores its term; the latest page
+      named only individuals and small firms) and GDELT's television archive (caption terms not
+      found; GDELT refuses this session).
+- [ ] **Open — the owner's pick:** mark each candidate in the note `APPROVED`, `REJECTED` or
+      `DEFERRED`. NC-095 stays open until then. Building the first approved one is its own batch,
+      with the usual checks: an adapter, a `SOURCES` entry with its licence, and a checked map from
+      each source's company names to listed companies.
+
 ## NC ledger — batch 28: the names audit, fixed (2026-10-22)
 
 The owner chose this next: a code health check of batches 24–27. The `code-auditor` agent's report
@@ -3885,6 +3921,11 @@ look like") went to a **separate business checklist** worked independently of bo
         `scripts/ingest.ts` calls it from three sites on the topic and company paths, and
         `check:archive` is in the chain. The entry described work already done; a fresh
         candidate has to be picked before this item means anything.
+      - **Shortlist written 2026-10-22 (batch 29, NC-095):** NHTSA vehicle recalls (1966 on),
+        Justice Department press releases (2009 on), FDA enforcement reports (2012 on) and CPSC
+        product recalls (1973 on), all public domain and measured live, in
+        [`docs/proposals/2026-10-22-news-sources.md`](proposals/2026-10-22-news-sources.md).
+        Waiting on the owner's pick.
 - [x] **The Internet Archive adapter, exercised against the live service for the first time.**
       Done 2026-08-12. Its header warned that every payload shape came from documentation and had
       never met the real server; egress reaches `archive.org` from the build container now, so it

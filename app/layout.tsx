@@ -95,8 +95,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Library of Congress (Chronicling America), historical context from Wikipedia
               (CC BY-SA), federal rules and notices from the Federal Register, archived material
               from the Internet Archive, Fed policy decisions from the Federal Reserve,
-              inflation reports from the U.S. Bureau of Labor Statistics, and vehicle recalls from
-              the National Highway Traffic Safety Administration.
+              inflation reports from the U.S. Bureau of Labor Statistics, vehicle recalls from
+              the National Highway Traffic Safety Administration, and press releases from the
+              U.S. Department of Justice.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

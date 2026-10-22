@@ -984,6 +984,108 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 32: Justice Department releases on company pages (2026-10-22)
+
+The owner chose this next, approving the second candidate on batch 29's shortlist: the Justice
+Department's press releases, 2009 on, in which a listed company is a party. Unlike vehicle
+recalls they reach companies in every industry. Batch 31's pull request was still open, so this
+batch joins it.
+
+`npm run check` passes (38 suites) and `npm run lint` is clean. `next build` compiles. `check:ui`
+is 203/203 on a production build against the demo database, re-seeded with Ford's release. (A
+first run failed one check, the explore page, because that page is built ahead of time and the
+build had been pointed at the development database; rebuilt against the demo one, all pass.)
+`check:live` is 18 pass, 0 fail, 2 unreachable (GDELT and Wikipedia refusing this session), 1 skipped
+(needs an Etherscan key); the new Justice Department case passes live. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **A company's page carries the releases in which it is a party** (`lib/doj.ts`). They are
+      read from justice.gov's keyless JSON API under the company's own names, kept only when the
+      title makes the company a party, one a day, as regulation events scored without the model.
+      Public domain by the Department's policy page ("Unless otherwise indicated, information on
+      Department of Justice websites is in the public domain…"); only the title, date, teaser and
+      link are used. Registered as source 23 (`doj_press`), read daily, credited in the footer,
+      the terms page, the README and the coverage map.
+- [x] **The name rule is stricter than the Federal Register's.** The API matches a name anywhere
+      in a title, even inside a word ("Intel" in "Intelligence", "Cisco" in "San Francisco").
+      Of the 912 titles naming 41 large companies as whole words, most were about someone else:
+      a former employee, a bank robbery, a crime committed on Facebook, an Apple Valley resident.
+      A release is kept when its title makes the company:
+      - the subject of the verb — it pays, pleads, settles, is charged ("Boeing Pays $18
+        Million…", "Drug Maker Pfizer Agrees…", "Wyeth and Pfizer Agree…");
+      - the object of an action — a suit against it, a settlement with it, "U.S. v."
+        ("Department of Justice Files Nationwide Lawsuit Against Walmart Inc.");
+      - or the owner of a deal ("Justice Department Sues to Block UnitedHealth Group's
+        Acquisition of Change Healthcare").
+      - A title opening with "Former", or naming the company after "who", is about a person. A
+        one-word name counts only where a clause starts. A longer listed company's name owns the
+        mention, as in the Federal Register rule.
+- [x] **Measured.** On the 41 companies the rule was written against: 188 titles kept, 142
+      events (one a day) for 34 of them, 71 before 2017. Then on 40 companies not used to write
+      it: 53 events for 24 of them, 22 before 2017. That second test found two holes, both fixed:
+      "Visa" kept immigration cases ("Israeli National in U.S. on Work VISA Sentenced") and "3M"
+      kept dollar amounts ("$5.3M to Settle"). After the fixes, every release either set keeps is
+      about the company.
+      - Live, the adapter gives Boeing 6 (2009-08-13 to 2023-09-28, the 737 MAX charge among
+        them), Visa 5, Ford 1 and Meta 5 (found under "Facebook" too). A real
+        `npm run ingest -- --ticker AAPL` stored Apple's 3, each scored 0.95 without the model.
+- [x] **One story, one event.** The national office and U.S. Attorneys' offices often post the
+      same release; McKesson's 2017 settlement went up eight times. The national office's copy
+      wins. A release is identified by its own id, not its address, because the Department moves
+      a past administration's releases to an archive address.
+- [ ] **Open — what the rule misses:** the Spanish copy of a release (the English one is kept);
+      joint ventures ("Chevron Phillips Chemical", "General Electric Hitachi"); a subsidiary named
+      without its parent ("Merck Sharp & Dohme"); and companies whose releases use a short name the
+      app does not hold, "PNC" or "AIG", since only a company's own names are searched. A common
+      word ("Target") is read only to its newest 500 titles.
+- [x] The shortlist note marks the Justice Department `APPROVED`. FDA enforcement reports and
+      CPSC product recalls still wait there.
+- Checks: new `check:doj` (37), on real releases read from justice.gov
+  (`scripts/fixtures/doj-releases.json`): parties and passers-by from both sets, McKesson's eight
+  copies, the paging, a refusal and a failure. It cannot run on main's code (`lib/doj.ts` does not
+  exist). `check:ui` gains 4 (Ford's release on its page, credited, linked, under the Regulation
+  chip), and `check:live` a Justice Department case (Boeing, and Visa without visa fraud).
+
+## NC ledger — batch 31: the vehicle makers listed companies bought (2026-10-22)
+
+The owner said to continue. Batch 30 left one item open: makers a mapped company bought, whose
+purchase dates needed checking before their recalls could be dated. Every date below comes from
+the buyer's own SEC filing, read through EDGAR's full-text search, not from memory. The first one
+checked would have been wrong: K.Z. closed on 2014-05-01, not in 2016.
+
+`npm run check` passes (37 suites) and `npm run lint` is clean. `next build` compiles. `check:ui` was
+not re-run: no file the site loads changed (`lib/recalls.ts` serves ingest, the demo seed and the
+checks only). `check:live` is 17 pass, 0 fail, 2 unreachable, 1 skipped, its NHTSA case passing.
+HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **Nine makers added, each from its closing date:**
+      - Thor: Dutchmen from May 1991 (its 1995 10-K: "In May, 1991, the Company acquired the
+        business and assets of Dutchmen"), Keystone RV from 2001-11-09, Heartland from 2010-09-16,
+        K.Z. from 2014-05-01, Jayco from 2016-06-30, Starcraft RV with Jayco (a Jayco company in
+        Thor's 2016 10-K), and Tiffin from 2020-12-18.
+      - Winnebago: Grand Design from 2016-11-08.
+      - Berkshire Hathaway: Forest River from 2005-08-31 (its 10-Q: "On August 31, 2005, Berkshire
+        acquired 100% of Forest River, Inc."). A new company on the map, so 20 now.
+      - Each `why` names the filing that gives its date, and `check:vehicle-recalls` requires it.
+- [x] **Measured live:** recalls of 10,000 vehicles or more go from 2 to 29 for Thor, from 8 to 16
+      for Winnebago and from 0 to 9 for Berkshire Hathaway. A real `npm run ingest -- --ticker THO`
+      stored the 29, from 2003-11-12, all scored 1 without the model.
+      - Recalls from before a purchase stay off: Jayco's 226,560-vehicle door-lock recall of
+        2013-11-22, K.Z.'s of 2013-10-17, Tiffin's of 2017-12-22.
+- [x] **Looked at and left out, because nothing would change:** none of these has a recall of
+      10,000 vehicles or more since its buyer bought it. REV Group's brands (E-One, Collins Bus,
+      Kovatch and the others), Oshkosh's Pierce, Newmar (Winnebago bought it in 2019; its large
+      recalls are from 2007 and 2017), and Meritor (all its large recalls are from before Cummins
+      bought it in 2022). Shyft Group stays out until its pre-1975 records can be separated.
+- [ ] **Open:** smaller brand names inside the mapped companies (Highland Ridge, Entegra Coach,
+      DRV Suites, Livin' Lite, CrossRoads, Cruiser RV) need their own dates before they can count.
+      Brands a mapped company *sold* (Ford's Volvo, Jaguar and Land Rover; GM's Saab) are not
+      mapped either: whether a former subsidiary's recalls belong on the seller's page is a
+      question the rule does not settle.
+- Checks: `check:vehicle-recalls` 35 → 39, with real rows from both sides of Jayco's, K.Z.'s and
+  Tiffin's purchase dates, Keystone's 1.2-million-vehicle recall of 2017, Forest River's and
+  Grand Design's. Against main's code the first three new cases fail, and the fourth stops the
+  suite (Berkshire Hathaway is not on the map).
+
 ## NC ledger — batch 30: vehicle recalls on carmakers' pages (2026-10-22)
 
 The owner chose this next, approving the first candidate on batch 29's shortlist (NC-095): the
@@ -1033,12 +1135,14 @@ new NHTSA case passes live. HawkScan could not run: `HAWK_API_KEY` is not set.
       F` stored Ford's 861, all scored 1 without the model. Apple's ingest made no recall request.
       Ford's cached page entry came to 1.09 MB with them, inside Next's 2 MB limit (audit
       2026-10-21 #4).
-- [ ] **Open — not mapped yet:** makers bought by a mapped company whose purchase date needs
+- [x] **Open — not mapped yet:** makers bought by a mapped company whose purchase date needs
       checking before their recalls can be dated: Thor's Keystone, Jayco, Heartland and Tiffin;
       Winnebago's Grand Design and Newmar; Oshkosh's Pierce; REV Group's brands. Also Shyft Group:
       its records start in 1973, two years before Spartan Motors was founded, so they mix in a
       company it bought. Carmakers with no SEC listing (Volkswagen, BMW, Mercedes-Benz, Nissan,
-      Hyundai) have no page to carry theirs.
+      Hyundai) have no page to carry theirs. ✅ **Done in batch 31 (above)** for every maker with a
+      large recall since its purchase, each dated from the buyer's own filing; the rest are left
+      out there with the reason, and Shyft Group stays out.
 - Checks: `check:vehicle-recalls` 35 (new, in the chain, so 37 suites), `check:ui` +4, `check:live`
   +1, and the new kind in `check:relevance`'s list.
   - Real rows from the dataset (`scripts/fixtures/nhtsa-recalls.json`) for every era of subject
@@ -1087,8 +1191,8 @@ Nothing was built, so no check changed; `npm run check` passes (36 suites).
       `DEFERRED`. NC-095 stays open until then. Building the first approved one is its own batch,
       with the usual checks: an adapter, a `SOURCES` entry with its licence, and a checked map from
       each source's company names to listed companies. ✅ **Settled 2026-10-22:** the owner picked
-      NHTSA vehicle recalls, built in batch 30 (above), which closes NC-095. The other three wait
-      in the note, unmarked.
+      NHTSA vehicle recalls, built in batch 30 (above), which closes NC-095. The second, Justice
+      Department releases, was approved and built in batch 32; the other two wait in the note.
 
 ## NC ledger — batch 28: the names audit, fixed (2026-10-22)
 
@@ -3984,7 +4088,7 @@ look like") went to a **separate business checklist** worked independently of bo
       obligation that disappears at a narrow viewport is not met. Wikipedia's credit no longer
       truncates; public-domain and open-data credit still does, because there it is accuracy
       rather than a condition. `check:ui` asserts both.
-- [x] `P2` **Research more news repositories.** Feeds the article-resurfacing initiative. ✅ **Done 2026-10-22:** shortlisted in batch 29, and the owner's pick, NHTSA vehicle recalls, built in batch 30.
+- [x] `P2` **Research more news repositories.** Feeds the article-resurfacing initiative. ✅ **Done 2026-10-22:** shortlisted in batch 29; the owner's picks built, NHTSA vehicle recalls in batch 30 and Justice Department releases in batch 32.
       - **Correction 2026-08-12: the Internet Archive adapter this entry called "the top unbuilt
         candidate" has been built for some time.** `lib/archive.ts` holds both halves
         (advancedsearch items, Wayback CDX snapshots), `internet_archive` is in `SOURCES`,
@@ -3995,8 +4099,9 @@ look like") went to a **separate business checklist** worked independently of bo
         Justice Department press releases (2009 on), FDA enforcement reports (2012 on) and CPSC
         product recalls (1973 on), all public domain and measured live, in
         [`docs/proposals/2026-10-22-news-sources.md`](proposals/2026-10-22-news-sources.md).
-        The owner picked NHTSA vehicle recalls; built in batch 30 (`lib/recalls.ts`). The other
-        three wait in the note.
+        The owner picked NHTSA vehicle recalls; built in batch 30 (`lib/recalls.ts`). Then the
+        Justice Department releases; built in batch 32 (`lib/doj.ts`). The other two wait in the
+        note.
 - [x] **The Internet Archive adapter, exercised against the live service for the first time.**
       Done 2026-08-12. Its header warned that every payload shape came from documentation and had
       never met the real server; egress reaches `archive.org` from the build container now, so it

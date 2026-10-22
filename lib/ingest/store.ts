@@ -268,6 +268,19 @@ export const SOURCES: {
     reviewedOn: "2026-10-22",
     notes: "recall campaigns since 1966 for the vehicle makers lib/recalls.ts maps; no key (batch 30)",
   },
+  {
+    id: 23,
+    key: "doj_press",
+    name: "Justice Department press releases",
+    license: "public domain",
+    attribution: "U.S. Department of Justice",
+    // justice.gov/legalpolicies: "Unless otherwise indicated, information on Department of Justice
+    // websites is in the public domain and may be copied and distributed without permission."
+    // Used: the release's title, date, teaser and link — never its photos.
+    commercialOk: true,
+    reviewedOn: "2026-10-22",
+    notes: "releases since 2009 whose title makes a listed company a party (lib/doj.ts); no key (batch 32)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

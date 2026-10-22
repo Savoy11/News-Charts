@@ -63,7 +63,9 @@ subject line), not the flat files below.
 
 ## 2. Justice Department press releases — 2009 to today, public domain
 
-**Status:** awaiting the owner
+**Status:** APPROVED — by the owner, 2026-10-22, and built in batch 32 (`lib/doj.ts`). The Federal
+Register's name rule was not enough on its own (it would keep "Former Goldman Sachs Investment
+Banker Convicted"), so a release is kept only when its title makes the company a party.
 
 - **What it is:** the Department's press releases: settlements, guilty pleas, civil suits and
   antitrust actions, many naming a listed company.

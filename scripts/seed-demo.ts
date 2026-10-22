@@ -19,6 +19,7 @@ config({ path: ".env.local" });
 
 import { getPool, configProblem } from "../lib/db";
 import { recallEvents, recallMakersFor } from "../lib/recalls";
+import { dojEvents } from "../lib/doj";
 import {
   ensureSources,
   emptyStats,
@@ -232,6 +233,15 @@ const FORD_RECALLS: TimelineEvent[] = recallEvents(
   recallMakersFor(37996) ?? []
 );
 
+// Ford's one Justice Department release as a party (justice.gov's API, read 2026-10-22), through the
+// parser ingest uses, so a company page shows a release without a network.
+const FORD_DOJ: TimelineEvent[] = dojEvents(
+  [
+    {"title": "Ford Motor Company Agrees to Pay $365M to Settle Customs Civil Penalty Claims Relating to Misclassified and Under-Valued Vehicles", "date": "1710158400", "url": "https://www.justice.gov/archives/opa/pr/ford-motor-company-agrees-pay-365m-settle-customs-civil-penalty-claims-relating", "teaser": "<p>Ford Motor Company has agreed to pay the United States $365 million to resolve allegations that it violated the Tariff Act of 1930 by misclassifying and understating the value of hundreds of thousands of its Transit Connect vehicles, the Justice Department announced today.</p>", "uuid": "d3fbcb0f-39ba-4954-92f6-044d38e362fd", "component": [{"name": "Civil Division"}, {"name": "Office of the Associate Attorney General"}]},
+  ],
+  ["FORD MOTOR"]
+);
+
 // Quarterly dividends plus one split. The split matters most: our series is split-adjusted,
 // so the line does not step and the marker is the only thing that says it happened.
 const FORD_ACTIONS: Seed[] = [
@@ -407,6 +417,7 @@ async function main(): Promise<void> {
       ...FORD_NEWS,
       ...FORD_ACTIONS,
       ...FORD_RECALLS,
+      ...FORD_DOJ,
     ];
     await client.query("BEGIN");
     for (const e of fordEvents) await upsertEvent(client, ev(e, "f"), fordId, stats);

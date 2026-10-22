@@ -88,7 +88,26 @@ names a maker, never a listed company, and files every recall under the maker's 
 `RECALL_MAKERS` maps makers to companies by hand, each with the day it became that company's:
 "Chrysler (FCA US, LLC)" counts for Stellantis from 2014-10-12, when today's Stellantis N.V. (then
 FCA N.V.) became Chrysler's parent, and "General Motors, LLC" counts for GM back to 1966 because
-today's GM carries old GM's ticker. Scored without the model, as a filing is.
+today's GM carries old GM's ticker. A maker a listed company bought counts from the closing date
+the buyer's own SEC filing gives: Thor's Keystone from 2001-11-09, Jayco from 2016-06-30, Winnebago's
+Grand Design from 2016-11-08, Berkshire Hathaway's Forest River from 2005-08-31. Scored without the
+model, as a filing is.
+
+### Justice Department releases (`lib/doj.ts`)
+
+A company's page carries the Justice Department press releases in which it is a party, back to
+2009: "Goldman Sachs Charged in Foreign Bribery Case and Agrees to Pay Over $2.9 Billion",
+"Department of Justice Files Nationwide Lawsuit Against Walmart Inc.", "Justice Department Sues to
+Block UnitedHealth Group's Acquisition of Change Healthcare". The API matches a name anywhere in a
+title, and most matches are about someone else — a former employee, a bank robbery, a crime
+committed on Facebook, an "Apple Valley" resident — so a release is kept only when its title makes
+the company the subject of the verb (it pays, pleads, settles, is charged), the object of an
+action (a lawsuit against it, a settlement with it, "U.S. v."), or the owner of a deal. A one-word
+name must open the title or a clause, since "Visa" and "3M" are also a document and the end of
+"$5.3M". The company's own other names count ("Facebook" for Meta), and the release the national
+office posted wins over the same story from a U.S. Attorney's office: one a day per company.
+Tuned on 912 titles naming 41 large companies and tried on 40 others; neither set kept a release
+that was not about the company. A release is a regulation event and is scored without the model.
 
 ### Source planning (`lib/enrich/plan.ts`)
 
@@ -535,6 +554,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Federal Reserve | FOMC policy statements since 1994 | Economy subject; on company pages behind the Economy chip (off by default). `npm run ingest -- --macro` |
 | BLS | CPI release dates since 2008 | Same subject and chip; needs a contact `User-Agent` |
 | NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966 | Recalls of 10,000 vehicles or more, only for the vehicle and tyre makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014). Public domain; no key |
+| U.S. Department of Justice | Press releases since 2009 in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |

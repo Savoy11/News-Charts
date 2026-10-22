@@ -40,7 +40,8 @@ export default function TermsPage() {
         Much of what the site shows belongs to others or is public record: filings from the SEC,
         historical newspapers from the Library of Congress, rules from the Federal Register, policy
         decisions from the Federal Reserve, inflation reports from the Bureau of Labor Statistics,
-        vehicle recalls from the National Highway Traffic Safety Administration, material from the
+        vehicle recalls from the National Highway Traffic Safety Administration, press releases from
+        the U.S. Department of Justice, material from the
         Internet Archive, text from Wikipedia under CC BY-SA, and headlines that
         link to their publishers. Those sources&apos; own terms and licences apply to their content.
         We link to the original wherever we can.

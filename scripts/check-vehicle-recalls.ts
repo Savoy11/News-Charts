@@ -72,6 +72,18 @@ async function main(): Promise<void> {
     recallEvents(rows, makersOf("PII")).map((e) => e.externalId).join() === "24V069000");
   check("another maker's recall reaches no mapped company (Volkswagen)",
     Object.values(RECALL_MAKERS).every((e) => !recallEvents(rows, e.makers).some((ev) => ev.externalId === "26V630000")));
+  // batch 31: makers a mapped company bought count from the closing date its own filings give
+  const thor = recallEvents(rows, makersOf("THO")).map((e) => e.externalId).sort().join(" ");
+  check("Thor gets Keystone's, Jayco's, K.Z.'s and Tiffin's recalls from the day it bought each",
+    thor === "17V746000 17V749000 17V755000 21V680000", thor);
+  check("  …and none from before: Jayco 2013, K.Z. 2013 (closed 2014-05-01, not 2016), Tiffin 2017",
+    !/13V585000|13V490000|17V841000/.test(thor) && makersOf("THO").find((m) => m.name === "K.Z., Inc.")?.from === "2014-05-01");
+  check("Winnebago gets Grand Design's, Berkshire Hathaway Forest River's",
+    recallEvents(rows, makersOf("WGO")).some((e) => e.externalId === "21V393000") &&
+      recallEvents(rows, makersOf("BRK-B")).map((e) => e.externalId).join() === "17V756000");
+  check("every bought maker's day cites the filing that gives it",
+    ["THO", "WGO", "BRK-B"].every((t) => makersOf(t).filter((m) => m.from).every((m) => /\((Thor|Winnebago|Berkshire)'s (8-K|10-K|10-Q) filed \d{4}-\d{2}-\d{2}\)$/.test(m.why))));
+
   const ev = fordEvents.find((e) => e.externalId === "11V385000")!;
   check("each one is the campaign: a recall event, NHTSA's page for it, one identity however often it is read",
     ev.type === "recall" && ev.sourceKey === "nhtsa_recalls" && ev.date === "2011-07-29" && ev.dedupBasis === "nhtsa:11V385000" &&

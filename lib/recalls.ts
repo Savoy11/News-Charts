@@ -100,15 +100,34 @@ export const RECALL_MAKERS: Readonly<Record<number, { ticker: string; makers: re
     ],
   },
   42582: { ticker: "GT", makers: [{ name: "Goodyear Tire & Rubber Company", why: "the company itself" }] },
-  107687: { ticker: "WGO", makers: [{ name: "Winnebago Industries, Inc.", why: "the company itself" }] },
+  107687: {
+    ticker: "WGO",
+    makers: [
+      { name: "Winnebago Industries, Inc.", why: "the company itself" },
+      { name: "Grand Design RV, LLC", from: "2016-11-08", why: "bought 2016-11-08 (Winnebago's 8-K filed 2016-11-14)" },
+    ],
+  },
+  1067983: {
+    ticker: "BRK-B",
+    makers: [{ name: "Forest River, Inc.", from: "2005-08-31", why: "bought 2005-08-31 (Berkshire's 10-Q filed 2005-11-04)" }],
+  },
   1589526: { ticker: "BLBD", makers: [{ name: "Blue Bird Body Company", why: "the company itself" }] },
   1648416: { ticker: "RACE", makers: [{ name: "Ferrari North America, Inc.", why: "Ferrari's own U.S. subsidiary" }] },
   26172: { ticker: "CMI", makers: [{ name: "Cummins, Inc.", why: "the company itself" }] },
+  // The dates of the companies Thor and Winnebago bought are the closing dates their own SEC
+  // filings give (batch 31), never remembered ones: K.Z. closed in 2014, not 2016.
   730263: {
     ticker: "THO",
     makers: [
       { name: "Thor Motor Coach", why: "Thor's own motorhome company, formed in 2010" },
       { name: "Airstream, Inc.", why: "Thor's from its founding in 1980, before its first recall here (1995)" },
+      { name: "Dutchmen Manufacturing, Inc.", from: "1991-06-01", why: "bought in May 1991 (Thor's 10-K filed 1995-10-27)" },
+      { name: "Keystone RV Company", from: "2001-11-09", why: "bought 2001-11-09 (Thor's 8-K filed 2001-11-13)" },
+      { name: "Heartland Recreational Vehicles, LLC", from: "2010-09-16", why: "bought 2010-09-16 (Thor's 8-K filed 2010-09-22)" },
+      { name: "K.Z., Inc.", from: "2014-05-01", why: "bought 2014-05-01 (Thor's 10-K filed 2016-09-26)" },
+      { name: "Jayco, Inc.", from: "2016-06-30", why: "bought 2016-06-30 (Thor's 8-K filed 2016-07-01)" },
+      { name: "Starcraft RV", from: "2016-06-30", why: "a Jayco company, Thor's with Jayco (Thor's 10-K filed 2016-09-26)" },
+      { name: "Tiffin Motorhomes, Inc.", from: "2020-12-18", why: "bought 2020-12-18 (Thor's 8-K filed 2020-12-22)" },
     ],
   },
   879526: { ticker: "WNC", makers: [{ name: "Wabash National Corporation", why: "the company itself" }] },

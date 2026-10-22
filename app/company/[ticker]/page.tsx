@@ -13,6 +13,7 @@ import FundSiblings from "@/components/FundSiblings";
 import SignalPanel from "@/components/SignalPanel";
 import JsonLd from "@/components/JsonLd";
 import FollowBar from "@/components/FollowBar";
+import NewsLeftOut from "@/components/NewsLeftOut";
 import { getCompanyPageData } from "@/lib/page-data";
 import { formatPrice } from "@/lib/priceFormat";
 import { absolute, breadcrumbLd, clampDescription, SITE_NAME } from "@/lib/seo";
@@ -148,6 +149,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
         <div className="min-w-0">
           {/* What the company is, before forty filings — credited where the text is (NC-047). */}
           {data.summary && <TopicSummary text={data.summary} wikipediaTitle={data.wikipediaTitle} />}
+          <NewsLeftOut events={data.events} leftOut={data.newsLeftOut} priced={data.prices.length > 1} />
           {/* Rendered without prices too: the explorer says the chart is missing (NC-103). */}
           <CompanyExplorer
             prices={data.prices}

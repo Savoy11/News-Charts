@@ -984,6 +984,59 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 35: a page's news, bounded under the cache limit (2026-10-22)
+
+Batch 23 left this open: "the timeline entry still grows with stored news, and nothing bounds it."
+Next caches no entry over 2 MB, and a company page is one entry for its timeline. About 1,200 more
+stories would take JPMorgan's page over it, and GDELT is asked every hour for its newest hundred,
+so a heavily covered company could get there within days. Past it, every view rebuilds the page
+from the database, and the visitor downloads all of it.
+
+`npm run check` passes (40 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` passes
+(203/203) against the demo database: the note shows on no demo page, since none holds that much
+news. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **News fills the room the rest of a page leaves** (`lib/pageNews.ts`, `boundPageNews`).
+      Every filing, earnings release, recall and other record stays; only news is left out, and
+      only when it would take the page's cached entry over budget. The room goes in two halves:
+      - **The newest stories take the first half**, so a page read today carries today's news.
+      - **The past takes the rest a round at a time:** the strongest story of each day, then each
+        day's second, and so on. In every round the days the price moved most come first, so when
+        the room runs out, the stories kept are the ones beside the moves a reader came to explain.
+      - **On a day,** a story whose headline scoring named the company comes before an unscored
+        one.
+      - Done when the page is read: the database keeps every story. Topic pages are bounded the
+        same way, their prices counted since a topic's prices share its cached entry.
+- [x] **Weighed the way Next weighs it.** `unstable_cache` stores a page as a JSON string inside a
+      JSON entry and compares that outer JSON's length with 2 × 1024 × 1024
+      (`next/dist/server/lib/incremental-cache`), so every quote in a page counts twice. Batch 23
+      measured plain JSON, which reads 10–15% light: JPMorgan's timeline entry is 1.34 MB plain and
+      1.48 MB as Next measures it, its prices 0.66 and 0.75 MB. Both were under the limit, with less
+      room than recorded. The budget is 1.8 MB as Next measures, leaving room for the entry's own
+      fields.
+- [x] **Measured on JPMorgan's real data**, ingested into a scratch database (8,369 EDGAR rows,
+      11,746 daily closes, 75 GDELT and 15 Yahoo stories), with 3,000 stand-in stories added to stand
+      for a few days of hourly runs. The site was built and JPMorgan's page opened three times on
+      each side:
+      - **Main's code:** the entry weighs 3.16 MB, and Next refused to cache it on every view ("items
+        over 2MB can not be cached (3162145 bytes)"). Each view took 0.93–1.35 s and sent 13.3 MB.
+      - **This batch:** 1.80 MB and no refusal. It keeps 659 of the 3,090 stories: all 198 since
+        June, today's included, and one story on each of 461 earlier days. Repeat views took
+        0.45–0.51 s and sent 7.1 MB.
+- [x] **The page says so** (`components/NewsLeftOut.tsx`): "Showing 659 of the 3,090 news stories
+      stored for this page, so it stays quick to load: the newest, then the strongest of the days the
+      price moved most. Every filing and other record is here." A page that leaves nothing out says
+      nothing.
+- [ ] **Open:** the page a visitor downloads is still 7.1 MB for JPMorgan: the rendered event list
+      and the data it is rendered from, prices included. The cache budget does not reach that;
+      paging the event list would. And how soon a real page reaches the budget is unknown until
+      the hourly refresh runs in production.
+- Checks: new `check:page-news` (21), wired after `check:short-names`. On main's code it cannot
+  load (`lib/pageNews.ts` does not exist). It pins how Next measures an entry, read from
+  `node_modules`, so an upgrade that changes the measurement fails the check rather than the cache.
+  `check:macro`'s pattern for a company page's events follows the new call; what it holds, that
+  the economy rows stay a field of their own, is unchanged.
+
 ## NC ledger — batch 34: short names claim news, and go to GDELT bare (2026-10-22)
 
 The owner answered batch 33's two questions with yes ("shorter names work fine"): a company's own
@@ -1805,9 +1858,11 @@ throttling this cloud session), 1 skipped (needs an Etherscan key). HawkScan cou
         JPM 4.20 → 1.89 MB, C 3.54 → 1.66, BAC 3.03 → 1.70, WFC 2.48 → 1.79, MS 3.01 → 1.16 and
         GS 3.19 → 1.17. Each is split into a timeline entry and a prices entry, both now well
         under the limit.
-      - [ ] **Open:** the timeline entry still grows with stored news, and nothing bounds it.
+      - [x] **Open:** the timeline entry still grows with stored news, and nothing bounds it.
             JPMorgan's is about 1.2 MB before any news row. Cap or page what a company page
-            carries before a heavy page's timeline approaches 2 MB.
+            carries before a heavy page's timeline approaches 2 MB. ✅ **Built in batch 35**
+            (`lib/pageNews.ts`): news fills the room the rest leaves, under a 1.8 MB budget
+            measured the way Next measures.
 - [x] **Audit #5 (`P2`): the privacy draft said per-IP counts "disappear within an hour"; they
       stayed until 10,000 clients piled up.** On a quiet site an IP address, and in the Federal
       Register limiter the search terms it sent, stayed in memory until a restart.

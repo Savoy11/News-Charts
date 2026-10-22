@@ -15,7 +15,9 @@ export type EventType =
   /** a reported security incident against a protocol — someone else's finding, attributed */
   | "exploit"
   /** economy-wide: a Fed policy statement or a CPI release — never about one company (lib/macro.ts) */
-  | "macro";
+  | "macro"
+  /** a vehicle safety recall the company filed with NHTSA (lib/recalls.ts) */
+  | "recall";
 
 /** Matches the date_precision enum in the database. */
 export type DatePrecision = "day" | "month" | "year";
@@ -44,7 +46,8 @@ export type SourceKey =
   | "snapshot"
   | "defillama"
   | "fed_fomc"
-  | "bls_cpi";
+  | "bls_cpi"
+  | "nhtsa_recalls";
 
 export interface TimelineEvent {
   id: string;

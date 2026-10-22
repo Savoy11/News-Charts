@@ -1,6 +1,6 @@
 # Coverage map — how far back a timeline can actually go
 
-**Last updated:** 2026-10-17 · 19 sources (11 on the ingest path; the 8 keyed ones are held back by their licences)
+**Last updated:** 2026-10-22 · 22 sources (14 on the ingest path; the 8 keyed ones are held back by their licences)
 
 The single question this answers: *given a subject, what is the earliest event News Charts could
 plausibly show, and which source would supply it?*
@@ -25,6 +25,7 @@ because it will be trusted.
 | **any** | Wikipedia citations | as far as the references go | Dated external articles |
 | **any** | Internet Archive | 1780 for companies (a bound on impossibility); topics effectively none | Catalogued items: reports, catalogues, film — relevance-ranked |
 | **1934 – now** | SEC EDGAR | electronic filings from ~1993 | Filings, earnings |
+| **1966 – now** | NHTSA vehicle recalls | 1966, the first campaigns | Safety recalls of 10,000 vehicles or more, for the vehicle and tyre makers `lib/recalls.ts` maps (Ford, GM, Stellantis from 2014, Toyota, Honda, Tesla, Harley-Davidson, PACCAR and others) |
 | **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |
 | **2008 – now** | BLS CPI release archive | February 2008, the oldest archived release | Monthly CPI releases — on company pages behind the Economy chip, off by default |
 | **1999 – now** | The Guardian Open Platform | 1999 | Articles — only with a visitor's own key, in their browser; never stored |
@@ -84,6 +85,9 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   America stops around 1963 (copyright, not interest), GDELT starts in 2017, and the keyed
   aggregators only carry recent weeks. A subject whose most interesting decades sit in that
   window will look sparser than it was. **This is the single biggest hole in the corpus.**
+  For vehicle makers it is partly filled: NHTSA recalls reach back to 1966 (Ford has 861 of 10,000
+  vehicles or more), the one free source found for that stretch that may be used commercially
+  (`docs/proposals/2026-10-22-news-sources.md`).
 - **The keyed aggregators are not ingested.** Their free tiers bar commercial use, so the
   adapters exist for diagnostics only. Even licensed, they are days-to-weeks deep: breadth for the
   present, never depth for the past.
@@ -106,6 +110,7 @@ windows — update both together.
 | Chronicling America | No published cap | 503s under load are routine |
 | Wikipedia | No hard cap | The User-Agent policy is the real obligation |
 | Federal Register | No published cap | Generous in practice; visitor terms are capped per client (15 new terms/hour) |
+| NHTSA recalls | No published cap without an app token | One request a day per mapped vehicle maker |
 | Federal Reserve, BLS | No published cap | One page each a day; the FOMC history (~27 year pages, 1 s apart) is read once. bls.gov refuses requests without a contact `User-Agent` |
 | Yahoo Finance (RSS and chart) | Undocumented | Unofficial — the licence question is the risk, not the quota |
 | Internet Archive, Snapshot, DefiLlama | No published cap | Keyless; asked on 12–24 h windows |

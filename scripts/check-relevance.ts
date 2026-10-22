@@ -149,7 +149,7 @@ console.log("\nNothing falls through by accident");
 const ALL: EventType[] = [
   "news", "filing", "earnings", "history", "press",
   "regulation", "citation", "corporate_action", "onchain", "annotation",
-  "governance", "exploit", "macro",
+  "governance", "exploit", "macro", "recall",
 ];
 const toModel = ALL.filter((k) => score(k) === null);
 check(

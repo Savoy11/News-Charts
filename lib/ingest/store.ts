@@ -255,6 +255,19 @@ export const SOURCES: {
     reviewedOn: "2026-10-20",
     notes: "Consumer Price Index release dates since 2008; refuses requests without a contact User-Agent (NC-080)",
   },
+  {
+    id: 22,
+    key: "nhtsa_recalls",
+    name: "NHTSA vehicle recalls",
+    license: "public domain",
+    attribution: "National Highway Traffic Safety Administration, U.S. Department of Transportation",
+    // "Public Domain U.S. Government" in the dataset's own licence field (data.transportation.gov,
+    // 6axg-epim); the federal data catalog lists the recalls file as us-pd. Used: the campaign's
+    // date, subject line, vehicle count, defect summary and a link to NHTSA's page for it.
+    commercialOk: true,
+    reviewedOn: "2026-10-22",
+    notes: "recall campaigns since 1966 for the vehicle makers lib/recalls.ts maps; no key (batch 30)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

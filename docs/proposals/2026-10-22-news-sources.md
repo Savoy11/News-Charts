@@ -26,7 +26,9 @@ Mark each candidate `APPROVED`, `REJECTED` or `DEFERRED`. Only an approved one g
 
 ## 1. NHTSA vehicle recalls — 1966 to today, public domain · recommended first
 
-**Status:** awaiting the owner
+**Status:** APPROVED — by the owner, 2026-10-22, and built in batch 30 (`lib/recalls.ts`). It reads
+the Transportation Department's open-data copy of the same records (one row per recall, with a
+subject line), not the flat files below.
 
 - **What it is:** every safety recall campaign filed with the National Highway Traffic Safety
   Administration since 1966: the maker, the date the defect report arrived, the component, the

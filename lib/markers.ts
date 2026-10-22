@@ -34,6 +34,9 @@ export const MARKER_STYLE = {
   // emerald, below the bar with the other scheduled facts: a Fed statement or a CPI release is a
   // date on the calendar, and it is the backdrop to the move rather than the company's own news
   macro: { color: "#34d399", position: "belowBar", shape: "square", text: "" },
+  // yellow, below the bar and pointing down like an exploit, with its own letter: a recall is bad
+  // news the company itself reported, and it should be findable without the legend
+  recall: { color: "#facc15", position: "belowBar", shape: "arrowDown", text: "R" },
 } as const;
 
 /** Which kind wins when several share a day — the market-moving ones first. */
@@ -57,6 +60,8 @@ export const PRIORITY: Record<EventType, number> = {
   // anything the company itself did that day is the story; the economy is the backdrop, and the
   // hover still lists it under the winning glyph
   macro: 0,
+  // the company's own report of a defect, at least 10,000 vehicles: with earnings, the day's story
+  recall: 3,
 };
 
 /** Snap an event date to the nearest trading day at or before it (weekends/holidays have no bar). */

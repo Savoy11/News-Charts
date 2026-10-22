@@ -36,6 +36,7 @@ import { fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { FR_COMPANY_SINCE, fetchCompanyRegulations, frSearchTerm } from "../lib/frCompany";
+import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
 import { MACRO_SUBJECT, fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
@@ -67,6 +68,8 @@ export const COMPANY_SOURCES = [
   "sec_edgar",
   // documents whose title names the company — not the sector's keyword rules (2026-10-17 proposal 4)
   "federal_register",
+  // safety recalls, asked only for the vehicle makers lib/recalls.ts maps (batch 30)
+  "nhtsa_recalls",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -464,6 +467,17 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   await run("federal_register", frSearchTerm(company.name, alsoKnownAs), () =>
     fetchCompanyRegulations(company.name, FR_COMPANY_SINCE, alsoKnownAs)
   );
+
+  /**
+   * Vehicle safety recalls the company filed with NHTSA, back to 1966 — the one source that reaches
+   * into the years between the old newspapers and GDELT (batch 30). Only for the makers
+   * lib/recalls.ts maps by hand: the dataset names a maker, never a listed company, and a name
+   * match would hand Chrysler's 1970s recalls to Stellantis.
+   */
+  const makers = recallMakersFor(company.cik);
+  if (makers) {
+    await run("nhtsa_recalls", `${makers.map((m) => m.name).join(" | ")} ≥${RECALL_FLOOR} vehicles`, () => fetchRecalls(company.cik));
+  }
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
   // headline that says "Ford" — the common name is the query, exactly as the comment above

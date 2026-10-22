@@ -256,6 +256,11 @@ export function deterministicScore(
     // they are about by construction; no company is ever their subject.
     case "macro":
       return { score: 1, reason: "a Fed decision or CPI release, held by the economy subject" };
+
+    // Filed with NHTSA by a maker the company owned on that day, checked by hand (lib/recalls.ts)
+    // and matched by the maker's exact name: about the company by construction, as a filing is.
+    case "recall":
+      return { score: 1, reason: "a recall filed by the company's own vehicle maker" };
   }
 }
 

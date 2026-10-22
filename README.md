@@ -79,6 +79,17 @@ page gets Google LLC's FTC orders; a one-word other name needs its company word 
 sector is listed once on the company's page. These are scored without the model: the title
 naming the company is the evidence.
 
+### Vehicle recalls (`lib/recalls.ts`)
+
+A carmaker's page carries the safety recalls it filed with NHTSA, back to 1966 — the one free
+source found that reaches into the years between the old newspapers and GDELT and may be used
+commercially. Only recalls of 10,000 vehicles or more are kept (Ford: 861 of 1,754). The dataset
+names a maker, never a listed company, and files every recall under the maker's *current* name, so
+`RECALL_MAKERS` maps makers to companies by hand, each with the day it became that company's:
+"Chrysler (FCA US, LLC)" counts for Stellantis from 2014-10-12, when today's Stellantis N.V. (then
+FCA N.V.) became Chrysler's parent, and "General Motors, LLC" counts for GM back to 1966 because
+today's GM carries old GM's ticker. Scored without the model, as a filing is.
+
 ### Source planning (`lib/enrich/plan.ts`)
 
 ```
@@ -523,6 +534,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Federal Register | Sector-level rules and notices; documents naming a company | Keyword hits attach to industries; a title naming the company, or one of its own other names ("Google LLC"), attaches to it (no airworthiness directives) |
 | Federal Reserve | FOMC policy statements since 1994 | Economy subject; on company pages behind the Economy chip (off by default). `npm run ingest -- --macro` |
 | BLS | CPI release dates since 2008 | Same subject and chip; needs a contact `User-Agent` |
+| NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966 | Recalls of 10,000 vehicles or more, only for the vehicle and tyre makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014). Public domain; no key |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |

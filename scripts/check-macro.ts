@@ -138,7 +138,7 @@ async function main(): Promise<void> {
     const s = SOURCES.find((x) => x.key === key);
     check(`${key}: public domain, commercial use allowed, reviewed`, s?.license === "public domain" && s.commercialOk === true && /^\d{4}-\d{2}-\d{2}$/.test(s.reviewedOn));
   }
-  check("the database knows the kind", /ADD VALUE IF NOT EXISTS 'macro'/.test(read("db/027_macro_kind.sql")) && /'exploit','macro'\)/.test(read("docs/EVENTS-SCHEMA.md")) && /'macro'/.test(read("db/001_init.sql")));
+  check("the database knows the kind", /ADD VALUE IF NOT EXISTS 'macro'/.test(read("db/027_macro_kind.sql")) && /'exploit','macro'[,)]/.test(read("docs/EVENTS-SCHEMA.md")) && /'macro'/.test(read("db/001_init.sql")));
   check("the chart has a marker for it", MARKER_STYLE.macro?.color === "#34d399");
 
   console.log("\nOn a company page: there when asked for, never the company's own");

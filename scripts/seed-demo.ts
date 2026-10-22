@@ -18,6 +18,7 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 import { getPool, configProblem } from "../lib/db";
+import { recallEvents, recallMakersFor } from "../lib/recalls";
 import {
   ensureSources,
   emptyStats,
@@ -221,6 +222,16 @@ const FORD_NEWS: Seed[] = [
   externalId: `news-ford-${date}-${outlet}`,
 }));
 
+// Two real recalls Ford filed with NHTSA (data.transportation.gov, read 2026-10-22), through the
+// parser ingest uses, so a carmaker's page shows its Recalls chip without a network.
+const FORD_RECALLS: TimelineEvent[] = recallEvents(
+  [
+    {"nhtsa_id": "26V104000", "report_received_date": "2026-02-20T00:00:00.000", "manufacturer": "Ford Motor Company", "subject": "Trailer Lighting and Brakes May Not Function/FMVSS 108", "component": "ELECTRICAL SYSTEM", "recall_type": "Vehicle", "potentially_affected": "4381878", "defect_summary": "Ford Motor Company (Ford) is recalling certain 2021-2026 F-150, 2022-2026 F-250 SD, F-350 SD, F-450 SD, F-550 SD, Maverick, 2024-2026 Ranger, 2023-2026 F-600 SD, 2022-2027 Lincoln Navigator, Expedition, and 2026 E-Transit vehicles. When towing a trailer, the integrated trailer module (ITRM) may lose"},
+    {"nhtsa_id": "25V572000", "report_received_date": "2025-09-04T00:00:00.000", "manufacturer": "Ford Motor Company", "subject": "Blank or Distorted Rearview Camera Image", "component": "BACK OVER PREVENTION", "recall_type": "Vehicle", "potentially_affected": "1456417", "defect_summary": "Ford Motor Company (Ford) is recalling certain 2015-2019 Lincoln MKC, Mustang, F-350 SD, F-250 SD, F-450 SD, 2015-2017 Lincoln Navigator, Expedition, 2015-2018 Edge, Transit Connect, 2016-2019 F-550 SD, Transit, 2017-2019 Econoline, and 2019 Ranger vehicles. The rearview camera may display a distort"},
+  ],
+  recallMakersFor(37996) ?? []
+);
+
 // Quarterly dividends plus one split. The split matters most: our series is split-adjusted,
 // so the line does not step and the marker is the only thing that says it happened.
 const FORD_ACTIONS: Seed[] = [
@@ -395,6 +406,7 @@ async function main(): Promise<void> {
       ...FORD_EARNINGS,
       ...FORD_NEWS,
       ...FORD_ACTIONS,
+      ...FORD_RECALLS,
     ];
     await client.query("BEGIN");
     for (const e of fordEvents) await upsertEvent(client, ev(e, "f"), fordId, stats);

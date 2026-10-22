@@ -984,6 +984,74 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 30: vehicle recalls on carmakers' pages (2026-10-22)
+
+The owner chose this next, approving the first candidate on batch 29's shortlist (NC-095): the
+safety recalls a carmaker filed with NHTSA, back to 1966. It is the one free source found that
+reaches into the 1963–2017 stretch and may be used commercially, though for one industry only.
+
+`npm run check` passes (37 suites) and `npm run lint` is clean. `next build` compiles. `check:ui` is
+199/199 on a production build, run against a fresh demo database: the real Ford ingest below had
+replaced the demo Ford the browser checks are written against. `check:live` is 17 pass, 0 fail,
+2 unreachable (GDELT and Wikipedia refusing this session), 1 skipped (needs an Etherscan key); the
+new NHTSA case passes live. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **A carmaker's page carries its recalls** (`lib/recalls.ts`). They are read from the
+      Transportation Department's open-data copy of NHTSA's recall database: one request per
+      company, no key, public domain ("Public Domain U.S. Government" in the dataset's own licence
+      field). Each recall is its own event kind, `recall` (`db/028_recall_kind.sql`), with a
+      yellow "Recall" badge, a Recalls chip that is on by default and a yellow "R" arrow on the
+      chart. The chip shows only on a company that has recalls.
+      - Only recalls of **10,000 vehicles or more** are kept. Measured: Ford has 1,754 recalls and
+        861 at that size, GM 1,724 and 756, Honda 478 and 247. At 100,000 a smaller maker would
+        show almost nothing (Winnebago, Blue Bird and Polaris none at all).
+      - Titles read as "Recall of 1,100,000 vehicles: Fuel tank strap corrosion". The subject line
+        is tidied by era. The 1960s rows carry NHTSA's part code ("BRAKES:HYDRAULIC:POWER
+        ASSIST:BOOSTER" → "Brakes: hydraulic, power assist, booster"), and a code cut at 50
+        characters gives way to the part's plain name ("Seat belts"). The middle years are in
+        capitals and open with the maker's own name ("FORD/FUEL TANK CRACKS" → "Fuel tank
+        cracks"), while safety-standard numbers and acronyms keep their capitals ("FMVSS 301",
+        "ABS"). Recent subject lines are left as written, with the summary.
+      - Each recall links to NHTSA's page for it and is one event however often it is read (its
+        campaign number). It is scored without the model, as a filing is.
+- [x] **The map from makers to listed companies is written by hand** (`RECALL_MAKERS`, 19
+      companies). The dataset names a maker, never a listed company, and files every recall under
+      the maker's *current* name. So "Chrysler (FCA US, LLC)" carries Chrysler's recalls back to
+      1966, and "General Motors, LLC" old GM's.
+      - It follows the rule news names follow: a company's own history and a predecessor whose
+        ticker it carries count, and an acquisition's past never does. GM keeps old GM's recalls
+        (it carries old GM's ticker). Chrysler and Maserati count for Stellantis only from
+        2014-10-12, when FCA N.V., today's Stellantis N.V., became their parent. Indian counts for
+        Polaris from its 2011 purchase.
+      - Every recall is checked against the map again after it arrives, so the rule holds whatever
+        the dataset answers.
+      - Mapped: Ford, GM, Stellantis, Toyota, Honda, Tesla, Harley-Davidson, LiveWire, PACCAR (with
+        Peterbilt), Polaris (with Indian), Goodyear, Winnebago, Blue Bird, Ferrari, Cummins, Thor
+        (Thor Motor Coach and Airstream), Wabash, Rivian and Lucid.
+- [x] **Measured live** on 2026-10-22: Ford 861 recalls from 1966-10-06, GM 756 from 1966-01-19,
+      Stellantis 269 from 2014-10-14, Polaris 14, Winnebago 8. A real `npm run ingest -- --ticker
+      F` stored Ford's 861, all scored 1 without the model. Apple's ingest made no recall request.
+      Ford's cached page entry came to 1.09 MB with them, inside Next's 2 MB limit (audit
+      2026-10-21 #4).
+- [ ] **Open — not mapped yet:** makers bought by a mapped company whose purchase date needs
+      checking before their recalls can be dated: Thor's Keystone, Jayco, Heartland and Tiffin;
+      Winnebago's Grand Design and Newmar; Oshkosh's Pierce; REV Group's brands. Also Shyft Group:
+      its records start in 1973, two years before Spartan Motors was founded, so they mix in a
+      company it bought. Carmakers with no SEC listing (Volkswagen, BMW, Mercedes-Benz, Nissan,
+      Hyundai) have no page to carry theirs.
+- Checks: `check:vehicle-recalls` 35 (new, in the chain, so 37 suites), `check:ui` +4, `check:live`
+  +1, and the new kind in `check:relevance`'s list.
+  - Real rows from the dataset (`scripts/fixtures/nhtsa-recalls.json`) for every era of subject
+    line, both sides of Stellantis's boundary (a Chrysler recall four days before it is refused),
+    a recall under the floor, another maker's recall, a tyre and an equipment recall.
+  - The map against the committed EDGAR index, one request per company, the dataset's errors
+    reported as errors, and the registration, scoring, chip, migration and credits.
+  - Against main's code the new suite cannot run at all (`lib/recalls.ts` does not exist), and
+    the new `check:ui` cases skip, saying why: there is no Recalls chip.
+  - The demo seed carries two real Ford recalls through the same parser, so `check:ui` sees the
+    chip without a network. `check:macro`'s schema check no longer assumes `macro` is the last
+    kind.
+
 ## NC ledger — batch 29: a new news source, researched and measured (2026-10-22)
 
 The owner chose this next (NC-095): find a free news source, test what it returns for a few
@@ -1015,10 +1083,12 @@ Nothing was built, so no check changed; `npm run check` passes (36 suites).
 - [x] **Not shortlisted:** SEC enforcement releases (the search ignores its term; the latest page
       named only individuals and small firms) and GDELT's television archive (caption terms not
       found; GDELT refuses this session).
-- [ ] **Open — the owner's pick:** mark each candidate in the note `APPROVED`, `REJECTED` or
+- [x] **Open — the owner's pick:** mark each candidate in the note `APPROVED`, `REJECTED` or
       `DEFERRED`. NC-095 stays open until then. Building the first approved one is its own batch,
       with the usual checks: an adapter, a `SOURCES` entry with its licence, and a checked map from
-      each source's company names to listed companies.
+      each source's company names to listed companies. ✅ **Settled 2026-10-22:** the owner picked
+      NHTSA vehicle recalls, built in batch 30 (above), which closes NC-095. The other three wait
+      in the note, unmarked.
 
 ## NC ledger — batch 28: the names audit, fixed (2026-10-22)
 
@@ -3914,7 +3984,7 @@ look like") went to a **separate business checklist** worked independently of bo
       obligation that disappears at a narrow viewport is not met. Wikipedia's credit no longer
       truncates; public-domain and open-data credit still does, because there it is accuracy
       rather than a condition. `check:ui` asserts both.
-- [ ] `P2` **Research more news repositories.** Feeds the article-resurfacing initiative.
+- [x] `P2` **Research more news repositories.** Feeds the article-resurfacing initiative. ✅ **Done 2026-10-22:** shortlisted in batch 29, and the owner's pick, NHTSA vehicle recalls, built in batch 30.
       - **Correction 2026-08-12: the Internet Archive adapter this entry called "the top unbuilt
         candidate" has been built for some time.** `lib/archive.ts` holds both halves
         (advancedsearch items, Wayback CDX snapshots), `internet_archive` is in `SOURCES`,
@@ -3925,7 +3995,8 @@ look like") went to a **separate business checklist** worked independently of bo
         Justice Department press releases (2009 on), FDA enforcement reports (2012 on) and CPSC
         product recalls (1973 on), all public domain and measured live, in
         [`docs/proposals/2026-10-22-news-sources.md`](proposals/2026-10-22-news-sources.md).
-        Waiting on the owner's pick.
+        The owner picked NHTSA vehicle recalls; built in batch 30 (`lib/recalls.ts`). The other
+        three wait in the note.
 - [x] **The Internet Archive adapter, exercised against the live service for the first time.**
       Done 2026-08-12. Its header warned that every payload shape came from documentation and had
       never met the real server; egress reaches `archive.org` from the build container now, so it

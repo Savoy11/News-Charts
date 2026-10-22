@@ -32,6 +32,7 @@ const LEGEND_LABEL: Record<EventType, string> = {
   governance: "Governance vote",
   exploit: "Exploit",
   macro: "Fed & inflation",
+  recall: "Vehicle recall",
 };
 
 interface Props {

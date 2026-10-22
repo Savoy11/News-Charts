@@ -1,0 +1,134 @@
+[
+ {
+  "nhtsa_id": "66V004002",
+  "report_received_date": "1966-10-06T00:00:00.000",
+  "manufacturer": "Ford Motor Company",
+  "subject": "INTERIOR SYSTEMS:RESTRAINT:BELT ANCHOR AND ATTACHM",
+  "component": "SEAT BELTS",
+  "recall_type": "Vehicle",
+  "potentially_affected": "65000"
+ },
+ {
+  "nhtsa_id": "66V012000",
+  "report_received_date": "1966-10-18T00:00:00.000",
+  "manufacturer": "Ford Motor Company",
+  "subject": "FUEL:THROTTLE LINKAGES AND CONTROL",
+  "recall_type": "Vehicle",
+  "potentially_affected": "47300"
+ },
+ {
+  "nhtsa_id": "67V018000",
+  "report_received_date": "1967-02-23T00:00:00.000",
+  "manufacturer": "Ford Motor Company",
+  "subject": "BRAKES:HYDRAULIC:POWER ASSIST:BOOSTER",
+  "component": "SERVICE BRAKES, HYDRAULIC",
+  "recall_type": "Vehicle",
+  "potentially_affected": "217000"
+ },
+ {
+  "nhtsa_id": "11V385000",
+  "report_received_date": "2011-07-29T00:00:00.000",
+  "manufacturer": "Ford Motor Company",
+  "subject": "FUEL TANK STRAP CORROSION",
+  "component": "FUEL SYSTEM, GASOLINE",
+  "recall_type": "Vehicle",
+  "potentially_affected": "1100000",
+  "defect_summary": "FORD IS RECALLING CERTAIN 1997 THROUGH 2003 MODEL YEAR FORD F-150, 2004 MODEL YEAR FORD F-150 HERITAGE, 1997 THROUGH 1999 MODEL YEAR F-250 LESS THAN 8,500 LBS. GROSS VEHICLE WEIGHT RATING (GVWR), AND 2002 AND 2003 LINCOLN BLACKWOOD VEHICLES MANUFACTURED FROM JUNE 20, 1995, THROUGH AUGUST 4, 2004, ORIGINALLY SOLD, OR CURRENTLY REGISTERED IN, CONNECTICUT, DELAWARE, ILLINOIS, INDIANA, IOWA, KENTUCKY, MAINE, MARYLAND, MASSACHUSETTS, MICHIGAN, MINNESOTA, MISSOURI, NEW HAMPSHIRE, NEW JERSEY, NEW YORK, OHIO, PENNSYLVANIA, RHODE ISLAND, VERMONT, WEST VIRGINIA, WISCONSIN, AND THE DISTRICT OF COLUMBIA.  PROLONGED EXPOSURE TO ROAD DEICING CHEMICALS MAY CAUSE SEVERE CORROSION OF THE FUEL TANK STRAPS WHICH SECURE THE TANK TO THE VEHICLE."
+ },
+ {
+  "nhtsa_id": "70T004000",
+  "report_received_date": "1970-07-09T00:00:00.000",
+  "manufacturer": "Goodyear Tire & Rubber Company",
+  "subject": "TIRES:TREAD",
+  "component": "TIRES",
+  "recall_type": "Tire",
+  "potentially_affected": "10000"
+ },
+ {
+  "nhtsa_id": "96V007000",
+  "report_received_date": "1996-01-16T00:00:00.000",
+  "manufacturer": "Ford Motor Company",
+  "subject": "FORD/AIR CONDITIONER:CLIMATE CONTROL MODULE",
+  "component": "EQUIPMENT",
+  "recall_type": "Vehicle",
+  "potentially_affected": "10600",
+  "defect_summary": "UNDER CERTAIN CONDITIONS, THE CLIMATE CONTROL BLOWER DOES NOT OPERATE AS INTENDED. THE BLOWER COULD (1) STICK ON \"HIGH;\" (2) OPERATE ERRATICALLY WITH BLOWER OUTPUT VARYING BETWEEN NO BLOWER AND MAXIMUM BLOWER; OR (3) NOT OPERATE AT ALL DUE TO MALFUNCTION OF THE TEMPERATURE CONTROL MODULE."
+ },
+ {
+  "nhtsa_id": "96V234000",
+  "report_received_date": "1996-11-14T00:00:00.000",
+  "manufacturer": "General Motors, LLC",
+  "subject": "GM/FMVSS 301",
+  "component": "FUEL SYSTEM, GASOLINE",
+  "recall_type": "Vehicle",
+  "potentially_affected": "432183",
+  "defect_summary": "VEHICLE DESCRIPTION:  4-DOOR, 4-WHEEL DRIVE AND ALL-WHEEL DRIVE MULTI-PURPOSE PASSENGER VEHICLES.  DURING DEVELOPMENT TESTING, THE PROP SHAFT CONTACTED THE INBOARD SIDE OF THE FUEL TANK ALLOWING FUEL LEAKAGE.  THIS LEAKAGE WAS IN EXCESS OF THE AMOUNT PERMITTED BY FMVSS 301, \"FUEL SYSTEM INTEGRITY.\""
+ },
+ {
+  "nhtsa_id": "26V653000",
+  "report_received_date": "2026-10-06T00:00:00.000",
+  "manufacturer": "Ford Motor Company",
+  "subject": "Inaccurate Speedometer and Tachometer Display/FMVSS 101",
+  "component": "ELECTRICAL SYSTEM",
+  "recall_type": "Vehicle",
+  "potentially_affected": "102159",
+  "defect_summary": "Ford Motor Company (Ford) is recalling certain 2025-2026 F-250 SD, F-350 SD, F-450 SD, F-550 SD, F-600, 2026 F-150, and F-750 SD vehicles. The analog cluster’s tachometer and speedometer may become stuck or move erratically, providing inaccurate readings to the driver. As such, these vehicles fail to comply with the requirements of Federal Motor Vehicle Safety Standard (FMVSS) Number 101, \"Controls and Displays.\""
+ },
+ {
+  "nhtsa_id": "26V655000",
+  "report_received_date": "2026-10-06T00:00:00.000",
+  "manufacturer": "Ford Motor Company",
+  "subject": "Front Row Seats Improperly Secured",
+  "recall_type": "Vehicle",
+  "potentially_affected": "2276",
+  "defect_summary": "Ford Motor Company (Ford) is recalling certain 2025-2027 F-150 vehicles. The front seats may have been improperly secured to the vehicle."
+ },
+ {
+  "nhtsa_id": "14V631000",
+  "report_received_date": "2014-10-08T00:00:00.000",
+  "manufacturer": "Chrysler (FCA US, LLC)",
+  "subject": "Potential for Fire in Heated Exterior Mirror",
+  "recall_type": "Vehicle",
+  "potentially_affected": "313772",
+  "defect_summary": "Chrysler Group LLC (Chrysler) is recalling certain model year 2011-2013 Jeep Wrangler vehicles manufactured February 16, 2010, to July 19, 2013.  Corrosion in the exterior heated power mirror electrical connector may result in an electrical short."
+ },
+ {
+  "nhtsa_id": "14V643000",
+  "report_received_date": "2014-10-14T00:00:00.000",
+  "manufacturer": "Chrysler (FCA US, LLC)",
+  "subject": "Air Bags/Seat Belt Pretensioners may be Disabled",
+  "recall_type": "Vehicle",
+  "potentially_affected": "126532",
+  "defect_summary": "Chrysler Group LLC (Chrysler) is recalling certain model year 2014 Dodge Durango vehicles manufactured June 2, 2013, to June 28, 2014, and 2014 Jeep Grand Cherokee vehicles manufactured October 30, 2012, to April 30, 2014.  Due to a fault within the Occupant Restraint Control (OCR) module, the frontal air bags, seat belt pretensioners, and side air bags may be disabled.  The malfunction indicator light MIL should illuminate to initially warn drivers of a failure."
+ },
+ {
+  "nhtsa_id": "24V069000",
+  "report_received_date": "2024-02-02T00:00:00.000",
+  "manufacturer": "Indian Motorcycle Company",
+  "subject": "Brake Lights May Illuminate Unexpectedly/FMVSS 108",
+  "component": "EXTERIOR LIGHTING",
+  "recall_type": "Vehicle",
+  "potentially_affected": "11648",
+  "defect_summary": "Indian Motorcycle Company (Indian) is recalling certain 2020-2022 Challenger, Challenger Dark Horse, Challenger Limited, 2022 Challenger Dark Horse Icon, Challenger Elite, FTR 1200, FTR 1200 Rally, FTR 1200 S, FTR 1200 R Carbon, Pursuit Dark Horse, Challenger JD Limited Edition, Pursuit Limited Icon, Pursuit Dark Horse Premium, Pursuit Limited, Pursuit Limited Premium, 2019-2020 FTR 1200 S, FTR 1200, and 2020 FTR 1200 Rally motorcycles.  The brake lights may illuminate unexpectedly and without brake application from the rider.  As such, these motorcycles fail to comply with the requirements of Federal Motor Vehicle Safety Standard number 108, \"Lamps, Reflective Devices, and Associated Equipment.\""
+ },
+ {
+  "nhtsa_id": "26V630000",
+  "report_received_date": "2026-09-30T00:00:00.000",
+  "manufacturer": "Volkswagen Group of America, Inc.",
+  "subject": "High Voltage Battery May Catch Fire",
+  "component": "ELECTRICAL SYSTEM",
+  "recall_type": "Vehicle",
+  "potentially_affected": "22524",
+  "defect_summary": "Volkswagen Group of America, Inc. (Volkswagen) is recalling certain 2023-2026 ID.4 vehicles. The high voltage battery may fail and lead to a vehicle fire."
+ },
+ {
+  "nhtsa_id": "90E043001",
+  "report_received_date": "1990-10-30T00:00:00.000",
+  "manufacturer": "Ford Motor Company",
+  "subject": "INTERIOR SYSTEMS:PASSIVE RESTRAINT:AIR BAG:DRIVER",
+  "component": "AIR BAGS",
+  "recall_type": "Equipment",
+  "potentially_affected": "172000",
+  "defect_summary": "THREADED INFLATOR COMPONENTS MAY HAVE BEEN DAMAGED DURING ASSEMBLY WHICH MAY ALLOW COMPONENTS TO SEPARATE WHEN INFLATOR RECEIVES A SIGNAL TO DEPLOY THE AIR BAG."
+ }
+]

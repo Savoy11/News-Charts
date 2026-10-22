@@ -38,6 +38,7 @@ import {
 import { fetchDailyPrices } from "../lib/prices";
 import { fetchRegulations } from "../lib/federalregister";
 import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
+import { fetchRecalls } from "../lib/recalls";
 import { FR_COMPANY_CAP, FR_COMPANY_SINCE, fetchCompanyRegulations, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
 import { WikipediaUnavailable, getTopicTimeline, wikiOutcome } from "../lib/wiki";
 import { fetchNews } from "../lib/news";
@@ -379,6 +380,26 @@ export const CASES: LiveCase[] = [
       else if (!/January 2024/.test(jan2024.title)) out.push(`2024-02-13 named "${jan2024.title}", not January 2024`);
       const newest = r.events.at(-1)?.date;
       if (newest && daysAgo(newest) > 45) out.push(`newest release ${newest} — expected within the last month or so`);
+      return out;
+    },
+  },
+  {
+    name: "NHTSA — Ford's recalls back to 1966, Stellantis's only from 2014",
+    covers: ["nhtsa_recalls"],
+    hosts: ["data.transportation.gov"],
+    async run() {
+      const ford = await fetchRecalls(37996);
+      const out = [...outcomeProblems(ford.outcome, ford.detail), ...eventProblems(ford.events, 800)];
+      const first = ford.events.map((e) => e.date).sort()[0];
+      if (first && first > "1967-01-01") out.push(`Ford's earliest recall is ${first}, expected 1966`);
+      // the 2011 F-150 fuel-tank strap recall: 1.1 million vehicles
+      const straps = ford.events.find((e) => e.externalId === "11V385000");
+      if (!straps) out.push("no 11V385000 (2011 fuel-tank straps)");
+      else if (!/^Recall of 1,100,000 vehicles: Fuel tank strap corrosion$/.test(straps.title)) out.push(`11V385000 titled "${straps.title}"`);
+      const stla = await fetchRecalls(1605484);
+      out.push(...outcomeProblems(stla.outcome, stla.detail).map((p) => `Stellantis: ${p}`));
+      const early = stla.events.filter((e) => e.date < "2014-10-12");
+      if (early.length) out.push(`${early.length} Stellantis recalls before 2014-10-12, e.g. ${early[0].date}`);
       return out;
     },
   },

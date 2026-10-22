@@ -90,6 +90,11 @@ const STYLE: Record<EventType, { dot: string; badge: string; label: string }> = 
     badge: "border-emerald-700/50 bg-emerald-500/15 text-emerald-300",
     label: "Economy",
   },
+  recall: {
+    dot: "bg-yellow-400 ring-yellow-400/30",
+    badge: "border-yellow-700/50 bg-yellow-500/15 text-yellow-300",
+    label: "Recall",
+  },
 };
 
 const CARD_CLASS =

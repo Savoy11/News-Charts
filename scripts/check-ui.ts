@@ -841,6 +841,30 @@ async function economyOverlay(page: Page): Promise<void> {
   check("the economy subject has a page of its own", /CPI report: consumer prices for/.test(topic) && /Fed policy statement/.test(topic), topic.slice(0, 80));
 }
 
+/**
+ * Vehicle safety recalls on a carmaker's page (batch 30): a Recalls chip, on, over the company's
+ * own NHTSA recalls, and no such chip on a company that makes no vehicles. Needs Ford's recalls in
+ * the database (`npm run ingest -- --ticker F`); skipped, and said so, without them.
+ */
+async function vehicleRecalls(page: Page): Promise<void> {
+  console.log("\nVehicle recalls");
+  await page.evaluate(() => localStorage.removeItem("news-charts:filters:/company/F"));
+  await go(page, "/company/F");
+  const chip = page.locator('[data-chip="recall"]');
+  if ((await chip.count()) === 0) {
+    console.log("  (no recalls for Ford in this database — run `npm run ingest -- --ticker F`; skipped)");
+    return;
+  }
+  check("a carmaker's page offers a Recalls chip, on", (await chip.getAttribute("aria-pressed")) === "true");
+  check("  …over its recalls, each counted in vehicles", /Recall of [\d,]+ vehicles: /.test(await visible(page)));
+  await chip.click();
+  await page.waitForTimeout(800);
+  check("turning it off hides them", (await chip.getAttribute("aria-pressed")) === "false" && !/Recall of [\d,]+ vehicles: /.test(await visible(page)));
+  await page.evaluate(() => localStorage.removeItem("news-charts:filters:/company/F"));
+  await go(page, "/company/AAPL");
+  check("a company that makes no vehicles has no Recalls chip", (await page.locator('[data-chip="recall"]').count()) === 0);
+}
+
 async function chromeAndRoutes(page: Page): Promise<void> {
   console.log("\nSite chrome");
   await go(page, "/explore");
@@ -1145,6 +1169,7 @@ async function main(): Promise<void> {
     await comparePage(page);
     await focusFilter(page);
     await economyOverlay(page);
+    await vehicleRecalls(page);
     await homepageSuggestions(page);
     await searchResilience(page);
   await feedKeys(page);

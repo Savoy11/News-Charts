@@ -30,6 +30,8 @@ const FILTERS: { key: EventType; label: string }[] = [
   // Fed policy statements and CPI releases — the economy, not the company (NC-080). Off until
   // asked for: about twenty a year on every page would bury the company's own story.
   { key: "macro", label: "Economy" },
+  // safety recalls the company filed with NHTSA, for the vehicle makers lib/recalls.ts maps
+  { key: "recall", label: "Recalls" },
 ];
 
 const ALL_TYPES = FILTERS.map((f) => f.key);

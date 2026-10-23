@@ -332,6 +332,19 @@ export const CASES: LiveCase[] = [
     },
   },
   {
+    // GDELT holds "Domino's Pizza" as "Domino Pizza" (batch 36): "dominos pizza", as Domino's was
+    // asked for, found 2 articles in three days; "domino pizza" 18
+    name: "GDELT — Domino's Pizza under the form GDELT holds",
+    covers: ["gdelt"],
+    hosts: ["api.gdeltproject.org"],
+    async run() {
+      const r = await fetchNews(gdeltEverydayName("DOMINOS PIZZA INC", "Domino's Pizza"));
+      const out = [...outcomeProblems(r.outcome, r.detail), ...eventProblems(r.events, 1)];
+      if (!r.events.some((e) => /\bDomino\b/i.test(e.title))) out.push("no headline naming Domino");
+      return out;
+    },
+  },
+  {
     name: "Federal Register — semiconductor rules",
     covers: ["federal_register"],
     hosts: ["www.federalregister.gov"],

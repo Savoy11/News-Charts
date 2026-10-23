@@ -103,9 +103,9 @@ for (const [legal, everyday] of [
 const ingestSrc = readFileSync(path.join(__dirname, "ingest.ts"), "utf8");
 check(
   "ingest queries GDELT under the common name",
-  /const newsQuery = gdeltEverydayName\(company\.name\);\s*await run\("gdelt",\s*gdeltNames\(newsQuery, alsoKnownAs\)\.join\(" \| "\),\s*\(\)\s*=>\s*fetchNews\(newsQuery, alsoKnownAs\)/.test(ingestSrc) &&
+  /const newsQuery = gdeltEverydayName\(company\.name, possessive\);\s*await run\("gdelt",\s*gdeltNames\(newsQuery, alsoKnownAs\)\.join\(" \| "\),\s*\(\)\s*=>\s*fetchNews\(newsQuery, alsoKnownAs\)/.test(ingestSrc) &&
     gdeltEverydayName("FORD MOTOR CO") === "FORD MOTOR" && gdeltEverydayName("Apple Inc.") === "Apple",
-  'expected newsQuery = gdeltEverydayName(company.name) and run("gdelt", gdeltNames(newsQuery, alsoKnownAs)…, () => fetchNews(newsQuery, alsoKnownAs)) in scripts/ingest.ts, the common name for "FORD MOTOR CO"'
+  'expected newsQuery = gdeltEverydayName(company.name, possessive) and run("gdelt", gdeltNames(newsQuery, alsoKnownAs)…, () => fetchNews(newsQuery, alsoKnownAs)) in scripts/ingest.ts, the common name for "FORD MOTOR CO"'
 );
 check(
   "  ...and never under the raw legal title",

@@ -240,7 +240,7 @@ async function main(): Promise<void> {
 
   console.log("\nWired");
   check("company ingest asks GDELT for the everyday name it can take",
-    /const newsQuery = gdeltEverydayName\(company\.name\);\s*await run\("gdelt", gdeltNames\(newsQuery, alsoKnownAs\)\.join\(" \| "\), \(\) => fetchNews\(newsQuery, alsoKnownAs\)/.test(read("scripts/ingest.ts")));
+    /const newsQuery = gdeltEverydayName\(company\.name, possessive\);\s*await run\("gdelt", gdeltNames\(newsQuery, alsoKnownAs\)\.join\(" \| "\), \(\) => fetchNews\(newsQuery, alsoKnownAs\)/.test(read("scripts/ingest.ts")));
   check("  …and its headline filter is handed the company's initials, so they count only in capitals",
     /const initials = alsoKnownAs\.filter\(\(n\) => INITIALISM\.test\(n\)\);[\s\S]*headlineNames\(a\.title \?\? "", names, initials\)/.test(read("lib/news.ts")));
 

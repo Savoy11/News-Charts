@@ -305,6 +305,16 @@ export function newsNamesFor(cik: number | string): string[] {
   return kept.slice(0, 3).map((n) => n.written);
 }
 
+/**
+ * The company's own name with the apostrophe its SEC title dropped — "McDonald's" for MCDONALDS
+ * CORP, "Lowe's" for LOWES COMPANIES INC — as Wikidata writes it, or "" (batch 36). Search never
+ * needed it, since the title finds the company, but GDELT holds a possessive without its "'s"
+ * (`gdeltEverydayName`).
+ */
+export function possessiveNameFor(cik: number | string): string {
+  return companyAliases.possessive?.[String(Number(cik))] ?? "";
+}
+
 /** Every company the committed index lists, CIK and title, in the SEC's order. */
 export const TICKER_INDEX_COMPANIES: [number, string][] = tickerIndex.companies.map(([cik, , title]) => [cik, title]);
 

@@ -63,6 +63,16 @@ export interface AliasIndexFile {
   syncedOn: string;
   source: string;
   aliases: Record<string, AliasEntry>;
+  /** CIK → the company's own name with the apostrophe its SEC title dropped (`possessiveNames`) */
+  possessive?: Record<string, string>;
+}
+
+/** A possessive "'s" in a name: "McDonald's", "Domino's Pizza". */
+export const POSSESSIVE = /['’]s\b/i;
+
+/** The words of a name that carry a possessive, keyed: "Dr. Reddy's Laboratories" → ["REDDYS"]. */
+export function possessiveWords(name: string): string[] {
+  return (foldAccents(name).match(/[\p{L}\p{N}&-]+['’]s\b/giu) ?? []).map(nameKey);
 }
 
 export type DropReason =
@@ -273,6 +283,7 @@ export function buildCompanyAliases(
   aliases: Record<string, AliasEntry>;
   dropped: { name: string; qid: string; reason: DropReason }[];
   overrides: { key: string; to: number; prefixHit: number }[];
+  possessive: Record<string, string>;
 } {
   const titleOf = new Map<number, string>();
   const order = new Map<number, number>();
@@ -284,6 +295,7 @@ export function buildCompanyAliases(
   });
 
   const dropped: { name: string; qid: string; reason: DropReason }[] = [];
+  const possessive: Record<string, string> = {};
   type Claim = { qid: string; kind: AliasKind; news: boolean; written: string };
   const claims = new Map<string, Map<number, Claim>>();
   const rank: Record<AliasKind, number> = { name: 0, former: 1, alias: 2 };
@@ -304,6 +316,13 @@ export function buildCompanyAliases(
       for (const n of all) dropped.push({ name: n, qid: item.qid, reason: why });
       continue;
     }
+    // The SEC's title drops the apostrophe ("MCDONALDS CORP", "LOWES COMPANIES INC"), so the
+    // company's own possessive name is redundant for search and dropped below, but GDELT needs to
+    // know which of the title's words is a possessive (batch 36).
+    const titleWords = nameKey(index.commonName(title)).split(" ");
+    const carried = (n: string) => POSSESSIVE.test(n) && possessiveWords(n).every((w) => titleWords.includes(w));
+    const own = item.kind === "own" && !POSSESSIVE.test(title) ? names.find(carried) : undefined;
+    if (own && possessive[item.targetCik] === undefined) possessive[item.targetCik] = own;
     // Each name and its everyday form: Meta's former official name is "Facebook, Inc.", and
     // what people type is "Facebook".
     const everydayToo = (list: string[]) => [...new Set(list.flatMap((n) => [n, index.commonName(n)]))];
@@ -371,5 +390,5 @@ export function buildCompanyAliases(
     }
     aliases[key] = [cik, qid, kind, news ? 1 : 0, written];
   }
-  return { aliases, dropped, overrides };
+  return { aliases, dropped, overrides, possessive };
 }

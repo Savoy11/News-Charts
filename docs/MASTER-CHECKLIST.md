@@ -1028,8 +1028,10 @@ once every few minutes. HawkScan could not run: `HAWK_API_KEY` is not set.
       - The one-word possessives keep their query: McDonald's, Moody's, Macy's, Wendy's, Dillard's,
         Campbell's, Carter's, Brink's. Nothing measured better; GDELT's relevance sort and its
         `repeat3:` operator (batch 25) are the leads left.
-      - "lowe companies" against "lowes companies" was not measured before GDELT stopped
-        answering. It follows the rule Domino's and Dick's measured.
+      - Lowe's gains nothing either way: "lowe companies" and "lowes companies" each found 1
+        article in three days, and neither had a headline naming it. Headlines call it "Lowe's",
+        which GDELT holds as "Lowe": under five letters, and a surname. It is as uncovered as
+        McDonald's.
       - "domino pizza" also finds the separately listed Domino's companies, the UK's Domino's
         Pizza Group and Australia's Domino's Pizza Enterprises: one brand, three listings.
 - Checks: new `check:possessive` (15), wired after `check:page-news`. On main's code it stops at

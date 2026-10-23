@@ -18,7 +18,8 @@ import {
   type ScorableRow,
   type SubjectContext,
 } from "../lib/enrich/relevance";
-import { newsNamesFor } from "../lib/sec";
+import { newsNamesFor, possessiveNameFor } from "../lib/sec";
+import { gdeltHeadlineNames } from "../lib/news";
 
 const BATCH = 25;
 
@@ -69,8 +70,10 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
     `SELECT alias FROM subject_aliases WHERE subject_id = $1`,
     [subjectId]
   );
-  // …and a company's other names that news may use, the ones ingest searched under (batch 25)
-  const alsoKnownAs = subject.kind === "company" && subjectRows[0].cik ? newsNamesFor(subjectRows[0].cik) : [];
+  // …and a company's other names that news may use, the ones ingest searched under (batch 25), with
+  // the names a GDELT headline gives a possessive ("mcdonald" for McDonald's, batch 36)
+  const cik = subject.kind === "company" ? subjectRows[0].cik : null;
+  const alsoKnownAs = cik ? [...newsNamesFor(cik), ...gdeltHeadlineNames(subject.displayName, possessiveNameFor(cik))] : [];
   const aliases = aliasesFor(subject, [...aliasRows.map((r) => r.alias), ...alsoKnownAs]);
 
   const { rows } = await client.query(

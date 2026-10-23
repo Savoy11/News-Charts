@@ -28,10 +28,10 @@ import { collapseNearDuplicates } from "../lib/newsQuality";
 import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
 import { getTopicTimeline, articleAnswersSlug, companyLede, articleCoversSlug, topicSlugFromTitle, WikipediaUnavailable, wikiOutcome } from "../lib/wiki";
 import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
-import { fetchNews, gdeltEverydayName, gdeltNames } from "../lib/news";
+import { fetchNews, gdeltEverydayName, gdeltHeadlineNames, gdeltNames } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
-import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, newsNamesFor, type Rename } from "../lib/sec";
+import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, newsNamesFor, possessiveNameFor, type Rename } from "../lib/sec";
 import { fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
@@ -397,10 +397,15 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   // acquired company's (`newsNamesFor`, batch 25). Headlines use them, so the feed is asked for
   // them and a headline naming one counts as naming the company.
   const alsoKnownAs = newsNamesFor(company.cik);
+  // "McDonald's" where the SEC writes MCDONALDS: GDELT holds a possessive without its "'s" (batch 36)
+  const possessive = possessiveNameFor(company.cik);
   // Score at link time, with the common name as an extra whole-phrase alias — the same name
   // the feeds were queried under is the name their headlines will use.
   const companyCtx = { kind: "company" as const, displayName: company.name, ticker: company.ticker };
-  const scoring: ScoringContext = { subject: companyCtx, aliases: aliasesFor(companyCtx, [name, ...alsoKnownAs]) };
+  const scoring: ScoringContext = {
+    subject: companyCtx,
+    aliases: aliasesFor(companyCtx, [name, ...alsoKnownAs, ...gdeltHeadlineNames(company.name, possessive)]),
+  };
   const run = runnerFor(client, subjectId, due, scoring);
 
   if (industry) {
@@ -497,8 +502,9 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   // headline that says "Ford" — the common name is the query, exactly as the comment above
   // promised and the historical sources below already do.
   if (alsoKnownAs.length) line("names", `headlines also scored by ${alsoKnownAs.map((n) => `"${n}"`).join(", ")}`);
-  // a name GDELT refuses as too short ("Visa", "CSX") is asked with its legal form ("Visa Inc")
-  const newsQuery = gdeltEverydayName(company.name);
+  // a name GDELT refuses as too short ("Visa", "CSX") is asked with its legal form ("Visa Inc"), and
+  // a possessive in the form GDELT holds ("DOMINO PIZZA")
+  const newsQuery = gdeltEverydayName(company.name, possessive);
   await run("gdelt", gdeltNames(newsQuery, alsoKnownAs).join(" | "), () => fetchNews(newsQuery, alsoKnownAs), (e) =>
     // dedupe BEFORE capping: syndicated copies of one wire story must not burn cap slots
     collapseNearDuplicates(e).slice(0, 75)

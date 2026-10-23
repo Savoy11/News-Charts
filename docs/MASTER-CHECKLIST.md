@@ -984,6 +984,58 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 36: possessive company names on GDELT (2026-10-23)
+
+Batch 28 left this to be measured "when GDELT answers": GDELT seemed to drop a possessive "'s",
+so a company whose name is a possessive would be asked for in a form GDELT never holds. It does,
+and it costs the multi-word ones most of their GDELT news.
+
+`npm run check` passes (41 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` was not
+re-run: no page, component or route changed, and the name index gains no search names.
+`check:live` gains a Domino's case but was not run, since GDELT was answering this session about
+once every few minutes. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **What GDELT does with a possessive, measured** (three days of GDELT each, 2026-10-23):
+      - **Headlines drop the "'s" whole:** none of the 211 GDELT headlines stored for JPMorgan keeps
+        an apostrophe ("Here What JPMorgan , Citi , BofA , Others Are Doing"), and the batch 34
+        probes returned "Grey Anatomy" and "Today Top Deals".
+      - **A quoted possessive is read as one run-together word:** "mcdonald's" and "mcdonalds" each
+        found the same 9 articles.
+      - **Multi-word names:** "dominos pizza", the form Domino's was asked for, found 2 articles;
+        "domino pizza" found 18, 7 naming Domino's in the headline. "dick sporting goods" found
+        17 ("DICK Sporting Goods Store is Set to Open New Store").
+      - **One-word names:** nothing measured well for McDonald's. "mcdonalds" found 9 articles,
+        "mcdonald corp" 4, and "mcdonald" returned the hundred newest pages, all passing mentions
+        or people called McDonald, none naming McDonald in the headline.
+- [x] **The name index keeps a company's own possessive spelling** (`lib/companyAliases.ts`,
+      `possessive` in `data/company-aliases.json`). The SEC's title often drops the apostrophe
+      ("MCDONALDS CORP", "DOMINOS PIZZA INC"), and Wikidata's spelling of the name was dropped as
+      redundant for search, so nothing said where the possessive was. Fourteen are kept now:
+      McDonald's, Lowe's, Moody's, Domino's Pizza, Casey's General Stores, Dr. Reddy's
+      Laboratories, Papa John's, Pilgrim's, Carter's, Brink's, Alexander's, Nathan's Famous,
+      Nature's Sunshine Products and BJ's Restaurant & Brewery. Rebuilt offline from batch 33's
+      Wikidata answer; the 1,555 names are unchanged.
+- [x] **A possessive of more than one word is asked in GDELT's form** (`gdeltEverydayName`,
+      `lib/news.ts`). Ten of the 1,500 largest companies are asked differently, and no other:
+      "DOMINO PIZZA", "CASEY GENERAL STORES", "DICK SPORTING GOODS", "VICTORIA SECRET", "DR REDDY
+      LABORATORIES", "BJ WHOLESALE CLUB", "OLLIE BARGAIN OUTLET", "JERSEY MIKE SUBS", "PILGRIM
+      PRIDE" and "LOWE COMPANIES". An other name goes the same way ("papa john"), and one that
+      comes to one word is left out, since alone it is a surname.
+- [x] **A GDELT headline without the "'s" names the company** (`gdeltHeadlineNames`, in ingest and
+      in re-scoring). "McDonald to raise menu prices again" names McDonald's now and did not
+      before; "Travis McDonald signs with the Packers" does not.
+- [ ] **Open:**
+      - The one-word possessives keep their query: McDonald's, Moody's, Macy's, Wendy's, Dillard's,
+        Campbell's, Carter's, Brink's. Nothing measured better; GDELT's relevance sort and its
+        `repeat3:` operator (batch 25) are the leads left.
+      - "lowe companies" against "lowes companies" was not measured before GDELT stopped
+        answering. It follows the rule Domino's and Dick's measured.
+      - "domino pizza" also finds the separately listed Domino's companies, the UK's Domino's
+        Pizza Group and Australia's Domino's Pizza Enterprises: one brand, three listings.
+- Checks: new `check:possessive` (15), wired after `check:page-news`. On main's code it stops at
+  its first case (`gdeltForm` does not exist). `check:aliases`, `check:recall` and
+  `check:short-names` follow ingest's new lines; what each holds is unchanged.
+
 ## NC ledger — batch 35: a page's news, bounded under the cache limit (2026-10-22)
 
 Batch 23 left this open: "the timeline entry still grows with stored news, and nothing bounds it."
@@ -1030,7 +1082,10 @@ news. HawkScan could not run: `HAWK_API_KEY` is not set.
 - [ ] **Open:** the page a visitor downloads is still 7.1 MB for JPMorgan: the rendered event list
       and the data it is rendered from, prices included. The cache budget does not reach that;
       paging the event list would. And how soon a real page reaches the budget is unknown until
-      the hourly refresh runs in production.
+      the hourly refresh runs in production. *(Corrected 2026-10-23, batch 36: 7.1 MB is the
+      uncompressed size. Next compresses what it sends, so JPMorgan's page is 0.52 MB on the wire,
+      against 1.08 MB on main's code before this batch. What is left is the 4,652 rows the browser
+      lays out.)*
 - Checks: new `check:page-news` (21), wired after `check:short-names`. On main's code it cannot
   load (`lib/pageNews.ts` does not exist). It pins how Next measures an entry, read from
   `node_modules`, so an upgrade that changes the measurement fails the check rather than the cache.
@@ -1495,11 +1550,12 @@ session; the skip needs an Etherscan key. HawkScan could not run: `HAWK_API_KEY`
     → 537 for news. 174 → 200 companies have names for news, and 68 GDELT queries change.
   - Live Federal Register, 17 companies: 105 → 118 documents (Embraer, U.S. Bancorp and J.B. Hunt
     up, Hartford's fund filings out, the other 13 unchanged).
-- [ ] **Open:** GDELT appears to drop apostrophes and a possessive "'s" with them. In the audit's
+- [x] **Open:** GDELT appears to drop apostrophes and a possessive "'s" with them. In the audit's
       saved results, "Buffett's Berkshire … Here's Why I'm" came back as "Buffett Berkshire … Here
       Why Im". If so, "Angie's List", "Papa John's" and "Dave & Buster's" are asked for in a form
       GDELT never prints, and their GDELT headlines do not match. One headline is too little to
-      build on; measure it when GDELT answers.
+      build on; measure it when GDELT answers. ✅ **Measured and built in batch 36:** it does, and
+      a possessive of more than one word is now asked in GDELT's form ("DOMINO PIZZA").
 - Checks: `check:wiring` 182 → 186, `check:aliases` 81 → 89, `check:recall` 34 → 49.
   - Each audit finding has its case: Embraer's and Ferrari's legal names, the Hartford's ETF
     filings, the apostrophe, closed-up initials, the written form in the file, D.R. Horton's

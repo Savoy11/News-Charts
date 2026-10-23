@@ -1,7 +1,7 @@
 import { FetchResult, TimelineEvent } from "./types";
 import { cleanDomain, sourceLabel } from "./sourceLabel";
 import { storyKey } from "./newsQuality";
-import { nameKey } from "./companyAliases";
+import { POSSESSIVE, nameKey, possessiveWords } from "./companyAliases";
 import { commonName } from "./sec";
 import { INITIALISM, mentions } from "./enrich/relevance";
 import shortWords from "../data/english-short-words.json";
@@ -115,12 +115,25 @@ export function gdeltNames(query: string, alsoKnownAs: string[] = []): string[] 
   const seen = new Set([nameKey(query).toLowerCase()]);
   const names = [query];
   for (const n of alsoKnownAs) {
-    const key = nameKey(n).toLowerCase();
+    // a possessive goes in the form GDELT holds ("papa john"), and only when that is more than one
+    // word: "Lowe" or "McDonald" alone is a surname whose passing mentions fill the hundred
+    if (POSSESSIVE.test(n) && !nameKey(gdeltForm(n)).includes(" ")) continue;
+    const key = nameKey(gdeltForm(n)).toLowerCase();
     if (seen.has(key) || PAGE_FURNITURE.has(key) || (key.length < GDELT_MIN_PHRASE && !unquotable(key))) continue;
     seen.add(key);
     names.push(key);
   }
   return names;
+}
+
+/**
+ * A name the way GDELT holds it. GDELT drops a possessive "'s" whole: "Grey's Anatomy" comes back
+ * "Grey Anatomy", and none of the 211 GDELT headlines stored for JPMorgan keeps an apostrophe. It
+ * reads a quoted "domino's pizza" as "dominos pizza", which found 2 articles in three days where
+ * "domino pizza" found 18 (2026-10-23, batch 36).
+ */
+export function gdeltForm(name: string): string {
+  return name.replace(/['’]s\b/gi, "");
 }
 
 /** Legal forms an SEC title carries after the everyday name: "VISA INC.", "HSBC HOLDINGS PLC". */
@@ -136,13 +149,41 @@ const LEGAL_INITIALS = new Set("SE SA SPA NV AG AB ASA LLC LP".split(" "));
  * first — with the legal form its SEC title carries, the way an article names the company at first
  * mention: "VISA Inc", "CGI Inc", "3M Co", "NEWS Corp". A title with no legal form after the name
  * keeps the name as it is.
+ *
+ * A possessive name of more than one word goes in the form GDELT holds (`gdeltForm`, batch 36):
+ * "DOMINO PIZZA", "DICK SPORTING GOODS". The SEC's title often drops the apostrophe ("DOMINOS PIZZA
+ * INC"), so `possessive` is the company's own name as Wikidata writes it (`possessiveNameFor`).
+ * One that comes to one word is asked as before: GDELT's form is a surname or a word ("McDonald",
+ * "Moody"), and nothing measured better. In three days "mcdonalds" found 9 articles, "mcdonald
+ * corp" 4, and "mcdonald" a hundred passing mentions, none naming McDonald's in the headline.
  */
-export function gdeltEverydayName(edgarTitle: string): string {
+export function gdeltEverydayName(edgarTitle: string, possessive = ""): string {
+  const dropS = new Set([...possessiveWords(edgarTitle), ...possessiveWords(possessive)]);
   const everyday = commonName(edgarTitle);
+  const held = nameKey(everyday).split(" ").map((w) => (dropS.has(w) ? w.slice(0, -1) : w));
+  if (dropS.size && held.length > 1) return held.join(" ");
   // long enough to quote, or short and safe to send bare ("ETSY", "ROKU"; batch 34)
   if (everyday.length >= GDELT_MIN_PHRASE || unquotable(everyday)) return everyday;
+  return withLegalForm(everyday, nameKey(edgarTitle));
+}
+
+/**
+ * The names a GDELT headline gives a company whose name is a possessive, for headline scoring:
+ * "mcdonald" for McDonald's, "domino pizza" for Domino's Pizza — [] for any other company. GDELT's
+ * headline reads "Domino sales growth slows", which names neither "DOMINOS PIZZA" nor "Domino's".
+ * Lower case, so a short one ("macy") is never read as initials that count only in capitals.
+ */
+export function gdeltHeadlineNames(edgarTitle: string, possessive = ""): string[] {
+  const dropS = new Set([...possessiveWords(edgarTitle), ...possessiveWords(possessive)]);
+  if (!dropS.size) return [];
+  const everyday = nameKey(commonName(edgarTitle)).split(" ").map((w) => (dropS.has(w) ? w.slice(0, -1) : w)).join(" ");
+  const own = possessive ? nameKey(gdeltForm(commonName(possessive))) : "";
+  return [...new Set([everyday, own].filter(Boolean).map((n) => n.toLowerCase()))];
+}
+
+/** The everyday name with the legal form `full`, the title as a name key, carries after it. */
+function withLegalForm(everyday: string, full: string): string {
   const own = nameKey(everyday);
-  const full = nameKey(edgarTitle);
   const after = full.startsWith(`${own} `) ? full.slice(own.length + 1).split(" ") : [];
   // "KKR & Co. Inc." is "KKR & Co"; "TIM S.A." spells its form out letter by letter
   if (after[0] === "&" && after[1] === "CO") return `${everyday} & Co`;

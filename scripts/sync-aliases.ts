@@ -107,7 +107,7 @@ async function main(): Promise<void> {
     it.aliases = [...new Set(it.aliases)];
   }
 
-  const { aliases, dropped, overrides } = buildCompanyAliases([...items.values()], {
+  const { aliases, dropped, overrides, possessive } = buildCompanyAliases([...items.values()], {
     companies: TICKER_INDEX_COMPANIES,
     titleMatch,
     commonName,
@@ -118,6 +118,7 @@ async function main(): Promise<void> {
     source:
       "Wikidata (CC0): listed companies' labels, official names and related aliases by CIK (P5531), and former registrants' names under a listed parent (P749)",
     aliases,
+    possessive,
   };
   writeFileSync(OUT, JSON.stringify(file, null, 0) + "\n");
   const reportAt = process.argv.indexOf("--report");

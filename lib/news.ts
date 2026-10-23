@@ -111,7 +111,7 @@ const bare = (name: string) => name.length < GDELT_MIN_PHRASE && unquotable(name
  * go in their matching form ("u s bancorp" for "U.S. Bancorp"), which GDELT is measured to take:
  * ("HORTON D R" OR "d r horton") returned 36 articles (batch 28 audit).
  */
-export function gdeltNames(query: string, alsoKnownAs: string[] = []): string[] {
+export function gdeltNames(query: string, alsoKnownAs: string[] = [], byRelevance = false): string[] {
   const seen = new Set([nameKey(query).toLowerCase()]);
   const names = [query];
   for (const n of alsoKnownAs) {
@@ -119,7 +119,9 @@ export function gdeltNames(query: string, alsoKnownAs: string[] = []): string[] 
     // word: "Lowe" or "McDonald" alone is a surname whose passing mentions fill the hundred
     if (POSSESSIVE.test(n) && !nameKey(gdeltForm(n)).includes(" ")) continue;
     const key = nameKey(gdeltForm(n)).toLowerCase();
-    if (seen.has(key) || PAGE_FURNITURE.has(key) || (key.length < GDELT_MIN_PHRASE && !unquotable(key))) continue;
+    // asked by relevance, a name measured to work that way comes back in ("uber", batch 37)
+    const measured = byRelevance && GDELT_BY_RELEVANCE[nameKey(key)] !== undefined;
+    if (seen.has(key) || (!measured && (PAGE_FURNITURE.has(key) || (key.length < GDELT_MIN_PHRASE && !unquotable(key))))) continue;
     seen.add(key);
     names.push(key);
   }
@@ -153,9 +155,7 @@ const LEGAL_INITIALS = new Set("SE SA SPA NV AG AB ASA LLC LP".split(" "));
  * A possessive name of more than one word goes in the form GDELT holds (`gdeltForm`, batch 36):
  * "DOMINO PIZZA", "DICK SPORTING GOODS". The SEC's title often drops the apostrophe ("DOMINOS PIZZA
  * INC"), so `possessive` is the company's own name as Wikidata writes it (`possessiveNameFor`).
- * One that comes to one word is asked as before: GDELT's form is a surname or a word ("McDonald",
- * "Moody"), and nothing measured better. In three days "mcdonalds" found 9 articles, "mcdonald
- * corp" 4, and "mcdonald" a hundred passing mentions, none naming McDonald's in the headline.
+ * One that comes to one word is asked as before here, and by relevance through `gdeltNewsPlan`.
  */
 export function gdeltEverydayName(edgarTitle: string, possessive = ""): string {
   const dropS = new Set([...possessiveWords(edgarTitle), ...possessiveWords(possessive)]);
@@ -166,6 +166,53 @@ export function gdeltEverydayName(edgarTitle: string, possessive = ""): string {
   if (everyday.length >= GDELT_MIN_PHRASE || unquotable(everyday)) return everyday;
   return withLegalForm(everyday, nameKey(edgarTitle));
 }
+
+/** How a company is asked for on GDELT: the query, and whether by relevance (`gdeltNewsPlan`). */
+export interface GdeltPlan {
+  query: string;
+  byRelevance: boolean;
+}
+
+/**
+ * Names asked for by relevance rather than newest first, each with what it was measured to bring.
+ * Kept to measured names on purpose: by relevance a headline must still name the company, but
+ * that test cannot tell a first name or a common word from it ("Wendy Williams", "on the brink").
+ */
+export const GDELT_BY_RELEVANCE: Record<string, string> = {
+  // newest-first, the hundred pages were passing mentions and people called McDonald, and
+  // "mcdonalds", "mcdonald's" and "mcdonald corp" found 9, 9 and 4 articles in three days, none
+  // naming McDonald's in the headline; by relevance, 37 of the hundred named it (2026-10-23)
+  MCDONALD: "McDonald's: 37 of the hundred headlines over three days, against none newest first",
+  // an other name of Uber Technologies, kept out of newest-first queries since batch 36: one
+  // headline in the hundred newest; by relevance, 26 of the hundred (2026-10-23)
+  UBER: "Uber: 26 of the hundred headlines over three days, against 1 newest first",
+};
+
+/**
+ * A company's GDELT query, and how to ask it.
+ *
+ * A possessive that comes to one word in GDELT's form ("McDonald") can drown newest-first, its
+ * hundred newest pages all passing mentions. Asked by relevance over the last three days, the
+ * pages most about it come first, and only those whose headline names it are kept (`fetchNews`).
+ * That is done only for a name in `GDELT_BY_RELEVANCE` (batch 37). Every other company is asked as
+ * `gdeltEverydayName` says, newest first.
+ */
+export function gdeltNewsPlan(edgarTitle: string, possessive = "", alsoKnownAs: string[] = []): GdeltPlan {
+  const dropS = new Set([...possessiveWords(edgarTitle), ...possessiveWords(possessive)]);
+  // the everyday name, or the company's own possessive spelling ("Lowe's" for LOWES COMPANIES)
+  const oneWord = (name: string) => {
+    const words = nameKey(commonName(name)).split(" ");
+    return words.length === 1 && dropS.has(words[0]) ? words[0].slice(0, -1) : "";
+  };
+  const stem = oneWord(edgarTitle) || (possessive && oneWord(possessive));
+  if (stem && GDELT_BY_RELEVANCE[stem] !== undefined) return { query: stem, byRelevance: true };
+  // an other name that only works by relevance ("Uber") takes the whole query that way
+  const byRelevance = alsoKnownAs.some((n) => GDELT_BY_RELEVANCE[nameKey(gdeltForm(n))] !== undefined);
+  return { query: gdeltEverydayName(edgarTitle, possessive), byRelevance };
+}
+
+/** How far back a query asked by relevance looks: the window "mcdonald" was measured over. */
+export const GDELT_RELEVANCE_SPAN = "3days";
 
 /**
  * The names a GDELT headline gives a company whose name is a possessive, for headline scoring:
@@ -199,8 +246,11 @@ function withLegalForm(everyday: string, full: string): string {
  * own. "GOLDMAN SACHS GROUP", the everyday form of its SEC title, misses every headline that says
  * "Goldman Sachs" (batch 25).
  */
-export function gdeltQuery(query: string, alsoKnownAs: string[] = []): string {
-  const terms = gdeltNames(query, alsoKnownAs).map((n) => (bare(n) ? n : `"${n}"`));
+export function gdeltQuery(query: string, alsoKnownAs: string[] = [], byRelevance = false): string {
+  // a measured name under five letters goes bare: GDELT refuses it quoted
+  const terms = gdeltNames(query, alsoKnownAs, byRelevance).map((n) =>
+    bare(n) || (byRelevance && n.length < GDELT_MIN_PHRASE) ? n : `"${n}"`
+  );
   return terms.length === 1 ? `${terms[0]} sourcelang:english` : `(${terms.join(" OR ")}) sourcelang:english`;
 }
 
@@ -221,11 +271,15 @@ export function headlineNames(title: string, names: readonly string[], initials:
 }
 
 /** Same fetch, but reporting *why* it came back empty so ingest can back off. */
-export async function fetchNews(query: string, alsoKnownAs: string[] = []): Promise<FetchResult> {
-  const q = gdeltQuery(query, alsoKnownAs);
-  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(
-    q
-  )}&mode=artlist&maxrecords=100&format=json&sort=datedesc&startdatetime=20170101000000`;
+export async function fetchNews(
+  query: string,
+  alsoKnownAs: string[] = [],
+  { byRelevance = false }: { byRelevance?: boolean } = {}
+): Promise<FetchResult> {
+  const q = gdeltQuery(query, alsoKnownAs, byRelevance);
+  // by relevance: the hundred pages most about the name in the last few days (`gdeltNewsPlan`)
+  const order = byRelevance ? `sort=hybridrel&timespan=${GDELT_RELEVANCE_SPAN}` : "sort=datedesc&startdatetime=20170101000000";
+  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(q)}&mode=artlist&maxrecords=100&format=json&${order}`;
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -257,9 +311,9 @@ export async function fetchNews(query: string, alsoKnownAs: string[] = []): Prom
         // GDELT refuses a query it cannot parse with a line of text. An other name is the likelier
         // cause than the everyday name it has always been asked for, so ask again without them:
         // a refused name never costs the company the news it found before.
-        if (gdeltNames(query, alsoKnownAs).length > 1) {
+        if (gdeltNames(query, alsoKnownAs, byRelevance).length > 1) {
           await sleep(5500);
-          const plain = await fetchNews(query);
+          const plain = await fetchNews(query, [], { byRelevance });
           const refused = `other names refused: ${text.trim().slice(0, 80)}`;
           return { ...plain, detail: plain.detail ? `${refused}; ${plain.detail}` : refused };
         }
@@ -268,12 +322,19 @@ export async function fetchNews(query: string, alsoKnownAs: string[] = []): Prom
       // A bare short name matches the word anywhere in an article — IBM's thirty articles of
       // 2026-10-22 named it in nine headlines and in passing in the rest — so with one in the query
       // only the articles whose headline names the company are kept (batch 34).
-      const names = gdeltNames(query, alsoKnownAs);
+      const names = gdeltNames(query, alsoKnownAs, byRelevance);
       const headlineOnly = names.some(bare);
       const initials = alsoKnownAs.filter((n) => INITIALISM.test(n));
-      const articles: GdeltArticle[] = (JSON.parse(text)?.articles ?? []).filter(
-        (a: GdeltArticle) => !headlineOnly || headlineNames(a.title ?? "", names, initials)
-      );
+      // Asked by relevance, a surname's headlines name people too ("Cooper McDonald", "Rep.
+      // McDonald Rivet"): the headline must name it the way scoring counts naming, not after a
+      // capitalised word, so a person's name is left out (batch 37). GDELT spaces punctuation off
+      // its word ("Rep . McDonald"), which would hide the "Rep." before the name.
+      const lower = names.map((n) => n.toLowerCase());
+      const keep = (title: string) =>
+        byRelevance
+          ? mentions(title.replace(/\s+([.,:;!?])/g, "$1"), lower) === "named"
+          : !headlineOnly || headlineNames(title, names, initials);
+      const articles: GdeltArticle[] = (JSON.parse(text)?.articles ?? []).filter((a: GdeltArticle) => keep(a.title ?? ""));
       const seenTitles = new Set<string>();
       const events: TimelineEvent[] = [];
       for (const a of articles) {

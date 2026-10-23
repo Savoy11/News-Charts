@@ -315,7 +315,7 @@ async function main(): Promise<void> {
     /const alsoKnownAs = newsNamesFor\(company\.cik\);/.test(ingestSrc) &&
       // since batch 36 with the names a GDELT headline gives a possessive ("mcdonald")
       /aliasesFor\(companyCtx, \[name, \.\.\.alsoKnownAs, \.\.\.gdeltHeadlineNames\(company\.name, possessive\)\]\)/.test(ingestSrc) &&
-      /fetchNews\(newsQuery, alsoKnownAs\)/.test(ingestSrc));
+      /fetchNews\(newsQuery, alsoKnownAs, \{ byRelevance \}\)/.test(ingestSrc));
   check("  …and so does re-scoring", /const cik = subject\.kind === "company" \? subjectRows\[0\]\.cik : null;\s*const alsoKnownAs = cik \? \[\.\.\.newsNamesFor\(cik\), \.\.\.gdeltHeadlineNames\(subject\.displayName, possessiveNameFor\(cik\)\)\]/.test(readFileSync("scripts/score.ts", "utf8")));
 
   console.log("\nThe sync reads what it says it reads");

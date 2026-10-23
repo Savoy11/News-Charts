@@ -42,7 +42,7 @@ import { fetchRecalls } from "../lib/recalls";
 import { fetchJusticeReleases } from "../lib/doj";
 import { FR_COMPANY_CAP, FR_COMPANY_SINCE, fetchCompanyRegulations, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
 import { WikipediaUnavailable, getTopicTimeline, wikiOutcome } from "../lib/wiki";
-import { GDELT_MIN_PHRASE, fetchNews, gdeltEverydayName } from "../lib/news";
+import { GDELT_MIN_PHRASE, fetchNews, gdeltEverydayName, gdeltNewsPlan } from "../lib/news";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchPressMentions } from "../lib/loc";
@@ -341,6 +341,21 @@ export const CASES: LiveCase[] = [
       const r = await fetchNews(gdeltEverydayName("DOMINOS PIZZA INC", "Domino's Pizza"));
       const out = [...outcomeProblems(r.outcome, r.detail), ...eventProblems(r.events, 1)];
       if (!r.events.some((e) => /\bDomino\b/i.test(e.title))) out.push("no headline naming Domino");
+      return out;
+    },
+  },
+  {
+    // by relevance (batch 37): newest first, none of the hundred headlines named McDonald's; by
+    // relevance, 37 did. The kept ones must name it, and not as a person's surname
+    name: "GDELT — McDonald's by relevance, headlines naming it only",
+    covers: ["gdelt"],
+    hosts: ["api.gdeltproject.org"],
+    async run() {
+      const plan = gdeltNewsPlan("MCDONALDS CORP", "McDonald's");
+      const r = await fetchNews(plan.query, [], { byRelevance: plan.byRelevance });
+      const out = [...outcomeProblems(r.outcome, r.detail), ...eventProblems(r.events, 1)];
+      const stray = r.events.find((e) => !/\bMcDonald/i.test(e.title));
+      if (stray) out.push(`kept "${stray.title}", whose headline does not name McDonald's`);
       return out;
     },
   },

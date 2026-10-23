@@ -186,6 +186,11 @@ export const GDELT_BY_RELEVANCE: Record<string, string> = {
   // an other name of Uber Technologies, kept out of newest-first queries since batch 36: one
   // headline in the hundred newest; by relevance, 26 of the hundred (2026-10-23)
   UBER: "Uber: 26 of the hundred headlines over three days, against 1 newest first",
+  // "Lowe's" is held as "Lowe", and "lowes companies" found 1 article in three days; by relevance,
+  // 12 of the hundred headlines carried "Lowe", half of them people (Rob Lowe, Rupert Lowe), and
+  // the headline test kept 3, every one the company's: "Lowe volunteers help build community garden"
+  LOWE: "Lowe's: 12 of the hundred headlines over three days, the 3 kept all the company's, against 1 article newest first",
+  // measured and left out: "moody" put 10 in the hundred, and kept two about Moody Park in Houston
 };
 
 /**

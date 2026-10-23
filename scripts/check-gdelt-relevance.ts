@@ -14,6 +14,8 @@ import { possessiveNameFor } from "../lib/sec";
  *  - "mcdonald": newest first, none of the hundred headlines named McDonald's; by relevance
  *    ("sort=hybridrel"), 37 did. "mcdonalds", "mcdonald's" and "mcdonald corp" found 9, 9 and 4.
  *  - "uber": newest first, 1 of the hundred; by relevance, 26.
+ *  - "lowe": by relevance, 12 headlines, half of them people; the headline test kept 3, all Lowe's.
+ *  - "moody": by relevance, 10 headlines, and the test would keep two about Moody Park: left out.
  * The headlines below are ones GDELT returned for "mcdonald" by relevance; its reply is mocked.
  */
 
@@ -49,13 +51,16 @@ async function main(): Promise<void> {
       gdeltQuery(uber.query, ["Uber"], true) === '("Uber Technologies" OR uber) sourcelang:english',
     gdeltQuery(uber.query, ["Uber"], true));
   check("  …and newest first, \"uber\" stays out as batch 36 measured", gdeltQuery("Uber Technologies", ["Uber"]) === '"Uber Technologies" sourcelang:english');
+  const low = gdeltNewsPlan("LOWES COMPANIES INC", possessiveNameFor(60667));
+  check("Lowe's, by its own possessive spelling, as \"lowe\" by relevance, bare since GDELT refuses four letters quoted",
+    low.query === "LOWE" && low.byRelevance && gdeltQuery(low.query, [], true) === "LOWE sourcelang:english", `${JSON.stringify(low)} ${gdeltQuery(low.query, [], true)}`);
   const others = [
     gdeltNewsPlan("MOODYS CORP /DE/", possessiveNameFor(1059556)),
     gdeltNewsPlan("DOMINOS PIZZA INC", possessiveNameFor(1286681)),
     gdeltNewsPlan("FORD MOTOR CO"),
     gdeltNewsPlan("Wendy's Co"),
   ];
-  check("an unmeasured stem (\"Moody\", \"Wendy\") and every other company are asked newest first, as before",
+  check("a stem measured and left out (\"Moody\"), an unmeasured one (\"Wendy\") and every other company are asked newest first, as before",
     others.every((p) => !p.byRelevance) && others.map((p) => p.query).join("|") === "MOODYS|DOMINO PIZZA|FORD MOTOR|Wendy's",
     others.map((p) => JSON.stringify(p)).join(" "));
   check("each name asked by relevance carries what it was measured to bring",
@@ -82,6 +87,13 @@ async function main(): Promise<void> {
     urls.length = 0;
     await fetchNews("FORD MOTOR");
     check("newest first is unchanged for everyone else", urls[0].includes("sort=datedesc&startdatetime=20170101000000"));
+    // as GDELT returned them for "lowe" by relevance, 2026-10-20 to 22
+    const lowes = ["Lowe volunteers help build community garden for Swannanoa nonprofit", "15 best Halloween decor deals from Amazon , Lowe , Home Depot and more starting at $5", "Hudson YMCA skatepark : new ramps with $50 , 000 Lowe grant | Local News"];
+    const people = ["Netflix unveils release dates for three Rob Lowe projects", "Rupert Lowe emerges as contender to succeed Burnham as betting odds shorten - London Business News", "Decision date moved for elite pass - rusher Hayden Lowe , but Vols squarely in the hunt"];
+    titles.splice(0, titles.length, ...lowes, ...people);
+    const l = await fetchNews("LOWE", [], { byRelevance: true });
+    check("Lowe's headlines are kept and Rob, Rupert and Hayden Lowe's are not",
+      l.events.length === lowes.length && lowes.every((t) => l.events.some((e) => e.title === t)), l.events.map((e) => e.title).join(" | "));
   } finally {
     globalThis.fetch = realFetch;
   }

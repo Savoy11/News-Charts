@@ -1002,26 +1002,31 @@ since GDELT was answering this session about once every few minutes. HawkScan co
         ("mcdonald corp").
       - **"uber":** newest first, 1 of the hundred; by relevance, 26 ("Uber gives more than 30,000
         staff OpenAI ChatGPT Work agent").
+      - **"lowe":** by relevance, 12 headlines carried the name, half of them people (Rob Lowe,
+        Rupert Lowe); the headline test below kept 3, every one the company's ("Lowe volunteers
+        help build community garden"). Batch 36's "lowes companies" found 1 article.
+      - **"moody":** by relevance, 10 headlines, but the test would keep two about Moody Park in
+        Houston ("command center at Moody Park"). Left out.
+      - **The window matters:** "mcdonald" by relevance over three months returned 92 pages and no
+        headline naming it, so the window is three days.
 - [x] **A measured name is asked by relevance over the last three days** (`gdeltNewsPlan`,
-      `GDELT_BY_RELEVANCE`, `lib/news.ts`). McDonald's is asked for "MCDONALD", and Uber
-      Technologies for "Uber Technologies" OR uber, both by relevance. Every other company is
-      asked newest first, as before.
-      - **Kept to measured names on purpose:** the same treatment could fit Moody's, Wendy's or
-        Brink's, but their stems are words and first names ("moody", "Wendy Williams", "on the
-        brink of"), so each joins only once it is measured.
+      `GDELT_BY_RELEVANCE`, `lib/news.ts`). McDonald's is asked for "MCDONALD", Lowe's for "lowe"
+      (bare: GDELT refuses four letters quoted), and Uber Technologies for "Uber Technologies" OR
+      uber, all by relevance. Every other company is asked newest first, as before.
+      - **Kept to measured names on purpose:** the same treatment could fit Wendy's or Brink's, but
+        their stems are first names and words ("Wendy Williams", "on the brink of"), so each joins
+        only once it is measured — as Moody's was, and failed.
 - [x] **Asked by relevance, a headline must name the company the way scoring counts naming:** not
       after a capitalised word, so a person is left out. Of the McDonald headlines GDELT returned,
       "Cooper McDonald" and "Rep . McDonald Rivet" are dropped (GDELT's space before the full stop
       is closed up first, so "Rep." is seen). The test is conservative: "3 Reasons to Own McDonald
       Stock" is dropped too.
 - [ ] **Open:**
-      - Moody's and Lowe's by relevance are being measured ("moody", "lowe") and are not on the
-        list yet.
       - Alphabet's "google" is unmeasured: the probe sent `"alphabet" OR "google"` without the
         brackets GDELT requires, and it was refused.
       - Some Uber headlines are incidents in an Uber ride ("fake Uber driver"). They name the
         company, as other feeds' headlines do, but say little about the business.
-- Checks: new `check:gdelt-relevance` (10), wired after `check:possessive`. On main's code it stops
+- Checks: new `check:gdelt-relevance` (12), wired after `check:possessive`. On main's code it stops
   at its first case (`gdeltNewsPlan` does not exist). `check:recall`, `check:short-names`,
   `check:possessive` and `check:aliases` follow ingest's new lines; what each holds is unchanged.
 
@@ -1073,7 +1078,7 @@ once every few minutes. HawkScan could not run: `HAWK_API_KEY` is not set.
       - Lowe's gains nothing either way: "lowe companies" and "lowes companies" each found 1
         article in three days, and neither had a headline naming it. Headlines call it "Lowe's",
         which GDELT holds as "Lowe": under five letters, and a surname. It is as uncovered as
-        McDonald's.
+        McDonald's. ✅ **Both asked by relevance since batch 37.**
       - "domino pizza" also finds the separately listed Domino's companies, the UK's Domino's
         Pizza Group and Australia's Domino's Pizza Enterprises: one brand, three listings.
 - Checks: new `check:possessive` (15), wired after `check:page-news`. On main's code it stops at

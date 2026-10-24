@@ -992,8 +992,8 @@ Real questions do this: `lib/prompt.ts` leaves "5G" as the focus of "how did 5G 
 stock", "in Q3" of "Ford in Q3", and "the US", "the EU" and "the UK" of "how did the US affect
 Ford" and its like. Each kept no focus word.
 
-`npm run check` passes (43 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` is
-being re-run against the demo database. HawkScan could not run: `HAWK_API_KEY` is not set.
+`npm run check` passes (43 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` passes
+203/203 against the demo database. HawkScan could not run: `HAWK_API_KEY` is not set.
 
 - [x] **A two-character word made of a letter and a digit is a focus word** (`SHORT_CODE`,
       `lib/focus.ts`): "5G", "Q3", "4K", "3D". Too specific to turn up by chance, where the other

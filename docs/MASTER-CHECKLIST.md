@@ -991,8 +991,8 @@ The owner approved FDA enforcement reports on 2026-10-24, #3 in
 now carries its drug, medical-device and food recalls from mid-2012: about 3,800 across 30
 companies.
 
-`npm run check` passes (44 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` is
-being re-run against the demo database. `check:live` gains an FDA case, which passes run on its own; the rest of `check:live` was not run.
+`npm run check` passes (44 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` passes
+203/203 against the demo database. `check:live` gains an FDA case, which passes run on its own; the rest of `check:live` was not run.
 HawkScan could not run: `HAWK_API_KEY` is not set.
 
 - [x] **Measured first** (openFDA, 2026-10-24):

@@ -54,6 +54,40 @@ async function main(): Promise<void> {
       eventsOf("GEHC", "wipro_ge").length === 0);
   check("a company with no mapped firm has none", fdaFirmsFor(320193) === null && fdaFirmsFor("0001613103") !== null);
 
+  console.log("\nBusinesses that changed hands (batch 41)");
+  const n = (ticker: string, label: string) => eventsOf(ticker, label).length;
+  check("Synthes's recalls are J&J's from the day J&J bought it, 2012-06-14, and not before",
+    n("JNJ", "synthes_before") === 0 && n("JNJ", "synthes_after") > 0);
+  check("Ortho-Clinical's are J&J's until its sale to Carlyle, nobody's while Carlyle owned it, and QuidelOrtho's from 2022-05-27",
+    n("JNJ", "ortho_clinical_jnj") > 0 && n("QDEL", "ortho_clinical_jnj") === 0 &&
+      n("JNJ", "ortho_clinical_carlyle") === 0 && n("QDEL", "ortho_clinical_carlyle") === 0 &&
+      n("QDEL", "ortho_clinical_quidelortho") > 0 && n("JNJ", "ortho_clinical_quidelortho") === 0);
+  check("Cordis's are J&J's until 2015-10-01, Cardinal Health's from 2015-10-02 to mid-2021, and the later Cordis US Corp is neither's",
+    n("JNJ", "cordis_jnj") > 0 && n("CAH", "cordis_jnj") === 0 && n("CAH", "cordis_cardinal") > 0 && n("JNJ", "cordis_cardinal") === 0 &&
+      n("CAH", "cordis_us_corp") === 0 && n("JNJ", "cordis_us_corp") === 0);
+  check("Alcon's are Novartis's until the spin-off on 2019-04-09, and Alcon's from then",
+    n("NVS", "alcon_novartis") > 0 && n("ALC", "alcon_novartis") === 0 && n("ALC", "alcon_own") > 0 && n("NVS", "alcon_own") === 0);
+  check("Mylan's are Viatris's only from its formation, 2020-11-16: Viatris does not carry Mylan's ticker",
+    n("VTRS", "mylan_before") === 0 && n("VTRS", "mylan_after") > 0);
+  check("a firm called Integra that is not shown to be Integra LifeSciences is left out", n("IART", "integra_limited") === 0);
+  const consumer = "Johnson & Johnson Consumer, Inc.";
+  check("J&J's consumer business is J&J's before Kenvue's IPO, both companies' until the exchange offer, and Kenvue's after",
+    n("JNJ", "jnj_consumer") === 1 && n("KVUE", "jnj_consumer") === 0 &&
+      firmFor(consumer, "2023-06-01", firmsOf("JNJ")) !== null && firmFor(consumer, "2023-06-01", firmsOf("KVUE")) !== null &&
+      firmFor(consumer, "2024-01-15", firmsOf("JNJ")) === null && firmFor(consumer, "2024-01-15", firmsOf("KVUE")) !== null);
+  const filing = /\b(?:8-K|8-K\/A|10-Q|10-K|20-F|6-K)\b/;
+  const whys = Object.values(FDA_FIRMS).flatMap((e) => e.firms.map((f) => f.why));
+  const dayAfter = (d: string) => new Date(Date.parse(`${d}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+  const uncited = Object.values(FDA_FIRMS).flatMap((e) =>
+    e.firms
+      .filter((f) => f.from || f.to)
+      .filter((f) => {
+        const day = f.from ?? dayAfter(f.to!);
+        return !filing.test(f.why) && !whys.some((w) => w.includes(day) && filing.test(w));
+      })
+      .map((f) => `${e.ticker} ${f.search}`));
+  check("every day a firm joined or left a company is cited to an SEC filing", uncited.length === 0, uncited.join(", "));
+
   console.log("\nOne recall, one event");
   const pump = eventsOf("MDT", "medtronic_two_products");
   check("a recall of three products is one event, on the day it started, at its most serious class",

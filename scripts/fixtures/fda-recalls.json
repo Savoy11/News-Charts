@@ -383,6 +383,365 @@
      "product_type": "Food"
     }
    ]
+  },
+  "synthes_before": {
+   "kind": "device",
+   "search": "recalling_firm:\"Synthes\" AND recall_initiation_date:[20100101 TO 20120613]",
+   "records": [
+    {
+     "event_id": "62324",
+     "recall_number": "Z-2054-2012",
+     "recalling_firm": "Synthes (USA) Products LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20120531",
+     "report_date": "20120801",
+     "product_description": "Universal Spinal System Lamina Hooks  Synthes Medium TI Lamina Hook - Right   498.320  Non sterile  LOT 6876785    Noncervical spinal fixation devices intended for posterior pedicle screw fixation, posterior hook fixation, or anterolateral fixation. Limited to skeletally mature patients with the exception of the small stature USS, which includes small stature and pediatric patients. These devices are indicated as an adjunct to fusion for all of these indications: degenerative disc disease, spondylolisthesis, trauma, deformities or curvatures, tumor, stenosis and failed previous fusion.",
+     "reason_for_recall": "USS Lamina Hooks, Medium, Right are being recalled because the hooks are etched with the wrong part number - 498.321 (Lamina Hook, Medium, Left). The Lamina Hooks should be etched with part number 498.320 (Lamina Hook, Medium, right).",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "62307",
+     "recall_number": "Z-2059-2012",
+     "recalling_firm": "Synthes USA HQ, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20120522",
+     "report_date": "20120801",
+     "product_description": "4.5mm TI Multiloc Screw Length 38MM-Sterile  Expiration: 04/29/2012  REF 04.019.038S    Manufactured or Distributed by Synthes (USA) 1101 Synthes Avenue, Monument CO 80132    4.5MM TI Multiloc Screw Length 38MM-Sterile  Ref 04.019,038S.     The Multiloc Screw 4.5 is used with a Multiloc PHN for treatment of proximal humerus fractures and is intended to be inserted through the Multiloc PHN until it engages the subchondral bone below the relative distal cortex (cortex closest to the humeral head, below the articular surface).",
+     "reason_for_recall": "Two lots of 4.5mm multi-loc screws were recalled due to incorrect labeling of screw size.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "synthes_after": {
+   "kind": "device",
+   "search": "recalling_firm:\"Synthes\" AND recall_initiation_date:[20120614 TO 20261231]",
+   "records": [
+    {
+     "event_id": "98461",
+     "recall_number": "Z-1702-2026",
+     "recalling_firm": "Synthes (USA) Products LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20260225",
+     "report_date": "20260408",
+     "product_description": "2.4 VOLT TAP LOCKING SCREW TAP TO 90MM. Part Number: 03.424.124-US.",
+     "reason_for_recall": "A full lot swap between VOLT Locking Screw Tap 03.424.124 lot 68900P9 and Cortical Screw Tap 03.424.126 lot 68982P8, resulting in the bones taps having an incorrect thread.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "98461",
+     "recall_number": "Z-1703-2026",
+     "recalling_firm": "Synthes (USA) Products LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20260225",
+     "report_date": "20260408",
+     "product_description": "2.4 VOLT(TM) TAP CORTEX SCREW TO 90MM. Part Number: 03.424.126-US.",
+     "reason_for_recall": "A full lot swap between VOLT Locking Screw Tap 03.424.124 lot 68900P9 and Cortical Screw Tap 03.424.126 lot 68982P8, resulting in the bones taps having an incorrect thread.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "ortho_clinical_jnj": {
+   "kind": "device",
+   "search": "recalling_firm:\"Ortho Clinical\" AND recall_initiation_date:[20120101 TO 20140629]",
+   "records": [
+    {
+     "event_id": "68286",
+     "recall_number": "Z-1804-2014",
+     "recalling_firm": "Ortho-Clinical Diagnostics",
+     "classification": "Class II",
+     "recall_initiation_date": "20140512",
+     "report_date": "20140625",
+     "product_description": "VITROS (R) Chemistry Products Calibrator Kit 17, Product Code/ Catalog Number 6801701 -- For in vitro diagnostic use only --- VITROS Chemistry Products Calibrator Kit 17 is used in conjunction with VITROS Chemistry Products FS Calibrator 1 to calibrate VITROS 5,1 FS Chemistry System, the VITROS 4600 Chemistry System and the VITROS 5600 Integrated System for the quantitative measurement of C-reactive protein (CRP) using VITROS hsCRP Reagent.",
+     "reason_for_recall": "Calibrator values assigned for the calibrator kit lots were released using a reference method that was undergoing validation for a new lot of European Reference Material (ERM). The validation process was not complete prior to calibrator value assignment for VITROS (R) Chemistry Products hsCRP Reagent (Product Code 6801739), Generation (GEN) 28.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "68286",
+     "recall_number": "Z-1805-2014",
+     "recalling_firm": "Ortho-Clinical Diagnostics",
+     "classification": "Class II",
+     "recall_initiation_date": "20140512",
+     "report_date": "20140625",
+     "product_description": "VITROS (R) Chemistry Products FS Calibrator 1, Product Code/ Catalog Number 6801873 -- For in vitro diagnostic use only --- VITROS Chemistry Products FS Calibrator 1 is used in conjunction with VITROS Chemistry Products Calibrator Kits to calibrate the VITROS 5,1 FS and 4600 Chemistry Systems and the VITROS 5600 Integrated System.",
+     "reason_for_recall": "Calibrator values assigned for the calibrator kit lots were released using a reference method that was undergoing validation for a new lot of European Reference Material (ERM). The validation process was not complete prior to calibrator value assignment for VITROS (R) Chemistry Products hsCRP Reagent (Product Code 6801739), Generation (GEN) 28.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "ortho_clinical_carlyle": {
+   "kind": "device",
+   "search": "recalling_firm:\"Ortho Clinical\" AND recall_initiation_date:[20150101 TO 20220526]",
+   "records": [
+    {
+     "event_id": "90408",
+     "recall_number": "Z-1367-2022",
+     "recalling_firm": "Ortho-Clinical Diagnostics, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20220526",
+     "report_date": "20220720",
+     "product_description": "Anti-SARS-CoV-2 IgG Quantitative Reagent Pack- Intended for use on VITROS¿  ECi/ECiQ/3600 Immunodiagnostic Systems and VITROS¿ 5600/XT 7600 Integrated Systems.  Product Code: 6199960",
+     "reason_for_recall": "On-Analyzer Stability (OAS) time, supported for 6 weeks; not 8 weeks as is currently stated in the Instructions For Use (IFU).",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "90047",
+     "recall_number": "Z-1113-2022",
+     "recalling_firm": "Ortho-Clinical Diagnostics, Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20220325",
+     "report_date": "20220525",
+     "product_description": "VITROS Immunodiagnostic Products LH Reagent Pack  Product Code: 1350198",
+     "reason_for_recall": "Falsely high or delayed patient and QC results may occur due to low end imprecision. VITROS Immunodiagnostic Products FSH, LH and Prol Reagents Low End Imprecision. Low-level quality control (QC) and patient samples at the low end of the Measuring (Reportable) Range when using VITROS FSH, LH and Prol Reagent. Calibration failures, driven by imprecision observed with Calibrator Level 1.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "ortho_clinical_quidelortho": {
+   "kind": "device",
+   "search": "recalling_firm:\"Ortho Clinical\" AND recall_initiation_date:[20220527 TO 20261231]",
+   "records": [
+    {
+     "event_id": "97409",
+     "recall_number": "Z-2560-2025",
+     "recalling_firm": "Ortho-Clinical Diagnostics, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20250729",
+     "report_date": "20250924",
+     "product_description": "VITROS Chemistry Products LAC Slides. Catalog Number: 8150112. 1 Sales Unit = contains 5 cartridges of 18 slides, for a total of 90 tests.",
+     "reason_for_recall": "VITROS Chemistry Products LAC Slides on VITROS XT 3400 and VITROS XT 7600 Systems are experiencing an increased occurrence of calibration failure related to lots from coating 0130 and above with Condition Code TH4-63J during calibration, causing the delay of lac test results and potentially impact patient management. The issue was identified by QuidelOrtho through an increase in customer complaints compared to the historical baseline with average failure rate of 1% for coating 0130 in 2025 while average of failure rate for other coating was 0.06% in 2025 and average of failure rate for all coatings is 0.03% for 2024.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "97409",
+     "recall_number": "Z-2559-2025",
+     "recalling_firm": "Ortho-Clinical Diagnostics, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20250729",
+     "report_date": "20250924",
+     "product_description": "Chemistry Products LAC Slides. Catalog Number: 8433880. 1 Sales Unit = contains 5 cartridges of 60 slides, for a total of 300 tests.",
+     "reason_for_recall": "VITROS Chemistry Products LAC Slides on VITROS XT 3400 and VITROS XT 7600 Systems are experiencing an increased occurrence of calibration failure related to lots from coating 0130 and above with Condition Code TH4-63J during calibration, causing the delay of lac test results and potentially impact patient management. The issue was identified by QuidelOrtho through an increase in customer complaints compared to the historical baseline with average failure rate of 1% for coating 0130 in 2025 while average of failure rate for other coating was 0.06% in 2025 and average of failure rate for all coatings is 0.03% for 2024.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "cordis_jnj": {
+   "kind": "device",
+   "search": "recalling_firm:\"Cordis\" AND recall_initiation_date:[20120101 TO 20151001]",
+   "records": [
+    {
+     "event_id": "70080",
+     "recall_number": "Z-0998-2015",
+     "recalling_firm": "Cordis Corporation",
+     "classification": "Class II",
+     "recall_initiation_date": "20141222",
+     "report_date": "20150128",
+     "product_description": "Cordis POWERFLEX PRO PTA Dilatation Catheter    Intended to dilate stenoses in iliac, femoral, ilio-femoral, popliteal, infra popliteal and renal arteries and for the treatment of obstructive lesions of native or synthetic arteriovenous dialysis fistulae. The device is also indicated for post- dilatation of balloon-expandable and self-expanding stents in the peripheral vasculature.",
+     "reason_for_recall": "One unit from a demo lot of POWERFLEX PRO PTA Dilatation Catheter was left at a hospital and was not sterilized.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "68834",
+     "recall_number": "Z-2556-2014",
+     "recalling_firm": "Cordis Corporation",
+     "classification": "Class II",
+     "recall_initiation_date": "20140623",
+     "report_date": "20140903",
+     "product_description": "Cordis EMPIRA NC RX PTCA Dilatation Catheter",
+     "reason_for_recall": "The balloon may exhibit resistance to the removal of the balloon cover. Weakening of the affected product in the region of the proximal balloon seal may occur when excessive force is applied to remove the balloon cover.  This may lead to balloon burst, shaft separation or deflation difficulties, which could result in procedural delay, vessel trauma or surgery.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "cordis_cardinal": {
+   "kind": "device",
+   "search": "recalling_firm:\"Cordis Corporation\" AND recall_initiation_date:[20151002 TO 20210630]",
+   "records": [
+    {
+     "event_id": "88112",
+     "recall_number": "Z-2079-2021",
+     "recalling_firm": "Cordis Corporation",
+     "classification": "Class II",
+     "recall_initiation_date": "20210609",
+     "report_date": "20210721",
+     "product_description": "Avanti¿+ Catheter Sheath Introducer - Product Usage: Is indicated for use in arterial and venous procedures requiring percutaneous introduction of intravascular devices.",
+     "reason_for_recall": "The product in the packaging is larger (both inner and outer diameter) than the labeling indicates.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "87329",
+     "recall_number": "Z-1257-2021",
+     "recalling_firm": "Cordis Corporation",
+     "classification": "Class I",
+     "recall_initiation_date": "20210211",
+     "report_date": "20210324",
+     "product_description": "PRECISE PRO RX CAROTID STENT implant system, Product Codes:  PC0520RXC, PC0530RXC, PC0540RXC, PC0620RXC, PC0630RXC, PC0640RXC, PC0720RXC, PC0730RXC, PC0740RXC, PC0820RXC, PC0830RXC, PC0840RXC, PC0920RXC, PC0930RXC, PC0940RXC, PC1030RXC, PC1040RXC",
+     "reason_for_recall": "Distal tip may become separated from the lumen wire in specific lots.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "cordis_us_corp": {
+   "kind": "device",
+   "search": "recalling_firm:\"Cordis US Corp\"",
+   "records": [
+    {
+     "event_id": "96418",
+     "recall_number": "Z-1510-2025",
+     "recalling_firm": "Cordis US Corp",
+     "classification": "Class II",
+     "recall_initiation_date": "20250304",
+     "report_date": "20250409",
+     "product_description": "Cordis, REF C10040ML, Smart Control Vascular Stent System ILIAC, 10mm X 40mm 6F,  SterileEO, Rx Only",
+     "reason_for_recall": "product mix-up; Vascular stent  labeled as one size but contains a different size.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "alcon_novartis": {
+   "kind": "device",
+   "search": "recalling_firm:\"Alcon\" AND recall_initiation_date:[20120101 TO 20190408]",
+   "records": [
+    {
+     "event_id": "80931",
+     "recall_number": "Z-0185-2019",
+     "recalling_firm": "Alcon Research, LTD.",
+     "classification": "Class I",
+     "recall_initiation_date": "20180828",
+     "report_date": "20181031",
+     "product_description": "CyPass System 241-S, CYPASS MICRO-STENT, CYPASS LOADED, CYPASS APPLIER, REF CATALOG #:  8065754003  For ophthalmic use.",
+     "reason_for_recall": "Analysis of the completed dataset from the COMPASS-XT long-term study showed that the CyPass Micro-Stent group experienced statistically significant endothelial cell loss (ECL) compared to the group who underwent cataract surgery alone.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "80931",
+     "recall_number": "Z-0186-2019",
+     "recalling_firm": "Alcon Research, LTD.",
+     "classification": "Class I",
+     "recall_initiation_date": "20180828",
+     "report_date": "20181031",
+     "product_description": "CyPass System 241, Intraocular Pressure Lowering Implant, CYPASS MICRO-STENT, CYPASS APPLIER, REF:  8065754001.   For ophthalmic use.",
+     "reason_for_recall": "Analysis of the completed dataset from the COMPASS-XT long-term study showed that the CyPass Micro-Stent group experienced statistically significant endothelial cell loss (ECL) compared to the group who underwent cataract surgery alone.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "alcon_own": {
+   "kind": "device",
+   "search": "recalling_firm:\"Alcon\" AND recall_initiation_date:[20190409 TO 20261231]",
+   "records": [
+    {
+     "event_id": "98055",
+     "recall_number": "Z-0939-2026",
+     "recalling_firm": "Alcon Research LLC",
+     "classification": "Class I",
+     "recall_initiation_date": "20251124",
+     "report_date": "20251231",
+     "product_description": "Brand Name: Alcon Laboratories, Inc.  Product Name: Custom Pak  Model/Catalog Numbers: 9903-20, 17188-04, 19762-03, 19203-04, 19203-04, 17957-10    Software Version: N/A  Product Description: Alcon Custom Paks are customer-designed sterile surgical procedure packs / convenience kits intended for use by trained ophthalmic surgeons in a variety of ophthalmic surgeries. Custom Pak is a collection of various ophthalmic surgical instruments and the necessary materials necessary to perform an ophthalmic surgical procedure.  Component: N/A",
+     "reason_for_recall": "Ophthalmic procedure packs may have incomplete seals affecting sterility.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "97739",
+     "recall_number": "Z-0326-2026",
+     "recalling_firm": "Alcon Research LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20250930",
+     "report_date": "20251105",
+     "product_description": "Alcon PRECISION1 One-Day Contact Lenses, -2.25D.",
+     "reason_for_recall": "Potential for a weak seal in some units resulting in compromise in sterility.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "mylan_before": {
+   "kind": "drug",
+   "search": "recalling_firm:\"Mylan\" AND recall_initiation_date:[20120101 TO 20201115]",
+   "records": [
+    {
+     "event_id": "86520",
+     "recall_number": "D-0049-2021",
+     "recalling_firm": "Mylan Pharmaceuticals Inc.",
+     "classification": "Class III",
+     "recall_initiation_date": "20201002",
+     "report_date": "20201028",
+     "product_description": "Candesartan Cilexetil and Hydrochlorothiazide Tablets, USP 32 mg/12.5 mg, packaged in a) 90-count bottles (NDC 0378-3002-77) and b) 500-count bottles (NDC 0378-3002-05), Rx only, Manufactured for: Mylan Pharmaceuticals Inc. Morgantown, WV 26505 U.S.A.",
+     "reason_for_recall": "Out-of-specification organic impurity results obtained during routine stability testing.",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "86247",
+     "recall_number": "D-1576-2020",
+     "recalling_firm": "Mylan Institutional LLC",
+     "classification": "Class I",
+     "recall_initiation_date": "20200817",
+     "report_date": "20200909",
+     "product_description": "Tranexamic Acid Injection, USP, 1000 mg/10 mL (100 mg/mL), 10 mL Single-Dose Vial (NDC 67457-197-00); 10 x 10 mL Single-Dose Vials per carton (NDC 67457-197-10), Rx only, Manufactured by: Mylan Institutional, Galway, Ireland; Manufactured for: Mylan Institutional LLC, Rockford, IL  61103.",
+     "reason_for_recall": "Labeling: Label Mix-Up; potential for cartons labeled as Tranexamic Acid Injection, USP to contain vials of Amiodarone HCl Injection, USP and cartons labeled as Amiodarone HCl Injection, USP to contain vials of Tranexamic Acid Injection, USP.",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "mylan_after": {
+   "kind": "drug",
+   "search": "recalling_firm:\"Mylan\" AND recall_initiation_date:[20201116 TO 20261231]",
+   "records": [
+    {
+     "event_id": "99750",
+     "recall_number": "D-0830-2026",
+     "recalling_firm": "Mylan Pharmaceuticals Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20260826",
+     "report_date": "20260909",
+     "product_description": "Carton label: Mycophenolate Mofetil for injection, USP, 500 mg/vial, Sterile, 4 Single Dose Vials, Rx only, Manufactured for: Mylan Institutional LLC, Morgantown, WV 26505, Made in India, NDC 67457-386-81.  Vial Label: Mycophenolate Mofetil for injection, USP, 500 mg/vial, Sterile, Single Dose Vial, Rx only, Manufactured for: Mylan Institutional LLC, Morgantown, WV 26505, Made in India, NDC 67457-386-00.",
+     "reason_for_recall": "Failed Dissolution Specifications",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "99653",
+     "recall_number": "D-0839-2026",
+     "recalling_firm": "Mylan Pharmaceuticals Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20260817",
+     "report_date": "20260909",
+     "product_description": "Prasugrel Tablets, USP, 10mg, Rx only, 30 Tablets in each bottle, Manufactured for: Mylan Pharmaceuticals Inc., Morgantown, WV 26505, Made in India, NDC 0378-5186-93.",
+     "reason_for_recall": "Failed Dissolution Specifications; product failed to meet 18-month stability testing acceptance criteria",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "integra_limited": {
+   "kind": "device",
+   "search": "recalling_firm:\"Integra Limited\"",
+   "records": [
+    {
+     "event_id": "82653",
+     "recall_number": "Z-1338-2019",
+     "recalling_firm": "Integra Limited",
+     "classification": "Class II",
+     "recall_initiation_date": "20190331",
+     "report_date": "20190522",
+     "product_description": "Integra Flowable Wound Matrix  Catalog No: FWD301    Product Usage:  Integra Flowable Wound Matrix is indicated for the treatment of tunneling and/or undermined wounds including: surgical wounds (donor sites/grafts, post-Moh s surgery, post-laser surgery, podiatric, wound dehiscence) and diabetic ulcers of both partial and full-thickness varieties. The device is intended for one-time use.",
+     "reason_for_recall": "Stability did not meet acceptance criteria for visual appearance during mixing and force vs. displacement at 6 months",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "jnj_consumer": {
+   "kind": "drug",
+   "search": "recalling_firm:\"Johnson & Johnson Consumer\"",
+   "records": [
+    {
+     "event_id": "88288",
+     "recall_number": "D-0843-2021",
+     "recalling_firm": "Johnson & Johnson Consumer, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20210714",
+     "report_date": "20211006",
+     "product_description": "Neutrogena Invisible Daily defense body spray sunscreen BROAD SPECTRUM SPF 60+, Avobenzone (3%), Homosalate (10%), Octisalate (5%), Octocrylene (10%), NET WT. 5.0 OZ. (141 g) aerosol can, Distributed by: JOHNSON & JOHNSON CONSUMER, INC. Skillman, NJ 08858, UPC 0 86800 11154 2",
+     "reason_for_recall": "cGMP Deviations",
+     "product_type": "Drugs"
+    }
+   ]
   }
  }
 }

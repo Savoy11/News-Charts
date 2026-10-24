@@ -97,7 +97,8 @@ Banker Convicted"), so a release is kept only when its title makes the company a
 ## 3. FDA enforcement reports — 2012 to today, CC0
 
 **Status:** APPROVED — by the owner, 2026-10-24, and built in batch 40 (`lib/fdaRecalls.ts`): Class I
-and II recalls for 30 listed companies mapped by hand, about 3,800 recalls in all.
+and II recalls for 30 listed companies mapped by hand, about 3,800 recalls in all; 38 companies and
+about 4,700 recalls from batch 41, which added Johnson & Johnson and the businesses it sold.
 
 - **What it is:** drug, medical-device and food recalls from the FDA's weekly enforcement report.
 - **How it is read:** openFDA's keyless API, `https://api.fda.gov/{drug,device,food}/enforcement.json`,

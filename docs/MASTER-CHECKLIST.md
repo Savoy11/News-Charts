@@ -991,8 +991,9 @@ browser lays out." Every row of the timeline list was drawn and laid out when a 
 1799 down, for a reader who came for this year. Now a long list opens with its recent years and
 folds the rest.
 
-`npm run check` passes (43 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` is
-being re-run against the demo database. HawkScan could not run: `HAWK_API_KEY` is not set.
+`npm run check` passes (43 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` passes
+203/203 against the demo database, whose pages are short enough to open whole. HawkScan could not
+run: `HAWK_API_KEY` is not set.
 
 - [x] **Measured first, in Chromium** (2026-10-24, the scratch database from batch 35: JPMorgan's
       real EDGAR, Yahoo and GDELT rows plus 3,000 stand-in stories, and the real Ford, IBM, Apple

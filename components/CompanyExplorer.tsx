@@ -322,6 +322,7 @@ export default function CompanyExplorer({ prices, events, macro = NO_EVENTS, sit
         siteDomain={siteDomain}
         persistKey={`news-charts:collapse:${pathname}`}
         reveal={reveal}
+        openAll={focusResult.active}
       />
     </div>
   );

@@ -984,6 +984,78 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 38: a long timeline opens with its older years folded (2026-10-24)
+
+Batch 35 left this open: JPMorgan's page was still 7.1 MB, and "what is left is the 4,652 rows the
+browser lays out." Every row of the timeline list was drawn and laid out when a page opened, from
+1799 down, for a reader who came for this year. Now a long list opens with its recent years and
+folds the rest.
+
+`npm run check` passes (43 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` is
+being re-run against the demo database. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **Measured first, in Chromium** (2026-10-24, the scratch database from batch 35: JPMorgan's
+      real EDGAR, Yahoo and GDELT rows plus 3,000 stand-in stories, and the real Ford, IBM, Apple
+      and UPS rows; each page opened three times, medians). On main's code:
+      - **JPMorgan:** 2,212 event rows, 32,971 elements, 385 ms of layout and 264 ms of style
+        work; ready (DOMContentLoaded) at 848 ms. Its 2026 alone has 382 rows.
+      - **Ford:** 1,979 rows and 298 ms of layout. **IBM:** 1,048 rows. **Apple** and **UPS:**
+        about 610 each.
+      - This container is fast. A phone does the same layout several times slower.
+- [x] **A long list opens with its older years folded** (`OPEN_ROW_BUDGET` = 300 and
+      `foldedYears`, `components/EventList.tsx`). The newest years stay open while their rows
+      fit 300, and the newest year is always open. The first year that does not fit, and every
+      year before it, start folded. A stack of filings counts as the one card it is. A list that
+      fits opens whole, as before, and so does a long one that a filter has shortened: the opening
+      folds are worked out from the list on screen, not stored.
+      - **A list a focused search narrowed opens every year, however long** (`openAll`, set from
+        the focus on company and topic pages). For "how did covid affect…" the years asked about
+        are 2020 and 2021, the ones the opening folds would hide. A focus that matches nothing shows
+        everything, as before, and folds like any long list.
+      - **A folded year keeps its header and its count** ("2019 · 89 events"), and the hover
+        preview it already had. It opens on a click, with Expand all, from the Jump bar, or by
+        itself when the chart or a Biggest-moves card jumps into it. Its days keep their anchors.
+      - **The page says so:** "Years before 2026 are folded so this page stays quick to load. Click
+        a year to open it, or use Expand all above." The list's button reads Expand all while any
+        year is folded, and Collapse all once none is; before, a page that opened partly folded
+        would have offered only Collapse all.
+      - **A remembered view is saved only once the reader chooses.** Before, every visit saved the
+        page's sections as they stood, so a stored copy of the opening folds would have kept them
+        after the list outgrew them. Saved views now carry a mark; one saved before this batch,
+        which every visit wrote, is not taken for a choice. Only the owner's browser has any.
+      - Topic, industry and group pages use the same list, so a long one folds the same way.
+- [x] **After, the same pages and the same database:**
+
+      | Page | Event rows laid out | Elements | Layout | Ready | HTML (gzipped) |
+      |---|---|---|---|---|---|
+      | JPMorgan | 2,212 → **382** | 32,971 → 8,979 | 385 → **69 ms** | 848 → 504 ms | 7.10 → 3.56 MB (0.52 → 0.36) |
+      | Ford | 1,979 → 258 | 28,375 → 7,860 | 298 → 77 ms | 673 → 374 ms | 5.55 → 2.76 MB (0.44 → 0.32) |
+      | IBM | 1,048 → 273 | 16,885 → 6,086 | 164 → 65 ms | 521 → 359 ms | 3.84 → 2.47 MB (0.33 → 0.29) |
+      | Apple | 613 → 268 | 9,700 → 5,085 | 103 → 60 ms | 368 → 231 ms | 2.36 → 1.77 MB (0.21 → 0.19) |
+      | UPS | 607 → 272 | 9,238 → 5,018 | 99 → 56 ms | 374 → 197 ms | 1.91 → 1.44 MB (0.16 → 0.14) |
+
+      On JPMorgan's page in Chromium: clicking 2020 opened it (382 → 533 rows) and a reload kept
+      it open; Expand all opened all 2,212 and the button then read Collapse all; a Biggest-moves
+      card for Apr 9, 2009 opened 2009; and nothing was saved, and a reload opened the same way,
+      until the reader chose. Focused, "dividend" showed its 179 rows across 43 years and
+      "interest rates" its 246, all open, with no note; no focus in that database matched more
+      than 300, so a long narrowed list is held by the check alone.
+- [ ] **Open:**
+      - The page still sends every row as data: a folded row is not drawn, but it is downloaded.
+        Script time barely moved (JPMorgan 625 → 555 ms) because the browser still reads and
+        hydrates the whole list. Sending older years only when opened would cut that. It is a
+        larger change: the explorer filters, ranks and focuses the whole list in the browser.
+      - A folded year keeps one zero-height anchor per day (about 2,000 on JPMorgan's page) so a
+        jump still lands. They are cheap, but one per year would do now that a jump opens the year
+        first.
+      - **Found in passing, not this batch's:** a focus whose words are all dropped, such as
+        "8-K" or "10-K", narrows nothing, yet the focus bar says "Showing the 3789 of 3789 events
+        that mention “8-K”". `applyFocus` returns every event with `matched` equal to the total,
+        and `FocusBar` reads that as a match.
+- Checks: new `check:event-folds` (16), wired after `check:gdelt-relevance`. On main's code it
+  stops at its first case (`foldedYears` does not exist). It renders the list as the server sends
+  it, with rows spread over the years as JPMorgan's and Ford's pages spread theirs.
+
 ## NC ledger — batch 37: crowded names asked by relevance (2026-10-23)
 
 Batches 25 and 36 left the same lead open: for a name in every other article, GDELT's newest
@@ -1134,7 +1206,8 @@ news. HawkScan could not run: `HAWK_API_KEY` is not set.
       the hourly refresh runs in production. *(Corrected 2026-10-23, batch 36: 7.1 MB is the
       uncompressed size. Next compresses what it sends, so JPMorgan's page is 0.52 MB on the wire,
       against 1.08 MB on main's code before this batch. What is left is the 4,652 rows the browser
-      lays out.)*
+      lays out.)* ✅ **Batch 38: a long list opens with its older years folded, so JPMorgan's
+      page lays out 382 rows, not 2,212.** The data it is drawn from still ships whole.
 - Checks: new `check:page-news` (21), wired after `check:short-names`. On main's code it cannot
   load (`lib/pageNews.ts` does not exist). It pins how Next measures an entry, read from
   `node_modules`, so an upgrade that changes the measurement fails the check rather than the cache.

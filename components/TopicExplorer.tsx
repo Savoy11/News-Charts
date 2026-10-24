@@ -353,6 +353,7 @@ export default function TopicExplorer({
           order="asc"
           persistKey={`news-charts:collapse:${pathname}`}
           reveal={reveal}
+          openAll={focusResult.active}
         />
       )}
     </div>

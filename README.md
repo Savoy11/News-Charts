@@ -516,6 +516,12 @@ under a 1.8 MB budget: the newest stories first, then the strongest story of eac
 the days the price moved most first. Every filing and other record stays, the database keeps
 every story, and a page that leaves stories out says how many.
 
+**A long timeline opens with its older years folded.** The list lays out about 300 rows at most
+when a page opens (`OPEN_ROW_BUDGET`, `components/EventList.tsx`). The newest years stay open while
+they fit, and the newest one is always open. Each older year shows its header and its count, and
+opens on a click, with "Expand all", or by itself when the chart jumps into it. JPMorgan's page
+went from 2,212 rows laid out to 382. A page whose list fits opens whole, as before.
+
 A small `stored` badge on each page carries the date that copy was last refreshed. It replaced a
 `stored` / `live` badge, which after the cut-over had one reachable value and implied a
 comparison the code no longer performed.

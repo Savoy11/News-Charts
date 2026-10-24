@@ -120,7 +120,7 @@ async function main(): Promise<void> {
   const ingest = read("scripts/ingest.ts");
   check("company ingest reads the possessive and asks and scores with it",
     /const possessive = possessiveNameFor\(company\.cik\);/.test(ingest) &&
-      /const newsQuery = gdeltEverydayName\(company\.name, possessive\);/.test(ingest) &&
+      /gdeltNewsPlan\(company\.name, possessive, alsoKnownAs\)/.test(ingest) &&
       /\.\.\.gdeltHeadlineNames\(company\.name, possessive\)/.test(ingest));
   check("  …and so does re-scoring", /gdeltHeadlineNames\(subject\.displayName, possessiveNameFor\(cik\)\)/.test(read("scripts/score.ts")));
   check("the sync writes the possessives into the index", /aliases,\s*possessive,\s*\};/.test(read("scripts/sync-aliases.ts")));

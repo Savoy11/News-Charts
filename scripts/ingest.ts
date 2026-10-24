@@ -28,7 +28,7 @@ import { collapseNearDuplicates } from "../lib/newsQuality";
 import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
 import { getTopicTimeline, articleAnswersSlug, companyLede, articleCoversSlug, topicSlugFromTitle, WikipediaUnavailable, wikiOutcome } from "../lib/wiki";
 import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
-import { fetchNews, gdeltEverydayName, gdeltHeadlineNames, gdeltNames } from "../lib/news";
+import { fetchNews, gdeltHeadlineNames, gdeltNames, gdeltNewsPlan } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
 import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, newsNamesFor, possessiveNameFor, type Rename } from "../lib/sec";
@@ -502,10 +502,12 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   // headline that says "Ford" — the common name is the query, exactly as the comment above
   // promised and the historical sources below already do.
   if (alsoKnownAs.length) line("names", `headlines also scored by ${alsoKnownAs.map((n) => `"${n}"`).join(", ")}`);
-  // a name GDELT refuses as too short ("Visa", "CSX") is asked with its legal form ("Visa Inc"), and
-  // a possessive in the form GDELT holds ("DOMINO PIZZA")
-  const newsQuery = gdeltEverydayName(company.name, possessive);
-  await run("gdelt", gdeltNames(newsQuery, alsoKnownAs).join(" | "), () => fetchNews(newsQuery, alsoKnownAs), (e) =>
+  // a name GDELT refuses as too short ("Visa", "CSX") is asked with its legal form ("Visa Inc"), a
+  // possessive in the form GDELT holds ("DOMINO PIZZA"), and one that drowns newest-first by
+  // relevance ("MCDONALD")
+  const { query: newsQuery, byRelevance } = gdeltNewsPlan(company.name, possessive, alsoKnownAs);
+  const asked = gdeltNames(newsQuery, alsoKnownAs, byRelevance).join(" | ") + (byRelevance ? " (by relevance)" : "");
+  await run("gdelt", asked, () => fetchNews(newsQuery, alsoKnownAs, { byRelevance }), (e) =>
     // dedupe BEFORE capping: syndicated copies of one wire story must not burn cap slots
     collapseNearDuplicates(e).slice(0, 75)
   );

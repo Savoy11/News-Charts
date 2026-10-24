@@ -130,9 +130,20 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
     firms: [
       { search: "Pfizer", why: "the company and its units, King Legacy and Meridian among them" },
       { search: "Hospira", from: "2015-09-03", why: "bought 2015-09-03 (Pfizer's 8-K filed 2015-09-03); Hospira's earlier recalls were its own" },
+      {
+        search: "Greenstone",
+        to: "2020-11-15",
+        why: "Pfizer's generics company until it went with Upjohn to form Viatris, 2020-11-16 (Viatris's 8-K/A filed 2020-11-19)",
+      },
     ],
   },
-  818686: { ticker: "TEVA", firms: [{ search: "Teva", why: "the company and its U.S. arm" }] },
+  818686: {
+    ticker: "TEVA",
+    firms: [
+      { search: "Teva", why: "the company and its U.S. arm" },
+      { search: "Actavis", from: "2016-08-02", why: "Allergan's generics business, bought 2016-08-02 (Teva's 6-K filed 2016-08-02)" },
+    ],
+  },
   59478: { ticker: "LLY", firms: [{ search: "Eli Lilly", why: "the company itself" }] },
   310158: {
     ticker: "MRK",
@@ -141,6 +152,117 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
   14272: {
     ticker: "BMY",
     firms: [{ search: "Bristol", match: /\bBristol[- ]?M[ey]+ers\s+Squibb\b/i, why: "the company itself, however the firm name is spelled" }],
+  },
+
+  1114448: {
+    ticker: "NVS",
+    firms: [
+      { search: "Novartis", not: /Consumer Health/i, why: "the company and its units" },
+      {
+        search: "Novartis Consumer Health",
+        to: "2015-03-01",
+        why: "its consumer business until it went into GSK's consumer joint venture on 2015-03-02 (Novartis's 20-F for 2015)",
+      },
+      { search: "Sandoz", to: "2023-10-03", why: "its generics business until the spin-off on 2023-10-04 (Novartis's 6-K filed 2023-10-04)" },
+      { search: "Alcon", to: "2019-04-08", why: "its eye-care business until the spin-off on 2019-04-09 (Alcon's 20-F for 2019)" },
+    ],
+  },
+  1167379: {
+    ticker: "ALC",
+    firms: [{ search: "Alcon", from: "2019-04-09", why: "the company from its spin-off from Novartis on 2019-04-09; before that its recalls were Novartis's" }],
+  },
+  1792044: {
+    ticker: "VTRS",
+    firms: [
+      { search: "Viatris", why: "the company itself" },
+      {
+        search: "Mylan",
+        from: "2020-11-16",
+        why: "joined Viatris at its formation 2020-11-16 (Viatris's 8-K/A filed 2020-11-19); Viatris does not carry Mylan's ticker, so Mylan's earlier recalls are not its",
+      },
+      { search: "Greenstone", from: "2020-11-16", why: "Pfizer's generics company, part of the Upjohn business that formed Viatris" },
+    ],
+  },
+  200406: {
+    ticker: "JNJ",
+    firms: [
+      { search: "Johnson & Johnson", not: /Consumer/i, why: "the company and the units named for it" },
+      { search: "Ethicon", why: "its surgical company" },
+      { search: "DePuy", why: "its orthopaedics company since 1998" },
+      { search: "Janssen", why: "its pharmaceutical companies" },
+      { search: "Biosense Webster", why: "its heart-rhythm company" },
+      { search: "Mentor Texas", why: "its breast-implant maker since 2009" },
+      { search: "Acclarent", why: "its ear, nose and throat company since 2010" },
+      { search: "Synthes", from: "2012-06-14", why: "bought 2012-06-14 (J&J's 8-K filed 2012-06-14)" },
+      { search: "Abbott Medical Optics", from: "2017-02-27", why: "bought from Abbott 2017-02-27, now Johnson & Johnson Surgical Vision" },
+      { search: "Auris Health", from: "2019-04-01", why: "bought 2019-04-01 (J&J's 10-K for 2019)" },
+      { search: "Abiomed", from: "2022-12-22", why: "bought 2022-12-22 (J&J's 8-K filed 2022-12-22)" },
+      { search: "Shockwave Medical", from: "2024-05-31", why: "bought 2024-05-31 (J&J's 10-Q filed 2024-07-25)" },
+      {
+        search: "Ortho Clinical",
+        match: /\bOrtho[- ]Clinical\b/i,
+        to: "2014-06-29",
+        why: "its diagnostics company until the sale to Carlyle on 2014-06-30 (J&J's 8-K filed 2014-06-30)",
+      },
+      { search: "Cordis", to: "2015-10-01", why: "its until Cardinal Health bought it 2015-10-02 (Cardinal's 10-Q filed 2015-11-03)" },
+      { search: "Codman", to: "2017-10-01", why: "Codman Neurosurgery, its until Integra bought it 2017-10-02 (Integra's 8-K filed 2017-10-02)" },
+      { search: "LifeScan", to: "2018-10-01", why: "sold to Platinum Equity; J&J announced the sale complete on 2018-10-02 (its 8-K filed that day)" },
+      { search: "Advanced Sterilization Products", to: "2019-03-31", why: "sold to Fortive 2019-04-01 (Fortive's 8-K filed 2019-04-01)" },
+      {
+        search: "Johnson & Johnson Consumer",
+        to: "2023-08-22",
+        why: "its consumer business, now Kenvue; J&J's until its exchange offer for Kenvue completed 2023-08-23 (J&J's 8-K filed 2023-08-25)",
+      },
+      { search: "McNeil", to: "2023-08-22", why: "a consumer company, J&J's until the Kenvue exchange offer completed 2023-08-23" },
+    ],
+  },
+  1944048: {
+    ticker: "KVUE",
+    firms: [
+      { search: "Kenvue", why: "the company itself" },
+      {
+        search: "Johnson & Johnson Consumer",
+        from: "2023-05-08",
+        why: "Kenvue's from the close of its IPO on 2023-05-08 (Kenvue's 8-K filed 2023-05-08); until 2023-08-23 J&J still held most of Kenvue, so a recall then is both companies'",
+      },
+      { search: "McNeil", from: "2023-05-08", why: "a Kenvue company from the close of its IPO on 2023-05-08" },
+    ],
+  },
+  917520: {
+    ticker: "IART",
+    firms: [
+      {
+        search: "Integra",
+        match: /\bIntegra (?:Life ?Sci|York|Burlington)/i,
+        why: "Integra LifeSciences and its named sites; other firms called Integra are left out",
+      },
+      { search: "Codman", from: "2017-10-02", why: "Codman Neurosurgery, bought from J&J 2017-10-02 (Integra's 8-K filed 2017-10-02)" },
+    ],
+  },
+  721371: {
+    ticker: "CAH",
+    firms: [
+      { search: "Cardinal Health", why: "the company itself, recalling what it makes or labels" },
+      {
+        search: "Cordis",
+        match: /\bCordis Corporation\b/i,
+        from: "2015-10-02",
+        to: "2021-06-30",
+        why: "bought from J&J 2015-10-02 (Cardinal's 10-Q filed 2015-11-03) and sold in the quarter to 2021-09-30 (its 10-Q filed 2021-11-09): counted to the last day its filings show it held Cordis",
+      },
+    ],
+  },
+  1906324: {
+    ticker: "QDEL",
+    firms: [
+      { search: "Quidel", why: "Quidel, and QuidelOrtho, which carries Quidel's ticker" },
+      {
+        search: "Ortho Clinical",
+        match: /\bOrtho[- ]Clinical\b/i,
+        from: "2022-05-27",
+        why: "joined QuidelOrtho at its formation on 2022-05-27 (QuidelOrtho's 10-K for 2022)",
+      },
+    ],
   },
 
   // ---- food ----
@@ -155,7 +277,13 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
     ],
   },
   1103982: { ticker: "MDLZ", firms: [{ search: "Mondelez", why: "the company itself" }] },
-  91419: { ticker: "SJM", firms: [{ search: "Smucker", why: "the company itself" }] },
+  91419: {
+    ticker: "SJM",
+    firms: [
+      { search: "Smucker", why: "the company itself" },
+      { search: "Hostess Brands", from: "2023-11-07", why: "bought 2023-11-07 (Smucker's 8-K filed 2023-11-07)" },
+    ],
+  },
   1637459: { ticker: "KHC", firms: [{ search: "Kraft Heinz", why: "the company itself, formed 2015" }] },
   47111: {
     ticker: "HSY",

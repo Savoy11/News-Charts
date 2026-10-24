@@ -984,6 +984,61 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 41: FDA recalls for Johnson & Johnson and the businesses that changed hands (2026-10-24)
+
+Batch 40 left J&J and a few others unmapped because their firms are mostly not named for them,
+and each changed hands on a day that needs its own source. This batch maps them, each day from the
+company's own SEC filing, and follows J&J's sold businesses to their listed buyers.
+
+`npm run check` passes (44 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` was not
+re-run: only the firm map, its check and the docs changed, no page, component or route. The FDA
+case in `check:live` is unchanged. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **Johnson & Johnson (485 recalls, 298 before 2017):** the units named for it and its long-held
+      companies (Ethicon, DePuy, Janssen, Biosense Webster, Mentor, Acclarent), with:
+      - **bought:** Synthes from 2012-06-14 (J&J's 8-K filed 2012-06-14), Abbott Medical Optics from
+        2017-02-27, Auris Health from 2019-04-01 (J&J's 10-K for 2019), Abiomed from 2022-12-22 (8-K
+        filed 2022-12-22), Shockwave Medical from 2024-05-31 (10-Q filed 2024-07-25);
+      - **sold:** Ortho-Clinical Diagnostics to 2014-06-29 (sold to Carlyle 2014-06-30, 8-K filed
+        2014-06-30), Cordis to 2015-10-01, Codman to 2017-10-01, LifeScan to 2018-10-01 (its sale
+        announced complete 2018-10-02, 8-K filed that day), Advanced Sterilization Products to
+        2019-03-31;
+      - **its consumer business** ("Johnson & Johnson Consumer", McNeil) to 2023-08-22: its exchange
+        offer for Kenvue completed 2023-08-23 (8-K filed 2023-08-25).
+- [x] **Followed to the buyers that are listed:**
+      - **Kenvue:** its own names, and the consumer names from the close of its IPO on 2023-05-08
+        (Kenvue's 8-K filed 2023-05-08). Until 2023-08-23 J&J still held most of Kenvue, so a recall
+        in those months is both companies'. One recall so far.
+      - **Cardinal Health (97):** its own, and "Cordis Corporation" from 2015-10-02 (Cardinal's 10-Q
+        filed 2015-11-03). Cardinal says only that it sold Cordis in the quarter to 2021-09-30, so
+        Cordis counts to 2021-06-30, the last day its filings show it held it; the buyer files as
+        "Cordis US Corp", which counts for no one.
+      - **Integra LifeSciences (112):** its own named sites, and Codman from 2017-10-02 (Integra's 8-K
+        filed 2017-10-02). A firm called "Integra Limited" is left out as not shown to be Integra's.
+      - **QuidelOrtho (49):** Quidel's, since QuidelOrtho carries Quidel's ticker, and Ortho-Clinical
+        from the combination on 2022-05-27 (QuidelOrtho's 10-K for 2022). Ortho-Clinical's recalls
+        between the Carlyle sale and the combination count for no one.
+      - **Fortive** bought Advanced Sterilization Products, but no recall has been filed under the
+        name since, so it has no entry.
+- [x] **Novartis (62):** its own, its consumer business to 2015-03-01 (into GSK's joint venture on
+      2015-03-02, Novartis's 20-F for 2015), Sandoz to 2023-10-03 (spun off 2023-10-04, 6-K filed
+      2023-10-04), and Alcon to 2019-04-08. **Alcon (25)** from its spin-off on 2019-04-09 (Alcon's
+      20-F for 2019).
+- [x] **Viatris (27):** its own, and Mylan and Greenstone from its formation on 2020-11-16 (8-K/A filed
+      2020-11-19). Viatris does not carry Mylan's ticker, so Mylan's earlier recalls are not its;
+      Greenstone counts for Pfizer until then (Pfizer 82 → 86).
+- [x] **Teva:** Actavis from 2016-08-02 (6-K filed 2016-08-02). **Smucker:** Hostess Brands from
+      2023-11-07 (8-K filed 2023-11-07); none filed under the name since.
+- [x] **Now 38 companies and 4,690 recalls,** every one answering live on 2026-10-24.
+- [ ] **Open:**
+      - Kellogg's two companies, Kellanova and WK Kellogg, are no longer in the company index, so
+        they have no page. Celgene and Big Heart Pet Brands have no FDA records.
+      - Cardinal's Cordis cut-off is a bound, not the closing day; a filing that names the day would
+        let it run to the end.
+- Checks: `check:fda-recalls` 29 → 37, on 25 more real openFDA records (51 in all). On main's code it
+  stops at the first new case (J&J is not mapped). One check holds every day a firm joined or left
+  a company to an SEC filing.
+
 ## NC ledger — batch 40: FDA recalls on drug, device and food companies' pages (2026-10-24)
 
 The owner approved FDA enforcement reports on 2026-10-24, #3 in
@@ -1050,7 +1105,9 @@ HawkScan could not run: `HAWK_API_KEY` is not set.
         DePuy, Janssen, McNeil, and Kenvue's separation in 2023), Kellogg and WK Kellogg (split in
         2023), Novartis with Sandoz (spun off 2023), Smucker's Hostess and Big Heart, Bristol Myers
         Squibb's Celgene, Teva's Actavis, Viatris. Each needs its own dates. Hologic is not in the
-        company index.
+        company index. ✅ **Batch 41: J&J, Kenvue, Novartis with Alcon and Sandoz, Viatris, Teva's
+        Actavis, Smucker's Hostess, and the buyers of J&J's sold businesses are mapped.** Kellogg's
+        two companies left the index; Celgene and Big Heart have no FDA records.
       - A product name is sometimes awkward: "Medtronic Grafton DBF Inject: a) GRAFTON T50303 DBF
         INJECT 3CC (12 products)".
       - The list carries every Class II recall: 137 of the 242 rows Medtronic's page opens with.

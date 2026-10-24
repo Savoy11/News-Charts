@@ -29,7 +29,7 @@ because it will be trusted.
 | **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |
 | **2008 – now** | BLS CPI release archive | February 2008, the oldest archived release | Monthly CPI releases — on company pages behind the Economy chip, off by default |
 | **2009 – now** | Justice Department press releases | 2009, the oldest releases the API holds | Settlements, pleas, suits and merger cases whose title makes the company a party (`lib/doj.ts`) — a few to ten per large company, about half before 2017 |
-| **2012 – now** | FDA enforcement reports | mid-2012, the first weekly report | Class I and II drug, device and food recalls for the 30 companies `lib/fdaRecalls.ts` maps (Medtronic, Philips, Stryker, Abbott, Pfizer, Teva, PepsiCo, General Mills and others) — tens to hundreds per company |
+| **2012 – now** | FDA enforcement reports | mid-2012, the first weekly report | Class I and II drug, device and food recalls for the 38 companies `lib/fdaRecalls.ts` maps (Medtronic, Philips, Johnson & Johnson, Stryker, Abbott, Pfizer, Novartis, Teva, PepsiCo, General Mills and others) — tens to hundreds per company |
 | **1999 – now** | The Guardian Open Platform | 1999 | Articles — only with a visitor's own key, in their browser; never stored |
 | **2015 – now** | Federal Register | 2015 (our query floor) | Sector rules; documents whose title names a company |
 | **2017 – now** | GDELT | 2017 (our query floor) | Recent news. GDELT refuses a quoted phrase under five characters, and until 2026-10-22 107 of the 1,500 largest companies got none. Now 59 of them are asked bare ("ETSY"), keeping only headlines that name them, and 48 with their legal form ("VISA Inc") |
@@ -92,8 +92,8 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   (`docs/proposals/2026-10-22-news-sources.md`). Justice Department releases add 2009–2016 for
   companies in any sector — measured on 81 large companies, 93 of 195 events fell before 2017 —
   but few a company, and only the cases the Department announced. FDA recalls add mid-2012 to 2016
-  for 30 drug, device and food companies, many of them: Medtronic has 532 recalls, 147 of them
-  before 2017 (Philips 232 of 590).
+  for 38 drug, device and food companies, many of them: Medtronic has 532 recalls, 147 of them
+  before 2017 (Philips 232 of 590, Johnson & Johnson 298 of 485).
 - **The keyed aggregators are not ingested.** Their free tiers bar commercial use, so the
   adapters exist for diagnostics only. Even licensed, they are days-to-weeks deep: breadth for the
   present, never depth for the past.

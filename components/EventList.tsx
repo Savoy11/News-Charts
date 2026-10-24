@@ -127,6 +127,13 @@ function SiteSnapshotLink({ domain, date }: { domain: string; date: string }) {
   );
 }
 
+/** Which years and months are folded. */
+interface Folds {
+  years: ReadonlySet<string>;
+  months: ReadonlySet<string>;
+}
+const NO_FOLDS: ReadonlySet<string> = new Set();
+
 interface Props {
   events: TimelineEvent[];
   order?: "asc" | "desc";
@@ -140,6 +147,11 @@ interface Props {
    * nothing else. The counter makes a repeat jump to the same date re-open it.
    */
   reveal?: { date: string; n: number } | null;
+  /**
+   * Open every year however long the list. Set while a focused search narrows it: the years the
+   * reader asked about ("how did covid affect…") are the ones the opening folds would hide.
+   */
+  openAll?: boolean;
 }
 
 /** "2026-07-24" → "July 2026". Built from the string parts under UTC so the label never drifts a day across time zones. */
@@ -315,6 +327,41 @@ function condenseFilings(rows: Row[]): RenderRow[] {
   }
   if (run.length) flush();
   return out;
+}
+
+/**
+ * How many rows a long list opens with (batch 38). JPMorgan's page laid out all 2,212 of its event
+ * rows, about 33,000 elements and 385 ms of layout on a fast machine, several times that on a
+ * phone, for a reader who starts at the top of 1799. A list longer than this opens its most recent
+ * years and folds the older ones. A folded year keeps its header and its count. It opens on a
+ * click, and by itself when the chart jumps into it.
+ */
+export const OPEN_ROW_BUDGET = 300;
+
+/**
+ * The years a list opens folded, newest first. The newest years stay open while their rows fit
+ * the budget, the newest one always; the first year that does not fit and every year before it
+ * are folded. A row is a card the reader sees: an event, or one card for a stack of filings.
+ * Nothing is folded when the whole list fits.
+ */
+function yearsToFold(rows: RenderRow[], budget: number): string[] {
+  const perYear = new Map<string, number>();
+  for (const r of rows) {
+    if (r.kind === "day") perYear.set(r.year, (perYear.get(r.year) ?? 0) + r.items.length);
+    else if (r.kind === "filings") perYear.set(r.year, (perYear.get(r.year) ?? 0) + 1);
+  }
+  const newestFirst = [...perYear.keys()].sort().reverse();
+  let open = 0;
+  for (let i = 0; i < newestFirst.length; i++) {
+    open += perYear.get(newestFirst[i])!;
+    if (i > 0 && open > budget) return newestFirst.slice(i);
+  }
+  return [];
+}
+
+/** The years a list of these events opens folded. */
+export function foldedYears(events: TimelineEvent[], budget = OPEN_ROW_BUDGET): string[] {
+  return yearsToFold(condenseFilings(buildRows(events, "asc")), budget);
 }
 
 const FORM_RE =
@@ -498,7 +545,7 @@ function PeekPopover({
   );
 }
 
-export default function EventList({ events, order = "asc", siteDomain, persistKey, reveal }: Props) {
+export default function EventList({ events, order = "asc", siteDomain, persistKey, reveal, openAll = false }: Props) {
   const rows = useMemo(() => condenseFilings(buildRows(events, order)), [events, order]);
   // The tone dot explained itself only in a hover title, which touch and keyboard users never
   // see; a one-line key says what the colour means wherever a dot appears (NC-167).
@@ -533,66 +580,78 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
     return { yearCount, monthCount, years, yearPeek, monthPeek };
   }, [rows]);
 
-  const [collapsedYears, setCollapsedYears] = useState<Set<string>>(new Set());
-  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set());
+  // What a long list opens with folded, until the reader opens or folds something themselves.
+  // Derived, not stored, so it follows the list: a filter that shortens it opens everything.
+  const folded = useMemo(() => new Set(openAll ? [] : yearsToFold(rows, OPEN_ROW_BUDGET)), [rows, openAll]);
+  const [chosen, setChosen] = useState<Folds | null>(null);
+  const collapsedYears = chosen?.years ?? folded;
+  const collapsedMonths = chosen?.months ?? NO_FOLDS;
 
-  // Remember-my-view: load the saved collapse set for this subject after mount (so SSR and the
-  // first client render agree), then save on every change. The hydrated gate stops the initial
-  // default state from overwriting what was stored.
+  // Remember-my-view: load what the reader chose for this subject after mount (so SSR and the
+  // first client render agree), then save each choice. Nothing is saved until they choose: a
+  // stored copy of the opening folds would keep them after the list had outgrown them. A view
+  // saved before batch 38 carries no `chosen` mark: every visit saved one, choice or not.
   const hydrated = useRef(false);
   useEffect(() => {
     hydrated.current = false;
     if (!persistKey) return;
-    const saved = loadJSON<{ years?: string[]; months?: string[] }>(persistKey, {});
+    const saved = loadJSON<{ years?: string[]; months?: string[]; chosen?: boolean }>(persistKey, {});
     // eslint-disable-next-line react-hooks/set-state-in-effect -- restored from storage after mount, so server and first render agree
-    setCollapsedYears(new Set(saved.years ?? []));
-    setCollapsedMonths(new Set(saved.months ?? []));
+    setChosen(saved.chosen ? { years: new Set(saved.years ?? []), months: new Set(saved.months ?? []) } : null);
     hydrated.current = true;
   }, [persistKey]);
   useEffect(() => {
-    if (!persistKey || !hydrated.current) return;
-    saveJSON(persistKey, { years: [...collapsedYears], months: [...collapsedMonths] });
-  }, [persistKey, collapsedYears, collapsedMonths]);
+    if (!persistKey || !hydrated.current || !chosen) return;
+    saveJSON(persistKey, { years: [...chosen.years], months: [...chosen.months], chosen: true });
+  }, [persistKey, chosen]);
 
-  const toggle = (set: Set<string>, key: string) => {
+  // The reveal effect below runs for a jump, not for a list that changed, so it reads the
+  // opening folds from here rather than depending on them.
+  const foldedNow = useRef(folded);
+  useEffect(() => {
+    foldedNow.current = folded;
+  }, [folded]);
+
+  const toggle = (set: ReadonlySet<string>, key: string) => {
     const next = new Set(set);
     if (next.has(key)) next.delete(key);
     else next.add(key);
     return next;
   };
-  const toggleYear = (y: string) => setCollapsedYears((s) => toggle(s, y));
-  const toggleMonth = (k: string) => setCollapsedMonths((s) => toggle(s, k));
+  const toggleYear = (y: string) =>
+    setChosen((c) => ({ years: toggle(c?.years ?? folded, y), months: c?.months ?? NO_FOLDS }));
+  const toggleMonth = (k: string) =>
+    setChosen((c) => ({ years: c?.years ?? folded, months: toggle(c?.months ?? NO_FOLDS, k) }));
 
-  // Open whatever contains the jumped-to date. Set-identity is preserved when nothing changes
+  // Open whatever contains the jumped-to date. The same state comes back when nothing changes,
   // so this cannot loop, and it runs after the restore pass for the same reason saving does.
   useEffect(() => {
     if (!reveal?.date) return;
     const year = reveal.date.slice(0, 4);
     const monthKey = reveal.date.slice(0, 7);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the section a jump landed in; returns the same set when nothing changes
-    setCollapsedYears((prev) => {
-      if (!prev.has(year)) return prev;
-      const next = new Set(prev);
-      next.delete(year);
-      return next;
-    });
-    setCollapsedMonths((prev) => {
-      if (!prev.has(monthKey)) return prev;
-      const next = new Set(prev);
-      next.delete(monthKey);
-      return next;
+    setChosen((c) => {
+      const years = c?.years ?? foldedNow.current;
+      const months = c?.months ?? NO_FOLDS;
+      if (!years.has(year) && !months.has(monthKey)) return c;
+      const openYears = new Set(years);
+      openYears.delete(year);
+      const openMonths = new Set(months);
+      openMonths.delete(monthKey);
+      return { years: openYears, months: openMonths };
     });
   }, [reveal?.date, reveal?.n]);
 
-  const allCollapsed = years.length > 0 && years.every((y) => collapsedYears.has(y));
-  const toggleAll = () => setCollapsedYears(allCollapsed ? new Set() : new Set(years));
+  // "Expand all" while any year is folded, the opening folds included; "Collapse all" once none is.
+  const anyFolded = years.some((y) => collapsedYears.has(y));
+  const toggleAll = () =>
+    setChosen((c) => ({ years: anyFolded ? new Set() : new Set(years), months: c?.months ?? NO_FOLDS }));
 
   // Jump-to-year: expand the year (so its content is there to see) and scroll to its header.
   const jumpToYear = (y: string) => {
-    setCollapsedYears((s) => {
-      const next = new Set(s);
+    setChosen((c) => {
+      const next = new Set(c?.years ?? folded);
       next.delete(y);
-      return next;
+      return { years: next, months: c?.months ?? NO_FOLDS };
     });
     document.getElementById(yearAnchorId(y))?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -613,6 +672,9 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
   if (rows.length === 0) {
     return <p className="text-sm text-slate-500">No events found.</p>;
   }
+
+  // the oldest year the list opens with, when it opens with older ones folded
+  const firstOpen = folded.size ? years.filter((y) => !folded.has(y)).sort()[0] : null;
 
   // a month/day is hidden when its year is collapsed, a day also when its own month is collapsed
   const hidden = (year: string, monthKey: string | null) =>
@@ -638,9 +700,15 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
             onClick={toggleAll}
             className="ml-auto shrink-0 rounded-sm border border-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-500 transition-colors hover:border-sky-700 hover:text-sky-300"
           >
-            {allCollapsed ? "Expand all" : "Collapse all"}
+            {anyFolded ? "Expand all" : "Collapse all"}
           </button>
         </div>
+      )}
+      {!chosen && firstOpen && (
+        <p className="mb-2 text-[11px] text-slate-400" data-opening-folds>
+          Years before {firstOpen} are folded so this page stays quick to load. Click a year to open
+          it, or use Expand all above.
+        </p>
       )}
       {hasTone && (
         <p className="mb-2 flex items-center gap-1.5 text-[11px] text-slate-400">

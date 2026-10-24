@@ -993,10 +993,9 @@ wants. The 2026-10-22 sources shortlist named this ("The press release inside ea
 it unbuilt because the headline is hard to pick out reliably. This batch picks it out, and only
 when it can tell the document is a press release.
 
-`npm run check` passes (45 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
-succeeds. `check:ui` (the timeline's filing stacks changed) was still running against the demo
-database when this was first committed — 114 of 203 passed, none failed; its result follows in the
-next commit. HawkScan could not run: `HAWK_API_KEY` is not set.
+`npm run check` passes (45 suites), `npm run lint` and `tsc --noEmit` are clean, `next build`
+succeeds, and `check:ui` passes 203/203 against the demo database (re-run because the timeline's
+filing stacks changed). HawkScan could not run: `HAWK_API_KEY` is not set.
 
 - [x] **The headline reader** (`lib/secHeadlines.ts`). An exhibit (EX-99, or EX-20 before 2004)
       counts as a press release only when a dateline — "DEARBORN, Mich., Sept. 1, 2004 –",

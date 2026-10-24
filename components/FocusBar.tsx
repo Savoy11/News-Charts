@@ -10,6 +10,11 @@ import { composableFocus, type FocusResult } from "@/lib/focus";
  * The zero-match case gets its own wording because "nothing here mentions Trump" is a genuine
  * answer to the question, and showing an empty page instead would read as "we have nothing on
  * IBM at all".
+ *
+ * So does a focus with nothing to search for (batch 39). "How did the US affect Ford" leaves "the
+ * US": two words too short or too common to look for in a headline, and no year. Nothing was
+ * narrowed, so every event came back, and the bar used to say "Showing the 52 of 52 events that
+ * mention “the US”": a match it never made.
  */
 export default function FocusBar({
   focus,
@@ -23,9 +28,10 @@ export default function FocusBar({
   subject: string;
   onClear: () => void;
 }) {
-  const none = result.matched === 0;
   const dated = result.window?.label;
   const worded = result.terms.length > 0;
+  const unsearchable = !worded && !dated;
+  const none = result.matched === 0 || unsearchable;
   // A qualifier ("in 2020") has no timeline of its own, so there is nothing to compose with.
   const composeWith = composableFocus(focus);
   /**
@@ -45,7 +51,12 @@ export default function FocusBar({
           : "border-sky-800/50 bg-sky-500/5 text-sky-200/90"
       }`}
     >
-      {none ? (
+      {unsearchable ? (
+        <span>
+          Nothing in <strong>“{focus}”</strong> can be looked for in headlines: words under three
+          letters and common words like “the” are skipped. This is the whole timeline.
+        </span>
+      ) : none ? (
         <span>
           {worded ? (
             <>

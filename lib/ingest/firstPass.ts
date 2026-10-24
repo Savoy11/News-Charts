@@ -1,6 +1,8 @@
 import { Pool, type PoolClient } from "pg";
 import { getTopicTimeline, articleCoversSlug, topicSlugFromTitle } from "../wiki";
 import { resolveCompany, getFilings, commonName } from "../sec";
+import { mayCarryRelease } from "../secHeadlines";
+import { applyHeadlines, storedHeadlines } from "./headlines";
 import { fetchDailyPrices } from "../prices";
 import { aliasesFor } from "../enrich/relevance";
 import { withTimeout, timedOut } from "../timeout";
@@ -270,6 +272,15 @@ export async function firstPassCompany(rawQuery: string): Promise<FirstPassOutco
         await recordFailure(client, ledgerSlug);
         return "unresolvable";
       }
+      // 8-K headlines already read for this company (batch 42) — none for a company never held,
+      // but a first pass that runs again must not put the item titles back over them. A lookup,
+      // never a read from EDGAR: that is the scheduler's, which has no visitor waiting.
+      let titled = filings;
+      try {
+        titled = applyHeadlines(filings, await storedHeadlines(client, filings.filter(mayCarryRelease).map((e) => e.externalId!)));
+      } catch {
+        titled = filings;
+      }
       // Prices are not part of that test any more. They required both, so a Yahoo refusal at the
       // moment of a first visit counted toward marking a real company dead (NC-103); the page
       // now renders its filings and says the chart is missing, and the scheduler fills it in.
@@ -291,7 +302,7 @@ export async function firstPassCompany(rawQuery: string): Promise<FirstPassOutco
       const stats = emptyStats();
       await client.query("BEGIN");
       try {
-        for (const ev of filings) await upsertEvent(client, ev, subjectId, stats, scoring);
+        for (const ev of titled) await upsertEvent(client, ev, subjectId, stats, scoring);
         for (const ev of daily.actions) await upsertEvent(client, ev, subjectId, stats, scoring);
         await logFetch(client, "sec_edgar", subjectId, resolved.ticker, "ok", filings.length, 200);
         await writePrices(client, subjectId, daily.points);

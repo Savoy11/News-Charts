@@ -984,6 +984,86 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 42: an 8-K titled by the headline of its press release (2026-10-24)
+
+An 8-K was titled by its item — "Other events (8-K 8.01)", "Officer or director change (8-K
+5.02)" — which says what kind of thing was reported and not what it was. Many 8-Ks carry the
+company's press release as an exhibit, and its headline is what a reader looking at a price move
+wants. The 2026-10-22 sources shortlist named this ("The press release inside each 8-K") and left
+it unbuilt because the headline is hard to pick out reliably. This batch picks it out, and only
+when it can tell the document is a press release.
+
+`npm run check` passes (45 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
+succeeds. `check:ui` (the timeline's filing stacks changed) was still running against the demo
+database when this was first committed — 114 of 203 passed, none failed; its result follows in the
+next commit. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **The headline reader** (`lib/secHeadlines.ts`). An exhibit (EX-99, or EX-20 before 2004)
+      counts as a press release only when a dateline — "DEARBORN, Mich., Sept. 1, 2004 –",
+      "CUPERTINO, CALIFORNIA —" — sits in its first 40 lines; a contract, slide deck, certification,
+      prospectus, set of financial statements or court notice filed as EX-99 gives nothing, and the
+      filing keeps its item title. The headline is the first line above the dateline after the
+      letterhead (contacts, phone numbers, addresses, release markers), joined with the lines it
+      wraps onto and kept apart from its subheadline and bullets. A headline in capitals is recased
+      ("IBM", "UPS", "Non-GAAP", "McDonald's" kept right); one in mixed case is the filer's own.
+      Windows dashes and quotes (`&#151;`, raw 0x97) are read as such: a dateline's dash is what the
+      reading turns on, and Node's own windows-1252 decoder returns them as control codes.
+- [x] **Measured before it was wired in.** 638 8-Ks sampled from 57 companies, 1994–2026, all read
+      from EDGAR on 2026-10-24: 25 companies to build the reader against, then 32 others. 378 carried
+      an EX-99 or EX-20 and 247 gave a headline. Read one by one:
+      - **The second sample, on its first run:** 107 headlines, of which about 92 were right, 12 cut
+        short and 3 wrong (a contact's name and title, a court's caption, a headline run into its
+        subheadline). Those mistakes were then fixed, so the 108 it gives now — about 100 right, 6
+        cut short, 2 that are a subheadline rather than the headline (Oracle) — are not an untouched
+        measure.
+      - **Live, through the real ingest** into a scratch database: Boeing's 336 8-Ks that can carry
+        a release took three runs and gave 164 headlines; of 41 drawn at random, 38 were right and 3
+        wrong (a 1997 table row, a subheadline under a rule, a bullet label run on). Pfizer's first
+        run read 150 and gave 107; of 45 drawn at random, one was wrong (the time the release went
+        out). All four were fixed and are cases in the check; none of the wrong ones remains.
+- [x] **Read once, kept** (`db/029_sec_headlines.sql`, `lib/ingest/headlines.ts`). Reading a
+      filing costs two or three EDGAR requests — its index page, then the release, or for a filing
+      from before 2001 its full submission text — and a filing never changes, so each 8-K is read
+      once and the answer stored by accession number: the headline, or none. The scheduled ingest
+      reads up to 150 a run, newest first, paced under 8 requests a second; it stops at the first
+      refusal or after three failures in a row, and a filing that could not be read is not stored,
+      so it is asked again. Each run applies everything stored. A whole Boeing ingest, every
+      source, took 89 s with 150 headlines read and 56 s with the next 150.
+      - **Only 8-Ks that can carry a release are asked:** since 2004, one listing exhibits (9.01) or
+        an announcing item (2.02, 7.01, 8.01, 5.02, 2.01). A shareholder vote filed bare is not; of
+        the 541 sampled 8-Ks filed since 2004 that skipped 37, 36 with no exhibit at all.
+      - **An enrichment:** if the headline step fails — the table missing, EDGAR down — the filings
+        are stored with their item titles, as before. The first pass applies headlines already
+        stored and never reads EDGAR for them, so a first pass that runs again cannot put the item
+        titles back.
+      - `HEADLINE_VERSION` marks the reading that produced each row; when the reading improves, rows
+        from an older version are read again, a run's worth at a time.
+- [x] **The title keeps its form:** "Boeing Co: Boeing Sets 787 First Delivery Date for Mid-First
+      Quarter 2011 (8-K 8.01)", the item's name moved into the description. The timeline's filing
+      stacks read the form from the closing brackets now, so a headline that names another form
+      ("…Regarding 2008 10-K Earnings per Share Data (8-K 8.01)") no longer renames the stack.
+      Headlines are words a focused search can match: "dividend" now finds "Boeing Raises Dividend
+      10 Percent…", which was "Other events" before.
+- [ ] **Open:**
+      - Some headlines are cut short where a wrap and a subheadline look alike ("Walmart Elects
+        Charles Holley" for "…New Chief Financial Officer"), and a few run a capitals headline into
+        a subheadline in capitals ("Pfizer Reports Fourth-Quarter and Full-Year 2016 Results
+        Provides 2017 Financial Guidance"). A name written in capitals is recased as a word
+        ("Nvidia", "Exxonmobil").
+      - A release whose dateline sits below 40 lines of tables (Exxon's 2004 results) gives nothing,
+        by design: further down, a place and a date are too often inside something else.
+      - Netflix's and Tesla's results are letters and decks with no dateline, so their earnings 8-Ks
+        keep "Earnings announcement (8-K)".
+      - A foreign company's 6-K carries its press releases the same way and is not read yet. Only a
+        filing's first two release exhibits are read.
+      - A bank's structured-note 8-Ks (JPMorgan filed about 700 in 2005–2008) list 9.01 and are
+        asked; each costs one request to find no release, spread over its runs.
+- Checks: `check:sec-headlines` (96), new and in the chain. 35 real press releases with the headline
+  each must give and 10 exhibits that are not releases, the index pages of three real filings, a
+  stand-in EDGAR for the reading of one filing, and a stand-in database for a run's limits, order,
+  failures and stored answers. On main's code it cannot run: the reader does not exist. With main's
+  `EventList`, the filing-stack check fails ("10-K ×3").
+
 ## NC ledger — batch 41: FDA recalls for Johnson & Johnson and the businesses that changed hands (2026-10-24)
 
 Batch 40 left J&J and a few others unmapped because their firms are mostly not named for them,

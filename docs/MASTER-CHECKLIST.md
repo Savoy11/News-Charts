@@ -984,6 +984,109 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 40: FDA recalls on drug, device and food companies' pages (2026-10-24)
+
+The owner approved FDA enforcement reports on 2026-10-24, #3 in
+`docs/proposals/2026-10-22-news-sources.md`, now marked APPROVED. A health or food company's page
+now carries its drug, medical-device and food recalls from mid-2012: about 3,800 across 30
+companies.
+
+`npm run check` passes (44 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` passes
+203/203 against the demo database. `check:live` gains an FDA case, which passes run on its own; the rest of `check:live` was not run.
+HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **Measured first** (openFDA, 2026-10-24):
+      - **A record is one product, not one recall.** A recall of several products shares an event
+        number: Medtronic's 1,270 device records are 420 recalls.
+      - **Firm names are free text.** Medtronic files under more than 25 spellings ("Medtronic
+        Vascular", "Medtronic Inc., Cardiac Rhythm and Heart Failure (CRHF)", "COVIDIEN MEDTRONIC").
+        Some look-alikes are other companies: "HERSHEY CREAMERY CO.", "Merck Millipore Ltd."
+        (Germany's Merck), "Tim Campbell Farm LLC".
+      - **Unbracketed, openFDA answers an OR for the last name only:** `recalling_firm:"Medtronic"
+        recalling_firm:"Covidien"` gave Covidien's 573 records; bracketed, 1,787.
+      - **A search that matches nothing is a 404,** not an empty list.
+      - **The enforcement report's own page shows a recall's event** (`ires/index.cfm?Event=…`),
+        once its script has run: checked in Chromium for Medtronic's event 93163.
+- [x] **The source** (`lib/fdaRecalls.ts`, `fda_enforcement`, public domain under CC0, licence read
+      2026-10-24):
+      - **`FDA_FIRMS` maps 30 companies by hand:** a phrase the company's firm names contain, the
+        look-alikes left out, and the days ownership changed, each from the company's own SEC
+        filing. Covidien counts for Medtronic from 2015-01-26 (8-K filed 2015-01-27); Hospira for
+        Pfizer from 2015-09-03; St. Jude for Abbott from 2017-01-04 and Alere from 2017-10-03; Abbott
+        Medical Optics stops being Abbott's after its sale to Johnson & Johnson on 2017-02-27 (10-Q
+        filed 2017-05-03); Bard counts for Becton Dickinson from 2017-12-29; Biomet for Zimmer from
+        2015-06-24; "GE Healthcare" is GE's until the spin-off on 2023-01-03 (8-K filed 2023-01-04)
+        and GE HealthCare's from 2023-01-04. Joint ventures (Philips–Neusoft, Wipro–GE) are left out.
+      - **Class I and II only.** Class III, unlikely to cause harm, is left out.
+      - **One event per recall:** its first day, its most serious class, the first product named,
+        with "(3 products)" when there are more, the recall's reason beneath, and a link to the
+        report's page. "Class I device recall: MiniMed 780G Insulin Pump (3 products)".
+      - **A product name from a label:** the text before the first comma, model, catalogue, UPC or
+        lot number, after a label word ("Vial Label:") or a package size ("28 oz. Gatorade…").
+      - **A start date before 2000, or after the report published it, gives way to the report's
+        date.** One record in all three sets is like that: an Intuitive Surgical recall published
+        2013-11-13 that says it started on 1930-12-11.
+      - **Asked daily** for all three product types, a page per 1,000 records. 1,000 requests a day
+        without a key; three to six a day per mapped company.
+- [x] **Counts, live, 2026-10-24** (recalls; Class I in brackets): Philips 590 (29), Medtronic 532
+      (62), Zimmer Biomet 383 (4), Stryker 330 (6), GE 281 (19, to the spin-off), Baxter 279 (54),
+      Becton Dickinson 267 (11), Abbott 224 (20), Boston Scientific 183 (25), Teva 121 (7), Smith &
+      Nephew 119 (0), Teleflex 108 (16), Intuitive Surgical 104 (1), Pfizer 82 (20), Edwards 49 (8),
+      PepsiCo 45 (22), General Mills 23 (10), GE HealthCare 22 (1), Conagra 20 (8), Mondelez 16 (3),
+      Kraft Heinz 9, ResMed 7, Bristol Myers Squibb 6, Merck 6, Smucker 6, Hormel 4, Lilly 4, Tyson
+      3, Campbell 2, Hershey 2. Before 2017: Medtronic 147 of 532, Philips 232 of 590.
+- [x] **On the page:** Medtronic ingested into a scratch database stored all 532, each scored as
+      the company's without the model, as a vehicle recall is. Its page shows them under the Recalls
+      chip, linked to the FDA's page for each.
+      - **A Class II recall is drawn as a plain dot and ranked like a news story** (`markerStyle`,
+        `markerPriority`, `lib/markers.ts`). With all 532 drawn as an "R", Medtronic's five-year
+        chart was covered in them. Class I and every vehicle recall keep the R.
+      - The chart's legend says "Recall", not "Vehicle recall", and a recall's relevance reason no
+        longer says "vehicle maker".
+- [x] The FDA is credited in the footer and the Terms with the other sources; README and
+      `docs/COVERAGE-MAP.md` describe it.
+- [ ] **Open:**
+      - **Not yet mapped:** Johnson & Johnson (its firms are mostly not named for it: Ethicon,
+        DePuy, Janssen, McNeil, and Kenvue's separation in 2023), Kellogg and WK Kellogg (split in
+        2023), Novartis with Sandoz (spun off 2023), Smucker's Hostess and Big Heart, Bristol Myers
+        Squibb's Celgene, Teva's Actavis, Viatris. Each needs its own dates. Hologic is not in the
+        company index.
+      - A product name is sometimes awkward: "Medtronic Grafton DBF Inject: a) GRAFTON T50303 DBF
+        INJECT 3CC (12 products)".
+      - The list carries every Class II recall: 137 of the 242 rows Medtronic's page opens with.
+- Checks: new `check:fda-recalls` (29), wired after `check:doj`, on 26 real openFDA records in
+  `scripts/fixtures/fda-recalls.json`. On main's code it cannot load (`lib/fdaRecalls.ts` does not
+  exist).
+
+## NC ledger — batch 39: the focus bar never claims a match it did not make (2026-10-24)
+
+Batch 38 found this in passing. A focused search whose words are all too short or too common
+narrows nothing, so every event comes back, and the focus bar then said every event mentions it.
+Real questions do this: `lib/prompt.ts` leaves "5G" as the focus of "how did 5G affect Verizon's
+stock", "in Q3" of "Ford in Q3", and "the US", "the EU" and "the UK" of "how did the US affect
+Ford" and its like. Each kept no focus word.
+
+`npm run check` passes (43 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` passes
+203/203 against the demo database. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **A two-character word made of a letter and a digit is a focus word** (`SHORT_CODE`,
+      `lib/focus.ts`): "5G", "Q3", "4K", "3D". Too specific to turn up by chance, where the other
+      short words are not: "us", "eu" and "in" turn up in every other headline, and a place has a
+      timeline of its own (the concept list keeps places out for the same reason). A number
+      alone stays out, so "COVID-19" gains no "19".
+- [x] **A focus with nothing to look for says so** (`components/FocusBar.tsx`). It used to say
+      "Showing the 52 of 52 events that mention “the US”". Now: "Nothing in “the US” can be looked
+      for in headlines: words under three letters and common words like “the” are skipped. This is
+      the whole timeline." It is shown like a focus that matched nothing, with Dismiss.
+      - In Chromium on the demo Ford page: "the US" shows that line over all 46 rows, "5G" says
+        nothing on the timeline mentions it, and "NHTSA" still narrows to its 3 events.
+- [ ] **Open:** "8-K" still has nothing to look for. GDELT and the feeds write "8-K" as two short
+      pieces, "8" and "K", and a single character is never a focus word. "8-K filings" works,
+      through "filing".
+- Checks: `check:focus` 60 → 66. On main's code 4 of the new cases fail: "5G" and "Q3" give no
+      focus word, so "how did 5G affect Verizon" narrows nothing, and the bar says "Showing the 3
+      of 3 events that mention “the US”" and the same for "5G".
+
 ## NC ledger — batch 38: a long timeline opens with its older years folded (2026-10-24)
 
 Batch 35 left this open: JPMorgan's page was still 7.1 MB, and "what is left is the 4,652 rows the
@@ -1052,7 +1155,8 @@ run: `HAWK_API_KEY` is not set.
       - **Found in passing, not this batch's:** a focus whose words are all dropped, such as
         "8-K" or "10-K", narrows nothing, yet the focus bar says "Showing the 3789 of 3789 events
         that mention “8-K”". `applyFocus` returns every event with `matched` equal to the total,
-        and `FocusBar` reads that as a match.
+        and `FocusBar` reads that as a match. ✅ **Batch 39: the bar says so instead, and "5G" and
+        "Q3" became focus words.**
 - Checks: new `check:event-folds` (16), wired after `check:gdelt-relevance`. On main's code it
   stops at its first case (`foldedYears` does not exist). It renders the list as the server sends
   it, with rows spread over the years as JPMorgan's and Ford's pages spread theirs.

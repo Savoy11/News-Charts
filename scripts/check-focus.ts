@@ -12,6 +12,9 @@ config({ path: ".env.local" });
  * that matters most: an empty page reads as "no data on IBM", not "no overlap".
  */
 import { readFileSync } from "node:fs";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import FocusBar from "../components/FocusBar";
 import { applyFocus, composableFocus, focusScore, focusTerms, focusWindow, matchesFocus, relatedWords } from "../lib/focus";
 import { CONCEPTS } from "../lib/concepts";
 import type { EventType, TimelineEvent } from "../lib/types";
@@ -223,6 +226,24 @@ check("no left-out ambiguous word crept in", !CONCEPTS.flat().some((w) => ["deal
 check("the focus bar says which related words counted", /alsoMatched/.test(readFileSync("components/FocusBar.tsx", "utf8")) &&
   /result\.related/.test(readFileSync("components/FocusBar.tsx", "utf8")));
 check("  …and the best-matches strip names one when it is what matched", /result\.related\.filter/.test(readFileSync("components/BestMatches.tsx", "utf8")));
+
+console.log("\nA short word: a letter-and-digit code is looked for, and a focus with nothing to look for says so (batch 39)");
+// what lib/prompt.ts leaves as the focus of "how did 5G affect Verizon's stock", "Ford in Q3",
+// "how did the US affect Ford", "how did the EU affect Apple" and "how did 8-K filings affect JPMorgan"
+check("\"5G\" and \"Q3\" are focus words: a letter and a digit, too specific to turn up by chance",
+  focusTerms("5G").join() === "5g" && focusTerms("in Q3").join() === "q3", `${focusTerms("5G")} | ${focusTerms("in Q3")}`);
+check("  …while \"the US\", \"the EU\" and \"8-K\" give none, and \"COVID-19\" gains no \"19\"",
+  ["the US", "the EU", "8-K"].every((f) => focusTerms(f).length === 0) && focusTerms("COVID-19").join() === "covid");
+const verizon = [ev("Verizon expands its 5G network to 30 more cities"), ev("Verizon raises its quarterly dividend"), ev("Verizon Q3 results beat estimates")];
+const fiveG = applyFocus(verizon, "5G");
+check("how did 5G affect Verizon narrows to the 5G headline", fiveG.active && fiveG.matched === 1 && fiveG.events[0].title.includes("5G"), `${fiveG.matched} matched`);
+const bar = (focus: string) =>
+  renderToStaticMarkup(createElement(FocusBar, { focus, result: applyFocus(verizon, focus), subject: "VZ", onClear: () => {} })).replace(/<[^>]+>/g, "");
+check("a focus with nothing to look for no longer claims every event mentions it",
+  !bar("the US").includes("that mention") && bar("the US").includes("Nothing in “the US” can be looked for in headlines") && bar("the US").includes("Dismiss"),
+  bar("the US").slice(0, 120));
+check("  …while a real match still says how many of how many", bar("5G").includes("Showing the 1 of 3 events that mention “5G”"), bar("5G").slice(0, 90));
+check("  …and a focus that matches nothing still says that", bar("Brexit").includes("Nothing on this timeline mentions “Brexit”"), bar("Brexit").slice(0, 90));
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);
 if (fail) process.exit(1);

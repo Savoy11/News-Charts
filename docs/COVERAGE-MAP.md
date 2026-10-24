@@ -29,6 +29,7 @@ because it will be trusted.
 | **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |
 | **2008 – now** | BLS CPI release archive | February 2008, the oldest archived release | Monthly CPI releases — on company pages behind the Economy chip, off by default |
 | **2009 – now** | Justice Department press releases | 2009, the oldest releases the API holds | Settlements, pleas, suits and merger cases whose title makes the company a party (`lib/doj.ts`) — a few to ten per large company, about half before 2017 |
+| **2012 – now** | FDA enforcement reports | mid-2012, the first weekly report | Class I and II drug, device and food recalls for the 30 companies `lib/fdaRecalls.ts` maps (Medtronic, Philips, Stryker, Abbott, Pfizer, Teva, PepsiCo, General Mills and others) — tens to hundreds per company |
 | **1999 – now** | The Guardian Open Platform | 1999 | Articles — only with a visitor's own key, in their browser; never stored |
 | **2015 – now** | Federal Register | 2015 (our query floor) | Sector rules; documents whose title names a company |
 | **2017 – now** | GDELT | 2017 (our query floor) | Recent news. GDELT refuses a quoted phrase under five characters, and until 2026-10-22 107 of the 1,500 largest companies got none. Now 59 of them are asked bare ("ETSY"), keeping only headlines that name them, and 48 with their legal form ("VISA Inc") |
@@ -90,7 +91,9 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   vehicles or more), the one free source found for that stretch that may be used commercially
   (`docs/proposals/2026-10-22-news-sources.md`). Justice Department releases add 2009–2016 for
   companies in any sector — measured on 81 large companies, 93 of 195 events fell before 2017 —
-  but few a company, and only the cases the Department announced.
+  but few a company, and only the cases the Department announced. FDA recalls add mid-2012 to 2016
+  for 30 drug, device and food companies, many of them: Medtronic has 532 recalls, 147 of them
+  before 2017 (Philips 232 of 590).
 - **The keyed aggregators are not ingested.** Their free tiers bar commercial use, so the
   adapters exist for diagnostics only. Even licensed, they are days-to-weeks deep: breadth for the
   present, never depth for the past.
@@ -114,6 +117,7 @@ windows — update both together.
 | Wikipedia | No hard cap | The User-Agent policy is the real obligation |
 | Federal Register | No published cap | Generous in practice; visitor terms are capped per client (15 new terms/hour) |
 | NHTSA recalls | No published cap without an app token | One request a day per mapped vehicle maker |
+| FDA (openFDA) | 1,000 requests a day, 240 a minute, without a key | Three to six a day per mapped company: one per product type, a page per 1,000 records |
 | Justice Department | No published cap | A page or two a day per company, 0.8 s apart; a common word ("Target") stops at ten pages |
 | Federal Reserve, BLS | No published cap | One page each a day; the FOMC history (~27 year pages, 1 s apart) is read once. bls.gov refuses requests without a contact `User-Agent` |
 | Yahoo Finance (RSS and chart) | Undocumented | Unofficial — the licence question is the risk, not the quota |

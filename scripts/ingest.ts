@@ -37,6 +37,7 @@ import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { FR_COMPANY_SINCE, companyNames, fetchCompanyRegulations, frSearchTerm } from "../lib/frCompany";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
+import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { dojQueryNames, fetchJusticeReleases } from "../lib/doj";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
@@ -71,6 +72,8 @@ export const COMPANY_SOURCES = [
   "federal_register",
   // safety recalls, asked only for the vehicle makers lib/recalls.ts maps (batch 30)
   "nhtsa_recalls",
+  // drug, device and food recalls, asked only for the firms lib/fdaRecalls.ts maps (batch 40)
+  "fda_enforcement",
   // releases whose title makes the company a party: it pays, pleads, is sued (batch 32)
   "doj_press",
   "gdelt",
@@ -485,6 +488,17 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   const makers = recallMakersFor(company.cik);
   if (makers) {
     await run("nhtsa_recalls", `${makers.map((m) => m.name).join(" | ")} ≥${RECALL_FLOOR} vehicles`, () => fetchRecalls(company.cik));
+  }
+
+  /**
+   * Drug, medical-device and food recalls of Class I and II from the FDA's enforcement report,
+   * mid-2012 on (batch 40). Only for the firms lib/fdaRecalls.ts maps by hand, as vehicle makers
+   * are: the report names a firm, never a listed company, and a name match would give Hospira's
+   * recalls to Pfizer before Pfizer bought it, or Hershey Creamery's to Hershey.
+   */
+  const fdaFirms = fdaFirmsFor(company.cik);
+  if (fdaFirms) {
+    await run("fda_enforcement", `${fdaFirms.map((f) => f.search).join(" | ")} (Class I and II)`, () => fetchFdaRecalls(company.cik));
   }
 
   /**

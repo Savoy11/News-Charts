@@ -36,6 +36,13 @@ const WEAK = new Set([
 /** A year, which narrows by date rather than by a word in a headline. */
 const YEAR = /^(?:1[89]|20)\d{2}$/;
 
+/**
+ * A two-character word made of a letter and a digit: "5G", "Q3", "4K", "3D" (batch 39). Specific
+ * enough to search headlines for, where other short words are not: "us", "eu" and "in" turn up in
+ * every other headline or are places, which have timelines of their own.
+ */
+const SHORT_CODE = /^(?=.*[a-z])(?=.*\d)[a-z0-9]{2}$/;
+
 const normalise = (s: string): string =>
   s.toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
 
@@ -97,7 +104,7 @@ export function focusTerms(focus: string): string[] {
       continue;
     }
     const w = words[i++];
-    if (w.length < 3 || WEAK.has(w) || YEAR.test(w)) continue;
+    if ((w.length < 3 && !SHORT_CODE.test(w)) || WEAK.has(w) || YEAR.test(w)) continue;
     seen.add(stem(w));
   }
   return [...seen];

@@ -12,7 +12,7 @@ import {
   type Time,
 } from "lightweight-charts";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
-import { MARKER_STYLE, markerEventsByDay, snapToTradingDay } from "@/lib/markers";
+import { MARKER_STYLE, markerEventsByDay, markerStyle, snapToTradingDay } from "@/lib/markers";
 import { safeHref } from "@/lib/safeUrl";
 import { formatPrice } from "@/lib/priceFormat";
 import EventThumb from "./EventThumb";
@@ -32,7 +32,7 @@ const LEGEND_LABEL: Record<EventType, string> = {
   governance: "Governance vote",
   exploit: "Exploit",
   macro: "Fed & inflation",
-  recall: "Vehicle recall",
+  recall: "Recall",
 };
 
 interface Props {
@@ -201,7 +201,7 @@ export default function PriceTimeline({ prices, events, onSelectDate }: Props) {
       .sort((a, b) => a - b);
 
     const markers: SeriesMarker<Time>[] = markerEventsByDay(events, tradingDays).map((ev) => {
-      const s = MARKER_STYLE[ev.type];
+      const s = markerStyle(ev);
       return {
         time: ev.date as Time,
         position: s.position,

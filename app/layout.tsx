@@ -96,7 +96,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               (CC BY-SA), federal rules and notices from the Federal Register, archived material
               from the Internet Archive, Fed policy decisions from the Federal Reserve,
               inflation reports from the U.S. Bureau of Labor Statistics, vehicle recalls from
-              the National Highway Traffic Safety Administration, and press releases from the
+              the National Highway Traffic Safety Administration, drug, device and food recalls
+              from the U.S. Food and Drug Administration, and press releases from the
               U.S. Department of Justice.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a

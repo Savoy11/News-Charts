@@ -13,9 +13,9 @@ import {
 import { PricePoint, TimelineEvent } from "@/lib/types";
 import { growthOf100 } from "@/lib/growth";
 import {
-  MARKER_STYLE,
   buildDayIndex,
   markerEventsByDay,
+  markerStyle,
   nearestEventDay,
 } from "@/lib/markers";
 
@@ -107,7 +107,7 @@ export default function PriceOverlay({ a, b }: { a: Series; b: Series }) {
         time: ev.date as Time,
         position: SIDE_POSITION[side],
         color,
-        shape: MARKER_STYLE[ev.type].shape,
+        shape: markerStyle(ev).shape,
         text: "",
         size: 1,
       }));

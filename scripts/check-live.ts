@@ -39,6 +39,7 @@ import { fetchDailyPrices } from "../lib/prices";
 import { fetchRegulations } from "../lib/federalregister";
 import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
 import { fetchRecalls } from "../lib/recalls";
+import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
 import { FR_COMPANY_CAP, FR_COMPANY_SINCE, fetchCompanyRegulations, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
 import { WikipediaUnavailable, getTopicTimeline, wikiOutcome } from "../lib/wiki";
@@ -455,6 +456,30 @@ export const CASES: LiveCase[] = [
       out.push(...outcomeProblems(stla.outcome, stla.detail).map((p) => `Stellantis: ${p}`));
       const early = stla.events.filter((e) => e.date < "2014-10-12");
       if (early.length) out.push(`${early.length} Stellantis recalls before 2014-10-12, e.g. ${early[0].date}`);
+      return out;
+    },
+  },
+  {
+    name: "FDA — Medtronic's device recalls since 2012; GE Healthcare's split at the 2023 spin-off",
+    covers: ["fda_enforcement"],
+    hosts: ["api.fda.gov"],
+    async run() {
+      const mdt = await fetchFdaRecalls(1613103);
+      const out = [...outcomeProblems(mdt.outcome, mdt.detail), ...eventProblems(mdt.events, 400)];
+      const first = mdt.events.map((e) => e.date).sort()[0];
+      if (first && first > "2013-01-01") out.push(`Medtronic's earliest recall is ${first}, expected 2012 or before`);
+      // 2025-08-06, Class I: three DLP left-heart vent catheters that may not keep their shape
+      const vent = mdt.events.find((e) => e.externalId === "97295");
+      if (!vent) out.push("no event 97295 (2025 DLP vent catheters)");
+      else if (!/^Class I device recall: DLP Left Heart Vent Catheter/.test(vent.title)) out.push(`97295 titled "${vent.title}"`);
+      const ge = await fetchFdaRecalls(40545);
+      out.push(...outcomeProblems(ge.outcome, ge.detail).map((p) => `GE: ${p}`));
+      const late = ge.events.filter((e) => e.date > "2023-01-03");
+      if (late.length) out.push(`${late.length} GE recalls after the 2023-01-03 spin-off, e.g. ${late[0].date}`);
+      const gehc = await fetchFdaRecalls(1932393);
+      out.push(...outcomeProblems(gehc.outcome, gehc.detail).map((p) => `GE HealthCare: ${p}`));
+      const early = gehc.events.filter((e) => e.date < "2023-01-04");
+      if (early.length) out.push(`${early.length} GE HealthCare recalls before its first day, e.g. ${early[0].date}`);
       return out;
     },
   },

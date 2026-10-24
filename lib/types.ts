@@ -48,7 +48,8 @@ export type SourceKey =
   | "fed_fomc"
   | "bls_cpi"
   | "nhtsa_recalls"
-  | "doj_press";
+  | "doj_press"
+  | "fda_enforcement";
 
 export interface TimelineEvent {
   id: string;

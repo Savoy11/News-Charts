@@ -281,6 +281,20 @@ export const SOURCES: {
     reviewedOn: "2026-10-22",
     notes: "releases since 2009 whose title makes a listed company a party (lib/doj.ts); no key (batch 32)",
   },
+  {
+    id: 24,
+    key: "fda_enforcement",
+    name: "FDA enforcement reports",
+    license: "public domain (CC0 1.0)",
+    attribution: "U.S. Food and Drug Administration (openFDA)",
+    // open.fda.gov/license: "public domain and made available with a Creative Commons CC0 1.0
+    // Universal dedication… You can copy, modify, distribute and perform the work, even for
+    // commercial purposes, all without asking permission." Used: the recall's date, class, product
+    // name, reason and a link to the enforcement report's page for it.
+    commercialOk: true,
+    reviewedOn: "2026-10-24",
+    notes: "Class I and II drug, device and food recalls since 2012 for the firms lib/fdaRecalls.ts maps; no key (batch 40)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

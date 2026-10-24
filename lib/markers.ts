@@ -60,9 +60,31 @@ export const PRIORITY: Record<EventType, number> = {
   // anything the company itself did that day is the story; the economy is the backdrop, and the
   // hover still lists it under the winning glyph
   macro: 0,
-  // the company's own report of a defect, at least 10,000 vehicles: with earnings, the day's story
+  // the company's own report of a defect, at least 10,000 vehicles or an FDA Class I recall: with
+  // earnings, the day's story (a Class II recall ranks as news, `markerPriority`)
   recall: 3,
 };
+
+/**
+ * A recall the FDA rates Class II, temporary or reversible harm, is listed in full but drawn and
+ * ranked like a news story (batch 40). The "R" and a recall's priority were set for NHTSA recalls
+ * of 10,000 vehicles or more; Medtronic alone has 470 Class II recalls since 2012, and drawn as Rs
+ * they covered its five-year chart. Class I and every vehicle recall keep the R.
+ */
+export const isMinorRecall = (ev: Pick<TimelineEvent, "type" | "title">): boolean =>
+  ev.type === "recall" && /^Class II (?:drug|device|food) recall: /.test(ev.title);
+
+const MINOR_RECALL = { color: "#facc15", position: "belowBar", shape: "circle", text: "" } as const;
+
+/** How an event is drawn on the chart. */
+export function markerStyle(ev: Pick<TimelineEvent, "type" | "title">): (typeof MARKER_STYLE)[EventType] | typeof MINOR_RECALL {
+  return isMinorRecall(ev) ? MINOR_RECALL : MARKER_STYLE[ev.type];
+}
+
+/** Which event a day's marker shows when several share it. */
+export function markerPriority(ev: Pick<TimelineEvent, "type" | "title">): number {
+  return isMinorRecall(ev) ? PRIORITY.news : PRIORITY[ev.type];
+}
 
 /** Snap an event date to the nearest trading day at or before it (weekends/holidays have no bar). */
 export function snapToTradingDay(date: string, tradingDays: string[]): string | null {
@@ -153,7 +175,7 @@ export function markerEventsByDay(
   const out: TimelineEvent[] = [];
   for (const [day, list] of groupBySnappedDay(events, tradingDays)) {
     let best = list[0];
-    for (const ev of list) if (PRIORITY[ev.type] > PRIORITY[best.type]) best = ev;
+    for (const ev of list) if (markerPriority(ev) > markerPriority(best)) best = ev;
     out.push({ ...best, date: day });
   }
   return out.sort((a, b) => a.date.localeCompare(b.date));

@@ -371,7 +371,10 @@ const FORM_RE =
 function formSummary(items: TimelineEvent[]): string {
   const counts = new Map<string, number>();
   for (const ev of items) {
-    const form = ev.title.match(FORM_RE)?.[1].toUpperCase() ?? "filing";
+    // the form sits in the closing brackets; a press release's headline before them can name
+    // another form ("…Files Its 10-K Late (8-K 8.01)"), so those are read first
+    const tail = /\(([^()]*)\)$/.exec(ev.title)?.[1] ?? "";
+    const form = (tail.match(FORM_RE) ?? ev.title.match(FORM_RE))?.[1].toUpperCase() ?? "filing";
     counts.set(form, (counts.get(form) ?? 0) + 1);
   }
   return [...counts.entries()]

@@ -32,6 +32,7 @@ import { fetchNews, gdeltHeadlineNames, gdeltNames, gdeltNewsPlan } from "../lib
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
 import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, newsNamesFor, possessiveNameFor, type Rename } from "../lib/sec";
+import { withSecHeadlines } from "../lib/ingest/headlines";
 import { fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
@@ -437,7 +438,27 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
      * Deep here and shallow in the first pass, deliberately: this path has no deadline and runs
      * on a refresh window, while the first pass runs with a visitor waiting on an 8s budget.
      */
-    const events = await getFilingsDeep(company, true, renames, othersStakes);
+    const filings = await getFilingsDeep(company, true, renames, othersStakes);
+    /**
+     * Each 8-K's press-release headline as its title (batch 42): those already read come from
+     * `sec_headlines`, and a run's worth more are read from EDGAR. An enrichment, so it can only
+     * add: if it fails, the filings go out with their item titles, as before.
+     */
+    let events = filings;
+    try {
+      const titled = await withSecHeadlines(client, company.cik, filings);
+      events = titled.events;
+      const s = titled.stats;
+      if (s.eligible) {
+        line(
+          "sec_edgar",
+          `headlines ${s.read} read (${s.found} found${s.failed ? `, ${s.failed} failed` : ""}); ` +
+            `${s.titled} of ${s.eligible} 8-Ks titled, ${s.left} left to read`
+        );
+      }
+    } catch (err) {
+      line("sec_edgar", `headlines skipped: ${(err as Error).message}`);
+    }
     return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
   });
 

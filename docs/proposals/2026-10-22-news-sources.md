@@ -156,6 +156,9 @@ about 4,700 recalls from batch 41, which added Johnson & Johnson and the busines
   Reports Strong First-Quarter Results". The headline is hard to pick out reliably — samples gave
   "TEXT OF PRESS RELEASE ISSUED BY APPLE INC. DATED JULY 21, 2008." and a file name — and it costs
   two EDGAR requests per filing. An enrichment of existing events, not a new source.
+  **Built in batch 42 (2026-10-24, `lib/secHeadlines.ts`):** a headline is taken only from an
+  exhibit with a dateline near the top, which rules out contracts and slide decks; lines like
+  "TEXT OF PRESS RELEASE…" are read as letterhead; each 8-K is read once and the answer stored.
 - **Wikipedia's daily "Current events" pages** (CC BY-SA, the licence the site already uses for
   Wikipedia text) list each day's news. Not tested, so how far back they reach and how often they
   name a listed company is unknown: Wikipedia answered this session with "too many requests".

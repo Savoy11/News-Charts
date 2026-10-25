@@ -985,6 +985,77 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 48: every headline read, and what the reading found (2026-10-25)
+
+The open item that batches 42, 43, 44 and 47 carried, headlines cut short where a wrap and a
+subheadline look alike, had last been measured in batch 42 at about one in ten. This batch measured
+it again by reading all 554 headlines the stored samples and batch 47's live reads give: 306 from
+the 378 stored 8-K exhibits, 62 from the 160 stored 6-Ks, and 186 from batch 47's live reads. Each
+was shown beside the line after it, and the 192 where that line could have carried the headline on
+were read one by one. Eight are cut short. The same reading found titles that are simply wrong, at
+filers batch 47 did not sample, and those matter more.
+
+`npm run check` passes (47 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
+passes. `check:ui` was not run: no page or component changed. HawkScan could not run:
+`HAWK_API_KEY` is not set.
+
+- [x] **Wrong titles** (`lib/secHeadlines.ts`):
+      - Takeda's 6-Ks were titled "Chief Accounting Officer and Corporate Controller". Takeda signs
+        after the date on one line ("Date: August 28, 2026 By: /s/ Norimasa Takeda"), and the
+        signature was read only on a line it opened. It is read anywhere on its line now. That also
+        reaches TSMC's signature, where a title under the name opens on the company's name ("TSMC
+        Board of Directors Meeting Resolutions") and is the headline. So a signer's unlabelled title
+        must now open on the title itself ("Chief…", "Senior…", "Member of…").
+      - UBS's capital report was titled "Form 20-F ☒ Form 40-F ☐", its check boxes set one to a line.
+        A cover page's own phrase is no headline, nor is "This Form 6-K consists of…". The report
+        is not a release, so it gives none.
+      - Five Lloyds 6-Ks were titled "Index to Exhibits Item". The index and its "No. 1 Regulatory
+        News Service Announcement…" entry are letterhead; the titles are "Transactions in Own
+        Securities".
+      - BP's were titled by their exhibit list ("Ian Tyler appointed bp Chair dated 02 September 2026
+        Exhibit 1.1"). An exhibit's label with any number is letterhead now, not only 99 and 20.
+      - "Jpmorganchase" is JPMorganChase, and P&G's results deck loses its trailing "July 29, 2026
+        EARNINGS RELEASE".
+      - Takeda's two-city datelines ("OSAKA, Japan, and CAMBRIDGE, Massachusetts, …") were read from
+        the second city, and the first was left on the headline ("…Chief Financial Officer
+        Succession OSAKA, Japan, and"). It is dropped, on its own or at the end of a page set as one
+        line.
+- [x] **Cut short:**
+      - A line opening on "And", "Of" or "Between" carries a headline of four words or more on:
+        Intel ("…Open to Certain Investors" / "And Related Tender Offers…"), Schering-Plough
+        ("…Public Offering" / "Of Common Shares…"), SAP 2010, and Mizuho ("…Business Alliance" /
+        "Between Mizuho Bank and Rakuten Bank" / "and Expected Change…"). The four-word floor keeps
+        a 1995 two-column release, with a contact's name between its headline's halves, untitled.
+      - A figure after "its" or "the" ends no line: AMD's "…Tender Offer for its 6.00%" / "Convertible
+        Senior Notes due 2015".
+      - The place-and-date rule now needs a year. It read "MUFG Announces December 1 Closing Date of
+        the Sale of" as a place and a date, dropped it, and titled the filing by its second line.
+- [x] `HEADLINE_VERSION` 4 → 5, so every title stored by batch 47's reading is read again.
+- Measured, every document read by main's reader and this one: 20 titles change across batch 47's
+  live reads (15) and the stored samples (5), every one from wrong to right. Nothing else in the
+  378 stored 8-K exhibits, the 160 stored 6-Ks, the 288 fresh 6-Ks or the 120 fresh US 8-Ks
+  changes. The real ingest of Takeda, Lloyds, UBS and BP into a fresh scratch database (600
+  filings read, 208 headlines) shows none of the faults fixed above. Its read turned up the Takeda
+  first-city fault, fixed last and checked by reading those filings again.
+- [ ] **Open:**
+      - Cut short still, each needing more than a rule can safely tell: "Walmart Elects Charles
+        Holley" (… "New Chief Financial Officer"), "Verizon Communications Establishes Record and
+        Closing" ("Dates for…"), "Nomura to Announce Second Quarter", Mitsubishi UFJ's "…of
+        Performance-Based" and "…the Sale of MUFG". Joining any line that cannot end on its own
+        would fix the last two, but it also joins Cisco's headline to a subheadline that wraps.
+      - Takeda: page-per-line documents whose dateline is read from "JAPAN" leave "…in 2025 Osaka";
+        a "Statement" label doubles ("Statement Statement on…"); a slogan opens one title ("Better
+        Health, Brighter Future Takeda Settles…").
+      - UBS: one title is a table's header ("Wealth Management Swiss Bank Asset Management…") and
+        one a sentence's fragment ("stand for re-election after eight years of Board").
+- Checks: `check:sec-headlines` 206 → 224. The real documents rise from 112 to 127 (103 releases
+  with the headline each must give, 24 that must give none). The 13 new ones above are each kept
+  long enough that main's reader gets them wrong, and the fixture builder refuses one it gets
+  right. Two are guards that read the same under both: TSMC's headline under its signer's title,
+  and the 1995 two-column release. Direct checks: a signature after the date, a headline with a
+  day and month in it, and the version. On main's reader 16 of the 18 new checks fail; the two
+  that pass are the guards.
+
 ## NC ledger — batch 47: the headline audit's findings fixed (2026-10-25)
 
 The `code-auditor` agent checked batches 42–46 on `258d6dc`. Its report is
@@ -1054,7 +1125,8 @@ passes. `check:ui` was not run: no page or component changed. HawkScan could not
       - Headlines cut short where a wrap and a subheadline look alike, the class batches 42–44
         left open, turned up again: "Nomura to Announce Second Quarter" (for "…Operating Results
         on October 28"), "Notice Regarding Continuation of Performance-Based", "MUFG Union Bank to
-        U.S. Bancorp". Each was a signature or worse before.
+        U.S. Bancorp". Each was a signature or worse before. Batch 48 measured the class (8 of 554)
+        and fixed the last of these and five others; the first two stay open there.
       - The audit's note on one slow pattern (a 0.5 MB run of text with no line breaks takes 4 s;
         no real document comes near) is left as it is; the audit did not count it a finding.
       - The audit's suggestion of a standing sampled live check of the reader is for the

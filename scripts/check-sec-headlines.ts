@@ -294,6 +294,15 @@ async function main(): Promise<void> {
   check("the name signed and the signer's title under a signature are cut, a headline with its verb is not",
     afterCoverPage(underSignature)[0] === "Acme Names New Chief Operating Officer", JSON.stringify(afterCoverPage(underSignature)));
   check("titles stored by batch 46's reading — signatures, \"Issued:\" lines, other filings' titles — are read again", HEADLINE_VERSION >= 4);
+  // batch 48: a full read of 554 headlines
+  const afterDate = [...cover.slice(0, 5), "Date: August 28, 2026 By: /s/ Jane Doe", "Jane Doe", "Chief Accounting Officer", "Acme Board of Directors Meeting Resolutions"];
+  check("a signature after the date on its line is cut with its name and title; a headline opening on the company's name is not a title, \"Directors\" or no",
+    afterCoverPage(afterDate)[0] === "Acme Board of Directors Meeting Resolutions", JSON.stringify(afterCoverPage(afterDate)));
+  const dayMonth = ["Acme Announces December 1 Closing Date of the Sale of", "Beta Union Bank to Delta Bancorp", "NEW YORK, Oct. 19, 2022 — Acme today announced the closing date."];
+  check("a headline with a day and month in it is no place and date: \"Acme Announces December 1 Closing Date…\" is read whole",
+    pressReleaseHeadline(dayMonth.map((l) => `<p>${l}</p>`).join("")) === "Acme Announces December 1 Closing Date of the Sale of Beta Union Bank to Delta Bancorp",
+    String(pressReleaseHeadline(dayMonth.map((l) => `<p>${l}</p>`).join(""))));
+  check("titles stored by batch 47's reading are read again", HEADLINE_VERSION >= 5);
 
   console.log("\nWhich 8-Ks and 6-Ks are asked about");
   const asked = (label: string, items?: string) => mayCarryRelease(eightK("000001292719000001", "2019-01-01", label, items));

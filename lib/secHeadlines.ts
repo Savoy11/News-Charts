@@ -1,5 +1,5 @@
 /**
- * The press release inside an 8-K or a 6-K, read for its headline (batches 42–47).
+ * The press release inside an 8-K or a 6-K, read for its headline (batches 42–48).
  *
  * An 8-K is titled by its item ("Other events (8-K 8.01)") and a 6-K "6-K filing", which say what
  * kind of thing was reported and nothing about what it was. Many carry the company's press release
@@ -27,9 +27,12 @@
  * 43): an announcement with no dateline is read by its lead paragraph, and a 6-K's own document
  * past its cover page. 3 (batch 44): a results release with neither, by its headline. 4 (batch 47):
  * a 6-K's signature, a bank's legend and a release's "Issued:" date are no headline, and a release
- * cited in the text lends this filing no title.
+ * cited in the text lends this filing no title. 5 (batch 48): a signature after the date on its line,
+ * a cover's check boxes, an exhibit index and any exhibit's label are no headline either, a
+ * headline carried on by "And", "Of" or "Between" is read whole, and a dateline's first city is no
+ * part of it.
  */
-export const HEADLINE_VERSION = 4;
+export const HEADLINE_VERSION = 5;
 
 /** The exhibit types a press release is filed under: EX-99.x, and EX-20 before the 2004 rules. */
 const RELEASE_EXHIBIT = /^EX-(?:99|20)\b/i;
@@ -174,6 +177,8 @@ const MONTH = String.raw`(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|JAN|
 // "Sept. 1, 2004", and the day first as Europe writes it: "10 July 2017", "24th August 2026"
 // and with no space after an abbreviation's point: "CINCINNATI, Nov.1, 2005 -"
 const DATE = String.raw`(?:(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day,?\s+)?(?:${MONTH}(?:\s+|(?<=\.))\d{1,2}(?:st|nd|rd|th)?\b(?:,?\s*\d{4})?|\d{1,2}(?:st|nd|rd|th)?\s+${MONTH}\s+\d{4})`;
+/** …and only with its year: "January 28, 2013", "10 July 2017" — never "December 1" alone. */
+const DATE_WITH_YEAR = String.raw`(?:(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day,?\s+)?(?:${MONTH}(?:\s+|(?<=\.))\d{1,2}(?:st|nd|rd|th)?,?\s*\d{4}|\d{1,2}(?:st|nd|rd|th)?\s+${MONTH}\s+\d{4})`;
 const PLACE_WORD = String.raw`(?:[A-Z][A-Za-z'’.-]*|of|de|la)`;
 const PLACE = String.raw`${PLACE_WORD}(?:\s${PLACE_WORD}){0,3}`;
 const CAPS_PLACE = String.raw`[A-Z][A-Z'’.-]+(?:\s[A-Z][A-Z'’.-]+){0,2}`;
@@ -239,7 +244,7 @@ function datelineInRun(run: string): number {
  * titles. The headline is looked for after the last of them.
  */
 const LETTERHEAD = [
-  /^(?:ex(?:hibit)?\.?\s*[-\s]?\s*(?:99|20)(?:\.\d+)?|EX-\d+(?:\.\d+)?)\b[\s.:-]*$/i,
+  /^(?:ex(?:hibit)?\.?\s*[-\s]?\s*\d{1,3}(?:\.\d+)?|EX-\d+(?:\.\d+)?)\b[\s.:-]*$/i,
   /^-?\s*(?:news|press)(?:\s+release)?\s*-?$/i,
   // but not "News Summary:", which heads the bullets under Cisco's headline
   /^(?:corporate\s+)?(?:news|statement|press\s+release|news\s+release|media\s+release|for\s+release|release)\b(?!\s+(?:summary|highlights)\b).{0,30}$/i,
@@ -271,6 +276,9 @@ const LETTERHEAD = [
   // a European postcode: "CH-4002 Basel", "D-69190 Walldorf"
   /^[A-Z]{1,2}-\d{4,5}\s+[A-Z]/,
   /^not\s+for\s+(?:release|publication|distribution)\b/i,
+  // a 6-K's list of what it carries, over the announcement: "Index to Exhibits" / "Item" / "No. 1
+  // Regulatory News Service Announcement, 23 October 2026"
+  /^index\s+to\s+exhibits\b|^exhibit\s+index\b|^(?:no\.\s*\d+\s+)?regulatory\s+news\s+service\b/i,
   // "Strictly embargoed until Sunday 12 April 2026, 3:10 pm (BST)"
   /^(?:strictly\s+)?embargo(?:ed)?\b/i,
   // "1-7-1 Konan, Minato-ku Tokyo 108-0075", "No.12-043E": a Japanese address and release number
@@ -310,8 +318,9 @@ const NOISE = [
   new RegExp(String.raw`^(?:issued|published|dated?)\s*:?\s+(?:on\s+)?${DATE}\b`, "i"),
   new RegExp(String.raw`^${DATE},?\s+[A-Z][\w.'’-]*(?:,?\s+[A-Z][\w.'’-]*){0,2}$`, "i"),
   // a place and a date with no dash, on a line of their own or before a label: "Basel, Switzerland,
-  // January 28, 2013 Management announcement"
-  new RegExp(String.raw`^${PLACE}${STATE}[,\s]+${DATE}\b(?!\s*${DASH})`),
+  // January 28, 2013 Management announcement" — its year required, or "MUFG Announces December 1
+  // Closing Date…" reads as one
+  new RegExp(String.raw`^${PLACE}${STATE}[,\s]+${DATE_WITH_YEAR}\b(?!\s*${DASH})`),
 ];
 /** A rule between lines: "-", "* * *", "|". */
 const SEPARATOR = /^[|•·*_=\s-]+$/;
@@ -335,7 +344,8 @@ function isLetterhead(line: string): boolean {
 }
 
 function isBoilerplate(line: string): boolean {
-  return isLetterhead(line) || NOISE.some((re) => re.test(line)) || SEPARATOR.test(line);
+  // and a cover page's own phrase, where the cut stopped short of it: "Form 20-F ☒ Form 40-F ☐"
+  return isLetterhead(line) || NOISE.some((re) => re.test(line)) || SEPARATOR.test(line) || COVER_PAGE.test(line);
 }
 
 const ABBREV_END = /\b(?:Inc|Co|Corp|Ltd|L\.P|N\.A|U\.S|U\.K|Jr|Sr|No|St|Bros|Cos|Mfg|plc)\.$/i;
@@ -364,6 +374,9 @@ function continues(cur: string, next: string): boolean {
   // "Boeing Sets 787 First Delivery Date" / "for Mid-First Quarter 2011"; and a line left on a comma
   // or a slash: "The 19th Annual General Meeting of Shareholders/" / "Proposal No. 2…"
   if (/^[a-z(]/.test(next) || /[,;/]$/.test(cur)) return true;
+  // and one that opens on a joining word in title case: "…Notes Open to Certain Investors" / "And
+  // Related Tender Offers…", "…Public Offering" / "Of Common Shares…", "…Alliance" / "Between…"
+  if (/^(?:And|Of|Between)\s/.test(next) && cur.split(/\s+/).length >= 4) return true;
   // a line in capitals over one that is not is a headline over its subheadline
   if (inCapitals(cur) !== inCapitals(next)) return false;
   // a line cut after a word a headline cannot end on: "GE Announces Its Intent to Explore
@@ -418,7 +431,7 @@ const WRAPS_AFTER = new RegExp(
     // a number after a joining word: "…to Leave After 18" / "Years…", "…and $29.4 Billion" / "Capital…"
     // — but not a year after "of", which ends one: "…for Second Quarter of 2005" (where "Stellar Start
     // to 2021" / "Fastest Growth…" runs on)
-    String.raw`(?:after|to|by|over|than|at|from|with)\s+\$?[\d.,]+%?|of\s+(?!(?:19|20)\d\d$)\$?[\d.,]+%?|(?:and|or)\s+\$?[\d.,]+%?(?:\s+(?:million|billion))?|` +
+    String.raw`(?:after|to|by|over|than|at|from|with|its|the|their)\s+\$?[\d.,]+%?|of\s+(?!(?:19|20)\d\d$)\$?[\d.,]+%?|(?:and|or)\s+\$?[\d.,]+%?(?:\s+(?:million|billion))?|` +
     String.raw`(?:reports?|announces?|names?|elects?|appoints?|declares?|completes?|adds?|rejects?|acquires?|` +
     String.raw`integrates?|expands?|explores?|sells?|buys?|launches|unveils|introduces|posts?|delivers?|raises?|` +
     // "updates" only: "…Delivery Update" is a noun and the line ends there
@@ -442,7 +455,7 @@ const SMALL = new Set(
  * never "Jpmorgan"; "NVIDIA" stays in capitals.
  */
 const CASED_NAMES = new Map(
-  ("JPMorgan ExxonMobil UnitedHealth UnitedHealthcare NVIDIA FedEx PayPal BlackRock PepsiCo eBay iPhone iPad " +
+  ("JPMorgan JPMorganChase ExxonMobil UnitedHealth UnitedHealthcare NVIDIA FedEx PayPal BlackRock PepsiCo eBay iPhone iPad " +
     "YouTube GlaxoSmithKline AstraZeneca AmerisourceBergen LinkedIn DoorDash GlobalFoundries BioNTech MicroStrategy " +
     "AbbVie HubSpot ConocoPhillips ServiceNow CrowdStrike Salesforce.com").split(" ").map((n) => [n.toUpperCase(), n])
 );
@@ -543,17 +556,25 @@ const COVER_PAGE = new RegExp(
     String.raw`^(?:yes|no)\s*:?\s*\S{0,2}$`,
     // a Japanese bank's legend above its signature, 370–430 characters long
     String.raw`form 6-k shall be deemed to be incorporated by reference`,
+    // what the 6-K says it consists of: "This Form 6-K consists of the UBS Group AG consolidated…"
+    String.raw`^this (?:report on )?form 6-k\b`,
   ].join("|"),
   "i"
 );
 /**
  * The signature under a cover page, set one field to a line: "By:", "/s/ Yoshitaka Sekine", "Name:
- * Yoshitaka Sekine", "Title: Managing Director, Head of Documentation…". Part of the cover only
+ * Yoshitaka Sekine", "Title: Managing Director, Head of Documentation…" — or after the date on its
+ * line: "Date: August 28, 2026 By: /s/ Norimasa Takeda". Part of the cover only
  * after one of its phrases, so an exhibit's own "Name:" is left alone.
  */
-const SIGNATURE = /^(?:name|title|by)\s*:|^by\s*(?:\/s\/|$)|^\/s\//i;
-/** A signer's title, printed without a label under the name: "Senior Managing Director". */
+const SIGNATURE = /^(?:name|title|by)\s*:|^by\s*(?:\/s\/|$)|^\/s\/|\bby:?\s*\/s\//i;
+/**
+ * A signer's title, printed without a label under the name: "Senior Managing Director", "(Chief Legal
+ * Officer)". It opens on the title, never on a company's name: "TSMC Board of Directors Meeting
+ * Resolutions" under a signature is the headline.
+ */
 const JOB_TITLE = /\b(?:officer|director|president|chair(?:man|woman|person)?|secretary|treasurer|controller|counsel|manager|executive|head\s+of|responsible\s+for|CEO|CFO|COO)s?\b/i;
+const TITLE_OPENS = /^\(?(?:chief|senior|executive|managing|group|deputy|assistant|vice|general|corporate|global|interim|acting|member|head|responsible|director|officer|president|chair\w*|secretary|treasurer|controller|counsel|manager|CEO|CFO|COO)\b/i;
 export function afterCoverPage(lines: string[]): string[] {
   let last = -1;
   let signed: string | undefined;
@@ -566,7 +587,8 @@ export function afterCoverPage(lines: string[]): string[] {
       // "Akito Bato" / "Senior Managing Director" (never a headline, which has its verb)
       while (i + 1 < lines.length && lines[i + 1].length < 200) {
         const next = lines[i + 1];
-        const printed = signed !== undefined && (next === signed || (next.length <= 100 && JOB_TITLE.test(next) && !HAS_VERB.test(next)));
+        const printed =
+          signed !== undefined && (next === signed || (next.length <= 100 && TITLE_OPENS.test(next) && JOB_TITLE.test(next) && !HAS_VERB.test(next)));
         if (!/[:,]$/.test(lines[i]) && !printed) break;
         last = ++i;
         signed = /\/s\/\s*(.+)$/.exec(lines[i])?.[1].trim() ?? signed;
@@ -631,6 +653,13 @@ export function listedRelease(lines: string[]): string | null {
   return null;
 }
 
+/**
+ * A dateline's first city, left before it where the dateline was read from its second: "OSAKA, Japan,
+ * and" — on its own, or one word at the end of a run of text ("…Congress Osaka, JAPAN and"), so a
+ * headline's last word is not taken for a city's first.
+ */
+const FIRST_CITY = /(?:^[A-Z][A-Za-z'’.-]*(?:\s[A-Z][A-Za-z'’.-]*)?|\s[A-Z][A-Za-z'’.-]*),(?:\s[A-Z][A-Za-z'’.-]*){1,2},?\s+(?:and|&)$/;
+
 /** How many lines from the top a dateline may sit. */
 export const DATELINE_WITHIN = 40;
 
@@ -672,7 +701,11 @@ export function pressReleaseHeadline(doc: string): string | null {
   const dateline = datelined ?? findLead(lines);
   if (!dateline) return resultsHeadline(lines);
   const head = lines.slice(0, dateline.line);
-  if (dateline.at > 0) head.push(...splitRun(lines[dateline.line].slice(0, dateline.at)));
+  if (dateline.at > 0) {
+    // …less the dateline's own first city: "OSAKA, Japan, and CAMBRIDGE, Massachusetts, February 1, 2024 –"
+    const before = lines[dateline.line].slice(0, dateline.at).trim().replace(FIRST_CITY, "").trim();
+    if (before) head.push(...splitRun(before));
+  }
   const blocks = headlineBlocks(head);
   let lastLetterhead = -1;
   blocks.forEach((b, i) => {
@@ -754,7 +787,13 @@ function resultsHeadline(lines: string[]): string | null {
   const text = first && candidate(first)!;
   if (!text || !RESULTS_HEADLINE.test(text) || NOT_RESULTS.test(text)) return null;
   // a deck's first page names itself and its day: "EARNINGS RELEASE Q1 FY 2027 Results October 22, 2026"
-  return finish(text.replace(/^(?:earnings|news|press|media)\s+release\s*[:–—-]?\s+/i, "").replace(TRAILING_DATE, ""));
+  // …or after it: "FY & Q4 FY 2026 Results July 29, 2026 EARNINGS RELEASE"
+  return finish(
+    text
+      .replace(/^(?:earnings|news|press|media)\s+release\s*[:–—-]?\s+/i, "")
+      .replace(/\s+(?:earnings|news|press|media)\s+release$/i, "")
+      .replace(TRAILING_DATE, "")
+  );
 }
 
 /**

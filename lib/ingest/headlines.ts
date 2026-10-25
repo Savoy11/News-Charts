@@ -34,18 +34,22 @@ export interface HeadlineStats {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** What is stored for these accessions: the headline, null for none, and the version read by. */
-export async function storedHeadlines(
-  client: PoolClient,
-  accessions: string[]
-): Promise<Map<string, { headline: string | null; version: number }>> {
-  const out = new Map<string, { headline: string | null; version: number }>();
+/** A stored reading: the headline (null for none), the document it came from, the version read by. */
+export interface StoredHeadline {
+  headline: string | null;
+  exhibit?: string | null;
+  version: number;
+}
+
+/** What is stored for these accessions. */
+export async function storedHeadlines(client: PoolClient, accessions: string[]): Promise<Map<string, StoredHeadline>> {
+  const out = new Map<string, StoredHeadline>();
   if (!accessions.length) return out;
-  const { rows } = await client.query<{ accession: string; headline: string | null; version: number }>(
-    "SELECT accession, headline, version FROM sec_headlines WHERE accession = ANY($1::text[])",
+  const { rows } = await client.query<{ accession: string; headline: string | null; exhibit: string | null; version: number }>(
+    "SELECT accession, headline, exhibit, version FROM sec_headlines WHERE accession = ANY($1::text[])",
     [accessions]
   );
-  for (const r of rows) out.set(r.accession, { headline: r.headline, version: Number(r.version) });
+  for (const r of rows) out.set(r.accession, { headline: r.headline, exhibit: r.exhibit, version: Number(r.version) });
   return out;
 }
 
@@ -58,14 +62,17 @@ export async function storeHeadline(client: PoolClient, accession: string, read:
   );
 }
 
-/** The events, each 8-K or 6-K with a stored headline retitled by it. Reads nothing from EDGAR. */
+/**
+ * The events, each 8-K or 6-K with a stored headline retitled by it and linked to the document it
+ * came from. Reads nothing from EDGAR.
+ */
 export function applyHeadlines(
   events: TimelineEvent[],
-  stored: Map<string, { headline: string | null }>
+  stored: Map<string, { headline: string | null; exhibit?: string | null }>
 ): TimelineEvent[] {
   return events.map((ev) => {
-    const headline = ev.externalId ? stored.get(ev.externalId)?.headline : null;
-    return headline && mayCarryRelease(ev) ? withHeadline(ev, headline) : ev;
+    const read = ev.externalId ? stored.get(ev.externalId) : undefined;
+    return read?.headline && mayCarryRelease(ev) ? withHeadline(ev, read.headline, read.exhibit) : ev;
   });
 }
 
@@ -117,7 +124,7 @@ export async function withSecHeadlines(
     }
     if (got) {
       await storeHeadline(client, ev.externalId!, got);
-      stored.set(ev.externalId!, { headline: got.headline, version: HEADLINE_VERSION });
+      stored.set(ev.externalId!, { headline: got.headline, exhibit: got.exhibit, version: HEADLINE_VERSION });
       stats.read++;
       if (got.headline) stats.found++;
       failuresInARow = 0;

@@ -446,8 +446,9 @@ function recaseWord(w: string, isFirst: boolean, keepShort = true): string {
   if (!w) return w;
   if (/^\d+(?:ST|ND|RD|TH)$/.test(w)) return w.toLowerCase();
   if (/\.[A-Za-z]/.test(w)) return /^[A-Z]+\.(?:COM|NET)$/.test(w) ? w[0] + w.slice(1).toLowerCase() : w;
-  const mc = /^(Ma?c)([A-Z]{3,})(['’]S)?$/.exec(w);
-  if (mc) return mc[1] + mc[2][0] + mc[2].slice(1).toLowerCase() + (mc[3] ? mc[3].toLowerCase() : "");
+  // "McDONALD'S", and one all in capitals: "MCDONNELL DOUGLAS", "MCKESSON" — never "Mcdonnell"
+  const mc = /^(Ma?c|MC)([A-Z]{3,})(['’]S)?$/.exec(w);
+  if (mc) return (mc[1] === "MC" ? "Mc" : mc[1]) + mc[2][0] + mc[2].slice(1).toLowerCase() + (mc[3] ? mc[3].toLowerCase() : "");
   const bare = w.replace(/['’](?:S)?$/, "");
   if (ACRONYMS.has(bare)) return w;
   const cased = CASED_NAMES.get(bare);
@@ -778,13 +779,32 @@ export function mayCarryRelease(ev: { title: string; description?: string; exter
 }
 
 /**
+ * Where the document a headline came from sits: in the filing's own folder, the press-release
+ * exhibit, a 6-K's own document, or, for a filing from before about 2001, its full submission text
+ * (`…/data/12927/000089102098000570/0000891020-98-000570.txt`, which EDGAR serves from the folder
+ * as well). Null when the filing's address is not an EDGAR archive one or the name is not a plain
+ * file name.
+ */
+export function releaseUrl(filingUrl: string | undefined, exhibit: string | null | undefined): string | null {
+  if (!exhibit || !/^[\w.-]+\.(?:htm|html|txt)$/i.test(exhibit) || exhibit.startsWith(".")) return null;
+  const folder = /^https:\/\/www\.sec\.gov\/Archives\/edgar\/data\/\d+\/\d{18}\//.exec(filingUrl ?? "");
+  return folder ? folder[0] + exhibit : null;
+}
+
+/**
  * A filing retitled with its press release's headline: "Boeing Co: Other events (8-K 8.01)" becomes
  * "Boeing Co: Boeing Sets 787 First Delivery Date for Mid-First Quarter 2011 (8-K 8.01)", and
  * "NIO Inc.: 6-K filing" becomes "NIO Inc.: NIO Inc. Provides April 2023 Delivery Update (6-K)". The
  * form and item stay at the end, where the timeline's filing stacks read them, and the item's name
- * moves into the description.
+ * moves into the description. Given the document the headline came from, the link opens it: a
+ * reader clicking "Boeing Raises Dividend 10 Percent…" gets the release, not the 8-K's cover form,
+ * which only says an exhibit is attached.
  */
-export function withHeadline<E extends { title: string; description?: string }>(ev: E, headline: string): E {
+export function withHeadline<E extends { title: string; description?: string; url?: string }>(
+  ev: E,
+  headline: string,
+  exhibit?: string | null
+): E {
   const m = RELEASE_TITLE.exec(ev.title);
   if (!m) return ev;
   const prefix = ev.title.slice(0, m.index);
@@ -792,9 +812,12 @@ export function withHeadline<E extends { title: string; description?: string }>(
   const code = m[3];
   const label = m[1] ?? `${m[4]} filing`;
   const named = m[1] ? `${label} (${form}${code ? ` ${code}` : ""})` : label;
+  const release = releaseUrl(ev.url, exhibit);
+  const said = `${named}. The headline is the press release's, filed with it${release ? ", and the link opens it" : ""}.`;
   return {
     ...ev,
     title: `${prefix}: ${headline} (${form}${code ? ` ${code}` : ""})`,
-    description: [`${named}. The headline is the press release's, filed with it.`, ev.description].filter(Boolean).join(" "),
+    ...(release ? { url: release } : {}),
+    description: [said, ev.description].filter(Boolean).join(" "),
   };
 }

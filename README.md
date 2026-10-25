@@ -347,9 +347,10 @@ Production and Deliveries" — so a contract, a slide deck, a shareholder letter
 filed as EX-99 gives nothing and the filing keeps its item title. A headline written in capitals is recased ("IBM", "UPS" and
 "Non-GAAP" kept). A foreign company's 6-K, until now just "6-K filing", is read the same way: its
 release attached as EX-99, or the announcement in the 6-K's own document once the SEC's cover page
-is cut — "NIO Inc. Provides April 2023 Delivery Update (6-K)", "Shell announces commencement of a
+and the signature under it are cut — "NIO Inc. Provides April 2023 Delivery Update (6-K)", "Shell announces commencement of a
 share buyback programme (6-K)". A Japanese 6-K that lists its release by title ("Press release
-entitled “…”") gives that title; a routine one — a monthly share return, a buyback report, a set
+entitled “…”") gives that title, when the entry opens its own line above any dateline (a sentence
+citing an earlier release names that release, not this one); a routine one — a monthly share return, a buyback report, a set
 of accounts — gives nothing. Reading one costs two to four EDGAR requests and a filing never
 changes, so each is read once and the answer kept in `sec_headlines` (`db/029`); the scheduled
 ingest reads up to 150 a run, newest first, and stops at the first refusal, so a long history fills

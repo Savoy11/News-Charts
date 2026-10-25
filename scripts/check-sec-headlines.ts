@@ -266,6 +266,34 @@ async function main(): Promise<void> {
   check("…and a quoted title that wraps over lines",
     listedRelease(["Press release, dated April 19, 2001, announcing, \"Novartis group", "sales up by 11% in the first quarter\""]) === "Novartis group sales up by 11% in the first quarter",
     String(listedRelease(["Press release, dated April 19, 2001, announcing, \"Novartis group", "sales up by 11% in the first quarter\""])));
+  check("…and an entry behind the list's own words: \"List of materials Documents attached hereto: i) A press release announcing - …\", \"Enclosure: Press release dated…\"",
+    listedRelease(["List of materials Documents attached hereto: i) A press release announcing - Sony Ericsson Q1 Results"]) === "Sony Ericsson Q1 Results" &&
+      listedRelease(["Enclosure: Press release dated January 20, 2005 announcing Novartis' results for the fourth quarter"]) === "Novartis' results for the fourth quarter");
+  // the audit's finding 3 (2026-10-25): a sentence that cites a release, a date, a rule
+  const cited = "TOKYO, September 29, 2026 — SMFG announced in its press release dated May 12, 2026, entitled “SMBC Group Announces Change of Subsidiary”, that it would transition.";
+  check("a sentence citing an earlier release names that release's title, not this one's", listedRelease([cited]) === null, String(listedRelease([cited])));
+  let threw = "";
+  let rule: string | null = "";
+  try {
+    rule = listedRelease(["Press release: ------------"]);
+  } catch (err) {
+    threw = String(err);
+  }
+  check("\"Press release:\" over a rule gives nothing, and does not throw — a throw kept the filing from ever being stored",
+    rule === null && !threw, threw || String(rule));
+  check("…nor does \"Press Release: October 24, 2026\": a date is no title", listedRelease(["Press Release: October 24, 2026"]) === null);
+  const dated = ["Press Release: October 24, 2026", "Acme Agrees to Acquire Widget Maker for $2 Billion", "NEW YORK, Oct. 24, 2026 — Acme Corp. today announced an agreement."];
+  check("…and the headline under it is read as any other's",
+    pressReleaseHeadline(dated.map((l) => `<p>${l}</p>`).join("")) === "Acme Agrees to Acquire Widget Maker for $2 Billion",
+    String(pressReleaseHeadline(dated.map((l) => `<p>${l}</p>`).join(""))));
+  check("the euro and the Latin-1 signs are decoded: &euro; &pound; &yen; &cent; &sect; &deg; &frac12;",
+    textLines("<p>&euro;2.20 &pound;3 &yen;4 5&cent; &sect;6 7&deg; &frac12;</p>")[0] === "€2.20 £3 ¥4 5¢ §6 7° ½", textLines("<p>&euro;2.20 &pound;3 &yen;4 5&cent; &sect;6 7&deg; &frac12;</p>")[0]);
+  const exhibit = ["Exhibit 99.1", "Name: Acme Corp.", "Acme Reports Third Quarter Results", "DALLAS, Oct. 24, 2026 — Acme today reported results."];
+  check("an exhibit's own \"Name:\" is no signature: with no cover page, nothing is cut", JSON.stringify(afterCoverPage(exhibit)) === JSON.stringify(exhibit));
+  const underSignature = [...cover.slice(0, 5), "By:", "/s/ Jane Doe", "Jane Doe", "Chief Financial Officer", "Acme Names New Chief Operating Officer"];
+  check("the name signed and the signer's title under a signature are cut, a headline with its verb is not",
+    afterCoverPage(underSignature)[0] === "Acme Names New Chief Operating Officer", JSON.stringify(afterCoverPage(underSignature)));
+  check("titles stored by batch 46's reading — signatures, \"Issued:\" lines, other filings' titles — are read again", HEADLINE_VERSION >= 4);
 
   console.log("\nWhich 8-Ks and 6-Ks are asked about");
   const asked = (label: string, items?: string) => mayCarryRelease(eightK("000001292719000001", "2019-01-01", label, items));

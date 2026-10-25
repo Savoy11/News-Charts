@@ -1,8 +1,8 @@
--- Press-release headlines read from 8-K exhibits (batch 42, lib/secHeadlines.ts).
+-- Press-release headlines read from 8-Ks and 6-Ks (batches 42–43, lib/secHeadlines.ts).
 --
--- An 8-K is titled by its item ("Other events (8-K 8.01)"); its press release, filed as an
--- exhibit, carries the headline that says what happened. Reading it costs two or three EDGAR
--- requests, and a filing never changes, so each is read once and the answer kept here — a
+-- An 8-K is titled by its item ("Other events (8-K 8.01)") and a 6-K "6-K filing"; the press
+-- release filed with it carries the headline that says what happened. Reading it costs two to four
+-- EDGAR requests, and a filing never changes, so each is read once and the answer kept here — a
 -- headline, or NULL for a filing that has none — keyed by accession number, which is the
 -- filing's identity everywhere else too. The ingest applies what is stored on every run.
 --

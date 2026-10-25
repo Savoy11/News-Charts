@@ -984,6 +984,39 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 45: a filing titled by its press release links to that release (2026-10-25)
+
+Batches 42–44 title an 8-K or 6-K by the headline of the press release filed with it, but its link
+still opened the filing's own document. For an 8-K that is the SEC's cover form, which says only
+that an exhibit is attached: a reader clicking "Boeing Raises Dividend 10 Percent…" got a page of
+check boxes. The reader already stores which document each headline came from.
+
+`npm run check` passes (45 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
+passes. `check:ui` was not run: no page or component changed. HawkScan could not run:
+`HAWK_API_KEY` is not set.
+
+- [x] **The link opens the release** (`lib/secHeadlines.ts` `releaseUrl`, `withHeadline`;
+      `lib/ingest/headlines.ts`). A titled filing's link is the document its headline was read
+      from, in the filing's own EDGAR folder: the press-release exhibit, a 6-K's own document, or,
+      for a filing from before about 2001, its full submission text, which EDGAR serves from the
+      folder too. The description adds "and the link opens it". Only a plain file name in an EDGAR
+      filing's folder is ever linked; anything else keeps the filing's own link, and so does a
+      filing read and found to have no headline.
+- [x] **Applied wherever stored headlines are:** the scheduled ingest (for the filings it reads in
+      the run and those read before) and the first pass. A filing's stored link is updated on its
+      next ingest, since the store already replaces an attestation's link.
+- [x] **Live:** Boeing's real ingest into the scratch database re-read 150 filings under batch 44's
+      reading and stored links for all 189 titled filings, each in its own folder; 20 drawn at
+      random, from 1997 submission texts to 2026 exhibits, all opened (HTTP 200) on the release.
+- [x] **And a name:** a headline in capitals that starts "MC" keeps the name's shape — "MCDONNELL
+      DOUGLAS" is McDonnell Douglas, "MCKESSON" McKesson — where it gave "Mcdonnell" (found in the
+      same Boeing sample).
+- Checks: `check:sec-headlines` 169 → 177 — the release link for an exhibit, a 6-K document and a
+  pre-2001 submission text; never outside an EDGAR folder or for a name with a path or another
+  kind of file; stored readings and a run's fresh reads applied to the link; the stand-in database
+  now keeps the document's name; two names beginning "MC". On main's code the check cannot run
+  (`releaseUrl` does not exist), and main's `applyHeadlines` leaves every link on the cover form.
+
 ## NC ledger — batch 44: results releases the headline reader gave up on (2026-10-25)
 
 A results release is the filing most likely to explain a price move, and many gave no headline:

@@ -337,7 +337,8 @@ An 8-K is titled by its item — "Other events (8-K 8.01)" — which says what k
 reported and not what it was. When the 8-K carries the company's press release as an exhibit
 (EX-99, or EX-20 before 2004), the release's headline becomes the title instead: "Boeing Sets 787
 First Delivery Date for Mid-First Quarter 2011 (8-K 8.01)", the form and item kept at the end and
-the item's name moved into the description (`lib/secHeadlines.ts`). Only a press release gives a
+the item's name moved into the description, and its link opens the release itself rather than the
+8-K's cover form (`lib/secHeadlines.ts`). Only a press release gives a
 headline: an exhibit counts as one when a dateline ("DEARBORN, Mich., Sept. 1, 2004 –") sits in
 its first 40 lines, or, with none, a lead paragraph in which the company announces or reports
 something "today", or, with neither, when the first headline under its letterhead announces

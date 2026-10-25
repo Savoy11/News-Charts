@@ -15,10 +15,11 @@ import {
   pressReleaseHeadline,
   readFilingHeadline,
   releaseExhibits,
+  releaseUrl,
   textLines,
   withHeadline,
 } from "../lib/secHeadlines";
-import { HEADLINES_PER_RUN, withSecHeadlines } from "../lib/ingest/headlines";
+import { HEADLINES_PER_RUN, applyHeadlines, withSecHeadlines } from "../lib/ingest/headlines";
 import EventList from "../components/EventList";
 import type { TimelineEvent } from "../lib/types";
 
@@ -71,7 +72,7 @@ function edgar(pages: Record<string, string | number>) {
 }
 
 /** Just enough of a pg client for `sec_headlines`. */
-function fakeDb(rows: Map<string, { headline: string | null; version: number }>): PoolClient {
+function fakeDb(rows: Map<string, { headline: string | null; exhibit?: string | null; version: number }>): PoolClient {
   return {
     query: async (sql: string, params: unknown[]) => {
       if (/^SELECT accession/.test(sql)) {
@@ -79,8 +80,8 @@ function fakeDb(rows: Map<string, { headline: string | null; version: number }>)
         return { rows: wanted.filter((a) => rows.has(a)).map((a) => ({ accession: a, ...rows.get(a)! })) };
       }
       if (/^INSERT INTO sec_headlines/.test(sql)) {
-        const [accession, headline, , version] = params as [string, string | null, string | null, number];
-        rows.set(accession, { headline, version });
+        const [accession, headline, exhibit, version] = params as [string, string | null, string | null, number];
+        rows.set(accession, { headline, exhibit, version });
         return { rows: [] };
       }
       throw new Error(`unexpected query: ${sql}`);
@@ -166,6 +167,8 @@ async function main(): Promise<void> {
     ["UNITEDHEALTH GROUP REPORTS FIRST QUARTER RESULTS", "UnitedHealth Group Reports First Quarter Results"],
     ["NVIDIA REPORTS RECORD REVENUE", "NVIDIA Reports Record Revenue"],
     ["EXXONMOBIL'S DUTCH GAS INTERESTS", "ExxonMobil's Dutch Gas Interests"],
+    ["BOEING COMPLETES MCDONNELL DOUGLAS MERGER", "Boeing Completes McDonnell Douglas Merger"],
+    ["MCDONALD'S AND MCKESSON", "McDonald's and McKesson"],
   ];
   for (const [from, to] of recased) check(`"${from}"`, headlineCase(from) === to, headlineCase(from));
   check("a headline in mixed case is the filer's own and kept as written",
@@ -293,6 +296,31 @@ async function main(): Promise<void> {
   check("a 6-K's title: the headline, then (6-K)",
     sixK.title === "NIO Inc.: NIO Inc. Provides April 2023 Delivery Update (6-K)" && sixK.description === "6-K filing. The headline is the press release's, filed with it.",
     `${sixK.title} / ${sixK.description}`);
+  console.log("\nThe link opens the release");
+  const folder = "https://www.sec.gov/Archives/edgar/data/12927/000001292720000001/";
+  check("the press-release exhibit, in the filing's own folder", releaseUrl(`${folder}x.htm`, "d813815dex991.htm") === `${folder}d813815dex991.htm`);
+  check("a filing from before 2001: its full submission text, which EDGAR serves from the folder (the filing's own address ends at the folder)",
+    releaseUrl("https://www.sec.gov/Archives/edgar/data/12927/000089102098000570/", "0000891020-98-000570.txt") ===
+      "https://www.sec.gov/Archives/edgar/data/12927/000089102098000570/0000891020-98-000570.txt");
+  check("never outside an EDGAR filing's folder, and only a plain file name: no path, no other kind of file",
+    releaseUrl("https://example.com/12927/000001292720000001/x.htm", "ex99.htm") === null && releaseUrl(`${folder}x.htm`, "../x.htm") === null &&
+      releaseUrl(`${folder}x.htm`, "ex99.pdf") === null && releaseUrl(`${folder}x.htm`, null) === null &&
+      releaseUrl("https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany", "ex99.htm") === null);
+  const linked = withHeadline(eightK("000001292720000001", "2020-01-29", "Other events (8-K 8.01)", undefined), "Boeing Statement on 737 MAX", "d813815dex991.htm");
+  check("a headline with its document: the link opens the release, and the description says so",
+    linked.url === `${folder}d813815dex991.htm` &&
+      linked.description === "Other events (8-K 8.01). The headline is the press release's, filed with it, and the link opens it.",
+    `${linked.url} / ${linked.description}`);
+  const applied = applyHeadlines(
+    [eightK("000001292720000001", "2020-01-29", "Other events (8-K 8.01)", undefined), eightK("000001292720000002", "2020-02-01", "Other events (8-K 8.01)", undefined)],
+    new Map([
+      ["000001292720000001", { headline: "Boeing Statement on 737 MAX", exhibit: "d813815dex991.htm" }],
+      ["000001292720000002", { headline: null, exhibit: "d900000dex991.htm" }],
+    ])
+  );
+  check("stored readings: a headline's filing links its release; one read and found to have none keeps the filing's own link",
+    applied[0].url === `${folder}d813815dex991.htm` && applied[1].url === "https://www.sec.gov/Archives/edgar/data/12927/000001292720000002/x.htm",
+    applied.map((e) => e.url).join(" "));
   check("a pre-2004 8-K's title ends (8-K)", withHeadline(eightK("000001292797000035", "1997-10-27", "8-K filing", "Items 5 · 7"), "Boeing Reports 1997 3rd Quarter Results").title === "Boeing Co: Boeing Reports 1997 3rd Quarter Results (8-K)");
 
   console.log("\nA run, against a stand-in EDGAR and database");
@@ -303,7 +331,7 @@ async function main(): Promise<void> {
     eightK("000001292718000004", "2018-12-17", "Other events (8-K 8.01)", "Items 8.01 Other events · 9.01 Financial statements and exhibits"),
     eightK("000001292718000005", "2018-04-25", "Earnings announcement (8-K)", "Items 2.02 Results of operations · 9.01 Financial statements and exhibits"),
   ];
-  const db = new Map<string, { headline: string | null; version: number }>([
+  const db = new Map<string, { headline: string | null; exhibit?: string | null; version: number }>([
     ["000001292718000004", { headline: "Boeing Raises Dividend 20 Percent", version: HEADLINE_VERSION }],
   ]);
   const order: string[] = [];
@@ -318,6 +346,9 @@ async function main(): Promise<void> {
     run.events[3].title === "Boeing Co: Boeing Raises Dividend 20 Percent (8-K 8.01)", run.events[3].title);
   check("a filing read and found to have none is stored as such, and keeps its item title",
     db.get("000001292719000002")?.headline === null && run.events[1].title === "Boeing Co: Officer or director change (8-K 5.02)");
+  check("…and a filing titled in the run links the release it was read from, stored with it",
+    run.events[0].url === "https://www.sec.gov/Archives/edgar/data/12927/000001292720000001/ex99.htm" && db.get("000001292720000001")?.exhibit === "ex99.htm",
+    run.events[0].url);
   check("the run says what it did and what is left", run.stats.eligible === 4 && run.stats.read === 2 && run.stats.found === 1 && run.stats.left === 1 && run.stats.titled === 2,
     JSON.stringify(run.stats));
   order.length = 0;
@@ -328,7 +359,7 @@ async function main(): Promise<void> {
   order.length = 0;
   run = await withSecHeadlines(fakeDb(db), "12927", filings, { read: reader });
   check("a headline from an older reading is read again", JSON.stringify(order) === JSON.stringify(["000001292720000001"]) && db.get("000001292720000001")?.version === HEADLINE_VERSION);
-  const failing = new Map<string, { headline: string | null; version: number }>();
+  const failing = new Map<string, { headline: string | null; exhibit?: string | null; version: number }>();
   let tries = 0;
   run = await withSecHeadlines(fakeDb(failing), "12927", filings, { read: async () => (tries++, null) });
   check("EDGAR failing: three tries and the run stops, storing nothing, so all are asked again next time",

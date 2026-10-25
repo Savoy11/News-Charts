@@ -14,9 +14,9 @@ config({ path: ".env.local" });
  * and with your keys in .env.local — keyed feeds report "no key" when unset.
  */
 
-import { getNews } from "../lib/news";
-import { getPressMentions } from "../lib/loc";
-import { getArchiveItems } from "../lib/archive";
+import { fetchNews, gdeltNames, gdeltNewsPlan } from "../lib/news";
+import { fetchPressMentions } from "../lib/loc";
+import { fetchArchiveItems } from "../lib/archive";
 import { GOVERNANCE_SPACES, getGovernanceFor, assertSpacesResolve } from "../lib/onchain/governance";
 import { EXPLOIT_TARGETS, getExploitsFor } from "../lib/onchain/exploits";
 import { getUsdtSupplyMoves } from "../lib/onchain/usdt";
@@ -25,9 +25,14 @@ import { getEthereumMilestones } from "../lib/onchain/ethereum";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { getDailyPrices } from "../lib/prices";
 import { getTopicTimeline } from "../lib/wiki";
-import { resolveCompany, commonName, getFilings } from "../lib/sec";
+import { resolveCompany, commonName, getFilings, newsNamesFor, possessiveNameFor } from "../lib/sec";
+import { FR_COMPANY_SINCE, companyNames, fetchCompanyRegulations, frSearchTerm } from "../lib/frCompany";
+import { fetchRecalls, recallMakersFor } from "../lib/recalls";
+import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
+import { dojPossessive, dojQueryNames, fetchJusticeReleases } from "../lib/doj";
+import { mayCarryRelease, readFilingHeadline } from "../lib/secHeadlines";
 import {
-  getYahooFinanceNews,
+  fetchYahooFinanceNews,
   getNytNews,
   getGuardianNews,
   getNewsdataNews,
@@ -39,7 +44,7 @@ import {
 } from "../lib/newsExtra";
 import { commercialMode, skipReason } from "../lib/ingest/store";
 import { COMPANY_SOURCES, TOPIC_SOURCES } from "./ingest";
-import type { SourceKey, TimelineEvent } from "../lib/types";
+import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
 
 // Each keyed feed with the source key its licence is recorded under, so this report can say
 // *why* a feed sat out. A silently-empty feed and a deliberately-withheld one look identical
@@ -78,6 +83,10 @@ const SOURCE_OF: Record<string, SourceKey> = {
   Finnhub: "finnhub",
   "LoC press (pre-1963)": "loc_chronam",
   "Internet Archive": "internet_archive",
+  "Federal Register (co.)": "federal_register",
+  "NHTSA recalls": "nhtsa_recalls",
+  "FDA enforcement": "fda_enforcement",
+  "Justice Department": "doj_press",
 };
 
 const INGESTED: ReadonlySet<SourceKey> = new Set([...TOPIC_SOURCES, ...COMPANY_SOURCES]);
@@ -111,6 +120,16 @@ function report(name: string, events: TimelineEvent[], note = "") {
   );
 }
 
+/** A fetch as ingest makes it: a refusal or a failure says so, rather than reading as 0 articles. */
+function reportFetch(name: string, res: FetchResult | null, note = "") {
+  if (res && res.outcome !== "ok" && res.outcome !== "empty") {
+    const why = res.httpStatus ? ` (HTTP ${res.httpStatus})` : res.detail ? ` (${res.detail.slice(0, 80)})` : "";
+    console.log(`  ${name.padEnd(22)} ⚠ ${res.outcome}${why} ${note}${pathNote(name)}`);
+    return;
+  }
+  report(name, res?.events ?? [], note);
+}
+
 async function main() {
   const arg = process.argv[2] ?? "BABA";
   const company = await resolveCompany(arg).catch(() => null);
@@ -128,9 +147,32 @@ async function main() {
   );
 
   const safe = (p: Promise<TimelineEvent[]>) => p.catch((e) => (console.log(`    (${e})`), []));
+  const tried = (p: Promise<FetchResult>) => p.catch((e) => (console.log(`    (${e})`), null));
 
-  report("GDELT", await safe(getNews(name)), "(throttles ~1 req/5s; rerun if 0)");
-  if (ticker) report("Yahoo Finance RSS", await safe(getYahooFinanceNews(ticker)));
+  /**
+   * Each company feed is asked exactly as `ingestCompany` asks it — the same call, the same names
+   * (`check:wiring` holds the two to it). This report once sent GDELT "VISA", which GDELT refuses
+   * as too short, where ingest sends "VISA Inc", and asked none of the recall, FDA or Justice
+   * Department feeds (the 2026-10-25 audit's finding 4).
+   */
+  if (company) {
+    const alsoKnownAs = newsNamesFor(company.cik);
+    const possessive = possessiveNameFor(company.cik);
+    const { query: newsQuery, byRelevance } = gdeltNewsPlan(company.name, possessive, alsoKnownAs);
+    const asked = gdeltNames(newsQuery, alsoKnownAs, byRelevance).join(" | ") + (byRelevance ? " by relevance" : "");
+    reportFetch("GDELT", await tried(fetchNews(newsQuery, alsoKnownAs, { byRelevance })), `(asked ${asked}; throttles ~1 req/5s)`);
+    reportFetch("Yahoo Finance RSS", await tried(fetchYahooFinanceNews(company.ticker)));
+    reportFetch("Federal Register (co.)", await tried(fetchCompanyRegulations(company.name, FR_COMPANY_SINCE, alsoKnownAs)),
+      `(asked ${frSearchTerm(company.name, alsoKnownAs)})`);
+    if (recallMakersFor(company.cik)) reportFetch("NHTSA recalls", await tried(fetchRecalls(company.cik)), "(mapped makers only)");
+    else console.log(`  ${"NHTSA recalls".padEnd(22)} — not a mapped vehicle maker`);
+    if (fdaFirmsFor(company.cik)) reportFetch("FDA enforcement", await tried(fetchFdaRecalls(company.cik)), "(mapped firms only)");
+    else console.log(`  ${"FDA enforcement".padEnd(22)} — not a mapped FDA firm`);
+    reportFetch("Justice Department", await tried(fetchJusticeReleases(company.name, alsoKnownAs, possessive)),
+      `(asked ${dojQueryNames(companyNames(company.name, alsoKnownAs), dojPossessive(company.name, possessive)).join(" | ")})`);
+  } else {
+    reportFetch("GDELT", await tried(fetchNews(name)), "(throttles ~1 req/5s; rerun if 0)");
+  }
   report("NYT", await safe(getNytNews(name)));
   report("Guardian", await safe(getGuardianNews(name)));
   report("Newsdata", await safe(getNewsdataNews(name)));
@@ -141,8 +183,8 @@ async function main() {
     report("EODHD", await safe(getEodhdNews(ticker)), "(free plan may not include news)");
     report("Finnhub", await safe(getFinnhubNews(ticker)));
   }
-  report("LoC press (pre-1963)", await safe(getPressMentions(name).then((r) => r)), "(normal for modern subjects)");
-  report("Internet Archive", await safe(getArchiveItems(name)), "(keyless; metadata index only)");
+  reportFetch("LoC press (pre-1963)", await tried(fetchPressMentions(name)), "(normal for modern subjects)");
+  reportFetch("Internet Archive", await tried(fetchArchiveItems(name)), "(keyless; metadata index only)");
   /**
    * Per space — but the id is checked BEFORE the proposals, because the two failures look
    * identical in a proposal count and are not the same fact.
@@ -190,6 +232,16 @@ async function main() {
   if (ticker) {
     const filings = await safe(getFilings(company!));
     report("SEC filings", filings, "(keyless; the filings timeline)");
+    // the newest 8-K or 6-K the headline reader would title, read as ingest reads it
+    const release = filings.find((e) => e.externalId && mayCarryRelease(e));
+    const read = release ? await readFilingHeadline(company!.cik, release.externalId!).catch(() => null) : null;
+    console.log(
+      !release
+        ? `  ${"SEC headlines".padEnd(22)} — no 8-K or 6-K among the recent filings`
+        : read?.headline
+          ? `  ${"SEC headlines".padEnd(22)} ✓ ${release.date} “${read.headline.slice(0, 70)}”`
+          : `  ${"SEC headlines".padEnd(22)} ${read ? "— no press-release headline in" : "⚠ EDGAR did not answer for"} ${release.date} ${release.title.slice(0, 50)}`
+    );
     const prices = await getDailyPrices(ticker).catch(() => null);
     console.log(
       prices?.points.length

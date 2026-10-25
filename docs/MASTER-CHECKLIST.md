@@ -985,6 +985,92 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 54: the audit's four other findings fixed (2026-10-25)
+
+Batch 53 fixed the 2026-10-25 audit's `P1` and left the four findings inside its scope open. This
+batch fixes all four. Each was reproduced before it was fixed, and each fix was measured live
+against main's code.
+
+`npm run check` passes (48 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
+passes. `check:ui` passes 198/198 against a fresh demo database, built against it. Its first run there
+failed 13, all on pages showing Ford's real rows: the build had reused a data cache left by the
+Ford test below against the main database. With that cache cleared, every check passes.
+HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **Finding 1 (`P2`): Justice Department releases about a company with an apostrophe in its
+      name.** Two causes, both fixed (`lib/doj.ts`):
+      - **The query.** justice.gov's title filter matches an apostrophe as written (letter case
+        aside), and its titles carry both kinds. Measured 2026-10-25: "Moody’s" 2 titles,
+        "Moody's" and "MOODYS" none; "Lowe’s" 12, "Lowe's" 5 (older titles, stored as `&#039;`);
+        "Kohl’s" 3, "Kohl's" none. A possessive is now asked in both spellings. Where the SEC
+        title dropped the apostrophe, the possessive comes from Wikidata's own name, cut after its
+        "'s" ("Moody's Corporation" → "Moody's", batch 36's `possessiveNameFor`). With none, a
+        one-word name ending in "s" gets one ("KOHLS" → "KOHL'S"); a one-word name that is no
+        possessive costs two queries that find nothing.
+      - **The party test.** An apostrophe in a name matches either kind, and a word's closing
+        "s" may carry the apostrophe its SEC title dropped, so MOODYS names "Moody’s". "Lowe's"
+        joins the names a release is matched under, since LOWES COMPANIES alone names none.
+        "Centers" may follow a name, as in "Lowe’s Home Centers to Pay $12.5M Penalty".
+      - **Headline scoring** (`mentions`, `lib/enrich/relevance.ts`), the same gap the audit
+        found for Kohl's: a one-word name kept without its apostrophe ("kohls") now names "Kohl's
+        names new CEO", and a curly "McDonald’s" names McDonald's, which it did not on main either.
+        "Ford's profit falls" still names Ford, and "Harrison Ford's new film" is still left for
+        the model.
+      - Live (2026-10-25), releases a page gets, main → now: Moody's 0 → 1 (the $864M
+        settlement, 2017-01-13), Kohl's 0 → 1 (2022-05-05; Walmart, the other party, keeps it
+        too), Macy's 0 → 1 (2016-06-22), Lowe's 0 → 2 (the 2025-11-25 lead-paint penalty and the
+        2024-12-03 accessibility agreement), McDonald's 0 → 1 (2015-11-19). Walmart 8 → 8 and
+        Home Depot 3 → 3. Wendy's, Domino's, Dick's and Papa John's still get none: their titles
+        are about franchise owners, a former employee, robberies and insider trading. No title
+        names Dillard's, Campbell's, BJ's or O'Reilly in either spelling.
+- [x] **Finding 2 (`P2`): one click on a long timeline made later focused views of that page hide
+      most of their matches** (`components/EventList.tsx`).
+      - The list now keeps what the reader changed (years opened from the opening folds, years
+        and months folded), not a copy of the whole folded set. So a list that grows or shortens
+        still opens as its length says, with the reader's own changes on top.
+      - A focused view keeps its folds to itself: it reads no saved choice, so every year opens,
+        and a fold made in it is not saved. A change of view never carries one view's folds into
+        the other's storage.
+      - A view saved before this batch held the whole folded set; it is read as no choice, once.
+      - Live in Chromium against Ford's real local page (2,349 events), the audit's steps:
+
+        | Step | Main | Now |
+        |---|---|---|
+        | `?focus=recall`, a fresh visitor | 863 rows, 0 years folded | the same |
+        | `/company/F`, then one year clicked | 329 rows, 98 folded | the same; saved: that one year |
+        | then `?focus=recall` again | **158 rows, 57 folded**, no note | **863 rows, 0 folded** |
+        | a year folded while focused, then `/company/F` | that year folded there too (233 rows) | not carried over (329 rows) |
+- [x] **Finding 3 (`P3`): UnitedHealth's 2026 results releases titled "Page 1 of N …".** Its
+      releases set each page as one line, which opens with the page's count. The reader now drops
+      a "Page N of M" opening a line; a count alone on its line was already dropped
+      (`lib/secHeadlines.ts`). `HEADLINE_VERSION` is 7, so stored titles are read again. Live: the
+      January, April and July releases now read "UnitedHealth Group Reports 2025 Results and
+      Issues 2026 Outlook", "…First Quarter 2026 Results" and "…Second Quarter 2026 Results".
+      `check:live` counts a "Page N of M" opening as page furniture, and samples UNH.
+- [x] **Finding 4 (`P3`): `check:feeds` asked GDELT what production no longer sends, and never
+      asked the newer sources.** It now makes every fetch `ingestCompany` makes, with the same
+      arguments: GDELT by `gdeltNewsPlan` from `newsNamesFor` and `possessiveNameFor`, the
+      company Federal Register feed, NHTSA and FDA recalls for mapped companies, the Justice
+      Department, Yahoo, the Library of Congress and the Internet Archive. It also reads the
+      newest 8-K's or 6-K's headline. A refusal or failure now reads as one, not as 0 articles.
+      Old query → now: Visa "VISA" → "VISA Inc"; McDonald's "MCDONALDS" → "MCDONALD" by
+      relevance; Uber and IBM gain the names ingest ORs in. Run live for MCO and MCD: the Justice
+      Department, recall, FDA and headline lines answer; GDELT answered "fetch failed" from this
+      cloud machine, and says so.
+      `check:wiring` now fails if a fetch in `ingestCompany` is missing from `check:feeds`, word
+      for word.
+- Checks: `check:doj` 37 → 45, `check:relevance` 49 → 52, `check:event-folds` 16 → 21,
+  `check:sec-headlines` 247 → 250 (UnitedHealth's January release joins the real documents),
+  `check:wiring` 199 → 202, and `check:live-harness` stays at 45 with one more past wrong title
+  (16). In `check:event-folds`, three checks that only matched main's code as written (the saved
+  view's two and the jump's) give way to the audit's click sequence, step by step. On main's
+  code:
+  - `check:doj` and `check:event-folds` stop at once: the helpers they call do not exist there.
+    The six real releases the new DOJ cases use all fail main's matcher.
+  - `check:relevance` fails its 2 new naming cases, and `check:sec-headlines` its 3 new ones.
+  - `check:wiring` fails its 3 new checks against main's `check:feeds`.
+  - `check:live-harness` fails 2 against main's `check:live`.
+
 ## NC ledger — batch 53: a company's history before its new SEC record (2026-10-25)
 
 The `code-auditor` agent checked everything changed since the last audit (`d36636d`, batches
@@ -1052,22 +1138,23 @@ not run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is
       Ferrari, Southwest Gas and Weatherford among them. Linde, Nutrien, Restaurant Brands and
       UBS AG stay out (above), and SKYD's notice was not confirmed. Whoever adds one adds a line
       to `lib/predecessors.ts`; `check:predecessors` checks its form against the ticker index.
-- [ ] **Open — audit finding 1 (`P2`): the Justice Department feed loses every release about a
+- [x] **Audit finding 1 (`P2`): the Justice Department feed loses every release about a
       company whose name has an apostrophe** (Moody's $864M settlement, Kohl's, Macy's, Lowe's,
-      McDonald's), and Kohl's penalty lands on Walmart's page instead. The API is asked under the
-      SEC spelling ("MOODYS", "KOHLS") while justice.gov writes "Moody’s", and the party test
-      (`escapeName`) does not fold `'` and `’` the way the Federal Register's `words()` does. For
-      batch 54.
-- [ ] **Open — audit finding 2 (`P2`): one click on a long timeline makes later focused views of
+      McDonald's); Kohl's joint penalty with Walmart reached only Walmart's page. The API is asked
+      under the SEC spelling ("MOODYS", "KOHLS") while justice.gov writes "Moody’s", and the party
+      test (`escapeName`) does not fold `'` and `’` the way the Federal Register's `words()` does.
+      Fixed in batch 54.
+- [x] **Audit finding 2 (`P2`): one click on a long timeline makes later focused views of
       that page hide most of their matches.** A year folded or opened by hand is saved per page
       and overrides the "open every year" a focused view asks for, so "How did covid affect Ford"
-      opens with most matched years folded. For batch 54.
-- [ ] **Open — audit finding 3 (`P3`): UnitedHealth's 2026 results releases are titled "Page 1 of
+      opens with most matched years folded. Fixed in batch 54.
+- [x] **Audit finding 3 (`P3`): UnitedHealth's 2026 results releases are titled "Page 1 of
       N …".** The reader should strip a leading page count from a line that holds a whole page.
-      For batch 54.
-- [ ] **Open — audit finding 4 (`P3`): `check:feeds` asks GDELT a query production no longer sends,
+      Fixed in batch 54.
+- [x] **Audit finding 4 (`P3`): `check:feeds` asks GDELT a query production no longer sends,
       and never asks the newer sources.** It should build its GDELT line from `gdeltNewsPlan` and
-      `newsNamesFor`, and add lines for the recall, FDA and Justice Department feeds. For batch 54.
+      `newsNamesFor`, and add lines for the recall, FDA and Justice Department feeds. Fixed in
+      batch 54.
 - The audit's six set-asides stay as it left them (each is in the report): "Form 10-K" resolving
   to FormFactor, recalls' marker priority in Biggest Moves, three fresh-filer headlines cut short,
   "/de/" in Moody's scoring aliases, "Chase" and "Citi" resolving to small companies, and the

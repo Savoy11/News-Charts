@@ -1,4 +1,5 @@
 import { companyNames, longerListedNameIn } from "./frCompany";
+import { commonName } from "./sec";
 import type { FetchResult, TimelineEvent } from "./types";
 
 /**
@@ -26,9 +27,10 @@ const PAGE_GAP_MS = 800;
 
 /**
  * Words that may follow a company's name and still be the company: "Wells Fargo Bank, N.A.",
- * "JPMorgan Chase & Co.", "ExxonMobil Pipeline Company", "Wells Fargo Dealer Services".
+ * "JPMorgan Chase & Co.", "ExxonMobil Pipeline Company", "Wells Fargo Dealer Services", "Lowe’s Home
+ * Centers".
  */
-const DESIGNATOR = String.raw`(?:(?:,?\s+|\s*&\s*)(?:Inc\.?|Incorporated|Corp\.?|Corporation|Company|Co\.?|LLC|L\.L\.C\.|L\.P\.|Ltd\.?|Limited|plc|N\.\s?A\.|USA|U\.S\.A?\.?|America|Holdings?|Group|Bank|Securities|Financial|Advisors|Mortgage|Home|Loans|Dealer|Services|Pipeline|Motor|Motors|Communications|Technologies|Laboratories|Health|Healthcare|Aerospace))*`;
+const DESIGNATOR = String.raw`(?:(?:,?\s+|\s*&\s*)(?:Inc\.?|Incorporated|Corp\.?|Corporation|Company|Co\.?|LLC|L\.L\.C\.|L\.P\.|Ltd\.?|Limited|plc|N\.\s?A\.|USA|U\.S\.A?\.?|America|Holdings?|Group|Bank|Securities|Financial|Advisors|Mortgage|Home|Loans|Dealer|Services|Pipeline|Motor|Motors|Communications|Technologies|Laboratories|Health|Healthcare|Aerospace|Centers))*`;
 
 /** A unit named after the company: "Johnson & Johnson Subsidiary Acclarent Inc. Pays". */
 const UNIT = String.raw`(?:\s+(?:Subsidiary|Unit|Affiliate)(?:\s+[A-Z][\w.&'’-]*){1,2}${DESIGNATOR})?`;
@@ -94,11 +96,19 @@ const CLAUSE_START = String.raw`(?:^|[,;:]\s*|\b(?:After|As|When|While|Because)\
 /** A release about a trader in a deal, not the deal: "Insider Trading In The Walt Disney Company's Acquisition". */
 const TRADER = /\b(?:insider\s+trading|securities\s+fraud|trading\s+ahead|man|woman|men|women)\b/i;
 
+/**
+ * A name as a pattern. An apostrophe matches either kind, and a word's closing "s" may carry the
+ * one its SEC title dropped: justice.gov writes "Moody’s" and "Wendy's" where the SEC writes
+ * MOODYS CORP and Wendy's Co (batch 54, the 2026-10-25 audit's finding 1).
+ */
 const escapeName = (name: string) =>
   name
     .trim()
     .split(/[\s-]+/)
-    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .map((w) => {
+      const e = w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return /['’]/.test(w) ? e.replace(/['’]/g, "['’]") : e.replace(/(?<=\p{L}{2})s$/iu, "['’]?s");
+    })
     .join(String.raw`[\s-]+`);
 
 /**
@@ -166,17 +176,36 @@ export const releaseDate = (seconds: string | number | undefined): string | null
 };
 
 /**
+ * The company's possessive name where its SEC title dropped the apostrophe: Wikidata's own name
+ * cut after its "'s" ("Moody's Corporation" → "Moody's", `possessiveNameFor`), or, with none, a
+ * one-word name ending in "s" ("KOHLS" → "KOHL'S"). A one-word name that is no possessive
+ * ("LOEWS") costs two queries that find nothing.
+ */
+export function dojPossessive(edgarName: string, possessive = ""): string {
+  const cut = /^.*?['’]s\b/i.exec(possessive.trim())?.[0];
+  if (cut) return cut;
+  const name = commonName(edgarName);
+  return /^\p{L}{3,}s$/iu.test(name) ? name.replace(/s$/i, (s) => `'${s}`) : "";
+}
+
+/**
  * The names to ask the API for: the company's names, minus any that contain another — the filter
  * matches anywhere in the title, so "Facebook" already finds "TheFacebook" and "Amazon" finds
  * "AMAZON COM".
+ *
+ * A possessive goes in both spellings, since the filter matches an apostrophe literally (letter
+ * case aside) and titles carry both. Measured 2026-10-25: "Moody’s" 2 titles, "Moody's" and
+ * "MOODYS" none, so Moody's $864M settlement was never fetched; "Lowe’s" 12, "Lowe's" 5 (older
+ * titles, stored as "&#039;"); "Kohl’s" 3, "Kohl's" none.
  */
-export function dojQueryNames(names: readonly string[]): string[] {
+export function dojQueryNames(names: readonly string[], possessive = ""): string[] {
   const kept: string[] = [];
   const byLength = names.map((n) => n.trim()).filter((n) => n.length >= 2);
   for (const n of [...byLength].sort((a, b) => a.length - b.length)) {
     if (!kept.some((k) => n.toLowerCase().includes(k.toLowerCase()))) kept.push(n);
   }
-  return byLength.filter((n) => kept.includes(n));
+  const both = (n: string) => (/['’]/.test(n) ? [n.replace(/’/g, "'"), n.replace(/'/g, "’")] : [n]);
+  return [...new Set([...byLength.filter((n) => kept.includes(n)), possessive.trim()].filter(Boolean).flatMap(both))];
 }
 
 /**
@@ -241,12 +270,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * The company's Justice Department releases: every release whose title contains one of its names,
  * newest first, kept only when the title makes it a party (`releaseNamesParty`).
  */
-export async function fetchJusticeReleases(edgarName: string, alsoKnownAs: string[] = []): Promise<FetchResult> {
-  const names = companyNames(edgarName, alsoKnownAs);
+export async function fetchJusticeReleases(edgarName: string, alsoKnownAs: string[] = [], possessive = ""): Promise<FetchResult> {
+  const own = dojPossessive(edgarName, possessive);
+  // "Lowe's" names Lowe's where LOWES COMPANIES does not; "Moody's" adds nothing to MOODYS
+  const names = [...companyNames(edgarName, alsoKnownAs), ...(own ? [own] : [])];
   const releases: DojRelease[] = [];
   let first = true;
   try {
-    for (const name of dojQueryNames(names)) {
+    for (const name of dojQueryNames(companyNames(edgarName, alsoKnownAs), own)) {
       for (let page = 0; page < MAX_PAGES; page++) {
         if (!first) await sleep(PAGE_GAP_MS);
         first = false;

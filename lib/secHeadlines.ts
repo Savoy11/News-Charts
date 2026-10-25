@@ -33,9 +33,10 @@
  * part of it. 6 (batch 51): a slogan, a label said twice, a company's name in capitals, a lone "not"
  * and a report's numbered parts are no headline or dateline, a city in small letters before its
  * country is the dateline's, and a headline cut after "Accepts", "Ended", a plural's possessive, a
- * length of time or "to" and a verb is read whole.
+ * length of time or "to" and a verb is read whole. 7 (batch 54): a page's count opening the line
+ * that holds the page ("Page 1 of 21 UnitedHealth Group Reports…") is no part of the headline.
  */
-export const HEADLINE_VERSION = 6;
+export const HEADLINE_VERSION = 7;
 
 /** The exhibit types a press release is filed under: EX-99.x, and EX-20 before the 2004 rules. */
 const RELEASE_EXHIBIT = /^EX-(?:99|20)\b/i;
@@ -163,6 +164,9 @@ export function textLines(doc: string): string[] {
     // "[AMAZON.COM Graphic]", "[LOGO]": where an image sat; "( BW)(CA-AMGEN-INC)(AMGN)": Business
     // Wire's old routing code before a headline
     .map((l) => l.replace(/\[[^\]]{0,40}\]/g, " ").replace(/^\s*\(\s?BW\)(?:\s?\([^)]{1,40}\))*/, "").replace(/\s+/g, " ").trim())
+    // a page set as one line opens with its count: "Page 1 of 21 UnitedHealth Group Reports 2025
+    // Results…" (batch 54); a count alone on its line is NOISE's
+    .map((l) => l.replace(/^page\s+\d{1,3}\s+of\s+\d{1,3}\s+(?=\S)/i, ""))
     .filter((l) => l && !/^-{3,}$/.test(l.replace(/\s/g, "")))
     // a bullet set in a cell of its own, "•" then its text, is one line: a page of them otherwise
     // takes two lines each and pushes Cisco's 2022 dateline to line 40

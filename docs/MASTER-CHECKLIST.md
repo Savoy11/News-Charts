@@ -985,6 +985,39 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 50: a fund's first page knows it is a fund (2026-10-25)
+
+Batch 46 left one item open: "a fund first visited before its industry is stored (GLD on a first
+pass) is a `Corporation` until the scheduled ingest gives it one." Only the scheduled ingest
+stored a company's SEC industry. The first visit, the gather that runs while the visitor waits,
+took the filings and the price chart and nothing else. So GLD, told from a company by its industry
+code (6221) and its name, was a `Corporation` on the page its first visitor saw. And every
+company's first page went without its sector: the sector link and the comparison with it.
+
+`npm run check` passes (47 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
+passes. `check:ui` was not run: no page or component changed. HawkScan could not run:
+`HAWK_API_KEY` is not set.
+
+- [x] **The first visit stores the SEC industry** (`lib/ingest/firstPass.ts`). The industry is a
+      field of the same EDGAR record the filings are read from, so it is asked for at the same
+      moment as the filings. It is an extra that never holds the page up:
+      - it is not part of the 8-second deadline the filings and the chart have;
+      - once the filings are in, it gets at most one more second (`INDUSTRY_GRACE_MS`), and then
+        the page renders without it;
+      - a refusal from EDGAR, or a record with no industry, means no industry;
+      - it is saved before the page's events, so no reader sees the page without it, and outside
+        their transaction, so a database refusal costs only the industry.
+      The scheduled ingest still links the industry on its next run, as before.
+- [x] Batch 46's open item is ticked.
+- Measured live (2026-10-25), GLD on an empty database against the real EDGAR: with this change
+  the first page is an `InvestmentFund` and shows its industry, "Commodity Contracts Brokers &
+  Dealers". With main's code the same first visit gives a `Corporation` and stores no industry.
+- Checks: `check:ondemand` 42 → 49. GLD's first visit runs end to end through a stand-in database
+  and EDGAR record. It is linked to `sic-6221`, before its events. A record with no industry still
+  renders, with no link. A link the database refuses leaves the page's rows written. An industry
+  that never answers holds the page one second at most. On main's code 3 of them fail: no link is
+  made, and there is no grace to keep to.
+
 ## NC ledger — batch 49: a live check of the headline reader (2026-10-25)
 
 The 2026-10-25 audit closed on an opportunity: "the headline reader has no standing live check. A
@@ -1224,8 +1257,9 @@ passes. `check:ui` passes 205/205 against the demo database. HawkScan could not 
       description pegs the timeline to "its share price". The page data carries `fund`, asked of
       `isFund` with the stored industry code.
 - [x] Batch 10's open item ("Not done: funds in JSON-LD") is ticked, and batch 9's note says so.
-- [ ] **Open:** a fund first visited before its industry is stored (GLD on a first pass) is a
-      `Corporation` until the scheduled ingest gives it one.
+- [x] ~~**Open:** a fund first visited before its industry is stored (GLD on a first pass) is a
+      `Corporation` until the scheduled ingest gives it one.~~ Batch 50: the first visit stores
+      the industry, and GLD's first page is an `InvestmentFund`.
 - Checks: `check:security-kind` (29), new and in the chain — registered funds, the trusts named by
   their names, the commodity trusts by code and name and not by either alone, companies under
   6221 or named Trust, the 300 largest companies, both structured-data shapes, and the wiring. On

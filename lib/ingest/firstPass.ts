@@ -1,6 +1,6 @@
 import { Pool, type PoolClient } from "pg";
 import { getTopicTimeline, articleCoversSlug, topicSlugFromTitle } from "../wiki";
-import { resolveCompany, getFilings, commonName } from "../sec";
+import { resolveCompany, getFilings, getIndustry, commonName } from "../sec";
 import { mayCarryRelease } from "../secHeadlines";
 import { applyHeadlines, storedHeadlines } from "./headlines";
 import { fetchDailyPrices } from "../prices";
@@ -15,6 +15,7 @@ import {
   logFetch,
   emptyStats,
   writePrices,
+  linkToIndustry,
   type ScoringContext,
 } from "./store";
 
@@ -50,6 +51,12 @@ export const FIRST_PASS_SOURCES = ["wikipedia", "sec_edgar", "yahoo_finance", "y
 
 /** How long a visitor's first search may wait on the gather before we fall back to the notice. */
 export const FIRST_PASS_BUDGET_MS = 8_000;
+
+/**
+ * How much longer than the filings the SEC industry may take. It is read from the same record, so
+ * it has almost always answered with them; past this the page renders without it.
+ */
+export const INDUSTRY_GRACE_MS = 1_000;
 
 /** Minimum minutes between attempts for one slug — the only per-slug bound for unresolvable ones. */
 export const ATTEMPT_COOLDOWN_MINUTES = 360;
@@ -227,8 +234,11 @@ export async function firstPassTopic(rawSlug: string): Promise<FirstPassOutcome>
 /**
  * First pass for a company: EDGAR filings and the Yahoo chart. Filings are what flip the
  * company page's render gate; the chart is asked in the same breath and stored when it answers,
- * but a page no longer waits on it (NC-103). Industry linking, the official domain,
- * the Wikipedia backstory and every news feed stay on the scheduler: they enrich a page
+ * but a page no longer waits on it (NC-103). The SEC industry comes too, because it costs no
+ * seconds: it is a field of the same EDGAR submissions record the filings are read from, asked
+ * alongside them and never waited on past them — and without it a commodity trust's first page
+ * (GLD) called it a corporation, and every first page went without its sector. The official
+ * domain, the Wikipedia backstory and every news feed stay on the scheduler: they enrich a page
  * that already renders, so they are not worth a visitor's seconds.
  */
 export async function firstPassCompany(rawQuery: string): Promise<FirstPassOutcome> {
@@ -260,6 +270,8 @@ export async function firstPassCompany(rawQuery: string): Promise<FirstPassOutco
     if (!lock[0]?.ok) return "already_attempted";
 
     try {
+      // An enrichment: a refusal is no industry, and it is not part of the gathering's deadline.
+      const industryAsked = getIndustry(resolved).catch(() => null);
       const gathered = await withTimeout(
         Promise.all([getFilings(resolved), fetchDailyPrices(resolved.ticker)]),
         FIRST_PASS_BUDGET_MS
@@ -293,6 +305,11 @@ export async function firstPassCompany(rawQuery: string): Promise<FirstPassOutco
         ticker: resolved.ticker,
         cik: resolved.cik,
       });
+      // Linked before the events, so no reader sees the page without it, and outside their
+      // transaction, so a failure costs only the link: the scheduler makes it on its next pass.
+      // The same record as the filings, so it has answered by now or is moments from it.
+      const industry = await withTimeout(industryAsked, INDUSTRY_GRACE_MS);
+      if (!timedOut(industry) && industry) await linkToIndustry(client, subjectId, industry).catch(() => {});
 
       const ctx = { kind: "company" as const, displayName: resolved.name, ticker: resolved.ticker };
       const scoring: ScoringContext = {

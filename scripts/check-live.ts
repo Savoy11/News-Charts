@@ -35,6 +35,7 @@ import {
   TICKER_INDEX_MAX_AGE_DAYS,
   TICKER_INDEX_SYNCED_ON,
 } from "../lib/sec";
+import { edgarFetch, readFilingHeadline } from "../lib/secHeadlines";
 import { fetchDailyPrices } from "../lib/prices";
 import { fetchRegulations } from "../lib/federalregister";
 import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
@@ -199,6 +200,56 @@ export function companyRegulationProblems(events: TimelineEvent[], edgarName: st
   return out;
 }
 
+/**
+ * What no press release's headline looks like, whatever the filer: a signature or a signer's title,
+ * the SEC's cover page, an exhibit's label or index, a date or a place and date alone, an HTML
+ * entity left as written, a company's name alone, or words cut off on a joining word. Each is a
+ * title the headline reader once gave (the 2026-10-25 audit, batches 47–48), so the reader's
+ * fixtures can say what a fix is; only live filings can say whether a filer has since found a new
+ * layout that brings one back. Kept to marks a real headline never carries, so a FAIL is worth
+ * reading: `check:live-harness` runs every fixture headline through it and none may match.
+ */
+const HEADLINE_SMELLS: [string, RegExp][] = [
+  ["a signature", /\/s\/|^(?:by|name|title|date)\s*:/i],
+  ["a disclosure's field", /^(?:company\s+name|representative|(?:stock\s+|securities\s+)?code(?:\s+number)?)\s*:/i],
+  ["a signer's title", /^\(?(?:chief|senior|executive|managing|deputy|corporate|group|member|head)\b(?:[\s,&]+(?:[A-Z][\w.'’-]*|and|of|the|for))*[\s,&]+(?:officer|director|controller|secretary|counsel|treasurer|manager|division|department|dept)s?\.?\)?$/i],
+  ["the SEC's cover page", /\bform\s+20-f\b.*\bform\s+40-f\b|indicate by check mark|commission file (?:number|no)|registrant has duly caused|^this (?:report on )?form 6-k\b/i],
+  ["an exhibit's label or index", /^(?:ex(?:hibit)?[\s.-]*\d|index to exhibits\b|exhibit index\b)|\bexhibit\s+\d+(?:\.\d+)?$/i],
+  ["a date, or a place and date, alone", /^(?:(?:[Ii]ssued|[Dd]ated?)\s*:?\s*)?(?:\d{1,2}(?:st|nd|rd|th)?\s+[A-Z][a-z]+\.?\s+\d{4}|[A-Z][a-z]+\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})(?:,\s*[A-Z][\w.]*(?:\s+[A-Z][\w.]*){0,2})?$/],
+  ["an HTML entity left as written", /&(?:[a-z]+|#\d+|#x[0-9a-f]+);/i],
+  ["a page's furniture", /^source\s*:|\btable of contents\b/i],
+  ["a company's name alone", /^[A-Z][\w&.'’-]*(?:[\s,]+[A-Z&][\w&.'’-]*){0,5}[\s,]+(?:Inc|Ltd|plc|PLC|AG|SE|N\.V|S\.A|Corp|Corporation|Limited|Co)\.?(?:\s?\([^)]{1,25}\))?$/],
+  // in lower case, or a title-case joining word other than "A", which ends "…haemophilia A"; and a
+  // figure after "its" or "the": "…Tender Offer for its 6.00%" (never after "of": "…per Share of $1.12")
+  ["words cut off on a joining word", /\s(?:of|and|or|the|a|an|for|to|with|by|from|its|their|Of|And|Or|The|An|For|To|With|By|From|Its|Their)$|\s(?:its|the|their)\s+\$?[\d.,]+%?$/],
+];
+
+/** A name with its legal form and punctuation dropped: "SUMITOMO MITSUI FINANCIAL GROUP, INC." → "sumitomo mitsui financial group". */
+const bareName = (s: string) =>
+  s.toLowerCase().replace(/[^\p{L}\p{N}&]+/gu, " ").trim().replace(/\s(?:inc|ltd|plc|ag|se|nv|sa|corp|corporation|limited|co)$/, "");
+
+export function headlineProblems(reads: { filer: string; accession: string; headline: string; name?: string }[]): string[] {
+  const out: string[] = [];
+  for (const r of reads) {
+    const smell =
+      r.headline.split(/\s+/).length < 3
+        ? "too few words to be a headline"
+        : r.name && bareName(r.headline) === bareName(r.name)
+          ? "the company's name alone"
+          : HEADLINE_SMELLS.find(([, re]) => re.test(r.headline))?.[0];
+    if (smell) out.push(`${r.filer} ${r.accession}: ${smell} — "${r.headline}"`);
+  }
+  return out;
+}
+
+/**
+ * Whose recent releases the headline reader is sampled on: US 8-Ks, and the 6-K layouts that went
+ * wrong once — Japanese banks' signatures and legends, GSK's date line, Takeda's signature after the
+ * date, Lloyds' exhibit index, BP's exhibit list, UBS's cover — with a few that never did.
+ */
+export const HEADLINE_SAMPLE = ["AAPL", "JPM", "PG", "INTC", "MUFG", "MFG", "SMFG", "GSK", "SAP", "TAK", "LYG", "BP", "UBS", "TSM", "ASML", "NMR"];
+const HEADLINES_PER_FILER = 5;
+
 export const CASES: LiveCase[] = [
   {
     name: "EDGAR — Apple's filings and the committed index",
@@ -243,6 +294,42 @@ export const CASES: LiveCase[] = [
       if (age > TICKER_INDEX_MAX_AGE_DAYS) {
         out.push(`committed ticker index is ${age} days old (synced ${TICKER_INDEX_SYNCED_ON}): npm run sync:tickers`);
       }
+      return out;
+    },
+  },
+  {
+    name: "EDGAR — recent press releases read as headlines",
+    covers: ["sec_edgar"],
+    hosts: ["data.sec.gov", "www.sec.gov"],
+    async run() {
+      // paced under EDGAR's limit, as the ingest's own reading is; a refusal is a throttle, not a wrong answer
+      const get = async (url: string) => {
+        await new Promise((r) => setTimeout(r, 150));
+        const res = await edgarFetch(url);
+        if (res.status === 429 || res.status === 403) throw new NoAnswer(`EDGAR answered ${res.status}`);
+        return res;
+      };
+      const reads: { filer: string; accession: string; headline: string; name: string }[] = [];
+      let asked = 0;
+      for (const ticker of HEADLINE_SAMPLE) {
+        const co = await resolveCompany(ticker);
+        if (!co) return [`${ticker} did not resolve`];
+        const listed = await get(`https://data.sec.gov/submissions/CIK${co.cik.padStart(10, "0")}.json`);
+        if (!listed.ok) throw new NoAnswer(`EDGAR answered ${listed.status} for ${ticker}'s filings`);
+        const recent = (await listed.json()).filings.recent;
+        const accessions: string[] = [];
+        for (let i = 0; i < recent.form.length && accessions.length < HEADLINES_PER_FILER; i++) {
+          if (recent.form[i] === "8-K" || recent.form[i] === "6-K") accessions.push(recent.accessionNumber[i].replace(/-/g, ""));
+        }
+        for (const accession of accessions) {
+          asked++;
+          const got = await readFilingHeadline(co.cik, accession, get);
+          if (got?.headline) reads.push({ filer: ticker, accession, headline: got.headline, name: co.name });
+        }
+      }
+      const out = headlineProblems(reads);
+      // about a third of recent 8-Ks and 6-Ks carry a release; a reader that finds almost none is broken
+      if (reads.length < asked / 8) out.push(`only ${reads.length} headlines from ${asked} recent 8-Ks and 6-Ks`);
       return out;
     },
   },

@@ -24,7 +24,9 @@ import {
   companyRegulationProblems,
   exploitUnitProblems,
   exitCode,
+  HEADLINE_SAMPLE,
   halvingProblems,
+  headlineProblems,
   outcomeProblems,
   runCase,
   seriesProblems,
@@ -133,6 +135,46 @@ async function main(): Promise<void> {
   check("…a document older than the floor",
     companyRegulationProblems([doc(petition.title, "2009-06-01")], "FORD MOTOR CO").length === 1);
   check("…and an empty feed", companyRegulationProblems([], "FORD MOTOR CO").length > 0);
+
+  console.log("\nRecent press releases read as headlines");
+  // every headline the reader's fixtures hold is a real one, so not one may smell
+  const fixture = JSON.parse(readFileSync("scripts/fixtures/sec-headlines.json", "utf8")) as { cases: { filer: string; accession: string; headline: string | null }[] };
+  const real = fixture.cases.filter((c) => c.headline).map((c) => ({ filer: c.filer, accession: c.accession, headline: c.headline! }));
+  const falseAlarms = headlineProblems(real);
+  check(`none of the ${real.length} headlines the reader's fixtures hold is taken for a wrong one`, falseAlarms.length === 0, falseAlarms.slice(0, 3).join("; "));
+  // and every wrong title the reader once gave (the 2026-10-25 audit, batches 47–48) is caught
+  const once = [
+    "By: /s/ Yoshitaka Sekine Name: Yoshitaka Sekine",
+    "Managing Director, Head of Documentation & Corporate Secretary Department, Corporate Administration Division",
+    "Chief Accounting Officer and Corporate Controller",
+    "Issued: 20 October 2026, London UK",
+    "24th August 2026, London UK",
+    "SAP Proposes Dividend of &euro;2.20 per Share",
+    "Source: Pekka Ala-Pietilä Proposed as Successor to Hasso Plattner (sap.com)",
+    "Mitsubishi UFJ Financial Group, Inc. (MUFG)",
+    "Company Name: Mizuho Financial Group, Inc.",
+    "Form 20-F ☒ Form 40-F ☐",
+    "Index to Exhibits Item",
+    "Ian Tyler appointed bp Chair dated 02 September 2026 Exhibit 1.1",
+    "AMD Announces Completion of Partial Tender Offer for its 6.00%",
+    "Takeda Announces Chief Financial Officer Succession OSAKA, Japan, and",
+    "Akito Bato Senior Managing Director Table of Contents",
+  ].map((headline, i) => ({ filer: "X", accession: String(i), headline }));
+  const caught = headlineProblems(once);
+  check(`each of the ${once.length} wrong titles the reader once gave is caught`, caught.length === once.length,
+    once.filter((o) => !caught.some((c) => c.startsWith(`X ${o.accession}:`))).map((o) => o.headline).join("; "));
+  const smfg = "SUMITOMO MITSUI FINANCIAL GROUP, INC.";
+  check("the company's name alone, its legal form left off, is caught by the filer's own name",
+    headlineProblems([{ filer: "SMFG", accession: "1", headline: "Sumitomo Mitsui Financial Group", name: smfg }]).length === 1);
+  check("…but a headline naming the company is not, nor one ending \"…haemophilia A\" or \"…per Share of $1.12\"",
+    headlineProblems([
+      { filer: "SMFG", accession: "2", headline: "Sumitomo Mitsui Financial Group Announces New Group Vision", name: smfg },
+      { filer: "NVO", accession: "3", headline: "CHMP recommends EU approval of FREHEMGO for the treatment of haemophilia A" },
+      { filer: "NKE", accession: "4", headline: "Nike Reports First Quarter Earnings per Share of $1.12" },
+    ]).length === 0);
+  const headlineCase = CASES.find((c) => /press releases read as headlines/.test(c.name));
+  check("a live case samples the headline reader on both 8-K and 6-K filers",
+    Boolean(headlineCase?.covers.includes("sec_edgar")) && HEADLINE_SAMPLE.includes("AAPL") && HEADLINE_SAMPLE.includes("TAK"));
 
   console.log("\nCoverage");
   check("every source the site may publish from has a live case", uncovered().length === 0, uncovered().join(", "));

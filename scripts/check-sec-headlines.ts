@@ -138,6 +138,9 @@ async function main(): Promise<void> {
   check("a footnote's number and a trademark's letters set on a word are dropped from a headline",
     pressReleaseHeadline(footnoted) === "Novartis starts 2019 with strong sales and double digit core operating income growth, Pluvicto launch",
     String(pressReleaseHeadline(footnoted)));
+  check("…and one set after a word's comma, while a figure's decimal point keeps its digits",
+    pressReleaseHeadline(footnoted.replace("core1 operating income growth, PluvictoTM launch", "USD 3.5 bn buyback; Board endorses Sandoz spin-off,2")) ===
+      "Novartis starts 2019 with strong sales and double digit USD 3.5 bn buyback; Board endorses Sandoz spin-off");
   check("…but a model's number is kept", pressReleaseHeadline(footnoted.replace("core1 operating income growth, PluvictoTM launch", "PS5 sales growth")) ===
     "Novartis starts 2019 with strong sales and double digit PS5 sales growth");
   check("an image placeholder is dropped", textLines("<p>[AMAZON.COM Graphic] AMAZON.COM ANNOUNCES</p>")[0] === "AMAZON.COM ANNOUNCES");

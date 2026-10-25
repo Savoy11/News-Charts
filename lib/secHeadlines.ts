@@ -474,6 +474,8 @@ function tidy(s: string): string {
     // a footnote's number or a trademark's letters set on a word: "double digit core1 operating
     // income", "Novartis PluvictoTM approved" — never a model's number such as "PS5" or "F-150"
     .replace(/\b([A-Za-z]{4,}|[a-z]{2,3})[1-9]\b/g, "$1")
+    // …and one after a word's comma or point: "Board endorses Sandoz spin-off,2" — never "3.5 bn"
+    .replace(/(?<=[A-Za-z][,.;])\d{1,2}(?=\s|$)/g, "")
     .replace(/(?<=[a-z]{3})TM\b/g, "")
     .replace(/\s+/g, " ")
     .replace(/^[\s"“'‘|:;,.–—-]+|[\s|:;,–—-]+$/g, "")

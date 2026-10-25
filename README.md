@@ -340,8 +340,10 @@ First Delivery Date for Mid-First Quarter 2011 (8-K 8.01)", the form and item ke
 the item's name moved into the description (`lib/secHeadlines.ts`). Only a press release gives a
 headline: an exhibit counts as one when a dateline ("DEARBORN, Mich., Sept. 1, 2004 –") sits in
 its first 40 lines, or, with none, a lead paragraph in which the company announces or reports
-something "today", so a contract, a slide deck or a certification filed as EX-99 gives nothing
-and the filing keeps its item title. A headline written in capitals is recased ("IBM", "UPS" and
+something "today", or, with neither, when the first headline under its letterhead announces
+results — "JPMorgan Chase Reports Third-Quarter 2022 Net Income…", "Tesla Q1 2017 Vehicle
+Production and Deliveries" — so a contract, a slide deck, a shareholder letter or a certification
+filed as EX-99 gives nothing and the filing keeps its item title. A headline written in capitals is recased ("IBM", "UPS" and
 "Non-GAAP" kept). A foreign company's 6-K, until now just "6-K filing", is read the same way: its
 release attached as EX-99, or the announcement in the 6-K's own document once the SEC's cover page
 is cut — "NIO Inc. Provides April 2023 Delivery Update (6-K)", "Shell announces commencement of a

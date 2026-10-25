@@ -344,7 +344,9 @@ const heldCompanySrc = pageData.slice(pageData.indexOf("async function heldCompa
 check("the company page data carries it", /summary: subject\.summary/.test(heldCompanySrc) && /wikipediaTitle: subject\.wikipediaTitle/.test(heldCompanySrc));
 const companyPage = read("app/company/[ticker]/page.tsx");
 check("the company page renders it, credited", /<TopicSummary text=\{data\.summary\}/.test(companyPage));
-check("  …and gives it to search engines", /description: clampDescription\(data\.summary/.test(companyPage));
+// batch 46: the structured data is built by securityLd, which trims the description itself
+check("  …and gives it to search engines",
+  /securityLd\(\{[^}]*description: data\.summary/.test(companyPage) && /description: clampDescription\(s\.description, 500\)/.test(read("lib/seo.ts")));
 
 // 2026-10-17 proposal 8: the index knew every fund's registrant and only resolution read it.
 console.log("\nA fund page names its siblings");

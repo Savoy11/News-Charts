@@ -1025,6 +1025,16 @@ async function readableToEveryone(page: Page): Promise<void> {
   const ld = await page.locator('script[type="application/ld+json"]').allTextContents();
   check("  …and is the company's structured-data description",
     ld.some((t) => /"@type":"Corporation"/.test(t) && /"description":"Ford/.test(t)), ld.find((t) => t.includes("Corporation")) ?? "no Corporation block");
+  // batch 46: a fund is described as a fund — VOO is seeded as one
+  await go(page, "/company/VOO");
+  const fundLd = await page.locator('script[type="application/ld+json"]').allTextContents();
+  check("a fund's structured data calls it an InvestmentFund, with its ticker as the identifier, not a Corporation",
+    fundLd.some((t) => /"@type":"InvestmentFund"/.test(t) && /"identifier":"VOO"/.test(t)) && !fundLd.some((t) => /"@type":"Corporation"/.test(t)),
+    fundLd.find((t) => /InvestmentFund|Corporation/.test(t)) ?? "no security block");
+  const fundDescription = (await page.locator('meta[name="description"]').getAttribute("content").catch(() => "")) ?? "";
+  check("  …and its description pegs the timeline to its share price", /pegged to its share price/.test(fundDescription), fundDescription);
+  await go(page, "/company/f");
+
   // 2026-10-17 proposal 6: was it the stock or the sector? Seeded: F, GM and TSLA in SIC 3711.
   const standingText = (await page.locator("[data-sector-standing]").first().textContent().catch(() => "")) ?? "";
   check("a company's standing against its sector is shown, window and member count with it",

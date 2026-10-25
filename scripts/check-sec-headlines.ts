@@ -129,6 +129,20 @@ async function main(): Promise<void> {
     textLines("<p>BENTONVILLE, Ark., Nov. 21, 2008 &#151; Wal-Mart&#146;s board</p>")[0] === "BENTONVILLE, Ark., Nov. 21, 2008 — Wal-Mart’s board");
   check("an accented letter by name: &eacute;", textLines("<p>Nestl&eacute;</p>")[0] === "Nestlé");
   check("a paragraph's own line breaks are only word wrap", textLines("<p>Boeing Sets 787\nFirst Delivery Date</p>").length === 1);
+  check("a bullet's mark set in a cell of its own joins the line it marks, so a page of bullets takes a line each",
+    JSON.stringify(textLines("<p>•</p><p>Revenue up 6%</p><p>o</p><p>Cloud up 9%</p>")) === JSON.stringify(["• Revenue up 6%", "• Cloud up 9%"]));
+  check("…and an empty bullet before the dateline is dropped, the dateline kept at the start of its line",
+    textLines("<p>·</p><p>Zurich/Basel, 29 March 2023 – UBS today said</p>")[0] === "Zurich/Basel, 29 March 2023 – UBS today said");
+  const footnoted = "<p>Novartis International AG</p><p>Novartis starts 2019 with strong sales and double digit core1 operating income growth, Pluvicto" +
+    "TM launch</p><p>Basel, April 24, 2019 – Novartis today reported…</p>";
+  check("a footnote's number and a trademark's letters set on a word are dropped from a headline",
+    pressReleaseHeadline(footnoted) === "Novartis starts 2019 with strong sales and double digit core operating income growth, Pluvicto launch",
+    String(pressReleaseHeadline(footnoted)));
+  check("…and one set after a word's comma, while a figure's decimal point keeps its digits",
+    pressReleaseHeadline(footnoted.replace("core1 operating income growth, PluvictoTM launch", "USD 3.5 bn buyback; Board endorses Sandoz spin-off,2")) ===
+      "Novartis starts 2019 with strong sales and double digit USD 3.5 bn buyback; Board endorses Sandoz spin-off");
+  check("…but a model's number is kept", pressReleaseHeadline(footnoted.replace("core1 operating income growth, PluvictoTM launch", "PS5 sales growth")) ===
+    "Novartis starts 2019 with strong sales and double digit PS5 sales growth");
   check("an image placeholder is dropped", textLines("<p>[AMAZON.COM Graphic] AMAZON.COM ANNOUNCES</p>")[0] === "AMAZON.COM ANNOUNCES");
   check("plain text keeps its lines, and a contacts column beside the headline becomes its own line",
     JSON.stringify(textLines("<TEXT>\nSCHERING-PLOUGH ANNOUNCES SALE        Steve Galpin, Jr.\n</TEXT>")) ===
@@ -147,6 +161,11 @@ async function main(): Promise<void> {
     // an accented capital is a letter of its word, not the end of it: never "NestlÉ"
     ["NESTLÉ REPORTS FIRST-HALF RESULTS", "Nestlé Reports First-Half Results"],
     ["SOCIÉTÉ GÉNÉRALE ANNOUNCES ÉLAN DEAL", "Société Générale Announces Élan Deal"],
+    // a name not written as a word keeps its own spelling: never "Jpmorgan", "Unitedhealth", "Nvidia"
+    ["JPMORGAN CHASE REPORTS THIRD-QUARTER 2022 NET INCOME", "JPMorgan Chase Reports Third-Quarter 2022 Net Income"],
+    ["UNITEDHEALTH GROUP REPORTS FIRST QUARTER RESULTS", "UnitedHealth Group Reports First Quarter Results"],
+    ["NVIDIA REPORTS RECORD REVENUE", "NVIDIA Reports Record Revenue"],
+    ["EXXONMOBIL'S DUTCH GAS INTERESTS", "ExxonMobil's Dutch Gas Interests"],
   ];
   for (const [from, to] of recased) check(`"${from}"`, headlineCase(from) === to, headlineCase(from));
   check("a headline in mixed case is the filer's own and kept as written",

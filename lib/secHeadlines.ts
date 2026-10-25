@@ -16,9 +16,9 @@
 /**
  * Bumped when the reading changes, so headlines read by an older version are read again. 2 (batch
  * 43): an announcement with no dateline is read by its lead paragraph, and a 6-K's own document
- * past its cover page.
+ * past its cover page. 3 (batch 44): a results release with neither, by its headline.
  */
-export const HEADLINE_VERSION = 2;
+export const HEADLINE_VERSION = 3;
 
 /** The exhibit types a press release is filed under: EX-99.x, and EX-20 before the 2004 rules. */
 const RELEASE_EXHIBIT = /^EX-(?:99|20)\b/i;
@@ -137,14 +137,26 @@ export function textLines(doc: string): string[] {
   return fromWindows1252(decode(t))
     .replace(/[\u00a0\u2002\u2003\u2009\u200b]/g, " ")
     .split("\n")
-    // "[AMAZON.COM Graphic]", "[LOGO]": where an image sat
-    .map((l) => l.replace(/\[[^\]]{0,40}\]/g, " ").replace(/\s+/g, " ").trim())
-    .filter((l) => l && !/^-{3,}$/.test(l.replace(/\s/g, "")));
+    // "[AMAZON.COM Graphic]", "[LOGO]": where an image sat; "( BW)(CA-AMGEN-INC)(AMGN)": Business
+    // Wire's old routing code before a headline
+    .map((l) => l.replace(/\[[^\]]{0,40}\]/g, " ").replace(/^\s*\(\s?BW\)(?:\s?\([^)]{1,40}\))*/, "").replace(/\s+/g, " ").trim())
+    .filter((l) => l && !/^-{3,}$/.test(l.replace(/\s/g, "")))
+    // a bullet set in a cell of its own, "•" then its text, is one line: a page of them otherwise
+    // takes two lines each and pushes Cisco's 2022 dateline to line 40
+    .reduce<string[]>((out, l) => {
+      // an empty bullet before the dateline marks nothing: UBS ends a list with one
+      if (out.length && BULLET_MARK.test(out[out.length - 1])) out[out.length - 1] = opensWithDateline(l) ? l : `• ${l}`;
+      else out.push(l);
+      return out;
+    }, []);
 }
+/** A bullet's mark alone on its line: "•", and "o" or "◦" for a bullet under it. */
+const BULLET_MARK = /^[•·▪●■◦o\uf0b7\uf0a7]$/;
 
 const MONTH = String.raw`(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Za-z]*\.?`;
 // "Sept. 1, 2004", and the day first as Europe writes it: "10 July 2017"
-const DATE = String.raw`(?:(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day,?\s+)?(?:${MONTH}\s+\d{1,2}\b(?:,?\s*\d{4})?|\d{1,2}\s+${MONTH}\s+\d{4})`;
+// and with no space after an abbreviation's point: "CINCINNATI, Nov.1, 2005 -"
+const DATE = String.raw`(?:(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day,?\s+)?(?:${MONTH}(?:\s+|(?<=\.))\d{1,2}(?:st|nd|rd|th)?\b(?:,?\s*\d{4})?|\d{1,2}\s+${MONTH}\s+\d{4})`;
 const PLACE_WORD = String.raw`(?:[A-Z][A-Za-z'’.-]*|of|de|la)`;
 const PLACE = String.raw`${PLACE_WORD}(?:\s${PLACE_WORD}){0,3}`;
 const CAPS_PLACE = String.raw`[A-Z][A-Z'’.-]+(?:\s[A-Z][A-Z'’.-]+){0,2}`;
@@ -188,11 +200,19 @@ function opensWithDateline(line: string, dated = false): boolean {
   return u !== null && !NOT_A_PLACE.test(u[1]) && (line.length < 70 || OPENS_SENTENCE.test(line.slice(u[0].length - 1)));
 }
 
+/**
+ * …or one with no date whose sentence says "today": "…Third-Quarter 2022 Results DETROIT – General
+ * Motors Co. (NYSE: GM) today reported…"
+ */
+const DATELINE_IN_RUN_TODAY = new RegExp(String.raw`(?:^|\s)((${CAPS_PLACE})${STATE}\s*${DASH})\s*(?=[A-Z].{0,100}?\btoday\b)`);
+
 /** Where a dateline starts inside a run of text, or -1. */
 function datelineInRun(run: string): number {
-  const re = new RegExp(DATELINE_IN_RUN.source, "g");
-  for (let m = re.exec(run); m; m = re.exec(run)) {
-    if (!NOT_A_PLACE.test(m[2])) return m.index + m[0].indexOf(m[1]);
+  for (const source of [DATELINE_IN_RUN, DATELINE_IN_RUN_TODAY]) {
+    const re = new RegExp(source.source, "g");
+    for (let m = re.exec(run); m; m = re.exec(run)) {
+      if (!NOT_A_PLACE.test(m[2])) return m.index + m[0].indexOf(m[1]);
+    }
   }
   return -1;
 }
@@ -204,7 +224,8 @@ function datelineInRun(run: string): number {
 const LETTERHEAD = [
   /^(?:ex(?:hibit)?\.?\s*[-\s]?\s*(?:99|20)(?:\.\d+)?|EX-\d+(?:\.\d+)?)\b[\s.:-]*$/i,
   /^-?\s*(?:news|press)(?:\s+release)?\s*-?$/i,
-  /^(?:corporate\s+)?(?:news|statement|press\s+release|news\s+release|media\s+release|for\s+release|release)\b.{0,30}$/i,
+  // but not "News Summary:", which heads the bullets under Cisco's headline
+  /^(?:corporate\s+)?(?:news|statement|press\s+release|news\s+release|media\s+release|for\s+release|release)\b(?!\s+(?:summary|highlights)\b).{0,30}$/i,
   /^(?:for\s+)?immediate(?:ly)?\s*(?:release)?\b/i,
   /^release(?:d)?\s*(?:date)?\b/i,
   /^(?:media|investor|press|analyst|financial|news)?\s*(?:contacts?|inquiries|relations)\b/i,
@@ -250,6 +271,8 @@ const NOISE = [
   /^\d{1,2}\s*[-–.)]\s+[A-Z]/,
   /^re:\s/i,
   /^herewith\b|\bwe\s+(?:hereby\s+)?furnish\b/i,
+  // the desks a wire story was sent to: "Business Editors/Health/Medical Writers"
+  /^business\s+editors\b/i,
   // a Swiss filer's "Ad hoc announcement pursuant to Art. 53 LR", which Novartis sets under the headline
   /^ad[\s-]hoc\s+announcement\b/i,
   // a place and a date with no dash, on a line of their own or before a label: "Basel, Switzerland,
@@ -326,8 +349,11 @@ function continues(cur: string, next: string): boolean {
   // "WITH EXPECTATIONS, REAFFIRMS FULL-YEAR OUTLOOK"
   if (/^(?:AND|OR|FOR|TO|OF|IN|ON|AT|BY|AS|WITH|WHILE|AFTER|AMID|FROM|INTO|OVER|THROUGH|DESPITE|AHEAD)\b/.test(next)) return true;
   // and a short headline runs on over two lines: "TARGET CORPORATION FIRST QUARTER" / "EARNINGS PER
-  // SHARE $0.48"; past 100 letters the second line is a subheadline in capitals too
-  return cur.length + next.length <= 100;
+  // SHARE $0.48"; past 100 letters the second line is a subheadline in capitals too, and one that
+  // opens on the line above's first two words starts a headline of its own: "AMERICAN EXPRESS Q3
+  // 2026 RESULTS" / "AMERICAN EXPRESS RAISES…"
+  const opening = (l: string) => l.split(/\s+/).slice(0, 2).join(" ");
+  return cur.length + next.length <= 100 && opening(cur) !== opening(next);
 }
 const VERBS = String.raw`(?:reports?|announces?|names?|elects?|appoints?|declares?|completes?|adds?|rejects?|acquires?|` +
   String.raw`approves?|agrees?|launches|unveils|introduces|posts?|delivers?|raises?|sets?|plans?|updates?|reaffirms?|` +
@@ -352,9 +378,12 @@ const STARTS_MID_PHRASE = /^(?:and|or|but|of|for|to|with|while|as)\s/i;
  * verbs a release's headline turns on ("The Coca-Cola Company Reports" / "Fourth Quarter…").
  */
 const WRAPS_AFTER = new RegExp(
-  String.raw`(?:^|\s)(?:and|or|but|for|to|of|in|on|at|by|as|with|from|into|the|a|an|its|their|&|` +
+  // "…for Combined Company Following" / "Close of Aetna Acquisition Transaction"
+  String.raw`(?:^|\s)(?:and|or|but|for|to|of|in|on|at|by|as|with|from|into|the|a|an|its|their|&|following|including|during|between|through|against|via|` +
     // a number after a joining word: "…to Leave After 18" / "Years…", "…and $29.4 Billion" / "Capital…"
-    String.raw`(?:after|to|of|by|over|than|at|from|with)\s+\$?[\d.,]+%?|(?:and|or)\s+\$?[\d.,]+%?(?:\s+(?:million|billion))?|` +
+    // — but not a year after "of", which ends one: "…for Second Quarter of 2005" (where "Stellar Start
+    // to 2021" / "Fastest Growth…" runs on)
+    String.raw`(?:after|to|by|over|than|at|from|with)\s+\$?[\d.,]+%?|of\s+(?!(?:19|20)\d\d$)\$?[\d.,]+%?|(?:and|or)\s+\$?[\d.,]+%?(?:\s+(?:million|billion))?|` +
     String.raw`(?:reports?|announces?|names?|elects?|appoints?|declares?|completes?|adds?|rejects?|acquires?|` +
     String.raw`integrates?|expands?|explores?|sells?|buys?|launches|unveils|introduces|posts?|delivers?|raises?|` +
     // "updates" only: "…Delivery Update" is a noun and the line ends there
@@ -373,6 +402,15 @@ const SMALL = new Set(
   "a an and as at but by for from in into nor of off on onto or over per the to up upon via vs with".split(" ")
 );
 /** Words of four or more letters written in capitals as a rule, kept so in a recased headline. */
+/**
+ * Names a headline in capitals spells as words that are not written so: "JPMORGAN" is JPMorgan,
+ * never "Jpmorgan"; "NVIDIA" stays in capitals.
+ */
+const CASED_NAMES = new Map(
+  ("JPMorgan ExxonMobil UnitedHealth UnitedHealthcare NVIDIA FedEx PayPal BlackRock PepsiCo eBay iPhone iPad " +
+    "YouTube GlaxoSmithKline AstraZeneca AmerisourceBergen LinkedIn DoorDash GlobalFoundries BioNTech MicroStrategy " +
+    "AbbVie HubSpot ConocoPhillips ServiceNow CrowdStrike Salesforce.com").split(" ").map((n) => [n.toUpperCase(), n])
+);
 const ACRONYMS = new Set(
   "NYSE NASDAQ GAAP EBIT EBITDA NASA NHTSA OPEC NATO FDIC FINRA LIBOR SOFR ESOP HVAC LCD OLED SUVS CEOS IPOS ADRS REIT".split(" ")
 );
@@ -412,6 +450,8 @@ function recaseWord(w: string, isFirst: boolean, keepShort = true): string {
   if (mc) return mc[1] + mc[2][0] + mc[2].slice(1).toLowerCase() + (mc[3] ? mc[3].toLowerCase() : "");
   const bare = w.replace(/['’](?:S)?$/, "");
   if (ACRONYMS.has(bare)) return w;
+  const cased = CASED_NAMES.get(bare);
+  if (cased) return cased + w.slice(bare.length).toLowerCase();
   const low = w.toLowerCase();
   if (!isFirst && SMALL.has(low)) return low;
   if (keepShort && bare.length <= 3 && !SMALL.has(bare.toLowerCase()) && !COMMON_SHORT.has(bare.toLowerCase())) return w;
@@ -431,6 +471,12 @@ const COMMON_SHORT = new Set(
 function tidy(s: string): string {
   let t = s
     .replace(/[®™©℠]/g, "")
+    // a footnote's number or a trademark's letters set on a word: "double digit core1 operating
+    // income", "Novartis PluvictoTM approved" — never a model's number such as "PS5" or "F-150"
+    .replace(/\b([A-Za-z]{4,}|[a-z]{2,3})[1-9]\b/g, "$1")
+    // …and one after a word's comma or point: "Board endorses Sandoz spin-off,2" — never "3.5 bn"
+    .replace(/(?<=[A-Za-z][,.;])\d{1,2}(?=\s|$)/g, "")
+    .replace(/(?<=[a-z]{3})TM\b/g, "")
     .replace(/\s+/g, " ")
     .replace(/^[\s"“'‘|:;,.–—-]+|[\s|:;,–—-]+$/g, "")
     .trim();
@@ -550,19 +596,34 @@ export function pressReleaseHeadline(doc: string): string | null {
   if (listed) return listed;
   const datelined = findDateline(lines);
   const dateline = datelined ?? findLead(lines);
-  if (!dateline) return null;
-  let head = lines.slice(0, dateline.line);
+  if (!dateline) return resultsHeadline(lines);
+  const head = lines.slice(0, dateline.line);
   if (dateline.at > 0) head.push(...splitRun(lines[dateline.line].slice(0, dateline.at)));
-  // the text above the dateline, as headline candidates — a run of text with no line breaks in
-  // it (the hidden text of a scanned release) is split at its letterhead and bullets first
-  head = head.flatMap((l) => (l.length > 260 ? splitRun(l) : [l]));
+  const blocks = headlineBlocks(head);
+  let lastLetterhead = -1;
+  blocks.forEach((b, i) => {
+    if (isLetterhead(joined(b))) lastLetterhead = i;
+  });
+  let at = blocks.findIndex((b, i) => i > lastLetterhead && candidate(b));
+  // a headline above the letterhead is taken only under a dateline: the lead paragraph is a weaker mark
+  if (at < 0 && datelined) at = blocks.findIndex(candidate);
+  return at < 0 ? null : finish(candidate(blocks[at])!);
+}
+
+/**
+ * The lines above a dateline as headline candidates, each joined with the lines it wraps onto, so
+ * a headline whose first line is short still counts. A run of text with no line breaks in it (the
+ * hidden text of a scanned release) is split at its letterhead and bullets first, and the bullets
+ * under a headline are left out.
+ */
+function headlineBlocks(lines: string[]): string[][] {
+  let head = lines.flatMap((l) => (l.length > 260 ? splitRun(l) : [l]));
   const firstBullet = head.findIndex((l) => /^[•·▪●■*]/.test(l));
   if (firstBullet >= 0) head = head.slice(0, firstBullet);
   // a short line just above the bullets labels them ("Fourth-Quarter 2009") and is no wrap, unless
   // the line before cannot end there: "Walmart Reports" / "Third Quarter Results"
   const labelsBullets = (j: number, above: string) =>
     firstBullet >= 0 && j === head.length - 1 && head[j].split(/\s+/).length <= 3 && !WRAPS_AFTER.test(above);
-  // each line joined with the lines it wraps onto, so a headline whose first line is short still counts
   const blocks: string[][] = [];
   for (let i = 0; i < head.length; i++) {
     const block = [head[i]];
@@ -571,21 +632,44 @@ export function pressReleaseHeadline(doc: string): string | null {
     }
     blocks.push(block);
   }
-  // a word broken at a line end rejoins without a space: "Record-" / "Setting Sales Pace"
-  const joined = (b: string[]) => b.reduce((s, l) => (/\w-$/.test(s) ? s + l : `${s} ${l}`));
-  const opens = (s: string) => headlineLike(s) && !STARTS_MID_PHRASE.test(s);
-  // the block as a headline — or its first line alone, when what it ran on into makes it too long
-  const candidate = (b: string[]) => (opens(joined(b)) ? joined(b) : opens(b[0]) ? b[0] : null);
-  let lastLetterhead = -1;
-  blocks.forEach((b, i) => {
-    if (isLetterhead(joined(b))) lastLetterhead = i;
-  });
-  let at = blocks.findIndex((b, i) => i > lastLetterhead && candidate(b));
-  // a headline above the letterhead is taken only under a dateline: the lead paragraph is a weaker mark
-  if (at < 0 && datelined) at = blocks.findIndex(candidate);
-  if (at < 0) return null;
-  const headline = tidy(headlineCase(tidy(candidate(blocks[at])!.replace(/^\d{1,2}\s+(?=[A-Z])/, ""))));
+  return blocks;
+}
+
+// a word broken at a line end rejoins without a space: "Record-" / "Setting Sales Pace"
+const joined = (b: string[]) => b.reduce((s, l) => (/\w-$/.test(s) ? s + l : `${s} ${l}`));
+const opens = (s: string) => headlineLike(s) && !STARTS_MID_PHRASE.test(s);
+/** The block as a headline — or its first line alone, when what it ran on into makes it too long. */
+const candidate = (b: string[]) => (opens(joined(b)) ? joined(b) : opens(b[0]) ? b[0] : null);
+/** A candidate as a title: a page number before it dropped, capitals recased, stray marks tidied. */
+function finish(text: string): string | null {
+  const headline = tidy(headlineCase(tidy(text.replace(/^\d{1,2}\s+(?=[A-Z])/, ""))));
   return headline.length >= 12 ? headline : null;
+}
+
+/**
+ * A results release with no dateline and no lead paragraph — JPMorgan's, Walmart's, Exxon's, Tesla's
+ * deliveries — opens on its headline under the letterhead: "JPMORGAN CHASE REPORTS THIRD-QUARTER
+ * 2022 NET INCOME OF $9.7 BILLION…", "Tesla Q1 2017 Vehicle Production and Deliveries". With
+ * nothing else to mark the document a release, the first line that could be a headline is taken
+ * only when it announces results; a shareholder letter ("Dear Fellow Shareholders"), a set of
+ * statements, a call's transcript or a slide deck's title gives nothing.
+ */
+const RESULTS_HEADLINE = new RegExp(
+  String.raw`\b(?:reports?|reported|announces?|posts?|delivers?|releases?|raises?)\b.{0,120}\b(?:results|earnings|net income|EPS|revenues?|sales|profits?|guidance)\b|` +
+    String.raw`\b(?:first|second|third|fourth)[\s-]quarter\b.{0,80}\b(?:results|update|deliveries|earnings)\b|` +
+    String.raw`\bQ[1-4]\b.{0,80}\b(?:results|update|deliveries|earnings)\b|\bvehicle production\b`,
+  "i"
+);
+const TRAILING_DATE = new RegExp(String.raw`\s+${DATE}$`);
+const NOT_RESULTS = /\b(?:transcript|conference call|earnings call|presentation|supplement(?:al|ary)?|statements? of)\b/i;
+/** How far down such a headline may sit: below a letterhead, never under a page of anything else. */
+const RESULTS_REACH = 15;
+function resultsHeadline(lines: string[]): string | null {
+  const first = headlineBlocks(lines.slice(0, RESULTS_REACH)).find((b) => !isLetterhead(joined(b)) && candidate(b));
+  const text = first && candidate(first)!;
+  if (!text || !RESULTS_HEADLINE.test(text) || NOT_RESULTS.test(text)) return null;
+  // a deck's first page names itself and its day: "EARNINGS RELEASE Q1 FY 2027 Results October 22, 2026"
+  return finish(text.replace(/^(?:earnings|news|press|media)\s+release\s*[:–—-]?\s+/i, "").replace(TRAILING_DATE, ""));
 }
 
 /**
@@ -598,6 +682,8 @@ function splitRun(run: string): string[] {
   let cut = -1;
   tokens.forEach((t, i) => {
     if (URLISH.test(t) || PHONE.test(t) || /^news$/i.test(t)) cut = i;
+    // the time it went out: "For Release: Tuesday, Oct. 25, 2022, at 6:30 a.m. ET"
+    if (/^(?:ET|EST|EDT|CT|CST|CDT|PT|PST|PDT|GMT|CET)$/.test(t) && /^[ap]\.?m\.?$/i.test(tokens[i - 1] ?? "")) cut = i;
   });
   const rest = tokens.slice(cut + 1).join(" ").trim();
   return rest ? [rest] : [];

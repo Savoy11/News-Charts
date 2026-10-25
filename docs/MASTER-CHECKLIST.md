@@ -984,6 +984,81 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 44: results releases the headline reader gave up on (2026-10-25)
+
+A results release is the filing most likely to explain a price move, and many gave no headline:
+the reader of batches 42–43 counts a document as a press release only by a dateline ("CITY, Date
+—") or a lead paragraph that says "today", and JPMorgan, Walmart, Exxon, Tesla, Novartis and others
+write results releases with neither. Their 8-Ks kept "Earnings announcement (8-K)" and their 6-Ks
+"6-K filing". Of the results exhibits in batch 42's two samples, 30 of 173 gave nothing. This batch
+reads the ones that can be told apart from what is not a release, and closes most of what batches
+42 and 43 left open.
+
+`npm run check` passes (45 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
+passes. `check:ui` was not run: no page or component changed. HawkScan could not run:
+`HAWK_API_KEY` is not set.
+
+- [x] **A results headline with nothing else to mark it** (`lib/secHeadlines.ts`). With no dateline
+      and no lead paragraph, the first line under the letterhead that reads as a headline is taken
+      — but only when it announces results: a company reports, announces, posts or delivers
+      results, earnings, net income, EPS, revenue, sales or guidance, or a quarter's results,
+      update or deliveries ("JPMorgan Chase Reports Third-Quarter 2022 Net Income of $9.7
+      Billion…", "Tesla Q1 2017 Vehicle Production and Deliveries", "Novartis delivers solid sales
+      and core operating income growth… in Q3"). A shareholder letter ("Dear Fellow Shareholders"),
+      a set of statements, a call's transcript, a supplement and a slide deck's title give nothing,
+      and so does a first line that announces anything else. It looks no further than 15 lines.
+- [x] **What else the reader had given up on:**
+      - a bullet's mark set on a line of its own joins its text, so a page of bullets no longer
+        pushes a dateline past line 40 (Cisco 2022, at line 40); an empty bullet before a dateline
+        is dropped (UBS);
+      - "News Summary:" is no letterhead (Cisco's contacts' names had become its headline);
+      - "CINCINNATI, Nov.1, 2005 -" is a dateline, the day set straight after the month's point;
+      - Business Wire's old routing code before a headline, "( BW)(CA-AMGEN-INC)(AMGN)", and its
+        "Business Editors/…" line are dropped;
+      - in a scanned page run together, a place in capitals whose sentence says "today" is a
+        dateline ("DETROIT – General Motors Co. (NYSE: GM) today reported"), and the release time
+        before the headline ("…at 6:30 a.m. ET") is cut;
+      - a capitals line that opens on the line above's first two words starts a headline of its
+        own ("AMERICAN EXPRESS Q3 2026 RESULTS" / "AMERICAN EXPRESS RAISES…");
+      - a headline carries on after "Following", "including" or "during" (CVS 2018), and a year
+        after "of" ends one (Baidu 2005, no longer run into its subheadline);
+      - names a headline in capitals spells as words keep their own spelling — JPMorgan,
+        UnitedHealth, NVIDIA, ExxonMobil, GlaxoSmithKline, PepsiCo and a few more, a short list;
+      - a footnote's number or a trademark's letters set on a word are dropped ("core1",
+        "PluvictoTM", "spin-off,2"), never a model's number ("PS5") or a figure ("3.5").
+- [x] **Measured.** The three samples and four companies already in the scratch database, every
+      changed headline read:
+      - **8-Ks, batch 42's samples:** 155 → 164 of 211 and 135 → 142 of 167 exhibits give a
+        headline. All 16 new ones are right; 6 more changed for the better (ExxonMobil, NVIDIA and
+        UnitedHealth spelled right, CVS no longer cut short).
+      - **6-Ks:** 60 → 62 of 160 (BP's "First Quarter 2005 Trading Update", Spotify's "Q4 2025
+        Update"), and Baidu 2005 no longer runs on.
+      - **Live,** each company's stored filings read once from EDGAR and given to batch 43's reader
+        and this one: Boeing 167 → 208 of 336 (40 quarterly results releases, 2003–2019, and a CFO's
+        retirement), Pfizer 108 → 109 of 150 (and GlaxoSmithKline spelled right twice), Novartis
+        116 → 132 of 150 (16 results releases; four lost a "TM" or footnote mark), NIO unchanged
+        at 203 of 274. Every one of the 64 changes read right but one, "…Board endorses Sandoz
+        spin-off,2", whose footnote after a comma is now dropped too.
+- [x] **Read again:** `HEADLINE_VERSION` is 3, so every filing read by batches 42–43 is read again
+      under this reading, a run's worth at a time.
+- [x] Batches 42's and 43's open items now say which this batch closed: Exxon's 2004 results,
+      Tesla's deliveries and letters, Novartis's results, names in capitals, CVS, Baidu and the
+      marks. README says what counts as a release.
+- [ ] **Open:**
+      - Netflix's results are letters and Tesla's recent ones are decks run together as one page;
+        both keep "Earnings announcement (8-K)".
+      - Amgen's 2012 headline is four lines in capitals and is cut after the second; SAP's
+        "Quarterly Statement Q2 2026" is too short to count as a headline, so a subheadline stands
+        in.
+      - The list of names spelled their own way is short; any other name written in capitals is
+        still recased as a word.
+- Checks: `check:sec-headlines` 142 → 169. The real documents rise from 74 to 92 (71 releases with
+  the headline each must give, 21 documents that must give none): 12 results releases and other
+  cases above, 6 that must stay untitled (two Netflix letters, GE's statements, an Exxon analyst
+  meeting, a Nike call transcript, AMD's accounting note), and Exxon's 2004 results, which moved
+  from "none" to its headline. Direct checks cover the name spellings, bullet marks and
+  footnote marks. Batch 43's reader gets 17 of the 92 documents wrong.
+
 ## NC ledger — batch 43: a foreign company's 6-K titled by its announcement's headline (2026-10-25)
 
 A foreign company files its news as a 6-K, and every 6-K was titled "6-K filing" — NIO's monthly
@@ -1047,14 +1122,17 @@ passes. `check:ui` was not run: no page or component changed. HawkScan could not
       "8-Ks and 6-Ks".
 - [ ] **Open:**
       - Novartis's results releases put a page of bullets between the headline and the dateline,
-        past line 40, so they give nothing; the reader gives up rather than guess.
+        past line 40, so they give nothing; the reader gives up rather than guess. Titled since
+        batch 44, by their results headline.
       - A long headline is still sometimes cut short or run into a subheadline (CVS 2018, Amgen
         2012, Baidu 2005, SAP 2026), and a trademark or footnote mark can stay on a word
-        ("PluvictoTM", "core1").
+        ("PluvictoTM", "core1"). Batch 44 fixed CVS, Baidu and the marks; Amgen 2012 and SAP 2026
+        stay open.
       - UBS puts a one-sentence summary where a headline goes; that sentence becomes the title.
       - A big foreign filer's history fills in slowly: Novartis's 936 6-Ks take about seven runs.
-- Checks: `check:sec-headlines` 96 → 142. The real documents rise from 45 to 74 (57 releases with
-  the headline each must give, 17 documents that must give none), among them 25 6-Ks and the five
+- Checks: `check:sec-headlines` 96 → 142. The real documents rise from 45 to 74 (58 releases with
+  the headline each must give, 16 documents that must give none; first written as 57 and 17,
+  corrected in batch 44), among them 25 6-Ks and the five
   mistakes found in the live runs; the 6-K index pages of Shell (announcement in its own document)
   and NIO (attached), read through a stand-in EDGAR; the cover-page cut, the lead rule, listed
   titles, the 6-K title and which 6-Ks are asked. On main's code the check cannot run (the cover
@@ -1125,11 +1203,13 @@ filing stacks changed). HawkScan could not run: `HAWK_API_KEY` is not set.
         Charles Holley" for "…New Chief Financial Officer"), and a few run a capitals headline into
         a subheadline in capitals ("Pfizer Reports Fourth-Quarter and Full-Year 2016 Results
         Provides 2017 Financial Guidance"). A name written in capitals is recased as a word
-        ("Nvidia", "Exxonmobil").
+        ("Nvidia", "Exxonmobil") — the well-known ones spelled right since batch 44.
       - A release whose dateline sits below 40 lines of tables (Exxon's 2004 results) gives nothing,
-        by design: further down, a place and a date are too often inside something else.
+        by design: further down, a place and a date are too often inside something else. Since
+        batch 44 such a release is titled by its results headline instead.
       - Netflix's and Tesla's results are letters and decks with no dateline, so their earnings 8-Ks
-        keep "Earnings announcement (8-K)".
+        keep "Earnings announcement (8-K)". Since batch 44 Tesla's delivery releases and update
+        letters are titled; Netflix's letters and Tesla's decks still are not.
       - A foreign company's 6-K carries its press releases the same way — read since batch 43. Only
         a filing's first two release exhibits are read.
       - A bank's structured-note 8-Ks (JPMorgan filed about 700 in 2005–2008) list 9.01 and are

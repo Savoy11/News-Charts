@@ -209,6 +209,89 @@ async function main(): Promise<void> {
   const withCompanionDown = await getTopicTimeline("penicillin").catch(() => null);
   check("a companion article Wikipedia cannot serve is only left out", withCompanionDown?.title === "Penicillin", String(withCompanionDown?.title));
 
+  /**
+   * The first visit stores the SEC industry (batch 50). Only the scheduler linked it, so a fund
+   * first visited before then — GLD, a commodity trust told from a company by its SIC 6221 —
+   * was called a corporation, and every first page went without its sector. Driven end to end
+   * through a stand-in database client and EDGAR record; it stays an enrichment throughout.
+   */
+  console.log("\nA first visit stores the SEC industry, and never waits or fails on it");
+  const { firstPassCompany, INDUSTRY_GRACE_MS } = await import("../lib/ingest/firstPass");
+  const pg = await import("pg");
+  const GLD_RECORD = {
+    sic: "6221",
+    sicDescription: "Commodity Contracts Brokers & Dealers",
+    filings: {
+      recent: { form: ["10-K"], filingDate: ["2025-11-20"], accessionNumber: ["0001222333-25-000009"], primaryDocument: ["gld-10k.htm"] },
+    },
+  };
+  /** One first pass for GLD; returns the outcome and the statements it sent, in order. */
+  const firstVisit = async (opts: {
+    record?: object;
+    industryHangs?: boolean;
+    refuse?: RegExp;
+  }): Promise<{ outcome: string; sent: { sql: string; params: unknown[] }[]; ms: number }> => {
+    const sent: { sql: string; params: unknown[] }[] = [];
+    const fake = {
+      query: async (sql: string, params: unknown[] = []) => {
+        sent.push({ sql, params });
+        if (opts.refuse?.test(sql)) throw new Error("refused by the check");
+        if (/sec_headlines/.test(sql)) return { rows: [], rowCount: 0 };
+        return { rows: [{ id: 7, ok: true, inserted: true }], rowCount: 1 };
+      },
+      release: () => {},
+    };
+    (pg.Pool.prototype as unknown as { connect: unknown }).connect = async () => fake;
+    (globalThis as { fetch: unknown }).fetch = (input: RequestInfo | URL) => {
+      if (!String(input).includes("data.sec.gov/submissions/")) {
+        return Promise.resolve({ ok: false, status: 404, json: async () => ({}) } as unknown as Response);
+      }
+      if (opts.industryHangs && /getIndustry/.test(new Error().stack ?? "")) return new Promise<Response>(() => {});
+      return Promise.resolve({ ok: true, status: 200, json: async () => opts.record ?? GLD_RECORD } as unknown as Response);
+    };
+    const started = Date.now();
+    const outcome = await firstPassCompany(`GLD`);
+    return { outcome, sent, ms: Date.now() - started };
+  };
+  const linked = (sent: { sql: string; params: unknown[] }[]) =>
+    sent.some((q) => /INSERT INTO subject_members/.test(q.sql) && /'sic'/.test(q.sql));
+  const at = (sent: { sql: string }[], re: RegExp) => sent.findIndex((q) => re.test(q.sql));
+
+  const gld = await firstVisit({});
+  check("GLD's first visit is ingested", gld.outcome === "ingested", gld.outcome);
+  check(
+    "  …and links it to its SEC industry, sic-6221",
+    linked(gld.sent) && gld.sent.some((q) => q.params.includes("sic-6221")),
+    gld.sent.filter((q) => /subject_members|sic-/.test(q.sql + q.params.join(" "))).length + " link statements"
+  );
+  check(
+    "  …before its events, so no reader sees the page without it",
+    at(gld.sent, /INSERT INTO subject_members/) >= 0 && at(gld.sent, /INSERT INTO subject_members/) < at(gld.sent, /^BEGIN$/),
+    `link at ${at(gld.sent, /INSERT INTO subject_members/)}, BEGIN at ${at(gld.sent, /^BEGIN$/)}`
+  );
+  const { isFund } = await import("../lib/sec");
+  check(
+    "  …which is what makes it a fund: GLD is a Trust under SIC 6221",
+    isFund({ ticker: "GLD", name: "SPDR GOLD TRUST", sic: "6221" }) && !isFund({ ticker: "GLD", name: "SPDR GOLD TRUST", sic: null })
+  );
+
+  const unclassified = await firstVisit({ record: { filings: GLD_RECORD.filings } });
+  check("a record with no industry still renders, with no link", unclassified.outcome === "ingested" && !linked(unclassified.sent), unclassified.outcome);
+
+  const refused = await firstVisit({ refuse: /INSERT INTO subject_members/ });
+  check(
+    "a link the database refuses costs only the link: the page's rows are still written",
+    refused.outcome === "ingested" && at(refused.sent, /^COMMIT$/) > 0 && at(refused.sent, /^ROLLBACK$/) < 0,
+    refused.outcome
+  );
+
+  const slow = await firstVisit({ industryHangs: true });
+  check(
+    `an industry that never answers holds the page ${INDUSTRY_GRACE_MS} ms at most, then renders without it`,
+    slow.outcome === "ingested" && !linked(slow.sent) && slow.ms < INDUSTRY_GRACE_MS + 1_500,
+    `${slow.outcome} in ${slow.ms} ms`
+  );
+
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);
 }

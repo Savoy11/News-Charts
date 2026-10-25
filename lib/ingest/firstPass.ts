@@ -272,9 +272,9 @@ export async function firstPassCompany(rawQuery: string): Promise<FirstPassOutco
         await recordFailure(client, ledgerSlug);
         return "unresolvable";
       }
-      // 8-K headlines already read for this company (batch 42) — none for a company never held,
-      // but a first pass that runs again must not put the item titles back over them. A lookup,
-      // never a read from EDGAR: that is the scheduler's, which has no visitor waiting.
+      // 8-K and 6-K headlines already read for this company (batches 42, 43) — none for a company
+      // never held, but a first pass that runs again must not put the item titles back over them.
+      // A lookup, never a read from EDGAR: that is the scheduler's, which has no visitor waiting.
       let titled = filings;
       try {
         titled = applyHeadlines(filings, await storedHeadlines(client, filings.filter(mayCarryRelease).map((e) => e.externalId!)));

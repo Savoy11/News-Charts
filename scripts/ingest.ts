@@ -440,9 +440,9 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
      */
     const filings = await getFilingsDeep(company, true, renames, othersStakes);
     /**
-     * Each 8-K's press-release headline as its title (batch 42): those already read come from
-     * `sec_headlines`, and a run's worth more are read from EDGAR. An enrichment, so it can only
-     * add: if it fails, the filings go out with their item titles, as before.
+     * Each 8-K's and 6-K's press-release headline as its title (batches 42, 43): those already
+     * read come from `sec_headlines`, and a run's worth more are read from EDGAR. An enrichment, so
+     * it can only add: if it fails, the filings go out with their item titles, as before.
      */
     let events = filings;
     try {
@@ -453,7 +453,7 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
         line(
           "sec_edgar",
           `headlines ${s.read} read (${s.found} found${s.failed ? `, ${s.failed} failed` : ""}); ` +
-            `${s.titled} of ${s.eligible} 8-Ks titled, ${s.left} left to read`
+            `${s.titled} of ${s.eligible} 8-Ks and 6-Ks titled, ${s.left} left to read`
         );
       }
     } catch (err) {

@@ -984,6 +984,83 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 43: a foreign company's 6-K titled by its announcement's headline (2026-10-25)
+
+A foreign company files its news as a 6-K, and every 6-K was titled "6-K filing" — NIO's monthly
+deliveries, Novartis's drug approvals, Shell's buybacks all looked alike on the timeline. Batch 42
+taught the reader to take a press release's headline from an 8-K and left 6-Ks open. This batch
+reads them, and along the way the reader learned to recognise a release with no dateline, which
+also titles more 8-Ks.
+
+`npm run check` passes (45 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
+passes. `check:ui` was not run: no page or component changed. HawkScan could not run:
+`HAWK_API_KEY` is not set.
+
+- [x] **6-Ks are read** (`lib/secHeadlines.ts`). A 6-K's announcement is either attached (EX-99,
+      the way an 8-K carries one) or is the 6-K's own document under the SEC's cover page. The
+      attachments are read first, then the 6-K's own document with its cover page cut ("REPORT OF
+      FOREIGN PRIVATE ISSUER…", the check boxes, the signature). Every 6-K is asked, since a 6-K
+      lists no items. The title becomes "NIO Inc.: NIO Inc. Provides April 2023 Delivery Update
+      (6-K)". A Japanese 6-K that lists its release by title ("Press release entitled “Agreement
+      to Transfer to Sony Certain Epson Business Assets…”") gives that title. A routine 6-K — a
+      monthly return on shares, a buyback report, a set of accounts, a director's share dealing —
+      gives nothing and keeps "6-K filing".
+- [x] **A release with no dateline.** European and Asian companies often write none: "Shell plc
+      (the 'Company') today announces…". With no dateline in the first 40 lines, a long lead
+      paragraph in which the company announces, reports or declares something "today" (or under
+      its exchange symbol, "(NYSE: BABA and HKEX: 9988…) announces") marks the release, and the
+      headline is read above it — but only below the letterhead, never guessed from above it.
+- [x] **What foreign releases taught the reader**, each kept as a real case in the check:
+      "Media Release · Communiqué aux médias · Medienmitteilung" and "Financial Results |
+      Résultats financiers | Finanzergebnisse" are letterhead; "Ad hoc announcement pursuant to
+      Art. 53 LR" under a headline does not push the search below it; a day-first date ("10 July
+      2017"), a country after "the" ("VELDHOVEN, the Netherlands"), a second city not in capitals
+      ("Burbank, CA and Las Vegas, NV (February 6, 2006) —", which also fixed a Disney 8-K that
+      gave "ABC Radio Station Group New York, NY") and international phone numbers are read; a
+      long headline in sentence case is no longer mistaken for body text (Novartis writes them
+      near 200 characters long); accented capitals recase as letters ("NESTLÉ" → "Nestlé", never "NestlÉ");
+      a currency in a dealing table ("GBP - British Pound") and a contents line ("CORE RESULTS -
+      Reconciliation from…") are no datelines; "…Delivery Update" ends a headline, "Update" being
+      a noun there.
+- [x] **Measured.** Three samples, all read from EDGAR:
+      - **6-Ks:** 160 from 16 companies, 1998–2026. 60 give a headline (26 from an attachment, 34
+        from the 6-K's own document); main reads none, as it never asks a 6-K. Of the 60, two run
+        into a subheadline (Baidu 2005, SAP 2026); most of the 100 without one are routine filings.
+      - **8-Ks, the batch 42 samples:** 139 → 155 of 211 exhibits and 108 → 135 of 167 give a
+        headline. Of the 43 new ones, 41 read right and 2 are cut short (CVS 2018, Amgen 2012).
+        Three changed: GM's 2026 results keep the second half of a two-line headline ("…; Board
+        approves new $20 billion share repurchase authorization, declares quarterly dividend"),
+        and Oracle 2018 and 3M 2008 drop a subheadline they had run into.
+      - **Live, through the real ingest** into a scratch database: NIO's 274 6-Ks took two runs
+        and gave 203 headlines (first run 2 min 28 s for every source, second 48 s; 4 filings
+        could not be read on the first run and were read fine on the second). Of 45 drawn at random, 40 were right
+        and 5 ran on into the line under them ("…Delivery Update Company Achieved New Record-High
+        Monthly Deliveries"); fixed, and a re-read of all 274 changed exactly those 22. Novartis's
+        first run read 150 of its 936 and gave 91; of 45 drawn at random, 37 were right, 3 were the
+        title of a "supplementary data" report rather than a release, and 5 were wrong (letterhead,
+        or a bullet taken where the headline was long). Fixed: the same 150 now give 116 and lose
+        the report titles; a fresh 40 drawn from the 116 were all right.
+- [x] **Stored readings are refreshed.** `HEADLINE_VERSION` is 2, so every 8-K read by batch 42 is
+      read again, a run's worth at a time, under the new reading.
+- [x] The 2026-10-22 sources shortlist and batch 42's open item ("A foreign company's 6-K… is not
+      read yet") now point here; README, `docs/COVERAGE-MAP.md` and the ingest's log line say
+      "8-Ks and 6-Ks".
+- [ ] **Open:**
+      - Novartis's results releases put a page of bullets between the headline and the dateline,
+        past line 40, so they give nothing; the reader gives up rather than guess.
+      - A long headline is still sometimes cut short or run into a subheadline (CVS 2018, Amgen
+        2012, Baidu 2005, SAP 2026), and a trademark or footnote mark can stay on a word
+        ("PluvictoTM", "core1").
+      - UBS puts a one-sentence summary where a headline goes; that sentence becomes the title.
+      - A big foreign filer's history fills in slowly: Novartis's 936 6-Ks take about seven runs.
+- Checks: `check:sec-headlines` 96 → 142. The real documents rise from 45 to 74 (57 releases with
+  the headline each must give, 17 documents that must give none), among them 25 6-Ks and the five
+  mistakes found in the live runs; the 6-K index pages of Shell (announcement in its own document)
+  and NIO (attached), read through a stand-in EDGAR; the cover-page cut, the lead rule, listed
+  titles, the 6-K title and which 6-Ks are asked. On main's code the check cannot run (the cover
+  page, lead and listed-title readers do not exist); main's reader gets 23 of the 74 documents
+  wrong.
+
 ## NC ledger — batch 42: an 8-K titled by the headline of its press release (2026-10-24)
 
 An 8-K was titled by its item — "Other events (8-K 8.01)", "Officer or director change (8-K
@@ -1053,8 +1130,8 @@ filing stacks changed). HawkScan could not run: `HAWK_API_KEY` is not set.
         by design: further down, a place and a date are too often inside something else.
       - Netflix's and Tesla's results are letters and decks with no dateline, so their earnings 8-Ks
         keep "Earnings announcement (8-K)".
-      - A foreign company's 6-K carries its press releases the same way and is not read yet. Only a
-        filing's first two release exhibits are read.
+      - A foreign company's 6-K carries its press releases the same way — read since batch 43. Only
+        a filing's first two release exhibits are read.
       - A bank's structured-note 8-Ks (JPMorgan filed about 700 in 2005–2008) list 9.01 and are
         asked; each costs one request to find no release, spread over its runs.
 - Checks: `check:sec-headlines` (96), new and in the chain. 35 real press releases with the headline

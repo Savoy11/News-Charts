@@ -13,8 +13,12 @@
  * near the top; without one it gives nothing, and the filing keeps its item title.
  */
 
-/** Bumped when the reading changes, so headlines read by an older version are read again. */
-export const HEADLINE_VERSION = 1;
+/**
+ * Bumped when the reading changes, so headlines read by an older version are read again. 2 (batch
+ * 43): an announcement with no dateline is read by its lead paragraph, and a 6-K's own document
+ * past its cover page.
+ */
+export const HEADLINE_VERSION = 2;
 
 /** The exhibit types a press release is filed under: EX-99.x, and EX-20 before the 2004 rules. */
 const RELEASE_EXHIBIT = /^EX-(?:99|20)\b/i;
@@ -29,9 +33,12 @@ export function releaseExhibits(indexHtml: string): {
   submission: string | null;
   /** how many documents the index lists one by one: none for a filing from before about 2001 */
   documents: number;
+  /** a 6-K's own document, which often carries the announcement itself */
+  primary: string | null;
 } {
   const exhibits: string[] = [];
   let submission: string | null = null;
+  let primary: string | null = null;
   let documents = 0;
   for (const row of indexHtml.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) ?? []) {
     const cells = row.match(/<td[^>]*>[\s\S]*?<\/td>/gi) ?? [];
@@ -43,12 +50,15 @@ export function releaseExhibits(indexHtml: string): {
       continue;
     }
     if (cells.length >= 4 && text[3] && !href.endsWith("/")) documents++;
+    if (cells.length >= 4 && /^6-K(?:\/A)?$/i.test(text[3]) && /\.(?:htm|html|txt)$/i.test(href)) {
+      primary ??= href.replace(/^\/ix\?doc=/, "");
+    }
     if (cells.length >= 4 && RELEASE_EXHIBIT.test(text[3]) && /\.(?:htm|html|txt)$/i.test(href)) {
       // inline-XBRL viewer links ("/ix?doc=/Archives/…") point at the same file
       exhibits.push(href.replace(/^\/ix\?doc=/, ""));
     }
   }
-  return { exhibits, submission, documents };
+  return { exhibits, submission, documents, primary };
 }
 
 /** The press-release exhibits inside a full submission text (`<DOCUMENT>…<TYPE>EX-99…`). */
@@ -133,28 +143,49 @@ export function textLines(doc: string): string[] {
 }
 
 const MONTH = String.raw`(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Za-z]*\.?`;
-const DATE = String.raw`(?:(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day,?\s+)?${MONTH}\s+\d{1,2}\b(?:,?\s*\d{4})?`;
+// "Sept. 1, 2004", and the day first as Europe writes it: "10 July 2017"
+const DATE = String.raw`(?:(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day,?\s+)?(?:${MONTH}\s+\d{1,2}\b(?:,?\s*\d{4})?|\d{1,2}\s+${MONTH}\s+\d{4})`;
 const PLACE_WORD = String.raw`(?:[A-Z][A-Za-z'’.-]*|of|de|la)`;
 const PLACE = String.raw`${PLACE_WORD}(?:\s${PLACE_WORD}){0,3}`;
 const CAPS_PLACE = String.raw`[A-Z][A-Z'’.-]+(?:\s[A-Z][A-Z'’.-]+){0,2}`;
-const STATE = String.raw`(?:,\s*[A-Z][A-Za-z.]*(?:\s[A-Z][A-Za-z.]*)?){0,2}`;
+// a state or country after the city, "the" allowed before it: "VELDHOVEN, the Netherlands,"
+const STATE = String.raw`(?:,\s*(?:the\s)?[A-Z][A-Za-z.]*(?:\s[A-Z][A-Za-z.]*)?){0,2}`;
 // a lone hyphen only with a space beside it: "2007 - The…", never the one inside "WAL-MART"
 const DASH = String.raw`(?:--|—|–|\s-|-\s|/\s*PRNewswire[\w-]*\s*/|\(BUSINESS WIRE\)|\(PRNewswire\)|\(GLOBE NEWSWIRE\))`;
 /** A joint release's second city: "OSAKA, Japan / PALO ALTO, Calif. –", "NEW YORK, N.Y. and BOULDER, Colo.," */
 const SECOND_PLACE = String.raw`(?:\s*(?:/|and|&)\s*${CAPS_PLACE}${STATE})?`;
+/** …and before a date, in any case: "Burbank, CA and Las Vegas, NV (February 6, 2006) —" */
+const SECOND_PLACE_DATED = String.raw`(?:\s*(?:/|and|&)\s*${PLACE}${STATE})?`;
 /** At the start of a line: "DEARBORN, Mich., Sept. 1, 2004 –", "New York, January 18 --" */
-const DATELINE = new RegExp(String.raw`^(${PLACE})${STATE}${SECOND_PLACE}[,\s]*(?:[—–-]\s*)?${DATE}\s*${DASH}`);
+// the date in brackets too: "Burbank, CA and Las Vegas, NV (February 6, 2006) —"
+const DATELINE = new RegExp(String.raw`^(${PLACE})${STATE}${SECOND_PLACE_DATED}[,\s]*(?:[—–-]\s*)?\(?${DATE}\)?\s*${DASH}`);
 /** At the start of a line, with no date: "CUPERTINO, CALIFORNIA — Apple today…" — the place in capitals */
 const DATELINE_UNDATED = new RegExp(String.raw`^(${CAPS_PLACE})${STATE}${SECOND_PLACE}\s*${DASH}\s*\S`);
 /** Inside a run of text with no line breaks, where only a place in capitals with a date is trusted */
 const DATELINE_IN_RUN = new RegExp(String.raw`(?:^|\s)((${CAPS_PLACE})${STATE}[,\s]*(?:[—–-]\s*)?${DATE}\s*${DASH})\s*\S`);
-/** "EXHIBIT 99 --", "NEWS RELEASE -", "Page 2 -": a word in the place's spot that is no place */
-const NOT_A_PLACE = /^(?:EXHIBIT|EX|NEWS|PRESS|RELEASE|PAGE|FOR|CONTACT|CONTACTS|MEDIA|INVESTOR|INVESTORS|NOTE|SLIDE|ITEM|SECTION|TABLE|SOURCE|UPDATE|STATEMENT|AND|THE)\b/i;
+/**
+ * "EXHIBIT 99 --", "NEWS RELEASE -", "Page 2 -", "GBP - British Pound" (a currency in a share-dealing
+ * table): a word in the place's spot that is no place
+ */
+const NOT_A_PLACE = /^(?:EXHIBIT|EX|NEWS|PRESS|RELEASE|PAGE|FOR|CONTACT|CONTACTS|MEDIA|INVESTOR|INVESTORS|NOTE|SLIDE|ITEM|SECTION|TABLE|SOURCE|UPDATE|STATEMENT|AND|THE|USD|EUR|GBP|GBX|JPY|CHF|CAD|AUD|HKD|CNY|SEK|NOK|DKK|INR)\b/i;
+
+/**
+ * With no date before the dash, a place in capitals must open a sentence — "DETROIT – General Motors
+ * (NYSE: GM) today reported…" — or carry its date after a wire's name, "SEATTLE -- (BUSINESS WIRE) --
+ * January 23, 2003 --", or sit on a line short enough to be wrapped plain text. A contents line,
+ * "CORE RESULTS - Reconciliation from IFRS® Accounting Standards results…", does none of these.
+ */
+const OPENS_SENTENCE = new RegExp(
+  String.raw`\b(?:today|announced|announces|reported|reports|said|says|is|are|was|were|has|have|had|will|would)\b|${DATE}`,
+  "i"
+);
 
 /** Whether `line` opens with a dateline — one with a date, when `dated`. */
 function opensWithDateline(line: string, dated = false): boolean {
-  const m = DATELINE.exec(line) ?? (dated ? null : DATELINE_UNDATED.exec(line));
-  return m !== null && !NOT_A_PLACE.test(m[1]);
+  const m = DATELINE.exec(line);
+  if (m) return !NOT_A_PLACE.test(m[1]);
+  const u = dated ? null : DATELINE_UNDATED.exec(line);
+  return u !== null && !NOT_A_PLACE.test(u[1]) && (line.length < 70 || OPENS_SENTENCE.test(line.slice(u[0].length - 1)));
 }
 
 /** Where a dateline starts inside a run of text, or -1. */
@@ -183,7 +214,20 @@ const LETTERHEAD = [
   /^note\s+to\s+(?:editors|analysts|reporters|media)\b/i,
   /\b(?:vice\s+president|director|manager|spokes(?:person|man|woman))\b.*\b(?:relations|communications|affairs|media)\b/i,
   /^(?:(?:corporate|investor|media|public|community|global|external|financial)\s+)+(?:communications|relations|affairs)\b/i,
+  /\b(?:global|corporate|group)\s+communications$/i,
   /^(?:(?:senior|executive|group|corporate)\s+)*(?:vice\s+president|president|director|manager|spokes(?:person|man|woman))\b/i,
+  // a foreign company's announcement markers: "Media Release · Communiqué aux médias · Medienmitteilung",
+  // "Financial Results | Résultats financiers | Finanzergebnisse", "Not for release, publication or
+  // distribution in…"
+  /^media\s+release\b|\bmedienmitteilung\b|communiqu[eé]\s+aux\s+m[eé]dias|r[eé]sultats\s+financiers|\bfinanzergebnisse\b/i,
+  /^-?\s*(?:investor\s+relations\s+|media\s+|press\s+|news\s+)?release\s*-?$/i,
+  // a company's name alone on its line, as a letterhead sets it: "Shell plc", "Novartis International AG"
+  /^[A-Z][\w&.,'’-]*(?:\s[\w&.,'’-]+){0,3}\s(?:plc|PLC|Inc\.?|Ltd\.?|Limited|AG|N\.V\.|S\.A\.|SE|Corp\.?|Corporation)$/,
+  // a European postcode: "CH-4002 Basel", "D-69190 Walldorf"
+  /^[A-Z]{1,2}-\d{4,5}\s+[A-Z]/,
+  /^not\s+for\s+(?:release|publication|distribution)\b/i,
+  // "1-7-1 Konan, Minato-ku Tokyo 108-0075", "No.12-043E": a Japanese address and release number
+  /^\d+-\d+-\d+\s|\b\d{3}-\d{4}\b.*\b(?:Tokyo|Osaka|Japan)\b|\bNo\.\s?\d{2}-\d{3}E\b/i,
 ];
 /**
  * Lines that are never a headline but say nothing about where one is: a date alone, a page number,
@@ -194,17 +238,40 @@ const NOISE = [
   new RegExp(String.raw`^(?:${DATE}|\d{1,2}/\d{1,2}/\d{2,4})$`, "i"),
   // "June 17, 2019 6:45 a.m. EDT | 4:45 a.m. MDT": when a release went out
   new RegExp(String.raw`^(?:${DATE}\b.*)?\d{1,2}:\d{2}\s*[ap]\.?m\b`, "i"),
-  /^(?:condensed\s+)?consolidated\s+(?:statements?|balance\s+sheets?)\b/i,
+  /^(?:notes\s+to\s+(?:the\s+)?)?(?:(?:interim|unaudited|condensed)\s+)*consolidated\s+(?:financial\s+)?(?:statements?|balance\s+sheets?)\b/i,
   /\band\s+(?:its\s+)?subsidiaries$/i,
   /^\(/,
   /\b(?:district|circuit|superior|bankruptcy)\s+court\b|^case\s+no\b/i,
   /^(?:page\s*)?\d+(?:\s+of\s+\d+)?$/i,
+  /^part\s+[ivx]+\b/i,
+  /^item\s+\d+[a-z]?\.?\s/i,
+  /^legal\s+entity\s+identifier\b/i,
+  // a numbered section of a form, and a letter's subject line: "4 - Details of the transaction(s)", "Re: …"
+  /^\d{1,2}\s*[-–.)]\s+[A-Z]/,
+  /^re:\s/i,
+  /^herewith\b|\bwe\s+(?:hereby\s+)?furnish\b/i,
+  // a Swiss filer's "Ad hoc announcement pursuant to Art. 53 LR", which Novartis sets under the headline
+  /^ad[\s-]hoc\s+announcement\b/i,
+  // a place and a date with no dash, on a line of their own or before a label: "Basel, Switzerland,
+  // January 28, 2013 Management announcement"
+  new RegExp(String.raw`^${PLACE}${STATE}[,\s]+${DATE}\b(?!\s*${DASH})`),
 ];
 /** A rule between lines: "-", "* * *", "|". */
 const SEPARATOR = /^[|•·*_=\s-]+$/;
 const URLISH = /(?:https?:\/\/|www\.|@[a-z0-9-]+\.[a-z])/i;
-const PHONE = /\(?\d{3}\)?[\s./-]\d{3}[\s.-]\d{4}|\b\d\.\d{3}\.\d{3}\.\d{4}\b/;
-const ADDRESS = /\b(?:P\.?\s?O\.?\s?Box|Suite|Room|Floor|Avenue|Ave\.|Street|St\.|Drive|Road|Boulevard|Blvd\.?|Parkway|Plaza|Way)\b.*\d|\d+\s+\w+.*\b(?:Avenue|Ave\.|Street|Drive|Road|Boulevard|Parkway|Plaza|Way)\b|\b[A-Z]{2}\s+\d{5}(?:-\d{4})?\b|\bNYSE\s*(?:symbol|:)|\b(?:NYSE|NASDAQ|Nasdaq)\s*:\s*[A-Z]+\s*$/;
+// and an international number: "+31 40 268 6494", "+44 (0) 207 934 5550"
+const PHONE = /\(?\d{3}\)?[\s./-]\d{3}[\s.-]\d{4}|\b\d\.\d{3}\.\d{3}\.\d{4}\b|\+\d{1,3}[\s.-]?(?:\(\d+\)[\s.-]?)?\d{1,4}(?:[\s.-]\d{2,4}){2,}/;
+// an address: "Suite 185", "P.O. Box 3707", "5959 Las Colinas Boulevard", a ZIP code — but not a
+// headline that names a "Product Suite" and a "7/5 Nanometer Node" further on
+const ADDRESS = new RegExp(
+  [
+    String.raw`\b(?:P\.?\s?O\.?\s?Box|Suite|Room|Floor)\s+#?\d`,
+    String.raw`\b\d+\s+(?:[NSEW]\.?\s+)?(?:[A-Z][\w.'’-]*\s+){1,4}(?:Avenue|Ave\.?|Street|St\.?|Drive|Dr\.?|Road|Rd\.?|Boulevard|Blvd\.?|Parkway|Pkwy\.?|Plaza|Way|Lane|Place)\b`,
+    String.raw`\b[A-Z]{2}\s+\d{5}(?:-\d{4})?\b`,
+    String.raw`\bNYSE\s*(?:symbol|:)`,
+    String.raw`\b(?:NYSE|NASDAQ|Nasdaq)\s*:\s*[A-Z]+\s*$`,
+  ].join("|")
+);
 
 function isLetterhead(line: string): boolean {
   return LETTERHEAD.some((re) => re.test(line)) || URLISH.test(line) || PHONE.test(line) || ADDRESS.test(line);
@@ -229,7 +296,7 @@ function headlineLike(line: string): boolean {
   const tokens = line.split(/\s+/);
   if (tokens.filter((t) => /^[(\-$]?[\d.,]+%?\)?$/.test(t)).length * 3 > tokens.length) return false;
   // a long line in sentence case is body text: a headline that long capitalises its words
-  if (line.length > 120 && words.filter((w) => /^[A-Z]/.test(w)).length * 2 < words.length) return false;
+  if (line.length > 220 && words.filter((w) => /^[A-Z]/.test(w)).length * 2 < words.length) return false;
   return true;
 }
 
@@ -287,18 +354,19 @@ const STARTS_MID_PHRASE = /^(?:and|or|but|of|for|to|with|while|as)\s/i;
 const WRAPS_AFTER = new RegExp(
   String.raw`(?:^|\s)(?:and|or|but|for|to|of|in|on|at|by|as|with|from|into|the|a|an|its|their|&|` +
     // a number after a joining word: "…to Leave After 18" / "Years…", "…and $29.4 Billion" / "Capital…"
-    String.raw`(?:after|to|of|by|over|than|at|from|with|and|or)\s+\$?[\d.,]+%?(?:\s+(?:million|billion))?|` +
+    String.raw`(?:after|to|of|by|over|than|at|from|with)\s+\$?[\d.,]+%?|(?:and|or)\s+\$?[\d.,]+%?(?:\s+(?:million|billion))?|` +
     String.raw`(?:reports?|announces?|names?|elects?|appoints?|declares?|completes?|adds?|rejects?|acquires?|` +
     String.raw`integrates?|expands?|explores?|sells?|buys?|launches|unveils|introduces|posts?|delivers?|raises?|` +
-    String.raw`plans?|agrees?|updates?|reaffirms?|provides?|issues?|prices?|increases?|expects?|` +
+    // "updates" only: "…Delivery Update" is a noun and the line ends there
+    String.raw`plans?|agrees?|updates|reaffirms?|provides?|issues?|prices?|increases?|expects?|` +
     String.raw`elected|appointed|named|promoted))$`,
   "i"
 );
 
 /** Written in capitals — "McDONALD'S REPORTS…" too: the one small letter is the name's own. */
 function inCapitals(s: string): boolean {
-  const letters = s.replace(/[^A-Za-z]/g, "");
-  return letters.length > 0 && letters.replace(/[^a-z]/g, "").length * 20 <= letters.length;
+  const letters = s.replace(/[^\p{L}]/gu, "");
+  return letters.length > 0 && letters.replace(/[^\p{Ll}]/gu, "").length * 20 <= letters.length;
 }
 
 const SMALL = new Set(
@@ -318,7 +386,8 @@ const ACRONYMS = new Set(
 export function headlineCase(s: string): string {
   if (!inCapitals(s)) return s;
   let first = true;
-  return s.replace(/[A-Za-z\d][A-Za-z'’.&\d-]*/g, (w) => {
+  // a word is accented letters too: "NESTLÉ" → "Nestlé", never "NestlÉ"
+  return s.replace(/[\p{L}\d][\p{L}'’.&\d-]*/gu, (w) => {
     const isFirst = first;
     first = false;
     if (/[\d&]/.test(w) && !/^\d+(?:ST|ND|RD|TH)$/.test(w)) return w;
@@ -360,11 +429,87 @@ const COMMON_SHORT = new Set(
 
 /** Tidies a headline: trademark marks and stray punctuation off, spacing even. */
 function tidy(s: string): string {
-  return s
+  let t = s
     .replace(/[®™©℠]/g, "")
     .replace(/\s+/g, " ")
     .replace(/^[\s"“'‘|:;,.–—-]+|[\s|:;,–—-]+$/g, "")
     .trim();
+  // a closing quotation mark left over from a quoted title: "…in honor of Heinz Imhof”"
+  if (/[”"]$/.test(t) && (t.match(/[“"]/g) ?? []).length < (t.match(/[”"]/g) ?? []).length) t = t.slice(0, -1).trim();
+  return t;
+}
+
+/**
+ * A 6-K's own document opens with the SEC's cover page — "REPORT OF FOREIGN PRIVATE ISSUER", the
+ * registrant's address, the check boxes, often the signature — and the announcement follows it.
+ * The lines after the last of the cover's own phrases in the first 70, looked for only until the
+ * first paragraph of text — a signature at the end of a short announcement is not its cover. A
+ * document with none of them, as every exhibit is, is left whole.
+ */
+const COVER_PAGE = new RegExp(
+  [
+    String.raw`report of foreign (?:private )?issuer`,
+    String.raw`indicate by check mark`,
+    String.raw`if\s+["“]yes["”]\s+is\s+marked`,
+    String.raw`\(address of principal executive office`,
+    String.raw`commission file (?:number|no)`,
+    String.raw`registrant has duly caused this report`,
+    String.raw`^by:?\s*/s/`,
+    String.raw`^date:\s`,
+    String.raw`^form 20-f\b.*form 40-f`,
+    String.raw`^yes\b\s*:?\s*\S{0,2}\s+no\b`,
+    String.raw`^(?:yes|no)\s*:?\s*\S{0,2}$`,
+  ].join("|"),
+  "i"
+);
+export function afterCoverPage(lines: string[]): string[] {
+  let last = -1;
+  for (let i = 0; i < Math.min(lines.length, 70); i++) {
+    if (COVER_PAGE.test(lines[i])) last = i;
+    else if (lines[i].length >= 200) break;
+  }
+  return last < 0 ? lines : lines.slice(last + 1);
+}
+
+/**
+ * The lead paragraph of an announcement with no dateline, the way European and Asian companies
+ * write them: "Shell plc (the ‘Company’) today announces…", "Alibaba Group Holding Limited (NYSE:
+ * BABA and HKEX: 9988…) announces…". A long line where the company announces or reports, today or
+ * under its exchange symbol; the headline is looked for above it, as above a dateline. Only a
+ * dateline is looked for first, so a release that has one reads as before.
+ */
+const LEAD = new RegExp(
+  String.raw`\btoday\b.{0,80}\b(?:announce[sd]?|report(?:s|ed)?|declare[sd]?|publishe[sd]|provide[sd]?|confirm(?:s|ed)?|unveil(?:s|ed)?|launch(?:es|ed)?|complete[sd]?)\b|` +
+    String.raw`\b(?:announce[sd]?|report(?:s|ed)?|declare[sd]?|publishe[sd])\b.{0,40}\btoday\b|` +
+    String.raw`\((?:NYSE|NASDAQ|Nasdaq|HKEX|SEHK|TSE|LSE|SIX|Euronext|NSE|BSE)\s*:[^)]{1,80}\).{0,160}\b(?:announce[sd]?|report(?:s|ed)?)\b`
+);
+export function findLead(lines: string[]): { line: number; at: number } | null {
+  const i = lines.findIndex((l) => l.length >= 80 && l.length <= 2000 && LEAD.test(l));
+  return i > 0 ? { line: i, at: 0 } : null;
+}
+
+/**
+ * A Japanese company's 6-K names the release it carries under its cover: "List of materials /
+ * Documents attached hereto: i) Press release entitled “Agreement to Transfer to Sony Certain
+ * Epson Business Assets…”". That title is the headline. Null when the lines list none.
+ */
+export function listedRelease(lines: string[]): string | null {
+  for (let i = 0; i < Math.min(lines.length, 12); i++) {
+    const line = lines[i];
+    // in quotation marks the title may wrap over a few lines: "Press release, dated April 19, 2001,
+    // announcing, "Novartis group" / "Sales up by 11%…""; the closing mark says where it ends
+    const window = lines.slice(i, i + 4).join(" ");
+    const m =
+      /press release,?\s+(?:dated\s+[^"“]{6,30}?,?\s+)?(?:entitled|titled|announcing,?)\s*["“]([^"”]{12,260})["”]/i.exec(window) ??
+      /press release:?\s+((?:Announcement|Notice)\b.{12,250})$/i.exec(line) ??
+      /press release:\s*(.{12,260})$/i.exec(line) ??
+      /press release,?\s+(?:dated\s+[^"“]{6,30}?,?\s+)?announcing[\s:–—-]+(.{12,260})$/i.exec(line);
+    if (!m) continue;
+    let title = tidy(headlineCase(tidy(m[1])));
+    if (/\.$/.test(title) && !ABBREV_END.test(title)) title = title.slice(0, -1);
+    return title[0].toUpperCase() + title.slice(1);
+  }
+  return null;
 }
 
 /** How many lines from the top a dateline may sit. */
@@ -400,8 +545,11 @@ export function findDateline(lines: string[]): { line: number; at: number } | nu
 export function pressReleaseHeadline(doc: string): string | null {
   // a press release's dateline is near the top: the furthest down a real one sat in the sample was
   // line 30, under a page of contacts; one further down is a place and date inside something else
-  const lines = textLines(doc).slice(0, DATELINE_WITHIN);
-  const dateline = findDateline(lines);
+  const lines = afterCoverPage(textLines(doc)).slice(0, DATELINE_WITHIN);
+  const listed = listedRelease(lines);
+  if (listed) return listed;
+  const datelined = findDateline(lines);
+  const dateline = datelined ?? findLead(lines);
   if (!dateline) return null;
   let head = lines.slice(0, dateline.line);
   if (dateline.at > 0) head.push(...splitRun(lines[dateline.line].slice(0, dateline.at)));
@@ -433,7 +581,8 @@ export function pressReleaseHeadline(doc: string): string | null {
     if (isLetterhead(joined(b))) lastLetterhead = i;
   });
   let at = blocks.findIndex((b, i) => i > lastLetterhead && candidate(b));
-  if (at < 0) at = blocks.findIndex(candidate);
+  // a headline above the letterhead is taken only under a dateline: the lead paragraph is a weaker mark
+  if (at < 0 && datelined) at = blocks.findIndex(candidate);
   if (at < 0) return null;
   const headline = tidy(headlineCase(tidy(candidate(blocks[at])!.replace(/^\d{1,2}\s+(?=[A-Z])/, ""))));
   return headline.length >= 12 ? headline : null;
@@ -477,10 +626,11 @@ function dashed(accession: string): string {
 const EXHIBITS_READ = 2;
 
 /**
- * Reads one 8-K for its press release's headline: the filing's index page, then its first
+ * Reads one 8-K or 6-K for its press release's headline: the filing's index page, then its first
  * press-release exhibits (or, for a filing from before about 2001, its full submission text, which
- * is small then). Two or three requests. Null when EDGAR did not answer — a failure, not an answer,
- * and the filing is tried again on a later run; a filing EDGAR does not have reads as having none.
+ * is small then), then a 6-K's own document. Two to four requests. Null when EDGAR did not answer —
+ * a failure, not an answer, and the filing is tried again on a later run; a filing EDGAR does not
+ * have reads as having none.
  */
 export async function readFilingHeadline(
   cik: string | number,
@@ -491,16 +641,17 @@ export async function readFilingHeadline(
   const index = await get(`${base}/${dashed(accession)}-index.htm`);
   if (index.status === 404) return { headline: null, exhibit: null };
   if (!index.ok) return null;
-  const { exhibits, submission, documents } = releaseExhibits(await index.text());
-  if (exhibits.length) {
-    for (const href of exhibits.slice(0, EXHIBITS_READ)) {
-      const doc = await get(ARCHIVES + href);
-      if (!doc.ok) return doc.status === 404 ? { headline: null, exhibit: null } : null;
-      const headline = pressReleaseHeadline(decodeDocument(await doc.arrayBuffer()));
-      if (headline) return { headline, exhibit: href.split("/").pop() ?? null };
-    }
-    return { headline: null, exhibit: exhibits[0].split("/").pop() ?? null };
+  const { exhibits, submission, documents, primary } = releaseExhibits(await index.text());
+  const name = (href: string) => href.split("/").pop() ?? null;
+  // the exhibits first, then a 6-K's own document, where many foreign companies put the announcement
+  const toRead = [...exhibits.slice(0, EXHIBITS_READ), ...(primary ? [primary] : [])];
+  for (const href of toRead) {
+    const doc = await get(ARCHIVES + href);
+    if (!doc.ok) return doc.status === 404 ? { headline: null, exhibit: null } : null;
+    const headline = pressReleaseHeadline(decodeDocument(await doc.arrayBuffer()));
+    if (headline) return { headline, exhibit: name(href) };
   }
+  if (toRead.length) return { headline: null, exhibit: name(toRead[0]) };
   // a filing from before the per-document index: its exhibits are inside the full submission text
   if (!documents && submission) {
     const doc = await get(ARCHIVES + submission);
@@ -514,10 +665,11 @@ export async function readFilingHeadline(
 }
 
 /**
- * An 8-K the reading applies to, from the title and description `lib/sec.ts` gave it — "(8-K 8.01)",
- * "(8-K)", "(8-K/A 5.02)", or "8-K filing" for one whose items predate 2004.
+ * A filing the reading applies to, from the title `lib/sec.ts` gave it: an 8-K — "(8-K 8.01)",
+ * "(8-K)", "(8-K/A 5.02)", or "8-K filing" for one whose items predate 2004 — or a foreign
+ * company's 6-K, which `lib/sec.ts` can only call "6-K filing".
  */
-export const EIGHT_K_TITLE = /: (?:(.*) \((8-K(?:\/A)?)(?: (\d\.\d\d))?\)|(8-K) filing)$/;
+export const RELEASE_TITLE = /: (?:(.*) \((8-K(?:\/A)?)(?: (\d\.\d\d))?\)|(8-K|6-K) filing)$/;
 
 /**
  * Whether an 8-K can carry a press release worth asking for, from the items it lists. Since 2004 a
@@ -526,11 +678,12 @@ export const EIGHT_K_TITLE = /: (?:(.*) \((8-K(?:\/A)?)(?: (\d\.\d\d))?\)|(8-K) 
  * filers attach one to without listing 9.01. An 8-K with none of those, such as a shareholder vote,
  * is not asked about: of the 541 8-Ks filed since 2004 in the sample, that skipped 37, of which 36
  * had no exhibit and the other was a bank's capital covenant. One from before 2004 used other item
- * numbers, and one that lists no items is unknown: both are asked.
+ * numbers, and one that lists no items is unknown: both are asked, and so is every 6-K, which
+ * lists none.
  */
 const ANNOUNCING_ITEMS = new Set(["9.01", "2.02", "7.01", "8.01", "5.02", "2.01"]);
 export function mayCarryRelease(ev: { title: string; description?: string; externalId?: string }): boolean {
-  if (!EIGHT_K_TITLE.test(ev.title) || !/^\d{18}$/.test(ev.externalId ?? "")) return false;
+  if (!RELEASE_TITLE.test(ev.title) || !/^\d{18}$/.test(ev.externalId ?? "")) return false;
   const items = ev.description?.match(/^Items? (.*)$/)?.[1];
   if (!items) return true;
   const codes = items.split(" · ").map((c) => c.split(" ")[0]);
@@ -539,18 +692,19 @@ export function mayCarryRelease(ev: { title: string; description?: string; exter
 }
 
 /**
- * An 8-K retitled with its press release's headline: "Boeing Co: Other events (8-K 8.01)" becomes
- * "Boeing Co: Boeing Sets 787 First Delivery Date for Mid-First Quarter 2011 (8-K 8.01)". The form
- * and item stay at the end, where the timeline's filing stacks read them, and the item's name
+ * A filing retitled with its press release's headline: "Boeing Co: Other events (8-K 8.01)" becomes
+ * "Boeing Co: Boeing Sets 787 First Delivery Date for Mid-First Quarter 2011 (8-K 8.01)", and
+ * "NIO Inc.: 6-K filing" becomes "NIO Inc.: NIO Inc. Provides April 2023 Delivery Update (6-K)". The
+ * form and item stay at the end, where the timeline's filing stacks read them, and the item's name
  * moves into the description.
  */
 export function withHeadline<E extends { title: string; description?: string }>(ev: E, headline: string): E {
-  const m = EIGHT_K_TITLE.exec(ev.title);
+  const m = RELEASE_TITLE.exec(ev.title);
   if (!m) return ev;
   const prefix = ev.title.slice(0, m.index);
   const form = m[2] ?? m[4];
   const code = m[3];
-  const label = m[1] ?? "8-K filing";
+  const label = m[1] ?? `${m[4]} filing`;
   const named = m[1] ? `${label} (${form}${code ? ` ${code}` : ""})` : label;
   return {
     ...ev,

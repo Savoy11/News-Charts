@@ -109,6 +109,20 @@ check("an alias-named headline scores as naming the subject", (googScore?.score 
 const googWithout = deterministicScore(row("news", "Google unveils Gemini"), GOOG, aliasesFor(GOOG));
 check("  ...and without the stored alias it stays a model call", googWithout === null);
 
+console.log("\nApostrophes the SEC title dropped (batch 54, the 2026-10-25 audit's finding 1)");
+const KSS: SubjectContext = { kind: "company", displayName: "KOHLS Corp", ticker: "KSS" };
+const kssAliases = aliasesFor(KSS, ["KOHLS"]);
+check("\"Kohl's\" and \"Kohl’s\" name KOHLS Corp, as ingest's aliases hold it",
+  ["Kohl's names new CEO", "Kohl’s names new CEO"].every((t) => (deterministicScore(row("news", t), KSS, kssAliases)?.score ?? 0) >= 0.9),
+  JSON.stringify(kssAliases));
+const MCD: SubjectContext = { kind: "company", displayName: "MCDONALDS CORP", ticker: "MCD" };
+check("  …and a curly \"McDonald’s\" names McDonald's, as the straight one did",
+  (deterministicScore(row("news", "McDonald’s raises prices"), MCD, aliasesFor(MCD, ["McDonald's"]))?.score ?? 0) >= 0.9);
+const FORD_CO: SubjectContext = { kind: "company", displayName: "FORD MOTOR CO", ticker: "F" };
+check("  …while \"Ford's\" still names Ford, and \"Harrison Ford's\" is still left for the model",
+  (deterministicScore(row("news", "Ford's profit falls"), FORD_CO, aliasesFor(FORD_CO))?.score ?? 0) >= 0.9 &&
+    deterministicScore(row("news", "Harrison Ford's new film"), FORD_CO, aliasesFor(FORD_CO)) === null);
+
 console.log("\nOne threshold, one place");
 // signals.ts once hardcoded its own copy of the display gate; a threshold change then
 // desynced signal windows from what the timeline showed. Source-asserted, not hoped.

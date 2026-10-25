@@ -95,10 +95,15 @@ export type Mention = "named" | "oblique" | "none";
  * reported `oblique` and left for the model rather than scored as certain.
  */
 export function mentions(original: string, names: string[]): Mention {
-  const title = foldAccents(original);
-  const aliases = names.map(foldAccents);
+  // one apostrophe, so "Kohl’s" and "Kohl's" read alike; same length, so offsets hold
+  const title = foldAccents(original).replace(/’/g, "'");
+  const aliases = names.map((n) => foldAccents(n).replace(/’/g, "'"));
   const lower = title.toLowerCase();
   const keyed = ` ${nameKey(title)} `;
+  // A one-word name kept without the apostrophe its SEC title dropped ("kohls") names "Kohl's
+  // names new CEO" read with the apostrophes out (batch 54). Only as a second try: out, "Ford's"
+  // would read "fords" and no longer name Ford.
+  const bareTitle = title.replace(/'/g, "");
   let sawOblique = false;
   for (const a of aliases) {
     if (a.length < 3 || INITIALISM.test(a)) {
@@ -107,7 +112,13 @@ export function mentions(original: string, names: string[]): Mention {
       continue;
     }
     const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(a)}(?![\\p{L}\\p{N}])`, "gu");
-    const m = re.exec(lower);
+    let m = re.exec(lower);
+    let read = title;
+    if (!m && !a.includes(" ") && bareTitle !== title) {
+      const bare = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(a.replace(/'/g, ""))}(?![\\p{L}\\p{N}])`, "gu");
+      m = bare.exec(bareTitle.toLowerCase());
+      read = bareTitle;
+    }
     if (!m) {
       const key = nameKey(a);
       if (key.includes(" ") && keyed.includes(` ${key} `)) return "named";
@@ -115,7 +126,7 @@ export function mentions(original: string, names: string[]): Mention {
     }
     // Multi-word aliases ("ford motor company") can't be a surname; only single tokens can.
     if (!a.includes(" ")) {
-      const before = title.slice(0, m.index);
+      const before = read.slice(0, m.index);
       const preceding = /(\p{Lu}[\p{L}'’.-]*)\s+$/u.exec(before)?.[1]?.toLowerCase() ?? null;
       if (preceding && !aliases.includes(preceding) && !WEAK_TOKENS.has(preceding)) {
         sawOblique = true;

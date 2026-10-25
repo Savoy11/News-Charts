@@ -39,7 +39,7 @@ import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { FR_COMPANY_SINCE, companyNames, fetchCompanyRegulations, frSearchTerm } from "../lib/frCompany";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
-import { dojQueryNames, fetchJusticeReleases } from "../lib/doj";
+import { dojPossessive, dojQueryNames, fetchJusticeReleases } from "../lib/doj";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
 import { MACRO_SUBJECT, fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
@@ -529,8 +529,8 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    * Indicted for Money Laundering"); `releaseNamesParty` keeps a release only when the title makes the company the one
    * acting or acted against. Scored without the model, as a filing is.
    */
-  await run("doj_press", dojQueryNames(companyNames(company.name, alsoKnownAs)).join(" | "), () =>
-    fetchJusticeReleases(company.name, alsoKnownAs)
+  await run("doj_press", dojQueryNames(companyNames(company.name, alsoKnownAs), dojPossessive(company.name, possessive)).join(" | "), () =>
+    fetchJusticeReleases(company.name, alsoKnownAs, possessive)
   );
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no

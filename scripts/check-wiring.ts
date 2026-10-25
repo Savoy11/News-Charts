@@ -292,6 +292,27 @@ check(
   /ORDER BY \(r\.last_error IS NOT NULL\), r\.requests DESC/.test(read("lib/ingest/queue.ts"))
 );
 
+console.log("\nThe feed report asks what ingest asks (batch 54, the 2026-10-25 audit's finding 4)");
+{
+  /**
+   * `check:feeds` is the per-subject report of what each feed returns, and it had drifted from
+   * the ingest path: it sent GDELT "VISA", which GDELT refuses as too short, where ingest sends
+   * "VISA Inc", and asked none of the recall, FDA or Justice Department feeds. Every fetch
+   * `ingestCompany` makes must appear in it word for word, arguments included.
+   */
+  const ingest = read("scripts/ingest.ts");
+  const body = ingest.slice(ingest.indexOf("export async function ingestCompany"), ingest.indexOf("export async function ingestIndustry"));
+  const calls = [...new Set([...body.matchAll(/await run\("\w+",[\s\S]*?\(\) =>\s*(fetch\w+\((?:[^()]|\([^()]*\))*\))/g)].map((m) => m[1]))];
+  const feeds = read("scripts/check-feeds.ts");
+  const missing = calls.filter((c) => !feeds.includes(c));
+  check("check:feeds makes each company fetch ingest makes, with the same arguments",
+    calls.length >= 8 && missing.length === 0, missing.length ? `missing: ${missing.join("; ")}` : `${calls.length} fetches`);
+  const plan = /const \{ query: newsQuery, byRelevance \} = gdeltNewsPlan\(company\.name, possessive, alsoKnownAs\);/;
+  check("  …and builds its GDELT query by the same plan, from the same names",
+    plan.test(body) && plan.test(feeds) && /const alsoKnownAs = newsNamesFor\(company\.cik\);/.test(feeds) && /const possessive = possessiveNameFor\(company\.cik\);/.test(feeds));
+  check("  …and reads a filing's headline as ingest does", /readFilingHeadline\(/.test(feeds) && /mayCarryRelease\(/.test(feeds));
+}
+
 console.log("\nEvery event kind a page can hold has a control that shows it");
 /**
  * Read as text rather than imported: these are `"use client"` components, and importing one into

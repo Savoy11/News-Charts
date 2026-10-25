@@ -127,12 +127,56 @@ function SiteSnapshotLink({ domain, date }: { domain: string; date: string }) {
   );
 }
 
-/** Which years and months are folded. */
-interface Folds {
-  years: ReadonlySet<string>;
+/**
+ * What the reader changed: the opening folds they opened, the years they folded themselves, and
+ * the months they folded. Kept as changes, not as the whole folded set, so a list that grows or
+ * shortens still opens as its length says: a saved copy of the opening folds kept 99 of Ford's
+ * years folded after one click, whatever the list became (batch 54, the 2026-10-25 audit).
+ */
+export interface Folds {
+  opened: ReadonlySet<string>;
+  closed: ReadonlySet<string>;
   months: ReadonlySet<string>;
 }
 const NO_FOLDS: ReadonlySet<string> = new Set();
+
+/** Whether `year` is folded: an opening fold the reader has not opened, or one they folded. */
+export const yearIsFolded = (chosen: Folds | null, opening: ReadonlySet<string>, year: string): boolean =>
+  chosen ? (opening.has(year) && !chosen.opened.has(year)) || chosen.closed.has(year) : opening.has(year);
+
+/** The reader's changes with `year` opened or folded. */
+export function withYear(chosen: Folds | null, opening: ReadonlySet<string>, year: string, open: boolean): Folds {
+  const opened = new Set(chosen?.opened);
+  const closed = new Set(chosen?.closed);
+  if (open) {
+    closed.delete(year);
+    if (opening.has(year)) opened.add(year);
+  } else {
+    opened.delete(year);
+    if (!opening.has(year)) closed.add(year);
+  }
+  return { opened, closed, months: chosen?.months ?? NO_FOLDS };
+}
+
+/**
+ * The reader's saved changes, or null. A view saved before batch 54 held the whole folded set
+ * (`years`), which is what kept a seeded copy of the opening folds; it is read as no choice.
+ */
+export function savedFolds(saved: { opened?: unknown; closed?: unknown; months?: unknown }): Folds | null {
+  const list = (v: unknown) => new Set(Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
+  return Array.isArray(saved.opened) || Array.isArray(saved.closed)
+    ? { opened: list(saved.opened), closed: list(saved.closed), months: list(saved.months) }
+    : null;
+}
+
+/**
+ * Where a list keeps the reader's folds. A focused view ("how did covid affect Ford") opens every
+ * year and keeps its folds to itself: sharing the page's, a choice made on the unfocused page
+ * folded 58 of the 99 years Ford's recall matches fall in, and a fold made while focused would
+ * have opened all of the unfocused page (batch 54).
+ */
+export const foldStorageKey = (persistKey: string | undefined, openAll: boolean): string | undefined =>
+  openAll ? undefined : persistKey;
 
 interface Props {
   events: TimelineEvent[];
@@ -586,34 +630,37 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
   // What a long list opens with folded, until the reader opens or folds something themselves.
   // Derived, not stored, so it follows the list: a filter that shortens it opens everything.
   const folded = useMemo(() => new Set(openAll ? [] : yearsToFold(rows, OPEN_ROW_BUDGET)), [rows, openAll]);
-  const [chosen, setChosen] = useState<Folds | null>(null);
-  const collapsedYears = chosen?.years ?? folded;
+  // The reader's changes, with the storage key they belong to: a change of key (a focus set or
+  // cleared) leaves them behind until that key's own are loaded, so one view's folds never reach
+  // the other's, nor its storage.
+  const storageKey = foldStorageKey(persistKey, openAll);
+  const [view, setView] = useState<{ key?: string; folds: Folds | null }>({ folds: null });
+  const chosen = view.key === storageKey ? view.folds : null;
+  const collapsedYears = useMemo(() => new Set(years.filter((y) => yearIsFolded(chosen, folded, y))), [years, chosen, folded]);
   const collapsedMonths = chosen?.months ?? NO_FOLDS;
+  const edit = (f: (c: Folds | null) => Folds | null) =>
+    setView((v) => ({ key: storageKey, folds: f(v.key === storageKey ? v.folds : null) }));
 
   // Remember-my-view: load what the reader chose for this subject after mount (so SSR and the
-  // first client render agree), then save each choice. Nothing is saved until they choose: a
-  // stored copy of the opening folds would keep them after the list had outgrown them. A view
-  // saved before batch 38 carries no `chosen` mark: every visit saved one, choice or not.
-  const hydrated = useRef(false);
+  // first client render agree), then save each choice. Nothing is saved until they choose.
   useEffect(() => {
-    hydrated.current = false;
-    if (!persistKey) return;
-    const saved = loadJSON<{ years?: string[]; months?: string[]; chosen?: boolean }>(persistKey, {});
+    const saved = storageKey ? loadJSON<{ opened?: unknown; closed?: unknown; months?: unknown }>(storageKey, {}) : {};
     // eslint-disable-next-line react-hooks/set-state-in-effect -- restored from storage after mount, so server and first render agree
-    setChosen(saved.chosen ? { years: new Set(saved.years ?? []), months: new Set(saved.months ?? []) } : null);
-    hydrated.current = true;
-  }, [persistKey]);
+    setView({ key: storageKey, folds: savedFolds(saved) });
+  }, [storageKey]);
   useEffect(() => {
-    if (!persistKey || !hydrated.current || !chosen) return;
-    saveJSON(persistKey, { years: [...chosen.years], months: [...chosen.months], chosen: true });
-  }, [persistKey, chosen]);
+    if (!storageKey || view.key !== storageKey || !view.folds) return;
+    saveJSON(storageKey, { opened: [...view.folds.opened], closed: [...view.folds.closed], months: [...view.folds.months] });
+  }, [storageKey, view]);
 
   // The reveal effect below runs for a jump, not for a list that changed, so it reads the
-  // opening folds from here rather than depending on them.
+  // opening folds and the key from here rather than depending on them.
   const foldedNow = useRef(folded);
+  const keyNow = useRef(storageKey);
   useEffect(() => {
     foldedNow.current = folded;
-  }, [folded]);
+    keyNow.current = storageKey;
+  }, [folded, storageKey]);
 
   const toggle = (set: ReadonlySet<string>, key: string) => {
     const next = new Set(set);
@@ -621,10 +668,9 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
     else next.add(key);
     return next;
   };
-  const toggleYear = (y: string) =>
-    setChosen((c) => ({ years: toggle(c?.years ?? folded, y), months: c?.months ?? NO_FOLDS }));
+  const toggleYear = (y: string) => edit((c) => withYear(c, folded, y, yearIsFolded(c, folded, y)));
   const toggleMonth = (k: string) =>
-    setChosen((c) => ({ years: c?.years ?? folded, months: toggle(c?.months ?? NO_FOLDS, k) }));
+    edit((c) => ({ opened: c?.opened ?? NO_FOLDS, closed: c?.closed ?? NO_FOLDS, months: toggle(c?.months ?? NO_FOLDS, k) }));
 
   // Open whatever contains the jumped-to date. The same state comes back when nothing changes,
   // so this cannot loop, and it runs after the restore pass for the same reason saving does.
@@ -632,30 +678,29 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
     if (!reveal?.date) return;
     const year = reveal.date.slice(0, 4);
     const monthKey = reveal.date.slice(0, 7);
-    setChosen((c) => {
-      const years = c?.years ?? foldedNow.current;
+    setView((v) => {
+      const key = keyNow.current;
+      const c = v.key === key ? v.folds : null;
       const months = c?.months ?? NO_FOLDS;
-      if (!years.has(year) && !months.has(monthKey)) return c;
-      const openYears = new Set(years);
-      openYears.delete(year);
+      if (!yearIsFolded(c, foldedNow.current, year) && !months.has(monthKey)) return v;
       const openMonths = new Set(months);
       openMonths.delete(monthKey);
-      return { years: openYears, months: openMonths };
+      return { key, folds: { ...withYear(c, foldedNow.current, year, true), months: openMonths } };
     });
   }, [reveal?.date, reveal?.n]);
 
   // "Expand all" while any year is folded, the opening folds included; "Collapse all" once none is.
-  const anyFolded = years.some((y) => collapsedYears.has(y));
+  const anyFolded = collapsedYears.size > 0;
   const toggleAll = () =>
-    setChosen((c) => ({ years: anyFolded ? new Set() : new Set(years), months: c?.months ?? NO_FOLDS }));
+    edit((c) =>
+      anyFolded
+        ? { opened: new Set(years), closed: NO_FOLDS, months: c?.months ?? NO_FOLDS }
+        : { opened: NO_FOLDS, closed: new Set(years), months: c?.months ?? NO_FOLDS },
+    );
 
   // Jump-to-year: expand the year (so its content is there to see) and scroll to its header.
   const jumpToYear = (y: string) => {
-    setChosen((c) => {
-      const next = new Set(c?.years ?? folded);
-      next.delete(y);
-      return { years: next, months: c?.months ?? NO_FOLDS };
-    });
+    edit((c) => withYear(c, folded, y, true));
     document.getElementById(yearAnchorId(y))?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 

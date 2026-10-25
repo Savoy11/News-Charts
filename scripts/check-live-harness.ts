@@ -159,6 +159,7 @@ async function main(): Promise<void> {
     "AMD Announces Completion of Partial Tender Offer for its 6.00%",
     "Takeda Announces Chief Financial Officer Succession OSAKA, Japan, and",
     "Akito Bato Senior Managing Director Table of Contents",
+    "Page 1 of 21 UnitedHealth Group Reports 2025 Results and Issues 2026 Outlook",
   ].map((headline, i) => ({ filer: "X", accession: String(i), headline }));
   const caught = headlineProblems(once);
   check(`each of the ${once.length} wrong titles the reader once gave is caught`, caught.length === once.length,
@@ -174,7 +175,7 @@ async function main(): Promise<void> {
     ]).length === 0);
   const headlineCase = CASES.find((c) => /press releases read as headlines/.test(c.name));
   check("a live case samples the headline reader on both 8-K and 6-K filers",
-    Boolean(headlineCase?.covers.includes("sec_edgar")) && HEADLINE_SAMPLE.includes("AAPL") && HEADLINE_SAMPLE.includes("TAK"));
+    Boolean(headlineCase?.covers.includes("sec_edgar")) && HEADLINE_SAMPLE.includes("AAPL") && HEADLINE_SAMPLE.includes("TAK") && HEADLINE_SAMPLE.includes("UNH"));
 
   console.log("\nCoverage");
   check("every source the site may publish from has a live case", uncovered().length === 0, uncovered().join(", "));

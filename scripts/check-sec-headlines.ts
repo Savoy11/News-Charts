@@ -334,6 +334,10 @@ async function main(): Promise<void> {
       wrapped("Acme Names Jane Doe Chief Executive of McDonald's", "Board Also Raises the Quarterly Dividend") === "Acme Names Jane Doe Chief Executive of McDonald's",
     `${wrapped("Acme Completes Acquisition of Widget Makers’", "Gen2 Robotics Unit")} | ${wrapped("Acme Names Jane Doe Chief Executive of McDonald's", "Board Also Raises the Quarterly Dividend")}`);
   check("titles stored by batch 50's reading are read again", HEADLINE_VERSION >= 6);
+  check("a page's count opening its line is no part of the headline, a count alone is no headline (batch 54)",
+    pressReleaseHeadline(asDoc(["Page 1 of 16 Acme Reports First Quarter 2026 Results", "MINNETONKA, Minn., Apr. 21, 2026 — Acme today reported results."])) === "Acme Reports First Quarter 2026 Results" &&
+      pressReleaseHeadline(asDoc(["Page 1 of 16", "Acme Reports First Quarter 2026 Results", "MINNETONKA, Minn., Apr. 21, 2026 — Acme today reported results."])) === "Acme Reports First Quarter 2026 Results");
+  check("titles stored by batch 53's reading are read again: UnitedHealth's \"Page 1 of 21 …\"", HEADLINE_VERSION >= 7);
 
   console.log("\nWhich 8-Ks and 6-Ks are asked about");
   const asked = (label: string, items?: string) => mayCarryRelease(eightK("000001292719000001", "2019-01-01", label, items));

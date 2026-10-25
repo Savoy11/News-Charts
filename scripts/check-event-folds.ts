@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import EventList, { OPEN_ROW_BUDGET, foldedYears } from "../components/EventList";
+import EventList, { OPEN_ROW_BUDGET, foldStorageKey, foldedYears, savedFolds, withYear, yearIsFolded, type Folds } from "../components/EventList";
 import type { TimelineEvent } from "../lib/types";
 
 /**
@@ -101,13 +101,45 @@ function main(): void {
   console.log("\nWired");
   const list = read("components/EventList.tsx");
   check("the opening folds are worked out from the list, not stored, so a filter that shortens it opens everything",
-    /const folded = useMemo\(\(\) => new Set\(openAll \? \[\] : yearsToFold\(rows, OPEN_ROW_BUDGET\)\), \[rows, openAll\]\);/.test(list) && /const collapsedYears = chosen\?\.years \?\? folded;/.test(list));
-  check("a remembered view is saved only once the reader chooses, and marked as a choice",
-    /if \(!persistKey \|\| !hydrated\.current \|\| !chosen\) return;/.test(list) && /chosen: true \}\);/.test(list));
-  check("  …and a view saved before, on every visit, is not taken for one", /setChosen\(saved\.chosen \?/.test(list));
+    /const folded = useMemo\(\(\) => new Set\(openAll \? \[\] : yearsToFold\(rows, OPEN_ROW_BUDGET\)\), \[rows, openAll\]\);/.test(list) &&
+      /yearIsFolded\(chosen, folded, y\)/.test(list));
   check("company and topic pages open every year while a focus narrows the list",
     ["components/CompanyExplorer.tsx", "components/TopicExplorer.tsx"].every((f) => read(f).includes("openAll={focusResult.active}")));
-  check("a jump from the chart opens the folded year it lands in", /const years = c\?\.years \?\? foldedNow\.current;/.test(list) && /openYears\.delete\(year\);/.test(list));
+
+  console.log("\nThe reader's folds, remembered (batch 54, the 2026-10-25 audit's finding 2)");
+  // The audit's run on Ford's page: one click on its oldest year, then the page focused on "recall".
+  const key = "news-charts:collapse:/company/JPM";
+  const opening = new Set(foldedYears(jpm));
+  const store = new Map<string, string>();
+  const save = (k: string | undefined, f: Folds) => k && store.set(k, JSON.stringify({ opened: [...f.opened], closed: [...f.closed], months: [...f.months] }));
+  const load = (k: string | undefined) => (k && store.has(k) ? savedFolds(JSON.parse(store.get(k)!)) : null);
+  const foldedOf = (events: TimelineEvent[], c: Folds | null, openAll = false) => {
+    const o = new Set(openAll ? [] : foldedYears(events));
+    return [...new Set(events.map((e) => e.date.slice(0, 4)))].filter((y) => yearIsFolded(c, o, y));
+  };
+  const clicked = withYear(null, opening, "1799", true);
+  save(foldStorageKey(key, false), clicked);
+  check("one click saves that click, not a copy of every opening fold",
+    clicked.opened.size === 1 && clicked.closed.size === 0 && JSON.parse(store.get(key)!).opened.join() === "1799", store.get(key));
+  check("  …so the page opens as before with that one year open", foldedOf(jpm, load(foldStorageKey(key, false))).length === opening.size - 1,
+    `${foldedOf(jpm, load(foldStorageKey(key, false))).length} folded of ${opening.size}`);
+  const focusedKey = foldStorageKey(key, true);
+  check("a focused view reads no saved folds, and opens every year", focusedKey === undefined && foldedOf(jpm, load(focusedKey), true).length === 0,
+    `${foldedOf(jpm, load(focusedKey), true).length} folded`);
+  const focusedFold = withYear(load(focusedKey), new Set(), "2020", false);
+  save(focusedKey, focusedFold);
+  check("  …and a fold made there stays there: the unfocused page keeps the reader's own",
+    focusedFold.closed.has("2020") && store.size === 1 && foldedOf(jpm, load(foldStorageKey(key, false))).length === opening.size - 1);
+  check("a list a filter shortens opens everything, the reader's changes notwithstanding", foldedOf(small, load(foldStorageKey(key, false))).length === 0);
+  check("a view saved before, as the whole folded set, is not taken for a choice",
+    savedFolds({ years: [...opening], months: [], chosen: true } as never) === null && savedFolds({}) === null);
+  const reopened = withYear(clicked, opening, "2019", true);
+  check("a jump from the chart or the year bar opens the folded year it lands in, and a click folds it again",
+    !yearIsFolded(reopened, opening, "2019") && yearIsFolded(withYear(reopened, opening, "2019", false), opening, "2019") &&
+      /edit\(\(c\) => withYear\(c, folded, y, true\)\)/.test(list) && /withYear\(c, foldedNow\.current, year, true\)/.test(list));
+  check("the list loads and saves under the view's own key, and never one view's folds under the other's",
+    /const storageKey = foldStorageKey\(persistKey, openAll\);/.test(list) && /setView\(\{ key: storageKey, folds: savedFolds\(saved\) \}\);/.test(list) &&
+      /if \(!storageKey \|\| view\.key !== storageKey \|\| !view\.folds\) return;/.test(list) && /const chosen = view\.key === storageKey \? view\.folds : null;/.test(list));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   process.exit(fail ? 1 : 0);

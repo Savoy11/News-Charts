@@ -217,7 +217,7 @@ const HEADLINE_SMELLS: [string, RegExp][] = [
   ["an exhibit's label or index", /^(?:ex(?:hibit)?[\s.-]*\d|index to exhibits\b|exhibit index\b)|\bexhibit\s+\d+(?:\.\d+)?$/i],
   ["a date, or a place and date, alone", /^(?:(?:[Ii]ssued|[Dd]ated?)\s*:?\s*)?(?:\d{1,2}(?:st|nd|rd|th)?\s+[A-Z][a-z]+\.?\s+\d{4}|[A-Z][a-z]+\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})(?:,\s*[A-Z][\w.]*(?:\s+[A-Z][\w.]*){0,2})?$/],
   ["an HTML entity left as written", /&(?:[a-z]+|#\d+|#x[0-9a-f]+);/i],
-  ["a page's furniture", /^source\s*:|\btable of contents\b/i],
+  ["a page's furniture", /^source\s*:|\btable of contents\b|^page\s+\d+\s+of\s+\d+\b/i],
   ["a company's name alone", /^[A-Z][\w&.'’-]*(?:[\s,]+[A-Z&][\w&.'’-]*){0,5}[\s,]+(?:Inc|Ltd|plc|PLC|AG|SE|N\.V|S\.A|Corp|Corporation|Limited|Co)\.?(?:\s?\([^)]{1,25}\))?$/],
   // in lower case, or a title-case joining word other than "A", which ends "…haemophilia A"; and a
   // figure after "its" or "the": "…Tender Offer for its 6.00%" (never after "of": "…per Share of $1.12")
@@ -245,9 +245,10 @@ export function headlineProblems(reads: { filer: string; accession: string; head
 /**
  * Whose recent releases the headline reader is sampled on: US 8-Ks, and the 6-K layouts that went
  * wrong once — Japanese banks' signatures and legends, GSK's date line, Takeda's signature after the
- * date, Lloyds' exhibit index, BP's exhibit list, UBS's cover — with a few that never did.
+ * date, Lloyds' exhibit index, BP's exhibit list, UBS's cover, UnitedHealth's page count — with a
+ * few that never did.
  */
-export const HEADLINE_SAMPLE = ["AAPL", "JPM", "PG", "INTC", "MUFG", "MFG", "SMFG", "GSK", "SAP", "TAK", "LYG", "BP", "UBS", "TSM", "ASML", "NMR"];
+export const HEADLINE_SAMPLE = ["AAPL", "JPM", "PG", "INTC", "UNH", "MUFG", "MFG", "SMFG", "GSK", "SAP", "TAK", "LYG", "BP", "UBS", "TSM", "ASML", "NMR"];
 const HEADLINES_PER_FILER = 5;
 
 export const CASES: LiveCase[] = [

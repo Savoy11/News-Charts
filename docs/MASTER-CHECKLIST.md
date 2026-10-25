@@ -985,6 +985,89 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 47: the headline audit's findings fixed (2026-10-25)
+
+The `code-auditor` agent checked batches 42–46 on `258d6dc`. Its report is
+`docs/audits/2026-10-25-headlines-audit.md`: five findings, three of them `P1`, all in the
+headline reader's 6-K side. Each was reproduced live before it was fixed, from the filings the
+report names. The 8-K side was clean, and stays unchanged: the 378 stored 8-K exhibits, the 160
+stored 6-Ks and 120 fresh US 8-Ks (the newest 8 of 15 companies) read exactly as before.
+
+`npm run check` passes (47 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
+passes. `check:ui` was not run: no page or component changed. HawkScan could not run:
+`HAWK_API_KEY` is not set.
+
+- [x] **Finding 1 (`P1`): a Japanese bank's 6-K titled by its signature** —
+      "By: /s/ Yoshitaka Sekine Name: Yoshitaka Sekine", "Managing Director, Head of
+      Documentation…". The cover page is now cut past the signature. That needed two things:
+      - The banks' 370–430-character legend ("THIS REPORT ON FORM 6-K SHALL BE DEEMED TO BE
+        INCORPORATED BY REFERENCE…") counts as cover, so it no longer stops the cut.
+      - The signature counts too, in each layout found: one field to a line ("By:" over "/s/ …"),
+        a label alone over its value ("Title:" / "Executive Officer & General Manager," /
+        "Financial Accounting Dept"), and no labels at all (Nomura and ORIX print the name and the
+        signer's titles under "/s/"). A title line counts only when it has no verb, so "Acme Names
+        New Chief Operating Officer" under a signature stays a headline. And the signature counts
+        only after a cover phrase, so an exhibit's own "Name:" is left alone.
+      The same live read showed what sits under the signature, now letterhead too: the bank's name
+      with its short form ("Mitsubishi UFJ Financial Group, Inc. (MUFG)", "… Co., Ltd. (MUMSS)",
+      "… Inc. (TSE Code: 8306)", "…Group,Inc."), the Tokyo exchange's opening fields ("Company
+      Name:", "Representative:", "Code Number:", "Stock code:"), and the company's name with its
+      legal form left off when the dateline under it writes the name in full. A headline cut
+      after "Regarding", "Concerning" or a slash now carries on.
+- [x] **Finding 2 (`P1`): every GSK release titled "Issued: 20 October 2026, London UK".** A
+      release's date line is noise: with "Issued:", without it ("24th August 2026, London UK"),
+      and with the day as an ordinal, which the date pattern now reads anywhere. GSK's
+      "Strictly embargoed until…" line is a release marker.
+- [x] **Finding 3 (`P1`): the listed-release rule read any sentence, and could throw.** SMFG's
+      September 2026 filing was titled by its May release, which its dateline cited. The rule
+      now looks only above any dateline, at an entry that opens its own line (after at most the
+      list's own words and mark: "List of materials Documents attached hereto: i) A press release
+      announcing…", "Enclosure: Press release dated…"). A date, a rule or a scrap is no title.
+      "Press release: ------" gave a TypeError, which kept that filing from ever being stored and
+      counted it towards the three-failure stop; it now gives nothing.
+- [x] **Finding 4 (`P2`): `&euro;`, `&pound;` and the other Latin-1 signs reached titles as
+      written** ("SAP Proposes Dividend of &euro;2.20 per Share"). They are decoded now, and so
+      are `&ensp;`, `&emsp;`, `&thinsp;` and a soft hyphen.
+- [x] **Finding 5 (`P2`): the reader's documentation described batch 42 only.** The module header
+      lists the four ways a document is marked as a release, in the order tried. The migration's
+      comment says 8-Ks and 6-Ks and two to four requests (`db:migrate` tracks files by name, so
+      the edit re-runs nothing). README says the signature is cut and where a listed title may
+      sit.
+- [x] Also from the live runs: a web page's credit above SAP's headline ("Source: … (sap.com)")
+      and EDGAR's "Table of Contents" link are noise.
+- [x] `HEADLINE_VERSION` 3 → 4, so every title stored by the old reading is read again, 150 a
+      run.
+- Measured live, every document read by main's reader and this one:
+  - The audited filers, the 25 newest 6-Ks each of Mitsubishi UFJ, Mizuho, SMFG, GSK and SAP: 27
+    titles change, every one from wrong to right. Mitsubishi UFJ 10 and Mizuho 3 lose their
+    signatures; SMFG 2 (its own headline instead of May's, a capital-ratio notice instead of a job
+    title); GSK 7 (an FDA approval among them, "Hibsago (bepirovirsen) approved in the US…"); SAP
+    5 (4 euros, 1 "Source:").
+  - 24 other foreign filers, 12 newest 6-Ks each (288): 10 change. Philips gains 7 (4 that were
+    "/s/ M.J. van Ginneken", 3 that had no title), Nomura 2, and ORIX's financial results go from
+    a signature to no title, which is true.
+  - The real ingest into a fresh scratch database, 150 headlines read for each of Mitsubishi UFJ,
+    GSK, Mizuho and SMFG: 256 found. Reading all 256 found the second wave of cases above (GSK's
+    date lines without "Issued:", the bracketed bank names, SMFG's name without "Inc."); each is
+    fixed and kept as a case, and a second clean run differs only in those.
+- [ ] **Open:**
+      - Headlines cut short where a wrap and a subheadline look alike, the class batches 42–44
+        left open, turned up again: "Nomura to Announce Second Quarter" (for "…Operating Results
+        on October 28"), "Notice Regarding Continuation of Performance-Based", "MUFG Union Bank to
+        U.S. Bancorp". Each was a signature or worse before.
+      - The audit's note on one slow pattern (a 0.5 MB run of text with no line breaks takes 4 s;
+        no real document comes near) is left as it is; the audit did not count it a finding.
+      - The audit's suggestion of a standing sampled live check of the reader is for the
+        `opportunity-scout`; not built here.
+- Checks: `check:sec-headlines` 177 → 206. The real documents rise from 92 to 112 (90 releases
+  with the headline each must give, 22 that must give none): the audit's examples and the second
+  wave from Mitsubishi UFJ, Mizuho, SMFG, GSK and SAP, Nomura's and Philips' signatures, and ORIX's
+  results, which must give none. Each new document is kept long enough that main's reader gets it
+  wrong, and the fixture builder refuses one it gets right. Direct checks: the citing sentence,
+  the rule that threw, a date as a title and the headline under it, the list's own words before
+  an entry, the entities, an exhibit's "Name:", a headline under a signature, and the version. On
+  main's reader 27 of the 29 new checks fail; the other two guard the new rules from overreaching.
+
 ## NC ledger — batch 46: a fund described as a fund (2026-10-25)
 
 Every security page told search engines it was a schema.org `Corporation` — SPY, VOO and GLD

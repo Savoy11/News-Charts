@@ -61,6 +61,17 @@ const CASES: Case[] = [
   { q: "stock", subject: "stock", note: "stripping would leave nothing" },
   { q: "Woodstock", subject: "Woodstock" },
   { q: "effect", subject: "effect", note: "no relation without both sides" },
+
+  // ---- an SEC form beside the security (batch 52): the form is what to narrow the page to
+  { q: "Apple 10-K", subject: "Apple", focus: "10-K" },
+  { q: "Ford's 8-K filings", subject: "Ford's", focus: "8-K", note: "the possessive is the resolver's, as above" },
+  { q: "Tesla 10Q", subject: "Tesla", focus: "10Q", note: "written without its hyphen" },
+  { q: "TSMC 20-F", subject: "TSMC", focus: "20-F" },
+  { q: "Pfizer S-4", subject: "Pfizer", focus: "S-4" },
+  { q: "10-Q for Tesla", subject: "Tesla", focus: "10-Q" },
+  { q: "Apple 10-K filings in 2020", subject: "Apple", focus: "10-K · in 2020", note: "the form and the year both narrow" },
+  { q: "Sony 4K", subject: "Sony 4K", note: "4K is no form" },
+  { q: "10-K", subject: "10-K", note: "a form alone names no security" },
 ];
 
 let pass = 0;

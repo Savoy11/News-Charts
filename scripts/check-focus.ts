@@ -15,7 +15,8 @@ import { readFileSync } from "node:fs";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import FocusBar from "../components/FocusBar";
-import { applyFocus, composableFocus, focusScore, focusTerms, focusWindow, matchesFocus, relatedWords } from "../lib/focus";
+import BestMatches from "../components/BestMatches";
+import { applyFocus, composableFocus, focusScore, focusTerms, focusWindow, isFormTerm, matchesFocus, relatedWords } from "../lib/focus";
 import { CONCEPTS } from "../lib/concepts";
 import type { EventType, TimelineEvent } from "../lib/types";
 
@@ -232,8 +233,8 @@ console.log("\nA short word: a letter-and-digit code is looked for, and a focus 
 // "how did the US affect Ford", "how did the EU affect Apple" and "how did 8-K filings affect JPMorgan"
 check("\"5G\" and \"Q3\" are focus words: a letter and a digit, too specific to turn up by chance",
   focusTerms("5G").join() === "5g" && focusTerms("in Q3").join() === "q3", `${focusTerms("5G")} | ${focusTerms("in Q3")}`);
-check("  …while \"the US\", \"the EU\" and \"8-K\" give none, and \"COVID-19\" gains no \"19\"",
-  ["the US", "the EU", "8-K"].every((f) => focusTerms(f).length === 0) && focusTerms("COVID-19").join() === "covid");
+check("  …while \"the US\" and \"the EU\" give none, and \"COVID-19\" gains no \"19\"",
+  ["the US", "the EU"].every((f) => focusTerms(f).length === 0) && focusTerms("COVID-19").join() === "covid");
 const verizon = [ev("Verizon expands its 5G network to 30 more cities"), ev("Verizon raises its quarterly dividend"), ev("Verizon Q3 results beat estimates")];
 const fiveG = applyFocus(verizon, "5G");
 check("how did 5G affect Verizon narrows to the 5G headline", fiveG.active && fiveG.matched === 1 && fiveG.events[0].title.includes("5G"), `${fiveG.matched} matched`);
@@ -244,6 +245,39 @@ check("a focus with nothing to look for no longer claims every event mentions it
   bar("the US").slice(0, 120));
 check("  …while a real match still says how many of how many", bar("5G").includes("Showing the 1 of 3 events that mention “5G”"), bar("5G").slice(0, 90));
 check("  …and a focus that matches nothing still says that", bar("Brexit").includes("Nothing on this timeline mentions “Brexit”"), bar("Brexit").slice(0, 90));
+
+console.log("\nAn SEC form is one term: \"Apple 10-K\" narrows to the annual reports (batch 52)");
+check("\"10-K\", \"10K\", \"10-Q\", \"8-K\", \"20-F\" and \"S-4\" are each one term, as a filing's title holds them",
+  ["10-K", "10K", "10-Q", "8-K", "20-F", "S-4"].map((f) => focusTerms(f).join("|")).join(",") === "10 k,10 k,10 q,8 k,20 f,s 4",
+  ["10-K", "10K", "10-Q", "8-K", "20-F", "S-4"].map((f) => focusTerms(f).join("|")).join(","));
+check("  …and \"8-K filings\" is the form alone: \"filings\" would match every title that says \"filing\"",
+  focusTerms("8-K filings").join() === "8 k" && focusTerms("Ford's 8-Ks").join("|") === "8 k|ford", `${focusTerms("8-K filings")} | ${focusTerms("Ford's 8-Ks")}`);
+check("  …while \"4K\", \"8K video\", \"$10K bonus\" and \"Ford's 3 recalls\" hold no form",
+  !["4K", "8K video", "$10K bonus", "Ford's 3 recalls"].some((f) => focusTerms(f).some(isFormTerm)),
+  ["4K", "8K video", "$10K bonus", "Ford's 3 recalls"].map((f) => focusTerms(f).join("|")).join(", "));
+const filings = [
+  ev("Apple Inc.: Annual report (10-K)", "earnings"),
+  ev("Apple Inc.: Amended annual report (10-K/A)", "filing"),
+  ev("Apple Computer Inc.: Annual report (10-K405)", "earnings"),
+  ev("Apple Inc.: Quarterly report (10-Q)", "earnings"),
+  ev("Apple Inc.: Apple Reports Fourth Quarter Results (8-K 2.02)", "earnings"),
+  ev("Apple Inc.: 6-K filing", "filing"),
+  ev("Apple shares rise 10 percent after the iPhone launch"),
+];
+const annual = applyFocus(filings, "10-K");
+check("\"10-K\" narrows to the annual reports: the amended one too, and the 10-K405 the form was until 2002", annual.active && annual.matched === 3 && annual.events.every((e) => /10-K/.test(e.title)),
+  annual.events.map((e) => e.title).join(" | "));
+const current = applyFocus(filings, "8-K filings");
+check("\"8-K filings\" narrows to the 8-K, not to the 6-K titled \"filing\"", current.matched === 1 && current.events[0].title.includes("(8-K 2.02)"),
+  current.events.map((e) => e.title).join(" | "));
+const formBar = renderToStaticMarkup(createElement(FocusBar, { focus: "10-K", result: annual, subject: "AAPL", onClear: () => {} })).replace(/<[^>]+>/g, "");
+check("the focus bar says what it narrowed to", formBar.includes("Showing the 3 of 7 events that mention “10-K”"), formBar.slice(0, 90));
+check("a form is no subject to draw on its own timeline", composableFocus("10-K") === null && composableFocus("tariffs") === "tariffs");
+const strip = renderToStaticMarkup(
+  createElement(BestMatches, { result: annual, activeTypes: new Set(["earnings", "filing", "news"]), onJump: () => {} })
+).replace(/<[^>]+>/g, " ");
+check("the best matches name the form as it is written: “10-K” in the headline, never \"10 k\"",
+  strip.includes("“10-K” in the headline") && !/10 k\b/.test(strip), strip.replace(/\s+/g, " ").slice(0, 160));
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);
 if (fail) process.exit(1);

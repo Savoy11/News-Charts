@@ -985,6 +985,46 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 52: "Apple 10-K" narrows to the annual reports (2026-10-25)
+
+Batch 39 left this open: '"8-K" still has nothing to look for. GDELT and the feeds write "8-K" as
+two short pieces, "8" and "K", and a single character is never a focus word.' The same held for
+every SEC form, the words an analyst types to find a filing: "Apple 10-K" or "Ford 8-K" gave no
+focus at all, and the search box read "Apple 10-K" as one name.
+
+`npm run check` passes (47 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
+passes. `check:ui` passes 198/198 against a fresh demo database, built against it. Its economy-overlay
+checks skip themselves there, as that database holds no economy subject. HawkScan could not run:
+`HAWK_API_KEY` is not set.
+
+- [x] **A form's name is one focus term** (`lib/focus.ts`): "8-K", "10-K", "10-Q", "6-K", "11-K",
+      "20-F", "40-F" and "S-1", "S-3", "S-4", "S-8", "F-1", "F-3", "F-4", in the plural too
+      ("8-Ks"). It is kept as the pair of words a filing's title holds ("Annual report (10-K)"),
+      so it matches every filing of the form, its amendments ("10-K/A") and the "10-K405" the
+      annual report was until 2002.
+      - "10K" and "10Q" count without the hyphen; the rest need it, so "8K video" is no 8-K and
+        "Ford's 3 recalls" no S-3. A dollar figure ("$10K") is no form.
+      - With a form named, "filings", "reports" and "forms" beside it are dropped. Alone they
+        would also match every title that says "filing" (a 6-K's, or a pre-2004 8-K's).
+      - A form has no timeline of its own, so the focus bar does not offer one.
+      - The best-matches list writes the form as typed: "“10-K” in the headline".
+- [x] **The search box splits a form from the security** (`lib/prompt.ts`): "Apple 10-K",
+      "Ford's 8-K filings", "TSMC 20-F" and "10-Q for Tesla" open the company's page narrowed to
+      that form. A year still narrows too: "Apple 10-K filings in 2020". "Sony 4K" and "10-K"
+      alone are left as they are.
+- [x] Batch 39's open item is ticked.
+- Measured live (2026-10-25), searched from the home page's box on the local database:
+  - "Apple 10-K" opens AAPL with 34 of its 698 events, which is every title holding "10-K" (30
+    annual reports, 2 amended, 2 10-K405s);
+  - "Ford's 8-K filings" opens F with 803 of 2,337, every title holding "8-K";
+  - "10-Q for IBM" opens IBM with 100 of 1,438, every title holding "10-Q".
+  On main's code, "Apple 10-K" gave no focus: the page said nothing in "10-K" could be looked for.
+- Checks: `check:focus` 66 → 74 and `check:prompt` 37 → 46. They cover the forms as terms, the
+  look-alikes that are not forms, the 10-K's amendments and 10-K405, "8-K filings" not matching a
+  6-K's "filing", the focus bar's and best matches' wording, and the search split with its
+  guards. On main's code `check:focus` fails 2 cases and then stops, because the new helper it
+  calls does not exist there; `check:prompt` fails 7 of its 9 new cases.
+
 ## NC ledger — batch 51: every Takeda and UBS 6-K read (2026-10-25)
 
 Batch 48 left five wrong titles open at Takeda and UBS: a slogan in front of a headline, a label
@@ -1757,9 +1797,10 @@ Ford" and its like. Each kept no focus word.
       the whole timeline." It is shown like a focus that matched nothing, with Dismiss.
       - In Chromium on the demo Ford page: "the US" shows that line over all 46 rows, "5G" says
         nothing on the timeline mentions it, and "NHTSA" still narrows to its 3 events.
-- [ ] **Open:** "8-K" still has nothing to look for. GDELT and the feeds write "8-K" as two short
+- [x] ~~**Open:** "8-K" still has nothing to look for. GDELT and the feeds write "8-K" as two short
       pieces, "8" and "K", and a single character is never a focus word. "8-K filings" works,
-      through "filing".
+      through "filing".~~ Batch 52: a form's name is one focus term, "8-K" narrows to the 8-Ks,
+      and the search box splits "Ford 8-K" into Ford and its 8-Ks.
 - Checks: `check:focus` 60 → 66. On main's code 4 of the new cases fail: "5G" and "Q3" give no
       focus word, so "how did 5G affect Verizon" narrows nothing, and the bar says "Showing the 3
       of 3 events that mention “the US”" and the same for "5G".

@@ -43,8 +43,32 @@ const YEAR = /^(?:1[89]|20)\d{2}$/;
  */
 const SHORT_CODE = /^(?=.*[a-z])(?=.*\d)[a-z0-9]{2}$/;
 
+/**
+ * An SEC form's name: "8-K", "10-K", "10-Q", "20-F", "S-4" (batch 52). Its two pieces are each too
+ * short to look for, so "Apple 10-K" narrowed nothing. Kept whole instead, as the pair of words a
+ * filing's title normalises to — "Annual report (10-K)" holds "10 k" — and an amendment's title
+ * ("10-K/A") holds it too. "10K" and "10Q" are written without the hyphen often enough to count;
+ * the rest need it, so "Ford's 3 recalls" is no S-3 and "8K video" no 8-K. A dollar figure
+ * ("$10K") is no form.
+ */
+const FORM_CODE = /(?<![$\w.,])(?:(?:8|6|11)-k|(?:20|40)-f|10-?[kq]|[sf]-[1348])s?(?![\w-])/gi;
+const FORM_NOUNS = new Set(["filing", "filings", "form", "forms", "report", "reports"]);
+/** The form as its title's words: "10-K", "10K" and "10-Ks" → "10 k". */
+const formWords = (code: string): string =>
+  code.toLowerCase().replace(/-/g, "").replace(/(?<=[kqf\d])s$/, "").replace(/^(\d+|[sf])([a-z\d])$/, "$1 $2");
+/** Whether a term is a form's name, which narrows to filings and is no subject of its own. */
+export const isFormTerm = (term: string): boolean => /^(?:(?:8|6|11) k|(?:20|40) f|10 [kq]|[sf] [1348])$/.test(term);
+/** A term as a reader writes it: a form's name as "10-K", any other word as it is. */
+export const termLabel = (term: string): string => (isFormTerm(term) ? term.replace(" ", "-").toUpperCase() : term);
+
 const normalise = (s: string): string =>
-  s.toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+  s
+    .toLowerCase()
+    // the annual report's form until 2002, "Annual report (10-K405)", is a 10-K to a reader
+    .replace(/\b10-k405\b/g, "10-k")
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 /**
  * Singular-ish form, so "Trumps" matches "Trump" and "tariffs" matches "tariff".
@@ -93,9 +117,18 @@ function memberAt(toks: string[], i: number): string[] | null {
  * ("ai") or partly made of weak words ("consumer price index").
  */
 export function focusTerms(focus: string): string[] {
-  const words = normalise(focus).split(" ").filter(Boolean);
-  const stems = words.map(stem);
   const seen = new Set<string>();
+  const rest = focus.replace(FORM_CODE, (code) => {
+    seen.add(formWords(code));
+    return " ";
+  });
+  // "8-K filings": with a form named, the word for what it is adds nothing, and alone it would
+  // narrow to every filing whose title says "filing"
+  const named = seen.size > 0;
+  const words = normalise(rest)
+    .split(" ")
+    .filter((w) => w && !(named && FORM_NOUNS.has(w)));
+  const stems = words.map(stem);
   for (let i = 0; i < words.length; ) {
     const member = memberAt(stems, i);
     if (member) {
@@ -295,5 +328,7 @@ export function applyFocus(events: TimelineEvent[], focus: string | null): Focus
 export function composableFocus(focus: string): string | null {
   const first = focus.split(" · ")[0].trim();
   if (/^(?:in|during|since|until|before|after|between|throughout|across|from|as)\b/i.test(first)) return null;
-  return focusTerms(first).length > 0 ? first : null;
+  // "10-K" narrows to filings; it has no timeline of its own
+  const terms = focusTerms(first);
+  return terms.length > 0 && !terms.every(isFormTerm) ? first : null;
 }

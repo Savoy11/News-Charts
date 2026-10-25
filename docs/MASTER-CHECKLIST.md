@@ -985,6 +985,47 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 46: a fund described as a fund (2026-10-25)
+
+Every security page told search engines it was a schema.org `Corporation` — SPY, VOO and GLD
+included — and its description pegged the timeline to "the stock price". Batches 9 and 10 left it
+so because "telling a fund from a company is not reliable from what is stored": the SEC files SPY
+and GLD as companies and VOO only as a fund. Three stored things do tell them apart.
+
+`npm run check` passes (46 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
+passes. `check:ui` passes 205/205 against the demo database. HawkScan could not run:
+`HAWK_API_KEY` is not set.
+
+- [x] **`isFund`** (`lib/sec.ts`), each signal measured against the committed index on
+      2026-10-25:
+      - a symbol in the index's registered-fund half — VOO, QQQ, IVV, VFIAX, ARKK, IBIT;
+      - a name that says ETF or Fund — SPY, DIA and MDY are unit investment trusts in the company
+        half with no industry code at all, but "SPDR S&P 500 ETF TRUST" says what it is. The company
+        half has 384 such names (60 ETF, 324 Fund): closed-end funds, lending funds, crypto trusts,
+        "United States Oil Fund, LP" — and the 8 whose other words do not say fund, read one by one,
+        are funds too ("GDL FUND", "BANCROFT FUND LTD");
+      - EDGAR's industry 6221 with a name that says Trust — GLD, IAU and SLV ("SPDR GOLD TRUST")
+        file under "Commodity Contracts Brokers & Dealers". The code alone is not enough: EDGAR's
+        list of 6221 registrants includes operating companies (Antalpha Platform Holding, AIB Data
+        Centers). Nor is Trust alone, a bank's (Northern Trust) or a REIT's name as often.
+      A business development company (Ares Capital) files as a company and stays one. None of the
+      index's 300 largest companies is called a fund; 428 securities in its company half are.
+- [x] **What the page says** (`lib/seo.ts` `securityLd`, `app/company/[ticker]/page.tsx`): a fund
+      is an `InvestmentFund`, its ticker the identifier (schema.org gives an InvestmentFund no
+      `tickerSymbol`); a company stays a `Corporation` with its `tickerSymbol`. A fund's
+      description pegs the timeline to "its share price". The page data carries `fund`, asked of
+      `isFund` with the stored industry code.
+- [x] Batch 10's open item ("Not done: funds in JSON-LD") is ticked, and batch 9's note says so.
+- [ ] **Open:** a fund first visited before its industry is stored (GLD on a first pass) is a
+      `Corporation` until the scheduled ingest gives it one.
+- Checks: `check:security-kind` (29), new and in the chain — registered funds, the trusts named by
+  their names, the commodity trusts by code and name and not by either alone, companies under
+  6221 or named Trust, the 300 largest companies, both structured-data shapes, and the wiring. On
+  main's code it cannot run (`isFund` and `securityLd` do not exist). `check:ui` gains two: VOO's
+  page carries an InvestmentFund block and no Corporation, and its description says share price.
+  `check:wiring`'s check that a company's summary reaches search engines now finds it passed to
+  `securityLd`, which trims it.
+
 ## NC ledger — batch 45: a filing titled by its press release links to that release (2026-10-25)
 
 Batches 42–44 title an 8-K or 6-K by the headline of the press release filed with it, but its link

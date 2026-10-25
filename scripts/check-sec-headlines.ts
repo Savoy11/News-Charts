@@ -8,6 +8,7 @@ import {
   HEADLINE_VERSION,
   afterCoverPage,
   decodeDocument,
+  findDateline,
   findLead,
   headlineCase,
   listedRelease,
@@ -303,6 +304,36 @@ async function main(): Promise<void> {
     pressReleaseHeadline(dayMonth.map((l) => `<p>${l}</p>`).join("")) === "Acme Announces December 1 Closing Date of the Sale of Beta Union Bank to Delta Bancorp",
     String(pressReleaseHeadline(dayMonth.map((l) => `<p>${l}</p>`).join(""))));
   check("titles stored by batch 47's reading are read again", HEADLINE_VERSION >= 5);
+  // batch 51: Takeda's and UBS's 6-Ks read whole
+  const asDoc = (ls: string[]) => ls.map((l) => `<p>${l}</p>`).join("");
+  const capsName = ["ACME HOLDINGS COMPANY LIMITED", "Acme Agrees to Acquire Widget Maker for $2 Billion", "TOKYO, Oct. 24, 2026 — Acme Holdings today announced an agreement."];
+  check("a company's name in capitals, as a signature sets it, is letterhead: \"ACME HOLDINGS COMPANY LIMITED\"",
+    pressReleaseHeadline(asDoc(capsName)) === "Acme Agrees to Acquire Widget Maker for $2 Billion", String(pressReleaseHeadline(asDoc(capsName))));
+  const notAlone = [...cover.slice(0, 5), "Acme publishes agenda for its Annual General Meeting", "• Jane Doe will", "not", "stand for re-election"];
+  check("\"not\" alone on its line is no cover page's \"No ☐\": nothing under the cover is cut",
+    afterCoverPage(notAlone)[0] === "Acme publishes agenda for its Annual General Meeting", JSON.stringify(afterCoverPage(notAlone).slice(0, 2)));
+  check("…but \"No ☐\" still is", afterCoverPage([...cover.slice(0, 5), "Yes ☐", "No ☒", "Acme Reports Results"])[0] === "Acme Reports Results");
+  check("a report's numbered part is no place before a dash: \"II – Treasury, risk, balance sheet…\"",
+    findDateline(["II – Treasury, risk, balance sheet and off-balance sheet"]) === null && findDateline(["DETROIT – General Motors today reported results."]) !== null);
+  const oneLine = (head: string, place: string) =>
+    pressReleaseHeadline(`<p>${head} ${place} May 8, 2025 – Acme Holdings (TSE:1234) today announced that its board resolved to continue the plan for the coming year, as set out below, with the terms the shareholders approved in June and the same trust structure as before.</p>`);
+  check("in a page set as one line, a city in small letters before its country in capitals is the dateline's: \"…in 2025 Osaka, JAPAN,\"",
+    oneLine("Continuation of the Stock Compensation Plan for Directors in 2025", "Osaka, JAPAN,") === "Continuation of the Stock Compensation Plan for Directors in 2025",
+    String(oneLine("Continuation of the Stock Compensation Plan for Directors in 2025", "Osaka, JAPAN,")));
+  check("…a two-word city only when its first word opens one: \"…Results New York, NY,\" keeps \"Results\"",
+    oneLine("Acme Holdings Announces Second Quarter Results", "New York, NY,") === "Acme Holdings Announces Second Quarter Results",
+    String(oneLine("Acme Holdings Announces Second Quarter Results", "New York, NY,")));
+  check("…and a slogan before the headline is taken off: \"Better Health, Brighter Future Takeda Settles…\"",
+    oneLine("1 Better Health, Brighter Future Acme Settles Tax Dispute with Revenue Commissioners", "OSAKA, Japan,") === "Acme Settles Tax Dispute with Revenue Commissioners",
+    String(oneLine("1 Better Health, Brighter Future Acme Settles Tax Dispute with Revenue Commissioners", "OSAKA, Japan,")));
+  check("a label the headline opens on again is said once: \"Statement Statement on…\"",
+    pressReleaseHeadline(asDoc(["Statement Statement on the Timing of Acme's Annual Meeting", "NEW YORK, Oct. 24, 2026 — Acme today said its meeting will move."])) === "Statement on the Timing of Acme's Annual Meeting");
+  const wrapped = (a: string, b: string) => pressReleaseHeadline(asDoc([a, b, "NEW YORK, Oct. 24, 2026 — Acme today announced the news."]));
+  check("a headline cut after a plural's possessive carries on, one cut after a name's does not",
+    wrapped("Acme Completes Acquisition of Widget Makers’", "Gen2 Robotics Unit") === "Acme Completes Acquisition of Widget Makers’ Gen2 Robotics Unit" &&
+      wrapped("Acme Names Jane Doe Chief Executive of McDonald's", "Board Also Raises the Quarterly Dividend") === "Acme Names Jane Doe Chief Executive of McDonald's",
+    `${wrapped("Acme Completes Acquisition of Widget Makers’", "Gen2 Robotics Unit")} | ${wrapped("Acme Names Jane Doe Chief Executive of McDonald's", "Board Also Raises the Quarterly Dividend")}`);
+  check("titles stored by batch 50's reading are read again", HEADLINE_VERSION >= 6);
 
   console.log("\nWhich 8-Ks and 6-Ks are asked about");
   const asked = (label: string, items?: string) => mayCarryRelease(eightK("000001292719000001", "2019-01-01", label, items));

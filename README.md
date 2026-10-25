@@ -339,12 +339,19 @@ reported and not what it was. When the 8-K carries the company's press release a
 First Delivery Date for Mid-First Quarter 2011 (8-K 8.01)", the form and item kept at the end and
 the item's name moved into the description (`lib/secHeadlines.ts`). Only a press release gives a
 headline: an exhibit counts as one when a dateline ("DEARBORN, Mich., Sept. 1, 2004 –") sits in
-its first 40 lines, so a contract, a slide deck or a certification filed as EX-99 gives nothing
+its first 40 lines, or, with none, a lead paragraph in which the company announces or reports
+something "today", so a contract, a slide deck or a certification filed as EX-99 gives nothing
 and the filing keeps its item title. A headline written in capitals is recased ("IBM", "UPS" and
-"Non-GAAP" kept). Reading one costs two or three EDGAR requests and a filing never changes, so each
-8-K is read once and the answer kept in `sec_headlines` (`db/029`); the scheduled ingest reads up
-to 150 a run, newest first, and stops at the first refusal, so a long history fills in over a few
-runs (Boeing's 336 took three). The first pass applies what is stored and reads nothing.
+"Non-GAAP" kept). A foreign company's 6-K, until now just "6-K filing", is read the same way: its
+release attached as EX-99, or the announcement in the 6-K's own document once the SEC's cover page
+is cut — "NIO Inc. Provides April 2023 Delivery Update (6-K)", "Shell announces commencement of a
+share buyback programme (6-K)". A Japanese 6-K that lists its release by title ("Press release
+entitled “…”") gives that title; a routine one — a monthly share return, a buyback report, a set
+of accounts — gives nothing. Reading one costs two to four EDGAR requests and a filing never
+changes, so each is read once and the answer kept in `sec_headlines` (`db/029`); the scheduled
+ingest reads up to 150 a run, newest first, and stops at the first refusal, so a long history fills
+in over a few runs (Boeing's 336 took three). The first pass applies what is stored and reads
+nothing.
 
 ### Checks
 
@@ -588,7 +595,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | --- | --- | --- |
 | Yahoo Finance chart API | Every daily close Yahoo holds, to six places (from 1962 at the earliest; read once, then 10y refreshes; whole history again after a split), dividends, splits. End of day only: a session still trading is left out | Unofficial; swap for a paid API before scale. Full history is asked for by date — `range=max` comes back quarterly (`3mo`) |
 | Yahoo Finance RSS | Company headlines | Headline, link and date only |
-| SEC EDGAR | Filings, earnings (10-K/10-Q/8-K 2.02), fund filings; an 8-K's press-release headline as its title | Requires a `User-Agent` with contact email; headlines read once each and stored (`sec_headlines`) |
+| SEC EDGAR | Filings, earnings (10-K/10-Q/8-K 2.02), fund filings; an 8-K's or 6-K's press-release headline as its title | Requires a `User-Agent` with contact email; headlines read once each and stored (`sec_headlines`) |
 | GDELT 2.0 | News headlines | English-filtered; 2017+. A company is searched under its everyday name and its own other names in one query ("Goldman Sachs Group" OR "Goldman Sachs"; `newsNamesFor`), except words printed around every article ("Google"). GDELT refuses a quoted phrase under five characters, so a short name that is no English word and stands for nothing else first goes bare ("IBM", "ETSY"; `unquotable`, with the word list in `data/english-short-words.json`), its articles kept only when the headline names the company; any other short name is asked with its legal form ("VISA Inc", "CGI Inc"; `gdeltEverydayName`) or, as an other name ("UPS"), only scores headlines. GDELT drops a possessive "'s", so a possessive name of more than one word is asked as GDELT holds it ("DOMINO PIZZA"; `gdeltForm`, with the company's own spelling kept in the name index's `possessive`), and a headline naming "McDonald" names McDonald's. A name measured to drown in passing mentions newest first is asked by relevance over the last three days instead, its articles kept only when the headline names the company and not as a person's name ("MCDONALD", "lowe", Uber's "uber"; `GDELT_BY_RELEVANCE`). Throttles per IP — see note below |
 | Wikipedia | Topic histories and company backstory | "History of ..." + "Timeline of ..." merged; search-index fallback |
 | LoC Chronicling America | Historical newspapers ~1770–1963 | Public domain; fills the pre-2017 gap |

@@ -3,8 +3,8 @@ import type { TimelineEvent } from "../types";
 import { HEADLINE_VERSION, edgarFetch, mayCarryRelease, readFilingHeadline, withHeadline, type HeadlineRead } from "../secHeadlines";
 
 /**
- * 8-K headlines at ingest (batch 42): the ones already read are applied from `sec_headlines`, and
- * a run's worth of the rest are read from EDGAR and stored.
+ * 8-K and 6-K headlines at ingest (batches 42 and 43): the ones already read are applied from
+ * `sec_headlines`, and a run's worth of the rest are read from EDGAR and stored.
  *
  * Bounded twice. A run reads at most `HEADLINES_PER_RUN` filings, newest first, so a long history
  * fills in over a few runs rather than holding one run for minutes — Ford has 777 8-Ks. And it
@@ -19,7 +19,7 @@ const REQUEST_GAP_MS = 130;
 const MAX_FAILURES_IN_A_ROW = 3;
 
 export interface HeadlineStats {
-  /** 8-Ks that can carry a release */
+  /** 8-Ks and 6-Ks that can carry a release */
   eligible: number;
   /** read this run */
   read: number;
@@ -58,7 +58,7 @@ export async function storeHeadline(client: PoolClient, accession: string, read:
   );
 }
 
-/** The events, each 8-K with a stored headline retitled by it. Reads nothing from EDGAR. */
+/** The events, each 8-K or 6-K with a stored headline retitled by it. Reads nothing from EDGAR. */
 export function applyHeadlines(
   events: TimelineEvent[],
   stored: Map<string, { headline: string | null }>
@@ -90,8 +90,8 @@ function pacedEdgar(gapMs: number) {
 type Reader = (cik: string, accession: string) => Promise<HeadlineRead | null>;
 
 /**
- * A company's filings with their 8-K headlines: those stored applied, and up to `limit` more read
- * from EDGAR first. `read` is replaceable so the check can run it offline.
+ * A company's filings with their 8-K and 6-K headlines: those stored applied, and up to `limit`
+ * more read from EDGAR first. `read` is replaceable so the check can run it offline.
  */
 export async function withSecHeadlines(
   client: PoolClient,

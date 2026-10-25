@@ -510,7 +510,7 @@ passes with a new suite (`check:live-harness`), and `npm run lint` reports nothi
       - **Fixed here:** the checklist's on-screen disambiguation `P1` was still open, though NC-039
         shipped it in batch 7. The box is now ticked.
       - **Not fixed:** the company page's JSON-LD calls every security a `Corporation`, funds
-        included. It's a structured-data nicety, left for a fund-page pass.
+        included. It's a structured-data nicety, left for a fund-page pass. Fixed in batch 46.
 - [ ] **NC-033 — wording corrected; the live check is still owed.** The release-gate line said
       "URL dedup". The match is a normalised headline plus its day (`storyKey`), which is what
       lets two outlets' copies of one story collapse.
@@ -562,10 +562,11 @@ same seven stale prompt-search checks.
         left are one chain under `eslint-config-next` (`fast-glob` → `micromatch` → `braces`),
         and every `braces` release is flagged with no fix yet. It is lint tooling only, and
         `--omit=dev` stays at 0.
-- [ ] **Not done: funds in JSON-LD.** The company page calls every security a `Corporation`.
+- [x] **Not done: funds in JSON-LD.** The company page calls every security a `Corporation`.
       Telling a fund from a company is not reliable from what is stored: the SEC files SPY and
       GLD as companies, while VOO appears only as a fund. Left for a fund-page pass, as batch 9
-      said.
+      said. **Done in batch 46:** SPY by its name, GLD by its industry code and name, VOO by the
+      fund index.
 
 ## NC ledger — batch 11: three of the scout's approved proposals (2026-10-18)
 

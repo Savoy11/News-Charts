@@ -34,6 +34,23 @@ export function clampDescription(text: string, max = 155): string {
   return `${(lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
 }
 
+/**
+ * What a security page tells search engines the security is: a schema.org Corporation with its
+ * ticker, or for a fund an InvestmentFund, which has no `tickerSymbol` of its own and carries the
+ * ticker as its identifier.
+ */
+export function securityLd(s: { name: string; ticker: string; fund: boolean; description?: string; siteDomain?: string | null }) {
+  const about = {
+    name: s.name,
+    url: absolute(`/company/${s.ticker}`),
+    ...(s.description ? { description: clampDescription(s.description, 500) } : {}),
+    ...(s.siteDomain ? { sameAs: `https://${s.siteDomain}` } : {}),
+  };
+  return s.fund
+    ? { "@context": "https://schema.org", "@type": "InvestmentFund", ...about, identifier: s.ticker }
+    : { "@context": "https://schema.org", "@type": "Corporation", ...about, tickerSymbol: s.ticker };
+}
+
 /** A schema.org BreadcrumbList — the one bit of structured data every subject page carries. */
 export function breadcrumbLd(items: { name: string; path: string }[]) {
   return {

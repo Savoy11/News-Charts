@@ -559,6 +559,31 @@ export function suggestSecurities(query: string, limit = SUGGEST_LIMIT): Securit
   return scored.slice(0, limit);
 }
 
+/**
+ * Whether a security is a fund — an ETF, a mutual fund, a closed-end fund or an exchange-traded
+ * trust — rather than a company, so its page can say so to search engines (batch 10 left every
+ * security a Corporation: "telling a fund from a company is not reliable from what is stored").
+ * Three things that are, each measured against the committed index on 2026-10-25:
+ *
+ * - a symbol in the registered-fund half of the index (`symbolSeries`): VOO, QQQ, IVV, VFIAX, IBIT;
+ * - a name that says ETF or Fund: SPY, DIA and MDY are unit investment trusts in the company half
+ *   with no industry code at all, but "SPDR S&P 500 ETF TRUST" says what it is. The company half
+ *   has 384 such names (60 ETF, 324 Fund): closed-end funds, lending funds, crypto trusts, USO's
+ *   "United States Oil Fund, LP" — and the 8 whose other words do not say fund, read one by one,
+ *   are funds too ("GDL FUND", "BANCROFT FUND LTD");
+ * - EDGAR's industry 6221 with a name that says Trust: GLD, IAU and SLV are "SPDR GOLD TRUST" and
+ *   kin under "Commodity Contracts Brokers & Dealers". The code alone is not enough — Antalpha
+ *   Platform Holding and AIB Data Centers file under it too — and Trust alone is a bank's or a
+ *   REIT's name as often.
+ *
+ * A business development company (Ares Capital) stays a company: it files as one.
+ */
+export function isFund(security: { ticker: string; name: string; sic?: string | null }): boolean {
+  if (tickerIndex.symbolSeries?.[security.ticker.trim().toUpperCase()] !== undefined) return true;
+  if (/\b(?:ETF|Fund)\b/i.test(security.name)) return true;
+  return security.sic === "6221" && /\bTrust\b/i.test(security.name);
+}
+
 /** The other fund series a registrant files — what a fund's page offers as related. */
 export interface SiblingFunds {
   /** the registrant's CIK, zero-padded, for a link to its EDGAR listing */

@@ -8,7 +8,7 @@ import { firstPassCompany, firstPassTopic } from "./ingest/firstPass";
 import { dropCompanyPrehistory } from "./history";
 import { withoutSharedSectorRows } from "./eventMerge";
 import { pageFilings } from "./secForms";
-import { resolveTickerLocally, siblingFunds } from "./sec";
+import { isFund, resolveTickerLocally, siblingFunds } from "./sec";
 import { loadSectorStanding, type SectorStanding } from "./signals";
 import { boundPageNews, cachedWeight } from "./pageNews";
 
@@ -81,6 +81,8 @@ export interface CompanyPageData {
   industry: IndustryRef | null;
   /** every member's return against the sector median; null below three members with prices */
   standing: SectorStanding | null;
+  /** a fund rather than a company (`isFund`): what the page calls it and tells search engines */
+  fund: boolean;
   /** for a fund, the other series its registrant files, those the site holds first; else null */
   siblings: { registrantCik: string; funds: { ticker: string; name: string; held: boolean }[] } | null;
   /** stored news stories left off the page to keep its cached entry under 2 MB (`boundPageNews`) */
@@ -267,6 +269,7 @@ async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
     macro,
     industry,
     standing,
+    fund: isFund({ ticker: subject.ticker, name: subject.displayName, sic: industry?.sic }),
     siblings,
     refreshedAt: subject.refreshedAt,
   };

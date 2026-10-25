@@ -16,7 +16,7 @@ import FollowBar from "@/components/FollowBar";
 import NewsLeftOut from "@/components/NewsLeftOut";
 import { getCompanyPageData } from "@/lib/page-data";
 import { formatPrice } from "@/lib/priceFormat";
-import { absolute, breadcrumbLd, clampDescription, SITE_NAME } from "@/lib/seo";
+import { absolute, breadcrumbLd, securityLd, SITE_NAME } from "@/lib/seo";
 
 // No route-level revalidate: it never applied (the route is dynamic — a miss runs a first-visit
 // gather and must never be cached), and it read as if pages were cached. The held-page reads in
@@ -32,7 +32,7 @@ export async function generateMetadata({
   const data = await getCompanyPageData(decodeURIComponent((await params).ticker));
   if (!data) return { title: "Company not found", robots: { index: false } };
   const title = `${data.name} (${data.ticker}) timeline`;
-  const description = `${data.name} (${data.ticker}) news, SEC filings, and earnings on one timeline, pegged to the stock price — see what was happening around each move.`;
+  const description = `${data.name} (${data.ticker}) news, SEC filings, and earnings on one timeline, pegged to ${data.fund ? "its share price" : "the stock price"} — see what was happening around each move.`;
   const url = absolute(`/company/${data.ticker}`);
   return {
     title,
@@ -75,15 +75,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
         ])}
       />
       <JsonLd
-        data={{
-          "@context": "https://schema.org",
-          "@type": "Corporation",
-          name: data.name,
-          tickerSymbol: data.ticker,
-          url: absolute(`/company/${data.ticker}`),
-          ...(data.summary ? { description: clampDescription(data.summary, 500) } : {}),
-          ...(data.siteDomain ? { sameAs: `https://${data.siteDomain}` } : {}),
-        }}
+        data={securityLd({ name: data.name, ticker: data.ticker, fund: data.fund, description: data.summary, siteDomain: data.siteDomain })}
       />
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>

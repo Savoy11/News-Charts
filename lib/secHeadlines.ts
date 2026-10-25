@@ -30,9 +30,12 @@
  * cited in the text lends this filing no title. 5 (batch 48): a signature after the date on its line,
  * a cover's check boxes, an exhibit index and any exhibit's label are no headline either, a
  * headline carried on by "And", "Of" or "Between" is read whole, and a dateline's first city is no
- * part of it.
+ * part of it. 6 (batch 51): a slogan, a label said twice, a company's name in capitals, a lone "not"
+ * and a report's numbered parts are no headline or dateline, a city in small letters before its
+ * country is the dateline's, and a headline cut after "Accepts", "Ended", a plural's possessive, a
+ * length of time or "to" and a verb is read whole.
  */
-export const HEADLINE_VERSION = 5;
+export const HEADLINE_VERSION = 6;
 
 /** The exhibit types a press release is filed under: EX-99.x, and EX-20 before the 2004 rules. */
 const RELEASE_EXHIBIT = /^EX-(?:99|20)\b/i;
@@ -192,16 +195,18 @@ const SECOND_PLACE = String.raw`(?:\s*(?:/|and|&)\s*${CAPS_PLACE}${STATE})?`;
 const SECOND_PLACE_DATED = String.raw`(?:\s*(?:/|and|&)\s*${PLACE}${STATE})?`;
 /** At the start of a line: "DEARBORN, Mich., Sept. 1, 2004 –", "New York, January 18 --" */
 // the date in brackets too: "Burbank, CA and Las Vegas, NV (February 6, 2006) —"
-const DATELINE = new RegExp(String.raw`^(${PLACE})${STATE}${SECOND_PLACE_DATED}[,\s]*(?:[—–-]\s*)?\(?${DATE}\)?\s*${DASH}`);
+// and a comma after the date: "Osaka, Japan, May 15, 2020, --- On April 27…"
+const DATELINE = new RegExp(String.raw`^(${PLACE})${STATE}${SECOND_PLACE_DATED}[,\s]*(?:[—–-]\s*)?\(?${DATE}\)?,?\s*${DASH}`);
 /** At the start of a line, with no date: "CUPERTINO, CALIFORNIA — Apple today…" — the place in capitals */
 const DATELINE_UNDATED = new RegExp(String.raw`^(${CAPS_PLACE})${STATE}${SECOND_PLACE}\s*${DASH}\s*\S`);
 /** Inside a run of text with no line breaks, where only a place in capitals with a date is trusted */
 const DATELINE_IN_RUN = new RegExp(String.raw`(?:^|\s)((${CAPS_PLACE})${STATE}[,\s]*(?:[—–-]\s*)?${DATE}\s*${DASH})\s*\S`);
 /**
  * "EXHIBIT 99 --", "NEWS RELEASE -", "Page 2 -", "GBP - British Pound" (a currency in a share-dealing
- * table): a word in the place's spot that is no place
+ * table), "II – Treasury, risk, balance sheet…" (a report's part): a word in the place's spot that
+ * is no place
  */
-const NOT_A_PLACE = /^(?:EXHIBIT|EX|NEWS|PRESS|RELEASE|PAGE|FOR|CONTACT|CONTACTS|MEDIA|INVESTOR|INVESTORS|NOTE|SLIDE|ITEM|SECTION|TABLE|SOURCE|UPDATE|STATEMENT|AND|THE|USD|EUR|GBP|GBX|JPY|CHF|CAD|AUD|HKD|CNY|SEK|NOK|DKK|INR)\b/i;
+const NOT_A_PLACE = /^(?:EXHIBIT|EX|NEWS|PRESS|RELEASE|PAGE|FOR|CONTACT|CONTACTS|MEDIA|INVESTOR|INVESTORS|NOTE|SLIDE|ITEM|SECTION|TABLE|SOURCE|UPDATE|STATEMENT|AND|THE|USD|EUR|GBP|GBX|JPY|CHF|CAD|AUD|HKD|CNY|SEK|NOK|DKK|INR|[IVX]{1,5})\b/i;
 
 /**
  * With no date before the dash, a place in capitals must open a sentence — "DETROIT – General Motors
@@ -228,12 +233,22 @@ function opensWithDateline(line: string, dated = false): boolean {
  */
 const DATELINE_IN_RUN_TODAY = new RegExp(String.raw`(?:^|\s)((${CAPS_PLACE})${STATE}\s*${DASH})\s*(?=[A-Z].{0,100}?\btoday\b)`);
 
+/**
+ * A city written in small letters just before the place in capitals, which is then its country:
+ * "…in Japan in 2025 Osaka, JAPAN, May 8, 2025 –". A headline never ends on a comma. One word, or
+ * two that open a city's name ("New York"): any other word before it is the headline's.
+ */
+const CITY_BEFORE = /(?:^|\s)((?:(?:New|San|Los|Las|Santa|St\.?|Saint|Hong|Tel|Palo|Salt|Fort|Kuala|Rio|Buenos|Mexico)\s)?[A-Z][a-z][A-Za-z'’.-]*),\s*$/;
+
 /** Where a dateline starts inside a run of text, or -1. */
 function datelineInRun(run: string): number {
   for (const source of [DATELINE_IN_RUN, DATELINE_IN_RUN_TODAY]) {
     const re = new RegExp(source.source, "g");
     for (let m = re.exec(run); m; m = re.exec(run)) {
-      if (!NOT_A_PLACE.test(m[2])) return m.index + m[0].indexOf(m[1]);
+      if (NOT_A_PLACE.test(m[2])) continue;
+      const at = m.index + m[0].indexOf(m[1]);
+      const city = CITY_BEFORE.exec(run.slice(0, at));
+      return city ? city.index + city[0].indexOf(city[1]) : at;
     }
   }
   return -1;
@@ -265,8 +280,8 @@ const LETTERHEAD = [
   /^media\s+release\b|\bmedienmitteilung\b|communiqu[eé]\s+aux\s+m[eé]dias|r[eé]sultats\s+financiers|\bfinanzergebnisse\b/i,
   /^-?\s*(?:investor\s+relations\s+|media\s+|press\s+|news\s+)?release\s*-?$/i,
   // a company's name alone on its line, as a letterhead sets it: "Shell plc", "Novartis International
-  // AG", "Sumitomo Mitsui Financial Group,Inc."
-  /^[A-Z][\w&.,'’-]*(?:\s[\w&.,'’-]+){0,3}(?:\s|,\s*)(?:plc|PLC|Inc\.?|Ltd\.?|Limited|AG|N\.V\.|S\.A\.|SE|Corp\.?|Corporation)$/,
+  // AG", "Sumitomo Mitsui Financial Group,Inc.", "TAKEDA PHARMACEUTICAL COMPANY LIMITED"
+  /^[A-Z][\w&.,'’-]*(?:\s[\w&.,'’-]+){0,3}(?:\s|,\s*)(?:plc|PLC|Inc\.?|INC\.?|Ltd\.?|LTD\.?|Limited|LIMITED|AG|N\.V\.|S\.A\.|SE|Corp\.?|CORP\.?|Corporation|CORPORATION)$/,
   // …and with its short name or exchange code after it, however long: "Mitsubishi UFJ Financial Group,
   // Inc. (MUFG)", "Mitsubishi UFJ Morgan Stanley Securities Co., Ltd. (MUMSS)", "… Inc. (TSE Code: 8306)"
   /^[A-Z].{0,60}\s(?:plc|PLC|Inc\.?|Ltd\.?|Limited|AG|N\.V\.|S\.A\.|SE|Corp\.?|Corporation)\s?\((?:[A-Z][A-Za-z&.]{1,7}(?:\s[A-Z][A-Za-z&.]{1,7})?|TSE\s+Code:?\s*\d{4})\)$/,
@@ -276,6 +291,8 @@ const LETTERHEAD = [
   // a European postcode: "CH-4002 Basel", "D-69190 Walldorf"
   /^[A-Z]{1,2}-\d{4,5}\s+[A-Z]/,
   /^not\s+for\s+(?:release|publication|distribution)\b/i,
+  // a company's slogan alone on its line: Takeda's "Better Health, Brighter Future"
+  /^better health(?: for people)?,\s*brighter future(?: for the world)?$/i,
   // a 6-K's list of what it carries, over the announcement: "Index to Exhibits" / "Item" / "No. 1
   // Regulatory News Service Announcement, 23 October 2026"
   /^index\s+to\s+exhibits\b|^exhibit\s+index\b|^(?:no\.\s*\d+\s+)?regulatory\s+news\s+service\b/i,
@@ -436,7 +453,16 @@ const WRAPS_AFTER = new RegExp(
     String.raw`integrates?|expands?|explores?|sells?|buys?|launches|unveils|introduces|posts?|delivers?|raises?|` +
     // "updates" only: "…Delivery Update" is a noun and the line ends there
     String.raw`plans?|agrees?|updates|reaffirms?|provides?|issues?|prices?|increases?|expects?|` +
-    String.raw`elected|appointed|named|promoted))$`,
+    // "…Food and Drug Administration Accepts" / "New Drug Application…"
+    String.raw`accepts?|grants?|receives?|` +
+    String.raw`elected|appointed|named|promoted|` +
+    // a period's end before its date, "…for the Three-month Period Ended" / "June 30, 2021"; a plural's
+    // possessive, "…Acquisition of Nimbus Therapeutics’" / "TYK2 Program Subsidiary"; a length of time
+    // before what it measures, "…Highlighting Full 32-Week" / "Results from Phase 3…"
+    String.raw`ended|ending|[A-Za-z]+s[’']|\d+-(?:day|week|month|year)|` +
+    // a verb after "to" that wants its object: "…Trial to Evaluate" / "Potential COVID-19 Hyperimmune
+    // Medicine", "…Decision to Release" / "Takeda from Commitment…"
+    String.raw`to\s+(?:acquire|evaluate|release|divest|sell|buy|develop|launch|explore|expand|offer|redeem|repurchase|purchase|transfer|supply|provide|create|form|build|deliver|support|accelerate|commercialize|manufacture|distribute|investigate|assess|treat|host)))$`,
   "i"
 );
 
@@ -553,7 +579,8 @@ const COVER_PAGE = new RegExp(
     String.raw`^date:\s`,
     String.raw`^form 20-f\b.*form 40-f`,
     String.raw`^yes\b\s*:?\s*\S{0,2}\s+no\b`,
-    String.raw`^(?:yes|no)\s*:?\s*\S{0,2}$`,
+    // …a whole word only: "not", wrapped alone onto its line under UBS's bullets, is no "No ☐"
+    String.raw`^(?:yes|no)\b\s*:?\s*\S{0,2}$`,
     // a Japanese bank's legend above its signature, 370–430 characters long
     String.raw`form 6-k shall be deemed to be incorporated by reference`,
     // what the 6-K says it consists of: "This Form 6-K consists of the UBS Group AG consolidated…"
@@ -758,9 +785,23 @@ const joined = (b: string[]) => b.reduce((s, l) => (/\w-$/.test(s) ? s + l : `${
 const opens = (s: string) => headlineLike(s) && !STARTS_MID_PHRASE.test(s);
 /** The block as a headline — or its first line alone, when what it ran on into makes it too long. */
 const candidate = (b: string[]) => (opens(joined(b)) ? joined(b) : opens(b[0]) ? b[0] : null);
-/** A candidate as a title: a page number before it dropped, capitals recased, stray marks tidied. */
+/**
+ * A company's slogan, set in the letterhead of a release whose text runs on as one line: "1 Better
+ * Health, Brighter Future Takeda Settles Tax Dispute…". A slogan reads like the start of a headline,
+ * so only those known are taken off.
+ */
+const SLOGAN = /^Better Health(?: for People)?,\s*Brighter Future(?: for the World)?\s+(?=\S)/i;
+/**
+ * A candidate as a title: a page number, a slogan and a label the headline opens on again ("Statement
+ * Statement on Inadvertent Abstract Disclosure…") dropped from its front, capitals recased, stray
+ * marks tidied.
+ */
 function finish(text: string): string | null {
-  const headline = tidy(headlineCase(tidy(text.replace(/^\d{1,2}\s+(?=[A-Z])/, ""))));
+  const unlabelled = text
+    .replace(/^\d{1,2}\s+(?=[A-Z])/, "")
+    .replace(SLOGAN, "")
+    .replace(/^([A-Z][a-z]+)\s+(?=\1\s)/, "");
+  const headline = tidy(headlineCase(tidy(unlabelled)));
   return headline.length >= 12 ? headline : null;
 }
 

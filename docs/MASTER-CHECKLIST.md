@@ -985,6 +985,72 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 51: every Takeda and UBS 6-K read (2026-10-25)
+
+Batch 48 left five wrong titles open at Takeda and UBS: a slogan in front of a headline, a label
+said twice, a city left on the end, a table's header and a sentence's fragment. Each was a layout
+that only a full read had shown. So this batch read every 6-K Takeda has filed since 2019 (343)
+and UBS's (422 from UBS Group since 2016, and UBS AG's 49 since October 2025): 814 filings through
+the reader, each title looked at.
+
+`npm run check` passes (47 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
+passes. `check:ui` was not run: no page or component changed. HawkScan could not run:
+`HAWK_API_KEY` is not set.
+
+- [x] **What the read found, and the fix for each** (`lib/secHeadlines.ts`):
+      - **Takeda's slogan**, "Better Health, Brighter Future". Alone on its line it is letterhead
+        now, and at the front of a page set as one line it is taken off. Two titles opened with it
+        and two were nothing else.
+      - **A label said twice**: "Statement Statement on…" is said once.
+      - **A city in small letters before its country in capitals**, in a page set as one line:
+        "…in 2025 Osaka, JAPAN, May 8, 2025 –" is all dateline now, so two titles lose "Osaka".
+        A two-word city is taken only when its first word opens one ("New York").
+      - **A comma after the dateline's date**, "Osaka, Japan, May 15, 2020, --- On…", no longer
+        hides the dateline. One title had been a numbered heading under it ("2.Details and
+        rationale…"), and a filing that had no title now has its headline.
+      - **A company's name in capitals**, as a signature sets it ("TAKEDA PHARMACEUTICAL COMPANY
+        LIMITED"), is letterhead. One title had been that name.
+      - **"not" alone on its line** was taken for the cover page's "No ☐" box, so everything above
+        it was cut as cover page, the headline included. UBS's 2024 meeting notice was titled
+        "stand for re-election after eight years of Board"; it is now "UBS publishes agenda for
+        its Annual General Meeting on 24 April 2024".
+      - **A report's numbered part**, "II – Treasury, risk, balance sheet…", was read as a place
+        before a dash, like "DETROIT – …". Credit Suisse's half-year report, filed by UBS, was
+        titled with its contents page; as a report, it now has no title.
+      - **Headlines cut short at the end of a line** on a word no headline ends on: "Accepts"
+        (and "Grants", "Receives"), "Ended" or "Ending" before a date, a plural's possessive
+        ("…Nimbus Therapeutics’"), a length of time ("32-Week"), and "to" with a verb that takes
+        an object ("to Evaluate", "to Release", "to Divest"). Seven titles now read whole.
+- Measured (2026-10-25), each reader on the same saved copies of the documents:
+  - Takeda and UBS, 814 filings: 21 titles change. 16 wrong titles become right. 3 filings with
+    no title get their headline: two results releases under the slogan, and one under a dateline
+    with a comma. The Credit Suisse report loses a title it should not have had. The 2019 notice
+    titled by the company's name now gets its headline's first line; the whole headline reads as
+    body text (see open). No filing went unanswered.
+  - Everything read before gives the same titles: the 798 stored 8-K and 6-K documents from
+    batches 42–44, and the 533 filings from batch 48's live read of 44 companies.
+- [x] Batch 48's Takeda and UBS items are ticked.
+- [ ] **Open** at Takeda and UBS after the read, each needing more than a rule can safely tell:
+      - Cut short still: Takeda's "Notice regarding the Acquisition of the Entire Issued and To Be
+        Issued" (… "Share of Shire plc…"), its 2019 capital notice (a headline of 253 letters,
+        nearly all in small letters, which the reader takes for body text), and UBS's "Pricing of
+        UBS Group AG Additional" ("Tier 1 instruments").
+      - UBS's 2023 announcement of its new chief executive is titled by its first sentence (the
+        batch 43 item), and a 2018 headline runs into its subheadline ("…Group Executive Board of
+        UBS Kathy Shih retiring at year-end").
+      - Two UBS quarterly reports are titled by their covers ("First Quarter 2021 Report Our
+        financial results"), and a Takeda call transcript by its cover ("WAVE 1 PIPELINE MARKET
+        OPPORTUNITY CALL (PART 2)…").
+- `HEADLINE_VERSION` 5 → 6, so the titles stored by the old reading are read again.
+- Checks: `check:sec-headlines` 224 → 247. The real documents rise from 127 to 140 (115 releases,
+  25 that must give none), each new one read wrong by main's reader. Ten direct checks cover the
+  rules on small cases, with guards where a rule must stop: a name's possessive ("…of McDonald's")
+  still ends a line, "Results" before "New York, NY," stays in the headline, and "No ☐" is still
+  the cover's. On main's reader 22 of them fail.
+- `npm run check:live` (2026-10-25): "EDGAR — recent press releases read as headlines" passes on
+  the new reader. As a whole: 21 pass, 0 fail, 5 unreachable (GDELT, which gives this session no
+  answer), 1 skipped (Etherscan, no key).
+
 ## NC ledger — batch 50: a fund's first page knows it is a fund (2026-10-25)
 
 Batch 46 left one item open: "a fund first visited before its industry is stored (GLD on a first
@@ -1129,11 +1195,12 @@ passes. `check:ui` was not run: no page or component changed. HawkScan could not
         Closing" ("Dates for…"), "Nomura to Announce Second Quarter", Mitsubishi UFJ's "…of
         Performance-Based" and "…the Sale of MUFG". Joining any line that cannot end on its own
         would fix the last two, but it also joins Cisco's headline to a subheadline that wraps.
-      - Takeda: page-per-line documents whose dateline is read from "JAPAN" leave "…in 2025 Osaka";
+      - ~~Takeda: page-per-line documents whose dateline is read from "JAPAN" leave "…in 2025 Osaka";
         a "Statement" label doubles ("Statement Statement on…"); a slogan opens one title ("Better
-        Health, Brighter Future Takeda Settles…").
-      - UBS: one title is a table's header ("Wealth Management Swiss Bank Asset Management…") and
-        one a sentence's fragment ("stand for re-election after eight years of Board").
+        Health, Brighter Future Takeda Settles…").~~ Fixed in batch 51.
+      - ~~UBS: one title is a table's header ("Wealth Management Swiss Bank Asset Management…") and
+        one a sentence's fragment ("stand for re-election after eight years of Board").~~ Fixed in
+        batch 51.
 - Checks: `check:sec-headlines` 206 → 224. The real documents rise from 112 to 127 (103 releases
   with the headline each must give, 24 that must give none). The 13 new ones above are each kept
   long enough that main's reader gets them wrong, and the fixture builder refuses one it gets

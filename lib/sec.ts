@@ -34,6 +34,7 @@ import rawTickerIndex from "../data/edgar-tickers.json";
 import rawCompanyAliases from "../data/company-aliases.json";
 import { nameKey, type AliasIndexFile } from "./companyAliases";
 import { foldAccents } from "./fold";
+import { predecessorsOf } from "./predecessors";
 
 /**
  * The index's contract, declared rather than inferred.
@@ -302,7 +303,12 @@ export function newsNamesFor(cik: number | string): string[] {
     .sort((a, b) => a.key.length - b.key.length || a.key.localeCompare(b.key));
   const kept: typeof names = [];
   for (const n of names) if (!kept.some((k) => ` ${n.key} `.includes(` ${k.key} `))) kept.push(n);
-  return kept.slice(0, 3).map((n) => n.written);
+  // …and a predecessor's own name, where the present one is not how headlines write the company:
+  // "Exxon Mobil" for ExxonMobil Holdings (`lib/predecessors.ts`); first, as the commonest
+  const carried = predecessorsOf(want)
+    .flatMap((p) => p.news ?? [])
+    .filter((n) => nameKey(n) !== askedKey && !kept.some((k) => k.key === nameKey(n)));
+  return [...carried, ...kept.map((n) => n.written)].slice(0, 3);
 }
 
 /**
@@ -1095,6 +1101,38 @@ export async function getFilingsDeep(
   renames: Rename[] = [],
   /** filled with the accessions of the filer's own stakes in other issuers, left out of the events */
   othersStakes: string[] = []
+): Promise<TimelineEvent[]> {
+  /**
+   * …and the records it was filed under before a new parent took its ticker (`lib/predecessors.ts`):
+   * Exxon Mobil Corporation's for XOM, Google Inc.'s for Alphabet. Each is read as the company's,
+   * titled with its present name and linked at the record it lives in, up to the day the successor
+   * took over. Asked at the same moment as the company's own record, so it costs no wait.
+   */
+  const earlier = predecessorsOf(company.cik).map(async (p) => {
+    const cik = String(p.cik).padStart(10, "0");
+    const theirs: Rename[] = [];
+    const events = await recordFilings({ ...company, cik }, includeOlder, theirs, othersStakes);
+    // A predecessor that took a subsidiary's name as its ticker passed on ("BlackRock Inc." to
+    // "BlackRock Finance, Inc." five days before) renamed itself, not the company: its last rename
+    // goes, unless it was into the name the company still had then ("Exxon Corp" to "Exxon Mobil").
+    const last = theirs.reduce<Rename | null>((a, r) => (!a || r.on > a.on ? r : a), null);
+    const own = (r: Rename) => r !== last || phrase(commonName(r.to)) === phrase(commonName(p.name));
+    renames.push(...theirs.filter((r) => r.on < p.until && own(r)));
+    const dropped = last && !own(last) ? `sec-rename-${cik}-${last.on}` : null;
+    return events.filter((e) => e.date < p.until && e.id !== dropped);
+  });
+  const [own, ...before] = await Promise.all([recordFilings(company, includeOlder, renames, othersStakes), ...earlier]);
+  // one row a filing: one the two records share is the successor's
+  const seen = new Set(own.map((e) => e.id));
+  return [...own, ...before.flat().filter((e) => !seen.has(e.id) && seen.add(e.id))];
+}
+
+/** One EDGAR record's filings: its recent block, and its older shards when asked. */
+async function recordFilings(
+  company: CompanyInfo,
+  includeOlder: boolean,
+  renames: Rename[],
+  othersStakes: string[]
 ): Promise<TimelineEvent[]> {
   const res = await fetch(`https://data.sec.gov/submissions/CIK${company.cik}.json`, {
     headers: UA,

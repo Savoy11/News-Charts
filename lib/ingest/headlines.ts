@@ -97,6 +97,14 @@ function pacedEdgar(gapMs: number) {
 type Reader = (cik: string, accession: string) => Promise<HeadlineRead | null>;
 
 /**
+ * The record a filing lives in, from its address: a predecessor's for a filing made before a new
+ * parent took the ticker (`lib/predecessors.ts`). EDGAR serves a filing only under a CIK that
+ * filed it, so read under the company's present CIK it would answer 404, and a 404 is stored as
+ * "no headline" for good.
+ */
+const filerCik = (url: string | undefined): string | null => /\/Archives\/edgar\/data\/(\d+)\//.exec(url ?? "")?.[1] ?? null;
+
+/**
  * A company's filings with their 8-K and 6-K headlines: those stored applied, and up to `limit`
  * more read from EDGAR first. `read` is replaceable so the check can run it offline.
  */
@@ -118,7 +126,7 @@ export async function withSecHeadlines(
   for (const ev of due.slice(0, limit)) {
     let got: HeadlineRead | null = null;
     try {
-      got = await reader(cik, ev.externalId!);
+      got = await reader(filerCik(ev.url) ?? cik, ev.externalId!);
     } catch {
       got = null;
     }

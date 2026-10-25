@@ -985,6 +985,101 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 53: a company's history before its new SEC record (2026-10-25)
+
+The `code-auditor` agent checked everything changed since the last audit (`d36636d`, batches
+24–52) on `7ba8cb6`. Its report is `docs/audits/2026-10-25-code-audit.md`: four findings inside
+that scope (two `P2`, two `P3`), six set aside, and one outside it that it rated above them all
+(`P1`). This batch fixes that one. The four are below as open items, for batch 54.
+
+`npm run check` passes (48 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` was
+not run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **XOM's page carried 8 filings; Exxon's record holds 581 back to 1994.** A holding-company
+      reorganisation, a redomicile or a merger the company survives gives the listed parent a new
+      SEC record (CIK), and EDGAR links the two nowhere. ExxonMobil Holdings Corp took XOM on
+      2026-07-01 and its record starts that day; BlackRock's new parent took BLK in October 2024.
+      Alphabet's page began in October 2015 and Disney's in 2019 for the same reason.
+      - `lib/predecessors.ts` maps each successor to the record its history stays under, with the
+        day of the handover. Every entry was checked by hand: the successor's notice of succession
+        (an 8-K12B or 8-K12G3) names the predecessor, and the predecessor's record no longer lists
+        a ticker, because its ticker passed on.
+      - The filings reader (`getFilingsDeep`, `lib/sec.ts`) reads the predecessor's record too and
+        keeps its filings dated before the handover. Its later filings are a subsidiary's (debt
+        filings, its deregistration) and are left out. A filing both records carry is shown once.
+        The predecessor's titles carry the company's present name; their links point at the record
+        they are filed under.
+      - The predecessor's own renames before the handover count ("Exxon" to "Exxon Mobil", 1999).
+        Its last rename does not when that rename is into a subsidiary's name at the handover:
+        BlackRock's old record became "BlackRock Finance" and Disney's "TWDC Enterprises 18".
+      - The 8-K headline reader asks EDGAR for a filing under the CIK in the filing's own link.
+        Asked under the successor's CIK, EDGAR answers 404 for a predecessor's filing.
+      - News uses the predecessor's own name where the successor's present name is not it:
+        "Exxon Mobil" and "Exxon" for XOM, "Cigna" for CI, "Bunge" for BG, "Marvell" for MRVL
+        (`newsNamesFor`). A name that is also an everyday word or a common surname ("Apache",
+        "Ferguson") is left out, as batch 34 left them out.
+      - Left out on purpose: a merger into a new company under a new ticker (Linde, Nutrien,
+        Restaurant Brands), which is not one company's history; and UBS AG, whose record lists
+        hundreds of notes of its own, which would bury UBS Group's page.
+- Measured live (2026-10-25), SEC filings and renames per page, main → now, with the annual reports
+  among them:
+
+  | Ticker | Main | Now | Earliest now | Annual reports |
+  |---|---:|---:|---|---|
+  | XOM | 8 | 583 | 1994-03-04 | 0 → 33 |
+  | BLK | 46 | 456 | 2006-06-09 | 2 → 20 |
+  | GOOGL | 266 | 570 | 2004-04-29 | 11 → 22 |
+  | DIS | 171 | 689 | 1995-09-20 | 7 → 30 |
+  | AVGO | 229 | 529 | 2008-08-21 | 8 → 17 |
+  | CI | 225 | 897 | 1994-01-11 | 8 → 33 |
+  | FERG | 50 | 201 | 2021-03-08 | 2 → 5 |
+  | BG | 103 | 706 | 2001-08-10 | 3 → 26 |
+  | HHH | 90 | 408 | 2010-10-22 | 3 → 16 |
+  | APO | 218 | 513 | 2008-04-08 | 4 → 14 |
+  | MRVL | 157 | 703 | 2000-03-23 | 5 → 26 |
+  | APA | 126 | 724 | 1994-02-11 | 5 → 33 |
+  | XRX | 203 | 963 | 1994-02-11 | 7 → 32 |
+  | MDT | 259 | 670 | 1994-03-04 | 12 → 33 |
+  | ETN | 266 | 619 | 1994-02-14 | 14 → 33 |
+
+  No page holds a filing twice. AVGO reads two records back: Broadcom Limited (2016–2018) and
+  Avago Technologies (2008–2016). A page refreshed by `npm run ingest` picks the history up; the
+  first pass reads the predecessor's recent filings too.
+- [ ] **Open — the rest of the successors.** Of the 264 listed companies that have filed a notice
+      of succession since 2001, 115 have a record that starts at most 18 months before it. The 15
+      above are mapped. The other 100 need the same hand check before they are added, BNY, Baker
+      Hughes, AB InBev, Crown Holdings, DraftKings, HF Sinclair, Liberty Global, Noble, Ovintiv,
+      Ferrari, Southwest Gas and Weatherford among them. Linde, Nutrien, Restaurant Brands and
+      UBS AG stay out (above), and SKYD's notice was not confirmed. Whoever adds one adds a line
+      to `lib/predecessors.ts`; `check:predecessors` checks its form against the ticker index.
+- [ ] **Open — audit finding 1 (`P2`): the Justice Department feed loses every release about a
+      company whose name has an apostrophe** (Moody's $864M settlement, Kohl's, Macy's, Lowe's,
+      McDonald's), and Kohl's penalty lands on Walmart's page instead. The API is asked under the
+      SEC spelling ("MOODYS", "KOHLS") while justice.gov writes "Moody’s", and the party test
+      (`escapeName`) does not fold `'` and `’` the way the Federal Register's `words()` does. For
+      batch 54.
+- [ ] **Open — audit finding 2 (`P2`): one click on a long timeline makes later focused views of
+      that page hide most of their matches.** A year folded or opened by hand is saved per page
+      and overrides the "open every year" a focused view asks for, so "How did covid affect Ford"
+      opens with most matched years folded. For batch 54.
+- [ ] **Open — audit finding 3 (`P3`): UnitedHealth's 2026 results releases are titled "Page 1 of
+      N …".** The reader should strip a leading page count from a line that holds a whole page.
+      For batch 54.
+- [ ] **Open — audit finding 4 (`P3`): `check:feeds` asks GDELT a query production no longer sends,
+      and never asks the newer sources.** It should build its GDELT line from `gdeltNewsPlan` and
+      `newsNamesFor`, and add lines for the recall, FDA and Justice Department feeds. For batch 54.
+- The audit's six set-asides stay as it left them (each is in the report): "Form 10-K" resolving
+  to FormFactor, recalls' marker priority in Biggest Moves, three fresh-filer headlines cut short,
+  "/de/" in Moody's scoring aliases, "Chase" and "Citi" resolving to small companies, and the
+  Federal Register asked under the SEC spelling (no document lost).
+- Checks: `check:predecessors` is new, 20 checks: the map against the committed ticker index
+  (each successor listed, no predecessor still listed, dates and notices well formed); the reader
+  against a stand-in EDGAR (the predecessor's filings before the handover only, back to its older
+  shard, titled and linked as above, a shared filing once, the renames kept and dropped); the
+  headline reader's CIK; and the news names, scored on "Exxon Mobil beats profit estimates". On
+  main's reader 10 of the 20 fail; the 10 that pass there check the map alone, which main does
+  not have.
+
 ## NC ledger — batch 52: "Apple 10-K" narrows to the annual reports (2026-10-25)
 
 Batch 39 left this open: '"8-K" still has nothing to look for. GDELT and the feeds write "8-K" as

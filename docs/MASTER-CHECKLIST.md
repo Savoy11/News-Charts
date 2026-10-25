@@ -985,6 +985,59 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 49: a live check of the headline reader (2026-10-25)
+
+The 2026-10-25 audit closed on an opportunity: "the headline reader has no standing live check. A
+small sampled read like the one above would have caught findings 1–3." Batches 47 and 48 each
+found their faults by reading live filings by hand. Every fault was a filer's own layout that no
+fixture held: a Japanese bank's legend, GSK's date line, Takeda's signature after the date,
+Lloyds' exhibit index. A filer can bring in a new layout any week. This batch makes that read a
+standing check.
+
+`npm run check` passes (47 suites), `npm run lint` and `tsc --noEmit` are clean, and `next build`
+passes. `check:ui` was not run: no page or component changed. HawkScan could not run:
+`HAWK_API_KEY` is not set.
+
+- [x] **`check:live` gains "EDGAR — recent press releases read as headlines"**
+      (`scripts/check-live.ts`). It reads the newest five 8-Ks and 6-Ks of 16 filers through the
+      real reader, paced under EDGAR's limit as the ingest is. The filers are four US companies,
+      the 6-K layouts that went wrong once (the three Japanese banks, GSK, SAP, Takeda, Lloyds,
+      BP, UBS) and three that never did (TSMC, ASML, Nomura). It fails on any title that has a
+      mark no headline carries:
+      - a signature or a disclosure's field;
+      - a signer's title alone;
+      - the SEC's cover page, an exhibit's label or index, or a page's furniture;
+      - a date, or a place and date, alone;
+      - an HTML entity left as written;
+      - a company's name alone, matched against the filer's own name when the legal form is left off;
+      - words cut off on a joining word, or on a figure after "its" or "the".
+      It also fails when the reader finds a headline in fewer than one recent filing in eight,
+      which is a broken reader rather than a filer's layout. A refusal from EDGAR is UNREACHABLE,
+      as for every source. Like the rest of `check:live`, it stays out of the offline chain.
+- [x] **The marks are kept to ones a real headline never carries,** so a FAIL is worth reading.
+      Each was tried against every headline at hand:
+      - none of the 103 headlines in the reader's fixtures matches;
+      - none of the 554 read in batch 48 matches, beyond the 12 wrong titles batch 48 fixed;
+      - none of the 464 the real ingest stored in batches 47–48 matches, beyond the 4 wrong titles
+        fixed after those runs.
+      Three marks were narrowed on the way. A title must have three words of any kind ("Q4 2025
+      Update" is one). The cover page means "Form 20-F" and "Form 40-F" together, since a headline
+      may announce a 20-F filing. A cut-off "A" must be lower case ("…haemophilia A").
+- Measured live (2026-10-25): the case passes in 48 seconds (35 headlines from 80 filings, none
+  flagged). The same sample read by batch 47's reader flags 7: Takeda's signer's title three times,
+  Lloyds' exhibit index twice, BP's exhibit list and UBS's cover. These are the faults batch 48
+  found by reading by hand, so the case would have found them. `npm run check:live` as a whole:
+  20 pass, 0 fail, 6 unreachable (GDELT's five, which give this session no answer, and Wikipedia,
+  which answers it 429), 1 skipped (Etherscan, no key).
+- [ ] **Open:** the sample is 80 filings, so a fault at a filer outside it, or in an older layout,
+  shows up only in the ingest's own titles. Batch 48's full read is the way to find those, and is
+  worth repeating whenever the reader changes.
+- Checks: `check:live-harness` 40 → 45: none of the fixtures' 103 headlines is taken for a wrong
+  one; each of 15 wrong titles the reader once gave is caught; the company's name alone is caught
+  by the filer's name, but a headline naming the company is not, nor "…haemophilia A" nor "…per
+  Share of $1.12"; and the case samples both 8-K and 6-K filers. On main the harness cannot run:
+  `headlineProblems` and `HEADLINE_SAMPLE` do not exist.
+
 ## NC ledger — batch 48: every headline read, and what the reading found (2026-10-25)
 
 The open item that batches 42, 43, 44 and 47 carried, headlines cut short where a wrap and a
@@ -1130,7 +1183,7 @@ passes. `check:ui` was not run: no page or component changed. HawkScan could not
       - The audit's note on one slow pattern (a 0.5 MB run of text with no line breaks takes 4 s;
         no real document comes near) is left as it is; the audit did not count it a finding.
       - The audit's suggestion of a standing sampled live check of the reader is for the
-        `opportunity-scout`; not built here.
+        `opportunity-scout`; not built here. Built in batch 49 as a `check:live` case.
 - Checks: `check:sec-headlines` 177 → 206. The real documents rise from 92 to 112 (90 releases
   with the headline each must give, 22 that must give none): the audit's examples and the second
   wave from Mitsubishi UFJ, Mizuho, SMFG, GSK and SAP, Nomura's and Philips' signatures, and ORIX's

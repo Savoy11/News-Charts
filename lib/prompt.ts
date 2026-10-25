@@ -146,6 +146,16 @@ export function headPrefixes(subject: string, maxPrefixes = 3): { prefix: string
   return out;
 }
 
+/**
+ * An SEC form named beside the security: "Apple 10-K", "Ford's 8-K filings", "10-Q for Tesla"
+ * (batch 52). The form is what to narrow the page to and the rest is the security; read whole,
+ * "Apple 10-K" is no name, and a near name could answer it instead. The forms are lib/focus.ts's.
+ */
+const FORM = String.raw`(?:(?:8|6|11)-K|(?:20|40)-F|10-?[KQ]|[SF]-[1348])(?:\/A)?s?`;
+const FORM_NOUN = String.raw`(?:\s+(?:filings?|reports?|forms?))?`;
+const FORM_AFTER = new RegExp(String.raw`^(.+?)\s+(${FORM})${FORM_NOUN}$`, "i");
+const FORM_BEFORE = new RegExp(String.raw`^(${FORM})${FORM_NOUN}\s+(?:(?:for|of|from|by)\s+)?(.+)$`, "i");
+
 export function parseSearchPrompt(raw: string): ParsedPrompt {
   let s = raw.replace(/\s+/g, " ").trim().replace(/[?!.]+$/, "");
 
@@ -196,9 +206,15 @@ export function parseSearchPrompt(raw: string): ParsedPrompt {
   // over-stripped to nothing — fall back to the raw query rather than search for ""
   if (!subject) return { subject: raw.trim(), focus: null, influence: null };
 
-  // both angles survive when a prompt carries a relation and a qualifier
-  // ("impact of tariffs on Ford in 2025")
-  const parts = [relationFocus, focus].filter(Boolean) as string[];
+  let formFocus: string | null = null;
+  const after = subject.match(FORM_AFTER);
+  const before = after ? null : subject.match(FORM_BEFORE);
+  if (after) [subject, formFocus] = [after[1].trim(), after[2]];
+  else if (before) [subject, formFocus] = [before[2].trim(), before[1]];
+
+  // every angle survives when a prompt carries more than one: a relation and a qualifier ("impact
+  // of tariffs on Ford in 2025"), a form and a qualifier ("Apple 10-K filings in 2020")
+  const parts = [relationFocus, formFocus, focus].filter(Boolean) as string[];
   return {
     subject,
     focus: parts.length ? parts.join(" · ") : null,

@@ -2,7 +2,7 @@
 
 import type { TimelineEvent } from "@/lib/types";
 import type { FocusResult } from "@/lib/focus";
-import { focusScore } from "@/lib/focus";
+import { focusScore, termLabel } from "@/lib/focus";
 
 /**
  * The most relevant events for what the visitor actually typed, above the chronology.
@@ -32,7 +32,7 @@ export default function BestMatches({
   if (rows.length === 0) return null;
 
   const evidence = (ev: TimelineEvent): string => {
-    const inTitle = result.terms.filter((t) => ev.title.toLowerCase().includes(t));
+    const inTitle = result.terms.map(termLabel).filter((t) => ev.title.toLowerCase().includes(t.toLowerCase()));
     if (inTitle.length) return `“${inTitle.join("”, “")}” in the headline`;
     // Matched by another word for the concern ("pandemic" for "covid") — name it, or the row
     // looks like it is here by mistake.
@@ -41,7 +41,7 @@ export default function BestMatches({
       new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(ev.title)
     );
     if (relatedInTitle.length) return `“${relatedInTitle[0]}” in the headline`;
-    if (result.terms.length) return `matches ${result.terms.slice(0, 3).join(", ")}`;
+    if (result.terms.length) return `matches ${result.terms.slice(0, 3).map(termLabel).join(", ")}`;
     // A focus of only a year ("Apple in 2020") narrows by date; there is no word to point at.
     return result.window ? `dated ${result.window.label}` : "";
   };

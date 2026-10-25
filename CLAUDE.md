@@ -67,6 +67,11 @@ carries, never an acquisition's or a loose alias (`newsNamesFor`): Sun's 1990s n
 furniture everywhere (`gdeltNames` in `lib/news.ts`). The Federal Register company feed searches the
 same names in one request and keeps a title only when it names one (`lib/frCompany.ts`).
 
+A ticker whose company moved to a new SEC record — a holding-company reorganisation or redomicile
+(XOM in 2026, Alphabet in 2015, Disney in 2019) — reads its earlier filings from the predecessor's
+record up to the handover day, through the hand-checked map in `lib/predecessors.ts`; read its
+header before adding an entry.
+
 ## Stack & layout
 
 | Layer | Choice |

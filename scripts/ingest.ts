@@ -33,6 +33,7 @@ import { fetchArchiveItems } from "../lib/archive";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
 import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, newsNamesFor, possessiveNameFor, type Rename } from "../lib/sec";
 import { withSecHeadlines } from "../lib/ingest/headlines";
+import { backfillNews } from "../lib/ingest/newsBackfill";
 import { fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
@@ -546,6 +547,17 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     // dedupe BEFORE capping: syndicated copies of one wire story must not burn cap slots
     collapseNearDuplicates(e).slice(0, 75)
   );
+  // …and the months before its newest hundred, by relevance, a run's worth at a time (batch 57).
+  // An enrichment: if it fails, the company keeps what the hourly ask found.
+  try {
+    const older = await backfillNews(client, subjectId, { query: newsQuery, alsoKnownAs, byRelevance, scoring });
+    if (older.due) {
+      line("gdelt", `older     ${older.read} of ${older.due} months asked, ${older.stories} stories kept, ${older.left} left` +
+        (older.stopped ? ` (${older.stopped})` : ""));
+    }
+  } catch (err) {
+    line("gdelt", `older     skipped: ${(err as Error).message}`);
+  }
 
   /**
    * The company's story predates its ticker.

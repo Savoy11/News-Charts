@@ -275,15 +275,27 @@ export function headlineNames(title: string, names: readonly string[], initials:
   });
 }
 
+/** The days a backfill asks GDELT about, both included: "2019-01-01" to "2019-03-31" (batch 57). */
+export interface NewsWindow {
+  from: string;
+  to: string;
+}
+
 /** Same fetch, but reporting *why* it came back empty so ingest can back off. */
 export async function fetchNews(
   query: string,
   alsoKnownAs: string[] = [],
-  { byRelevance = false }: { byRelevance?: boolean } = {}
+  { byRelevance = false, window }: { byRelevance?: boolean; window?: NewsWindow } = {}
 ): Promise<FetchResult> {
   const q = gdeltQuery(query, alsoKnownAs, byRelevance);
-  // by relevance: the hundred pages most about the name in the last few days (`gdeltNewsPlan`)
-  const order = byRelevance ? `sort=hybridrel&timespan=${GDELT_RELEVANCE_SPAN}` : "sort=datedesc&startdatetime=20170101000000";
+  const compact = (day: string) => day.replace(/-/g, "");
+  // by relevance: the hundred pages most about the name in the last few days (`gdeltNewsPlan`), or
+  // in a past window, whose newest hundred would be its last few days (`lib/ingest/newsBackfill.ts`)
+  const order = window
+    ? `sort=hybridrel&startdatetime=${compact(window.from)}000000&enddatetime=${compact(window.to)}235959`
+    : byRelevance
+      ? `sort=hybridrel&timespan=${GDELT_RELEVANCE_SPAN}`
+      : "sort=datedesc&startdatetime=20170101000000";
   const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(q)}&mode=artlist&maxrecords=100&format=json&${order}`;
 
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -318,7 +330,7 @@ export async function fetchNews(
         // a refused name never costs the company the news it found before.
         if (gdeltNames(query, alsoKnownAs, byRelevance).length > 1) {
           await sleep(5500);
-          const plain = await fetchNews(query, [], { byRelevance });
+          const plain = await fetchNews(query, [], { byRelevance, window });
           const refused = `other names refused: ${text.trim().slice(0, 80)}`;
           return { ...plain, detail: plain.detail ? `${refused}; ${plain.detail}` : refused };
         }

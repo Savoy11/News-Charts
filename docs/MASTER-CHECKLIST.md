@@ -985,6 +985,91 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 55: the rest of the companies with an earlier SEC record (2026-10-26)
+
+Batch 53 mapped 15 of the 115 listed companies whose SEC record starts with a notice of
+succession, and left the other 100 open. Four of those (Linde, Nutrien, Restaurant Brands, UBS AG)
+were already ruled out. This batch read the other 96: **55 are now mapped and 41 left out**, each
+for a reason below. `lib/predecessors.ts` holds 70 companies.
+
+`npm run check` passes (48 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` was
+not run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **How each was checked.** A scan read each company's notice of succession, took the old
+      company's name from it, found that company's record by full-text search of the filings that
+      name it, and checked the record: no ticker of its own now, a name that matches, and filings
+      from before the handover. Then every result was read by hand, notice sentence and record
+      together. The scan's guesses were wrong often enough to need that: it matched Crown Holdings
+      to NeighborCare and Ferrari to United Therapeutics, and read "Inc." as a name.
+- [x] **The rule, stated as it is applied** (`lib/predecessors.ts`). The page carries an old
+      record when it is one company's history carrying on:
+      - a holding-company reorganisation, a move of legal home, a partnership converting to a
+        corporation, or a savings bank's second step, whether or not the ticker changed with it.
+        Encana became Ovintiv and ECA became OVV; it is the same company.
+      - an acquisition made through a new parent, when the buyer's ticker carried on: Uniti with
+        Windstream, QuidelOrtho with Ortho, AB InBev with SABMiller, Liberty Global with Virgin
+        Media, DraftKings with Golden Nugget.
+      Batch 53's "only a ticker that carried on" was too strict for the first kind and is replaced.
+- [x] **A record that began as a shell starts at the business** (a new `since`). DraftKings' old
+      record was a SPAC, Diamond Eagle, until April 2020; China BAK's was Medina Coffee, Terra
+      Tech's a shell called Private Secretary, Taoping's Irish Mag, Arcturus's Alcobra and
+      SharpLink's MER Telemanagement. Their filings before the business arrived, and the rename
+      that day, stay off the page.
+- [x] **Chains.** Weatherford reads three records back (Switzerland 2009–2014, Bermuda 2002–2009,
+      Delaware before) and Noble two: its Swiss and UK parent from 2009, through the 2021
+      restructuring, and its Cayman parent from 2002. Noble's step before 2002 (Noble Drilling)
+      has no notice of succession on file, so it is not linked.
+- [x] **News names** where the old name is not the present one: "Encana", "Bancolombia",
+      "CompuCredit", "Quidel", "FREYR", "Openwave", "Unwired Planet" and "Crown Cork". Not
+      "Aaron's" for PROG Holdings: The Aaron's Company it spun off is another listed company now.
+- Measured live, SEC filings and renames per page, main → now, for all 55. No page holds a filing
+  twice. The largest:
+
+  | Ticker | Main | Now | Earliest now |
+  |---|---:|---:|---|
+  | TIMB (TIM, Brazil) | 541 | 1,644 | 2002 |
+  | AU (AngloGold Ashanti) | 132 | 1,275 | 2002 |
+  | CIB (Grupo Cibest, Bancolombia) | 48 | 983 | 2002 |
+  | WFRD (Weatherford) | 390 | 948 | 1995 |
+  | NWE (NorthWestern) | 85 | 926 | 1994 |
+  | OVV (Ovintiv, Encana) | 205 | 865 | 2002 |
+  | SWX (Southwest Gas) | 281 | 756 | 1994 |
+  | NE (Noble) | 100 | 697 | 2002 |
+  | QDEL (QuidelOrtho) | 130 | 693 | 1995 |
+  | GEG (Great Elm; Phone.com, Openwave) | 118 | 684 | 1999 |
+  | PRG (PROG Holdings; Aaron's) | 123 | 634 | 1995 |
+  | NWN (Northwest Natural) | 193 | 596 | 1994 |
+  | BH-A (Biglari; Steak n Shake) | 138 | 601 | 1994 |
+  | CLB (Core Laboratories) | 68 | 595 | 1996 |
+
+  And smaller ones gain most of what they have: CBAT 2 → 397, DMRC 18 → 360, PNFP 30 → 499, CLBK
+  13 → 172. DraftKings starts at the April 2020 merger (82 → 164), not the SPAC.
+- **Left out (41)**, by reason:
+  - **A SPAC**, whose own filings are a blank-check company's (9): OIO, MYPS, FOA, IGIC, NIVF,
+    FIRY, TTSH, NUAI, ABTC.
+  - **A merger into a new company**, its name or ticker new, or the other company's (15):
+    Paramount and Skydance (SKYD), Primo Water and BlueTriton (PRMB), Baker Hughes and GE's oil
+    business (BKR), Xperi and TiVo (ADEA), HollyFrontier and Sinclair (DINO), Cyberonics and Sorin
+    (LIVN), Talos and Stone (TALO), Sonus and Genband (RBBN), I.D. Systems and Pointer (AIOT), Real
+    and RE/MAX (REAX), Cedar Fair and Six Flags under Six Flags' name (FUN), JFB and Xtend (XTND,
+    which reads as a merger but was not confirmed), Bank of New York and Mellon (BNY), Colony and
+    NorthStar (DBRHP), and Restaurant Brands' partnership units (QSP).
+  - **A bought company's registration**, inherited by its buyer (2): Pembina took Provident's
+    (PBA), First Mining took Clifton Star's (FFMGF).
+  - **A bank's holding company** (12): AMAL, USCB, CARE, BPRN, MRBK, VABK, FGBI, OPHC, BOTJ, ENBP,
+    STBI, NWPP. The old company is the bank itself, which reported to its bank regulator, not on
+    EDGAR, so there is no older record to read.
+  - **The old company still listed** (1): WISeKey International Holding still trades as WKEY
+    beside WQEY.
+  - **Not settled** (2): Ferrari (RACE), whose old and new records share the name Ferrari N.V.
+    and whose old one held three months of filings; and Lionsgate Studios (LION), whose 2025
+    separation leaves open which history is whose.
+- Checks: `check:predecessors` 20 → 27: a start day falls before its handover; batch 55's mapped
+  (Ovintiv, Grupo Cibest, DraftKings, Weatherford three back, Noble two); Linde, HF Sinclair, Baker
+  Hughes and Pembina have none; DraftKings' 2021 and 2022 annual reports on its page and the SPAC's
+  not, against a stand-in EDGAR; and the news names, with no "Aaron's". On main's code 3 of the 7
+  new checks fail; the other four guard what main already leaves out.
+
 ## NC ledger — batch 54: the audit's four other findings fixed (2026-10-25)
 
 Batch 53 fixed the 2026-10-25 audit's `P1` and left the four findings inside its scope open. This
@@ -1131,13 +1216,14 @@ not run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is
   No page holds a filing twice. AVGO reads two records back: Broadcom Limited (2016–2018) and
   Avago Technologies (2008–2016). A page refreshed by `npm run ingest` picks the history up; the
   first pass reads the predecessor's recent filings too.
-- [ ] **Open — the rest of the successors.** Of the 264 listed companies that have filed a notice
+- [x] **The rest of the successors.** Of the 264 listed companies that have filed a notice
       of succession since 2001, 115 have a record that starts at most 18 months before it. The 15
       above are mapped. The other 100 need the same hand check before they are added, BNY, Baker
       Hughes, AB InBev, Crown Holdings, DraftKings, HF Sinclair, Liberty Global, Noble, Ovintiv,
       Ferrari, Southwest Gas and Weatherford among them. Linde, Nutrien, Restaurant Brands and
       UBS AG stay out (above), and SKYD's notice was not confirmed. Whoever adds one adds a line
       to `lib/predecessors.ts`; `check:predecessors` checks its form against the ticker index.
+      Done in batch 55: 55 more mapped, and each of the other 41 left out for a stated reason.
 - [x] **Audit finding 1 (`P2`): the Justice Department feed loses every release about a
       company whose name has an apostrophe** (Moody's $864M settlement, Kohl's, Macy's, Lowe's,
       McDonald's); Kohl's joint penalty with Walmart reached only Walmart's page. The API is asked

@@ -985,6 +985,69 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 60: a word many companies' names share names none of them alone (2026-10-26)
+
+Batch 59 left open that a word many listed companies share in their names named each of them
+alone. This batch measured it on real headlines: 4,165 Yahoo Finance headlines from the feeds of
+235 companies (the 200 largest in the ticker index and 38 picked for shared words), read
+2026-10-26. A company's own feed is mostly its news and the other feeds mostly not, so the first
+measures what a rule costs and the second what it saves. On main, headlines from other companies'
+feeds named one of the 235 3,098 times:
+- "European Equities Traded in the US as American Depositary Receipts Track Higher" named American
+  Airlines, American Tower, American Electric Power and British American Tobacco;
+- "AI Chip Demand Gives Linde a New Growth Catalyst" named Bank of New York Mellon, whose name gave
+  it "new";
+- "…as Gold Slides Back Toward $4,000" named Kinross Gold, and "Investing.com's stocks of the
+  week" Amazon ("AMAZON COM INC").
+
+In the ticker index, 406 words are shared by five or more companies' names ("fund" 305, "gold"
+130, "american" 52, "new" 36, "companies" 24).
+
+`npm run check` passes (49 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` was not
+run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **A word five or more listed companies' names share names none of them alone**, unless it is
+      the company's whole name (`SHARED_ALONE` in `lib/enrich/relevance.ts`). Target's "target",
+      which five names share, still names Target.
+      - The counts are in the new `data/shared-name-words.json`, which `npm run sync:word-names`
+        now also writes.
+      - A web address's "com" is no word of a name (`nameWords`). It stays a word for search, which
+        shares `WEAK_TOKENS`: made weak there, "electric cars" offered Cars.com (`check:tickers`).
+- [x] **A company is still named by its common name whole and by its short name.** The whole
+      common name is "Southern Copper"; the short name drops its trailing generic words, two words
+      at least (`shortName`): "American Water" for American Water Works, "First Citizens",
+      "Interactive Brokers".
+      - The common name used to be a name only where ingest passed it in; `npm run score` did not.
+- [x] **A name of two words or more names its possessive.** "Is Parker Hannifin's Premium
+      Valuation a Warning Sign" is Parker-Hannifin's, and "Franco-Nevada's 2026 Guidance" Franco
+      Nevada's.
+- Measured with the code, main against this branch on the same headlines:
+  - Other feeds' namings: 3,098 → 1,236. Sixty of those removed, picked at random, were all wrong.
+  - The companies' own feeds: 2,029 → 2,009. Of the 21 lost, 17 were not about the company ("3
+    Canadian Dividend Stocks" on CIBC's feed, "Sector Update: Financial Stocks Rise" on Mitsubishi
+    UFJ's). Four were: "Goldman's Equities Revenues Jump" (five names share "goldman"), "Santander
+    Stock…", "United Leads Airline Rebound", and "America's Second-Biggest Bank" for Bank of
+    America. One was gained, Parker Hannifin's.
+  - At a bound of three, own namings fell to 1,992; at ten, 1,347 wrong namings stayed.
+- Corrected: batch 59's open item named Barrick Gold for "Gold prices hit record high". Barrick is
+  "BARRICK MINING CORP" in the index; the example was a made-up name. Kinross Gold is a real case,
+  and this batch fixes it.
+- [ ] **Open:**
+      - A word fewer than five names share still names each of them alone. Royal Bank of Canada is
+        named in 23 other feeds' headlines ("Canada", four share it). "GE" names GE Aerospace, GE
+        Vernova and GE HealthCare alike.
+      - "Goldman", "Santander" and "United" alone no longer name their companies.
+      - Batch 59's capitalised-word and two-letter-ticker items stay open.
+- Checks, main → now. On main's code the new ones fail, except those guarding what main already
+  does, and those calling the new functions cannot run:
+  - `check:relevance` 70 → 76:
+    - ten real headlines that named a company wrongly on main (fails on main, all ten);
+    - eight companies' own real headlines still named, by the whole or the short name;
+    - Parker Hannifin's possessive (fails on main);
+    - Target keeps its whole name, `shortName`, and the shared counts come from the ticker index
+      in use.
+    - Embracer's expected names gain its common name, "embracer group".
+
 ## NC ledger — batch 59: an everyday word names a company only with its capital (2026-10-26)
 
 Batch 58 left the hourly GDELT ask keeping an everyday word's stories: Target's "inflation target"
@@ -1043,7 +1106,9 @@ run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is not
         "american" 52; 1,294 pieces are shared by two or more. "Gold prices hit record high"
         scores 0.9 for Barrick Gold, and "Companies cut hiring as rates bite" for Lowe's.
         "American" is not in ENABLE, which leaves out capitalised words, so it is not even held to
-        its capital. Fixing this needs care: "ford" is a word, and Ford's own name.
+        its capital. Fixing this needs care: "ford" is a word, and Ford's own name. *(Batch 60: a
+        word five or more names share names none alone now, and Lowe's is no longer named by
+        "Companies". Barrick was a made-up name, "BARRICK GOLD CORP"; Kinross Gold was a real case.)*
       - A two-letter ticker is matched in capitals, as before, so "IT spending to rise 8% next
         year" scores 0.9 for Gartner.
 - Checks, main → now. On main's code the new ones fail, except those guarding what main already

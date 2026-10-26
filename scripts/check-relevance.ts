@@ -16,10 +16,13 @@ import {
   aliasesFor,
   deterministicScore,
   freePass,
+  shortName,
   type ScorableRow,
   type SubjectContext,
 } from "../lib/enrich/relevance";
-import { withCapital } from "../lib/wordNames";
+import { sharedBy, withCapital } from "../lib/wordNames";
+import tickerIndex from "../data/edgar-tickers.json";
+import sharedNames from "../data/shared-name-words.json";
 import type { EventType } from "../lib/types";
 import { getFilings } from "../lib/sec";
 import { REGISTRANT_FORM } from "../lib/secForms";
@@ -131,7 +134,7 @@ check("Moody's is named \"moodys\" and \"moodys corp\", never \"/de/\"",
   JSON.stringify(namesOf("MOODYS CORP /DE/")) === JSON.stringify(["moodys", "moodys corp"]), JSON.stringify(namesOf("MOODYS CORP /DE/")));
 check("  …nor Pulte \"inc/mi/\", nor an ADR's company \"ab/adr\" or, the tag off, \"ab\"",
   !namesOf("PULTEGROUP INC/MI/").some((a) => a.includes("/")) &&
-    JSON.stringify(namesOf("Embracer Group AB/ADR").map((a) => a.toLowerCase())) === JSON.stringify(["embracer", "embracer group ab"]),
+    JSON.stringify(namesOf("Embracer Group AB/ADR").map((a) => a.toLowerCase())) === JSON.stringify(["embracer", "embracer group ab", "embracer group"]),
   JSON.stringify(namesOf("Embracer Group AB/ADR")));
 check("  …nor a partnership \"lp\"", !namesOf("Energy Transfer LP").includes("lp"), JSON.stringify(namesOf("Energy Transfer LP")));
 check("  …while a slash inside a name stays, and a topic is named as it is written",
@@ -184,6 +187,49 @@ check("  …and a headline in lowercase throughout says nothing by its case: \"t
   (news(TGT_CO, "target expands price cuts", ["TARGET"])?.score ?? 0) >= 0.9);
 check("  …Shell's \"Investors in shell shock as markets slide\" too, though \"Shell profit beats forecasts\" names it",
   news(SHEL, "Investors in shell shock as markets slide", ["Shell"])?.score === 0.2 && (news(SHEL, "Shell profit beats forecasts", ["Shell"])?.score ?? 0) >= 0.9);
+
+console.log("\nA word many companies' names share names none of them alone (batch 60)");
+// Real Yahoo Finance headlines, read 2026-10-26: each scored 0.9 for these companies on main
+const co = (displayName: string, ticker: string): SubjectContext => ({ kind: "company", displayName, ticker });
+const ADR = "European Equities Traded in the US as American Depositary Receipts Track Higher in Friday Trading";
+const wronglyNamed: [SubjectContext, string][] = [
+  [co("AMERICAN ELECTRIC POWER CO INC", "AEP"), ADR],
+  [co("American Airlines Group Inc.", "AAL"), ADR],
+  [co("AMERICAN TOWER CORP /MA/", "AMT"), ADR],
+  [co("British American Tobacco p.l.c.", "BTI"), ADR],
+  [co("Bank of New York Mellon Corp", "BNY"), "AI Chip Demand Gives Linde a New Growth Catalyst"],
+  [co("Elevance Health, Inc.", "ELV"), "He Kept Driving for Uber and Paying for Health Insurance. Medicare Could Still Add a 10% Late-Enrollment Penalty"],
+  [co("KINROSS GOLD CORP", "KGC"), "Newmont Sinks 4%4 Despite Record Third-Quarter Profit as Gold Slides Back Toward $4,000"],
+  [co("SOUTHERN COPPER CORP/", "SCCO"), "Southern Company’s Dividend Looks Safe. Its Massive Spending Plan Is the Real Test"],
+  [LOW_CO, "4 Companies Just Boosted Their Dividends. Not All the Raises Are Equally Safe"],
+  [co("AMAZON COM INC", "AMZN"), "Investing.com’s stocks of the week"],
+];
+const stillNamed = wronglyNamed.filter(([subject, title]) => news(subject, title) !== null);
+check("\"American Depositary Receipts\" names no American company, \"a New Growth Catalyst\" no Bank of New York Mellon, \"Gold Slides\" no Kinross Gold, \"Southern Company’s\" no Southern Copper, \"4 Companies\" no Lowe's, \"Investing.com’s\" no Amazon",
+  stillNamed.length === 0, stillNamed.map(([subject]) => subject.ticker).join(", "));
+const ownNews: [SubjectContext, string][] = [
+  [co("American Water Works Company, Inc.", "AWK"), "American Water Announces Leadership Changes in Missouri and Illinois"],
+  [co("FIRST CITIZENS BANCSHARES INC /DE/", "FCNCA"), "First Citizens Soars 8% on Q3 Earnings Beat and New $1.2 Billion Buyback"],
+  [co("Interactive Brokers Group, Inc.", "IBKR"), "Interactive Brokers Introduces Autonomous Trading"],
+  [co("British American Tobacco p.l.c.", "BTI"), "Is British American Tobacco (LSE:BATS) A Bargain After Horizon 2030?"],
+  [co("SOUTHERN COPPER CORP/", "SCCO"), "Southern Copper Sinks 7%, Freeport Down 6% as Copper Slides Despite “Record Highs”"],
+  [co("KINROSS GOLD CORP", "KGC"), "Kinross Gold (KGC) Earnings Expected to Grow: Should You Buy?"],
+  [co("FRANCO NEVADA Corp", "FNV"), "Can Higher H2 Production Support Franco-Nevada's 2026 Guidance?"],
+  [FORD_CO, "Ford Plans to Overtake Toyota in a Critical Business. Here's Why It Matters."],
+];
+const unnamed = ownNews.filter(([subject, title]) => (news(subject, title)?.score ?? 0) < 0.9);
+check("  …while each company's own news is still named, by its whole name or its short one: \"American Water\", \"First Citizens\", \"Interactive Brokers\", \"Franco-Nevada's\"",
+  unnamed.length === 0, unnamed.map(([subject]) => `${subject.ticker} ${JSON.stringify(aliasesFor(subject))}`).join("; "));
+check("a name of two words names its possessive: \"Is Parker Hannifin’s Premium Valuation a Warning Sign\" is Parker-Hannifin's",
+  (news(co("Parker-Hannifin Corp", "PH"), "Is Parker Hannifin’s Premium Valuation a Warning Sign for Dividend Investors?")?.score ?? 0) >= 0.9);
+check("  …and a company whose whole name is a shared word keeps it: \"Target\" (five share it) still names Target",
+  sharedBy("TARGET") >= 5 && (news(TGT_CO, "Target expands price cuts ahead of the holiday season", ["TARGET"])?.score ?? 0) >= 0.9);
+check("a short name drops the trailing generic words, two words at least: \"American Water\", \"First Citizens\", \"Interactive Brokers\"; none for \"Bank of America\" or \"Johnson & Johnson\"",
+  shortName("American Water Works") === "American Water" && shortName("FIRST CITIZENS BANCSHARES") === "FIRST CITIZENS" &&
+    shortName("Interactive Brokers Group") === "Interactive Brokers" && shortName("Bank of America") === null && shortName("Johnson & Johnson") === null && shortName("Ford Motor") === null,
+  JSON.stringify(["American Water Works", "Bank of America", "Johnson & Johnson"].map(shortName)));
+check(`the shared words were counted from the ticker index in use (${Object.keys(sharedNames.shared).length} shared by two or more; "GOLD" ${sharedBy("GOLD")}, "FORD" ${sharedBy("FORD")})`,
+  sharedNames.index.endsWith((tickerIndex as unknown as { syncedOn: string }).syncedOn) && sharedBy("GOLD") >= 5 && sharedBy("FORD") === 1);
 
 console.log("\nA corrected rule reaches the rows it scored before: npm run score -- --rescore (batch 59)");
 const AS_STORED = 0.8999999761581421; // 0.9, as a real reads back

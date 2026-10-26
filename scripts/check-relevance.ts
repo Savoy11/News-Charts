@@ -15,9 +15,11 @@ import {
   RELEVANCE_THRESHOLD,
   aliasesFor,
   deterministicScore,
+  freePass,
   type ScorableRow,
   type SubjectContext,
 } from "../lib/enrich/relevance";
+import { withCapital } from "../lib/wordNames";
 import type { EventType } from "../lib/types";
 import { getFilings } from "../lib/sec";
 import { REGISTRANT_FORM } from "../lib/secForms";
@@ -129,7 +131,7 @@ check("Moody's is named \"moodys\" and \"moodys corp\", never \"/de/\"",
   JSON.stringify(namesOf("MOODYS CORP /DE/")) === JSON.stringify(["moodys", "moodys corp"]), JSON.stringify(namesOf("MOODYS CORP /DE/")));
 check("  …nor Pulte \"inc/mi/\", nor an ADR's company \"ab/adr\" or, the tag off, \"ab\"",
   !namesOf("PULTEGROUP INC/MI/").some((a) => a.includes("/")) &&
-    JSON.stringify(namesOf("Embracer Group AB/ADR")) === JSON.stringify(["embracer", "embracer group ab"]),
+    JSON.stringify(namesOf("Embracer Group AB/ADR").map((a) => a.toLowerCase())) === JSON.stringify(["embracer", "embracer group ab"]),
   JSON.stringify(namesOf("Embracer Group AB/ADR")));
 check("  …nor a partnership \"lp\"", !namesOf("Energy Transfer LP").includes("lp"), JSON.stringify(namesOf("Energy Transfer LP")));
 check("  …while a slash inside a name stays, and a topic is named as it is written",
@@ -144,6 +146,63 @@ check("\"she'll\" with its apostrophe out is not Shell: \"Taylor Swift says she'
 check("  …while \"Shell\" itself still names it, and \"Kohl's\" still names KOHLS Corp",
   (deterministicScore(row("news", "Shell profit beats forecasts"), SHEL, shelAliases)?.score ?? 0) >= 0.9 &&
     (deterministicScore(row("news", "Kohl's names new CEO"), KSS, kssAliases)?.score ?? 0) >= 0.9);
+
+console.log("\nAn everyday word names a company only with its capital (batch 59)");
+const news = (subject: SubjectContext, title: string, extra: string[] = [], strict = false) =>
+  deterministicScore(row("news", title), subject, aliasesFor(subject, extra), strict);
+const ALL_CO: SubjectContext = { kind: "company", displayName: "ALLSTATE CORP", ticker: "ALL" };
+const COST_CO: SubjectContext = { kind: "company", displayName: "COSTCO WHOLESALE CORP /NEW", ticker: "COST" };
+const LOW_CO: SubjectContext = { kind: "company", displayName: "LOWES COMPANIES INC", ticker: "LOW" };
+check("a ticker that is a word names a headline only in capitals: not Allstate's \"All eyes on the Fed\", Costco's \"Cost of living rises\" or Lowe's \"Stocks hit a new low\"",
+  news(ALL_CO, "All eyes on the Fed as markets wait") === null && news(COST_CO, "Cost of living rises again") === null &&
+    news(LOW_CO, "Stocks hit a new low on rate fears") === null,
+  [news(ALL_CO, "All eyes on the Fed as markets wait"), news(COST_CO, "Cost of living rises again")].map((v) => v?.score ?? null).join(", "));
+check("  …while \"Allstate (ALL) raises dividend\" and \"COST shares jump\" still name them",
+  (news(ALL_CO, "Allstate (ALL) raises dividend")?.score ?? 0) >= 0.9 && (news(COST_CO, "COST shares jump after sales beat")?.score ?? 0) >= 0.9);
+const VISA_CO: SubjectContext = { kind: "company", displayName: "VISA INC.", ticker: "V" };
+const HD_CO: SubjectContext = { kind: "company", displayName: "HOME DEPOT, INC.", ticker: "HD" };
+check("a name that is a word names a headline only with its capital: not \"New rules tighten student visa approvals\" for Visa, nor \"Fire closes bus depot downtown\" for Home Depot",
+  news(VISA_CO, "New rules tighten student visa approvals") === null && news(HD_CO, "Fire closes bus depot downtown") === null,
+  JSON.stringify(aliasesFor(VISA_CO)));
+check("  …while \"Visa beats estimates\" still names Visa, and strict mode demotes the student visa",
+  (news(VISA_CO, "Visa beats estimates")?.score ?? 0) >= 0.9 && (news(VISA_CO, "New rules tighten student visa approvals", [], true)?.score ?? 1) < RELEVANCE_THRESHOLD);
+check("  …by the word list: \"visa\" → \"Visa\", \"lowe's\" → \"Lowe's\", while \"nvidia\" and \"motor racing\" stay as they are",
+  withCapital("visa") === "Visa" && withCapital("lowe's") === "Lowe's" && withCapital("nvidia") === "nvidia" && withCapital("motor racing") === "motor racing");
+// Real headlines GDELT gave for "TARGET" in September 2026 (the 2026-10-26 audit)
+const TGT_CO: SubjectContext = { kind: "company", displayName: "TARGET CORP", ticker: "TGT" };
+const wordOnly = ["IMF urges retaining 5 % inflation target", "Govt . to retain 5 % inflation target for next three years",
+  "Bihar urges Centre to raise paddy procurement target to 50 lakh MT"];
+check("a company whose own name is the word: a headline with it only in lowercase is hidden, in either mode — \"IMF urges retaining 5 % inflation target\"",
+  wordOnly.every((t) => [false, true].every((strict) => {
+    const v = news(TGT_CO, t, ["TARGET"], strict);
+    return v?.score === 0.2 && v.reason === "headline uses the company's name only as an everyday word";
+  })), wordOnly.map((t) => news(TGT_CO, t, ["TARGET"])?.score ?? null).join(", "));
+check("  …while \"Target expands price cuts ahead of the holiday season\" still names it, and so does \"TGT shares jump\"",
+  (news(TGT_CO, "Target expands price cuts ahead of the holiday season", ["TARGET"])?.score ?? 0) >= 0.9 &&
+    (news(TGT_CO, "TGT shares jump", ["TARGET"])?.score ?? 0) >= 0.9);
+check("  …and a headline in lowercase throughout says nothing by its case: \"target expands price cuts\" is read as before",
+  (news(TGT_CO, "target expands price cuts", ["TARGET"])?.score ?? 0) >= 0.9);
+check("  …Shell's \"Investors in shell shock as markets slide\" too, though \"Shell profit beats forecasts\" names it",
+  news(SHEL, "Investors in shell shock as markets slide", ["Shell"])?.score === 0.2 && (news(SHEL, "Shell profit beats forecasts", ["Shell"])?.score ?? 0) >= 0.9);
+
+console.log("\nA corrected rule reaches the rows it scored before: npm run score -- --rescore (batch 59)");
+const AS_STORED = 0.8999999761581421; // 0.9, as a real reads back
+const tgtPass = freePass([
+  { ...row("news", "IMF urges retaining 5 % inflation target"), eventId: 1, prior: AS_STORED },
+  { ...row("news", "Target expands price cuts ahead of the holiday season"), eventId: 2, prior: AS_STORED },
+  { ...row("news", "Target opening 8 new stores this fall across six states"), eventId: 3, prior: null },
+  { ...row("filing", "TARGET CORP: Quarterly report (10-Q)"), eventId: 4, prior: 1 },
+], TGT_CO, aliasesFor(TGT_CO, ["TARGET"]));
+check("a free score the rules now change is written again, one they keep is left alone, and an unscored row is scored",
+  JSON.stringify(tgtPass.scores) === JSON.stringify([{ eventId: 1, score: 0.2 }, { eventId: 3, score: 0.9 }]) && !tgtPass.cleared.length && !tgtPass.remaining.length,
+  JSON.stringify(tgtPass));
+const costPass = freePass([{ ...row("news", "Cost of living rises again"), eventId: 7, prior: AS_STORED }], COST_CO, aliasesFor(COST_CO));
+check("  …and one the rules no longer settle is cleared, back to the model: Costco's \"Cost of living rises again\"",
+  !costPass.scores.length && JSON.stringify(costPass.cleared) === "[7]" && costPass.remaining.length === 1, JSON.stringify(costPass));
+const scoreSrc = readFileSync(path.join(__dirname, "score.ts"), "utf8");
+check("  …in npm run score, which takes back only the free tier's own scores, never a model's",
+  /const rescore = has\("rescore"\)/.test(scoreSrc) && scoreSrc.includes("es.relevance IS NULL OR ($3 AND es.scored_by = 'deterministic')") &&
+    scoreSrc.includes("AND scored_by = 'deterministic'`") && /freePass\(pending, subject, aliases, strict\)/.test(scoreSrc));
 
 console.log("\nOne threshold, one place");
 // signals.ts once hardcoded its own copy of the display gate; a threshold change then

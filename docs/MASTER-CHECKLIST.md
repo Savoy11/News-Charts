@@ -985,6 +985,84 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 59: an everyday word names a company only with its capital (2026-10-26)
+
+Batch 58 left the hourly GDELT ask keeping an everyday word's stories: Target's "inflation target"
+still scored 0.9 when it arrived that way. The cause was wider than Target. Headline scoring counted
+every name of a company in any case, so a company's ticker and the English words in its name named
+a headline that used them as words. On main, "All eyes on the Fed as markets wait" scored 0.9 for
+Allstate (ticker ALL), "Stocks hit a new low on rate fears" for Lowe's (LOW) and "Cat cafe opens in
+Brooklyn" for Caterpillar (CAT). In the committed ticker index (8,029 companies), 589 tickers of
+three to five letters are English words in ENABLE, and so are 2,277 other one-word names that
+headlines are scored by.
+
+`npm run check` passes (49 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` was not
+run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **A ticker names a headline only in capitals.** `aliasesFor` keeps a ticker of three to five
+      letters as it is, and `mentions` matches it as it matches initials. "COST shares jump" names
+      Costco; "Cost of living rises again" no longer does.
+- [x] **A name that is an English word names a headline only with its capital** (`withCapital` in
+      the new `lib/wordNames.ts`, matched in `mentions`). "Visa beats estimates" names Visa. "New
+      rules tighten student visa approvals" no longer does, nor does "Fire closes bus depot
+      downtown" name Home Depot.
+      - The words are in `data/english-word-names.json`. `npm run sync:word-names` now also writes
+        them there (`pieces`, 2,277), from the names ingest scores headlines by.
+      - A headline in lowercase throughout says nothing by its case, and is read as before.
+- [x] **A headline with a company's own one-word name only in lowercase is hidden.** For the 205
+      companies whose name is one everyday word, such a headline scores 0.2 ("headline uses the
+      company's name only as an everyday word"), in either scoring mode. "IMF urges retaining 5 %
+      inflation target" and two more of the audit's real Target headlines leave Target's page.
+      - With its capital the name still scores 0.9, as on main.
+      - Holding the capitalised name back as well was tried and dropped. The 205 include Alphabet,
+        Adobe, Caterpillar, Chevron, Oracle and Shell, and it took the 0.9 from nearly every real
+        headline about them.
+- [x] **A corrected rule now reaches stored scores: `npm run score -- --rescore`.** Before,
+      `npm run score` took only unscored rows, and a stored score changed only when its story was
+      fetched again.
+      - It works out again the scores the free tier gave, and writes the ones that change. A row
+        the rules no longer settle goes back to NULL, for the model. A model's score is never
+        touched (`freePass` in `lib/enrich/relevance.ts`).
+      - Tried on a scratch database with five real headlines: "inflation target" 0.9 → 0.2;
+        Target's own news kept at 0.9; a model's 0.7 kept; Costco's "Cost of living rises again"
+        0.9 → NULL. A plain `npm run score` left the 0.9 alone, as before.
+      - `docs/OWNER-ACTIONS.md` asks for one run after deploying.
+- [x] The word helpers moved from `lib/ingest/newsBackfill.ts` to `lib/wordNames.ts`, and batch
+      58's `BACKFILL_WORD_NAMES` is now `MEASURED_WORD_NAMES`. The backfill behaves as before. With
+      the capital in the scorer's names, `namesCompany` itself now passes 7 of the real Target
+      month's 15, as the backfill's own capital test does.
+- Corrected: batch 58's note on the open GDELT item said scoring keeps off a page whose headline
+  does not name the company. In ingest's scoring mode such a headline is left unscored, and shown,
+  until the paid model scores it, or `--strict-headline` does. The item now says so.
+- [ ] **Open:**
+      - A capitalised word still names the company: "Southern California wildfires spread" scores
+        0.9 for Southern Company and for Southern Copper, "Target Date Funds Draw Record Inflows"
+        for Target.
+      - A name piece many listed companies share still names each of them alone. "fund" is a piece
+        of 305 companies' names, "trust" of 246, "energy" 194, "gold" 130, "first" 59 and
+        "american" 52; 1,294 pieces are shared by two or more. "Gold prices hit record high"
+        scores 0.9 for Barrick Gold, and "Companies cut hiring as rates bite" for Lowe's.
+        "American" is not in ENABLE, which leaves out capitalised words, so it is not even held to
+        its capital. Fixing this needs care: "ford" is a word, and Ford's own name.
+      - A two-letter ticker is matched in capitals, as before, so "IT spending to rise 8% next
+        year" scores 0.9 for Gartner.
+- Checks, main → now. On main's code the new ones fail, except those guarding what main already
+  does, and those calling the new functions cannot run:
+  - `check:relevance` 58 → 70:
+    - tickers: Allstate's "All eyes on the Fed", Costco's "Cost of living rises", Lowe's "new
+      low" (fails on main); "Allstate (ALL)" and "COST shares jump" still named;
+    - word names: Visa's student visa and Home Depot's bus depot (fails on main); "Visa beats
+      estimates" still named while strict mode demotes the student visa (fails on main);
+      `withCapital`;
+    - a company's own word: three real Target headlines hidden in both modes, and Shell's "shell
+      shock" (both fail on main); Target's own news and "TGT shares jump" still named; a
+      lowercase-throughout headline read as before;
+    - `--rescore`: `freePass` writes what changed, leaves what did not, scores what was unscored,
+      and clears Costco's row; `npm run score` takes back only the free tier's own scores.
+    - Embracer's names are compared in lowercase: "embracer" is an English word.
+  - `check:news-backfill` 38 → 38: the real Target month's check now asks that `namesCompany`
+    pass 7 of 15 (main passed all 15) and agree with the backfill's capital test.
+
 ## NC ledger — batch 58: the 2026-10-26 audit's four findings fixed (2026-10-26)
 
 The `code-auditor` read the changes since the last audit (batches 53–57, `7ba8cb6..1ac7cdd`). Its
@@ -1040,7 +1118,8 @@ run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is not
   window-edge stories dated a day late, `dojPossessive`'s extra queries, and one contrived query.
 - [ ] **Open:**
       - The hourly GDELT ask still keeps an everyday word's stories for those companies: Target's
-        "inflation target" is still scored 0.9 when it arrives that way.
+        "inflation target" is still scored 0.9 when it arrives that way. *(Batch 59: a headline
+        with the word only in lowercase is now hidden; one with its capital still names it.)*
       - The other 203 everyday-word names wait for a measured month from the production host.
         GDELT refused nearly every request from this container again.
 - Checks, main → now. On main's code the new ones fail, except those guarding what main already
@@ -3195,7 +3274,11 @@ between its refusals (below). HawkScan could not run: `HAWK_API_KEY` is not set.
         100 places. *(Corrected 2026-10-26, batch 58: scoring keeps off a page that does not name
         the company in its headline, but not one that uses the company's name as a word: "IMF
         urges retaining 5 % inflation target" scores 0.9 for Target. The backfill holds such names
-        back; the hourly ask still lets them in.)* One lead, measured once: GDELT's `repeat3:` operator (the word at least three
+        back; the hourly ask still lets them in.)* *(Corrected again 2026-10-26, batch 59: a
+        headline that does not name the company is left unscored, and shown, until the paid model
+        or `--strict-headline` scores it. A headline with a company's one-word name only in
+        lowercase now scores 0.2 and is hidden; "Southern California" still scores 0.9 for
+        Southern Company.)* One lead, measured once: GDELT's `repeat3:` operator (the word at least three
         times on the page) works, and "Alphabet" OR `repeat3:"google"` returned 5 in 100 against
         "Alphabet" alone's 1. It, and GDELT's relevance sort, are worth measuring on more companies
         before the platform words go back into queries this way. The same measurement settles the

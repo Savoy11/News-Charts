@@ -3,8 +3,7 @@ import type { FetchResult, TimelineEvent } from "../types";
 import { fetchNews, gdeltQuery, type NewsWindow } from "../news";
 import { mentions } from "../enrich/relevance";
 import { collapseNearDuplicates } from "../newsQuality";
-import { nameKey } from "../companyAliases";
-import wordNames from "../../data/english-word-names.json";
+import { MEASURED_WORD_NAMES, everydayWordName, namedWithCapital } from "../wordNames";
 import { assertCommercialOk, emptyStats, logFetch, shouldBackOff, upsertEvent, type ScoringContext } from "./store";
 
 /**
@@ -31,8 +30,9 @@ import { assertCommercialOk, emptyStats, logFetch, shouldBackOff, upsertEvent, t
  *   back-off sees it. A month is stored only when GDELT answered, so a refused one is asked again
  *   on a later run.
  * - A company asked under one everyday word ("Target", "Southern", "Crown") is held back until a
- *   month of its own is measured (`BACKFILL_WORD_NAMES`): "the headline names it" is true of the
- *   word. One month of Target kept "IMF urges retaining 5 % inflation target" (the 2026-10-26 audit).
+ *   month of its own is measured (`MEASURED_WORD_NAMES` in lib/wordNames.ts): "the headline names
+ *   it" is true of the word. One month of Target kept "IMF urges retaining 5 % inflation target"
+ *   (the 2026-10-26 audit).
  */
 export const BACKFILL_FROM = "2017-01-01";
 export const WINDOWS_PER_RUN = 40;
@@ -58,42 +58,6 @@ export function newsWindows(today: string, since = BACKFILL_FROM): NewsWindow[] 
     windows.push({ from, to });
   }
   return windows.reverse();
-}
-
-const WORDS: ReadonlySet<string> = new Set(wordNames.words);
-const NOT_WORDS: ReadonlySet<string> = new Set(wordNames.others);
-
-/** A company's GDELT name when it is one word of letters, as a name key: "TARGET" — null for "Ford Motor" or "Life360". */
-export function oneWordName(query: string): string | null {
-  const key = nameKey(query);
-  return /^[A-Z]+$/.test(key) ? key : null;
-}
-
-/**
- * The company's GDELT name when it is one everyday English word, per `data/english-word-names.json`
- * (`npm run sync:word-names`): "TARGET", "SOUTHERN", "APPLE". A one-word name the file does not hold
- * counts as a word, so a company listed since the file was written is held back, not let through.
- */
-export function everydayWordName(query: string): string | null {
-  const key = oneWordName(query);
-  return key && (WORDS.has(key) || !NOT_WORDS.has(key)) ? key : null;
-}
-
-/**
- * Everyday-word names measured to backfill cleanly, each with its measurement. A headline names one
- * only with its capital ("Apple", "APPLE", never "apple"). Target is not here: with that rule, its
- * September 2026 kept 25 stories and 2 were stock tips ("… | Target , stop - loss").
- */
-export const BACKFILL_WORD_NAMES: Record<string, string> = {
-  APPLE: "May 2023: 60 headlines kept, each with its capital; one, a cranberry brie recipe, not about Apple",
-  TESLA: "April 2022: 31 headlines with its capital, every one about Tesla or its cars; the one without was a tag page",
-};
-
-/** Whether the headline writes the name with its capital: "Apple" or "APPLE", never "apple". */
-export function namedWithCapital(title: string, key: string): boolean {
-  const re = new RegExp(`(?<![\\p{L}\\p{N}])${key}(?![\\p{L}\\p{N}])`, "giu");
-  for (const m of title.matchAll(re)) if (m[0][0] === key[0]) return true;
-  return false;
 }
 
 /** Whether a GDELT headline names the company, by the names its headlines are scored with. */
@@ -165,7 +129,7 @@ export async function backfillNews(
   const stats: BackfillStats = { due: due.length, read: 0, stories: 0, left: due.length };
   if (!due.length) return stats;
   const word = everydayWordName(plan.query);
-  if (word && !BACKFILL_WORD_NAMES[word]) return { ...stats, stopped: `"${word.toLowerCase()}" is an everyday word, not yet measured` };
+  if (word && !MEASURED_WORD_NAMES[word]) return { ...stats, stopped: `"${word.toLowerCase()}" is an everyday word, not yet measured` };
   if (budget.left <= 0) return { ...stats, stopped: "this run's months are spent" };
 
   await assertCommercialOk(client, "gdelt");

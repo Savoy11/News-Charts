@@ -490,6 +490,7 @@ npm run score                      # every subject
 npm run score -- --subject aapl    # one
 npm run score -- --dry-run         # no writes, and no model call
 npm run score -- --strict-headline # see below
+npm run score -- --rescore         # work out the free tier's own scores again
 ```
 
 Two tiers, cheapest first:
@@ -497,7 +498,8 @@ Two tiers, cheapest first:
 1. **Deterministic (free).** Scores only what provenance makes certain: filings and earnings are
    1.0 (indexed under the subject's own CIK) — except a fund registrant's forms, 0.7, since a
    trust files for every series it sells — history sentences are 1.0 (extracted from the
-   subject's own article), press mentions 0.7. Everything ambiguous is left `NULL`.
+   subject's own article), press mentions 0.7, and a news headline that names the subject 0.9.
+   Everything ambiguous is left `NULL`.
 2. **Model (paid, batched).** Scores the remainder — in practice, news headlines. Set
    `ANTHROPIC_API_KEY` in `.env.local` to enable it; without a key the pass is skipped cleanly.
    One request scores 25 headlines, so cost tracks new content, not rows or pageviews. Runs
@@ -505,6 +507,16 @@ Two tiers, cheapest first:
 
 **Unscored means visible.** The read query is `relevance IS NULL OR relevance >= 0.4`, so
 nothing is hidden without evidence and the site behaves identically with scoring switched off.
+
+**An everyday word names a company only with its capital** (batch 59). A ticker names a headline
+only in capitals ("COST", never "Cost of living rises"), and a name that is also an English word
+only with its capital ("Visa beats estimates", never "New rules tighten student visa approvals";
+the words are in `data/english-word-names.json`, rebuilt by `npm run sync:word-names`). For a
+company whose own name is one such word, a headline with it only in lowercase is scored 0.2 and
+hidden: "IMF urges retaining 5 % inflation target" is not Target's. A headline in lowercase
+throughout is read as before. A stored score follows a corrected rule on the story's next ingest,
+or at once with `--rescore`, which works out the free tier's own scores again and hands those it
+no longer settles back to the model; a model's score is never touched.
 
 `--strict-headline` is a product decision, not a fact: it scores company news 0.2 when the
 *headline* never names the subject. Against 12 real headlines captured from the live AAPL page
@@ -600,7 +612,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Yahoo Finance chart API | Every daily close Yahoo holds, to six places (from 1962 at the earliest; read once, then 10y refreshes; whole history again after a split), dividends, splits. End of day only: a session still trading is left out | Unofficial; swap for a paid API before scale. Full history is asked for by date — `range=max` comes back quarterly (`3mo`) |
 | Yahoo Finance RSS | Company headlines | Headline, link and date only |
 | SEC EDGAR | Filings, earnings (10-K/10-Q/8-K 2.02), fund filings; an 8-K's or 6-K's press-release headline as its title | Requires a `User-Agent` with contact email; headlines read once each and stored (`sec_headlines`) |
-| GDELT 2.0 | News headlines | English-filtered; 2017+. A company is searched under its everyday name and its own other names in one query ("Goldman Sachs Group" OR "Goldman Sachs"; `newsNamesFor`), except words printed around every article ("Google"). GDELT refuses a quoted phrase under five characters, so a short name that is no English word and stands for nothing else first goes bare ("IBM", "ETSY"; `unquotable`, with the word list in `data/english-short-words.json`), its articles kept only when the headline names the company; any other short name is asked with its legal form ("VISA Inc", "CGI Inc"; `gdeltEverydayName`) or, as an other name ("UPS"), only scores headlines. GDELT drops a possessive "'s", so a possessive name of more than one word is asked as GDELT holds it ("DOMINO PIZZA"; `gdeltForm`, with the company's own spelling kept in the name index's `possessive`), and a headline naming "McDonald" names McDonald's. A name measured to drown in passing mentions newest first is asked by relevance over the last three days instead, its articles kept only when the headline names the company and not as a person's name ("MCDONALD", "lowe", Uber's "uber"; `GDELT_BY_RELEVANCE`). That hourly ask returns the newest hundred, so each month since 2017 (or since the company's first price) is also asked once, by relevance, keeping only the headlines that name the company: at most 40 months a run, 6 s apart, newest first (`lib/ingest/newsBackfill.ts`, kept in `gdelt_windows`). A company asked under one everyday word ("Target", "Southern"; `data/english-word-names.json`, rebuilt by `npm run sync:word-names` after `sync:tickers`) is held back from that until a month of its own is measured, since "the headline names it" is true of the word; a measured one ("Apple") counts a headline only where the name has its capital. Throttles per IP — see note below |
+| GDELT 2.0 | News headlines | English-filtered; 2017+. A company is searched under its everyday name and its own other names in one query ("Goldman Sachs Group" OR "Goldman Sachs"; `newsNamesFor`), except words printed around every article ("Google"). GDELT refuses a quoted phrase under five characters, so a short name that is no English word and stands for nothing else first goes bare ("IBM", "ETSY"; `unquotable`, with the word list in `data/english-short-words.json`), its articles kept only when the headline names the company; any other short name is asked with its legal form ("VISA Inc", "CGI Inc"; `gdeltEverydayName`) or, as an other name ("UPS"), only scores headlines. GDELT drops a possessive "'s", so a possessive name of more than one word is asked as GDELT holds it ("DOMINO PIZZA"; `gdeltForm`, with the company's own spelling kept in the name index's `possessive`), and a headline naming "McDonald" names McDonald's. A name measured to drown in passing mentions newest first is asked by relevance over the last three days instead, its articles kept only when the headline names the company and not as a person's name ("MCDONALD", "lowe", Uber's "uber"; `GDELT_BY_RELEVANCE`). That hourly ask returns the newest hundred, so each month since 2017 (or since the company's first price) is also asked once, by relevance, keeping only the headlines that name the company: at most 40 months a run, 6 s apart, newest first (`lib/ingest/newsBackfill.ts`, kept in `gdelt_windows`). A company asked under one everyday word ("Target", "Southern"; `data/english-word-names.json`, rebuilt by `npm run sync:word-names` after `sync:tickers`) is held back from that until a month of its own is measured, since "the headline names it" is true of the word; a measured one ("Apple") counts a headline only where the name has its capital. Headline scoring, too, counts a name that is a word only with its capital, and hides a headline that has a company's own one-word name only in lowercase (batch 59; see Relevance scoring). Throttles per IP — see note below |
 | Wikipedia | Topic histories and company backstory | "History of ..." + "Timeline of ..." merged; search-index fallback |
 | LoC Chronicling America | Historical newspapers ~1770–1963 | Public domain; fills the pre-2017 gap |
 | Internet Archive | Catalogued items (reports, catalogues, film) | Relevance-ranked; impossible dates dropped |

@@ -6,6 +6,7 @@ import { WEAK_TOKENS } from "../newsQuality";
 import { dataBlock, untrustedNotice } from "./untrusted";
 import { REGISTRANT_FORM } from "../secForms";
 import { parseScoreReply } from "../scoreReply";
+import { isListedWord, oneWordName, withCapital } from "../wordNames";
 
 export { parseScoreReply };
 
@@ -48,6 +49,11 @@ export interface Scored {
  *
  * `extraAliases` carries stored `subject_aliases` rows ("Google" for Alphabet). They join as
  * whole phrases, never tokenized — an alias is a name someone recorded, not a bag of words.
+ *
+ * A company's everyday words keep their capitals, so they name only a headline that writes them
+ * so (batch 59): its ticker ("COST" for Costco, never "Cost of living rises") and a one-word name
+ * that is an English word (`withCapital`: "Visa beats estimates", never "Student visa rules
+ * tightened").
  */
 export function aliasesFor(subject: SubjectContext, extraAliases: string[] = []): string[] {
   // EDGAR's registration tag names no company, and its legal form no more: "MOODYS CORP /DE/" gave
@@ -62,14 +68,14 @@ export function aliasesFor(subject: SubjectContext, extraAliases: string[] = [])
     if ((tok.length > 2 || keepShort) && !WEAK_TOKENS.has(lower)) aliases.add(lower);
   }
   aliases.add(shown.toLowerCase());
-  if (subject.ticker) aliases.add(subject.ticker.toLowerCase());
+  if (subject.ticker) aliases.add(CAPITALS.test(subject.ticker) ? subject.ticker : subject.ticker.toLowerCase());
   for (const phrase of extraAliases) {
     // a company's initials keep their capitals, so they name a headline only written that way:
     // "PAN" is Palo Alto Networks, "pan-European" is not (batch 34)
     const p = INITIALISM.test(phrase.trim()) ? phrase.trim() : phrase.trim().toLowerCase();
     if (p.length >= 3) aliases.add(p);
   }
-  return [...aliases];
+  return company ? [...new Set([...aliases].map(withCapital))] : [...aliases];
 }
 
 const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -77,8 +83,14 @@ const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 /** Three or four capitals: a company's initials, as `newsNamesFor` writes them ("IBM", "AIG"). */
 export const INITIALISM = /^[A-Z]{3,4}$/;
 
-/** What a headline says about the subject: named outright, obliquely, or not at all. */
-export type Mention = "named" | "oblique" | "none";
+/** A name kept in capitals, matched only in them: a company's initials, or its ticker ("COST"). */
+const CAPITALS = /^[A-Z]{3,5}$/;
+
+/**
+ * What a headline says about the subject: named outright, obliquely, or not at all — or only as
+ * the everyday word one of its names also is, in lowercase ("inflation target").
+ */
+export type Mention = "named" | "oblique" | "word" | "none";
 
 /**
  * Unicode-aware naming test over the ORIGINAL title, accents folded on both sides.
@@ -91,9 +103,14 @@ export type Mention = "named" | "oblique" | "none";
  * punctuation folded, as the alias index keys it: "D.R. Horton" names "D . R . Horton beats" (as
  * GDELT writes it) and "Angie's List" names "Angies List" (batch 28).
  *
- * Short aliases (single-letter tickers like F, or GM) and a company's initials ("PAN", batch 34)
- * match only as a standalone UPPERCASE token in the original title, and never one followed by "."
- * or "-" — "F beats estimates" names Ford; "John F. Kennedy Airport reopens" does not.
+ * Short aliases (single-letter tickers like F, or GM), a company's initials ("PAN", batch 34) and
+ * a ticker kept in capitals ("COST", batch 59) match only as a standalone UPPERCASE token in the
+ * original title, and never one followed by "." or "-" — "F beats estimates" names Ford; "John F.
+ * Kennedy Airport reopens" does not.
+ *
+ * An alias kept with its capital ("Visa", `aliasesFor`) names only a headline that writes it with
+ * the capital; one that has it only in lowercase is reported `word` (batch 59). A headline in
+ * lowercase throughout says nothing by its case, and is read as before.
  *
  * A single-token alias immediately preceded by a different capitalized word reads as a person's
  * name — "Harrison Ford", "Gerald Ford" — which is a judgement call, not a naming, so it is
@@ -103,7 +120,8 @@ export function mentions(original: string, names: string[]): Mention {
   // one apostrophe, so "Kohl’s" and "Kohl's" read alike; same length, so offsets hold
   const title = foldAccents(original).replace(/’/g, "'");
   const aliases = names.map((n) => foldAccents(n).replace(/’/g, "'"));
-  const lower = title.toLowerCase();
+  const lowered = aliases.map((a) => a.toLowerCase());
+  const cased = /\p{Lu}/u.test(title);
   const keyed = ` ${nameKey(title)} `;
   // A one-word name kept without the apostrophe its SEC title dropped ("kohls") names "Kohl's
   // names new CEO" read with the apostrophes out (batch 54). Only as a second try: out, "Ford's"
@@ -111,18 +129,29 @@ export function mentions(original: string, names: string[]): Mention {
   // "shell" and named Shell (batch 58, the 2026-10-26 audit).
   const bareTitle = title.replace(/'(?=s(?![\p{L}\p{N}]))/gu, "");
   let sawOblique = false;
+  let sawWord = false;
   for (const a of aliases) {
-    if (a.length < 3 || INITIALISM.test(a)) {
+    if (a.length < 3 || CAPITALS.test(a)) {
       const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(a.toUpperCase())}(?![\\p{L}\\p{N}.-])`, "u");
       if (re.test(title)) return "named";
       continue;
     }
-    const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(a)}(?![\\p{L}\\p{N}])`, "gu");
-    let m = re.exec(lower);
+    // the first place the title has the name — with its capital, when the name keeps one
+    const capital = cased && a[0] !== a[0].toLowerCase();
+    const first = (re: RegExp, text: string): RegExpExecArray | null => {
+      const low = text.toLowerCase();
+      for (let m = re.exec(low); m; m = re.exec(low)) {
+        if (!capital || text[m.index] !== low[m.index]) return m;
+        sawWord = true;
+      }
+      return null;
+    };
+    const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(a.toLowerCase())}(?![\\p{L}\\p{N}])`, "gu");
+    let m = first(re, title);
     let read = title;
     if (!m && !a.includes(" ") && bareTitle !== title) {
-      const bare = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(a.replace(/'/g, ""))}(?![\\p{L}\\p{N}])`, "gu");
-      m = bare.exec(bareTitle.toLowerCase());
+      const bare = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(a.toLowerCase().replace(/'/g, ""))}(?![\\p{L}\\p{N}])`, "gu");
+      m = first(bare, bareTitle);
       read = bareTitle;
     }
     if (!m) {
@@ -134,14 +163,14 @@ export function mentions(original: string, names: string[]): Mention {
     if (!a.includes(" ")) {
       const before = read.slice(0, m.index);
       const preceding = /(\p{Lu}[\p{L}'’.-]*)\s+$/u.exec(before)?.[1]?.toLowerCase() ?? null;
-      if (preceding && !aliases.includes(preceding) && !WEAK_TOKENS.has(preceding)) {
+      if (preceding && !lowered.includes(preceding) && !WEAK_TOKENS.has(preceding)) {
         sawOblique = true;
         continue;
       }
     }
     return "named";
   }
-  return sawOblique ? "oblique" : "none";
+  return sawOblique ? "oblique" : sawWord ? "word" : "none";
 }
 
 /**
@@ -159,6 +188,12 @@ export function mentions(original: string, names: string[]): Mention {
  * *headline* never names the subject. That removes market-roundup noise, at the cost of
  * demoting oblique headlines like "iPhone maker rebounds".
  */
+/** The company's own name as a name key when it is one word the word list holds: "TARGET" for "Target Corp". */
+function ownWordName(displayName: string): string | null {
+  const key = oneWordName(commonName(withoutTag(displayName)));
+  return key && isListedWord(key) ? key : null;
+}
+
 export function deterministicScore(
   row: ScorableRow,
   subject: SubjectContext,
@@ -235,6 +270,13 @@ export function deterministicScore(
 
     case "news": {
       const named = mentions(row.title, aliases);
+      // A company whose own name is one everyday word reaches GDELT by the word, so a headline with
+      // it only in lowercase is the word's, not the company's: "IMF urges retaining 5 % inflation
+      // target" is no Target news (batch 59). With its capital it still names the company, and
+      // "Southern California wildfires spread" still reads as Southern Company's.
+      if (named === "word" && subject.kind === "company" && ownWordName(subject.displayName)) {
+        return { score: 0.2, reason: "headline uses the company's name only as an everyday word" };
+      }
       if (named === "named") return { score: 0.9, reason: "headline names the subject" };
       // "Harrison Ford wins award" matches the token but reads as a person — a judgement
       // call in both modes, so it goes to the model rather than being scored or demoted.
@@ -290,6 +332,36 @@ export function deterministicScore(
     case "recall":
       return { score: 1, reason: "a recall filed by a maker or firm the company owned that day" };
   }
+}
+
+/**
+ * The free tier over a subject's rows: the scores to write, the rows to clear, and the rows left
+ * for the model. A row with a `prior` score is one this tier scored before (`npm run score --
+ * --rescore`, batch 59): it is written again only when the rules now say otherwise, and cleared,
+ * back to the model, when they no longer settle it — as ingest re-scores a row it fetches again.
+ * A model's score is never passed in.
+ */
+export function freePass(
+  rows: (ScorableRow & { prior?: number | null })[],
+  subject: SubjectContext,
+  aliases: string[],
+  strictHeadline = false
+): { scores: { eventId: number; score: number }[]; cleared: number[]; remaining: ScorableRow[] } {
+  const scores: { eventId: number; score: number }[] = [];
+  const cleared: number[] = [];
+  const remaining: ScorableRow[] = [];
+  for (const row of rows) {
+    const verdict = deterministicScore(row, subject, aliases, strictHeadline);
+    const prior = row.prior ?? null;
+    if (verdict) {
+      // stored as a real: 0.9 reads back as 0.8999999762
+      if (prior === null || Math.abs(prior - verdict.score) > 1e-6) scores.push({ eventId: row.eventId, score: verdict.score });
+      continue;
+    }
+    if (prior !== null) cleared.push(row.eventId);
+    remaining.push(row);
+  }
+  return { scores, cleared, remaining };
 }
 
 interface AnthropicResponse {

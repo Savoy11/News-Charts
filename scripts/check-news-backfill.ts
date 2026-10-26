@@ -1,18 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { PoolClient } from "pg";
-import {
-  BACKFILL_FROM,
-  BACKFILL_WORD_NAMES,
-  GAP_MS,
-  WINDOWS_PER_RUN,
-  backfillNews,
-  everydayWordName,
-  namedWithCapital,
-  namesCompany,
-  newsWindows,
-  oneWordName,
-} from "../lib/ingest/newsBackfill";
+import { BACKFILL_FROM, GAP_MS, WINDOWS_PER_RUN, backfillNews, namesCompany, newsWindows } from "../lib/ingest/newsBackfill";
+import { MEASURED_WORD_NAMES, everydayWordName, namedWithCapital, oneWordName } from "../lib/wordNames";
 import { fetchNews, gdeltNewsPlan, gdeltQuery, type NewsWindow } from "../lib/news";
 import { newsNamesFor, possessiveNameFor } from "../lib/sec";
 import tickers from "../data/edgar-tickers.json";
@@ -203,7 +193,7 @@ async function main(): Promise<void> {
 
   console.log("\nA name that is an everyday word (batch 58, the 2026-10-26 audit)");
   // Real headlines GDELT gave for "TARGET" in September 2026, as the backfill asks: all kept by
-  // `namesCompany`, the first five about Target, the rest not
+  // batch 58's `namesCompany`, the first five about Target, the rest not
   const targetMonth = [
     "Target expands price cuts ahead of the holiday season",
     "Target opening 8 new stores this fall across six states",
@@ -223,14 +213,15 @@ async function main(): Promise<void> {
   ];
   const TGT = { kind: "company" as const, displayName: "TARGET CORP", ticker: "TGT" };
   const tgtAliases = aliasesFor(TGT, ["TARGET"]);
-  check("for \"Target\", \"the headline names it\" is true of the word: all fifteen of a real month pass it",
-    targetMonth.every((t) => namesCompany(t, tgtAliases)));
+  // batch 58 found all fifteen passed "the headline names it"; the scorer's names now keep the word's capital (batch 59)
+  const named = targetMonth.filter((t) => namesCompany(t, tgtAliases));
+  check("a headline names Target only with its capital: of the fifteen, the five about Target pass and eight of the ten others do not",
+    named.length === 7 && targetMonth.slice(0, 5).every((t) => named.includes(t)) && named.filter((t) => targetMonth.indexOf(t) >= 5).length === 2,
+    `${named.length} named: ${JSON.stringify(tgtAliases)}`);
   const capital = targetMonth.filter((t) => namedWithCapital(t, "TARGET"));
-  check("  …with its capital, the five about Target pass and eight of the ten others do not",
-    capital.length === 7 && targetMonth.slice(0, 5).every((t) => capital.includes(t)) && capital.filter((t) => targetMonth.indexOf(t) >= 5).length === 2,
-    `${capital.length} with the capital`);
+  check("  …as the backfill's own capital test has it", JSON.stringify(capital) === JSON.stringify(named), `${capital.length} with the capital`);
   check("  …so the two stock tips left keep Target off the measured list, and it is held back",
-    BACKFILL_WORD_NAMES.TARGET === undefined && everydayWordName("TARGET") === "TARGET");
+    MEASURED_WORD_NAMES.TARGET === undefined && everydayWordName("TARGET") === "TARGET");
   const held = months();
   const heldRun = await backfillNews(fakeDb(freshDb()), 1, { ...plan, query: "TARGET", scoring: { subject: TGT, aliases: tgtAliases } },
     { today: TODAY, budget: { left: 10 }, gapMs: 0, fetch: held.fetch, store: collector().store });
@@ -252,7 +243,7 @@ async function main(): Promise<void> {
   const appleKept = collector();
   await backfillNews(fakeDb(freshDb("1980-12-12")), 1, { ...plan, query: "Apple", scoring: { subject: AAPL, aliases: aliasesFor(AAPL, ["Apple"]) } },
     { today: TODAY, budget: { left: 1 }, gapMs: 0, fetch: apple.fetch, store: appleKept.store });
-  check(`a measured word is asked, keeping only headlines that write it with its capital: Apple ("${BACKFILL_WORD_NAMES.APPLE?.slice(0, 40)}…")`,
+  check(`a measured word is asked, keeping only headlines that write it with its capital: Apple ("${MEASURED_WORD_NAMES.APPLE?.slice(0, 40)}…")`,
     apple.asked.length === 1 && appleKept.stored.length === 2 && !appleKept.stored.some((e) => e.title.includes("harvest")),
     appleKept.stored.map((e) => e.title).join(" | "));
   const index = tickers as unknown as { syncedOn: string; companies: [number, string, string][] };

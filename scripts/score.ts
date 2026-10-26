@@ -13,7 +13,7 @@ import {
 import {
   MODEL,
   aliasesFor,
-  deterministicScore,
+  freePass,
   scoreBatchWithModel,
   type ScorableRow,
   type SubjectContext,
@@ -31,6 +31,8 @@ const has = (name: string) => process.argv.includes(`--${name}`);
 
 interface Pending extends ScorableRow {
   subjectId: number;
+  /** the free tier's earlier score, on a `--rescore` */
+  prior: number | null;
 }
 
 async function writeScores(
@@ -49,7 +51,17 @@ async function writeScores(
   );
 }
 
-async function scoreSubject(client: PoolClient, slug: string, strict: boolean, limit: number) {
+/** Hands rows the free tier scored back to the model: its rules no longer settle them. */
+async function clearScores(client: PoolClient, subjectId: number, eventIds: number[]): Promise<void> {
+  if (!eventIds.length) return;
+  await client.query(
+    `UPDATE event_subjects SET relevance = NULL, scored_by = NULL, scored_at = NULL
+      WHERE subject_id = $1 AND event_id = ANY($2::bigint[]) AND scored_by = 'deterministic'`,
+    [subjectId, eventIds]
+  );
+}
+
+async function scoreSubject(client: PoolClient, slug: string, strict: boolean, limit: number, rescore: boolean) {
   const { rows: subjectRows } = await client.query(
     `SELECT id, kind, display_name, ticker, cik FROM subjects WHERE slug = $1`,
     [slug.toLowerCase()]
@@ -78,15 +90,16 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
 
   const { rows } = await client.query(
     // The primary attestation's source rides along: an Internet Archive "citation" is judged on
-    // whether it names the subject, a Wikipedia one is not (NC-131).
-    `SELECT e.id, e.kind, e.title, s.key AS source_key, a.source_label
+    // whether it names the subject, a Wikipedia one is not (NC-131). A `--rescore` takes the rows
+    // the free tier scored too, so a corrected rule reaches the rows it scored before (batch 59).
+    `SELECT e.id, e.kind, e.title, s.key AS source_key, a.source_label, es.relevance AS prior
        FROM events e JOIN event_subjects es ON es.event_id = e.id
        LEFT JOIN event_attestations a ON a.event_id = e.id AND a.is_primary
        LEFT JOIN sources s ON s.id = a.source_id
-      WHERE es.subject_id = $1 AND es.relevance IS NULL
+      WHERE es.subject_id = $1 AND (es.relevance IS NULL OR ($3 AND es.scored_by = 'deterministic'))
       ORDER BY e.occurred_on DESC
       LIMIT $2`,
-    [subjectId, limit]
+    [subjectId, limit, rescore]
   );
   const pending: Pending[] = rows.map((r) => ({
     eventId: Number(r.id),
@@ -95,23 +108,21 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
     sourceKey: r.source_key,
     byline: r.source_label,
     subjectId,
+    prior: r.prior === null ? null : Number(r.prior),
   }));
 
   console.log(`\n${slug} — ${subject.displayName}`);
   console.log(`  aliases: ${aliases.join(", ")}`);
-  console.log(`  unscored pairs: ${pending.length}`);
+  console.log(`  ${rescore ? "pairs to score or rescore" : "unscored pairs"}: ${pending.length}`);
   if (!pending.length) return;
 
   // --- tier 1: free, provenance-based ---
-  const free: { eventId: number; score: number }[] = [];
-  const remaining: ScorableRow[] = [];
-  for (const row of pending) {
-    const verdict = deterministicScore(row, subject, aliases, strict);
-    if (verdict) free.push({ eventId: row.eventId, score: verdict.score });
-    else remaining.push(row);
+  const { scores: free, cleared, remaining } = freePass(pending, subject, aliases, strict);
+  if (!has("dry-run")) {
+    await writeScores(client, subjectId, free, "deterministic");
+    await clearScores(client, subjectId, cleared);
   }
-  if (!has("dry-run")) await writeScores(client, subjectId, free, "deterministic");
-  console.log(`  deterministic: scored ${free.length}, left ${remaining.length} for the model`);
+  console.log(`  deterministic: scored ${free.length}${rescore ? ` (new or changed), cleared ${cleared.length}` : ""}, left ${remaining.length} for the model`);
 
   if (!remaining.length) return;
 
@@ -181,6 +192,7 @@ async function main() {
   const slug = arg("subject");
   const limit = Number(arg("limit") ?? 500);
   const strict = has("strict-headline");
+  const rescore = has("rescore");
   const client = await getPool().connect();
   try {
     let slugs: string[];
@@ -192,7 +204,8 @@ async function main() {
     }
     if (strict) console.log("strict-headline: company news must name the subject in the headline");
     if (has("dry-run")) console.log("dry-run: no writes");
-    for (const s of slugs) await scoreSubject(client, s, strict, limit);
+    if (rescore) console.log("rescore: the free tier's own scores are worked out again; a model's are kept");
+    for (const s of slugs) await scoreSubject(client, s, strict, limit, rescore);
   } finally {
     client.release();
     await closePool();

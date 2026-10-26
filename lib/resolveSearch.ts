@@ -3,7 +3,7 @@ import { findCandidates, findKnownCompany, loadSubject } from "./store/read";
 import { closeCandidates, optionFor, optionForSuggestion, withFocus, type SearchOption } from "./searchChoice";
 
 export type { SearchOption };
-import { headPrefixes, parseSearchPrompt } from "./prompt";
+import { headPrefixes, namesOnlyAForm, parseSearchPrompt } from "./prompt";
 import { MAX_QUERY, logResolution, targetHasEvents, type ResolutionRung } from "./searchLog";
 import { NETWORK_BUDGET_MS, timedOut, withTimeout } from "./timeout";
 
@@ -98,6 +98,12 @@ export async function resolveSearch(q: string): Promise<ResolvedSearch> {
   }
 
   const whole = () => ladder(query, started, { raw: query, focus: null, influence: null }, { salvage: true, final: true });
+
+  // a form with no security is no company's: "Form 10-K" salvaged "Form", FormFactor's ticker
+  if (namesOnlyAForm(query)) {
+    await logResolution({ query, subject: query, focus: null, influence: null, resolvedBy: "unresolved", kind: null, target: null, hasEvents: null, durationMs: Date.now() - started });
+    return { kind: "none" };
+  }
 
   /**
    * Prompt search: the security the query names, with the concern it asked about carried along.

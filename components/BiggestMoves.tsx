@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
+import { isMinorRecall } from "@/lib/markers";
 
 // Surfaces the largest single-day price changes and pairs each with the nearest *earlier* event,
 // so a reader can see at a glance what was happening around a move. This is deliberately framed as
@@ -59,6 +60,14 @@ const CATALYST_PRIORITY: Record<EventType, number> = {
   // carmaker's stock reacts to
   recall: 4,
 };
+/**
+ * A kind's rank, except that an FDA Class II recall ranks as news, as it does on the chart
+ * (batch 40's `isMinorRecall`). Ranked as a filing, one took the caption from the same day's news
+ * and from a Fed decision or inflation print, and Medtronic alone has 470 (batch 56, set aside by
+ * the 2026-10-25 audit).
+ */
+export const catalystPriority = (ev: Pick<TimelineEvent, "type" | "title">): number =>
+  isMinorRecall(ev) ? CATALYST_PRIORITY.news : CATALYST_PRIORITY[ev.type];
 const MIN_PCT = 2; // ignore ordinary days — a "biggest move" under 2% isn't worth a callout
 const MAX_MOVES = 6;
 const SPACING = 5; // trading days between picks, so one volatile week doesn't fill the whole panel
@@ -73,7 +82,7 @@ interface Move {
 
 const dayMs = (date: string) => Date.parse(`${date}T00:00:00Z`);
 
-function nearestCatalyst(sorted: TimelineEvent[], day: string): TimelineEvent | null {
+export function nearestCatalyst(sorted: TimelineEvent[], day: string): TimelineEvent | null {
   const end = dayMs(day);
   const start = end - CATALYST_LOOKBACK_DAYS * 86_400_000;
   let best: TimelineEvent | null = null;
@@ -85,7 +94,7 @@ function nearestCatalyst(sorted: TimelineEvent[], day: string): TimelineEvent | 
     // day before still beat same-day reaction news — the after-close report that moved the next
     // session is the more useful pairing. Same-day, the higher-priority kind wins.
     const daysBefore = (end - t) / 86_400_000;
-    const score = -daysBefore * 2 + CATALYST_PRIORITY[ev.type];
+    const score = -daysBefore * 2 + catalystPriority(ev);
     if (score > bestScore) {
       bestScore = score;
       best = ev;

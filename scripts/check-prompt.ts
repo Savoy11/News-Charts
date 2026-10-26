@@ -72,6 +72,13 @@ const CASES: Case[] = [
   { q: "Apple 10-K filings in 2020", subject: "Apple", focus: "10-K · in 2020", note: "the form and the year both narrow" },
   { q: "Sony 4K", subject: "Sony 4K", note: "4K is no form" },
   { q: "10-K", subject: "10-K", note: "a form alone names no security" },
+  // ---- the form by its full name (batch 56): "Form" is no security, though FormFactor's ticker is FORM
+  { q: "Form 10-K", subject: "Form 10-K", note: "a form alone, by its full name, names no security either" },
+  { q: "SEC Form 8-K filings", subject: "SEC Form 8-K filings", note: "nor with the SEC's name on it" },
+  { q: "Form 10-K for Apple", subject: "Apple", focus: "10-K" },
+  { q: "Apple Form 10-K", subject: "Apple", focus: "10-K" },
+  { q: "Form 8-K Tesla", subject: "Tesla", focus: "8-K" },
+  { q: "FormFactor 10-K", subject: "FormFactor", focus: "10-K", note: "a name that starts with \"Form\" keeps it" },
 ];
 
 let pass = 0;

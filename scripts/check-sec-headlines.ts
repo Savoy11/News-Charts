@@ -338,6 +338,10 @@ async function main(): Promise<void> {
     pressReleaseHeadline(asDoc(["Page 1 of 16 Acme Reports First Quarter 2026 Results", "MINNETONKA, Minn., Apr. 21, 2026 — Acme today reported results."])) === "Acme Reports First Quarter 2026 Results" &&
       pressReleaseHeadline(asDoc(["Page 1 of 16", "Acme Reports First Quarter 2026 Results", "MINNETONKA, Minn., Apr. 21, 2026 — Acme today reported results."])) === "Acme Reports First Quarter 2026 Results");
   check("titles stored by batch 53's reading are read again: UnitedHealth's \"Page 1 of 21 …\"", HEADLINE_VERSION >= 7);
+  check("a period's results on the next line carry it on, but not under a headline that already has its results (batch 56)",
+    pressReleaseHeadline(asDoc(["Acme to Announce First Quarter 2026", "Financial Results on April 28", "AKRON, Ohio, April 1, 2026 — Acme will report."])) === "Acme to Announce First Quarter 2026 Financial Results on April 28" &&
+      pressReleaseHeadline(asDoc(["Acme Reports Results for First Quarter 2026", "Sales Rise in Every Region", "AKRON, Ohio, April 21, 2026 — Acme today reported results."])) === "Acme Reports Results for First Quarter 2026");
+  check("titles stored by batch 54's reading are read again: Stellantis, TotalEnergies, Toyota", HEADLINE_VERSION >= 8);
 
   console.log("\nWhich 8-Ks and 6-Ks are asked about");
   const asked = (label: string, items?: string) => mayCarryRelease(eightK("000001292719000001", "2019-01-01", label, items));

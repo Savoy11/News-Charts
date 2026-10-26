@@ -490,7 +490,7 @@ npm run score                      # every subject
 npm run score -- --subject aapl    # one
 npm run score -- --dry-run         # no writes, and no model call
 npm run score -- --strict-headline # see below
-npm run score -- --rescore         # work out the free tier's own scores again
+npm run score -- --rescore --limit 100000  # work out the free tier's own scores again
 ```
 
 Two tiers, cheapest first:
@@ -520,7 +520,9 @@ throughout is read as before.
 130 listed companies' names, "american" of 52, "companies" of 24; a word five or more share no
 longer names a company by itself, unless it is the company's whole name ("Target"). The company is
 still named by its common name whole ("Southern Copper") and by that name without its trailing
-generic words ("American Water" for American Water Works). Measured on 4,165 Yahoo Finance
+generic words ("American Water" for American Water Works) when no other listed company's name holds
+it, and only written with its capitals (batch 61): "New York" names no New York Times news, and "top
+clean energy stocks" none of Clean Energy Fuels'. Measured on 4,165 Yahoo Finance
 headlines from 235 companies' feeds: other feeds' headlines naming a company fell from 3,098 to
 1,236 (sixty of those removed, picked at random, were all wrong: "American Depositary Receipts" for
 American Airlines), while the companies' own feeds named them 2,009 times against 2,029. The counts
@@ -529,7 +531,10 @@ names no company either: "AMAZON COM INC" made "Investing.com's stocks of the we
 
 A stored score follows a corrected rule on the story's next ingest,
 or at once with `--rescore`, which works out the free tier's own scores again and hands those it
-no longer settles back to the model; a model's score is never touched.
+no longer settles back to the model; a model's score is never touched. It reaches the newest 500
+rows a subject has unless `--limit` says more, and a `--strict-headline` score only when run with
+that flag too: strict scores are kept apart (`deterministic-strict`), so a plain rescore, or ingest's
+own, leaves those demotions alone.
 
 `--strict-headline` is a product decision, not a fact: it scores company news 0.2 when the
 *headline* never names the subject. Against 12 real headlines captured from the live AAPL page

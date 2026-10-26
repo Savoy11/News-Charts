@@ -1,10 +1,11 @@
 import { Pool, type PoolClient } from "pg";
 import { getTopicTimeline, articleCoversSlug, topicSlugFromTitle } from "../wiki";
-import { resolveCompany, getFilings, getIndustry, commonName } from "../sec";
+import { resolveCompany, getFilings, getIndustry } from "../sec";
 import { mayCarryRelease } from "../secHeadlines";
 import { applyHeadlines, storedHeadlines } from "./headlines";
 import { fetchDailyPrices } from "../prices";
 import { aliasesFor } from "../enrich/relevance";
+import { companyScoringAliases } from "../scoringNames";
 import { withTimeout, timedOut } from "../timeout";
 import { PG_TYPES } from "../db";
 import {
@@ -312,10 +313,8 @@ export async function firstPassCompany(rawQuery: string): Promise<FirstPassOutco
       if (!timedOut(industry) && industry) await linkToIndustry(client, subjectId, industry).catch(() => {});
 
       const ctx = { kind: "company" as const, displayName: resolved.name, ticker: resolved.ticker };
-      const scoring: ScoringContext = {
-        subject: ctx,
-        aliases: aliasesFor(ctx, [commonName(resolved.name)]),
-      };
+      // the names ingest scores with, so a first visit's scores are the ones its next ingest keeps
+      const scoring: ScoringContext = { subject: ctx, aliases: companyScoringAliases(resolved) };
       const stats = emptyStats();
       await client.query("BEGIN");
       try {

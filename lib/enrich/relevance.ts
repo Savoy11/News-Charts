@@ -6,7 +6,7 @@ import { WEAK_TOKENS } from "../newsQuality";
 import { dataBlock, untrustedNotice } from "./untrusted";
 import { REGISTRANT_FORM } from "../secForms";
 import { parseScoreReply } from "../scoreReply";
-import { isListedWord, oneWordName, sharedBy, withCapital } from "../wordNames";
+import { isListedWord, isOwnShortName, oneWordName, sharedBy, withCapital } from "../wordNames";
 
 export { parseScoreReply };
 
@@ -56,10 +56,12 @@ export interface Scored {
  * tightened").
  *
  * A word of a company's name that five or more listed companies' names share names none of them
- * alone, unless it is the whole name (batch 60): "Gold prices hit record high" is no Barrick Gold
- * news, nor "Companies cut hiring as rates bite" Lowe's, nor "American Depositary Receipts" American
- * Airlines'. The company is still named by its common name whole ("Southern Copper") and by that
- * name without its trailing generic words (`shortName`: "American Water" for American Water Works).
+ * alone, unless it is the whole name (batch 60): "…as Gold Slides Back Toward $4,000" is no Kinross
+ * Gold news, nor "Companies cut hiring as rates bite" Lowe's, nor "American Depositary Receipts"
+ * American Airlines'. The company is still named by its common name whole ("Southern Copper"), and
+ * by that name without its trailing generic words (`shortName`: "American Water" for American Water
+ * Works) when no other listed company's name holds it, with its capitals (batch 61): "New York" is
+ * not the New York Times's, and "top clean energy stocks" not Clean Energy Fuels'.
  */
 export function aliasesFor(subject: SubjectContext, extraAliases: string[] = []): string[] {
   const company = subject.kind === "company";
@@ -71,7 +73,9 @@ export function aliasesFor(subject: SubjectContext, extraAliases: string[] = [])
     aliases.add(word);
   }
   aliases.add(shown.toLowerCase());
-  if (company) for (const phrase of [common, shortName(common)]) if (phrase?.includes(" ")) aliases.add(phrase.toLowerCase());
+  if (company && common.includes(" ")) aliases.add(common.toLowerCase());
+  const short = company ? shortName(common) : null;
+  if (short && isOwnShortName(nameKey(short))) aliases.add(short.toLowerCase().replace(/(?<![\p{L}\p{N}'])\p{L}/gu, (c) => c.toUpperCase()));
   if (subject.ticker) aliases.add(CAPITALS.test(subject.ticker) ? subject.ticker : subject.ticker.toLowerCase());
   for (const phrase of extraAliases) {
     // a company's initials keep their capitals, so they name a headline only written that way:
@@ -88,7 +92,9 @@ export function aliasesFor(subject: SubjectContext, extraAliases: string[] = [])
  * more: "MOODYS CORP /DE/" gave Moody's the name "/de/", and the tag off, "Embracer Group AB/ADR"
  * would give Embracer "ab" (batch 56). Nor does a web address's ending: "AMAZON COM INC" made
  * "Investing.com's stocks of the week" Amazon news (batch 60). Search keeps "com" a word — "Cars.com"
- * is not offered for "electric cars" — so it is not one of `WEAK_TOKENS`.
+ * is not offered for "electric cars" — so it is not one of `WEAK_TOKENS`. Nor does a number:
+ * "Bitwise 10 Crypto Index ETF" named every "Top 10" headline, WD-40 every "Dow tops 40,000"
+ * (batch 61).
  */
 export function nameWords(subject: SubjectContext): string[] {
   const company = subject.kind === "company";
@@ -98,7 +104,9 @@ export function nameWords(subject: SubjectContext): string[] {
   for (const tok of rawTokens) {
     const keepShort = tok.length >= 2 && (/\d/.test(tok) || tok === tok.toUpperCase());
     const lower = tok.toLowerCase();
-    if ((tok.length > 2 || keepShort) && !WEAK_TOKENS.has(lower) && lower !== "com" && !words.includes(lower)) words.push(lower);
+    if ((tok.length > 2 || keepShort) && /\p{L}/u.test(tok) && !WEAK_TOKENS.has(lower) && lower !== "com" && !words.includes(lower)) {
+      words.push(lower);
+    }
   }
   return words;
 }
@@ -117,15 +125,20 @@ export const SHARED_ALONE = 5;
  * A company's common name without its trailing generic words, two words at least: "American Water
  * Works" → "American Water", "First Citizens BancShares" → "First Citizens", "Interactive Brokers
  * Group" → "Interactive Brokers". A word is generic when it is weak or two listed companies' names
- * share it; null when nothing goes, or less than two words would be left ("Bank of America").
+ * share it; null when nothing goes, less than two words would be left ("Bank of America"), or a word
+ * left is an initial: "U S" of U S Global Investors named every "U.S." headline (batch 61).
+ * `aliasesFor` names a company by it only when no other listed company's name holds it
+ * (`isOwnShortName`), which `npm run sync:word-names` works out with `shared` from its own counts.
  */
-export function shortName(common: string): string | null {
+export function shortName(common: string, shared: (key: string) => number = sharedBy): string | null {
   const words = common.replace(/[.,]/g, "").split(/\s+/).filter(Boolean);
   const weak = (w: string) => WEAK_TOKENS.has(w.toLowerCase()) || !/\p{L}/u.test(w);
   let end = words.length;
-  while (end > 2 && (weak(words[end - 1]) || sharedBy(nameKey(words[end - 1])) >= 2)) end--;
+  while (end > 2 && (weak(words[end - 1]) || shared(nameKey(words[end - 1])) >= 2)) end--;
   while (end > 0 && weak(words[end - 1])) end--;
-  return end >= 2 && end < words.length ? words.slice(0, end).join(" ") : null;
+  if (end < 2 || end === words.length) return null;
+  const kept = words.slice(0, end);
+  return kept.some((w) => (w.match(/\p{L}/gu) ?? []).length < 2) ? null : kept.join(" ");
 }
 
 const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -135,6 +148,9 @@ export const INITIALISM = /^[A-Z]{3,4}$/;
 
 /** A name kept in capitals, matched only in them: a company's initials, or its ticker ("COST"). */
 const CAPITALS = /^[A-Z]{3,5}$/;
+
+/** Words whose "'s" is "is" or "has", never a possessive: "It's", "That's", "Here's". */
+const CONTRACTED: ReadonlySet<string> = new Set(["it", "that", "there", "here", "what", "who", "where", "when", "why", "how", "he", "she", "let"]);
 
 /**
  * What a headline says about the subject: named outright, obliquely, or not at all — or only as
@@ -173,12 +189,17 @@ export function mentions(original: string, names: string[]): Mention {
   const lowered = aliases.map((a) => a.toLowerCase());
   const cased = /\p{Lu}/u.test(title);
   // a name of two words or more names a possessive too: "Franco-Nevada's" is Franco Nevada's (batch 60)
-  const keyed = ` ${nameKey(title)} | ${nameKey(title.replace(/'s(?![\p{L}\p{N}])/gu, ""))} `;
+  const keyOf = (t: string) => ` ${nameKey(t)} | ${nameKey(t.replace(/'s(?![\p{L}\p{N}])/gu, ""))} `;
+  const keyed = keyOf(title);
+  // …and a name kept with its capitals only in the title's capitalised words, each other word a
+  // "&&" no name holds: "D.R. Horton" is "D. R. Horton", "olympic american water polo" no American Water (batch 61)
+  const keyedCapitals = keyOf(title.replace(/(?<![\p{L}\p{N}'])\p{Ll}[\p{L}\p{N}'.-]*/gu, "&&"));
   // A one-word name kept without the apostrophe its SEC title dropped ("kohls") names "Kohl's
   // names new CEO" read with the apostrophes out (batch 54). Only as a second try: out, "Ford's"
   // would read "fords" and no longer name Ford. And only a possessive's: out of "she'll", it read
-  // "shell" and named Shell (batch 58, the 2026-10-26 audit).
-  const bareTitle = title.replace(/'(?=s(?![\p{L}\p{N}]))/gu, "");
+  // "shell" and named Shell (batch 58, the 2026-10-26 audit), and out of "It's", "Its", Southern ITS
+  // (batch 61, the scoring audit).
+  const bareTitle = title.replace(/(\p{L}+)'(?=s(?![\p{L}\p{N}]))/gu, (all, stem: string) => (CONTRACTED.has(stem.toLowerCase()) ? all : stem));
   let sawOblique = false;
   let sawWord = false;
   for (const a of aliases) {
@@ -187,12 +208,12 @@ export function mentions(original: string, names: string[]): Mention {
       if (re.test(title)) return "named";
       continue;
     }
-    // the first place the title has the name — with its capital, when the name keeps one
+    // the first place the title has the name — with its capitals, every word's, when the name keeps them
     const capital = cased && a[0] !== a[0].toLowerCase();
     const first = (re: RegExp, text: string): RegExpExecArray | null => {
       const low = text.toLowerCase();
       for (let m = re.exec(low); m; m = re.exec(low)) {
-        if (!capital || text[m.index] !== low[m.index]) return m;
+        if (!capital || [...m[0].matchAll(/(?<![\p{L}\p{N}'])\p{L}/gu)].every((w) => text[m.index + w.index] !== w[0])) return m;
         sawWord = true;
       }
       return null;
@@ -207,7 +228,7 @@ export function mentions(original: string, names: string[]): Mention {
     }
     if (!m) {
       const key = nameKey(a);
-      if (key.includes(" ") && keyed.includes(` ${key} `)) return "named";
+      if (key.includes(" ") && (capital ? keyedCapitals : keyed).includes(` ${key} `)) return "named";
       continue;
     }
     // Multi-word aliases ("ford motor company") can't be a surname; only single tokens can.
@@ -405,7 +426,7 @@ export function freePass(
     const verdict = deterministicScore(row, subject, aliases, strictHeadline);
     const prior = row.prior ?? null;
     if (verdict) {
-      // stored as a real: 0.9 reads back as 0.8999999762
+      // a real holds 0.9 as 0.89999998, so a score is compared with room for that
       if (prior === null || Math.abs(prior - verdict.score) > 1e-6) scores.push({ eventId: row.eventId, score: verdict.score });
       continue;
     }

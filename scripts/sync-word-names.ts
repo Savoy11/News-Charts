@@ -1,9 +1,9 @@
 import { writeFileSync } from "node:fs";
 import tickers from "../data/edgar-tickers.json";
-import { gdeltHeadlineNames, gdeltNewsPlan } from "../lib/news";
+import { companyScoringAliases, gdeltNewsPlan } from "../lib/news";
 import { oneWordName } from "../lib/wordNames";
-import { aliasesFor, nameWords } from "../lib/enrich/relevance";
-import { commonName } from "../lib/edgarName";
+import { nameWords, shortName } from "../lib/enrich/relevance";
+import { commonName, withoutTag } from "../lib/edgarName";
 import { nameKey } from "../lib/companyAliases";
 import { newsNamesFor, possessiveNameFor } from "../lib/sec";
 
@@ -33,7 +33,8 @@ import { newsNamesFor, possessiveNameFor } from "../lib/sec";
  *
  * …and `data/shared-name-words.json`: for each word of a company's name (`nameWords`), how many
  * listed companies' names hold it, where two or more do. A word five or more share names none of
- * them alone (`SHARED_ALONE`).
+ * them alone (`SHARED_ALONE`). With it, `shortNames`: the short names (`shortName`) no other listed
+ * company's name holds, which alone a company may be named by (batch 61).
  */
 
 const ENABLE = "https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt";
@@ -57,11 +58,12 @@ async function main(): Promise<void> {
     if (name) (english.has(name.toLowerCase()) ? words : others).add(name);
     const ownWords = nameWords({ kind: "company", displayName: title });
     for (const word of ownWords) (shared.get(nameKey(word)) ?? shared.set(nameKey(word), new Set()).get(nameKey(word))!).add(cik);
-    // as ingest scores the company's headlines, with every word of its name
-    const scored = [...ownWords, ...aliasesFor({ kind: "company", displayName: title, ticker }, [commonName(title), ...aka, ...gdeltHeadlineNames(title, possessive)])];
+    // as ingest scores the company's headlines, with every word of its name; its ticker apart, which
+    // is matched in capitals anyway, and not the name word it may equal: GAP's "gap" (batch 61)
+    const scored = [...ownWords, ...companyScoringAliases({ name: title, ticker, cik })];
     for (const alias of scored) {
       const key = oneWordName(alias);
-      if (key && key.length >= 3 && key !== ticker && english.has(key.toLowerCase())) pieces.add(key);
+      if (key && key.length >= 3 && alias !== ticker && english.has(key.toLowerCase())) pieces.add(key);
     }
   }
   for (const w of words) pieces.delete(w);
@@ -77,12 +79,25 @@ async function main(): Promise<void> {
   console.log(`${OUT}: ${words.size} one-word names are English words, ${others.size} are not; ${pieces.size} other scored names are words (index synced ${index.syncedOn})`);
   const counts = [...shared].map(([key, ciks]) => [key, ciks.size] as const).filter(([, n]) => n >= 2)
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  // each company's short name, from these counts, and how many companies' common names hold it
+  const sharedBy = (key: string) => shared.get(key)?.size ?? 1;
+  const commons = new Map<number, string>();
+  for (const [cik, , title] of index.companies) if (!commons.has(cik)) commons.set(cik, ` ${nameKey(commonName(withoutTag(title)))} `);
+  const shorts = new Set<string>();
+  for (const [cik, , title] of index.companies) {
+    const short = shortName(commonName(withoutTag(title)), sharedBy);
+    if (short) shorts.add(` ${nameKey(short)} `);
+  }
+  const holders = new Map([...shorts].map((s) => [s, 0]));
+  for (const common of commons.values()) for (const s of shorts) if (common.includes(s)) holders.set(s, holders.get(s)! + 1);
+  const ownShort = [...holders].filter(([, n]) => n === 1).map(([s]) => s.trim()).sort();
   writeFileSync(SHARED_OUT, JSON.stringify({
     index: `data/edgar-tickers.json synced ${index.syncedOn}`,
-    use: "How many listed companies' names hold each word of a name, where two or more do. A word five or more share names none of them alone in headline scoring, unless it is a company's whole name; a word two share is generic in a company's short name (lib/enrich/relevance.ts, batch 60).",
+    use: "How many listed companies' names hold each word of a name, where two or more do. A word five or more share names none of them alone in headline scoring, unless it is a company's whole name; a word two share is generic in a company's short name (lib/enrich/relevance.ts, batch 60). `shortNames`: the short names one listed company's common name alone holds, the only ones a company is named by (batch 61).",
     shared: Object.fromEntries(counts),
+    shortNames: ownShort,
   }, null, 1) + "\n");
-  console.log(`${SHARED_OUT}: ${counts.length} words are shared by two or more companies' names, ${counts.filter(([, n]) => n >= 5).length} by five or more`);
+  console.log(`${SHARED_OUT}: ${counts.length} words are shared by two or more companies' names, ${counts.filter(([, n]) => n >= 5).length} by five or more; ${ownShort.length} of ${shorts.size} short names are one company's`);
 }
 
 main().catch((err) => {

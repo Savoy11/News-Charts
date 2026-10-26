@@ -985,6 +985,76 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 61: the scoring audit's five findings fixed (2026-10-26)
+
+The `code-auditor` read batches 58–60 (`1ac7cdd..10f163a`). Its report is
+`docs/audits/2026-10-26-scoring-audit.md`. It found the mechanics sound: across every company in
+the index, other feeds' headlines scored 0.9 fell from 83,847 on batch 59 to 10,395. All five of its
+findings were reproduced here and are fixed, with the one it found worse than recorded.
+
+`npm run check` passes (49 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` was not
+run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **Finding 1 (`P2`): `shortName` put back the generic names batch 60 removed.**
+      - "u s" for U S Global Investors named every "U.S." headline.
+      - "new york" named New York Times news, "united states" United States Oil Fund's, and
+        "morgan stanley" six Morgan Stanley funds'. Lowercase "top clean energy stocks" named Clean
+        Energy Fuels.
+      - Now a short name names a company only when no other listed company's common name holds it,
+        and only written with its capitals, every word's: "American Water", never "american water
+        polo". The list is `shortNames` in `data/shared-name-words.json`, written by `npm run
+        sync:word-names`: 1,694 of 1,839 short names. Initials make no short name.
+      - A name with capitals still has its punctuation folded, over the title's capitalised words
+        only: "D.R. Horton" is "D. R. Horton".
+- [x] **Finding 2 (`P2`): 70 companies whose ticker is their name escaped the capital rule.** The
+      sync skipped the name word along with the ticker. Gap, Ally, Ball, Bill, Dell, Snap and the
+      others now keep their capital: "Gender pay gap widens" is no Gap news.
+- [x] **Finding 3 (`P2`): `npm run score` and `--rescore` scored with names ingest does not use.**
+      - They used the stored search aliases, among them former names news does not keep. Great Elm's
+        "Unwired Planet" scored 0.9 there and nothing at ingest.
+      - Now every path takes a company's names from `companyScoringAliases`, in the new pure module
+        `lib/scoringNames.ts`: ingest, a first visit (which used only the common name), `npm run
+        score`, the backfill (through ingest) and `check:feeds`. A first visit still reaches no slow
+        source (`check:ondemand`).
+      - Tried on a scratch database: the Unwired Planet headline stays unscored.
+- [x] **Finding 4 (`P3`): a plain `--rescore` cleared every `--strict-headline` 0.2.**
+      - A strict score is now written as `deterministic-strict`. A rescore takes it back only with the
+        flag, and ingest's own re-score never: before, a story fetched again also lost its strict 0.2.
+      - `scripts/cost-report.ts` counts it free. The README's example gains `--limit`, without which
+        a rescore reaches only a subject's newest 500 rows.
+      - Tried on a scratch database: the strict 0.2 was left alone by a plain rescore and kept by a
+        strict one.
+- [x] **Finding 5 (`P3`): "It's" was read as Southern ITS's "Its".** The apostrophe retry leaves a
+      contraction alone ("it's", "that's", "here's", …).
+- [x] **Worse than recorded: a number named a company alone.** "10" named Bitwise 10 Crypto Index
+      ETF in 51 saved headlines, and "40" WD-40 in 13 ("Dow tops 40,000"). A name word with no
+      letter is no name now. "Q2" stays: it is Q2 Holdings' name.
+- From the audit's set-asides: the Barrick Gold comment (Kinross Gold now) and the "0.8999999762"
+  comment are corrected. Left as it left them: "Form 10 Q Apple" opening Qnity Electronics, and the
+  re-score check matching source text by design.
+- Measured on the saved Yahoo Finance headlines, main against this branch:
+  - the 235 companies' own feeds: 2,009 namings either way;
+  - other feeds' namings: 1,236 → 1,235;
+  - across all 10,443 index companies, other feeds' 0.9s: 10,393 → 9,888, none gained.
+- The auditor sent one request straight to EDGAR (Motorola Solutions' record) with the project's
+  User-Agent, which carries the owner's email; it says so in its report.
+- [ ] **Open:**
+      - Batch 60's and 59's: a capitalised word still names; words fewer than five names share still
+        name alone; two-letter tickers; and now "Q2".
+      - The auditor's suggestion, a `check:relevance` that replays a saved headline set across the
+        whole index, is not done: committing some 3,000 third-party headlines needs a licensing look
+        first.
+- Checks, main → now. On main's code the new ones fail, except the one guarding what main already
+  does, and those calling the new functions cannot run:
+  - `check:relevance` 76 → 85:
+    - findings 1, 2 and 5 and the numbers, on real and audit headlines (fail on main); "Gap raises
+      full-year outlook" still names Gap;
+    - every path using `companyScoringAliases`, and the strict label (fail on main);
+    - the short-name list and Great Elm's scoring names (new functions);
+    - batch 59's re-score wiring check follows the new SQL.
+  - `check:aliases` (99) and `check:possessive` (15): their wiring checks follow
+    `companyScoringAliases`.
+
 ## NC ledger — batch 60: a word many companies' names share names none of them alone (2026-10-26)
 
 Batch 59 left open that a word many listed companies share in their names named each of them
@@ -1018,6 +1088,9 @@ run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is not
       at least (`shortName`): "American Water" for American Water Works, "First Citizens",
       "Interactive Brokers".
       - The common name used to be a name only where ingest passed it in; `npm run score` did not.
+      - *(Batch 61, the scoring audit: a short name now names the company only when no other
+        listed company's name holds it, and only written with its capitals. "U S", "New York" and
+        "Morgan Stanley" named every "U.S.", New York and Morgan Stanley headline.)*
 - [x] **A name of two words or more names its possessive.** "Is Parker Hannifin's Premium
       Valuation a Warning Sign" is Parker-Hannifin's, and "Franco-Nevada's 2026 Guidance" Franco
       Nevada's.

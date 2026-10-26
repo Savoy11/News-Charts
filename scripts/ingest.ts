@@ -28,7 +28,7 @@ import { collapseNearDuplicates } from "../lib/newsQuality";
 import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
 import { getTopicTimeline, articleAnswersSlug, companyLede, articleCoversSlug, topicSlugFromTitle, WikipediaUnavailable, wikiOutcome } from "../lib/wiki";
 import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
-import { fetchNews, gdeltHeadlineNames, gdeltNames, gdeltNewsPlan } from "../lib/news";
+import { companyScoringAliases, fetchNews, gdeltNames, gdeltNewsPlan } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
 import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, newsNamesFor, possessiveNameFor, type Rename } from "../lib/sec";
@@ -404,13 +404,10 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   const alsoKnownAs = newsNamesFor(company.cik);
   // "McDonald's" where the SEC writes MCDONALDS: GDELT holds a possessive without its "'s" (batch 36)
   const possessive = possessiveNameFor(company.cik);
-  // Score at link time, with the common name as an extra whole-phrase alias — the same name
-  // the feeds were queried under is the name their headlines will use.
+  // Score at link time, by the names every path scores a company's headlines with: the common
+  // name the feeds were queried under is the name their headlines will use.
   const companyCtx = { kind: "company" as const, displayName: company.name, ticker: company.ticker };
-  const scoring: ScoringContext = {
-    subject: companyCtx,
-    aliases: aliasesFor(companyCtx, [name, ...alsoKnownAs, ...gdeltHeadlineNames(company.name, possessive)]),
-  };
+  const scoring: ScoringContext = { subject: companyCtx, aliases: companyScoringAliases(company) };
   const run = runnerFor(client, subjectId, due, scoring);
 
   if (industry) {

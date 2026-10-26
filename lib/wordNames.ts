@@ -19,6 +19,7 @@ const WORDS: ReadonlySet<string> = new Set(wordNames.words);
 const NOT_WORDS: ReadonlySet<string> = new Set(wordNames.others);
 const PIECES: ReadonlySet<string> = new Set(wordNames.pieces);
 const SHARED: Readonly<Record<string, number>> = sharedNames.shared;
+const OWN_SHORT: ReadonlySet<string> = new Set(sharedNames.shortNames);
 
 /** A company's GDELT name when it is one word of letters, as a name key: "TARGET" — null for "Ford Motor" or "Life360". */
 export function oneWordName(query: string): string | null {
@@ -76,4 +77,14 @@ export function withCapital(name: string): string {
  */
 export function sharedBy(key: string): number {
   return SHARED[key] ?? 1;
+}
+
+/**
+ * Whether a company's short name (`shortName`), as a name key, is held by no other listed company's
+ * name: "AMERICAN WATER" is, "NEW YORK" (the New York Times, New York Community Bancorp…) and
+ * "MORGAN STANLEY" (Morgan Stanley Direct Lending Fund) are not. Worked out by `npm run
+ * sync:word-names` (batch 61).
+ */
+export function isOwnShortName(key: string): boolean {
+  return OWN_SHORT.has(key);
 }

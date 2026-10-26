@@ -18,8 +18,7 @@ import {
   type ScorableRow,
   type SubjectContext,
 } from "../lib/enrich/relevance";
-import { newsNamesFor, possessiveNameFor } from "../lib/sec";
-import { gdeltHeadlineNames } from "../lib/news";
+import { companyScoringAliases } from "../lib/news";
 
 const BATCH = 25;
 
@@ -51,13 +50,22 @@ async function writeScores(
   );
 }
 
+/**
+ * What the free tier writes as its scorer: a `--strict-headline` score apart, so a rescore without
+ * the flag, and ingest's own re-score, leave its demotions alone (batch 61). Before, a plain
+ * `--rescore` cleared every strict 0.2 back to NULL, and the page showed them again.
+ */
+const FREE = "deterministic";
+const FREE_STRICT = "deterministic-strict";
+const freeScorers = (strict: boolean) => (strict ? [FREE, FREE_STRICT] : [FREE]);
+
 /** Hands rows the free tier scored back to the model: its rules no longer settle them. */
-async function clearScores(client: PoolClient, subjectId: number, eventIds: number[]): Promise<void> {
+async function clearScores(client: PoolClient, subjectId: number, eventIds: number[], strict: boolean): Promise<void> {
   if (!eventIds.length) return;
   await client.query(
     `UPDATE event_subjects SET relevance = NULL, scored_by = NULL, scored_at = NULL
-      WHERE subject_id = $1 AND event_id = ANY($2::bigint[]) AND scored_by = 'deterministic'`,
-    [subjectId, eventIds]
+      WHERE subject_id = $1 AND event_id = ANY($2::bigint[]) AND scored_by = ANY($3::text[])`,
+    [subjectId, eventIds, freeScorers(strict)]
   );
 }
 
@@ -76,17 +84,17 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
     ticker: subjectRows[0].ticker,
   };
   const subjectId = Number(subjectRows[0].id);
-  // Stored aliases ("Google" for Alphabet) settle headlines deterministically that would
-  // otherwise cost a model call — one indexed read that pays for itself immediately.
-  const { rows: aliasRows } = await client.query<{ alias: string }>(
+  // A company is scored by the names ingest scores it with ("Google" for Alphabet), never by its
+  // stored search aliases, whose former names news does not keep (batch 61). Any other subject
+  // by its stored aliases, the phrasings searched for it — one indexed read.
+  const cik = subject.kind === "company" ? subjectRows[0].cik : null;
+  const { rows: aliasRows } = cik ? { rows: [] as { alias: string }[] } : await client.query<{ alias: string }>(
     `SELECT alias FROM subject_aliases WHERE subject_id = $1`,
     [subjectId]
   );
-  // …and a company's other names that news may use, the ones ingest searched under (batch 25), with
-  // the names a GDELT headline gives a possessive ("mcdonald" for McDonald's, batch 36)
-  const cik = subject.kind === "company" ? subjectRows[0].cik : null;
-  const alsoKnownAs = cik ? [...newsNamesFor(cik), ...gdeltHeadlineNames(subject.displayName, possessiveNameFor(cik))] : [];
-  const aliases = aliasesFor(subject, [...aliasRows.map((r) => r.alias), ...alsoKnownAs]);
+  const aliases = cik
+    ? companyScoringAliases({ name: subject.displayName, ticker: subject.ticker, cik })
+    : aliasesFor(subject, aliasRows.map((r) => r.alias));
 
   const { rows } = await client.query(
     // The primary attestation's source rides along: an Internet Archive "citation" is judged on
@@ -96,10 +104,10 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
        FROM events e JOIN event_subjects es ON es.event_id = e.id
        LEFT JOIN event_attestations a ON a.event_id = e.id AND a.is_primary
        LEFT JOIN sources s ON s.id = a.source_id
-      WHERE es.subject_id = $1 AND (es.relevance IS NULL OR ($3 AND es.scored_by = 'deterministic'))
+      WHERE es.subject_id = $1 AND (es.relevance IS NULL OR ($3 AND es.scored_by = ANY($4::text[])))
       ORDER BY e.occurred_on DESC
       LIMIT $2`,
-    [subjectId, limit, rescore]
+    [subjectId, limit, rescore, freeScorers(strict)]
   );
   const pending: Pending[] = rows.map((r) => ({
     eventId: Number(r.id),
@@ -119,8 +127,8 @@ async function scoreSubject(client: PoolClient, slug: string, strict: boolean, l
   // --- tier 1: free, provenance-based ---
   const { scores: free, cleared, remaining } = freePass(pending, subject, aliases, strict);
   if (!has("dry-run")) {
-    await writeScores(client, subjectId, free, "deterministic");
-    await clearScores(client, subjectId, cleared);
+    await writeScores(client, subjectId, free, strict ? FREE_STRICT : FREE);
+    await clearScores(client, subjectId, cleared, strict);
   }
   console.log(`  deterministic: scored ${free.length}${rescore ? ` (new or changed), cleared ${cleared.length}` : ""}, left ${remaining.length} for the model`);
 

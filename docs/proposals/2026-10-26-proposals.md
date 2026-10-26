@@ -30,11 +30,13 @@
 Mark each proposal below: `APPROVED`, `REJECTED`, or `DEFERRED`, and add a
 reason for anything rejected. Then run the scout in FILE mode.
 
+**Marked 2026-10-26 by the owner: all eight approved, none rejected or deferred.**
+
 ---
 
 ## 1. Reach the Federal Register back to 1994, and past the newest forty · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-26. Which routine rail-board and FERC notices count is asked when it is built.
 **Owner's reason (if rejected):**
 
 **Anchor:** data the source holds that our own query declines — a floor `docs/COVERAGE-MAP.md:100-101`
@@ -124,7 +126,7 @@ owner call on routine notices
 
 ## 2. A results release is an earnings event, whatever form carried it · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-26. Whether a profit alert counts as earnings is asked when it is built.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present for one subject type and missing for a comparable one — a US
@@ -189,7 +191,7 @@ still agrees with 2.02 on the 120. On main every one of them is a filing, so the
 
 ## 3. Keep the forms the 2026-10-18 list missed: foreign listings, large-company shelves, late-filing notices, proxy fights, tender results · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-26. The owner picks the forms from the list when it is built.
 **Owner's reason (if rejected):**
 
 **Anchor:** data already downloaded and dropped · a capability present for one subject type and
@@ -255,7 +257,7 @@ same response, same function · *Practicality:* high — one owner pick, the cou
 
 ## 4. NHTSA defect investigations beside the recalls — a source for the owner to decide · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-26, the new source (NHTSA defect investigations) included.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present for one kind of record and missing for a comparable one — a
@@ -313,7 +315,7 @@ adapter does not exist.
 
 ## 5. A fund's page carries its own fund's filings · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-26.
 **Owner's reason (if rejected):**
 
 **Anchor:** data already fetched and dropped (EDGAR's series ids) · it revisits NC-139's premise
@@ -363,7 +365,7 @@ reach sec.gov).
 
 ## 6. When a filing came out: before the open, or after the close · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-26.
 **Owner's reason (if rejected):**
 
 **Anchor:** data collected but never surfaced — EDGAR's acceptance time, and a database column
@@ -415,7 +417,7 @@ weigh
 
 ## 7. Federal Reserve enforcement actions on bank pages — a source for the owner to decide · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-26, the new source (Federal Reserve enforcement actions) included.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present for comparable companies and missing here — carmakers and drug,
@@ -471,7 +473,7 @@ cannot run: the adapter does not exist.
 
 ## 8. FDA recalls for the next health-care makers · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-26.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present for 38 companies and missing for comparable listed ones, on a

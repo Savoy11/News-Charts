@@ -114,6 +114,17 @@ export const INITIALS_NOT_NEWS: Record<string, string> = {
 };
 
 /**
+ * Brands a listed company trades under that its Wikidata item does not list, each pointing at the
+ * company's own item, with the evidence. Search only: they never claim news ("Chase" is every car
+ * chase). Kept short on purpose; a brand Wikidata lists needs no entry.
+ */
+export const BRAND_NAMES: Record<string, { cik: number; qid: string; why: string }> = {
+  Chase: { cik: 19617, qid: "Q192314", why: "JPMorgan Chase's consumer and commercial bank, Chase" },
+  "Chase Bank": { cik: 19617, qid: "Q192314", why: "the same bank, as people name it; read apart, \"Bank\" narrowed JPMorgan's page" },
+  Citibank: { cik: 831001, qid: "Q219508", why: "Citigroup's bank, Citibank" },
+};
+
+/**
  * Items whose names still find the company in search but may not claim its news, because the
  * brand went elsewhere when the company kept the filings. Same rule as `KNOWN_WRONG`: a class of
  * cases belongs in `newsMay`, and only the exceptions here.
@@ -156,15 +167,20 @@ const initials = (key: string): string =>
 
 /**
  * Whether a loose alias belongs to the names it sits beside: it shares a word with one of them
- * that says something ("Ford Motors" beside "Ford Motor Company"), or it is their initials
- * ("IBM", "P&G"). Wikidata's aliases also hold a P&G shampoo ("Rejoice"), nicknames ("Big G"),
+ * that says something ("Ford Motors" beside "Ford Motor Company"), starts one ("Citi" for
+ * Citigroup), writes one apart ("JP Morgan" for JPMorgan), or it is their initials ("IBM",
+ * "P&G"). Wikidata's aliases also hold a P&G shampoo ("Rejoice"), nicknames ("Big G"),
  * misspellings ("Wallmart") and a merger partner ("Continental" for United Airlines); none of
- * those does either.
+ * those does any of that.
  */
 function related(alias: string, names: string[]): boolean {
   const own = new Set(names.flatMap((n) => significant(nameKey(n))));
   const words = significant(nameKey(alias));
   if (words.some((w) => own.has(w))) return true;
+  // a word written apart, or the start of one in four letters or more: without them Citigroup and
+  // JPMorgan lost every alias (batch 56)
+  if (own.has(nameKey(alias).replace(/ /g, ""))) return true;
+  if (words.some((w) => w.length >= 4 && [...own].some((o) => o.length > w.length && o.startsWith(w)))) return true;
   const letters = nameKey(alias).replace(/[^A-Z]/g, "");
   return names.some((n) => {
     const i = initials(nameKey(n));
@@ -350,6 +366,13 @@ export function buildCompanyAliases(
       );
       claims.set(key, byCik);
     }
+  }
+
+  for (const [name, brand] of Object.entries(BRAND_NAMES)) {
+    if (!titleOf.has(brand.cik)) continue;
+    const byCik = claims.get(nameKey(name)) ?? new Map<number, Claim>();
+    if (!byCik.has(brand.cik)) byCik.set(brand.cik, { qid: brand.qid, kind: "alias", news: false, written: name });
+    claims.set(nameKey(name), byCik);
   }
 
   const aliases: Record<string, AliasEntry> = {};

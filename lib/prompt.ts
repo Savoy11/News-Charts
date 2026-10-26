@@ -153,8 +153,17 @@ export function headPrefixes(subject: string, maxPrefixes = 3): { prefix: string
  */
 const FORM = String.raw`(?:(?:8|6|11)-K|(?:20|40)-F|10-?[KQ]|[SF]-[1348])(?:\/A)?s?`;
 const FORM_NOUN = String.raw`(?:\s+(?:filings?|reports?|forms?))?`;
-const FORM_AFTER = new RegExp(String.raw`^(.+?)\s+(${FORM})${FORM_NOUN}$`, "i");
-const FORM_BEFORE = new RegExp(String.raw`^(${FORM})${FORM_NOUN}\s+(?:(?:for|of|from|by)\s+)?(.+)$`, "i");
+/**
+ * "Form 10-K" is the form's full name: read apart, "Form" matched FormFactor's ticker, FORM, and
+ * "Form 10-K for Apple" opened FormFactor (batch 56, set aside by the 2026-10-25 audit).
+ */
+const FORM_WORD = String.raw`(?:(?:sec\s+)?forms?\s+)?`;
+const FORM_AFTER = new RegExp(String.raw`^(.+?)\s+${FORM_WORD}(${FORM})${FORM_NOUN}$`, "i");
+const FORM_BEFORE = new RegExp(String.raw`^${FORM_WORD}(${FORM})${FORM_NOUN}\s+(?:(?:for|of|from|by)\s+)?(.+)$`, "i");
+const FORM_ALONE = new RegExp(String.raw`^(?:(?:an?|the)\s+)?${FORM_WORD}${FORM}${FORM_NOUN}$`, "i");
+
+/** A query that names an SEC form and no security — "10-K", "Form 10-K", "SEC Form 8-K filings". */
+export const namesOnlyAForm = (raw: string): boolean => FORM_ALONE.test(raw.replace(/\s+/g, " ").trim().replace(/[?!.]+$/, ""));
 
 export function parseSearchPrompt(raw: string): ParsedPrompt {
   let s = raw.replace(/\s+/g, " ").trim().replace(/[?!.]+$/, "");
@@ -207,8 +216,10 @@ export function parseSearchPrompt(raw: string): ParsedPrompt {
   if (!subject) return { subject: raw.trim(), focus: null, influence: null };
 
   let formFocus: string | null = null;
-  const after = subject.match(FORM_AFTER);
-  const before = after ? null : subject.match(FORM_BEFORE);
+  // a form with no security names none, as a bare "10-K" does: "Form 10-K" is not the subject "Form"
+  const formOnly = namesOnlyAForm(subject);
+  const after = formOnly ? null : subject.match(FORM_AFTER);
+  const before = formOnly || after ? null : subject.match(FORM_BEFORE);
   if (after) [subject, formFocus] = [after[1].trim(), after[2]];
   else if (before) [subject, formFocus] = [before[2].trim(), before[1]];
 

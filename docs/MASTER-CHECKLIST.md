@@ -985,6 +985,95 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 56: the 2026-10-25 audit's set-asides (2026-10-26)
+
+The 2026-10-25 code audit set six things aside (batch 53's entry lists them). This batch fixes
+five. The sixth, the Federal Register asked under the SEC spelling, needs nothing: the audit found
+no document lost (7 companies, 0 either way).
+
+`npm run check` passes (48 suites), `npm run lint` and `tsc --noEmit` are clean, and `check:ui`
+passes 198/198 against a fresh demo database. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **"Citi", "Citibank", "Chase" and "Chase Bank" open Citigroup and JPMorgan.** Before, "Citi"
+      opened Citi Trends, "Citibank" an ADR named "Citibank,N.A.", "Chase" Chase Packaging, "Chase
+      Bank" Chase Packaging with a "Bank" filter, and "Pepsi" a chooser of three. Two causes:
+      - The alias builder kept a Wikidata alias only when it shared a whole word with the
+        company's names (`lib/companyAliases.ts`). "Citi" is the start of "Citigroup" and "JP
+        Morgan" is "JPMorgan" written apart, so both were dropped as unrelated, and Citigroup and
+        JPMorgan lost every alias. Now the start of a name word counts when it is four letters or
+        more, and so does a word written apart.
+      - Wikidata does not list "Chase" or "Citibank" on the companies at all. A short brand list
+        (`BRAND_NAMES`, three entries, each with its reason) adds them for search only. They never
+        search news: "Chase" is also every car chase.
+      - Citi Trends and Chase Packaging still open themselves; Citigroup and JPMorgan are bigger, so
+        they win the short name, by the rule that already gives "J&J" to Johnson & Johnson.
+- [x] **The alias index was rebuilt** from the Wikidata answers read today: 1,555 → 1,586 names.
+      The new rules add 30 and remove or change none. Among them: "Pepsi", "Citi", "Citi Bank",
+      "CN Rail", "STmicro", "United Healthcare", "Pulte Homes", "Campbell Soup" and "McDonald". All
+      are search only, except JinkoSolar's "Jinko Solar" and The RealReal's own name, which are
+      the companies' official names.
+      - Wikidata itself changed since the last sync (+3 names, −2). "Cimpress NV" and "Philip Morris
+        and Company" now open their companies without a stray filter.
+      - "Kraft Foods" now opens Kraft Heinz with a "Foods" filter. Wikidata relabelled the 2012
+        Kraft Foods Group's alias as "Kraft Foods, 2012 company", since Mondelez was also called
+        Kraft Foods until 2012, and a name with a qualifier is not read. "Kraft Foods Group" still
+        opens Kraft Heinz with no filter.
+- [x] **"Form 10-K" opens no company.** Before, it opened FormFactor (ticker FORM) with a 10-K filter,
+      "Form 10-K for Apple" opened FormFactor too, and "Apple Form 10-K" filtered by "Form · 10-K".
+      Now "Form" and "SEC Form" are read as part of the form's name (`lib/prompt.ts`). "Form 10-K"
+      alone finds nothing, as a bare "10-K" does; "Form 10-K for Apple" opens Apple's annual
+      reports; "FormFactor" and "FormFactor 10-K" still open FormFactor.
+- [x] **Biggest moves rank an FDA Class II recall as news** (`components/BiggestMoves.tsx`). Every
+      recall used to rank as a filing when picking the event that labels a big move. So a Class II
+      recall that day beat the news, a Fed decision or an inflation report, and Medtronic alone has
+      470. The chart already ranks Class II as news (batch 40), and the panel now does too.
+      - Class I and vehicle recalls keep their rank. The audit's example, Ford's +23.4% day
+        labelled by a 288,110-vehicle recall, stays as it is: a vehicle recall is the carmaker's own
+        act, on the chart as here, and the panel says proximity isn't proof.
+- [x] **Moody's is scored by "moodys", not "/de/".** The names the relevance scorer looks for came
+      from the words of the SEC title, registration tag included. "MOODYS CORP /DE/" gave "/de/",
+      "PULTEGROUP INC/MI/" gave "inc/mi/", and an ADR's "…AB/ADR" gave "ab/adr".
+      - Now the tag is taken off, by the same rules the everyday name already used. Those rules
+        moved to `lib/edgarName.ts`, so the scorer need not load the ticker index. The single
+        words now come from the everyday name, so a legal form (LP, LLC, AB, SpA, A/S) is not a
+        name either.
+      - Across all 8,028 company titles, 719 change. What goes is only tags and legal forms (55
+        "/de/", 100 "ltd/adr", 48 "lp", 25 "llc"…). What comes is words a tag was stuck to:
+        "CaixaBank/ADR" now gives "caixabank".
+      - The everyday name itself is the same as before on every title. Stored scores change as
+        events are next scored.
+- [x] **Three headlines cut short now read whole** (`lib/secHeadlines.ts`):
+      - Stellantis's "…to Announce Third Quarter 2026" / "Financial Results on October 28": a
+        reporting period whose results are named on the next line carries on.
+      - TotalEnergies's "…Divests its Minority Non-Operated" / "Interest in Marjoram Gas Field": a
+        "Non-" word cannot end a line of a headline.
+      - Toyota's results deck was titled "FY2027 First Quarter Financial Results Land Cruiser FJ
+        Toyota Motor Corporation", its cover's caption and company name included. It is now
+        "FY2027 First Quarter Financial Results".
+      - `HEADLINE_VERSION` is 8, so stored titles are read again.
+      - Over 2,190 saved documents (earlier batches' and this one's), 6 read differently, all for the
+        better: these three, Toyota's same deck saved twice, Stellantis's Q2 notice, and Nomura's
+        "…to Announce Second Quarter" (now "…Operating Results on October 28").
+      - Seen and left open: a TotalEnergies meeting notice runs into its subheadline ("…Meeting on
+        May 29, 2026 Conditions of availability of the preparatory documents"). It belongs with
+        batch 44's open item on headlines run into a subheadline.
+- [x] Batch 53's note on the six set-asides now says which batch fixed them.
+- Checks, main → now, each new one failing on main's code unless it guards what main already does:
+  - `check:aliases` 89 → 98: the start of a word ("Citi") and a word written apart ("JP Morgan");
+    the brands, search only and ahead of Chase Packaging and the Citibank ADR; the committed
+    index; and search end to end with the database down ("Citi", "Citibank", "Chase", "Chase
+    Bank", "Pepsi", Citi Trends and Chase Packaging, "Form 10-K", "Form 10-K for Apple"). On main
+    four fail, then the check stops at the missing brand list.
+  - `check:prompt` 46 → 52: "Form 10-K", "SEC Form 8-K filings", "Form 10-K for Apple", "Apple Form
+    10-K", "Form 8-K Tesla" (5 fail on main) and "FormFactor 10-K".
+  - `check:relevance` 52 → 56: Moody's, Pulte and an ADR's names, a partnership's "lp" (3 fail on
+    main), and a slash inside a name or a topic kept.
+  - `check:fda-recalls` 37 → 38: a Fed decision labels a big move before a Class II recall, never
+    before a Class I or a vehicle recall.
+  - `check:sec-headlines` 250 → 255: the three documents, added to the fixture (141 → 144
+    documents); the period rule beside a headline that already names its results; the version.
+    All 5 fail on main.
+
 ## NC ledger — batch 55: the rest of the companies with an earlier SEC record (2026-10-26)
 
 Batch 53 mapped 15 of the 115 listed companies whose SEC record starts with a notice of
@@ -1244,7 +1333,8 @@ not run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is
 - The audit's six set-asides stay as it left them (each is in the report): "Form 10-K" resolving
   to FormFactor, recalls' marker priority in Biggest Moves, three fresh-filer headlines cut short,
   "/de/" in Moody's scoring aliases, "Chase" and "Citi" resolving to small companies, and the
-  Federal Register asked under the SEC spelling (no document lost).
+  Federal Register asked under the SEC spelling (no document lost). Batch 56 fixed the first five;
+  the sixth needs nothing.
 - Checks: `check:predecessors` is new, 20 checks: the map against the committed ticker index
   (each successor listed, no predecessor still listed, dates and notices well formed); the reader
   against a stand-in EDGAR (the predecessor's filings before the handover only, back to its older

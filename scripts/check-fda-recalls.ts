@@ -4,6 +4,7 @@ import { FDA_FIRMS, fdaFirmsFor, fdaQuery, fdaRecallEvents, fetchFdaRecalls, fir
 import { SOURCES } from "../lib/ingest/store";
 import { deterministicScore } from "../lib/enrich/relevance";
 import { MARKER_STYLE, markerEventsByDay, markerPriority, markerStyle } from "../lib/markers";
+import { nearestCatalyst } from "../components/BiggestMoves";
 import type { TimelineEvent } from "../lib/types";
 import { COMPANY_SOURCES } from "./ingest";
 
@@ -115,6 +116,12 @@ async function main(): Promise<void> {
   check("  …so a filing on the same day takes the day's marker from a Class II recall, and a Class I takes it from a filing",
     markerEventsByDay([classII, filingSameDay], [classII.date])[0].type === "filing" &&
       markerEventsByDay([{ ...filingSameDay, date: pump[0].date }, pump[0]], [pump[0].date])[0].type === "recall");
+  const fedSameDay = { id: "m1", date: classII.date, type: "macro", title: "Fed holds rates", source: "Federal Reserve" } as TimelineEvent;
+  check("  …and a big move's caption goes to a Fed decision that day before a Class II recall, never before a Class I (batch 56)",
+    nearestCatalyst([classII, fedSameDay], classII.date)?.type === "macro" &&
+      nearestCatalyst([{ ...fedSameDay, date: pump[0].date }, pump[0]], pump[0].date)?.type === "recall" &&
+      nearestCatalyst([{ ...fedSameDay, date: vehicle.date }, vehicle], vehicle.date)?.type === "recall",
+    nearestCatalyst([classII, fedSameDay], classII.date)?.title);
 
   console.log("\nA product name from a label");
   const names: [string, string][] = [

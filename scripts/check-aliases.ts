@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import aliasFile from "../data/company-aliases.json";
 import tickerIndex from "../data/edgar-tickers.json";
 import {
+  BRAND_NAMES,
   KNOWN_NOT_NEWS,
   KNOWN_WRONG,
   ONE_WORD_MIN_SITELINKS,
@@ -87,6 +88,9 @@ async function main(): Promise<void> {
       item("Q1260606", 1001250, "own", { labels: ["Estée Lauder Companies", "Estée Lauder"], aliases: ["Estee Lauder"], sitelinks: 28 }),
       // Advent bought Sapiens in 2025; Wikidata still has Formula Systems as its parent
       item("Q7420971", 1045986, "former", { labels: ["Sapiens International Corporation N.V."], sitelinks: 3 }),
+      // everyday names that share no whole word with the title: the head of one, a word written apart
+      item("Q219508", 831001, "own", { labels: ["Citigroup"], aliases: ["Citi"], sitelinks: 70 }),
+      item("Q192314", 19617, "own", { labels: ["JPMorgan Chase"], aliases: ["JP Morgan"], sitelinks: 80 }),
     ],
     view
   );
@@ -118,6 +122,17 @@ async function main(): Promise<void> {
     nameKey("Estée Lauder"));
   check("a parent Wikidata still lists after a sale is not read: Sapiens left Formula Systems in 2025",
     why("Sapiens International Corporation N.V.") === "known wrong");
+  const prefixHit = (key: string) => built.overrides.find((o) => o.key === key)?.prefixHit;
+  check("the head of a word in the title is the company's name: \"Citi\" is Citigroup's, ahead of Citi Trends (batch 56)",
+    built.aliases["CITI"]?.[0] === 831001 && prefixHit("CITI") === 1318484, JSON.stringify(built.aliases["CITI"]));
+  check("  …and a word written apart is the same word: \"JP Morgan\" is JPMorgan's, which its title already finds",
+    why("JP Morgan") === "redundant", why("JP Morgan"));
+  check("a brand the company's item does not list is searched for it: \"Chase\" is JPMorgan's, ahead of Chase Packaging",
+    built.aliases["CHASE"]?.[0] === 19617 && prefixHit("CHASE") === 1025771, JSON.stringify(built.aliases["CHASE"]));
+  check("  …and \"Citibank\" Citigroup's, ahead of an ADR named \"Citibank,N.A.\"",
+    built.aliases["CITIBANK"]?.[0] === 831001 && prefixHit("CITIBANK") === 1472033, JSON.stringify(built.aliases["CITIBANK"]));
+  check("  …for search only: a brand never searches news, and each says whose it is",
+    Object.keys(BRAND_NAMES).every((b) => built.aliases[nameKey(b)]?.[3] === 0) && Object.values(BRAND_NAMES).every((b) => b.why.length > 0));
 
   console.log("\nNews may use a company's own names, never an acquisition's (batch 25)");
   const news = (key: string) => built.aliases[key]?.[3];
@@ -163,6 +178,9 @@ async function main(): Promise<void> {
   check("  …so \"Google\" and \"Facebook\" search news, and \"Whole Foods\" and \"Sun Microsystems\" do not",
     file.aliases["GOOGLE"]?.[3] === 1 && file.aliases["FACEBOOK"]?.[3] === 1 &&
       file.aliases["WHOLE FOODS"]?.[3] === 0 && file.aliases["SUN MICROSYSTEMS"]?.[3] === 0);
+  check("Citigroup and JPMorgan Chase are found by \"Citi\", \"Citibank\" and \"Chase\", for search only (batch 56)",
+    file.aliases["CITI"]?.[0] === 831001 && file.aliases["CITIBANK"]?.[0] === 831001 && file.aliases["CHASE"]?.[0] === 19617 &&
+      ["CITI", "CITIBANK", "CHASE"].every((k) => file.aliases[k]?.[3] === 0));
   const notNews = entries.filter(([, [, qid]]) => KNOWN_NOT_NEWS[qid] !== undefined);
   check("  …nor an item whose brand went elsewhere (Motorola, Inc.)", notNews.length > 0 && notNews.every(([, [, , , news]]) => news === 0),
     notNews.map(([k, v]) => `${k}:${v[3]}`).join(", "));
@@ -227,6 +245,22 @@ async function main(): Promise<void> {
     if (!same(a, b)) accented.push(`${withAccent} ${JSON.stringify(a)} vs ${JSON.stringify(b)}`);
   }
   check("a name typed with its accent gets the answer it gets without one", accented.length === 0, accented.join(" | "));
+  // batch 56: "Chase" opened Chase Packaging and "Citi" Citi Trends, by title prefix
+  const openedBy: [string, string][] = [["Citi", "C"], ["Citibank", "C"], ["Chase", "JPM"], ["Chase Bank", "JPM"], ["Pepsi", "PEP"], ["Citi Trends", "CTRN"], ["Chase Packaging", "WHLT"]];
+  const misopened: string[] = [];
+  for (const [q, ticker] of openedBy) {
+    const r = await resolveSearch(q);
+    if (!same(r, { kind: "company", ticker })) misopened.push(`${q} → ${JSON.stringify(r)}`);
+  }
+  check("\"Citi\", \"Citibank\", \"Chase\", \"Chase Bank\" and \"Pepsi\" open Citigroup, JPMorgan and PepsiCo; Citi Trends and Chase Packaging keep theirs",
+    misopened.length === 0, misopened.join(" | "));
+  const formAlone = await resolveSearch("Form 10-K");
+  check("a form by its full name opens no company: \"Form 10-K\" opened FormFactor, whose ticker is FORM",
+    same(formAlone, { kind: "none" }), JSON.stringify(formAlone));
+  const formFor = await resolveSearch("Form 10-K for Apple");
+  check("  …while \"Form 10-K for Apple\" opens Apple's annual reports, and \"FormFactor\" still opens FormFactor",
+    same(formFor, { kind: "company", ticker: "AAPL", focus: "10-K" }) && same(await resolveSearch("FormFactor"), { kind: "company", ticker: "FORM" }),
+    JSON.stringify(formFor));
 
   console.log("\nNews is asked for, and scored by, those names");
   const cikOf = (t: string) => tickerRows.find(([, ticker]) => ticker === t)![0];

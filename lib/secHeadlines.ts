@@ -34,9 +34,11 @@
  * and a report's numbered parts are no headline or dateline, a city in small letters before its
  * country is the dateline's, and a headline cut after "Accepts", "Ended", a plural's possessive, a
  * length of time or "to" and a verb is read whole. 7 (batch 54): a page's count opening the line
- * that holds the page ("Page 1 of 21 UnitedHealth Group Reports…") is no part of the headline.
+ * that holds the page ("Page 1 of 21 UnitedHealth Group Reports…") is no part of the headline. 8
+ * (batch 56): a headline cut after a reporting period or a "Non-" word is read whole, and a results
+ * deck's cover loses the picture's caption and the company's name after its title.
  */
-export const HEADLINE_VERSION = 7;
+export const HEADLINE_VERSION = 8;
 
 /** The exhibit types a press release is filed under: EX-99.x, and EX-20 before the 2004 rules. */
 const RELEASE_EXHIBIT = /^EX-(?:99|20)\b/i;
@@ -406,6 +408,9 @@ function continues(cur: string, next: string): boolean {
   // a subject on one line and its verb on the next: "THE BOARD OF DIRECTORS OF THE COCA-COLA
   // COMPANY" / "ELECTS ALEXIS M. HERMAN AS DIRECTOR"
   if (STARTS_WITH_VERB.test(next) && !HAS_VERB.test(cur)) return true;
+  // a reporting period whose noun is on the next line: "Stellantis to Announce Third Quarter 2026" /
+  // "Financial Results on October 28" (batch 56)
+  if (ENDS_ON_PERIOD.test(cur) && !/\b(?:results|earnings)\b/i.test(cur) && OPENS_ON_RESULTS.test(next)) return true;
   // the last words alone on their line: "…Federal Aviation Administration 787" / "Action",
   // "Walmart Board of Directors Adds Former Accenture" / "CFO Pamela Craig" — unless they repeat
   // the line above, as a label does: "Boeing Reports Second Quarter Results" / "Second Quarter 2024"
@@ -439,6 +444,12 @@ function sharesPair(a: string, b: string): boolean {
   return [...pairs(b)].some((p) => pa.has(p));
 }
 
+/** A reporting period at a line's end: "…Third Quarter 2026", "…Q3 2026", "…Full-Year 2025", "…FY2027". */
+const ENDS_ON_PERIOD =
+  /\b(?:(?:first|second|third|fourth)[\s-]quarter|Q[1-4]|(?:first|second)[\s-]half|H[12]|full[\s-]year|fiscal(?:\s+year)?|FY)\s*(?:(?:19|20)\d\d)?$/i;
+/** What a period's results are called, opening a line. */
+const OPENS_ON_RESULTS = /^(?:(?:financial|operating)\s+)?(?:results|earnings|shipments|deliveries|sales|revenues?)\b/i;
+
 /** A line that carries on from one before it rather than opening a headline: "AND THIRD QUARTER…" */
 const STARTS_MID_PHRASE = /^(?:and|or|but|of|for|to|with|while|as)\s/i;
 
@@ -464,6 +475,8 @@ const WRAPS_AFTER = new RegExp(
     // possessive, "…Acquisition of Nimbus Therapeutics’" / "TYK2 Program Subsidiary"; a length of time
     // before what it measures, "…Highlighting Full 32-Week" / "Results from Phase 3…"
     String.raw`ended|ending|[A-Za-z]+s[’']|\d+-(?:day|week|month|year)|` +
+    // a "Non-" word, which wants its noun: "…Divests its Minority Non-Operated" / "Interest in…"
+    String.raw`non-[a-z]+|` +
     // a verb after "to" that wants its object: "…Trial to Evaluate" / "Potential COVID-19 Hyperimmune
     // Medicine", "…Decision to Release" / "Takeda from Commitment…"
     String.raw`to\s+(?:acquire|evaluate|release|divest|sell|buy|develop|launch|explore|expand|offer|redeem|repurchase|purchase|transfer|supply|provide|create|form|build|deliver|support|accelerate|commercialize|manufacture|distribute|investigate|assess|treat|host)))$`,
@@ -824,6 +837,13 @@ const RESULTS_HEADLINE = new RegExp(
   "i"
 );
 const TRAILING_DATE = new RegExp(String.raw`\s+${DATE}$`);
+/**
+ * A deck's cover under its title, ending on the company's name: "FY2027 First Quarter Financial
+ * Results Land Cruiser FJ Toyota Motor Corporation", where "Land Cruiser FJ" is the picture's
+ * caption (batch 56).
+ */
+const COVER_AFTER_RESULTS =
+  /^(.*?\b(?:results|earnings))\s+.*\b(?:corporation|inc|incorporated|ltd|limited|plc|n\.\s?v|s\.\s?a|ag|se)\.?$/i;
 const NOT_RESULTS = /\b(?:transcript|conference call|earnings call|presentation|supplement(?:al|ary)?|statements? of)\b/i;
 /** How far down such a headline may sit: below a letterhead, never under a page of anything else. */
 const RESULTS_REACH = 15;
@@ -838,6 +858,7 @@ function resultsHeadline(lines: string[]): string | null {
       .replace(/^(?:earnings|news|press|media)\s+release\s*[:–—-]?\s+/i, "")
       .replace(/\s+(?:earnings|news|press|media)\s+release$/i, "")
       .replace(TRAILING_DATE, "")
+      .replace(COVER_AFTER_RESULTS, "$1")
   );
 }
 

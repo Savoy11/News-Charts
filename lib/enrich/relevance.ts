@@ -1,6 +1,7 @@
 import { EventType, SourceKey } from "../types";
 import { foldAccents } from "../fold";
 import { nameKey } from "../companyAliases";
+import { commonName, withoutTag } from "../edgarName";
 import { WEAK_TOKENS } from "../newsQuality";
 import { dataBlock, untrustedNotice } from "./untrusted";
 import { REGISTRANT_FORM } from "../secForms";
@@ -49,14 +50,18 @@ export interface Scored {
  * whole phrases, never tokenized — an alias is a name someone recorded, not a bag of words.
  */
 export function aliasesFor(subject: SubjectContext, extraAliases: string[] = []): string[] {
-  const rawTokens = subject.displayName.replace(/[.,]/g, "").split(/\s+/).filter(Boolean);
+  // EDGAR's registration tag names no company, and its legal form no more: "MOODYS CORP /DE/" gave
+  // Moody's the name "/de/", and the tag off, "Embracer Group AB/ADR" would give Embracer "ab"
+  const company = subject.kind === "company";
+  const shown = company ? withoutTag(subject.displayName) : subject.displayName;
+  const rawTokens = (company ? commonName(shown) : shown).replace(/[.,]/g, "").split(/\s+/).filter(Boolean);
   const aliases = new Set<string>();
   for (const tok of rawTokens) {
     const keepShort = tok.length >= 2 && (/\d/.test(tok) || tok === tok.toUpperCase());
     const lower = tok.toLowerCase();
     if ((tok.length > 2 || keepShort) && !WEAK_TOKENS.has(lower)) aliases.add(lower);
   }
-  aliases.add(subject.displayName.toLowerCase());
+  aliases.add(shown.toLowerCase());
   if (subject.ticker) aliases.add(subject.ticker.toLowerCase());
   for (const phrase of extraAliases) {
     // a company's initials keep their capitals, so they name a headline only written that way:

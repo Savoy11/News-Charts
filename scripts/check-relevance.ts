@@ -123,6 +123,18 @@ check("  …while \"Ford's\" still names Ford, and \"Harrison Ford's\" is still 
   (deterministicScore(row("news", "Ford's profit falls"), FORD_CO, aliasesFor(FORD_CO))?.score ?? 0) >= 0.9 &&
     deterministicScore(row("news", "Harrison Ford's new film"), FORD_CO, aliasesFor(FORD_CO)) === null);
 
+console.log("\nA title's registration tag and legal form name no company (batch 56, set aside by the 2026-10-25 audit)");
+const namesOf = (displayName: string, kind: SubjectContext["kind"] = "company") => aliasesFor({ kind, displayName });
+check("Moody's is named \"moodys\" and \"moodys corp\", never \"/de/\"",
+  JSON.stringify(namesOf("MOODYS CORP /DE/")) === JSON.stringify(["moodys", "moodys corp"]), JSON.stringify(namesOf("MOODYS CORP /DE/")));
+check("  …nor Pulte \"inc/mi/\", nor an ADR's company \"ab/adr\" or, the tag off, \"ab\"",
+  !namesOf("PULTEGROUP INC/MI/").some((a) => a.includes("/")) &&
+    JSON.stringify(namesOf("Embracer Group AB/ADR")) === JSON.stringify(["embracer", "embracer group ab"]),
+  JSON.stringify(namesOf("Embracer Group AB/ADR")));
+check("  …nor a partnership \"lp\"", !namesOf("Energy Transfer LP").includes("lp"), JSON.stringify(namesOf("Energy Transfer LP")));
+check("  …while a slash inside a name stays, and a topic is named as it is written",
+  namesOf("CULLEN/FROST BANKERS, INC.").includes("cullen/frost") && namesOf("AI/ML", "topic").includes("ai/ml"));
+
 console.log("\nOne threshold, one place");
 // signals.ts once hardcoded its own copy of the display gate; a threshold change then
 // desynced signal windows from what the timeline showed. Source-asserted, not hoped.

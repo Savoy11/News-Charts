@@ -985,6 +985,71 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 57: a company's older news from GDELT, a month at a time (2026-10-26)
+
+The hourly GDELT ask returns its newest hundred pages, which for a busy company is the last few
+days. So a company page's GDELT news began about when the company was first ingested. The
+backlog's "GDELT year-window backfill" (`P2`, securities-coverage depth) was waiting on a host
+GDELT would answer. From this container it answered 5 requests in the batch and refused the rest
+(429, and for a few minutes no connection at all), which was enough to choose the window and see
+what a window gives.
+
+`npm run check` passes (49 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` was not
+run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **Each month since 2017 is asked once more, by relevance** (`lib/ingest/newsBackfill.ts`),
+      in company ingest right after the hourly ask, with the same query and names. A story is
+      kept only when its headline names the company the way headline scoring counts naming, so
+      it is stored scored as named.
+      - **A month, not a year.** The hundred pages a span gives are spread thinner the longer it
+        is. Asked for all of 2021, Ford's hundred all came from October (45), November (25) and
+        December (30), and 49 stories were kept. The first quarter of 2021 gave 55; February 2021
+        alone gave 52, from the 1st to the 28th. (Kept: the headline names Ford, near-duplicates
+        collapsed.)
+      - Measured, one month each, stories kept: Ford (February 2021) 52 of 100, Apple (May 2023)
+        58, McDonald's (June 2022, asked by relevance) 63. What is left out is pages whose headline
+        names someone else ("Harrison Ford", "Dr. McDonald", "Steve Jobs signed check") or nobody.
+      - Months start at the company's first price, and never before 2017, the hourly ask's floor.
+        So a common word's years before the company listed ("Snowflake" before 2020) are not
+        asked. A company with no prices is not asked at all.
+      - A month that is over is asked once. The asking is kept in a new table, `gdelt_windows`
+        (migration 030), with the query asked; a month asked under an older query is asked again.
+- [x] **Paced for GDELT.** Requests are 6 s apart, at most 40 months per process (about four
+      minutes of an hourly refresh), each company newest first. A company's 117 months fill in
+      over three of its runs.
+      - It stops at the first refusal or failure and logs it in `source_fetches`, as any GDELT
+        failure is. A refusal then keeps every other subject off GDELT for ten minutes (the
+        run-wide back-off, NC-143). A refused month is not stored, so it is asked again later.
+      - Months answered are not written to the fetch log, so they never make the hourly ask look
+        fresh and skip it.
+      - An enrichment: if it fails, the company keeps everything the hourly ask found.
+- [x] **Run against a real Postgres** (a fresh database, the migrations applied, GDELT a stand-in): a
+      company priced from May 2018 asked 101 months over two runs and stored one story a month,
+      scored as named (0.9). The stand-in's "Harrison Ford's film" was left out every month, and a
+      third run asked nothing.
+- [x] `check:feeds` (live, outside the chain) also asks the newest past month, as the backfill
+      does.
+- [x] README and `docs/COVERAGE-MAP.md` describe it, with the advice to measure it from the
+      production host. The backlog item's GDELT half is marked built; its paid-tier half stays open.
+- [ ] **Open: watch it in production.** From a shared address GDELT refused about four requests in
+      five. The production host should show how fast histories fill in, how many stories a month
+      gives across companies, and how large pages grow (batch 35's budget keeps the stories beside
+      the biggest moves).
+- Checks: new `check:news-backfill` (30), wired after `check:gdelt-relevance`:
+  - the months asked: every month since 2017 that is over, newest first; whole months, February
+    included; a company's listing month as the start;
+  - the request: by relevance between the month's first and last second, with the hourly ask's
+    query;
+  - what is kept: headlines that name the company, not another person by the same word;
+  - a run: newest first, the budget shared by every company in the process, nothing asked twice,
+    a changed query asked again, a whole history in three runs;
+  - a refusal: it stops, logs the month as a GDELT failure, and stores only what was answered;
+    nothing is asked inside a back-off; a failed store rolls the month back;
+  - pacing and wiring: 6 s apart, a run's months within five minutes, ingest calls it after the
+    hourly ask with the same query, names and scoring.
+
+  On main the check cannot run: `lib/ingest/newsBackfill.ts` does not exist.
+
 ## NC ledger — batch 56: the 2026-10-25 audit's set-asides (2026-10-26)
 
 The 2026-10-25 code audit set six things aside (batch 53's entry lists them). This batch fixes
@@ -3710,7 +3775,9 @@ already held, but new investment goes to securities coverage first.
       host to develop against) and **richer paid-tier evidence** (needs a paid key). The LoC
       decade walk serves companies too and keeps its place; Wikidata alias harvesting shipped in
       batch 24 once `query.wikidata.org` answered from the cloud session. Topic-only recall items
-      rank behind all of these until the scope changes again.
+      rank behind all of these until the scope changes again. ✅ **GDELT backfill built in batch
+      57**, a month at a time rather than a year (see that section); its live measurement waits on
+      the production host. The paid-tier evidence stays open.
 - [x] `P2` **Company pages show the Wikipedia lede their ingest already fetches.**
       ✅ **Done 2026-10-18 (batch 11)** — see that section for what shipped.
       `ingestCompany` calls `getTopicTimeline(name)` (`scripts/ingest.ts:442`), which returns a

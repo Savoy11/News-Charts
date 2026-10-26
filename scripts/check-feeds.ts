@@ -15,6 +15,7 @@ config({ path: ".env.local" });
  */
 
 import { fetchNews, gdeltNames, gdeltNewsPlan } from "../lib/news";
+import { GAP_MS, newsWindows } from "../lib/ingest/newsBackfill";
 import { fetchPressMentions } from "../lib/loc";
 import { fetchArchiveItems } from "../lib/archive";
 import { GOVERNANCE_SPACES, getGovernanceFor, assertSpacesResolve } from "../lib/onchain/governance";
@@ -161,6 +162,11 @@ async function main() {
     const { query: newsQuery, byRelevance } = gdeltNewsPlan(company.name, possessive, alsoKnownAs);
     const asked = gdeltNames(newsQuery, alsoKnownAs, byRelevance).join(" | ") + (byRelevance ? " by relevance" : "");
     reportFetch("GDELT", await tried(fetchNews(newsQuery, alsoKnownAs, { byRelevance })), `(asked ${asked}; throttles ~1 req/5s)`);
+    // …and the newest month the backfill asks, as `backfillNews` asks it, after GDELT's gap (batch 57)
+    const month = newsWindows(new Date().toISOString().slice(0, 10))[0];
+    await new Promise((r) => setTimeout(r, GAP_MS));
+    reportFetch("GDELT, a past month", await tried(fetchNews(newsQuery, alsoKnownAs, { byRelevance, window: month })),
+      `(${month.from} to ${month.to} by relevance, before the headline filter)`);
     reportFetch("Yahoo Finance RSS", await tried(fetchYahooFinanceNews(company.ticker)));
     reportFetch("Federal Register (co.)", await tried(fetchCompanyRegulations(company.name, FR_COMPANY_SINCE, alsoKnownAs)),
       `(asked ${frSearchTerm(company.name, alsoKnownAs)})`);

@@ -985,6 +985,38 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 62: a new opportunity-scout run, eight proposals for the owner (2026-10-26)
+
+The work the previous scout run proposed (2026-10-17, proposals 1–10) is all built, and nearly
+everything else open waits on the owner. So the `opportunity-scout` read the repository again at
+`5e2a1f7` and wrote `docs/proposals/2026-10-26-proposals.md`: eight proposals, all **PENDING**,
+ranked with securities depth first. Nothing is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      1. `P1` The company Federal Register feed back to 1994, and past the newest forty.
+      2. `P1` A results release counts as earnings whatever form carried it (a 6-K results release,
+         Boeing's 1997–2004 results 8-Ks).
+      3. `P1` The SEC forms the 2026-10-18 list missed: S-3ASR shelves, F-1 foreign listings,
+         late-filing notices, proxy-fight forms, tender-offer results.
+      4. `P1` NHTSA defect investigations: a new source, so the owner's yes first.
+      5. `P2` A fund's page carries only its own fund's filings, by EDGAR's series tag (it revisits
+         NC-139).
+      6. `P2` A filing's time: before the open or after the close, from EDGAR's acceptance time.
+      7. `P2` Federal Reserve enforcement actions on bank pages: a new source, so the owner's yes first.
+      8. `P2` FDA recalls for the next health-care makers (Beckman Coulter, Fresenius, ICU Medical…).
+      Several carry a smaller decision inside: which routine rail-board and FERC notices count (1),
+      whether profit alerts are earnings (2), which forms (3).
+- Found on the way and confirmed here in the code: the company Federal Register feed keeps the
+  newest 40 title-naming documents a run and never pages (`FR_COMPANY_CAP`, `lib/frCompany.ts`), so
+  a company's 41st-newest document never reaches its page however many runs go by. The scout
+  counts GM's 51 since 2015 against 40 kept, Duke Energy's 184. Proposal 1 covers it.
+- The scout made about 110 requests to SEC EDGAR with the project's User-Agent, which carries the
+  owner's email (EDGAR refuses a request without a contact), and some to the Federal Register,
+  openFDA, data.transportation.gov, federalreserve.gov, Wikidata and Wikipedia. Its document says so
+  at the top. It started the local Postgres for read-only queries and stopped it again.
+- `npm run check` passes (49 suites) and `npm run lint` is clean; no code changed.
+
 ## NC ledger — batch 61: the scoring audit's five findings fixed (2026-10-26)
 
 The `code-auditor` read batches 58–60 (`1ac7cdd..10f163a`). Its report is

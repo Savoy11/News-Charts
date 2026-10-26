@@ -1,5 +1,6 @@
 import { nameKey } from "./companyAliases";
 import wordNames from "../data/english-word-names.json";
+import sharedNames from "../data/shared-name-words.json";
 
 /**
  * Company names that are also everyday English words, per `data/english-word-names.json`
@@ -10,10 +11,14 @@ import wordNames from "../data/english-word-names.json";
  *   kept "IMF urges retaining 5 % inflation target" (the 2026-10-26 audit).
  * - Headline scoring counts a name that is such a word only where the headline writes it with its
  *   capital (batch 59): "Visa beats estimates" names Visa, "Student visa rules tightened" does not.
+ *
+ * It also holds how many listed companies' names share each word (`sharedBy`, batch 60): a word
+ * five or more share names none of them alone.
  */
 const WORDS: ReadonlySet<string> = new Set(wordNames.words);
 const NOT_WORDS: ReadonlySet<string> = new Set(wordNames.others);
 const PIECES: ReadonlySet<string> = new Set(wordNames.pieces);
+const SHARED: Readonly<Record<string, number>> = sharedNames.shared;
 
 /** A company's GDELT name when it is one word of letters, as a name key: "TARGET" — null for "Ford Motor" or "Life360". */
 export function oneWordName(query: string): string | null {
@@ -62,4 +67,13 @@ export function namedWithCapital(title: string, key: string): boolean {
 export function withCapital(name: string): string {
   const key = oneWordName(name);
   return key && (WORDS.has(key) || PIECES.has(key)) ? name[0].toUpperCase() + name.slice(1) : name;
+}
+
+/**
+ * How many listed companies' names hold a word, as a name key: "GOLD" 130, "FORD" 1. From
+ * `data/shared-name-words.json` (`npm run sync:word-names`), which lists the words two or more
+ * share; any other counts as one (batch 60).
+ */
+export function sharedBy(key: string): number {
+  return SHARED[key] ?? 1;
 }

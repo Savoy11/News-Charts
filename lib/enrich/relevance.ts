@@ -6,7 +6,7 @@ import { WEAK_TOKENS } from "../newsQuality";
 import { dataBlock, untrustedNotice } from "./untrusted";
 import { REGISTRANT_FORM } from "../secForms";
 import { parseScoreReply } from "../scoreReply";
-import { isListedWord, oneWordName, withCapital } from "../wordNames";
+import { isListedWord, oneWordName, sharedBy, withCapital } from "../wordNames";
 
 export { parseScoreReply };
 
@@ -54,20 +54,24 @@ export interface Scored {
  * so (batch 59): its ticker ("COST" for Costco, never "Cost of living rises") and a one-word name
  * that is an English word (`withCapital`: "Visa beats estimates", never "Student visa rules
  * tightened").
+ *
+ * A word of a company's name that five or more listed companies' names share names none of them
+ * alone, unless it is the whole name (batch 60): "Gold prices hit record high" is no Barrick Gold
+ * news, nor "Companies cut hiring as rates bite" Lowe's, nor "American Depositary Receipts" American
+ * Airlines'. The company is still named by its common name whole ("Southern Copper") and by that
+ * name without its trailing generic words (`shortName`: "American Water" for American Water Works).
  */
 export function aliasesFor(subject: SubjectContext, extraAliases: string[] = []): string[] {
-  // EDGAR's registration tag names no company, and its legal form no more: "MOODYS CORP /DE/" gave
-  // Moody's the name "/de/", and the tag off, "Embracer Group AB/ADR" would give Embracer "ab"
   const company = subject.kind === "company";
   const shown = company ? withoutTag(subject.displayName) : subject.displayName;
-  const rawTokens = (company ? commonName(shown) : shown).replace(/[.,]/g, "").split(/\s+/).filter(Boolean);
+  const common = company ? commonName(shown) : shown;
   const aliases = new Set<string>();
-  for (const tok of rawTokens) {
-    const keepShort = tok.length >= 2 && (/\d/.test(tok) || tok === tok.toUpperCase());
-    const lower = tok.toLowerCase();
-    if ((tok.length > 2 || keepShort) && !WEAK_TOKENS.has(lower)) aliases.add(lower);
+  for (const word of nameWords(subject)) {
+    if (company && nameKey(word) !== nameKey(common) && sharedBy(nameKey(word)) >= SHARED_ALONE) continue;
+    aliases.add(word);
   }
   aliases.add(shown.toLowerCase());
+  if (company) for (const phrase of [common, shortName(common)]) if (phrase?.includes(" ")) aliases.add(phrase.toLowerCase());
   if (subject.ticker) aliases.add(CAPITALS.test(subject.ticker) ? subject.ticker : subject.ticker.toLowerCase());
   for (const phrase of extraAliases) {
     // a company's initials keep their capitals, so they name a headline only written that way:
@@ -76,6 +80,52 @@ export function aliasesFor(subject: SubjectContext, extraAliases: string[] = [])
     if (p.length >= 3) aliases.add(p);
   }
   return company ? [...new Set([...aliases].map(withCapital))] : [...aliases];
+}
+
+/**
+ * The words of a subject's name it may be named by on their own, lowercased: "Ford Motor Company"
+ * → "ford", "3M Company" → "3m". EDGAR's registration tag names no company, and its legal form no
+ * more: "MOODYS CORP /DE/" gave Moody's the name "/de/", and the tag off, "Embracer Group AB/ADR"
+ * would give Embracer "ab" (batch 56). Nor does a web address's ending: "AMAZON COM INC" made
+ * "Investing.com's stocks of the week" Amazon news (batch 60). Search keeps "com" a word — "Cars.com"
+ * is not offered for "electric cars" — so it is not one of `WEAK_TOKENS`.
+ */
+export function nameWords(subject: SubjectContext): string[] {
+  const company = subject.kind === "company";
+  const shown = company ? withoutTag(subject.displayName) : subject.displayName;
+  const rawTokens = (company ? commonName(shown) : shown).replace(/[.,]/g, "").split(/\s+/).filter(Boolean);
+  const words: string[] = [];
+  for (const tok of rawTokens) {
+    const keepShort = tok.length >= 2 && (/\d/.test(tok) || tok === tok.toUpperCase());
+    const lower = tok.toLowerCase();
+    if ((tok.length > 2 || keepShort) && !WEAK_TOKENS.has(lower) && lower !== "com" && !words.includes(lower)) words.push(lower);
+  }
+  return words;
+}
+
+/**
+ * How many listed companies' names may share a word before it names none of them alone. Measured
+ * on 4,165 Yahoo Finance headlines from 235 companies' feeds (2026-10-26): at five, other feeds'
+ * headlines naming a company fell from 3,098 to 1,236, every one of sixty removed at random wrong,
+ * while companies' own feeds named the company 2,009 times against 2,029; of the 21 lost, 17 were
+ * not about it ("3 Canadian Dividend Stocks" on CIBC's). At ten, 1,347 stayed; at three, own
+ * namings fell to 1,992 (batch 60).
+ */
+export const SHARED_ALONE = 5;
+
+/**
+ * A company's common name without its trailing generic words, two words at least: "American Water
+ * Works" → "American Water", "First Citizens BancShares" → "First Citizens", "Interactive Brokers
+ * Group" → "Interactive Brokers". A word is generic when it is weak or two listed companies' names
+ * share it; null when nothing goes, or less than two words would be left ("Bank of America").
+ */
+export function shortName(common: string): string | null {
+  const words = common.replace(/[.,]/g, "").split(/\s+/).filter(Boolean);
+  const weak = (w: string) => WEAK_TOKENS.has(w.toLowerCase()) || !/\p{L}/u.test(w);
+  let end = words.length;
+  while (end > 2 && (weak(words[end - 1]) || sharedBy(nameKey(words[end - 1])) >= 2)) end--;
+  while (end > 0 && weak(words[end - 1])) end--;
+  return end >= 2 && end < words.length ? words.slice(0, end).join(" ") : null;
 }
 
 const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -122,7 +172,8 @@ export function mentions(original: string, names: string[]): Mention {
   const aliases = names.map((n) => foldAccents(n).replace(/’/g, "'"));
   const lowered = aliases.map((a) => a.toLowerCase());
   const cased = /\p{Lu}/u.test(title);
-  const keyed = ` ${nameKey(title)} `;
+  // a name of two words or more names a possessive too: "Franco-Nevada's" is Franco Nevada's (batch 60)
+  const keyed = ` ${nameKey(title)} | ${nameKey(title.replace(/'s(?![\p{L}\p{N}])/gu, ""))} `;
   // A one-word name kept without the apostrophe its SEC title dropped ("kohls") names "Kohl's
   // names new CEO" read with the apostrophes out (batch 54). Only as a second try: out, "Ford's"
   // would read "fords" and no longer name Ford. And only a possessive's: out of "she'll", it read

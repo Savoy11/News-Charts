@@ -15,7 +15,8 @@ config({ path: ".env.local" });
  */
 
 import { fetchNews, gdeltHeadlineNames, gdeltNames, gdeltNewsPlan } from "../lib/news";
-import { BACKFILL_WORD_NAMES, GAP_MS, everydayWordName, namedWithCapital, namesCompany, newsWindows } from "../lib/ingest/newsBackfill";
+import { GAP_MS, namesCompany, newsWindows } from "../lib/ingest/newsBackfill";
+import { MEASURED_WORD_NAMES, everydayWordName, namedWithCapital } from "../lib/wordNames";
 import { aliasesFor } from "../lib/enrich/relevance";
 import { fetchPressMentions } from "../lib/loc";
 import { fetchArchiveItems } from "../lib/archive";
@@ -165,7 +166,7 @@ async function main() {
     reportFetch("GDELT", await tried(fetchNews(newsQuery, alsoKnownAs, { byRelevance })), `(asked ${asked}; throttles ~1 req/5s)`);
     // …and the newest month the backfill asks, as `backfillNews` asks it and keeps it (batches 57, 58)
     const word = everydayWordName(newsQuery);
-    if (word && !BACKFILL_WORD_NAMES[word]) {
+    if (word && !MEASURED_WORD_NAMES[word]) {
       console.log(`  ${"GDELT, a past month".padEnd(22)} — held back: "${word.toLowerCase()}" is an everyday word, not yet measured`);
     } else {
       const month = newsWindows(new Date().toISOString().slice(0, 10))[0];

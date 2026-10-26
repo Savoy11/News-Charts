@@ -160,8 +160,14 @@ npm run rekey:gdelt
   prints — names that will now find a different company — before committing (NC-004).
 - **Then re-sync the everyday-word list.** `npm run sync:word-names` rebuilds
   `data/english-word-names.json`, which says whose GDELT name is an everyday word ("Target") and so
-  is held back from the news backfill until measured. `check:news-backfill` fails until it is rerun
-  after a ticker sync, and a company it does not list is held back meanwhile (batch 58).
+  is held back from the news backfill until measured, and which of the names headlines are scored
+  by are words, counted only with their capital (batch 59). `check:news-backfill` fails until it is
+  rerun after a ticker sync, and a company it does not list is held back meanwhile (batch 58).
+- **Re-score stored headlines once** after deploying batch 59: `npm run score -- --rescore --limit
+  100000`. It works out the free scores again under the new rules, so "Cost of living rises" stops
+  naming Costco and "IMF urges retaining 5 % inflation target" leaves Target's page. It costs
+  nothing; the rows it no longer settles go back to the paid tier, which runs only with
+  `ANTHROPIC_API_KEY` set and stops at its cap (`--max-usd`, $1 a subject by default).
 - **Run Node 20.9 or later on the host**, and install fresh (`npm ci`) — Next.js 16 refuses
   older Node (NC-166).
 - **Rehearse a restore** into a scratch database: `createdb -U postgres news_charts_restore`,

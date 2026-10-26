@@ -83,6 +83,7 @@
     "check:index": "tsx scripts/check-index.ts",
     "sync:tickers": "tsx scripts/sync-tickers.ts",
     "sync:aliases": "tsx scripts/sync-aliases.ts",
+    "sync:word-names": "tsx scripts/sync-word-names.ts",
     "check:tickers": "tsx scripts/check-tickers.ts",
     "check:aliases": "tsx scripts/check-aliases.ts",
     "check:signals": "tsx scripts/check-signals.ts",

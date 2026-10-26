@@ -257,6 +257,13 @@ async function main(): Promise<void> {
   const formAlone = await resolveSearch("Form 10-K");
   check("a form by its full name opens no company: \"Form 10-K\" opened FormFactor, whose ticker is FORM",
     same(formAlone, { kind: "none" }), JSON.stringify(formAlone));
+  const anyForm: [string, object][] = [["Form 4 Tesla", { kind: "company", ticker: "TSLA" }], ["Form 13F Berkshire", { kind: "company", ticker: "BRK-B" }], ["Form D", { kind: "none" }]];
+  const formWrong: string[] = [];
+  for (const [q, want] of anyForm) {
+    const r = await resolveSearch(q);
+    if (!same(r, want)) formWrong.push(`${q} → ${JSON.stringify(r)}`);
+  }
+  check("  …nor any other form called a form: \"Form 4 Tesla\" opens Tesla, \"Form D\" nothing (batch 58)", formWrong.length === 0, formWrong.join(" | "));
   const formFor = await resolveSearch("Form 10-K for Apple");
   check("  …while \"Form 10-K for Apple\" opens Apple's annual reports, and \"FormFactor\" still opens FormFactor",
     same(formFor, { kind: "company", ticker: "AAPL", focus: "10-K" }) && same(await resolveSearch("FormFactor"), { kind: "company", ticker: "FORM" }),

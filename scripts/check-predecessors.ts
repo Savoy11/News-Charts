@@ -203,8 +203,11 @@ async function main(): Promise<void> {
   check("Alphabet keeps \"Google\" from the alias file, as before", newsNamesFor(1652044).includes("Google"));
   check("\"Encana\" for Ovintiv, \"Bancolombia\" for Grupo Cibest, \"CompuCredit\" for Atlanticus (batch 55)",
     newsNamesFor(1792580).includes("Encana") && newsNamesFor(2058897).includes("Bancolombia") && newsNamesFor(1464343).includes("CompuCredit"));
-  check("  …but never a name another listed company now holds: no \"Aaron's\" for PROG Holdings", !newsNamesFor(1808834).some((n) => /aaron/i.test(n)),
-    JSON.stringify(newsNamesFor(1808834)));
+  check("  …but never a name whose brand left with a business sold or spun off: no \"Aaron's\" for PROG Holdings",
+    !newsNamesFor(1808834).some((n) => /aaron/i.test(n)), JSON.stringify(newsNamesFor(1808834)));
+  check("  …nor \"Openwave\" or \"Unwired Planet\" for Great Elm, which sold both in 2012 and 2016 (batch 58)",
+    newsNamesFor(1831096).length === 0 && mentions("UK Supreme Court rules in Unwired Planet v Huawei", aliasesFor({ kind: "company", displayName: "Great Elm Group, Inc.", ticker: "GEG" }, ["Great Elm Group", ...newsNamesFor(1831096)])) === "none",
+    JSON.stringify(newsNamesFor(1831096)));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);

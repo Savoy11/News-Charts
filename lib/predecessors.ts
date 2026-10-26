@@ -28,6 +28,9 @@
  * `news` is the predecessor's own name as headlines write it, where the successor's name is not
  * it: "Exxon Mobil" for ExxonMobil Holdings, "Cigna" for The Cigna Group. A name that is also an
  * everyday word or a common surname ("Apache", "Ferguson") is left out, as batch 34 left them out.
+ * So is a name whose brand left with a business sold or spun off, as Motorola's went to Lenovo
+ * (`KNOWN_NOT_NEWS`): Great Elm's "Openwave" went to Openwave Mobility in 2012 and its "Unwired
+ * Planet" to Optis in 2016, and "Aaron's" to The Aaron's Company in 2020 (batch 58).
  */
 export interface Predecessor {
   /** the predecessor's CIK */
@@ -125,13 +128,12 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   1835632: [{ cik: 1058057, name: "Marvell Technology Group Ltd.", until: "2021-04-20", notice: "0001193125-21-122938", news: ["Marvell"] }],
   // APA — APA Corporation
   1841666: [{ cik: 6769, name: "Apache Corporation", until: "2021-03-01", notice: "0001193125-21-063695" }],
-  // GEG — Great Elm Group, Inc. (a new parent); Phone.com, Openwave and Unwired Planet before
-  1831096: [
-    { cik: 1082506, name: "Great Elm Capital Group, Inc.", until: "2020-12-29", notice: "0001140361-20-029666", news: ["Openwave", "Unwired Planet"] },
-  ],
+  // GEG — Great Elm Group, Inc. (a new parent); Phone.com, Openwave and Unwired Planet before, names
+  // whose businesses it sold (8-Ks 0001193125-12-212068, 0001193125-16-532468), so no news names
+  1831096: [{ cik: 1082506, name: "Great Elm Capital Group, Inc.", until: "2020-12-29", notice: "0001140361-20-029666" }],
   // LQDA — Liquidia Corp, with RareGen (the ticker carried on)
   1819576: [{ cik: 1330436, name: "Liquidia Technologies, Inc.", until: "2020-11-18", notice: "0001104659-20-126838" }],
-  // PRG — PROG Holdings, Inc., the legal successor of Aaron's, Inc.; The Aaron's Company it spun off is another company
+  // PRG — PROG Holdings, Inc., the legal successor of Aaron's, Inc.; the brand went with The Aaron's Company it spun off
   1808834: [{ cik: 706688, name: "Aaron's, Inc.", until: "2020-10-16", notice: "0001193125-20-271107" }],
   // TIMB — TIM S.A., which absorbed its parent
   1826168: [{ cik: 1066116, name: "TIM Participações S.A.", until: "2020-09-29", notice: "0001292814-20-003678" }],

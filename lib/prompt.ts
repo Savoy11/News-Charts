@@ -161,9 +161,21 @@ const FORM_WORD = String.raw`(?:(?:sec\s+)?forms?\s+)?`;
 const FORM_AFTER = new RegExp(String.raw`^(.+?)\s+${FORM_WORD}(${FORM})${FORM_NOUN}$`, "i");
 const FORM_BEFORE = new RegExp(String.raw`^${FORM_WORD}(${FORM})${FORM_NOUN}\s+(?:(?:for|of|from|by)\s+)?(.+)$`, "i");
 const FORM_ALONE = new RegExp(String.raw`^(?:(?:an?|the)\s+)?${FORM_WORD}${FORM}${FORM_NOUN}$`, "i");
+/**
+ * Any form called a form: "Form 4", "Form 13F", "SEC Form D", "Form S-8". The page carries none of
+ * the insider and fund forms, so one names no focus, but it is still a form: "Form 4 Tesla" opened
+ * FormFactor, filtered by "4 Tesla" (batch 58, the 2026-10-26 audit).
+ */
+const NAMED_FORM = String.raw`(?:sec\s+)?forms?\s+(?:\d{1,3}[a-z]{0,2}(?:-[a-z0-9]{1,2})?|[a-z](?:-\d{1,2})?)${FORM_NOUN}`;
+const NAMED_FORM_AFTER = new RegExp(String.raw`^(.+?)\s+${NAMED_FORM}$`, "i");
+const NAMED_FORM_BEFORE = new RegExp(String.raw`^${NAMED_FORM}\s+(?:(?:for|of|from|by)\s+)?(.+)$`, "i");
+const NAMED_FORM_ALONE = new RegExp(String.raw`^(?:(?:an?|the)\s+)?${NAMED_FORM}$`, "i");
 
-/** A query that names an SEC form and no security — "10-K", "Form 10-K", "SEC Form 8-K filings". */
-export const namesOnlyAForm = (raw: string): boolean => FORM_ALONE.test(raw.replace(/\s+/g, " ").trim().replace(/[?!.]+$/, ""));
+/** A query that names an SEC form and no security — "10-K", "Form 10-K", "SEC Form 8-K filings", "Form 4". */
+export const namesOnlyAForm = (raw: string): boolean => {
+  const q = raw.replace(/\s+/g, " ").trim().replace(/[?!.]+$/, "");
+  return FORM_ALONE.test(q) || NAMED_FORM_ALONE.test(q);
+};
 
 export function parseSearchPrompt(raw: string): ParsedPrompt {
   let s = raw.replace(/\s+/g, " ").trim().replace(/[?!.]+$/, "");
@@ -222,6 +234,7 @@ export function parseSearchPrompt(raw: string): ParsedPrompt {
   const before = formOnly || after ? null : subject.match(FORM_BEFORE);
   if (after) [subject, formFocus] = [after[1].trim(), after[2]];
   else if (before) [subject, formFocus] = [before[2].trim(), before[1]];
+  else if (!formOnly) subject = (subject.match(NAMED_FORM_AFTER)?.[1] ?? subject.match(NAMED_FORM_BEFORE)?.[1] ?? subject).trim();
 
   // every angle survives when a prompt carries more than one: a relation and a qualifier ("impact
   // of tariffs on Ford in 2025"), a form and a qualifier ("Apple 10-K filings in 2020")

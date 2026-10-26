@@ -79,6 +79,13 @@ const CASES: Case[] = [
   { q: "Apple Form 10-K", subject: "Apple", focus: "10-K" },
   { q: "Form 8-K Tesla", subject: "Tesla", focus: "8-K" },
   { q: "FormFactor 10-K", subject: "FormFactor", focus: "10-K", note: "a name that starts with \"Form\" keeps it" },
+  // ---- any form called a form (batch 58): the page carries no insider or fund forms, so no focus
+  { q: "Form 4 Tesla", subject: "Tesla", note: "an insider form names no focus, and no FormFactor" },
+  { q: "Tesla Form 4", subject: "Tesla" },
+  { q: "Berkshire Form 13F filings", subject: "Berkshire" },
+  { q: "Form 144 for Apple", subject: "Apple" },
+  { q: "Form D", subject: "Form D", note: "a form alone, whatever its number" },
+  { q: "Form Energy", subject: "Form Energy", note: "a word after \"Form\" is no form" },
 ];
 
 let pass = 0;

@@ -1,8 +1,22 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { PoolClient } from "pg";
-import { BACKFILL_FROM, GAP_MS, WINDOWS_PER_RUN, backfillNews, namesCompany, newsWindows } from "../lib/ingest/newsBackfill";
-import { fetchNews, gdeltQuery, type NewsWindow } from "../lib/news";
+import {
+  BACKFILL_FROM,
+  BACKFILL_WORD_NAMES,
+  GAP_MS,
+  WINDOWS_PER_RUN,
+  backfillNews,
+  everydayWordName,
+  namedWithCapital,
+  namesCompany,
+  newsWindows,
+  oneWordName,
+} from "../lib/ingest/newsBackfill";
+import { fetchNews, gdeltNewsPlan, gdeltQuery, type NewsWindow } from "../lib/news";
+import { newsNamesFor, possessiveNameFor } from "../lib/sec";
+import tickers from "../data/edgar-tickers.json";
+import wordNames from "../data/english-word-names.json";
 import { aliasesFor } from "../lib/enrich/relevance";
 import type { FetchResult, TimelineEvent } from "../lib/types";
 
@@ -186,6 +200,66 @@ async function main(): Promise<void> {
   const none = months();
   const n = await backfillNews(fakeDb(ndb), 1, plan, { today: TODAY, budget: { left: 10 }, gapMs: 0, fetch: none.fetch, store: collector().store });
   check("a company with no prices is not asked about, having no listing day to start from", none.asked.length === 0 && n.due === 0);
+
+  console.log("\nA name that is an everyday word (batch 58, the 2026-10-26 audit)");
+  // Real headlines GDELT gave for "TARGET" in September 2026, as the backfill asks: all kept by
+  // `namesCompany`, the first five about Target, the rest not
+  const targetMonth = [
+    "Target expands price cuts ahead of the holiday season",
+    "Target opening 8 new stores this fall across six states",
+    "Jim Cramer Says Buy Walmart ( WMT ) as Target ( TGT ) Turnaround Gains Momentum",
+    "Target Pokémon 30th Anniversary Event Leaves Parents Angry and Confused",
+    "Racist Halloween costume shows Target still doesnt get it",
+    "IMF urges retaining 5 % inflation target",
+    "Spanish fighter jets scrambled AGAIN as  moving target  spotted after Russian onslaught",
+    "Bihar urges Centre to raise paddy procurement target to 50 lakh MT",
+    "Winnipeg surpasses federal target for housing funding ahead of deadline",
+    "Only 14 driving test centres hitting wait - time target",
+    "NSE stock gets thumbs up from Street ; here highest share price target",
+    "India fiscal deficit widens to ₹7 . 1 lakh crore , hits 41 . 9 % of FY27 target by August",
+    "Govt . to retain 5 % inflation target for next three years",
+    "Top 5 Breakout stocks to buy : KPI Green , Crisil , Manyavar , Prudent , Go Digit by Sumeet Bagadia | Target , stop - loss",
+    "45 % YTD rally ! Experts see up to 56 % upside in these 3 stocks on China export shift | Target , rationale",
+  ];
+  const TGT = { kind: "company" as const, displayName: "TARGET CORP", ticker: "TGT" };
+  const tgtAliases = aliasesFor(TGT, ["TARGET"]);
+  check("for \"Target\", \"the headline names it\" is true of the word: all fifteen of a real month pass it",
+    targetMonth.every((t) => namesCompany(t, tgtAliases)));
+  const capital = targetMonth.filter((t) => namedWithCapital(t, "TARGET"));
+  check("  …with its capital, the five about Target pass and eight of the ten others do not",
+    capital.length === 7 && targetMonth.slice(0, 5).every((t) => capital.includes(t)) && capital.filter((t) => targetMonth.indexOf(t) >= 5).length === 2,
+    `${capital.length} with the capital`);
+  check("  …so the two stock tips left keep Target off the measured list, and it is held back",
+    BACKFILL_WORD_NAMES.TARGET === undefined && everydayWordName("TARGET") === "TARGET");
+  const held = months();
+  const heldRun = await backfillNews(fakeDb(freshDb()), 1, { ...plan, query: "TARGET", scoring: { subject: TGT, aliases: tgtAliases } },
+    { today: TODAY, budget: { left: 10 }, gapMs: 0, fetch: held.fetch, store: collector().store });
+  check("a company asked under an everyday word is not asked about at all, and says why",
+    held.asked.length === 0 && heldRun.due === 117 && /everyday word/.test(heldRun.stopped ?? ""), JSON.stringify(heldRun));
+  check("  …Southern, Crown and Progressive too, while Pfizer, Nvidia and \"Ford Motor\" are no words",
+    ["SOUTHERN", "CROWN", "PROGRESSIVE"].every((w) => everydayWordName(w) === w) && ["Pfizer", "NVIDIA", "Ford Motor"].every((n) => everydayWordName(n) === null));
+  check("  …and a one-word name the list does not hold counts as a word, held back until the list is rebuilt",
+    everydayWordName("Zorbalux") === "ZORBALUX" && oneWordName("Life360") === null);
+  const AAPL = { kind: "company" as const, displayName: "Apple Inc.", ticker: "AAPL" };
+  const apple = months(() => ({
+    outcome: "ok",
+    events: [
+      story("Apple inks multibillion - dollar deal with chipmaker Broadcom", "2023-05-23"),
+      story("APPLE UNVEILS VISION PRO HEADSET", "2023-06-05"),
+      story("Growers say the apple harvest will be the largest in a decade", "2023-05-10"),
+    ],
+  }));
+  const appleKept = collector();
+  await backfillNews(fakeDb(freshDb("1980-12-12")), 1, { ...plan, query: "Apple", scoring: { subject: AAPL, aliases: aliasesFor(AAPL, ["Apple"]) } },
+    { today: TODAY, budget: { left: 1 }, gapMs: 0, fetch: apple.fetch, store: appleKept.store });
+  check(`a measured word is asked, keeping only headlines that write it with its capital: Apple ("${BACKFILL_WORD_NAMES.APPLE?.slice(0, 40)}…")`,
+    apple.asked.length === 1 && appleKept.stored.length === 2 && !appleKept.stored.some((e) => e.title.includes("harvest")),
+    appleKept.stored.map((e) => e.title).join(" | "));
+  const index = tickers as unknown as { syncedOn: string; companies: [number, string, string][] };
+  const listed = new Set([...wordNames.words, ...wordNames.others]);
+  const unlisted = index.companies.map(([cik, , title]) => oneWordName(gdeltNewsPlan(title, possessiveNameFor(cik), newsNamesFor(cik)).query)).filter((n): n is string => !!n && !listed.has(n));
+  check(`every one-word GDELT name in the ticker index is in the word list, built from the index it ships with (${wordNames.words.length} words)`,
+    unlisted.length === 0 && wordNames.index.endsWith(index.syncedOn) && /ENABLE/.test(wordNames.source), unlisted.slice(0, 5).join(", "));
 
   console.log("\nPacing and wiring");
   check(`requests are at least five seconds apart, GDELT's limit (${GAP_MS} ms)`, GAP_MS >= 5000);

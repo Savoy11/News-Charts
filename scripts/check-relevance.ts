@@ -135,6 +135,16 @@ check("  …nor a partnership \"lp\"", !namesOf("Energy Transfer LP").includes("
 check("  …while a slash inside a name stays, and a topic is named as it is written",
   namesOf("CULLEN/FROST BANKERS, INC.").includes("cullen/frost") && namesOf("AI/ML", "topic").includes("ai/ml"));
 
+console.log("\nA contraction is no possessive (batch 58, the 2026-10-26 audit)");
+const SHEL: SubjectContext = { kind: "company", displayName: "Shell plc", ticker: "SHEL" };
+const shelAliases = aliasesFor(SHEL, ["Shell"]);
+check("\"she'll\" with its apostrophe out is not Shell: \"Taylor Swift says she'll retire\" is left unscored",
+  deterministicScore(row("news", "Taylor Swift says she'll retire next year"), SHEL, shelAliases) === null &&
+    deterministicScore(row("news", "She’ll be missed: tributes pour in"), SHEL, shelAliases) === null);
+check("  …while \"Shell\" itself still names it, and \"Kohl's\" still names KOHLS Corp",
+  (deterministicScore(row("news", "Shell profit beats forecasts"), SHEL, shelAliases)?.score ?? 0) >= 0.9 &&
+    (deterministicScore(row("news", "Kohl's names new CEO"), KSS, kssAliases)?.score ?? 0) >= 0.9);
+
 console.log("\nOne threshold, one place");
 // signals.ts once hardcoded its own copy of the display gate; a threshold change then
 // desynced signal windows from what the timeline showed. Source-asserted, not hoped.

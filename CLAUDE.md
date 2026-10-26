@@ -103,6 +103,7 @@ npm run check:boundary   # repo-boundary checks alone
 npm run db:migrate       # apply db/*.sql in order
 npm run ingest -- …      # pull events for a subject (see README)
 npm run sync:aliases     # rebuild data/company-aliases.json from Wikidata (after sync:tickers)
+npm run sync:word-names  # rebuild data/english-word-names.json from ENABLE (after sync:tickers)
 ```
 
 The `check-*.ts` scripts in the `check` chain are offline by construction (network/fetch is

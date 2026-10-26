@@ -158,6 +158,10 @@ npm run rekey:gdelt
   Wikidata and writes `data/company-aliases.json` ("Google" → Alphabet, "Facebook" → Meta); it
   keeps only names for companies the ticker index lists, so run it second. Read the "overrides" it
   prints — names that will now find a different company — before committing (NC-004).
+- **Then re-sync the everyday-word list.** `npm run sync:word-names` rebuilds
+  `data/english-word-names.json`, which says whose GDELT name is an everyday word ("Target") and so
+  is held back from the news backfill until measured. `check:news-backfill` fails until it is rerun
+  after a ticker sync, and a company it does not list is held back meanwhile (batch 58).
 - **Run Node 20.9 or later on the host**, and install fresh (`npm ci`) — Next.js 16 refuses
   older Node (NC-166).
 - **Rehearse a restore** into a scratch database: `createdb -U postgres news_charts_restore`,

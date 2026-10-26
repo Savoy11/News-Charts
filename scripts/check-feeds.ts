@@ -14,8 +14,9 @@ config({ path: ".env.local" });
  * and with your keys in .env.local — keyed feeds report "no key" when unset.
  */
 
-import { fetchNews, gdeltNames, gdeltNewsPlan } from "../lib/news";
-import { GAP_MS, newsWindows } from "../lib/ingest/newsBackfill";
+import { fetchNews, gdeltHeadlineNames, gdeltNames, gdeltNewsPlan } from "../lib/news";
+import { BACKFILL_WORD_NAMES, GAP_MS, everydayWordName, namedWithCapital, namesCompany, newsWindows } from "../lib/ingest/newsBackfill";
+import { aliasesFor } from "../lib/enrich/relevance";
 import { fetchPressMentions } from "../lib/loc";
 import { fetchArchiveItems } from "../lib/archive";
 import { GOVERNANCE_SPACES, getGovernanceFor, assertSpacesResolve } from "../lib/onchain/governance";
@@ -162,11 +163,20 @@ async function main() {
     const { query: newsQuery, byRelevance } = gdeltNewsPlan(company.name, possessive, alsoKnownAs);
     const asked = gdeltNames(newsQuery, alsoKnownAs, byRelevance).join(" | ") + (byRelevance ? " by relevance" : "");
     reportFetch("GDELT", await tried(fetchNews(newsQuery, alsoKnownAs, { byRelevance })), `(asked ${asked}; throttles ~1 req/5s)`);
-    // …and the newest month the backfill asks, as `backfillNews` asks it, after GDELT's gap (batch 57)
-    const month = newsWindows(new Date().toISOString().slice(0, 10))[0];
-    await new Promise((r) => setTimeout(r, GAP_MS));
-    reportFetch("GDELT, a past month", await tried(fetchNews(newsQuery, alsoKnownAs, { byRelevance, window: month })),
-      `(${month.from} to ${month.to} by relevance, before the headline filter)`);
+    // …and the newest month the backfill asks, as `backfillNews` asks it and keeps it (batches 57, 58)
+    const word = everydayWordName(newsQuery);
+    if (word && !BACKFILL_WORD_NAMES[word]) {
+      console.log(`  ${"GDELT, a past month".padEnd(22)} — held back: "${word.toLowerCase()}" is an everyday word, not yet measured`);
+    } else {
+      const month = newsWindows(new Date().toISOString().slice(0, 10))[0];
+      await new Promise((r) => setTimeout(r, GAP_MS));
+      const got = await tried(fetchNews(newsQuery, alsoKnownAs, { byRelevance, window: month }));
+      const aliases = aliasesFor({ kind: "company", displayName: company.name, ticker: company.ticker },
+        [name, ...alsoKnownAs, ...gdeltHeadlineNames(company.name, possessive)]);
+      const kept = (got?.events ?? []).filter((e) => namesCompany(e.title, aliases) && (!word || namedWithCapital(e.title, word)));
+      reportFetch("GDELT, a past month", got && { ...got, events: kept },
+        `(${month.from} to ${month.to} by relevance: the ${kept.length} of ${got?.events.length ?? 0} it would keep)`);
+    }
     reportFetch("Yahoo Finance RSS", await tried(fetchYahooFinanceNews(company.ticker)));
     reportFetch("Federal Register (co.)", await tried(fetchCompanyRegulations(company.name, FR_COMPANY_SINCE, alsoKnownAs)),
       `(asked ${frSearchTerm(company.name, alsoKnownAs)})`);

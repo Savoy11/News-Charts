@@ -107,8 +107,9 @@ export function mentions(original: string, names: string[]): Mention {
   const keyed = ` ${nameKey(title)} `;
   // A one-word name kept without the apostrophe its SEC title dropped ("kohls") names "Kohl's
   // names new CEO" read with the apostrophes out (batch 54). Only as a second try: out, "Ford's"
-  // would read "fords" and no longer name Ford.
-  const bareTitle = title.replace(/'/g, "");
+  // would read "fords" and no longer name Ford. And only a possessive's: out of "she'll", it read
+  // "shell" and named Shell (batch 58, the 2026-10-26 audit).
+  const bareTitle = title.replace(/'(?=s(?![\p{L}\p{N}]))/gu, "");
   let sawOblique = false;
   for (const a of aliases) {
     if (a.length < 3 || INITIALISM.test(a)) {

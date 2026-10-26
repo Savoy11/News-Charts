@@ -985,6 +985,80 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 58: the 2026-10-26 audit's four findings fixed (2026-10-26)
+
+The `code-auditor` read the changes since the last audit (batches 53–57, `7ba8cb6..1ac7cdd`). Its
+report is `docs/audits/2026-10-26-code-audit.md`. All four findings were reproduced here and are
+fixed; its five set-asides stay as it left them.
+
+`npm run check` passes (49 suites), `npm run lint` and `tsc --noEmit` are clean. `check:ui` was not
+run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is not set.
+
+- [x] **Finding 1 (`P1`): the GDELT backfill kept an everyday word's stories as the company's.**
+      One live month of Target (September 2026) gave 33 stories whose headline "names" Target.
+      10 were about inflation targets, price targets and a moving target, each scored 0.9.
+      - A company asked under one everyday English word is now held back from the backfill until
+        a month of its own has been measured (`BACKFILL_WORD_NAMES` in
+        `lib/ingest/newsBackfill.ts`). 205 of the index's 1,949 one-word GDELT names are words in
+        ENABLE, the public-domain list `data/english-short-words.json` already came from: Target,
+        Southern, Crown, Progressive, Shell, Tesla, Apple and others. Pfizer, Nvidia and Boeing are
+        not. A one-word name the list does not hold counts as a word, so it is held back.
+      - A measured name counts a headline only where the name has its capital ("Apple", "APPLE",
+        never "apple"). Two are measured, from live GDELT months:
+        - Apple, May 2023: 60 headlines, every one with its capital, and one (a cranberry brie
+          recipe) not about Apple.
+        - Tesla, April 2022: 31 headlines with its capital, every one about Tesla or its cars; the
+          one without it was a tag page.
+        - Target is not on the list: with capitals, 8 of its 10 wrong stories go, but 2 stock tips
+          ("… | Target , stop - loss") stay.
+      - The list is `data/english-word-names.json`, written by the new `npm run sync:word-names`
+        from the committed ticker index. `check:news-backfill` fails until it is rerun after a
+        ticker sync. `docs/OWNER-ACTIONS.md`, `CLAUDE.md` and the README say so.
+      - `check:feeds` now reports what the backfill would keep from a past month, or that the
+        company is held back. It used to report GDELT's count before the filter.
+      - The open GDELT item said scoring keeps unrelated pages off a page. It is corrected: a page
+        that uses the company's name as a word is not kept off.
+- [x] **Finding 2 (`P2`): Great Elm Group's news was asked and scored under two brands it sold.**
+      "Openwave" went to Openwave Mobility in 2012 (8-K 0001193125-12-212068). "Unwired Planet",
+      with all the patents, went to Optis in 2016 (8-K 0001193125-16-532468). Both filings were
+      read on EDGAR this batch.
+      - Both names are dropped. The rule is now written beside `news` in `lib/predecessors.ts`: a
+        name whose brand left with a business sold or spun off does not carry, as Motorola's did
+        not (`KNOWN_NOT_NEWS`).
+      - The reason recorded for withholding "Aaron's" is corrected in batch 55's entry and its
+        check: the brand went with the spin-off, which is no longer listed.
+- [x] **Finding 3 (`P3`): the apostrophe retry read "she'll" as Shell.** It now drops an
+      apostrophe only before a final "s" ("Kohl's" → "kohls"). "Taylor Swift says she'll retire
+      next year" no longer scores 0.9 for Shell, and "Kohl's names new CEO" still names Kohl's.
+- [x] **Finding 4 (`P3`): "Form 4 Tesla", "Form 13F Berkshire" and "Form D" still opened
+      FormFactor.** Now any form called a form is read as a form (`lib/prompt.ts`): "Form 4 Tesla"
+      opens Tesla, "Form 13F Berkshire" Berkshire Hathaway, and "Form D" nothing. There is no
+      filter, since the page carries none of those forms. The rule cuts none of the index's 29,983
+      company and fund names. Batch 56's line about it is corrected.
+- Set aside, as the audit left them: DOJ releases naming another party ("Ten Employers" for
+  Employers Holdings), common-word aliases older than these batches (Welltower's "well"), three
+  window-edge stories dated a day late, `dojPossessive`'s extra queries, and one contrived query.
+- [ ] **Open:**
+      - The hourly GDELT ask still keeps an everyday word's stories for those companies: Target's
+        "inflation target" is still scored 0.9 when it arrives that way.
+      - The other 203 everyday-word names wait for a measured month from the production host.
+        GDELT refused nearly every request from this container again.
+- Checks, main → now. On main's code the new ones fail, except those guarding what main already
+  does, and the backfill's cannot run (its functions are new):
+  - `check:news-backfill` 30 → 38:
+    - a real Target month: all fifteen headlines pass "names it", and the capital rule drops
+      eight of the ten wrong;
+    - Target held back and saying why; Southern, Crown and Progressive words, Pfizer, Nvidia and
+      "Ford Motor" not; an unlisted name held back;
+    - Apple asked and kept only with its capital;
+    - every one-word name in the ticker index listed.
+  - `check:relevance` 56 → 58: "she'll" and "She'll" are not Shell (fails on main); Shell and
+    Kohl's still named.
+  - `check:predecessors` 27 → 28: no "Openwave" or "Unwired Planet" for Great Elm.
+  - `check:prompt` 52 → 58: "Form 4 Tesla", "Tesla Form 4", "Berkshire Form 13F filings" and
+    "Form 144 for Apple" (4 fail on main), "Form D" and "Form Energy".
+  - `check:aliases` 98 → 99: "Form 4 Tesla", "Form 13F Berkshire" and "Form D", searched.
+
 ## NC ledger — batch 57: a company's older news from GDELT, a month at a time (2026-10-26)
 
 The hourly GDELT ask returns its newest hundred pages, which for a busy company is the last few
@@ -1087,7 +1161,8 @@ passes 198/198 against a fresh demo database. HawkScan could not run: `HAWK_API_
       "Form 10-K for Apple" opened FormFactor too, and "Apple Form 10-K" filtered by "Form · 10-K".
       Now "Form" and "SEC Form" are read as part of the form's name (`lib/prompt.ts`). "Form 10-K"
       alone finds nothing, as a bare "10-K" does; "Form 10-K for Apple" opens Apple's annual
-      reports; "FormFactor" and "FormFactor 10-K" still open FormFactor.
+      reports; "FormFactor" and "FormFactor 10-K" still open FormFactor. *(Batch 58: that held only
+      for the forms the page carries; "Form 4 Tesla" still opened FormFactor until then.)*
 - [x] **Biggest moves rank an FDA Class II recall as news** (`components/BiggestMoves.tsx`). Every
       recall used to rank as a filing when picking the event that labels a big move. So a Class II
       recall that day beat the news, a Fed decision or an inflation report, and Medtronic alone has
@@ -1176,6 +1251,9 @@ not run: no page or component changed. HawkScan could not run: `HAWK_API_KEY` is
 - [x] **News names** where the old name is not the present one: "Encana", "Bancolombia",
       "CompuCredit", "Quidel", "FREYR", "Openwave", "Unwired Planet" and "Crown Cork". Not
       "Aaron's" for PROG Holdings: The Aaron's Company it spun off is another listed company now.
+      *(Corrected in batch 58: Great Elm sold the businesses behind "Openwave" (2012) and "Unwired
+      Planet" (2016), so both are dropped; and "Aaron's" is withheld because the brand went with
+      the spin-off, which is no longer listed.)*
 - Measured live, SEC filings and renames per page, main → now, for all 55. No page holds a filing
   twice. The largest:
 
@@ -3114,7 +3192,10 @@ between its refusals (below). HawkScan could not run: `HAWK_API_KEY` is not set.
       - [ ] **Open:** GDELT returns the newest 100 matching pages, so a company whose name is also
         a common word gets mostly unrelated pages: 1 in 100 for "Alphabet", 5 in 100 for "GOLDMAN
         SACHS GROUP". Scoring keeps the unrelated pages off the page, but they still use up the
-        100 places. One lead, measured once: GDELT's `repeat3:` operator (the word at least three
+        100 places. *(Corrected 2026-10-26, batch 58: scoring keeps off a page that does not name
+        the company in its headline, but not one that uses the company's name as a word: "IMF
+        urges retaining 5 % inflation target" scores 0.9 for Target. The backfill holds such names
+        back; the hourly ask still lets them in.)* One lead, measured once: GDELT's `repeat3:` operator (the word at least three
         times on the page) works, and "Alphabet" OR `repeat3:"google"` returned 5 in 100 against
         "Alphabet" alone's 1. It, and GDELT's relevance sort, are worth measuring on more companies
         before the platform words go back into queries this way. The same measurement settles the

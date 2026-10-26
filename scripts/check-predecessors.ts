@@ -44,6 +44,14 @@ async function main(): Promise<void> {
   check("XOM, GOOGL, DIS and BLK are mapped",
     ["XOM", "GOOGL", "DIS", "BLK"].every((t) => predecessorsOf(companies.find(([, tk]) => tk === t)![0]).length > 0));
   check("a company with no change of record has none", predecessorsOf(320193).length === 0);
+  check("a start day, where one is set, falls before the handover",
+    entries.every(([, ps]) => ps.every((p) => !p.since || (/^\d{4}-\d{2}-\d{2}$/.test(p.since) && p.since < p.until))));
+  const cikOf = (t: string) => companies.find(([, tk]) => tk === t)?.[0] ?? -1;
+  check("batch 55's are mapped: Ovintiv, Grupo Cibest, DraftKings; Weatherford three records back, Noble two",
+    ["OVV", "CIB", "DKNG"].every((t) => predecessorsOf(cikOf(t)).length === 1) && predecessorsOf(cikOf("WFRD")).length === 3 && predecessorsOf(cikOf("NE")).length === 2,
+    ["OVV", "CIB", "DKNG", "WFRD", "NE"].map((t) => `${t} ${predecessorsOf(cikOf(t)).length}`).join(", "));
+  check("a merger into a new company, or a bought company's registration, is no predecessor: Linde, HF Sinclair, Baker Hughes, Pembina have none",
+    ["LIN", "DINO", "BKR", "PBA"].every((t) => cikOf(t) > 0 && predecessorsOf(cikOf(t)).length === 0));
 
   console.log("\nThe filings reader takes the predecessor's record up to the handover");
   const XOM = { ticker: "XOM", cik: "0002115436", name: "ExxonMobil Holdings Corp" };
@@ -137,6 +145,33 @@ async function main(): Promise<void> {
     blk.filter((e) => e.type === "corporate_action").map((e) => e.title).join(" | "));
   check("  …and its annual report before the handover is on the page", blk.some((e) => e.id === "sec-000136474224000010"));
 
+  // DraftKings' predecessor record began as a SPAC, Diamond Eagle, until the business merged in
+  records["0001883685"] = { name: "DraftKings Inc.", formerNames: [], filings: { recent: block([["2023-02-17", "10-K", "0001883685-23-000010"]]) } };
+  records["0001772757"] = {
+    name: "DraftKings Holdings Inc.",
+    formerNames: [
+      { name: "Diamond Eagle Acquisition Corp. \\ DE", from: "2019-04-05T00:00:00.000Z", to: "2020-04-24T00:00:00.000Z" },
+      { name: "DraftKings Inc.", from: "2020-04-24T00:00:00.000Z", to: "2022-05-05T00:00:00.000Z" },
+    ],
+    filings: { recent: block([["2022-02-18", "10-K", "0001772757-22-000010"], ["2021-02-26", "10-K", "0001772757-21-000010"], ["2020-03-02", "10-K", "0001772757-20-000010"]]) },
+  };
+  (globalThis as { fetch: unknown }).fetch = async (input: RequestInfo | URL) => {
+    const key = /CIK(\d{10})\.json$/.exec(String(input))?.[1] ?? "";
+    const body = records[key];
+    return { ok: body !== undefined, status: body ? 200 : 404, json: async () => body } as unknown as Response;
+  };
+  let dkng: Awaited<ReturnType<typeof getFilingsDeep>> = [];
+  try {
+    dkng = await getFilingsDeep({ ticker: "DKNG", cik: "0001883685", name: "DraftKings Inc." }, false, []);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const dkngIds = new Set(dkng.map((e) => e.id));
+  check("a record that began as a shell is the company's from the day the business merged in: DraftKings' 2021 and 2022 annual reports",
+    dkngIds.has("sec-000177275722000010") && dkngIds.has("sec-000177275721000010"), [...dkngIds].join(", "));
+  check("  …and not the SPAC's annual report, nor its rename that day", !dkngIds.has("sec-000177275720000010") && !dkng.some((e) => /Diamond Eagle/.test(e.title)),
+    dkng.map((e) => e.title).join(" | "));
+
   console.log("\nIts headlines are read under the record they live in");
   const readAs: string[] = [];
   const fakeDb = { query: async () => ({ rows: [], rowCount: 0 }) } as unknown as PoolClient;
@@ -166,6 +201,10 @@ async function main(): Promise<void> {
   check("a name that is an everyday word or a common surname is not carried: no \"Apache\", no \"Ferguson\"",
     !newsNamesFor(1841666).includes("Apache") && !newsNamesFor(2011641).includes("Ferguson"));
   check("Alphabet keeps \"Google\" from the alias file, as before", newsNamesFor(1652044).includes("Google"));
+  check("\"Encana\" for Ovintiv, \"Bancolombia\" for Grupo Cibest, \"CompuCredit\" for Atlanticus (batch 55)",
+    newsNamesFor(1792580).includes("Encana") && newsNamesFor(2058897).includes("Bancolombia") && newsNamesFor(1464343).includes("CompuCredit"));
+  check("  …but never a name another listed company now holds: no \"Aaron's\" for PROG Holdings", !newsNamesFor(1808834).some((n) => /aaron/i.test(n)),
+    JSON.stringify(newsNamesFor(1808834)));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);

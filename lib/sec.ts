@@ -1117,9 +1117,12 @@ export async function getFilingsDeep(
     // goes, unless it was into the name the company still had then ("Exxon Corp" to "Exxon Mobil").
     const last = theirs.reduce<Rename | null>((a, r) => (!a || r.on > a.on ? r : a), null);
     const own = (r: Rename) => r !== last || phrase(commonName(r.to)) === phrase(commonName(p.name));
-    renames.push(...theirs.filter((r) => r.on < p.until && own(r)));
+    // the record's span as the company's: before the handover, and from the day the shell it began
+    // as became the business, not the shell's rename that day (DraftKings' SPAC, batch 55)
+    const inSpan = (date: string, rename = false) => date < p.until && (!p.since || (rename ? date > p.since : date >= p.since));
+    renames.push(...theirs.filter((r) => inSpan(r.on, true) && own(r)));
     const dropped = last && !own(last) ? `sec-rename-${cik}-${last.on}` : null;
-    return events.filter((e) => e.date < p.until && e.id !== dropped);
+    return events.filter((e) => inSpan(e.date, e.id.startsWith("sec-rename-")) && e.id !== dropped);
   });
   const [own, ...before] = await Promise.all([recordFilings(company, includeOlder, renames, othersStakes), ...earlier]);
   // one row a filing: one the two records share is the successor's

@@ -14,10 +14,9 @@ config({ path: ".env.local" });
  * and with your keys in .env.local — keyed feeds report "no key" when unset.
  */
 
-import { fetchNews, gdeltHeadlineNames, gdeltNames, gdeltNewsPlan } from "../lib/news";
+import { companyScoringAliases, fetchNews, gdeltNames, gdeltNewsPlan } from "../lib/news";
 import { GAP_MS, namesCompany, newsWindows } from "../lib/ingest/newsBackfill";
 import { MEASURED_WORD_NAMES, everydayWordName, namedWithCapital } from "../lib/wordNames";
-import { aliasesFor } from "../lib/enrich/relevance";
 import { fetchPressMentions } from "../lib/loc";
 import { fetchArchiveItems } from "../lib/archive";
 import { GOVERNANCE_SPACES, getGovernanceFor, assertSpacesResolve } from "../lib/onchain/governance";
@@ -172,8 +171,7 @@ async function main() {
       const month = newsWindows(new Date().toISOString().slice(0, 10))[0];
       await new Promise((r) => setTimeout(r, GAP_MS));
       const got = await tried(fetchNews(newsQuery, alsoKnownAs, { byRelevance, window: month }));
-      const aliases = aliasesFor({ kind: "company", displayName: company.name, ticker: company.ticker },
-        [name, ...alsoKnownAs, ...gdeltHeadlineNames(company.name, possessive)]);
+      const aliases = companyScoringAliases(company);
       const kept = (got?.events ?? []).filter((e) => namesCompany(e.title, aliases) && (!word || namedWithCapital(e.title, word)));
       reportFetch("GDELT, a past month", got && { ...got, events: kept },
         `(${month.from} to ${month.to} by relevance: the ${kept.length} of ${got?.events.length ?? 0} it would keep)`);

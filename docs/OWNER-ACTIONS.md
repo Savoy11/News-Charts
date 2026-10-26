@@ -165,10 +165,12 @@ npm run rekey:gdelt
   `data/shared-name-words.json`, how many companies' names share each word (batch 60).
   `check:news-backfill` and `check:relevance` fail until it is rerun after a ticker sync, and a
   company it does not list is held back from the backfill meanwhile (batch 58).
-- **Re-score stored headlines once** after deploying batches 59 and 60: `npm run score -- --rescore
+- **Re-score stored headlines once** after deploying batches 59 to 61: `npm run score -- --rescore
   --limit 100000`. It works out the free scores again under the new rules, so "Cost of living rises"
   stops naming Costco, "IMF urges retaining 5 % inflation target" leaves Target's page, and
-  "American Depositary Receipts" stops naming American Airlines. It costs
+  "American Depositary Receipts" stops naming American Airlines. Since batch 61 it scores a company
+  by the same names ingest does; before, it brought back names batch 58 had removed, so run it on
+  batch 61 or later. A `--strict-headline` score is left alone unless the flag is given too. It costs
   nothing; the rows it no longer settles go back to the paid tier, which runs only with
   `ANTHROPIC_API_KEY` set and stops at its cap (`--max-usd`, $1 a subject by default).
 - **Run Node 20.9 or later on the host**, and install fresh (`npm ci`) — Next.js 16 refuses

@@ -4,6 +4,10 @@ import { storyKey } from "./newsQuality";
 import { POSSESSIVE, nameKey, possessiveWords } from "./companyAliases";
 import { commonName } from "./sec";
 import { INITIALISM, mentions } from "./enrich/relevance";
+import { gdeltForm } from "./scoringNames";
+
+// pure name logic, in its own module so a visitor's first pass can score without this one (batch 61)
+export { companyScoringAliases, gdeltForm, gdeltHeadlineNames } from "./scoringNames";
 import shortWords from "../data/english-short-words.json";
 
 interface GdeltArticle {
@@ -128,16 +132,6 @@ export function gdeltNames(query: string, alsoKnownAs: string[] = [], byRelevanc
   return names;
 }
 
-/**
- * A name the way GDELT holds it. GDELT drops a possessive "'s" whole: "Grey's Anatomy" comes back
- * "Grey Anatomy", and none of the 211 GDELT headlines stored for JPMorgan keeps an apostrophe. It
- * reads a quoted "domino's pizza" as "dominos pizza", which found 2 articles in three days where
- * "domino pizza" found 18 (2026-10-23, batch 36).
- */
-export function gdeltForm(name: string): string {
-  return name.replace(/['’]s\b/gi, "");
-}
-
 /** Legal forms an SEC title carries after the everyday name: "VISA INC.", "HSBC HOLDINGS PLC". */
 const LEGAL_FORM = new Set("INC CORP CO PLC LTD LIMITED HOLDING HOLDINGS GROUP".split(" "));
 /** …and those written in capitals: "SAP SE", "Vale S.A.", "ASML HOLDING NV". */
@@ -218,20 +212,6 @@ export function gdeltNewsPlan(edgarTitle: string, possessive = "", alsoKnownAs: 
 
 /** How far back a query asked by relevance looks: the window "mcdonald" was measured over. */
 export const GDELT_RELEVANCE_SPAN = "3days";
-
-/**
- * The names a GDELT headline gives a company whose name is a possessive, for headline scoring:
- * "mcdonald" for McDonald's, "domino pizza" for Domino's Pizza — [] for any other company. GDELT's
- * headline reads "Domino sales growth slows", which names neither "DOMINOS PIZZA" nor "Domino's".
- * Lower case, so a short one ("macy") is never read as initials that count only in capitals.
- */
-export function gdeltHeadlineNames(edgarTitle: string, possessive = ""): string[] {
-  const dropS = new Set([...possessiveWords(edgarTitle), ...possessiveWords(possessive)]);
-  if (!dropS.size) return [];
-  const everyday = nameKey(commonName(edgarTitle)).split(" ").map((w) => (dropS.has(w) ? w.slice(0, -1) : w)).join(" ");
-  const own = possessive ? nameKey(gdeltForm(commonName(possessive))) : "";
-  return [...new Set([everyday, own].filter(Boolean).map((n) => n.toLowerCase()))];
-}
 
 /** The everyday name with the legal form `full`, the title as a name key, carries after it. */
 function withLegalForm(everyday: string, full: string): string {

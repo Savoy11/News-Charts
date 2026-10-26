@@ -174,7 +174,8 @@ async function main(): Promise<void> {
   for (const r of scored) {
     // Deterministic scores are the ones that cost nothing; showing them next to the paid ones is
     // the point, because the ratio is what the relevance floor is for.
-    const free = r.scored_by === "deterministic";
+    // "deterministic-strict" is the same free tier under --strict-headline (batch 61)
+    const free = r.scored_by.startsWith("deterministic");
     console.log(`  ${"relevance".padEnd(13)} ${r.scored_by.padEnd(28)} ${String(r.n).padStart(4)} rows  ${free ? "free" : "paid"}`);
   }
   if (!enrich.length && !synth.length && !refused.length && !scored.length) console.log("  nothing enriched yet.");

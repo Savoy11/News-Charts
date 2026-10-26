@@ -20,7 +20,8 @@ import {
   type ScorableRow,
   type SubjectContext,
 } from "../lib/enrich/relevance";
-import { sharedBy, withCapital } from "../lib/wordNames";
+import { isOwnShortName, sharedBy, withCapital } from "../lib/wordNames";
+import { companyScoringAliases } from "../lib/news";
 import tickerIndex from "../data/edgar-tickers.json";
 import sharedNames from "../data/shared-name-words.json";
 import type { EventType } from "../lib/types";
@@ -227,9 +228,54 @@ check("  …and a company whose whole name is a shared word keeps it: \"Target\"
 check("a short name drops the trailing generic words, two words at least: \"American Water\", \"First Citizens\", \"Interactive Brokers\"; none for \"Bank of America\" or \"Johnson & Johnson\"",
   shortName("American Water Works") === "American Water" && shortName("FIRST CITIZENS BANCSHARES") === "FIRST CITIZENS" &&
     shortName("Interactive Brokers Group") === "Interactive Brokers" && shortName("Bank of America") === null && shortName("Johnson & Johnson") === null && shortName("Ford Motor") === null,
-  JSON.stringify(["American Water Works", "Bank of America", "Johnson & Johnson"].map(shortName)));
+  JSON.stringify(["American Water Works", "Bank of America", "Johnson & Johnson"].map((n) => shortName(n))));
 check(`the shared words were counted from the ticker index in use (${Object.keys(sharedNames.shared).length} shared by two or more; "GOLD" ${sharedBy("GOLD")}, "FORD" ${sharedBy("FORD")})`,
   sharedNames.index.endsWith((tickerIndex as unknown as { syncedOn: string }).syncedOn) && sharedBy("GOLD") >= 5 && sharedBy("FORD") === 1);
+
+console.log("\nThe scoring audit's findings (batch 61, docs/audits/2026-10-26-scoring-audit.md)");
+// each scored 0.9 for these companies on main
+const shortWrong: [SubjectContext, string][] = [
+  [co("U S GLOBAL INVESTORS INC", "GROW"), "U.S. stocks fall as Treasury yields climb"],
+  [co("NEW YORK TIMES CO", "NYT"), "New York subway fares rise"],
+  [co("United States Oil Fund, LP", "USO"), "United States and China agree trade truce"],
+  [co("Morgan Stanley Direct Lending Fund", "MSDL"), "Morgan Stanley beats estimates on trading"],
+  [co("Clean Energy Fuels Corp.", "CLNE"), "Truist names top clean energy stocks to watch ahead of Q3 earnings season"],
+  [co("American Water Works Company, Inc.", "AWK"), "Olympic american water polo team wins gold"],
+];
+const shortStill = shortWrong.filter(([subject, title]) => news(subject, title) !== null);
+check("finding 1: a short name names a company only when no other listed company's name holds it, with its capitals — not \"U.S. stocks fall\", \"New York subway fares\", \"Morgan Stanley beats\" or \"top clean energy stocks\"",
+  shortStill.length === 0, shortStill.map(([subject]) => `${subject.ticker} ${JSON.stringify(aliasesFor(subject))}`).join("; "));
+check("  …by the list the sync works out: \"American Water\" is American Water Works' alone, \"New York\" and \"Morgan Stanley\" are not, and initials make none (\"U S\")",
+  isOwnShortName("AMERICAN WATER") && !isOwnShortName("NEW YORK") && !isOwnShortName("MORGAN STANLEY") && shortName("U S Global Investors") === null);
+const tickerWords: [SubjectContext, string][] = [
+  [co("GAP INC", "GAP"), "Gender pay gap widens for third straight year"],
+  [co("BILL Holdings, Inc.", "BILL"), "Senate passes stopgap spending bill"],
+  [co("Snap Inc", "SNAP"), "Japan's prime minister calls snap election"],
+];
+const tickerStill = tickerWords.filter(([subject, title]) => news(subject, title) !== null);
+check("finding 2: a name word that is also the ticker keeps its capital: \"gender pay gap\" is not Gap's, \"stopgap spending bill\" not BILL's, \"snap election\" not Snap's",
+  tickerStill.length === 0, tickerStill.map(([subject]) => `${subject.ticker} ${JSON.stringify(aliasesFor(subject))}`).join("; "));
+check("  …while \"Gap raises full-year outlook\" still names Gap", (news(co("GAP INC", "GAP"), "Gap raises full-year outlook")?.score ?? 0) >= 0.9);
+const geg = companyScoringAliases({ name: "Great Elm Group, Inc.", ticker: "GEG", cik: 1831096 });
+check("finding 3: every path scores a company by the same names, never its stored search aliases: Great Elm has no \"Unwired Planet\" or \"Openwave\"",
+  !geg.some((a) => /unwired|openwave/i.test(a)) &&
+    deterministicScore(row("news", "UK Supreme Court rules in Unwired Planet v Huawei"), co("Great Elm Group, Inc.", "GEG"), geg) === null,
+  JSON.stringify(geg));
+const read = (file: string) => readFileSync(path.join(__dirname, "..", file), "utf8");
+const scoreTs = read("scripts/score.ts");
+check("  …in ingest, a first visit, npm run score and check:feeds alike",
+  ["scripts/ingest.ts", "lib/ingest/firstPass.ts", "scripts/score.ts", "scripts/check-feeds.ts"].every((f) => /companyScoringAliases\(/.test(read(f))) &&
+    /const \{ rows: aliasRows \} = cik \? \{ rows: \[\] as/.test(scoreTs));
+check("finding 4: a --strict-headline score is kept apart, so a plain --rescore and ingest's re-score leave it alone",
+  scoreTs.includes('const FREE_STRICT = "deterministic-strict"') && scoreTs.includes("strict ? FREE_STRICT : FREE") &&
+    scoreTs.includes("es.scored_by = ANY($4::text[])") && scoreTs.includes("AND scored_by = ANY($3::text[])") &&
+    /scored_by = 'deterministic'/.test(read("lib/ingest/store.ts")) && /startsWith\("deterministic"\)/.test(read("scripts/cost-report.ts")));
+const SITS_CO = co("SOUTHERN ITS INTERNATIONAL, INC.", "SITS");
+check("finding 5: \"It's\" is no possessive: \"The Real Energy Bottleneck Isn’t Crude—It’s Fuel, Says Kuwait CEO\" is not Southern ITS's",
+  news(SITS_CO, "The Real Energy Bottleneck Isn’t Crude—It’s Fuel, Says Kuwait CEO") === null && (news(SITS_CO, "Southern ITS wins Texas contract")?.score ?? 0) >= 0.9);
+check("a number is no name: \"Top 10 stocks to watch\" is not Bitwise 10 Crypto Index ETF's, \"Dow tops 40,000\" not WD-40's, while \"WD-40 raises dividend\" is",
+  news(co("Bitwise 10 Crypto Index ETF", "BITW"), "Top 10 stocks to watch this week") === null &&
+    news(co("WD 40 CO", "WDFC"), "Dow tops 40,000 for the first time") === null && (news(co("WD 40 CO", "WDFC"), "WD-40 raises dividend")?.score ?? 0) >= 0.9);
 
 console.log("\nA corrected rule reaches the rows it scored before: npm run score -- --rescore (batch 59)");
 const AS_STORED = 0.8999999761581421; // 0.9, as a real reads back
@@ -247,8 +293,9 @@ check("  …and one the rules no longer settle is cleared, back to the model: Co
   !costPass.scores.length && JSON.stringify(costPass.cleared) === "[7]" && costPass.remaining.length === 1, JSON.stringify(costPass));
 const scoreSrc = readFileSync(path.join(__dirname, "score.ts"), "utf8");
 check("  …in npm run score, which takes back only the free tier's own scores, never a model's",
-  /const rescore = has\("rescore"\)/.test(scoreSrc) && scoreSrc.includes("es.relevance IS NULL OR ($3 AND es.scored_by = 'deterministic')") &&
-    scoreSrc.includes("AND scored_by = 'deterministic'`") && /freePass\(pending, subject, aliases, strict\)/.test(scoreSrc));
+  /const rescore = has\("rescore"\)/.test(scoreSrc) && scoreSrc.includes("es.relevance IS NULL OR ($3 AND es.scored_by = ANY($4::text[]))") &&
+    scoreSrc.includes("AND scored_by = ANY($3::text[])") && scoreSrc.includes('const FREE = "deterministic"') &&
+    /freePass\(pending, subject, aliases, strict\)/.test(scoreSrc));
 
 console.log("\nOne threshold, one place");
 // signals.ts once hardcoded its own copy of the display gate; a threshold change then

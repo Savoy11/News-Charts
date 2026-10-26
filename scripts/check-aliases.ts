@@ -352,12 +352,15 @@ async function main(): Promise<void> {
   const block = { kind: "company" as const, displayName: "Block, Inc.", ticker: "XYZ" };
   check("  …while Times Square is not Block's", mentions("Crowds pack Times Square for the countdown", aliasesFor(block, ["Block", ...newsNamesFor(cikOf("XYZ"))])) !== "named");
   const ingestSrc = readFileSync("scripts/ingest.ts", "utf8");
+  const newsSrc = readFileSync("lib/scoringNames.ts", "utf8");
   check("company ingest searches and scores with them",
     /const alsoKnownAs = newsNamesFor\(company\.cik\);/.test(ingestSrc) &&
-      // since batch 36 with the names a GDELT headline gives a possessive ("mcdonald")
-      /aliasesFor\(companyCtx, \[name, \.\.\.alsoKnownAs, \.\.\.gdeltHeadlineNames\(company\.name, possessive\)\]\)/.test(ingestSrc) &&
+      // by the names every path scores a company with (batch 61): since batch 36 with the names a
+      // GDELT headline gives a possessive ("mcdonald")
+      /aliases: companyScoringAliases\(company\)/.test(ingestSrc) &&
+      /\[commonName\(company\.name\), \.\.\.newsNamesFor\(company\.cik\), \.\.\.gdeltHeadlineNames\(company\.name, possessiveNameFor\(company\.cik\)\)\]/.test(newsSrc) &&
       /fetchNews\(newsQuery, alsoKnownAs, \{ byRelevance \}\)/.test(ingestSrc));
-  check("  …and so does re-scoring", /const cik = subject\.kind === "company" \? subjectRows\[0\]\.cik : null;\s*const alsoKnownAs = cik \? \[\.\.\.newsNamesFor\(cik\), \.\.\.gdeltHeadlineNames\(subject\.displayName, possessiveNameFor\(cik\)\)\]/.test(readFileSync("scripts/score.ts", "utf8")));
+  check("  …and so does re-scoring", /companyScoringAliases\(\{ name: subject\.displayName, ticker: subject\.ticker, cik \}\)/.test(readFileSync("scripts/score.ts", "utf8")));
 
   console.log("\nThe sync reads what it says it reads");
   const sync = readFileSync("scripts/sync-aliases.ts", "utf8");

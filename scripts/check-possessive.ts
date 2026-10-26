@@ -121,8 +121,10 @@ async function main(): Promise<void> {
   check("company ingest reads the possessive and asks and scores with it",
     /const possessive = possessiveNameFor\(company\.cik\);/.test(ingest) &&
       /gdeltNewsPlan\(company\.name, possessive, alsoKnownAs\)/.test(ingest) &&
-      /\.\.\.gdeltHeadlineNames\(company\.name, possessive\)/.test(ingest));
-  check("  …and so does re-scoring", /gdeltHeadlineNames\(subject\.displayName, possessiveNameFor\(cik\)\)/.test(read("scripts/score.ts")));
+      // by the names every path scores a company with (batch 61)
+      /aliases: companyScoringAliases\(company\)/.test(ingest) &&
+      /\.\.\.gdeltHeadlineNames\(company\.name, possessiveNameFor\(company\.cik\)\)/.test(read("lib/scoringNames.ts")));
+  check("  …and so does re-scoring", /companyScoringAliases\(\{ name: subject\.displayName/.test(read("scripts/score.ts")));
   check("the sync writes the possessives into the index", /aliases,\s*possessive,\s*\};/.test(read("scripts/sync-aliases.ts")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);

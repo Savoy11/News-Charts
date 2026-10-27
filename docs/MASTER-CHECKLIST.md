@@ -988,6 +988,76 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 69: Federal Reserve enforcement actions on bank pages (2026-10-27)
+
+The seventh of the eight proposals the owner approved on 2026-10-26 (#7), with its new source. It
+needed the hand-checked bank map, built here.
+
+- [x] **A bank's page carries the Federal Reserve Board's actions against it** (`lib/fedActions.ts`):
+      cease-and-desist orders, written agreements, civil money penalties, from 1993.
+      - **The source:** two keyless files behind the Board's enforcement-action search: 2,514
+        actions from 1989-09-25 to 2018-12-26, and 385 since 2019-01-18. Public domain, cited to
+        the Board ("Please cite to the Board as the source of the information",
+        federalreserve.gov/disclaimer.htm). Both are read once per ingest process, whatever the
+        number of banks.
+      - **A day's actions against a bank are one row**, titled with what the Board did:
+        "Federal Reserve: Cease-and-desist order and $342 million civil money penalty"
+        (JPMorgan, 2015-05-20). Two orders on one day are "Two cease-and-desist orders", and an
+        amendment names the order it amends by its date. Beneath it: the organisation the Board
+        named, and the day each order ended. A link the Board left as "DNE" gives no link.
+      - **Only actions against the firm.** One against a person who worked at a bank is not the
+        bank's: 29 such actions name JPMorgan, Wells Fargo or Goldman Sachs.
+      - **Wiring:** the source is registered as public domain (`fed_enforcement`, SOURCES 26) and
+        refreshed daily. It is asked only for mapped banks, scored without the model, and credited
+        in the footer and the Terms page.
+- [x] **The bank map** (`FED_BANKS`) covers 25 listed bank holding companies, by CIK. Every row of
+      both files that matches a pattern, or a broad search for the banks, their predecessors and
+      their namesakes, was checked by eye.
+      - **The rule is the one recalls and news names follow:** a company's own history counts, and
+        an acquisition's past never does. So SunTrust's actions of 2011 to 2019 are not Truist's,
+        AmSouth's of 2004 are not Regions', and The Bank of New York's before the 2007 merger are
+        not BNY's, as its filings are not. American Express's international bank counts only until
+        its sale closed on 2008-02-29 (the company's 8-K of that day).
+      - **A namesake needs its city checked.** "Huntington Bancshares, Inc., Huntington, Texas" is
+        not Huntington, and no "Citizens" bank in the files is Citizens Financial.
+      - **Seven banks with no action yet** (Citizens Financial, KeyCorp, Schwab, Synchrony, Northern
+        Trust, Zions, First Horizon) are mapped by their own legal name and home city.
+      - **Discover and Comerica** are no longer listed, so they are not mapped. BNY trades as BNY
+        now.
+- **Measured from the Board's files, 2026-10-27:** 72 events on 18 of the 25 banks, 51 of them before
+  2017. The biggest: JPMorgan 10, Citigroup 10, Wells Fargo 7, Goldman Sachs 7, Bank of America 6,
+  American Express 5. 25 of the events carry a penalty of a million dollars or more.
+- **Live, on a scratch copy of the local database:**
+  - JPMorgan's 10 actions were stored once, and a second run added nothing. Each was scored 1
+    without the model.
+  - All 10 reach its page through the filing and regulation shaping and the 2 MB page bound: 4,092
+    of its 11,728 stored events are shown, the 10 among them.
+- **Left as is:**
+  - **Foreign banks' US arms** (HSBC, Deutsche Bank, Barclays, BNP Paribas, UBS and others), whose
+    penalties are among the largest, are not mapped. Each needs its own row-by-row check: a next
+    step if wanted.
+  - A penalty the recent file gives without an amount reads "civil money penalty"; the amount is in
+    its press release.
+- **Checks:**
+  - A new `check:fed-actions` (30 cases), in the chain, runs on real rows pinned in
+    `scripts/fixtures/fed-actions.json`. It covers:
+    - Wells Fargo's 2018 order lands on WFC, and JPMorgan's $200 million penalty on JPM;
+    - an order and a penalty on one day are one event;
+    - the three namesakes, SunTrust, AmSouth and the pre-merger Bank of New York are refused;
+    - a person's action is refused;
+    - every mapped bank's count is pinned;
+    - the source is registered, scored and credited.
+  - On main it cannot run: the module does not exist.
+  - A `check:live` case (Wells Fargo's asset-cap order, no Huntington, Texas action on HBAN) passed
+    against the Board's site, and `check:feeds` reports the source.
+  - `npm run check` passes (51 suites) and `npm run lint` is clean.
+- **Requests made:**
+  - about 10 to federalreserve.gov: the two files, read for the measurements, the live case, the
+    feeds report and the two scratch ingests;
+  - two to EDGAR, to confirm American Express's sale date;
+  - two to Wikidata's API from the ingests.
+  All carried the project's User-Agent, which holds the owner's email.
+
 ## NC ledger — batch 68: when a filing came out — before the open, or after the close (2026-10-27)
 
 The sixth of the eight proposals the owner approved on 2026-10-26 (#6). It needed no decision.
@@ -4715,7 +4785,7 @@ already held, but new investment goes to securities coverage first.
       - ✅ **Done in batch 68** (see its section). Apple's measured figures differ a little from
         those above (release day 1.0%, next session 3.5%), and stamps before 2002 are mostly
         midnight placeholders, read as no time.
-- [ ] `P2` **Federal Reserve enforcement actions on bank pages.** A new source, approved by the
+- [x] `P2` **Federal Reserve enforcement actions on bank pages.** A new source, approved by the
       owner 2026-10-26: the Board's actions against a listed bank holding company — cease-and-desist
       orders, written agreements, civil money penalties — as regulation events. Licence:
       "information on Board's website is in the public domain … Please cite to the Board as the
@@ -4739,6 +4809,8 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
         #7, approved 2026-10-26 with the new source. Importance medium · Efficiency medium ·
         Practicality medium (the source approved; the bank map still to build).*
+      - ✅ **Done in batch 69** (see its section): 25 banks mapped, 72 events on 18 of them, 51 before
+        2017. Foreign banks' US arms are the next step if wanted.
 - [ ] `P2` **FDA recalls for the next health-care makers.** Extend `FDA_FIRMS`
       (`lib/fdaRecalls.ts:54`, 38 companies today) to the listed device and drug makers with the
       most Class I and II recalls not yet mapped, each date a firm joined or left taken from the

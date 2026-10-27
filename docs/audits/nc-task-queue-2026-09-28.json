@@ -289,7 +289,7 @@
     {
      "noted_on": "2026-10-21",
      "note": "Batch 23 (audit 2026-10-21 #2): with nothing held, 'Google' resolves to a Google-themed ETF (DEPW), because EDGAR's ticker index does not know Alphabet was Google. Wikidata aliases are what would answer it before Alphabet is held; once it is, its EDGAR former name supplies the alias (batch 15). (Corrected 2026-10-21, batch 24: the last sentence was wrong — Alphabet's EDGAR record has no former names; Google Inc. is a separate registrant, CIK 1288776, now under Alphabet.)",
-     "evidence": "docs/MASTER-CHECKLIST.md:3895"
+     "evidence": "docs/MASTER-CHECKLIST.md:3965"
     }
    ],
    "closure": {
@@ -305,7 +305,7 @@
      "lib/sec.ts",
      "scripts/check-aliases.ts",
      "scripts/check-live.ts",
-     "docs/MASTER-CHECKLIST.md:3834"
+     "docs/MASTER-CHECKLIST.md:3904"
     ]
    }
   },
@@ -445,7 +445,7 @@
      "scripts/check-search-log.ts",
      "scripts/check-focus.ts",
      "scripts/check-ui.ts",
-     "docs/MASTER-CHECKLIST.md:4150"
+     "docs/MASTER-CHECKLIST.md:4220"
     ]
    }
   },
@@ -1368,7 +1368,7 @@
     "verdict": "superseded",
     "reason": "Later checklist entry marks 'Label every source on screen' done 2026-07-28; GDELT domains are tidied but deliberately not embellished. Code present.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:5204-5218",
+     "docs/MASTER-CHECKLIST.md:5276-5290",
      "lib/sourceLabel.ts:55",
      "package.json:40"
     ]
@@ -1481,7 +1481,7 @@
      "docs/proposals/2026-10-17-proposals.md",
      "scripts/refresh.ts:77",
      "scripts/check-wiring.ts:161",
-     "docs/MASTER-CHECKLIST.md:4116"
+     "docs/MASTER-CHECKLIST.md:4186"
     ]
    }
   },
@@ -2718,7 +2718,7 @@
      "lib/feedKeys.ts:65",
      "lib/feeds/browser.ts:43",
      "lib/feeds/browser.ts:88",
-     "docs/MASTER-CHECKLIST.md:4383"
+     "docs/MASTER-CHECKLIST.md:4453"
     ]
    }
   },
@@ -2804,7 +2804,7 @@
     {
      "noted_on": "2026-10-22",
      "note": "Partly filled for one industry: batch 30 adds NHTSA vehicle recalls from 1966 (public domain) to the pages of 19 listed vehicle and tyre makers; Ford has 861 recalls of 10,000 vehicles or more. No free, commercially usable news-article archive for 1963-2017 was found (batch 29), so the gap stays open for every other company, and the decision stays the owner's.",
-     "evidence": "docs/MASTER-CHECKLIST.md:3406"
+     "evidence": "docs/MASTER-CHECKLIST.md:3476"
     }
    ]
   },
@@ -2967,8 +2967,8 @@
      "lib/ingest/store.ts",
      "scripts/check-parsers.ts",
      "scripts/check-live.ts",
-     "docs/MASTER-CHECKLIST.md:4014",
-     "docs/MASTER-CHECKLIST.md:3895"
+     "docs/MASTER-CHECKLIST.md:4084",
+     "docs/MASTER-CHECKLIST.md:3965"
     ]
    }
   },
@@ -3084,7 +3084,7 @@
      "scripts/fixtures/macro-pages.json",
      "components/CompanyExplorer.tsx",
      "lib/page-data.ts",
-     "docs/MASTER-CHECKLIST.md:4058"
+     "docs/MASTER-CHECKLIST.md:4128"
     ]
    }
   },
@@ -3519,7 +3519,7 @@
     {
      "noted_on": "2026-10-22",
      "note": "Batch 29: shortlist written and measured live, in docs/proposals/2026-10-22-news-sources.md. No free news-article archive covering 1963-2017 clears the commercial bar; the candidates are public-domain primary records: 1 NHTSA vehicle recalls (1966 on; Ford 1,118 campaigns 1966-2016, GM 1,428), 2 Justice Department press releases (2009 on), 3 FDA enforcement reports (2012 on, CC0), 4 CPSC product recalls (1973 on). Stays open until the owner marks a candidate APPROVED; nothing was built.",
-     "evidence": "docs/MASTER-CHECKLIST.md:3476"
+     "evidence": "docs/MASTER-CHECKLIST.md:3546"
     }
    ],
    "closure": {
@@ -3529,7 +3529,7 @@
     "verdict": "close",
     "reason": "Batch 29 wrote and measured a shortlist (docs/proposals/2026-10-22-news-sources.md); the owner picked its first candidate, NHTSA vehicle recalls, and batch 30 built it (lib/recalls.ts): recall campaigns of 10,000 vehicles or more since 1966 for 19 hand-mapped listed vehicle makers, public domain, verified live (Ford 861 from 1966-10-06; Stellantis only from 2014-10-12). The other three candidates wait in the note.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3406",
+     "docs/MASTER-CHECKLIST.md:3476",
      "lib/recalls.ts",
      "docs/proposals/2026-10-22-news-sources.md"
     ]
@@ -4349,8 +4349,8 @@
     "reason": "Their content (feed gate, affiliate initiative, owner backlog, on-chain checklist) is present in main's MASTER-CHECKLIST in later form.",
     "evidence": [
      "docs/MASTER-CHECKLIST.md:362",
-     "docs/MASTER-CHECKLIST.md:4949",
-     "docs/MASTER-CHECKLIST.md:5058"
+     "docs/MASTER-CHECKLIST.md:5021",
+     "docs/MASTER-CHECKLIST.md:5130"
     ]
    }
   },
@@ -4503,7 +4503,7 @@
     {
      "noted_on": "2026-10-21",
      "note": "Batch 23: the privacy page said per-IP rate-limit counts 'disappear within an hour' while the limiters kept them until 10,000 clients piled up (audit 2026-10-21 #5). The limiters now clear expired windows every minute, and the page states the windows from lib/rateLimit.ts; check:legal ties the two.",
-     "evidence": "docs/MASTER-CHECKLIST.md:3895"
+     "evidence": "docs/MASTER-CHECKLIST.md:3965"
     }
    ]
   },
@@ -5881,7 +5881,7 @@
      "app/industry/[slug]/page.tsx:20",
      "scripts/check-wiring.ts:224",
      "docs/MASTER-CHECKLIST.md:257-319",
-     "docs/MASTER-CHECKLIST.md:3895"
+     "docs/MASTER-CHECKLIST.md:3965"
     ]
    }
   },
@@ -6486,7 +6486,7 @@
     "what": "Batch 19: Prompt search v2 (NC-008 closed) — a question naming a security and a concern opens the security's page with ?focus=, never splitting a real name; salvage keeps its tail; years in a focus narrow by date; the seven stale check:ui failures resolved.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:4150"
+     "docs/MASTER-CHECKLIST.md:4220"
     ]
    },
    {
@@ -6494,7 +6494,7 @@
     "what": "Batch 20: question search matches other words for 15 common concerns (lib/concepts.ts — covid/pandemic/lockdown, tariffs, interest rates …), graded below the typed word and named on the focus bar; the search box hint invites a question. No ledger item opened or closed (a follow-up to NC-008, tracked in the checklist).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:4119"
+     "docs/MASTER-CHECKLIST.md:4189"
     ]
    },
    {
@@ -6502,7 +6502,7 @@
     "what": "Batch 21: NC-080 closed — Fed policy statements (1994–) and CPI releases (2008–) on a curated economy subject, shown on company pages behind an Economy chip that starts off; batch 15's former-names fixture pinned from the real EDGAR record, which exposed and fixed an annotation bug ('APPLE COMPUTER INC/ FA').",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea with the Fed, BLS and SEC hosts reachable: the full `npm run check` chain, `npm run lint`, `next build`, the two new check:live cases, a live ingest into the local database, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:4058"
+     "docs/MASTER-CHECKLIST.md:4128"
     ]
    },
    {
@@ -6510,7 +6510,7 @@
     "what": "Batch 22: NC-077 closed — every daily close since listing, read once (asked by date; range=max is monthly), then ten-year refreshes; fixed the split re-read that replaced daily charts with monthly closes; two live checks corrected (EDGAR rename links, Wikipedia throttle as UNREACHABLE).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain, `npm run lint`, `next build`, check:live (14 pass, 0 fail, 2 unreachable, 1 skipped), a live backfill of F into a local database, and a check:ui run on a production build.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:4014"
+     "docs/MASTER-CHECKLIST.md:4084"
     ]
    },
    {
@@ -6518,7 +6518,7 @@
     "what": "Batch 23: the 2026-10-21 code audit's six findings fixed — exact closes and a one-time re-read of every full history (P0); punctuation-tolerant name matching on the committed index, 36 → 2,789 of 2,794 'Name, Inc.' titles found by name (P1); 'Before the chart' instead of a false first trading day; a filer's own stakes in other issuers left out, routine prospectus months as one row and prices cached apart, so the biggest banks' pages fit Next's 2 MB cache; the rate limiter forgets expired windows as the privacy page now says; prose corrected. Also: a trading session still in progress is never stored as a close.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea with SEC and Yahoo reachable: the full `npm run check` chain, `npm run lint`, `next build`, a check:ui run on a production build, check:live, whole-index before/after comparisons of name resolution, and live page-size measurements for six bank filers.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3895",
+     "docs/MASTER-CHECKLIST.md:3965",
      "docs/audits/2026-10-21-audit.md"
     ]
    },
@@ -6527,7 +6527,7 @@
     "what": "Batch 24: NC-004 closed — other names for listed companies from Wikidata (labels, official names, related aliases, and former SEC registrants now under a listed parent) as a committed alias index read by the company name rungs: 'Google' → Alphabet, 'Facebook' → Meta, 'P&G', 'Sun Microsystems' → Oracle; exact titles still outrank aliases. Batch 23's note that holding Alphabet would supply 'Google' corrected.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea with query.wikidata.org reachable: the full `npm run check` chain (36 suites), `npm run lint`, `next build`, check:live (Wikidata case passing), a check:ui run on a production build, the running site's /api/resolve, and a whole-index before/after comparison of 23,422 name queries.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3834"
+     "docs/MASTER-CHECKLIST.md:3904"
     ]
    },
    {
@@ -6535,7 +6535,7 @@
     "what": "Batch 25: a company's news searched and scored by its own other names. GDELT is asked for the everyday name OR up to three of them in one request (GOLDMAN SACHS GROUP OR goldman sachs: headlines naming the company 5 -> 12 of 100, measured), and headlines naming them count as naming the company. Words printed around every article (google, facebook, amazon) only score headlines: measured, Alphabet OR google returned 0 of 97 on-topic pages. Only the company's own names and a predecessor whose ticker carried on may claim news; an acquired company's names, loose aliases and the Motorola brand (Lenovo's phones since 2011) stay search-only.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (36 suites; check:aliases 72), `npm run lint`, `next build`, a check:ui run on a production build, a comparison of 23,741 search queries showing every answer unchanged, and live GDELT measurements of the old and new queries for Alphabet and Goldman Sachs.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3723"
+     "docs/MASTER-CHECKLIST.md:3793"
     ]
    },
    {
@@ -6543,7 +6543,7 @@
     "what": "Batch 26: company names cleaned up. commonName drops what the SEC title still carried: a trailing slash, a backslash tag, a place after a slash, and legal forms it missed or could no longer see once the final dot went (S.A, N.V, LP, A/S, ASA, AB, S.p.A, Tbk, S.A.B. de C.V) - 302 everyday names, 315 companies' news queries. Accents are folded, not word breaks (Estée Lauder was stored as 'est e lauder'), in the stored-name key, the Federal Register matcher and the headline matcher. Sapiens joins KNOWN_WRONG (Advent bought it from Formula Systems in 2025). Closes batch 25's first open follow-up.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (36 suites; check:recall 34, check:wiring 177, check:aliases 81), `npm run lint`, `next build`, a check:ui run on a production build, and a comparison of 27,992 search queries against main: 41 gained, 24 lost (split spellings and Sapiens), 0 moved.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3665"
+     "docs/MASTER-CHECKLIST.md:3735"
     ]
    },
    {
@@ -6551,7 +6551,7 @@
     "what": "Batch 27: a company's Federal Register documents searched and matched under its own other names (newsNamesFor), in one request: the API ORs quoted phrases joined by '|'. A one-word other name needs its company word straight after it ('Google LLC'), which keeps out 'Amazon Produce Network, LLC' and 'Toyota Material Handling, Inc.'. Measured live on 15 companies: title-naming documents 50 -> 87 (Alphabet 0 -> 4, Goldman Sachs 5 -> 17, American Airlines Group 0 -> 16), each read and the right company's. Closes batch 25's Federal Register note.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (36 suites; check:wiring 182), `npm run lint`, `npm run check:live` (16 pass, 0 fail; its Federal Register company search passes), and the live 15-company measurement. check:ui not re-run: no file the site loads changed.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3621"
+     "docs/MASTER-CHECKLIST.md:3691"
     ]
    },
    {
@@ -6559,7 +6559,7 @@
     "what": "Batch 28: the 2026-10-21 names audit of batches 24-27 (docs/audits/2026-10-21-names-audit.md), all seven findings dealt with. A one-word company's legal name counts again in Federal Register titles ('Embraer S.A.', a batch 26 regression: Embraer 2 -> 24 documents live). Other names are kept as written ('U.S. Bancorp', which finds 108 documents where 'u s bancorp' finds none), headlines are matched on matching forms, apostrophes and spaced initials handled. A leading 'the' is never half a name (Hartford's 13 fund filings out). 34 everyday names lose a spaced, tagged or public-company legal form. Accented searches get the unaccented answer. README's Wikidata row corrected; finding 6 left as is with its reason. Live Federal Register on 17 companies: 105 -> 118 documents.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (36 suites; check:wiring 186, check:aliases 89, check:recall 49), `npm run lint`, `next build`, `check:ui` on a production build, and `check:live` (15 pass; the 1 fail is the Library of Congress answering 'error 520' intermittently, untouched here). Every new check was run against main's code and fails there, bar three guards. Whole-index comparisons against main: 38 everyday names, 42 of 27,972 search answers (none moved to another company), 68 GDELT queries.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3514"
+     "docs/MASTER-CHECKLIST.md:3584"
     ]
    },
    {
@@ -6567,7 +6567,7 @@
     "what": "Batch 29: NC-095 researched, not built. A shortlist of free, commercially usable news sources measured live on six to ten companies each: NHTSA vehicle recalls (1966 on, public domain; the only candidate that fills the 1963-2017 hole, for one sector), Justice Department press releases (2009 on), FDA enforcement reports (2012 on) and CPSC product recalls (1973 on). Progress note on NC-095, which waits on the owner's pick.",
     "basis_key": "Live requests from the cloud session on 2026-10-22; recall files downloaded and counted offline. Licences quoted from each agency's own page where readable from here, else from the federal data catalog. `npm run check` passes (36 suites); no code changed.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3476",
+     "docs/MASTER-CHECKLIST.md:3546",
      "docs/proposals/2026-10-22-news-sources.md"
     ]
    },
@@ -6576,7 +6576,7 @@
     "what": "Batch 30: NHTSA vehicle recalls on carmakers' pages, the owner's pick from batch 29's shortlist. A new 'recall' kind (db/028) and source nhtsa_recalls (public domain), read from the Transportation Department's open data, one request per company, recalls of 10,000 vehicles or more. A hand-written map from makers to 19 listed companies, each with the day the maker became the company's (Chrysler for Stellantis from 2014-10-12; old GM's recalls stay GM's by ticker). NC-095 closed; progress on NC-072.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (37 suites; check:vehicle-recalls 35 new), `npm run lint`, `next build`, `check:ui` on a production build against a fresh demo database, `check:live` (17 pass; the new NHTSA case passes live), and a real `npm run ingest -- --ticker F` that stored 861 recalls, all scored without the model.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3406",
+     "docs/MASTER-CHECKLIST.md:3476",
      "lib/recalls.ts",
      "scripts/check-vehicle-recalls.ts"
     ]
@@ -6586,7 +6586,7 @@
     "what": "Batch 31: batch 30's open item, the vehicle makers listed companies bought. Nine makers added to lib/recalls.ts, each from the closing date in the buyer's own SEC filing (EDGAR full-text search): Thor's Dutchmen (May 1991), Keystone (2001-11-09), Heartland (2010-09-16), K.Z. (2014-05-01, not the remembered 2016), Jayco and Starcraft (2016-06-30), Tiffin (2020-12-18); Winnebago's Grand Design (2016-11-08); Berkshire Hathaway's Forest River (2005-08-31). Recalls at the floor: Thor 2 -> 29, Winnebago 8 -> 16, Berkshire 0 -> 9. Makers with no large recall since their purchase are left out with the reason.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (37 suites; check:vehicle-recalls 35 -> 39, the new cases failing on main), `npm run lint`, `next build`, `check:live` (17 pass; its NHTSA case passes), and a real `npm run ingest -- --ticker THO` that stored 29 recalls, all scored without the model. check:ui not re-run: no file the site loads changed.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3365",
+     "docs/MASTER-CHECKLIST.md:3435",
      "lib/recalls.ts"
     ]
    },
@@ -6595,7 +6595,7 @@
     "what": "Batch 32: the owner approved the shortlist's second candidate (NC-095's note), Justice Department press releases, and it is built: lib/doj.ts reads justice.gov's keyless API under a company's own names and keeps a release only when the title makes the company a party (subject of the verb, object of an action, owner of a deal), one a day, as regulation events scored 0.95 without the model. Source 23 (doj_press), public domain by the Department's policy page. Measured: 41 companies the rule was written on, 142 events for 34 of them (71 before 2017); 40 held-out companies, 53 events for 24 (22 before 2017), after fixing the two holes that test found (Visa's immigration cases, 3M in dollar amounts).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (38 suites; new check:doj 37, which cannot run on main), `npm run lint`, `next build`, check:ui 203/203 on a production build against a demo database re-seeded with Ford's real release, check:live 18 pass 0 fail (its new Justice Department case passes), and a real `npm run ingest -- --ticker AAPL` that stored Apple's 3 releases, scored without the model.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3302",
+     "docs/MASTER-CHECKLIST.md:3372",
      "lib/doj.ts",
      "scripts/check-doj.ts",
      "docs/proposals/2026-10-22-news-sources.md"
@@ -6606,7 +6606,7 @@
     "what": "Batch 33 (owner: merge and continue): short company names. lib/companyAliases.ts keeps a three-letter name in capitals that spells the company's own initials (IBM, AMD news names; AIG, UPS, BMS, RBC, PAN and others search-only), rebuilt from the same Wikidata answer: +25 names, none lost. lib/news.ts never asks GDELT a phrase under five characters (measured: 'CSX' and 'Visa' refused as too short, 'Apple' taken) and asks a short everyday name with its legal form ('VISA Inc', 'CSX Corp', 'NIKE Inc'): 106 of the 107 short names among the 1,500 largest companies now get a query GDELT takes; by hand 'visa inc' 7 articles, 'csx corp' 1, 'nike inc' 8, each previously none. lib/doj.ts takes 'Claim Against'; IBM gets its 3 releases. Batch 32's open item partly done.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (39 suites; new check:short-names 18, 9 failing on main before it stops), `npm run lint`, check:ui 203/203 on a production build, live GDELT probes spaced around its throttle, and a real `npm run ingest -- --ticker IBM` (3 Justice Department releases, 75 GDELT articles in one request).",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3237",
+     "docs/MASTER-CHECKLIST.md:3307",
      "lib/companyAliases.ts",
      "lib/news.ts",
      "scripts/check-short-names.ts",
@@ -6618,7 +6618,7 @@
     "what": "Batch 34, the owner's yes to batch 33's two questions. lib/companyAliases.ts: a company's own initials claim its news even as a Wikidata alias (21 names: AIG, UPS, ADP, ...), PMI excepted (the purchasing managers' index); initials count in headline scoring only in capitals. lib/news.ts: a three- or four-letter name that is no English word (ENABLE, committed as data/english-short-words.json) and not on a short list of letters meaning something else (RTX, CGI, TIM, ...) goes to GDELT bare, its articles kept only when the headline names the company (initials only in capitals, as in scoring); after a second round of probes AIG (Nigerian police officers), AMD (macular degeneration), ADM (a defence magazine, an expo), BMS (another organisation), RBC (RBC Bearings' ticker), UBER (one headline in 100, crowding out Uber Technologies) and DIDI (a first name) joined that list; the 107 short everyday names now all get a query GDELT takes (59 bare, 48 with a legal form). Federal Register search leaves out other names under five characters (UPS: 2,031 documents vs 374); the Justice Department feed reads a flooded short name one page (AIG inside 1,600 titles) and UPS goes from 2 releases to 6.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (39 suites; check:short-names 18 -> 27, failing on main before it stops and 4 failing on the batch's first push), `npm run lint`, `tsc --noEmit`, live GDELT probes (bare IBM 30 articles in a day, 9 headlines naming it; bare Etsy 30 in three days, none; CSX, Roku, ADP, AEP, HII, HPE, ITW, JLL, SLF, WMG and TSMC clean; AIG, AMD, ADM, BMS, RBC and UBER bringing in other meanings or crowding), and real ingests of IBM (24 GDELT articles, all naming IBM in the headline) and UPS (6 Justice Department releases). check:ui not re-run: no page, component or route changed.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3147",
+     "docs/MASTER-CHECKLIST.md:3217",
      "lib/news.ts",
      "lib/companyAliases.ts",
      "data/english-short-words.json",
@@ -6630,7 +6630,7 @@
     "what": "Batch 35, batch 23's open item: a page's stored news grew with no bound, and Next caches no entry over 2 MB. lib/pageNews.ts boundPageNews: news fills the room the rest of a page's cached entry leaves under a 1.8 MB budget, measured the way Next measures (the page's JSON escaped again inside the entry, so every quote counts twice): the newest stories take the first half; the past takes the rest a round at a time, the strongest story of each day, the days the price moved most first; a headline-named story before an unscored one. Every filing and other record stays; company and topic pages both bounded; components/NewsLeftOut.tsx says how many stories a page shows of how many. Batch 23's plain-JSON sizes read 10-15% light (JPM timeline 1.34 MB plain, 1.48 MB as Next measures).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (40 suites; new check:page-news 21, failing on main where lib/pageNews.ts does not exist), `npm run lint`, `tsc --noEmit`, `check:ui` (203/203) against the demo database, and a live build against a scratch database holding JPMorgan's real EDGAR, Yahoo and GDELT rows plus 3,000 stand-in stories: on main's code Next refused to cache the page on all three views (3,162,145 bytes; 13.3 MB sent, 0.93-1.35 s), on the branch no refusal, 659 of 3,090 stories kept (all 198 since June), 7.1 MB sent, repeat views 0.45-0.51 s.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3090",
+     "docs/MASTER-CHECKLIST.md:3160",
      "lib/pageNews.ts",
      "lib/page-data.ts",
      "components/NewsLeftOut.tsx",
@@ -6642,7 +6642,7 @@
     "what": "Batch 36, batch 28's open item measured: GDELT drops a possessive 's (none of 211 stored GDELT headlines keeps an apostrophe) and reads a quoted possessive as one run-together word, so possessive company names were asked in forms GDELT never holds ('dominos pizza' 2 articles in three days, 'domino pizza' 18). lib/companyAliases.ts keeps a company's own possessive spelling where the SEC title dropped the apostrophe (14 in data/company-aliases.json 'possessive'; the 1,555 names unchanged); lib/news.ts gdeltEverydayName asks a possessive of more than one word in GDELT's form (10 of the 1,500 largest change: DOMINO PIZZA, CASEY GENERAL STORES, DICK SPORTING GOODS, LOWE COMPANIES, ...); gdeltHeadlineNames lets 'McDonald ...' name McDonald's in ingest and re-scoring. One-word possessives keep their query: 'mcdonalds' 9, 'mcdonald corp' 4, 'mcdonald' a hundred passing mentions, none naming it in the headline. Batch 35's 7.1 MB corrected: 0.52 MB compressed on the wire.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (41 suites; new check:possessive 15, failing on main where gdeltForm does not exist), `npm run lint`, `tsc --noEmit`, an offline rebuild of the alias index from batch 33's Wikidata answer (aliases identical), and live GDELT probes of each spelling, three days each (lowe companies and lowes companies tied at 1 article).",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:3035",
+     "docs/MASTER-CHECKLIST.md:3105",
      "lib/news.ts",
      "lib/companyAliases.ts",
      "data/company-aliases.json",
@@ -6654,7 +6654,7 @@
     "what": "Batch 37, the relevance-sort lead batches 25 and 36 left open: for a name in every other article GDELT's newest hundred pages are passing mentions. By relevance (sort=hybridrel, last three days) 'mcdonald' put McDonald's in 37 of the hundred headlines against none newest first, and 'uber' Uber in 26 against 1. lib/news.ts gdeltNewsPlan asks a name in GDELT_BY_RELEVANCE (MCDONALD, UBER, LOWE, each with its measurement; 'moody' measured and left out, two Moody Park headlines kept) by relevance; McDonald's as MCDONALD, Uber Technologies with uber admitted bare; every other company newest first as before. Asked by relevance, a headline must name the company the way scoring counts naming (mentions), so 'Cooper McDonald' and 'Rep . McDonald Rivet' are dropped. Kept to measured names: Moody's, Wendy's, Brink's stems are words or first names.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (42 suites; new check:gdelt-relevance 12, failing on main where gdeltNewsPlan does not exist), `npm run lint`, `tsc --noEmit`, and live GDELT probes by relevance and newest first, three days each.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2989",
+     "docs/MASTER-CHECKLIST.md:3059",
      "lib/news.ts",
      "scripts/ingest.ts",
      "scripts/check-gdelt-relevance.ts"
@@ -6665,7 +6665,7 @@
     "what": "Batch 38, batch 35's open item: every row of a timeline list was drawn and laid out when a page opened, 2,212 event rows and 32,971 elements on JPMorgan's page (385 ms of layout in Chromium). components/EventList.tsx now opens a long list with its newest years open while they fit OPEN_ROW_BUDGET (300 rows; the newest year always open; a filing stack counts as one) and older years folded, each with its header, count and day anchors. The opening folds are derived from the list on screen, so a filter that shortens it opens everything, and a list a focused search narrowed opens every year (openAll); a note says why; the list's button reads Expand all while any year is folded; a remembered view is saved only once the reader chooses, marked as a choice. JPMorgan: 382 rows, 8,979 elements, 69 ms of layout; Ford 1,979 to 258 rows. Open: the data still ships whole (script time 625 to 555 ms).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (43 suites; new check:event-folds 16, failing on main where foldedYears does not exist), `npm run lint`, `tsc --noEmit`, `check:ui` (203/203 against the demo database), and Chromium measurements of five company pages on main's code and the branch against a scratch database (JPMorgan, Ford, IBM, Apple, UPS), with clicks, Expand all, a chart jump and reloads driven on JPMorgan's.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2915",
+     "docs/MASTER-CHECKLIST.md:2985",
      "components/EventList.tsx",
      "scripts/check-event-folds.ts",
      "README.md"
@@ -6676,7 +6676,7 @@
     "what": "Batch 39, found in passing in batch 38: a focused search whose words are all too short or too common narrowed nothing, every event came back, and the focus bar said every event mentions it ('Showing the 52 of 52 events that mention “the US”'). lib/prompt.ts leaves such focuses for real questions: '5G' (how did 5G affect Verizon), 'in Q3', 'the US', 'the EU', 'the UK'. lib/focus.ts SHORT_CODE makes a two-character letter-and-digit word a focus word ('5G', 'Q3', '4K', '3D'; a bare number never, so COVID-19 gains no '19'); components/FocusBar.tsx says when a focus has nothing to look for in headlines and shows the whole timeline, styled like a zero-match focus with Dismiss. Open: '8-K' is still two one-character pieces.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (43 suites; check:focus 60 to 66, four of the new cases failing on main), `npm run lint`, `tsc --noEmit`, `check:ui` (203/203 against the demo database), and the demo Ford page in Chromium with focus 'the US', '5G' and 'NHTSA'.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2885",
+     "docs/MASTER-CHECKLIST.md:2955",
      "lib/focus.ts",
      "components/FocusBar.tsx",
      "scripts/check-focus.ts"
@@ -6687,7 +6687,7 @@
     "what": "Batch 40, the owner's approval of FDA enforcement reports (sources plan #3, now APPROVED): Class I and II drug, device and food recalls from mid-2012 on company pages, about 3,800 across 30 companies. lib/fdaRecalls.ts reads openFDA's keyless API (public domain, CC0; licence read 2026-10-24); FDA_FIRMS maps companies by hand with look-alikes left out (Hershey Creamery, Merck Millipore, joint ventures) and SEC-dated ownership changes (Covidien for Medtronic from 2015-01-26, Hospira for Pfizer from 2015-09-03, St. Jude and Alere for Abbott, AMO until its 2017-02-27 sale, Bard for BD, Biomet for Zimmer, GE Healthcare split at the 2023-01-03 spin-off). One event per recall event, linked to the enforcement report's page; a start date before 2000 or after publication falls back to the report date. lib/markers.ts draws a Class II recall as a plain dot ranked like news; the chart legend says Recall. Open: J&J, Kellogg/WK Kellogg, Novartis/Sandoz and others unmapped.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (44 suites; new check:fda-recalls 29 on 26 real openFDA records, unable to load on main), `npm run lint`, `tsc --noEmit`, `check:ui` (203/203 against the demo database), the check:live FDA case run alone (PASS), a live fetch of all 30 mapped companies, and Medtronic ingested into a scratch database and viewed in Chromium.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2809",
+     "docs/MASTER-CHECKLIST.md:2879",
      "lib/fdaRecalls.ts",
      "lib/markers.ts",
      "scripts/check-fda-recalls.ts",
@@ -6700,7 +6700,7 @@
     "what": "Batch 41, batch 40's open item: FDA recalls for the companies whose firms are not named for them or changed hands. lib/fdaRecalls.ts maps Johnson & Johnson (its units and long-held companies; Synthes, AMO, Auris, Abiomed, Shockwave from their closings; Ortho-Clinical, Cordis, Codman, LifeScan, Advanced Sterilization until their sales; its consumer business until the Kenvue exchange offer on 2023-08-23), and follows sold businesses to listed buyers: Kenvue (consumer names from its IPO close 2023-05-08), Cardinal Health (Cordis 2015-10-02 to 2021-06-30, a bound), Integra (Codman from 2017-10-02), QuidelOrtho (Quidel by ticker; Ortho-Clinical from 2022-05-27). Novartis with its consumer business to 2015-03-01, Sandoz to 2023-10-03 and Alcon to 2019-04-08; Alcon from 2019-04-09; Viatris with Mylan and Greenstone from 2020-11-16; Teva's Actavis from 2016-08-02; Smucker's Hostess from 2023-11-07. Every date from the company's own SEC filing. Now 38 companies, 4,690 recalls.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (44 suites; check:fda-recalls 29 to 37 on 51 real openFDA records, stopping at the first new case on main), `npm run lint`, `tsc --noEmit`, a live fetch of all 38 mapped companies, and each date read from the filing EDGAR full-text search found.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2754",
+     "docs/MASTER-CHECKLIST.md:2824",
      "lib/fdaRecalls.ts",
      "scripts/check-fda-recalls.ts",
      "scripts/fixtures/fda-recalls.json"
@@ -6711,7 +6711,7 @@
     "what": "Batch 42, the shortlist's 'press release inside each 8-K': an 8-K is titled by the headline of the press release filed with it (EX-99, or EX-20 before 2004) instead of its item, the form and item kept at the end. lib/secHeadlines.ts takes a headline only from an exhibit with a dateline in its first 40 lines, so contracts, slide decks, certifications and financial statements give none; capitals are recased. Each 8-K is read once and the answer kept in sec_headlines (db/029); the scheduled ingest reads up to 150 a run, newest first, paced and stopping at the first refusal, and applies everything stored; the first pass applies stored headlines only. Filing stacks read the form from the closing brackets. Measured on 638 sampled 8-Ks from 57 companies (247 headlines) and live on Boeing (164 of 336, three runs) and Pfizer (107 of the first 150 read); the four live mistakes found were fixed and kept as cases.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (45 suites; check:sec-headlines 96, new: it cannot run on main, and its filing-stack check fails with main's EventList), `npm run lint`, `tsc --noEmit`, `next build`, check:ui, and live ingests of Boeing and Pfizer into a scratch database.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2673",
+     "docs/MASTER-CHECKLIST.md:2743",
      "lib/secHeadlines.ts",
      "lib/ingest/headlines.ts",
      "db/029_sec_headlines.sql",
@@ -6724,7 +6724,7 @@
     "what": "Batch 43, batch 42's open 6-K item: a foreign company's 6-K, until now titled '6-K filing', is titled by the headline of the announcement it carries, read from its EX-99 attachment or from the 6-K's own document once the SEC cover page is cut; a Japanese 6-K's listed release title is taken; routine 6-Ks (share returns, buyback reports, accounts, dealing notices) give none. A release with no dateline is marked by a lead paragraph in which the company announces or reports something today, which also titles more 8-Ks (139 -> 155 of 211 and 108 -> 135 of 167 in batch 42's samples). Foreign letterheads, day-first dates, mixed-case second cities, long sentence-case headlines and accented capitals are read; currency and contents lines are no datelines. Measured on 160 sampled 6-Ks from 16 companies (60 headlines) and live on NIO (203 of 274, two runs) and Novartis (116 of the first 150 after fixes); the live mistakes found were fixed and kept as cases. HEADLINE_VERSION 2 re-reads batch 42's stored rows.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (45 suites; check:sec-headlines 96 -> 142, which cannot run on main, whose reader gets 23 of its 74 real documents wrong), `npm run lint`, `tsc --noEmit`, `next build`, and live ingests of NIO and Novartis into a scratch database. check:ui not run: no component changed.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2593",
+     "docs/MASTER-CHECKLIST.md:2663",
      "lib/secHeadlines.ts",
      "lib/ingest/headlines.ts",
      "scripts/check-sec-headlines.ts",
@@ -6736,7 +6736,7 @@
     "what": "Batch 44, results releases the headline reader gave up on: with no dateline and no lead paragraph, the first headline under the letterhead is taken only when it announces results (JPMorgan, Exxon, Tesla's deliveries, Novartis's results); letters, statements, transcripts and decks give none. Also: a bullet's lone mark joins its text (Cisco's dateline was at line 40), 'News Summary:' is no letterhead, 'Nov.1, 2005' is a date, Business Wire's old routing code is dropped, an undated 'today' dateline is found in a run-together page, names in capitals keep their spelling (JPMorgan, UnitedHealth, NVIDIA), footnote digits and TM marks are dropped, CVS and Baidu no longer cut short or run on. HEADLINE_VERSION 3. Samples: 155 -> 164 of 211 and 135 -> 142 of 167 8-K exhibits, 60 -> 62 of 160 6-Ks; live re-reads: Boeing 167 -> 208 of 336, Pfizer 108 -> 109, Novartis 116 -> 132 of 150, NIO unchanged; every change read, the one wrong one fixed.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (45 suites; check:sec-headlines 142 -> 169, 92 real documents, of which batch 43's reader gets 17 wrong), `npm run lint`, `tsc --noEmit`, `next build`, and each stored filing of Boeing, Pfizer, Novartis and NIO in a scratch database read once from EDGAR and given to both readers. check:ui not run: no component changed.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2518",
+     "docs/MASTER-CHECKLIST.md:2588",
      "lib/secHeadlines.ts",
      "scripts/check-sec-headlines.ts",
      "scripts/fixtures/sec-headlines.json"
@@ -6747,7 +6747,7 @@
     "what": "Batch 45: a filing titled by its press release's headline (batches 42-44) links to that release instead of the 8-K's cover form: the document the headline was read from, in the filing's own EDGAR folder (the exhibit, a 6-K's own document, or a pre-2001 filing's full submission text), applied by the scheduled ingest and the first pass from the stored readings. Also a capitals name starting 'MC' keeps its shape (McDonnell Douglas, McKesson). Live: Boeing's real ingest stored release links for all 189 titled filings; 20 random ones, 1997-2026, all opened on the release.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (45 suites; check:sec-headlines 169 -> 177, which cannot run on main), `npm run lint`, `tsc --noEmit`, `next build`, and a real Boeing ingest into a scratch database with 20 release links fetched. check:ui not run: no component changed.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2485",
+     "docs/MASTER-CHECKLIST.md:2555",
      "lib/secHeadlines.ts",
      "lib/ingest/headlines.ts",
      "scripts/check-sec-headlines.ts"
@@ -6758,7 +6758,7 @@
     "what": "Batch 46, batch 10's open 'funds in JSON-LD': isFund tells a fund from a company by a symbol in the registered-fund index, a name that says ETF or Fund, or EDGAR industry 6221 with a name that says Trust (each measured against the committed index: none of its 300 largest companies is called a fund, 428 securities in its company half are). A fund's page tells search engines it is a schema.org InvestmentFund (ticker as identifier) instead of a Corporation, and its description pegs the timeline to its share price.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (46 suites; check:security-kind 29, new, which cannot run on main), `npm run lint`, `tsc --noEmit`, `next build`, and check:ui against the demo database, including two new assertions on VOO's page.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2443",
+     "docs/MASTER-CHECKLIST.md:2513",
      "lib/sec.ts",
      "lib/seo.ts",
      "app/company/[ticker]/page.tsx",
@@ -6770,7 +6770,7 @@
     "what": "Batch 47, the code audit of batches 42-46 (docs/audits/2026-10-25-headlines-audit.md, 3 P1 and 2 P2 findings, all in the 6-K headline reader): a Japanese bank's legend and signature (labelled, label-over-value and unlabelled) are cut with the cover page, so MUFG, Mizuho and SMFG 6-Ks are no longer titled by a signer's name or job; GSK's 'Issued: <date>, London UK' and other date lines are noise; the listed-release rule reads only an entry that opens its line above any dateline, rejects a date or a rule, and no longer throws; the euro and Latin-1 signs are decoded; the module header, migration comment and README describe the current reader. HEADLINE_VERSION 3 -> 4 re-reads stored titles. Live: 27 of 125 audited-filer titles change, all wrong to right; 378 stored 8-K exhibits, 160 stored 6-Ks and 120 fresh US 8-Ks unchanged.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (47 suites; check:sec-headlines 177 -> 206, 27 of the 29 new checks failing on main's reader), `npm run lint`, `tsc --noEmit`, `next build`; live EDGAR reads compared with main's reader; the real ingest of MUFG, GSK, Mizuho and SMFG into two fresh scratch databases. check:ui not run (no page or component changed).",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2359",
+     "docs/MASTER-CHECKLIST.md:2429",
      "docs/audits/2026-10-25-headlines-audit.md",
      "lib/secHeadlines.ts",
      "scripts/check-sec-headlines.ts",
@@ -6782,7 +6782,7 @@
     "what": "Batch 48, the headline reader's open 'cut short' item (batches 42-47), measured by reading all 554 headlines of the stored samples and batch 47's live reads beside the line after each: 8 cut short. Fixed: a line opening on And/Of/Between carries a headline of 4+ words on; a figure after its/the ends no line; the place-and-date rule needs a year. The same read found wrong titles, also fixed: Takeda's signature after the date ('Chief Accounting Officer and Corporate Controller'), UBS's cover check boxes, Lloyds' exhibit index, BP's 'Exhibit 1.1' list, 'Jpmorganchase', P&G's trailing 'EARNINGS RELEASE', Takeda's two-city dateline left on the headline. HEADLINE_VERSION 4 -> 5. Live: 20 titles change, all wrong to right; nothing else in the samples changes.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: the full `npm run check` chain (47 suites; check:sec-headlines 206 -> 224, 16 of the 18 new checks failing on main's reader, the other two guards), `npm run lint`, `tsc --noEmit`, `next build`; cached live EDGAR reads compared with main's reader; the real ingest of Takeda, Lloyds, UBS and BP into a fresh scratch database. check:ui not run (no page or component changed).",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2287",
+     "docs/MASTER-CHECKLIST.md:2357",
      "lib/secHeadlines.ts",
      "scripts/check-sec-headlines.ts",
      "scripts/fixtures/sec-headlines.json"
@@ -6793,7 +6793,7 @@
     "what": "Batch 49, the 2026-10-25 audit's closing opportunity: a standing live check of the headline reader. check:live gains 'EDGAR — recent press releases read as headlines': the newest five 8-Ks and 6-Ks of 16 filers (US companies, the 6-K layouts that went wrong in batches 47-48, and some that never did) read through the real reader; it fails on any title with a mark no headline carries (a signature or disclosure field, a signer's title, cover-page text, an exhibit label or index, a date alone, an undecoded entity, the company's name alone, words cut off on a joining word) or when the reader finds almost none. Live it passes (35 headlines from 80 filings); on batch 47's reader the same sample flags 7 titles, the faults batch 48 found by hand.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (47 suites; check:live-harness 40 -> 45: no fixture headline flagged, 15 once-wrong titles all caught), `npm run lint`, `tsc --noEmit`, `next build`, and `npm run check:live` (20 pass, 0 fail, 6 unreachable, 1 skipped). The marks were also run over the 554 headlines of batch 48's read and the 464 the ingest stored in batches 47-48: they flag only titles those batches fixed.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2234",
+     "docs/MASTER-CHECKLIST.md:2304",
      "scripts/check-live.ts",
      "scripts/check-live-harness.ts",
      "docs/audits/2026-10-25-headlines-audit.md"
@@ -6804,7 +6804,7 @@
     "what": "Batch 50, batch 46's open item: a fund first visited before its industry was stored (GLD on a first pass) was a Corporation until the scheduled ingest linked its SEC industry. The first visit (lib/ingest/firstPass.ts) now asks EDGAR for the industry alongside the filings (the same submissions record) and links it before the page's events, as an enrichment: outside the 8-second gather deadline, at most one second's grace after the filings (INDUSTRY_GRACE_MS), a refusal or a record without an industry means none, and a database refusal costs only the link. Every first page also gets its sector link and comparison. Live, GLD on an empty database: InvestmentFund with 'Commodity Contracts Brokers & Dealers'; main's code gives Corporation and no industry.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (47 suites; check:ondemand 42 -> 49, GLD's first visit driven end to end through a stand-in database and EDGAR record, 3 of the 7 failing on main's code), `npm run lint`, `tsc --noEmit`, `next build`; GLD's first page loaded through `next dev` on two fresh scratch databases, one with this change and one with main's first pass. check:ui not run (no page or component changed).",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2201",
+     "docs/MASTER-CHECKLIST.md:2271",
      "lib/ingest/firstPass.ts",
      "scripts/check-ondemand.ts"
     ]
@@ -6814,7 +6814,7 @@
     "what": "Batch 51, batch 48's open Takeda and UBS titles, found by reading every Takeda 6-K since 2019 (343) and UBS's (422 UBS Group since 2016, 49 UBS AG since October 2025) through the reader. Fixed in lib/secHeadlines.ts: Takeda's slogan ('Better Health, Brighter Future') is letterhead alone and taken off the front of a one-line page; a label said twice ('Statement Statement on…') is said once; a city in small letters before its country in capitals ('…in 2025 Osaka, JAPAN,') is the dateline's; a comma after a dateline's date no longer hides it; a company's name in capitals is letterhead; a lone 'not' is no cover page 'No' box (UBS's 2024 AGM notice had been titled by a fragment under it); a report's roman-numbered part is no place before a dash (Credit Suisse's report had been titled by its contents); and a headline cut after 'Accepts', 'Ended', a plural's possessive, a length of time or 'to' and a verb is read whole. HEADLINE_VERSION 5 -> 6. Of the 814 filings 21 titles change: 16 wrong to right, 3 untitled now titled, 1 report untitled, 1 company name replaced by its headline's first line.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (47 suites; check:sec-headlines 224 -> 247: 13 real documents, each read wrong by main's reader, and 10 direct checks with guards; 22 fail on main's reader), `npm run lint`, `tsc --noEmit`, `next build`, `npm run check:live` (21 pass, 0 fail, 5 unreachable, 1 skipped; the headline case passes). The 798 stored 8-K/6-K documents of batches 42-44 and the 533 filings of batch 48's live read give the same titles under both readers. check:ui not run (no page or component changed).",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2135",
+     "docs/MASTER-CHECKLIST.md:2205",
      "lib/secHeadlines.ts",
      "scripts/check-sec-headlines.ts",
      "scripts/fixtures/sec-headlines.json"
@@ -6825,7 +6825,7 @@
     "what": "Batch 52, batch 39's open item: an SEC form's name narrowed nothing ('8-K' splits into two pieces too short to look for), and the search box read 'Apple 10-K' as one name. lib/focus.ts now keeps 8-K, 10-K, 10-Q, 6-K, 11-K, 20-F, 40-F and S-1/3/4/8, F-1/3/4 whole as one focus term, matching every filing of the form, its amendments and the 10-K405 (10K and 10Q without the hyphen; '8K video', '$10K' and \"Ford's 3 recalls\" are no forms; 'filings' beside a form is dropped; a form offers no timeline of its own; best matches write it as '10-K'). lib/prompt.ts splits a form from the security: 'Apple 10-K', \"Ford's 8-K filings\", '10-Q for Tesla', with a year still narrowing. Live from the home page's box: 'Apple 10-K' -> AAPL with 34 of 698 events (every 10-K title), 'Ford's 8-K filings' -> F with 803 of 2,337, '10-Q for IBM' -> IBM with 100 of 1,438.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (47 suites; check:focus 66 -> 74, check:prompt 37 -> 46; on main check:focus fails 2 then stops on the missing helper, check:prompt fails 7 of 9 new cases), `npm run lint`, `tsc --noEmit`, `next build`, `check:ui` 198/198 against a fresh demo database (economy-overlay checks skip there), and the three searches above in Chromium against the local database with counts matched by SQL.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:2095",
+     "docs/MASTER-CHECKLIST.md:2165",
      "lib/focus.ts",
      "lib/prompt.ts",
      "components/BestMatches.tsx",
@@ -6838,7 +6838,7 @@
     "what": "Batch 53: the code-auditor checked batches 24-52 on 7ba8cb6 (docs/audits/2026-10-25-code-audit.md): four findings in scope (two P2, two P3), six set aside, and one outside scope it rated P1, fixed here. A holding-company reorganisation or redomicile gives the listed parent a new CIK that EDGAR links nowhere, so XOM's page carried 8 filings where Exxon Mobil Corporation's record holds 581 back to 1994. lib/predecessors.ts maps 15 successors (XOM, BLK, FERG, BG, HHH, APO, MRVL, APA, XRX, DIS, CI, AVGO two records back, GOOGL, MDT, ETN), each hand-checked against its 8-K12B/8-K12G3 notice; getFilingsDeep reads the predecessor's record up to the handover day (later filings are a subsidiary's), shows a shared filing once, keeps its earlier renames and drops a rename into a subsidiary's name at the handover (BlackRock Finance, TWDC Enterprises 18); the 8-K headline reader asks under the CIK in the filing's link; newsNamesFor carries 'Exxon Mobil'/'Exxon', 'Cigna', 'Bunge', 'Marvell'. Live, main -> now: XOM 8 -> 583, BLK 46 -> 456, GOOGL 266 -> 570, DIS 171 -> 689, CI 225 -> 897, XRX 203 -> 963, no duplicate ids. Open: the other 100 of 115 successors whose record starts within 18 months of its notice, and audit findings 1-4 (DOJ apostrophe names, saved folds overriding a focused view, UNH 'Page 1 of N' titles, check:feeds' stale GDELT query) for batch 54.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (48 suites; new check:predecessors 20 checks, 10 of them failing on main's reader, the other 10 checking the map main lacks), `npm run lint`, `tsc --noEmit`, and the live main-vs-branch filings count for all 15 tickers against EDGAR.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1997",
+     "docs/MASTER-CHECKLIST.md:2067",
      "docs/audits/2026-10-25-code-audit.md",
      "lib/predecessors.ts",
      "lib/sec.ts",
@@ -6851,7 +6851,7 @@
     "what": "Batch 54: the 2026-10-25 audit's four in-scope findings, open since batch 53, fixed. (1) Justice Department releases about apostrophe-named companies: justice.gov's title filter matches an apostrophe as written ('Moody’s' 2 titles, 'Moody's' and 'MOODYS' none), so a possessive is asked in both spellings, from Wikidata's own name cut after its 's or a one-word name's closing s; the party test lets an apostrophe match either kind and a closing s carry a dropped one; 'Centers' may follow a name; headline scoring names 'Kohl's' under 'kohls' and a curly 'McDonald’s'. Live main -> now: Moody's 0 -> 1 (the $864M settlement), Kohl's 0 -> 1, Macy's 0 -> 1, Lowe's 0 -> 2, McDonald's 0 -> 1; Walmart 8 -> 8, Home Depot 3 -> 3. (2) The event list keeps the reader's changes, not a copy of the opening folds, and a focused view keeps its folds to itself: in Chromium on Ford's real page, ?focus=recall after one click went from 158 of 863 rows with 57 years folded to all 863. (3) A 'Page N of M' opening a line is dropped (HEADLINE_VERSION 7): UnitedHealth's three 2026 results releases read cleanly; check:live counts it as page furniture and samples UNH. (4) check:feeds makes every fetch ingestCompany makes, word for word (GDELT by gdeltNewsPlan, company Federal Register, NHTSA, FDA, DOJ, Yahoo, LoC, Internet Archive) plus a headline read, and check:wiring holds it there.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (48 suites; check:doj 37 -> 45, check:relevance 49 -> 52, check:event-folds 16 -> 21, check:sec-headlines 247 -> 250, check:wiring 199 -> 202, check:live-harness 45 with 16 past titles; each new case fails or stops on main's code), `npm run lint`, `tsc --noEmit`, `next build`, `check:ui` 198/198 against a fresh demo database, live DOJ and headline comparisons against main's code, and the audit's fold sequence in Chromium on both codes.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1911",
+     "docs/MASTER-CHECKLIST.md:1981",
      "lib/doj.ts",
      "lib/enrich/relevance.ts",
      "components/EventList.tsx",
@@ -6865,7 +6865,7 @@
     "what": "Batch 55, batch 53's open item: the other 96 listed companies whose SEC record starts with a notice of succession, read one by one (a scan named each predecessor from its notice, resolved its CIK by full-text search and checked its record; every result then read by hand). 55 mapped in lib/predecessors.ts (70 in all), 41 left out for stated reasons: SPACs (9), mergers into a new company (15), a bought company's registration (Pembina/Provident, First Mining/Clifton Star), bank holding companies whose old bank never filed on EDGAR (12), WISeKey's old company still listed, Ferrari and Lionsgate unsettled. The rule now reads: one company's history carrying on (holdco reorganisation, redomicile, partnership conversion, second step) whatever the ticker (Encana -> Ovintiv), or an acquisition through a new parent when the buyer's ticker carried on (Uniti, QuidelOrtho, AB InBev, Liberty Global, DraftKings). A new `since` starts a record that began as a shell at the business (DraftKings' SPAC, Medina Coffee, Irish Mag, Alcobra, MER Telemanagement). Weatherford reads three records back, Noble two. Live main -> now: TIMB 541 -> 1,644, AU 132 -> 1,275, CIB 48 -> 983, WFRD 390 -> 948, NWE 85 -> 926, OVV 205 -> 865; no page holds a filing twice.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (48 suites; check:predecessors 20 -> 27, 3 of the 7 new checks failing on main's code, the other 4 guarding exclusions), `npm run lint`, `tsc --noEmit`, and the live main-vs-branch filings count for all 55 tickers against EDGAR.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1823",
+     "docs/MASTER-CHECKLIST.md:1893",
      "lib/predecessors.ts",
      "lib/sec.ts",
      "scripts/check-predecessors.ts"
@@ -6876,7 +6876,7 @@
     "what": "Batch 56, the 2026-10-25 code audit's six set-asides: five fixed, the sixth (Federal Register asked under the SEC spelling, no document lost) needs nothing. (1) Search: 'Citi', 'Citibank', 'Chase', 'Chase Bank' open Citigroup and JPMorgan (were Citi Trends, an ADR named 'Citibank,N.A.', Chase Packaging); 'Pepsi' opens PepsiCo (was a chooser). The alias builder now counts an alias that starts a name word of 4+ letters or writes one apart, and a three-entry BRAND_NAMES list adds 'Chase', 'Chase Bank', 'Citibank' for search only; data/company-aliases.json rebuilt from today's Wikidata answers, 1,555 -> 1,586 names (30 from the rules, +3/-2 Wikidata drift; 'Kraft Foods' now opens Kraft Heinz with a 'Foods' filter after Wikidata qualified that alias). (2) 'Form 10-K' opens no company (was FormFactor); 'Form 10-K for Apple' opens Apple's 10-Ks. (3) Biggest moves rank an FDA Class II recall as news, as the chart does; Class I and vehicle recalls keep their rank. (4) The relevance scorer's names drop EDGAR's registration tag and legal form ('/de/' for Moody's, 'ab/adr', 'lp'); the name-cleaning rules moved to lib/edgarName.ts, commonName unchanged on all 8,028 titles, 719 titles' scoring names change. (5) Headlines: Stellantis's 'to Announce Third Quarter 2026 / Financial Results on October 28' and TotalEnergies's 'Minority Non-Operated / Interest in Marjoram Gas Field' read whole, Toyota's deck cover loses its caption and company name; HEADLINE_VERSION 8; 6 of 2,190 saved documents change, all for the better.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (48 suites; check:aliases 89 -> 98, check:prompt 46 -> 52, check:relevance 52 -> 56, check:fda-recalls 37 -> 38, check:sec-headlines 250 -> 255, the new checks failing on main's code except those guarding what main already does), `npm run lint`, `tsc --noEmit`, `check:ui` against a fresh demo database, search answers main vs branch with the database down, and the headline reader main vs branch over 2,190 saved EDGAR documents.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1733",
+     "docs/MASTER-CHECKLIST.md:1803",
      "lib/companyAliases.ts",
      "data/company-aliases.json",
      "lib/prompt.ts",
@@ -6892,7 +6892,7 @@
     "what": "Batch 57, the backlog's GDELT year-window backfill (P2, securities-coverage depth), built a month at a time: each month since 2017 (or since the company's first price) is asked once by relevance, after the hourly newest-hundred ask, keeping only headlines that name the company (scored as named). Months, not years: asked for all of 2021, Ford's hundred all came from Oct-Dec (49 kept); Q1 2021 gave 55; February 2021 alone 52. Measured one month each: Ford 52, Apple (May 2023) 58, McDonald's (June 2022) 63. New table gdelt_windows (migration 030) keeps each month asked with its query; at most 40 months per process, 6 s apart, newest first; stops at the first refusal, logged as a GDELT failure so the run-wide back-off holds; successes never mark the hourly ask fresh. GDELT answered 5 requests from this container and refused the rest, so production should confirm fill rate and page growth (open item).",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (49 suites; new check:news-backfill 30, which cannot run on main's code), `npm run lint`, `tsc --noEmit`, the backfill against a fresh real Postgres with a stand-in GDELT (101 months over two runs, one story a month scored 0.9, a third run asking nothing), and live GDELT windows for Ford, Apple and McDonald's.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1668",
+     "docs/MASTER-CHECKLIST.md:1738",
      "lib/ingest/newsBackfill.ts",
      "db/030_gdelt_windows.sql",
      "lib/news.ts",
@@ -6905,7 +6905,7 @@
     "what": "Batch 58: the code-auditor read batches 53-57 (7ba8cb6..1ac7cdd; docs/audits/2026-10-26-code-audit.md) and found four defects, all reproduced and fixed. (1, P1) The GDELT backfill kept an everyday word's stories as the company's: one live Target month kept 10 wrong of 33 ('IMF urges retaining 5 % inflation target'), scored 0.9. A company asked under one ENABLE word (205 of 1,949 one-word GDELT names; data/english-word-names.json from the new `npm run sync:word-names`, unlisted names held back) is now held back until a month is measured; measured names (Apple May 2023, Tesla April 2022, both clean) count a headline only with the name's capital; check:feeds reports what the backfill keeps. (2, P2) Great Elm's news names 'Openwave' and 'Unwired Planet' were brands it sold (8-Ks 0001193125-12-212068, 0001193125-16-532468) and are dropped; the rule is written in lib/predecessors.ts. (3, P3) the apostrophe retry read \"she'll\" as Shell; it now drops an apostrophe only before a final s. (4, P3) 'Form 4 Tesla', 'Form 13F Berkshire', 'Form D' no longer open FormFactor (0 of 29,983 index names cut). Open: the hourly GDELT ask still keeps an everyday word's stories; 203 everyday-word names await a measured month.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (49 suites; check:news-backfill 30 -> 38, check:relevance 56 -> 58, check:predecessors 27 -> 28, check:prompt 52 -> 58, check:aliases 98 -> 99, the new checks failing on main's code except guards), `npm run lint`, `tsc --noEmit`, both Great Elm 8-Ks read on EDGAR, the Target month from the audit and live Apple and Tesla months from GDELT.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1593",
+     "docs/MASTER-CHECKLIST.md:1663",
      "docs/audits/2026-10-26-code-audit.md",
      "lib/ingest/newsBackfill.ts",
      "data/english-word-names.json",
@@ -6920,7 +6920,7 @@
     "what": "Batch 59: an everyday word names a company only with its capital. Batch 58 left the hourly GDELT ask scoring Target's 'IMF urges retaining 5 % inflation target' 0.9; the cause was wider: headline scoring counted every name in any case, so on main a ticker or an English word in a name named a headline using it as a word ('All eyes on the Fed' 0.9 for Allstate, 'Stocks hit a new low' for Lowe's, 'Cat cafe opens' for Caterpillar). In the 8,029-company index, 589 three-to-five-letter tickers and 2,277 other scored one-word names are ENABLE words. Now a ticker names a headline only in capitals; a name that is an English word only with its capital (`withCapital`, lib/wordNames.ts; the words written by `npm run sync:word-names` as `pieces`); and for the 205 companies whose own name is one everyday word, a headline with it only in lowercase scores 0.2 and is hidden. Holding back the capitalised name too was tried and dropped (it took the 0.9 from Alphabet's, Chevron's, Oracle's real headlines). `npm run score -- --rescore` reworks the free tier's own stored scores and clears those the rules no longer settle; a model's score is never touched; verified on a scratch database. Open: a capitalised word still names ('Southern California' for Southern Company and Southern Copper), name pieces many companies share ('gold' for Barrick, 'Companies' for Lowe's; 1,294 shared pieces), and two-letter tickers ('IT' for Gartner). Batch 58's note on the open GDELT item, that scoring keeps off a page whose headline does not name the company, is corrected: such a headline is left unscored and shown.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (49 suites; check:relevance 58 -> 70, check:news-backfill 38 -> 38 with the Target month check restated; the new behaviour checks failing on main's code except guards, run in a worktree of main), `npm run lint`, `tsc --noEmit`, `npm run score -- --rescore` against a scratch Postgres database (chronolens_b59) with five real headlines, and the index measurements from data/edgar-tickers.json and ENABLE.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1513",
+     "docs/MASTER-CHECKLIST.md:1583",
      "lib/wordNames.ts",
      "lib/enrich/relevance.ts",
      "scripts/score.ts",
@@ -6935,7 +6935,7 @@
     "what": "Batch 60: a word many companies' names share names none of them alone. Measured on 4,165 Yahoo Finance headlines from 235 companies' feeds (own feed = what a rule costs, other feeds = what it saves): on main, other feeds' headlines named one of the companies 3,098 times ('American Depositary Receipts' for American Airlines, American Tower, AEP and BAT; 'a New Growth Catalyst' for Bank of New York Mellon; 'Gold Slides' for Kinross Gold; 'Investing.com' for Amazon). Now a word five or more listed companies' names share (406 words, data/shared-name-words.json from `npm run sync:word-names`; `SHARED_ALONE`) names none alone unless it is the whole name; a company is named by its whole common name and its short name (`shortName`: 'American Water', 'First Citizens', 'Interactive Brokers'); a two-word name names its possessive ('Parker Hannifin's', 'Franco-Nevada's'); a web address's 'com' is no name word. Result, main vs branch on the same headlines: other feeds' namings 3,098 -> 1,236 (60 removed at random, all wrong); own feeds 2,029 -> 2,009 (21 lost, 17 not about the company; 'Goldman's', 'Santander', 'United' and an oblique Bank of America headline were; one gained). Batch 59's Barrick Gold example is corrected (Barrick is 'BARRICK MINING CORP'). Open: words fewer than five share ('Canada' for Royal Bank of Canada, 'GE' for GE Aerospace, Vernova and HealthCare), and batch 59's capitalised-word and two-letter-ticker items.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (49 suites; check:relevance 70 -> 76, the new behaviour checks failing on main's code except guards, run in a worktree of main), `npm run lint`, `tsc --noEmit`, and the headline measurement with main's code and the branch's on the same 4,165 Yahoo Finance headlines read 2026-10-26, at bounds of three, five and ten.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1447",
+     "docs/MASTER-CHECKLIST.md:1517",
      "lib/enrich/relevance.ts",
      "lib/wordNames.ts",
      "data/shared-name-words.json",
@@ -6948,7 +6948,7 @@
     "what": "Batch 61: the code-auditor read batches 58-60 (1ac7cdd..10f163a; docs/audits/2026-10-26-scoring-audit.md), found the mechanics sound (other feeds' 0.9s across the index 83,847 on batch 59 -> 10,395) and five defects, all reproduced and fixed. (1, P2) shortName put back generic names ('u s' for U S Global Investors named every 'U.S.' headline; 'new york', 'united states', 'morgan stanley'; lowercase 'top clean energy stocks'): a short name now names a company only when no other listed company's common name holds it (shortNames, 1,694 of 1,839, data/shared-name-words.json) and only with its capitals; initials make none. (2, P2) 70 companies whose ticker is their name (Gap, Ally, Ball, Bill, Dell, Snap) escaped the capital rule in the sync; fixed. (3, P2) npm run score/--rescore scored with stored search aliases, bringing back Great Elm's 'Unwired Planet': every path now takes names from companyScoringAliases (new lib/scoringNames.ts; ingest, first visit, score, backfill, check:feeds). (4, P3) a plain --rescore cleared strict 0.2s: strict scores are labelled deterministic-strict, taken back only with the flag and never by ingest's re-score; cost-report counts them free; README example gains --limit. (5, P3) 'It's' read as Southern ITS's 'Its': contractions left alone. Worse than recorded: digit-only name words ('10' for Bitwise 10, '40' for WD-40) are no names now. Measured: saved Yahoo own feeds 2,009 -> 2,009, other feeds 1,236 -> 1,235; all index companies' other-feed 0.9s 10,393 -> 9,888, none gained. Open: capitalised words, shared words under five, two-letter tickers, 'Q2'; a headline-replay check needs a licensing look.",
     "basis_key": "Verified on branch claude/lucid-goodall-6km6ea: `npm run check` (49 suites; check:relevance 76 -> 85, the new behaviour checks failing on main's code in a worktree except the Gap guard; check:aliases and check:possessive wiring checks updated), `npm run lint`, `tsc --noEmit`, score/--rescore/--strict-headline against the scratch database chronolens_b59, and the auditor's whole-index replay on the saved Yahoo Finance headlines.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1377",
+     "docs/MASTER-CHECKLIST.md:1447",
      "docs/audits/2026-10-26-scoring-audit.md",
      "lib/scoringNames.ts",
      "lib/enrich/relevance.ts",
@@ -6965,7 +6965,7 @@
     "what": "Batch 62: a new opportunity-scout run (docs/proposals/2026-10-26-proposals.md), since the 2026-10-17 proposals are all built and nearly everything else open waits on the owner. Eight proposals, all PENDING, securities depth first: (1) the company Federal Register feed back to 1994 and past the newest forty; (2) a results release counts as earnings whatever form carried it; (3) the SEC forms the 2026-10-18 list missed (S-3ASR, F-1, late-filing notices, proxy fights, tender-offer results); (4) NHTSA defect investigations, a source decision; (5) a fund's page carries its own fund's filings by series tag; (6) filing times before the open or after the close; (7) Federal Reserve enforcement actions on bank pages, a source decision; (8) FDA recalls for the next health-care makers. Confirmed in the code: the company Federal Register feed keeps the newest 40 a run and never pages (lib/frCompany.ts FR_COMPANY_CAP), so older documents never reach a page. Nothing built; no ledger item changes status.",
     "basis_key": "The scout's document, measured live from the cloud container on 2026-10-26 (about 110 SEC EDGAR requests with the project's User-Agent, which carries the owner's email; Federal Register, openFDA, data.transportation.gov, federalreserve.gov, Wikidata, Wikipedia); its code references spot-checked here (lib/frCompany.ts, lib/sec.ts); `npm run check` (49 suites) and `npm run lint` pass.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1340",
+     "docs/MASTER-CHECKLIST.md:1410",
      "docs/proposals/2026-10-26-proposals.md",
      "lib/frCompany.ts"
     ]
@@ -6975,15 +6975,15 @@
     "what": "Batch 62, follow-up: the owner marked docs/proposals/2026-10-26-proposals.md — all eight approved, the two new sources (#4 NHTSA defect investigations, #7 Federal Reserve enforcement actions) included, none rejected or deferred. The opportunity-scout's FILE pass filed each into the checklist's 'Scope refocus — exchange-traded securities (2026-08-08)' section: the four P1s after the last P1 there, the four P2s at its end, each with its grounding line. The smaller owner calls inside #1 (routine rail-board and FERC notices), #2 (profit alerts and guidance updates), #3 (which forms) and #4 (the event kind) are asked when each is built. Nothing built; no ledger item changes status.",
     "basis_key": "The owner's answers in this session on 2026-10-26; the filed entries read here against the proposal file; `npm run check` and `npm run lint` pass.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1340",
-     "docs/MASTER-CHECKLIST.md:4464-4496",
-     "docs/MASTER-CHECKLIST.md:4497-4525",
-     "docs/MASTER-CHECKLIST.md:4526-4557",
-     "docs/MASTER-CHECKLIST.md:4558-4582",
-     "docs/MASTER-CHECKLIST.md:4669-4692",
-     "docs/MASTER-CHECKLIST.md:4693-4714",
-     "docs/MASTER-CHECKLIST.md:4718-4741",
-     "docs/MASTER-CHECKLIST.md:4742-4760",
+     "docs/MASTER-CHECKLIST.md:1410",
+     "docs/MASTER-CHECKLIST.md:4534-4566",
+     "docs/MASTER-CHECKLIST.md:4567-4595",
+     "docs/MASTER-CHECKLIST.md:4596-4627",
+     "docs/MASTER-CHECKLIST.md:4628-4652",
+     "docs/MASTER-CHECKLIST.md:4739-4762",
+     "docs/MASTER-CHECKLIST.md:4763-4784",
+     "docs/MASTER-CHECKLIST.md:4788-4811",
+     "docs/MASTER-CHECKLIST.md:4814-4832",
      "docs/proposals/2026-10-26-proposals.md"
     ]
    },
@@ -6992,8 +6992,8 @@
     "what": "Batch 63: the 2026-10-26 proposal 1 built. A company's Federal Register documents reach 1994: the daily ask reads the current year (up to 40), and a new year walk (lib/ingest/frBackfill.ts, fr_windows in db/031) reads each year from 1994 to last year once, every page, keeping every document whose title names the company, under the EDGAR former names in use that year (Walmart's 1999 and 2002 FTC orders under 'Wal-Mart Stores'). Routine notices from the Surface Transportation Board, the ICC, FERC and the NRC are grouped a row a month on the page (pageRegulations; the owner's call 2026-10-26), contested ones kept dated; the row label now names the issuing board (issuingAgency), corrected on stored rows as their year is re-read. The owner's other two calls are recorded in the checklist: only reported results count as earnings (#2), all four groups of SEC forms are kept (#3). The sector feed's 2015 floor stays open. No ledger item changes status.",
     "basis_key": "check:fr-backfill (39, new; cannot run on main) plus updated check:wiring, check:live's Ford case (2008 via the year walk: 6 documents live), check-live-harness, check:macro and check:page-news; `npm run check` (50 suites) and `npm run lint` pass; live runs on 2026-10-27 into a scratch database: CSX 32 years, 565 documents, a second run asked nothing, 572 rows shown as 330 after grouping; Walmart 5 through its former name.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1275",
-     "docs/MASTER-CHECKLIST.md:4464-4496",
+     "docs/MASTER-CHECKLIST.md:1345",
+     "docs/MASTER-CHECKLIST.md:4534-4566",
      "lib/ingest/frBackfill.ts",
      "lib/frCompany.ts",
      "db/031_fr_windows.sql",
@@ -7005,8 +7005,8 @@
     "what": "Batch 64: the 2026-10-26 proposal 2 built. A filing whose stored press-release headline reports a period's results is typed earnings (announcesResults and asResultsRelease in lib/secHeadlines.ts, applied in applyHeadlines), as an 8-K's item 2.02 is: a 6-K says nothing of what it carries, and an 8-K before August 2004 had no 2.02. The owner's call (2026-10-26): only reported results count; a profit alert, a preliminary figure, an expectation, a guidance update or a revised forecast stays a filing, as do trial and tender results, a capital-ratio notice, supplementary data, a charge, a release date and an amended 8-K. No ledger item changes status.",
     "basis_key": "check:sec-headlines (266, 11 new, cannot run on main) on scripts/fixtures/results-headlines.json, the 960 headlines stored in the batch 42 and 48 databases: of 830 on filings it marks 47 (NIO 32, Novartis 8, Boeing 4, GSK 2, Lloyds 1), each a results release, and agrees with item 2.02 on 117 of 130; live on a copy of the batch 42 database, NIO's stored earnings went 8 to 40 and Boeing's 224 to 228; `npm run check` (50 suites) and `npm run lint` pass.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1232",
-     "docs/MASTER-CHECKLIST.md:4497-4525",
+     "docs/MASTER-CHECKLIST.md:1302",
+     "docs/MASTER-CHECKLIST.md:4567-4595",
      "lib/secHeadlines.ts",
      "lib/ingest/headlines.ts",
      "scripts/fixtures/results-headlines.json",
@@ -7018,8 +7018,8 @@
     "what": "Batch 65: the 2026-10-26 proposal 3 built, all four groups the owner picked. MATERIAL_FORMS gains S-3ASR, F-3, F-3ASR and F-10 (shelves and a Canadian registration), F-1 (a foreign company's registration to sell shares), F-4, SC TO-I and SC TO-T/A, NT 10-K, NT 10-Q and NT 20-F, PREC14A, DEFC14A and DFAN14A; DFAN14A and SC TO-T/A are grouped a row a month (pageFilings). Found and fixed: a tender offer or proxy fight a company made about another company (no file number in its record) is named as its own (DEAL_FORM, FOR_ANOTHER_COMPANY) — Pfizer's bids for Array, Medivation and King had read 'Tender offer by an outside bidder' since batch 13. Focus and the filing stacks read the new forms (a late notice is no 10-K; an S-3ASR is an S-3). No ledger item changes status.",
     "basis_key": "check:sec-forms (66, 12 new, on real EDGAR rows; fixture scripts/fixtures/sec-form-rows.json), check:focus (77, 3 new), check:prompt ('Arm F-1'); live on a scratch copy of the batch 42 database: Pfizer 47 new rows and its 9 stored SC TO-T bids retitled, Apple 10; three Pfizer filing indexes read on EDGAR to confirm filer and subject; `npm run check` (50 suites) and `npm run lint` pass.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1181",
-     "docs/MASTER-CHECKLIST.md:4526-4557",
+     "docs/MASTER-CHECKLIST.md:1251",
+     "docs/MASTER-CHECKLIST.md:4596-4627",
      "lib/secForms.ts",
      "lib/sec.ts",
      "lib/focus.ts",
@@ -7032,8 +7032,8 @@
     "what": "Batch 66: the 2026-10-26 proposal 4 built, with its new source (NHTSA 'Investigations Data', data.transportation.gov b3rp-be92, public domain, approved by the owner 2026-10-26). A mapped carmaker's page carries the defect investigations NHTSA opened into it since 1975 (lib/investigations.ts), through the recalls' hand-checked maker map and dates. The owner's calls (2026-10-27): under the Recalls tag, one row on the day it opened, its closing and linked recall said in the row. Drawn as a dot ranked like news, never a recall's R. Registered (SOURCES id 25), refreshed daily, credited in the footer and Terms. No ledger item changes status.",
     "basis_key": "check:vehicle-recalls (53, 14 new, on real rows in scripts/fixtures/nhtsa-investigations.json; cannot run on main), a check:live case (Toyota RQ10003, Stellantis from 2014-10-12), check:feeds; live 2026-10-27: 1,766 investigations for 18 companies, 1,579 before 2017, Ford's 684 stored once and scored without the model; `npm run check` (50 suites) and `npm run lint` pass.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1140",
-     "docs/MASTER-CHECKLIST.md:4558-4582",
+     "docs/MASTER-CHECKLIST.md:1210",
+     "docs/MASTER-CHECKLIST.md:4628-4652",
      "lib/investigations.ts",
      "lib/markers.ts",
      "lib/ingest/store.ts",
@@ -7045,8 +7045,8 @@
     "what": "Batch 67: the 2026-10-26 proposal 5 built. Each fund series keeps its EDGAR id in the committed ticker index (npm run sync:tickers, 19,558 series), and at ingest the series' own EDGAR filing list (browse-edgar?CIK=S..., a hundred a request) says which of the trust's fund filings are the fund's (lib/fundSeries.ts): its own linked as certain under the scorer deterministic-series, a sibling's unlinked from it alone. The stored row keeps the trust's name, since one row serves every sibling's page; the fund's page shows its own under its name at read time (loadEvents). The lists begin in February 2006, so older trust filings keep their hedge; a list read in part sorts only the days it reached; a 503 is asked twice more; a run whose list fails keeps an earlier run's siblings off. It revisits NC-139's premise (a request per filing), which stays closed. The sync's followers (sync:aliases, sync:word-names) ran too. No ledger item changes status.",
     "basis_key": "check:sec-forms (105, on EDGAR's answers pinned in scripts/fixtures/voo-series-filings.json: VOO keeps 76 of the trust's 432 fund filings in 2022-12-05..2026-08-28; cannot run on main) and check:tickers (108, the index carries the ids, fails on main); a check:live case and check:feeds line, both passing against EDGAR; live 2026-10-27 on a scratch database: VOO 1,808 links to 503 (294 own, 1,305 siblings' unlinked, 154 pre-2006 kept hedged), VTI 259 own; `npm run check` (50 suites) and `npm run lint` pass.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:1056",
-     "docs/MASTER-CHECKLIST.md:4669-4692",
+     "docs/MASTER-CHECKLIST.md:1126",
+     "docs/MASTER-CHECKLIST.md:4739-4762",
      "docs/MASTER-CHECKLIST.md:297",
      "lib/fundSeries.ts",
      "lib/sec.ts",
@@ -7062,8 +7062,8 @@
     "what": "Batch 68: the 2026-10-26 proposal 6 built. Each SEC filing keeps the instant EDGAR accepted it (acceptanceDateTime, UTC; a midnight-Eastern stamp, which most pre-2002 filings carry, is read as no time) in events.occurred_at, which nothing wrote before; rows already stored gain it on their next ingest, as the owning source's correction. The row says when it came out ('4:30 pm ET, after the close'; another day named when EDGAR dated it the next business day), and Biggest moves never pairs a move with something published after that session closed (lib/marketTime.ts, nearestCatalyst). The cached company page moved to v8. No ledger item changes status.",
     "basis_key": "check:sec-forms (119, real Apple and Ford rows; cannot run on main) and check:markers (30, two cases fail on main); a check:live assertion on Apple's newest results 8-K; measured: Apple's 45 results 8-Ks since 2015 all after the close, 10 of 45 release days moved 2%+ before the release; live on a scratch database: Apple's 11 such days captioned by that evening's release before, none after; Ford's pre-2018 before-open releases still caption their day; `npm run check` (50 suites) and `npm run lint` pass.",
     "evidence": [
-     "docs/MASTER-CHECKLIST.md:991",
-     "docs/MASTER-CHECKLIST.md:4693-4717",
+     "docs/MASTER-CHECKLIST.md:1061",
+     "docs/MASTER-CHECKLIST.md:4763-4787",
      "lib/marketTime.ts",
      "lib/sec.ts",
      "lib/ingest/store.ts",
@@ -7072,6 +7072,21 @@
      "components/EventList.tsx",
      "scripts/check-sec-forms.ts",
      "scripts/check-markers.ts"
+    ]
+   },
+   {
+    "on": "2026-10-27",
+    "what": "Batch 69: the 2026-10-26 proposal 7 built, with its new source (the Federal Reserve Board's enforcement actions, two keyless JSON files, public domain cited to the Board; approved by the owner 2026-10-26). A mapped bank's page carries the Board's cease-and-desist orders, written agreements and civil money penalties against it from 1993, a day's as one event titled with what the Board did; an action against a person is not the bank's. The hand-checked map FED_BANKS (lib/fedActions.ts) covers 25 listed bank holding companies by CIK, checked against every candidate row: an acquisition's past never counts (SunTrust, AmSouth, pre-2007 Bank of New York), a sold unit stops on its sale (American Express Bank International, 2008-02-29), namesakes are refused by city. Registered (SOURCES 26), refreshed daily, scored without the model, credited. No ledger item changes status.",
+    "basis_key": "check:fed-actions (30, new, on real rows pinned in scripts/fixtures/fed-actions.json; cannot run on main), a check:live case and a check:feeds line; measured: 72 events on 18 of 25 banks, 51 before 2017; live on a scratch database: JPMorgan's 10 stored once, scored 1 without the model, all 10 on its bounded page; `npm run check` (51 suites) and `npm run lint` pass.",
+    "evidence": [
+     "docs/MASTER-CHECKLIST.md:991",
+     "docs/MASTER-CHECKLIST.md:4788-4813",
+     "lib/fedActions.ts",
+     "lib/ingest/store.ts",
+     "lib/enrich/relevance.ts",
+     "scripts/ingest.ts",
+     "scripts/check-fed-actions.ts",
+     "scripts/fixtures/fed-actions.json"
     ]
    }
   ]

@@ -309,6 +309,21 @@ export const SOURCES: {
     reviewedOn: "2026-10-27",
     notes: "defect investigations since 1975 into the vehicle makers lib/recalls.ts maps, shown with recalls; no key (batch 66)",
   },
+  {
+    id: 26,
+    key: "fed_enforcement",
+    name: "Federal Reserve enforcement actions",
+    license: "public domain",
+    attribution: "Board of Governors of the Federal Reserve System",
+    // "Unless otherwise indicated, information on Board's website is in the public domain and may be
+    // copied and distributed without permission. Please cite to the Board as the source of the
+    // information." (federalreserve.gov/disclaimer.htm, read 2026-10-26). Used: each action's day,
+    // the Board's words for it, the organisation it names, the day it ended, and a link to its
+    // press release. Approved by the owner on 2026-10-26.
+    commercialOk: true,
+    reviewedOn: "2026-10-27",
+    notes: "the Board's enforcement actions since 1989 against the banks lib/fedActions.ts maps; two keyless files, no key (batch 69)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

@@ -44,6 +44,7 @@ import { fetchRegulations } from "../lib/federalregister";
 import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
 import { fetchRecalls } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
+import { fetchFedActions } from "../lib/fedActions";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
 import { FR_COMPANY_CAP, fetchCompanyRegulations, fetchCompanyYear, frDailySince, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
@@ -590,6 +591,25 @@ export const CASES: LiveCase[] = [
       out.push(...outcomeProblems(stla.outcome, stla.detail).map((p) => `Stellantis: ${p}`));
       const early = stla.events.filter((e) => e.date < "2014-10-12");
       if (early.length) out.push(`${early.length} Stellantis recalls before 2014-10-12, e.g. ${early[0].date}`);
+      return out;
+    },
+  },
+  {
+    name: "Federal Reserve — Wells Fargo's 2018 asset-cap order, and no namesake's action on Huntington (batch 69)",
+    covers: ["fed_enforcement"],
+    hosts: ["www.federalreserve.gov"],
+    async run() {
+      const wfc = await fetchFedActions(72971);
+      const out = [...outcomeProblems(wfc.outcome, wfc.detail), ...eventProblems(wfc.events, 6)];
+      const cap = wfc.events.find((e) => e.date === "2018-02-02");
+      if (!cap) out.push("no Wells Fargo action of 2018-02-02 (the asset cap)");
+      else if (!/^Federal Reserve: Cease-and-desist order/.test(cap.title)) out.push(`2018-02-02 titled "${cap.title}"`);
+      // the recent file grows: an action of the last year or so says it is still being kept
+      const jpm = await fetchFedActions(19617);
+      out.push(...outcomeProblems(jpm.outcome, jpm.detail).map((p) => `JPMorgan: ${p}`));
+      if (!jpm.events.some((e) => e.date === "2013-09-18" && /\$200 million/.test(e.title))) out.push("no JPMorgan $200 million penalty of 2013-09-18");
+      const hban = await fetchFedActions(49196);
+      if (hban.events.some((e) => /Huntington, Texas/.test(e.description ?? ""))) out.push("a Huntington, Texas action on HBAN");
       return out;
     },
   },

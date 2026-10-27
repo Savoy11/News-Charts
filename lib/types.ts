@@ -49,6 +49,7 @@ export type SourceKey =
   | "bls_cpi"
   | "nhtsa_recalls"
   | "nhtsa_investigations"
+  | "fed_enforcement"
   | "doj_press"
   | "fda_enforcement";
 

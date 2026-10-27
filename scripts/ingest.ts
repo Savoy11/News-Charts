@@ -43,6 +43,7 @@ import { backfillRegulations } from "../lib/ingest/frBackfill";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
+import { FED_BANKS, fedBanksFor, fetchFedActions } from "../lib/fedActions";
 import { dojPossessive, dojQueryNames, fetchJusticeReleases } from "../lib/doj";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
@@ -81,6 +82,8 @@ export const COMPANY_SOURCES = [
   "nhtsa_investigations",
   // drug, device and food recalls, asked only for the firms lib/fdaRecalls.ts maps (batch 40)
   "fda_enforcement",
+  // the Federal Reserve's actions, asked only for the banks lib/fedActions.ts maps (batch 69)
+  "fed_enforcement",
   // releases whose title makes the company a party: it pays, pleads, is sued (batch 32)
   "doj_press",
   "gdelt",
@@ -611,6 +614,16 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   const fdaFirms = fdaFirmsFor(company.cik);
   if (fdaFirms) {
     await run("fda_enforcement", `${fdaFirms.map((f) => f.search).join(" | ")} (Class I and II)`, () => fetchFdaRecalls(company.cik));
+  }
+
+  /**
+   * The Federal Reserve Board's enforcement actions against the company or a bank it owned:
+   * cease-and-desist orders, written agreements, civil money penalties, back to 1989 (batch 69).
+   * Only for the banks lib/fedActions.ts maps by hand: the Board names an organisation and its
+   * city, never a listed company, and a name match would give a Texas bank's order to Huntington.
+   */
+  if (fedBanksFor(company.cik)) {
+    await run("fed_enforcement", `Federal Reserve actions against ${FED_BANKS[Number(company.cik)].ticker}`, () => fetchFedActions(company.cik));
   }
 
   /**

@@ -69,8 +69,13 @@ relevance problem the AI layer exists for, now with real material to work on.
 
 The one exception is a document whose **title** names the company — an FTC consent order, an
 NHTSA petition, an ITC investigation naming it as respondent. `npm run ingest -- --ticker F` asks
-for those too (`lib/frCompany.ts`): up to 40 a run, from 2015, never an airworthiness directive
-(an aircraft maker gets about a hundred a year, each on one part). A one-word name needs a
+for those too (`lib/frCompany.ts`), never an airworthiness directive (an aircraft maker gets
+about a hundred a year, each on one part). The daily ask reads the current year, up to 40 a run;
+each year from 1994, where the API begins, to last year is read once, every page, and every
+document whose title names the company is kept (`lib/ingest/frBackfill.ts`, kept in `fr_windows`:
+at most 40 years a run, 1 s apart, newest first). A year is searched under the names the company
+had then, so Walmart's 1999 FTC order is found under "Wal-Mart Stores", its EDGAR name until 2018.
+Before batch 63 the feed read from 2015 and kept the newest 40, so each run read the same forty. A one-word name needs a
 company word after it ("Apple Inc.", not "Light Brown Apple Moth"), and a longer listed name
 owns the mention ("Portland General Electric" isn't GE's). The company's own other names are
 searched in the same request (`newsNamesFor`; the API ORs phrases joined by `|`), so Alphabet's
@@ -78,6 +83,16 @@ page gets Google LLC's FTC orders; a one-word other name needs its company word 
 ("Google LLC", not "Amazon Produce Network, LLC"). A document linked to both the company and its
 sector is listed once on the company's page. These are scored without the model: the title
 naming the company is the evidence.
+
+Routine notices are grouped, one row a month (the owner, 2026-10-26): a railroad's trackage-rights
+and abandonment exemptions before the Surface Transportation Board (and the ICC before it), a
+utility's FERC and NRC notices. Over 1994–2025 they are 1,203 of Union Pacific's and CSX's 1,340
+documents, 579 of Duke Energy's 614. A month with two or more of one board's notices becomes one
+row naming how many, its description listing the first few and its link the newest; a lone
+notice, and any merger, control case, complaint, order, petition or settlement, keeps its dated
+row (`pageRegulations`). Grouping happens when the page is read, so the database keeps every
+notice. It reads the issuing board from the row's label, which before batch 63 named the
+department ("Transportation Department"); a year the walk re-reads corrects it.
 
 ### Vehicle recalls (`lib/recalls.ts`)
 

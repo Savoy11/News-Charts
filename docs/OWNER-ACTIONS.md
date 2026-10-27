@@ -64,8 +64,9 @@ is one bounded gather the first time a subject is visited — so this is the onl
 refreshes a chart — and a scheduler that is not running looks exactly like a
 quiet news week. Until it runs, the corpus only changes when you run it by hand.
 
-Before the first run on a new deploy, apply the schema: `npm run db:migrate` (db/021–025 came
-with the October ledger batches).
+Before the first run on a new deploy, apply the schema: `npm run db:migrate` (db/021–031 came
+with the October ledger batches; 031, from batch 63, keeps which past years of a company's Federal
+Register documents have been read).
 
 ```bash
 npm run refresh -- --dry-run   # what it would touch, spending nothing

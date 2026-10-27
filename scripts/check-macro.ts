@@ -145,8 +145,9 @@ async function main(): Promise<void> {
   const pageData = read("lib/page-data.ts");
   check("company pages load the economy subject by its slug", /loadMacroEvents\(MACRO_SUBJECT\.slug\)/.test(pageData) && MACRO_SUBJECT.slug === "us-economy");
   check("  …into a field of their own, out of what /compare and the follow badge read", /^\s+macro,$/m.test(pageData) &&
-    // the events are the company's and its sector's alone, bounded for the cache since batch 35
-    /boundPageNews\(\s*dropCompanyPrehistory\(pageFilings\(\[\.\.\.events, \.\.\.withoutSharedSectorRows\(events, sector\)\], subject\.cik\)\)/.test(pageData));
+    // the events are the company's and its sector's alone, bounded for the cache since batch 35,
+    // its routine Federal Register notices grouped since batch 63
+    /boundPageNews\(\s*dropCompanyPrehistory\(pageRegulations\(pageFilings\(\[\.\.\.events, \.\.\.withoutSharedSectorRows\(events, sector\)\], subject\.cik\)\)\)/.test(pageData));
   check("  …and the cached page shape moves on, so no cached page lacks the field", /\["held-company-page", "v[5-9]"\]/.test(pageData));
   const explorer = read("components/CompanyExplorer.tsx");
   check("the Economy chip starts off", /DEFAULT_OFF: ReadonlySet<EventType> = new Set<EventType>\(\["macro"\]\)/.test(explorer) && /useState<Set<EventType>>\(\(\) => new Set<EventType>\(DEFAULT_TYPES\)\)/.test(explorer));

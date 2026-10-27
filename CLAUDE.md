@@ -65,7 +65,9 @@ only the strongest of them — the company's own former names and a predecessor 
 carries, never an acquisition's or a loose alias (`newsNamesFor`): Sun's 1990s news is not Oracle's.
 "Google" scores Alphabet's headlines but is never put in a GDELT query, which matches it in page
 furniture everywhere (`gdeltNames` in `lib/news.ts`). The Federal Register company feed searches the
-same names in one request and keeps a title only when it names one (`lib/frCompany.ts`). Every path
+same names in one request and keeps a title only when it names one (`lib/frCompany.ts`); each year
+back to 1994 is read once, under the EDGAR former names in use that year (`lib/ingest/frBackfill.ts`),
+and routine rail-board, FERC and NRC notices are grouped a row a month on the page. Every path
 that scores a company's headlines — ingest, a first visit, `npm run score`, the backfill — takes its
 names from one place, `companyScoringAliases` in `lib/scoringNames.ts`; build no second list.
 

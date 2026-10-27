@@ -985,6 +985,71 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 63: a company's Federal Register documents back to 1994 (2026-10-27)
+
+The first of the eight proposals the owner approved on 2026-10-26 (#1). The owner also made the
+three smaller calls on 2026-10-26: routine rail-board and utility notices are grouped a row a month
+(built here); only reported results count as earnings (#2); and all four groups of SEC forms are
+kept (#3). Those two are recorded in their entries for when they are built.
+
+- [x] **A company's Federal Register documents reach 1994, every one a year holds.** Before this,
+      the daily ask read from 2015 and kept the newest 40, so every run read the same forty: GM's
+      51 since 2015 reached its page as 40, and nothing before 2015 at all.
+      - The daily ask now reads the current year, up to 40 (`frDailySince`). Each year from 1994 to
+        last year is read once by a new year walk (`lib/ingest/frBackfill.ts`), every page of it,
+        and every document whose title names the company is kept. A year that is over is not
+        asked again: `fr_windows` (db/031) keeps what was asked. At most 40 years a process,
+        1 s apart, newest first, stopping at the first refusal, as the GDELT month walk does.
+      - A year is searched under the names the company had then: its EDGAR former names count
+        until the day they stopped, read from the rename events the filings step stores.
+        Walmart's 1999 and 2002 FTC orders and two 1990s trade-zone notices now arrive under
+        "Wal-Mart Stores"; under "Walmart" the feed found none of them.
+      - **Measured live 2026-10-27** into a scratch database: CSX's 32 years were read in 38 s and
+        565 documents were kept (154 from the 1990s, 206 from the 2000s); a second run asked
+        nothing. Across five companies, 1994–2025, the same search and match keep Union Pacific
+        775, Duke 614, CSX 565, Ford 130 and Exxon 70, where the old feed kept at most 40 each.
+- [x] **Routine notices are grouped, one row a month** (the owner's call). A month with two or more
+      routine notices from one of these four agencies becomes one row: the Surface
+      Transportation Board, the ICC before it, FERC, or the NRC. The row names how many there are,
+      lists the first few, and links to the newest (`pageRegulations`, run when the page is read,
+      so the database keeps every notice). A lone notice, and any merger, control case,
+      complaint, order, penalty, petition or settlement, keeps its own dated row. CSX, re-read
+      live: its 572 stored rows show as 330, with 135 month rows holding 377 notices; the
+      1996–97 Conrail merger notices stay dated.
+      - The NRC is included by my reading of the question, which named railroads and power
+        companies: 231 of Duke's 250 NRC documents pass the routine rule (licence amendments,
+        exemptions, environmental assessments). If the
+        owner meant only the rail boards and FERC, it is one line in `ROUTINE_AGENCIES`.
+      - The label now names the issuing board, not its department. The Federal Register listed a
+        rail-board notice under "Transportation Department" first. It also lists the board with
+        no parent department (measured), so the rule takes the agency listed after a department
+        (`issuingAgency`). A year the walk re-reads corrects a stored row's label; re-read live,
+        346 of CSX's rows moved to the board's label (471 now carry it). A current-year row
+        stored before this batch keeps the department's label, so it is not grouped until its
+        year is over and read.
+      - The search link the Federal Register's site uses could not be checked from here (the site
+        sends this container to a bot check), so a grouped row links to its newest notice.
+- Known limits, not fixed here:
+  - "Union Pacific Resources Company", spun off in 1996 and gone by 2000, matches Union
+    Pacific's name. A title naming it after the spin-off is not UNP's. This is the existing
+    match rule; the older years only make it visible.
+  - The sector feed still starts in 2015 (left open in the proposal's entry).
+  - A year with more than 10,000 hits would be read only to its tenth page. The busiest year
+    measured had 224.
+- Checks:
+  - A new `check:fr-backfill` (39 checks). It cannot run on main, which has no year walk and no
+    grouping.
+  - `check:wiring` now asks for the year walk, and checks that the daily ask starts on the current
+    year's first day.
+  - `check:live`'s Ford case reads 2008 through the year walk (live: 6 documents) and holds the
+    daily ask to its window.
+  - `check-live-harness` cases are pinned to their dates, so they don't age out with the calendar.
+  - `check:macro` and `check:page-news` follow the page's new line.
+  - `npm run check` passes (50 suites) and `npm run lint` is clean. Owner: `npm run db:migrate`
+    applies db/031 (noted in OWNER-ACTIONS).
+- Requests made: about 270 to the Federal Register, for the measurement and the live runs. One to
+  SEC EDGAR (Walmart's record), with the project's User-Agent, which carries the owner's email.
+
 ## NC ledger — batch 62: a new opportunity-scout run, eight proposals for the owner (2026-10-26)
 
 The work the previous scout run proposed (2026-10-17, proposals 1–10) is all built, and nearly
@@ -4109,7 +4174,7 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
         #4, approved 2026-10-18. Importance high · Efficiency medium-high · Practicality medium
         (a live measurement and a materiality rule first).*
-- [ ] `P1` **The company Federal Register feed back to 1994, and past the newest forty.** It asks
+- [x] `P1` **The company Federal Register feed back to 1994, and past the newest forty.** It asks
       from `FR_COMPANY_SINCE = "2015-01-01"` (`lib/frCompany.ts:194`), though the API answers from
       1994 — a floor `docs/COVERAGE-MAP.md:100-101` calls "a choice, not a limit", in the 1963–2017
       stretch it calls the corpus's biggest hole — and keeps `.slice(0, FR_COMPANY_CAP)`, the
@@ -4126,14 +4191,15 @@ already held, but new investment goes to securities coverage first.
         today's daily ask only.
       - Search a company's EDGAR former names (batch 15, `renamesFrom`) for dates before the rename
         only: "Walmart" finds 1 document before 2015, "Wal-Mart Stores" 5.
-      - ⚠ **Before it ships — the owner says which routine rail-board and FERC notices count**
-        (asked when it is built, per the approval). UNP's 663 and CSX's 430 pre-2015 documents are
-        nearly all Surface Transportation Board line notices, Duke's 461 FERC dockets: exclude
-        them, group them a row a month as `pageFilings` groups prospectuses
-        (`lib/secForms.ts:175`), or keep them. Records are never cut by the page budget and news is
-        (`lib/pageNews.ts`), so 600 more records mean fewer stories.
-      - The sector feed has the same 2015 floor (`lib/federalregister.ts:19`); the same change
-        follows, at lower priority.
+      - ✅ **The owner's call, 2026-10-26: group them, one row a month.** UNP's 663 and CSX's 430
+        pre-2015 documents are nearly all Surface Transportation Board line notices, Duke's 461
+        FERC dockets. Records are never cut by the page budget and news is (`lib/pageNews.ts`), so
+        grouping is what keeps their stories on the page.
+      - **Done in batch 63** (see its section): the year walk (`lib/ingest/frBackfill.ts`,
+        `fr_windows`), former names by year, routine notices grouped (`pageRegulations`).
+      - [ ] `P2` Still open: the sector feed has the same 2015 floor (`lib/federalregister.ts:19`,
+        `fetchRegulations(term, since = "2015-01-01")`); the same change follows, at lower
+        priority.
       - Cases in `check:wiring` against a stand-in Federal Register — a 2003 Ford document reaches
         the page, 60 since 2015 are all kept once walked, a closed year is not asked twice, a former
         name counts only before the rename — and a `check:live` case. No key, licence or recurring
@@ -4160,9 +4226,9 @@ already held, but new investment goes to securities coverage first.
         not results releases), and newly types 47 — 42 results releases, 5 not. Traps it must keep
         out, all stored: Takeda's "Phase 3 Topline Results", UBS's tender-offer "Results", MUFG's
         quarterly capital ratio, a Novartis supplementary-data report.
-      - ⚠ **Before it ships — the owner says whether profit alerts and guidance updates count**
-        (asked when it is built, per the approval): the 5 are a profit alert, a pre-announcement, a
-        guidance update and two Takeda forecast revisions.
+      - ✅ **The owner's call, 2026-10-26: only actual results count.** The 5 — a profit alert, a
+        pre-announcement, a guidance update and two Takeda forecast revisions — stay filings, shown
+        with their headlines; the Earnings chip means reported results.
       - Cases in `check:sec-headlines` from the real stored titles: NIO's 32 and Boeing's four
         become earnings, the traps stay filings, the 120 still agree. No key, licence, recurring
         cost or request — the headlines are stored; small, offline.
@@ -4186,9 +4252,10 @@ already held, but new investment goes to securities coverage first.
         reports the result); SC TO-I 23.
       - **A dead end it closes:** focus and search already read F-1, F-3 and F-4 as form names
         (`lib/focus.ts:54`), so "Arm F-1" opens ARM narrowed to its F-1s and finds none.
-      - ⚠ **Before building — the owner picks the forms from this list**, as on 2026-10-18 (asked
-        when it is built, per the approval). Optional: SUPPL (77 rows), grouped like 424B. Counted
-        and not proposed: 425, DEFA14A, PX14A6G, CORRESP/UPLOAD; insider forms stay out.
+      - ✅ **The owner's pick, 2026-10-26: all four groups** — the offerings (S-3ASR, F-1, F-3,
+        F-3ASR, F-10), late-filing notices, proxy fights, and the tender and merger forms (SC TO-T/A,
+        SC TO-I, F-4). Not picked: SUPPL (77 rows, offered as optional). Counted and not proposed:
+        425, DEFA14A, PX14A6G, CORRESP/UPLOAD; insider forms stay out.
       - Labels and typing in `MATERIAL_FORMS`, the monthly grouping reusing `pageFilings`; cases in
         `check:sec-forms` from real rows (ARM's F-1 kept; Apple's NT 10-Q a late-filing notice;
         Disney's 2024 DFAN14As one row a month; S-3ASR reads as a shelf) and a `check:prompt` case

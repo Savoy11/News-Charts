@@ -97,8 +97,10 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
 - **The keyed aggregators are not ingested.** Their free tiers bar commercial use, so the
   adapters exist for diagnostics only. Even licensed, they are days-to-weeks deep: breadth for the
   present, never depth for the past.
-- **Our own floors are choices, not limits.** GDELT is queried from 2017 and the Federal Register
-  from 2015 because that is what the queries ask for, not because the sources stop there.
+- **Our own floors are choices, not limits.** GDELT is queried from 2017 because that is what the
+  queries ask for, not because the source stops there. A company's Federal Register documents
+  reached back only to 2015 for the same reason; since batch 63 they reach 1994, where its API
+  begins (the sector feed still starts in 2015).
 - **Nothing here reaches non-US regulation**, and nothing reaches non-English press except
   incidentally through Wikipedia.
 

@@ -147,7 +147,7 @@ function main(): void {
   console.log("\nWired");
   const pageData = read("lib/page-data.ts");
   check("a company page's events are bounded after its filings are trimmed, weighed with the rest of its entry",
-    /boundPageNews\(\s*dropCompanyPrehistory\(pageFilings\(\[\.\.\.events, \.\.\.withoutSharedSectorRows\(events, sector\)\], subject\.cik\)\),\s*prices,\s*cachedWeight\(rest\)\s*\)/.test(pageData));
+    /boundPageNews\(\s*dropCompanyPrehistory\(pageRegulations\(pageFilings\(\[\.\.\.events, \.\.\.withoutSharedSectorRows\(events, sector\)\], subject\.cik\)\)\),\s*prices,\s*cachedWeight\(rest\)\s*\)/.test(pageData));
   check("a topic page's too, its prices counted since they share its entry",
     /const rest = \{\s*title: subject\.displayName,[^}]*\bprices,[^}]*\};\s*\/\/[^\n]*\n\s*const \{ events, newsLeftOut \} = boundPageNews\(stored, prices, cachedWeight\(rest\)\);/.test(pageData));
   check("both page caches are re-keyed for the new shape", pageData.includes('["held-company-page", "v7"]') && pageData.includes('["held-topic-page", "v3"]'));

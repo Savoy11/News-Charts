@@ -37,7 +37,8 @@ import { backfillNews } from "../lib/ingest/newsBackfill";
 import { fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
 import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
-import { FR_COMPANY_SINCE, companyNames, fetchCompanyRegulations, frSearchTerm } from "../lib/frCompany";
+import { companyNames, fetchCompanyRegulations, frDailySince, frSearchTerm } from "../lib/frCompany";
+import { backfillRegulations } from "../lib/ingest/frBackfill";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { dojPossessive, dojQueryNames, fetchJusticeReleases } from "../lib/doj";
@@ -493,10 +494,23 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    * petition, a trade-zone or export notice — and never airworthiness directives (the owner's rule
    * from the 2026-10-18 count). A sector's keyword rules stay the industry's; these are the
    * company's own. Scored at link time: the title names the subject, so no model is needed.
+   *
+   * The daily ask reads the current year; each year since 1994 is read once, in full, under the
+   * names the company had then (batch 63). An enrichment: if the walk fails, the company keeps
+   * what it has.
    */
   await run("federal_register", frSearchTerm(company.name, alsoKnownAs), () =>
-    fetchCompanyRegulations(company.name, FR_COMPANY_SINCE, alsoKnownAs)
+    fetchCompanyRegulations(company.name, frDailySince(), alsoKnownAs)
   );
+  try {
+    const older = await backfillRegulations(client, subjectId, { edgarName: company.name, alsoKnownAs, scoring });
+    if (older.due) {
+      line("federal_register", `older     ${older.read} of ${older.due} years asked, ${older.documents} documents kept, ${older.left} left` +
+        (older.stopped ? ` (${older.stopped})` : ""));
+    }
+  } catch (err) {
+    line("federal_register", `older     skipped: ${(err as Error).message}`);
+  }
 
   /**
    * Vehicle safety recalls the company filed with NHTSA, back to 1966 — the one source that reaches

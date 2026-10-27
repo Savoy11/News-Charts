@@ -36,6 +36,9 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   // A maker files a recall within days of deciding there is a defect, a few a month for the
   // largest; a daily look finds each one within a day of NHTSA posting it.
   nhtsa_recalls: 1440,
+  // NHTSA opens a few investigations a month across every maker; a daily look finds each one
+  // within a day of it being posted.
+  nhtsa_investigations: 1440,
   // The enforcement report is published weekly; a daily look finds each recall within a day of it.
   fda_enforcement: 1440,
   // A settlement or a suit naming a large company comes a few times a year; a daily look finds

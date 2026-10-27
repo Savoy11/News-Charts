@@ -1,0 +1,91 @@
+[
+ {
+  "nhtsa_action_number": "EA26002",
+  "manufacturer": "Tesla, Inc.",
+  "investigation_type": "Engineering Analysis",
+  "subject": "FSD Collisions in Reduced Roadway Visibility Conditions",
+  "component": "ELECTRICAL SYSTEM",
+  "open_date": "2026-03-18T00:00:00.000",
+  "status": "Open"
+ },
+ {
+  "nhtsa_action_number": "RQ10003",
+  "manufacturer": "Toyota Motor Corporation",
+  "investigation_type": "Recall Query",
+  "subject": "Unintended and Uncontrolled Acceleration",
+  "component": "VEHICLE SPEED CONTROL",
+  "recall": {
+   "url": "https://www.nhtsa.gov/recalls?nhtsaId=11V115",
+   "description": "11V115"
+  },
+  "open_date": "2010-02-16T00:00:00.000",
+  "closed_date": "2011-03-01T00:00:00.000",
+  "status": "Close"
+ },
+ {
+  "nhtsa_action_number": "AQ08001",
+  "manufacturer": "PACE AMERICAN, INC.",
+  "investigation_type": "Audit Query",
+  "subject": "PACE AMERICAN 573 RETRACTION",
+  "component": "WHEELS",
+  "recall": {
+   "url": "https://www.nhtsa.gov/recalls?nhtsaId=07V526",
+   "description": "07V526"
+  },
+  "open_date": "2008-06-18T00:00:00.000",
+  "closed_date": "2008-10-29T00:00:00.000",
+  "status": "Close"
+ },
+ {
+  "nhtsa_action_number": "DP14004",
+  "manufacturer": "Chrysler (FCA US, LLC)",
+  "investigation_type": "Defect Petition",
+  "subject": "Totally Integrated Power Module Failure",
+  "component": "ELECTRICAL SYSTEM",
+  "open_date": "2014-09-25T00:00:00.000",
+  "closed_date": "2015-07-24T00:00:00.000",
+  "status": "Close"
+ },
+ {
+  "nhtsa_action_number": "AQ14003",
+  "manufacturer": "Chrysler (FCA US, LLC)",
+  "investigation_type": "Audit Query",
+  "subject": "Chrysler's execution of 13V-528 & 529",
+  "component": "STEERING",
+  "open_date": "2014-10-20T00:00:00.000",
+  "closed_date": "2016-05-16T00:00:00.000",
+  "status": "Close"
+ },
+ {
+  "nhtsa_action_number": "EA83013",
+  "manufacturer": "Ford Motor Company",
+  "investigation_type": "Engineering Analysis",
+  "subject": "FRONT SEATBACK FAILURE",
+  "component": "SEATS",
+  "recall": {
+   "url": "https://www.nhtsa.gov/recalls?nhtsaId=84V085",
+   "description": "84V085"
+  },
+  "open_date": "1983-03-23T00:00:00.000",
+  "closed_date": "1989-01-26T00:00:00.000",
+  "status": "Close"
+ },
+ {
+  "nhtsa_action_number": "RQ26003",
+  "manufacturer": "General Motors, LLC",
+  "investigation_type": "Recall Query",
+  "subject": "Upper Grille Deflector Detachment",
+  "component": "STRUCTURE",
+  "open_date": "2026-10-09T00:00:00.000",
+  "status": "Open"
+ },
+ {
+  "nhtsa_action_number": "DP26011",
+  "manufacturer": "Ford Motor Company",
+  "investigation_type": "Defect Petition",
+  "subject": "Camshaft and Lifter Failure in Ford 7.3L Gasoline Engines",
+  "component": "ENGINE",
+  "open_date": "2026-10-23T00:00:00.000",
+  "status": "Open"
+ }
+]

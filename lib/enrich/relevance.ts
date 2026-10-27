@@ -402,7 +402,9 @@ export function deterministicScore(
     // Filed with NHTSA or the FDA by a maker or firm the company owned on that day, checked by
     // hand (lib/recalls.ts, lib/fdaRecalls.ts): about the company by construction, as a filing is.
     case "recall":
-      return { score: 1, reason: "a recall filed by a maker or firm the company owned that day" };
+      return row.sourceKey === "nhtsa_investigations"
+        ? { score: 1, reason: "an investigation NHTSA opened into a maker the company owned that day" }
+        : { score: 1, reason: "a recall filed by a maker or firm the company owned that day" };
   }
 }
 

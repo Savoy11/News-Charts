@@ -985,6 +985,47 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 66: NHTSA's defect investigations on carmakers' pages (2026-10-27)
+
+The fourth of the eight proposals the owner approved on 2026-10-26 (#4), with its new source. The
+owner made its two calls on 2026-10-27: investigations go under the Recalls tag, and only the
+opening is an event.
+
+- [x] **A carmaker's page carries the defect investigations NHTSA opened into it, back to 1975**
+      (`lib/investigations.ts`). They come from the same open-data portal as the recalls, the
+      dataset "Investigations Data" (`b3rp-be92`). Its licence field reads "Public Domain U.S.
+      Government", credited to NHTSA, and it needs no key.
+      - They go through the same hand-checked maker map and its dates (`RECALL_MAKERS`), so
+        Chrysler's investigations count for Stellantis only from 2014-10-12.
+      - Titles say what was opened, never a finding: "NHTSA opened a recall query: Unintended and
+        Uncontrolled Acceleration" (Toyota's RQ10003, 2010-02-16).
+      - **The owner's calls:** each investigation is one row under the Recalls tag, on the day it
+        opened. Its closing goes in the row, with the recall NHTSA links to it: "Closed 2011-03-01;
+        NHTSA links it to recall 11V115." An open one says it is still open.
+      - **On the chart:** each is a small dot ranked like news, never the R a recall gets. An
+        investigation opened is no recall, and Ford alone has 684 (`isMinorRecall`,
+        `lib/markers.ts`).
+      - **Wiring:** the source is registered and licence-checked (`nhtsa_investigations`, in
+        `SOURCES`, the refresh windows and the quota notes). It is asked once a day per mapped
+        maker, beside the recalls. Scoring needs no model and gives its own reason. NHTSA is
+        credited for its investigations in the footer and the Terms page.
+- **Live, 2026-10-27:**
+  - 1,766 investigations for 18 mapped companies, 1,579 of them opened before 2017: Ford 684,
+    GM 651, Toyota 114, Honda 113, Stellantis 50 (from 2014-10-20), Blue Bird 39, Tesla 28, and
+    others.
+  - Stored into a scratch database: Ford's 684 went in once, a second run added nothing, and
+    each was scored 1 without the model. Ford's Recalls tab now holds 1,545 rows.
+- Checks:
+  - 14 new cases in `check:vehicle-recalls` (53 in all), on real rows pinned from the dataset
+    (`scripts/fixtures/nhtsa-investigations.json`). On main they cannot run: the adapter does not
+    exist.
+  - A `check:live` case: Toyota's RQ10003, and no Stellantis investigation before 2014-10-12.
+  - `check:feeds` reports the source.
+  - `npm run check` passes (50 suites) and `npm run lint` is clean.
+- Requests made: about 30 to data.transportation.gov (the counts, the fixture rows, and one
+  request per mapped maker for the live run), with the project's User-Agent, which carries the
+  owner's email.
+
 ## NC ledger — batch 65: the SEC forms the 2026-10-18 list missed (2026-10-27)
 
 The third of the eight proposals the owner approved on 2026-10-26 (#3). The owner picked all four
@@ -4362,7 +4403,7 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
         #3, approved 2026-10-26. Importance high · Efficiency very high · Practicality high (one
         owner pick, the counts in hand).*
-- [ ] `P1` **NHTSA defect investigations beside the recalls, on carmakers' pages.** A new source,
+- [x] `P1` **NHTSA defect investigations beside the recalls, on carmakers' pages.** A new source,
       approved by the owner 2026-10-26: NHTSA's "Investigations Data"
       (`data.transportation.gov/resource/b3rp-be92`), licence field "Public Domain U.S.
       Government" — the same as the recalls dataset batch 30 built on (`6axg-epim`,
@@ -4376,17 +4417,17 @@ already held, but new investment goes to securities coverage first.
       - An adapter in the recall adapter's shape: one request a day per mapped maker, on the portal
         ingest already calls. Titles say what was opened, never a finding ("NHTSA opened an
         engineering analysis: Steering knuckle fracture"). Registered, licence-checked, credited.
-      - ⚠ **Before building — the owner's calls:** which event kind (a regulation event, the Recalls
-        chip, or a kind of its own with a migration like db/028), and whether a closing is a second
-        event. Ford's page gains 684 records, which the page budget pays for in news.
+      - ✅ **The owner's calls, 2026-10-27: under the Recalls tag, and the opening only** — the
+        closing is said in the row. Ford's page gains 684 records, which the page budget pays for
+        in news. **Done in batch 66** (see its section).
       - A new `check:vehicle-investigations` (or cases in `check:vehicle-recalls`) on real pinned
         rows — Toyota's 2010 RQ10003 lands on TM; a Chrysler row before 2014-10-12 is refused for
         Stellantis; another maker's row is refused — plus `check:wiring` and
         `check:commercial-mode`. No key, licence fee or recurring cost; a cloud session builds it.
       - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
         #4, approved 2026-10-26 with the new source. Importance high for its 20 companies ·
-        Efficiency high · Practicality medium (the source approved; the event kind still to
-        choose).*
+        Efficiency high · Practicality medium (the source approved; the event kind chosen
+        2026-10-27).*
 - [ ] `P2` The rest of the securities-coverage depth set: **GDELT year-window backfill** (GDELT
       answers from this container but throttles hard — 429/503 — so this needs the production
       host to develop against) and **richer paid-tier evidence** (needs a paid key). The LoC

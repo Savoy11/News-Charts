@@ -30,6 +30,7 @@ import { getTopicTimeline } from "../lib/wiki";
 import { resolveCompany, commonName, getFilings, newsNamesFor, possessiveNameFor } from "../lib/sec";
 import { companyNames, fetchCompanyRegulations, fetchCompanyYear, frDailySince, frSearchTerm } from "../lib/frCompany";
 import { fetchRecalls, recallMakersFor } from "../lib/recalls";
+import { fetchInvestigations } from "../lib/investigations";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { dojPossessive, dojQueryNames, fetchJusticeReleases } from "../lib/doj";
 import { mayCarryRelease, readFilingHeadline } from "../lib/secHeadlines";
@@ -181,8 +182,10 @@ async function main() {
       `(asked ${frSearchTerm(company.name, alsoKnownAs)}, this year)`);
     reportFetch("Federal Register, 2008", await tried(fetchCompanyYear(company.name, 2008, alsoKnownAs)),
       "(a past year, as the year walk reads it: every page; former names are not read here)");
-    if (recallMakersFor(company.cik)) reportFetch("NHTSA recalls", await tried(fetchRecalls(company.cik)), "(mapped makers only)");
-    else console.log(`  ${"NHTSA recalls".padEnd(22)} — not a mapped vehicle maker`);
+    if (recallMakersFor(company.cik)) {
+      reportFetch("NHTSA recalls", await tried(fetchRecalls(company.cik)), "(mapped makers only)");
+      reportFetch("NHTSA investigations", await tried(fetchInvestigations(company.cik)), "(mapped makers only)");
+    } else console.log(`  ${"NHTSA recalls".padEnd(22)} — not a mapped vehicle maker`);
     if (fdaFirmsFor(company.cik)) reportFetch("FDA enforcement", await tried(fetchFdaRecalls(company.cik)), "(mapped firms only)");
     else console.log(`  ${"FDA enforcement".padEnd(22)} — not a mapped FDA firm`);
     reportFetch("Justice Department", await tried(fetchJusticeReleases(company.name, alsoKnownAs, possessive)),

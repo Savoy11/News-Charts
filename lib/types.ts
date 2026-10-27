@@ -48,6 +48,7 @@ export type SourceKey =
   | "fed_fomc"
   | "bls_cpi"
   | "nhtsa_recalls"
+  | "nhtsa_investigations"
   | "doj_press"
   | "fda_enforcement";
 

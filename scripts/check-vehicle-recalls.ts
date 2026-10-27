@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import tickerIndex from "../data/edgar-tickers.json";
 import { RECALL_FLOOR, RECALL_MAKERS, fetchRecalls, recallEvents, recallHeadline, recallMakersFor, recallQuery, type RecallRow } from "../lib/recalls";
+import { fetchInvestigations, investigationEvents, investigationQuery, isInvestigation, type InvestigationRow } from "../lib/investigations";
+import { markerPriority, markerStyle } from "../lib/markers";
 import { SOURCES } from "../lib/ingest/store";
 import { deterministicScore } from "../lib/enrich/relevance";
 import { MARKER_STYLE } from "../lib/markers";
@@ -155,9 +157,66 @@ async function main(): Promise<void> {
   check("the database knows the kind: a migration for existing databases, the schema for new ones",
     /ADD VALUE IF NOT EXISTS 'recall'/.test(read("db/028_recall_kind.sql")) && /'macro','recall'\)/.test(read("db/001_init.sql")) &&
       /'macro','recall'\)/.test(read("docs/EVENTS-SCHEMA.md")));
-  check("NHTSA is credited where the other sources are",
-    /vehicle recalls from\s+the National Highway Traffic Safety Administration/.test(read("app/layout.tsx")) &&
-      /vehicle recalls from the National Highway Traffic Safety Administration/.test(read("app/legal/terms/page.tsx")));
+  check("NHTSA is credited where the other sources are, for its recalls and its investigations (batch 66)",
+    /vehicle recalls and\s+defect investigations from the National Highway Traffic Safety Administration/.test(read("app/layout.tsx")) &&
+      /vehicle recalls and defect investigations from the National Highway Traffic Safety\s+Administration/.test(read("app/legal/terms/page.tsx")));
+
+  /**
+   * NHTSA's defect investigations (batch 66, the 2026-10-26 proposal 4). The rows are real, read
+   * from data.transportation.gov on 2026-10-27 (scripts/fixtures/nhtsa-investigations.json):
+   * Toyota's 2010 acceleration query, Tesla's open FSD analysis, Ford's oldest engineering analysis
+   * and a petition still open, GM's newest query, the two sides of Stellantis's 2014-10-12 boundary,
+   * and another maker's audit.
+   */
+  console.log("\nNHTSA's defect investigations, with the recalls (batch 66)");
+  const invRows: InvestigationRow[] = JSON.parse(read("scripts/fixtures/nhtsa-investigations.json"));
+  const inv = (ticker: string) => investigationEvents(invRows, makersOf(ticker));
+  const toyota = inv("TM").find((e) => e.externalId === "RQ10003");
+  check("Toyota's 2010 acceleration query lands on its page, on the day it opened, under the Recalls tag",
+    toyota?.date === "2010-02-16" && toyota.type === "recall" && toyota.title === "NHTSA opened a recall query: Unintended and Uncontrolled Acceleration",
+    toyota ? `${toyota.date} ${toyota.type}: ${toyota.title}` : "missing");
+  check("  …one row, its closing said in it, never a second event (the owner's call)",
+    inv("TM").filter((e) => e.externalId === "RQ10003").length === 1 &&
+      toyota?.description === "NHTSA investigation RQ10003 (Recall Query) into Toyota Motor Corporation. Closed 2011-03-01; NHTSA links it to recall 11V115.",
+    toyota?.description);
+  const tesla = inv("TSLA")[0];
+  check("an investigation still open says so", tesla?.externalId === "EA26002" && tesla.description === "NHTSA investigation EA26002 (Engineering Analysis) into Tesla, Inc. Still open." &&
+    tesla.title === "NHTSA opened an engineering analysis: FSD Collisions in Reduced Roadway Visibility Conditions", `${tesla?.title} / ${tesla?.description}`);
+  const fordInv = inv("F");
+  check("Ford's 1983 engineering analysis reads as a sentence, its capitals lowered as a recall's are",
+    fordInv.find((e) => e.externalId === "EA83013")?.title === "NHTSA opened an engineering analysis: Front seatback failure",
+    fordInv.find((e) => e.externalId === "EA83013")?.title);
+  check("  …and a defect petition is a review of one, not a finding", fordInv.some((e) => e.externalId === "DP26011" && /^NHTSA opened a review of a defect petition: /.test(e.title)));
+  const stlaInv = inv("STLA").map((e) => e.externalId);
+  check("Chrysler's investigation from before 2014-10-12 is refused for Stellantis, the one after kept",
+    !stlaInv.includes("DP14004") && stlaInv.includes("AQ14003"), stlaInv.join(","));
+  check("another maker's investigation reaches no mapped company",
+    !Object.values(RECALL_MAKERS).some((c) => investigationEvents(invRows, c.makers).some((e) => e.externalId === "AQ08001")));
+  check("the query asks a dated maker only from its day, every other mapped maker in full",
+    (new URL(investigationQuery(makersOf("STLA"))).searchParams.get("$where") ?? "").includes("manufacturer = 'Chrysler (FCA US, LLC)' AND open_date >= '2014-10-12T00:00:00'") &&
+      new URL(investigationQuery(makersOf("F"))).searchParams.get("$where") === "manufacturer IN ('Ford Motor Company')",
+    new URL(investigationQuery(makersOf("F"))).searchParams.get("$where") ?? "");
+  check("each has its own identity, apart from any recall's", toyota?.dedupBasis === "nhtsa-inv:RQ10003" && toyota.sourceKey === "nhtsa_investigations");
+  check("on the chart it is a dot ranked like news, never the R a recall made gets",
+    !!toyota && isInvestigation(toyota) && markerStyle(toyota).text === "" && markerPriority(toyota) < markerPriority({ type: "recall", title: "Recall of 10,000 vehicles: x" }));
+  const scored = toyota && deterministicScore({ kind: "recall", title: toyota.title, sourceKey: "nhtsa_investigations" } as never, { kind: "company", displayName: "TOYOTA MOTOR CORP", ticker: "TM" }, ["toyota"]);
+  check("  …and is scored without the model, saying it is an investigation", scored?.score === 1 && /investigation NHTSA opened/.test(scored.reason), scored?.reason);
+  let invAsked = 0;
+  try {
+    globalThis.fetch = (async () => (invAsked++, new Response(JSON.stringify(invRows), { status: 200 }))) as typeof fetch;
+    const none = await fetchInvestigations(320193);
+    const f = await fetchInvestigations(37996);
+    check("an unmapped company asks nothing; a mapped one asks once", invAsked === 1 && none.outcome === "empty" && f.outcome === "ok" && f.events.length === 2,
+      `${invAsked} asked, ${f.events.length} of Ford's`);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const invSrc = SOURCES.find((s) => s.key === "nhtsa_investigations");
+  check("the source is registered as public domain, cleared for commercial use, with the day it was read",
+    invSrc?.license === "public domain" && invSrc.commercialOk && invSrc.reviewedOn === "2026-10-27", JSON.stringify(invSrc));
+  check("company ingest asks for them beside the recalls, for a mapped maker only",
+    (COMPANY_SOURCES as readonly string[]).includes("nhtsa_investigations") &&
+      /if \(makers\) \{\s*await run\("nhtsa_recalls"[^\n]*\n[^\n]*\n\s*await run\("nhtsa_investigations", [^\n]*fetchInvestigations\(company\.cik\)\);\s*\}/.test(ingest));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   process.exit(fail ? 1 : 0);

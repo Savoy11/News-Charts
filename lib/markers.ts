@@ -70,9 +70,12 @@ export const PRIORITY: Record<EventType, number> = {
  * ranked like a news story (batch 40). The "R" and a recall's priority were set for NHTSA recalls
  * of 10,000 vehicles or more; Medtronic alone has 470 Class II recalls since 2012, and drawn as Rs
  * they covered its five-year chart. Class I and every vehicle recall keep the R.
+ *
+ * So does an NHTSA defect investigation (batch 66): listed under the Recalls tag, the owner's call,
+ * but an investigation opened is no recall, and an R would say one was made. Ford alone has 684.
  */
 export const isMinorRecall = (ev: Pick<TimelineEvent, "type" | "title">): boolean =>
-  ev.type === "recall" && /^Class II (?:drug|device|food) recall: /.test(ev.title);
+  ev.type === "recall" && /^(?:Class II (?:drug|device|food) recall: |NHTSA opened )/.test(ev.title);
 
 const MINOR_RECALL = { color: "#facc15", position: "belowBar", shape: "circle", text: "" } as const;
 

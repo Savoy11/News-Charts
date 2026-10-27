@@ -42,6 +42,7 @@ export const QUOTAS: Record<SourceKey, Quota> = {
   fed_fomc: { perDay: null, note: "public pages, no published cap; one page a day, about 27 once for the history" },
   bls_cpi: { perDay: null, note: "public archive page, no published cap; one page a day" },
   nhtsa_recalls: { perDay: null, note: "open-data API, no published cap without an app token; one request a day per vehicle maker" },
+  nhtsa_investigations: { perDay: null, note: "the same open-data API; one request a day per vehicle maker" },
   doj_press: { perDay: null, note: "justice.gov's public API, no published cap; a page or two a day per company, 0.8s apart" },
   fda_enforcement: { perDay: 1000, note: "openFDA without a key: 1,000 requests a day, 240 a minute; three to six a day per mapped company" },
   yahoo_finance: { perDay: null, note: "undocumented and unofficial — the licence question, not the quota, is the risk" },

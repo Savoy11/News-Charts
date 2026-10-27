@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
 import { isMinorRecall } from "@/lib/markers";
+import { publishedAfterClose } from "@/lib/marketTime";
 
 // Surfaces the largest single-day price changes and pairs each with the nearest *earlier* event,
 // so a reader can see at a glance what was happening around a move. This is deliberately framed as
@@ -30,7 +31,9 @@ const BADGE: Record<EventType, { label: string; cls: string }> = {
 };
 
 // A move on day D can be sparked by an item dated D itself (intraday news) or a few days before
-// (an after-close 8-K/earnings moves the *next* session). Look back this far, no further.
+// (an after-close 8-K/earnings moves the *next* session). Look back this far, no further. An item
+// with a time that came out after D's close is never D's (`publishedAfterClose`, batch 68): an
+// after-close release carries its own day's date, and by date alone it captioned that day's move.
 const CATALYST_LOOKBACK_DAYS = 5;
 // Which kind wins when two events sit on the same nearest day — the market-moving ones first.
 const CATALYST_PRIORITY: Record<EventType, number> = {
@@ -89,7 +92,7 @@ export function nearestCatalyst(sorted: TimelineEvent[], day: string): TimelineE
   let bestScore = -Infinity;
   for (const ev of sorted) {
     const t = dayMs(ev.date);
-    if (t > end || t < start) continue;
+    if (t > end || t < start || publishedAfterClose(ev, day)) continue;
     // Proximity leads, but the ×2 weight lets a high-priority item (earnings/filing) reported the
     // day before still beat same-day reaction news — the after-close report that moved the next
     // session is the more useful pairing. Same-day, the higher-priority kind wins.

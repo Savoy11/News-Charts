@@ -205,7 +205,8 @@ const cachedHeldCompany = unstable_cache(
     const page = await heldCompanyPage(key);
     return page && { ...page, prices: [] };
   },
-  ["held-company-page", "v7"],
+  // v8: a filing row carries the instant it came out (batch 68)
+  ["held-company-page", "v8"],
   { revalidate: PAGE_CACHE_SECONDS, tags: ["subject-pages"] }
 );
 const cachedHeldPrices = unstable_cache(

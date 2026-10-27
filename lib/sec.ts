@@ -36,6 +36,7 @@ import { nameKey, type AliasIndexFile } from "./companyAliases";
 import { foldAccents } from "./fold";
 import { predecessorsOf } from "./predecessors";
 import { commonName } from "./edgarName";
+import { eastern } from "./marketTime";
 
 export { commonName };
 
@@ -776,6 +777,21 @@ interface FilingBlock {
   primaryDocument?: string[];
   items?: string[];
   fileNumber?: string[];
+  acceptanceDateTime?: string[];
+}
+
+/**
+ * When EDGAR accepted a filing, as an instant, or null when it does not say (batch 68). The stamp is
+ * UTC: Apple's results 8-K of 2026-07-30 reads "2026-07-30T20:30:28.000Z", and its filing page says
+ * accepted 16:30:28. Until 2002 EDGAR kept most filings' day only, stamped midnight New York time
+ * — all of Ford's 366 filings of 1994 to 2001 and 22 of its 64 in 2002, though one of Apple's 1994
+ * filings has a time — so a stamp of exactly midnight Eastern is a day, not a time, and is dropped.
+ */
+export function acceptedAt(raw: string | undefined): string | null {
+  if (!raw || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(raw)) return null;
+  const et = eastern(raw);
+  if (!et || et.time === "00:00:00") return null;
+  return raw.replace(/\.\d+Z$/, "Z");
 }
 
 /** One 424B prospectus, held back so a day's worth can become one row (`prospectusEvents`). */
@@ -902,6 +918,8 @@ function filingsFromBlock(
      * says which are the fund's, at ingest; its page shows those under its name (batch 67).
      */
     const byRegistrant = fund !== undefined;
+    // which side of the session it came out on, for the row and for Biggest moves (batch 68)
+    const accepted = acceptedAt(block.acceptanceDateTime?.[i]);
     events.push({
       id: `sec-${accession}`,
       date,
@@ -919,6 +937,7 @@ function filingsFromBlock(
       // the accession number is already globally unique, so document and event identity coincide
       externalId: accession,
       dedupBasis: `sec:${accession}`,
+      ...(accepted ? { occurredAt: accepted } : {}),
     });
   }
   return events;

@@ -209,7 +209,8 @@ check(
   "the owning source can correct an event's date, precision and kind (NC-141)",
   /occurred_on = CASE WHEN \$9 THEN EXCLUDED\.occurred_on/.test(storeSrc) &&
     /kind = CASE WHEN \$9 THEN EXCLUDED\.kind/.test(storeSrc) &&
-    /OR \(\$9 AND \(events\.occurred_on, events\.date_precision, events\.kind\)/.test(storeSrc)
+    // …and, since batch 68, the instant it came out (`check:sec-forms` holds that part)
+    /OR \(\$9 AND \(events\.occurred_on, events\.date_precision, events\.kind(?:, events\.occurred_at)?\)/.test(storeSrc)
 );
 check(
   "a deterministic score is re-scored on re-ingest, a model's never (NC-131)",

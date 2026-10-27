@@ -24,7 +24,7 @@ because it will be trusted.
 | **any** | Wikipedia prose | as far as the article goes | History sentences |
 | **any** | Wikipedia citations | as far as the references go | Dated external articles |
 | **any** | Internet Archive | 1780 for companies (a bound on impossibility); topics effectively none | Catalogued items: reports, catalogues, film — relevance-ranked |
-| **1934 – now** | SEC EDGAR | electronic filings from ~1993 | Filings, earnings; an 8-K, or a foreign company's 6-K, titled by the headline of the press release filed with it, from 1994 (`lib/secHeadlines.ts`) |
+| **1934 – now** | SEC EDGAR | electronic filings from ~1993 | Filings, earnings; an 8-K, or a foreign company's 6-K, titled by the headline of the press release filed with it, from 1994 (`lib/secHeadlines.ts`). A fund's own filings, by the list EDGAR keeps for its series, from February 2006, when the lists begin; its trust's older ones stay, hedged (`lib/fundSeries.ts`, batch 67) |
 | **1966 – now** | NHTSA vehicle recalls | 1966, the first campaigns | Safety recalls of 10,000 vehicles or more, for the vehicle and tyre makers `lib/recalls.ts` maps (Ford, GM, Stellantis from 2014, Toyota, Honda, Tesla, Harley-Davidson, PACCAR, the RV makers Thor and Winnebago with the brands they bought, Berkshire Hathaway's Forest River, and others) |
 | **1975 – now** | NHTSA defect investigations | 1975, the first opened | Every investigation NHTSA opened into the same makers, shown with their recalls (batch 66): 1,766 for 18 companies, 1,579 before 2017 (Ford 684, GM 651) |
 | **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |

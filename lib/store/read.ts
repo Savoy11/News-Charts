@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { getPool } from "../db";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
+import { OWN_SERIES_SCORER, asOwnSeriesFiling } from "../fundSeries";
 import { SIMILARITY_FLOOR, worthFuzzyMatching } from "../fuzzy";
 import { DatePrecision, EventType, PricePoint, SourceKey, TimelineEvent } from "../types";
 import { PROMPT_VERSION } from "../enrich/explain";
@@ -233,21 +234,26 @@ export async function loadSubject(slug: string): Promise<SubjectRow | null> {
 /**
  * The site's hot read. Joins the primary attestation for the link, and counts
  * attestations so corroborated events can be distinguished later.
+ *
+ * A fund's own filing, by its series' filing list, is shown under the fund's name: the stored row
+ * names the trust, because it is the same row on every sibling's page (`asOwnSeriesFiling`).
  */
 export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
   const { rows } = await getPool().query(
     `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title, e.body, e.image_url,
             es.relevance,
+            CASE WHEN es.scored_by = $3 THEN sj.display_name END AS own_series_of,
             a.url, a.source_label, a.external_id,
             (SELECT count(*) FROM event_attestations x WHERE x.event_id = e.id) AS attestations
        FROM events e
        JOIN event_subjects es ON es.event_id = e.id
+       JOIN subjects sj ON sj.id = es.subject_id
        LEFT JOIN event_attestations a ON a.event_id = e.id AND a.is_primary
       -- unscored (NULL) still shows: nothing is hidden without evidence
       WHERE es.subject_id = $1
         AND (es.relevance IS NULL OR es.relevance >= $2)
       ORDER BY e.occurred_on`,
-    [subjectId, RELEVANCE_THRESHOLD]
+    [subjectId, RELEVANCE_THRESHOLD, OWN_SERIES_SCORER]
   );
 
   return rows.map((r) => {
@@ -256,7 +262,7 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
         ? r.occurred_on.toISOString().slice(0, 10)
         : String(r.occurred_on).slice(0, 10);
     const attestations = Number(r.attestations);
-    return {
+    const ev = {
       id: `db-${r.id}`,
       date,
       type: r.kind as EventType,
@@ -278,6 +284,7 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
       // an invisible SQL gate before — a score that can hide a row but never order one.
       relevance: r.relevance == null ? undefined : Number(r.relevance),
     } satisfies TimelineEvent;
+    return r.own_series_of ? asOwnSeriesFiling(ev, r.own_series_of) : ev;
   });
 }
 

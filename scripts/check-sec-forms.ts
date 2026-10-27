@@ -431,8 +431,216 @@ async function main(): Promise<void> {
     /return page && \{ \.\.\.page, prices: \[\] \};/.test(pageData) && /\["held-company-prices", "v1"\]/.test(pageData) &&
       /prices: await cachedHeldPrices\(k\)/.test(pageData));
 
+  await fundSeriesFilings();
+
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);
+}
+
+/**
+ * A fund's page carries its own fund's filings, by the series EDGAR tags them with (batch 67, the
+ * 2026-10-26 proposal 5). Against EDGAR's own answers of 2026-10-27, pinned: the Vanguard Index
+ * Funds trust's record over the window the proposal measured, and VOO's series' whole filing list,
+ * served a hundred entries a page in the feed's own markup.
+ */
+async function fundSeriesFilings(): Promise<void> {
+  console.log("\nA fund's own filings, by its series");
+  const { getFilingsDeep, fundSeriesId } = await import("../lib/sec");
+  const { REGISTRANT_FORM } = await import("../lib/secForms");
+  const fs = await import("../lib/fundSeries");
+  const pinned = JSON.parse(readFileSync("scripts/fixtures/voo-series-filings.json", "utf8")) as {
+    trust: { cik: string; name: string; recent: Record<string, string[]> };
+    seriesId: string;
+    series: [accession: string, date: string, form: string][];
+    sampleEntry: string;
+    olderShard: { name: string; row: Record<string, string[]> };
+  };
+  check("VOO's series is the one the list is pinned for", fundSeriesId("VOO") === pinned.seriesId, String(fundSeriesId("VOO")));
+
+  // A page as EDGAR writes it: its first entry's markup, with each entry's own number, day and form.
+  const page = (start: number) =>
+    `<?xml version="1.0" encoding="ISO-8859-1" ?>\n<feed xmlns="http://www.w3.org/2005/Atom">\n<company-info><cik>${pinned.trust.cik}</cik>` +
+    `<conformed-name>${pinned.trust.name}</conformed-name></company-info>\n` +
+    pinned.series
+      .slice(start, start + fs.SERIES_PAGE)
+      .map(([accession, date, form]) =>
+        pinned.sampleEntry
+          .replace(/<accession-number>[^<]*</g, `<accession-number>${accession}<`)
+          .replace(/<filing-date>[^<]*</g, `<filing-date>${date}<`)
+          .replace(/term="[^"]*"/, `term="${form}"`)
+          .replace(/<filing-type>[^<]*</g, `<filing-type>${form}<`)
+      )
+      .join("\n") +
+    "\n</feed>";
+  const asked: string[] = [];
+  const failAt = { start: -1, status: 429, times: Infinity };
+  const listGet = async (url: string): Promise<Response> => {
+    asked.push(url);
+    const start = Number(new URL(url).searchParams.get("start") ?? 0);
+    if (start === failAt.start && failAt.times-- > 0) return new Response("", { status: failAt.status });
+    return new Response(page(start), { status: 200 });
+  };
+  const read = (opts: { maxPages?: number } = {}) => fs.fetchSeriesFilings(pinned.seriesId, { get: listGet, gapMs: 0, retryMs: 0, ...opts });
+
+  const series = await read();
+  const listed = new Set(pinned.series.map(([a]) => a.replace(/-/g, "")));
+  check("the whole list is read, a hundred a request: 533 entries in 6", asked.length === 6 && series?.pages === 6, `${asked.length} requests`);
+  check("  …and every filing on it is kept, each once", series?.accessions.size === listed.size && listed.size === 467, `${series?.accessions.size}`);
+  check("  …read to its end, back to 2006-02-16, the oldest day it lists", series?.complete === true && series.oldest === "2006-02-16", series?.oldest);
+  check("  …asked by series id, newest first, a page at a time",
+    /CIK=S000002839&owner=include&count=100&output=atom$/.test(asked[0]) && /&start=500&output=atom$/.test(asked[5]), asked[5]);
+
+  // The trust's record over the window, through the filings step as the ingest reads it.
+  const realFetch = globalThis.fetch;
+  const trustFilings = async (ticker: string, name: string) => {
+    globalThis.fetch = (async (url: string) =>
+      new Response(
+        String(url).endsWith(pinned.olderShard.name)
+          ? JSON.stringify(pinned.olderShard.row)
+          : JSON.stringify({ name: pinned.trust.name, filings: { recent: pinned.trust.recent, files: [{ name: pinned.olderShard.name }] } }),
+        { status: 200 }
+      )) as unknown as typeof fetch;
+    try {
+      return await getFilingsDeep({ ticker, cik: pinned.trust.cik, name }, true);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  };
+  const filings = await trustFilings("VOO", "Vanguard 500 Index Fund");
+  const older = filings.find((e) => e.externalId === "000093247105000480");
+  const fundForms = filings.filter((e) => REGISTRANT_FORM.test(e.title) && e !== older);
+  check("the trust filed 432 of the kept fund forms in the window, all of them on VOO's page before", fundForms.length === 432, `${fundForms.length}`);
+  if (!series) return;
+  const split = fs.ownSeriesFilings(filings, series);
+  const formOf = (id: string) => fundForms.find((e) => e.externalId === id)?.title.match(/\(([^)]+)\)$/)?.[1];
+  const byForm = (ids: string[], form: string) => ids.filter((id) => formOf(id) === form).length;
+  check("VOO keeps 76 of them, its own", split.own.length === 76 && split.siblings.length === 356, `${split.own.length} own, ${split.siblings.length} a sibling's`);
+  check("  …NPORT-P 181 → 15, 497K 191 → 16, 497 39 → 29, as the proposal measured",
+    byForm(split.own, "NPORT-P") === 15 && byForm(split.own, "497K") === 16 && byForm(split.own, "497") === 29 &&
+      byForm([...split.own, ...split.siblings], "NPORT-P") === 181,
+    `${byForm(split.own, "NPORT-P")} / ${byForm(split.own, "497K")} / ${byForm(split.own, "497")}`);
+  check("  …and a sibling's filing is not stored for it", !split.events.some((e) => split.siblings.includes(e.externalId ?? "")));
+  check("  …while every other form passes as it was", split.events.length === filings.length - 356);
+  // EDGAR began tagging series in 2006: the trust's filings before VOO's list begins are on no list
+  check("a fund filing older than the list's first day is not a sibling's: the trust's 2005 annual report keeps its hedge",
+    Boolean(older) && /\(N-CSR\)$/.test(older!.title) && split.events.includes(older!) &&
+      !split.own.includes(older!.externalId!) && !split.siblings.includes(older!.externalId!) &&
+      !fs.covers(series, "2006-02-15") && fs.covers(series, "2006-02-16"),
+    older?.title);
+  // 2026-08-28: two of that day's twelve holdings reports, read from their EDGAR headers 2026-10-27
+  // — 000472 tags series S000002845 (Vanguard Morningstar Small-Cap Index Fund, VB), 000473 VOO's.
+  check("a sibling's NPORT-P is not on VOO's page: VB's of 2026-08-28",
+    split.siblings.includes("000003640526000472") && !split.events.some((e) => e.externalId === "000003640526000472"));
+  const own = split.events.find((e) => e.externalId === "000003640526000473");
+  check("  …and VOO's own of that day is", Boolean(own) && split.own.includes("000003640526000473"));
+
+  console.log("\nOne stored row, every sibling's page");
+  check("the stored row names the trust, as before",
+    own?.title === "VANGUARD INDEX FUNDS: Portfolio holdings (NPORT-P)" && /may concern a sibling fund/.test(own?.description ?? ""), own?.title);
+  const asVti = (await trustFilings("VTI", "Vanguard Morningstar Total Stock Market Index Fund")).find((e) => e.externalId === "000003640526000473");
+  check("  …and is written the same whichever fund's ingest writes it",
+    asVti?.title === own?.title && asVti?.description === own?.description && !/Vanguard 500|Total Stock/.test(own?.description ?? ""),
+    own?.description);
+  const shown = own && fs.asOwnSeriesFiling(own, "Vanguard 500 Index Fund");
+  check("on the fund's own page it is the fund's, under its name",
+    shown?.title === "Vanguard 500 Index Fund: Portfolio holdings (NPORT-P)", shown?.title);
+  check("  …without the hedge, saying who filed it",
+    shown?.description === "Filed by VANGUARD INDEX FUNDS; EDGAR lists it among this fund's own filings.", shown?.description);
+  const op = { id: "x", date: "2026-01-02", type: "filing" as const, title: "Vanguard 500 Index Fund: Proxy statement (DEF 14A)", source: "SEC EDGAR" };
+  check("  …and a row that is not a fund form is left alone", fs.asOwnSeriesFiling(op, "Other") === op);
+
+  console.log("\nA list read in part, or not at all");
+  asked.length = 0;
+  failAt.start = 100;
+  const part = await read();
+  const oldestRead = pinned.series.slice(0, 100).map(([, d]) => d).sort()[0];
+  check("a second page refused (429, slow down) leaves the first, covering the days after its oldest",
+    part?.pages === 1 && !part.complete && part.oldest === oldestRead && asked.length === 2 &&
+      !fs.covers(part, oldestRead) && fs.covers(part, "2022-12-06"),
+    `${part?.oldest}`);
+  const partSplit = part && fs.ownSeriesFilings(filings, part);
+  const uncovered = fundForms.filter((e) => e.date <= oldestRead);
+  check("  …so the days after it are sorted, and a fund filing of its last day keeps the trust's title and hedge",
+    Boolean(partSplit) && partSplit!.own.length > 0 && partSplit!.siblings.length > 0 && uncovered.length > 0 &&
+      uncovered.every((e) => partSplit!.events.includes(e)) &&
+      uncovered.every((e) => !partSplit!.own.includes(e.externalId!) && !partSplit!.siblings.includes(e.externalId!)),
+    `${partSplit?.own.length} own, ${partSplit?.siblings.length} a sibling's, ${uncovered.length} of ${oldestRead} left as it was`);
+  // browse-edgar gives up on a slow page with a 503: VTI's first page did, 2026-10-27
+  asked.length = 0;
+  failAt.status = 503;
+  failAt.times = 2;
+  const twice = await read();
+  check("a 503 is asked again, and a page that then answers is read", twice?.complete === true && asked.length === 8, `${asked.length} requests`);
+  asked.length = 0;
+  failAt.times = Infinity;
+  const thrice = await read();
+  check("  …but only twice: a third 503 ends the walk like a refusal", thrice?.pages === 1 && !thrice.complete && asked.length === 4, `${asked.length} requests`);
+  failAt.status = 429;
+  failAt.start = -1;
+  const capped = await read({ maxPages: 1 });
+  check("the page cap ends a long list the same way", capped?.pages === 1 && !capped.complete && capped.oldest === oldestRead);
+  failAt.start = 0;
+  check("an unreachable list is not read as one: today's titles stay", (await read()) === null);
+  failAt.start = -1;
+  check("  …nor is an empty first page, which would take every filing off the page",
+    (await fs.fetchSeriesFilings(pinned.seriesId, { get: async () => new Response(page(9999), { status: 200 }), gapMs: 0 })) === null);
+  check("  …nor an answer that is not the feed",
+    (await fs.fetchSeriesFilings(pinned.seriesId, { get: async () => new Response("<html>No matching CIK.</html>", { status: 200 }), gapMs: 0 })) === null &&
+      (await fs.fetchSeriesFilings(pinned.seriesId, { get: async () => { throw new Error("socket hang up"); }, gapMs: 0 })) === null);
+  check("a list of exactly a hundred ends on the empty page after it, read whole",
+    (await fs.fetchSeriesFilings(pinned.seriesId, {
+      get: async (url) => new Response(Number(new URL(url).searchParams.get("start") ?? 0) ? page(9999) : page(0), { status: 200 }),
+      gapMs: 0,
+    }))?.complete === true);
+  check("a fund with no series id is not asked, and a company is never one", fundSeriesId("AAPL") === null && fundSeriesId("ZZZZQ") === null);
+
+  console.log("\nA later run whose list fails keeps what an earlier one settled");
+  // after the whole list was read: the fund's own linked and marked, its siblings unlinked
+  const ownDates = split.events.filter((e) => split.own.includes(e.externalId ?? "")).map((e) => e.date).sort();
+  const before = { from: ownDates[0], to: ownDates.at(-1)!, linked: new Set(split.events.map((e) => e.externalId!)) };
+  const inSpan = split.siblings.filter((id) => {
+    const d = filings.find((e) => e.externalId === id)!.date;
+    return d >= before.from && d <= before.to;
+  });
+  const unread = fs.withoutJudgedSiblings(filings, null, before);
+  check("a run whose list cannot be read does not link the siblings an earlier read unlinked",
+    unread.left === inSpan.length && inSpan.length > 300 && !unread.events.some((e) => inSpan.includes(e.externalId ?? "")),
+    `${unread.left} kept off, of ${split.siblings.length} siblings; ${before.from} to ${before.to}`);
+  check("  …and keeps every filing still linked, its own among them",
+    split.own.every((id) => unread.events.some((e) => e.externalId === id)) && unread.events.length === filings.length - inSpan.length);
+  check("  …while a day no earlier read reached keeps today's hedge: the 2005 annual report",
+    unread.events.includes(older!) && older!.date < before.from);
+  // as if this run's list had been read back only to the start of 2025
+  const toward = { ...series, complete: false, oldest: "2025-01-01" };
+  const recent = fs.ownSeriesFilings(filings, toward);
+  const partAgain = fs.withoutJudgedSiblings(recent.events, toward, before);
+  const olderSiblings = inSpan.filter((id) => filings.find((e) => e.externalId === id)!.date <= "2025-01-01");
+  check("a list read in part splits the days it reached, and keeps the earlier read's word for the rest",
+    recent.siblings.length > 0 && olderSiblings.length > 0 && partAgain.left === olderSiblings.length &&
+      recent.siblings.length + partAgain.left === inSpan.length,
+    `${recent.siblings.length} split off now, ${partAgain.left} kept off by the earlier read`);
+
+  console.log("\nCertain where its list says so, and kept so");
+  check("the fund's own are linked by a free scorer of their own",
+    fs.OWN_SERIES_SCORER.startsWith("deterministic") && !["deterministic", "deterministic-strict"].includes(fs.OWN_SERIES_SCORER));
+  const storeSrc = readFileSync("lib/ingest/store.ts", "utf8");
+  const scoreSrc = readFileSync("scripts/score.ts", "utf8");
+  check("  …which ingest's re-score does not overwrite", /WHERE \$5 AND event_subjects\.scored_by = 'deterministic'\n/.test(storeSrc));
+  check("  …nor a `--rescore`", /const freeScorers = \(strict: boolean\) => \(strict \? \[FREE, FREE_STRICT\] : \[FREE\]\);/.test(scoreSrc));
+  const ingestSrc = readFileSync("scripts/ingest.ts", "utf8");
+  check("the ingest keeps an earlier read's siblings off a fund whose list it did not read whole",
+    /const before = series\?\.complete \? null : await judgedBefore\(client, subjectId\);/.test(ingestSrc) &&
+      /withoutJudgedSiblings\(filings, series, before\)/.test(ingestSrc) && /WHERE es\.subject_id = \$1 AND es\.scored_by = \$2`,\s+\[subjectId, OWN_SERIES_SCORER\]/.test(ingestSrc));
+  check("the ingest reads the list for a fund, and stores only what it keeps",
+    /const seriesId = fundSeriesId\(company\.ticker\);/.test(ingestSrc) && /fundSplit = ownSeriesFilings\(filings, series\);\s+filings = fundSplit\.events;/.test(ingestSrc));
+  check("  …unlinks a sibling's filings from this fund alone, and marks its own certain",
+    /await unlinkFilings\(client, subjectId, fundSplit\.siblings\)/.test(ingestSrc) &&
+      /SET relevance = 1, scored_by = \$3[\s\S]{0,400}\[subjectId, fundSplit\.own, OWN_SERIES_SCORER\]/.test(ingestSrc));
+  const readSrc = readFileSync("lib/store/read.ts", "utf8");
+  check("the page reader shows the fund's own under its name",
+    /CASE WHEN es\.scored_by = \$3 THEN sj\.display_name END AS own_series_of/.test(readSrc) &&
+      /\[subjectId, RELEVANCE_THRESHOLD, OWN_SERIES_SCORER\]/.test(readSrc) &&
+      /return r\.own_series_of \? asOwnSeriesFiling\(ev, r\.own_series_of\) : ev;/.test(readSrc));
 }
 
 main();

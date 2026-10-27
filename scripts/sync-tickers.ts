@@ -108,6 +108,12 @@ async function main(): Promise<void> {
    * ~150KB and removes the whole failure mode.
    */
   const seriesCiks: number[] = [];
+  /**
+   * EDGAR's id per series ("S000002839"), which names the fund's own filing list: EDGAR tags every
+   * fund filing with the series it covers, and `browse-edgar?CIK=S…` lists them (2026-10-26
+   * proposal 5). The page above already carries it; it was read and dropped until batch 67.
+   */
+  const seriesIds: string[] = [];
   const symbolSeries: Record<string, number> = {};
   let failed = 0;
 
@@ -181,6 +187,7 @@ async function main(): Promise<void> {
     seriesNames.push(s.name);
     seriesSymbols.push(preferred.symbol);
     seriesCiks.push(cik);
+    seriesIds.push(s.seriesId);
     // Every class points at its fund's name, so resolving VFIAX can say "Vanguard 500 Index
     // Fund" instead of the registrant trust, and without a request to do it.
     for (const c of s.classes) if (symbolSeries[c.symbol] === undefined) symbolSeries[c.symbol] = idx;
@@ -201,6 +208,7 @@ async function main(): Promise<void> {
     seriesNames,
     seriesSymbols,
     seriesCiks,
+    seriesIds,
     symbolSeries,
   };
 

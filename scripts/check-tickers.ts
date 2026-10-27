@@ -335,6 +335,23 @@ async function main(): Promise<void> {
   })());
   check("  …and none of it asked anybody", asked.length === 0, asked.join(", "));
 
+  // 2026-10-26 proposal 5 (batch 67): the series page the sync reads carries each fund's EDGAR id,
+  // which names the fund's own filing list; it was read and dropped.
+  console.log("\nEach fund series keeps its EDGAR id");
+  const { fundSeriesId } = await import("../lib/sec");
+  trapFetch();
+  check("the index carries one id per named series",
+    index.seriesIds?.length === index.seriesNames?.length && (index.seriesIds ?? []).every((id) => /^S\d{9}$/.test(id)),
+    `${index.seriesIds?.length ?? 0} ids / ${index.seriesNames?.length} names`);
+  check("  …each a different fund's", new Set(index.seriesIds ?? []).size === (index.seriesIds?.length ?? -1));
+  check("VOO's is S000002839, the Vanguard 500 Index Fund's", fundSeriesId("VOO") === "S000002839", String(fundSeriesId("VOO")));
+  check("  …and VFIAX, a share class of the same fund, has the same",
+    fundSeriesId("VFIAX") === "S000002839" && fundSeriesId("VTI") !== null && fundSeriesId("VTI") !== "S000002839");
+  check("an operating company has none", fundSeriesId("AAPL") === null && fundSeriesId("F") === null);
+  check("  …and none of it asked anybody", asked.length === 0, asked.join(", "));
+  const syncedSrc = (await import("node:fs")).readFileSync("scripts/sync-tickers.ts", "utf8");
+  check("the sync writes the id it reads", /seriesIds\.push\(s\.seriesId\);/.test(syncedSrc) && /\n    seriesIds,\n/.test(syncedSrc));
+
   // 2026-10-18: run from the owner's machine, the sync went past the SEC's 10/s, was refused, and
   // its one retry two seconds later met the same block — 889 of 1,159 registrants failed.
   console.log("\nThe sync paces itself and waits out a refusal");

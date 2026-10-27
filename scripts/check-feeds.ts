@@ -27,7 +27,8 @@ import { getEthereumMilestones } from "../lib/onchain/ethereum";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { getDailyPrices } from "../lib/prices";
 import { getTopicTimeline } from "../lib/wiki";
-import { resolveCompany, commonName, getFilings, newsNamesFor, possessiveNameFor } from "../lib/sec";
+import { resolveCompany, commonName, fundSeriesId, getFilings, newsNamesFor, possessiveNameFor } from "../lib/sec";
+import { fetchSeriesFilings, ownSeriesFilings } from "../lib/fundSeries";
 import { companyNames, fetchCompanyRegulations, fetchCompanyYear, frDailySince, frSearchTerm } from "../lib/frCompany";
 import { fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
@@ -262,6 +263,17 @@ async function main() {
           ? `  ${"SEC headlines".padEnd(22)} ✓ ${release.date} “${read.headline.slice(0, 70)}”`
           : `  ${"SEC headlines".padEnd(22)} ${read ? "— no press-release headline in" : "⚠ EDGAR did not answer for"} ${release.date} ${release.title.slice(0, 50)}`
     );
+    // a fund's own filings, by the series list the ingest reads (batch 67): its newest page only
+    const seriesId = fundSeriesId(company!.ticker);
+    if (seriesId) {
+      const series = await fetchSeriesFilings(seriesId, { maxPages: 1 }).catch(() => null);
+      const own = series ? ownSeriesFilings(filings, series) : null;
+      console.log(
+        own
+          ? `  ${"SEC fund series".padEnd(22)} ✓ ${seriesId}: ${own.own.length} of the trust's recent fund filings are this fund's, ${own.siblings.length} a sibling's`
+          : `  ${"SEC fund series".padEnd(22)} ⚠ ${seriesId}'s filing list did not answer — the trust's filings keep their hedge`
+      );
+    }
     const prices = await getDailyPrices(ticker).catch(() => null);
     console.log(
       prices?.points.length

@@ -315,11 +315,11 @@ const TSLA_EVENTS: Seed[] = [
 // Two series of one fund trust (Vanguard Index Funds, CIK 36405), so a fund page has a sibling the
 // site holds (VTI) beside ten it does not (proposal 8).
 const VOO_EVENTS: Seed[] = [
-  { date: "2026-02-26", title: "VANGUARD INDEX FUNDS: Shareholder report (N-CSR)", description: "Filed by VANGUARD INDEX FUNDS, the registrant behind Vanguard 500 Index Fund. A registrant files for every fund it sells, so this filing may concern a sibling fund.", type: "earnings", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "edgar-voo-2026-02-26" },
-  { date: "2026-04-28", title: "VANGUARD INDEX FUNDS: Summary prospectus (497K)", description: "Filed by VANGUARD INDEX FUNDS, the registrant behind Vanguard 500 Index Fund. A registrant files for every fund it sells, so this filing may concern a sibling fund.", type: "filing", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "edgar-voo-2026-04-28" },
+  { date: "2026-02-26", title: "VANGUARD INDEX FUNDS: Shareholder report (N-CSR)", description: "Filed by VANGUARD INDEX FUNDS, which files for every fund it sells, so this filing may concern a sibling fund.", type: "earnings", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "edgar-voo-2026-02-26" },
+  { date: "2026-04-28", title: "VANGUARD INDEX FUNDS: Summary prospectus (497K)", description: "Filed by VANGUARD INDEX FUNDS, which files for every fund it sells, so this filing may concern a sibling fund.", type: "filing", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "edgar-voo-2026-04-28" },
 ];
 const VTI_EVENTS: Seed[] = [
-  { date: "2026-03-30", title: "VANGUARD INDEX FUNDS: Portfolio holdings (NPORT-P)", description: "Filed by VANGUARD INDEX FUNDS, the registrant behind Vanguard Total Stock Market Index Fund. A registrant files for every fund it sells, so this filing may concern a sibling fund.", type: "filing", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "edgar-vti-2026-03-30" },
+  { date: "2026-03-30", title: "VANGUARD INDEX FUNDS: Portfolio holdings (NPORT-P)", description: "Filed by VANGUARD INDEX FUNDS, which files for every fund it sells, so this filing may concern a sibling fund.", type: "filing", source: "SEC EDGAR", url: "https://www.sec.gov/", sourceKey: "sec_edgar", externalId: "edgar-vti-2026-03-30" },
 ];
 
 // ---------------------------------------------------------------- topic

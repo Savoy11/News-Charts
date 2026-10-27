@@ -846,8 +846,10 @@ function filingsFromBlock(
     const results = eightK && reportsResults(items);
     /**
      * A 20-F or 40-F is the annual report of a foreign private issuer — BABA, TSM, ASML, SAP, SHOP
-     * — and the counterpart of a 10-K, so it is earnings the way a 10-K is. A 6-K stays a filing:
+     * — and the counterpart of a 10-K, so it is earnings the way a 10-K is. A 6-K is a filing here:
      * it carries anything a home market required, and the submissions list does not say which.
+     * Its press release's headline does, and a results release is typed earnings where the
+     * headline is put on it (`asResultsRelease`, lib/ingest/headlines.ts; batch 64).
      */
     const annual = form === "10-K" || form === "20-F" || form === "40-F";
     /**

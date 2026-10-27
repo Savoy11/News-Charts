@@ -981,6 +981,63 @@ export function releaseUrl(filingUrl: string | undefined, exhibit: string | null
 }
 
 /**
+ * A reporting period, as results headlines name one: "Third Quarter 2019", "Q2", "First-Quarter
+ * 2004", "Full Year 2025", "Half Year", "Nine Months", "FY2026", "in 2021", "for 2007", "2017 Results".
+ */
+const PERIOD =
+  /\b(?:Q[1-4]|H[12]|(?:first|second|third|fourth|1st|2nd|3rd|4th)[\s-]quarter|(?:full|fiscal)[\s-]year|half[\s-]year|first half|second half|nine months|FY\s?\d{2,4}|(?:in|for) (?:19|20)\d{2}|(?:19|20)\d{2}(?= (?:financial )?(?:results|earnings)))\b/i;
+/**
+ * A period its figure follows straight on, which reports it with no verb: "Fourth-Quarter EPS
+ * Doubles", "Ford's 1993 Profit Reflected Worldwide Improvement", "Amgen's First Quarter 2005
+ * Adjusted Earnings Per Share Increased", Tesla's "Second Quarter 2016 Update" — never NIO's
+ * "Second Quarter 2020 Delivery Update".
+ */
+const PERIOD_FIGURE =
+  /\b(?:Q[1-4]|(?:first|second|third|fourth)[\s-]quarter|full[\s-]year|FY\s?\d{2,4}|(?:19|20)\d{2})[\s,]+(?:(?:19|20)\d{2}\s+)?(?:(?:adjusted|reported|GAAP|non-GAAP|core|operating|financial)\s+)?(?:net income|EPS|earnings|profits?|results|update)\b/i;
+/** What results report: "Financial Results", "Earnings", "Net Income", "Sales Growth", "Q1 Performance". */
+const RESULTS_NOUN = /\b(?:results|earnings|net income|net profit|profits?|EPS|(?:sales|revenue) growth|performance)\b/i;
+/** …and that the company is reporting them, not announcing a date to: "Reports", "Delivers", "Posts". */
+const REPORTING = /\b(?:reports?|reported|announces?|posts?|delivers?|delivered|continues|publishes?|releases?)\b/i;
+/**
+ * What looks like results and is not (batch 64): a profit alert, a preliminary figure or an
+ * expectation, a forecast revised or a difference from one, a charge, the date of a call, a
+ * trial's topline results, a tender offer's. The owner's call, 2026-10-26: only reported results
+ * count as earnings, so a warning stays a filing, shown with its headline.
+ */
+const NOT_REPORTED_RESULTS =
+  /\b(?:profit (?:alert|warning)|preliminary|pre-?announce\w*|expects?|expected|estimates?|forecasts?|revis\w*|differences?|charges?|to (?:report|announce|release|hold|publish|host)|will (?:report|announce|release)|dates?|conference call|webcast|transcript|presentation|supplement(?:al|ary)?|tender|exchange offer|phase|topline|top-line|trial|study|studies)\b/i;
+
+/**
+ * Whether a press release's headline reports a period's results: "NIO Inc. Reports Unaudited Third
+ * Quarter 2019 Financial Results", "Boeing Reports 1997 2nd Quarter Results", "GSK delivers strong
+ * Q1 performance…", "Q1 2026 results Interim management statement", and Novartis's cover, "Financial
+ * Results • Résultats Financiers • Finanzergebnisse" (batch 64, the 2026-10-26 proposal 2). An 8-K
+ * is typed earnings by its item 2.02; a 6-K says nothing of what it carries, and an 8-K before
+ * August 2004 had no 2.02, so the release's own headline is what says so.
+ */
+export function announcesResults(headline: string): boolean {
+  if (NOT_REPORTED_RESULTS.test(headline)) return false;
+  if (/^financial results\b/i.test(headline)) return true;
+  // a guidance update names a period and a figure too, but reports neither: "Pfizer Reaffirms
+  // Full-Year 2025 EPS Guidance and Provides Full-Year 2026 Guidance"
+  if (/\bguidance\b/i.test(headline) && !REPORTING.test(headline)) return false;
+  if (PERIOD_FIGURE.test(headline)) return true;
+  if (!PERIOD.test(headline) || !RESULTS_NOUN.test(headline)) return false;
+  // "Q1 2026 results Interim management statement" opens on its period
+  return REPORTING.test(headline) || /^(?:Q[1-4]|H[12]|FY\s?\d{2,4})\b/i.test(headline);
+}
+
+/**
+ * A filing whose headline reports results, typed as earnings — the kind an 8-K's 2.02 gives, so a
+ * foreign company's quarterly results reach the Earnings chip and are the catalyst Biggest moves
+ * prefers. An amended 8-K stays a filing, as an amended 2.02 does: the release is already the event.
+ */
+export function asResultsRelease<E extends { type: string; title: string; description?: string }>(ev: E, headline: string): E {
+  if (ev.type !== "filing" || /\(8-K\/A(?: \d\.\d\d)?\)$/.test(ev.title) || !announcesResults(headline)) return ev;
+  return { ...ev, type: "earnings", description: ["A results release, counted as earnings.", ev.description].filter(Boolean).join(" ") };
+}
+
+/**
  * A filing retitled with its press release's headline: "Boeing Co: Other events (8-K 8.01)" becomes
  * "Boeing Co: Boeing Sets 787 First Delivery Date for Mid-First Quarter 2011 (8-K 8.01)", and
  * "NIO Inc.: 6-K filing" becomes "NIO Inc.: NIO Inc. Provides April 2023 Delivery Update (6-K)". The

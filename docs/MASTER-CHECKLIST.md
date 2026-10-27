@@ -985,6 +985,49 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 64: a results release is earnings, whatever form carried it (2026-10-27)
+
+The second of the eight proposals the owner approved on 2026-10-26 (#2). The owner's call, made
+the same day: only reported results count as earnings.
+
+- [x] **A filing whose press release reports a period's results is typed as earnings.** An 8-K's
+      item 2.02 already does this. A 6-K says nothing of what it carries, and an 8-K before August
+      2004 had no 2.02, so NIO's quarterly results, Novartis's and GSK's, and Boeing's 1997–2004
+      results 8-Ks were plain filings: no Earnings chip, no earnings marker, and ranked below
+      earnings when Biggest moves picks a move's cause.
+      - The rule is `announcesResults` in `lib/secHeadlines.ts`. A headline counts when it names a
+        period and a figure and says the company reports them: "NIO Inc. Reports Unaudited Third
+        Quarter 2019 Financial Results", "Boeing Reports 1997 2nd Quarter Results". It also counts
+        when the figure follows the period directly ("Fourth-Quarter EPS Doubles"), and for
+        Novartis's "Financial Results" cover. `asResultsRelease` types the filing where the stored
+        headline is put on it (`applyHeadlines`), so the ingest and the first visit agree. The
+        description says why: "A results release, counted as earnings."
+      - **The owner's call:** a profit alert, a preliminary figure, an expectation, a guidance
+        update and a revised forecast all stay filings, shown with their headlines. So do a
+        trial's "topline results", a tender's results, a capital-ratio notice, supplementary data,
+        a charge, the date of a coming release, and an amended 8-K.
+      - **Measured** on every headline stored in the batch 42 and 48 databases (960 filings, ten
+        companies), now committed as `scripts/fixtures/results-headlines.json`. Of the 830 on
+        filings, it marks 47 and nothing else: NIO 32, Novartis 8, Boeing 4, GSK 2 and Lloyds 1,
+        each a results release. It agrees with item 2.02 on 117 of the 130 releases filed under
+        it. The other 13 are four charges, a settlement, an acquisition, a guidance update, a
+        preliminary figure, a 10-K statement, a table's heading, and three results releases whose
+        headlines name a charge or no figure; item 2.02 types those anyway. On the older fixture's
+        144 releases it marks 30, every one a results release, including Exxon's "Estimated" style
+        and Tesla's quarterly "Update".
+      - **Live,** on a copy of the batch 42 database: re-running NIO's filings moved 32 stored rows
+        to earnings (8 earnings became 40), and Boeing gained its 4 pre-2004 releases (224 became
+        228). Stored rows re-type on their next ingest, as their titles do, because the filings'
+        own source owns the row.
+- Not covered: a results release whose headline names no period ("Intel Reports First $11 Billion
+  Revenue Quarter", "P&G Delivers Strong Sales and EPS Results") stays a filing unless item 2.02
+  types it.
+- Checks: 11 new cases in `check:sec-headlines`, built on the stored headlines (266 in all now).
+  They cannot run on main, which has no `announcesResults`. `npm run check` passes (50 suites) and
+  `npm run lint` is clean.
+- Requests made: for the live run, SEC EDGAR's submission records for NIO and Boeing, and
+  Boeing's older record files, with the project's User-Agent, which carries the owner's email.
+
 ## NC ledger — batch 63: a company's Federal Register documents back to 1994 (2026-10-27)
 
 The first of the eight proposals the owner approved on 2026-10-26 (#1). The owner also made the
@@ -4207,7 +4250,7 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
         #1, approved 2026-10-26. Importance high · Efficiency high · Practicality medium-high (one
         owner call on routine notices).*
-- [ ] `P1` **A results release is an earnings event, whatever form carried it.** An 8-K is typed
+- [x] `P1` **A results release is an earnings event, whatever form carried it.** An 8-K is typed
       `earnings` by item 2.02, so a foreign issuer's results 6-K never is — "a 6-K stays a filing:
       … the submissions list does not say which" (`lib/sec.ts:849-852`, batch 11) — and nor is any
       results 8-K filed before item 2.02 existed (August 2004). Since batches 43–44 the headline
@@ -4229,6 +4272,8 @@ already held, but new investment goes to securities coverage first.
       - ✅ **The owner's call, 2026-10-26: only actual results count.** The 5 — a profit alert, a
         pre-announcement, a guidance update and two Takeda forecast revisions — stay filings, shown
         with their headlines; the Earnings chip means reported results.
+      - **Done in batch 64** (see its section): `announcesResults` and `asResultsRelease`, applied
+        where a stored headline is put on a filing.
       - Cases in `check:sec-headlines` from the real stored titles: NIO's 32 and Boeing's four
         become earnings, the traps stay filings, the 120 still agree. No key, licence, recurring
         cost or request — the headlines are stored; small, offline.

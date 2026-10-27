@@ -372,6 +372,17 @@ ingest reads up to 150 a run, newest first, and stops at the first refusal, so a
 in over a few runs (Boeing's 336 took three). The first pass applies what is stored and reads
 nothing.
 
+A filing whose headline reports a period's results is typed as earnings, as an 8-K's item 2.02 is
+(`announcesResults`, batch 64). A 6-K says nothing of what it carries, and an 8-K before August
+2004 had no 2.02, so the release's headline is what says so: "NIO Inc. Reports Unaudited Third
+Quarter 2019 Financial Results (6-K)", "Boeing Reports 1997 2nd Quarter Results (8-K)". Of the 960
+headlines stored for ten companies, it marks 47 such filings (NIO 32, Novartis 8, Boeing 4, GSK 2,
+Lloyds 1) and nothing else, and it agrees with item 2.02 on 117 of the 130 releases filed under it.
+By the owner's call (2026-10-26), only reported results count: a profit alert, a preliminary
+figure, an expectation, a guidance update or a revised forecast stays a filing, shown with its
+headline; so do a trial's "topline results", a tender's, and an amended 8-K. A stored filing
+re-types on its next ingest, as its title does.
+
 ### Checks
 
 ```

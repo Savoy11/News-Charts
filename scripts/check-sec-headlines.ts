@@ -7,6 +7,8 @@ import {
   DATELINE_WITHIN,
   HEADLINE_VERSION,
   afterCoverPage,
+  announcesResults,
+  asResultsRelease,
   decodeDocument,
   findDateline,
   findLead,
@@ -22,6 +24,7 @@ import {
 } from "../lib/secHeadlines";
 import { HEADLINES_PER_RUN, applyHeadlines, withSecHeadlines } from "../lib/ingest/headlines";
 import EventList from "../components/EventList";
+import storedReleases from "./fixtures/results-headlines.json";
 import type { TimelineEvent } from "../lib/types";
 
 /**
@@ -450,6 +453,69 @@ async function main(): Promise<void> {
   const html = renderToStaticMarkup(createElement(EventList, { events: stack }));
   check("a headline naming another form does not rename the stack: it reads 8-K, from the closing brackets",
     html.includes("8-K ×3") && !html.includes("10-K ×"), html.match(/(?:8|10)-K ×\d/)?.[0] ?? "no stack");
+
+  console.log("\nA results release is earnings, whatever form carried it (batch 64)");
+  // every headline stored in two scratch databases, with the kind ingest gave its filing before
+  const releases = (storedReleases as { releases: { accession: string; filed: string; filer: string; form: string; kind: string; headline: string }[] }).releases;
+  const marked = releases.filter((r) => r.kind === "filing" && announcesResults(r.headline));
+  const byFiler: Record<string, number> = {};
+  for (const r of marked) byFiler[r.filer] = (byFiler[r.filer] ?? 0) + 1;
+  check("of 830 stored headlines on filings, the 47 results releases are marked, and nothing else",
+    releases.length === 960 && marked.length === 47 && byFiler["NIO Inc."] === 32 && byFiler["BOEING CO"] === 4 &&
+      byFiler["NOVARTIS AG"] === 8 && byFiler["GSK plc"] === 2 && byFiler["Lloyds Banking Group plc"] === 1, JSON.stringify(byFiler));
+  const nioStored = releases.filter((r) => r.filer === "NIO Inc.");
+  check("  …every one of NIO's \"Reports Unaudited … Financial Results\", and none of its delivery updates or meetings",
+    nioStored.filter((r) => /Reports Unaudited .* Financial Results/.test(r.headline)).every((r) => announcesResults(r.headline)) &&
+      !nioStored.some((r) => /Delivery Update|Delivery Outlook|General Meeting|Files Its Annual Report/.test(r.headline) && announcesResults(r.headline)));
+  check("  …Boeing's results 8-Ks from before item 2.02 existed (1997, 2003, 2004)",
+    ["Boeing Reports 1997 2nd Quarter Results", "Boeing Reports Second Quarter Results; Updates Outlook", "Boeing Reports Third Quarter Results; Updates Outlook",
+      "Boeing Reports First-Quarter 2004 Results; Raises Outlook"].every(announcesResults));
+  const two02 = releases.filter((r) => r.kind === "earnings");
+  const agree = two02.filter((r) => announcesResults(r.headline)).length;
+  // the other 13: four charges, a settlement, an acquisition, a guidance update, a preliminary
+  // figure, a 10-K statement, a table's heading, and three results releases whose headlines name a
+  // charge or no figure ("Boeing Reports Strong Second-Quarter; …") — those 2.02 types anyway
+  check("  …and it agrees with item 2.02 on 117 of the 130 releases filed under it",
+    two02.length === 130 && agree >= 117, `${agree} of ${two02.length}`);
+  check("the owner's call, 2026-10-26: a warning is not results — profit alert, preliminary figure, expectation, guidance, revised forecast",
+    ["NIO Inc. Announces Profit Alert for the Fourth Quarter of 2025", "Boeing Reports Preliminary Fourth Quarter Results",
+      "Boeing Expects to Exceed Wall Street Estimates for First-Quarter EPS", "Pfizer Reaffirms Full-Year 2025 EPS Guidance and Provides Full-Year 2026 Guidance",
+      "Difference between Forecast and Actual Results for the Fiscal Year Ended March 2024", "MUFG Revises Earnings Target and Dividend Forecast",
+      "Additional Provision for Legal Proceedings and Revision of the Earnings Report (Kessan Tanshin) for the Fiscal Year Ended March 31, 2026 (IFRS, Consolidated)",
+    ].every((h) => !announcesResults(h)));
+  check("  …nor a trial's results, a tender's, a capital ratio, supplementary data, a charge, or the date of a release",
+    ["Takeda Announces Phase 3 Topline Results for Soticlestat (TAK-935) in Patients with Dravet Syndrome and Lennox-Gastaut Syndrome",
+      "UBS Announces Results and Upsizing of its Cash Tender Offers for Debt Securities",
+      "Risk-Adjusted Capital Ratio Based on the Basel 3 Standards for the First Quarter Ended June 30, 2026",
+      "Novartis Third Quarter and Nine Months 2025 Condensed Interim Financial Report – Supplementary Data",
+      "Boeing Announces Special Fourth Quarter Earnings Charge for Douglas Products", "Stellantis to Announce Third Quarter 2026 Financial Results on October 28",
+    ].every((h) => !announcesResults(h)));
+  const usCases = fixture.cases.filter((c) => c.headline && announcesResults(c.headline)).map((c) => c.headline);
+  check("  …while the fixture's US releases read as results too, without a verb or with an \"Estimated\" in Exxon's style",
+    ["Target Corporation First Quarter Earnings per Share $0.48", "Exxon Mobil Corporation Announces Estimated Fourth Quarter and 2003 Results",
+      "Q1 FY 2027 Results", "Ford's 1993 Profit Reflected Worldwide Improvement", "Tesla Second Quarter 2016 Update"].every((h) => usCases.includes(h)),
+    `${usCases.length} marked`);
+
+  const sixKFiling = (accession: string, date: string): TimelineEvent => ({
+    id: `sec-${accession}`, date, type: "filing", title: "NIO Inc.: 6-K filing", source: "SEC EDGAR",
+    url: `https://www.sec.gov/Archives/edgar/data/1736541/${accession}/x.htm`, sourceKey: "sec_edgar", externalId: accession, dedupBasis: `sec:${accession}`,
+  });
+  const nioRows = [sixKFiling("000110465919071166", "2019-12-31"), sixKFiling("000110465926011223", "2026-02-05")];
+  const typed = applyHeadlines(nioRows, new Map([
+    ["000110465919071166", { headline: "NIO Inc. Reports Unaudited Third Quarter 2019 Financial Results", exhibit: null }],
+    ["000110465926011223", { headline: "NIO Inc. Announces Profit Alert for the Fourth Quarter of 2025", exhibit: null }],
+  ]));
+  check("a NIO results 6-K reaches the page as earnings, saying why", typed[0].type === "earnings" &&
+    typed[0].title === "NIO Inc.: NIO Inc. Reports Unaudited Third Quarter 2019 Financial Results (6-K)" &&
+    /^A results release, counted as earnings\. 6-K filing\./.test(typed[0].description ?? ""), `${typed[0].type}: ${typed[0].description}`);
+  check("  …and its profit alert stays a filing, shown with its headline", typed[1].type === "filing" && /Profit Alert/.test(typed[1].title));
+  const boeing1997 = applyHeadlines([eightK("000001292797000020", "1997-07-22", "Current report (8-K)", undefined)],
+    new Map([["000001292797000020", { headline: "Boeing Reports 1997 2nd Quarter Results", exhibit: null }]]))[0];
+  check("a 1997 Boeing 8-K with no item 2.02 reads as earnings", boeing1997.type === "earnings", `${boeing1997.type} ${boeing1997.title}`);
+  const amended = asResultsRelease({ type: "filing", title: "Boeing Co: Boeing Reports Third Quarter Results (8-K/A 2.02)" }, "Boeing Reports Third Quarter Results");
+  const already = asResultsRelease({ type: "earnings", title: "Boeing Co: Boeing Reports Third Quarter Results (8-K)", description: "Results release" }, "Boeing Reports Third Quarter Results");
+  check("an amended 8-K stays a filing, as an amended 2.02 does, and a 2.02 release is left as it was",
+    amended.type === "filing" && already.type === "earnings" && already.description === "Results release");
 
   console.log("\nWired");
   const ingest = read("scripts/ingest.ts");

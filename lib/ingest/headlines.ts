@@ -1,6 +1,6 @@
 import type { PoolClient } from "pg";
 import type { TimelineEvent } from "../types";
-import { HEADLINE_VERSION, edgarFetch, mayCarryRelease, readFilingHeadline, withHeadline, type HeadlineRead } from "../secHeadlines";
+import { HEADLINE_VERSION, asResultsRelease, edgarFetch, mayCarryRelease, readFilingHeadline, withHeadline, type HeadlineRead } from "../secHeadlines";
 
 /**
  * 8-K and 6-K headlines at ingest (batches 42 and 43): the ones already read are applied from
@@ -64,7 +64,8 @@ export async function storeHeadline(client: PoolClient, accession: string, read:
 
 /**
  * The events, each 8-K or 6-K with a stored headline retitled by it and linked to the document it
- * came from. Reads nothing from EDGAR.
+ * came from, and typed as earnings when the headline reports a period's results (batch 64). Reads
+ * nothing from EDGAR.
  */
 export function applyHeadlines(
   events: TimelineEvent[],
@@ -72,7 +73,7 @@ export function applyHeadlines(
 ): TimelineEvent[] {
   return events.map((ev) => {
     const read = ev.externalId ? stored.get(ev.externalId) : undefined;
-    return read?.headline && mayCarryRelease(ev) ? withHeadline(ev, read.headline, read.exhibit) : ev;
+    return read?.headline && mayCarryRelease(ev) ? asResultsRelease(withHeadline(ev, read.headline, read.exhibit), read.headline) : ev;
   });
 }
 

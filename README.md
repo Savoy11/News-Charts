@@ -108,6 +108,15 @@ the buyer's own SEC filing gives: Thor's Keystone from 2001-11-09, Jayco from 20
 Grand Design from 2016-11-08, Berkshire Hathaway's Forest River from 2005-08-31. Scored without the
 model, as a filing is.
 
+The defect investigations NHTSA opened into the same makers come from the same open-data portal,
+through the same map and its dates (`lib/investigations.ts`, batch 66): preliminary evaluations,
+engineering analyses, defect-petition reviews and recall queries, back to 1975. Toyota's RQ10003,
+"Unintended and Uncontrolled Acceleration", opened 2010-02-16. By the owner's call (2026-10-26) they
+sit under the Recalls tag, one row on the day an investigation opened, its closing and the recall
+NHTSA links to it said in that row. On the chart each is a small dot ranked like news, never the R
+a recall gets: an investigation opened is no recall. Measured 2026-10-27: 1,766 for 18 companies,
+1,579 of them before 2017 (Ford 684, GM 651, Toyota 114, Honda 113, Stellantis 50 from 2014).
+
 ### FDA recalls (`lib/fdaRecalls.ts`)
 
 A drug, device or food company's page carries its Class I and II recalls from the FDA's weekly
@@ -663,7 +672,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Federal Register | Sector-level rules and notices; documents naming a company | Keyword hits attach to industries; a title naming the company, or one of its own other names ("Google LLC"), attaches to it (no airworthiness directives) |
 | Federal Reserve | FOMC policy statements since 1994 | Economy subject; on company pages behind the Economy chip (off by default). `npm run ingest -- --macro` |
 | BLS | CPI release dates since 2008 | Same subject and chip; needs a contact `User-Agent` |
-| NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966 | Recalls of 10,000 vehicles or more, only for the vehicle and tyre makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014). Public domain; no key |
+| NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966; defect investigations since 1975 | Recalls of 10,000 vehicles or more, and every investigation NHTSA opened, only for the vehicle and tyre makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014). Public domain; no key |
 | FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 38 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
 | U.S. Department of Justice | Press releases since 2009 in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |

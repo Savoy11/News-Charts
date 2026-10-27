@@ -40,6 +40,7 @@ import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { companyNames, fetchCompanyRegulations, frDailySince, frSearchTerm } from "../lib/frCompany";
 import { backfillRegulations } from "../lib/ingest/frBackfill";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
+import { fetchInvestigations } from "../lib/investigations";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { dojPossessive, dojQueryNames, fetchJusticeReleases } from "../lib/doj";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
@@ -75,6 +76,8 @@ export const COMPANY_SOURCES = [
   "federal_register",
   // safety recalls, asked only for the vehicle makers lib/recalls.ts maps (batch 30)
   "nhtsa_recalls",
+  // …and the defect investigations NHTSA opened into the same makers, shown with them (batch 66)
+  "nhtsa_investigations",
   // drug, device and food recalls, asked only for the firms lib/fdaRecalls.ts maps (batch 40)
   "fda_enforcement",
   // releases whose title makes the company a party: it pays, pleads, is sued (batch 32)
@@ -521,6 +524,8 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   const makers = recallMakersFor(company.cik);
   if (makers) {
     await run("nhtsa_recalls", `${makers.map((m) => m.name).join(" | ")} ≥${RECALL_FLOOR} vehicles`, () => fetchRecalls(company.cik));
+    // …and the defect investigations NHTSA opened into the same makers, shown with them (batch 66)
+    await run("nhtsa_investigations", makers.map((m) => m.name).join(" | "), () => fetchInvestigations(company.cik));
   }
 
   /**

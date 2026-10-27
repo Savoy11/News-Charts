@@ -26,6 +26,7 @@ because it will be trusted.
 | **any** | Internet Archive | 1780 for companies (a bound on impossibility); topics effectively none | Catalogued items: reports, catalogues, film — relevance-ranked |
 | **1934 – now** | SEC EDGAR | electronic filings from ~1993 | Filings, earnings; an 8-K, or a foreign company's 6-K, titled by the headline of the press release filed with it, from 1994 (`lib/secHeadlines.ts`) |
 | **1966 – now** | NHTSA vehicle recalls | 1966, the first campaigns | Safety recalls of 10,000 vehicles or more, for the vehicle and tyre makers `lib/recalls.ts` maps (Ford, GM, Stellantis from 2014, Toyota, Honda, Tesla, Harley-Davidson, PACCAR, the RV makers Thor and Winnebago with the brands they bought, Berkshire Hathaway's Forest River, and others) |
+| **1975 – now** | NHTSA defect investigations | 1975, the first opened | Every investigation NHTSA opened into the same makers, shown with their recalls (batch 66): 1,766 for 18 companies, 1,579 before 2017 (Ford 684, GM 651) |
 | **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |
 | **2008 – now** | BLS CPI release archive | February 2008, the oldest archived release | Monthly CPI releases — on company pages behind the Economy chip, off by default |
 | **2009 – now** | Justice Department press releases | 2009, the oldest releases the API holds | Settlements, pleas, suits and merger cases whose title makes the company a party (`lib/doj.ts`) — a few to ten per large company, about half before 2017 |
@@ -89,7 +90,8 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   window will look sparser than it was. **This is the single biggest hole in the corpus.**
   For vehicle makers it is partly filled: NHTSA recalls reach back to 1966 (Ford has 861 of 10,000
   vehicles or more), the one free source found for that stretch that may be used commercially
-  (`docs/proposals/2026-10-22-news-sources.md`). Justice Department releases add 2009–2016 for
+  (`docs/proposals/2026-10-22-news-sources.md`), and NHTSA's defect investigations to 1975 (1,579
+  of the mapped makers' 1,766 opened before 2017). Justice Department releases add 2009–2016 for
   companies in any sector — measured on 81 large companies, 93 of 195 events fell before 2017 —
   but few a company, and only the cases the Department announced. FDA recalls add mid-2012 to 2016
   for 38 drug, device and food companies, many of them: Medtronic has 532 recalls, 147 of them
@@ -119,6 +121,7 @@ windows — update both together.
 | Wikipedia | No hard cap | The User-Agent policy is the real obligation |
 | Federal Register | No published cap | Generous in practice; visitor terms are capped per client (15 new terms/hour) |
 | NHTSA recalls | No published cap without an app token | One request a day per mapped vehicle maker |
+| NHTSA investigations | No published cap without an app token | One request a day per mapped vehicle maker |
 | FDA (openFDA) | 1,000 requests a day, 240 a minute, without a key | Three to six a day per mapped company: one per product type, a page per 1,000 records |
 | Justice Department | No published cap | A page or two a day per company, 0.8 s apart; a common word ("Target") stops at ten pages |
 | Federal Reserve, BLS | No published cap | One page each a day; the FOMC history (~27 year pages, 1 s apart) is read once. bls.gov refuses requests without a contact `User-Agent` |

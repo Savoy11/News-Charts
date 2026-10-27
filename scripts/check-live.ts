@@ -40,6 +40,7 @@ import { fetchDailyPrices } from "../lib/prices";
 import { fetchRegulations } from "../lib/federalregister";
 import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
 import { fetchRecalls } from "../lib/recalls";
+import { fetchInvestigations } from "../lib/investigations";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
 import { FR_COMPANY_CAP, fetchCompanyRegulations, fetchCompanyYear, frDailySince, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
@@ -560,6 +561,24 @@ export const CASES: LiveCase[] = [
       out.push(...outcomeProblems(stla.outcome, stla.detail).map((p) => `Stellantis: ${p}`));
       const early = stla.events.filter((e) => e.date < "2014-10-12");
       if (early.length) out.push(`${early.length} Stellantis recalls before 2014-10-12, e.g. ${early[0].date}`);
+      return out;
+    },
+  },
+  {
+    name: "NHTSA — Toyota's defect investigations, its 2010 acceleration query among them (batch 66)",
+    covers: ["nhtsa_investigations"],
+    hosts: ["data.transportation.gov"],
+    async run() {
+      // measured 2026-10-27: 114 under Toyota Motor Corporation, from 1990 on
+      const toyota = await fetchInvestigations(1094517);
+      const out = [...outcomeProblems(toyota.outcome, toyota.detail), ...eventProblems(toyota.events, 100)];
+      const rq = toyota.events.find((e) => e.externalId === "RQ10003");
+      if (!rq) out.push("no RQ10003 (2010 unintended acceleration)");
+      else if (rq.date !== "2010-02-16" || rq.title !== "NHTSA opened a recall query: Unintended and Uncontrolled Acceleration") out.push(`RQ10003: ${rq.date} "${rq.title}"`);
+      const stla = await fetchInvestigations(1605484);
+      out.push(...outcomeProblems(stla.outcome, stla.detail).map((p) => `Stellantis: ${p}`));
+      const early = stla.events.filter((e) => e.date < "2014-10-12");
+      if (early.length) out.push(`${early.length} Stellantis investigations before 2014-10-12, e.g. ${early[0].date}`);
       return out;
     },
   },

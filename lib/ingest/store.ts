@@ -295,6 +295,20 @@ export const SOURCES: {
     reviewedOn: "2026-10-24",
     notes: "Class I and II drug, device and food recalls since 2012 for the firms lib/fdaRecalls.ts maps; no key (batch 40)",
   },
+  {
+    id: 25,
+    key: "nhtsa_investigations",
+    name: "NHTSA defect investigations",
+    license: "public domain",
+    attribution: "National Highway Traffic Safety Administration, U.S. Department of Transportation",
+    // "Public Domain U.S. Government" in the dataset's own licence field (data.transportation.gov,
+    // b3rp-be92, "Investigations Data", read 2026-10-27), linked to usa.gov/government-works.
+    // Used: the investigation's number, type, subject line, component, dates, the recall NHTSA
+    // links to it, and a link to NHTSA's page for it. Approved by the owner on 2026-10-26.
+    commercialOk: true,
+    reviewedOn: "2026-10-27",
+    notes: "defect investigations since 1975 into the vehicle makers lib/recalls.ts maps, shown with recalls; no key (batch 66)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

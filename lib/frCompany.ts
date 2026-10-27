@@ -13,11 +13,33 @@ import type { FetchResult, TimelineEvent } from "./types";
  * module is the measurement; `npm run fr-company-report` prints it.
  */
 
+export interface FrAgency {
+  name?: string;
+  /** the department a sub-agency sits in: the Surface Transportation Board's is Transportation */
+  parent_id?: number | null;
+}
+
 export interface FrHit {
   title: string;
   publication_date: string;
   type?: string;
-  agencies?: { name?: string }[];
+  agencies?: FrAgency[];
+}
+
+/**
+ * The agency that issued a document: the sub-agency, not its department. The API lists the
+ * department first, so the label read "Transportation Department" for a Surface Transportation
+ * Board notice and "Energy Department" for a FERC one — and which board it was is what says a
+ * notice is routine (batch 63). FERC carries its department as a parent; the Surface
+ * Transportation Board, an independent board listed after the department, does not (measured
+ * 2026-10-27), so an agency after a department is the issuer too. A document several independent
+ * agencies issued together keeps the first.
+ */
+export function issuingAgency(agencies: FrAgency[] | undefined): string | undefined {
+  const named = (agencies ?? []).filter((a) => a?.name);
+  const sub = named.find((a) => a.parent_id != null);
+  if (sub) return sub.name;
+  return (named.length > 1 && / Department$/.test(named[0].name!) ? named[1] : named[0])?.name;
 }
 
 // apostrophes go, as the alias index's keys drop them: "Angie's List" reads "angies list"
@@ -187,72 +209,210 @@ export async function fetchCompanyMentions(
   }
 }
 
-/** At most this many documents a run, newest first — a ceiling, not a target. */
+/** At most this many documents a daily ask, newest first — a ceiling, not a target. */
 export const FR_COMPANY_CAP = 40;
 
-/** How far back the company feed reaches, matching the sector feed's default. */
-export const FR_COMPANY_SINCE = "2015-01-01";
+/**
+ * How far back a company's documents reach: 1994, where the Federal Register's API begins. The
+ * feed stopped at 2015, "a choice, not a limit" (docs/COVERAGE-MAP.md), and in the years the corpus
+ * is thinnest (batch 63).
+ */
+export const FR_COMPANY_FROM = "1994-01-01";
+
+/**
+ * The daily ask reads the current year only: each year before it is read once, in full, by the
+ * year walk (`lib/ingest/frBackfill.ts`). Asked from 2015 for the newest forty, every run read the
+ * same forty, so a company's forty-first-newest document never reached its page.
+ */
+export const frDailySince = (today = new Date()): string => `${today.getUTCFullYear()}-01-01`;
+
+/** A year the walk reads is this many pages of a thousand at most: Duke Energy's busiest was 224 hits. */
+export const FR_YEAR_PAGES = 10;
 
 interface FrDocument extends FrHit {
   document_number: string;
   html_url: string;
 }
 
+const FIELDS = ["document_number", "title", "publication_date", "type", "html_url", "agencies"];
+
+/** One page of the full-text search for a company's names, between two days. */
+function searchUrl(term: string, since: string, until: string | null, page = 1): string {
+  const params = new URLSearchParams({
+    per_page: "1000",
+    order: "newest",
+    "conditions[term]": term,
+    "conditions[publication_date][gte]": since,
+  });
+  if (until) params.set("conditions[publication_date][lte]", until);
+  if (page > 1) params.set("page", String(page));
+  for (const f of FIELDS) params.append("fields[]", f);
+  return `https://www.federalregister.gov/api/v1/documents.json?${params}`;
+}
+
 /**
- * The company's own Federal Register documents, as timeline events: full-text hits for its
- * names, kept only when the title names it (`titleNamesCompany`) and never airworthiness
- * directives — the owner's rule from the live count, where they were 539 of Boeing's 596.
+ * A company's own documents among the hits, as timeline events: kept only when the title names it
+ * (`titleNamesCompany`) and never airworthiness directives — the owner's rule from the live count,
+ * where they were 539 of Boeing's 596.
  *
  * Same identity as the sector feed (`fr:<document number>`), so a document that is both a sector
  * rule and this company's is one event linked to both subjects, not two.
  */
+function companyEvents(docs: FrDocument[], edgarName: string, alsoKnownAs: string[]): TimelineEvent[] {
+  return docs
+    .filter(
+      (d) =>
+        d.document_number &&
+        /^\d{4}-\d{2}-\d{2}$/.test(d.publication_date ?? "") &&
+        titleNamesCompany(d.title, edgarName, alsoKnownAs) &&
+        !isAirworthinessDirective(d.title)
+    )
+    .map((d) => {
+      const agency = issuingAgency(d.agencies);
+      return {
+        id: `fr-${d.document_number}`,
+        date: d.publication_date,
+        type: "regulation" as const,
+        title: d.title.replace(/\s+/g, " ").trim(),
+        source: agency ? `Federal Register · ${agency}` : "Federal Register",
+        url: d.html_url,
+        description: d.type,
+        sourceKey: "federal_register" as const,
+        externalId: d.document_number,
+        dedupBasis: `fr:${d.document_number}`,
+      };
+    });
+}
+
+/**
+ * The company's own Federal Register documents since a day, newest first, at most
+ * `FR_COMPANY_CAP` of them: the daily ask, for the current year.
+ */
 export async function fetchCompanyRegulations(
   edgarName: string,
-  since = FR_COMPANY_SINCE,
+  since = frDailySince(),
   alsoKnownAs: string[] = []
 ): Promise<FetchResult> {
-  const params = new URLSearchParams({
-    per_page: "1000",
-    order: "newest",
-    "conditions[term]": frSearchTerm(edgarName, alsoKnownAs),
-    "conditions[publication_date][gte]": since,
-  });
-  for (const f of ["document_number", "title", "publication_date", "type", "html_url", "agencies"]) {
-    params.append("fields[]", f);
-  }
   try {
-    const res = await fetch(`https://www.federalregister.gov/api/v1/documents.json?${params}`, {
+    const res = await fetch(searchUrl(frSearchTerm(edgarName, alsoKnownAs), since, null), {
       next: { revalidate: 21600 },
     });
     if (res.status === 429 || res.status === 503) return { events: [], outcome: "throttled", httpStatus: res.status };
     if (!res.ok) return { events: [], outcome: "error", httpStatus: res.status };
     const docs: FrDocument[] = (await res.json())?.results ?? [];
-    const events: TimelineEvent[] = docs
-      .filter(
-        (d) =>
-          d.document_number &&
-          /^\d{4}-\d{2}-\d{2}$/.test(d.publication_date ?? "") &&
-          titleNamesCompany(d.title, edgarName, alsoKnownAs) &&
-          !isAirworthinessDirective(d.title)
-      )
-      .slice(0, FR_COMPANY_CAP)
-      .map((d) => {
-        const agency = d.agencies?.[0]?.name;
-        return {
-          id: `fr-${d.document_number}`,
-          date: d.publication_date,
-          type: "regulation" as const,
-          title: d.title.replace(/\s+/g, " ").trim(),
-          source: agency ? `Federal Register · ${agency}` : "Federal Register",
-          url: d.html_url,
-          description: d.type,
-          sourceKey: "federal_register" as const,
-          externalId: d.document_number,
-          dedupBasis: `fr:${d.document_number}`,
-        };
-      });
+    const events = companyEvents(docs, edgarName, alsoKnownAs).slice(0, FR_COMPANY_CAP);
     return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
   } catch (err) {
     return { events: [], outcome: "error", detail: String(err).slice(0, 200) };
   }
+}
+
+export interface YearResult extends FetchResult {
+  /** the hits the search counted for the year, the company's or not */
+  documents: number;
+}
+
+/**
+ * Every one of the company's documents in a year that is over, each page of the search read, none
+ * left out by a cap: the year walk's ask (batch 63). `alsoKnownAs` carries the year's own names —
+ * its other names, and an EDGAR former name still in use that year.
+ */
+export async function fetchCompanyYear(edgarName: string, year: number, alsoKnownAs: string[] = []): Promise<YearResult> {
+  const term = frSearchTerm(edgarName, alsoKnownAs);
+  const docs: FrDocument[] = [];
+  let documents = 0;
+  try {
+    for (let page = 1; page <= FR_YEAR_PAGES; page++) {
+      const res = await fetch(searchUrl(term, `${year}-01-01`, `${year}-12-31`, page));
+      if (res.status === 429 || res.status === 503) return { events: [], documents, outcome: "throttled", httpStatus: res.status };
+      if (!res.ok) return { events: [], documents, outcome: "error", httpStatus: res.status };
+      const json = await res.json();
+      documents = Number(json?.count ?? 0);
+      docs.push(...(json?.results ?? []));
+      if (!json?.next_page_url) break;
+    }
+  } catch (err) {
+    return { events: [], documents, outcome: "error", detail: String(err).slice(0, 200) };
+  }
+  const events = companyEvents(docs, edgarName, alsoKnownAs);
+  return { events, documents, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
+}
+
+/**
+ * The agencies whose notices naming a company are mostly routine paperwork: a railroad's
+ * trackage-rights and abandonment exemptions before the Surface Transportation Board (and the
+ * Interstate Commerce Commission before it), a utility's FERC filings and NRC licence notices.
+ * Measured 2026-10-27 over 1994–2025: 1,203 of Union Pacific's and CSX's 1,340 documents came from
+ * the two rail boards, 579 of Duke Energy's 614 from FERC and the NRC.
+ */
+export const ROUTINE_AGENCIES = [
+  "Surface Transportation Board",
+  "Interstate Commerce Commission",
+  "Federal Energy Regulatory Commission",
+  "Nuclear Regulatory Commission",
+];
+
+/**
+ * A notice from those agencies that is not routine: a merger or control case, a complaint, an
+ * order, a penalty, a settlement, a petition. "Union Pacific Corporation…—Control—Norfolk
+ * Southern" and "Intermountain Power Agency v. Union Pacific" keep their own dated rows.
+ */
+const NOT_ROUTINE =
+  /\b(?:complaint|v\.|vs\.|versus|order imposing|order modifying|confirmatory order|civil (?:monetary )?penalt|violation|merger|control\b|investigation|show cause|settlement|declaratory order|petition for|enforcement)/i;
+
+const AGENCY_LABEL = /^Federal Register · (.+)$/;
+
+/**
+ * Whether a stored company row is one of those routine notices, and whose. A notice, or a document
+ * the Federal Register left uncategorized, as it did 25 of CSX's 1994–95 ICC notices; never a rule.
+ */
+export function routineNoticeAgency(e: TimelineEvent): string | null {
+  if (e.type !== "regulation" || (e.description !== "Notice" && e.description !== "Uncategorized Document")) return null;
+  const agency = AGENCY_LABEL.exec(e.source)?.[1];
+  return agency && ROUTINE_AGENCIES.includes(agency) && !NOT_ROUTINE.test(e.title) ? agency : null;
+}
+
+/**
+ * A company page's Federal Register rows, as the page should carry them (batch 63). The owner's
+ * call, 2026-10-26: routine notices are grouped, one row a month. A month with two or more of one
+ * agency's routine notices becomes one month-precision row naming how many, its description
+ * listing the first few and its link the newest; a lone notice keeps its dated row. Done when the
+ * page is read, as prospectuses are (`pageFilings`), so what is stored is covered and the
+ * database keeps each notice.
+ */
+export function pageRegulations(events: TimelineEvent[]): TimelineEvent[] {
+  const months = new Map<string, TimelineEvent[]>();
+  const kept: TimelineEvent[] = [];
+  for (const e of events) {
+    const agency = routineNoticeAgency(e);
+    if (!agency) {
+      kept.push(e);
+      continue;
+    }
+    const key = `${agency}|${e.date.slice(0, 7)}`;
+    months.set(key, [...(months.get(key) ?? []), e]);
+  }
+  for (const [key, rows] of months) {
+    if (rows.length < 2) {
+      kept.push(...rows);
+      continue;
+    }
+    const [agency, month] = key.split("|");
+    const newest = [...rows].sort((a, b) => b.date.localeCompare(a.date))[0];
+    const listed = rows.slice(0, 3).map((r) => `"${r.title}"`).join("; ");
+    kept.push({
+      id: `fr-routine-${agency.toLowerCase().replace(/[^a-z]+/g, "-")}-${month}`,
+      date: `${month}-01`,
+      precision: "month",
+      type: "regulation",
+      title: `${agency}: ${rows.length} routine notices`,
+      source: `Federal Register · ${agency}`,
+      url: newest.url,
+      description:
+        `${rows.length} routine ${agency} notices this month, grouped into one row: ${listed}` +
+        (rows.length > 3 ? `, and ${rows.length - 3} more` : "") +
+        ". The link opens the newest.",
+    });
+  }
+  return kept.sort((a, b) => a.date.localeCompare(b.date));
 }

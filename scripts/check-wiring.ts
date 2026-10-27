@@ -34,7 +34,7 @@ import type { SourceKey } from "../lib/types";
 import { countMismatches, sameDatabase } from "../lib/backupCounts";
 import { companyLede } from "../lib/wiki";
 import { OVERLAP_SQL, STRIP_MIN_SHARED, summariseOverlap } from "../lib/overlap";
-import { FR_COMPANY_CAP, FR_COMPANY_SINCE, fetchCompanyMentions, fetchCompanyRegulations, frSearchTerm, tallyCompanyMentions, titleNamesCompany } from "../lib/frCompany";
+import { FR_COMPANY_CAP, fetchCompanyMentions, fetchCompanyRegulations, frDailySince, frSearchTerm, tallyCompanyMentions, titleNamesCompany } from "../lib/frCompany";
 import { withoutSharedSectorRows } from "../lib/eventMerge";
 
 let pass = 0;
@@ -512,7 +512,7 @@ const frSearch2 = (async () => {
         frDoc(201, "Google Maps Data Standards; Request for Information"),
       ] }), { status: 200 });
     }) as typeof fetch;
-    const g = await fetchCompanyRegulations("Alphabet Inc.", FR_COMPANY_SINCE, ["google"]);
+    const g = await fetchCompanyRegulations("Alphabet Inc.", frDailySince(), ["google"]);
     check("  …and Alphabet's search carries \"google\", keeping Google LLC's order and not Google Maps",
       asked.includes('conditions[term]="Alphabet" | "google"') && g.events.length === 1 && /Google LLC/.test(g.events[0].title),
       `${g.events.length} — ${asked.slice(55, 140)}`);
@@ -522,7 +522,10 @@ const frSearch2 = (async () => {
 })();
 check("the company sources include it, and ingestCompany asks for the company's own documents",
   (COMPANY_SOURCES as readonly string[]).includes("federal_register") &&
-    /run\("federal_register", frSearchTerm\(company\.name, alsoKnownAs\), \(\) =>\s*fetchCompanyRegulations\(company\.name, FR_COMPANY_SINCE, alsoKnownAs\)/.test(ingestSrcFor("ingestCompany")));
+    /run\("federal_register", frSearchTerm\(company\.name, alsoKnownAs\), \(\) =>\s*fetchCompanyRegulations\(company\.name, frDailySince\(\), alsoKnownAs\)/.test(ingestSrcFor("ingestCompany")));
+check("  …this year's on the daily ask, and each year since 1994 once, by the year walk (batch 63)",
+  /backfillRegulations\(client, subjectId, \{ edgarName: company\.name, alsoKnownAs, scoring \}\)/.test(ingestSrcFor("ingestCompany")) &&
+    frDailySince(new Date("2026-10-27T12:00:00Z")) === "2026-01-01");
 check("  …under the company's other names, and the count report searches the same names",
   /fetchCompanyMentions\(c\.name, since, alsoKnownAs\)/.test(read("scripts/fr-company-report.ts")) &&
     /tallyCompanyMentions\(r\.hits, c\.name, alsoKnownAs\)/.test(read("scripts/fr-company-report.ts")) &&

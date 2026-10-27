@@ -8,6 +8,7 @@ import { firstPassCompany, firstPassTopic } from "./ingest/firstPass";
 import { dropCompanyPrehistory } from "./history";
 import { withoutSharedSectorRows } from "./eventMerge";
 import { pageFilings } from "./secForms";
+import { pageRegulations } from "./frCompany";
 import { isFund, resolveTickerLocally, siblingFunds } from "./sec";
 import { loadSectorStanding, type SectorStanding } from "./signals";
 import { boundPageNews, cachedWeight } from "./pageNews";
@@ -275,7 +276,7 @@ async function heldCompanyPage(key: string): Promise<CompanyPageData | null> {
   };
   // prices are a cache entry of their own (`cachedHeldPrices`), but they still rank the days
   const bounded = boundPageNews(
-    dropCompanyPrehistory(pageFilings([...events, ...withoutSharedSectorRows(events, sector)], subject.cik)),
+    dropCompanyPrehistory(pageRegulations(pageFilings([...events, ...withoutSharedSectorRows(events, sector)], subject.cik))),
     prices,
     cachedWeight(rest)
   );

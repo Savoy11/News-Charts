@@ -127,14 +127,20 @@ async function main(): Promise<void> {
   const doc = (title: string, date = "2026-03-02"): TimelineEvent =>
     ({ id: `fr-${title}`, date, type: "regulation", title, source: "Federal Register", url: "https://www.federalregister.gov/d/x" });
   const petition = doc("Ford Motor Company, Receipt of Petition for Decision of Inconsequential Noncompliance");
-  check("a company's own Federal Register documents pass", companyRegulationProblems([petition], "FORD MOTOR CO").length === 0);
+  // the daily ask's window, pinned so the cases do not age out with the calendar
+  const daily = { since: "2026-01-01", cap: 40 };
+  check("a company's own Federal Register documents pass", companyRegulationProblems([petition], "FORD MOTOR CO", 1, daily).length === 0);
   check("…one whose title doesn't name it fails",
-    companyRegulationProblems([petition, doc("Fuel Economy Standards for Light Trucks")], "FORD MOTOR CO").length === 1);
+    companyRegulationProblems([petition, doc("Fuel Economy Standards for Light Trucks")], "FORD MOTOR CO", 1, daily).length === 1);
   check("…as does an airworthiness directive",
-    companyRegulationProblems([petition, doc("Airworthiness Directives; Ford Motor Company Airplanes")], "FORD MOTOR CO").length === 1);
-  check("…a document older than the floor",
-    companyRegulationProblems([doc(petition.title, "2009-06-01")], "FORD MOTOR CO").length === 1);
-  check("…and an empty feed", companyRegulationProblems([], "FORD MOTOR CO").length > 0);
+    companyRegulationProblems([petition, doc("Airworthiness Directives; Ford Motor Company Airplanes")], "FORD MOTOR CO", 1, daily).length === 1);
+  check("…a document from before the daily ask's year",
+    companyRegulationProblems([doc(petition.title, "2025-06-01")], "FORD MOTOR CO", 1, daily).length === 1);
+  check("…and an empty feed", companyRegulationProblems([], "FORD MOTOR CO", 1, daily).length > 0);
+  const y2008 = { since: "2008-01-01", until: "2008-12-31" };
+  check("a past year's documents pass in that year's window (batch 63)",
+    companyRegulationProblems([doc(petition.title, "2008-05-14")], "FORD MOTOR CO", 1, y2008).length === 0);
+  check("…and one from the next year fails", companyRegulationProblems([doc(petition.title, "2009-01-02")], "FORD MOTOR CO", 1, y2008).length === 1);
 
   console.log("\nRecent press releases read as headlines");
   // every headline the reader's fixtures hold is a real one, so not one may smell

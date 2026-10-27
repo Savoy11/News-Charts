@@ -42,7 +42,7 @@ import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
 import { fetchRecalls } from "../lib/recalls";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
-import { FR_COMPANY_CAP, FR_COMPANY_SINCE, fetchCompanyRegulations, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
+import { FR_COMPANY_CAP, fetchCompanyRegulations, fetchCompanyYear, frDailySince, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
 import { WikipediaUnavailable, getTopicTimeline, wikiOutcome } from "../lib/wiki";
 import { GDELT_MIN_PHRASE, fetchNews, gdeltEverydayName, gdeltNewsPlan } from "../lib/news";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
@@ -189,14 +189,20 @@ export function exploitUnitProblems(rows: { name?: string; amount?: number }[]):
  * filter is offline-tested in `check:wiring`; only the live feed can say it still lets something
  * through, because the API's phrase search is the part that changes under us.
  */
-export function companyRegulationProblems(events: TimelineEvent[], edgarName: string, min = 1): string[] {
+export function companyRegulationProblems(
+  events: TimelineEvent[],
+  edgarName: string,
+  min = 1,
+  window: { since: string; until?: string; cap?: number } = { since: frDailySince(), cap: FR_COMPANY_CAP }
+): string[] {
   const out = eventProblems(events, min);
   const unnamed = events.filter((e) => !titleNamesCompany(e.title, edgarName));
   if (unnamed.length) out.push(`${unnamed.length} titles that don't name ${edgarName}, e.g. "${unnamed[0].title}"`);
   const directives = events.filter((e) => isAirworthinessDirective(e.title));
   if (directives.length) out.push(`${directives.length} airworthiness directives, e.g. "${directives[0].title}"`);
-  if (events.some((e) => e.date < FR_COMPANY_SINCE)) out.push(`a document dated before the ${FR_COMPANY_SINCE} floor`);
-  if (events.length > FR_COMPANY_CAP) out.push(`${events.length} documents, over the cap of ${FR_COMPANY_CAP}`);
+  const outside = events.filter((e) => e.date < window.since || (window.until !== undefined && e.date > window.until));
+  if (outside.length) out.push(`a document dated ${outside[0].date}, outside ${window.since} to ${window.until ?? "today"}`);
+  if (window.cap !== undefined && events.length > window.cap) out.push(`${events.length} documents, over the cap of ${window.cap}`);
   return out;
 }
 
@@ -464,9 +470,19 @@ export const CASES: LiveCase[] = [
     covers: ["federal_register"],
     hosts: ["www.federalregister.gov"],
     async run() {
-      // Ford petitions NHTSA over recalls several times a year, so the feed is never honestly empty.
+      // The daily ask reads the current year, which in January may honestly hold none, so it is held
+      // to its window and cap only. A year before 2015, the old floor, is the year walk's (batch 63):
+      // measured 2026-10-27, 2008 held six of Ford's, NHTSA petitions and a Labor Department
+      // determination at its Louisville plant.
       const r = await fetchCompanyRegulations("FORD MOTOR CO");
-      return [...outcomeProblems(r.outcome, r.detail), ...companyRegulationProblems(r.events, "FORD MOTOR CO", 3)];
+      const daily = r.outcome === "empty" ? [] : outcomeProblems(r.outcome, r.detail);
+      const y = await fetchCompanyYear("FORD MOTOR CO", 2008);
+      return [
+        ...daily,
+        ...companyRegulationProblems(r.events, "FORD MOTOR CO", 0),
+        ...outcomeProblems(y.outcome, y.detail),
+        ...companyRegulationProblems(y.events, "FORD MOTOR CO", 4, { since: "2008-01-01", until: "2008-12-31" }),
+      ];
     },
   },
   {

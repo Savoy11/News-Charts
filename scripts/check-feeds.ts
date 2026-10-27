@@ -28,7 +28,7 @@ import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { getDailyPrices } from "../lib/prices";
 import { getTopicTimeline } from "../lib/wiki";
 import { resolveCompany, commonName, getFilings, newsNamesFor, possessiveNameFor } from "../lib/sec";
-import { FR_COMPANY_SINCE, companyNames, fetchCompanyRegulations, frSearchTerm } from "../lib/frCompany";
+import { companyNames, fetchCompanyRegulations, fetchCompanyYear, frDailySince, frSearchTerm } from "../lib/frCompany";
 import { fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { dojPossessive, dojQueryNames, fetchJusticeReleases } from "../lib/doj";
@@ -177,8 +177,10 @@ async function main() {
         `(${month.from} to ${month.to} by relevance: the ${kept.length} of ${got?.events.length ?? 0} it would keep)`);
     }
     reportFetch("Yahoo Finance RSS", await tried(fetchYahooFinanceNews(company.ticker)));
-    reportFetch("Federal Register (co.)", await tried(fetchCompanyRegulations(company.name, FR_COMPANY_SINCE, alsoKnownAs)),
-      `(asked ${frSearchTerm(company.name, alsoKnownAs)})`);
+    reportFetch("Federal Register (co.)", await tried(fetchCompanyRegulations(company.name, frDailySince(), alsoKnownAs)),
+      `(asked ${frSearchTerm(company.name, alsoKnownAs)}, this year)`);
+    reportFetch("Federal Register, 2008", await tried(fetchCompanyYear(company.name, 2008, alsoKnownAs)),
+      "(a past year, as the year walk reads it: every page; former names are not read here)");
     if (recallMakersFor(company.cik)) reportFetch("NHTSA recalls", await tried(fetchRecalls(company.cik)), "(mapped makers only)");
     else console.log(`  ${"NHTSA recalls".padEnd(22)} — not a mapped vehicle maker`);
     if (fdaFirmsFor(company.cik)) reportFetch("FDA enforcement", await tried(fetchFdaRecalls(company.cik)), "(mapped firms only)");

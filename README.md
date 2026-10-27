@@ -117,6 +117,21 @@ NHTSA links to it said in that row. On the chart each is a small dot ranked like
 a recall gets: an investigation opened is no recall. Measured 2026-10-27: 1,766 for 18 companies,
 1,579 of them before 2017 (Ford 684, GM 651, Toyota 114, Honda 113, Stellantis 50 from 2014).
 
+### Federal Reserve enforcement actions (`lib/fedActions.ts`)
+
+A bank's page carries the Federal Reserve Board's enforcement actions against it, back to 1993:
+cease-and-desist orders, written agreements, civil money penalties ("Federal Reserve:
+Cease-and-desist order and $342 million civil money penalty", JPMorgan's of 2015-05-20), with the
+organisation the Board named and the day an order ended beneath. They come from the two keyless
+files behind the Board's enforcement-action search (public domain, cited to the Board), read once a
+process. A day's actions against a bank are one row. One against a person who worked at a bank is
+not the bank's. The Board names an organisation and its city, never a listed company, so a bank
+reaches a page only through the hand-checked map in `lib/fedActions.ts`, by CIK, with the same
+rule as recalls: a company's own history counts, an acquisition's past never does. SunTrust's orders
+are not Truist's, AmSouth's are not Regions', and "Huntington Bancshares, Inc., Huntington, Texas"
+is not Huntington. Scored without the model. Measured 2026-10-27: 72 events on 18 of the 25 mapped
+banks, 51 of them before 2017 (JPMorgan 10, Citigroup 10, Wells Fargo 7, Goldman Sachs 7).
+
 ### FDA recalls (`lib/fdaRecalls.ts`)
 
 A drug, device or food company's page carries its Class I and II recalls from the FDA's weekly
@@ -675,6 +690,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Federal Reserve | FOMC policy statements since 1994 | Economy subject; on company pages behind the Economy chip (off by default). `npm run ingest -- --macro` |
 | BLS | CPI release dates since 2008 | Same subject and chip; needs a contact `User-Agent` |
 | NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966; defect investigations since 1975 | Recalls of 10,000 vehicles or more, and every investigation NHTSA opened, only for the vehicle and tyre makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014). Public domain; no key |
+| Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 25 bank holding companies `lib/fedActions.ts` maps by hand to a listed company; an action against a person is left out. Public domain, cited to the Board; two keyless files |
 | FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 38 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
 | U.S. Department of Justice | Press releases since 2009 in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |

@@ -365,6 +365,11 @@ export function deterministicScore(
      * cannot make from provenance. Scoring it here would be inventing certainty.
      */
     case "regulation":
+      // The Federal Reserve acted against the company or a bank it owned that day, by the
+      // hand-checked map (lib/fedActions.ts): about the company by construction, as a recall is.
+      if (subject.kind === "company" && row.sourceKey === "fed_enforcement") {
+        return { score: 1, reason: "a Federal Reserve action against the company or a bank it owned that day" };
+      }
       // A Justice Department release reaches a company only when its title makes the company a
       // party — it pays, it is sued, its merger is blocked (lib/doj.ts, batch 32) — a stricter test
       // than naming it, and one "Justice Department Sues Monopolist Google" fails as a headline.

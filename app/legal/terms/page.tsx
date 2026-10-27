@@ -39,7 +39,8 @@ export default function TermsPage() {
       <p>
         Much of what the site shows belongs to others or is public record: filings from the SEC,
         historical newspapers from the Library of Congress, rules from the Federal Register, policy
-        decisions from the Federal Reserve, inflation reports from the Bureau of Labor Statistics,
+        decisions and enforcement actions from the Federal Reserve Board, inflation reports from
+        the Bureau of Labor Statistics,
         vehicle recalls and defect investigations from the National Highway Traffic Safety
         Administration, drug, device and food recalls from the U.S. Food and Drug Administration,
         press releases from the U.S. Department of Justice, material from the

@@ -32,6 +32,7 @@ import { fetchSeriesFilings, ownSeriesFilings } from "../lib/fundSeries";
 import { companyNames, fetchCompanyRegulations, fetchCompanyYear, frDailySince, frSearchTerm } from "../lib/frCompany";
 import { fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
+import { fedBanksFor, fetchFedActions } from "../lib/fedActions";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { dojPossessive, dojQueryNames, fetchJusticeReleases } from "../lib/doj";
 import { mayCarryRelease, readFilingHeadline } from "../lib/secHeadlines";
@@ -90,6 +91,7 @@ const SOURCE_OF: Record<string, SourceKey> = {
   "Federal Register (co.)": "federal_register",
   "NHTSA recalls": "nhtsa_recalls",
   "FDA enforcement": "fda_enforcement",
+  "Federal Reserve actions": "fed_enforcement",
   "Justice Department": "doj_press",
 };
 
@@ -189,6 +191,8 @@ async function main() {
     } else console.log(`  ${"NHTSA recalls".padEnd(22)} — not a mapped vehicle maker`);
     if (fdaFirmsFor(company.cik)) reportFetch("FDA enforcement", await tried(fetchFdaRecalls(company.cik)), "(mapped firms only)");
     else console.log(`  ${"FDA enforcement".padEnd(22)} — not a mapped FDA firm`);
+    if (fedBanksFor(company.cik)) reportFetch("Federal Reserve actions", await tried(fetchFedActions(company.cik)), "(mapped banks only)");
+    else console.log(`  ${"Federal Reserve actions".padEnd(22)} — not a mapped bank`);
     reportFetch("Justice Department", await tried(fetchJusticeReleases(company.name, alsoKnownAs, possessive)),
       `(asked ${dojQueryNames(companyNames(company.name, alsoKnownAs), dojPossessive(company.name, possessive)).join(" | ")})`);
   } else {

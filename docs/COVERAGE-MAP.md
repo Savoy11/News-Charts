@@ -27,6 +27,7 @@ because it will be trusted.
 | **1934 – now** | SEC EDGAR | electronic filings from ~1993 | Filings, earnings; an 8-K, or a foreign company's 6-K, titled by the headline of the press release filed with it, from 1994 (`lib/secHeadlines.ts`). A fund's own filings, by the list EDGAR keeps for its series, from February 2006, when the lists begin; its trust's older ones stay, hedged (`lib/fundSeries.ts`, batch 67) |
 | **1966 – now** | NHTSA vehicle recalls | 1966, the first campaigns | Safety recalls of 10,000 vehicles or more, for the vehicle and tyre makers `lib/recalls.ts` maps (Ford, GM, Stellantis from 2014, Toyota, Honda, Tesla, Harley-Davidson, PACCAR, the RV makers Thor and Winnebago with the brands they bought, Berkshire Hathaway's Forest River, and others) |
 | **1975 – now** | NHTSA defect investigations | 1975, the first opened | Every investigation NHTSA opened into the same makers, shown with their recalls (batch 66): 1,766 for 18 companies, 1,579 before 2017 (Ford 684, GM 651) |
+| **1993 – now** | Federal Reserve enforcement actions | 1989 in the Board's files; 1993 the first against a mapped bank | Cease-and-desist orders, written agreements and civil money penalties against the 25 banks `lib/fedActions.ts` maps (batch 69): 72 events on 18 of them, 51 before 2017 (JPMorgan 10, Citigroup 10, Wells Fargo 7, Goldman Sachs 7) |
 | **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |
 | **2008 – now** | BLS CPI release archive | February 2008, the oldest archived release | Monthly CPI releases — on company pages behind the Economy chip, off by default |
 | **2009 – now** | Justice Department press releases | 2009, the oldest releases the API holds | Settlements, pleas, suits and merger cases whose title makes the company a party (`lib/doj.ts`) — a few to ten per large company, about half before 2017 |
@@ -95,7 +96,8 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   companies in any sector — measured on 81 large companies, 93 of 195 events fell before 2017 —
   but few a company, and only the cases the Department announced. FDA recalls add mid-2012 to 2016
   for 38 drug, device and food companies, many of them: Medtronic has 532 recalls, 147 of them
-  before 2017 (Philips 232 of 590, Johnson & Johnson 298 of 485).
+  before 2017 (Philips 232 of 590, Johnson & Johnson 298 of 485). The Federal Reserve's
+  enforcement actions add a few material events for large banks, 51 of their 72 before 2017.
 - **The keyed aggregators are not ingested.** Their free tiers bar commercial use, so the
   adapters exist for diagnostics only. Even licensed, they are days-to-weeks deep: breadth for the
   present, never depth for the past.
@@ -122,6 +124,7 @@ windows — update both together.
 | Federal Register | No published cap | Generous in practice; visitor terms are capped per client (15 new terms/hour) |
 | NHTSA recalls | No published cap without an app token | One request a day per mapped vehicle maker |
 | NHTSA investigations | No published cap without an app token | One request a day per mapped vehicle maker |
+| Federal Reserve enforcement actions | No published cap | Two files, read once a process whatever the number of banks |
 | FDA (openFDA) | 1,000 requests a day, 240 a minute, without a key | Three to six a day per mapped company: one per product type, a page per 1,000 records |
 | Justice Department | No published cap | A page or two a day per company, 0.8 s apart; a common word ("Target") stops at ten pages |
 | Federal Reserve, BLS | No published cap | One page each a day; the FOMC history (~27 year pages, 1 s apart) is read once. bls.gov refuses requests without a contact `User-Agent` |

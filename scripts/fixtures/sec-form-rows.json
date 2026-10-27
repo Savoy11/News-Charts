@@ -1,0 +1,474 @@
+{
+ "source": "Real rows of EDGAR submissions records, read 2026-10-27 for check:sec-forms (batch 65): Disney's DFAN14As of November 2023 and March 2024 (file number 001-38842, its own), and Pfizer's SC TO-T/A updates of July 2019 to its offer for Array BioPharma (no file number in Pfizer's record: it made them about another company).",
+ "rows": [
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-29",
+   "accession": "0001213900-24-028066",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-29",
+   "accession": "0001213900-24-028045",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-29",
+   "accession": "0000902664-24-002688",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-29",
+   "accession": "0000902664-24-002668",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-28",
+   "accession": "0001213900-24-027326",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-28",
+   "accession": "0000902664-24-002664",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-27",
+   "accession": "0001213900-24-026654",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-27",
+   "accession": "0000902664-24-002639",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-27",
+   "accession": "0000902664-24-002634",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-27",
+   "accession": "0000902664-24-002629",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-26",
+   "accession": "0001213900-24-026103",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-26",
+   "accession": "0000902664-24-002610",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-26",
+   "accession": "0000902664-24-002600",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-25",
+   "accession": "0000902664-24-002596",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-25",
+   "accession": "0001213900-24-025611",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-25",
+   "accession": "0001213900-24-025479",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-25",
+   "accession": "0000902664-24-002585",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-25",
+   "accession": "0000902664-24-002577",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-22",
+   "accession": "0000902664-24-002574",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-22",
+   "accession": "0001213900-24-025204",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-22",
+   "accession": "0000902664-24-002549",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-21",
+   "accession": "0000902664-24-002536",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-21",
+   "accession": "0000902664-24-002535",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-21",
+   "accession": "0000902664-24-002534",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-21",
+   "accession": "0001213900-24-024805",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-20",
+   "accession": "0001213900-24-024436",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-20",
+   "accession": "0000902664-24-002506",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-20",
+   "accession": "0001213900-24-024164",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-19",
+   "accession": "0001213900-24-024098",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-19",
+   "accession": "0000902664-24-002492",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-18",
+   "accession": "0000902664-24-002482",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-18",
+   "accession": "0000902664-24-002481",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-18",
+   "accession": "0001213900-24-023588",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-15",
+   "accession": "0000902664-24-002470",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-15",
+   "accession": "0000902664-24-002445",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-15",
+   "accession": "0001213900-24-022708",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-14",
+   "accession": "0000902664-24-002438",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-13",
+   "accession": "0000902664-24-002418",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-12",
+   "accession": "0001213900-24-021902",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-12",
+   "accession": "0000902664-24-002375",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-12",
+   "accession": "0000902664-24-002373",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-12",
+   "accession": "0001213900-24-021583",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-11",
+   "accession": "0001213900-24-021477",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-11",
+   "accession": "0000902664-24-002363",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-11",
+   "accession": "0000902664-24-002358",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-08",
+   "accession": "0001213900-24-021118",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-07",
+   "accession": "0001213900-24-020800",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-07",
+   "accession": "0000902664-24-002275",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-07",
+   "accession": "0000902664-24-002245",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-06",
+   "accession": "0001213900-24-020489",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-06",
+   "accession": "0000902664-24-002213",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-05",
+   "accession": "0001213900-24-019715",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-05",
+   "accession": "0001213900-24-019655",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-05",
+   "accession": "0000902664-24-002191",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-04",
+   "accession": "0000902664-24-002190",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-01",
+   "accession": "0001213900-24-019094",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-01",
+   "accession": "0000902664-24-002160",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2024-03-01",
+   "accession": "0000902664-24-002156",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "DFAN14A",
+   "date": "2023-11-30",
+   "accession": "0000902664-23-005752",
+   "fileNumber": "001-38842",
+   "who": "Walt Disney Co"
+  },
+  {
+   "form": "SC TO-T/A",
+   "date": "2019-07-30",
+   "accession": "0001193125-19-206250",
+   "fileNumber": "",
+   "who": "Pfizer Inc."
+  },
+  {
+   "form": "SC TO-T/A",
+   "date": "2019-07-29",
+   "accession": "0001193125-19-204820",
+   "fileNumber": "",
+   "who": "Pfizer Inc."
+  },
+  {
+   "form": "SC TO-T/A",
+   "date": "2019-07-25",
+   "accession": "0001193125-19-202657",
+   "fileNumber": "",
+   "who": "Pfizer Inc."
+  },
+  {
+   "form": "SC TO-T/A",
+   "date": "2019-07-17",
+   "accession": "0001193125-19-195737",
+   "fileNumber": "",
+   "who": "Pfizer Inc."
+  },
+  {
+   "form": "SC TO-T/A",
+   "date": "2019-07-12",
+   "accession": "0001193125-19-193304",
+   "fileNumber": "",
+   "who": "Pfizer Inc."
+  },
+  {
+   "form": "SC TO-T/A",
+   "date": "2019-07-11",
+   "accession": "0001193125-19-192489",
+   "fileNumber": "",
+   "who": "Pfizer Inc."
+  },
+  {
+   "form": "SC TO-T/A",
+   "date": "2019-07-08",
+   "accession": "0001193125-19-190634",
+   "fileNumber": "",
+   "who": "Pfizer Inc."
+  },
+  {
+   "form": "SC TO-T/A",
+   "date": "2019-07-03",
+   "accession": "0001193125-19-189200",
+   "fileNumber": "",
+   "who": "Pfizer Inc."
+  }
+ ]
+}

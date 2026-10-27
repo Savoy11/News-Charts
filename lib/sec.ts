@@ -1,5 +1,5 @@
 import { CompanyInfo, TimelineEvent } from "./types";
-import { MATERIAL_FORMS, PROSPECTUS, STAKE_FORM, describeItems, leadItem, reportsResults } from "./secForms";
+import { DEAL_FORM, FOR_ANOTHER_COMPANY, MATERIAL_FORMS, PROSPECTUS, STAKE_FORM, describeItems, leadItem, reportsResults } from "./secForms";
 import {
   SIMILARITY_FLOOR,
   distinctiveWords,
@@ -861,10 +861,12 @@ function filingsFromBlock(
     const isEarnings =
       fund?.earnings ?? material?.earnings ?? (annual || form === "10-Q" || (results && !amended));
     const lead = eightK && !results ? leadItem(items) : null;
+    // a tender offer or proxy fight this company made about another one (`DEAL_FORM`, batch 65)
+    const forAnother = DEAL_FORM.test(form) && block.fileNumber && !block.fileNumber[i] ? FOR_ANOTHER_COMPANY[form] : undefined;
     const label =
       fund?.label ??
       (material
-        ? `${material.label} (${form})`
+        ? `${forAnother ?? material.label} (${form})`
         : annual
           ? `Annual report (${form})`
           : form === "10-Q"

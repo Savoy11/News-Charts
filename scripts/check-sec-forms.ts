@@ -208,6 +208,90 @@ async function main(): Promise<void> {
   }
 
   /**
+   * The forms the 2026-10-18 list missed, picked by the owner on 2026-10-26 (batch 65). Each row's
+   * form, date and accession are a real filing's, read from EDGAR on 2026-10-27; a deal form's file
+   * number is as EDGAR lists it (Disney's own, 001-38842; none on Pfizer's, which it made about
+   * other companies), and UBS's F-4's; the others are stand-ins, which no rule here reads.
+   */
+  console.log("\nThe forms the 2026-10-18 list missed (batch 65)");
+  const missed: [form: string, date: string, accession: string, fileNumber: string, who: string][] = [
+    ["F-1", "2023-08-21", "0001193125-23-216983", "333-00001", "Arm Holdings plc"],
+    ["NT 10-Q", "2006-08-11", "0001104659-06-053743", "001-00001", "Apple Inc."],
+    ["NT 10-K", "2006-12-15", "0001104659-06-081617", "001-00001", "Apple Inc."],
+    ["S-3ASR", "2024-11-01", "0001140361-24-044880", "333-00001", "Apple Inc."],
+    ["SC TO-I", "2007-03-16", "0001104659-07-019900", "005-00001", "Apple Inc."],
+    ["NT 20-F", "2020-04-29", "0001104659-20-052701", "001-00001", "NIO Inc."],
+    ["F-3ASR", "2024-05-21", "0001104659-24-063824", "333-00001", "NIO Inc."],
+    ["F-4", "2023-04-26", "0001193125-23-118754", "333-271453", "UBS Group AG"],
+    ["F-3", "2023-06-06", "0001104659-23-068524", "333-00001", "UBS Group AG"],
+    ["PREC14A", "2024-01-16", "0001744489-24-000050", "001-38842", "Walt Disney Co"],
+    ["DEFC14A", "2024-02-06", "0001213900-24-010239", "001-38842", "Walt Disney Co"],
+    ["SC TO-T", "2019-06-28", "0001193125-19-185659", "", "Pfizer Inc."],
+    ["PREC14A", "1999-12-16", "0000950123-99-010992", "", "Pfizer Inc."],
+  ];
+  const dfan = (JSON.parse(readFileSync("scripts/fixtures/sec-form-rows.json", "utf8")) as {
+    rows: { form: string; date: string; accession: string; fileNumber: string; who: string }[];
+  }).rows;
+  const allMissed = [...missed.map(([form, date, accession, fileNumber, who]) => ({ form, date, accession, fileNumber, who })), ...dfan];
+  const byWho = new Map<string, TimelineEvent[]>();
+  try {
+    for (const who of [...new Set(allMissed.map((r) => r.who))]) {
+      const list = allMissed.filter((r) => r.who === who);
+      globalThis.fetch = (async () => new Response(JSON.stringify({ name: who, filings: { recent: {
+        form: list.map((r) => r.form), filingDate: list.map((r) => r.date), accessionNumber: list.map((r) => r.accession),
+        primaryDocument: list.map(() => "a.htm"), items: list.map(() => ""), fileNumber: list.map((r) => r.fileNumber),
+      } } }), { status: 200 })) as typeof fetch;
+      const { getFilingsDeep } = await import("../lib/sec");
+      byWho.set(who, await getFilingsDeep({ ticker: "X", cik: "0000000002", name: who }, true, [], []));
+    }
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const filed = (who: string, date: string, form: string) =>
+    byWho.get(who)?.find((e) => e.date === date && e.title.endsWith(`(${form})`))?.title.replace(`${who}: `, "");
+  check("ARM's F-1, its 2023 listing, is kept and named",
+    filed("Arm Holdings plc", "2023-08-21", "F-1") === "Registration to sell shares (foreign company) (F-1)", filed("Arm Holdings plc", "2023-08-21", "F-1"));
+  check("Apple's 2006 late-filing notices are kept, the 10-Q's and the 10-K's",
+    filed("Apple Inc.", "2006-08-11", "NT 10-Q") === "Notice that the quarterly report will be late (NT 10-Q)" &&
+      filed("Apple Inc.", "2006-12-15", "NT 10-K") === "Notice that the annual report will be late (NT 10-K)");
+  check("  …as is NIO's NT 20-F of 2020", filed("NIO Inc.", "2020-04-29", "NT 20-F") === "Notice that the annual report will be late (NT 20-F)");
+  check("an automatic shelf reads as a shelf: Apple's S-3ASR, NIO's F-3ASR, UBS's F-3",
+    filed("Apple Inc.", "2024-11-01", "S-3ASR") === "Shelf registration for new securities (S-3ASR)" &&
+      filed("NIO Inc.", "2024-05-21", "F-3ASR") === "Shelf registration for new securities (F-3ASR)" &&
+      filed("UBS Group AG", "2023-06-06", "F-3") === "Shelf registration for new securities (F-3)");
+  check("UBS's F-4 for Credit Suisse is a merger registration, and Apple's SC TO-I its own offer",
+    filed("UBS Group AG", "2023-04-26", "F-4") === "Merger or exchange registration (F-4)" &&
+      filed("Apple Inc.", "2007-03-16", "SC TO-I") === "The company's own tender or exchange offer (SC TO-I)");
+  check("Disney's 2024 proxy fight is on its page, its own preliminary proxy and Blackwells' proxy statement",
+    filed("Walt Disney Co", "2024-01-16", "PREC14A") === "Proxy fight: preliminary proxy statement (PREC14A)" &&
+      filed("Walt Disney Co", "2024-02-06", "DEFC14A") === "Proxy fight: proxy statement (DEFC14A)");
+  check("Pfizer's own bid for Array reads as its offer, not as a bidder's for Pfizer",
+    filed("Pfizer Inc.", "2019-06-28", "SC TO-T") === "Its tender offer for another company's shares (SC TO-T)", filed("Pfizer Inc.", "2019-06-28", "SC TO-T"));
+  check("  …and its 1999 fight for Warner-Lambert as its proxy fight at another company",
+    filed("Pfizer Inc.", "1999-12-16", "PREC14A") === "Its proxy fight at another company: preliminary proxy statement (PREC14A)");
+  const disneyPage = pageFilings(byWho.get("Walt Disney Co")!, "1744489");
+  const march = disneyPage.filter((e) => e.date.startsWith("2024-03") && /DFAN14A/.test(e.title));
+  check("Disney's March 2024 DFAN14As are one row for the month",
+    march.length === 1 && march[0].precision === "month" && march[0].title === `Walt Disney Co: Proxy material from outside the company ×${dfan.filter((r) => r.who === "Walt Disney Co" && r.date.startsWith("2024-03")).length} (DFAN14A)`,
+    march.map((e) => e.title).join(" | "));
+  check("  …while a month with one keeps its dated row", disneyPage.some((e) => e.date === "2023-11-30" && /\(DFAN14A\)$/.test(e.title) && e.precision !== "month"),
+    disneyPage.filter((e) => e.date.startsWith("2023-11")).map((e) => `${e.date} ${e.title}`).join(" | "));
+  const pfizerPage = pageFilings(byWho.get("Pfizer Inc.")!, "78003");
+  const july = pfizerPage.filter((e) => e.date.startsWith("2019-07"));
+  check("Pfizer's July 2019 updates to its Array offer are one row",
+    july.length === 1 && july[0].title === "Pfizer Inc.: Update to its tender offer for another company's shares ×8 (SC TO-T/A)", july.map((e) => e.title).join(" | "));
+  if (reSrc) {
+    const FORM_RE = new RegExp(reSrc, "i");
+    const stackForm = (t: string) => (/\(([^()]*)\)$/.exec(t)?.[1].match(FORM_RE) ?? t.match(FORM_RE))?.[1].toUpperCase();
+    check("the filing stack names each new form as it is, a late notice never as the report",
+      stackForm("Apple Inc.: Notice that the annual report will be late (NT 10-K)") === "NT 10-K" &&
+        stackForm("Pfizer Inc.: Update to its tender offer for another company's shares ×8 (SC TO-T/A)") === "SC TO-T/A" &&
+        stackForm("Apple Inc.: The company's own tender or exchange offer (SC TO-I)") === "SC TO-I" &&
+        stackForm("Walt Disney Co: Proxy material from outside the company ×58 (DFAN14A)") === "DFAN14A" &&
+        stackForm("Apple Inc.: Shelf registration for new securities (S-3ASR)") === "S-3ASR");
+  }
+
+  /**
    * 2026-10-17 proposal 9. The fixture is the record's own `formerNames` field, pinned from
    * `npm run former-names-report`; while it is still the provisional one this says so, because a
    * fixture written from an assumption can only confirm that assumption.

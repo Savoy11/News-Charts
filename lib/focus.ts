@@ -66,6 +66,10 @@ const normalise = (s: string): string =>
     .toLowerCase()
     // the annual report's form until 2002, "Annual report (10-K405)", is a 10-K to a reader
     .replace(/\b10-k405\b/g, "10-k")
+    // a late-filing notice is no report: "(NT 10-K)" is not a 10-K (batch 65)…
+    .replace(/\bnt (10|20)-([kqf])\b/g, "nt$1$2")
+    // …while an automatic shelf is an S-3 or an F-3: "(S-3ASR)"
+    .replace(/\b([sf])-3asr\b/g, "$1-3 asr")
     .replace(/[^a-z0-9 ]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();

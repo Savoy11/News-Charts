@@ -64,6 +64,7 @@ const CASES: Case[] = [
 
   // ---- an SEC form beside the security (batch 52): the form is what to narrow the page to
   { q: "Apple 10-K", subject: "Apple", focus: "10-K" },
+  { q: "Arm F-1", subject: "Arm", focus: "F-1", note: "a foreign listing's form, kept since batch 65" },
   { q: "Ford's 8-K filings", subject: "Ford's", focus: "8-K", note: "the possessive is the resolver's, as above" },
   { q: "Tesla 10Q", subject: "Tesla", focus: "10Q", note: "written without its hyphen" },
   { q: "TSMC 20-F", subject: "TSMC", focus: "20-F" },

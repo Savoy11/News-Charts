@@ -124,6 +124,18 @@ export const MATERIAL_FORMS: Record<string, { label: string; earnings?: true }> 
   DEFM14A: { label: "Merger vote proxy" },
   "SC TO-T": { label: "Tender offer by an outside bidder" },
   "SC 14D9": { label: "Board's response to a tender offer" },
+  // the rest of the 2026-10-18 list's gaps, counted and picked by the owner on 2026-10-26 (batch 65)
+  "F-4": { label: "Merger or exchange registration" },
+  "SC TO-T/A": { label: "Update to a tender offer by an outside bidder" },
+  "SC TO-I": { label: "The company's own tender or exchange offer" },
+  // late-filing notices, which tend to come before a restatement: Apple's of 2006, NVIDIA's of 2002
+  "NT 10-K": { label: "Notice that the annual report will be late" },
+  "NT 10-Q": { label: "Notice that the quarterly report will be late" },
+  "NT 20-F": { label: "Notice that the annual report will be late" },
+  // proxy fights: Disney's of 2023 and 2024, GM's of 2017
+  PREC14A: { label: "Proxy fight: preliminary proxy statement" },
+  DEFC14A: { label: "Proxy fight: proxy statement" },
+  DFAN14A: { label: "Proxy material from outside the company" },
   // large stakes — the SEC renamed these "SCHEDULE 13D/G" in December 2024; both spellings occur
   "SC 13D": { label: "Investor stake over 5%" },
   "SC 13D/A": { label: "Change to a 5%+ investor stake" },
@@ -133,14 +145,47 @@ export const MATERIAL_FORMS: Record<string, { label: string; earnings?: true }> 
   "SCHEDULE 13D/A": { label: "Change to a 5%+ investor stake" },
   "SCHEDULE 13G": { label: "Passive investor stake over 5%" },
   "SCHEDULE 13G/A": { label: "Change to a passive 5%+ stake" },
-  // offerings
+  // offerings — a large seasoned issuer shelves on the automatic S-3ASR, a foreign one on F-3
   "S-3": { label: "Shelf registration for new securities" },
+  "S-3ASR": { label: "Shelf registration for new securities" },
+  "F-3": { label: "Shelf registration for new securities" },
+  "F-3ASR": { label: "Shelf registration for new securities" },
+  "F-10": { label: "Registration for new securities (Canadian company)" },
+  // a foreign company's listing: ARM's of 2023, Alibaba's of 2014
+  "F-1": { label: "Registration to sell shares (foreign company)" },
   // exits
   "25": { label: "Delisting notice" },
   "25-NSE": { label: "Removed from an exchange" },
   "15-12B": { label: "Deregistration — stops SEC reporting" },
   "15-12G": { label: "Deregistration — stops SEC reporting" },
 };
+
+/**
+ * Forms a company files about another company as well as ones about itself: its own tender offer
+ * for another company's shares, its proxy fight at another company. Its record lists both. One
+ * about the company carries the company's own file number (Disney's 134 DFAN14As, 001-38842); one
+ * it made about another company carries none there (all 46 of Pfizer's SC TO-T and SC TO-T/A
+ * filings, among them its offers for Array, Medivation and King) — the rule the large-stake
+ * schedules follow (`STAKE_FORM`, lib/sec.ts). Read with the default label, Pfizer's own bids read
+ * "Tender offer by an outside bidder" on its page (batch 65).
+ */
+export const DEAL_FORM = /^(?:SC TO-T(?:\/A)?|PREC14A|DEFC14A|DFAN14A)$/;
+
+/** Their labels when the company made them about another company. */
+export const FOR_ANOTHER_COMPANY: Record<string, string> = {
+  "SC TO-T": "Its tender offer for another company's shares",
+  "SC TO-T/A": "Update to its tender offer for another company's shares",
+  PREC14A: "Its proxy fight at another company: preliminary proxy statement",
+  DEFC14A: "Its proxy fight at another company: proxy statement",
+  DFAN14A: "Its proxy material in a vote at another company",
+};
+
+/**
+ * Forms filed many times a month while a fight or an offer runs: Disney's DFAN14As, 58 in March
+ * 2024; Pfizer's tender-offer updates, eight in July 2019. Grouped a row a month, as busy
+ * prospectus months are (`pageFilings`).
+ */
+export const MONTHLY_FORM = /^(?:DFAN14A|SC TO-T\/A)$/;
 
 /**
  * Prospectuses for new securities. Kept, but grouped into one row per form per day: a bank files
@@ -156,6 +201,7 @@ export const STAKE_FORM = /^(?:SC 13[DG]|SCHEDULE 13[DG])(?:\/A)?$/;
 export const BUSY_PROSPECTUS_DAYS = 5;
 
 const PROSPECTUS_ROW = /^(.*): Prospectus(?:es ×(\d+))? \((424B[1-8])\)$/;
+const MONTHLY_ROW = /^(.*): (.+) \((DFAN14A|SC TO-T\/A)\)$/;
 
 /**
  * A company page's filing rows, as the page should carry them (audit 2026-10-21 #4).
@@ -174,6 +220,7 @@ const PROSPECTUS_ROW = /^(.*): Prospectus(?:es ×(\d+))? \((424B[1-8])\)$/;
  */
 export function pageFilings(events: TimelineEvent[], cik: string | null): TimelineEvent[] {
   const months = new Map<string, TimelineEvent[]>();
+  const busy = new Map<string, TimelineEvent[]>();
   const kept: TimelineEvent[] = [];
   for (const e of events) {
     const prospectus = e.type === "filing" ? PROSPECTUS_ROW.exec(e.title) : null;
@@ -182,7 +229,36 @@ export function pageFilings(events: TimelineEvent[], cik: string | null): Timeli
       months.set(key, [...(months.get(key) ?? []), e]);
       continue;
     }
+    const monthly = e.type === "filing" ? MONTHLY_ROW.exec(e.title) : null;
+    if (monthly) {
+      // the label is part of the key: a company's own proxy material and a dissident's are two rows
+      const key = `${monthly[3]}|${e.date.slice(0, 7)}|${monthly[2]}`;
+      busy.set(key, [...(busy.get(key) ?? []), e]);
+      continue;
+    }
     kept.push(e);
+  }
+  for (const [key, rows] of busy) {
+    if (rows.length < 2) {
+      kept.push(...rows);
+      continue;
+    }
+    const [form, month] = key.split("|");
+    const [, name, label] = MONTHLY_ROW.exec(rows[0].title)!;
+    const last = rows.reduce((d, r) => (r.date > d ? r.date : d), rows[0].date);
+    kept.push({
+      id: `sec-${form.replace(/\W+/g, "")}-${month}-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`,
+      date: `${month}-01`,
+      precision: "month",
+      type: "filing",
+      title: `${name}: ${label} ×${rows.length} (${form})`,
+      source: "SEC EDGAR",
+      url: cik
+        ? `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}&type=${encodeURIComponent(form)}&dateb=${last.replace(/-/g, "")}&owner=include&count=40`
+        : rows[0].url,
+      description: `${rows.length} filings under ${form} this month, grouped into one row for the month.`,
+      sourceKey: "sec_edgar",
+    });
   }
   for (const [key, rows] of months) {
     if (rows.length < BUSY_PROSPECTUS_DAYS) {

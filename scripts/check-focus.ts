@@ -279,5 +279,23 @@ const strip = renderToStaticMarkup(
 check("the best matches name the form as it is written: “10-K” in the headline, never \"10 k\"",
   strip.includes("“10-K” in the headline") && !/10 k\b/.test(strip), strip.replace(/\s+/g, " ").slice(0, 160));
 
+console.log("\nThe forms batch 65 keeps, as a focus reads them");
+const more = [
+  ev("Apple Inc.: Annual report (10-K)", "earnings"),
+  ev("Apple Inc.: Notice that the annual report will be late (NT 10-K)", "filing"),
+  ev("Apple Inc.: Shelf registration for new securities (S-3ASR)", "filing"),
+  ev("Apple Inc.: Shelf registration for new securities (S-3)", "filing"),
+  ev("Arm Holdings plc: Registration to sell shares (foreign company) (F-1)", "filing"),
+  ev("Shopify Inc.: Registration for new securities (Canadian company) (F-10)", "filing"),
+];
+const tenK = applyFocus(more, "10-K");
+check("\"10-K\" finds the annual report, not the notice that it will be late", tenK.matched === 1 && tenK.events[0].title.endsWith("(10-K)"),
+  tenK.events.map((e) => e.title).join(" | "));
+const shelf = applyFocus(more, "S-3");
+check("\"S-3\" finds an automatic shelf too, the S-3ASR a large company files", shelf.matched === 2, shelf.events.map((e) => e.title).join(" | "));
+const listing = applyFocus(more, "F-1");
+check("\"F-1\" finds ARM's listing, which is now kept, and not a Canadian F-10", listing.matched === 1 && /\(F-1\)$/.test(listing.events[0].title),
+  listing.events.map((e) => e.title).join(" | "));
+
 console.log(`\n${pass}/${pass + fail} checks passed\n`);
 if (fail) process.exit(1);

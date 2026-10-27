@@ -985,6 +985,57 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 65: the SEC forms the 2026-10-18 list missed (2026-10-27)
+
+The third of the eight proposals the owner approved on 2026-10-26 (#3). The owner picked all four
+groups on the same day.
+
+- [x] **The forms are kept and named** (`MATERIAL_FORMS`, `lib/secForms.ts`). They were already in
+      every submissions record ingest downloads, and the form filter dropped them.
+      - **Offerings:** S-3ASR, F-3 and F-3ASR read as shelf registrations, as S-3 does. F-10 is a
+        Canadian company's registration. F-1 is a foreign company's registration to sell shares:
+        ARM's 2023 listing, NIO's of 2018.
+      - **Mergers and tenders:** F-4 is a merger registration, as S-4 is. SC TO-I is the
+        company's own tender or exchange offer, and SC TO-T/A an update to a tender offer.
+      - **Late-filing notices:** NT 10-K, NT 10-Q and NT 20-F, such as Apple's of 2006 (its
+        options review) and NIO's of 2020.
+      - **Proxy fights:** PREC14A and DEFC14A, such as Disney's of 2023 and 2024, and DFAN14A,
+        the material filed by others in a vote.
+- [x] **A busy month is one row.** Disney's DFAN14As (58 in March 2024) and tender-offer updates
+      (Pfizer's 8 for Array in July 2019) group a row a month, as busy prospectus months do
+      (`pageFilings`). A month with one keeps its dated row.
+- [x] **Found on the way and fixed: a company's own bids read as bids for it.** A company's record
+      lists the tender offers and proxy fights it made about other companies, as well as those
+      about itself. All 46 of Pfizer's SC TO-T and SC TO-T/A filings have no file number in its
+      record; the three checked on EDGAR are its offers for Array (2019), Medivation (2016) and
+      King (2010), Pfizer the filer and the other company the subject. Disney's 134 DFAN14As carry
+      its own file number, 001-38842. Since batch 13, Pfizer's own bids showed on its page as "Tender offer by
+      an outside bidder". Now a deal form with no file number is named as the company's own
+      (`DEAL_FORM`, `FOR_ANOTHER_COMPANY`): "Its tender offer for another company's shares", and
+      for Pfizer's 1999 fight for Warner-Lambert, "Its proxy fight at another company". Large
+      stakes follow the same rule (batch 23).
+- [x] **Search and the filing stacks read the new forms right.** "Apple 10-K" no longer finds a
+      notice that the 10-K will be late, "S-3" finds an automatic shelf too, and "Arm F-1" finds
+      ARM's listing, which before this batch was never kept (`lib/focus.ts`). The timeline's
+      filing stacks name "NT 10-K" and "SC TO-T/A" as they are, not as "10-K" and "SC TO-T"
+      (`components/EventList.tsx`).
+- **Live,** on the scratch copy of the batch 42 database:
+  - Pfizer's record gave 47 new rows: 6 S-3ASR shelves, 2 SC TO-I offers, 37 SC TO-T/A updates
+    (9 monthly rows on its page), a DFAN14A and its 1999 PREC14A. Its 9 stored SC TO-T bids were
+    retitled as its own.
+  - Apple's gave 10: 5 S-3ASR, 2 SC TO-I buyback offers, its NT 10-K and NT 10-Q of 2006, and a
+    DFAN14A.
+- Checks:
+  - 12 new cases in `check:sec-forms` (66 in all), built on real rows pinned from EDGAR, with
+    Disney's and Pfizer's busy months in `scripts/fixtures/sec-form-rows.json`. On main the forms
+    are dropped, so these cases fail.
+  - 3 in `check:focus`; on main the late notice matches "10-K" and the S-3ASR misses "S-3".
+  - "Arm F-1" in `check:prompt`.
+  - `npm run check` passes (50 suites) and `npm run lint` is clean.
+- Requests made: about 30 to SEC EDGAR (the submission records of ARM, Apple, Disney, NIO, Pfizer
+  and UBS, some read twice, Pfizer's and Apple's again for the live run, and three filing index
+  pages), with the project's User-Agent, which carries the owner's email.
+
 ## NC ledger — batch 64: a results release is earnings, whatever form carried it (2026-10-27)
 
 The second of the eight proposals the owner approved on 2026-10-26 (#2). The owner's call, made
@@ -4279,7 +4330,7 @@ already held, but new investment goes to securities coverage first.
         cost or request — the headlines are stored; small, offline.
       - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
         #2, approved 2026-10-26. Importance high · Efficiency very high · Practicality high.*
-- [ ] `P1` **Keep the SEC forms the 2026-10-18 list missed — foreign listings, large-company
+- [x] `P1` **Keep the SEC forms the 2026-10-18 list missed — foreign listings, large-company
       shelves, late-filing notices, proxy fights, tender results.** The owner picked
       `MATERIAL_FORMS` (`lib/secForms.ts:114-143`) on 2026-10-18 without the live count; it is now
       made, across 45 submissions records (20 large US companies, 25 foreign issuers), and these
@@ -4301,6 +4352,9 @@ already held, but new investment goes to securities coverage first.
         F-3ASR, F-10), late-filing notices, proxy fights, and the tender and merger forms (SC TO-T/A,
         SC TO-I, F-4). Not picked: SUPPL (77 rows, offered as optional). Counted and not proposed:
         425, DEFA14A, PX14A6G, CORRESP/UPLOAD; insider forms stay out.
+      - **Done in batch 65** (see its section): the forms, named in `MATERIAL_FORMS`; DFAN14A and
+        SC TO-T/A grouped a row a month; a company's own tender offers and proxy fights at other
+        companies named as its own.
       - Labels and typing in `MATERIAL_FORMS`, the monthly grouping reusing `pageFilings`; cases in
         `check:sec-forms` from real rows (ARM's F-1 kept; Apple's NT 10-Q a late-filing notice;
         Disney's 2024 DFAN14As one row a month; S-3ASR reads as a shelf) and a `check:prompt` case

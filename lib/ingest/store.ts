@@ -855,6 +855,8 @@ export async function upsertEvent(
    * reached the row (NC-141). They update only from the source that owns the event's primary
    * attestation — two sources attesting one event with different dates must not take turns — and
    * a date-only correction is its own reason to update, since it leaves the content hash alone.
+   * So is the instant it came out (`occurred_at`, batch 68), which the filings stored before EDGAR's
+   * acceptance time was read gain on their next ingest.
    */
   const { rows: owner } = await client.query<{ primary: boolean }>(
     `SELECT EXISTS (SELECT 1 FROM events e
@@ -864,8 +866,8 @@ export async function upsertEvent(
   );
   const ownsEvent = owner[0]?.primary ?? false;
   const upserted = await client.query<{ id: string; inserted: boolean }>(
-    `INSERT INTO events (kind, occurred_on, date_precision, title, body, image_url, dedup_key, content_hash)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+    `INSERT INTO events (kind, occurred_on, date_precision, title, body, image_url, dedup_key, content_hash, occurred_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$10)
      ON CONFLICT (dedup_key) DO UPDATE
         SET title = EXCLUDED.title,
             body = EXCLUDED.body,
@@ -874,10 +876,11 @@ export async function upsertEvent(
             occurred_on = CASE WHEN $9 THEN EXCLUDED.occurred_on ELSE events.occurred_on END,
             date_precision = CASE WHEN $9 THEN EXCLUDED.date_precision ELSE events.date_precision END,
             kind = CASE WHEN $9 THEN EXCLUDED.kind ELSE events.kind END,
+            occurred_at = CASE WHEN $9 THEN EXCLUDED.occurred_at ELSE events.occurred_at END,
             updated_at = now()
       WHERE events.content_hash IS DISTINCT FROM EXCLUDED.content_hash
-         OR ($9 AND (events.occurred_on, events.date_precision, events.kind)
-                    IS DISTINCT FROM (EXCLUDED.occurred_on, EXCLUDED.date_precision, EXCLUDED.kind))
+         OR ($9 AND (events.occurred_on, events.date_precision, events.kind, events.occurred_at)
+                    IS DISTINCT FROM (EXCLUDED.occurred_on, EXCLUDED.date_precision, EXCLUDED.kind, EXCLUDED.occurred_at))
      RETURNING id, (xmax = 0) AS inserted`,
     [
       ev.type,
@@ -889,6 +892,7 @@ export async function upsertEvent(
       key,
       hash,
       ownsEvent,
+      ev.occurredAt ?? null,
     ]
   );
 

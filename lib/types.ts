@@ -84,6 +84,12 @@ export interface TimelineEvent {
    */
   precision?: DatePrecision;
   /**
+   * The instant it came out, UTC, when the source gives a real one ("2026-07-30T20:30:28Z": an
+   * SEC filing's acceptance). `date` stays the source's own day; this says which side of the
+   * session it fell on (`lib/marketTime.ts`, batch 68). Absent for most sources.
+   */
+  occurredAt?: string;
+  /**
    * Stored subject-aboutness score (0–1) from `event_subjects.relevance`, when one exists.
    * Absent means unscored — which always displays; ranking treats it as a neutral prior,
    * never as evidence against the event.

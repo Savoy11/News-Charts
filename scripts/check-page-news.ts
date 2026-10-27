@@ -150,7 +150,8 @@ function main(): void {
     /boundPageNews\(\s*dropCompanyPrehistory\(pageRegulations\(pageFilings\(\[\.\.\.events, \.\.\.withoutSharedSectorRows\(events, sector\)\], subject\.cik\)\)\),\s*prices,\s*cachedWeight\(rest\)\s*\)/.test(pageData));
   check("a topic page's too, its prices counted since they share its entry",
     /const rest = \{\s*title: subject\.displayName,[^}]*\bprices,[^}]*\};\s*\/\/[^\n]*\n\s*const \{ events, newsLeftOut \} = boundPageNews\(stored, prices, cachedWeight\(rest\)\);/.test(pageData));
-  check("both page caches are re-keyed for the new shape", pageData.includes('["held-company-page", "v7"]') && pageData.includes('["held-topic-page", "v3"]'));
+  // the company page has moved on since (v8, batch 68's filing times); the topic page has not
+  check("both page caches are re-keyed for the new shape", /\["held-company-page", "v([7-9]|\d\d)"\]/.test(pageData) && pageData.includes('["held-topic-page", "v3"]'));
   check("company and topic pages show the note",
     ["app/company/[ticker]/page.tsx", "app/topic/[slug]/page.tsx"].every((p) =>
       read(p).includes("<NewsLeftOut events={data.events} leftOut={data.newsLeftOut} priced={data.prices.length > 1} />")));

@@ -20,6 +20,7 @@ import {
   snapToTradingDay,
 } from "../lib/markers";
 import type { EventType, TimelineEvent } from "../lib/types";
+import { nearestCatalyst } from "../components/BiggestMoves";
 
 let pass = 0;
 let fail = 0;
@@ -97,6 +98,28 @@ const twoSided = buildDayIndex([ev("2024-01-03", "news"), ev("2024-01-11", "news
 check("the nearer of two events wins", nearestEventDay(twoSided, "2024-01-10")?.day === "2024-01-11", nearestEventDay(twoSided, "2024-01-10")?.day);
 check("and from the other side too", nearestEventDay(twoSided, "2024-01-04")?.day === "2024-01-03", nearestEventDay(twoSided, "2024-01-04")?.day);
 check("reach constant is the documented one", HOVER_REACH === 5, String(HOVER_REACH));
+
+// Biggest moves never pairs a move with something published after that session closed (batch 68,
+// the 2026-10-26 proposal 6). Apple's results 8-K of 2026-07-30 was accepted at 20:30:28 UTC, 4:30
+// pm ET: by date alone it took the caption of that day's move, which happened before it came out.
+console.log("\nA move is never paired with what came out after its close");
+{
+  const release: TimelineEvent = { ...ev("2026-07-30", "earnings"), id: "aapl-8k", title: "Apple Inc.: Earnings announcement (8-K)", occurredAt: "2026-07-30T20:30:28Z" };
+  const sameDayNews: TimelineEvent = { ...ev("2026-07-30", "news"), id: "news", title: "Apple shares slip ahead of results" };
+  const sorted = [sameDayNews, release];
+  check("the release day's move is not captioned with that evening's release", nearestCatalyst(sorted, "2026-07-30")?.id === "news",
+    nearestCatalyst(sorted, "2026-07-30")?.id);
+  check("  …the next session's is", nearestCatalyst(sorted, "2026-07-31")?.id === "aapl-8k", nearestCatalyst(sorted, "2026-07-31")?.id);
+  check("  …and with nothing else that day, the release day's move has no caption from it",
+    nearestCatalyst([release], "2026-07-30") === null);
+  // Ford's 10-Q dated 2026-07-29, accepted the evening before (7:29 pm ET): out before the 29th's open
+  const lateTenQ: TimelineEvent = { ...ev("2026-07-29", "earnings"), id: "f-10q", title: "Ford Motor Co: Quarterly report (10-Q)", occurredAt: "2026-07-28T23:29:21Z" };
+  check("a filing dated the day after it came out still captions that day's move", nearestCatalyst([lateTenQ], "2026-07-29")?.id === "f-10q");
+  check("one released before the open, or during trading, captions its own day",
+    nearestCatalyst([{ ...release, occurredAt: "2026-07-30T12:00:00Z" }], "2026-07-30")?.id === "aapl-8k" &&
+      nearestCatalyst([{ ...release, occurredAt: "2026-07-30T19:59:00Z" }], "2026-07-30")?.id === "aapl-8k");
+  check("an event with no time is judged by its date, as before", nearestCatalyst([{ ...release, occurredAt: undefined }], "2026-07-30")?.id === "aapl-8k");
+}
 
 console.log(`\n${pass}/${pass + fail} checks passed`);
 if (fail > 0) process.exit(1);

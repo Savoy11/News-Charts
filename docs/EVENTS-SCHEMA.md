@@ -343,6 +343,11 @@ SELECT outcome, fetched_at
   here blocks that.
 - **Denormalised `attestation_count` on `events`.** The subquery is fine at current volume;
   add a maintained counter only if the timeline query measures slow.
-- **Intraday event times.** `occurred_at` is reserved for it, unused until the price series
-  goes intraday.
+- **Intraday event times.** `occurred_at` was reserved for them, unused until the price series
+  went intraday. Since batch 68 it holds an SEC filing's EDGAR acceptance time, for a different
+  reason: prices stay end of day, and the time says which daily bar a release belongs to. Apple's
+  results 8-Ks all come out at 4:30 pm ET and carry that day's date; the row says "after the close",
+  and Biggest moves never pairs a move with a filing published after that session closed
+  (`lib/marketTime.ts`). Other sources' times (GDELT's `seendate`, Yahoo's `pubDate`) are not read
+  yet.
 - **Users, saved searches, alerts.** No auth in the product yet.

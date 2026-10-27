@@ -414,7 +414,8 @@ async function main(): Promise<void> {
           filings.push(stored(date, `JPMORGAN CHASE & CO: Prospectuses ×${d * 7} (424B2)`, filings.length));
         }
     // JPMorgan's measured shape once trimmed: 2,903 filing rows, 11,744 closes, 470 economy rows.
-    for (let i = 0; i < 2700; i++) filings.push(stored(`2010-01-${String((i % 28) + 1).padStart(2, "0")}`, "JPMORGAN CHASE & CO: Other events (8-K 8.01)", 90_000 + i));
+    // each with the instant EDGAR accepted it, which a filing row carries since batch 68
+    for (let i = 0; i < 2700; i++) filings.push({ ...stored(`2010-01-${String((i % 28) + 1).padStart(2, "0")}`, "JPMORGAN CHASE & CO: Other events (8-K 8.01)", 90_000 + i), occurredAt: "2010-01-05T21:30:28Z" });
     const prices = Array.from({ length: 11_744 }, (_, i) => ({ time: "1980-03-17", value: 0.123456 + (i % 250), volume: 12_345_678 }));
     const macro = Array.from({ length: 470 }, (_, i) => stored("2000-01-01", `CPI report: consumer prices for month ${i}`, 80_000 + i));
     const mb = (n: number) => `${(n / 1e6).toFixed(2)} MB`;
@@ -432,9 +433,92 @@ async function main(): Promise<void> {
       /prices: await cachedHeldPrices\(k\)/.test(pageData));
 
   await fundSeriesFilings();
+  await filingTimes();
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);
+}
+
+/**
+ * When a filing came out: before the open, during trading or after the close (batch 68, the
+ * 2026-10-26 proposal 6). Real rows of Apple's and Ford's submissions records, read 2026-10-27, as
+ * EDGAR gives them; Apple's two releases checked against their filing pages ("Accepted 2026-07-30
+ * 16:30:28", "Accepted 2026-01-29 16:30:33").
+ */
+async function filingTimes(): Promise<void> {
+  console.log("\nWhen a filing came out");
+  const { getFilings, acceptedAt } = await import("../lib/sec");
+  const mt = await import("../lib/marketTime");
+  type Row = [form: string, date: string, accession: string, doc: string, items: string, accepted: string];
+  const record = (name: string, rows: Row[]) => ({
+    name,
+    filings: {
+      recent: {
+        form: rows.map((r) => r[0]),
+        filingDate: rows.map((r) => r[1]),
+        accessionNumber: rows.map((r) => r[2]),
+        primaryDocument: rows.map((r) => r[3]),
+        items: rows.map((r) => r[4]),
+        acceptanceDateTime: rows.map((r) => r[5]),
+        fileNumber: rows.map(() => "001-03950"),
+      },
+    },
+  });
+  const read = async (company: { ticker: string; cik: string; name: string }, rows: Row[]) => {
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (async () => new Response(JSON.stringify(record(company.name.toUpperCase(), rows)), { status: 200 })) as typeof fetch;
+    try {
+      return await getFilings(company);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  };
+  const apple = await read({ ticker: "AAPL", cik: "0000320193", name: "Apple Inc." }, [
+    ["8-K", "2026-07-30", "0000320193-26-000018", "aapl-20260730.htm", "2.02,9.01", "2026-07-30T20:30:28.000Z"],
+    ["8-K", "2026-01-29", "0000320193-26-000005", "aapl-20260129.htm", "2.02,9.01", "2026-01-29T21:30:33.000Z"],
+  ]);
+  const ford = await read({ ticker: "F", cik: "0000037996", name: "Ford Motor Co" }, [
+    ["8-K", "2026-10-02", "0000037996-26-000184", "f-20261002.htm", "7.01,8.01,9.01", "2026-10-02T13:16:49.000Z"],
+    ["10-Q", "2026-07-29", "0000037996-26-000156", "f-20260630.htm", "", "2026-07-28T23:29:21.000Z"],
+    ["8-K", "2026-04-15", "0000037996-26-000079", "f-20260415.htm", "1.01,2.03,9.01", "2026-04-15T13:52:44.000Z"],
+    ["8-K", "2020-04-13", "0000037996-20-000031", "ford8-kdated4x13x2020.htm", "2.02,7.01,8.01,9.01", "2020-04-13T14:30:56.000Z"],
+    ["10-K", "2001-03-22", "0000037996-01-000014", "0001.txt", "", "2001-03-22T05:00:00.000Z"],
+  ]);
+  const of = (evs: TimelineEvent[], accession: string) => evs.find((e) => e.externalId === accession.replace(/-/g, ""));
+  const say = (ev?: TimelineEvent) => (ev ? mt.whenPhrase(ev) : "missing");
+  const july = of(apple, "0000320193-26-000018");
+  check("Apple's 2026-07-30 results release keeps the instant EDGAR accepted it, to the second",
+    july?.occurredAt === "2026-07-30T20:30:28Z" && july.date === "2026-07-30", july?.occurredAt);
+  check("  …and its row says 4:30 pm ET, after the close", say(july) === "4:30 pm ET, after the close", String(say(july)));
+  check("January's, accepted 21:30 UTC in winter time, is 4:30 pm too", say(of(apple, "0000320193-26-000005")) === "4:30 pm ET, after the close",
+    String(say(of(apple, "0000320193-26-000005"))));
+  check("a filing EDGAR dated the next business day says the day it came out: Ford's 10-Q of 2026-07-29",
+    say(of(ford, "0000037996-26-000156")) === "Jul 28, 7:29 pm ET, after the close", String(say(of(ford, "0000037996-26-000156"))));
+  check("an 8-K before the open, and one during trading",
+    say(of(ford, "0000037996-26-000184")) === "9:16 am ET, before the open" && say(of(ford, "0000037996-26-000079")) === "9:52 am ET, during trading",
+    `${say(of(ford, "0000037996-26-000184"))} / ${say(of(ford, "0000037996-26-000079"))}`);
+  check("  …and Ford's April 2020 results, released mid-morning", say(of(ford, "0000037996-20-000031")) === "10:30 am ET, during trading");
+  check("a filing from before EDGAR kept times has none: Ford's 2001 10-K, stamped midnight Eastern",
+    of(ford, "0000037996-01-000014") !== undefined && of(ford, "0000037996-01-000014")!.occurredAt === undefined &&
+      acceptedAt("2001-03-22T05:00:00.000Z") === null && acceptedAt("2009-06-01T04:00:00.000Z") === null);
+  check("  …nor does a stamp that is not an instant", acceptedAt("") === null && acceptedAt("2026-07-30") === null && acceptedAt(undefined) === null);
+  check("a Saturday is markets closed", mt.sessionOf(mt.eastern("2026-10-24T14:00:00Z")!) === "markets closed");
+  check("the session's edges: 9:30 is trading, 4:00 pm is after the close",
+    mt.sessionOf(mt.eastern("2026-07-30T13:30:00Z")!) === "during trading" && mt.sessionOf(mt.eastern("2026-07-30T13:29:59Z")!) === "before the open" &&
+      mt.sessionOf(mt.eastern("2026-07-30T20:00:00Z")!) === "after the close");
+
+  const storeSrc = readFileSync("lib/ingest/store.ts", "utf8");
+  check("the store writes the instant, and an existing row gains it on its next ingest",
+    /INSERT INTO events \(kind, occurred_on, date_precision, title, body, image_url, dedup_key, content_hash, occurred_at\)/.test(storeSrc) &&
+      /occurred_at = CASE WHEN \$9 THEN EXCLUDED\.occurred_at ELSE events\.occurred_at END/.test(storeSrc) &&
+      /\(events\.occurred_on, events\.date_precision, events\.kind, events\.occurred_at\)/.test(storeSrc) &&
+      /ev\.occurredAt \?\? null,\n    \]/.test(storeSrc));
+  const readSrc = readFileSync("lib/store/read.ts", "utf8");
+  check("  …the page reader carries it to the event",
+    /e\.image_url, e\.occurred_at,/.test(readSrc) && /occurredAt: r\.occurred_at\.toISOString\(\)/.test(readSrc));
+  check("  …and the event row says it", /const when = whenPhrase\(ev\);/.test(readFileSync("components/EventList.tsx", "utf8")));
+  check("  …and no cached page from before lacks it: the company page cache moved to v8",
+    readFileSync("lib/page-data.ts", "utf8").includes('["held-company-page", "v8"]'));
 }
 
 /**

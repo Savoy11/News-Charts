@@ -37,6 +37,7 @@ import {
   TICKER_INDEX_SYNCED_ON,
 } from "../lib/sec";
 import { fetchSeriesFilings, ownSeriesFilings } from "../lib/fundSeries";
+import { whenPhrase } from "../lib/marketTime";
 import { edgarFetch, readFilingHeadline } from "../lib/secHeadlines";
 import { fetchDailyPrices } from "../lib/prices";
 import { fetchRegulations } from "../lib/federalregister";
@@ -290,6 +291,11 @@ export const CASES: LiveCase[] = [
       if (!filings.some((f) => /\(8-K \d\.\d\d\)$/.test(f.title))) {
         out.push("no 8-K titled by its item — is EDGAR still sending `items`?");
       }
+      // Apple releases its results at 4:30 pm ET, after the close (batch 68): a release with no time
+      // means EDGAR stopped sending `acceptanceDateTime`, or its meaning moved
+      const release = filings.filter((f) => /^Apple Inc\.: Earnings announcement \(8-K\)$/.test(f.title)).sort((a, b) => b.date.localeCompare(a.date))[0];
+      if (!release) out.push("no results 8-K among Apple's recent filings");
+      else if (!/ET, after the close$/.test(whenPhrase(release) ?? "")) out.push(`Apple's results 8-K of ${release.date} came out "${whenPhrase(release) ?? "at no time"}"`);
       // A foreign private issuer's annual report is earnings the way a 10-K is. TSM files a 20-F
       // every spring and few enough 6-Ks that the recent block always reaches back to one.
       const tsm = await resolveCompany("TSM");

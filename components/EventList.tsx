@@ -6,6 +6,7 @@ import { waybackUrl, waybackCouldHave } from "@/lib/wikidata";
 import { loadJSON, saveJSON } from "@/lib/viewState";
 import { toneOf } from "@/lib/sentiment";
 import { safeHref } from "@/lib/safeUrl";
+import { whenPhrase } from "@/lib/marketTime";
 import ChainRef from "./ChainRef";
 import EventThumb from "./EventThumb";
 
@@ -61,6 +62,8 @@ function ToneDot({ ev }: { ev: TimelineEvent }) {
 /** The whole row is the click target, so there's no need to hit the title text exactly. */
 function EventRow({ ev }: { ev: TimelineEvent }) {
   const href = safeHref(ev.url);
+  // "4:30 pm ET, after the close": which daily bar it could have moved (batch 68)
+  const when = whenPhrase(ev);
   const body = (
     <>
       <ToneDot ev={ev} />
@@ -75,6 +78,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
           <ChainRef ev={ev} />
           {ev.source}
           {href ? " ↗" : ""}
+          {when ? ` · ${when}` : ""}
           {ev.description ? ` · ${ev.description}` : ""}
         </span>
       </span>

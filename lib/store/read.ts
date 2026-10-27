@@ -240,7 +240,7 @@ export async function loadSubject(slug: string): Promise<SubjectRow | null> {
  */
 export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
   const { rows } = await getPool().query(
-    `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title, e.body, e.image_url,
+    `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title, e.body, e.image_url, e.occurred_at,
             es.relevance,
             CASE WHEN es.scored_by = $3 THEN sj.display_name END AS own_series_of,
             a.url, a.source_label, a.external_id,
@@ -280,6 +280,8 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
       // which block they came from even though the row was sitting in the database.
       externalId: r.external_id ?? undefined,
       precision: r.date_precision as DatePrecision,
+      // the instant it came out, where the source gave one (batch 68), to the second
+      ...(r.occurred_at instanceof Date ? { occurredAt: r.occurred_at.toISOString().replace(/\.\d{3}Z$/, "Z") } : {}),
       // The stored subject-aboutness score, surfaced so ranking can use it. It was only ever
       // an invisible SQL gate before — a score that can hide a row but never order one.
       relevance: r.relevance == null ? undefined : Number(r.relevance),

@@ -988,6 +988,71 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 68: when a filing came out — before the open, or after the close (2026-10-27)
+
+The sixth of the eight proposals the owner approved on 2026-10-26 (#6). It needed no decision.
+
+- [x] **Each SEC filing keeps the instant EDGAR accepted it** (`acceptedAt`, `lib/sec.ts`). The
+      submissions record already carried it, and nothing read it. It is stored in
+      `events.occurred_at`, a column built for this and never written until now.
+      - **The stamp is UTC.** Apple's results 8-K of 2026-07-30 reads "2026-07-30T20:30:28.000Z", and
+        its filing page says "Accepted 2026-07-30 16:30:28". January's reads 21:30 UTC, also 4:30
+        pm in New York, so daylight saving is the time zone database's, through `Intl`.
+      - **Before 2002 most stamps are only a day**, written as exactly midnight New York time: all of
+        Ford's 366 filings of 1994 to 2001, and 22 of its 64 in 2002. A midnight-Eastern stamp is
+        read as no time. One of Apple's 1994 filings does have a real time, and keeps it.
+      - **Rows already stored gain the time on their next ingest.** The time is one of the things
+        the owning source may correct, as the date already was (NC-141).
+- [x] **The row says when it came out** (`lib/marketTime.ts`): "4:30 pm ET, after the close", "9:16
+      am ET, before the open", "9:52 am ET, during trading". The session is 9:30 am to 4 pm,
+      Monday to Friday. EDGAR dates a filing accepted after 5:30 pm on the next business day, so
+      a time on another day names it: Ford's 10-Q dated 2026-07-29 came out "Jul 28, 7:29 pm ET,
+      after the close".
+- [x] **Biggest moves never pairs a move with something published after that session closed**
+      (`publishedAfterClose`, in `nearestCatalyst`). An event with no time is judged by its date,
+      as before.
+- [x] **The cached company page moved to v8**, so no cached page from before lacks the times.
+- **Measured from EDGAR and the price series, 2026-10-27:**
+  - **Apple:** all 45 of its results 8-Ks since 2015 came out after the close. The release day's
+    median move is 1.0%; the next session's is 3.5%. On 10 of those 45 release days the stock had
+    already moved 2% or more, before the release came out. The proposal gave 0.7% and 3.7%; these
+    are this batch's own figures.
+  - **Ford:** 29 of its 30 results releases in its recent record (since 2019) came out after the
+    close, and one, April 2020's, mid-morning.
+- **Live, on a scratch copy of the local database (Apple and Ford ingested with the new code):**
+  - 413 of Apple's stored filings and 912 of Ford's now carry a time.
+  - **Apple:** 11 of its release days since 2015 moved 2% or more. All 11 were captioned with
+    that day's release before; none are now. 10 have no caption, and one has an earlier filing.
+  - **Ford:** of 18 such days, 17 were captioned with that day's release before. 5 still are, and
+    rightly: until 2017 Ford released before the open (7:19 to 8:16 am). Its after-close releases
+    from late 2018 on no longer caption the day before them.
+  - Apple's page, served by the dev server, shows the times. 45 rows read "4:30 pm ET, after the
+    close".
+- **Left as is:**
+  - Exchange holidays and early closes are not known: a time on one is read by the clock.
+  - Other sources' times (GDELT's `seendate`, Yahoo's `pubDate`) are not read, as the proposal set
+    out.
+  - A day's prospectus groups carry no time.
+  - Chart markers still sit on the filing's own date.
+- **Checks:**
+  - `check:sec-forms` (now 119) runs on real rows of Apple's and Ford's records: the two Apple
+    releases, Ford's next-day 10-Q, a before-open and a during-trading 8-K, April 2020's results
+    and the 2001 10-K's midnight stamp. Plus the session edges and the wiring.
+  - `check:markers` (now 30): the release day's move is not captioned with that evening's release;
+    the next session's is; a filing dated the day after it came out still captions that day.
+  - On main both fail: the module does not exist, and the release takes the release day's caption.
+  - `check:live`'s Apple case now asks that its newest results 8-K read "after the close". It
+    passed against EDGAR.
+  - Pinned text in `check:wiring` and `check:page-news` was widened for the new column and the
+    cache version.
+  - `npm run check` passes (50 suites) and `npm run lint` is clean.
+- **Requests made:**
+  - about 320 to EDGAR: Apple's and Ford's records, two filing pages, and the two scratch
+    ingests, whose headline reader asked 150 each;
+  - two to Yahoo's chart for the price series;
+  - two to Wikidata's API from the ingests.
+  The EDGAR and Wikidata requests carried the project's User-Agent, which holds the owner's email.
+
 ## NC ledger — batch 67: a fund's page carries its own fund's filings (2026-10-27)
 
 The fifth of the eight proposals the owner approved on 2026-10-26 (#5). It needed no decision.
@@ -4625,7 +4690,7 @@ already held, but new investment goes to securities coverage first.
         their hedge.
       - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
         #5, approved 2026-10-26. Importance medium · Efficiency high · Practicality high.*
-- [ ] `P2` **When a filing came out: before the open, or after the close.** Every submissions
+- [x] `P2` **When a filing came out: before the open, or after the close.** Every submissions
       record carries each filing's `acceptanceDateTime`, and `FilingBlock` reads none of it
       (`lib/sec.ts:759-766`); `events.occurred_at` exists for "a real instant"
       (`docs/EVENTS-SCHEMA.md:134`), and 0 of 30,470 events in the batch 42 database have one. The
@@ -4647,6 +4712,9 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
         #6, approved 2026-10-26. Importance medium · Efficiency high · Practicality high (it
         revisits a written deferral, with a reason the deferral did not weigh).*
+      - ✅ **Done in batch 68** (see its section). Apple's measured figures differ a little from
+        those above (release day 1.0%, next session 3.5%), and stamps before 2002 are mostly
+        midnight placeholders, read as no time.
 - [ ] `P2` **Federal Reserve enforcement actions on bank pages.** A new source, approved by the
       owner 2026-10-26: the Board's actions against a listed bank holding company — cease-and-desist
       orders, written agreements, civil money penalties — as regulation events. Licence:

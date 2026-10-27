@@ -29,12 +29,14 @@ config({ path: ".env.local" });
 
 import { SOURCES } from "../lib/ingest/store";
 import {
+  fundSeriesId,
   resolveCompany,
   getFilings,
   tickerIndexAgeDays,
   TICKER_INDEX_MAX_AGE_DAYS,
   TICKER_INDEX_SYNCED_ON,
 } from "../lib/sec";
+import { fetchSeriesFilings, ownSeriesFilings } from "../lib/fundSeries";
 import { edgarFetch, readFilingHeadline } from "../lib/secHeadlines";
 import { fetchDailyPrices } from "../lib/prices";
 import { fetchRegulations } from "../lib/federalregister";
@@ -302,6 +304,27 @@ export const CASES: LiveCase[] = [
       if (age > TICKER_INDEX_MAX_AGE_DAYS) {
         out.push(`committed ticker index is ${age} days old (synced ${TICKER_INDEX_SYNCED_ON}): npm run sync:tickers`);
       }
+      return out;
+    },
+  },
+  {
+    name: "EDGAR — VOO's own filings, by its series' filing list (batch 67)",
+    covers: ["sec_edgar"],
+    hosts: ["data.sec.gov", "www.sec.gov"],
+    async run() {
+      const seriesId = fundSeriesId("VOO");
+      if (seriesId !== "S000002839") return [`VOO's series id is ${seriesId}, expected S000002839 from the committed index`];
+      const series = await fetchSeriesFilings(seriesId, { maxPages: 1 });
+      if (!series) throw new NoAnswer("EDGAR did not answer with VOO's series filing list");
+      const out: string[] = [];
+      if (series.accessions.size < 50) out.push(`only ${series.accessions.size} filings on the list's first page`);
+      // 2026-08-28, read from both filings' headers on 2026-10-27: VOO's NPORT-P, and VB's beside it
+      if (series.oldest < "2026-08-28" && !series.accessions.has("000003640526000473")) out.push("VOO's NPORT-P of 2026-08-28 (0000036405-26-000473) is not on its list");
+      if (series.accessions.has("000003640526000472")) out.push("VB's NPORT-P of 2026-08-28 (0000036405-26-000472) is on VOO's list");
+      const voo = await resolveCompany("VOO");
+      if (!voo) return [...out, "VOO did not resolve"];
+      const split = ownSeriesFilings(await getFilings(voo), series);
+      if (split.own.length < 10 || split.siblings.length < 10) out.push(`the trust's recent fund filings split ${split.own.length} own / ${split.siblings.length} a sibling's`);
       return out;
     },
   },

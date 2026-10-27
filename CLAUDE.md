@@ -76,6 +76,13 @@ A ticker whose company moved to a new SEC record — a holding-company reorganis
 record up to the handover day, through the hand-checked map in `lib/predecessors.ts`; read its
 header before adding an entry.
 
+A fund's CIK is its trust's, and the trust files for every fund it sells. Which filings are a fund's
+own comes from the filing list EDGAR keeps for its series (`lib/fundSeries.ts`; the id is in
+`data/edgar-tickers.json`), read at ingest: a sibling's are not linked to the fund. The stored row
+keeps the trust's name, since one row serves every sibling's page; the fund's page shows its own
+under its name, at read time (`loadEvents`). The lists begin in February 2006, so older trust
+filings keep their hedge.
+
 ## Stack & layout
 
 | Layer | Choice |

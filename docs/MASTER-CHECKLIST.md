@@ -299,6 +299,9 @@ same seven stale prompt-search checks as batches 3 and 4.
       forms are now titled with the registrant ("VANGUARD INDEX FUNDS: Prospectus update (497)"),
       say they may concern a sibling fund, and score 0.7 ("filed by the fund's registrant") instead
       of 1.0 — still shown. An operating company's own filings keep its name and 1.0.
+      *Batch 67: telling them apart costs a request per hundred filings, from the series' own
+      EDGAR list. A fund's own filings are now certain and under its name, and a sibling's are not
+      on its page.*
 - [x] **NC-159 — subject pages stop re-querying the database on every view.** The routes were
       dynamic, so `revalidate = 900` did nothing. Sector pages are now cached whole (MISS then HIT,
       `s-maxage=900`). Company and topic pages cannot be: a miss runs a first-visit gather and must
@@ -984,6 +987,90 @@ checks.
         `LEGAL_DRAFT` to false. The "How we make money" disclosure stays its own item.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
+
+## NC ledger — batch 67: a fund's page carries its own fund's filings (2026-10-27)
+
+The fifth of the eight proposals the owner approved on 2026-10-26 (#5). It needed no decision.
+
+- [x] **Each fund series keeps its EDGAR id** ("S000002839" for VOO), in the committed ticker
+      index. The sync already read it with the fund's name and dropped it. `npm run sync:tickers`
+      ran here: 19,558 series, each with its id. The first run lost one registrant (T. Rowe
+      Price's institutional funds, 11 series) to a network error, so it ran again, with no losses.
+- [x] **A fund's page carries its own filings, and not its siblings'** (`lib/fundSeries.ts`). A
+      fund's CIK is its trust's, and the trust files for every fund it sells. At ingest, the
+      fund's own filing list from EDGAR (`browse-edgar?CIK=S…`, a hundred a request) says which
+      filings are its own.
+      - **Its own** are linked as certain (1.0). They are scored `deterministic-series`, so
+        neither ingest's re-score nor `npm run score --rescore` puts the 0.7 back.
+      - **A sibling's** is unlinked from the fund alone; the same row stays on the sibling's page.
+      - **Measured on the window the proposal used** (2022-12-05 to 2026-08-28): VOO keeps 76 of
+        the trust's 432 fund filings (NPORT-P 15 of 181, 497K 16 of 191, 497 29 of 39).
+- [x] **The fund's name goes on at read time.** A 497 or a shareholder report often covers several
+      funds at once, and one stored row serves every page it is linked to. Titled with VOO's
+      name, the row would read as VOO's on VTI's page. So the stored row keeps the trust's name
+      and a description that names no fund. The fund's own page shows "Vanguard 500 Index Fund:
+      Prospectus update (497)", with "Filed by VANGUARD INDEX FUNDS; EDGAR lists it among this
+      fund's own filings" (`asOwnSeriesFiling`, in `loadEvents`). Views that mix several
+      companies keep the trust's name.
+- [x] **Where the list cannot say, today's hedged row stays:**
+      - **Before the list begins.** EDGAR's series lists begin in February 2006: VOO's on
+        2006-02-16, Fidelity Contrafund's on the 27th and Vanguard Wellington's on the 24th, though
+        their trusts filed from 1994 and 1995. So a trust's older filings are on no fund's list,
+        and they keep the trust's title and the hedge. This was found in the live run below:
+        without the rule, VOO lost 154 of its trust's pre-2006 filings as "siblings'".
+      - **A list read in part.** If a page fails, or the 40-page cap is reached, only the days the
+        list reached are sorted. A 503 is asked again twice, 2 and 4 seconds later. `browse-edgar`
+        is slow and gave up with a 503 on VTI's first page, minutes after the same request
+        answered. A 429 (slow down) is not asked again.
+      - **No list at all.** If the first page cannot be read, nothing is sorted. An empty first
+        page counts as unread too, so it can never take every filing off a page.
+- [x] **A later run whose list fails keeps an earlier run's word.** Between a fund's oldest and
+      newest own filing, an earlier read covered every day. So a fund filing of such a day that is
+      not linked to the fund now was a sibling's, and it is not linked again
+      (`withoutJudgedSiblings`). This uses the links already stored, so it needs no new table.
+      - **What it leaves:** a sibling's filing newer than the fund's newest own one is linked
+        again, with its hedge, until the list next answers.
+- [x] **The ticker sync's two followers ran too, as `CLAUDE.md` says:** `sync:aliases` and
+      `sync:word-names`.
+      - The new SEC ticker file no longer lists WBD or ABIT, so 6 names went from the alias file:
+        "Discovery" ×3, GamePlan, Criteo Technology Services and Westport Innovations.
+      - The word-name files changed to match.
+      - `check:short-names` pinned 107 short names among the 1,500 largest companies. It now pins
+        104, because GDS Holdings, DPC Holdings and VSE moved below the SEC's 1,500th row.
+- **Live, 2026-10-27, on a scratch copy of the local database** (VOO and its sibling VTI, both
+  held). Main's code first put all 1,753 of the trust's fund filings on each page, hedged. Then
+  the new code ran:
+  - **VOO:** 1,808 links became 503. 294 are its own, certain and under its name. 1,305 siblings'
+    were unlinked, and 154 from before 2006-02-16 kept their hedge.
+  - **VTI:** 259 own, and 1,134 siblings' unlinked. Its list read back to 2011-08-25 before a page
+    failed three times, so its older filings stayed hedged.
+  - **A 2026-06-30 prospectus update tagged to both funds** shows as each fund's own on each page,
+    from one stored row.
+  - **Then VOO again, with the list forced to fail:** 1,304 siblings' filings stayed off. One newer
+    than its newest own filing (2026-09-16) came back hedged, as described above.
+- Checks:
+  - `check:sec-forms` (now 105) runs against EDGAR's own answers, pinned in
+    `scripts/fixtures/voo-series-filings.json`: the trust's record over the window, its 2005 annual
+    report, and VOO's whole list served in the feed's own markup. The cases cover:
+    - VOO keeps 76 of 432;
+    - VB's NPORT-P of 2026-08-28 is not on VOO's page (read from its EDGAR header);
+    - the stored row is the same whichever fund writes it;
+    - the 2005 report keeps its hedge;
+    - a read in part, a 429, a 503 twice, an unreadable list and an empty first page;
+    - the earlier read's word on a failed run;
+    - the wiring.
+  - `check:tickers` (now 108): the index carries one id per series, VOO's is S000002839, and no
+    request is made.
+  - On main both checks fail: neither the id nor the module exists.
+  - `check:live` gained a VOO case and `check:feeds` reports the split; both passed against EDGAR.
+  - `npm run check` passes (50 suites) and `npm run lint` is clean.
+- Requests made:
+  - the two ticker syncs, about 2,330 to sec.gov;
+  - about 120 to EDGAR for the measurements, the fixtures and eleven scratch ingests, each of which
+    also asked Wikidata's API for the fund's website;
+  - one Wikidata alias sync;
+  - the ENABLE word list, from GitHub.
+  All but the word list carried the project's User-Agent, which holds the owner's email.
 
 ## NC ledger — batch 66: NHTSA's defect investigations on carmakers' pages (2026-10-27)
 
@@ -4514,7 +4601,7 @@ already held, but new investment goes to securities coverage first.
         cost.
       - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
         #8, approved 2026-10-18. Importance low-medium · Efficiency high · Practicality high.*
-- [ ] `P2` **A fund's page carries its own fund's filings, by EDGAR's series tag.** It revisits
+- [x] `P2` **A fund's page carries its own fund's filings, by EDGAR's series tag.** It revisits
       NC-139's premise, "filtering per fund would cost a request per filing": today every trust
       filing goes on every series' page, titled with the registrant, scored 0.7 and "may concern a
       sibling fund" (`lib/sec.ts:880-895`). EDGAR's per-series list
@@ -4533,6 +4620,9 @@ already held, but new investment goes to securities coverage first.
       - A `check:tickers` case (the index carries the id, no request) and `check:sec-forms` cases
         on pinned Atom pages: VOO keeps 76 of the 432; a sibling's NPORT-P is not on VOO's page; an
         unreachable list leaves today's titles. No key, licence or recurring cost.
+      - ✅ **Done in batch 67** (see its section). The fund's name goes on at read time, since one
+        stored row serves every sibling's page. Filings before a list begins (February 2006) keep
+        their hedge.
       - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
         #5, approved 2026-10-26. Importance medium · Efficiency high · Practicality high.*
 - [ ] `P2` **When a filing came out: before the open, or after the close.** Every submissions

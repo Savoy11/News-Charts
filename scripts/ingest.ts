@@ -31,7 +31,8 @@ import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib
 import { companyScoringAliases, fetchNews, gdeltNames, gdeltNewsPlan } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
 import { fetchYahooFinanceNews } from "../lib/newsExtra";
-import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, newsNamesFor, possessiveNameFor, type Rename } from "../lib/sec";
+import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, fundSeriesId, newsNamesFor, possessiveNameFor, type Rename } from "../lib/sec";
+import { OWN_SERIES_SCORER, fetchSeriesFilings, ownSeriesFilings, withoutJudgedSiblings, type JudgedBefore, type OwnSeriesSplit } from "../lib/fundSeries";
 import { withSecHeadlines } from "../lib/ingest/headlines";
 import { backfillNews } from "../lib/ingest/newsBackfill";
 import { fetchDailyPrices, fullHistoryQuery, splitsIn } from "../lib/prices";
@@ -235,6 +236,39 @@ async function runSource(
  * A `runSource` bound to one subject and one due-set: sources still inside their window are
  * reported and skipped rather than asked.
  */
+/** What earlier runs' series lists settled for a fund (`withoutJudgedSiblings`), or null if none read one. */
+async function judgedBefore(client: PoolClient, subjectId: number): Promise<JudgedBefore | null> {
+  const { rows } = await client.query<{ from: string | null; to: string | null }>(
+    `SELECT min(e.occurred_on)::text AS from, max(e.occurred_on)::text AS to
+       FROM event_subjects es JOIN events e ON e.id = es.event_id
+      WHERE es.subject_id = $1 AND es.scored_by = $2`,
+    [subjectId, OWN_SERIES_SCORER]
+  );
+  if (!rows[0]?.from || !rows[0].to) return null;
+  const linked = await client.query<{ external_id: string }>(
+    `SELECT a.external_id
+       FROM event_subjects es
+       JOIN event_attestations a ON a.event_id = es.event_id
+       JOIN sources s ON s.id = a.source_id AND s.key = 'sec_edgar'
+      WHERE es.subject_id = $1`,
+    [subjectId]
+  );
+  return { from: rows[0].from, to: rows[0].to, linked: new Set(linked.rows.map((r) => r.external_id)) };
+}
+
+/** Takes filings off this subject's page only, by accession; the rows stay for whoever they concern. */
+async function unlinkFilings(client: PoolClient, subjectId: number, accessions: string[]): Promise<number> {
+  if (!accessions.length) return 0;
+  const { rowCount } = await client.query(
+    `DELETE FROM event_subjects es
+       USING event_attestations a, sources s
+      WHERE es.subject_id = $1 AND a.event_id = es.event_id
+        AND s.id = a.source_id AND s.key = 'sec_edgar' AND a.external_id = ANY($2::text[])`,
+    [subjectId, accessions]
+  );
+  return rowCount ?? 0;
+}
+
 function runnerFor(
   client: PoolClient,
   subjectId: number,
@@ -427,6 +461,8 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
 
   const renames: Rename[] = [];
   const othersStakes: string[] = [];
+  // set inside the run below, which TypeScript does not follow into
+  let fundSplit = null as OwnSeriesSplit | null;
   await run("sec_edgar", company.ticker, async () => {
     /**
      * The scheduler takes the WHOLE history, not just EDGAR's recent block.
@@ -440,7 +476,35 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
      * Deep here and shallow in the first pass, deliberately: this path has no deadline and runs
      * on a refresh window, while the first pass runs with a visitor waiting on an 8s budget.
      */
-    const filings = await getFilingsDeep(company, true, renames, othersStakes);
+    let filings = await getFilingsDeep(company, true, renames, othersStakes);
+    /**
+     * A fund's own filings, by the series EDGAR tags them with (batch 67): the trust files for
+     * every fund it sells, and the series' own list says which are this one's. Not read, it leaves
+     * every filing as before, titled with the trust and hedged.
+     */
+    const seriesId = fundSeriesId(company.ticker);
+    if (seriesId) {
+      const series = await fetchSeriesFilings(seriesId);
+      if (series) {
+        fundSplit = ownSeriesFilings(filings, series);
+        filings = fundSplit.events;
+        line(
+          "sec_edgar",
+          `series ${seriesId}: ${series.accessions.size} listed in ${series.pages} page(s), ` +
+            `${series.complete ? "from" : "read back to"} ${series.oldest}; ` +
+            `${fundSplit.own.length} of the trust's fund filings are this fund's, ${fundSplit.siblings.length} a sibling's`
+        );
+      } else {
+        line("sec_edgar", `series ${seriesId}: its filing list could not be read; filings no earlier list settled keep their hedge`);
+      }
+      // …and a day it did not reach keeps what an earlier run's list said of it
+      const before = series?.complete ? null : await judgedBefore(client, subjectId);
+      if (before) {
+        const kept = withoutJudgedSiblings(filings, series, before);
+        filings = kept.events;
+        if (kept.left) line("sec_edgar", `${kept.left} sibling filings an earlier list read kept off this fund's page`);
+      }
+    }
     /**
      * Each 8-K's and 6-K's press-release headline as its title (batches 42, 43): those already
      * read come from `sec_headlines`, and a run's worth more are read from EDGAR. An enrichment, so
@@ -469,15 +533,25 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    * but an ingest before 2026-10-21 linked them here, as stakes *in* it. Unlink those from this
    * company only: the same filing is, correctly, a stake in the issuer it names.
    */
-  if (othersStakes.length) {
+  const stakes = await unlinkFilings(client, subjectId, othersStakes);
+  if (stakes) line("sec_edgar", `unlinked ${stakes} of its own stakes in other issuers`);
+
+  /**
+   * A fund's siblings' filings, linked here by every ingest before batch 67, are unlinked from it
+   * alone: the same row stays on the page of the sibling it is about. Its own are linked as
+   * certain, under a scorer the registrant rule's 0.7 does not overwrite (`OWN_SERIES_SCORER`).
+   */
+  if (fundSplit) {
+    const siblings = await unlinkFilings(client, subjectId, fundSplit.siblings);
     const { rowCount } = await client.query(
-      `DELETE FROM event_subjects es
-         USING event_attestations a, sources s
+      `UPDATE event_subjects es SET relevance = 1, scored_by = $3, scored_at = now()
+         FROM event_attestations a, sources s
         WHERE es.subject_id = $1 AND a.event_id = es.event_id
-          AND s.id = a.source_id AND s.key = 'sec_edgar' AND a.external_id = ANY($2::text[])`,
-      [subjectId, othersStakes]
+          AND s.id = a.source_id AND s.key = 'sec_edgar' AND a.external_id = ANY($2::text[])
+          AND es.scored_by IS DISTINCT FROM $3`,
+      [subjectId, fundSplit.own, OWN_SERIES_SCORER]
     );
-    if (rowCount) line("sec_edgar", `unlinked ${rowCount} of its own stakes in other issuers`);
+    if (siblings || rowCount) line("sec_edgar", `unlinked ${siblings} of its siblings' filings; ${rowCount} of its own marked certain`);
   }
 
   /**

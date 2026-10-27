@@ -58,6 +58,8 @@ export interface TickerIndex {
   seriesSymbols?: string[];
   /** the registrant CIK per series — carried, because 36% are not resolvable via `funds` */
   seriesCiks?: number[];
+  /** EDGAR's id per series ("S000002839"), whose filing list is the fund's own; absent before batch 67 */
+  seriesIds?: string[];
   /** every share-class symbol → its series' index in `seriesNames` */
   symbolSeries?: Record<string, number>;
 }
@@ -631,6 +633,17 @@ export function siblingFunds(symbol: string): SiblingFunds | null {
 }
 
 /**
+ * EDGAR's id for the fund series a symbol is a share class of — "S000002839" for VOO, and for
+ * VFIAX, its sister class — whose filing list is the fund's own (`lib/fundSeries.ts`, batch 67).
+ * Null for a symbol that is not a fund series, or an index synced before the ids were kept.
+ */
+export function fundSeriesId(symbol: string): string | null {
+  const at = tickerIndex.symbolSeries?.[symbol.trim().toUpperCase()];
+  const id = at === undefined ? undefined : tickerIndex.seriesIds?.[at];
+  return id && /^S\d{9}$/.test(id) ? id : null;
+}
+
+/**
  * The ticker a query names, from the committed index alone — rungs 1–3 below without the
  * registrant enrichment or the live files, so it never makes a request.
  *
@@ -884,7 +897,9 @@ function filingsFromBlock(
      * A fund's CIK is its registrant's — the trust — and the trust files one 497, N-PORT or
      * shareholder report for any of the series it sells. Prefixed with the fund's name, VOO's
      * page showed every sibling's filings as VOO's own (NC-139). EDGAR's submissions list does
-     * not say which series a filing covers, so the honest title names who filed it.
+     * not say which series a filing covers, so the honest title names who filed it — and so does
+     * the description, which one stored row shows on every sibling's page. The series' own list
+     * says which are the fund's, at ingest; its page shows those under its name (batch 67).
      */
     const byRegistrant = fund !== undefined;
     events.push({
@@ -895,8 +910,8 @@ function filingsFromBlock(
       source: "SEC EDGAR",
       url: `https://www.sec.gov/Archives/edgar/data/${Number(company.cik)}/${accession}/${doc}`,
       description: byRegistrant
-        ? `Filed by ${registrant}, the registrant behind ${company.name}. A registrant files for ` +
-          `every fund it sells, so this filing may concern a sibling fund.`
+        ? `Filed by ${registrant}, which files for every fund it sells, so this filing may concern ` +
+          `a sibling fund.`
         : eightK
           ? describeItems(items)
           : undefined,

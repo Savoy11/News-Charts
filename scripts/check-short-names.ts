@@ -147,8 +147,10 @@ async function main(): Promise<void> {
     if (q.length >= GDELT_MIN_PHRASE) withForm++;
     else if (unquotable(q)) asBare++;
   });
-  check("of the 1,500 largest companies, the 107 with a short everyday name all get a query GDELT takes: 59 bare, 48 with a legal form",
-    short === 107 && asBare === 59 && withForm === 48, `${asBare} bare, ${withForm} with a legal form, of ${short}`);
+  // 107 on the 2026-10-22 index; the 2026-10-27 sync (batch 67) moved GDS Holdings, DPC Holdings
+  // and VSE, three asked bare, below the SEC's 1,500th row
+  check("of the 1,500 largest companies, the 104 with a short everyday name all get a query GDELT takes: 56 bare, 48 with a legal form",
+    short === 104 && asBare === 56 && withForm === 48, `${asBare} bare, ${withForm} with a legal form, of ${short}`);
   // headlines GDELT returned for a bare "IBM", 2026-10-22: nine of thirty named it
   check("with a bare name, an article stays only when its headline names the company",
     headlineNames("IBM beats Q3 earnings on software rebound , guides full - year revenue growth", ["INTERNATIONAL BUSINESS MACHINES", "ibm"]) &&

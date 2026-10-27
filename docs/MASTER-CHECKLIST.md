@@ -985,6 +985,43 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 62: a new opportunity-scout run, eight proposals for the owner (2026-10-26)
+
+The work the previous scout run proposed (2026-10-17, proposals 1–10) is all built, and nearly
+everything else open waits on the owner. So the `opportunity-scout` read the repository again at
+`5e2a1f7` and wrote `docs/proposals/2026-10-26-proposals.md`: eight proposals, all **PENDING**,
+ranked with securities depth first. Nothing is built in this batch.
+
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ Marked 2026-10-26: all eight approved, the two new sources (4 and 7) included; none
+      rejected or deferred. The scout's FILE pass put each into "Scope refocus — exchange-traded
+      securities", the four `P1`s after the last `P1` there and the four `P2`s at the section's
+      end. The smaller decisions inside 1, 2 and 3, and the event kind for 4, are asked when each
+      is built.
+      1. `P1` The company Federal Register feed back to 1994, and past the newest forty.
+      2. `P1` A results release counts as earnings whatever form carried it (a 6-K results release,
+         Boeing's 1997–2004 results 8-Ks).
+      3. `P1` The SEC forms the 2026-10-18 list missed: S-3ASR shelves, F-1 foreign listings,
+         late-filing notices, proxy-fight forms, tender-offer results.
+      4. `P1` NHTSA defect investigations: a new source, so the owner's yes first.
+      5. `P2` A fund's page carries only its own fund's filings, by EDGAR's series tag (it revisits
+         NC-139).
+      6. `P2` A filing's time: before the open or after the close, from EDGAR's acceptance time.
+      7. `P2` Federal Reserve enforcement actions on bank pages: a new source, so the owner's yes first.
+      8. `P2` FDA recalls for the next health-care makers (Beckman Coulter, Fresenius, ICU Medical…).
+      Several carry a smaller decision inside: which routine rail-board and FERC notices count (1),
+      whether profit alerts are earnings (2), which forms (3).
+- Found on the way and confirmed here in the code: the company Federal Register feed keeps the
+  newest 40 title-naming documents a run and never pages (`FR_COMPANY_CAP`, `lib/frCompany.ts`), so
+  a company's 41st-newest document never reaches its page however many runs go by. The scout
+  counts GM's 51 since 2015 against 40 kept, Duke Energy's 184. Proposal 1 covers it.
+- The scout made about 110 requests to SEC EDGAR with the project's User-Agent, which carries the
+  owner's email (EDGAR refuses a request without a contact), and some to the Federal Register,
+  openFDA, data.transportation.gov, federalreserve.gov, Wikidata and Wikipedia. Its document says so
+  at the top. It started the local Postgres for read-only queries and stopped it again.
+- `npm run check` passes (49 suites) and `npm run lint` is clean; no code changed.
+
 ## NC ledger — batch 61: the scoring audit's five findings fixed (2026-10-26)
 
 The `code-auditor` read batches 58–60 (`1ac7cdd..10f163a`). Its report is
@@ -4072,6 +4109,118 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
         #4, approved 2026-10-18. Importance high · Efficiency medium-high · Practicality medium
         (a live measurement and a materiality rule first).*
+- [ ] `P1` **The company Federal Register feed back to 1994, and past the newest forty.** It asks
+      from `FR_COMPANY_SINCE = "2015-01-01"` (`lib/frCompany.ts:194`), though the API answers from
+      1994 — a floor `docs/COVERAGE-MAP.md:100-101` calls "a choice, not a limit", in the 1963–2017
+      stretch it calls the corpus's biggest hole — and keeps `.slice(0, FR_COMPANY_CAP)`, the
+      newest 40, on every run (`:191`, `:238`), so a company's 41st-newest title-naming document
+      never reaches its page however many runs go by. Measured 2026-10-26 with the feed's own match
+      rule, directives left out: across fourteen companies the source holds 2,909 documents the
+      rule accepts and the feed can carry at most 338 (GM: 225 before 2015, 51 since, 40 kept;
+      Ford: 100 and 32); without the two railroads and Duke, 910 against 218. The older years hold
+      what the feed already carries — NHTSA petitions, FTC consent orders (Wal-Mart Stores 1999
+      and 2002), trade-adjustment determinations at named plants, FERC complaints.
+      - Walk each company's past years once, each closed year kept in a table shaped like
+        `gdelt_windows` (db/030) and never asked again — about 21 requests per company, once. A
+        closed year stores every title-naming document; the forty stays a per-run ceiling on
+        today's daily ask only.
+      - Search a company's EDGAR former names (batch 15, `renamesFrom`) for dates before the rename
+        only: "Walmart" finds 1 document before 2015, "Wal-Mart Stores" 5.
+      - ⚠ **Before it ships — the owner says which routine rail-board and FERC notices count**
+        (asked when it is built, per the approval). UNP's 663 and CSX's 430 pre-2015 documents are
+        nearly all Surface Transportation Board line notices, Duke's 461 FERC dockets: exclude
+        them, group them a row a month as `pageFilings` groups prospectuses
+        (`lib/secForms.ts:175`), or keep them. Records are never cut by the page budget and news is
+        (`lib/pageNews.ts`), so 600 more records mean fewer stories.
+      - The sector feed has the same 2015 floor (`lib/federalregister.ts:19`); the same change
+        follows, at lower priority.
+      - Cases in `check:wiring` against a stand-in Federal Register — a 2003 Ford document reaches
+        the page, 60 since 2015 are all kept once walked, a closed year is not asked twice, a former
+        name counts only before the rename — and a `check:live` case. No key, licence or recurring
+        cost; a cloud session builds it.
+      - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
+        #1, approved 2026-10-26. Importance high · Efficiency high · Practicality medium-high (one
+        owner call on routine notices).*
+- [ ] `P1` **A results release is an earnings event, whatever form carried it.** An 8-K is typed
+      `earnings` by item 2.02, so a foreign issuer's results 6-K never is — "a 6-K stays a filing:
+      … the submissions list does not say which" (`lib/sec.ts:849-852`, batch 11) — and nor is any
+      results 8-K filed before item 2.02 existed (August 2004). Since batches 43–44 the headline
+      reader does say which: each 6-K's headline is in `sec_headlines` (db/029), and
+      `RESULTS_HEADLINE` (`lib/secHeadlines.ts:833`) already recognises a results headline. NIO's
+      32 quarterly-results 6-Ks and Boeing's 1997–2004 results 8-Ks are typed `filing` in the batch
+      42 and 48 databases: no Earnings chip, no marker, and Biggest moves ranks them as a filing
+      (4), not earnings (5), when it picks a move's catalyst (`components/BiggestMoves.tsx:37-41`).
+      - One predicate beside `RESULTS_HEADLINE`, applied where a stored headline is put on a filing
+        (`lib/ingest/headlines.ts:75`), so the kind travels with the title; stored rows re-type on
+        their next ingest, and the description says why ("a results release, counted as
+        earnings"). Not by EDGAR's pre-2004 8-K item codes, which disagree with the documents (the
+        proposal's "Considered and cut").
+      - Tried on 1,079 real headlines: a reporting period, a results word and no excluded word
+        marks 196, agrees with 2.02 on 120 of the 130 titled 2.02 releases (8 of the 10 misses are
+        not results releases), and newly types 47 — 42 results releases, 5 not. Traps it must keep
+        out, all stored: Takeda's "Phase 3 Topline Results", UBS's tender-offer "Results", MUFG's
+        quarterly capital ratio, a Novartis supplementary-data report.
+      - ⚠ **Before it ships — the owner says whether profit alerts and guidance updates count**
+        (asked when it is built, per the approval): the 5 are a profit alert, a pre-announcement, a
+        guidance update and two Takeda forecast revisions.
+      - Cases in `check:sec-headlines` from the real stored titles: NIO's 32 and Boeing's four
+        become earnings, the traps stay filings, the 120 still agree. No key, licence, recurring
+        cost or request — the headlines are stored; small, offline.
+      - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
+        #2, approved 2026-10-26. Importance high · Efficiency very high · Practicality high.*
+- [ ] `P1` **Keep the SEC forms the 2026-10-18 list missed — foreign listings, large-company
+      shelves, late-filing notices, proxy fights, tender results.** The owner picked
+      `MATERIAL_FORMS` (`lib/secForms.ts:114-143`) on 2026-10-18 without the live count; it is now
+      made, across 45 submissions records (20 large US companies, 25 foreign issuers), and these
+      rows — already in the records ingest downloads — are dropped at `lib/sec.ts:818`:
+      - **S-3ASR 123, in 18 records, against S-3's 95 kept**: large seasoned issuers shelve on the
+        automatic form, so "Shelf registration" (`lib/secForms.ts:137`) almost never fires for the
+        most-read companies. F-3 and F-3ASR 67, F-10 22.
+      - **F-1, 9 foreign listings, none kept** (ARM 2023, BABA 2014, SPOT 2018, NIO 2018…), while
+        the US listings are (META 2012, TSLA 2010). F-4 15.
+      - **Late-filing notices** (NT 10-K, NT 10-Q, NT 20-F): 8 even among these — Apple's NT 10-Q
+        and NT 10-K of 2006, NVIDIA's of 2002, GM's of 2010, Tesla's of 2013, NIO's NT 20-F of 2020.
+      - **Proxy fights:** PREC14A and DEFC14A 15 (Disney 2023 and 2024, GM 2017); DFAN14A 195, 134
+        of them Disney's, so grouped a row a month as `pageFilings` groups prospectuses.
+      - **Tenders:** SC TO-T/A 299 against SC TO-T's 59 kept (or only the final amendment, which
+        reports the result); SC TO-I 23.
+      - **A dead end it closes:** focus and search already read F-1, F-3 and F-4 as form names
+        (`lib/focus.ts:54`), so "Arm F-1" opens ARM narrowed to its F-1s and finds none.
+      - ⚠ **Before building — the owner picks the forms from this list**, as on 2026-10-18 (asked
+        when it is built, per the approval). Optional: SUPPL (77 rows), grouped like 424B. Counted
+        and not proposed: 425, DEFA14A, PX14A6G, CORRESP/UPLOAD; insider forms stay out.
+      - Labels and typing in `MATERIAL_FORMS`, the monthly grouping reusing `pageFilings`; cases in
+        `check:sec-forms` from real rows (ARM's F-1 kept; Apple's NT 10-Q a late-filing notice;
+        Disney's 2024 DFAN14As one row a month; S-3ASR reads as a shelf) and a `check:prompt` case
+        for "Arm F-1". No key, licence, recurring cost or request; small, offline.
+      - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
+        #3, approved 2026-10-26. Importance high · Efficiency very high · Practicality high (one
+        owner pick, the counts in hand).*
+- [ ] `P1` **NHTSA defect investigations beside the recalls, on carmakers' pages.** A new source,
+      approved by the owner 2026-10-26: NHTSA's "Investigations Data"
+      (`data.transportation.gov/resource/b3rp-be92`), licence field "Public Domain U.S.
+      Government" — the same as the recalls dataset batch 30 built on (`6axg-epim`,
+      `lib/recalls.ts:18`) — and no key. A carmaker's recall is on its page; the investigation
+      that came before it, often the event the stock reacted to, is not. Measured 2026-10-26: 4,053
+      investigations, 1975-03-27 to 2026-10-23, each with an action number, the maker as the
+      recalls dataset writes it, a type, subject, component, open and close dates and the recall
+      it led to. Through the existing `RECALL_MAKERS` map and its dates (`lib/recalls.ts:56`),
+      1,766 land on 20 mapped companies, 1,579 of them before 2017 — Ford 684, GM 651, Toyota 114,
+      Honda 113, Stellantis 50 (from 2014-10-12, as for recalls).
+      - An adapter in the recall adapter's shape: one request a day per mapped maker, on the portal
+        ingest already calls. Titles say what was opened, never a finding ("NHTSA opened an
+        engineering analysis: Steering knuckle fracture"). Registered, licence-checked, credited.
+      - ⚠ **Before building — the owner's calls:** which event kind (a regulation event, the Recalls
+        chip, or a kind of its own with a migration like db/028), and whether a closing is a second
+        event. Ford's page gains 684 records, which the page budget pays for in news.
+      - A new `check:vehicle-investigations` (or cases in `check:vehicle-recalls`) on real pinned
+        rows — Toyota's 2010 RQ10003 lands on TM; a Chrysler row before 2014-10-12 is refused for
+        Stellantis; another maker's row is refused — plus `check:wiring` and
+        `check:commercial-mode`. No key, licence fee or recurring cost; a cloud session builds it.
+      - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
+        #4, approved 2026-10-26 with the new source. Importance high for its 20 companies ·
+        Efficiency high · Practicality medium (the source approved; the event kind still to
+        choose).*
 - [ ] `P2` The rest of the securities-coverage depth set: **GDELT year-window backfill** (GDELT
       answers from this container but throttles hard — 429/503 — so this needs the production
       host to develop against) and **richer paid-tier evidence** (needs a paid key). The LoC
@@ -4158,6 +4307,92 @@ already held, but new investment goes to securities coverage first.
         cost.
       - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
         #8, approved 2026-10-18. Importance low-medium · Efficiency high · Practicality high.*
+- [ ] `P2` **A fund's page carries its own fund's filings, by EDGAR's series tag.** It revisits
+      NC-139's premise, "filtering per fund would cost a request per filing": today every trust
+      filing goes on every series' page, titled with the registrant, scored 0.7 and "may concern a
+      sibling fund" (`lib/sec.ts:880-895`). EDGAR's per-series list
+      (`browse-edgar?action=getcompany&CIK=S000002839&owner=include&count=100&output=atom`) tags
+      each fund filing with its series at a request per hundred: VOO's 533 since 2006 in 6
+      requests. Measured 2026-10-26: of the 432 kept-form filings the Vanguard Index Funds trust
+      made from 2022-12-05 to 2026-08-28, all on VOO's page today, 76 (18%) are VOO's (NPORT-P
+      181 → 15, 497K 191 → 16, 497 39 → 29).
+      - Keep the series id the sync already reads and drops — `parseSeriesPage` returns `seriesId`
+        (`lib/edgarSeries.ts:57`), `collect` keeps only name, symbol and CIK
+        (`scripts/sync-tickers.ts:177-187`); one id per series, 19,540. At ingest, read the fund's
+        own list, paced as the headline reader is: its own filings are titled with its name and
+        score 1.0, a sibling's are not linked. When the list cannot be read, today's behaviour
+        stays.
+      - Needs one `npm run sync:tickers` to write the ids (the owner's host or a cloud session).
+      - A `check:tickers` case (the index carries the id, no request) and `check:sec-forms` cases
+        on pinned Atom pages: VOO keeps 76 of the 432; a sibling's NPORT-P is not on VOO's page; an
+        unreachable list leaves today's titles. No key, licence or recurring cost.
+      - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
+        #5, approved 2026-10-26. Importance medium · Efficiency high · Practicality high.*
+- [ ] `P2` **When a filing came out: before the open, or after the close.** Every submissions
+      record carries each filing's `acceptanceDateTime`, and `FilingBlock` reads none of it
+      (`lib/sec.ts:759-766`); `events.occurred_at` exists for "a real instant"
+      (`docs/EVENTS-SCHEMA.md:134`), and 0 of 30,470 events in the batch 42 database have one. The
+      schema deferred it "until the price series goes intraday" (`:346-347`); this is a different
+      reason — the time decides which daily bar a release belongs to, and prices stay end of day.
+      Measured 2026-10-26: of 544 results 8-Ks since 2008 in 45 sampled records, 290 (53%) were
+      accepted after 16:00 ET and carry that day's date. All 45 of Apple's since 2015 came after
+      the close: median move 0.7% on the release day, 3.7% the next session. Biggest moves knows
+      and guesses ("an after-close 8-K/earnings moves the *next* session",
+      `components/BiggestMoves.tsx:32-34`) but scores the move's own day first (`:97`), so a
+      2%-plus release-day move — 10 of Apple's 45 — is captioned with a release that came after it.
+      - Read the field, store it in `occurred_at` and carry it to the event; the row says "4:30 pm
+        ET, after the close"; one rule in `nearestCatalyst`: a move is never paired with something
+        published after its session closed. The schema doc's deferral note changes with it.
+        GDELT's `seendate` and Yahoo's `pubDate` could follow; not part of this item.
+      - A `check:sec-forms` case (Apple's 2026-07-30 release, "2026-07-30T20:30:00.000Z", stored as
+        16:30 ET, daylight saving handled) and a `nearestCatalyst` case in `check:markers`. No key,
+        licence, recurring cost or request; small, offline.
+      - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
+        #6, approved 2026-10-26. Importance medium · Efficiency high · Practicality high (it
+        revisits a written deferral, with a reason the deferral did not weigh).*
+- [ ] `P2` **Federal Reserve enforcement actions on bank pages.** A new source, approved by the
+      owner 2026-10-26: the Board's actions against a listed bank holding company — cease-and-desist
+      orders, written agreements, civil money penalties — as regulation events. Licence:
+      "information on Board's website is in the public domain … Please cite to the Board as the
+      source" (`federalreserve.gov/disclaimer.htm`); the Board is already credited for the FOMC
+      statements (batch 21). Carmakers and drug, device and food makers carry their regulator's
+      actions; banks carry none of theirs. Measured 2026-10-26: two keyless JSON files,
+      `/supervisionreg/ea-old.json` (2,514 actions, 1989-09-25 to 2018-12-26, 566 KB, read once)
+      and `/supervisionreg/files/ea-cms-recent.json` (385 since 2019-01-18, 92 KB, read daily); 45
+      actions against five large banks, most before 2017 — Wells Fargo's asset-cap order of
+      2018-02-02, JPMorgan's $200 million penalty of 2013-09-18.
+      - **A hand-checked map like `FDA_FIRMS`, with a city check, never a name alone:** by name,
+        152 actions land on 76 listed companies, many of them other banks of the same name
+        ("Huntington Bancshares, Inc., Huntington, Texas" is not Huntington). Start with the 20 or
+        so largest bank holding companies. An action against a person is not the bank's; a
+        cease-and-desist and a penalty the same day are one event.
+      - Unsized past the large banks until the map is built: a few to a dozen material events a
+        bank.
+      - A new `check:fed-actions` on real rows: Wells Fargo's 2018 order lands on WFC; the
+        namesakes are refused; same-day orders make one event; the source is registered and
+        credited. No key, licence fee or recurring cost; a cloud session builds it.
+      - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
+        #7, approved 2026-10-26 with the new source. Importance medium · Efficiency medium ·
+        Practicality medium (the source approved; the bank map still to build).*
+- [ ] `P2` **FDA recalls for the next health-care makers.** Extend `FDA_FIRMS`
+      (`lib/fdaRecalls.ts:54`, 38 companies today) to the listed device and drug makers with the
+      most Class I and II recalls not yet mapped, each date a firm joined or left taken from the
+      company's own SEC filing, as batch 41 did. Measured on openFDA 2026-10-26: Beckman Coulter
+      223 (Danaher's), Fresenius Medical Care 86, ICU Medical 78, Steris 57, Bausch 24, Amneal 24,
+      Perrigo 20, GlaxoSmithKline 18, Avanos 18, Insulet 15 — about 650 across some twenty
+      companies; food and household makers add about 150 (Dole 26, TreeHouse 13, Church & Dwight
+      13).
+      - Most of the work is the acquisition dates (ICU Medical's Smiths Medical, Steris's Cantel,
+        the GSK consumer business that became Haleon) and the look-alike pass batch 40 did:
+        "Bausch" is two listed companies; "Coca-Cola" (33) is mostly independent bottlers.
+        Retailers' store-brand recalls (Kroger 41) stay out, for the reason the CPSC note gives
+        (`docs/proposals/2026-10-22-news-sources.md:144-146`).
+      - Nearly all are Class II, which rank as news (Beckman Coulter: 334 Class II, 5 Class I).
+      - Cases in `check:fda-recalls` on real openFDA records for each new company, both sides of
+        each date, look-alikes refused. 3–6 requests a day per company, inside openFDA's keyless
+        1,000 a day; no key, licence or recurring cost.
+      - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
+        #8, approved 2026-10-26. Importance low-medium · Efficiency medium · Practicality high.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

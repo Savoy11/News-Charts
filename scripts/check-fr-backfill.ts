@@ -54,6 +54,11 @@ interface Db {
   fetches: { query: string; outcome: string }[];
   relabels: { ids: string[]; labels: string[] }[];
   latest: string | null;
+  /** the company's first stored price, or null when it has none */
+  listed: string | null;
+  /** the days its Federal Register documents were taken off it before, and how many each time */
+  unlinks: string[];
+  stale: number;
 }
 
 /** Just enough of a pg client for the year walk's own statements. */
@@ -63,6 +68,11 @@ function fakeDb(db: Db): PoolClient {
       const s = sql.trim();
       if (/^(BEGIN|COMMIT|ROLLBACK)$/.test(s)) return { rows: [] };
       if (/FROM events e/.test(s)) return { rows: db.renames };
+      if (/FROM prices/.test(s)) return { rows: [{ listed: db.listed }] };
+      if (/^DELETE FROM event_subjects/.test(s) && /federal_register/.test(s)) {
+        db.unlinks.push(String(params[1]));
+        return { rows: [], rowCount: db.stale };
+      }
       if (/^SELECT starts_on/.test(s)) return { rows: [...db.windows].map(([starts_on, w]) => ({ starts_on, query: w.query })) };
       if (/^SELECT commercial_ok FROM sources/.test(s)) return { rows: [{ commercial_ok: true }] };
       if (/FROM source_fetches/.test(s)) return { rows: [{ mine: null, latest: db.latest }] };
@@ -86,7 +96,8 @@ function fakeDb(db: Db): PoolClient {
     },
   } as unknown as PoolClient;
 }
-const freshDb = (): Db => ({ windows: new Map(), renames: [], fetches: [], relabels: [], latest: null });
+// Ford's prices begin in 1972, before the Federal Register's company years do
+const freshDb = (listed: string | null = "1972-06-01"): Db => ({ windows: new Map(), renames: [], fetches: [], relabels: [], latest: null, listed, unlinks: [], stale: 0 });
 
 const FORD = { kind: "company" as const, displayName: "FORD MOTOR CO", ticker: "F" };
 const fordPlan = { edgarName: "FORD MOTOR CO", alsoKnownAs: [], scoring: { subject: FORD, aliases: aliasesFor(FORD, ["Ford"]) } };
@@ -211,6 +222,29 @@ const param = (u: URL, k: string) => u.searchParams.get(k);
     refused.fetches[0]?.outcome === "throttled" && /· 2023$/.test(refused.fetches[0]?.query) && !refused.windows.has("2023-01-01"),
     JSON.stringify(refused.fetches));
 
+  // batch 71: asked from 1994, Dow Inc. (listed 2019) kept 2010's "Dow Jones & Company, Sharon
+  // Pennsylvania Print Plant…" and three "Dow Corning Corporation" zone notices, scored as its own
+  const dowDb = freshDb("2019-03-20");
+  dowDb.stale = 4;
+  const dowAsked: number[] = [];
+  const dow = await backfillRegulations(fakeDb(dowDb), 5, { ...fordPlan, edgarName: "Dow Inc." }, {
+    today: TODAY, gapMs: 0, budget: { left: 100 },
+    fetch: async (year) => { dowAsked.push(year); return { events: [], documents: 0, outcome: "empty" }; },
+    store: async () => {},
+  });
+  check("a company is not asked for the years before its first price: Dow Inc., listed 2019, never for 2010's Dow Jones and Dow Corning notices (batch 71)",
+    dow.read === 7 && dowAsked[0] === 2025 && dowAsked[dowAsked.length - 1] === 2019 && !dowAsked.includes(2010), dowAsked.join(","));
+  check("  …and what a walk before the fix kept from those years comes off it", dow.unlinked === 4 && dowDb.unlinks.join() === "2019-03-20" &&
+    db.unlinks.length === 0, `${dow.unlinked} unlinked before ${dowDb.unlinks.join()}; Ford: ${db.unlinks.length} asked`);
+  const unpriced: number[] = [];
+  const none = await backfillRegulations(fakeDb(freshDb(null)), 6, fordPlan, {
+    today: TODAY, gapMs: 0, budget: { left: 100 },
+    fetch: async (year) => { unpriced.push(year); return { events: [], documents: 0, outcome: "empty" }; },
+    store: async () => {},
+  });
+  check("  …and a company with no prices is not asked at all, as the GDELT month walk is not", none.due === 0 && unpriced.length === 0 &&
+    none.stopped === "no prices to start from", JSON.stringify(none));
+
   console.log("\nFormer names, for the years they were in use");
   const walmart: FormerName[] = [{ name: "WAL MART STORES INC", until: "2018-02-01" }];
   check("Walmart's 1999 search carries \"Wal-Mart Stores\"", frSearchTerm("Walmart Inc.", namesForYear(1999, [], walmart)).includes('"WAL MART STORES"'),
@@ -291,6 +325,13 @@ const param = (u: URL, k: string) => u.searchParams.get(k);
   check("  …saying what it holds, its link the newest", grouped?.url === july[2].url && /Weld County/.test(grouped?.description ?? "") &&
     /grouped into one row/.test(grouped?.description ?? ""), grouped?.description?.slice(0, 90));
   check("  …while a control case in the same month keeps its dated row", page.includes(control) && routineNoticeAgency(control) === null);
+  // batch 71: the Federal Register gives the 1990s titles with their words run together
+  const conrail = row("CSX Corporation and CSX Transportation, Inc., Norfolk Southern Corporation and Norfolk Southern Railway CompanyControl and Operating Leases/Agreements Conrail Inc. and Consolidated Rail Corporation", "1997-04-21", STB);
+  const conrailJoined = row("CSX Corporation and CSX Transportation, Inc., Norfolk Southern Corporation and Norfolk Southern Railway CompanyControl and Operating Leases/AgreementsConrail, Inc. and Consolidated Rail Corporation", "1997-07-07", STB);
+  check("  …and so does CSX's 1997 Conrail control case, its words run together as the Federal Register gives them (batch 71)",
+    routineNoticeAgency(conrail) === null && routineNoticeAgency(conrailJoined) === null);
+  const listening = row("Public Listening Session Regarding CSX Transportation, Inc.'s Rail Service Issues; Joint Petition of Foresight Coal Sales, LLC, Sugar Camp Energy, LLC, Williamson Energy, LLC, and Consolidation Coal Company To Address the Adequacy of CSX Transportation's Coal Transportation Service Originating in the Illinois Basin and Northern Appalachia", "2017-08-30", STB);
+  check("  …and the board's 2017 hearing on CSX's rail service, a joint petition", routineNoticeAgency(listening) === null);
   check("  …and a lone notice in its month keeps its own", page.includes(lone));
   check("two FERC notices in a month are grouped, its complaint is not",
     page.some((e) => e.id === "fr-routine-federal-energy-regulatory-commission-2011-02" && e.title === `${FERC}: 2 routine notices`) && page.includes(complaint));

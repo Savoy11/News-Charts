@@ -104,7 +104,7 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
 - **Our own floors are choices, not limits.** GDELT is queried from 2017 because that is what the
   queries ask for, not because the source stops there. A company's Federal Register documents
   reached back only to 2015 for the same reason; since batch 63 they reach 1994, where its API
-  begins (the sector feed still starts in 2015).
+  begins, or the company's first price if later (batch 71); the sector feed still starts in 2015.
 - **Nothing here reaches non-US regulation**, and nothing reaches non-English press except
   incidentally through Wikipedia.
 

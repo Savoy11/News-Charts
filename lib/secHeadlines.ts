@@ -1002,10 +1002,12 @@ const REPORTING = /\b(?:reports?|reported|announces?|posts?|delivers?|delivered|
  * What looks like results and is not (batch 64): a profit alert, a preliminary figure or an
  * expectation, a forecast revised or a difference from one, a charge, the date of a call, a
  * trial's topline results, a tender offer's. The owner's call, 2026-10-26: only reported results
- * count as earnings, so a warning stays a filing, shown with its headline.
+ * count as earnings, so a warning stays a filing, shown with its headline. "Update on" and
+ * "special items" too (batch 71): "Ford Provides Update on Certain Special Items for FY2021
+ * Results" (2022-01-18) gave the year's preliminary special items, two weeks before the results.
  */
 const NOT_REPORTED_RESULTS =
-  /\b(?:profit (?:alert|warning)|preliminary|pre-?announce\w*|expects?|expected|estimates?|forecasts?|revis\w*|differences?|charges?|to (?:report|announce|release|hold|publish|host)|will (?:report|announce|release)|dates?|conference call|webcast|transcript|presentation|supplement(?:al|ary)?|tender|exchange offer|phase|topline|top-line|trial|study|studies)\b/i;
+  /\b(?:profit (?:alert|warning)|preliminary|pre-?announce\w*|expects?|expected|estimates?|forecasts?|revis\w*|differences?|charges?|special items?|update on|to (?:report|announce|release|hold|publish|host)|will (?:report|announce|release)|dates?|conference call|webcast|transcript|presentation|supplement(?:al|ary)?|tender|exchange offer|phase|topline|top-line|trial|study|studies)\b/i;
 
 /**
  * Whether a press release's headline reports a period's results: "NIO Inc. Reports Unaudited Third

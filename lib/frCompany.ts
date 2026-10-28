@@ -358,7 +358,13 @@ export const ROUTINE_AGENCIES = [
  * Southern" and "Intermountain Power Agency v. Union Pacific" keep their own dated rows.
  */
 const NOT_ROUTINE =
-  /\b(?:complaint|v\.|vs\.|versus|order imposing|order modifying|confirmatory order|civil (?:monetary )?penalt|violation|merger|control\b|investigation|show cause|settlement|declaratory order|petition for|enforcement)/i;
+  /\b(?:complaint|v\.|vs\.|versus|order imposing|order modifying|confirmatory order|civil (?:monetary )?penalt|violation|merger|control\b|investigation|show cause|settlement|declaratory order|petition|enforcement)/i;
+/**
+ * The 1990s titles run words together where the dash was: "…Norfolk Southern Railway
+ * CompanyControl and Operating Leases/Agreements Conrail Inc." (CSX, 1997). Read apart, so the
+ * control case keeps its rows (batch 71: eight of its nineteen notices had been grouped).
+ */
+const wordsApart = (title: string) => title.replace(/([a-z.,])([A-Z])/g, "$1 $2");
 
 const AGENCY_LABEL = /^Federal Register · (.+)$/;
 
@@ -369,7 +375,7 @@ const AGENCY_LABEL = /^Federal Register · (.+)$/;
 export function routineNoticeAgency(e: TimelineEvent): string | null {
   if (e.type !== "regulation" || (e.description !== "Notice" && e.description !== "Uncategorized Document")) return null;
   const agency = AGENCY_LABEL.exec(e.source)?.[1];
-  return agency && ROUTINE_AGENCIES.includes(agency) && !NOT_ROUTINE.test(e.title) ? agency : null;
+  return agency && ROUTINE_AGENCIES.includes(agency) && !NOT_ROUTINE.test(wordsApart(e.title)) ? agency : null;
 }
 
 /**

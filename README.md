@@ -71,7 +71,8 @@ The one exception is a document whose **title** names the company — an FTC con
 NHTSA petition, an ITC investigation naming it as respondent. `npm run ingest -- --ticker F` asks
 for those too (`lib/frCompany.ts`), never an airworthiness directive (an aircraft maker gets
 about a hundred a year, each on one part). The daily ask reads the current year, up to 40 a run;
-each year from 1994, where the API begins, to last year is read once, every page, and every
+each year from 1994, where the API begins, or from the company's first price if later (batch 71: Dow Inc.,
+listed 2019, had kept 2010's Dow Jones notices), to last year is read once, every page, and every
 document whose title names the company is kept (`lib/ingest/frBackfill.ts`, kept in `fr_windows`:
 at most 40 years a run, 1 s apart, newest first). A year is searched under the names the company
 had then, so Walmart's 1999 FTC order is found under "Wal-Mart Stores", its EDGAR name until 2018.

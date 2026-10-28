@@ -988,6 +988,52 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 72: a new opportunity-scout run, five proposals for the owner (2026-10-28)
+
+The 2026-10-26 proposals are all built (batches 63–70), and batch 71's audit findings are fixed. So
+the `opportunity-scout` read the repository again at `3243d71` and wrote
+`docs/proposals/2026-10-28-proposals.md`: five proposals, all **PENDING**, ranked with securities
+depth first. Nothing is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      1. `P1` **The SEC's own press releases naming a company as the party, from 1998.** A new
+         source, so the owner's yes first; the licence is quoted in the file. In 2010 and 2003 the
+         scout counted 8 and 10 releases whose party has a page here. The Justice Department
+         adapter's party rule would keep only 4 of them without the SEC's own wording ("SEC
+         Charges X").
+      2. `P2` **The Federal Reserve's actions against the foreign banks with pages here:** 37 action
+         days on 14 banks (HSBC, Deutsche Bank, UBS, Barclays, NatWest…), 27 of them before 2017.
+         No new request: the same two files. BNP Paribas, Standard Chartered and Société Générale
+         are not in the company index, so they stay out.
+      3. `P2` **QQQ's 22 annual reports.** They are filed on form N-30B-2, which the fund form list
+         leaves out. SPY, DIA and MDY file theirs as N-30D, which is kept. One form.
+      4. `P2` **FDA recalls for Siemens Healthineers and Fresenius SE, with two calls for the owner:**
+         from when Siemens Healthineers' 726 recalls count (413 before its 2018 listing), and
+         whether Fresenius SE's control of FMC until 2023-11-30 makes FMC's recalls also its own.
+         Fresenius Kabi's 58 can be mapped either way.
+      5. `P2` **The vehicle brands Ford and GM owned, while they owned them, with one call for the
+         owner:** Ford's Volvo, Jaguar and Land Rover, about 56 recalls and 28 investigations; GM's
+         Saab, about 12 and 9. The FDA and Fed maps already count a sold business until it left.
+- **Checked here:**
+  - The fund form list in `lib/sec.ts` has no N-30B-2. EDGAR's record for INVESCO QQQ TRUST,
+    SERIES 1 lists 22 of them, from 2005-05-16 to 2025-10-24.
+  - HSBC, Deutsche Bank, UBS, Barclays and NatWest are in `data/edgar-tickers.json`; BNP Paribas,
+    Standard Chartered and Société Générale are not.
+- **Found on the way, for the next audit:**
+  - `lib/secForms.ts` labels every Form 25 "Delisting notice" and every 25-NSE "Removed from an
+    exchange", whatever they remove.
+  - The scout's examples: Apple's 25-NSE of 2025-05-22 removed only a note issue; Walmart's
+    2025-12-08 Form 25 was a voluntary move off the NYSE.
+- **Requests made:**
+  - **By the scout:** www.sec.gov 28, data.sec.gov 17, api.fda.gov 8, data.transportation.gov 3,
+    www.federalreserve.gov 2, apps.occ.gov 2 (both a "Security Redirect"), www.consumerfinance.gov
+    1, www.fsis.usda.gov 1 (refused by the container's proxy).
+  - **Here:** data.sec.gov 1, the QQQ count.
+  - All carried the project's User-Agent with the owner's contact address. The scout started
+    Postgres for read-only queries and stopped it again.
+- `npm run check` passes (51 suites) and `npm run lint` is clean; no code changed.
+
 ## NC ledger — batch 71: the audit of batches 62–70, and its three findings fixed (2026-10-28)
 
 The `code-auditor` read batches 62–70 (`5e2a1f7..0da40a1`). Its report is

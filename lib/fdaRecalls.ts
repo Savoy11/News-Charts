@@ -41,6 +41,33 @@ export interface FdaFirm {
 }
 
 /**
+ * GE's healthcare business under names other than "GE Healthcare", each listed among GE
+ * HealthCare's subsidiaries in its 10-K for 2022 (Exhibit 21): the business is GE's to the
+ * spin-off and GE HealthCare's after it, as "GE Healthcare" is.
+ */
+const GE_HEALTHCARE_NAMES: readonly FdaFirm[] = [
+  { search: "GE Medical Systems", not: /Wipro/i, why: "GE Medical Systems and its sites, the healthcare business under its older name" },
+  { search: "GE OEC", not: /Wipro/i, why: "OEC Medical Systems, its surgical imaging unit" },
+  { search: "GE Vingmed", why: "Vingmed Ultrasound, its ultrasound unit in Norway" },
+  { search: "General Electric Med", why: "the healthcare business under GE's full name" },
+  { search: "Datex", match: /\bDatex[- ]+Ohmeda\b/i, why: "Datex-Ohmeda, its anaesthesia and ventilator unit (CARESCAPE)" },
+];
+
+/** Danaher's dental companies, which went with Envista (batch 70): the dates are added where each is used. */
+const DANAHER_DENTAL: readonly FdaFirm[] = [
+  { search: "Implant Direct", why: "its implant company (Danaher's 10-K for 2014 names the brand)" },
+  { search: "Ormco", why: "its orthodontics and endodontics company (Ormco, SybronEndo)" },
+  { search: "Kerr", match: /\bKerr (?:Corporation|Dental)\b|\bKerr\/Pentron\b/i, why: "Kerr, its dental-materials company; other firms called Kerr are left out" },
+  { search: "Sybron Dental", why: "Sybron Dental Specialties, Danaher's since 2006 (Danaher's 10-K for 2014)" },
+];
+
+/** GSK's two spellings; its consumer business is told apart by the word "Consumer" (batch 70). */
+const GSK_NAMES: readonly FdaFirm[] = [
+  { search: "GlaxoSmithKline", match: /\bGlaxo ?SmithKline\b/i, why: "GlaxoSmithKline" },
+  { search: "GSK", match: /^GSK\b/i, why: "GSK" },
+];
+
+/**
  * Which firms' recalls belong to which listed company, by CIK. Checked by hand against the firm
  * names openFDA holds, never matched by name alone: "Hershey Creamery Co." is not the Hershey
  * Company, and "Merck Millipore" is Germany's Merck, not Merck & Co.
@@ -60,32 +87,96 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
       { search: "Covidien", from: "2015-01-26", why: "bought 2015-01-26 (Medtronic plc's 8-K filed 2015-01-27); Covidien's earlier recalls were its own" },
     ],
   },
-  310764: { ticker: "SYK", firms: [{ search: "Stryker", why: "the company and its divisions" }] },
+  310764: {
+    ticker: "SYK",
+    firms: [
+      { search: "Stryker", why: "the company and its divisions" },
+      { search: "Howmedica", why: "Howmedica Osteonics, its orthopaedic implant company (a subsidiary in Stryker's 10-K for 2002), held before the reports begin" },
+      { search: "Mako Surgical", from: "2013-12-17", why: "bought 2013-12-17 (Stryker's 8-K filed 2013-12-17)" },
+      { search: "Sage Products", from: "2016-04-01", why: "bought 2016-04-01 (Stryker's 8-K filed 2016-04-01)" },
+      { search: "Physio-Control", match: /\bPhysio[- ]?Control\b/i, from: "2016-04-05", why: "bought 2016-04-05 (Stryker's 8-K filed 2016-04-05); Physio-Control's earlier recalls were its own" },
+      { search: "K2M", from: "2018-11-09", why: "bought 2018-11-09 (Stryker's 8-K filed 2018-11-09)" },
+      { search: "Wright Medical", from: "2020-11-11", why: "bought 2020-11-11 (Stryker's 8-K filed 2020-11-16); Wright's earlier recalls were its own" },
+      { search: "Tornier", from: "2020-11-11", why: "part of Wright Medical when Stryker bought it on 2020-11-11" },
+      { search: "Inari Medical", from: "2025-02-19", why: "bought 2025-02-19 (Stryker's 8-K filed 2025-02-19)" },
+    ],
+  },
   885725: { ticker: "BSX", firms: [{ search: "Boston Scientific", why: "the company and its divisions" }] },
   10795: {
     ticker: "BDX",
     firms: [
       { search: "Becton", why: "the company and its divisions" },
-      { search: "BD", match: /^BD\b/i, why: "the company's units filed under its initials (BD Biosciences, BD Switzerland)" },
+      {
+        search: "BD",
+        match: /^BD\b/i,
+        not: /^BD (?:Bioscience|Diagnostic|Kiestra|Life Science)/i,
+        why: "the company's units filed under its initials (BD Switzerland, BD Medical)",
+      },
+      {
+        search: "BD",
+        match: /^BD (?:Bioscience|Diagnostic|Kiestra|Life Science)/i,
+        to: "2026-02-08",
+        why: "its biosciences and diagnostics units, until they were spun off and combined with Waters on 2026-02-09 (BD's 8-K filed 2026-02-09)",
+      },
       { search: "Bard", from: "2017-12-29", why: "C.R. Bard and its units, bought 2017-12-29 (BD's 8-K filed 2017-12-29)" },
+      {
+        search: "CareFusion",
+        not: /\bCareFusion (?:203|207|211)\b/i,
+        from: "2015-03-17",
+        why: "bought 2015-03-17 (BD's 8-K filed 2015-03-17): Alaris pumps, ChloraPrep, V. Mueller instruments; CareFusion's earlier recalls were its own",
+      },
+      {
+        search: "CareFusion",
+        match: /\bCareFusion (?:203|207|211)\b/i,
+        from: "2015-03-17",
+        to: "2016-10-02",
+        why: "CareFusion's respiratory units, BD's until it sold control of them on 2016-10-03 (BD's 10-K for 2016); they file as Vyaire since",
+      },
     ],
   },
   1136869: {
     ticker: "ZBH",
     firms: [
-      { search: "Zimmer", why: "the company itself, Zimmer Holdings until it bought Biomet" },
+      { search: "Zimmer", not: /\b(?:Spine|Dental)\b/i, why: "the company itself, Zimmer Holdings until it bought Biomet" },
+      {
+        search: "Zimmer",
+        match: /\bZimmer\b.*\b(?:Spine|Dental)\b/i,
+        to: "2022-02-28",
+        why: "its spine and dental units, until they were spun off as ZimVie on 2022-03-01 (Zimmer Biomet's 8-K filed 2022-03-01)",
+      },
       {
         search: "Biomet",
         from: "2015-06-24",
-        not: /Changzhou/i,
+        not: /Changzhou|\b3i\b|\bSpine\b|\bDental\b/i,
         why: "bought 2015-06-24 (Zimmer Biomet's 8-K filed 2015-06-26); a Chinese firm of the name is left out as not shown to be the company's",
       },
+      {
+        search: "Biomet",
+        match: /\bBiomet\b.*(?:\b3i\b|\bSpine\b|\bDental\b)/i,
+        from: "2015-06-24",
+        to: "2022-02-28",
+        why: "Biomet's spine and dental units, Zimmer Biomet's from 2015-06-24 until the ZimVie spin-off on 2022-03-01",
+      },
+      { search: "Paragon 28", from: "2025-04-21", why: "bought 2025-04-21 (Zimmer Biomet's 8-K filed 2025-04-21); Paragon 28's earlier recalls were its own" },
     ],
   },
-  10456: { ticker: "BAX", firms: [{ search: "Baxter", why: "the company itself; the kidney-care business it sold in 2025 files as Vantive" }] },
+  10456: {
+    ticker: "BAX",
+    firms: [
+      { search: "Baxter", why: "the company itself; the kidney-care business it sold in 2025 files as Vantive" },
+      { search: "Hill-Rom", match: /\bHill[- ]?Rom\b/i, from: "2021-12-13", why: "Hillrom, bought 2021-12-13 (Baxter's 8-K filed 2021-12-13); its earlier recalls were its own" },
+      { search: "Welch Allyn", from: "2021-12-13", why: "Hillrom's, Baxter's with it from 2021-12-13" },
+    ],
+  },
   1035267: { ticker: "ISRG", firms: [{ search: "Intuitive Surgical", why: "the company itself" }] },
   1099800: { ticker: "EW", firms: [{ search: "Edwards Lifesciences", why: "the company itself" }] },
-  96943: { ticker: "TFX", firms: [{ search: "Teleflex", why: "the company and its divisions, Arrow among them" }] },
+  96943: {
+    ticker: "TFX",
+    firms: [
+      { search: "Teleflex", why: "the company and its divisions" },
+      { search: "Arrow International", from: "2007-10-01", why: "Arrow, Teleflex's since 2007-10-01 (Teleflex's 8-K filed 2007-10-01), before the reports begin" },
+    ],
+  },
   313216: {
     ticker: "PHG",
     firms: [{ search: "Philips", not: /Neusoft/i, why: "the company and its divisions; its joint venture with Neusoft is left out" }],
@@ -94,21 +185,27 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
   943819: { ticker: "RMD", firms: [{ search: "ResMed", why: "the company itself" }] },
   40545: {
     ticker: "GE",
-    firms: [{
-      search: "GE Healthcare",
-      to: "2023-01-03",
-      not: /Wipro/i,
-      why: "GE's healthcare business until it was spun off on 2023-01-03 (GE's 8-K filed 2023-01-04); the joint venture with Wipro is left out",
-    }],
+    firms: [
+      {
+        search: "GE Healthcare",
+        to: "2023-01-03",
+        not: /Wipro/i,
+        why: "GE's healthcare business until it was spun off on 2023-01-03 (GE's 8-K filed 2023-01-04); the joint venture with Wipro is left out",
+      },
+      ...GE_HEALTHCARE_NAMES.map((f) => ({ ...f, to: "2023-01-03", why: `${f.why}; GE's until the spin-off on 2023-01-03` })),
+    ],
   },
   1932393: {
     ticker: "GEHC",
-    firms: [{
-      search: "GE Healthcare",
-      from: "2023-01-04",
-      not: /Wipro/i,
-      why: "the company from its first day apart from GE; before that its recalls were GE's",
-    }],
+    firms: [
+      {
+        search: "GE Healthcare",
+        from: "2023-01-04",
+        not: /Wipro/i,
+        why: "the company from its first day apart from GE; before that its recalls were GE's",
+      },
+      ...GE_HEALTHCARE_NAMES.map((f) => ({ ...f, from: "2023-01-04", why: `${f.why}; the company's from its first day apart from GE` })),
+    ],
   },
   1800: {
     ticker: "ABT",
@@ -194,6 +291,7 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
       { search: "Mentor Texas", why: "its breast-implant maker since 2009" },
       { search: "Acclarent", why: "its ear, nose and throat company since 2010" },
       { search: "Synthes", from: "2012-06-14", why: "bought 2012-06-14 (J&J's 8-K filed 2012-06-14)" },
+      { search: "Anspach", from: "2012-06-14", why: "The Anspach Effort, Synthes's power-tool maker since 2010, J&J's with Synthes from 2012-06-14" },
       { search: "Abbott Medical Optics", from: "2017-02-27", why: "bought from Abbott 2017-02-27, now Johnson & Johnson Surgical Vision" },
       { search: "Auris Health", from: "2019-04-01", why: "bought 2019-04-01 (J&J's 10-K for 2019)" },
       { search: "Abiomed", from: "2022-12-22", why: "bought 2022-12-22 (J&J's 8-K filed 2022-12-22)" },
@@ -265,6 +363,200 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
     ],
   },
 
+  // ---- batch 70: the next device makers ----
+  2046386: {
+    ticker: "MDLN",
+    firms: [{ search: "Medline", why: "the company and its units; a private company until its IPO, so its earlier recalls are its own" }],
+  },
+  313616: {
+    ticker: "DHR",
+    firms: [
+      { search: "Beckman Coulter", from: "2011-06-30", why: "bought 2011-06-30 (Danaher's 8-K filed 2011-06-30); Beckman Coulter's earlier recalls were its own" },
+      { search: "Radiometer", why: "Danaher's since 2004 (Danaher's 10-K for 2013), before the reports begin" },
+      {
+        search: "Leica",
+        match: /\bLeica (?:Microsystems|Biosystems)\b/i,
+        why: "Leica Microsystems and Leica Biosystems, Danaher's since 2005 (Danaher's 10-K for 2013); Leica Camera and Leica Geosystems are other companies",
+      },
+      { search: "HemoCue", from: "2013-04-09", why: "bought from Quest Diagnostics, which completed the sale on 2013-04-09 (Quest's 10-Q filed 2013-04-24)" },
+      { search: "Cepheid", from: "2016-11-04", why: "bought 2016-11-04 (Danaher's 10-K for 2016); Cepheid's earlier recalls were its own" },
+      ...DANAHER_DENTAL.map((f) => ({
+        ...f,
+        to: "2019-12-17",
+        why: `${f.why}; Danaher's dental business until its split-off of Envista completed 2019-12-18 (Danaher's 8-K filed 2019-12-18)`,
+      })),
+      {
+        search: "Nobel Biocare",
+        from: "2014-12-11",
+        to: "2019-12-17",
+        why: "bought 2014-12-11 (Danaher's 10-K for 2014), then Envista's: Danaher's until the split-off completed 2019-12-18",
+      },
+      { search: "KaVo", to: "2019-12-17", why: "a Danaher dental company since 2004 (Danaher's 10-K for 2014), until the Envista split-off" },
+    ],
+  },
+  1757073: {
+    ticker: "NVST",
+    firms: [
+      ...[...DANAHER_DENTAL, { search: "Nobel Biocare", why: "its implant company" }].map((f) => ({
+        ...f,
+        from: "2019-09-20",
+        why: `${f.why}; Envista's from the close of its IPO on 2019-09-20 (Envista's 8-K filed 2019-09-20). Until Danaher's split-off completed 2019-12-18, Danaher still held most of Envista, so a recall then is both companies'`,
+      })),
+    ],
+  },
+  1333141: {
+    ticker: "FMS",
+    firms: [
+      { search: "Fresenius Medical Care", why: "the company and its U.S. companies; Fresenius Kabi belongs to Fresenius SE, another company" },
+      {
+        search: "NxStage",
+        from: "2019-02-26",
+        why: "NxStage Medical, whose purchase the company announced complete on 2019-02-26 (its 6-K filed 2019-02-26); NxStage's earlier recalls were its own",
+      },
+    ],
+  },
+  883984: {
+    ticker: "ICUI",
+    firms: [
+      { search: "ICU Medical", not: /Otsuka/i, why: "the company itself; Otsuka ICU Medical, a joint venture, is left out" },
+      { search: "Smiths Medical", from: "2022-01-06", why: "bought 2022-01-06 (ICU Medical's 8-K filed 2022-01-07); Smiths Medical's earlier recalls were Smiths Group's" },
+    ],
+  },
+  1757898: { ticker: "STE", firms: [{ search: "Steris", why: "the company itself; STERIS plc carries STERIS Corporation's ticker" }] },
+  856982: { ticker: "MMSI", firms: [{ search: "Merit Medical", why: "the company itself" }] },
+  1275187: {
+    ticker: "ANGO",
+    firms: [
+      { search: "AngioDynamics", why: "the company itself" },
+      { search: "Navilyst", from: "2012-05-22", why: "bought 2012-05-22 (AngioDynamics's 8-K filed 2012-05-25)" },
+    ],
+  },
+  816956: {
+    ticker: "CNMD",
+    firms: [
+      { search: "ConMed", why: "the company itself" },
+      { search: "Linvatec", why: "ConMed Linvatec, its sports-medicine company, held before the reports begin" },
+    ],
+  },
+  711404: {
+    ticker: "COO",
+    firms: [
+      { search: "CooperVision", match: /\bCooper ?Vision\b/i, why: "its contact-lens company" },
+      { search: "Cooper Vision", match: /\bCooper ?Vision\b/i, why: "its contact-lens company, its name spelled apart" },
+      { search: "CooperSurgical", match: /\bCooper ?Surgical\b/i, why: "its women's-health company" },
+      { search: "Cooper Surgical", match: /\bCooper ?Surgical\b/i, why: "its women's-health company, its name spelled apart" },
+      { search: "Paragon Vision", from: "2017-12-01", why: "bought by CooperVision 2017-12-01 (Cooper's 10-K for 2017)" },
+    ],
+  },
+  1237831: {
+    ticker: "GMED",
+    firms: [
+      { search: "Globus Medical", why: "the company itself" },
+      { search: "NuVasive", from: "2023-09-01", why: "merged into Globus 2023-09-01 (Globus's 8-K filed 2023-09-01); NuVasive's earlier recalls were its own" },
+    ],
+  },
+  313143: { ticker: "HAE", firms: [{ search: "Haemonetics", why: "the company itself" }] },
+  1321732: { ticker: "PEN", firms: [{ search: "Penumbra", why: "the company itself" }] },
+  1114483: { ticker: "ITGR", firms: [{ search: "Greatbatch", why: "the company under its name until 2016, when Greatbatch became Integer" }] },
+  1420800: {
+    ticker: "ENOV",
+    firms: [{ search: "DJO", match: /^DJO\b/i, from: "2019-02-22", why: "bought 2019-02-22 by Colfax, now Enovis (Colfax's 8-K filed 2019-02-25); DJO's earlier recalls were its own" }],
+  },
+  1145197: { ticker: "PODD", firms: [{ search: "Insulet", why: "the company itself" }] },
+  1438133: { ticker: "TNDM", firms: [{ search: "Tandem Diabetes", why: "the company itself" }] },
+  1093557: { ticker: "DXCM", firms: [{ search: "Dexcom", why: "the company itself" }] },
+  1872789: { ticker: "EMBC", firms: [{ search: "Embecta", why: "the company itself" }] },
+  66740: {
+    ticker: "MMM",
+    firms: [{
+      search: "3M",
+      to: "2024-03-31",
+      why: "3M and its health care business until that business was spun off as Solventum on 2024-04-01 (3M's 8-K filed 2024-04-04); since then a recall filed as 3M can be either company's, and none is counted",
+    }],
+  },
+  1964738: {
+    ticker: "SOLV",
+    firms: [
+      { search: "Solventum", why: "the company itself" },
+      {
+        search: "3M",
+        match: /\b3M\b.*\bHealth ?care\b|\b3M (?:Unitek|ESPE)\b/i,
+        from: "2024-04-01",
+        why: "3M's health care business under 3M's names, Solventum's from the spin-off on 2024-04-01; before that its recalls were 3M's",
+      },
+    ],
+  },
+
+  // ---- batch 70: the next drug makers ----
+  885590: {
+    ticker: "BHC",
+    firms: [
+      { search: "Bausch", match: /\bBausch Health\b/i, why: "the company itself" },
+      { search: "Valeant", why: "the company under its name until 2018, Valeant Pharmaceuticals" },
+      { search: "Solta Medical", from: "2014-01-23", why: "bought 2014-01-23 (Valeant's 10-K for 2013)" },
+      {
+        search: "Bausch",
+        match: /\bBausch\b.*\bLomb\b/i,
+        from: "2013-08-05",
+        why: "bought 2013-08-05 (Valeant's 8-K filed 2013-08-08). Since Bausch + Lomb's IPO it has held most of it, about 87% on 2026-06-30 (its 10-Q filed 2026-07-30), so a recall since is both companies'",
+      },
+    ],
+  },
+  1860742: {
+    ticker: "BLCO",
+    firms: [{
+      search: "Bausch",
+      match: /\bBausch\b.*\bLomb\b/i,
+      from: "2022-05-10",
+      why: "the company from the close of its IPO on 2022-05-10 (its 8-K filed 2022-05-10); before that its recalls were Bausch Health's",
+    }],
+  },
+  1723128: {
+    ticker: "AMRX",
+    firms: [{
+      search: "Amneal",
+      why: "the company and its units; Amneal Pharmaceuticals LLC is the company's accounting predecessor, whose history is the company's (Amneal's 10-K for 2018)",
+    }],
+  },
+  1585364: { ticker: "PRGO", firms: [{ search: "Perrigo", why: "the company and L. Perrigo, its U.S. company; Perrigo Company plc carries Perrigo Company's ticker" }] },
+  1135951: { ticker: "RDY", firms: [{ search: "Dr. Reddy's", match: /\bDr\.? Reddy'?s\b/i, why: "the company and its U.S. company" }] },
+  1121404: {
+    ticker: "SNY",
+    firms: [
+      { search: "Sanofi", why: "the company and its units (Sanofi-Aventis, Sanofi Pasteur, Sanofi Genzyme)" },
+      { search: "Genzyme", why: "Sanofi's since April 2011 (Sanofi's 20-F for 2024), before the reports begin" },
+      {
+        search: "Chattem",
+        to: "2025-04-29",
+        why: "a consumer company of Sanofi's until it sold control of Opella, its consumer business, on 2025-04-30 (Sanofi's 20-F for 2025)",
+      },
+    ],
+  },
+  1131399: {
+    ticker: "GSK",
+    firms: [
+      ...GSK_NAMES.map((f) => ({ ...f, not: /\bConsu?mer\b/i, why: `${f.why}: the company and its units` })),
+      ...GSK_NAMES.map((f) => ({
+        ...f,
+        match: new RegExp(`${f.match!.source}.*\\bConsu?mer\\b`, "i"),
+        to: "2022-07-17",
+        why: `${f.why}: its consumer business, until Haleon's demerger and listing on 2022-07-18 (Haleon's 20-F for 2022)`,
+      })),
+    ],
+  },
+  1900304: {
+    ticker: "HLN",
+    firms: [
+      { search: "Haleon", why: "the company itself" },
+      ...GSK_NAMES.map((f) => ({
+        ...f,
+        match: new RegExp(`${f.match!.source}.*\\bConsu?mer\\b`, "i"),
+        from: "2022-07-18",
+        why: `${f.why}: the consumer business, the company's from its demerger on 2022-07-18; before that its recalls were GSK's`,
+      })),
+    ],
+  },
+
   // ---- food ----
   40704: { ticker: "GIS", firms: [{ search: "General Mills", why: "the company itself" }] },
   23217: { ticker: "CAG", firms: [{ search: "Conagra", why: "the company itself, ConAgra Foods before 2016" }] },
@@ -292,6 +584,31 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
   48465: { ticker: "HRL", firms: [{ search: "Hormel", why: "the company itself" }] },
   100493: { ticker: "TSN", firms: [{ search: "Tyson Foods", why: "the company itself" }] },
   16732: { ticker: "CPB", firms: [{ search: "Campbell Soup", why: "the company and its supply company; other firms called Campbell are left out" }] },
+  // batch 70
+  313927: { ticker: "CHD", firms: [{ search: "Church & Dwight", why: "the company itself" }] },
+  217410: {
+    ticker: "UL",
+    firms: [
+      { search: "Unilever", why: "the company and its U.S. companies" },
+      { search: "Conopco", why: "Unilever's U.S. company, which files as Conopco" },
+    ],
+  },
+  55785: {
+    ticker: "KMB",
+    firms: [{ search: "Kimberly-Clark", match: /\bKimberly[- ]Clark\b/i, why: "the company itself; the health care business it spun off files as Halyard and Avanos" }],
+  },
+  1857475: {
+    ticker: "DOLE",
+    firms: [
+      {
+        search: "Dole Fresh Vegetables",
+        from: "2021-08-03",
+        to: "2025-08-04",
+        why: "Legacy Dole's vegetables business: Dole plc's from its merger with Legacy Dole, closed 2021-08-03 (Dole's 20-F for 2021), until its sale on 2025-08-05 (Dole's 10-K for 2025); Dole Packaged Foods is another company",
+      },
+      { search: "Dole Fresh Fruit", from: "2021-08-03", why: "Legacy Dole's fruit business, Dole plc's from the merger closed 2021-08-03" },
+    ],
+  },
 };
 
 /** The firms whose recalls belong to a company, or null when none is mapped. */

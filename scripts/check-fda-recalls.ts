@@ -18,6 +18,10 @@ import { COMPANY_SOURCES } from "./ingest";
  * business and GE spun off GE HealthCare; the look-alike firms that are other companies; a
  * recall of three products; a Class III recall; and the one record dated 1930. Offline: every
  * fetch is mocked.
+ *
+ * Batch 70 adds records read on 2026-10-27: units of mapped companies the map missed (Teleflex's
+ * Arrow, Stryker's Howmedica and its later purchases, BD's CareFusion, GE's other healthcare
+ * names), and the next device, drug and food makers, each on both sides of its dates.
  */
 
 let pass = 0;
@@ -88,6 +92,56 @@ async function main(): Promise<void> {
       })
       .map((f) => `${e.ticker} ${f.search}`));
   check("every day a firm joined or left a company is cited to an SEC filing", uncited.length === 0, uncited.join(", "));
+
+  console.log("\nUnits the map missed, and the next makers (batch 70, records of 2026-10-27)");
+  const firm = (ticker: string, name: string, day: string) => firmFor(name, day, firmsOf(ticker)) !== null;
+  check("Teleflex's Arrow International is Teleflex's: asked as \"Teleflex\" alone, 95 of its 203 recalls were missed", n("TFX", "tfx_arrow") === 1);
+  check("Stryker's Howmedica Osteonics is Stryker's, and a company it bought counts from the day the deal closed: Mako, Physio-Control, Wright Medical, Inari",
+    n("SYK", "syk_howmedica") === 1 && n("SYK", "syk_mako_before") === 0 && n("SYK", "syk_mako_after") === 1 &&
+      n("SYK", "syk_physio_before") === 0 && n("SYK", "syk_physio_after") === 1 && n("SYK", "syk_wright_before") === 0 &&
+      n("SYK", "syk_wright_after") === 1 && n("SYK", "syk_inari_before") === 0 && n("SYK", "syk_inari_after") === 1);
+  check("CareFusion is BD's from 2015-03-17, its respiratory units only until their sale on 2016-10-03, and BD's biosciences units not after they went to Waters on 2026-02-09",
+    n("BDX", "bdx_carefusion_before") === 0 && n("BDX", "bdx_carefusion_after") === 1 && n("BDX", "bdx_carefusion_respiratory") === 1 &&
+      !firm("BDX", "Carefusion 211 Inc dba Carefusion", "2016-11-01") && firm("BDX", "BD Biosciences, Systems & Reagents", "2026-01-15") &&
+      !firm("BDX", "BD Biosciences, Systems & Reagents", "2026-03-01") && firm("BDX", "BD SWITZERLAND SARL", "2026-03-01"));
+  check("GE's healthcare names besides \"GE Healthcare\" (OEC, Datex-Ohmeda, GE Medical Systems) are GE's to the spin-off and GE HealthCare's after it",
+    n("GE", "ge_oec") === 1 && n("GEHC", "ge_oec") === 0 && n("GEHC", "gehc_datex") === 1 && n("GE", "gehc_datex") === 0 &&
+      firm("GE", "GE Medical Systems, LLC", "2020-01-02") && !firm("GE", "GE Medical Systems, LLC", "2024-06-14"));
+  check("Hillrom is Baxter's from 2021-12-13, and Synthes's Anspach is J&J's with Synthes from 2012-06-14",
+    n("BAX", "bax_hillrom_before") === 0 && n("BAX", "bax_hillrom_after") === 1 && n("JNJ", "jnj_anspach_before") === 0 && n("JNJ", "jnj_anspach_after") === 1);
+  check("Zimmer Biomet's spine and dental units are not its after the ZimVie spin-off on 2022-03-01, and Paragon 28 is from 2025-04-21",
+    n("ZBH", "zbh_spine_before") === 1 && n("ZBH", "zbh_spine_zimvie") === 0 && n("ZBH", "zbh_paragon_before") === 0 && n("ZBH", "zbh_paragon_after") === 1 &&
+      firm("ZBH", "Biomet 3i, LLC", "2020-08-31") && !firm("ZBH", "Biomet 3i, LLC", "2023-01-02") && firm("ZBH", "Zimmer, Inc.", "2026-05-20"));
+  check("Danaher's diagnostics count from the days it bought them (Beckman Coulter 2011-06-30, HemoCue 2013-04-09, Cepheid 2016-11-04); Leica and Radiometer it held before the reports",
+    n("DHR", "dhr_beckman_before") === 0 && n("DHR", "dhr_beckman_after") === 1 && n("DHR", "dhr_cepheid_before") === 0 && n("DHR", "dhr_cepheid_after") === 1 &&
+      n("DHR", "dhr_hemocue") === 1 && n("DHR", "dhr_leica") === 1 && n("DHR", "dhr_radiometer") === 1);
+  check("  …its dental companies are Danaher's before Envista's IPO, both companies' until the split-off, Envista's after; Nobel Biocare before Danaher bought it is neither's",
+    n("DHR", "dental_danaher") === 1 && n("NVST", "dental_danaher") === 0 && n("DHR", "dental_both") === 1 && n("NVST", "dental_both") === 1 &&
+      n("DHR", "dental_envista") === 0 && n("NVST", "dental_envista") === 1 && n("DHR", "nobel_before_danaher") === 0 && n("NVST", "nobel_before_danaher") === 0);
+  check("Fresenius Medical Care's recalls are its own and Fresenius Kabi's are not; NxStage's count from its purchase",
+    n("FMS", "fms_own") === 1 && n("FMS", "fresenius_kabi") === 0 && n("FMS", "nxstage_before") === 0 && n("FMS", "nxstage_after") === 1);
+  check("ICU Medical's are its own, Smiths Medical's from 2022-01-06, and the Otsuka joint venture's are left out",
+    n("ICUI", "icu_own") === 1 && n("ICUI", "smiths_before") === 0 && n("ICUI", "smiths_after") === 1 && n("ICUI", "otsuka_icu") === 0);
+  check("Bausch & Lomb is no listed company's before Valeant bought it, Bausch Health's from 2013-08-05, and both companies' since its IPO on 2022-05-10",
+    n("BHC", "bausch_before_valeant") === 0 && n("BLCO", "bausch_before_valeant") === 0 && n("BHC", "bausch_valeant") === 1 &&
+      n("BLCO", "bausch_valeant") === 0 && n("BHC", "bausch_after_ipo") === 1 && n("BLCO", "bausch_after_ipo") === 1);
+  check("GSK's consumer business is GSK's until Haleon's demerger on 2022-07-18 and Haleon's after; GSK's medicines stay GSK's",
+    n("GSK", "gsk_consumer") === 1 && n("HLN", "gsk_consumer") === 0 && n("HLN", "haleon_after") === 1 && n("GSK", "haleon_after") === 0 &&
+      n("GSK", "gsk_rx") === 1 && n("HLN", "gsk_rx") === 0);
+  check("3M's health care business is 3M's until the Solventum spin-off on 2024-04-01 and Solventum's after; one filed as plain \"3M Company\" since is left out",
+    n("MMM", "mmm_before_spin") === 1 && n("SOLV", "mmm_before_spin") === 0 && n("SOLV", "solventum_after_spin") === 1 &&
+      n("MMM", "solventum_after_spin") === 0 && n("MMM", "mmm_plain_after_spin") === 0 && n("SOLV", "mmm_plain_after_spin") === 0);
+  check("Chattem is Sanofi's until it sold control of Opella on 2025-04-30; Dole Fresh Vegetables is Dole plc's only from the Legacy Dole merger to its sale, Dole Packaged Foods never",
+    n("SNY", "chattem") === 1 && !firm("SNY", "Chattem Inc", "2025-06-02") && n("DOLE", "dole_before") === 0 && n("DOLE", "dole_after") === 1 &&
+      n("DOLE", "dole_packaged") === 0 && !firm("DOLE", "Dole Fresh Vegetables Inc", "2025-09-02"));
+  check("NuVasive is Globus's from 2023-09-01, DJO Enovis's from 2019-02-22, Paragon Vision Cooper's",
+    n("GMED", "nuvasive_before") === 0 && n("GMED", "nuvasive_after") === 1 && n("ENOV", "djo_before") === 0 && n("ENOV", "djo_after") === 1 &&
+      n("COO", "paragon_vision") === 1);
+  check("a company's own past before its listing counts: Medline before its IPO, Amneal before it combined with Impax (its accounting predecessor), Dr. Reddy's",
+    n("MDLN", "medline") === 1 && n("AMRX", "amneal_predecessor") === 1 && n("RDY", "reddy") === 1);
+  const index = new Map((JSON.parse(read("data/edgar-tickers.json")).companies as [number, string, string][]).map(([cik, ticker]) => [`${cik} ${ticker}`, true]));
+  const missing = Object.entries(FDA_FIRMS).filter(([cik, e]) => !index.has(`${cik} ${e.ticker}`)).map(([cik, e]) => `${e.ticker} ${cik}`);
+  check(`every one of the ${Object.keys(FDA_FIRMS).length} mapped companies is in the company index under its CIK, so each has a page`, missing.length === 0, missing.join(", "));
 
   console.log("\nOne recall, one event");
   const pump = eventsOf("MDT", "medtronic_two_products");

@@ -656,6 +656,27 @@ export const CASES: LiveCase[] = [
     },
   },
   {
+    name: "FDA — Teleflex's Arrow recalls; Danaher's Beckman Coulter from its purchase, Envista from its IPO (batch 70)",
+    covers: ["fda_enforcement"],
+    hosts: ["api.fda.gov"],
+    async run() {
+      // measured 2026-10-27: Teleflex 203 (95 of them Arrow International's), Danaher 377, Envista 13
+      const tfx = await fetchFdaRecalls(96943);
+      const out = [...outcomeProblems(tfx.outcome, tfx.detail), ...eventProblems(tfx.events, 180)];
+      if (!tfx.events.some((e) => e.externalId === "87092")) out.push("no event 87092 (Arrow International, 2021-01-06)");
+      const dhr = await fetchFdaRecalls(313616);
+      out.push(...outcomeProblems(dhr.outcome, dhr.detail).map((p) => `Danaher: ${p}`), ...eventProblems(dhr.events, 300).map((p) => `Danaher: ${p}`));
+      if (!dhr.events.some((e) => e.externalId === "61212")) out.push("no event 61212 (Beckman Coulter, 2011-07-27)");
+      const early = dhr.events.filter((e) => e.date < "2011-06-30");
+      if (early.length) out.push(`${early.length} Danaher recalls before it bought Beckman Coulter on 2011-06-30, e.g. ${early[0].date}`);
+      const nvst = await fetchFdaRecalls(1757073);
+      out.push(...outcomeProblems(nvst.outcome, nvst.detail).map((p) => `Envista: ${p}`));
+      const beforeIpo = nvst.events.filter((e) => e.date < "2019-09-20");
+      if (beforeIpo.length) out.push(`${beforeIpo.length} Envista recalls before its IPO closed on 2019-09-20, e.g. ${beforeIpo[0].date}`);
+      return out;
+    },
+  },
+  {
     name: "Justice Department — Boeing's settlements and 737 MAX charge; Visa's suits, not visa fraud",
     covers: ["doj_press"],
     hosts: ["www.justice.gov"],

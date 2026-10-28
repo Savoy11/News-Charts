@@ -742,6 +742,1474 @@
      "product_type": "Drugs"
     }
    ]
+  },
+  "tfx_arrow": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Arrow International, Teleflex's since 2007",
+   "records": [
+    {
+     "event_id": "87092",
+     "recall_number": "Z-1106-2021",
+     "recalling_firm": "Arrow International Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20210106",
+     "report_date": "20210217",
+     "product_description": "Arrow AGB+ Multi-Lumen CVC Kit 7Fr 3 Lumen- Intended for venous access to the central circulation by the way of the  femoral, jugular, or subclavian veins.  Product Code: CDC-45703-1A",
+     "reason_for_recall": "The lidstock / information card on the kits correctly states the product code as CDC-45703-1A. The banner card on the side of the kit may incorrectly state the product code as CDC-15703-1A and not identify the product as a coated ARROWg+ard Blue PLUS (AGB+) antimicrobial catheter which may cause a minor delay during use and placement of a coated catheter in patients with known sensitivity to chlorohexidine, silver sulfadiazine or sulfa could result in an allergic reaction",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "syk_howmedica": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Howmedica Osteonics, Stryker's",
+   "records": [
+    {
+     "event_id": "90241",
+     "recall_number": "Z-1237-2022",
+     "recalling_firm": "Howmedica Osteonics Corp.",
+     "classification": "Class II",
+     "recall_initiation_date": "20220330",
+     "report_date": "20220615",
+     "product_description": "Triathlon Tritanium Tibial Component (Size 6); Catalog Number 5536-B-600  Triathlon¿ Tritanium¿ Tibial Component (Size 5); Catalog Number 5536-B-500",
+     "reason_for_recall": "Stryker has discovered a potential product mix where the size of the Triathlon Tritanium Tibial Component inside the package does not match the package labeling.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "syk_mako_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Mako before Stryker bought it, 2013-12-17",
+   "records": [
+    {
+     "event_id": "63607",
+     "recall_number": "Z-0385-2013",
+     "recalling_firm": "Mako Surgical Corporation",
+     "classification": "Class II",
+     "recall_initiation_date": "20120912",
+     "report_date": "20121128",
+     "product_description": "The RIO (TGS 2.), Model # MAKO TGS 2.0 (Part No. 204000).    The RIO is intended to assist the surgeon in providing software defined spatial boundaries for orientation and reference information to anatomical structures during orthopedic procedures. The RIO is indicated for use in surgical knee and hip procedures, in which the use of stereotactic surgery may be appropriate, and where reference to rigid anatomical bony structures can be identified relative to a CT based model of the anatomy. These procedures include: Unicondylar knee replacement (UKA) and/or Patellofemoral knee replacement (PKA) and Total Hip Arthroplasty (THA).",
+     "reason_for_recall": "MAKO Surgical Group recalled their RIO System software, version 2.4 and is implementing software version 2.5 to address a software functional issue with the existing version of the system's software. Loss of tactile feedback constraining the cutting burr has been reported.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "syk_mako_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Mako after",
+   "records": [
+    {
+     "event_id": "67444",
+     "recall_number": "Z-1132-2014",
+     "recalling_firm": "Mako Surgical Corporation",
+     "classification": "Class II",
+     "recall_initiation_date": "20140109",
+     "report_date": "20140312",
+     "product_description": "Restoris Multicompartmental Knee (MCK) System is an implant system designed to be used with MAKO's Robotic Arm Interactive Orthopedic System (RIO). It is composed of a unicompartmental implant system (Restoris MCK Uni) and a patellofemoral implant system (Restoris MCK PF). The Restoris MCK Uni is designed for use when load bearing ROM is expected to be less than or equal to 155 degrees. In Restoris MCK combination where multi-compartmental areas are being treated, the Restoris MCK components were designed with 3 mm of gap between the components to ensure that the components do not interfere.  Is indicated for single or multi-compartmental knee replacement used in conjunction with RIO, in individuals with osteoarthritis or post-traumatic arthritis of the tibiofemoral and/or patellofemoral articular surfaces.",
+     "reason_for_recall": "The product may be mislabeled and could result in the incorrect implant being used.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "syk_physio_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Physio-Control before 2016-04-05",
+   "records": [
+    {
+     "event_id": "73473",
+     "recall_number": "Z-1993-2016",
+     "recalling_firm": "Physio-Control, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20160127",
+     "report_date": "20160622",
+     "product_description": "LIFEPAK15 monitor/defibrillator with End-Tidal C02 (EtC02) feature installed.      Part numbers:   V15-2-xxxxxx (includes software version 1 and version 2);  V15-5-xxxxxx (inclues software version 4).  The LIFEPAK 15 monitor/defibrillator is intended for use by trained medical personnel in outdoor and indoor emergency care settings within the environmental conditions specified. The LIFEPAK 15 monitor/defibrillator is designed to be used during ground transportation except when specified otherwise. Manual mode monitoring and therapy functions are intended for use on adult and pediatric patients. Automated external defibrillation mode is intended for use on patients eight years of age and older.",
+     "reason_for_recall": "The firm became aware that when using EtC02 in the kPa or % setting and in a situation where the reading is above 9.9 kPa, the display of the LIFEPAK 15 respiratory rate may partially obscure a portion of the leading digit of the EtC02 value. This affects all LIFEPAK 15 with an EtC02 feature installed and configured to the kPa or % setting.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "syk_physio_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Physio-Control after",
+   "records": [
+    {
+     "event_id": "74198",
+     "recall_number": "Z-2100-2016",
+     "recalling_firm": "Physio-Control, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20160525",
+     "report_date": "20160706",
+     "product_description": "LIFEPAK CR Plus and/or LIFEPAK EXPRESS are Automatic External Defibrillator(s) and are non-wearable.    LIFEPAK CR Plus and LIFEPAK EXPRESS defibrillators are intended for use on patients in cardiac arrest.",
+     "reason_for_recall": "LIFEPAK CR Plus Automated External Defibrillators (AED) or LIFEPAK EXPRESS AED may fail to initiate voice prompts when the ON/OFF button is pressed and the lid is opened due to an internal component (reed switch) that can intermittently become fixed in the closed position. A defibrillator in this condition will fail to deliver a shock, with the potential result that therapy is not delivered and a patient is not resuscitated.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "syk_wright_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Wright Medical before 2020-11-11",
+   "records": [
+    {
+     "event_id": "85982",
+     "recall_number": "Z-2797-2020",
+     "recalling_firm": "Wright Medical Technology, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20200728",
+     "report_date": "20200819",
+     "product_description": "Screw Removal Case Assembly, Part Number 1985BASE - Product Usage: The Wright Medical hardware removal kit is designed to facilitate removal of both plates and screws used in foot and ankle procedures. Along with a complete range of drivers, the kit also features driver handles and a range of k-wires to assist in removal of cannulated screws. This product is a multiple use, non-sterile instrument.",
+     "reason_for_recall": "Hardware removal kit does not include drivers to remove Dart-Fire 2.5 and 3.0mm Headless screws.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "85982",
+     "recall_number": "Z-2796-2020",
+     "recalling_firm": "Wright Medical Technology, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20200728",
+     "report_date": "20200819",
+     "product_description": "Hardware removal kit, Part Number 1985KIT1 - Product Usage: The Wright Medical hardware removal kit is designed to facilitate removal of both plates and screws used in foot and ankle procedures. Along with a complete range of drivers, the kit also features driver handles and a range of k-wires to assist in removal of cannulated screws. This product is a multiple use, non-sterile instrument.",
+     "reason_for_recall": "Hardware removal kit does not include drivers to remove Dart-Fire 2.5 and 3.0mm Headless screws.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "syk_wright_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Wright Medical after",
+   "records": [
+    {
+     "event_id": "89007",
+     "recall_number": "Z-0316-2022",
+     "recalling_firm": "Wright Medical Technology Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20211104",
+     "report_date": "20211208",
+     "product_description": "INBONE Total Ankle System, INBONE POLY INSERT SZ 2+ 14mm SULCUS",
+     "reason_for_recall": "The package contents and package labeling do not match.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "89007",
+     "recall_number": "Z-0315-2022",
+     "recalling_firm": "Wright Medical Technology Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20211104",
+     "report_date": "20211208",
+     "product_description": "INBONE Total Ankle System, INBONE POLY INSERT SZ 2 10mm SULCUS",
+     "reason_for_recall": "The package contents and package labeling do not match.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "syk_inari_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Inari before 2025-02-19",
+   "records": [
+    {
+     "event_id": "95069",
+     "recall_number": "Z-2587-2024",
+     "recalling_firm": "Inari Medical - Oak Canyon",
+     "classification": "Class I",
+     "recall_initiation_date": "20240719",
+     "report_date": "20240828",
+     "product_description": "ClotTriever XL Catheter, 30 mm, REF: 41-102, used with Instructions for Use   ClotTriever XL Catheter ClotTriever Thrombectomy System, Reference: IU-01011",
+     "reason_for_recall": "Thrombectomy system catheter instructions for use updated to reduce adverse events due to the following circumstances: 1) Fibrous, firmly adherent, calcified material, or suspected tumor thrombus overloading catheter bag 2) Catheter pulled through internal jugular vein access site or not pulled away from heart; may lead to device entrapment, pulmonary embolism, venous cutdown, abdominal surgery.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "syk_inari_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Inari after",
+   "records": [
+    {
+     "event_id": "96682",
+     "recall_number": "Z-1728-2025",
+     "recalling_firm": "Inari Medical - Oak Canyon",
+     "classification": "Class II",
+     "recall_initiation_date": "20250408",
+     "report_date": "20250514",
+     "product_description": "Artix MT Thrombectomy Device, REF: 32-102",
+     "reason_for_recall": "Thrombectomy device specifies vessel range of 2.5-6 mm on the pouch, carton, and Instructions for Use rather than the correct vessel range of 3-6 mm, which could incrementally increase the radial force on the artery, which has the potential of vascular complications.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "bdx_carefusion_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: CareFusion before BD bought it, 2015-03-17",
+   "records": [
+    {
+     "event_id": "70608",
+     "recall_number": "Z-1311-2015",
+     "recalling_firm": "CareFusion 303, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20150312",
+     "report_date": "20150401",
+     "product_description": "Alaris PC units, Model No. 8015.  Infusion pump.",
+     "reason_for_recall": "CareFusion is recalling the Alaris PC unit because of an error code.  The error code may occur upon power on during the \"Power-On Self Test\" due to a keypad issue.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "bdx_carefusion_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: CareFusion after",
+   "records": [
+    {
+     "event_id": "71081",
+     "recall_number": "Z-1811-2015",
+     "recalling_firm": "CareFusion 303, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20150513",
+     "report_date": "20150624",
+     "product_description": "Alaris PC unit model 8015, Infusion pump. software version 9.17    Product Usage: The Alaris PC unit is the central programming, monitoring and power supply component for the Alaris System. The software is embedded in the Alaris PC unit.",
+     "reason_for_recall": "An issue with the cancel functionality used during atypical infusion programming to cancel user inputted values.  An infusion may start that is greater than or less than the hospital established limits for the specific medication.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "bdx_carefusion_respiratory": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: a CareFusion respiratory unit while BD held it",
+   "records": [
+    {
+     "event_id": "70920",
+     "recall_number": "Z-1609-2015",
+     "recalling_firm": "Carefusion 211 Inc dba Carefusion",
+     "classification": "Class I",
+     "recall_initiation_date": "20150403",
+     "report_date": "20150603",
+     "product_description": "CareFusion AVEA ventilator, all models.    Product Usage:  A continuous ventilator (respirator), intended to mechanically control or assist patient breathing by delivering a predetermined percentage of oxygen in the breathing gas.",
+     "reason_for_recall": "A pressure transducer failure can develop, activating a false Extended High Ppeak or Circuit Occlusion Alarm.   The Safety Valve will open to ambient air and the unit will stop ventilating, allowing spontaneous breathing patients to breathe.  The malfunction may delay initiation or cease ventilation.  Nonbreathing patients will need manual ventilation or to be connected to another ventilator.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "ge_oec": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: GE OEC before the spin-off",
+   "records": [
+    {
+     "event_id": "88202",
+     "recall_number": "Z-2160-2021",
+     "recalling_firm": "GE OEC Medical Systems, Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20210610",
+     "report_date": "20210804",
+     "product_description": "OEC 3D Imaging, Image-Intensified Fluoroscopic X-Ray System, Mobile - Product Usage: designed to provide fluoroscopic and digital spot images of adult and pediatric populations during diagnostic, interventional, and surgical procedures",
+     "reason_for_recall": "There is a potential that the coin cell battery used to monitor X-Ray tube temperature may deplete early causing the system to become inoperable.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "88202",
+     "recall_number": "Z-2161-2021",
+     "recalling_firm": "GE OEC Medical Systems, Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20210610",
+     "report_date": "20210804",
+     "product_description": "OEC Elite mobile C-arm - Product Usage: intended to provide fluoroscopic and digital spot images of the patient anatomy, interventional tools/devices, and contrast agents during diagnostic, interventional, and surgical procedures.",
+     "reason_for_recall": "There is a potential that the coin cell battery used to monitor X-Ray tube temperature may deplete early causing the system to become inoperable.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "gehc_datex": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Datex-Ohmeda after the spin-off",
+   "records": [
+    {
+     "event_id": "92454",
+     "recall_number": "Z-2100-2023",
+     "recalling_firm": "DATEX--OHMEDA, INC.",
+     "classification": "Class II",
+     "recall_initiation_date": "20230519",
+     "report_date": "20230712",
+     "product_description": "Giraffe OmniBed Carestation CS1,   Model Numbers:  a. 2082844-001-XXX,  b. 2074920-001-XXXXXX,  c. M1050205,  d. M1135822,  e. M1145475,  f. M1145476,  g. M1235957,  h. M1149051,  i. M1146098;    Labeled as the following: GIRAFFE OMNIBED CARESTATION CS1, GIRAFFE OMNIBED CARESTATION, GIRAFFE OMNIBED, GIRAFFE OMNIBED CS1, OMNI G 115/230V SERVO2 CARESTATION, ASSY-LAU, OMNIBED CHINA EBASE S HUMID, Manufacturing assembly - Make,  OBSOLETE-Omnibed Czech Servo O2 Nist/Scale/Re-usable Probe/SW w/port hole/CE Plug,  ASSY-LAU, Omnibed Czech S-PH w/Nist O2 w/Reus Probe CE Power Cord, Finished good - Make, ASSY-LAU, Omnibed Czech S-PH w/Reusable Probe CE Power Cord, Finished good - Make, Omnibed Czech Servo O2 Nist/Scale/Re-usable Probe/SW w/port hole/Ce Plug, ASSY-LAU, Omnibed Indonesian S-GR W/Reuseable Probe CE Plug, Finished good - Make, ASSY-LAU, Omnibed ENG S-Gr w/REUProbe CE Power Cord, Finished good - Make, ASSY-LAU, Omnibed Portuguese S-PH w/NIST O2w/Reusable Probe CE Power Cord, Finished",
+     "reason_for_recall": "GE HealthCare has become aware of the potential that an incorrect type of secondary latch could have been installed on the northeast (NE) and/or northwest (NW) bedside panels for certain Giraffe OmniBed and Giraffe OmniBed Carestation devices",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "92454",
+     "recall_number": "Z-2102-2023",
+     "recalling_firm": "DATEX--OHMEDA, INC.",
+     "classification": "Class II",
+     "recall_initiation_date": "20230519",
+     "report_date": "20230712",
+     "product_description": "Beside panel  FRU (Field Replacement Units) Kits",
+     "reason_for_recall": "GE HealthCare has become aware of the potential that an incorrect type of secondary latch could have been installed on the northeast (NE) and/or northwest (NW) bedside panels for certain Giraffe OmniBed and Giraffe OmniBed Carestation devices",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "92454",
+     "recall_number": "Z-2101-2023",
+     "recalling_firm": "DATEX--OHMEDA, INC.",
+     "classification": "Class II",
+     "recall_initiation_date": "20230519",
+     "report_date": "20230712",
+     "product_description": "Giraffe OmniBed, with the following Model Numbers: 6650-0004-901, 6650-0001-901, 6650-0003-901, 6650-0002-901, 6650-0094-901, 6650-0001-9901, 6650-0029-901, 6650-0080-901, 6650-0032-901, 6650-0077-901, 6650-001-901, 6650-0006-901, 6650-0129-901, 6650-0063-902, 6650-0130-901, 6650-0082-902, 6650-0061-902, 6650-0131-902, 6650-0034-902, 6650-0104-902, 6650-0066-902, 6650-0042-902, 6650-0143-901, 6650-0148-902, 6650-0152-901, 6650-0107-902, 6650-0136-902, 6650-0060-902, 6650-0056-902, 6650-0043-902.    Labeled as OMNIBED ENG EBASE S-HUMID, GIRAFFE OMNIBED, GIRAFFE OMNIBED CARESTATION CS1, GIRAFFE OMNIBED CARESTATION, OMNIBED SW EBASE S-HUMID, Giraffe OmniBed Legacy, OMNIBED FR EBASE S-HUMID, OMNIBED GR EBASE S-HUMID, OMNIBED SP EBASE S-HUMID, ASSY-LAU, OMNIBED ENG EBASE S-HUMI D, Finished good - Make, OBSOLETE-OMNIBED UK EBASE S-HUMID, OMNIBED UK EBASE S-HUMID.  Incubator, Neonatal",
+     "reason_for_recall": "GE HealthCare has become aware of the potential that an incorrect type of secondary latch could have been installed on the northeast (NE) and/or northwest (NW) bedside panels for certain Giraffe OmniBed and Giraffe OmniBed Carestation devices",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "bax_hillrom_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Hill-Rom before Baxter bought it, 2021-12-13",
+   "records": [
+    {
+     "event_id": "88909",
+     "recall_number": "Z-0402-2022",
+     "recalling_firm": "Hill-Rom Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20211014",
+     "report_date": "20211229",
+     "product_description": "These are communication systems, labeled as:  a.\tNaviCare Nurse Call, Part Numbers:  3.6, 3.7, 3.9  b.\tVoalte Nurse Call, Part Number 4.0      *Product was rebranded from NaviCare to Voalte in 2020",
+     "reason_for_recall": "An unrecoverable error may occur where a component will fail to complete the reboot cycle, become non-functional and must be replaced.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "bax_hillrom_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Hill-Rom after",
+   "records": [
+    {
+     "event_id": "89414",
+     "recall_number": "Z-0640-2022",
+     "recalling_firm": "Hill-Rom, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20211223",
+     "report_date": "20220223",
+     "product_description": "Liko Mobile Lifts: Primarily intended for use in nursing homes  LikoM230\tModel: 2050015",
+     "reason_for_recall": "Missing bushing on Liko M220 and M230 causing wear and potential for patient falling",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "89414",
+     "recall_number": "Z-0639-2022",
+     "recalling_firm": "Hill-Rom, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20211223",
+     "report_date": "20220223",
+     "product_description": "Liko Mobile Lifts: Primarily intended for use in nursing homes  Liko M220, Model 2050010",
+     "reason_for_recall": "Missing bushing on Liko M220 and M230 causing wear and potential for patient falling",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "zbh_spine_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Zimmer Biomet Spine before the ZimVie spin-off",
+   "records": [
+    {
+     "event_id": "77251",
+     "recall_number": "Z-2318-2017",
+     "recalling_firm": "Zimmer Biomet Spine Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20170510",
+     "report_date": "20170614",
+     "product_description": "Vitality Spinal Fixation System, Vitality T27 Final Drivers and Vitality Torque Limiting Handle \u0013 90 in-lbs Model Number(s): 07.02066.001, 07.02053.001, 730M0017",
+     "reason_for_recall": "Zimmer Biomet is conducting a medical device recall for Vitality T27 Final Drivers and Vitality Torque Limiting Handle \u0013 90 in-lbs because when applying torque to tighten the closure top the driver has the potential to create a torsional spring which can cause damage and the potential for the values of torque to go out of specification.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "zbh_spine_zimvie": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Zimmer Biomet Spine after the ZimVie spin-off",
+   "records": [
+    {
+     "event_id": "93650",
+     "recall_number": "Z-0639-2024",
+     "recalling_firm": "Zimmer Biomet Spine Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20231016",
+     "report_date": "20240110",
+     "product_description": "Vitality Polyaxial Screw, 7.5mmx 50mm, REF: 07.02000.118, used with Vitality and Vital Spinal Fixation System",
+     "reason_for_recall": "Spinal fixation system 7.5mmx 50mm screws are packaged with the correct labeling, but the screws themselves were laser marked with an incorrect size description of 7.5 x 40; use of incorrect screws could lead to screw perforation and indention of vascular or other structures.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "zbh_paragon_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Paragon 28 before Zimmer bought it, 2025-04-21",
+   "records": [
+    {
+     "event_id": "93900",
+     "recall_number": "Z-1256-2024",
+     "recalling_firm": "Paragon 28, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20231221",
+     "report_date": "20240313",
+     "product_description": "Phantom TTC Nail, TTC Nail, 11.5 X 250mm, RIGHT, REF: P31-615-250R",
+     "reason_for_recall": "Medical devices distributed, prior to sterilization",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "93900",
+     "recall_number": "Z-1255-2024",
+     "recalling_firm": "Paragon 28, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20231221",
+     "report_date": "20240313",
+     "product_description": "Phantom TTC Nail, TTC Nail, 10.0 X 150mm, RIGHT , REF: P31-600-175L",
+     "reason_for_recall": "Medical devices distributed, prior to sterilization",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "93900",
+     "recall_number": "Z-1254-2024",
+     "recalling_firm": "Paragon 28, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20231221",
+     "report_date": "20240313",
+     "product_description": "Phantom TTC Nail, 10.0 X 200mm, Right",
+     "reason_for_recall": "Medical devices distributed, prior to sterilization",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "zbh_paragon_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Paragon 28 after",
+   "records": [
+    {
+     "event_id": "97891",
+     "recall_number": "Z-0871-2026",
+     "recalling_firm": "Paragon 28, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20251013",
+     "report_date": "20251210",
+     "product_description": "Phantom Fibula Nail, 2.8mm x 130mm, Right, Ti, Fibula Nail, REF: P36-128-130R-S",
+     "reason_for_recall": "Fibula nail system intended for use in fixation of fibular fractures and osteotomies, has out of specification thread depths on the fibula nail, so implant may not be able to mate properly with the associated mounting bolt. If nail (implant) cannot properly mate with instrumentation, the surgery potentially will need to be aborted.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "jnj_anspach_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Anspach before J&J bought Synthes, 2012-06-14",
+   "records": [
+    {
+     "event_id": "67131",
+     "recall_number": "Z-0632-2014",
+     "recalling_firm": "The Anspach Effort, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20120611",
+     "report_date": "20140115",
+     "product_description": "Anspach B-Blue-S 11.25 cm attachment and Anspach B-Green Standard Craniotome.     Cutting and shaping bone.",
+     "reason_for_recall": "Anspach was contacted by a hospital to inform Anspach that a Blackmax motor had been used in a case where the patient was diagnosed with Creutzfeldt-Jacob Disease (CJD).",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "67131",
+     "recall_number": "Z-0631-2014",
+     "recalling_firm": "The Anspach Effort, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20120611",
+     "report_date": "20140115",
+     "product_description": "Anspach BLACKMAX-N (Pneumatic motor) and Autolube III (Foot Control).    Cutting and shaping bone.",
+     "reason_for_recall": "Anspach was contacted by a hospital to inform Anspach that a Blackmax motor had been used in a case where the patient was diagnosed with Creutzfeldt-Jacob Disease (CJD).",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "jnj_anspach_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Anspach after",
+   "records": [
+    {
+     "event_id": "63793",
+     "recall_number": "Z-0783-2013",
+     "recalling_firm": "The Anspach Effort, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20120905",
+     "report_date": "20130213",
+     "product_description": "Anspach Effort, Inc.,  98-0061 MA-15C  Bearing Sleeve with Removable Bur Guard.  A reusable device used with dissection tools; designed for Transphenoidal and Skull base procedures.",
+     "reason_for_recall": "Contact  between the bur and bur guard could generate metal fragments that may or may not be visible to the  surgeon and can potentially remain in the surgical site.     The materials used to fabricate the bur guard are not traceable, design validation did not effectively evaluate adequate protection of adjacent tissue and inspection results for each of these bur guards were not documented.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "dhr_beckman_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Beckman Coulter before Danaher bought it, 2011-06-30",
+   "records": [
+    {
+     "event_id": "65655",
+     "recall_number": "Z-1951-2013",
+     "recalling_firm": "Beckman Coulter Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20100922",
+     "report_date": "20130821",
+     "product_description": "ISE Electrolyte Reference reagent (for Synchron LX Systems and UniCel DxC 600/800 Systems), Part No. A28937, A28945, 467935, 467915.    Product Usage:  ISE Electrolyte Buffer reagent and ISE Electrolyte Reference reagent, when used in conjunction with SYNCHRON LX System(s), UniCel DxC 600/800 System(s) and SYNCHRON Systems AQUA CAL 1, 2 and 3, are intended for the quantitative determination of potassium concentration in human serum, plasma or urine.",
+     "reason_for_recall": "Beckman Coulter is recalling the Synchron Systems LX20/UniCel DxC ISE Reference Reagent because it has a potassium (K) response near the instrument calibration flag limits and may exceed the limits on some instruments.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "dhr_beckman_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Beckman Coulter after",
+   "records": [
+    {
+     "event_id": "61212",
+     "recall_number": "Z-0613-2013",
+     "recalling_firm": "Beckman Coulter Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20110727",
+     "report_date": "20130102",
+     "product_description": "Access Immunoassay Systems Total T4 Calibrators, Part Number: 33805.      The Access Total T4 Calibrators are intended to calibrate the Access Total T4 assay for the quantitative determination of total thyroxine (T4) levels in human serum and plasma using the Access Immunoassay Systems. Total T4 assay results are used for diagnosis and confirmation of thyroid disorders such as hyper- and hypothyroidism.",
+     "reason_for_recall": "A recall communication was initiated because Beckman has identified that Access Total T4 calibrator lots 019818, 021654, and 024072 do not meet their 12 month expiration date claim.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "dhr_cepheid_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Cepheid before 2016-11-04",
+   "records": [
+    {
+     "event_id": "74803",
+     "recall_number": "Z-2548-2016",
+     "recalling_firm": "Cepheid",
+     "classification": "Class II",
+     "recall_initiation_date": "20160718",
+     "report_date": "20160824",
+     "product_description": "Xpert MRSA  Catalog GXMRSA-120, Rev. AJ    Microbiology:    The Cepheid Xpert MRSA assay performed in the GeneXpert Dx System  (Xpert MRSA) is a qualitative in vitro diagnostic test designed for rapid detection of Methicillin-Resistant Staphylococcus Aureus (MRSA) from nasal swabs in patients at risk for nasal colonization",
+     "reason_for_recall": "Internal investigation found the certain lots of MRSA kits have the potential for performance issues at lower positive sample concentrations.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "dhr_cepheid_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Cepheid after",
+   "records": [
+    {
+     "event_id": "78177",
+     "recall_number": "Z-0028-2018",
+     "recalling_firm": "Cepheid",
+     "classification": "Class II",
+     "recall_initiation_date": "20170915",
+     "report_date": "20171025",
+     "product_description": "Xpert EV Assay, Catalog GXEV-100N-10.    The Cepheid Xpert EV assay is a reverse transcription polymerase chain reaction (RT-PCR) using the GeneXpert Dx System for the presumptive qualitative detection of enterovirus (EV) RNA in cerebrospinal fluid (CSF) specimens from individuals with signs and symptoms of meningitis.",
+     "reason_for_recall": "Customers have reported a higher than expected number of invalid test results when using the recalled product per the package insert.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "dhr_hemocue": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: HemoCue after 2013-04-09",
+   "records": [
+    {
+     "event_id": "65854",
+     "recall_number": "Z-2190-2013",
+     "recalling_firm": "HemoCue AB",
+     "classification": "Class II",
+     "recall_initiation_date": "20130715",
+     "report_date": "20130918",
+     "product_description": "HemoCue¿ Glucose 201 Microcuvettes, 25 Microcuvettes Individually Packaged.      The HemoCue Glucose 201 Microcuvettes are designed for use with the HemoCue Glucose 201 Analyzer and the HemoCue Glucose 201 DM Analyzer. Quantitative determination of glucose in whole blood using a specially designed analyzer, the HemoCue Glucose 201 with Plasma conversion. The quantitative determination of the instant blood glucose concentration in circulation supplements the clinical evidence in the diagnosis and treatment of patients with diabetes as well as monitoring of neonatal blood glucose levels.",
+     "reason_for_recall": "During a complaint investigation HemoCue AB discovered punctured HemoCue Glucose 201 single pack pouches.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "dhr_leica": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Leica Microsystems",
+   "records": [
+    {
+     "event_id": "81903",
+     "recall_number": "Z-0772-2019",
+     "recalling_firm": "Leica Microsystems, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20190102",
+     "report_date": "20190130",
+     "product_description": "Leica M220 F12 surgical microscope     The Leica M220 F12 surgical microscope is an optical instrument for improving the visibility of objects through magnification and illumination. It can be applied for observation and documentation and for human and veterinary medical treatment.",
+     "reason_for_recall": "The M220 optics may unintentionally drop into the surgical field, risking contact with the patient.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "dhr_radiometer": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Radiometer",
+   "records": [
+    {
+     "event_id": "85326",
+     "recall_number": "Z-1761-2020",
+     "recalling_firm": "Radiometer Medical ApS",
+     "classification": "Class II",
+     "recall_initiation_date": "20200203",
+     "report_date": "20200429",
+     "product_description": "ABL90 FLEX PLUS Analyzer, Model Number 393-092 - Product Usage: It is intended for use in a laboratory environment, near patient or point-of-care setting.",
+     "reason_for_recall": "The firm received reports of occurrences where the  barcode reader misinterpreted the contents of a locally printed barcode label used for entering patient ID or accession number into the analyzer in connection with a sample measurement.  This could result is patient mixup and/or lost of sample, resulting in delayed medical treatment.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "85326",
+     "recall_number": "Z-1760-2020",
+     "recalling_firm": "Radiometer Medical ApS",
+     "classification": "Class II",
+     "recall_initiation_date": "20200203",
+     "report_date": "20200429",
+     "product_description": "ABL90 FLEX Analyzer, Model Numbers 393-090, with software versions below 3.4MR2 - Product Usage: It is intended for use in a laboratory environment, near patient or point-of-care setting.",
+     "reason_for_recall": "The firm received reports of occurrences where the  barcode reader misinterpreted the contents of a locally printed barcode label used for entering patient ID or accession number into the analyzer in connection with a sample measurement.  This could result is patient mixup and/or lost of sample, resulting in delayed medical treatment.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "dental_danaher": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Implant Direct before Envista's IPO",
+   "records": [
+    {
+     "event_id": "84706",
+     "recall_number": "Z-1126-2020",
+     "recalling_firm": "Implant Direct Sybron Manufacturing LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20190109",
+     "report_date": "20200219",
+     "product_description": "SwishPlus Implant 5.7mmD x 8mmL, SBM 6.5mmD Platform, Part Number 925708",
+     "reason_for_recall": "Due to a complaint received and internal investigation it was determined that implant vials were distributed with incorrect  color coded vials and caps. The part/lot numbers were correct, the customer received the product they ordered, however the color on the vial label and cap labels were incorrect.Specifically, the color coded vial and cap does not match the implant size described on the vial. As a result of the incorrect color on the vial and cap, the surgeon may not be certain if the implant received was the correct size. This could result in a delay in surgery, risk of infection if the surgical site has to be closed up and a second round of anesthesia.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "dental_both": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Implant Direct between the IPO and the split-off",
+   "records": [
+    {
+     "event_id": "84801",
+     "recall_number": "Z-1041-2020",
+     "recalling_firm": "Implant Direct Sybron Manufacturing LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20191007",
+     "report_date": "20200212",
+     "product_description": "Legacy 3 Implant, Size: 4.2mmD x 13mmL, 3.5mmD Platform, REF: 864213",
+     "reason_for_recall": "Some dental implant packages contain incorrect implants, which could lead to surgery rescheduling.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "dental_envista": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Implant Direct after the split-off",
+   "records": [
+    {
+     "event_id": "88859",
+     "recall_number": "Z-0198-2022",
+     "recalling_firm": "Implant Direct Sybron Manufacturing LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20210923",
+     "report_date": "20211110",
+     "product_description": "ImplantDirect, REF 834713, Legacy 2 Implant 4.7mmD x 13mmL, 4.5mmD Platform,",
+     "reason_for_recall": "Packaged dental implant contains a different size then the size declared on the labeling.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "88859",
+     "recall_number": "Z-0197-2022",
+     "recalling_firm": "Implant Direct Sybron Manufacturing LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20210923",
+     "report_date": "20211110",
+     "product_description": "ImplantDirect, REF 834711, Legacy 2 Implant 4.7mmD x 11.5mmL, 4.5mmD Platform,",
+     "reason_for_recall": "Packaged dental implant contains a different size then the size declared on the labeling.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "nobel_before_danaher": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Nobel Biocare before Danaher bought it, 2014-12-11",
+   "records": [
+    {
+     "event_id": "66664",
+     "recall_number": "Z-0273-2014",
+     "recalling_firm": "Nobel Biocare Usa Llc",
+     "classification": "Class II",
+     "recall_initiation_date": "20131024",
+     "report_date": "20131120",
+     "product_description": "Osseocare Pro Console & Set Osseocare Pro, Model 1600870-001, 1700470-001, and 1700471-001.    Device Name: Osseocare Pro console & Set Osseocare Pro.  Model: 1600870-001, 1700470-001, 1700471-001.  Marketing status: Class I, under K092214.  Device description: Software-based, electronically controlled tabletop device.    In dentistry for dental surgery, endodontics and implantology.",
+     "reason_for_recall": "The recall was initiated because there is a potential for malfunction of the OsseoCare Pro when used with the OseeoCare Pro iPad application software release 1.2.0.7.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "fms_own": {
+   "kind": "drug",
+   "search": "batch 70, captured 2026-10-27: Fresenius Medical Care",
+   "records": [
+    {
+     "event_id": "85228",
+     "recall_number": "D-1064-2020",
+     "recalling_firm": "Fresenius Medical Care Holdings, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20200305",
+     "report_date": "20200325",
+     "product_description": "Sodium Chloride 0.9% Injection, USP, 1000 mL bags, Rx only, Manufactured by: Fresenius Medical Care North America, Waltham, MA 02451",
+     "reason_for_recall": "CGMP Deviation: Chemical indicators were not positioned properly during sterilization process.",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "fresenius_kabi": {
+   "kind": "drug",
+   "search": "batch 70, captured 2026-10-27: Fresenius Kabi, Fresenius SE's",
+   "records": [
+    {
+     "event_id": "85504",
+     "recall_number": "D-1296-2020",
+     "recalling_firm": "Fresenius Kabi USA, LLC",
+     "classification": "Class I",
+     "recall_initiation_date": "20200420",
+     "report_date": "20200617",
+     "product_description": "Ketorolac Tromethamine Injection, USP, 30 mg per mL, packaged in 1 mL Single Dose Vials (NDC 63323-162-00); 25 x 1 mL Single Dose Vials per tray (NDC 63323-162-01); For IM or IV use, Rx only, Fresenius Kabi, Lake Zurich, IL  60047.",
+     "reason_for_recall": "Presence of Particulate Matter - found in reserve sample vials at the firm.",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "85504",
+     "recall_number": "D-1297-2020",
+     "recalling_firm": "Fresenius Kabi USA, LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20200420",
+     "report_date": "20200617",
+     "product_description": "Ketorolac Tromethamine Injection, USP, 60 mg per 2 mL (30 mg per mL), packaged in 2 mL Single Dose Vials (NDC 63323-162-03), 25 x 2 mL Single Dose Vials per tray (NDC 63323-162-02); For IM use only, Not for IV use, Rx only, Fresenius Kabi, Lake Zurich, IL  60047.",
+     "reason_for_recall": "Presence of Particulate Matter - found in reserve sample vials at the firm.",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "nxstage_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: NxStage before FMC bought it",
+   "records": [
+    {
+     "event_id": "81445",
+     "recall_number": "Z-0502-2019",
+     "recalling_firm": "NxStage Medical, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20181017",
+     "report_date": "20181205",
+     "product_description": "NxStage PureFlow B Solution-RFP-402, Premixed Dialysate for Hemodialysis     NxStage PureFlow B Solution is indicated for use with renal replacement therapy systems that utilize sterile premixed dialysate during hemodialysis.",
+     "reason_for_recall": "PureFlow B Solution smaller chamber of the two chamber  bag can burst electrolyte fluid and cause injury if it comes in contact with the eyes or skin",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "81445",
+     "recall_number": "Z-0500-2019",
+     "recalling_firm": "NxStage Medical, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20181017",
+     "report_date": "20181205",
+     "product_description": "NxStage PureFlow B Solution-RFP-400, Premixed Dialysate for Hemodialysis.       NxStage PureFlow B Solution is indicated for use with renal replacement therapy systems that utilize sterile premixed dialysate during hemodialysis.",
+     "reason_for_recall": "PureFlow B Solution smaller chamber of the two chamber  bag can burst electrolyte fluid and cause injury if it comes in contact with the eyes or skin",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "81445",
+     "recall_number": "Z-0507-2019",
+     "recalling_firm": "NxStage Medical, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20181017",
+     "report_date": "20181205",
+     "product_description": "NxStage PureFlow B Solution-RFP-RFP-456, Premixed Dialysate for Hemodialysis     NxStage PureFlow B Solution is indicated for use with renal replacement therapy systems that utilize sterile premixed dialysate during hemodialysis.",
+     "reason_for_recall": "PureFlow B Solution smaller chamber of the two chamber  bag can burst electrolyte fluid and cause injury if it comes in contact with the eyes or skin",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "81445",
+     "recall_number": "Z-0501-2019",
+     "recalling_firm": "NxStage Medical, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20181017",
+     "report_date": "20181205",
+     "product_description": "NxStage PureFlow B Solution-RFP-401, Premixed Dialysate for Hemodialysis     NxStage PureFlow B Solution is indicated for use with renal replacement therapy systems that utilize sterile premixed dialysate during hemodialysis.",
+     "reason_for_recall": "PureFlow B Solution smaller chamber of the two chamber  bag can burst electrolyte fluid and cause injury if it comes in contact with the eyes or skin",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "81445",
+     "recall_number": "Z-0506-2019",
+     "recalling_firm": "NxStage Medical, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20181017",
+     "report_date": "20181205",
+     "product_description": "NxStage PureFlow B Solution-RFP-RFP-454, Premixed Dialysate for Hemodialysis     NxStage PureFlow B Solution is indicated for use with renal replacement therapy systems that utilize sterile premixed dialysate during hemodialysis.",
+     "reason_for_recall": "PureFlow B Solution smaller chamber of the two chamber  bag can burst electrolyte fluid and cause injury if it comes in contact with the eyes or skin",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "81445",
+     "recall_number": "Z-0504-2019",
+     "recalling_firm": "NxStage Medical, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20181017",
+     "report_date": "20181205",
+     "product_description": "NxStage PureFlow B Solution-RFP-404, Premixed Dialysate for Hemodialysis     NxStage PureFlow B Solution is indicated for use with renal replacement therapy systems that utilize sterile premixed dialysate during hemodialysis.",
+     "reason_for_recall": "PureFlow B Solution smaller chamber of the two chamber  bag can burst electrolyte fluid and cause injury if it comes in contact with the eyes or skin",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "81445",
+     "recall_number": "Z-0505-2019",
+     "recalling_firm": "NxStage Medical, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20181017",
+     "report_date": "20181205",
+     "product_description": "NxStage PureFlow B Solution-RFP-406, Premixed Dialysate for Hemodialysis     NxStage PureFlow B Solution is indicated for use with renal replacement therapy systems that utilize sterile premixed dialysate during hemodialysis.",
+     "reason_for_recall": "PureFlow B Solution smaller chamber of the two chamber  bag can burst electrolyte fluid and cause injury if it comes in contact with the eyes or skin",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "81445",
+     "recall_number": "Z-0503-2019",
+     "recalling_firm": "NxStage Medical, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20181017",
+     "report_date": "20181205",
+     "product_description": "NxStage PureFlow B Solution-RFP-403, Premixed Dialysate for Hemodialysis       NxStage PureFlow B Solution is indicated for use with renal replacement therapy systems that utilize sterile premixed dialysate during hemodialysis.",
+     "reason_for_recall": "PureFlow B Solution smaller chamber of the two chamber  bag can burst electrolyte fluid and cause injury if it comes in contact with the eyes or skin",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "nxstage_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: NxStage after",
+   "records": [
+    {
+     "event_id": "82693",
+     "recall_number": "Z-1707-2019",
+     "recalling_firm": "NxStage Medical, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20190411",
+     "report_date": "20190612",
+     "product_description": "NxStage PureFlow B Solution, REF RFP-401, M535RPF4010    NxStage PureFlow B Solution is indicated for use with renal replacement therapy systems that utilize sterile premixed dialysate during hemodialysis.",
+     "reason_for_recall": "Certain lots were mislabeled with incorrect product number.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "82693",
+     "recall_number": "Z-1706-2019",
+     "recalling_firm": "NxStage Medical, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20190411",
+     "report_date": "20190612",
+     "product_description": "NxStage PureFlow B Solution, REF RFP-400, M535RFP4000    Product NxStage PureFlow B Solution is indicated for use with renal  replacement therapy systems that utilize sterile premixed dialysate during hemodialysis.",
+     "reason_for_recall": "Certain lots were mislabeled with incorrect product number.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "icu_own": {
+   "kind": "drug",
+   "search": "batch 70, captured 2026-10-27: ICU Medical",
+   "records": [
+    {
+     "event_id": "85625",
+     "recall_number": "D-1270-2020",
+     "recalling_firm": "ICU Medical Inc",
+     "classification": "Class I",
+     "recall_initiation_date": "20200508",
+     "report_date": "20200527",
+     "product_description": "LACTATED RINGER'S Injection, USP 1000 mL flexible container, Rx Only, Hospira, Inc., Lake Forest, IL 60045, NDC 0409-7953-09",
+     "reason_for_recall": "Presence of Particulate Matter: confirmed customer complaint for the presence of particulate matter identified as iron oxide.",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "smiths_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Smiths Medical before ICU bought it, 2022-01-06",
+   "records": [
+    {
+     "event_id": "88512",
+     "recall_number": "Z-0177-2022",
+     "recalling_firm": "Smiths Medical ASD Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20210809",
+     "report_date": "20211103",
+     "product_description": "Bivona Aire-Cuf Endotracheal Tube",
+     "reason_for_recall": "Inadequate pouch seal leading to a compromised sterile barrier on products with a shaft length of 325mm.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "88512",
+     "recall_number": "Z-0178-2022",
+     "recalling_firm": "Smiths Medical ASD Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20210809",
+     "report_date": "20211103",
+     "product_description": "Bivona Uncuffed Wire Endotracheal Tubes,",
+     "reason_for_recall": "Inadequate pouch seal leading to a compromised sterile barrier on products with a shaft length of 325mm.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "smiths_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Smiths Medical after",
+   "records": [
+    {
+     "event_id": "89913",
+     "recall_number": "Z-1272-2022",
+     "recalling_firm": "Smiths Medical ASD Inc.",
+     "classification": "Class I",
+     "recall_initiation_date": "20220418",
+     "report_date": "20220629",
+     "product_description": "Medfusion Syringe Pump Models:  3500, 3500-0600-00, 3500-0600-01, 3500-0600-249, 3500-0600-50, 3500-0600-51, 3500-0600-82, 3500-306, 3500-402, 3500-414, 3500-415, 3500-500, 3500BC, 3500E, 3500G, 3500SD, 3500SD-500, 3500VX, 3500VX-306, 3500VX-414, 3500VX-415, 3500VX-500, 3500ZE, Software Versions 6.0.0, 6.0.1",
+     "reason_for_recall": "Multiple issues with the potential for interruption of therapy or over-infusion:  1. Primary Audible Alarm (PAA), 2. Unanticipated Depleted Battery Alarms, 3. Time Base Alarm, 4. Intermittent Volume Over Time (IVOT) - Infusion Continues after System Failure, 5. Clearing of Program Volume Delivered (PVD), 6. False Alarm for Rate Below Recommended Minimum for Syringe Size, 7. Incorrect Bolus or Loading Dose Time Display, 8. Domain Name Server (DNS) Port 1001",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "89913",
+     "recall_number": "Z-1271-2022",
+     "recalling_firm": "Smiths Medical ASD Inc.",
+     "classification": "Class I",
+     "recall_initiation_date": "20220418",
+     "report_date": "20220629",
+     "product_description": "Medfusion Syringe Pump Model:  Model 4000-0100-50, Model 4000-0101-249, Model 4000-0101-50, Model 4000-0101-51, Model 4000-0101-78, Model 4000-0105-249, Model 4000-0105-51, Model 4000-0105-78, Model 4000-0106-00, Model 4000-0106-01, Model 4000-0106-231",
+     "reason_for_recall": "Multiple issues with the potential for interruption of therapy or over-infusion:  1. Primary Audible Alarm (PAA), 2. Unanticipated Depleted Battery Alarms, 3. Time Base Alarm, 4. Intermittent Volume Over Time (IVOT) - Infusion Continues after System Failure, 5. Clearing of Program Volume Delivered (PVD), 6. False Alarm for Rate Below Recommended Minimum for Syringe Size, 7. Incorrect Bolus or Loading Dose Time Display, 8. Domain Name Server (DNS) Port 1001",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "otsuka_icu": {
+   "kind": "drug",
+   "search": "batch 70, captured 2026-10-27: Otsuka ICU Medical, a joint venture",
+   "records": [
+    {
+     "event_id": "97841",
+     "recall_number": "D-0143-2026",
+     "recalling_firm": "Otsuka ICU Medical LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20251027",
+     "report_date": "20251105",
+     "product_description": "0.9% SODIUM CHLORIDE Injection, USP, 100 mL, Rx only, ICU Medical, Inc., Lake Forest, Illinois, 60045, USA, NDC 0990-7984-37",
+     "reason_for_recall": "Lack of Assurance of Sterility: Potential for flexible container leaks.",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "bausch_before_valeant": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Bausch & Lomb before Valeant bought it, 2013-08-05",
+   "records": [
+    {
+     "event_id": "63057",
+     "recall_number": "Z-0593-2013",
+     "recalling_firm": "Bausch & Lomb Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20120831",
+     "report_date": "20121226",
+     "product_description": "Bausch + Lomb Stellaris PC Vision Enhancement System, Posterior Fluidics Module (PFM). The system is intended for the emulsification and removal of cataracts, anterior, and posterior segment vitrectomy.",
+     "reason_for_recall": "Posterior fluidics modules installed in the system may need to be recalibrated.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "bausch_valeant": {
+   "kind": "drug",
+   "search": "batch 70, captured 2026-10-27: Bausch & Lomb under Valeant, before its IPO",
+   "records": [
+    {
+     "event_id": "68348",
+     "recall_number": "D-1411-2014",
+     "recalling_firm": "Bausch & Lomb, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20140410",
+     "report_date": "20140702",
+     "product_description": "Sodium Chloride Hypertonicity Ophthalmic Ointment, 5%, 1/8 oz. (3.5 g) tube per carton, Distributed by Major Pharmaceuticals, 31778 Enterprise Drive, Livonia, MI  48150, NDC 0904-5315-38, UPC 3 09045 31538 5.",
+     "reason_for_recall": "Crystallization: Crystal precipitate formation and an increase in the number of complaints associated with a gritty, sand-like feeling in the eye.",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "68348",
+     "recall_number": "D-1410-2014",
+     "recalling_firm": "Bausch & Lomb, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20140410",
+     "report_date": "20140702",
+     "product_description": "Muro 128 (sodium chloride) hypertonicity ophthalmic ointment, 5%, packaged in a) 1 g tube per carton, professional sample, NDC 24208-385-01, UPC 3 24208-385-01 2; b) 1/8 oz. (3.5 g) tube per carton, NDC 24208-385-55, UPC 3 24208-385-55 5; and c) 1/4 oz. (7 g) Twin Pack, Two 1/8 oz. (3.5 g) tubes per carton, NDC 24208-385-56, UPC 3 24208-385-56 3; Bausch & Lomb Incorporated, Tampa, FL  33637.",
+     "reason_for_recall": "Crystallization: Crystal precipitate formation and an increase in the number of complaints associated with a gritty, sand-like feeling in the eye.",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "bausch_after_ipo": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Bausch & Lomb after its IPO, 2022-05-10",
+   "records": [
+    {
+     "event_id": "96594",
+     "recall_number": "Z-1680-2025",
+     "recalling_firm": "Bausch & Lomb Surgical, Inc.",
+     "classification": "Class I",
+     "recall_initiation_date": "20250327",
+     "report_date": "20250514",
+     "product_description": "Intraocular Lens. enVista Envy IOL, All models starting with EN;  enVista Envy Toric IOL, All models starting with ETN.",
+     "reason_for_recall": "In response to an increased number of reports of toxic anterior segment syndrome (TASS) in conjunction with implantation of enVista Aspire and enVista Envy IOLs, and certain enVista monofocal lenses in the U.S.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "96594",
+     "recall_number": "Z-1679-2025",
+     "recalling_firm": "Bausch & Lomb Surgical, Inc.",
+     "classification": "Class I",
+     "recall_initiation_date": "20250327",
+     "report_date": "20250514",
+     "product_description": "Intraocular lens. enVista Monofocal IOL, All models starting with EE;  enVista Aspire IOL, All models starting with EA;  enVista Monofocal Toric IOL, All models starting with ETE;  enVista Aspire Toric IOL, All models starting with ETA;",
+     "reason_for_recall": "In response to an increased number of reports of toxic anterior segment syndrome (TASS) in conjunction with implantation of enVista Aspire and enVista Envy IOLs, and certain enVista monofocal lenses in the U.S.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "gsk_consumer": {
+   "kind": "drug",
+   "search": "batch 70, captured 2026-10-27: GSK's consumer business before the Haleon demerger",
+   "records": [
+    {
+     "event_id": "85224",
+     "recall_number": "D-1066-2020",
+     "recalling_firm": "Glaxosmithkline Consumer Healthcare Holdings",
+     "classification": "Class II",
+     "recall_initiation_date": "20200316",
+     "report_date": "20200401",
+     "product_description": "Ibuprofen 200 mg liquid filled capsules  Advil Liqui-Gel Minis, 160 count bottle  NDC 0573-1769-89  NDC 0573-1769-95",
+     "reason_for_recall": "Labeling: Lacks Warning or Rx Legend- Certain lots does not include required safety warning information in the Drug Facts Panel.",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "85224",
+     "recall_number": "D-1065-2020",
+     "recalling_firm": "Glaxosmithkline Consumer Healthcare Holdings",
+     "classification": "Class II",
+     "recall_initiation_date": "20200316",
+     "report_date": "20200401",
+     "product_description": "Ibuprofen 200 mg Chlorpheniramine Maleate 4mg Phenylephrine 10 mg tablets.  Advil Allergy & Congestion Relief  10 and 20 count blister tray in carton   NDC 0573-0196-10, item # F00573019610C, 10 ct. blister  NDC 0573-0196-20, item # F00573019620C, 20 ct. blister  NDC 0573-0196-10, item # F00573019610R, 10 ct. blister",
+     "reason_for_recall": "Labeling: Lacks Warning or Rx Legend- Certain lots does not include required safety warning information in the Drug Facts Panel.",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "85224",
+     "recall_number": "D-1068-2020",
+     "recalling_firm": "Glaxosmithkline Consumer Healthcare Holdings",
+     "classification": "Class II",
+     "recall_initiation_date": "20200316",
+     "report_date": "20200401",
+     "product_description": "Advil Sinus Congestion and Pain/Advil Allergy and Congestion Relief 8 pc with $1 IRC (mixed product display - only Advil Allergy & Congestion is impacted).   NDC # 0573-2161-14  SKU# F00573216114A (original lot # R73995)  Co-packaged Batch/Lot # 0045DB, 9327VB, 0017DA & 9353WA",
+     "reason_for_recall": "Labeling: Lacks Warning or Rx Legend- Certain lots does not include required safety warning information in the Drug Facts Panel.",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "85224",
+     "recall_number": "D-1069-2020",
+     "recalling_firm": "Glaxosmithkline Consumer Healthcare Holdings",
+     "classification": "Class II",
+     "recall_initiation_date": "20200316",
+     "report_date": "20200401",
+     "product_description": "Advil Liqui-Gel Mini 160+20+20 CT (e-commerce)  NDC # 0573-1715-59  SKU# F00573171559 (original lot # R53074)  Co-packaged Batch/Lot # 0198FR & 3188FRB",
+     "reason_for_recall": "Labeling: Lacks Warning or Rx Legend- Certain lots does not include required safety warning information in the Drug Facts Panel.",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "85224",
+     "recall_number": "D-1067-2020",
+     "recalling_firm": "Glaxosmithkline Consumer Healthcare Holdings",
+     "classification": "Class II",
+     "recall_initiation_date": "20200316",
+     "report_date": "20200401",
+     "product_description": "Ibuprofen 50 mg per 1.25 mL Oral Suspension  Advil Infant Concentrated Drops White Grape  0.75 oz. and 1 oz. bottles  NDC 0573-0191-75 (0.75 oz.)  NDC 0573-0191-50 (1 oz.)",
+     "reason_for_recall": "Labeling: Lacks Warning or Rx Legend- Certain lots does not include required safety warning information in the Drug Facts Panel.",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "gsk_rx": {
+   "kind": "drug",
+   "search": "batch 70, captured 2026-10-27: GSK's own",
+   "records": [
+    {
+     "event_id": "74742",
+     "recall_number": "D-1442-2016",
+     "recalling_firm": "GlaxoSmithKline, LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20160718",
+     "report_date": "20160727",
+     "product_description": "Bactroban Cream, (Mupirocin Calcium Cream 2%),  15 gram tube, Rx only, GlaxoSmithKline, Research Triangle Park, NC 27709, Made in England, NDC 0029-1527-22,",
+     "reason_for_recall": "Penicillin Cross Contamination",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "74742",
+     "recall_number": "D-1445-2016",
+     "recalling_firm": "GlaxoSmithKline, LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20160718",
+     "report_date": "20160727",
+     "product_description": "Bactroban Ointment, (Mupirocin Ointment 2%),  22 gram tube, Rx only, GlaxoSmithKline, Research Triangle Park, NC 27709, Made in England, NDC 0029-1525-44,",
+     "reason_for_recall": "Penicillin Cross Contamination",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "74742",
+     "recall_number": "D-1444-2016",
+     "recalling_firm": "GlaxoSmithKline, LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20160718",
+     "report_date": "20160727",
+     "product_description": "Bactroban Nasal, (Mupirocin Calcium Ointment 2%), 1 gram Single Use Tubes, Rx only, GlaxoSmithKline, Research Triangle Park, NC 27709, NDC 0029-1526-11.",
+     "reason_for_recall": "Penicillin Cross Contamination",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "74742",
+     "recall_number": "D-1443-2016",
+     "recalling_firm": "GlaxoSmithKline, LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20160718",
+     "report_date": "20160727",
+     "product_description": "Bactroban Cream, (Mupirocin Calcium Cream 2%), 30 gram tube, Rx only, GlaxoSmithKline, Research Triangle Park, NC 27709, Made in England, NDC 0029-1527-25,",
+     "reason_for_recall": "Penicillin Cross Contamination",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "haleon_after": {
+   "kind": "drug",
+   "search": "batch 70, captured 2026-10-27: the consumer business after the demerger, as Haleon",
+   "records": [
+    {
+     "event_id": "91259",
+     "recall_number": "D-0183-2023",
+     "recalling_firm": "Glaxosmithkline Consumer Healthcare Holdings DBA Haleon",
+     "classification": "Class I",
+     "recall_initiation_date": "20221206",
+     "report_date": "20230201",
+     "product_description": "Advil Liqui Gels (minis), Solubilized ibuprofen capsules, 200mg, Pain Reliever Fever Reducer (NSAID), 200 liquid filled capsules, Pfizer, Madison, NJ 07940, UPC 3 0573 1769 13 5",
+     "reason_for_recall": "Labeling: Illegible Label; the adhesive migrated onto a portion of the label, causing it to tear when peeled back",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "91259",
+     "recall_number": "D-0182-2023",
+     "recalling_firm": "Glaxosmithkline Consumer Healthcare Holdings DBA Haleon",
+     "classification": "Class I",
+     "recall_initiation_date": "20221206",
+     "report_date": "20230201",
+     "product_description": "Advil Liqui Gels, Solubilized ibuprofen capsules, 200mg, Pain Reliever Fever Reducer (NSAID), 200 liquid filled capsules, Distributed by: Pfizer, Madison, NJ 07940, UPC 3 0573 0169 49 3",
+     "reason_for_recall": "Labeling: Illegible Label; the adhesive migrated onto a portion of the label, causing it to tear when peeled back",
+     "product_type": "Drugs"
+    },
+    {
+     "event_id": "91259",
+     "recall_number": "D-0181-2023",
+     "recalling_firm": "Glaxosmithkline Consumer Healthcare Holdings DBA Haleon",
+     "classification": "Class I",
+     "recall_initiation_date": "20221206",
+     "report_date": "20230201",
+     "product_description": "Advil (ibuprofen) Tablets, 200 mg, packaged as a) 360-count bottles (UPC 3 0573 0154 60 4), and b)\t200-count bottles (UPC 3 0573 0154 21 5), Pfizer, Madison, NJ 07940",
+     "reason_for_recall": "Labeling: Illegible Label; the adhesive migrated onto a portion of the label, causing it to tear when peeled back",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "mmm_before_spin": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: 3M's health care business before the Solventum spin-off",
+   "records": [
+    {
+     "event_id": "93825",
+     "recall_number": "Z-1169-2024",
+     "recalling_firm": "3M Company - Health Care Business",
+     "classification": "Class II",
+     "recall_initiation_date": "20240112",
+     "report_date": "20240228",
+     "product_description": "3M Specialty Blade Assembly, REF 9660,70-2011-8462-2, 7100213114, used with used with 3M Surgical Clipper Catalog Number 9661L",
+     "reason_for_recall": "3M has added the following cautionary statement regarding the use of the product:    \"Caution - To reduce the risk of burns, which if not avoided may result in minor injury:  \"  Do not use on injured skin.  \"  Do not leave clipper running unused in air without applying to skin for more than 1 minute as blade temperature may exceed 41¿C (105.8¿F).  \"  Do not leave the clipper blade applied to the same location on the patient s skin for longer than 1 second as potential injury may occur; continuous motion of the clipper during use is required.  Note: If clipper is left running unused in air for 10 minutes without applying to skin, the Model 9690 blade maximum temperature may reach 60¿C (140¿F) and the Model 9660 blade maximum temperature may reach 77¿C (170.6¿F).\"",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "93825",
+     "recall_number": "Z-1170-2024",
+     "recalling_firm": "3M Company - Health Care Business",
+     "classification": "Class II",
+     "recall_initiation_date": "20240112",
+     "report_date": "20240228",
+     "product_description": "3M Specialty Blade Assembly, REF 9660,70-2011-8491-1, 7100213026, used with used with 3M Surgical Clipper Catalog Number 9661L",
+     "reason_for_recall": "3M has added the following cautionary statement regarding the use of the product:    \"Caution - To reduce the risk of burns, which if not avoided may result in minor injury:  \"  Do not use on injured skin.  \"  Do not leave clipper running unused in air without applying to skin for more than 1 minute as blade temperature may exceed 41¿C (105.8¿F).  \"  Do not leave the clipper blade applied to the same location on the patient s skin for longer than 1 second as potential injury may occur; continuous motion of the clipper during use is required.  Note: If clipper is left running unused in air for 10 minutes without applying to skin, the Model 9690 blade maximum temperature may reach 60¿C (140¿F) and the Model 9660 blade maximum temperature may reach 77¿C (170.6¿F).\"",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "solventum_after_spin": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: the same names after it",
+   "records": [
+    {
+     "event_id": "95273",
+     "recall_number": "Z-0038-2025",
+     "recalling_firm": "3M Company - Health Care Business",
+     "classification": "Class II",
+     "recall_initiation_date": "20240814",
+     "report_date": "20241016",
+     "product_description": "3M Tegaderm CHG, Chlorhexidine Gluconate I.V. Securement Dressing,  REF 1658R",
+     "reason_for_recall": "Contamination with foreign substance matter",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "mmm_plain_after_spin": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: a recall filed as plain 3M after the spin-off",
+   "records": [
+    {
+     "event_id": "96841",
+     "recall_number": "Z-2483-2025",
+     "recalling_firm": "3M Company",
+     "classification": "Class I",
+     "recall_initiation_date": "20250410",
+     "report_date": "20250924",
+     "product_description": "3M Ranger Blood/Fluid Warming High Flow Set Catalog Numbers 24355, 24370",
+     "reason_for_recall": "Field action to clarify the flow rates and inlet fluid temperatures, along with location of the outlet temperature for Ranger Blood/Fluid Warming High Flow Sets.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "chattem": {
+   "kind": "drug",
+   "search": "batch 70, captured 2026-10-27: Chattem, before Sanofi sold control of Opella",
+   "records": [
+    {
+     "event_id": "96391",
+     "recall_number": "D-0266-2025",
+     "recalling_firm": "Chattem Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20250304",
+     "report_date": "20250319",
+     "product_description": "Unisom, SleepMelts, Diphenhydramine HCl tablets, 25 mg, Nighttime Sleep-Aid, 4 x 8 blister packs per carton, Cherry flavor, Manufactured by Adare Pharmaceuticals, Inc., Dist. by Chattem, Inc., P.O. Box 2219, Chattanooga, TN 37409, UPC # 0 41167 0014 0",
+     "reason_for_recall": "CGMP Deviations: Nitrosamine Drug Substance Related Issue impurity above the daily acceptable intake limit defined by the Food and Drug Administration.",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "dole_before": {
+   "kind": "food",
+   "search": "batch 70, captured 2026-10-27: Dole Fresh Vegetables before Dole plc's merger",
+   "records": [
+    {
+     "event_id": "87308",
+     "recall_number": "F-0323-2021",
+     "recalling_firm": "Dole Fresh Vegetables Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20210209",
+     "report_date": "20210303",
+     "product_description": "Dole Chopped Kit- Sunflower Crunch  Cabbage, Green Leaf Lettuce, Kale, Sunflower Seeds, Sweet Onion and Citrus Dressing, Bacon Crumbles, Red Cabbage, Green onions, carrots.  UPC: 0 71430 00034 2 Salad and Toppings Net Wt.:9.5 oz. (269 g) Dressing  2.4 fl oz.(72 mL) Total Net Wt. 12.2 oz. (346 g) Contains: Egg, Soy  Dole Fresh Vegetable Company, Inc. Monterey, CA",
+     "reason_for_recall": "Potential undeclared allergens (wheat and tree nuts)",
+     "product_type": "Food"
+    }
+   ]
+  },
+  "dole_after": {
+   "kind": "food",
+   "search": "batch 70, captured 2026-10-27: Dole Fresh Vegetables after",
+   "records": [
+    {
+     "event_id": "88666",
+     "recall_number": "F-0013-2022",
+     "recalling_firm": "Dole Fresh Vegetables Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20210909",
+     "report_date": "20211020",
+     "product_description": "Bunches of curly parsley packed in cardboard cases received at distributor level with following labeling: Herb Parsley Curly  Grown in Salinas 60EA x 60EA Bunch US or 30EA x 60EA Bunch US Dole Fresh Vegetables, Monterey, CA 93940 PLU 4899 0 07143 00310 Harvest Date Aug18  Bunches of curly parsley displayed on produce retail shelf tied with binding twist tie with following labeling: Curly Parsley Persil Frise Product of USA #4899  Product Des Etatis-Unis 0 33383 80110 0",
+     "reason_for_recall": "Potential non-O157 STEC (Shiga-Toxin 1) contamination.  Serotype OXY31:H20 (stx1a with saa)",
+     "product_type": "Food"
+    }
+   ]
+  },
+  "dole_packaged": {
+   "kind": "food",
+   "search": "batch 70, captured 2026-10-27: Dole Packaged Foods, Itochu's",
+   "records": [
+    {
+     "event_id": "83985",
+     "recall_number": "F-0062-2020",
+     "recalling_firm": "Dole Packaged Foods, LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20191007",
+     "report_date": "20191030",
+     "product_description": "Dole Crushed Pineapple   in 100% pineapple juice  Manufactured For Dole Packaged Foods, LLC   Westlake Village, CA 91361  Product of The Philippines   UPC 3890000613",
+     "reason_for_recall": "Foreign object; potential plastic pieces.",
+     "product_type": "Food"
+    }
+   ]
+  },
+  "nuvasive_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: NuVasive before merging into Globus, 2023-09-01",
+   "records": [
+    {
+     "event_id": "91196",
+     "recall_number": "Z-0738-2023",
+     "recalling_firm": "NuVasive Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20221110",
+     "report_date": "20221228",
+     "product_description": "X-CORE 2 Ti Core, Static.  Part of the NuVasive X-Core Expandable VBR System used with spinal fixation.",
+     "reason_for_recall": "Potential that insert will be unable to disengage from the vertebral body replacement device/implant",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "nuvasive_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: NuVasive after",
+   "records": [
+    {
+     "event_id": "95567",
+     "recall_number": "Z-0500-2025",
+     "recalling_firm": "NuVasive Specialized Orthopedics, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20240930",
+     "report_date": "20241127",
+     "product_description": "Precice Max REF:  PM10.0-80B265\tPRECICE MAX Antegrade Femur Piriformis Straight 10.0mm x 265mm  \t  PM10.0-80B280\tPRECICE MAX Antegrade Femur Piriformis Straight 10.0mm x 280mm  \t\t  PM10.0-80B305\tPRECICE MAX Antegrade Femur Piriformis Straight 10.0mm x 305mm  \t  PM10.0-80B335\tPRECICE MAX Antegrade Femur Piriformis Straight 10.0mm x 335mm  \t  PM10.0-80B365\tPRECICE MAX Antegrade Femur Piriformis Straight 10.0mm x 365mm  \t  PM10.0-80TJ265\tPRECICE MAX Antegrade Tibia 10¿ Bend 3 Hole 10.0mm x 265mm  \t  PM10.0-80TJ280\tPRECICE MAX Antegrade Tibia 10¿ Bend 3 Hole 10.0mm x 280mm  \t  PM10.0-80TJ305\tPRECICE MAX Antegrade Tibia 10¿ Bend 3 Hole 10.0mm x 305mm    PM11.5-80B265\tPRECICE MAX Antegrade Femur Piriformis Straight 11.5mm x 265mm  \t  PM11.5-80B280\tPRECICE MAX Antegrade Femur Piriformis Straight 11.5mm x 280mm  \t  PM11.5-80B305\tPRECICE MAX Antegrade Femur Piriformis Straight 11.5mm x 305mm  \t  PM11.5-80B335\tPRECICE MAX Antegrade Femur Piriformis Straight 11.5mm x 335mm  \t  PM11.5-80B365\tPRECI",
+     "reason_for_recall": "Due to potential issues with design, manufacturing and documentation issues related to the validation of the affected products/devices.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "djo_before": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: DJO before Colfax bought it, 2019-02-22",
+   "records": [
+    {
+     "event_id": "82967",
+     "recall_number": "Z-1985-2019",
+     "recalling_firm": "DJO, LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20190117",
+     "report_date": "20190724",
+     "product_description": "Aircast REF 3011 - PL RX only VF-PL Sterile Cuff Pkg., Lot# 418003,  Expiration Date: 2020 -12 - 31, Made in Mexico, DJO, LLC.",
+     "reason_for_recall": "The product may not meet sterility requirements. Product labeled as sterile, however all units do not appear to meet sterility requirements.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "djo_after": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: DJO after",
+   "records": [
+    {
+     "event_id": "88623",
+     "recall_number": "Z-0010-2022",
+     "recalling_firm": "DJO, LLC",
+     "classification": "Class I",
+     "recall_initiation_date": "20210907",
+     "report_date": "20211013",
+     "product_description": "Ultra-Myossage Lotion 1-gallon bottle, REF:  4262; Myossage Lotion 1-gallon bottle, REF: 4210, located in the following DJO, LLC / DJO FRANCE kits:",
+     "reason_for_recall": "Ultrasound gels and lotions manufactured by Eco-Med Pharmaceutical, Inc. may contain bacterial contamination. On August 18, 2021, FDA published a Letter to Health Care Providers to further address this issue: https://www.fda.gov/medical-devices/letters-health-care-providers/stop-using-all-eco-med-ultrasound-gels-and-lotions-due-risk-bacterial-contamination-letter-health.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "88623",
+     "recall_number": "Z-0009-2022",
+     "recalling_firm": "DJO, LLC",
+     "classification": "Class I",
+     "recall_initiation_date": "20210907",
+     "report_date": "20211013",
+     "product_description": "GEL CONDUCTOR, Description/REF: 5 LITER W/DISP/4238, 24-8.5OZ BOTTLES/4248, 5 LITER/4266, distributed by DJO, LLC / DJO FRANCE in the following kits, Part/Description:  2073/ INTELECT RPW 120V,\t\t\t\t\t\t\t\t\t  2073-BR/ INTELECT RPW 120V BRAZIL,\t\t\t\t\t\t\t\t  2074/ INTELECT RPW 230 V,\t\t\t  2082/ INTELECT RPW 100 V,  2760/ INTELECT LEGEND XT COMBOUS STD,\t\t\t\t\t\t\t\t  2791/ INTELECT LEGEND XT COMBO US STD W/CART,  2782-10/ INTELECT TRANSPORT US STD,\t\t  2782-2/ INTELECT TRANSPORT US STD,  2843/ INTELECT VET 4CH COMBO PKG,  2845K/ KIT INTELECT VET 4CH COMBO PKG,  2863/ SENIOR SOLUTIONS 2CH COMBO PKG US STD 5CM,\t\t\t\t\t\t  2863-10/ SENIOR SOLUTIONS 2CH COMBO PKG US STD 10CM APPL,\t  2863-2/ SENIOR SOLUTIONS 2CH COMBO PKG US STD 2CM APPL,\t\t\t\t\t  2864/ SENIOR SOLUTIONS 4CH COMBO PKG US STD,\t\t\t\t\t\t\t  2761/ VECTRA GENISYS 2CH COMBO PKG US STD 5CM APPL,\t\t\t\t\t\t  2792/ VECTRA GENISYS 2CH COMBO US STD W/CART,\t\t\t\t\t\t\t  2761-10/ VECTRA GENISYS 2CH COMBO PKG US STD 10CM APPL,\t\t\t\t\t  2761-2/ VECTRA GENISYS 2CH COMBO PKG US STD 2",
+     "reason_for_recall": "Ultrasound gels and lotions manufactured by Eco-Med Pharmaceutical, Inc. may contain bacterial contamination. On August 18, 2021, FDA published a Letter to Health Care Providers to further address this issue: https://www.fda.gov/medical-devices/letters-health-care-providers/stop-using-all-eco-med-ultrasound-gels-and-lotions-due-risk-bacterial-contamination-letter-health.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "amneal_predecessor": {
+   "kind": "drug",
+   "search": "batch 70, captured 2026-10-27: Amneal before its combination with Impax",
+   "records": [
+    {
+     "event_id": "76627",
+     "recall_number": "D-0693-2017",
+     "recalling_firm": "Amneal Pharmaceuticals LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20161212",
+     "report_date": "20170510",
+     "product_description": "Rabeprazole Sodium Delayed Release Tablets, 20 mg, a) 30-count bottle (NDC 65162-0724-03), b) 90-count bottle (NDC 65162-0724-09), Rx Only, Manufactured by Amneal Pharmaceuticals Pvt. Ltd., Ahmedabad INDIA 382220, Distributed by Amneal Pharmaceuticals, Bridgewater, NJ 08807",
+     "reason_for_recall": "Failed Dissolution Specifications",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "medline": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Medline before its IPO",
+   "records": [
+    {
+     "event_id": "74664",
+     "recall_number": "Z-2404-2016",
+     "recalling_firm": "Medline Industries Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20160511",
+     "report_date": "20160817",
+     "product_description": "Medicine Cup, 1 OZ. Liquid medication dispenser to issue a measured amount of liquid medication.",
+     "reason_for_recall": "There is \u001c5 mL\u001d printed next to the increment on the medicine cups instead of \u001c10 mL.\u001d    The cup has the correct mL markings for the other gradations, but sequentially, the markings are listed as 2.5 mL, 5 mL, 7.5 mL, and 5 mL.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "reddy": {
+   "kind": "drug",
+   "search": "batch 70, captured 2026-10-27: Dr. Reddy's",
+   "records": [
+    {
+     "event_id": "73527",
+     "recall_number": "D-0784-2016",
+     "recalling_firm": "Dr. Reddy's Laboratories, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20160303",
+     "report_date": "20160406",
+     "product_description": "Zoledronic Acid Injection, 5 mg/100 mL (0.05 mg/mL), 100 mL Single Use Bottle, Rx Only, Mfd. By: Gland Pharma Limited D.P. Pally - 500 043 INDIA   NDC 55111-688-52",
+     "reason_for_recall": "Lack of Assurance of Sterility; defective seals where the metal silver ring was not attached tightly to the vial",
+     "product_type": "Drugs"
+    }
+   ]
+  },
+  "paragon_vision": {
+   "kind": "device",
+   "search": "batch 70, captured 2026-10-27: Paragon Vision Sciences after CooperVision bought it",
+   "records": [
+    {
+     "event_id": "92719",
+     "recall_number": "Z-2515-2023",
+     "recalling_firm": "PARAGON VISION SCIENCES, Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20230626",
+     "report_date": "20230913",
+     "product_description": "ISee  Ortho-K Lens",
+     "reason_for_recall": "Manufactured lenses are not covered by existing FDA approval",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "92719",
+     "recall_number": "Z-2516-2023",
+     "recalling_firm": "PARAGON VISION SCIENCES, Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20230626",
+     "report_date": "20230913",
+     "product_description": "Fargo Ortho-K Lens",
+     "reason_for_recall": "Manufactured lenses are not covered by existing FDA approval",
+     "product_type": "Devices"
+    }
+   ]
   }
- }
+ },
+ "batch70": "cases from 2026-10-27 (batch 70) keep the fields above, with product descriptions and reasons cut to 1,000 characters"
 }

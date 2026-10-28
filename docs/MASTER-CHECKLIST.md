@@ -988,6 +988,112 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 70: FDA recalls for the next health-care makers (2026-10-27)
+
+The last of the eight proposals the owner approved on 2026-10-26 (#8). A scan of openFDA's biggest
+recalling firms found, before any new company, that the map missed whole units of companies it
+already covered. Both are fixed here.
+
+- [x] **Units the map missed, on companies already mapped** (same live records, old map against new):
+      - **Teleflex +95:** "Arrow International" files under its own name. The map asked for
+        "Teleflex" alone, while its note said Arrow was included. 108 → 203.
+      - **Stryker +137:** Howmedica Osteonics 48, Mako 21, Physio-Control 21, Wright Medical 16,
+        Tornier 15, K2M 10, Sage 5, Inari 1. Each bought firm counts from the day its deal closed
+        (Stryker's 8-Ks of 2013-12-17, 2016-04-01, 2016-04-05, 2018-11-09, 2020-11-16 and
+        2025-02-19). Wright's and Inari's earlier recalls were their own. 330 → 467.
+      - **BD +108:** CareFusion from 2015-03-17 (8-K). Its respiratory units (CareFusion 203, 207
+        and 211) count only until BD sold control of them on 2016-10-03 (10-K for 2016). 268 → 376.
+      - **GE +60, GE HealthCare +58:** the healthcare business also files as GE Medical Systems,
+        OEC, Vingmed, Datex-Ohmeda and "General Electric Med Systems". Each name is in GE
+        HealthCare's 10-K for 2022 (Exhibit 21) and splits at the spin-off as "GE Healthcare" does.
+        GE HealthCare 22 → 80.
+      - **J&J +25:** The Anspach Effort, Synthes's since 2010 (J&J's S-4 of 2011), J&J's with
+        Synthes from 2012-06-14.
+      - **Baxter +2:** Hillrom and Welch Allyn from 2021-12-13 (8-K).
+      - **Zimmer Biomet +2 −1:** Paragon 28 from 2025-04-21 (8-K). Its spine and dental units are
+        no longer its after the ZimVie spin-off on 2022-03-01 (8-K), which moves one 2023 recall off
+        its page.
+      - **BD's biosciences and diagnostics units** ("BD Biosciences", "BD Kiestra"…) stop counting
+        for BD on 2026-02-09, when they were spun off and combined with Waters (BD's 8-K of that
+        day). No recall under those names has been filed since.
+- [x] **33 more companies** (`FDA_FIRMS`, now 71), 1,424 recalls:
+      - **The counts:** Danaher 377, Medline 254, ICU Medical 106, Fresenius Medical Care 91,
+        Cooper 68, Merit Medical 61, Steris 58, Dr. Reddy's 50, AngioDynamics 45, ConMed 35, Bausch
+        Health 33, 3M 28, Amneal 24, Perrigo 20, GSK 19, Sanofi 16, Insulet 15, Integer 14, Church &
+        Dwight 13, Envista 13, Tandem 12, Dexcom 11, Kimberly-Clark 11, Unilever 11, Haemonetics 8,
+        Globus 7, Dole 6, Haleon 5, Penumbra 4, Enovis 3, Solventum 3, Embecta 2, Bausch + Lomb 1.
+      - **Every join or leave date comes from a filing,** an 8-K, 10-Q, 10-K, 20-F or 6-K:
+        - **Danaher:** Beckman Coulter from 2011-06-30, HemoCue from 2013-04-09 (Quest's 10-Q),
+          Cepheid from 2016-11-04, Nobel Biocare from 2014-12-11. Its dental companies are Danaher's
+          until the Envista split-off completed 2019-12-18.
+        - **Smaller purchases:** Smiths Medical for ICU Medical from 2022-01-06; NxStage for FMC
+          from 2019-02-26; Navilyst for AngioDynamics from 2012-05-22; NuVasive for Globus from
+          2023-09-01; DJO for Enovis from 2019-02-22; Paragon Vision for Cooper from 2017-12-01;
+          Solta for Bausch Health from 2014-01-23.
+        - **Sanofi:** Chattem counts until Sanofi sold control of Opella on 2025-04-30 (20-F for
+          2025).
+        - **Dole:** Dole Fresh Vegetables is Dole plc's only from the Legacy Dole merger, closed
+          2021-08-03, to its sale on 2025-08-05.
+      - **A majority-held listed unit is both companies' while the parent holds most of it,** as
+        Kenvue was J&J's:
+        - **Envista:** from its IPO close on 2019-09-20 to Danaher's split-off.
+        - **Bausch + Lomb:** from its IPO on 2022-05-10, still. Bausch Health held about 87% on
+          2026-06-30 (its 10-Q).
+        - Bausch & Lomb before Valeant bought it on 2013-08-05 is neither's.
+      - **Spin-offs split where the names allow it:**
+        - **GSK's consumer names** ("…Consumer Healthcare") are GSK's until Haleon's demerger on
+          2022-07-18 and Haleon's after.
+        - **3M's health care names** are 3M's until the Solventum spin-off on 2024-04-01 and
+          Solventum's after. A recall filed as plain "3M Company" since then could be either
+          company's and is counted for neither.
+      - **Own history before a listing counts:**
+        - Medline was private until its IPO.
+        - Amneal Pharmaceuticals LLC is Amneal's accounting predecessor (its 10-K for 2018), so its
+          pre-2018 recalls are Amneal's. Impax's are not, and none has been filed since 2018.
+      - **Look-alikes refused:**
+        - Fresenius Kabi (Fresenius SE's) is not Fresenius Medical Care's.
+        - Otsuka ICU Medical, a joint venture, is not ICU Medical's.
+        - Dole Packaged Foods (Itochu's) is not Dole's.
+        - Other firms called Kerr, Leica or Paragon are not the mapped companies'.
+- **Now about 6,600 recalls on 71 companies, every one answering live on 2026-10-27:**
+  - 4,696 → 6,606 on the same records; before 2017, 1,883 → 2,413.
+  - Three are on two pages: Envista's during the overlap, Bausch + Lomb's since its IPO.
+  - The map needs 213 requests a day at least (three per company), plus a page per further
+    1,000 records, inside openFDA's keyless 1,000.
+- [ ] **Not mapped, and why:**
+  - **Siemens Healthineers** (726 recalls as Siemens Medical Solutions USA and Siemens Healthcare
+    Diagnostics, the most of any unmapped firm): it files nothing with the SEC, so its
+    2018 listing has no filing to date it.
+  - **Fresenius SE** (Fresenius Kabi): it controlled FMC until 2023, which needs its own dated rule.
+  - **Not in the company index:** Olympus, Avanos (Halyard), TreeHouse, Owens & Minor, ZimVie,
+    Hologic.
+  - **Distributors and others:** McKesson's own-label recalls, Cencora's PharMEDium, Linde's
+    Lincare and IBM's Merge Healthcare are other kinds of business, each a next step if wanted.
+    Retailers stay out.
+  - **Medline's Centurion Medical Products:** its prospectus gives only "2017 to 2020" for the
+    purchase, not a day.
+  - **No recall since the purchase:** Conagra's Pinnacle Foods, Baxter's Claris, Steris's
+    Medivators (Cantel), Danaher's Pall. "Coca-Cola" is mostly independent bottlers.
+- **Known limits:**
+  - A BD unit filed as "Becton, Dickinson and Company, BD Biosciences" after 2026-02-09 cannot be
+    told from BD's own by name.
+  - Teleflex sold its OEM business on 2026-08-03 (8-K); none of its recalls is known to file under a
+    name of its own.
+- **Checks:**
+  - `check:fda-recalls` 37 → 55, on 63 more real openFDA records (93 cases):
+    - Teleflex's Arrow; Stryker's units on both sides of each date; CareFusion and its
+      respiratory units; GE's other names on both sides of the spin-off; Hillrom; ZimVie; Anspach;
+    - Danaher, Envista and the dental overlap; FMC against Kabi; ICU against Smiths and Otsuka;
+      both Bausch companies; GSK against Haleon; 3M against Solventum; Chattem; Dole; NuVasive;
+      DJO; Medline; Amneal;
+    - every mapped company is in the company index under its CIK.
+  - On main, six of the new cases fail and the run then stops at Danaher, which is not mapped.
+  - A new `check:live` case (Teleflex's Arrow event, no Danaher recall before Beckman, none for
+    Envista before its IPO) passed against openFDA.
+- **Requests made:** about 265 to openFDA, for the scans, every company's live count and the live
+  case, and 143 to SEC EDGAR for the dates (full-text search, filing lists, documents). All carried
+  the project's User-Agent with the owner's contact address.
+
 ## NC ledger — batch 69: Federal Reserve enforcement actions on bank pages (2026-10-27)
 
 The seventh of the eight proposals the owner approved on 2026-10-26 (#7), with its new source. It
@@ -4811,7 +4917,7 @@ already held, but new investment goes to securities coverage first.
         Practicality medium (the source approved; the bank map still to build).*
       - ✅ **Done in batch 69** (see its section): 25 banks mapped, 72 events on 18 of them, 51 before
         2017. Foreign banks' US arms are the next step if wanted.
-- [ ] `P2` **FDA recalls for the next health-care makers.** Extend `FDA_FIRMS`
+- [x] `P2` **FDA recalls for the next health-care makers.** Extend `FDA_FIRMS`
       (`lib/fdaRecalls.ts:54`, 38 companies today) to the listed device and drug makers with the
       most Class I and II recalls not yet mapped, each date a firm joined or left taken from the
       company's own SEC filing, as batch 41 did. Measured on openFDA 2026-10-26: Beckman Coulter
@@ -4830,6 +4936,10 @@ already held, but new investment goes to securities coverage first.
         1,000 a day; no key, licence or recurring cost.
       - *Derived from [`docs/proposals/2026-10-26-proposals.md`](proposals/2026-10-26-proposals.md)
         #8, approved 2026-10-26. Importance low-medium · Efficiency medium · Practicality high.*
+      - ✅ **Done in batch 70** (see its section): 33 more companies (71 in all), and units the map
+        missed on seven it had (Teleflex's Arrow, Stryker's Howmedica and later purchases, BD's
+        CareFusion, GE's other names). Recalls 4,696 → 6,606. Siemens Healthineers is left out: it
+        has no SEC filing to date its listing.
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

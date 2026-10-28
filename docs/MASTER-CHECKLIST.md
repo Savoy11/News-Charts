@@ -988,6 +988,71 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 71: the audit of batches 62–70, and its three findings fixed (2026-10-28)
+
+The `code-auditor` read batches 62–70 (`5e2a1f7..0da40a1`). Its report is
+`docs/audits/2026-10-28-code-audit.md`. It found the mechanics sound (the bank map, the fund series
+split, acceptance times, the deal-form rule, and the counts in the docs all held on real data) and
+three defects in the rules that decide what a document is. All three were reproduced here and are
+fixed.
+
+- [x] **1. The Federal Register year walk read every company back to 1994** (`lib/ingest/frBackfill.ts`):
+      - **The defect:** under today's name, and years before the company existed. Dow Inc., listed
+        2019, kept 2010's "Dow Jones & Company, Sharon Pennsylvania Print Plant…" notice and three
+        "Dow Corning Corporation" zone notices, scored 0.95 as its own. News Corp, whose EDGAR record
+        begins 2012, kept the old News Corporation's 2001 TV-stations antitrust case. Carrier kept
+        eight 1994–2011 notices from when Carrier Corporation belonged to United Technologies. A year
+        once read is never read again.
+      - **The fix:** years now start no earlier than the company's first price, as the GDELT month
+        walk's do, and a company with no prices is not asked.
+      - **Already stored:** what an earlier walk kept from before the first price comes off the
+        company on its next walk ("unlinked N documents from before its first price"). The rows stay;
+        none of the local databases holds such a row.
+      - **Not done:** the audit's second suggestion, refusing a one-word name followed by another
+        proper noun. Measured live, Dow Inc.'s 2019–2025 years keep no Dow Jones notice. They keep one
+        "Dow Corning Corporation" notice, of 2021-12-14, and that one is Dow's: Dow Chemical has owned
+        all of Dow Corning since 2016. The rule would have dropped it, and "The Dow Chemical Company"
+        too. The batch 63 known limit (a former unit's name, as Union Pacific Resources) stands.
+- [x] **2. Ford's preliminary special-items notice was typed as earnings** (`lib/secHeadlines.ts`):
+      - **The defect:** "Ford Provides Update on Certain Special Items for FY2021 Results" (8-K 7.01,
+        2022-01-18) passed batch 64's results rule on "FY2021 Results". Ford's page carried two FY2021
+        earnings events, and a −7.92% day's caption named the notice as earnings.
+      - **The fix:** "special items" and "update on" now join the owner's not-results words, beside
+        "preliminary" and "expects".
+      - **Already stored:** a filing's type is rebuilt from EDGAR on every refresh and its owning
+        source updates the stored row, so Ford's row reads as a filing again on its next refresh.
+- [x] **3. The routine-notice rule grouped CSX's Conrail control case** (`lib/frCompany.ts`):
+      - **The defect:** the Federal Register gives 1990s titles with their words run together where
+        a dash was ("…Norfolk Southern Railway CompanyControl and Operating Leases/Agreements Conrail
+        Inc."), so `control` had no word boundary. 8 of the 19 Conrail notices of 1997–98 were
+        folded into "Surface Transportation Board: N routine notices" rows. So was the board's 2017
+        listening session on CSX's rail service, a "Joint Petition of…", since only "petition for"
+        was kept.
+      - **The fix:** a title is read with its run-together words apart before the not-routine test,
+        and any petition keeps its row.
+      - **Replayed on CSX's 572 stored rows:** its page goes from 330 rows to 339, the 9 regained
+        exactly the 8 Conrail notices and the hearing.
+- **Set aside by the audit, not defects:**
+  - two exports with no production reader (`MONTHLY_FORM`, `isInvestigation`);
+  - 4 of 1,325 acceptance stamps that fall well after the filing's date;
+  - "$61.93 million" rounding;
+  - made-up "Schedules … Earnings Release" headlines that pass the rule, with no real instance;
+  - a company first held late in a busy year waiting until January for that year's older documents.
+- **Checks:**
+  - `check:fr-backfill` 39 → 44:
+    - Dow Inc., listed 2019, is asked only 2025–2019, never 2010;
+    - a company with no prices is not asked;
+    - an earlier walk's pre-listing rows come off it, and none come off Ford, listed 1972;
+    - the run-together 1997 Conrail titles keep their rows;
+    - so does the 2017 joint petition.
+  - `check:sec-headlines` 266 → 267: Ford's special-items headline is not results.
+  - On main, all five new cases fail.
+  - `npm run check` passes (51 suites) and `npm run lint` is clean.
+- **Requests made:** 7 to the Federal Register (Dow Inc.'s 2019–2025 years, for the measurement
+  above). The audit itself made 9: 4 to the Federal Register, 1 to federalreserve.gov and 4 to SEC
+  EDGAR. All carried the project's User-Agent with the owner's contact address. Postgres was
+  started for read-only queries on the scratch databases.
+
 ## NC ledger — batch 70: FDA recalls for the next health-care makers (2026-10-27)
 
 The last of the eight proposals the owner approved on 2026-10-26 (#8). A scan of openFDA's biggest

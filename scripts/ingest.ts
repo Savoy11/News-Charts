@@ -584,6 +584,7 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   );
   try {
     const older = await backfillRegulations(client, subjectId, { edgarName: company.name, alsoKnownAs, scoring });
+    if (older.unlinked) line("federal_register", `unlinked  ${older.unlinked} documents from before its first price`);
     if (older.due) {
       line("federal_register", `older     ${older.read} of ${older.due} years asked, ${older.documents} documents kept, ${older.left} left` +
         (older.stopped ? ` (${older.stopped})` : ""));

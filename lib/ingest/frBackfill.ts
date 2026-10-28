@@ -18,10 +18,14 @@ import { assertCommercialOk, emptyStats, logFetch, shouldBackOff, upsertEvent, t
  * EDGAR former name until the day it stopped (`namesForYear`). "Walmart" finds one document before
  * 2015; "Wal-Mart Stores", its name until 2018, five — among them the FTC's 1999 consent order.
  *
- * Bounded as the GDELT month walk is (`newsBackfill.ts`): a process asks at most `YEARS_PER_RUN`
- * years in all, `GAP_MS` apart, each company's newest first, and stops at the first refusal or
- * failure, logged as any Federal Register failure is so the run-wide back-off sees it. A year is
- * stored only when the Federal Register answered, so a refused one is asked again later.
+ * Bounded as the GDELT month walk is (`newsBackfill.ts`): years start no earlier than the company's
+ * first price, and a company with no prices is not asked (batch 71: asked from 1994, Dow Inc.,
+ * listed 2019, kept 2010's "Dow Jones & Company" and "Dow Corning Corporation" notices, and News
+ * Corp, whose record begins 2012, the old News Corporation's 2001 antitrust case). A process asks
+ * at most `YEARS_PER_RUN` years in all, `GAP_MS` apart, each company's newest first, and stops at
+ * the first refusal or failure, logged as any Federal Register failure is so the run-wide back-off
+ * sees it. A year is stored only when the Federal Register answered, so a refused one is asked
+ * again later.
  */
 export const YEARS_PER_RUN = 40;
 export const GAP_MS = 1_000;
@@ -106,11 +110,25 @@ export interface RegulationStats {
   /** documents stored from them */
   documents: number;
   left: number;
+  /** documents from before the company's first price taken off it, stored before batch 71 */
+  unlinked?: number;
   /** why it stopped short, if it did */
   stopped?: string;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Takes the company's Federal Register documents dated before `day` off it; the rows stay. */
+async function unlinkBefore(client: PoolClient, subjectId: number, day: string): Promise<number> {
+  const { rowCount } = await client.query(
+    `DELETE FROM event_subjects es
+       USING events e, event_attestations a, sources s
+      WHERE es.subject_id = $1 AND e.id = es.event_id AND e.occurred_on < $2::date
+        AND a.event_id = es.event_id AND s.id = a.source_id AND s.key = 'federal_register'`,
+    [subjectId, day]
+  );
+  return rowCount ?? 0;
+}
 
 /**
  * Asks the Federal Register about the company's years not yet asked under their names, newest
@@ -141,19 +159,28 @@ export async function backfillRegulations(
     store?: (events: TimelineEvent[]) => Promise<void>;
   } = {}
 ): Promise<RegulationStats> {
+  const { rows: first } = await client.query<{ listed: string | null }>(
+    "SELECT min(on_date)::text AS listed FROM prices WHERE subject_id = $1",
+    [subjectId]
+  );
+  const listed = first[0]?.listed;
+  if (!listed) return { due: 0, read: 0, documents: 0, left: 0, stopped: "no prices to start from" };
+  // a walk before batch 71 read every company from 1994, and a year once read is not read again,
+  // so what it kept from before the company's first price comes off the company here
+  const unlinked = listed > FR_COMPANY_FROM ? await unlinkBefore(client, subjectId, listed) : 0;
   const formerNames = former ?? (await storedFormerNames(client, subjectId));
   const { rows } = await client.query<{ starts_on: string; query: string }>(
     "SELECT starts_on::text AS starts_on, query FROM fr_windows WHERE subject_id = $1",
     [subjectId]
   );
   const stored = new Map(rows.map((r) => [r.starts_on, r.query]));
-  const due = closedYears(today)
+  const due = closedYears(today, listed > FR_COMPANY_FROM ? listed : FR_COMPANY_FROM)
     .map((year) => {
       const names = namesForYear(year, plan.alsoKnownAs, formerNames);
       return { year, names, query: frSearchTerm(plan.edgarName, names) };
     })
     .filter((w) => stored.get(`${w.year}-01-01`) !== w.query);
-  const stats: RegulationStats = { due: due.length, read: 0, documents: 0, left: due.length };
+  const stats: RegulationStats = { due: due.length, read: 0, documents: 0, left: due.length, ...(unlinked ? { unlinked } : {}) };
   if (!due.length) return stats;
   if (budget.left <= 0) return { ...stats, stopped: "this run's years are spent" };
 

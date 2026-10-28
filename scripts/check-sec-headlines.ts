@@ -490,6 +490,9 @@ async function main(): Promise<void> {
       "Novartis Third Quarter and Nine Months 2025 Condensed Interim Financial Report – Supplementary Data",
       "Boeing Announces Special Fourth Quarter Earnings Charge for Douglas Products", "Stellantis to Announce Third Quarter 2026 Financial Results on October 28",
     ].every((h) => !announcesResults(h)));
+  // its results came on 2022-02-03, an 8-K filed under item 2.02
+  check("  …nor an update on a year's special items, two weeks before its results (Ford, 8-K 7.01 of 2022-01-18; batch 71)",
+    !announcesResults("Ford Provides Update on Certain Special Items for FY2021 Results"));
   const usCases = fixture.cases.filter((c) => c.headline && announcesResults(c.headline)).map((c) => c.headline);
   check("  …while the fixture's US releases read as results too, without a verb or with an \"Estimated\" in Exxon's style",
     ["Target Corporation First Quarter Earnings per Share $0.48", "Exxon Mobil Corporation Announces Estimated Fourth Quarter and 2003 Results",

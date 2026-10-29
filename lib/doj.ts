@@ -30,13 +30,13 @@ const PAGE_GAP_MS = 800;
  * "JPMorgan Chase & Co.", "ExxonMobil Pipeline Company", "Wells Fargo Dealer Services", "Lowe’s Home
  * Centers".
  */
-const DESIGNATOR = String.raw`(?:(?:,?\s+|\s*&\s*)(?:Inc\.?|Incorporated|Corp\.?|Corporation|Company|Co\.?|LLC|L\.L\.C\.|L\.P\.|Ltd\.?|Limited|plc|N\.\s?A\.|USA|U\.S\.A?\.?|America|Holdings?|Group|Bank|Securities|Financial|Advisors|Mortgage|Home|Loans|Dealer|Services|Pipeline|Motor|Motors|Communications|Technologies|Laboratories|Health|Healthcare|Aerospace|Centers))*`;
+export const DESIGNATOR = String.raw`(?:(?:,?\s+|\s*&\s*)(?:Inc\.?|Incorporated|Corp\.?|Corporation|Company|Co\.?|LLC|L\.L\.C\.|L\.P\.|Ltd\.?|Limited|plc|N\.\s?A\.|USA|U\.S\.A?\.?|America|Holdings?|Group|Bank|Securities|Financial|Advisors|Mortgage|Home|Loans|Dealer|Services|Pipeline|Motor|Motors|Communications|Technologies|Laboratories|Health|Healthcare|Aerospace|Centers))*`;
 
 /** A unit named after the company: "Johnson & Johnson Subsidiary Acclarent Inc. Pays". */
 const UNIT = String.raw`(?:\s+(?:Subsidiary|Unit|Affiliate)(?:\s+[A-Z][\w.&'’-]*){1,2}${DESIGNATOR})?`;
 
 /** The verbs of a release whose subject is a company: it pays, pleads, settles, is charged. */
-const PARTY_VERB = String.raw`(?:Agrees?|Pays|Paid|Pleads?|Pleaded|Settles?|Settled|Resolves?|Resolved|Charged|Indicted|Convicted|Sentenced|Fined|Admits?|Enters?|Accepts?|Reach(?:es)?|Ordered|Sued|Consents?|Signs?|Abandons?|(?:Will\s+|To\s+)(?:Pay|Resolve|Settle|Plead|Forfeit|Divest|Restore|Reduce|Improve|Implement|Install|Upgrade|Overhaul|Spend|Make|Provide|Compensate|Refund))\b`;
+export const PARTY_VERB = String.raw`(?:Agrees?|Pays|Paid|Pleads?|Pleaded|Settles?|Settled|Resolves?|Resolved|Charged|Indicted|Convicted|Sentenced|Fined|Admits?|Enters?|Accepts?|Reach(?:es)?|Ordered|Sued|Consents?|Signs?|Abandons?|(?:Will\s+|To\s+)(?:Pay|Resolve|Settle|Plead|Forfeit|Divest|Restore|Reduce|Improve|Implement|Install|Upgrade|Overhaul|Spend|Make|Provide|Compensate|Refund))\b`;
 
 /**
  * The same after two subjects — "Wyeth and Pfizer Agree", "Raytheon Technologies and Subsidiary
@@ -62,7 +62,7 @@ const ALONGSIDE = String.raw`(?:(?:[A-Z][\w.&'’-]*\s+){0,3}[A-Z][\w.&'’-]*(?
  * Tesla Arsonists", "Settles with Apple Tree Children's Center" and "Acquisition of Apple
  * Products" stay out: the end, punctuation, a possessive, a joining word, or a verb.
  */
-const FOLLOWS = String.raw`(?=\s*$|\s*[,.;:!?()/–—-]|['’]s\b|\s+(?:for|to|over|in|on|alleging|and|resulting|regarding|concerning|relating|related|that|after|from|with|by|at|of|under|as|formerly|involving|arising|stemming|amid|following|because|who|which)\b|\s+[A-Za-z]+ing\b|\s+${PARTY_VERB})`;
+export const FOLLOWS = String.raw`(?=\s*$|\s*[,.;:!?()/–—-]|['’]s\b|\s+(?:for|to|over|in|on|alleging|and|resulting|regarding|concerning|relating|related|that|after|from|with|by|at|of|under|as|formerly|involving|arising|stemming|amid|following|because|who|which)\b|\s+[A-Za-z]+ing\b|\s+${PARTY_VERB})`;
 
 /** A merger or acquisition the company is part of: "Google Inc.'s Acquisition of", "AT&T's Abandonment". */
 const DEAL = String.raw`['’]s\s+(?:Proposed\s+)?(?:Acquisitions?|Merger|Purchase|Sale|Joint\s+Venture|Abandonment)\b`;
@@ -82,7 +82,7 @@ const BOUGHT = String.raw`['’]s\s+(?:[\w&-]+\s+){0,3}(?:Business|Businesses|Op
 const NOT_SUBJECT = String.raw`(?<!\b(?:at|on|from|of|with|in|into|via|through|against|for|to|who|stole|steal|rob|defraud|[A-Za-z]+ed|[A-Za-z]+ing)\s+(?:the\s+)?)`;
 
 /** Not inside a word, a hyphenated word or an amount: "$5.3M to Settle" is not 3M settling. */
-const START = String.raw`(?<![\w$&.-])`;
+export const START = String.raw`(?<![\w$&.-])`;
 
 /**
  * Where a one-word name may stand as the subject: opening the title or a clause, after "The", a
@@ -101,7 +101,7 @@ const TRADER = /\b(?:insider\s+trading|securities\s+fraud|trading\s+ahead|man|wo
  * one its SEC title dropped: justice.gov writes "Moody’s" and "Wendy's" where the SEC writes
  * MOODYS CORP and Wendy's Co (batch 54, the 2026-10-25 audit's finding 1).
  */
-const escapeName = (name: string) =>
+export const escapeName = (name: string) =>
   name
     .trim()
     .split(/[\s-]+/)
@@ -130,19 +130,30 @@ export function releaseNamesParty(title: string, names: readonly string[]): bool
   for (const name of names) {
     if (name.trim().length < 2 || longerListedNameIn(t, name)) continue;
     const n = escapeName(name);
-    const lead = /\s/.test(name.trim()) ? `${NOT_SUBJECT}${START}` : CLAUSE_START;
-    const subject = new RegExp(
-      String.raw`${lead}${n}${DESIGNATOR}${UNIT}(?:,?\s+${PARTY_VERB}|\s+and(?:\s+[A-Z][\w.&'’-]*){1,4}\s+${PLURAL_VERB})`,
-      "i",
-    );
     const owner = String.raw`,\s+an?\s+${n}${DESIGNATOR}\s*(?:Company|Subsidiary|Unit|Affiliate|Business)\b`;
     const object = new RegExp(String.raw`(?:\b${ACTION}\s+${ALONGSIDE}${n}${DESIGNATOR}${FOLLOWS}|${owner})`, "i");
     const deal = new RegExp(String.raw`(?:${START}${n}${DESIGNATOR}${DEAL}|\b(?:Buy|Buying|Acquire|Acquiring)\s+${n}${DESIGNATOR}${BOUGHT})`, "i");
-    const s = subject.exec(t);
-    if (s && !aboutAPerson && !/\bwho\b/i.test(t.slice(0, s.index))) return true;
+    if (namedAsSubject(t, name, n)) return true;
     if (object.test(t) || (deal.test(t) && !aboutAPerson && !TRADER.test(t))) return true;
   }
   return false;
+}
+
+/**
+ * Whether `name` is the subject of a party's verb in the title — "Goldman Sachs Agrees to Pay",
+ * "Drug Maker Pfizer Agrees", "Wyeth and Pfizer Agree" — and the title is not about a person: it
+ * does not open with "Former", and no "who" comes before the name. `pattern` is the name as a
+ * pattern, `escapeName`'s by default. The first of `releaseNamesParty`'s three tests, and the one
+ * the SEC's releases share (`lib/secPress.ts`).
+ */
+export function namedAsSubject(t: string, name: string, pattern = escapeName(name)): boolean {
+  const lead = /\s/.test(name.trim()) ? `${NOT_SUBJECT}${START}` : CLAUSE_START;
+  const subject = new RegExp(
+    String.raw`${lead}${pattern}${DESIGNATOR}${UNIT}(?:,?\s+${PARTY_VERB}|\s+and(?:\s+[A-Z][\w.&'’-]*){1,4}\s+${PLURAL_VERB})`,
+    "i",
+  );
+  const s = subject.exec(t);
+  return !!s && !/^(?:Former|Ex-)\b/i.test(t) && !/\bwho\b/i.test(t.slice(0, s.index));
 }
 
 /** One release as the API returns it — every field a string, the date in Unix seconds. */

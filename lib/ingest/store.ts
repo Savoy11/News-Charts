@@ -324,6 +324,21 @@ export const SOURCES: {
     reviewedOn: "2026-10-27",
     notes: "the Board's enforcement actions since 1989 against the banks lib/fedActions.ts maps; two keyless files, no key (batch 69)",
   },
+  {
+    id: 27,
+    key: "sec_press",
+    name: "SEC press releases",
+    license: "public domain",
+    attribution: "U.S. Securities and Exchange Commission",
+    // "Information presented on sec.gov is considered public information and may be copied or
+    // further distributed by users of the web site without the SEC's permission. Please consider
+    // appropriate citation to the SEC as the source." (sec.gov/about/privacy-information, "Website
+    // Dissemination", read 2026-10-28). Used: the release's headline, day, number and a link to
+    // it. Approved by the owner on 2026-10-29.
+    commercialOk: true,
+    reviewedOn: "2026-10-29",
+    notes: "the newsroom's releases since 1997 whose headline makes a listed company the party (lib/secPress.ts); no key (batch 73)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

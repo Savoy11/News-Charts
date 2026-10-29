@@ -40,6 +40,7 @@ import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { companyNames, fetchCompanyRegulations, frDailySince, frSearchTerm } from "../lib/frCompany";
 import { backfillRegulations } from "../lib/ingest/frBackfill";
+import { secPressFor, walkSecPress } from "../lib/ingest/secPressWalk";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
@@ -86,6 +87,8 @@ export const COMPANY_SOURCES = [
   "fed_enforcement",
   // releases whose title makes the company a party: it pays, pleads, is sued (batch 32)
   "doj_press",
+  // …and the SEC's own releases by the same test: it is charged, sued or settles (batch 73)
+  "sec_press",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -637,6 +640,23 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   await run("doj_press", dojQueryNames(companyNames(company.name, alsoKnownAs), dojPossessive(company.name, possessive)).join(" | "), () =>
     fetchJusticeReleases(company.name, alsoKnownAs, possessive)
   );
+
+  /**
+   * The SEC's own press releases in which the company is the party — it is charged, sued or
+   * sanctioned, it settles — back to 1997 (batch 73). The newsroom lists releases by year for
+   * every company at once, so each past year is read once and kept, and the current year a day
+   * after it was last read (`walkSecPress`); the company keeps the kept releases whose headline
+   * makes it the party under the names it had that year. Scored without the model, as a Justice
+   * Department release is.
+   */
+  await run("sec_press", `SEC releases naming ${companyNames(company.name, alsoKnownAs).join(" | ")} as the party`, async () => {
+    const walked = await walkSecPress(client);
+    if (walked.due) {
+      line("sec_press", `years     ${walked.read} of ${walked.due} read, ${walked.pages} pages, ${walked.releases} releases stored` +
+        (walked.stopped ? ` (${walked.stopped})` : ""));
+    }
+    return secPressFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive) }, walked);
+  });
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
   // headline that says "Ford" — the common name is the query, exactly as the comment above

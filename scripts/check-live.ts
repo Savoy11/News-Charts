@@ -45,6 +45,7 @@ import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
 import { fetchRecalls } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
 import { fetchFedActions } from "../lib/fedActions";
+import { fetchListingPage, secPressEvents } from "../lib/secPress";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
 import { FR_COMPANY_CAP, fetchCompanyRegulations, fetchCompanyYear, frDailySince, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
@@ -695,6 +696,28 @@ export const CASES: LiveCase[] = [
       if (!visa.events.some((e) => e.date === "2024-09-24" && /Sues Visa/.test(e.title))) out.push("Visa: no 2024-09-24 debit-monopoly suit");
       const word = visa.events.find((e) => /\b(?:student|work|her|his)\s+visa\b/i.test(e.title));
       if (word) out.push(`Visa: kept "${word.title}"`);
+      return out;
+    },
+  },
+  {
+    name: "SEC press releases — a closed year's pages as the walk reads them; Goldman's 2010 settlement by the party rule (batch 73)",
+    covers: ["sec_press"],
+    hosts: ["www.sec.gov"],
+    async run() {
+      // measured 2026-10-29: 2010 holds 258 releases, newest first, 25 a page; its newest is 2010-258,
+      // Alcatel-Lucent's FCPA charge of Dec. 27, and Goldman's $550 million settlement is on page 6
+      const first = await fetchListingPage(2010, 0);
+      const out = first.outcome === "ok" ? [] : [`2010 page 1: ${first.outcome} ${first.httpStatus ?? ""} ${first.detail ?? ""}`.trim()];
+      if (first.releases.length !== 25) out.push(`2010 page 1 holds ${first.releases.length} releases, not 25`);
+      const alcatel = first.releases.find((r) => r.number === "2010-258");
+      if (!alcatel || alcatel.day !== "2010-12-27" || !/Alcatel-Lucent/.test(alcatel.title)) out.push("no 2010-258, Alcatel-Lucent's charge of 2010-12-27, on page 1");
+      await new Promise((r) => setTimeout(r, 1_000));
+      const sixth = await fetchListingPage(2010, 5);
+      const gs = secPressEvents(sixth.releases, () => ["GOLDMAN SACHS GROUP", "Goldman Sachs"]);
+      if (!gs.some((e) => e.externalId === "2010-123@2010-07-15")) out.push("Goldman's 2010-123 settlement of 2010-07-15 not kept for GS from page 6");
+      await new Promise((r) => setTimeout(r, 1_000));
+      const past = await fetchListingPage(2010, 11);
+      if (past.outcome !== "ok" || past.releases.length) out.push(`2010 page 12, past the last, answered ${past.outcome} with ${past.releases.length} releases`);
       return out;
     },
   },

@@ -988,6 +988,78 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 73: the SEC's own press releases on company pages (2026-10-29)
+
+The first of the five proposals the owner approved on 2026-10-29 (#1, with its new source). The
+owner's calls for #4 and #5 are written into their entries for when they are built.
+
+- [x] **A company's page carries the SEC's press releases in which it is the party, back to 1997**
+      (`lib/secPress.ts`, `lib/ingest/secPressWalk.ts`, db/032). "SEC Charges Goldman Sachs With
+      Fraud in Structuring and Marketing of CDO Tied to Subprime Mortgages" is on Goldman's page;
+      "SEC Settles Enforcement Proceedings against J.P. Morgan Chase and Citigroup" (2003) on both.
+      - The newsroom lists releases by year, 25 a page, for every company at once, so the listing
+        is read once for all of them and kept (`sec_press_releases`, `sec_press_years`). Each past
+        year is read once, every page; the current year again a day after its last read, from its
+        newest page down to the first release already kept. At most 120 pages a process, 1 s apart,
+        a year begun only while 20 pages are left, so none is cut in half; the walk stops at the
+        first refusal, and a year is stored only when every page it asked answered.
+      - Each company keeps the kept releases whose headline makes it the party, under the names it
+        had that year (EDGAR former names count until the day they stopped, `namesForYear`, as in
+        the Federal Register walk) and its possessive, from its first price on.
+      - The party rule (`secReleaseNamesParty`): the company pays, settles, agrees or is charged —
+        the Justice Department rule's subject test, split out of `releaseNamesParty` unchanged as
+        `namedAsSubject` (`check:doj` still 45/45) — or the SEC, or its Division of Enforcement,
+        charges, sues or sanctions it, or brings proceedings, an action or an order against it.
+      - A release's day is the day in Washington: the listing gives a UTC instant, and an evening
+        release is the next day in UTC. Its identity is its number and its day: the SEC gave
+        2022-123 twice, and the listing shows four releases twice (2006-198 and 2024-3 among them).
+      - Registered (SOURCES 27, public information the SEC lets anyone copy, cited to it),
+        refreshed daily, scored without the model as a Justice Department release is (0.95),
+        credited in the footer and the Terms page; a `check:feeds` line and a `check:live` case.
+      - A new `check:sec-press` (46 cases on real rows and a stand-in SEC and database). It cannot
+        run on main: the module it tests does not exist there.
+- **Measured** 2026-10-29: 293 pages, 6,898 releases, 1997–2026 (95 in 1997, 344 in 2020). Read
+  against every company in the index under its current names, 209 land on 122 companies, 125 of
+  them before 2017 and 54 before 2009: Morgan Stanley 13, Citigroup 10, Wells Fargo 9, Goldman
+  Sachs 8, Bank of America 8. Every match was read by hand, and 22 wrong ones are refused:
+  - 6 cities taken for City Holding ("SEC Charges City of Miami"): no "of" after the name;
+  - 2 for The Crypto Company ("Crypto Trading Platform Beaxy", "Crypto-Focused Advisory Firm"):
+    no hyphen or "-ing" word after it;
+  - 6 for Strategy Inc., the SEC's own "Division of Risk, Strategy, and Financial Innovation",
+    which the Justice Department rule's "Division of" took for a parent;
+  - 1 for Procter & Gamble, "Board Member of Goldman Sachs and Procter & Gamble Charged": a
+    release about a company's people;
+  - 1 for Take-Two ("Settlement With Former Take-Two Interactive Software, Inc. CEO") and 1 for
+    Universal Corp ("Action Against Vivendi Universal, S.A."): no lone word before the name;
+  - 5 for names more than one listed company has: "First Bancorp" (the Puerto Rico, North
+    Carolina and Maine banks) and Rio Tinto plc's 2023 charge, which Rio Tinto Ltd shares and so
+    reaches neither.
+  - Before 2000 nothing matches: those years' cases name firms that no longer trade (Smith Barney,
+    Livent, Bear Stearns, Informix).
+- **On a scratch database** (`chronolens_b73`, a copy of b69), the walk run from the saved pages
+  stored 6,894 releases (the four repeats once) in under a second, and a second walk asked nothing.
+  Of its 17 companies, Boeing, IBM, Pfizer and UPS got 1 each and JPMorgan 2, the 2003 one by its
+  former name J P MORGAN CHASE & CO; GM's and Tesla's prices there begin in 2025, so their older
+  releases wait for their full price history, and the two funds have no prices. Each is stored as
+  a regulation event scored 0.95 without the model, and JPMorgan's page loads both.
+- **Found on the way, for the owner or the next audit:**
+  - JPMorgan's releases mostly say "J.P. Morgan" or "JPMorgan" (about 16 since 2003), names its
+    record does not carry: Wikidata gives "Chase", which news does not use. Two reach its page. A
+    hand-added name would change its news and scoring too, so it is the owner's call.
+  - UBS Group's page knows only "UBS Group". The releases' "UBS" (11) reaches UBS AG's record,
+    the issuer of its exchange-traded notes (AMUB), which `lib/predecessors.ts` leaves out of UBS
+    Group's history on purpose.
+  - Deutsche Bank's everyday name keeps its legal form, "DEUTSCHE BANK AKTIENGESELLSCHAFT"
+    (`commonName`), so a headline saying "Deutsche Bank" names it nowhere: here, in GDELT or in the
+    Justice Department feed.
+  - Still open from batch 72: Form 25 and 25-NSE labels.
+- **Requests made:** www.sec.gov 297, all with the project's User-Agent, which carries the owner's
+  contact address, about one a second: 294 for the year listings (every page of 1997–2026, and
+  2010's past its last) and 3 for the live case. The local Postgres was started for the scratch
+  database and stopped again.
+- `npm run check` passes (52 suites with the new `check:sec-press`) and `npm run lint` is clean.
+  HawkScan was not run: `HAWK_API_KEY` is not set.
+
 ## NC ledger — batch 72: a new opportunity-scout run, five proposals for the owner (2026-10-28)
 
 The 2026-10-26 proposals are all built (batches 63–70), and batch 71's audit findings are fixed. So
@@ -4873,7 +4945,7 @@ already held, but new investment goes to securities coverage first.
         #4, approved 2026-10-26 with the new source. Importance high for its 20 companies ·
         Efficiency high · Practicality medium (the source approved; the event kind chosen
         2026-10-27).*
-- [ ] `P1` **The SEC's own press releases naming a company as the party, from 1998.** A new
+- [x] `P1` **The SEC's own press releases naming a company as the party, from 1998.** A new
       source, approved by the owner 2026-10-29: the SEC newsroom's press-release list
       (`www.sec.gov/newsroom/press-releases?year=YYYY&month=All`, 25 a page, each with its title,
       link and a dated `<time>`), on the host EDGAR is read from, and no key. Licence: "Information
@@ -4929,6 +5001,11 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-10-28-proposals.md`](proposals/2026-10-28-proposals.md)
         #1, approved 2026-10-29 with the new source. Importance high · Efficiency medium-high ·
         Practicality medium (the source approved; a title rule to tune on the two years read).*
+      - ✅ **Done in batch 73** (see its section): every release since 1997, the first year the
+        listing holds, read once for every company; 209 of the 6,898 name a company in the index as
+        the party, 125 of them before 2017. Units named otherwise ("J.P. Morgan Securities", "Banc
+        of America Securities") are not reached: the names a company's record carries do not
+        include them.
 - [ ] `P2` The rest of the securities-coverage depth set: **GDELT year-window backfill** (GDELT
       answers from this container but throttles hard — 429/503 — so this needs the production
       host to develop against) and **richer paid-tier evidence** (needs a paid key). The LoC

@@ -172,6 +172,32 @@ office posted wins over the same story from a U.S. Attorney's office: one a day 
 Tuned on 912 titles naming 41 large companies and tried on 40 others; neither set kept a release
 that was not about the company. A release is a regulation event and is scored without the model.
 
+### SEC press releases (`lib/secPress.ts`)
+
+A company's page carries the SEC's own press releases in which it is the party, back to 1997: "SEC
+Charges Goldman Sachs With Fraud in Structuring and Marketing of CDO Tied to Subprime Mortgages",
+"Morgan Stanley Pays $50 Million To Settle SEC Action", "SEC Settles Enforcement Proceedings against
+J.P. Morgan Chase and Citigroup". The newsroom lists releases by year, 25 a page, for every company
+at once, so the listing is read once for all of them (`lib/ingest/secPressWalk.ts`, kept in
+`sec_press_releases` and `sec_press_years`): each past year once, every page, and the current year
+again a day after its last read, from its newest page to the first release already kept. At most
+120 pages a process, 1 s apart; 1997–2026 is 293 pages. Each company then keeps the kept releases
+whose headline makes it the party, under the names it had that year (its EDGAR former names count
+until the day they stopped, as in the Federal Register walk), from its first price on.
+
+A release is the party's when the company pays, settles, agrees or is charged (the Justice
+Department rule's subject test), or when the SEC charges, sues or sanctions it, or brings
+proceedings, an action or an order against it. Read against every company in the index under its
+current names, 209 of the 6,898 releases land on 122 companies, 125 of them before 2017 (Morgan
+Stanley 13, Citigroup 10, Wells Fargo 9, Goldman Sachs 8, Bank of America 8), each read by hand.
+What is refused: a release about a company's people ("SEC Charges Former Carter's Executive", "Board
+Member of Goldman Sachs and Procter & Gamble Charged"), a name followed by "of" ("SEC Charges City of
+Miami" is not City Holding), by a hyphen or an "-ing" word ("Crypto-Focused Advisory Firm"), the
+SEC's own divisions ("Division of Risk, Strategy, and Financial Innovation"), and a name more than
+one listed company has ("First Bancorp" is three banks'). A release's day is the day in Washington,
+and its identity is its number and its day, since the SEC has given one number twice. A release is
+a regulation event and is scored without the model.
+
 ### Source planning (`lib/enrich/plan.ts`)
 
 ```
@@ -700,6 +726,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 25 bank holding companies `lib/fedActions.ts` maps by hand to a listed company; an action against a person is left out. Public domain, cited to the Board; two keyless files |
 | FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 71 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
 | U.S. Department of Justice | Press releases since 2009 in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
+| SEC newsroom (press releases) | Press releases since 1997 in which a company is the party — the SEC charges, sues or sanctions it, or it settles | The year listing, read once for every company (`lib/ingest/secPressWalk.ts`); kept only when the headline makes the company the party (`lib/secPress.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |

@@ -51,7 +51,8 @@ export type SourceKey =
   | "nhtsa_investigations"
   | "fed_enforcement"
   | "doj_press"
-  | "fda_enforcement";
+  | "fda_enforcement"
+  | "sec_press";
 
 export interface TimelineEvent {
   id: string;

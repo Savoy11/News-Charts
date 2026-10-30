@@ -663,7 +663,7 @@ export const CASES: LiveCase[] = [
     },
   },
   {
-    name: "FDA — Teleflex's Arrow recalls; Danaher's Beckman Coulter from its purchase, Envista from its IPO (batch 70)",
+    name: "FDA — Teleflex's Arrow recalls; Danaher's Beckman Coulter from its purchase, Envista from its IPO (batch 70); Siemens Healthineers from its listing, Fresenius SE (batch 76)",
     covers: ["fda_enforcement"],
     hosts: ["api.fda.gov"],
     async run() {
@@ -680,6 +680,14 @@ export const CASES: LiveCase[] = [
       out.push(...outcomeProblems(nvst.outcome, nvst.detail).map((p) => `Envista: ${p}`));
       const beforeIpo = nvst.events.filter((e) => e.date < "2019-09-20");
       if (beforeIpo.length) out.push(`${beforeIpo.length} Envista recalls before its IPO closed on 2019-09-20, e.g. ${beforeIpo[0].date}`);
+      // batch 76, measured 2026-10-30: Siemens Healthineers 298 from its listing on 2018-03-16;
+      // Fresenius SE 125, Fresenius Kabi's 58 and FMC's 67 from before 2023-11-30
+      const smmny = await fetchFdaRecalls(1738519);
+      out.push(...outcomeProblems(smmny.outcome, smmny.detail).map((p) => `Siemens Healthineers: ${p}`), ...eventProblems(smmny.events, 250).map((p) => `Siemens Healthineers: ${p}`));
+      const listed = smmny.events.filter((e) => e.date < "2018-03-16");
+      if (listed.length) out.push(`${listed.length} Siemens Healthineers recalls before its listing on 2018-03-16, e.g. ${listed[0].date}`);
+      const fsnuy = await fetchFdaRecalls(904868);
+      out.push(...outcomeProblems(fsnuy.outcome, fsnuy.detail).map((p) => `Fresenius SE: ${p}`), ...eventProblems(fsnuy.events, 110).map((p) => `Fresenius SE: ${p}`));
       return out;
     },
   },

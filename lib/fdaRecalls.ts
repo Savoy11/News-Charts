@@ -415,6 +415,61 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
       },
     ],
   },
+  /**
+   * Fresenius SE (batch 76, the owner's call of 2026-10-29): Fresenius Kabi is its own, and
+   * Fresenius Medical Care was its while it controlled FMC. It held 32% of FMC's shares but "owned
+   * 100% of the equity of the General Partner" until 2023-11-30, when FMC converted to an AG "and
+   * Fresenius KGaA completed the deconsolidation of Fresenius Medical Care AG" (its 13D/A filed
+   * 2023-12-07). So for this case the rule for a listed unit, both companies' while the parent holds
+   * most of it (Envista, Bausch + Lomb), reads "while the parent controls it".
+   */
+  904868: {
+    ticker: "FSNUY",
+    firms: [
+      { search: "Fresenius Kabi", why: "Fresenius Kabi, the company's drug and infusion business, and its compounding unit" },
+      {
+        search: "Fresenius Medical Care",
+        to: "2023-11-29",
+        why: "Fresenius Medical Care while the company controlled it, through FMC's general partner, until its deconsolidation on 2023-11-30 (the company's 13D/A filed 2023-12-07); FMC's from then on only",
+      },
+      {
+        search: "NxStage",
+        from: "2019-02-26",
+        to: "2023-11-29",
+        why: "NxStage Medical, FMC's from 2019-02-26, so the company's too while it controlled FMC",
+      },
+    ],
+  },
+  /**
+   * Siemens Healthineers (batch 76, the owner's call of 2026-10-29): its recalls count from its
+   * listing. "On March 16, 2018, Siemens Healthineers AG successfully performed its stock market
+   * debut by trading its shares for the first time on the Regulated Market (Prime Standard) of the
+   * Frankfurt Stock Exchange" (its Annual Report 2018, the combined management report). No SEC
+   * filing dates it — its record holds only the depositary's F-6EF filings, from 2018-04-26 — so
+   * this day, for this case, comes from the company's own annual report. Before it, the business
+   * was Siemens AG's, which has no page here, and its recalls are on no page: the 413 that began
+   * before 2018 stay out.
+   */
+  1738519: {
+    ticker: "SMMNY",
+    firms: [
+      {
+        search: "Siemens Medical Solutions",
+        from: "2018-03-16",
+        why: "its imaging and therapy company, Siemens Medical Solutions USA, from the listing on 2018-03-16 (its Annual Report 2018; the owner's call of 2026-10-29)",
+      },
+      {
+        search: "Siemens Healthcare",
+        from: "2018-03-16",
+        why: "its diagnostics company, Siemens Healthcare Diagnostics, and Siemens Healthcare GmbH, from the listing on 2018-03-16 (its Annual Report 2018); Siemens Hearing Instruments, sold by Siemens AG in 2015, is another company",
+      },
+      {
+        search: "Varian Medical",
+        from: "2021-04-15",
+        why: "Varian Medical Systems, bought 2021-04-15 (Varian's 8-K filed 2021-04-15); Varian's earlier recalls were its own",
+      },
+    ],
+  },
   883984: {
     ticker: "ICUI",
     firms: [

@@ -2209,7 +2209,166 @@
      "product_type": "Devices"
     }
    ]
+  },
+  "fmc_after_deconsolidation": {
+   "kind": "device",
+   "search": "batch 76, captured 2026-10-30: Fresenius Medical Care after Fresenius SE deconsolidated it on 2023-11-30",
+   "records": [
+    {
+     "event_id": "99556",
+     "recall_number": "Z-3087-2026",
+     "recalling_firm": "Fresenius Medical Care Renal Therapies Group, LLC",
+     "classification": "Class II",
+     "recall_initiation_date": "20260810",
+     "report_date": "20260909",
+     "product_description": "5008X HD/HDF   with Twister Blood  Tubing Set    Part Number 03-5350-8",
+     "reason_for_recall": "Heightened probability of blood leak from the connection between the Arterial Alpha Clip and the main line or pump segment. Leak during treatment may lead to blood loss and hypovolemia.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "siemens_before_listing": {
+   "kind": "device",
+   "search": "batch 76, captured 2026-10-30: Siemens Medical Solutions before Siemens Healthineers listed on 2018-03-16",
+   "records": [
+    {
+     "event_id": "79568",
+     "recall_number": "Z-1200-2018",
+     "recalling_firm": "Siemens Medical Solutions USA, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20180305",
+     "report_date": "20180516",
+     "product_description": "ACUSON SC2000 Ultrasound System.  The firm name on the label is Siemens Medical Solutions USA, Inc., Buffalo Grove, IL.",
+     "reason_for_recall": "The ECG signal may flatline due to electromagnetic interference during the use of electrosurgical equipment.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "siemens_after_listing": {
+   "kind": "device",
+   "search": "batch 76, captured 2026-10-30: Siemens Medical Solutions after the listing",
+   "records": [
+    {
+     "event_id": "81821",
+     "recall_number": "Z-0707-2019",
+     "recalling_firm": "Siemens Medical Solutions USA, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20181130",
+     "report_date": "20190116",
+     "product_description": "Siemens Biograph Horizon PET/CT System,     Product Usage:  The Siemens Biograph systems are combined X-Ray Computed Tomography (CT) and Positron Emission Tomography (PET) scanners that provide registration and fusion of high resolution physiologic and anatomic information.",
+     "reason_for_recall": "Improper design or specifications.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "siemens_healthcare_gmbh": {
+   "kind": "device",
+   "search": "batch 76, captured 2026-10-30: Siemens Healthcare GmbH, after the listing",
+   "records": [
+    {
+     "event_id": "94892",
+     "recall_number": "Z-2241-2024",
+     "recalling_firm": "Siemens AG/Siemens Healthcare GmbH",
+     "classification": "Class II",
+     "recall_initiation_date": "20240626",
+     "report_date": "20240710",
+     "product_description": "ARTIS is a family of dedicated angiography systems developed for single and biplane diagnostic imaging and interventional procedures including, but not limited to, pediatric and obese patients.",
+     "reason_for_recall": "A potential issue with ARTIS icono systems equipped with a small detector and a corresponding collimator (model # 10843101) was identified. In very rare situations, the first x-ray release following patient registration may be performed with incorrect copper prefiltration. If the described issue occurs, the applied radiation dose rate may be higher than intended by the user.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "94892",
+     "recall_number": "Z-2242-2024",
+     "recalling_firm": "Siemens AG/Siemens Healthcare GmbH",
+     "classification": "Class II",
+     "recall_initiation_date": "20240626",
+     "report_date": "20240710",
+     "product_description": "ARTIS is a family of dedicated angiography systems developed for single and biplane diagnostic imaging and interventional procedures including, but not limited to, pediatric and obese patients.",
+     "reason_for_recall": "A potential issue with ARTIS icono systems equipped with a small detector and a corresponding collimator (model # 10843101) was identified. In very rare situations, the first x-ray release following patient registration may be performed with incorrect copper prefiltration. If the described issue occurs, the applied radiation dose rate may be higher than intended by the user.",
+     "product_type": "Devices"
+    },
+    {
+     "event_id": "94892",
+     "recall_number": "Z-2240-2024",
+     "recalling_firm": "Siemens AG/Siemens Healthcare GmbH",
+     "classification": "Class II",
+     "recall_initiation_date": "20240626",
+     "report_date": "20240710",
+     "product_description": "ARTIS is a family of dedicated angiography systems developed for single and biplane diagnostic imaging and interventional procedures including, but not limited to, pediatric and obese patients.",
+     "reason_for_recall": "A potential issue with ARTIS icono systems equipped with a small detector and a corresponding collimator (model # 10843101) was identified. In very rare situations, the first x-ray release following patient registration may be performed with incorrect copper prefiltration. If the described issue occurs, the applied radiation dose rate may be higher than intended by the user.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "siemens_hearing": {
+   "kind": "device",
+   "search": "batch 76, captured 2026-10-30: Siemens Hearing Instruments, another company",
+   "records": [
+    {
+     "event_id": "67241",
+     "recall_number": "Z-0988-2014",
+     "recalling_firm": "Siemens Hearing Instruments, Inc",
+     "classification": "Class II",
+     "recall_initiation_date": "20050701",
+     "report_date": "20140226",
+     "product_description": "Siemens Prisma 2K Hearing Aid    Product Usage:  A behind the ear (BTE) hearing aid developed for pediatric patients.",
+     "reason_for_recall": "Siemens became aware of an issue where an infant or child could open the tamper resistant battery compartment of the Siemens Prisma 2K hearing aid under certain unintended use conditions.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "varian_before": {
+   "kind": "device",
+   "search": "batch 76, captured 2026-10-30: Varian Medical Systems before Siemens Healthineers bought it on 2021-04-15",
+   "records": [
+    {
+     "event_id": "85269",
+     "recall_number": "Z-1899-2020",
+     "recalling_firm": "Varian Medical Systems, Inc.",
+     "classification": "Class II",
+     "recall_initiation_date": "20190812",
+     "report_date": "20200513",
+     "product_description": "Varian Multileaf Collimator [MLC]; Millenium Multileaf Collimator [52, 80, 120 leaf]; High Definition 120 Multileaf Collimator Model Number(s):  product code: H54 and H56; MLC software version 8.5 - Product Usage: is intended to assist the clinician in the delivery of external beam radiation to defined target volumes during radiosurgery and radiotherapy while sparing surrounding normal tissue and critical organs from excess radiation.",
+     "reason_for_recall": "After a recent upgrade to the collimator software version 8.5, the firm became aware that the multi-leaf collimator leaves did not move during an arc treatment. The issue is related to a transient carriage primary- secondary interlock due to carriage fault on the MLC that immediately preceded the initiation of the arc treatment. The issue will occur only with MLC software version 8.5 and only affects conformal arc treatments, including VMAT and RapidArc. There have been no reports of adverse health consequences due to this issue.",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "varian_after": {
+   "kind": "device",
+   "search": "batch 76, captured 2026-10-30: Varian Medical Systems after the purchase",
+   "records": [
+    {
+     "event_id": "89922",
+     "recall_number": "Z-0942-2022",
+     "recalling_firm": "Varian Medical Systems Imaging Laboratory GmbH",
+     "classification": "Class II",
+     "recall_initiation_date": "20220321",
+     "report_date": "20220420",
+     "product_description": "ARIA Radiation Therapy Management (RTM) VERSIONS 13.6, 15.1, 15.5, 15.6, 16.0, 16.1",
+     "reason_for_recall": "Software issue for treatment plan and image management application may result in mismatch values which could result in  treatment in the wrong location",
+     "product_type": "Devices"
+    }
+   ]
+  },
+  "fresenius_vial": {
+   "kind": "device",
+   "search": "batch 76, captured 2026-10-30: Fresenius Vial, not mapped",
+   "records": [
+    {
+     "event_id": "81208",
+     "recall_number": "Z-0362-2019",
+     "recalling_firm": "Fresenius Vial Sa",
+     "classification": "Class II",
+     "recall_initiation_date": "20171202",
+     "report_date": "20181107",
+     "product_description": "Volumat MC Agilia Volumetric Infusion Pump, Model No. Z021135, Software version 1.7. Product Usage - The Volumat MC Agilia is a piece of transportable medical equipment intended to be used in healthcare facilities environment by healthcare trained professionals according to hospital protocols on adults, pediatrics and neonatal human patient to administer via a single channel or mounted on a multiple channels rack accessory: Intermittent or continuous delivery of parenteral fluids (solutions, colloids, parenteral nutrition) and medications (including but limited to diluted drugs, chemotherapy) through clinically accepted IV routes of administration). Transfusion of blood and blood derivatives products. Note that for transfusion procedures, use of a special administration set is required).",
+     "reason_for_recall": "Fresenius Kabi initiated a mandatory software upgrade of the Volumat MC Agilia Volumetric Infusion Pump because it was designed to improve customer experience while preventing common software malfunctions.",
+     "product_type": "Devices"
+    }
+   ]
   }
  },
- "batch70": "cases from 2026-10-27 (batch 70) keep the fields above, with product descriptions and reasons cut to 1,000 characters"
+ "batch70": "cases from 2026-10-27 (batch 70) keep the fields above, with product descriptions and reasons cut to 1,000 characters",
+ "batch76": "cases from 2026-10-30 (batch 76) keep the same fields, with product descriptions and reasons cut to 1,000 characters"
 }

@@ -147,7 +147,7 @@ A drug, device or food company's page carries its Class I and II recalls from th
 enforcement report, back to mid-2012: "Class I device recall: MiniMed 780G Insulin Pump (3
 products)", with the recall's reason beneath and a link to the report's page for it. Class III,
 unlikely to cause harm, is left out. The report names a firm, never a listed company, in many
-spellings (Medtronic files under more than 25), so `FDA_FIRMS` maps 71 companies by hand: a phrase
+spellings (Medtronic files under more than 25), so `FDA_FIRMS` maps 73 companies by hand: a phrase
 the company's firm names contain, the look-alikes that are other companies ("Hershey Creamery",
 Germany's "Merck Millipore"), and the days a bought firm joined or a business left. Covidien counts
 for Medtronic from 2015-01-26, Hospira for Pfizer from 2015-09-03, and "GE Healthcare" for GE until
@@ -163,6 +163,13 @@ listed unit's recall is both companies' while the parent holds most of it, as Ke
 until Danaher's split-off, Bausch + Lomb's still. About 6,600 recalls in all (2026-10-27): Philips
 590, Medtronic 533, Johnson & Johnson 511, Stryker 467, Danaher 377, BD 376, Medline 254. Scored
 without the model, as a filing is.
+
+Batch 76 added the two companies batch 70 left out for a rule, by the owner's calls of 2026-10-29.
+Siemens Healthineers' recalls count from its listing on 2018-03-16, the one day the map takes from
+a company's annual report rather than an SEC filing, since none dates it; its earlier recalls were
+Siemens AG's, which has no page here (298 from the listing, 2026-10-30). Fresenius SE has Fresenius
+Kabi's recalls and, while it controlled Fresenius Medical Care through FMC's general partner, FMC's
+too, until FMC's deconsolidation on 2023-11-30 (125).
 
 ### Justice Department releases (`lib/doj.ts`)
 
@@ -732,7 +739,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | BLS | CPI release dates since 2008 | Same subject and chip; needs a contact `User-Agent` |
 | NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966; defect investigations since 1975 | Recalls of 10,000 vehicles or more, and every investigation NHTSA opened, only for the vehicle and tyre makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014). Public domain; no key |
 | Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 39 banks `lib/fedActions.ts` maps by hand to a listed company — 25 US bank holding companies and 14 foreign banks with their US arms; an action against a person is left out. Public domain, cited to the Board; two keyless files |
-| FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 71 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
+| FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 73 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
 | U.S. Department of Justice | Press releases since 2009 in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | SEC newsroom (press releases) | Press releases since 1997 in which a company is the party — the SEC charges, sues or sanctions it, or it settles | The year listing, read once for every company (`lib/ingest/secPressWalk.ts`); kept only when the headline makes the company the party (`lib/secPress.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |

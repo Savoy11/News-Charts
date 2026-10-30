@@ -576,7 +576,7 @@ export const CASES: LiveCase[] = [
     },
   },
   {
-    name: "NHTSA — Ford's recalls back to 1966, Stellantis's only from 2014",
+    name: "NHTSA — Ford's recalls back to 1966 with Volvo's while Ford owned it (batch 77), Stellantis's only from 2014",
     covers: ["nhtsa_recalls"],
     hosts: ["data.transportation.gov"],
     async run() {
@@ -588,6 +588,11 @@ export const CASES: LiveCase[] = [
       const straps = ford.events.find((e) => e.externalId === "11V385000");
       if (!straps) out.push("no 11V385000 (2011 fuel-tank straps)");
       else if (!/^Recall of 1,100,000 vehicles: Fuel tank strap corrosion$/.test(straps.title)) out.push(`11V385000 titled "${straps.title}"`);
+      // batch 77: Volvo is Ford's from 1999-03-31 to 2010-08-01 — 30 at the floor, measured 2026-10-30
+      const volvo = ford.events.filter((e) => / Volvo vehicles: /.test(e.title));
+      if (volvo.length < 25) out.push(`only ${volvo.length} Volvo recalls on Ford's page, expected about 30`);
+      const outside = volvo.filter((e) => e.date < "1999-03-31" || e.date > "2010-08-01");
+      if (outside.length) out.push(`${outside.length} Volvo recalls on Ford's page outside 1999-03-31..2010-08-01, e.g. ${outside[0].date}`);
       const stla = await fetchRecalls(1605484);
       out.push(...outcomeProblems(stla.outcome, stla.detail).map((p) => `Stellantis: ${p}`));
       const early = stla.events.filter((e) => e.date < "2014-10-12");

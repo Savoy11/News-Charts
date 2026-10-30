@@ -1,6 +1,6 @@
 # Coverage map — how far back a timeline can actually go
 
-**Last updated:** 2026-10-29 · 27 sources (19 on the ingest path; the 8 keyed ones are held back by their licences)
+**Last updated:** 2026-10-30 · 27 sources (19 on the ingest path; the 8 keyed ones are held back by their licences)
 
 The single question this answers: *given a subject, what is the earliest event News Charts could
 plausibly show, and which source would supply it?*
@@ -25,8 +25,8 @@ because it will be trusted.
 | **any** | Wikipedia citations | as far as the references go | Dated external articles |
 | **any** | Internet Archive | 1780 for companies (a bound on impossibility); topics effectively none | Catalogued items: reports, catalogues, film — relevance-ranked |
 | **1934 – now** | SEC EDGAR | electronic filings from ~1993 | Filings, earnings; an 8-K, or a foreign company's 6-K, titled by the headline of the press release filed with it, from 1994 (`lib/secHeadlines.ts`). A fund's own filings, by the list EDGAR keeps for its series, from February 2006, when the lists begin; its trust's older ones stay, hedged (`lib/fundSeries.ts`, batch 67) |
-| **1966 – now** | NHTSA vehicle recalls | 1966, the first campaigns | Safety recalls of 10,000 vehicles or more, for the vehicle and tyre makers `lib/recalls.ts` maps (Ford, GM, Stellantis from 2014, Toyota, Honda, Tesla, Harley-Davidson, PACCAR, the RV makers Thor and Winnebago with the brands they bought, Berkshire Hathaway's Forest River, and others) |
-| **1975 – now** | NHTSA defect investigations | 1975, the first opened | Every investigation NHTSA opened into the same makers, shown with their recalls (batch 66): 1,766 for 18 companies, 1,579 before 2017 (Ford 684, GM 651) |
+| **1966 – now** | NHTSA vehicle recalls | 1966, the first campaigns | Safety recalls of 10,000 vehicles or more, for the vehicle and tyre makers `lib/recalls.ts` maps (Ford, GM, Stellantis from 2014, Toyota, Honda, Tesla, Harley-Davidson, PACCAR, the RV makers Thor and Winnebago with the brands they bought, Berkshire Hathaway's Forest River, and others), and the brands Ford and GM sold, while they owned them (batch 77): Volvo, Jaguar and Land Rover on Ford's page, 56 recalls from 1990 to 2010; Saab on GM's, 12 from 2001 to 2008 |
+| **1975 – now** | NHTSA defect investigations | 1975, the first opened | Every investigation NHTSA opened into the same makers, shown with their recalls (batch 66): 1,766 for 18 companies, 1,579 before 2017 (Ford 684, GM 651); batch 77 adds the 38 opened into the brands Ford and GM later sold, all before 2011 (Ford 29, GM 9) |
 | **1993 – now** | Federal Reserve enforcement actions | 1989 in the Board's files; 1993 the first against a mapped bank | Cease-and-desist orders, written agreements and civil money penalties against the 39 banks `lib/fedActions.ts` maps (batches 69 and 74; 14 of them foreign, with their US arms): 109 events on 32 of them, 78 before 2017 (JPMorgan 10, Citigroup 10, Wells Fargo 7, Goldman Sachs 7, HSBC 7, Deutsche Bank 7) |
 | **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |
 | **1997 – now** | SEC press releases | 1997, the first year the newsroom lists | Charges, suits and settlements whose headline makes the company the party (`lib/secPress.ts`, batch 73): against every company in the index, 209 of the 6,898 releases on 122 companies, 125 before 2017 (Morgan Stanley 13, Citigroup 10, Wells Fargo 9) |

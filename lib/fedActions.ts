@@ -108,6 +108,101 @@ export const FED_BANKS: Readonly<Record<number, { ticker: string; orgs: readonly
   73124: { ticker: "NTRS", orgs: [{ match: /\bNorthern Trust Corporation,? Chicago\b/i, why: "the company" }] },
   109380: { ticker: "ZION", orgs: [{ match: /\bZions Bancorporation\b[^;]*\bSalt Lake City\b/i, why: "the company" }] },
   36966: { ticker: "FHN", orgs: [{ match: /\bFirst Horizon (?:Corporation|National Corporation)\b[^;]*\bMemphis\b/i, why: "the company" }] },
+  // The foreign banks with a page here (batch 74, the 2026-10-28 proposal 2): the bank itself, its
+  // US holding company and branches, and a US bank it bought from the day it did. Checked by hand
+  // against every row of both files (2026-10-30).
+  1089113: {
+    ticker: "HSBC",
+    orgs: [
+      { match: /\bHSBC (?:Holdings|North America Holdings|USA,? Inc|Bank USA)\b/i, why: "the company, its US holding company and its US bank, Marine Midland until 1999" },
+      {
+        match: /\bHSBC Finance Corporation\b|\bHousehold International\b/i,
+        from: "2003-03-28",
+        why: "Household International, HSBC Finance from 2004, bought 2003-03-28 (\"the date we were acquired by HSBC\", HSBC's 6-K of 2009-08-03)",
+      },
+    ],
+  },
+  1159508: {
+    ticker: "DB",
+    orgs: [
+      { match: /\bDeutsche Bank (?:AG|Aktiengesellschaft)\b|\bDB USA Corporation\b/i, why: "the company, its New York branch and its US holding company" },
+      {
+        match: /\bDeutsche Bank Trust (?:Company Americas|Corporation)\b|\bBankers Trust (?:Company|Corporation|New York Corporation)\b[^;]*\bNew York\b/i,
+        from: "1999-06-04",
+        why: "Bankers Trust of New York, Deutsche Bank Trust from 2002, bought 1999-06-04 (its 20-F filed 2003-03-27): its agreement of 1994 is not Deutsche Bank's, nor the Des Moines Bankers Trust's of 1991",
+      },
+    ],
+  },
+  891478: {
+    ticker: "SAN",
+    orgs: [
+      { match: /^Banco Santander(?:,? S\.A\.)?,? (?:Spain|Madrid|Santander|Boadilla)/i, why: "the company" },
+      {
+        match: /\bSantander Holdings USA\b|\bSovereign Bancorp\b/i,
+        from: "2009-01-30",
+        why: "Sovereign Bancorp, Santander Holdings USA from 2010, wholly the company's from 2009-01-30 (its 6-K of that day); it held a quarter before",
+      },
+    ],
+  },
+  1610520: {
+    ticker: "UBS",
+    orgs: [
+      { match: /^UBS,? (?:Group )?AG\b/i, why: "the company and its bank, UBS AG, which was the listed company until UBS Group AG took its place in the exchange offer of November 2014 (its 20-F filed 2015-03-13)" },
+      {
+        match: /^Credit Suisse\b/i,
+        from: "2023-06-12",
+        why: "Credit Suisse, bought 2023-06-12 (Credit Suisse AG's 6-K of 2023-09-29): its actions of 2009, 2014 and 2020 are Credit Suisse's",
+      },
+    ],
+  },
+  844150: {
+    ticker: "NWG",
+    orgs: [{ match: /\bRoyal Bank of Scotland (?:Group )?plc\b|\bNatWest (?:Group|Markets)\b/i, why: "the company, The Royal Bank of Scotland Group plc until 2020-07-22 (its 6-K of that day), on the same record" }],
+  },
+  312069: { ticker: "BCS", orgs: [{ match: /\bBarclays (?:Bank )?PLC\b/i, why: "the company and its bank, Barclays Bank PLC, with its New York branch" }] },
+  1022837: {
+    ticker: "SMFG",
+    orgs: [{ match: /\bSumitomo Mitsui (?:Banking Corporation|Financial Group)\b/i, why: "the company and its bank, whose holding company it became on 2002-12-02 (its 20-F filed 2011-07-29)" }],
+  },
+  67088: {
+    ticker: "MUFG",
+    orgs: [
+      { match: /\bMitsubishi UFJ Financial Group\b|\bBank of Tokyo-Mitsubishi\b|\bMUFG (?:Bank|Americas)\b/i, why: "the company and its bank, The Bank of Tokyo-Mitsubishi (UFJ)" },
+      {
+        match: /\bUnion Bank of California\b|\bMUFG Union Bank\b/i,
+        to: "2022-11-30",
+        why: "UnionBanCal's bank, 62.1% the company's on 2004-06-30 (its 20-F filed 2004-09-28), wholly from 2008, sold to U.S. Bancorp 2022-12-01 (its 6-K of 2022-12-02)",
+      },
+    ],
+  },
+  842180: {
+    ticker: "BBVA",
+    orgs: [{ match: /\bBanco Bilbao Vizcaya\b/i, why: "the company, Banco Bilbao Vizcaya until it merged with Argentaria in 1999, with its Miami agency and New York branch" }],
+  },
+  1000275: {
+    ticker: "RY",
+    orgs: [
+      { match: /\bRoyal Bank of Canada\b/i, why: "the company" },
+      {
+        match: /\bRBC Centura Bank\b|\bRBC Bank \(USA\)/i,
+        from: "2001-06-05",
+        to: "2012-03-01",
+        why: "Centura Banks, bought 2001-06-05 (its 40-F filed 2002-12-27), sold to PNC 2012-03-02 (its 40-F filed 2012-11-29)",
+      },
+      {
+        match: /\bCity National (?:Bank|Corporation),? (?:Los Angeles|Beverly Hills)\b/i,
+        from: "2015-11-02",
+        why: "City National of Los Angeles, bought 2015-11-02 (its 40-F filed 2023-11-30); Newark's City National Bancshares is another",
+      },
+    ],
+  },
+  947263: {
+    ticker: "TD",
+    orgs: [{ match: /\bToronto-Dominion Bank\b|\bTD Group U\.?S\.? Holdings\b|\bTD Bank U\.?S\.? Holding Company\b|\bTD Bank, N\.?A\./i, why: "the company and its US holding companies; Capital Commerce Bancorp and Tennessee Commerce Bancorp are not its Commerce Bancorp" }],
+  },
+  927971: { ticker: "BMO", orgs: [{ match: /\bBank of Montreal\b|\bBMO (?:Financial Corp|Harris Bank)\b/i, why: "the company, its US holding company and its Chicago branch" }] },
+  9631: { ticker: "BNS", orgs: [{ match: /\bBank of Nova Scotia\b/i, why: "the company, with its New York agency" }] },
+  1045520: { ticker: "CM", orgs: [{ match: /\bCanadian Imperial Bank of Commerce\b/i, why: "the company" }] },
 };
 
 /** The organisations that are the company's, or null for a company that is not a mapped bank. */

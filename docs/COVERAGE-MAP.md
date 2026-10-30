@@ -27,7 +27,7 @@ because it will be trusted.
 | **1934 – now** | SEC EDGAR | electronic filings from ~1993 | Filings, earnings; an 8-K, or a foreign company's 6-K, titled by the headline of the press release filed with it, from 1994 (`lib/secHeadlines.ts`). A fund's own filings, by the list EDGAR keeps for its series, from February 2006, when the lists begin; its trust's older ones stay, hedged (`lib/fundSeries.ts`, batch 67) |
 | **1966 – now** | NHTSA vehicle recalls | 1966, the first campaigns | Safety recalls of 10,000 vehicles or more, for the vehicle and tyre makers `lib/recalls.ts` maps (Ford, GM, Stellantis from 2014, Toyota, Honda, Tesla, Harley-Davidson, PACCAR, the RV makers Thor and Winnebago with the brands they bought, Berkshire Hathaway's Forest River, and others) |
 | **1975 – now** | NHTSA defect investigations | 1975, the first opened | Every investigation NHTSA opened into the same makers, shown with their recalls (batch 66): 1,766 for 18 companies, 1,579 before 2017 (Ford 684, GM 651) |
-| **1993 – now** | Federal Reserve enforcement actions | 1989 in the Board's files; 1993 the first against a mapped bank | Cease-and-desist orders, written agreements and civil money penalties against the 25 banks `lib/fedActions.ts` maps (batch 69): 72 events on 18 of them, 51 before 2017 (JPMorgan 10, Citigroup 10, Wells Fargo 7, Goldman Sachs 7) |
+| **1993 – now** | Federal Reserve enforcement actions | 1989 in the Board's files; 1993 the first against a mapped bank | Cease-and-desist orders, written agreements and civil money penalties against the 39 banks `lib/fedActions.ts` maps (batches 69 and 74; 14 of them foreign, with their US arms): 109 events on 32 of them, 78 before 2017 (JPMorgan 10, Citigroup 10, Wells Fargo 7, Goldman Sachs 7, HSBC 7, Deutsche Bank 7) |
 | **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |
 | **1997 – now** | SEC press releases | 1997, the first year the newsroom lists | Charges, suits and settlements whose headline makes the company the party (`lib/secPress.ts`, batch 73): against every company in the index, 209 of the 6,898 releases on 122 companies, 125 before 2017 (Morgan Stanley 13, Citigroup 10, Wells Fargo 9) |
 | **2008 – now** | BLS CPI release archive | February 2008, the oldest archived release | Monthly CPI releases — on company pages behind the Economy chip, off by default |
@@ -100,7 +100,7 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   before 2017, 54 before 2009, most of them on the largest banks and brokers. FDA recalls add
   mid-2012 to 2016 for 38 drug, device and food companies, many of them: Medtronic has 532
   recalls, 147 of them before 2017 (Philips 232 of 590, Johnson & Johnson 298 of 485). The
-  Federal Reserve's enforcement actions add a few material events for large banks, 51 of their 72
+  Federal Reserve's enforcement actions add a few material events for large banks, 78 of their 109
   before 2017.
 - **The keyed aggregators are not ingested.** Their free tiers bar commercial use, so the
   adapters exist for diagnostics only. Even licensed, they are days-to-weeks deep: breadth for the

@@ -988,6 +988,56 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 74: the Federal Reserve's actions against the foreign banks with pages here (2026-10-30)
+
+The second of the five proposals the owner approved on 2026-10-29 (#2).
+
+- [x] **A foreign bank's page carries the Federal Reserve Board's actions against it and its US
+      arms** (`FED_BANKS`, `lib/fedActions.ts`): HSBC, Deutsche Bank, Santander, UBS, NatWest,
+      Barclays, SMFG, MUFG, BBVA and the five Canadian banks (RBC, TD, BMO, Scotiabank, CIBC).
+      - Each maps the bank, its US holding company and branches, and a US bank it bought from the
+        day it did, under batch 69's rule: its own history counts, an acquisition's past never
+        does, a unit sold stops the day it left. Every day is read from the bank's own SEC filing:
+        - HSBC: Household International (HSBC Finance) from 2003-03-28 (its 6-K of 2009-08-03).
+        - Deutsche Bank: Bankers Trust (Deutsche Bank Trust) from 1999-06-04 (its 20-F filed
+          2003-03-27).
+        - Santander: Sovereign (Santander Holdings USA) from 2009-01-30 (its 6-K of that day).
+        - UBS: UBS AG, the listed company until the exchange offer of November 2014 (its 20-F filed
+          2015-03-13); Credit Suisse from 2023-06-12 (Credit Suisse AG's 6-K of 2023-09-29).
+        - MUFG: Union Bank of California while it held most of it, 62.1% on 2004-06-30 (its 20-F
+          filed 2004-09-28), to its sale on 2022-12-01 (its 6-K of 2022-12-02).
+        - RBC: Centura from 2001-06-05 (its 40-F filed 2002-12-27) to its sale to PNC on 2012-03-02
+          (its 40-F filed 2012-11-29); City National of Los Angeles from 2015-11-02 (its 40-F filed
+          2023-11-30).
+        - SMFG: its bank, whose holding company it became on 2002-12-02 (its 20-F filed 2011-07-29);
+          NatWest: The Royal Bank of Scotland Group plc until 2020-07-22 (its 6-K of that day).
+- **Measured** on the Board's two files read 2026-10-30 (2,899 rows, the same as on 2026-10-28):
+  37 events on the 14 banks, 27 before 2017, exactly the scout's count bank by bank (HSBC 7,
+  Deutsche Bank 7, Santander 4, UBS 3, NatWest 3, Barclays, SMFG, MUFG and BBVA 2, the Canadian
+  banks 1 each). Eight carry a penalty of $100 million or more. The 25 US banks keep their 72, so
+  the map carries 109 on 32 of its 39 banks, 78 before 2017; no row lands on two banks.
+  - Refused, all in the files: Bankers Trust's agreement of 1994, before Deutsche Bank bought it;
+    the Des Moines Bankers Trust of 1991 and Community Bankers Trust of Glen Allen; Newark's City
+    National Bancshares; the Capital and Tennessee Commerce Bancorps; the Irwin, Highlands and
+    Bowling Green Union Banks; Credit Suisse's actions of 2009, 2014 and 2020, before UBS bought
+    it.
+- 12 new cases in `check:fed-actions` (42 in all) on rows pinned from both files; 11 fail on main,
+  where the banks are unmapped. A `check:live` assertion for HSBC's 2012 penalty and for no Bankers
+  Trust action before 1999 on Deutsche Bank's page, run here.
+- **Found on the way:**
+  - Popular, Inc. (BPOP), a US bank holding company with a page here, has three actions in the
+    files (Banco Popular de Puerto Rico's of 1999 and 2000, Popular Bank's of 2023) and is not in
+    the map; batch 69 mapped 25 others.
+  - Credit Suisse AG and UBS AG have records of their own here, as issuers of exchange-traded
+    notes (GLDI, AMUB); their actions go to UBS's page, not to those notes'.
+  - Batch 73's migration (db/032) had one comment line run past the others' width; re-wrapped.
+- **Requests made:** www.federalreserve.gov 4 (the two files, then both again for the live
+  assertion); EDGAR 25 (efts.sec.gov 13 full-text searches, www.sec.gov 12 for the filings that
+  date the purchases).
+  All with the project's User-Agent, which carries the owner's contact address.
+- `npm run check` passes and `npm run lint` is clean. HawkScan was not run: `HAWK_API_KEY` is not
+  set.
+
 ## NC ledger — batch 73: the SEC's own press releases on company pages (2026-10-29)
 
 The first of the five proposals the owner approved on 2026-10-29 (#1, with its new source). The
@@ -5190,7 +5240,7 @@ already held, but new investment goes to securities coverage first.
         missed on seven it had (Teleflex's Arrow, Stryker's Howmedica and later purchases, BD's
         CareFusion, GE's other names). Recalls 4,696 → 6,606. Siemens Healthineers is left out: it
         has no SEC filing to date its listing.
-- [ ] `P2` **The Federal Reserve's actions against the foreign banks with pages here.** Add the
+- [x] `P2` **The Federal Reserve's actions against the foreign banks with pages here.** Add the
       foreign banks in the company index to `FED_BANKS` (`lib/fedActions.ts:53`), each row checked
       by eye as batch 69 did, under its rule: a bank's own history and its US arms count, an
       acquisition's past never does, and a unit the company sold stops counting the day it left
@@ -5229,6 +5279,8 @@ already held, but new investment goes to securities coverage first.
         whatever the number of banks.
       - *Derived from [`docs/proposals/2026-10-28-proposals.md`](proposals/2026-10-28-proposals.md)
         #2, approved 2026-10-29. Importance medium · Efficiency high · Practicality high.*
+      - ✅ **Done in batch 74** (see its section): the 14 banks mapped, 37 events, 27 before 2017,
+        exactly as measured; each bought US unit dated from the bank's own filing.
 - [ ] `P2` **QQQ's annual reports: keep form N-30B-2 among the fund forms.** QQQ's record (Invesco
       QQQ Trust, Series 1, CIK 1067839, read whole) holds 22 N-30B-2 filings, filed 2005-05-16 to
       2025-10-24, each with a report date of 30 September, 2004 to 2025 — its annual reports as a

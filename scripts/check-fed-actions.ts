@@ -8,7 +8,8 @@
  * 2018-02-02 that capped its assets, nor JPMorgan's $200 million penalty of 2013-09-18. Offline by
  * construction: the Board's two files are served from real rows pinned on 2026-10-27
  * (`scripts/fixtures/fed-actions.json`), every one any map pattern or a broad search for the mapped
- * banks, their predecessors and their namesakes finds.
+ * banks, their predecessors and their namesakes finds. Batch 74 (the 2026-10-28 proposal 2) added
+ * the foreign banks with a page here, from the same files read 2026-10-30.
  */
 
 import { readFileSync } from "node:fs";
@@ -109,14 +110,44 @@ async function main(): Promise<void> {
   check("American Express's international bank is its own until it was sold on 2008-02-29",
     amex?.to === "2008-02-28" && on("AXP", "2007-08-03")?.title === "Federal Reserve: $20 million civil money penalty and cease-and-desist order");
 
-  console.log("\nWhat each mapped bank carries (the Board's files of 2026-10-27)");
+  console.log("\nThe foreign banks with a page here (batch 74)");
+  const hsbc = on("HSBC", "2012-12-11");
+  check("HSBC's order and $165 million penalty of 2012-12-11 are one event on HSBC",
+    of("HSBC").filter((e) => e.date === "2012-12-11").length === 1 && hsbc?.title === "Federal Reserve: $165 million civil money penalty and cease-and-desist order", hsbc?.title);
+  check("  …and HSBC Finance's order of 2011, Household International before 2004, is HSBC's: it bought Household on 2003-03-28",
+    /HSBC Finance Corporation/.test(on("HSBC", "2011-04-13")?.description ?? "") && fed.FED_BANKS[1089113].orgs[1].from === "2003-03-28");
+  check("Barclays' order and $342 million penalty of 2015-05-20 land on BCS, and not on the others fined that day",
+    on("BCS", "2015-05-20")?.title === "Federal Reserve: Cease-and-desist order and $342 million civil money penalty" &&
+      !/Barclays/i.test(on("UBS", "2015-05-20")?.description ?? "") && !/Barclays/i.test(on("NWG", "2015-05-20")?.description ?? ""));
+  check("Bankers Trust's agreement of 1994 is not Deutsche Bank's, which bought it on 1999-06-04; its trust company's of 2005, under Deutsche Bank's name, is",
+    !on("DB", "1994-12-04") && on("DB", "2005-10-12")?.title === "Federal Reserve: Written agreement" && fed.FED_BANKS[1159508].orgs[1].from === "1999-06-04");
+  check("  …nor the Des Moines Bankers Trust's of 1991, nor Community Bankers Trust's of Glen Allen", !on("DB", "1991-04-08") && !of("DB").some((e) => /Des Moines|Glen Allen/.test(e.description ?? "")));
+  check("Newark's City National Bancshares is not RBC's City National, nor are the Capital and Tennessee Commerce Bancorps TD's",
+    !all.some((e) => /Newark|Capital Commerce|Tennessee Commerce/.test(e.description ?? "")) && of("RY").length === 1 && of("TD").length === 1);
+  check("RBC Centura's penalty of 2007 is RBC's, between its purchase on 2001-06-05 and its sale on 2012-03-02",
+    on("RY", "2007-06-13")?.title === "Federal Reserve: $106,930 civil money penalty" && fed.FED_BANKS[1000275].orgs[1].to === "2012-03-01");
+  check("UBS's action of 2023 is UBS's; Credit Suisse's from before UBS bought it on 2023-06-12 are not",
+    !!on("UBS", "2023-07-21") && !on("UBS", "2009-12-16") && !on("UBS", "2014-05-19") && !on("UBS", "2020-12-22"));
+  check("Santander's written agreements are Santander Holdings USA's, wholly its own from 2009-01-30",
+    on("SAN", "2014-09-14")?.title === "Federal Reserve: Written agreement" && fed.FED_BANKS[891478].orgs[1].from === "2009-01-30");
+  check("Union Bank of California's agreement of 2004, 62.1% the company's that year, is MUFG's; the Irwin, Highlands and Bowling Green Union Banks are no one's here",
+    !!on("MUFG", "2004-10-18") && !all.some((e) => /Irwin|Highlands|Bowling Green/.test(e.description ?? "")));
+  check("The Royal Bank of Scotland's are NatWest's, the same company renamed", of("NWG").map((e) => e.date).sort().join(",") === "2011-07-26,2013-12-11,2015-05-20");
+  check("Banks with no page here stay out: Asahi, Banco Popular", !all.some((e) => /Asahi|Popular/.test(e.description ?? "")));
+
+  console.log("\nWhat each mapped bank carries (the Board's files of 2026-10-27 and 2026-10-30)");
   const expected: Record<string, number> = {
     JPM: 10, C: 10, WFC: 7, GS: 7, BAC: 6, AXP: 5, USB: 4, PNC: 4, MS: 3, ALLY: 3, RF: 3, BNY: 3, MTB: 2, TFC: 1, COF: 1, STT: 1, FITB: 1, HBAN: 1,
     CFG: 0, KEY: 0, SCHW: 0, SYF: 0, NTRS: 0, ZION: 0, FHN: 0,
+    HSBC: 7, DB: 7, SAN: 4, UBS: 3, NWG: 3, BCS: 2, SMFG: 2, MUFG: 2, BBVA: 2, RY: 1, TD: 1, BMO: 1, BNS: 1, CM: 1,
   };
   const counts = Object.fromEntries([...byTicker].map(([t, e]) => [t, e.length]));
   const off = Object.keys(expected).filter((t) => counts[t] !== expected[t]);
-  check("72 events on 18 banks, each count as read", off.length === 0 && all.length === 72, off.map((t) => `${t} ${counts[t]}≠${expected[t]}`).join(", ") || `${all.length}`);
+  const foreign = ["HSBC", "DB", "SAN", "UBS", "NWG", "BCS", "SMFG", "MUFG", "BBVA", "RY", "TD", "BMO", "BNS", "CM"].flatMap(of);
+  check("109 events on 32 of the 39 banks, each count as read: the 14 foreign banks add 37, 27 of them before 2017",
+    off.length === 0 && all.length === 109 && Object.keys(expected).length === 39 && Object.keys(fed.FED_BANKS).length === 39 &&
+      foreign.length === 37 && foreign.filter((e) => e.date < "2017-01-01").length === 27,
+    off.map((t) => `${t} ${counts[t]}≠${expected[t]}`).join(", ") || `${all.length}, ${foreign.length} foreign`);
   check("every mapped bank says why each name is its own", Object.values(fed.FED_BANKS).every((b) => b.orgs.every((o) => o.why.length > 10)));
 
   console.log("\nThe Board's words, read");

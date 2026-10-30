@@ -2,9 +2,9 @@
 -- lib/secPress.ts, lib/ingest/secPressWalk.ts).
 --
 -- The listing is the SEC's, not a company's, so it is read once for every company: each release
--- is kept here, and each company's ingest keeps the ones whose headline makes it the party. A year that is over never changes, so it is read once, every page of it,
--- and marked `complete`; the current year is read again a day later, from its newest page until
--- a release already held.
+-- is kept here, and each company's ingest keeps the ones whose headline makes it the party. A
+-- year that is over never changes, so it is read once, every page of it, and marked `complete`;
+-- the current year is read again a day later, from its newest page until a release already held.
 --
 -- Only an answer is stored. A refused or failed page is logged in `source_fetches` with the
 -- company whose ingest asked, so the run-wide back-off sees it, and its year is read again later.

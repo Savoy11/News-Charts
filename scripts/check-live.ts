@@ -596,7 +596,7 @@ export const CASES: LiveCase[] = [
     },
   },
   {
-    name: "Federal Reserve — Wells Fargo's 2018 asset-cap order, and no namesake's action on Huntington (batch 69)",
+    name: "Federal Reserve — Wells Fargo's 2018 asset-cap order, no namesake's action on Huntington (batch 69), HSBC's 2012 penalty (batch 74)",
     covers: ["fed_enforcement"],
     hosts: ["www.federalreserve.gov"],
     async run() {
@@ -611,6 +611,12 @@ export const CASES: LiveCase[] = [
       if (!jpm.events.some((e) => e.date === "2013-09-18" && /\$200 million/.test(e.title))) out.push("no JPMorgan $200 million penalty of 2013-09-18");
       const hban = await fetchFedActions(49196);
       if (hban.events.some((e) => /Huntington, Texas/.test(e.description ?? ""))) out.push("a Huntington, Texas action on HBAN");
+      // a foreign bank's (batch 74): HSBC's order and $165 million penalty of 2012-12-11, and none of
+      // Bankers Trust's before Deutsche Bank bought it on 1999-06-04
+      const hsbc = await fetchFedActions(1089113);
+      if (!hsbc.events.some((e) => e.date === "2012-12-11" && /\$165 million/.test(e.title))) out.push("no HSBC $165 million penalty of 2012-12-11");
+      const db = await fetchFedActions(1159508);
+      if (db.events.some((e) => e.date < "1999-06-04")) out.push("a Bankers Trust action from before Deutsche Bank bought it on DB");
       return out;
     },
   },

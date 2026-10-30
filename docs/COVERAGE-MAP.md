@@ -1,6 +1,6 @@
 # Coverage map — how far back a timeline can actually go
 
-**Last updated:** 2026-10-22 · 23 sources (15 on the ingest path; the 8 keyed ones are held back by their licences)
+**Last updated:** 2026-10-29 · 27 sources (19 on the ingest path; the 8 keyed ones are held back by their licences)
 
 The single question this answers: *given a subject, what is the earliest event News Charts could
 plausibly show, and which source would supply it?*
@@ -29,6 +29,7 @@ because it will be trusted.
 | **1975 – now** | NHTSA defect investigations | 1975, the first opened | Every investigation NHTSA opened into the same makers, shown with their recalls (batch 66): 1,766 for 18 companies, 1,579 before 2017 (Ford 684, GM 651) |
 | **1993 – now** | Federal Reserve enforcement actions | 1989 in the Board's files; 1993 the first against a mapped bank | Cease-and-desist orders, written agreements and civil money penalties against the 25 banks `lib/fedActions.ts` maps (batch 69): 72 events on 18 of them, 51 before 2017 (JPMorgan 10, Citigroup 10, Wells Fargo 7, Goldman Sachs 7) |
 | **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |
+| **1997 – now** | SEC press releases | 1997, the first year the newsroom lists | Charges, suits and settlements whose headline makes the company the party (`lib/secPress.ts`, batch 73): against every company in the index, 209 of the 6,898 releases on 122 companies, 125 before 2017 (Morgan Stanley 13, Citigroup 10, Wells Fargo 9) |
 | **2008 – now** | BLS CPI release archive | February 2008, the oldest archived release | Monthly CPI releases — on company pages behind the Economy chip, off by default |
 | **2009 – now** | Justice Department press releases | 2009, the oldest releases the API holds | Settlements, pleas, suits and merger cases whose title makes the company a party (`lib/doj.ts`) — a few to ten per large company, about half before 2017 |
 | **2012 – now** | FDA enforcement reports | mid-2012, the first weekly report | Class I and II drug, device and food recalls for the 71 companies `lib/fdaRecalls.ts` maps (Medtronic, Philips, Johnson & Johnson, Stryker, Danaher, BD, Medline, Abbott, Pfizer, Novartis, Teva, GSK, PepsiCo, General Mills and others) — tens to hundreds per company |
@@ -94,10 +95,13 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   (`docs/proposals/2026-10-22-news-sources.md`), and NHTSA's defect investigations to 1975 (1,579
   of the mapped makers' 1,766 opened before 2017). Justice Department releases add 2009–2016 for
   companies in any sector — measured on 81 large companies, 93 of 195 events fell before 2017 —
-  but few a company, and only the cases the Department announced. FDA recalls add mid-2012 to 2016
-  for 38 drug, device and food companies, many of them: Medtronic has 532 recalls, 147 of them
-  before 2017 (Philips 232 of 590, Johnson & Johnson 298 of 485). The Federal Reserve's
-  enforcement actions add a few material events for large banks, 51 of their 72 before 2017.
+  but few a company, and only the cases the Department announced. The SEC's own releases reach
+  further, to 1997, in the same way: 125 of the 209 that name a company here as the party fall
+  before 2017, 54 before 2009, most of them on the largest banks and brokers. FDA recalls add
+  mid-2012 to 2016 for 38 drug, device and food companies, many of them: Medtronic has 532
+  recalls, 147 of them before 2017 (Philips 232 of 590, Johnson & Johnson 298 of 485). The
+  Federal Reserve's enforcement actions add a few material events for large banks, 51 of their 72
+  before 2017.
 - **The keyed aggregators are not ingested.** Their free tiers bar commercial use, so the
   adapters exist for diagnostics only. Even licensed, they are days-to-weeks deep: breadth for the
   present, never depth for the past.

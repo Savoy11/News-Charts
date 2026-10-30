@@ -988,6 +988,78 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 73: the SEC's own press releases on company pages (2026-10-29)
+
+The first of the five proposals the owner approved on 2026-10-29 (#1, with its new source). The
+owner's calls for #4 and #5 are written into their entries for when they are built.
+
+- [x] **A company's page carries the SEC's press releases in which it is the party, back to 1997**
+      (`lib/secPress.ts`, `lib/ingest/secPressWalk.ts`, db/032). "SEC Charges Goldman Sachs With
+      Fraud in Structuring and Marketing of CDO Tied to Subprime Mortgages" is on Goldman's page;
+      "SEC Settles Enforcement Proceedings against J.P. Morgan Chase and Citigroup" (2003) on both.
+      - The newsroom lists releases by year, 25 a page, for every company at once, so the listing
+        is read once for all of them and kept (`sec_press_releases`, `sec_press_years`). Each past
+        year is read once, every page; the current year again a day after its last read, from its
+        newest page down to the first release already kept. At most 120 pages a process, 1 s apart,
+        a year begun only while 20 pages are left, so none is cut in half; the walk stops at the
+        first refusal, and a year is stored only when every page it asked answered.
+      - Each company keeps the kept releases whose headline makes it the party, under the names it
+        had that year (EDGAR former names count until the day they stopped, `namesForYear`, as in
+        the Federal Register walk) and its possessive, from its first price on.
+      - The party rule (`secReleaseNamesParty`): the company pays, settles, agrees or is charged —
+        the Justice Department rule's subject test, split out of `releaseNamesParty` unchanged as
+        `namedAsSubject` (`check:doj` still 45/45) — or the SEC, or its Division of Enforcement,
+        charges, sues or sanctions it, or brings proceedings, an action or an order against it.
+      - A release's day is the day in Washington: the listing gives a UTC instant, and an evening
+        release is the next day in UTC. Its identity is its number and its day: the SEC gave
+        2022-123 twice, and the listing shows four releases twice (2006-198 and 2024-3 among them).
+      - Registered (SOURCES 27, public information the SEC lets anyone copy, cited to it),
+        refreshed daily, scored without the model as a Justice Department release is (0.95),
+        credited in the footer and the Terms page; a `check:feeds` line and a `check:live` case.
+      - A new `check:sec-press` (46 cases on real rows and a stand-in SEC and database). It cannot
+        run on main: the module it tests does not exist there.
+- **Measured** 2026-10-29: 293 pages, 6,898 releases, 1997–2026 (95 in 1997, 344 in 2020). Read
+  against every company in the index under its current names, 209 land on 122 companies, 125 of
+  them before 2017 and 54 before 2009: Morgan Stanley 13, Citigroup 10, Wells Fargo 9, Goldman
+  Sachs 8, Bank of America 8. Every match was read by hand, and 22 wrong ones are refused:
+  - 6 cities taken for City Holding ("SEC Charges City of Miami"): no "of" after the name;
+  - 2 for The Crypto Company ("Crypto Trading Platform Beaxy", "Crypto-Focused Advisory Firm"):
+    no hyphen or "-ing" word after it;
+  - 6 for Strategy Inc., the SEC's own "Division of Risk, Strategy, and Financial Innovation",
+    which the Justice Department rule's "Division of" took for a parent;
+  - 1 for Procter & Gamble, "Board Member of Goldman Sachs and Procter & Gamble Charged": a
+    release about a company's people;
+  - 1 for Take-Two ("Settlement With Former Take-Two Interactive Software, Inc. CEO") and 1 for
+    Universal Corp ("Action Against Vivendi Universal, S.A."): no lone word before the name;
+  - 5 for names more than one listed company has: "First Bancorp" (the Puerto Rico, North
+    Carolina and Maine banks) and Rio Tinto plc's 2023 charge, which Rio Tinto Ltd shares and so
+    reaches neither.
+  - Before 2000 nothing matches: those years' cases name firms that no longer trade (Smith Barney,
+    Livent, Bear Stearns, Informix).
+- **On a scratch database** (`chronolens_b73`, a copy of b69), the walk run from the saved pages
+  stored 6,894 releases (the four repeats once) in under a second, and a second walk asked nothing.
+  Of its 17 companies, Boeing, IBM, Pfizer and UPS got 1 each and JPMorgan 2, the 2003 one by its
+  former name J P MORGAN CHASE & CO; GM's and Tesla's prices there begin in 2025, so their older
+  releases wait for their full price history, and the two funds have no prices. Each is stored as
+  a regulation event scored 0.95 without the model, and JPMorgan's page loads both.
+- **Found on the way, for the owner or the next audit:**
+  - JPMorgan's releases mostly say "J.P. Morgan" or "JPMorgan" (about 16 since 2003), names its
+    record does not carry: Wikidata gives "Chase", which news does not use. Two reach its page. A
+    hand-added name would change its news and scoring too, so it is the owner's call.
+  - UBS Group's page knows only "UBS Group". The releases' "UBS" (11) reaches UBS AG's record,
+    the issuer of its exchange-traded notes (AMUB), which `lib/predecessors.ts` leaves out of UBS
+    Group's history on purpose.
+  - Deutsche Bank's everyday name keeps its legal form, "DEUTSCHE BANK AKTIENGESELLSCHAFT"
+    (`commonName`), so a headline saying "Deutsche Bank" names it nowhere: here, in GDELT or in the
+    Justice Department feed.
+  - Still open from batch 72: Form 25 and 25-NSE labels.
+- **Requests made:** www.sec.gov 297, all with the project's User-Agent, which carries the owner's
+  contact address, about one a second: 294 for the year listings (every page of 1997–2026, and
+  2010's past its last) and 3 for the live case. The local Postgres was started for the scratch
+  database and stopped again.
+- `npm run check` passes (52 suites with the new `check:sec-press`) and `npm run lint` is clean.
+  HawkScan was not run: `HAWK_API_KEY` is not set.
+
 ## NC ledger — batch 72: a new opportunity-scout run, five proposals for the owner (2026-10-28)
 
 The 2026-10-26 proposals are all built (batches 63–70), and batch 71's audit findings are fixed. So
@@ -995,8 +1067,14 @@ the `opportunity-scout` read the repository again at `3243d71` and wrote
 `docs/proposals/2026-10-28-proposals.md`: five proposals, all **PENDING**, ranked with securities
 depth first. Nothing is built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ Marked 2026-10-29: all five approved, the new source (1) included; none rejected or
+      deferred. The calls: Siemens Healthineers' recalls count from its 2018 listing (4, option a);
+      Fresenius SE's control of FMC counts until 2023-11-30 (4); a brand Ford or GM owned counts
+      until the day it was sold (5). The scout's FILE pass put each into "Scope refocus —
+      exchange-traded securities", the `P1` after the last `P1` there and the four `P2`s at the
+      section's end.
       1. `P1` **The SEC's own press releases naming a company as the party, from 1998.** A new
          source, so the owner's yes first; the licence is quoted in the file. In 2010 and 2003 the
          scout counted 8 and 10 releases whose party has a page here. The Justice Department
@@ -4867,6 +4945,67 @@ already held, but new investment goes to securities coverage first.
         #4, approved 2026-10-26 with the new source. Importance high for its 20 companies ·
         Efficiency high · Practicality medium (the source approved; the event kind chosen
         2026-10-27).*
+- [x] `P1` **The SEC's own press releases naming a company as the party, from 1998.** A new
+      source, approved by the owner 2026-10-29: the SEC newsroom's press-release list
+      (`www.sec.gov/newsroom/press-releases?year=YYYY&month=All`, 25 a page, each with its title,
+      link and a dated `<time>`), on the host EDGAR is read from, and no key. Licence: "Information
+      presented on sec.gov is considered public information and may be copied or further
+      distributed by users of the web site without the SEC's permission. Please consider
+      appropriate citation to the SEC as the source" (`sec.gov/about/privacy-information`, "Website
+      Dissemination", read 2026-10-28). The Justice Department's releases that make a company the
+      party are on its page from 2009 (`lib/doj.ts`); the SEC's are on no page from any year, in
+      every sector, and reach into the 1963–2017 stretch `docs/COVERAGE-MAP.md:87-91` calls the
+      corpus's biggest hole. The 2026-10-22 note left "SEC enforcement releases" off its shortlist
+      (`docs/proposals/2026-10-22-news-sources.md:170-172`); this is the press-release series, not
+      the litigation releases, and reading each past year once is now a built pattern (batch 63).
+      - Measured 2026-10-28: 2010 holds 258 releases on 11 pages, 2003 holds 185 on 8; the 1998 and
+        1999 pages list releases, 1996's none (1997 not asked). Read by hand, 2010 has 8 releases
+        whose party has a page here — Goldman Sachs twice (the CDO charge, then the record $550
+        million settlement), Citigroup, General Electric (FCPA), State Street, ABB, Daimler AG,
+        Innospec — and 3 naming a firm that may be a unit of one (Banc of America Securities,
+        Morgan Keegan, General Re), each needing its owner on that day from a filing. 2003 has 10:
+        CIBC's Enron settlement, Alliance Capital's $250 million, Invesco Funds Group, Morgan
+        Stanley's $50 million, J.P. Morgan Securities' $25 million, AIG's $10 million, Goldman
+        Sachs (the 30-year bond case), UBS PaineWebber, Deutsche Bank's advisory unit, and J.P.
+        Morgan Chase and Citigroup together over Enron. If those years are typical, about 250
+        events across the index for 1998–2025 before units, most on the largest financial
+        companies; not sized per company past the two years read.
+      - A year walk in the shape of `lib/ingest/frBackfill.ts` (`fr_windows`, db/031): each closed
+        year read once and never asked again, its titles stored once and matched against each held
+        company at its ingest. About 220 to 310 requests for 1998–2025 at the measured rates, a
+        second apart, once for all companies rather than per company; then the current year's
+        first page or two a day.
+      - The party rule: `releaseNamesParty` (`lib/doj.ts:127`), run unchanged on the 443 titles of
+        the two years with 18 companies' names, keeps 4 (Goldman's 2010 settlement; the Morgan
+        Stanley, AIG and CIBC releases of 2003) and nothing else — it reads a company as the party
+        when it pays or settles, not when "SEC Charges" or "SEC Sues" it. Teach it the SEC's
+        phrasing ("SEC Charges X", "SEC Sues X", "SEC Brings … Action Against X", "Commission
+        Settles … Against X"), with the names every scoring path takes (`companyScoringAliases`,
+        `lib/scoringNames.ts:43`) and the DOJ adapter's look-alike guards. Real titles it must
+        refuse: "SEC Charges Former Carter's Executive With Fraud and Insider Trading", "SEC Charges
+        Two Individuals for Roles in Innospec FCPA Scheme", "SEC Proposes New Measures to Help
+        Investors in Target Date Funds".
+      - A unit named for the company ("J.P. Morgan Securities", "Banc of America Securities")
+        counts as the DOJ adapter's units do; a firm bought later does not, by the rule every map
+        follows: Merrill Lynch's 2003 Enron case is not Bank of America's.
+      - Registered in `SOURCES` (`lib/ingest/store.ts`; public domain, commercial use), credited in
+        the footer and the Terms page as the Justice Department is, scored without the model as a
+        Justice Department release is. The listing's `<time>` is a day ("2010-12-27T07:00:00Z"),
+        not an instant, so it sets no `occurred_at`.
+      - A new `check:sec-press` in the `check` chain, on the pinned 2003 and 2010 titles: Goldman's
+        2010 charge and settlement land on GS; the 2003 J.P. Morgan Chase and Citigroup release
+        lands on both; the Innospec individuals', Carter's executive's and Target Date Funds
+        releases land on no company; a closed year is not asked twice; the source is registered,
+        licence-checked (`check:commercial-mode`) and credited. No key, licence fee or recurring
+        cost; a cloud session builds it (sec.gov answers from the container, measured).
+      - *Derived from [`docs/proposals/2026-10-28-proposals.md`](proposals/2026-10-28-proposals.md)
+        #1, approved 2026-10-29 with the new source. Importance high · Efficiency medium-high ·
+        Practicality medium (the source approved; a title rule to tune on the two years read).*
+      - ✅ **Done in batch 73** (see its section): every release since 1997, the first year the
+        listing holds, read once for every company; 209 of the 6,898 name a company in the index as
+        the party, 125 of them before 2017. Units named otherwise ("J.P. Morgan Securities", "Banc
+        of America Securities") are not reached: the names a company's record carries do not
+        include them.
 - [ ] `P2` The rest of the securities-coverage depth set: **GDELT year-window backfill** (GDELT
       answers from this container but throttles hard — 429/503 — so this needs the production
       host to develop against) and **richer paid-tier evidence** (needs a paid key). The LoC
@@ -5051,6 +5190,145 @@ already held, but new investment goes to securities coverage first.
         missed on seven it had (Teleflex's Arrow, Stryker's Howmedica and later purchases, BD's
         CareFusion, GE's other names). Recalls 4,696 → 6,606. Siemens Healthineers is left out: it
         has no SEC filing to date its listing.
+- [ ] `P2` **The Federal Reserve's actions against the foreign banks with pages here.** Add the
+      foreign banks in the company index to `FED_BANKS` (`lib/fedActions.ts:53`), each row checked
+      by eye as batch 69 did, under its rule: a bank's own history and its US arms count, an
+      acquisition's past never does, and a unit the company sold stops counting the day it left
+      (`:51`). Batch 69 left it as the next step ("Foreign banks' US arms … are not mapped", in its
+      "Left as is"). Measured 2026-10-28 on the Board's two files (2,899 rows, 1,562 of them against
+      an organisation rather than a person): 37 action days fall on 14 foreign banks in the company
+      index, 27 of them before 2017 — HSBC 7 (6 before 2017; penalties of $165M in 2012, $131M in
+      2016, $175.3M in 2017), DB 7 (2; $136.95M in 2017), SAN 4 (3), UBS 3 (2; $100M in 2004, $342M
+      in 2015), NWG 3 (3; $274M in 2015, as The Royal Bank of Scotland), BCS 2 (2; $342M in 2015),
+      SMFG 2 (1), MUFG 2 (2), BBVA 2 (2), and RY, TD, BMO, BNS and CM 1 each (4 before 2017; TD's is
+      2024-10-09). Today's 25 banks carry 72 events (batch 69); these add 37. Four recent penalties
+      carry no amount in the file (Deutsche Bank's of 2022 and 2023, UBS's of 2023, TD's of 2024).
+      - **What the map must refuse, all in the files:** Bankers Trust's agreements of 1991 and 1994,
+        from before Deutsche Bank bought it (the day read from a filing) — its US trust company
+        counts under its later name, Deutsche Bank Trust Company Americas (2005, 2022); namesakes
+        ("Community Bankers Trust Corporation, Glen Allen, Virginia" is not Deutsche Bank's; "City
+        National Bancshares Corporation, Newark, New Jersey" is not RBC's City National; "Capital
+        Commerce Bancorp" and "Tennessee Commerce Bancorp" are not TD's); Credit Suisse's actions
+        from before UBS bought it — UBS's 2023 action names UBS Group AG beside Credit Suisse, and
+        counts.
+      - Where a named unit was bought ("Deutsche Bank Trust Company Americas", "RBC Centura Bank",
+        "HSBC Finance Corporation", "Santander Holdings USA"), the day it became the bank's comes
+        from a filing, as batch 69 dated American Express's sale. UBS AG's 2004 and 2015 actions are
+        read as the group's bank's, as Goldman Sachs Bank USA's are Goldman's (`:63`). MUFG's 2004
+        row is against "Union Bank of California International", by its name a unit of
+        UnionBanCal; its ownership that day needs a filing.
+      - Not mappable, so left out: the largest foreign-bank penalties in the files — BNP Paribas's
+        $508 million (2014) and $246.4 million (2017), Standard Chartered's, Société Générale's,
+        Commerzbank's and ICBC's — fall on banks with no page in the company index.
+      - Cases in `check:fed-actions` on rows pinned from both files: HSBC's 2012-12-11 order and
+        $165 million penalty are one event on HSBC; Barclays' 2015-05-20 penalty lands on BCS;
+        Bankers Trust's 1994 agreement is refused for DB, and Deutsche Bank Trust Company Americas'
+        2005 agreement is not; the Newark City National and the two Commerce Bancorps are refused;
+        UBS's 2023 action lands on UBS; every new bank's count is pinned. No key, licence or
+        recurring cost, and no request: the two files are already read once an ingest process,
+        whatever the number of banks.
+      - *Derived from [`docs/proposals/2026-10-28-proposals.md`](proposals/2026-10-28-proposals.md)
+        #2, approved 2026-10-29. Importance medium · Efficiency high · Practicality high.*
+- [ ] `P2` **QQQ's annual reports: keep form N-30B-2 among the fund forms.** QQQ's record (Invesco
+      QQQ Trust, Series 1, CIK 1067839, read whole) holds 22 N-30B-2 filings, filed 2005-05-16 to
+      2025-10-24, each with a report date of 30 September, 2004 to 2025 — its annual reports as a
+      unit investment trust (the record also holds the trust forms S-6 and N-8B-2). The fund form
+      list (`lib/sec.ts:823-840`) has no N-30B-2, so the filter drops every one (`:847`), and the
+      only shareholder report on its page is the N-CSRS of 2026-06-01. SPY, DIA and MDY file theirs
+      as N-30D, which is kept and typed earnings (`:832`): 48, 51 and 25 in their records. QQQ is
+      one of the four securities in the homepage's first chips (`INITIAL`,
+      `lib/suggestions.ts:50-56`).
+      - Add "N-30B-2" to `wanted` and `FUND_LABELS`, labelled "Shareholder report (N-30B-2)" and
+        typed `earnings` as the N-30D is: 21 years of the fund's annual reports on the Earnings chip
+        where SPY's sit. The rows go through batch 67's series rule as any fund filing does (QQQ's
+        series id, S000101292, is in `data/edgar-tickers.json`); one filed before its series list
+        begins keeps the trust's name and hedge.
+      - **Optional, not part of the approval unless the owner picks it:** the older forms of two the
+        list keeps. On Fidelity Contrafund's record N-Q runs to 2018-11-28 and NPORT-P begins
+        2019-11-26; NSAR-A and NSAR-B run to 2018 and N-CEN begins 2020-03-12. Counts: N-Q 29,
+        NSAR-A 24, NSAR-B 25 on Contrafund's record; NSAR-U 21, 19, 20 and 20 on SPY's, QQQ's,
+        DIA's and MDY's. Routine forms: a page would gain years of the rows it already shows from
+        2019 and 2020.
+      - A `check:sec-forms` case on QQQ's real row of 2021-12-29 (report date 2021-09-30): kept,
+        labelled and typed earnings; against main it is dropped at the form filter. No key, licence,
+        recurring cost or request — the rows are in the record ingest already downloads; small,
+        offline.
+      - *Derived from [`docs/proposals/2026-10-28-proposals.md`](proposals/2026-10-28-proposals.md)
+        #3, approved 2026-10-29. Importance medium · Efficiency very high · Practicality high.*
+- [ ] `P2` **FDA recalls for Siemens Healthineers and Fresenius SE.** Batch 70 counted both and left
+      them out for a rule, not for want of data (its "Not mapped, and why"), and both pages carry
+      almost nothing from EDGAR: Siemens Healthineers' record (SMMNY, CIK 1738519) holds six F-6EF
+      filings, the first 2018-04-26, and nothing else; Fresenius SE's (FSNUY, CIK 904868) holds 24
+      Schedule 13D filings and amendments about FMC, which carry no file number on its record, so
+      the stake rule keeps them off its page (`lib/sec.ts:863`).
+      - ✅ **The owner's calls, 2026-10-29:**
+        - **Siemens Healthineers' recalls count from its 2018 listing** (option a), the day read
+          from the company's own annual report, since no SEC filing dates it — for this case, an
+          exception to the map taking every date from the company's own SEC filing
+          (`lib/fdaRecalls.ts:77-78`). The map already dates a unit spun off from a listed parent
+          from its listing (Kenvue, `:317-328`); Siemens AG has no page here. Its 726 Class I and II
+          recalls under "Siemens Medical Solutions USA" and "Siemens Healthcare Diagnostics" (1,459
+          records; 4 recalls with a Class I product) are the 726 batch 70 counted: 413 began before
+          2018 and stay out, 313 from 2018 on, so at most 313 land. Not all 726 (option b, reading
+          a parent with no page as Medline's private past is read, `:369`), and not left out (c).
+        - **Fresenius SE's control of FMC counts:** FMC's recalls before 2023-11-30 are also
+          Fresenius SE's. Its 13D/A filed 2023-12-07 says that on 2023-11-30 FMC converted from a
+          KGaA to an AG "and Fresenius KGaA completed the deconsolidation of Fresenius Medical Care
+          AG"; before that day it "owned 100% of the equity of the General Partner", and held 32% of
+          FMC's shares. For this case the map's rule for a listed unit, "both companies' while the
+          parent holds most of it" (Envista `:403`, Bausch + Lomb `:501`), becomes "while the parent
+          controls it". 65 of the 86 recalls filed under FMC's own name began before 2023-11-30
+          (batch 70's 91 for FMC include NxStage).
+      - Fresenius Kabi, which needs neither call: "Fresenius Kabi USA" and "Fresenius Kabi
+        Compounding" have 58 recalls from 2012-09-27 — 36 drug and 22 device, 25 with a Class I
+        product — mapped to FSNUY. FMC's entry keeps refusing Kabi, "Fresenius Kabi belongs to
+        Fresenius SE, another company" (`:410`).
+      - Varian Medical Systems, which Siemens Healthineers bought, has 31 recalls, the last
+        2022-03-21: only those after the purchase closed count, so one at most. "Siemens Hearing
+        Instruments" is not Siemens Healthineers'.
+      - Cases in `check:fda-recalls` on real openFDA records: a Fresenius Kabi recall lands on FSNUY
+        and not on FMS; an FMC recall before 2023-11-30 lands on both FMS and FSNUY, and one from
+        that day on FMS only; Siemens Healthineers' recalls land on SMMNY from the listing day and
+        not before; "Siemens Hearing Instruments" is refused. Six more openFDA requests a day, three
+        per company, on the map's 213 (batch 70), inside the keyless 1,000; no key, licence or
+        recurring cost.
+      - *Derived from [`docs/proposals/2026-10-28-proposals.md`](proposals/2026-10-28-proposals.md)
+        #4, approved 2026-10-29 with both calls. Importance low-medium · Efficiency high ·
+        Practicality medium (the two calls made 2026-10-29).*
+- [ ] `P2` **The vehicle brands Ford and GM owned, on their pages while they owned them.** The FDA
+      and Federal Reserve maps count a business a company sold until the day it left
+      (`lib/fdaRecalls.ts:78`, `lib/fedActions.ts:51`) — J&J's Cordis counts for J&J until
+      2015-10-01 (`lib/fdaRecalls.ts:305`) — and the vehicle map cannot: `RecallMaker` has a `from`
+      and no `to` (`lib/recalls.ts:33-43`). Batch 31 left the question open: "whether a former
+      subsidiary's recalls belong on the seller's page is a question the rule does not settle" (its
+      "Open" box).
+      - ✅ **The owner's call, 2026-10-29: a brand Ford or GM owned counts for it until the day it
+        sold the brand**, as a sold business does in the other two maps.
+      - Add `to` to `RecallMaker` and to both adapters' queries and row filters — `recallQuery`
+        (`lib/recalls.ts:146-151`, filter `:231`) and `investigationQuery`
+        (`lib/investigations.ts:44-49`, filter `:90`). Map Volvo, Jaguar and Land Rover to Ford and
+        Saab to GM for the years each owned them, each day read from the company's own filings, as
+        batch 31 read purchase dates. Investigations follow through the same map.
+      - Measured 2026-10-28 on the recalls dataset at the 10,000-vehicle floor, in sizing windows
+        (the real days come from the filings): "Volvo Car USA, LLC", the dataset's name for Volvo's
+        recalls since 1968, 30 from 1999-04 to 2010-07, the largest 245,894 vehicles; "Jaguar Cars,
+        Ltd." 11 and "Redundant JAGUAR ROVER TRIUMPH INC." 2, from 1990 to 2008-05; "Land Rover" 13
+        from 2000-07 to 2008-05, the largest 100,174 vehicles; "SAAB CARS USA, INC." 12 from 2000 to
+        2010-02, and 8 more in 1990–1999 whose ownership the filings must settle. Defect
+        investigations opened in the same windows: Volvo 17, Jaguar 5, Land Rover 6, Saab 9. Ford's
+        page gains about 56 recalls and 28 investigations from 1990 to 2010, beside its 861 recalls
+        (batch 30); GM's about 12 and 9.
+      - What stays out: Jaguar Land Rover North America's 41 large recalls and 3 investigations,
+        all filed after the sale; Volvo's from before 1999 and after 2010. Aston Martin has none at
+        the floor.
+      - Cases in `check:vehicle-recalls` on pinned rows: a Volvo Car USA recall of 2003 lands on Ford
+        and one of 2016 does not; a Land Rover recall of 2004 lands on Ford and a Jaguar Land Rover
+        North America one of 2015 does not; a 2004 Saab recall lands on GM; the same holds for an
+        investigation of each. No key, licence, recurring cost or request — the makers join the same
+        per-company query (`manufacturer IN (…)`); small.
+      - *Derived from [`docs/proposals/2026-10-28-proposals.md`](proposals/2026-10-28-proposals.md)
+        #5, approved 2026-10-29 with the call. Importance low-medium · Efficiency high ·
+        Practicality medium-high (the call made 2026-10-29).*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

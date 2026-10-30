@@ -736,6 +736,23 @@ export function listedNamesContaining(everyday: string): string[] {
   return list;
 }
 
+const namedCache = new Map<string, number>();
+
+/**
+ * How many listed companies have this everyday name: "First Bancorp" is three banks' — North
+ * Carolina's, Puerto Rico's and Maine's — so a title naming "First Bancorp" names none of them
+ * for certain (batch 73).
+ */
+export function listedCompaniesNamed(everyday: string): number {
+  const own = phrase(everyday);
+  const cached = namedCache.get(own);
+  if (cached !== undefined) return cached;
+  const ciks = new Set<number>();
+  for (const r of localCompanies()) if (phrase(commonName(r.title)) === own) ciks.add(r.cik_str);
+  namedCache.set(own, ciks.size);
+  return ciks.size;
+}
+
 export interface Industry {
   /** 4-digit SIC code, e.g. "3674" */
   sic: string;

@@ -376,6 +376,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "doj_press") {
         return { score: 0.95, reason: "a Justice Department release naming the company as a party" };
       }
+      // …and an SEC release by the same test, taught the SEC's phrasing: it charges, sues or
+      // sanctions the company, or the company settles (lib/secPress.ts, batch 73)
+      if (subject.kind === "company" && row.sourceKey === "sec_press") {
+        return { score: 0.95, reason: "an SEC release naming the company as a party" };
+      }
       // …but a company's own document reaches it only when the title names it (lib/frCompany.ts),
       // so on a company subject that title is the evidence (2026-10-17 proposal 4).
       if (subject.kind === "company" && mentions(row.title, aliases) === "named") {

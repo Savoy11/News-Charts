@@ -35,7 +35,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. The SEC's own press releases about a company, from 1998 — a source for the owner to decide · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-29, the new source (the SEC's press releases) included.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present for one regulator and missing for a comparable one — the Justice
@@ -127,7 +127,7 @@ stretch · *Efficiency:* medium-high — a host already called, a rule already w
 
 ## 2. The Federal Reserve's actions against the foreign banks with pages here · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-29.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present for 25 US bank holding companies and missing for comparable listed
@@ -203,7 +203,7 @@ banks · *Efficiency:* high — rows on a built map, no new request · *Practica
 
 ## 3. QQQ's annual reports, filed on a form the fund list drops · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-29.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present for comparable funds and missing for one of the most prominent:
@@ -253,7 +253,7 @@ fails.
 
 ## 4. FDA recalls for Siemens Healthineers and Fresenius SE — two owner calls · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-29, with both calls: Siemens Healthineers' recalls count from its 2018 listing (option a), at most 313; and Fresenius SE's control of FMC counts, so FMC's recalls before 2023-11-30 are also Fresenius SE's.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present for 71 companies and missing for the two whose recalls batch 70
@@ -325,7 +325,7 @@ two calls
 
 ## 5. The vehicle brands Ford and GM owned, on their pages while they owned them — one owner call · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-10-29, with the call: a brand Ford or GM owned counts for it until the day it sold the brand.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present in two maps and missing in the third. The FDA and Federal Reserve

@@ -35,6 +35,7 @@ import { fetchInvestigations } from "../lib/investigations";
 import { fedBanksFor, fetchFedActions } from "../lib/fedActions";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { dojPossessive, dojQueryNames, fetchJusticeReleases } from "../lib/doj";
+import { fetchListingPage, secPressEvents } from "../lib/secPress";
 import { mayCarryRelease, readFilingHeadline } from "../lib/secHeadlines";
 import {
   fetchYahooFinanceNews,
@@ -93,6 +94,7 @@ const SOURCE_OF: Record<string, SourceKey> = {
   "FDA enforcement": "fda_enforcement",
   "Federal Reserve actions": "fed_enforcement",
   "Justice Department": "doj_press",
+  "SEC press releases": "sec_press",
 };
 
 const INGESTED: ReadonlySet<SourceKey> = new Set([...TOPIC_SOURCES, ...COMPANY_SOURCES]);
@@ -195,6 +197,16 @@ async function main() {
     else console.log(`  ${"Federal Reserve actions".padEnd(22)} — not a mapped bank`);
     reportFetch("Justice Department", await tried(fetchJusticeReleases(company.name, alsoKnownAs, possessive)),
       `(asked ${dojQueryNames(companyNames(company.name, alsoKnownAs), dojPossessive(company.name, possessive)).join(" | ")})`);
+    // the newest page of this year's listing, kept as ingest keeps it; the walk reads every year
+    // since 1997 once, with the company's former names, and is not repeated here
+    const own = dojPossessive(company.name, possessive);
+    const newest = await fetchListingPage(new Date().getUTCFullYear(), 0);
+    reportFetch("SEC press releases", {
+      events: secPressEvents(newest.releases, () => [...companyNames(company.name, alsoKnownAs), ...(own ? [own] : [])]),
+      outcome: newest.outcome === "ok" ? (newest.releases.length ? "ok" : "empty") : newest.outcome,
+      httpStatus: newest.httpStatus,
+      detail: newest.detail,
+    }, `(the ${newest.releases.length} newest this year; the walk reads every year since 1997)`);
   } else {
     reportFetch("GDELT", await tried(fetchNews(name)), "(throttles ~1 req/5s; rerun if 0)");
   }

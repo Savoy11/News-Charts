@@ -99,7 +99,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               inflation reports from the U.S. Bureau of Labor Statistics, vehicle recalls and
               defect investigations from the National Highway Traffic Safety Administration,
               drug, device and food recalls from the U.S. Food and Drug Administration, and
-              press releases from the U.S. Department of Justice.
+              press releases from the U.S. Department of Justice and the U.S. Securities and
+              Exchange Commission.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

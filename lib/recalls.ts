@@ -38,7 +38,14 @@ export interface RecallMaker {
    * name is the company's own.
    */
   from?: string;
-  /** Why this maker is the company's, and why from that day. */
+  /** The last day they are: a brand the company sold stops counting the day it left. */
+  to?: string;
+  /**
+   * The brand a title names, for a brand the company sold: on Ford's page a Volvo recall says it
+   * is a Volvo's, which today's reader would not otherwise know.
+   */
+  brand?: string;
+  /** Why this maker is the company's, and why from or to that day. */
   why: string;
 }
 
@@ -52,15 +59,63 @@ export interface RecallMaker {
  * a company bought counts from the day it was bought, and a name whose past mixes in another
  * company's records stays out until that can be separated (Shyft Group's start in 1973, two years
  * before Spartan Motors was founded).
+ *
+ * A brand a company sold counts for it until the day it left, as a sold business does in the FDA
+ * and Federal Reserve maps (the owner's call of 2026-10-29, batch 77): Volvo is Ford's from
+ * 1999-03-31 to 2010-08-01, and its recalls before and after are Volvo's owners' then. Half of a
+ * business is a joint venture, never the company's, as in those maps: Saab before 2000, when GM
+ * held half of it, stays out.
  */
 export const RECALL_MAKERS: Readonly<Record<number, { ticker: string; makers: readonly RecallMaker[] }>> = {
-  37996: { ticker: "F", makers: [{ name: "Ford Motor Company", why: "the company itself" }] },
+  37996: {
+    ticker: "F",
+    makers: [
+      { name: "Ford Motor Company", why: "the company itself" },
+      {
+        name: "Volvo Car USA, LLC",
+        from: "1999-03-31",
+        to: "2010-08-01",
+        brand: "Volvo",
+        why: "Volvo's U.S. company, Ford's from the purchase of AB Volvo's car business on 1999-03-31 (Ford's 10-K filed 2001-03-22) until the sale to Geely on 2010-08-02 (Ford's 8-K filed 2010-08-02)",
+      },
+      {
+        name: "Jaguar Cars, Ltd.",
+        from: "1990-01-01",
+        to: "2008-06-01",
+        brand: "Jaguar",
+        why: "Ford's from 1990, its figures including \"Jaguar sales since 1990\" (Ford's 10-K filed 1994-03-21), until the sale to Tata Motors on 2008-06-02 (Ford's 8-K filed 2008-06-02)",
+      },
+      {
+        name: "Redundant JAGUAR ROVER TRIUMPH INC.",
+        from: "1990-01-01",
+        to: "2008-06-01",
+        brand: "Jaguar",
+        why: "Jaguar's U.S. importer under its older name, whose last recalls, of 1990, are Jaguar XJS and XJ12 cars; Ford's as Jaguar is (Ford's 10-K filed 1994-03-21) until the sale to Tata Motors on 2008-06-02 (Ford's 8-K filed 2008-06-02)",
+      },
+      {
+        name: "Land Rover",
+        from: "2000-06-30",
+        to: "2008-06-01",
+        brand: "Land Rover",
+        why: "Ford's from the purchase from BMW on 2000-06-30 (Ford's 10-K filed 2001-03-22) until the sale to Tata Motors with Jaguar on 2008-06-02 (Ford's 8-K filed 2008-06-02); the name also carries Rover's and BMW's years before and Tata's after",
+      },
+    ],
+  },
   1467858: {
     ticker: "GM",
-    makers: [{
-      name: "General Motors, LLC",
-      why: "old GM's recalls to 2009 are filed under today's name too; today's GM carries old GM's ticker",
-    }],
+    makers: [
+      {
+        name: "General Motors, LLC",
+        why: "old GM's recalls to 2009 are filed under today's name too; today's GM carries old GM's ticker",
+      },
+      {
+        name: "SAAB CARS USA, INC.",
+        from: "2000-01-28",
+        to: "2010-02-22",
+        brand: "Saab",
+        why: "Saab's U.S. company. Before 2000 GM held half of Saab Automobile, a joint venture it carried at equity (old GM's 10-K filed 2000-03-13), bought the other half on 2000-01-28 (old GM's 10-Q filed 2000-05-15) and sold Saab to Spyker on 2010-02-23 (GM's 8-K filed 2010-03-05). It owned Saab throughout, though Saab's Swedish reorganization kept it off GM's books from 2009-02-20 to August 2009",
+      },
+    ],
   },
   1605484: {
     ticker: "STLA",
@@ -142,16 +197,30 @@ export function recallMakersFor(cik: number | string): readonly RecallMaker[] | 
 
 const quote = (s: string) => `'${s.replace(/'/g, "''")}'`;
 
+/** Whether a recall or investigation of that day is the company's under this maker. */
+export const heldOn = (m: RecallMaker, day: string): boolean => (!m.from || day >= m.from) && (!m.to || day <= m.to);
+
+/**
+ * Which makers a request asks for: those whose every row is the company's in one list, each dated
+ * one only between its days, by the dataset's own date field.
+ */
+export function makersWhere(makers: readonly RecallMaker[], field: string): string {
+  const plain = makers.filter((m) => !m.from && !m.to).map((m) => quote(m.name));
+  const dated = makers
+    .filter((m) => m.from || m.to)
+    .map((m) => `(${[
+      `manufacturer = ${quote(m.name)}`,
+      ...(m.from ? [`${field} >= ${quote(`${m.from}T00:00:00`)}`] : []),
+      ...(m.to ? [`${field} <= ${quote(`${m.to}T23:59:59`)}`] : []),
+    ].join(" AND ")})`);
+  return [...(plain.length ? [`manufacturer IN (${plain.join(", ")})`] : []), ...dated].join(" OR ");
+}
+
 /** One request for every recall of the company's makers at the floor, newest first. */
 export function recallQuery(makers: readonly RecallMaker[], floor = RECALL_FLOOR): string {
-  const plain = makers.filter((m) => !m.from).map((m) => quote(m.name));
-  const dated = makers
-    .filter((m) => m.from)
-    .map((m) => `(manufacturer = ${quote(m.name)} AND report_received_date >= ${quote(`${m.from}T00:00:00`)})`);
-  const who = [...(plain.length ? [`manufacturer IN (${plain.join(", ")})`] : []), ...dated].join(" OR ");
   const params = new URLSearchParams({
     $select: "nhtsa_id, report_received_date, manufacturer, subject, component, recall_type, potentially_affected, defect_summary",
-    $where: `(${who}) AND potentially_affected >= ${floor}`,
+    $where: `(${makersWhere(makers, "report_received_date")}) AND potentially_affected >= ${floor}`,
     $order: "report_received_date DESC, nhtsa_id",
     $limit: String(ROW_LIMIT),
   });
@@ -170,7 +239,7 @@ export interface RecallRow {
 }
 
 /** Short words kept in capitals that a vowel test would lower: anti-lock brakes, the airbag system. */
-const ACRONYMS = new Set(["ABS", "SIR", "ATV", "UTV", "SUV", "EGR", "ECM", "EV", "RV", "AC", "VIN", "OEM", "LED", "HID", "ESC", "CNG", "LPG", "HVAC", "USA"]);
+const ACRONYMS = new Set(["ABS", "SIR", "ATV", "UTV", "SUV", "EGR", "ECM", "EV", "RV", "AC", "VIN", "OEM", "LED", "HID", "ESC", "CNG", "LPG", "HVAC", "USA", "ISOFIX"]);
 
 /**
  * "FUEL TANK STRAP CORROSION" → "fuel tank strap corrosion". A word with a digit ("F-150", "FMVSS
@@ -185,10 +254,11 @@ const sentence = (s: string) => {
 
 /**
  * In the middle years the subject often opens with the maker's own name — "FORD/FRONT LOWER BALL
- * JOINTS", "GM/FMVSS 135/REAR BRAKE HOSE" — which says nothing on that maker's own page.
+ * JOINTS", "GM/FMVSS 135/REAR BRAKE HOSE", "GM/SAAB/FUEL PUMP" — which says nothing on that
+ * maker's own page, and a sold brand's title names the brand already (`RecallMaker.brand`).
  */
 const MAKER_PREFIX =
-  /^(?:FORD|GM|GENERAL MOTORS|CHEVROLET|CADILLAC|BUICK|PONTIAC|OLDSMOBILE|GMC|SATURN|LINCOLN|MERCURY|CHRYSLER|DODGE|JEEP|RAM|HONDA|ACURA|TOYOTA|LEXUS|SCION|TESLA|HARLEY-DAVIDSON|HARLEY|PACCAR|PETERBILT|KENWORTH|POLARIS|INDIAN|GOODYEAR|WINNEBAGO|BLUE BIRD|FERRARI|CUMMINS|THOR|AIRSTREAM|WABASH|RIVIAN|LUCID|MASERATI|LIVEWIRE)\s*\/\s*/;
+  /^(?:(?:FORD|GM|GENERAL MOTORS|CHEVROLET|CADILLAC|BUICK|PONTIAC|OLDSMOBILE|GMC|SATURN|LINCOLN|MERCURY|CHRYSLER|DODGE|JEEP|RAM|HONDA|ACURA|TOYOTA|LEXUS|SCION|TESLA|HARLEY-DAVIDSON|HARLEY|PACCAR|PETERBILT|KENWORTH|POLARIS|INDIAN|GOODYEAR|WINNEBAGO|BLUE BIRD|FERRARI|CUMMINS|THOR|AIRSTREAM|WABASH|RIVIAN|LUCID|MASERATI|LIVEWIRE|VOLVO CARS|VOLVO|JAGUAR|LAND ROVER|SAAB)\s*[/\\]\s*)+/;
 
 /**
  * The recall's subject line, readable. The dataset's oldest rows carry NHTSA's component code in
@@ -216,7 +286,7 @@ const NOUN: Record<string, string> = { Vehicle: "vehicles", Tire: "tires", "Chil
 
 /**
  * Rows → timeline events. Every row is checked against the maker map again, whatever the query
- * asked for: a recall reaches a company's page only under a mapped maker, on or after its day.
+ * asked for: a recall reaches a company's page only under a mapped maker, between its days.
  */
 export function recallEvents(rows: readonly RecallRow[], makers: readonly RecallMaker[], floor = RECALL_FLOOR): TimelineEvent[] {
   const byName = new Map(makers.map((m) => [m.name, m]));
@@ -228,14 +298,14 @@ export function recallEvents(rows: readonly RecallRow[], makers: readonly Recall
     const maker = byName.get(r.manufacturer ?? "");
     const count = Number(r.potentially_affected);
     if (!/^\d{2}[A-Z]\d{6}$/.test(id) || seen.has(id) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-    if (!maker || (maker.from && date < maker.from) || !Number.isFinite(count) || count < floor) continue;
+    if (!maker || !heldOn(maker, date) || !Number.isFinite(count) || count < floor) continue;
     seen.add(id);
     const summary = (r.defect_summary ?? "").replace(/\s+/g, " ").trim();
     out.push({
       id: `recall-${id}`,
       date,
       type: "recall",
-      title: `Recall of ${count.toLocaleString("en-US")} ${NOUN[r.recall_type ?? ""] ?? "vehicles"}: ${recallHeadline(r.subject, r.component)}`,
+      title: `Recall of ${count.toLocaleString("en-US")} ${maker.brand ? `${maker.brand} ` : ""}${NOUN[r.recall_type ?? ""] ?? "vehicles"}: ${recallHeadline(r.subject, r.component)}`,
       // the older summaries are written in capitals; the subject line already carries their gist
       description: summary && summary !== summary.toUpperCase() ? (summary.length > 400 ? `${summary.slice(0, 397).replace(/\s\S*$/, "")}…` : summary) : undefined,
       source: "NHTSA",

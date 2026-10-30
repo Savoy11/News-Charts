@@ -1,0 +1,353 @@
+{
+ "note": "Real rows for batch 77 (the brands Ford and GM sold), read from data.transportation.gov on 2026-10-30 with the adapters' own $select: the recalls dataset (6axg-epim) at the 10,000-vehicle floor and the investigations dataset (b3rp-be92). For each brand, rows on both sides of the day Ford or GM bought it and the day it sold it, and rows under the names of the brands' later owners.",
+ "recalls": [
+  {
+   "nhtsa_id": "98V254000",
+   "report_received_date": "1998-10-14T00:00:00.000",
+   "manufacturer": "Volvo Car USA, LLC",
+   "subject": "VOLVO/TAILPIPE BURNING",
+   "component": "ENGINE AND ENGINE COOLING",
+   "recall_type": "Vehicle",
+   "potentially_affected": "50835",
+   "defect_summary": "VEHICLE DESCRIPTION:  STATION WAGONS EQUIPPED WITH THIRD SEATS.  USERS OF THE THIRD SEAT, WHEN EXITING THE VEHICLE, CAN COME IN CONTACT WITH THE TAILPIPE."
+  },
+  {
+   "nhtsa_id": "99V235000",
+   "report_received_date": "1999-08-30T00:00:00.000",
+   "manufacturer": "Volvo Car USA, LLC",
+   "subject": "VOLVO/HEADLIGHT SWITCH",
+   "component": "EXTERIOR LIGHTING",
+   "recall_type": "Vehicle",
+   "potentially_affected": "139588",
+   "defect_summary": "VEHICLE DESCRIPTION:  PASSENGER VEHICLES.  OPERATION OF THE HEADLIGHT SWITCH, OVER AN EXTENDED PERIOD OF TIME, CAN RESULT IN INCONSISTENT OPERATION OF THE SWITCH."
+  },
+  {
+   "nhtsa_id": "03V284000",
+   "report_received_date": "2003-08-01T00:00:00.000",
+   "manufacturer": "Volvo Car USA, LLC",
+   "subject": "VOLVO/ISOFIX GUIDE",
+   "component": "EQUIPMENT",
+   "recall_type": "Vehicle",
+   "potentially_affected": "220407",
+   "defect_summary": "CERTAIN PASSENGER CARS FAIL TO COMPLY WITH THE REQUIREMENTS OF FEDERAL MOTOR VEHICLE SAFETY STANDARD NO. 225, \"CHILD RESTRAINT ANCHORAGE SYSTEMS.\"   THE SECOND ISOFIX GUIDE WAS NOT INSTALLED IN THESE VEHICLES AND, IN CERTAIN CASES, THE OWNER'S MANUAL ISOFIX INFORMATION IS INCORRECT."
+  },
+  {
+   "nhtsa_id": "09V483000",
+   "report_received_date": "2009-12-18T00:00:00.000",
+   "manufacturer": "Volvo Car USA, LLC",
+   "subject": "FUEL PUMP LEAK",
+   "component": "FUEL SYSTEM, GASOLINE",
+   "recall_type": "Vehicle",
+   "potentially_affected": "158733",
+   "defect_summary": "VOLVO IS RECALLING CERTAIN MODEL YEAR 2001-2005 S80, MODEL YEAR 2001-2004 V70, S60, XC70 AND MODEL YEAR 2003-2005 XC90 VEHICLES SOLD IN OR REGISTERED IN THE STATES OF ALABAMA, ARIZONA, ARKANSAS, CALIFORNIA, FLORIDA, GEORGIA, HAWAII, KENTUCKY, LOUISIANA, MISSISSIPPI, NEVADA, NEW MEXICO, NORTH CAROLINA, OKLAHOMA, SOUTH CAROLINA, TENNESSEE, TEXAS, UTAH, VIRGINIA AND THE U.S. TERRITORIES.  WHEN EXPOSED TO CERTAIN ENVIRONMENTAL CONDITIONS (HOT CLIMATE AND TEMPERATURE CYCLING) OVER TIME AND IN COMBINATION WITH VARYING FUEL QUALITY, THE FUEL PUMP CAN DEVELOP CRACKS IN THE FUEL PUMP FLANGE."
+  },
+  {
+   "nhtsa_id": "11V508000",
+   "report_received_date": "2011-10-18T00:00:00.000",
+   "manufacturer": "Volvo Car USA, LLC",
+   "subject": "TIRE AND LOAD INFORMATION LABEL/FMVSS 110",
+   "component": "EQUIPMENT",
+   "recall_type": "Vehicle",
+   "potentially_affected": "20611",
+   "defect_summary": "VOLVO IS RECALLING CERTAIN MODEL YEAR 2006-2012 C70 VEHICLES MANUFACTURED FROM NOVEMBER 15, 2005, THROUGH JULY 31, 2011, AND MODEL YEAR 2011-2012 S60 VEHICLES MANUFACTURED FROM JULY 14, 2010, THROUGH APRIL 16, 2011, THAT WERE EQUIPPED WITH OPTIONAL ACCESSORY SPARE TIRE KIT.  THESE VEHICLES FAIL TO COMPLY WITH THE REQUIREMENTS OF FEDERAL MOTOR VEHICLE SAFETY STANDARD NUMBER. 110, \"TIRE SELECTION AND RIMS.\"  THESE VEHICLES DO NOT CONTAIN THE CORRECT INFORMATION FOR VEHICLES EQUIPPED WITH THE OPTIONAL ACCESSORY SPARE TIRE AND WHEEL KIT."
+  },
+  {
+   "nhtsa_id": "16V268000",
+   "report_received_date": "2016-05-04T00:00:00.000",
+   "manufacturer": "Volvo Car USA, LLC",
+   "subject": "Sunroof may Fully Close Unintentionally",
+   "component": "VISIBILITY",
+   "recall_type": "Vehicle",
+   "potentially_affected": "30214",
+   "defect_summary": "Volvo Car USA LLC (Volvo) is recalling certain model year 2016 XC90 vehicles manufactured January 27, 2015, to April 23, 2016.  The sunroofs on the affected vehicles have a switch on the overhead console that may not be adequately recessed to prevent the switch from being unintentionally pressed.  When pressed, the sunroof may fully close.  As such, these vehicles fail to comply with the requirements of Federal Motor Vehicle Safety Standard (FMVSS) number 118, \"Power-Operated Window, Partition, and Roof Panel Systems.\""
+  },
+  {
+   "nhtsa_id": "99V237000",
+   "report_received_date": "1999-08-26T00:00:00.000",
+   "manufacturer": "Land Rover",
+   "subject": "LAND ROVER/ABS",
+   "component": "SERVICE BRAKES, HYDRAULIC",
+   "recall_type": "Vehicle",
+   "potentially_affected": "11583",
+   "defect_summary": "VEHICLE DESCRIPTION:  PASSENGER VEHICLES.  THE CONTACTS OF THE RELAY, WHICH OPERATES THE ANTI-LOCK BRAKE SYSTEM (ABS) PUMP, CAN STICK AND REMAIN CLOSED WHEN COMMANDED TO OPEN BY THE ABS ELECTRONIC CONTROL UNIT.  THE WARNING LAMP WILL ILLUMINATE AND AN AUDIBLE ALARM WILL SOUND."
+  },
+  {
+   "nhtsa_id": "04V005000",
+   "report_received_date": "2004-01-06T00:00:00.000",
+   "manufacturer": "Land Rover",
+   "subject": "LAND ROVER/ABS VALVE COVER BOLT",
+   "component": "SERVICE BRAKES, HYDRAULIC",
+   "recall_type": "Vehicle",
+   "potentially_affected": "100174",
+   "defect_summary": "CERTAIN SPORT UTILITY VEHICLES FAIL TO COMPLY WITH THE REQUIREMENTS OF FEDERAL MOTOR VEHICLE SAFETY STANDARDS NO. 105, \"HYDRAULIC AND ELECTRIC BRAKE SYSTEMS,\" AND NO. 135, \"PASSENGER CAR BRAKE SYSTEMS.\"   THE ANTI-LOCK BRAKING SYSTEM (ABS) MODULATOR VALVE COVER RETAINING BOLTS CAN CRACK DUE TO STRESSES TRANSMITTED BY THE FLEXING VALVE COVERS."
+  },
+  {
+   "nhtsa_id": "08V055000",
+   "report_received_date": "2008-02-05T00:00:00.000",
+   "manufacturer": "Land Rover",
+   "subject": "SUNROOF DETACHMENT",
+   "component": "VISIBILITY",
+   "recall_type": "Vehicle",
+   "potentially_affected": "12353",
+   "defect_summary": "LAND ROVER IS RECALLING 12,353 MY 2008 LR2 VEHICLES BUILT WITH A SUNROOF.  FAILURE OF EITHER THE LEFT OR RIGHT HAND SIDE SUNROOF GUIDE RAIL CAN OCCUR WHEN THE SUNROOF IS OPERATED.  EXCESSIVE STRESS CAN DEVELOP IN THE OVER-MOLDED BRACKET WHICH COULD LEAD TO CRACKING DURING NORMAL SUNROOF OPERATION.  IF CRACKS OCCUR AND PROPAGATE IN A CERTAIN AREA OF THE GUIDE RAIL, FRAGMENTS OF THE PLASTIC OVER-MOLD MATERIAL MAY DETACH FROM THE GUIDE RAIL AND OBSTRUCT THE OPERATION OF THE SUNROOF."
+  },
+  {
+   "nhtsa_id": "08V248000",
+   "report_received_date": "2008-06-04T00:00:00.000",
+   "manufacturer": "Land Rover",
+   "subject": "STEERING COLUMN ROTARY COUPLER WIRING FRACTURE",
+   "component": "STEERING",
+   "recall_type": "Vehicle",
+   "potentially_affected": "37142",
+   "defect_summary": "LAND ROVER IS RECALLING 37,142 MY 2005-2006 LR3 AND RANGE ROVER SPORT VEHICLES.  RELATIVE MOTION BETWEEN THE STEERING WHEEL HUB AND/OR THE STEERING COLUMN COWL WITH THE CLOCKSPRING, WHICH INCLUDES THE DRIVER SIDE AIR BAG CIRCUITRY, COULD RESULT IN FRACTURING OF THE AIR BAG WIRING CONNECTION.  IF AN AIR BAG WIRE FRACTURES, THE SRS WARNING LIGHT WILL ILLUMINATE ON THE INSTRUMENT CLUSTER.  THE SRS WARNING LIGHT INDICATES TO THE DRIVER THAT THERE IS A CONCERN WITH THE SRS SYSTEM IN THE VEHICLE AND THAT IMMEDIATE REPAIR IS NECESSARY."
+  },
+  {
+   "nhtsa_id": "15V039000",
+   "report_received_date": "2015-01-27T00:00:00.000",
+   "manufacturer": "Jaguar Land Rover North America, LLC",
+   "subject": "Front Brake Hose(s) may Rupture",
+   "component": "SERVICE BRAKES, HYDRAULIC",
+   "recall_type": "Vehicle",
+   "potentially_affected": "74648",
+   "defect_summary": "Jaguar Land Rover North America, LLC (Land Rover) is recalling certain model year 2006-2012 Land Rover Range Rover vehicles manufactured April 15, 2005, to September 4, 2012.  One or both of the flexible front brake hoses may rupture causing loss of brake fluid."
+  },
+  {
+   "nhtsa_id": "88V018000",
+   "report_received_date": "1988-02-12T00:00:00.000",
+   "manufacturer": "Jaguar Cars, Ltd.",
+   "subject": "SUSPENSION:INDEPENDENT FRONT ATTACHING MECHANISMS:",
+   "component": "SUSPENSION",
+   "recall_type": "Vehicle",
+   "potentially_affected": "16000",
+   "defect_summary": "CERTAIN FRONT SUSPENSION LOWER SPRING PAN FIXINGS MAY FAIL DUE TO STRESS CORROSION."
+  },
+  {
+   "nhtsa_id": "90V023000",
+   "report_received_date": "1990-02-08T00:00:00.000",
+   "manufacturer": "Jaguar Cars, Ltd.",
+   "subject": "BRAKES:HYDRAULIC:LINES:HOSE:NON-METALLIC",
+   "component": "SERVICE BRAKES, HYDRAULIC",
+   "recall_type": "Vehicle",
+   "potentially_affected": "38315",
+   "defect_summary": "HIGH PRESSURE FLUID SUPPLY HOSE COULD RUPTURE CAUSING LOSS OF FLUID OF THE BRAKE POWER ASSIST SYSTEM."
+  },
+  {
+   "nhtsa_id": "06V418000",
+   "report_received_date": "2006-10-31T00:00:00.000",
+   "manufacturer": "Jaguar Cars, Ltd.",
+   "subject": "FUEL TANK SEALS",
+   "component": "FUEL SYSTEM, GASOLINE",
+   "recall_type": "Vehicle",
+   "potentially_affected": "13655",
+   "defect_summary": "SOME PASSENGER VEHICLES MAY HAVE FUEL TANKS IN WHICH THE FUEL DELIVERY MODULE (FDM), JET PUMP MODULE (JPM), AND/OR CLUSTER VALVE (CV) SEALS ARE NOT PROPERLY RETAINED IN THE FUEL TANK.  THIS MAY RESULT IN ILLUMINATION OF THE MALFUNCTION INDICATOR LAMP (MIL), OR A FUEL ODOR."
+  },
+  {
+   "nhtsa_id": "09V144000",
+   "report_received_date": "2009-04-30T00:00:00.000",
+   "manufacturer": "Jaguar Cars, Ltd.",
+   "subject": "UNDER FLOOR/REAR CROSS MEMBER BRAKE PIPE CORROSION",
+   "component": "SERVICE BRAKES, HYDRAULIC",
+   "recall_type": "Vehicle",
+   "potentially_affected": "14551",
+   "defect_summary": "JAGUAR IS RECALLING 14,551 MY 2004 XJ VEHICLES. A POTENTIAL CONCERN HAS BEEN IDENTIFIED WITH THE INSTALLATION OF A NOISE VIBRATION AND HARSHNESS (NVH) PAD FITTED TO THE UNDER TRAY AND ITS INTERACTION WITH THE REAR UNDER FLOOR BRAKE PIPES, REAR CROSS MEMBER BRAKE PIPES, AND THEIR UNIONS.  A REVIEW OF VEHICLE BUILD CONDITIONS PROVIDES EVIDENCE THAT A TOUCH CONDITION CAN EXIST BETWEEN THE UNDER FLOOR AND CROSS MEMBER BRAKE PIPES AND THE NVH PAD AT THE REAR OF THE UNDER FLOOR UNDER TRAY.  WHERE THE TOUCH CONDITION EXISTS, WATER AND DIRT CAN COLLECT AND BE HELD IN CONTACT WITH THE PIPES AND THEIR UNIONS, ABRADE THE CORROSION PROTECTION AND REDUCE THE CORROSION LIFE OF THE PIPES ACCORDINGLY."
+  },
+  {
+   "nhtsa_id": "85V059000",
+   "report_received_date": "1985-05-07T00:00:00.000",
+   "manufacturer": "Redundant JAGUAR ROVER TRIUMPH INC.",
+   "subject": "INTERIOR SYSTEMS:SEAT BELTS:LAP:FRONT",
+   "component": "SEAT BELTS",
+   "recall_type": "Vehicle",
+   "potentially_affected": "150000",
+   "defect_summary": "WIDESPREAD LACK OF UNDERSTANDING ABOUT THE OPERATION OF  WEBBING SENSITIVE AND DUAL SENSITIVE SEAT BELTS HAS LEAD TO NON-USE OF BELTS BY  A NUMBER OF OWNERS. SOME BELTS RETRACTORS MAY JAM, BIND OR LOCK. THIS MAY        DISCOURAGE THE USE OF THE SAFETY BELTS.                                                                                                                           CONSEQUENCE OF DEFECT: NON-USE OF SEAT BELTS SUBJECTS OCCUPANTS TO RISK OF       INJURY IN EVENT OF AN ACCIDENT OR SUDDEN BRAKING."
+  },
+  {
+   "nhtsa_id": "90V123000",
+   "report_received_date": "1990-07-02T00:00:00.000",
+   "manufacturer": "Redundant JAGUAR ROVER TRIUMPH INC.",
+   "subject": "FUEL:FUEL TANK ASSEMBLY:TANK",
+   "component": "FUEL SYSTEM, GASOLINE",
+   "recall_type": "Vehicle",
+   "potentially_affected": "35000",
+   "defect_summary": "EXCESSIVE FUEL VAPOR PRESSURE CAN OCCUR THAT, AFTER PROLONGED CYCLING, COULD WEAKEN THE FUEL TANK STRUCTURE."
+  },
+  {
+   "nhtsa_id": "99V109000",
+   "report_received_date": "1999-05-06T00:00:00.000",
+   "manufacturer": "SAAB CARS USA, INC.",
+   "subject": "SAAB/AIR BAG MODULE",
+   "component": "AIR BAGS",
+   "recall_type": "Vehicle",
+   "potentially_affected": "26116",
+   "defect_summary": "VEHICLE DESCRIPTION:  PASSENGER VEHICLES.  MOISTURE CAN ENTER THE AIR BAG INFLATABLE RESTRAINT ELECTRONIC CONTROL MODULE (ECM) AND CAUSE CORROSION ON PORTIONS OF THE ECM PRINTER CIRCUIT BOARDS."
+  },
+  {
+   "nhtsa_id": "01V222000",
+   "report_received_date": "2001-07-02T00:00:00.000",
+   "manufacturer": "SAAB CARS USA, INC.",
+   "subject": "SAAB\\AIR BAG MODULE",
+   "component": "AIR BAGS",
+   "recall_type": "Vehicle",
+   "potentially_affected": "12036",
+   "defect_summary": "VEHICLE DESCRIPTION:  PASSENGER VEHICLES.  STATIC ELECTRICITY CAN BUILD UP WITHIN THE PASSENGER-SIDE AIR BAG MODULE AND CREATE ENOUGH OF A CHARGE TO CAUSE AN INADVERTENT AIR BAG DEPLOYMENT.   MOST OF THESE INADVERTENT DEPLOYMENTS HAVE OCCURRED IN COOLER, DRY WEATHER, AND HAVE GENERALLY INCLUDED DUSTING OR WIPING OF THE DASHBOARD, STARTING THE CAR, OR CLOSING THE DOOR."
+  },
+  {
+   "nhtsa_id": "04V557000",
+   "report_received_date": "2004-11-19T00:00:00.000",
+   "manufacturer": "SAAB CARS USA, INC.",
+   "subject": "GM/SAAB/FUEL PUMP",
+   "component": "FUEL SYSTEM, GASOLINE",
+   "recall_type": "Vehicle",
+   "potentially_affected": "17394",
+   "defect_summary": "ON CERTAIN PASSENGER VEHICLES, THE FUEL PUMP RETAINING TABS HOLDING THE FUEL LINES WERE DAMAGED DURING PRODUCTION."
+  },
+  {
+   "nhtsa_id": "08V160000",
+   "report_received_date": "2008-04-09T00:00:00.000",
+   "manufacturer": "SAAB CARS USA, INC.",
+   "subject": "OCCUPANT PROTECTION IN INTERIOR IMPACT/FMVSS 201",
+   "component": "SEATS",
+   "recall_type": "Vehicle",
+   "potentially_affected": "57389",
+   "defect_summary": "SAAB IS RECALLING 57,389 MY 2002-2008 9-5 SERIES VEHICLES FOR FAILING TO COMPLY WITH THE REQUIREMENTS OF FEDERAL MOTOR VEHICLE SAFETY STANDARD NO. 201, \"OCCUPANT PROTECTION IN INTERIOR IMPACT.\" DURING COMPLIANCE TESTING, ONE OF THE UPPER INTERIOR OCCUPANT PROTECTION TEST POINTS EXCEEDED THE STANDARD'S REQUIREMENTS."
+  }
+ ],
+ "investigations": [
+  {
+   "nhtsa_action_number": "PE99005",
+   "manufacturer": "Volvo Car USA, LLC",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "FUEL LEAKAGE",
+   "component": "VEHICLE SPEED CONTROL",
+   "open_date": "1999-01-15T00:00:00.000",
+   "closed_date": "1999-06-30T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE03003",
+   "manufacturer": "Volvo Car USA, LLC",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "FUEL TANK LEAKS",
+   "component": "FUEL SYSTEM, GASOLINE",
+   "open_date": "2003-01-16T00:00:00.000",
+   "closed_date": "2003-06-11T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE10025",
+   "manufacturer": "Volvo Car USA, LLC",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "Central Electronic Module Failure",
+   "component": "ELECTRICAL SYSTEM",
+   "open_date": "2010-07-20T00:00:00.000",
+   "closed_date": "2010-11-22T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE05034",
+   "manufacturer": "Land Rover",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "BRAKE LIGHT SWITCH FAILURE",
+   "component": "EXTERIOR LIGHTING",
+   "open_date": "2005-06-16T00:00:00.000",
+   "closed_date": "2005-10-14T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE16015",
+   "manufacturer": "Land Rover",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "Powered vehicle rollaway",
+   "component": "POWER TRAIN",
+   "open_date": "2016-12-16T00:00:00.000",
+   "closed_date": "2020-08-11T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE25006",
+   "manufacturer": "Jaguar Land Rover North America, LLC",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "Front Steering Knuckle Fractures",
+   "component": "STEERING",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=25V514",
+    "description": "25V514"
+   },
+   "open_date": "2025-06-27T00:00:00.000",
+   "closed_date": "2026-04-24T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EA90004",
+   "manufacturer": "Jaguar Cars, Ltd.",
+   "investigation_type": "Engineering Analysis",
+   "subject": "ANTI-LOCK BRAKES FAIL",
+   "component": "SERVICE BRAKES, HYDRAULIC",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=90V024",
+    "description": "90V024"
+   },
+   "open_date": "1989-10-23T00:00:00.000",
+   "closed_date": "1990-06-28T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "DP98002",
+   "manufacturer": "Jaguar Cars, Ltd.",
+   "investigation_type": "Defect Petition",
+   "subject": "THROTTLE STICKING",
+   "component": "VEHICLE SPEED CONTROL",
+   "open_date": "1998-03-05T00:00:00.000",
+   "closed_date": "1998-03-16T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "RQ19004",
+   "manufacturer": "Jaguar Cars, Ltd.",
+   "investigation_type": "Recall Query",
+   "subject": "Fuel Tank Flange Leak",
+   "component": "FUEL SYSTEM, GASOLINE",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=20V081",
+    "description": "20V081"
+   },
+   "open_date": "2019-06-28T00:00:00.000",
+   "closed_date": "2020-11-05T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EA95020",
+   "manufacturer": "SAAB CARS USA, INC.",
+   "investigation_type": "Engineering Analysis",
+   "subject": "PASSENGER COMPARTMENT FIRE",
+   "component": "ELECTRICAL SYSTEM",
+   "open_date": "1995-06-30T00:00:00.000",
+   "closed_date": "1996-07-31T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EA04008",
+   "manufacturer": "SAAB CARS USA, INC.",
+   "investigation_type": "Engineering Analysis",
+   "subject": "ENGINE STALL",
+   "component": "ENGINE AND ENGINE COOLING",
+   "open_date": "2004-03-19T00:00:00.000",
+   "closed_date": "2004-10-27T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE09048",
+   "manufacturer": "SAAB CARS USA, INC.",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "SEAT BELT RETRACTOR",
+   "component": "SEAT BELTS",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=10V043",
+    "description": "10V043"
+   },
+   "open_date": "2009-09-30T00:00:00.000",
+   "closed_date": "2010-02-25T00:00:00.000",
+   "status": "Close"
+  }
+ ]
+}

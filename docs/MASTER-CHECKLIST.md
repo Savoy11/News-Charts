@@ -988,6 +988,72 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 77: the brands Ford and GM sold, on their pages while they owned them (2026-10-30)
+
+The last of the five proposals the owner approved on 2026-10-29 (#5), with its call: a brand Ford
+or GM owned counts for it until the day it sold the brand.
+
+- [x] **A vehicle maker can end** (`RecallMaker.to`, `lib/recalls.ts`): a brand a company sold
+      stops counting the day it left, as a sold business does in the FDA and Federal Reserve maps.
+      Both adapters ask for a dated maker only between its days, through one shared condition
+      (`makersWhere`), and check every row against the same days whatever the dataset answers
+      (`heldOn`), recalls by the day the report arrived and investigations by the day they opened.
+- [x] **Ford's page carries Volvo, Jaguar and Land Rover while Ford owned them**, every day from
+      Ford's own filings:
+      - Volvo Car USA, from the purchase of AB Volvo's car business on 1999-03-31 (Ford's 10-K filed
+        2001-03-22) to 2010-08-01; on 2010-08-02 Geely bought Volvo Car Corporation and Volvo Cars
+        of North America (Ford's 8-K filed 2010-08-02).
+      - Land Rover, from the purchase from BMW on 2000-06-30 (the same 10-K) to 2008-06-01; "The sale
+        was completed on June 2, 2008" (Ford's 8-K filed 2008-06-02). The dataset files Rover's and
+        BMW's earlier Land Rover recalls and Tata's later ones under the same name; they stay out.
+      - Jaguar Cars, Ltd., from 1990 — Ford's figures "include Jaguar sales since 1990" (its 10-K filed
+        1994-03-21, the oldest on EDGAR, which gives no closer day) — to the same sale. Its two 1990
+        recalls under the importer's older name, "Redundant JAGUAR ROVER TRIUMPH INC.", count too:
+        NHTSA's own campaign records list them as Jaguar XJS and XJ12 cars.
+- [x] **GM's page carries Saab from 2000-01-28 to 2010-02-22.** "On January 28, 2000, GM completed
+      the acquisition of the remaining 50% of Saab Automobile AB from Investor AB" (old GM's 10-Q filed
+      2000-05-15); "Spyker Cars Finalizes Purchase of Saab Automobile from GM", 2010-02-23 (GM's 8-K
+      filed 2010-03-05).
+      - Before 2000 GM held half of Saab, a joint venture it carried at equity ("lower equity losses
+        from Saab Automobile AB", old GM's 10-K filed 2000-03-13), so Saab's earlier recalls stay
+        out, as joint ventures do in the other maps.
+      - Saab's Swedish reorganization kept it off GM's books from 2009-02-20 to August 2009 (GM's 10-K
+        for 2009) while GM still owned it. The owner's rule counts a brand until it was sold, so the
+        months count; nothing in either dataset falls in them.
+- [x] **A sold brand's title names it**: "Recall of 220,407 Volvo vehicles: ISOFIX guide", "NHTSA
+      opened an engineering analysis (Saab): Engine stall". Today's Ford page would otherwise show
+      a Volvo recall as a Ford one. The brand's own name in the subject (`VOLVO/`, `GM/SAAB/`,
+      `SAAB\`) is dropped, as the maker's own name already was. Makers a company still owns are
+      unchanged; the check holds that a maker names a brand exactly when it has an end day. "ISOFIX"
+      keeps its capitals.
+- **Measured** on the two datasets 2026-10-30, through the map: Ford's page gains 56 recalls at the
+  10,000-vehicle floor (Volvo 30 from 1999-08-30 to 2009-12-18, Jaguar 11 and 2 under the older name
+  from 1990-02-08, Land Rover 13 from 2000-10-16 to 2008-02-05) and 29 investigations (Volvo 17,
+  Jaguar 6, Land Rover 6), beside its own 861 recalls. GM's gains 12 recalls (2001-05-18 to
+  2008-04-09) and 9 investigations. All fall before 2011, in the years before GDELT reaches.
+  - Not mapped: Jaguar Land Rover North America (41 large recalls, all after the sale); Aston
+    Martin, Ford's until 2007, which has no recall at the floor and no investigation; Mazda, of which
+    Ford owned 33.4% and accounted for "on an equity basis" (its 10-K filed 2001-03-22); and Isuzu
+    and Fuji Heavy Industries (Subaru), which old GM carried at equity, 20% of Fuji (its 10-K filed
+    2001-03-07). None was most of the company.
+- 21 new cases in `check:vehicle-recalls` (74 in all) on real rows pinned 2026-10-30
+  (`scripts/fixtures/nhtsa-sold-brands.json`), on both sides of every purchase and sale day and
+  under the brands' later owners' names: a Volvo recall of 2003 lands on Ford and those of 1998,
+  2011 and 2016 do not; a Land Rover recall of 2004 lands on Ford and BMW's of 1999, one two days
+  after the sale and Jaguar Land Rover North America's of 2015 do not; a 2004 Saab recall lands on
+  GM and one of 1999 does not; and likewise for an investigation of each. 15 fail on main; the six
+  that check a row stays out pass there too, as nothing is added there. A `check:live` assertion:
+  Ford's live Volvo recalls are about 30 and none outside its days.
+- **Requests made:** data.transportation.gov 8 (the makers' names, their recalls at the floor, their
+  investigations and the 1990 importer rows; then Ford's and GM's recalls and investigations live
+  through the map); api.nhtsa.gov 2 (the makes of those two recalls);
+  EDGAR 27 (efts.sec.gov 11, www.sec.gov 12, one a wrong path, data.sec.gov 4). All with the
+  project's User-Agent,
+  which carries the owner's contact address. No new source, key, licence or recurring cost: the
+  brands join each company's one daily query.
+- `npm run check` passes and `npm run lint` is clean. HawkScan was not run: `HAWK_API_KEY` is not
+  set.
+
 ## NC ledger — batch 76: FDA recalls for Siemens Healthineers and Fresenius SE (2026-10-30)
 
 The fourth of the five proposals the owner approved on 2026-10-29 (#4), with both of its calls.
@@ -5416,7 +5482,7 @@ already held, but new investment goes to securities coverage first.
         Practicality medium (the two calls made 2026-10-29).*
       - ✅ **Done in batch 76** (see its section): Siemens Healthineers 298 recalls from its
         listing on 2018-03-16, Fresenius SE 125 (Kabi's 58, FMC's 67 from before 2023-11-30).
-- [ ] `P2` **The vehicle brands Ford and GM owned, on their pages while they owned them.** The FDA
+- [x] `P2` **The vehicle brands Ford and GM owned, on their pages while they owned them.** The FDA
       and Federal Reserve maps count a business a company sold until the day it left
       (`lib/fdaRecalls.ts:78`, `lib/fedActions.ts:51`) — J&J's Cordis counts for J&J until
       2015-10-01 (`lib/fdaRecalls.ts:305`) — and the vehicle map cannot: `RecallMaker` has a `from`
@@ -5450,6 +5516,9 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-10-28-proposals.md`](proposals/2026-10-28-proposals.md)
         #5, approved 2026-10-29 with the call. Importance low-medium · Efficiency high ·
         Practicality medium-high (the call made 2026-10-29).*
+      - ✅ **Done in batch 77** (see its section): Ford's page gains 56 recalls and 29
+        investigations of Volvo, Jaguar and Land Rover from 1990 to 2010, GM's 12 and 9 of Saab from
+        2000 to 2010, each day from Ford's and GM's own filings.
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

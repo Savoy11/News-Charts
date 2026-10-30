@@ -17,7 +17,8 @@ import { COMPANY_SOURCES } from "./ingest";
  * The rows are real, read from data.transportation.gov on 2026-10-22
  * (scripts/fixtures/nhtsa-recalls.json): one from each era of subject line, the two sides of
  * Stellantis's 2014-10-12 boundary, a recall under the floor, another maker's recall, a tyre and an
- * equipment recall. Offline: the one fetch is mocked.
+ * equipment recall. Offline: the one fetch is mocked. Batch 77 adds the brands Ford and GM sold
+ * (scripts/fixtures/nhtsa-sold-brands.json).
  */
 
 let pass = 0;
@@ -102,8 +103,10 @@ async function main(): Promise<void> {
   check("no maker belongs to two companies", new Set(names).size === names.length);
   check("every maker says why it is the company's, and a start day is a real day",
     entries.every(([, e]) => e.makers.every((m) => m.why.length > 10 && (!m.from || /^\d{4}-\d{2}-\d{2}$/.test(m.from)))));
-  check("GM keeps old GM's recalls (it carries old GM's ticker); Ford's are all its own",
-    makersOf("GM").every((m) => !m.from) && makersOf("F").every((m) => !m.from));
+  const own = (ticker: string, name: string) => makersOf(ticker).find((m) => m.name === name);
+  check("GM keeps old GM's recalls (it carries old GM's ticker); Ford's own are all its own",
+    !!own("GM", "General Motors, LLC") && !own("GM", "General Motors, LLC")?.from && !own("GM", "General Motors, LLC")?.to &&
+      !!own("F", "Ford Motor Company") && !own("F", "Ford Motor Company")?.from && !own("F", "Ford Motor Company")?.to);
   check("a company that makes no vehicles has no makers", recallMakersFor(320193) === null && recallMakersFor("0000037996") !== null);
 
   console.log("\nOne request per company");
@@ -194,8 +197,8 @@ async function main(): Promise<void> {
     !Object.values(RECALL_MAKERS).some((c) => investigationEvents(invRows, c.makers).some((e) => e.externalId === "AQ08001")));
   check("the query asks a dated maker only from its day, every other mapped maker in full",
     (new URL(investigationQuery(makersOf("STLA"))).searchParams.get("$where") ?? "").includes("manufacturer = 'Chrysler (FCA US, LLC)' AND open_date >= '2014-10-12T00:00:00'") &&
-      new URL(investigationQuery(makersOf("F"))).searchParams.get("$where") === "manufacturer IN ('Ford Motor Company')",
-    new URL(investigationQuery(makersOf("F"))).searchParams.get("$where") ?? "");
+      new URL(investigationQuery(makersOf("TSLA"))).searchParams.get("$where") === "manufacturer IN ('Tesla, Inc.')",
+    new URL(investigationQuery(makersOf("TSLA"))).searchParams.get("$where") ?? "");
   check("each has its own identity, apart from any recall's", toyota?.dedupBasis === "nhtsa-inv:RQ10003" && toyota.sourceKey === "nhtsa_investigations");
   check("on the chart it is a dot ranked like news, never the R a recall made gets",
     !!toyota && isInvestigation(toyota) && markerStyle(toyota).text === "" && markerPriority(toyota) < markerPriority({ type: "recall", title: "Recall of 10,000 vehicles: x" }));
@@ -217,6 +220,74 @@ async function main(): Promise<void> {
   check("company ingest asks for them beside the recalls, for a mapped maker only",
     (COMPANY_SOURCES as readonly string[]).includes("nhtsa_investigations") &&
       /if \(makers\) \{\s*await run\("nhtsa_recalls"[^\n]*\n[^\n]*\n\s*await run\("nhtsa_investigations", [^\n]*fetchInvestigations\(company\.cik\)\);\s*\}/.test(ingest));
+
+  /**
+   * The brands Ford and GM sold count for them while they owned them (batch 77, the 2026-10-28
+   * proposal 5; the owner's call of 2026-10-29). The rows are real, read from data.transportation.gov
+   * on 2026-10-30 (scripts/fixtures/nhtsa-sold-brands.json), on both sides of every day Ford or GM
+   * bought a brand and sold it, and under the names of the brands' later owners.
+   */
+  console.log("\nThe brands Ford and GM sold, on their pages while they owned them (batch 77)");
+  const sold: { recalls: RecallRow[]; investigations: InvestigationRow[] } = JSON.parse(read("scripts/fixtures/nhtsa-sold-brands.json"));
+  const soldOf = (ticker: string) => recallEvents(sold.recalls, makersOf(ticker));
+  const soldInv = (ticker: string) => investigationEvents(sold.investigations, makersOf(ticker));
+  const fordSold = soldOf("F");
+  const fordTitle = (id: string) => fordSold.find((e) => e.externalId === id)?.title;
+  check("a Volvo Car USA recall of 2003 lands on Ford, its title naming the brand",
+    fordTitle("03V284000") === "Recall of 220,407 Volvo vehicles: ISOFIX guide" && fordSold.find((e) => e.externalId === "03V284000")?.date === "2003-08-01",
+    fordTitle("03V284000"));
+  check("  …and so do the first after the purchase on 1999-03-31 and the last before the sale on 2010-08-02",
+    !!fordTitle("99V235000") && fordTitle("09V483000") === "Recall of 158,733 Volvo vehicles: Fuel pump leak", fordTitle("09V483000"));
+  check("  …but not one of 1998, nor of 2011 or 2016, when Volvo was AB Volvo's and then Geely's",
+    !["98V254000", "11V508000", "16V268000"].some((id) => fordTitle(id)));
+  check("a Land Rover recall of 2004 lands on Ford, the brand said and its own name dropped from the subject",
+    fordTitle("04V005000") === "Recall of 100,174 Land Rover vehicles: ABS valve cover bolt" && !!fordTitle("08V055000"), fordTitle("04V005000"));
+  check("  …but not BMW's of 1999, nor one two days after the sale to Tata on 2008-06-02, filed under the same name",
+    !fordTitle("99V237000") && !fordTitle("08V248000"));
+  check("Jaguar Land Rover North America's recall of 2015, Tata's, reaches no mapped company",
+    Object.values(RECALL_MAKERS).every((c) => !recallEvents(sold.recalls, c.makers).some((e) => e.externalId === "15V039000")));
+  check("Jaguar's recalls are Ford's from 1990 to the sale, under both of Jaguar's names",
+    !!fordTitle("90V023000") && !!fordTitle("06V418000") && fordTitle("90V123000") === "Recall of 35,000 Jaguar vehicles: Fuel: fuel tank assembly, tank",
+    fordTitle("90V123000"));
+  check("  …but not those of 1985, 1988 and 2009",
+    !["85V059000", "88V018000", "09V144000"].some((id) => fordTitle(id)));
+  const gmSold = soldOf("GM");
+  check("a 2004 Saab recall lands on GM, both makers' names dropped from \"GM/SAAB/FUEL PUMP\"",
+    gmSold.find((e) => e.externalId === "04V557000")?.title === "Recall of 17,394 Saab vehicles: Fuel pump", gmSold.find((e) => e.externalId === "04V557000")?.title);
+  check("  …and \"SAAB\\AIR BAG MODULE\" of 2001 loses its prefix too",
+    gmSold.find((e) => e.externalId === "01V222000")?.title === "Recall of 12,036 Saab vehicles: Air bag module", gmSold.find((e) => e.externalId === "01V222000")?.title);
+  check("  …but not one of 1999, when GM held half of Saab, a joint venture",
+    !gmSold.some((e) => e.externalId === "99V109000") && gmSold.length === 3, gmSold.map((e) => e.externalId).join(" "));
+  check("the rule holds on the rows whatever the query asked: no Ford recall of a sold brand outside its days",
+    fordSold.length === 8 && fordSold.every((e) => e.date >= "1990-01-01" && e.date <= "2010-08-01"), fordSold.map((e) => e.externalId).join(" "));
+  const fordInvSold = soldInv("F").map((e) => e.externalId);
+  check("a Volvo investigation of 2003 lands on Ford, naming the brand",
+    soldInv("F").find((e) => e.externalId === "PE03003")?.title === "NHTSA opened a preliminary evaluation (Volvo): Fuel tank leaks" && fordInvSold.includes("PE10025"),
+    soldInv("F").find((e) => e.externalId === "PE03003")?.title);
+  check("  …a Land Rover one of 2005 and a Jaguar petition of 1998 too, but not Land Rover's of 2016 or Jaguar's of 1989 and 2019",
+    fordInvSold.includes("PE05034") && fordInvSold.includes("DP98002") && !["PE16015", "EA90004", "RQ19004", "PE99005"].some((id) => fordInvSold.includes(id)),
+    fordInvSold.join(" "));
+  check("  …and none filed under Jaguar Land Rover North America reaches a mapped company",
+    Object.values(RECALL_MAKERS).every((c) => !investigationEvents(sold.investigations, c.makers).some((e) => e.externalId === "PE25006")));
+  const gmInvSold = soldInv("GM").map((e) => e.externalId);
+  check("a Saab investigation of 2004 lands on GM, and one of 2009, opened while GM still owned Saab; not one of 1995",
+    [...gmInvSold].sort().join(" ") === "EA04008 PE09048" && soldInv("GM").find((e) => e.externalId === "EA04008")?.title === "NHTSA opened an engineering analysis (Saab): Engine stall",
+    gmInvSold.join(" "));
+  const fordWhere = decodeURIComponent(recallQuery(makersOf("F")).replace(/\+/g, " "));
+  check("the request asks each sold brand only between its days",
+    fordWhere.includes("manufacturer IN ('Ford Motor Company') OR (manufacturer = 'Volvo Car USA, LLC' AND report_received_date >= '1999-03-31T00:00:00' AND report_received_date <= '2010-08-01T23:59:59')") &&
+      (new URL(investigationQuery(makersOf("GM"))).searchParams.get("$where") ?? "").includes("(manufacturer = 'SAAB CARS USA, INC.' AND open_date >= '2000-01-28T00:00:00' AND open_date <= '2010-02-22T23:59:59')"),
+    fordWhere.slice(0, 300));
+  check("  …and a maker with only an end day is asked to that day",
+    decodeURIComponent(recallQuery([{ name: "Old Brand", to: "2001-02-03", why: "a test maker" }]).replace(/\+/g, " ")).includes("((manufacturer = 'Old Brand' AND report_received_date <= '2001-02-03T23:59:59'))"));
+  const ended = entries.flatMap(([, e]) => e.makers.filter((m) => m.to));
+  check("Ford's four sold makers and GM's Saab carry an end day",
+    makersOf("F").filter((m) => m.to).length === 4 && makersOf("GM").filter((m) => m.to).length === 1);
+  check("  …a maker names its brand exactly when it has one, and a brand ends after it begins",
+    entries.every(([, e]) => e.makers.every((m) => !!m.brand === !!m.to && (!m.to || /^\d{4}-\d{2}-\d{2}$/.test(m.to)) && (!m.from || !m.to || m.from < m.to))));
+  check("  …and each of its days cites the filing that gives it",
+    ended.length === 5 && ended.every((m) => (m.why.match(/\((?:old )?(?:Ford|GM)'s (?:8-K|10-K|10-Q) filed \d{4}-\d{2}-\d{2}\)/g) ?? []).length >= 2),
+    ended.filter((m) => (m.why.match(/\((?:old )?(?:Ford|GM)'s (?:8-K|10-K|10-Q) filed \d{4}-\d{2}-\d{2}\)/g) ?? []).length < 2).map((m) => m.name).join(", "));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   process.exit(fail ? 1 : 0);

@@ -1,5 +1,5 @@
 import type { FetchResult, TimelineEvent } from "./types";
-import { recallHeadline, recallMakersFor, type RecallMaker } from "./recalls";
+import { heldOn, makersWhere, recallHeadline, recallMakersFor, type RecallMaker } from "./recalls";
 
 /**
  * The defect investigations NHTSA opened into a listed carmaker, from 1975 (batch 66, the
@@ -17,8 +17,8 @@ import { recallHeadline, recallMakersFor, type RecallMaker } from "./recalls";
  *
  * The owner's calls (2026-10-26): an investigation is shown with recalls, under the Recalls tag,
  * and as one row on the day it opened; its closing is said in that row, never a second one. A
- * maker reaches a page only through the hand-checked map recalls use (`RECALL_MAKERS`), on or after
- * the day the company owned it.
+ * maker reaches a page only through the hand-checked map recalls use (`RECALL_MAKERS`), while the
+ * company owned it.
  */
 
 const DATASET = "https://data.transportation.gov/resource/b3rp-be92.json";
@@ -38,18 +38,11 @@ export const INVESTIGATION_KIND: Record<string, string> = {
   "Audit Query": "an audit query",
 };
 
-const quote = (s: string) => `'${s.replace(/'/g, "''")}'`;
-
 /** One request for every investigation into the company's makers, newest first. */
 export function investigationQuery(makers: readonly RecallMaker[]): string {
-  const plain = makers.filter((m) => !m.from).map((m) => quote(m.name));
-  const dated = makers
-    .filter((m) => m.from)
-    .map((m) => `(manufacturer = ${quote(m.name)} AND open_date >= ${quote(`${m.from}T00:00:00`)})`);
-  const who = [...(plain.length ? [`manufacturer IN (${plain.join(", ")})`] : []), ...dated].join(" OR ");
   const params = new URLSearchParams({
     $select: "nhtsa_action_number, manufacturer, investigation_type, subject, component, recall, open_date, closed_date, status",
-    $where: who,
+    $where: makersWhere(makers, "open_date"),
     $order: "open_date DESC, nhtsa_action_number",
     $limit: String(ROW_LIMIT),
   });
@@ -74,8 +67,9 @@ const isDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 
 /**
  * Rows → timeline events. Every row is checked against the maker map again, whatever the query
- * asked for: an investigation reaches a company's page only under a mapped maker, opened on or
- * after its day. The title says what was opened, never a finding.
+ * asked for: an investigation reaches a company's page only under a mapped maker, opened between
+ * its days. The title says what was opened, never a finding, and names a sold brand as a recall's
+ * does: "NHTSA opened a preliminary evaluation (Volvo): …" on Ford's page.
  */
 export function investigationEvents(rows: readonly InvestigationRow[], makers: readonly RecallMaker[]): TimelineEvent[] {
   const byName = new Map(makers.map((m) => [m.name, m]));
@@ -87,7 +81,7 @@ export function investigationEvents(rows: readonly InvestigationRow[], makers: r
     const maker = byName.get(r.manufacturer ?? "");
     const kind = INVESTIGATION_KIND[r.investigation_type ?? ""];
     if (!/^[A-Z]{2}\d{5}$/.test(id) || seen.has(id) || !isDay(opened) || !kind) continue;
-    if (!maker || (maker.from && opened < maker.from)) continue;
+    if (!maker || !heldOn(maker, opened)) continue;
     seen.add(id);
     const closed = day(r.closed_date);
     const recall = /^\d{2}[A-Z]\d{3}$/.test(r.recall?.description ?? "") ? r.recall!.description : null;
@@ -98,7 +92,7 @@ export function investigationEvents(rows: readonly InvestigationRow[], makers: r
       id: `nhtsa-inv-${id}`,
       date: opened,
       type: "recall",
-      title: `NHTSA opened ${kind}: ${recallHeadline(r.subject, r.component)}`,
+      title: `NHTSA opened ${kind}${maker.brand ? ` (${maker.brand})` : ""}: ${recallHeadline(r.subject, r.component)}`,
       // "into Tesla, Inc." ends its sentence on the name's own full stop
       description: `NHTSA investigation ${id} (${r.investigation_type}) into ${maker.name.replace(/\.$/, "")}. ${ending}`,
       source: "NHTSA",

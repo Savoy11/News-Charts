@@ -106,8 +106,15 @@ names a maker, never a listed company, and files every recall under the maker's 
 FCA N.V.) became Chrysler's parent, and "General Motors, LLC" counts for GM back to 1966 because
 today's GM carries old GM's ticker. A maker a listed company bought counts from the closing date
 the buyer's own SEC filing gives: Thor's Keystone from 2001-11-09, Jayco from 2016-06-30, Winnebago's
-Grand Design from 2016-11-08, Berkshire Hathaway's Forest River from 2005-08-31. Scored without the
-model, as a filing is.
+Grand Design from 2016-11-08, Berkshire Hathaway's Forest River from 2005-08-31. A brand a company
+sold counts for it until the day it left, as a sold business does in the FDA and Federal Reserve
+maps (the owner's call of 2026-10-29, batch 77), each day from the company's own filings: Volvo is
+Ford's from 1999-03-31 to 2010-08-01, Land Rover from 2000-06-30 and Jaguar from 1990 to 2008-06-01,
+when Ford sold both to Tata, and Saab GM's from 2000-01-28, when it bought the half it did not own, to
+2010-02-22. Their titles name the brand ("Recall of 220,407 Volvo vehicles: ISOFIX guide"), which a
+reader of today's Ford page would not otherwise know: 56 recalls on Ford's page and 12 on GM's, 29 and
+9 investigations. Before 2000 GM held half of Saab, a joint venture carried at equity, and those years stay
+out. Scored without the model, as a filing is.
 
 The defect investigations NHTSA opened into the same makers come from the same open-data portal,
 through the same map and its dates (`lib/investigations.ts`, batch 66): preliminary evaluations,

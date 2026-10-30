@@ -988,6 +988,29 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 75: QQQ's annual reports on its page (2026-10-30)
+
+The third of the five proposals the owner approved on 2026-10-29 (#3).
+
+- [x] **A unit investment trust's annual report is kept** (`lib/sec.ts`, the fund form list and
+      its labels; `REGISTRANT_FORM`, `lib/secForms.ts`). QQQ files its annual report as N-30B-2,
+      which the list left out, so none of its 22 reached its page while SPY's, DIA's and MDY's N-30D
+      did. Each is now "Shareholder report (N-30B-2)", typed earnings as the N-30D is, so it sits
+      on the Earnings chip, and is read as a fund form, so batch 67's series rule sees it.
+      - Measured on QQQ's whole EDGAR record, read 2026-10-30 (259 filings): 22 N-30B-2, filed
+        2005-05-16 to 2025-10-24, one for each year to 30 September from 2004 to 2025. All 22 are
+        kept; its NSAR-U (19), proxy material (DEFA14A, 35) and 24F-2NT notices (27) stay out, as
+        before.
+      - The optional older forms the proposal listed (N-Q, NSAR-A, NSAR-B, NSAR-U) are not added:
+        the approval did not pick them.
+- 5 new `check:sec-forms` cases on QQQ's real record, pinned (`scripts/fixtures/qqq-record.json`);
+  3 fail on main, where the form is dropped. `check:relevance`'s fund forms now include N-30B-2,
+  scored as a registrant's filing.
+- **Requests made:** data.sec.gov 1, QQQ's record, with the project's User-Agent, which carries the
+  owner's contact address.
+- `npm run check` passes and `npm run lint` is clean. HawkScan was not run: `HAWK_API_KEY` is not
+  set.
+
 ## NC ledger — batch 74: the Federal Reserve's actions against the foreign banks with pages here (2026-10-30)
 
 The second of the five proposals the owner approved on 2026-10-29 (#2).
@@ -5281,7 +5304,7 @@ already held, but new investment goes to securities coverage first.
         #2, approved 2026-10-29. Importance medium · Efficiency high · Practicality high.*
       - ✅ **Done in batch 74** (see its section): the 14 banks mapped, 37 events, 27 before 2017,
         exactly as measured; each bought US unit dated from the bank's own filing.
-- [ ] `P2` **QQQ's annual reports: keep form N-30B-2 among the fund forms.** QQQ's record (Invesco
+- [x] `P2` **QQQ's annual reports: keep form N-30B-2 among the fund forms.** QQQ's record (Invesco
       QQQ Trust, Series 1, CIK 1067839, read whole) holds 22 N-30B-2 filings, filed 2005-05-16 to
       2025-10-24, each with a report date of 30 September, 2004 to 2025 — its annual reports as a
       unit investment trust (the record also holds the trust forms S-6 and N-8B-2). The fund form
@@ -5307,6 +5330,9 @@ already held, but new investment goes to securities coverage first.
         offline.
       - *Derived from [`docs/proposals/2026-10-28-proposals.md`](proposals/2026-10-28-proposals.md)
         #3, approved 2026-10-29. Importance medium · Efficiency very high · Practicality high.*
+      - ✅ **Done in batch 75** (see its section): all 22 kept, labelled and typed earnings. The
+        optional older forms (N-Q, NSAR-A, NSAR-B, NSAR-U) stay out, as the approval did not pick
+        them.
 - [ ] `P2` **FDA recalls for Siemens Healthineers and Fresenius SE.** Batch 70 counted both and left
       them out for a rule, not for want of data (its "Not mapped, and why"), and both pages carry
       almost nothing from EDGAR: Siemens Healthineers' record (SMMNY, CIK 1738519) holds six F-6EF

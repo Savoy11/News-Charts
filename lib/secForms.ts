@@ -5,7 +5,7 @@ import type { TimelineEvent } from "./types";
  * end of a filing's title. Its own module so the relevance floor can read it without loading the
  * EDGAR ticker index that `lib/sec.ts` carries.
  */
-export const REGISTRANT_FORM = /\((?:N-CSRS?|N-30D|N-CEN|NPORT-P|485APOS|485BPOS|497K?|N-1A)\)$/;
+export const REGISTRANT_FORM = /\((?:N-CSRS?|N-30D|N-30B-2|N-CEN|NPORT-P|485APOS|485BPOS|497K?|N-1A)\)$/;
 
 /**
  * The SEC's fixed list of Form 8-K items (the numbering in force since August 2004), each with a

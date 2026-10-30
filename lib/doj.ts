@@ -1,5 +1,5 @@
 import { companyNames, longerListedNameIn } from "./frCompany";
-import { commonName } from "./sec";
+import { commonName, outrankingNameFor } from "./sec";
 import type { FetchResult, TimelineEvent } from "./types";
 
 /**
@@ -28,9 +28,12 @@ const PAGE_GAP_MS = 800;
 /**
  * Words that may follow a company's name and still be the company: "Wells Fargo Bank, N.A.",
  * "JPMorgan Chase & Co.", "ExxonMobil Pipeline Company", "Wells Fargo Dealer Services", "Lowe’s Home
- * Centers".
+ * Centers". One of them; a short name a bigger company's name begins with must carry one
+ * (`outrankedName`).
  */
-export const DESIGNATOR = String.raw`(?:(?:,?\s+|\s*&\s*)(?:Inc\.?|Incorporated|Corp\.?|Corporation|Company|Co\.?|LLC|L\.L\.C\.|L\.P\.|Ltd\.?|Limited|plc|N\.\s?A\.|USA|U\.S\.A?\.?|America|Holdings?|Group|Bank|Securities|Financial|Advisors|Mortgage|Home|Loans|Dealer|Services|Pipeline|Motor|Motors|Communications|Technologies|Laboratories|Health|Healthcare|Aerospace|Centers))*`;
+const DESIGNATOR_WORD = String.raw`(?:(?:,?\s+|\s*&\s*)(?:Inc\.?|Incorporated|Corp\.?|Corporation|Company|Co\.?|LLC|L\.L\.C\.|L\.P\.|Ltd\.?|Limited|plc|N\.\s?A\.|USA|U\.S\.A?\.?|America|Holdings?|Group|Bank|Securities|Financial|Advisors|Mortgage|Home|Loans|Dealer|Services|Pipeline|Motor|Motors|Communications|Technologies|Laboratories|Health|Healthcare|Aerospace|Centers))`;
+/** Any number of them. */
+export const DESIGNATOR = String.raw`${DESIGNATOR_WORD}*`;
 
 /** A unit named after the company: "Johnson & Johnson Subsidiary Acclarent Inc. Pays". */
 const UNIT = String.raw`(?:\s+(?:Subsidiary|Unit|Affiliate)(?:\s+[A-Z][\w.&'’-]*){1,2}${DESIGNATOR})?`;
@@ -112,6 +115,17 @@ export const escapeName = (name: string) =>
     .join(String.raw`[\s-]+`);
 
 /**
+ * A name as a pattern, made to carry one of its own legal words when a bigger listed company's
+ * name begins with it (`outrankingNameFor`): "Prudential to Pay $600 Million" names Prudential
+ * Financial as likely as Prudential plc, and "UBS Agrees to Pay" UBS Group as likely as UBS AG's
+ * notes, so neither bare name is theirs, while "Crown Holdings to Pay" and "Southern Company
+ * Agrees" still are (the 2026-10-30 audit's finding 1). The bigger company's own name in the
+ * title is `longerListedNameIn`'s to refuse.
+ */
+export const outrankedName = (name: string, pattern: string): string =>
+  outrankingNameFor(name) ? `${pattern}${DESIGNATOR_WORD}` : pattern;
+
+/**
  * Whether the release is about the company as a party, not merely mentioning it.
  *
  * Measured on 912 release titles naming 41 large companies (2026-10-22): most were about someone
@@ -129,7 +143,7 @@ export function releaseNamesParty(title: string, names: readonly string[]): bool
   const aboutAPerson = /^(?:Former|Ex-)\b/i.test(t);
   for (const name of names) {
     if (name.trim().length < 2 || longerListedNameIn(t, name)) continue;
-    const n = escapeName(name);
+    const n = outrankedName(name, escapeName(name));
     const owner = String.raw`,\s+an?\s+${n}${DESIGNATOR}\s*(?:Company|Subsidiary|Unit|Affiliate|Business)\b`;
     const object = new RegExp(String.raw`(?:\b${ACTION}\s+${ALONGSIDE}${n}${DESIGNATOR}${FOLLOWS}|${owner})`, "i");
     const deal = new RegExp(String.raw`(?:${START}${n}${DESIGNATOR}${DEAL}|\b(?:Buy|Buying|Acquire|Acquiring)\s+${n}${DESIGNATOR}${BOUGHT})`, "i");
@@ -141,7 +155,9 @@ export function releaseNamesParty(title: string, names: readonly string[]): bool
 
 /**
  * Whether `name` is the subject of a party's verb in the title — "Goldman Sachs Agrees to Pay",
- * "Drug Maker Pfizer Agrees", "Wyeth and Pfizer Agree" — and the title is not about a person: it
+ * "Drug Maker Pfizer Agrees", "Wyeth and Pfizer Agree", "Morgan Stanley, Citigroup Charged" (the
+ * first of two parties a comma joins, the 2026-10-30 audit's finding 2) — and the title is not
+ * about a person: it
  * does not open with "Former", and no "who" comes before the name. `pattern` is the name as a
  * pattern, `escapeName`'s by default. The first of `releaseNamesParty`'s three tests, and the one
  * the SEC's releases share (`lib/secPress.ts`).
@@ -149,7 +165,7 @@ export function releaseNamesParty(title: string, names: readonly string[]): bool
 export function namedAsSubject(t: string, name: string, pattern = escapeName(name)): boolean {
   const lead = /\s/.test(name.trim()) ? `${NOT_SUBJECT}${START}` : CLAUSE_START;
   const subject = new RegExp(
-    String.raw`${lead}${pattern}${DESIGNATOR}${UNIT}(?:,?\s+${PARTY_VERB}|\s+and(?:\s+[A-Z][\w.&'’-]*){1,4}\s+${PLURAL_VERB})`,
+    String.raw`${lead}${pattern}${DESIGNATOR}${UNIT}(?:,?\s+${PARTY_VERB}|(?:\s+and|,)(?:\s+[A-Z][\w.&'’-]*){1,4}\s+${PLURAL_VERB})`,
     "i",
   );
   const s = subject.exec(t);

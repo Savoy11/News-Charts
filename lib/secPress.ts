@@ -1,4 +1,4 @@
-import { DESIGNATOR, PARTY_VERB, START, escapeName, namedAsSubject, plainText } from "./doj";
+import { DESIGNATOR, PARTY_VERB, START, escapeName, namedAsSubject, outrankedName, plainText } from "./doj";
 import { longerListedNameIn } from "./frCompany";
 import { listedCompaniesNamed } from "./sec";
 import type { TimelineEvent } from "./types";
@@ -164,17 +164,18 @@ function pressName(name: string): string {
  * and Insider Trading", "SEC Charges Two Individuals for Roles in Innospec FCPA Scheme", "SEC
  * Proposes New Measures to Help Investors in Target Date Funds".
  *
- * As in the Justice Department rule, a longer listed company's name owns the mention, and a name
- * more than one listed company has names none of them: "First Bancorp Settles SEC Financial Fraud
- * Charges" is Puerto Rico's First BanCorp, and nothing in the title says so to North Carolina's
- * or Maine's.
+ * As in the Justice Department rule, a longer listed company's name owns the mention, a short
+ * name a bigger listed company's name begins with counts only with a legal word of its own
+ * (`outrankedName`: "Prudential to Pay" is not Prudential plc's), and a name more than one listed
+ * company has names none of them: "First Bancorp Settles SEC Financial Fraud Charges" is Puerto
+ * Rico's First BanCorp, and nothing in the title says so to North Carolina's or Maine's.
  */
 export function secReleaseNamesParty(title: string, names: readonly string[]): boolean {
   const t = title.replace(/\s+/g, " ").trim();
   if (ABOUT_PEOPLE.test(t)) return false;
   for (const name of names) {
     if (name.trim().length < 2 || longerListedNameIn(t, name) || listedCompaniesNamed(name) > 1) continue;
-    const n = pressName(name);
+    const n = outrankedName(name, pressName(name));
     if (namedAsSubject(t, name, n)) return true;
     const object = new RegExp(String.raw`(?:${SEC_VERB}|${AGAINST})\s+${BEFORE}${START}${n}${DESIGNATOR}${AFTER}`, "i");
     if (object.test(t)) return true;

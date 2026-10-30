@@ -988,6 +988,97 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 78: the audit of batches 72–77, and its four findings fixed (2026-10-30)
+
+The `code-auditor` read batches 72–77 (`3243d71..1353574`). Its report is
+`docs/audits/2026-10-30-code-audit.md`. It found the mechanics sound: the SEC year walk and its
+tables, the 14 foreign banks, the sold vehicle brands, N-30B-2 and the counts in the docs all held
+on real data. It also found four defects in which company a release or action belongs to. All four
+were reproduced here and are fixed, each with cases that fail on main.
+
+- [x] **1. Prudential Financial's $600 million settlement landed on Prudential plc** (`lib/sec.ts`,
+      `lib/doj.ts`, `lib/secPress.ts`), `P2`:
+      - **The defect:** SEC release 2006-145, "Prudential to Pay $600 Million in Global Settlement of
+        Fraud Charges…", went on PUK's page scored 0.95. Its text names "a … subsidiary of Prudential
+        Financial, Inc." PUK's everyday name is "PRUDENTIAL", which only Prudential plc has, so the
+        shared-name guard let it through. The Justice Department rule ran the same test.
+      - **The fix:** a short name that begins a bigger listed company's everyday name
+        (`outrankingNameFor`) counts only with a legal word of its own after it (`outrankedName`).
+        "Bigger" means ranked above it in the committed index, which keeps the SEC's order, roughly by
+        size, as the search's name-prefix rung already relies on. "Prudential" begins "Prudential
+        Financial", ranked above it, so "Prudential to Pay" is neither company's. "Prudential plc" or
+        "Crown Holdings to Pay" (beneath Crown Castle) still is. "Apple" stays Apple's, above Apple
+        Hospitality REIT. Both the SEC and the Justice Department rules apply it.
+      - **Measured:** replayed on all 6,894 stored releases against every company in the index, it
+        removes exactly 12 matches and no other:
+        - Prudential's;
+        - 11 that said only "UBS" and sat on UBS AG's record, which issues UBS's exchange-traded notes
+          (AMUB). Batch 74 had already said the bank's actions belong to UBS's page, not the notes'.
+          UBS Group's page still knows only "UBS Group", so they land on no page (known since
+          batch 74).
+        - 55 companies in the index have such a name. None of them has a stored Justice Department
+          release in the local databases.
+      - **Already stored:** the SEC step adds links and never removes them, so a database that had
+        linked one of the 12 would keep it. No database here holds PUK or AMUB.
+- [x] **2. A headline joining two parties with a comma landed only on the second** (`lib/doj.ts`
+      `namedAsSubject`), `P3`:
+      - **The defect:** "Morgan Stanley, Citigroup Charged With Misleading Investors About Forex
+        Trading Program" (2017-30) reached Citigroup only. Barclays (2016-16), BOK Financial (2016-182)
+        and Freddie Mac (2007-205) missed their own charges the same way.
+      - **The fix:** the subject test now accepts a comma where it already accepted "and": the name,
+        a comma, up to four more words, then the verb. The guards on "Former" and "who" are
+        unchanged. Replayed on all stored releases, it adds exactly those four and nothing else.
+        Morgan Stanley's page now has 14.
+- [x] **3. BBVA's map left out Compass Bank, the US bank it bought** (`lib/fedActions.ts`), `P3`:
+      - **The defect:** the Board's row 1224, a civil money penalty against "Compass Bank, Birmingham,
+        Alabama" of 2009-09-21, landed on no page. Batch 74's own rule is "a US bank it bought from the
+        day it did".
+      - **The fix:** Compass Bank, Birmingham, counts for BBVA from 2007-09-07 to 2021-05-31.
+        - "BBVA announces that it has completed today its acquisition of Compass Bancshares Inc."
+          (its 6-K filed 2007-09-07).
+        - "BBVA has completed the sale to The PNC Financial Services Group, Inc. of 100% of the capital
+          stock of its subsidiary BBVA USA Bancshares, Inc." (its 6-K filed 2021-06-01).
+        - The city keeps out a namesake elsewhere.
+        - The Board's other Compass rows are against people, which the map leaves out.
+      - **Measured:** BBVA 3 actions, not 2; 110 events on the 39 banks, 79 before 2017.
+- [x] **4. A company's first ingest asked for SEC releases before it had prices** (`scripts/ingest.ts`),
+      `P3`:
+      - **The defect:** prices were read last, so the SEC step found no first price, stored nothing,
+        and logged "empty". That counts as read for a day. The Federal Register years and GDELT's
+        months, which also begin at the first price, found none on that run too.
+      - **The fix:** the price step is now its own helper, `companyPrices`, called before any of them.
+        It works as before, under its own window, back-off and log.
+- **Not done, and why:**
+  - **Credit Suisse's 7 releases on GLDI.** They sit on Credit Suisse AG's record, the issuer of its
+    exchange-traded notes. Batch 74's convention keeps a bank's actions off its notes' page. But no
+    name rule here tells a notes record from the bank, and the record is the same legal entity. So
+    it is left for the owner's call, as UBS Group's missing "UBS" and JPMorgan's "J.P. Morgan" are.
+  - **The other known items the audit confirmed:** Deutsche Bank's "Deutsche Bank" headlines, and
+    Popular, Inc. (BPOP) missing from the Fed map.
+- **Set aside, as the audit did:**
+  - **Namesakes held off only by the first-price gate:** ITG, Trinity Capital, Lucent, Broadcom, Alcoa,
+    Bristow. Each listed after the release; not measured against real prices.
+  - **A short parsed page ends a year's walk.** No instance today: the stored years add up to all
+    293 pages.
+  - **Rio Tinto's 2023 charge reaches neither listing.** It is pinned on purpose.
+  - **The current year's stored release count is overwritten daily.** Cosmetic.
+- **Checks:**
+  - 9 new cases in `check:sec-press` (55 in all) on seven more real releases from the listing (its
+    fixture);
+  - 2 in `check:fed-actions` (44 in all) on the Board's real row 1224, with its counts moved to
+    BBVA 3 and 110;
+  - on main, the SEC suite stops at its first new case, and the comma and order cases each fail there
+    when run alone.
+  - The README and COVERAGE-MAP now say 201 SEC releases on 122 companies (120 before 2017, 53 before
+    2009) and 110 Fed events.
+- **Requests made:**
+  - by the audit, 6: www.federalreserve.gov 2, www.sec.gov 2, data.transportation.gov 2;
+  - here, 4: efts.sec.gov 2 and www.sec.gov 2, for BBVA's two 6-Ks.
+
+  All with the project's User-Agent, which carries the owner's contact address.
+- `npm run check` passes and `npm run lint` is clean. HawkScan was not run: `HAWK_API_KEY` is not
+  set.
+
 ## NC ledger — batch 77: the brands Ford and GM sold, on their pages while they owned them (2026-10-30)
 
 The last of the five proposals the owner approved on 2026-10-29 (#5), with its call: a brand Ford

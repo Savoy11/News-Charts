@@ -177,7 +177,16 @@ export const FED_BANKS: Readonly<Record<number, { ticker: string; orgs: readonly
   },
   842180: {
     ticker: "BBVA",
-    orgs: [{ match: /\bBanco Bilbao Vizcaya\b/i, why: "the company, Banco Bilbao Vizcaya until it merged with Argentaria in 1999, with its Miami agency and New York branch" }],
+    orgs: [
+      { match: /\bBanco Bilbao Vizcaya\b/i, why: "the company, Banco Bilbao Vizcaya until it merged with Argentaria in 1999, with its Miami agency and New York branch" },
+      {
+        // Birmingham's: the city keeps out a namesake elsewhere
+        match: /\bCompass Bank\b[^;]*\bBirmingham\b/i,
+        from: "2007-09-07",
+        to: "2021-05-31",
+        why: "Compass Bancshares' bank, bought 2007-09-07 (its 6-K filed that day), sold as BBVA USA to PNC 2021-06-01 (its 6-K filed that day); added after the 2026-10-30 audit's finding 3",
+      },
+    ],
   },
   1000275: {
     ticker: "RY",

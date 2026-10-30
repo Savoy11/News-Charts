@@ -433,6 +433,7 @@ async function main(): Promise<void> {
       /prices: await cachedHeldPrices\(k\)/.test(pageData));
 
   await fundSeriesFilings();
+  await unitTrustReports();
   await filingTimes();
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
@@ -519,6 +520,43 @@ async function filingTimes(): Promise<void> {
   check("  …and the event row says it", /const when = whenPhrase\(ev\);/.test(readFileSync("components/EventList.tsx", "utf8")));
   check("  …and no cached page from before lacks it: the company page cache moved to v8",
     readFileSync("lib/page-data.ts", "utf8").includes('["held-company-page", "v8"]'));
+}
+
+/**
+ * QQQ's annual reports (batch 75, the 2026-10-28 proposal 3). A unit investment trust files its
+ * annual report as N-30B-2, which the fund form list left out, so none of QQQ's 22 reached its page
+ * while SPY's, DIA's and MDY's N-30D did. Against QQQ's whole EDGAR record, pinned 2026-10-30.
+ */
+async function unitTrustReports(): Promise<void> {
+  console.log("\nA unit investment trust's annual reports");
+  const { getFilings } = await import("../lib/sec");
+  const { REGISTRANT_FORM } = await import("../lib/secForms");
+  const pinned = JSON.parse(readFileSync("scripts/fixtures/qqq-record.json", "utf8")) as {
+    cik: string;
+    name: string;
+    recent: Record<string, string[]>;
+  };
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () => new Response(JSON.stringify({ name: pinned.name, filings: { recent: pinned.recent, files: [] } }), { status: 200 })) as unknown as typeof fetch;
+  let events: TimelineEvent[];
+  try {
+    events = await getFilings({ ticker: "QQQ", cik: pinned.cik, name: "Invesco QQQ Trust, Series 1" });
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const filed = pinned.recent.form.filter((f) => f === "N-30B-2").length;
+  const reports = events.filter((e) => /\(N-30B-2\)$/.test(e.title));
+  check("every one of QQQ's 22 annual reports is kept", filed === 22 && reports.length === 22, `${reports.length} of ${filed}`);
+  const fy2021 = events.find((e) => e.externalId === "000119312521368691");
+  check("  …its report for the year to 2021-09-30, filed 2021-12-29, as a shareholder report on the Earnings chip",
+    fy2021?.date === "2021-12-29" && fy2021.type === "earnings" && fy2021.title === "INVESCO QQQ TRUST, SERIES 1: Shareholder report (N-30B-2)",
+    fy2021 && `${fy2021.date} ${fy2021.type} ${fy2021.title}`);
+  check("  …from the first, of 2005-05-16, to the newest, of 2025-10-24",
+    reports.map((e) => e.date).sort()[0] === "2005-05-16" && reports.map((e) => e.date).sort().at(-1) === "2025-10-24");
+  check("  …read as a fund form, so a series' own-filings rule sees it as it sees an N-30D",
+    reports.length > 0 && reports.every((e) => REGISTRANT_FORM.test(e.title)) && REGISTRANT_FORM.test("SPDR S&P 500 ETF TRUST: Shareholder report (N-30D)"));
+  check("the forms the list still leaves out stay out: the trust's NSAR-U and proxy material",
+    !events.some((e) => /\((?:NSAR-U|DEFA14A|24F-2NT)\)$/.test(e.title)));
 }
 
 /**

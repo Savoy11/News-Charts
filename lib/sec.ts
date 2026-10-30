@@ -835,18 +835,21 @@ function filingsFromBlock(
    * list is 497 ×80, N-30D ×48, 485BPOS ×27, NPORT-P ×27 … and not one form the old set knew.
    *
    * A fund's shareholder report (N-CSR, and N-30D in the older records) is its results
-   * announcement — typed `earnings` so it sits on the same chip a company's 10-K does.
+   * announcement — typed `earnings` so it sits on the same chip a company's 10-K does. A unit
+   * investment trust files its annual report as N-30B-2: QQQ's 22, one each 30 September from 2004
+   * to 2025, were dropped here until batch 75, while SPY's, DIA's and MDY's N-30D were kept.
    */
   const wanted = new Set([
     // operating companies — 20-F and 40-F are a foreign private issuer's annual report
     "8-K", "10-K", "10-Q", "S-1", "DEF 14A", "20-F", "40-F", "6-K",
     // registered funds
-    "N-CSR", "N-CSRS", "N-30D", "N-CEN", "NPORT-P", "485APOS", "485BPOS", "497", "497K", "N-1A",
+    "N-CSR", "N-CSRS", "N-30D", "N-30B-2", "N-CEN", "NPORT-P", "485APOS", "485BPOS", "497", "497K", "N-1A",
   ]);
   const FUND_LABELS: Record<string, { label: string; earnings: boolean }> = {
     "N-CSR": { label: "Shareholder report (N-CSR)", earnings: true },
     "N-CSRS": { label: "Semi-annual shareholder report (N-CSRS)", earnings: true },
     "N-30D": { label: "Shareholder report (N-30D)", earnings: true },
+    "N-30B-2": { label: "Shareholder report (N-30B-2)", earnings: true },
     "N-CEN": { label: "Annual fund census (N-CEN)", earnings: false },
     "NPORT-P": { label: "Portfolio holdings (NPORT-P)", earnings: false },
     "485APOS": { label: "Registration amendment (485APOS)", earnings: false },

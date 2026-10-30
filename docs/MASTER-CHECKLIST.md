@@ -988,6 +988,47 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 76: FDA recalls for Siemens Healthineers and Fresenius SE (2026-10-30)
+
+The fourth of the five proposals the owner approved on 2026-10-29 (#4), with both of its calls.
+
+- [x] **Siemens Healthineers' page carries its FDA recalls from its listing** (`FDA_FIRMS`,
+      `lib/fdaRecalls.ts`): Siemens Medical Solutions USA and Siemens Healthcare Diagnostics (with
+      Siemens Healthcare GmbH) from 2018-03-16, and Varian Medical Systems from its purchase on
+      2021-04-15 (Varian's 8-K filed that day). The owner's call (option a): before the listing the
+      business was Siemens AG's, which has no page here, so those recalls are on no page.
+      - The day is the one the map takes from somewhere other than an SEC filing, since the
+        company's record holds only the depositary's F-6EF filings. Its Annual Report 2018, read
+        from its own site: "On March 16, 2018, Siemens Healthineers AG successfully performed its
+        stock market debut by trading its shares for the first time on the Regulated Market (Prime
+        Standard) of the Frankfurt Stock Exchange." The check holds this as the one exception.
+      - Siemens Hearing Instruments, which Siemens AG sold in 2015, is not the company's.
+- [x] **Fresenius SE's page carries Fresenius Kabi's recalls, and FMC's while it controlled FMC**:
+      Fresenius Kabi (USA and Compounding) as its own, and Fresenius Medical Care, NxStage among it
+      from FMC's purchase on 2019-02-26, until 2023-11-29. The owner's call: on 2023-11-30 FMC
+      converted to an AG "and Fresenius KGaA completed the deconsolidation of Fresenius Medical
+      Care AG" (its 13D/A filed 2023-12-07); before, it "owned 100% of the equity of the General
+      Partner" and held 32% of the shares. So here the rule for a listed unit, both companies'
+      while the parent holds most of it, reads "while the parent controls it". FMC's own entry is
+      unchanged and still refuses Kabi.
+      - NxStage's recalls are FMC's from 2019-02-26 under the map, so they count for Fresenius SE
+        too until 2023-11-29, as FMC's own; the proposal had left that reading open.
+- **Measured** live on openFDA 2026-10-30, through the map: Siemens Healthineers 298 recalls, the
+  first 2018-03-21, 2 with a Class I product, Varian's 2022-03-21 recall among them (its only one
+  since the purchase); Fresenius SE 125, 103 before 2023-11-30 and 45 before 2017, 29 with a Class
+  I product: Kabi's 58 and FMC's 67 from before 2023-11-30. FMC keeps its 91.
+  - Not mapped: Fresenius Vial (one recall, 2017), which no filing here ties to either company.
+- 6 new cases in `check:fda-recalls` (61 in all) on real records pinned 2026-10-30, each on both
+  sides of its day; on main they cannot run, the two companies being unmapped. The citation case
+  now reads a 13D/A as an SEC filing and holds Siemens Healthineers' listing as the owner's one
+  exception. A `check:live` assertion for both companies.
+- **Requests made:** api.fda.gov 38 (firm names, the boundary records, and the three companies
+  through the map; two answered with a server error and were asked once more); EDGAR 6 (efts.sec.gov
+  3, www.sec.gov 3); www.siemens-healthineers.com 4 and its asset host 1, the 2018 annual report.
+  All with the project's User-Agent, which carries the owner's contact address.
+- `npm run check` passes and `npm run lint` is clean. HawkScan was not run: `HAWK_API_KEY` is not
+  set.
+
 ## NC ledger — batch 75: QQQ's annual reports on its page (2026-10-30)
 
 The third of the five proposals the owner approved on 2026-10-29 (#3).
@@ -5333,7 +5374,7 @@ already held, but new investment goes to securities coverage first.
       - ✅ **Done in batch 75** (see its section): all 22 kept, labelled and typed earnings. The
         optional older forms (N-Q, NSAR-A, NSAR-B, NSAR-U) stay out, as the approval did not pick
         them.
-- [ ] `P2` **FDA recalls for Siemens Healthineers and Fresenius SE.** Batch 70 counted both and left
+- [x] `P2` **FDA recalls for Siemens Healthineers and Fresenius SE.** Batch 70 counted both and left
       them out for a rule, not for want of data (its "Not mapped, and why"), and both pages carry
       almost nothing from EDGAR: Siemens Healthineers' record (SMMNY, CIK 1738519) holds six F-6EF
       filings, the first 2018-04-26, and nothing else; Fresenius SE's (FSNUY, CIK 904868) holds 24
@@ -5373,6 +5414,8 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-10-28-proposals.md`](proposals/2026-10-28-proposals.md)
         #4, approved 2026-10-29 with both calls. Importance low-medium · Efficiency high ·
         Practicality medium (the two calls made 2026-10-29).*
+      - ✅ **Done in batch 76** (see its section): Siemens Healthineers 298 recalls from its
+        listing on 2018-03-16, Fresenius SE 125 (Kabi's 58, FMC's 67 from before 2023-11-30).
 - [ ] `P2` **The vehicle brands Ford and GM owned, on their pages while they owned them.** The FDA
       and Federal Reserve maps count a business a company sold until the day it left
       (`lib/fdaRecalls.ts:78`, `lib/fedActions.ts:51`) — J&J's Cordis counts for J&J until

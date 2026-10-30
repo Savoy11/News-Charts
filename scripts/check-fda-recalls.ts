@@ -19,6 +19,9 @@ import { COMPANY_SOURCES } from "./ingest";
  * recall of three products; a Class III recall; and the one record dated 1930. Offline: every
  * fetch is mocked.
  *
+ * Batch 76 adds records read on 2026-10-30 for Fresenius SE and Siemens Healthineers, each on both
+ * sides of the days the owner's calls of 2026-10-29 set.
+ *
  * Batch 70 adds records read on 2026-10-27: units of mapped companies the map missed (Teleflex's
  * Arrow, Stryker's Howmedica and its later purchases, BD's CareFusion, GE's other healthcare
  * names), and the next device, drug and food makers, each on both sides of its dates.
@@ -80,7 +83,11 @@ async function main(): Promise<void> {
     n("JNJ", "jnj_consumer") === 1 && n("KVUE", "jnj_consumer") === 0 &&
       firmFor(consumer, "2023-06-01", firmsOf("JNJ")) !== null && firmFor(consumer, "2023-06-01", firmsOf("KVUE")) !== null &&
       firmFor(consumer, "2024-01-15", firmsOf("JNJ")) === null && firmFor(consumer, "2024-01-15", firmsOf("KVUE")) !== null);
-  const filing = /\b(?:8-K|8-K\/A|10-Q|10-K|20-F|6-K)\b/;
+  const filing = /\b(?:8-K|8-K\/A|10-Q|10-K|20-F|6-K|13D\/A)\b/;
+  // the owner's call of 2026-10-29: Siemens Healthineers' listing, which no SEC filing dates, from
+  // its own annual report — the one day the map takes from anywhere else (batch 76)
+  const ownersException = (ticker: string, f: { from?: string; why: string }) =>
+    ticker === "SMMNY" && f.from === "2018-03-16" && /\(its Annual Report 2018\b/.test(f.why);
   const whys = Object.values(FDA_FIRMS).flatMap((e) => e.firms.map((f) => f.why));
   const dayAfter = (d: string) => new Date(Date.parse(`${d}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
   const uncited = Object.values(FDA_FIRMS).flatMap((e) =>
@@ -88,10 +95,13 @@ async function main(): Promise<void> {
       .filter((f) => f.from || f.to)
       .filter((f) => {
         const day = f.from ?? dayAfter(f.to!);
-        return !filing.test(f.why) && !whys.some((w) => w.includes(day) && filing.test(w));
+        return !filing.test(f.why) && !whys.some((w) => w.includes(day) && filing.test(w)) && !ownersException(e.ticker, f);
       })
       .map((f) => `${e.ticker} ${f.search}`));
   check("every day a firm joined or left a company is cited to an SEC filing", uncited.length === 0, uncited.join(", "));
+  const excepted = Object.values(FDA_FIRMS).flatMap((e) => e.firms.filter((f) => ownersException(e.ticker, f)).map((f) => `${e.ticker} ${f.search}`));
+  check("  …but Siemens Healthineers' listing, which no SEC filing dates: from its own annual report, by the owner's call, and nothing else",
+    excepted.join(", ") === "SMMNY Siemens Medical Solutions, SMMNY Siemens Healthcare", excepted.join(", "));
 
   console.log("\nUnits the map missed, and the next makers (batch 70, records of 2026-10-27)");
   const firm = (ticker: string, name: string, day: string) => firmFor(name, day, firmsOf(ticker)) !== null;
@@ -139,6 +149,20 @@ async function main(): Promise<void> {
       n("COO", "paragon_vision") === 1);
   check("a company's own past before its listing counts: Medline before its IPO, Amneal before it combined with Impax (its accounting predecessor), Dr. Reddy's",
     n("MDLN", "medline") === 1 && n("AMRX", "amneal_predecessor") === 1 && n("RDY", "reddy") === 1);
+  // batch 76: the owner's calls of 2026-10-29
+  check("Fresenius Kabi's recalls are Fresenius SE's, and not FMC's",
+    n("FSNUY", "fresenius_kabi") === 1 && n("FMS", "fresenius_kabi") === 0);
+  check("  …FMC's before its deconsolidation on 2023-11-30 are both companies', NxStage's among them from FMC's purchase; FMC's after are FMC's alone",
+    n("FMS", "fms_own") === 1 && n("FSNUY", "fms_own") === 1 && n("FSNUY", "nxstage_after") === 1 && n("FSNUY", "nxstage_before") === 0 &&
+      n("FMS", "fmc_after_deconsolidation") === 1 && n("FSNUY", "fmc_after_deconsolidation") === 0 &&
+      firm("FSNUY", "Fresenius Medical Care Holdings, Inc.", "2023-11-29") && !firm("FSNUY", "Fresenius Medical Care Holdings, Inc.", "2023-11-30"));
+  check("  …and Fresenius Vial, which no filing here ties to either, is neither's", n("FSNUY", "fresenius_vial") === 0 && n("FMS", "fresenius_vial") === 0);
+  check("Siemens Healthineers' recalls count from its listing on 2018-03-16, the day its Annual Report 2018 gives, and not before",
+    n("SMMNY", "siemens_before_listing") === 0 && n("SMMNY", "siemens_after_listing") === 1 && n("SMMNY", "siemens_healthcare_gmbh") === 1 &&
+      firm("SMMNY", "Siemens Healthcare Diagnostics Inc.", "2018-03-16") && !firm("SMMNY", "Siemens Healthcare Diagnostics Inc.", "2018-03-15"));
+  check("  …Varian's from its purchase on 2021-04-15, and Siemens Hearing Instruments' never",
+    n("SMMNY", "varian_before") === 0 && n("SMMNY", "varian_after") === 1 && n("SMMNY", "siemens_hearing") === 0 &&
+      !firm("SMMNY", "Siemens Hearing Instruments, Inc", "2024-01-02"));
   const index = new Map((JSON.parse(read("data/edgar-tickers.json")).companies as [number, string, string][]).map(([cik, ticker]) => [`${cik} ${ticker}`, true]));
   const missing = Object.entries(FDA_FIRMS).filter(([cik, e]) => !index.has(`${cik} ${e.ticker}`)).map(([cik, e]) => `${e.ticker} ${cik}`);
   check(`every one of the ${Object.keys(FDA_FIRMS).length} mapped companies is in the company index under its CIK, so each has a page`, missing.length === 0, missing.join(", "));

@@ -45,7 +45,8 @@ import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { FED_BANKS, fedBanksFor, fetchFedActions } from "../lib/fedActions";
-import { dojPossessive, dojQueryNames, fetchJusticeReleases } from "../lib/doj";
+import { dojPossessive, fetchJusticeReleases, justiceQueryNames } from "../lib/doj";
+import { releaseNamesAsked } from "../lib/releaseNames";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
 import { MACRO_SUBJECT, fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
@@ -638,10 +639,12 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    * suit against it, an antitrust case over its merger — back to 2009 (batch 32). The API matches
    * a name anywhere in a title, so most hits are about someone else ("Wells Fargo Personal Banker
    * Indicted for Money Laundering"); `releaseNamesParty` keeps a release only when the title makes the company the one
-   * acting or acted against. Scored without the model, as a filing is.
+   * acting or acted against. Scored without the model, as a filing is. As for the SEC's releases
+   * below, the securities units the company owned count, each between its days, and a bank's notes
+   * record is asked nothing (lib/releaseNames.ts, batch 82).
    */
-  await run("doj_press", dojQueryNames(companyNames(company.name, alsoKnownAs), dojPossessive(company.name, possessive)).join(" | "), () =>
-    fetchJusticeReleases(company.name, alsoKnownAs, possessive)
+  await run("doj_press", justiceQueryNames(company.name, alsoKnownAs, possessive, company.cik).join(" | "), () =>
+    fetchJusticeReleases(company.name, alsoKnownAs, possessive, company.cik)
   );
 
   /**
@@ -652,13 +655,13 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    * makes it the party under the names it had that year. Scored without the model, as a Justice
    * Department release is.
    */
-  await run("sec_press", `SEC releases naming ${companyNames(company.name, alsoKnownAs).join(" | ")} as the party`, async () => {
+  await run("sec_press", `SEC releases naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")} as the party`, async () => {
     const walked = await walkSecPress(client);
     if (walked.due) {
       line("sec_press", `years     ${walked.read} of ${walked.due} read, ${walked.pages} pages, ${walked.releases} releases stored` +
         (walked.stopped ? ` (${walked.stopped})` : ""));
     }
-    return secPressFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive) }, walked);
+    return secPressFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik }, walked);
   });
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no

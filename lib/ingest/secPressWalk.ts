@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import { companyNames } from "../frCompany";
+import { isNotesRecord, releaseNamesOn } from "../releaseNames";
 import { SEC_PRESS_FROM, SEC_PRESS_PAGE_SIZE, fetchListingPage, releaseKey, secPressEvents, type ListingPage, type SecRelease } from "../secPress";
 import type { FetchResult } from "../types";
 import { namesForYear, storedFormerNames } from "./frBackfill";
@@ -161,6 +162,8 @@ export interface PressPlan {
   edgarName: string;
   alsoKnownAs: string[];
   possessive?: string;
+  /** its CIK, for the units the release rules give it and the notes records they give none (lib/releaseNames.ts) */
+  cik?: number | string;
 }
 
 /**
@@ -182,6 +185,10 @@ export async function secPressFor(
   );
   const listed = rows[0]?.listed;
   const failure = walked.failure;
+  if (plan.cik !== undefined && isNotesRecord(plan.cik)) {
+    const detail = "a bank's notes record: its releases are its group's page's";
+    return failure ? { events: [], outcome: failure.outcome, httpStatus: failure.httpStatus, detail: failure.detail } : { events: [], outcome: "empty", detail };
+  }
   if (!listed) {
     return failure
       ? { events: [], outcome: failure.outcome, httpStatus: failure.httpStatus, detail: failure.detail }
@@ -192,7 +199,8 @@ export async function secPressFor(
   const events = secPressEvents(
     await storedSecReleases(client),
     (year) => [...companyNames(plan.edgarName, namesForYear(year, plan.alsoKnownAs, former)), ...own],
-    listed
+    listed,
+    plan.cik === undefined ? undefined : (day) => releaseNamesOn(plan.cik!, day),
   );
   if (failure) return { events, outcome: failure.outcome, httpStatus: failure.httpStatus, detail: failure.detail };
   return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };

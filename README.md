@@ -194,6 +194,11 @@ name must open the title or a clause, since "Visa" and "3M" are also a document 
 office posted wins over the same story from a U.S. Attorney's office: one a day per company.
 Tuned on 912 titles naming 41 large companies and tried on 40 others; neither set kept a release
 that was not about the company. A release is a regulation event and is scored without the model.
+The SEC releases' map of a bank's units is read here too (`lib/releaseNames.ts`, batch 82): the
+units are asked for whatever their days, and a release counts only inside them — Wachovia Bank's
+2011 admission is Wells Fargo's, and the record $13 billion settlement "with JPMorgan" of 2013
+JPMorgan's. A bank's notes record is asked nothing. A name under five characters stands in for no
+longer one when the API is asked, since its ask stops at one page when crowded.
 
 ### SEC press releases (`lib/secPress.ts`)
 
@@ -211,20 +216,31 @@ until the day they stopped, as in the Federal Register walk), from its first pri
 A release is the party's when the company pays, settles, agrees or is charged (the Justice
 Department rule's subject test), or when the SEC charges, sues or sanctions it, or brings
 proceedings, an action or an order against it; two parties a comma joins ("Morgan Stanley,
-Citigroup Charged") are both its subject. Read against every company in the index under its current
-names, 208 of the 6,898 releases land on 123 companies, 124 of them before 2017 (Morgan Stanley 14,
-Citigroup 10, Wells Fargo 9, Goldman Sachs 8, Bank of America 8, Deutsche Bank 7), each read by hand
+Citigroup Charged") are both its subject. A bank's securities units count while it owned them,
+each day from its own filings (`lib/releaseNames.ts`, batch 82): Banc of America Securities, and
+Merrill Lynch from 2009-01-01, for Bank of America; Wachovia from 2008-12-31 for Wells Fargo; Smith
+Barney until 2009-05-30 and Citigroup Global Markets for Citigroup; Morgan Stanley Smith Barney from
+2009-05-31; Morgan Keegan for Regions from 2001-03-30 to 2012-04-01. By the owner's calls of
+2026-11-01, "J.P. Morgan" and "JPMorgan" are JPMorgan Chase's from its merger with J.P. Morgan & Co.
+on 2000-12-31, a bare "UBS" is UBS Group's and Credit Suisse its own from 2023-06-12, and the banks'
+notes records (UBS AG's AMUB and Credit Suisse AG's GLDI) take none. Merrill Lynch's Enron charge of
+2003 stays Merrill Lynch's. The map is read by the release rules alone, never by headline scoring.
+Read against every company in the index under its current names, 252 of the 6,894 stored releases
+land on 124 companies, 150 of them before 2017 (Bank of America 28, Morgan Stanley 17, Citigroup 13,
+UBS Group 11, JPMorgan 11, Wells Fargo 10, Goldman Sachs 8, Deutsche Bank 7), each read by hand
 (batch 78, after the 2026-10-30 audit; Deutsche Bank's since batch 81, when its everyday name lost its
-"AKTIENGESELLSCHAFT").
+"AKTIENGESELLSCHAFT"; the banks' units since batch 82). `check:sec-press` replays the whole stored
+listing against the index and pins the count.
 What is refused: a release about a company's people ("SEC Charges Former Carter's Executive", "Board
 Member of Goldman Sachs and Procter & Gamble Charged"), a name followed by "of" ("SEC Charges City of
 Miami" is not City Holding), by a hyphen or an "-ing" word ("Crypto-Focused Advisory Firm"), the
 SEC's own divisions ("Division of Risk, Strategy, and Financial Innovation"), and a name more than
 one listed company has ("First Bancorp" is three banks'), and a short name a bigger listed company's
 name begins with, unless a legal word of its own follows it: "Prudential to Pay $600 Million" is no
-more Prudential plc's than Prudential Financial's, and "UBS Agrees to Pay" no more the record of UBS
-AG's notes than UBS Group's, so both land on no page; "Crown Holdings to Pay" would still be Crown
-Holdings', beneath Crown Castle. The Justice Department rule refuses the same. A release's day is
+more Prudential plc's than Prudential Financial's, so it lands on no page; "Crown Holdings to Pay"
+would still be Crown Holdings', beneath Crown Castle. The bigger company must rank above the company
+asking as well, and is never one of its own names: "UBS Agrees to Pay" is UBS Group's, since nothing
+ranked above UBS Group begins "UBS". The Justice Department rule refuses the same. A release's day is
 the day in Washington, and its identity is its number and its day, since the SEC has given one
 number twice. A release is a regulation event and is scored without the model.
 

@@ -988,6 +988,120 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 82: the banks as the SEC names them (2026-11-01)
+
+The fourth of the five proposals the owner approved on 2026-11-01 (#4), with the three calls:
+(a) "J.P. Morgan" and "JPMorgan" are JPMorgan Chase's; (b) a bare "UBS" is UBS Group's, and Credit
+Suisse is its own from the day UBS bought it; (c) the banks' notes records take no release. All
+three apply in the release rules' own map only, never to the names headlines are scored by.
+
+- [x] **A map the release rules alone read** (`lib/releaseNames.ts`). Each unit counts while the
+      company owned it, each day from the company's own filings, as the Fed, FDA and NHTSA maps do:
+      - Bank of America: Banc of America Securities, Investment Services and Capital Management, and
+        Merrill Lynch from 2009-01-01 (its 10-K filed 2009-02-27);
+      - Wells Fargo: Wachovia from 2008-12-31 (its 8-K filed 2009-01-28);
+      - JPMorgan Chase: "J.P. Morgan" and "JPMorgan" from 2000-12-31, the day J.P. Morgan & Co.
+        merged into Chase's record (its 8-K of that day). "J.P. Morgan" with its legal word covers
+        J.P. Morgan Securities. Bear Stearns from 2008-05-31: the purchase closed at 11:59 p.m. on
+        2008-05-30 (its 8-K filed 2008-06-02);
+      - Citigroup: Citigroup Global Markets, and Smith Barney until 2009-05-30;
+      - Morgan Stanley: Morgan Stanley Smith Barney from 2009-05-31, 51 percent its own from the
+        start. Both 8-Ks say the venture closed "On May 31, 2009", not on June 1 as the proposal had
+        it;
+      - Regions: Morgan Keegan from 2001-03-30 to 2012-04-01. That Regions' 8-K gives 2001-03-30,
+        not the proposal's 2001-06-29. The company's own 8-K gives the sale to Raymond James as
+        2012-04-02;
+      - UBS Group: a bare "UBS" (call b), and Credit Suisse from 2023-06-12, as the Fed map has it.
+      - **Not a scoring list:** `companyScoringAliases` is unchanged, and CLAUDE.md now says the map
+        must stay out of scoring.
+- [x] **The notes records take none** (call c, `NOTES_RECORDS`): UBS AG's AMUB and Credit Suisse
+      AG's GLDI. Their SEC release step returns empty with a reason, and the Justice Department is
+      asked nothing for them.
+- [x] **UBS Group's "UBS" is not outranked by a smaller UBS company** (`outrankingNameFor`,
+      `lib/sec.ts`).
+      - **What was wrong:** "UBS" is UBS AG's everyday name, 8,368th in the index. "UBS Asset
+        Management High Yield Credit Fund" ranks above it (4,038th), so on UBS Group's page the bare
+        name counted only with a legal word after it, though UBS Group ranks 111th.
+      - **The rule now:** the bigger company must rank above the company asking as well, and is
+        never one of its own names.
+      - **Nothing else changes:** the replay without the new names gives the same 208 entries before
+        and after.
+- [x] **The Justice Department reads the map too** (`justiceQueryNames`, `dojEvents`):
+      - the units are asked for whatever their days, and a release counts only inside them;
+      - a name under five characters no longer stands in for a longer one when the API is asked
+        (`dojQueryNames`), since its search stops after one page when it matches too many titles.
+        Without this, UBS Group's new "UBS" would have replaced its "UBS Group" search;
+      - ten other companies had a longer name dropped for a short one this way: Dell Technologies
+        for Dell, TSMC for TSM, and Uber, CGI, DiDi, Snap, Gogo, Angi, H&M and DCC. Each now asks
+        both. Measured live, none of their pages changes, at one more request each per run.
+- [x] **Faster name lookups** (`lib/sec.ts`): the index's everyday names are made once, not once per
+      name looked up. The full replay went from 78 seconds to 11, and ingest's lookups speed up too.
+- **Measured, SEC:** all 6,894 stored releases replayed against the committed index, under current
+  names (former names and first prices aside).
+  - **The totals:** 208 page entries become 252, on 124 companies instead of 123, 150 of them before
+    2017 instead of 124.
+  - **Added, 51:**
+    - Bank of America 20 (8 → 28): "Banc of America Capital Management, BACAP Distributors and
+      Banc of America Securities to Pay $375 Million" (2005-16), "Merrill Lynch to Pay $415
+      Million" (2016-128);
+    - UBS Group 11 (0 → 11): "UBS Agrees to Pay $200 Million" (2009-29), and its charges of 2011
+      to 2022;
+    - JPMorgan 10 (1 → 11 in the replay; its page has 2 today, with its former name): "J.P. Morgan
+      to Pay $153.6 Million" (2011-131), "J.P. Morgan Securities Admits to Manipulative Trading in
+      U.S. Treasuries" (2020-233);
+    - Citigroup 3, including Smith Barney's 1997 settlement; Morgan Stanley 3; Regions 3 (Morgan
+      Keegan's of 2009 to 2011); Wells Fargo 1 (Wachovia's bid rigging, 2011-257).
+  - **Removed, 7:** Credit Suisse's on GLDI, 2012-11-16 to 2021-10-19. One, "SEC Charges J.P.
+    Morgan and Credit Suisse" (2012-233), is now JPMorgan's. The other six sit on no page, since
+    Credit Suisse Group is not in the index.
+  - **Against the proposal's estimates:**
+    - the units add 30 beside JPMorgan's, as estimated;
+    - JPMorgan gains 10, the scout counted 11;
+    - UBS Group gains 11, not "about 18". The other 8 stay out on the rule's existing limits: a
+      former adviser, "UBS Puerto Rico" (twice), "UBS Global Asset Management", "UBS PaineWebber",
+      "UBS Subsidiary", "Two UBS Advisory Firms", and the 2008 "UBS Securities LLC and UBS
+      Financial Services, Inc. Agree".
+  - **Still out, as proposed:** Merrill Lynch's Enron charge of 2003 and its auction-rate settlement
+    of 2008, Wachovia's of 2004 and 2008, Bear Stearns' of 1999 and 2006, "SEC Charges Two J.P.
+    Morgan Traders" (2013-154), and the former Countrywide executives (2009-129).
+- **Measured, Justice Department** (live, 2026-11-01, each bank with and without the map):
+  - **Wells Fargo 9 → 10:** "Wachovia Bank N.A. Admits to Anticompetitive Conduct…" (2011-12-08);
+  - **JPMorgan 6 → 7:** the record $13 billion settlement "with JPMorgan" (2013-11-19);
+  - **GLDI 6 → 0:** Credit Suisse's go to no page;
+  - **the rest are unchanged.** UBS Group gains none: "UBS" turns up 2,358 titles, inside words like
+    "subsidiary", so its search reads only the newest 50, and "UBS Group" turns up 5 titles, none a
+    party.
+- **Left for the next audit:**
+  - "AG", "Commodities" and "Entities" are not words the rules let follow a name, so three releases
+    stay out: Merrill Lynch Commodities' 2019 resolution, Credit Suisse Services AG's 2025 plea
+    (both the Justice Department's), and "Credit Suisse Entities to Pay $10 Million" (SEC
+    2023-249);
+  - UBS's units by their own names ("UBS Puerto Rico", "UBS Global Asset Management");
+  - Morgan Keegan for Raymond James after 2012-04-02, which the proposal did not list;
+  - Barclays Bank PLC (ATMP), a third notes record. It takes no SEC release today; whether it takes
+    a Justice Department release that should be Barclays' was not measured.
+- **Checks:**
+  - **`check:sec-press`, 73 in all (17 new),** on the whole stored listing, now committed
+    (`scripts/fixtures/sec-press-listing.json`, 6,894 releases, 766 KB):
+    - each bank's cases, and the releases that must stay out;
+    - the ranking change, the notes records, and ingest reading the map by CIK;
+    - the full replay, pinned at 252 entries on 124 companies, with each bank's count.
+    - **On the code before this batch** the check cannot load, since the map did not exist. With
+      the map file but the old rules, 14 of the 17 fail, as does the updated wiring check, and the
+      replay gives 201 entries.
+  - **`check:doj`, 54 in all (9 new),** on three real releases added to its test data:
+    Wachovia's, JPMorgan's, and Credit Suisse's of 2017. They cover the dated units, the notes
+    records (asked nothing), and the short-name rule. On the code before this batch the unit cases
+    fail, and the check then stops with an error, since `justiceQueryNames` did not exist.
+  - **`check:feeds`** (live, outside the chain) asks as ingest now does.
+- **Docs:** README (both release sections), COVERAGE-MAP, CLAUDE.md, and batch 73's note on units.
+- **Requests made:** data.sec.gov 7 (filing lists), efts.sec.gov 9 (full-text search), www.sec.gov
+  10 (the filings read for the days) and www.justice.gov 60. The Justice Department pages covered
+  the nine banks with and without the map, and the ten short-name companies with and without their
+  longer names.
+- `npm run check` passes and `npm run lint` is clean. HawkScan was not run: `HAWK_API_KEY` is not
+  set.
+
 ## NC ledger — batch 81: a legal form left in the everyday name (2026-11-01)
 
 The third of the five proposals the owner approved on 2026-11-01 (#3), as proposed, with no call.
@@ -5453,7 +5567,7 @@ already held, but new investment goes to securities coverage first.
         listing holds, read once for every company; 209 of the 6,898 name a company in the index as
         the party, 125 of them before 2017. Units named otherwise ("J.P. Morgan Securities", "Banc
         of America Securities") are not reached: the names a company's record carries do not
-        include them.
+        include them. Reached since batch 82, each while its bank owned it (`lib/releaseNames.ts`).
 - [x] `P1` **The small-business reports, the 1990s tender offers and 10-K405/A: forms ingest
       downloads and the form filter drops.** The 10-K405 is kept as "the annual report's own form
       until 2002, which the older shards reach" (`lib/secForms.ts:120-121`), and so are SC TO-T,
@@ -5992,7 +6106,7 @@ already held, but new investment goes to securities coverage first.
       - ✅ **Done in batch 77** (see its section): Ford's page gains 56 recalls and 29
         investigations of Volvo, Jaguar and Land Rover from 1990 to 2010, GM's 12 and 9 of Saab from
         2000 to 2010, each day from Ford's and GM's own filings.
-- [ ] `P2` **The banks as the SEC names them: their securities units while they owned them, and
+- [x] `P2` **The banks as the SEC names them: their securities units while they owned them, and
       three names in the release rules' own map.** The FDA, Federal Reserve and NHTSA maps count a
       unit the company owned while it owned it ("A unit the company sold stops counting the day it
       left", `lib/fedActions.ts:51`; `lib/fdaRecalls.ts:78`; `RecallMaker.to`). The SEC's and the
@@ -6070,6 +6184,12 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-11-01-proposals.md`](proposals/2026-11-01-proposals.md)
         #4, approved 2026-11-01 with the three calls. Importance medium · Efficiency high ·
         Practicality medium (the three calls made 2026-11-01; the units needed none).*
+      - ✅ **Done in batch 82** (see its section): the map is `lib/releaseNames.ts`, read by the
+        SEC's and the Justice Department's release rules alone. Replayed on the 6,894 stored
+        releases, 208 page entries become 252: Bank of America 8 → 28, UBS Group 0 → 11, JPMorgan
+        1 → 11 (current names), Regions 0 → 3, and Credit Suisse's 7 leave GLDI. Two days differ
+        from the proposal, each from the filings: the Smith Barney venture closed 2009-05-31, and
+        Regions bought Morgan Keegan 2001-03-30.
 - [ ] `P2` **The Federal Reserve Board's own announcements about a bank: its approvals of banks'
       acquisitions since 2006.** A new source, approved by the owner 2026-11-01: the Board's
       press-release feed, `https://www.federalreserve.gov/json/ne-press.json`, on the host the

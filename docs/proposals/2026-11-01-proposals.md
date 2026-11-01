@@ -41,7 +41,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. The small-business reports and the 1990s tender offers: forms ingest downloads and the filter drops · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-01, with the call: groups (a), (b) and (c), and of the options SB-2 and 10-12B; 10-12G, a registration under section 12(g) rather than for an exchange listing, stays out.
 **Owner's reason (if rejected):**
 
 **Anchor:** data already downloaded and never surfaced · a capability present for one era and
@@ -150,7 +150,7 @@ owner pick
 
 ## 2. The SEC's litigation releases and administrative proceedings, by the parties they name — a source for the owner to decide · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-01: yes to the source.
 **Owner's reason (if rejected):**
 
 **Anchor:** a capability present for one of the SEC's three enforcement listings and missing for
@@ -258,7 +258,7 @@ the owner's yes first, and the namesakes a caption can carry
 
 ## 3. A legal form left in the everyday name: Deutsche Bank, Fresenius SE, YPF and eleven others · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-01.
 **Owner's reason (if rejected):**
 
 **Raised before:** Deutsche Bank's part, in batch 73 (`docs/MASTER-CHECKLIST.md:1323-1325`),
@@ -345,7 +345,7 @@ none
 
 ## 4. The banks as the SEC names them: their securities units while they owned them, and three names for the owner · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-01, with the calls: (a) yes, "J.P. Morgan" and "JPMorgan" are JPMorgan's names in the release rules' map; (b) yes, a bare "UBS" is UBS Group's there; (c) yes, Credit Suisse's releases come off GLDI. All three in the release rules' own map only, never in the names headlines are scored by.
 **Owner's reason (if rejected):**
 
 **Raised before:** JPMorgan's "J.P. Morgan" and UBS Group's missing "UBS" (batch 73,
@@ -463,7 +463,7 @@ need none
 
 ## 5. The Federal Reserve Board's own announcements about a bank: its approvals since 2006 — a source for the owner to decide · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-01: yes to the source.
 **Owner's reason (if rejected):**
 
 **Anchor:** data served by a host the site already reads, and not read. The Board's enforcement

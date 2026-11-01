@@ -995,8 +995,17 @@ the `opportunity-scout` read the repository again at `5dc6cb2` and wrote
 `docs/proposals/2026-11-01-proposals.md`: five proposals, all **PENDING**, ranked with securities
 depth first. Nothing is built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ Marked 2026-11-01: all five approved, both new sources (2, 5) included; none rejected or
+      deferred. The calls:
+      - (1) groups (a), (b) and (c), and of the options SB-2 and 10-12B; 10-12G stays out, a
+        registration under section 12(g) rather than for an exchange listing;
+      - (4a) "J.P. Morgan" and "JPMorgan" are JPMorgan's names in the release rules' map;
+      - (4b) a bare "UBS" is UBS Group's there;
+      - (4c) Credit Suisse's releases come off GLDI;
+      - all three of (4) apply in the release rules' own map only, never to the names headlines
+        are scored by.
       1. `P1` **The small-business reports and the 1990s tender offers.** Ingest already downloads
          these forms, and the form filter drops them: 10-KSB, 10-QSB and 10-KSB40 with their
          amendments; SC 14D1 and SC 13E4, the tender forms Schedule TO replaced in 2000; and

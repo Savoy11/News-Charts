@@ -257,6 +257,11 @@ const TODAY = "2026-10-29";
   check("  …in the Justice Department rule too, which shares the subject test",
     releaseNamesParty(release("2017-30").title, namesOf("MS")(2017)) && releaseNamesParty(release("2016-16").title, namesOf("BCS")(2016)));
 
+  // batch 81, the 2026-11-01 proposal 3: Deutsche Bank's everyday name kept "AKTIENGESELLSCHAFT",
+  // so no release named it; under "DEUTSCHE BANK" 7 of the stored 6,894 do
+  expectOn("Deutsche Bank's 2015 charge lands on DB, and the 2009 auction-rate settlement beside Bank of America's and RBC's",
+    [["2015-99", ["DB"]], ["2009-127", ["DB", "BAC", "RY"]]]);
+
   console.log("\nAs timeline events");
   const gs = secPressEvents(fixture.releases, namesOf("GS"));
   check("Goldman's releases, newest first, as regulation events credited to the SEC and linked to sec.gov",

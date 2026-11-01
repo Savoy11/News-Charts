@@ -988,6 +988,54 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 81: a legal form left in the everyday name (2026-11-01)
+
+The third of the five proposals the owner approved on 2026-11-01 (#3), as proposed, with no call.
+
+- [x] **The long legal forms go as the short ones do** (`LEGAL_SUFFIX`, `lib/edgarName.ts`):
+      - Aktiengesellschaft (the word "AG" abbreviates), KGaA, Sociedad Anónima, S.A.A., B.V., PCL
+        and Societas;
+      - the Danish and Turkish A/S, written "A S" or "A.S".
+      - **The result:** "DEUTSCHE BANK AKTIENGESELLSCHAFT" is "DEUTSCHE BANK", "Fresenius SE & Co.
+        KGaA" is "Fresenius", "YPF SOCIEDAD ANONIMA" is "YPF" and "NOVO NORDISK A S" is "NOVO NORDISK".
+      - **Every name-based source asks by the new name:** GDELT, the Justice Department's title
+        search, the SEC's and the Federal Register's title rules, and headline scoring.
+- **Measured** on the committed index (10,429 rows): **17 everyday names change, and no other.**
+  The scout counted 14; the spaced "A S" left three more, Novo Nordisk, Turkcell and Anadolu Efes.
+  - The 17: Novo Nordisk, Deutsche Bank, Fresenius SE, YPF, Turkcell, Ottobock, Turk Altin
+    Isletmeleri, SCHOTT Pharma, Springer Nature, InoBat, LuxExperience, Loma Negra, Cementos
+    Pacasmayo, Meridian Mining UK, Com7, Anadolu Efes and TKMS.
+  - **SEC releases:** replayed on all 6,894 stored, Deutsche Bank becomes the party in 7, 4 before
+    2017, and nothing else changes: 208 matches on 123 companies, 124 before 2017.
+    - The 7: its research-conflicts settlement of 2004, the auction-rate settlement of 2009 beside
+      Bank of America's and RBC's, its 2015 charge for misstating financial reports, and those of
+      2016, 2018, 2021 and 2023.
+  - **No name collides:** none of the 17 new names is shared by another listed company, and none is
+    the start of a bigger company's name (`outrankingNameFor`). "Fresenius Medical Care" in a title
+    stays FMC's, by the longer-name rule.
+- **The word lists rebuilt** (`npm run sync:word-names`, one request for the ENABLE list):
+  - Six new one-word names (Fresenius, InoBat, LuxExperience, Ottobock, TKMS, YPF) join the
+    non-words, so GDELT's month walk no longer holds them back.
+  - "KGAA", "BV", "SOCIEDAD" and "ANONIMA" leave the shared-word counts.
+  - Nothing else in either file changed but the date the list was read.
+- **Nothing to re-read by hand:** the GDELT months and Federal Register years are kept by the names
+  they were asked under, so a corrected name is asked afresh on its own.
+- **YPF in GDELT:** under five letters and no English word, so it is asked bare, as IBM is, its
+  articles kept only when the headline names it. The filed entry expected its legal form.
+  `check:short-names`' count of the 1,500 largest companies' short names moves from 104 to 105 (57
+  bare, 48 with a legal form).
+- **Left for the next audit, as batch 79 noted:** whether "deutsche" alone should stay among Deutsche
+  Bank's scoring names.
+- **Checks:**
+  - 10 new cases in `check:recall` (59 in all), and its index-wide check now knows the long forms.
+    On main the cases fail and that check finds 17.
+  - 1 case in `check:sec-press` (56 in all), on two more real releases added to its fixture: 2015-99
+    lands on Deutsche Bank, and 2009-127 on it, Bank of America and RBC. It fails on main.
+- **Docs:** README and COVERAGE-MAP give the new counts.
+- **Requests made:** raw.githubusercontent.com 1, the ENABLE word list for `sync:word-names`.
+- `npm run check` passes and `npm run lint` is clean. HawkScan was not run: `HAWK_API_KEY` is not
+  set.
+
 ## NC ledger — batch 80: the small-business reports and the 1990s tender offers (2026-11-01)
 
 The first of the five proposals the owner approved on 2026-11-01 (#1), with the pick: groups (a),
@@ -5553,7 +5601,7 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-11-01-proposals.md`](proposals/2026-11-01-proposals.md)
         #2, approved 2026-11-01 with the new source. Importance high · Efficiency medium-high ·
         Practicality medium (the source approved; the namesakes a caption can carry).*
-- [ ] `P1` **A legal form left in the everyday name: Deutsche Bank, Fresenius SE, YPF and eleven
+- [x] `P1` **A legal form left in the everyday name: Deutsche Bank, Fresenius SE, YPF and eleven
       others.** `commonName` strips "AG", "S.A." and "SE" (`lib/edgarName.ts:16-17`) and not the
       words they abbreviate, so 14 everyday names in the committed index keep a legal form:
       DEUTSCHE BANK AKTIENGESELLSCHAFT (DB, 287th in the index), Fresenius SE & Co. KGaA (FSNUY,
@@ -5608,6 +5656,9 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-11-01-proposals.md`](proposals/2026-11-01-proposals.md)
         #3, approved 2026-11-01 as proposed. Importance medium-high · Efficiency very high ·
         Practicality high (no call, as the owner agreed).*
+      - ✅ **Done in batch 81** (see its section): 17 everyday names cleaned, not 14 — the spaced
+        "A S" left Novo Nordisk, Turkcell and Anadolu Efes too; Deutsche Bank's SEC releases go from
+        0 to 7.
 - [ ] `P2` The rest of the securities-coverage depth set: **GDELT year-window backfill** (GDELT
       answers from this container but throttles hard — 429/503 — so this needs the production
       host to develop against) and **richer paid-tier evidence** (needs a paid key). The LoC

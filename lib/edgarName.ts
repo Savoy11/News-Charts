@@ -12,9 +12,12 @@
 // The letters may also be spaced, as some older titles write them: "TELEFONICA S A", "HEINEKEN
 // HOLDING N V", "DEUTSCHE LUFTHANSA A G", "NATUZZI S P A" — and the public company's forms, which
 // left "CRH PUBLIC" (CRH PUBLIC LTD CO), "Osotspa Public" (Osotspa Public Co Ltd) and "Medtronic
-// Public" (batch 28).
+// Public" (batch 28). And the long forms the short ones abbreviate, with the Danish and Turkish
+// A/S written "A S" or "A.S": every name-based source asked for "DEUTSCHE BANK AKTIENGESELLSCHAFT",
+// "Fresenius SE & Co. KGaA", "YPF SOCIEDAD ANONIMA" and "NOVO NORDISK A S", 17 names in all
+// (batch 81, the 2026-11-01 proposal 3).
 const LEGAL_SUFFIX =
-  /(?<=^|[\s,.])(?:public(?:[\s,]+(?:limited|ltd|company|co)\.?)+|incorporated|inc|corporation|corp|company|co|limited|ltd|plc|llc|l\.l\.c|holdings?|s\.?\s?a\.?\s?(?:b|p\.?\s?i)?\.?\s+de\s+c\.?\s?v|s\.?\s?a\.?\s?b|s\.?\s?a|n\.?\s?v|l\.?\s?p|s\.?\s?p\.?\s?a|a\/s|ab|asa|oyj|tbk|a\s?g|se)\.?$/i;
+  /(?<=^|[\s,.])(?:public(?:[\s,]+(?:limited|ltd|company|co)\.?)+|incorporated|inc|corporation|corp|company|co|limited|ltd|plc|llc|l\.l\.c|holdings?|s\.?\s?a\.?\s?(?:b|p\.?\s?i)?\.?\s+de\s+c\.?\s?v|s\.?\s?a\.?\s?b|s\.?\s?a|n\.?\s?v|l\.?\s?p|s\.?\s?p\.?\s?a|a\/s|a\.?\s?s|ab|asa|oyj|tbk|a\s?g|se|aktiengesellschaft|kgaa|sociedad\s+an[oó]nima|s\.?\s?a\.?\s?a|b\.?\s?v|pcl|societas)\.?$/i;
 
 /** The legal suffixes a registration tag can follow. */
 const SUFFIX_BEFORE_TAG = "(?:incorporated|inc|corporation|corp|company|co|limited|ltd|plc|llc|lp|ag|ab)";

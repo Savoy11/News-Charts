@@ -82,6 +82,19 @@ for (const [legal, everyday] of [
   ["Banco Santander (Brasil) S.A.", "Banco Santander (Brasil)"],
   ["Public Storage", "Public Storage"],
   ["111, Inc.", "111, Inc"],
+  // batch 81, the 2026-11-01 proposal 3: the long forms the short ones abbreviate, which left
+  // Deutsche Bank asked as "DEUTSCHE BANK AKTIENGESELLSCHAFT" by every name-based source, and the
+  // Danish and Turkish A/S written with a space
+  ["DEUTSCHE BANK AKTIENGESELLSCHAFT", "DEUTSCHE BANK"],
+  ["Fresenius SE & Co. KGaA", "Fresenius"],
+  ["SCHOTT Pharma AG & Co. KGaA/ADR", "SCHOTT Pharma"],
+  ["YPF SOCIEDAD ANONIMA", "YPF"],
+  ["CEMENTOS PACASMAYO SAA", "CEMENTOS PACASMAYO"],
+  ["NOVO NORDISK A S", "NOVO NORDISK"],
+  ["Turk Altin Isletmeleri A.S./ADR", "Turk Altin Isletmeleri"],
+  ["InoBat B.V.", "InoBat"],
+  ["Com7 PCL/ADR", "Com7"],
+  ["Meridian Mining UK Societas", "Meridian Mining UK"],
 ]) {
   check(`  "${legal}" is "${everyday}"`, commonName(legal) === everyday, commonName(legal));
 }
@@ -89,8 +102,9 @@ for (const [legal, everyday] of [
   // Every company the index lists, not only the cases above: on 2026-10-21, 302 everyday names
   // still ended in a mark or a legal form, so news and Federal Register searches asked for them —
   // and after that fix, 34 more in the spaced, tagged and public company forms (batch 28 audit).
+  // …and, from batch 81, the long forms and the spaced A/S, which 17 names kept
   const LEFT_OVER =
-    /[\\]|\/$|[\s,.](?:S\.?A|N\.?V|L\.?P|LLC|A\/S|ASA|AB|S\.?P\.?A|OYJ|TBK|S\.?A\.?B|DE C\.?V)\.?$|\s(?:S A|N V|A G|S P A|L P|S A B|DE|AND|PUBLIC)$|(?:INC|CORP|LTD|PLC|CO|N\.?V|S\.?A)\.?\s*\([^)]*\)$/i;
+    /[\\]|\/$|[\s,.](?:S\.?A|N\.?V|L\.?P|LLC|A\/S|ASA|AB|S\.?P\.?A|OYJ|TBK|S\.?A\.?B|DE C\.?V|AKTIENGESELLSCHAFT|KGAA|SOCIEDAD AN[OÓ]NIMA|S\.?A\.?A|B\.?V|A\.S|PCL|SOCIETAS)\.?$|\s(?:S A|N V|A G|S P A|L P|S A B|A S|DE|AND|PUBLIC)$|(?:INC|CORP|LTD|PLC|CO|N\.?V|S\.?A)\.?\s*\([^)]*\)$/i;
   const left = [...new Set(TICKER_INDEX_COMPANIES.map(([, title]) => commonName(title)))].filter((n) => LEFT_OVER.test(n));
   check("no everyday name in the committed index keeps a mark or a legal form", left.length === 0, `${left.length} — ${left.slice(0, 4).join(" | ")}`);
 }

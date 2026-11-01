@@ -212,9 +212,10 @@ A release is the party's when the company pays, settles, agrees or is charged (t
 Department rule's subject test), or when the SEC charges, sues or sanctions it, or brings
 proceedings, an action or an order against it; two parties a comma joins ("Morgan Stanley,
 Citigroup Charged") are both its subject. Read against every company in the index under its current
-names, 201 of the 6,898 releases land on 122 companies, 120 of them before 2017 (Morgan Stanley 14,
-Citigroup 10, Wells Fargo 9, Goldman Sachs 8, Bank of America 8), each read by hand (batch 78, after
-the 2026-10-30 audit).
+names, 208 of the 6,898 releases land on 123 companies, 124 of them before 2017 (Morgan Stanley 14,
+Citigroup 10, Wells Fargo 9, Goldman Sachs 8, Bank of America 8, Deutsche Bank 7), each read by hand
+(batch 78, after the 2026-10-30 audit; Deutsche Bank's since batch 81, when its everyday name lost its
+"AKTIENGESELLSCHAFT").
 What is refused: a release about a company's people ("SEC Charges Former Carter's Executive", "Board
 Member of Goldman Sachs and Procter & Gamble Charged"), a name followed by "of" ("SEC Charges City of
 Miami" is not City Holding), by a hyphen or an "-ing" word ("Crypto-Focused Advisory Firm"), the

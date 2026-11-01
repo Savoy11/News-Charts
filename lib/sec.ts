@@ -727,8 +727,7 @@ export function listedNamesContaining(everyday: string): string[] {
   const cached = containingCache.get(own);
   if (cached) return cached;
   const found = new Set<string>();
-  for (const r of localCompanies()) {
-    const theirs = phrase(commonName(r.title));
+  for (const { phrase: theirs } of everydayRows()) {
     if (theirs !== own && ` ${theirs} `.includes(` ${own} `)) found.add(theirs);
   }
   const list = [...found];
@@ -748,12 +747,12 @@ export function listedCompaniesNamed(everyday: string): number {
   const cached = namedCache.get(own);
   if (cached !== undefined) return cached;
   const ciks = new Set<number>();
-  for (const r of localCompanies()) if (phrase(commonName(r.title)) === own) ciks.add(r.cik_str);
+  for (const r of everydayRows()) if (r.phrase === own) ciks.add(r.cik);
   namedCache.set(own, ciks.size);
   return ciks.size;
 }
 
-const outrankedCache = new Map<string, string | null>();
+const outrankedCache = new Map<string, number[]>();
 
 /**
  * A bigger listed company whose everyday name begins with this one, which a headline saying only
@@ -763,22 +762,49 @@ const outrankedCache = new Map<string, string | null>();
  * keeps the SEC's order, roughly by size, as the name-prefix search rung does: "Apple" stays Apple
  * Inc.'s though "Apple Hospitality REIT" begins with it, and "BP" BP's. Null when no company has
  * this everyday name, or none above it extends it.
+ *
+ * `own` are the asking company's names. The bigger company must rank above the asking company as
+ * well, where the highest of its names ranks, and is never one of them: UBS Group's bare "UBS"
+ * (batch 82, the owner's call of 2026-11-01) is UBS AG's everyday name, ranked 8,368th, and
+ * "UBS Asset Management High Yield Credit Fund" ranks above that at 4,038th but below UBS Group
+ * at 111th, so a headline saying "UBS" is no more the fund's than UBS Group's. No company's names
+ * did this before.
  */
-export function outrankingNameFor(everyday: string): string | null {
-  const own = phrase(everyday);
-  const cached = outrankedCache.get(own);
-  if (cached !== undefined) return cached;
+export function outrankingNameFor(everyday: string, own: readonly string[] = []): string | null {
+  const key = phrase(everyday);
+  const at = key ? rankOf(key) : -1;
+  // only a name some company has
+  if (at < 0) return null;
   const ranked = everydayByRank();
-  const at = own ? ranked.indexOf(own) : -1;
-  // only a name some company has, and only a longer one listed above its first holder
-  const found = at < 0 ? null : (ranked.slice(0, at).find((theirs) => theirs.startsWith(`${own} `)) ?? null);
-  outrankedCache.set(own, found);
-  return found;
+  let above = outrankedCache.get(key);
+  if (!above) {
+    // the longer ones listed above its first holder, by their places in the index
+    above = [];
+    for (let i = 0; i < at; i++) if (ranked[i].startsWith(`${key} `)) above.push(i);
+    outrankedCache.set(key, above);
+  }
+  const mine = own.map(phrase);
+  const top = Math.min(at, ...mine.map(rankOf).filter((i) => i >= 0));
+  const found = above.find((i) => i < top && !mine.includes(ranked[i]));
+  return found === undefined ? null : ranked[found];
 }
+
+let firstRanks: Map<string, number> | null = null;
+/** An everyday name's place in the index, where its first holder is; -1 for a name none has. */
+const rankOf = (p: string): number =>
+  (firstRanks ??= everydayByRank().reduce((m, theirs, i) => (m.has(theirs) ? m : m.set(theirs, i)), new Map<string, number>())).get(p) ?? -1;
+
+let phraseRows: { cik: number; phrase: string }[] | null = null;
+/**
+ * Every listed company's everyday name as a phrase, with its CIK, in the index's order: made once,
+ * since each name the release rules ask about reads all of them (batch 82: replaying the stored
+ * SEC releases against the index spent 70 of its 80 seconds making them again).
+ */
+const everydayRows = () => (phraseRows ??= localCompanies().map((r) => ({ cik: r.cik_str, phrase: phrase(commonName(r.title)) })));
 
 let rankedRows: string[] | null = null;
 /** Every listed company's everyday name as a phrase, in the index's order. */
-const everydayByRank = () => (rankedRows ??= localCompanies().map((r) => phrase(commonName(r.title))));
+const everydayByRank = () => (rankedRows ??= everydayRows().map((r) => r.phrase));
 
 export interface Industry {
   /** 4-digit SIC code, e.g. "3674" */

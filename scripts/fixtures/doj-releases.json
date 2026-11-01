@@ -1049,5 +1049,58 @@
     ]
    }
   ]
+ },
+ "BANK_UNITS": {
+  "edgar": "",
+  "note": "Read from justice.gov's API on 2026-11-01 for batch 82: a unit's release on its bank's page from the day the bank bought it, and Credit Suisse's on no page",
+  "releases": [
+   {
+    "title": "Wachovia Bank N.A. Admits to Anticompetitive Conduct by Former Employees in the Municipal Bond Investments Market and Agrees to Pay $148 Million to Federal and State Agencies",
+    "date": "1323345600",
+    "url": "https://www.justice.gov/archives/opa/pr/wachovia-bank-na-admits-anticompetitive-conduct-former-employees-municipal-bond-investments",
+    "teaser": "<p>Wachovia Bank N.A., which is now known as Wells Fargo Bank N.A., has entered into an agreement with the Department of Justice to resolve the company&amp;#8217;s role in anticompetitive activity in the municipal bond investments market and has agreed to pay a total of $148 million in restitution, penalties and disgorgement to federal and state agencies.</p>\n",
+    "uuid": "353487ef-534e-4000-9045-256c6e128975",
+    "component": [
+     {
+      "uuid": "ff94f093-0dd5-455c-afa6-37feafca2f1b",
+      "name": "Antitrust Division"
+     }
+    ]
+   },
+   {
+    "title": "Justice Department, Federal and State Partners Secure Record $13 Billion Global Settlement with JPMorgan for Misleading Investors About Securities Containing Toxic Mortgages",
+    "date": "1384862400",
+    "url": "https://www.justice.gov/archives/opa/pr/justice-department-federal-and-state-partners-secure-record-13-billion-global-settlement",
+    "teaser": "The Justice Department, along with federal and state partners, today announced a $13 billion settlement with JPMorgan - the largest settlement with a single entity in American history - to resolve federal and state civil claims arising out of the packaging, marketing, sale and issuance of residential mortgage-backed securities (RMBS) by JPMorgan, Bear Stearns and Washington Mutual prior to Jan. 1, 2009.  As part of the settlement, JPMorgan acknowledged it made serious misrepresentations to the public - including the investing public - about numerous RMBS transactions.  The resolution also requ",
+    "uuid": "d71a5550-3fa8-40ad-9029-7303a1130e37",
+    "component": [
+     {
+      "uuid": "e99b9547-7d65-42c6-9404-68fab0db9543",
+      "name": "Office of the Attorney General"
+     }
+    ]
+   },
+   {
+    "title": "Credit Suisse Agrees to Pay $5.28 Billion in Connection with its Sale of Residential Mortgage-Backed Securities",
+    "date": "1484740800",
+    "url": "https://www.justice.gov/archives/opa/pr/credit-suisse-agrees-pay-528-billion-connection-its-sale-residential-mortgage-backed",
+    "teaser": "<p>The Justice Department announced today a $5.28 billion settlement with Credit Suisse related to Credit Suisse’s conduct in the packaging, securitization, issuance, marketing and sale of residential mortgage-backed securities (RMBS) between 2005 and 2007.  The resolution announced today requires Credit Suisse to pay $2.48 billion as a civil penalty under the Financial Institutions Reform, Recovery and Enforcement Act (FIRREA).  It also requires the bank to provide $2.8 billion in other relief, including relief to underwater homeowners, distressed borrowers and affected communities, in the fo",
+    "uuid": "1ee19ba8-f5fb-4d46-b9bd-5916d88851e2",
+    "component": [
+     {
+      "uuid": "dbbe4f45-4e70-4db6-88ec-c35012cac37d",
+      "name": "Civil Division"
+     },
+     {
+      "uuid": "2dd23226-fdaa-483b-bbc5-81233ed79643",
+      "name": "Office of the Associate Attorney General"
+     },
+     {
+      "uuid": "b0c7769a-77d7-4efb-bf83-effd6581f741",
+      "name": "USAO - Colorado"
+     }
+    ]
+   }
+  ]
  }
 }

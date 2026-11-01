@@ -70,7 +70,10 @@ back to 1994, or to the company's first price if later, is read once, under the 
 that year (`lib/ingest/frBackfill.ts`),
 and routine rail-board, FERC and NRC notices are grouped a row a month on the page. Every path
 that scores a company's headlines — ingest, a first visit, `npm run score`, the backfill — takes its
-names from one place, `companyScoringAliases` in `lib/scoringNames.ts`; build no second list.
+names from one place, `companyScoringAliases` in `lib/scoringNames.ts`; build no second list. The
+SEC's and the Justice Department's release rules alone also read `lib/releaseNames.ts`: the securities
+units a bank owned, each between the days its filings give (Merrill Lynch is Bank of America's from
+2009-01-01), and the notes records that take no release. It is not a scoring list; keep it that way.
 
 A ticker whose company moved to a new SEC record — a holding-company reorganisation or redomicile
 (XOM in 2026, Alphabet in 2015, Disney in 2019) — reads its earlier filings from the predecessor's

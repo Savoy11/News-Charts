@@ -6,6 +6,7 @@ import { dojPossessive, releaseNamesParty } from "../lib/doj";
 import { companyNames } from "../lib/frCompany";
 import { namesForYear } from "../lib/ingest/frBackfill";
 import { GAP_MS, PAGES_PER_RUN, YEAR_PAGES, secPressFor, storedSecReleases, walkSecPress, type PressWalk } from "../lib/ingest/secPressWalk";
+import { NOTES_RECORDS, RELEASE_NAMES, isNotesRecord, releaseNamesAsked, releaseNamesOn } from "../lib/releaseNames";
 import { SOURCE_TTL_MINUTES } from "../lib/ingest/refresh";
 import { QUOTAS } from "../lib/ingest/quota";
 import { SOURCES } from "../lib/ingest/store";
@@ -62,6 +63,62 @@ function release(number: string, day?: string): SecRelease {
   if (!r) throw new Error(`no release ${number} in the fixture`);
   return r;
 }
+/**
+ * Every release the SEC listing held on 2026-10-30, 6,894 of them (scripts/fixtures/sec-press-listing.json):
+ * number, day and headline, linked as the listing links them.
+ */
+const listing: { releases: [number: string, day: string, title: string][] } = JSON.parse(read("scripts/fixtures/sec-press-listing.json"));
+const stored: SecRelease[] = listing.releases.map(([number, day, title]) => ({ number, day, title, url: `https://www.sec.gov/newsroom/press-releases/${number}` }));
+function storedRelease(number: string): SecRelease {
+  const r = stored.find((x) => x.number === number);
+  if (!r) throw new Error(`no release ${number} in the stored listing`);
+  return r;
+}
+const cikOf = (ticker: string) => companies.find(([, t]) => t === ticker)![0];
+/**
+ * Whether ingest puts the release on the company's page, its first price aside: its names that
+ * year, the units it then owned (`releaseNamesOn`), and none on a bank's notes record.
+ */
+const pageTakes = (r: SecRelease, ticker: string) =>
+  !isNotesRecord(cikOf(ticker)) && secPressEvents([r], namesOf(ticker), "", (day) => releaseNamesOn(cikOf(ticker), day)).length === 1;
+function expectPages(name: string, cases: [number: string, ticker: string, wanted: boolean][]): void {
+  const wrong = cases.filter(([n, t, want]) => pageTakes(storedRelease(n), t) !== want);
+  check(name, wrong.length === 0, wrong.map(([n, t, want]) => `${n} ${want ? "not on" : "on"} ${t}`).join("; "));
+}
+
+/**
+ * The whole stored listing against every company in the committed index, as ingest names them —
+ * former names and first prices aside — with the units the release rules give them (batch 82, as
+ * the 2026-10-30 audit replayed it by hand). A name matches only a headline whose letters and
+ * digits hold its own, so each company reads only those.
+ */
+function replayListing(): Map<string, string[]> {
+  const alnum = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const heads = stored.map((r) => alnum(r.title));
+  const pieces = new Map<string, number[]>();
+  heads.forEach((h, i) => {
+    const got = new Set<string>();
+    for (let p = 0; p + 2 <= h.length; p++) for (const k of [2, 3]) if (p + k <= h.length) got.add(h.slice(p, p + k));
+    for (const g of got) (pieces.get(g) ?? pieces.set(g, []).get(g)!).push(i);
+  });
+  const holding = (a: string) => (pieces.get(a.slice(0, 3)) ?? []).filter((i) => heads[i].includes(a));
+  const out = new Map<string, string[]>();
+  const seen = new Set<number>();
+  for (const [cik, ticker, title] of companies) {
+    if (seen.has(cik)) continue;
+    seen.add(cik);
+    if (isNotesRecord(cik)) continue;
+    const own = dojPossessive(title, possessiveNameFor(cik));
+    const aka = newsNamesFor(cik);
+    const names = (year: number) => [...companyNames(title, namesForYear(year, aka, [])), ...(own ? [own] : [])];
+    const all = [...names(2026), ...releaseNamesAsked(cik)].map(alnum).filter((a) => a.length >= 2);
+    const held = [...new Set(all.flatMap(holding))].sort((a, b) => a - b).map((i) => stored[i]);
+    const events = held.length ? secPressEvents(held, names, "", (day) => releaseNamesOn(cik, day)) : [];
+    if (events.length) out.set(ticker, events.map((e) => e.externalId!));
+  }
+  return out;
+}
+
 /** Which of `tickers` a release lands on. */
 const landsOn = (r: SecRelease, tickers: string[], former: Record<string, { name: string; until: string }[]> = {}) =>
   tickers.filter((t) => secReleaseNamesParty(r.title, namesOf(t, former[t])(Number(r.day.slice(0, 4)))));
@@ -262,6 +319,73 @@ const TODAY = "2026-10-29";
   expectOn("Deutsche Bank's 2015 charge lands on DB, and the 2009 auction-rate settlement beside Bank of America's and RBC's",
     [["2015-99", ["DB"]], ["2009-127", ["DB", "BAC", "RY"]]]);
 
+  /**
+   * Batch 82, the 2026-11-01 proposal 4, approved by the owner on 2026-11-01: the SEC charges a
+   * bank's securities units by their own names, which counted for no company; now each counts
+   * while the company owned it, each day from the company's filings (lib/releaseNames.ts). With
+   * the owner's three calls: "J.P. Morgan" and "JPMorgan" are JPMorgan Chase's, a bare "UBS" UBS
+   * Group's and Credit Suisse its own from 2023-06-12, and the banks' notes records take none.
+   * On the code before this batch none of it runs: the map did not exist.
+   */
+  console.log("\nThe banks as the SEC names them: their units while they owned them (batch 82)");
+  expectPages("Bank of America's own units: Banc of America Securities, Investment Services, and the three charged together in 2005",
+    [["2010-239", "BAC", true], ["2004-29", "BAC", true], ["2008-72", "BAC", true], ["2005-16", "BAC", true]]);
+  expectPages("  …Merrill Lynch from its purchase on 2009-01-01: its 2009, 2016 and 2023 charges, never its Enron charge of 2003 or its auction-rate settlement of 2008",
+    [["2009-13", "BAC", true], ["2016-128", "BAC", true], ["2023-128", "BAC", true], ["2003-32", "BAC", false], ["2008-181", "BAC", false]]);
+  expectPages("Wells Fargo's Wachovia from 2008-12-31, never its settlements of 2004 and 2008",
+    [["2011-257", "WFC", true], ["2004-152", "WFC", false], ["2008-176", "WFC", false]]);
+  expectPages("JPMorgan's \"J.P. Morgan\" and \"JPMorgan\", the owner's call, with J.P. Morgan Securities: 2003 to 2024",
+    [["2003-129", "JPM", true], ["2011-131", "JPM", true], ["2018-306", "JPM", true], ["2020-233", "JPM", true], ["2024-7", "JPM", true]]);
+  expectPages("  …never Bear Stearns before 2008-05-31, nor two of its traders",
+    [["2006-38", "JPM", false], ["99-94", "JPM", false], ["2013-154", "JPM", false]]);
+  const jpmBefore = { number: "x-1", day: "2000-12-30", title: "J.P. Morgan to Pay $1 Million to Settle SEC Charges", url: "https://www.sec.gov/x-1" };
+  check("  …nor \"J.P. Morgan\" before J.P. Morgan & Co. merged into the company's record on 2000-12-31 (a constructed headline)",
+    !pageTakes(jpmBefore, "JPM") && pageTakes({ ...jpmBefore, day: "2000-12-31" }, "JPM"));
+  expectPages("Citigroup's Smith Barney until it went into Morgan Stanley's venture on 2009-05-31, and its Global Markets unit; the venture's charges Morgan Stanley's",
+    [["97-78", "C", true], ["2015-171", "C", true], ["2023-165", "C", true], ["2020-109", "MS", true], ["2022-168", "MS", true], ["2020-109", "C", false]]);
+  expectPages("Regions' Morgan Keegan, bought 2001-03-30 and sold 2012-04-02: its three cases of 2009 to 2011",
+    [["2009-166", "RF", true], ["2010-53", "RF", true], ["2011-132", "RF", true]]);
+  expectPages("UBS Group's bare \"UBS\", the owner's call: its 2009 settlement, its charges of 2011 to 2022, and the one with JPMorgan",
+    [["2009-29", "UBS", true], ["2011-105", "UBS", true], ["2016-197", "UBS", true], ["2022-131", "UBS", true], ["2022-131", "JPM", true], ["2011-60", "UBS", false]]);
+  check("  …which UBS AG's everyday name is, ranked below UBS Group and a UBS fund: neither outranks the company asking",
+    outrankingNameFor("UBS", ["UBS Group", "UBS"]) === null && outrankingNameFor("UBS", ["UBS"]) === "ubs group" &&
+      outrankingNameFor("UBS") === "ubs group" && outrankingNameFor("PRUDENTIAL", ["PRUDENTIAL"]) === "prudential financial",
+    `${outrankingNameFor("UBS", ["UBS Group", "UBS"])} | ${outrankingNameFor("UBS", ["UBS"])}`);
+  const csAfter = { number: "x-2", day: "2023-06-12", title: "Credit Suisse Agrees to Pay $10 Million to Settle SEC Charges", url: "https://www.sec.gov/x-2" };
+  check("Credit Suisse's releases are UBS Group's from its purchase on 2023-06-12 (a constructed headline), never before",
+    pageTakes(csAfter, "UBS") && !pageTakes({ ...csAfter, day: "2023-06-11" }, "UBS") && !pageTakes(storedRelease("2021-213"), "UBS"));
+  expectPages("the banks' notes records, Credit Suisse AG's and UBS AG's, take none: the owner's call, as batch 74 kept the Board's actions off them",
+    [["2014-39", "GLDI", false], ["2021-213", "GLDI", false], ["2012-233", "GLDI", false], ["2012-233", "JPM", true], ["2009-29", "AMUB", false]]);
+  check("  …where before this batch GLDI's page took Credit Suisse's own",
+    secPressEvents([storedRelease("2014-39"), storedRelease("2021-213")], namesOf("GLDI")).length === 2);
+  check("the map: seven banks, each unit with its reason, each day well formed, and the two notes records not mapped to any",
+    Object.keys(RELEASE_NAMES).length === 7 && Object.keys(NOTES_RECORDS).length === 2 &&
+      Object.values(RELEASE_NAMES).every((b) => b.names.every((n) => n.why.length > 20 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
+      Object.keys(NOTES_RECORDS).every((cik) => !(cik in RELEASE_NAMES)) &&
+      Object.entries(RELEASE_NAMES).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)) &&
+      Object.entries(NOTES_RECORDS).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)));
+  const bacDb = freshDb("1990-01-02");
+  for (const n of ["2010-239", "2003-32", "2016-128"]) bacDb.releases.set(releaseKey(storedRelease(n)), storedRelease(n));
+  const bacPlan = { edgarName: "BANK OF AMERICA CORP /DE/", alsoKnownAs: newsNamesFor(70858) };
+  const bacWith = await secPressFor(fakeDb(bacDb), 1, { ...bacPlan, cik: 70858 }, { due: 0, read: 0, pages: 0, releases: 0 });
+  const bacWithout = await secPressFor(fakeDb(bacDb), 1, bacPlan, { due: 0, read: 0, pages: 0, releases: 0 });
+  const gldiKept = await secPressFor(fakeDb(bacDb), 1, { edgarName: "CREDIT SUISSE AG", alsoKnownAs: [], cik: 1053092 }, { due: 0, read: 0, pages: 0, releases: 0 });
+  check("a company's ingest reads them by its CIK: Bank of America's page takes the 2016 and 2010 charges, not the 2003 one",
+    bacWith.events.map((e) => e.date).join(",") === "2016-06-23,2010-12-07" && bacWithout.events.length === 0 &&
+      gldiKept.outcome === "empty" && /notes record/.test(gldiKept.detail ?? ""),
+    `${bacWith.events.map((e) => e.date).join(",")} · ${gldiKept.detail}`);
+
+  console.log("\nEvery stored release against every listed company (batch 82)");
+  const t0 = Date.now();
+  const replay = replayListing();
+  const entries = [...replay.values()].reduce((n, l) => n + l.length, 0);
+  check("the 6,894 stored releases give 252 page entries on 124 companies, 44 more than before this batch's names, as replayed in full",
+    stored.length === 6894 && entries === 252 && replay.size === 124, `${stored.length} releases → ${entries} entries on ${replay.size} companies in ${Date.now() - t0} ms`);
+  const pinned: Record<string, number> = { BAC: 28, MS: 17, C: 13, UBS: 11, JPM: 11, WFC: 10, GS: 8, DB: 7, RF: 3 };
+  const got = Object.fromEntries(Object.keys(pinned).map((t) => [t, replay.get(t)?.length ?? 0]));
+  check("  …Bank of America 28 (8 before), Morgan Stanley 17, Citigroup 13, UBS Group 11 (none), JPMorgan 11, Wells Fargo 10, Regions 3, and the notes records none",
+    Object.entries(pinned).every(([t, n]) => got[t] === n) && !replay.has("GLDI") && !replay.has("AMUB"), JSON.stringify(got));
+
   console.log("\nAs timeline events");
   const gs = secPressEvents(fixture.releases, namesOf("GS"));
   check("Goldman's releases, newest first, as regulation events credited to the SEC and linked to sec.gov",
@@ -371,7 +495,7 @@ const TODAY = "2026-10-29";
   const ingest = read("scripts/ingest.ts");
   check("company ingest walks the years, then keeps the company's releases under its names and its possessive",
     (COMPANY_SOURCES as readonly string[]).includes("sec_press") &&
-      /await run\("sec_press", [^\n]+, async \(\) => \{\s+const walked = await walkSecPress\(client\);[\s\S]{0,400}return secPressFor\(client, subjectId, \{ edgarName: company\.name, alsoKnownAs, possessive: dojPossessive\(company\.name, possessive\) \}, walked\);/.test(ingest));
+      /await run\("sec_press", [^\n]+, async \(\) => \{\s+const walked = await walkSecPress\(client\);[\s\S]{0,400}return secPressFor\(client, subjectId, \{ edgarName: company\.name, alsoKnownAs, possessive: dojPossessive\(company\.name, possessive\), cik: company\.cik \}, walked\);/.test(ingest));
   // the 2026-10-30 audit's finding 4 (batch 78): prices were read last, so a company's first
   // ingest found no first price, stored no release and marked the source read for a day
   const company = ingest.slice(ingest.indexOf("export async function ingestCompany"), ingest.indexOf("\n}\n", ingest.indexOf("export async function ingestCompany")));

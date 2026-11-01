@@ -34,7 +34,8 @@ import { fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
 import { fedBanksFor, fetchFedActions } from "../lib/fedActions";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
-import { dojPossessive, dojQueryNames, fetchJusticeReleases } from "../lib/doj";
+import { dojPossessive, fetchJusticeReleases, justiceQueryNames } from "../lib/doj";
+import { isNotesRecord, releaseNamesOn } from "../lib/releaseNames";
 import { fetchListingPage, secPressEvents } from "../lib/secPress";
 import { mayCarryRelease, readFilingHeadline } from "../lib/secHeadlines";
 import {
@@ -195,14 +196,14 @@ async function main() {
     else console.log(`  ${"FDA enforcement".padEnd(22)} — not a mapped FDA firm`);
     if (fedBanksFor(company.cik)) reportFetch("Federal Reserve actions", await tried(fetchFedActions(company.cik)), "(mapped banks only)");
     else console.log(`  ${"Federal Reserve actions".padEnd(22)} — not a mapped bank`);
-    reportFetch("Justice Department", await tried(fetchJusticeReleases(company.name, alsoKnownAs, possessive)),
-      `(asked ${dojQueryNames(companyNames(company.name, alsoKnownAs), dojPossessive(company.name, possessive)).join(" | ")})`);
+    reportFetch("Justice Department", await tried(fetchJusticeReleases(company.name, alsoKnownAs, possessive, company.cik)),
+      `(asked ${justiceQueryNames(company.name, alsoKnownAs, possessive, company.cik).join(" | ")})`);
     // the newest page of this year's listing, kept as ingest keeps it; the walk reads every year
     // since 1997 once, with the company's former names, and is not repeated here
     const own = dojPossessive(company.name, possessive);
     const newest = await fetchListingPage(new Date().getUTCFullYear(), 0);
     reportFetch("SEC press releases", {
-      events: secPressEvents(newest.releases, () => [...companyNames(company.name, alsoKnownAs), ...(own ? [own] : [])]),
+      events: isNotesRecord(company.cik) ? [] : secPressEvents(newest.releases, () => [...companyNames(company.name, alsoKnownAs), ...(own ? [own] : [])], "", (day) => releaseNamesOn(company.cik, day)),
       outcome: newest.outcome === "ok" ? (newest.releases.length ? "ok" : "empty") : newest.outcome,
       httpStatus: newest.httpStatus,
       detail: newest.detail,

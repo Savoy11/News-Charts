@@ -1,4 +1,5 @@
 import { companyNames, longerListedNameIn } from "./frCompany";
+import { isNotesRecord, releaseNamesAsked, releaseNamesOn } from "./releaseNames";
 import { commonName, outrankingNameFor } from "./sec";
 import type { FetchResult, TimelineEvent } from "./types";
 
@@ -24,6 +25,8 @@ const PAGE_SIZE = 50;
  */
 const MAX_PAGES = 10;
 const PAGE_GAP_MS = 800;
+/** A name shorter than this is asked for one page when it fills more than the pages read (batch 34). */
+const SHORT_NAME = 5;
 
 /**
  * Words that may follow a company's name and still be the company: "Wells Fargo Bank, N.A.",
@@ -118,12 +121,14 @@ export const escapeName = (name: string) =>
  * A name as a pattern, made to carry one of its own legal words when a bigger listed company's
  * name begins with it (`outrankingNameFor`): "Prudential to Pay $600 Million" names Prudential
  * Financial as likely as Prudential plc, and "UBS Agrees to Pay" UBS Group as likely as UBS AG's
- * notes, so neither bare name is theirs, while "Crown Holdings to Pay" and "Southern Company
- * Agrees" still are (the 2026-10-30 audit's finding 1). The bigger company's own name in the
- * title is `longerListedNameIn`'s to refuse.
+ * notes, so neither bare name is the smaller company's, while "Crown Holdings to Pay" and
+ * "Southern Company Agrees" still are (the 2026-10-30 audit's finding 1). The bigger company's own name in the
+ * title is `longerListedNameIn`'s to refuse. `own` are the asking company's names: a company
+ * ranked below it, or one of them, outranks none of them, so UBS Group's own bare "UBS" (batch 82)
+ * is its.
  */
-export const outrankedName = (name: string, pattern: string): string =>
-  outrankingNameFor(name) ? `${pattern}${DESIGNATOR_WORD}` : pattern;
+export const outrankedName = (name: string, pattern: string, own: readonly string[] = []): string =>
+  outrankingNameFor(name, own) ? `${pattern}${DESIGNATOR_WORD}` : pattern;
 
 /**
  * Whether the release is about the company as a party, not merely mentioning it.
@@ -143,7 +148,7 @@ export function releaseNamesParty(title: string, names: readonly string[]): bool
   const aboutAPerson = /^(?:Former|Ex-)\b/i.test(t);
   for (const name of names) {
     if (name.trim().length < 2 || longerListedNameIn(t, name)) continue;
-    const n = outrankedName(name, escapeName(name));
+    const n = outrankedName(name, escapeName(name), names);
     const owner = String.raw`,\s+an?\s+${n}${DESIGNATOR}\s*(?:Company|Subsidiary|Unit|Affiliate|Business)\b`;
     const object = new RegExp(String.raw`(?:\b${ACTION}\s+${ALONGSIDE}${n}${DESIGNATOR}${FOLLOWS}|${owner})`, "i");
     const deal = new RegExp(String.raw`(?:${START}${n}${DESIGNATOR}${DEAL}|\b(?:Buy|Buying|Acquire|Acquiring)\s+${n}${DESIGNATOR}${BOUGHT})`, "i");
@@ -218,7 +223,12 @@ export function dojPossessive(edgarName: string, possessive = ""): string {
 /**
  * The names to ask the API for: the company's names, minus any that contain another — the filter
  * matches anywhere in the title, so "Facebook" already finds "TheFacebook" and "Amazon" finds
- * "AMAZON COM".
+ * "AMAZON COM". A name under five characters stands in for none: when it fills more than the
+ * pages read, its ask stops at one page, so "Dell" would lose Dell Technologies' releases past the
+ * newest fifty titles holding "dell". Before batch 82 ten companies had a longer name dropped for a
+ * short one (Dell Technologies for Dell, TSMC for TSM; Uber, CGI, DiDi, Snap, Gogo, Angi, H&M and
+ * DCC too), and UBS Group's bare "UBS" would have dropped "UBS Group"; asked both, none of the ten
+ * pages changed (measured 2026-11-01).
  *
  * A possessive goes in both spellings, since the filter matches an apostrophe literally (letter
  * case aside) and titles carry both. Measured 2026-10-25: "Moody’s" 2 titles, "Moody's" and
@@ -229,7 +239,7 @@ export function dojQueryNames(names: readonly string[], possessive = ""): string
   const kept: string[] = [];
   const byLength = names.map((n) => n.trim()).filter((n) => n.length >= 2);
   for (const n of [...byLength].sort((a, b) => a.length - b.length)) {
-    if (!kept.some((k) => n.toLowerCase().includes(k.toLowerCase()))) kept.push(n);
+    if (!kept.some((k) => k.length >= SHORT_NAME && n.toLowerCase().includes(k.toLowerCase()))) kept.push(n);
   }
   const both = (n: string) => (/['’]/.test(n) ? [n.replace(/’/g, "'"), n.replace(/'/g, "’")] : [n]);
   return [...new Set([...byLength.filter((n) => kept.includes(n)), possessive.trim()].filter(Boolean).flatMap(both))];
@@ -254,14 +264,18 @@ function better(a: { title: string; url: string }, b: { title: string; url: stri
 /** At most this many releases a company, newest first — a ceiling, not a target. */
 export const DOJ_CAP = 60;
 
-/** The releases naming the company as a party, as timeline events — one a day, newest first. */
-export function dojEvents(releases: readonly DojRelease[], names: readonly string[]): TimelineEvent[] {
+/**
+ * The releases naming the company as a party, as timeline events — one a day, newest first.
+ * `namesOn(day)` gives the names a release of that day may add, the units the company then owned
+ * (`releaseNamesOn`).
+ */
+export function dojEvents(releases: readonly DojRelease[], names: readonly string[], namesOn?: (day: string) => string[]): TimelineEvent[] {
   const byDay = new Map<string, { title: string; url: string; r: DojRelease; date: string }>();
   for (const r of releases) {
     const title = plainText(r.title ?? "");
     const date = releaseDate(r.date);
     if (!title || !date || !r.url || !/^https:\/\/www\.justice\.gov\//.test(r.url)) continue;
-    if (!releaseNamesParty(title, names)) continue;
+    if (!releaseNamesParty(title, namesOn ? [...names, ...namesOn(date)] : names)) continue;
     const cand = { title, url: r.url, r, date };
     const held = byDay.get(date);
     if (!held || better(cand, held)) byDay.set(date, cand);
@@ -294,17 +308,27 @@ export function dojEvents(releases: readonly DojRelease[], names: readonly strin
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * The company's Justice Department releases: every release whose title contains one of its names,
- * newest first, kept only when the title makes it a party (`releaseNamesParty`).
+ * What the API is asked for: the company's names, its possessive, and the units the release rules
+ * give it (`releaseNamesAsked`, batch 82) whatever their days, since the filter knows no dates —
+ * a release outside a unit's days is dropped after.
  */
-export async function fetchJusticeReleases(edgarName: string, alsoKnownAs: string[] = [], possessive = ""): Promise<FetchResult> {
+export const justiceQueryNames = (edgarName: string, alsoKnownAs: readonly string[] = [], possessive = "", cik?: number | string): string[] =>
+  dojQueryNames([...companyNames(edgarName, alsoKnownAs), ...(cik === undefined ? [] : releaseNamesAsked(cik))], dojPossessive(edgarName, possessive));
+
+/**
+ * The company's Justice Department releases: every release whose title contains one of its names,
+ * newest first, kept only when the title makes it a party (`releaseNamesParty`) under the names it
+ * had that day. A bank's notes record takes none (`isNotesRecord`).
+ */
+export async function fetchJusticeReleases(edgarName: string, alsoKnownAs: string[] = [], possessive = "", cik?: number | string): Promise<FetchResult> {
+  if (cik !== undefined && isNotesRecord(cik)) return { events: [], outcome: "empty", detail: "a bank's notes record: its releases are its group's page's" };
   const own = dojPossessive(edgarName, possessive);
   // "Lowe's" names Lowe's where LOWES COMPANIES does not; "Moody's" adds nothing to MOODYS
   const names = [...companyNames(edgarName, alsoKnownAs), ...(own ? [own] : [])];
   const releases: DojRelease[] = [];
   let first = true;
   try {
-    for (const name of dojQueryNames(companyNames(edgarName, alsoKnownAs), own)) {
+    for (const name of justiceQueryNames(edgarName, alsoKnownAs, possessive, cik)) {
       for (let page = 0; page < MAX_PAGES; page++) {
         if (!first) await sleep(PAGE_GAP_MS);
         first = false;
@@ -325,12 +349,12 @@ export async function fetchJusticeReleases(edgarName: string, alsoKnownAs: strin
         // A short name matches inside other words — "AIG" in 1,600 titles ("Craig"), "ADM" in 8,333
         // ("admin") — and the newest 500 of those held none of its company's releases; "UPS" in 273
         // held four. One page, then, when there are more than the pages read (batch 34).
-        if (name.length < 5 && Number(json?.metadata?.resultset?.count) > MAX_PAGES * PAGE_SIZE) break;
+        if (name.length < SHORT_NAME && Number(json?.metadata?.resultset?.count) > MAX_PAGES * PAGE_SIZE) break;
       }
     }
   } catch (err) {
     return { events: [], outcome: "error", detail: String(err).slice(0, 200) };
   }
-  const events = dojEvents(releases, names);
+  const events = dojEvents(releases, names, cik === undefined ? undefined : (day) => releaseNamesOn(cik, day));
   return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
 }

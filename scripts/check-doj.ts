@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import tickerIndex from "../data/edgar-tickers.json";
-import { DOJ_CAP, dojEvents, dojPossessive, dojQueryNames, fetchJusticeReleases, plainText, releaseDate, releaseNamesParty, type DojRelease } from "../lib/doj";
+import { DOJ_CAP, dojEvents, dojPossessive, dojQueryNames, fetchJusticeReleases, justiceQueryNames, plainText, releaseDate, releaseNamesParty, type DojRelease } from "../lib/doj";
+import { releaseNamesOn } from "../lib/releaseNames";
 import { companyNames } from "../lib/frCompany";
 import { newsNamesFor } from "../lib/sec";
 import { SOURCES } from "../lib/ingest/store";
@@ -225,6 +226,53 @@ async function main(): Promise<void> {
     globalThis.fetch = realFetch;
   }
 
+  /**
+   * Batch 82, the 2026-11-01 proposal 4: the units a bank owned count while it owned them, the
+   * owner's "JPMorgan" is JPMorgan Chase's, and a bank's notes record takes no release
+   * (lib/releaseNames.ts). Real releases, read 2026-11-01; on the code before this batch the
+   * Wachovia and JPMorgan ones landed on no page.
+   */
+  console.log("\nA bank's units while it owned them, and its notes records (batch 82)");
+  const units = fixture.BANK_UNITS.releases;
+  const wfc = dojEvents(units, namesOf("WFC"), (day) => releaseNamesOn(72971, day));
+  const jpm = dojEvents(units, namesOf("JPM"), (day) => releaseNamesOn(19617, day));
+  check("Wachovia Bank's 2011 admission lands on Wells Fargo, which bought Wachovia on 2008-12-31, and the $13 billion settlement \"with JPMorgan\" on JPMorgan",
+    wfc.map((e) => e.date).join(",") === "2011-12-08" && jpm.map((e) => e.date).join(",") === "2013-11-19",
+    `${wfc.map((e) => e.date).join(",")} · ${jpm.map((e) => e.date).join(",")}`);
+  check("  …neither under the bank's own names alone", dojEvents(units, namesOf("WFC")).length === 0 && dojEvents(units, namesOf("JPM")).length === 0);
+  check("  …nor before the purchase: the same Wachovia release dated 2008-12-30",
+    dojEvents([{ ...units[0], date: String(Date.UTC(2008, 11, 30, 12) / 1000) }], namesOf("WFC"), (day) => releaseNamesOn(72971, day)).length === 0);
+  const ubsOn = (day: string) => releaseNamesOn(1610520, day);
+  check("Credit Suisse's $5.28 billion settlement of 2017 is UBS Group's no more than it was before UBS bought Credit Suisse on 2023-06-12",
+    dojEvents(units, namesOf("UBS"), ubsOn).length === 0);
+  check("  …while the same headline after the purchase is (a constructed day, 2023-11-14)",
+    dojEvents([{ ...units[2], date: "1700000000" }], namesOf("UBS"), ubsOn).map((e) => e.date).join(",") === "2023-11-14");
+  check("the units are asked for with the company's names, whatever their days, since the filter knows none",
+    justiceQueryNames("BANK OF AMERICA CORP /DE/", [], "", 70858).join("|") ===
+      "BANK OF AMERICA|Banc of America Securities|Banc of America Investment Services|Banc of America Capital Management|Merrill Lynch" &&
+      justiceQueryNames("BANK OF AMERICA CORP /DE/", []).join("|") === "BANK OF AMERICA",
+    justiceQueryNames("BANK OF AMERICA CORP /DE/", [], "", 70858).join("|"));
+  check("a name under five characters stands in for no longer one, since its ask stops at a page when crowded: UBS Group keeps \"UBS Group\", Dell \"Dell Technologies\"",
+    justiceQueryNames("UBS Group AG", [], "", 1610520).join("|") === "UBS Group|UBS|Credit Suisse" &&
+      dojQueryNames(["Dell Technologies", "Dell"]).join("|") === "Dell Technologies|Dell" && dojQueryNames(["JPMORGAN CHASE", "JPMorgan"]).join("|") === "JPMorgan",
+    `${justiceQueryNames("UBS Group AG", [], "", 1610520).join("|")} · ${dojQueryNames(["Dell Technologies", "Dell"]).join("|")}`);
+  let notesAsked = 0;
+  try {
+    globalThis.fetch = (async () => {
+      notesAsked++;
+      return new Response(JSON.stringify({ results: units }), { status: 200 });
+    }) as typeof fetch;
+    const gldi = await fetchJusticeReleases("CREDIT SUISSE AG", [], "", 1053092);
+    const amub = await fetchJusticeReleases("UBS AG", [], "", 1114446);
+    check("a bank's notes record, Credit Suisse AG's or UBS AG's, is asked nothing and takes no release",
+      notesAsked === 0 && gldi.outcome === "empty" && gldi.events.length === 0 && /notes record/.test(gldi.detail ?? "") && amub.events.length === 0,
+      `${notesAsked} asked, ${gldi.detail}`);
+    const before = await fetchJusticeReleases("CREDIT SUISSE AG", []);
+    check("  …where before this batch Credit Suisse AG's page took the settlement", before.events.length === 1 && notesAsked === 1);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+
   console.log("\nRegistered, licensed, wired");
   const src = SOURCES.find((s) => s.key === "doj_press");
   check("the source is registered as public domain, cleared for commercial use, with the day it was read",
@@ -235,9 +283,9 @@ async function main(): Promise<void> {
     deterministicScore({ ...sued, sourceKey: "doj_press" }, google, ["alphabet", "google"])?.score === 0.95 &&
       deterministicScore({ ...sued, sourceKey: "federal_register" }, google, ["alphabet", "google"]) === null);
   const ingest = read("scripts/ingest.ts");
-  check("company ingest asks for the company's releases under its names and its possessive",
+  check("company ingest asks for the company's releases under its names, its possessive and its units (batch 82)",
     (COMPANY_SOURCES as readonly string[]).includes("doj_press") &&
-      /await run\("doj_press", dojQueryNames\(companyNames\(company\.name, alsoKnownAs\), dojPossessive\(company\.name, possessive\)\)\.join\(" \| "\), \(\) =>\s*fetchJusticeReleases\(company\.name, alsoKnownAs, possessive\)/.test(ingest));
+      /await run\("doj_press", justiceQueryNames\(company\.name, alsoKnownAs, possessive, company\.cik\)\.join\(" \| "\), \(\) =>\s*fetchJusticeReleases\(company\.name, alsoKnownAs, possessive, company\.cik\)/.test(ingest));
   check("the Justice Department is credited where the other sources are",
     /press releases from the\s+U\.S\. Department of Justice/.test(read("app/layout.tsx")) &&
       /press releases from\s+the U\.S\. Department of Justice/.test(read("app/legal/terms/page.tsx")) &&

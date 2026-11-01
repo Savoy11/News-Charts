@@ -47,6 +47,7 @@ import { fetchInvestigations } from "../lib/investigations";
 import { fetchFedActions } from "../lib/fedActions";
 import { fetchListingPage, secPressEvents } from "../lib/secPress";
 import { fetchCasePage, secCaseEvents } from "../lib/secCases";
+import { cachedFedFeed, fedPressEvents } from "../lib/fedPress";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
 import { FR_COMPANY_CAP, fetchCompanyRegulations, fetchCompanyYear, frDailySince, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
@@ -762,6 +763,24 @@ export const CASES: LiveCase[] = [
       await new Promise((r) => setTimeout(r, 1_000));
       const last = await fetchCasePage("litigation", 2010, 4);
       if (last.outcome !== "ok" || last.cases.length !== 39) out.push(`litigation 2010 page 5, the last, answered ${last.outcome} with ${last.cases.length} rows, not 39`);
+      return out;
+    },
+  },
+  {
+    name: "Federal Reserve Board releases — the feed as ingest reads it; Wells Fargo's Wachovia approval and Bank of America's capital plan by the party rules (batch 84)",
+    covers: ["fed_press"],
+    hosts: ["www.federalreserve.gov"],
+    async run() {
+      // measured 2026-11-01: 2,219 releases of the three types read, from 2006-01-10, 1,929 with a
+      // time; the Wachovia order of 2008-10-12 and the capital-plan release of 2014-04-28 among them
+      const releases = await cachedFedFeed();
+      const out: string[] = [];
+      if (releases.length < 2_219) out.push(`the feed holds ${releases.length} releases of the types read, fewer than the 2,219 of 2026-11-01`);
+      if (!releases.some((r) => r.day === "2006-01-10")) out.push("no release of 2006-01-10, the feed's first day");
+      const wfc = fedPressEvents(releases, () => ["Wells Fargo", "WELLS FARGO & COMPANY"], { cik: 72971 });
+      if (!wfc.some((e) => e.date === "2008-10-12" && /to acquire Wachovia Corporation/.test(e.title))) out.push("Wells Fargo's Wachovia approval of 2008-10-12 not kept");
+      const bac = fedPressEvents(releases, () => ["Bank of America", "BANK OF AMERICA CORP"], { cik: 70858 });
+      if (!bac.some((e) => e.date === "2014-04-28" && /requiring Bank of America Corporation to resubmit/.test(e.title))) out.push("Bank of America's capital-plan release of 2014-04-28 not kept");
       return out;
     },
   },

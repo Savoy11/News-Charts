@@ -988,6 +988,115 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 84: the Federal Reserve Board's press releases (2026-11-01)
+
+The last of the five proposals the owner approved on 2026-11-01 (#5), with the owner's yes to the
+source. All five are now built.
+
+- [x] **A new source, `fed_press`** (`lib/fedPress.ts`, `lib/ingest/fedPressFor.ts`).
+      - **What it reads:** one file, `www.federalreserve.gov/json/ne-press.json`, about 1 MB, every
+        Board release since 2006-01-10 (4,650 on 2026-11-01). Three of its five types are read:
+        Orders on Banking Applications, Banking and Consumer Regulatory Policy, and Other
+        Announcements. 19 rows of the last link off the Board's site (Reserve Banks naming their
+        presidents) and are skipped, which leaves 2,219. Enforcement Actions are not read here,
+        since batch 69 reads them from the Board's own files; nor is Monetary Policy.
+      - **Licence:** re-read on 2026-11-01 (`federalreserve.gov/disclaimer.htm`), the same words
+        the enforcement files carry: public domain, cite the Board. No key. Registered as source
+        29, credited in the footer, the Terms page and README, and scored without the model.
+      - **How it is read:** once a process for every company; a failed read is not kept, so the
+        next company asks again.
+      - **The names a company is read by:** the same list the SEC's cases use, now one shared
+        function (`partyNamesFor` in `lib/ingest/secCasesWalk.ts`). That is its everyday names that
+        year, its possessive, its legal name and the former legal names it had that year, plus the
+        units the release rules' map gives it. Nothing from before its first price.
+      - **Times:** 1,929 of the 2,219 carry a Washington clock time, read to an exact instant, so
+        batch 68's mark applies ("4:30 pm ET, after the close" on Scotiabank's approval of
+        2026-10-29). The rest, all before 2017, give a day only.
+      - **Accented names:** the feed writes them as HTML codes (`Soci&eacute;t&eacute;
+        G&eacute;n&eacute;rale`). They are decoded with the SEC headline reader's decoder, now
+        exported as `decodeEntities`.
+- [x] **Who an order names** (`orderParties`).
+      - **The parties:** the applicant after "by" (or "approval for"), and what it acquires, merges
+        with, buys, retains or controls. Each is read as a case caption is: the name, or the legal
+        name, with only legal words after it. "Approval of proposal by Mitsubishi UFJ Financial
+        Group to acquire voting shares of Morgan Stanley" (2008-10-06) goes on both pages.
+      - **Batch 69's hand-checked map counts too:** an order filed under a bank the map gives the
+        company on that day. That adds "Goldman Sachs Bank USA" (2015-10-05, 2016-03-21), Morgan
+        Stanley's E*TRADE notice (2020-04-30) and its bank's request of 2026-03-26, and BB&T's six
+        orders on Truist's page.
+- [x] **Who a policy release acts on** (`boardActsOn`). The Board's own phrase must come just
+      before the name:
+      - a capital plan from or of; a stress capital buffer for; assistance, support or lending to;
+        a statement or joint release on; an agreement with; "requiring"; approve or permit;
+        applications of; an acquisition by or of; a transition period for; efforts of;
+        participation in; subsidiaries of; rescinding the designation of;
+      - or the company's own plan ("Morgan Stanley's stress capital buffer requirement", "Wells
+        Fargo's second resolution plan"), "has remediated", or "proposed U.S. Bancorp Acquisition
+        of MUFG Union Bank";
+      - under the press releases' guards: a longer listed name owns the mention, a name more than
+        one listed company has names none, and a short name a bigger company's begins with counts
+        only with a legal word of its own.
+- [x] **Every match read by hand** (225).
+      - **Namesakes:** "Approval of proposal by Fortis" (2007-12-04) is the Belgian bank, kept off
+        Fortis Inc. by CIK (`NOT_THE_COMPANY`). The rule itself refuses "Banco Popular Español"
+        (2006-02-08) for Popular, and Michigan's "Citizens Banking Corporation" (2006-12-12) for
+        Citizens, Inc. and Citizens Financial.
+      - **Near misses refused:** seven releases whose letters hold a large bank's name but make it
+        no party: a vice chairman's recusal from Wells Fargo matters, payments to Goldman's and
+        Morgan Stanley's borrowers, and capital rules on banks' holdings of Fannie Mae and Freddie
+        Mac preferred stock.
+      - **Caught on the way and added:** Fannie Mae's and Freddie Mac's joint release of 2008-09-07,
+        the day of their conservatorship; Freddie Mac in the Board's lending authority of
+        2008-07-13 (Fannie Mae's was already kept); and the statement of 2017-10-02 on rescinding
+        AIG's designation.
+      - **The feed's own type is kept:** Old National's approval of 2018-10-17 is typed "Banking and
+        Consumer Regulatory Policy" by the Board. The policy rule keeps it, described by that type.
+- **Measured** on the 2,219 releases against the committed index, under current names (former names
+  aside), in the shape ingest reads them:
+  - **The totals:** 225 matches (213 releases) on 103 companies, 126 before 2017, 181 of them orders.
+    The proposal counted 157 orders on 89 companies by exact everyday names, and 34 policy releases
+    by a list of names.
+  - **The most:** Morgan Stanley and Bank of America 11 each, Capital One 8, Wells Fargo, Truist and
+    PNC 7.
+- **Not given yet (open):**
+  - **Orders filed under a listed company's own bank** whose name is not its holding company's, and
+    that no map row gives: about two dozen (25 by a reading of the titles, not each checked against
+    the banks' filings). Regions Bank 4, Frost Bank 3 (Cullen/Frost), Origin Bank 3, Centennial
+    Bank 2 (Home BancShares), PlainsCapital Bank 2 (Hilltop), and one each for Simmons Bank, Green
+    Dot Bank, Five Star Bank (Financial Institutions), Equity Bank, Banco de Credito del Peru
+    (Credicorp), National Westminster Bank (NatWest), ING Bank and Lloyds Bank Corporate Markets. A
+    map row per bank would give them; that widens batch 69's map, so it is left for a decision.
+  - **Popular, Inc.:** its order of 2010-04-30 and two of 2015-02-27 are filed under Banco Popular de
+    Puerto Rico and Banco Popular North America. Popular's row in `FED_BANKS` is still the owner's
+    (raised in batch 74); one row would serve both sources.
+  - "Board announces that Goldman Sachs and Morgan Stanley transactions may be consummated
+    immediately" (2008-09-22) has no party phrase. The approval of the day before is on both pages.
+  - The Board's orders before 2006, on its yearly pages, are not read.
+- **Found on the way and fixed:** batch 83 put README's section on the SEC's cases in the middle of
+  the SEC press releases' section, cutting its "What is refused" paragraph off from the rest. The
+  section now follows it.
+- **Real Postgres** (`chronolens_b84`, every migration applied, from the saved feed): four banks
+  stored through the ingest's own functions with one request between them. Mitsubishi UFJ's stake
+  in Morgan Stanley of 2008-10-06 is one event on both pages, at "5:30 pm ET, after the close"; the
+  Wachovia approval reads "4:45 pm ET, markets closed" (a Sunday); Live Oak, listed 2015-07-23,
+  gets nothing from 2013.
+- **Checks:**
+  - **`check:fed-press`, new in the chain, 40 checks** on 234 real rows (`scripts/fixtures/
+    fed-press.json`, 52 KB): every release the rules keep, the near misses, the namesakes, rows of
+    the types not read, one row linking off the Board's site, and the feed's closing row. It
+    covers the parser and its times, the parties, the policy phrases, the map, the first price,
+    the full replay pinned at 225 on 103, one read for every company, the ingest step with a former
+    name, and the registration, wiring and credits. On main it cannot run: the adapter does not
+    exist.
+  - **`check:live`:** a case on the real file (at least 2,219 releases, the first day, Wells
+    Fargo's Wachovia approval, Bank of America's capital plan), run once on its own today and
+    passing. **`check:feeds`:** the company's releases from the file.
+- **Docs:** README (a section and a sources row), COVERAGE-MAP (a row, the gaps paragraph, 29
+  sources, 21 on the ingest path), CLAUDE.md and `lib/releaseNames.ts` (who reads the release map).
+- **Requests made:** www.federalreserve.gov 3 (the feed twice, the licence page once).
+- `npm run check` passes (53 suites) and `npm run lint` is clean. HawkScan was not run:
+  `HAWK_API_KEY` is not set.
+
 ## NC ledger — batch 83: the SEC's litigation releases and administrative proceedings (2026-11-01)
 
 The second of the five proposals the owner approved on 2026-11-01 (#2), with the owner's yes to the
@@ -6304,7 +6413,7 @@ already held, but new investment goes to securities coverage first.
         1 → 11 (current names), Regions 0 → 3, and Credit Suisse's 7 leave GLDI. Two days differ
         from the proposal, each from the filings: the Smith Barney venture closed 2009-05-31, and
         Regions bought Morgan Keegan 2001-03-30.
-- [ ] `P2` **The Federal Reserve Board's own announcements about a bank: its approvals of banks'
+- [x] `P2` **The Federal Reserve Board's own announcements about a bank: its approvals of banks'
       acquisitions since 2006.** A new source, approved by the owner 2026-11-01: the Board's
       press-release feed, `https://www.federalreserve.gov/json/ne-press.json`, on the host the
       enforcement files and FOMC statements are read from, and no key. Licence: "Unless otherwise
@@ -6362,6 +6471,13 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-11-01-proposals.md`](proposals/2026-11-01-proposals.md)
         #5, approved 2026-11-01 with the new source. Importance medium · Efficiency high ·
         Practicality medium-high (the source approved; a hand read of 191 matches).*
+      - ✅ **Done in batch 84** (see its section): source 29, `fed_press` (`lib/fedPress.ts`). Read
+        against the index, the 2,219 releases of the three types read give 225 matches on 103
+        companies, 126 before 2017, 181 of them orders, each read by hand. Beyond the proposal: an
+        order filed under a bank batch 69's map gives the company counts ("Goldman Sachs Bank USA",
+        BB&T's orders on Truist's page), and the licence was re-read on 2026-11-01. Popular's row in
+        the Fed map is still the owner's, and orders filed under a bank whose name is not its
+        holding company's are not given yet (about two dozen, listed in the section).
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

@@ -1,6 +1,6 @@
 # Coverage map — how far back a timeline can actually go
 
-**Last updated:** 2026-11-01 · 28 sources (20 on the ingest path; the 8 keyed ones are held back by their licences)
+**Last updated:** 2026-11-01 · 29 sources (21 on the ingest path; the 8 keyed ones are held back by their licences)
 
 The single question this answers: *given a subject, what is the earliest event News Charts could
 plausibly show, and which source would supply it?*
@@ -31,6 +31,7 @@ because it will be trusted.
 | **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |
 | **1997 – now** | SEC press releases | 1997, the first year the newsroom lists | Charges, suits and settlements whose headline makes the company the party (`lib/secPress.ts`, batch 73): against every company in the index, 255 of the 6,894 stored releases on 124 companies, 153 before 2017 (Bank of America 28, Morgan Stanley 18, Citigroup 13, UBS Group 12, JPMorgan 11; batch 78; Deutsche Bank's 7 from batch 81; the banks' securities units, while they owned them, from batch 82, `lib/releaseNames.ts`) |
 | **1995 – now** | SEC litigation releases and administrative proceedings | 1995, the first year either listing holds | The SEC's record of each case whose caption names the company, by its name and legal form, as a defendant or respondent (`lib/secCases.ts`, batch 83): against every company in the index, 1,022 company days on 352 companies from the 30,654 rows, 478 before 2017 (Bank of America 72, Morgan Stanley 66, Wells Fargo 47, UBS Group 46, JPMorgan 46); most fall on days no press release names the company |
+| **2006 – now** | Federal Reserve Board press releases | January 2006, the first in the Board's feed | The Board's orders on a bank's applications, kept when the company is the applicant or what it buys, and its policy releases that act on a named bank — a rescue, a capital plan (`lib/fedPress.ts`, batch 84): against every company in the index, 225 matches on 103 companies, 126 before 2017, 181 of them orders (Morgan Stanley and Bank of America 11 each, Capital One 8, Wells Fargo, Truist and PNC 7) |
 | **2008 – now** | BLS CPI release archive | February 2008, the oldest archived release | Monthly CPI releases — on company pages behind the Economy chip, off by default |
 | **2009 – now** | Justice Department press releases | 2009, the oldest releases the API holds | Settlements, pleas, suits and merger cases whose title makes the company a party (`lib/doj.ts`) — a few to ten per large company, about half before 2017 |
 | **2012 – now** | FDA enforcement reports | mid-2012, the first weekly report | Class I and II drug, device and food recalls for the 73 companies `lib/fdaRecalls.ts` maps (Medtronic, Philips, Johnson & Johnson, Stryker, Danaher, BD, Medline, Abbott, Pfizer, Novartis, Teva, GSK, PepsiCo, General Mills and others) — tens to hundreds per company |
@@ -100,7 +101,9 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   further, to 1997, in the same way: 153 of the 255 that name a company here as the party fall
   before 2017, most of them on the largest banks and brokers. The SEC's litigation releases and
   administrative proceedings reach 1995 and every sector: 478 of the 1,022 company days they give
-  fall before 2017 (batch 83). FDA recalls add
+  fall before 2017 (batch 83). The Federal Reserve Board's own press releases add 2006–2016 for the
+  banks: 126 of their 225 matches fall before 2017, among them the 2008 approvals and rescues
+  (batch 84). FDA recalls add
   mid-2012 to 2016 for 38 drug, device and food companies, many of them: Medtronic has 532
   recalls, 147 of them before 2017 (Philips 232 of 590, Johnson & Johnson 298 of 485). The
   Federal Reserve's enforcement actions add a few material events for large banks, 79 of their 110

@@ -161,27 +161,40 @@ export async function storedSecCases(client: PoolClient): Promise<SecCase[]> {
 }
 
 /**
- * The company's cases: the walk first, then every kept row whose caption names it as a party under
- * the names it had that year and the units it then owned, from its first price on, as the press
- * releases are kept (`secPressFor`). A bank's notes record takes none.
+ * The names a party rule reads a company by in a year — its everyday names then, its possessive,
+ * and its legal name and the former legal names it had that year — and its first price, from
+ * which a release can be its. Shared by the SEC's cases and the Federal Reserve Board's releases
+ * (batch 84), which both name a party by its legal name.
  */
-export async function secCasesFor(client: PoolClient, subjectId: number, plan: PressPlan & { cik: number | string }, walked: CasesWalk): Promise<FetchResult> {
+export async function partyNamesFor(
+  client: PoolClient,
+  subjectId: number,
+  plan: PressPlan,
+): Promise<{ listed: string | null; namesIn: (year: number) => string[] }> {
   const { rows } = await client.query<{ listed: string | null }>("SELECT min(on_date)::text AS listed FROM prices WHERE subject_id = $1", [subjectId]);
-  const listed = rows[0]?.listed;
-  const failure = walked.failure;
-  const failed = failure ? { outcome: failure.outcome, httpStatus: failure.httpStatus, detail: failure.detail } : null;
-  if (isNotesRecord(plan.cik)) return failed ? { events: [], ...failed } : { events: [], outcome: "empty", detail: "a bank's notes record: its cases are its group's page's" };
-  if (!listed) return failed ? { events: [], ...failed } : { events: [], outcome: "empty", detail: "no prices to start from" };
   const former = await storedFormerNames(client, subjectId);
   const own = plan.possessive ? [plan.possessive] : [];
   // a caption gives a party its full legal name, which the everyday name may have shortened:
   // "RenaissanceRe Holdings Ltd." is RenaissanceRe's, "Dana Holding Corporation" Dana's until 2016
   const legal = (year: number) => [plan.edgarName, ...former.filter((f) => f.until >= `${year}-01-01`).map((f) => f.name)].map(withoutTag);
-  const events = secCaseEvents(
-    await storedSecCases(client),
-    (year) => [...companyNames(plan.edgarName, namesForYear(year, plan.alsoKnownAs, former)), ...own, ...legal(year)],
-    { cik: plan.cik, from: listed, namesOn: (day) => releaseNamesOn(plan.cik, day) },
-  );
+  return {
+    listed: rows[0]?.listed ?? null,
+    namesIn: (year) => [...companyNames(plan.edgarName, namesForYear(year, plan.alsoKnownAs, former)), ...own, ...legal(year)],
+  };
+}
+
+/**
+ * The company's cases: the walk first, then every kept row whose caption names it as a party under
+ * the names it had that year and the units it then owned, from its first price on, as the press
+ * releases are kept (`secPressFor`). A bank's notes record takes none.
+ */
+export async function secCasesFor(client: PoolClient, subjectId: number, plan: PressPlan & { cik: number | string }, walked: CasesWalk): Promise<FetchResult> {
+  const failure = walked.failure;
+  const failed = failure ? { outcome: failure.outcome, httpStatus: failure.httpStatus, detail: failure.detail } : null;
+  if (isNotesRecord(plan.cik)) return failed ? { events: [], ...failed } : { events: [], outcome: "empty", detail: "a bank's notes record: its cases are its group's page's" };
+  const { listed, namesIn } = await partyNamesFor(client, subjectId, plan);
+  if (!listed) return failed ? { events: [], ...failed } : { events: [], outcome: "empty", detail: "no prices to start from" };
+  const events = secCaseEvents(await storedSecCases(client), namesIn, { cik: plan.cik, from: listed, namesOn: (day) => releaseNamesOn(plan.cik, day) });
   if (failed) return { events, ...failed };
   return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
 }

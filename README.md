@@ -235,6 +235,19 @@ UBS Group 12, JPMorgan 11, Wells Fargo 10, Goldman Sachs 8, Deutsche Bank 7), ea
 "AKTIENGESELLSCHAFT"; the banks' units since batch 82). `check:sec-press` replays the whole stored
 listing against the index and pins the count.
 
+What is refused: a release about a company's people ("SEC Charges Former Carter's Executive", "Board
+Member of Goldman Sachs and Procter & Gamble Charged"), a name followed by "of" ("SEC Charges City of
+Miami" is not City Holding), by a hyphen or an "-ing" word ("Crypto-Focused Advisory Firm"), the
+SEC's own divisions ("Division of Risk, Strategy, and Financial Innovation"), and a name more than
+one listed company has ("First Bancorp" is three banks'), and a short name a bigger listed company's
+name begins with, unless a legal word of its own follows it: "Prudential to Pay $600 Million" is no
+more Prudential plc's than Prudential Financial's, so it lands on no page; "Crown Holdings to Pay"
+would still be Crown Holdings', beneath Crown Castle. The bigger company must rank above the company
+asking as well, and is never one of its own names: "UBS Agrees to Pay" is UBS Group's, since nothing
+ranked above UBS Group begins "UBS". The Justice Department rule refuses the same. A release's day is
+the day in Washington, and its identity is its number and its day, since the SEC has given one
+number twice. A release is a regulation event and is scored without the model.
+
 ### SEC litigation releases and administrative proceedings (`lib/secCases.ts`)
 
 The SEC's record of each case it brings: a litigation release for each step of a suit in court,
@@ -263,18 +276,32 @@ current names, the 30,654 rows give 1,022 company days on 352 companies, 478 of 
 company's former names add more, and its first price keeps it off the years before it listed.
 `check:sec-cases` replays the kept rows and pins the count. A case is a regulation event and is
 scored without the model.
-What is refused: a release about a company's people ("SEC Charges Former Carter's Executive", "Board
-Member of Goldman Sachs and Procter & Gamble Charged"), a name followed by "of" ("SEC Charges City of
-Miami" is not City Holding), by a hyphen or an "-ing" word ("Crypto-Focused Advisory Firm"), the
-SEC's own divisions ("Division of Risk, Strategy, and Financial Innovation"), and a name more than
-one listed company has ("First Bancorp" is three banks'), and a short name a bigger listed company's
-name begins with, unless a legal word of its own follows it: "Prudential to Pay $600 Million" is no
-more Prudential plc's than Prudential Financial's, so it lands on no page; "Crown Holdings to Pay"
-would still be Crown Holdings', beneath Crown Castle. The bigger company must rank above the company
-asking as well, and is never one of its own names: "UBS Agrees to Pay" is UBS Group's, since nothing
-ranked above UBS Group begins "UBS". The Justice Department rule refuses the same. A release's day is
-the day in Washington, and its identity is its number and its day, since the SEC has given one
-number twice. A release is a regulation event and is scored without the model.
+
+### Federal Reserve Board press releases (`lib/fedPress.ts`)
+
+The Board's own announcements since 2006, the first year its press-release feed holds
+(www.federalreserve.gov/json/ne-press.json, one file of about 1 MB, read once a process for every
+company). Two kinds reach a company's page. An order on a banking application, kept when the
+company is the applicant ("Approval of proposal by Wells Fargo & Company to acquire Wachovia
+Corporation", 2008-10-12) or what the applicant buys ("…by Mitsubishi UFJ Financial Group to acquire
+voting shares of Morgan Stanley", 2008-10-06, on both pages); each party is read as a case caption
+is, its name or its legal name with legal words after it, so "Banco Popular Español" is not Popular,
+Inc. and Michigan's "Citizens Banking Corporation" not Citizens, Inc. And a policy release that names
+the company as the one the Board acts on, by the Board's own phrase before the name: the rescue of
+Bank of America (2009-01-16), the joint statement on Citigroup (2008-11-23), "requiring Bank of
+America Corporation to resubmit its capital plan" (2014-04-28), Morgan Stanley's stress capital
+buffer; a title that only mentions a bank ("will voluntarily recuse himself from participating in
+matters specific to Wells Fargo") is not one. An order filed under a bank batch 69's hand-checked map
+gives the company counts on its days ("Goldman Sachs Bank USA", BB&T's orders until Truist), and a
+company's former legal names count in the years it had them. "Approval of proposal by Fortis"
+(2007-12-04) is the Belgian bank, and is kept off Fortis Inc. by CIK (`NOT_THE_COMPANY`). Enforcement
+actions are not read here (batch 69 reads them from the Board's own files), nor monetary policy.
+A release carries its time where the feed gives one, so a release after 4 p.m. is marked after the
+close. Read against every company in the index under its current names, the 2,219 releases of the
+types read give 225 matches on 103 companies, 126 before 2017, 181 of them orders, each read by hand;
+`check:fed-press` replays them and pins the count. Not given yet: an order filed under a bank whose
+name is not its holding company's ("Regions Bank", "Frost Bank", "Banco Popular de Puerto Rico") and
+that no map row gives the company. A release is a regulation event and is scored without the model.
 
 ### Source planning (`lib/enrich/plan.ts`)
 
@@ -806,6 +833,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | U.S. Department of Justice | Press releases since 2009 in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | SEC newsroom (press releases) | Press releases since 1997 in which a company is the party — the SEC charges, sues or sanctions it, or it settles | The year listing, read once for every company (`lib/ingest/secPressWalk.ts`); kept only when the headline makes the company the party (`lib/secPress.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
+| Federal Reserve Board press releases | The Board's orders on a bank's applications since 2006, and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |

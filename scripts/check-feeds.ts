@@ -38,6 +38,7 @@ import { dojPossessive, fetchJusticeReleases, justiceQueryNames } from "../lib/d
 import { isNotesRecord, releaseNamesOn } from "../lib/releaseNames";
 import { fetchListingPage, secPressEvents } from "../lib/secPress";
 import { fetchCasePage, secCaseEvents } from "../lib/secCases";
+import { fetchFedPress } from "../lib/fedPress";
 import { withoutTag } from "../lib/edgarName";
 import { mayCarryRelease, readFilingHeadline } from "../lib/secHeadlines";
 import {
@@ -99,6 +100,7 @@ const SOURCE_OF: Record<string, SourceKey> = {
   "Justice Department": "doj_press",
   "SEC press releases": "sec_press",
   "SEC cases": "sec_cases",
+  "Fed Board releases": "fed_press",
 };
 
 const INGESTED: ReadonlySet<SourceKey> = new Set([...TOPIC_SOURCES, ...COMPANY_SOURCES]);
@@ -223,6 +225,11 @@ async function main() {
       httpStatus: refused?.httpStatus ?? pages[0].httpStatus,
       detail: refused?.detail,
     }, `(the ${pages[0].cases.length} and ${pages[1].cases.length} newest this year; the walk reads every year since 1995)`);
+    // …and the Board's releases since 2006, one file for every company (batch 84); former names
+    // and the first-price bound are ingest's and not applied here
+    reportFetch("Fed Board releases", isNotesRecord(company.cik) ? { events: [], outcome: "empty" } : await tried(fetchFedPress(
+      () => [...companyNames(company.name, alsoKnownAs), ...(own ? [own] : []), withoutTag(company.name)],
+      { cik: company.cik, namesOn: (day) => releaseNamesOn(company.cik, day) })), "(every release since 2006; former names are not read here)");
   } else {
     reportFetch("GDELT", await tried(fetchNews(name)), "(throttles ~1 req/5s; rerun if 0)");
   }

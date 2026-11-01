@@ -354,6 +354,21 @@ export const SOURCES: {
     reviewedOn: "2026-11-01",
     notes: "the SEC's two case listings since 1995, kept where a caption names a listed company as a defendant or respondent (lib/secCases.ts); no key (batch 83)",
   },
+  {
+    id: 29,
+    key: "fed_press",
+    name: "Federal Reserve Board press releases",
+    license: "public domain",
+    attribution: "Board of Governors of the Federal Reserve System",
+    // The enforcement files' licence, on the same host, read again for this source: "Unless
+    // otherwise indicated, information on Board's website is in the public domain and may be copied
+    // and distributed without permission. Please cite to the Board as the source of the
+    // information." (federalreserve.gov/disclaimer.htm, read 2026-11-01). Used: each release's
+    // title, day, time, type and a link to it. Approved by the owner on 2026-11-01.
+    commercialOk: true,
+    reviewedOn: "2026-11-01",
+    notes: "the Board's press releases since 2006, kept where an order's applicant or a policy release's subject is a listed company (lib/fedPress.ts); one keyless file, no key (batch 84)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

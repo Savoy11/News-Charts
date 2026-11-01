@@ -117,7 +117,8 @@ const CP1252_HIGH = "€\u0081‚ƒ„…†‡ˆ‰Š‹Œ\u008dŽ\u008f\u0090�
 function fromWindows1252(s: string): string {
   return s.replace(/[\u0080-\u009f]/g, (c) => CP1252_HIGH[c.charCodeAt(0) - 0x80]);
 }
-function decode(s: string): string {
+/** HTML entities to their characters: named (Latin-1 letters and signs among them) and numbered. */
+export function decodeEntities(s: string): string {
   return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+\d*);/gi, (m, e: string) => {
     if (e[0] === "#") {
       const n = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
@@ -160,7 +161,7 @@ export function textLines(doc: string): string[] {
     // "Schering-Plough Announces Sale        Steve Galpin, Jr." — each column is its own line
     t = t.replace(/^[ \t]*(\S.*?\S)[ \t]{4,}(\S.*)$/gm, "$1\n$2");
   }
-  return fromWindows1252(decode(t))
+  return fromWindows1252(decodeEntities(t))
     .replace(/[\u00a0\u2002\u2003\u2009\u200b]/g, " ")
     .split("\n")
     // "[AMAZON.COM Graphic]", "[LOGO]": where an image sat; "( BW)(CA-AMGEN-INC)(AMGN)": Business

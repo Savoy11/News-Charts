@@ -1,8 +1,9 @@
 /**
  * The names the SEC's and the Justice Department's releases give a listed company beyond those
  * its own record carries, read only by the release rules: the SEC's press releases
- * (`lib/secPress.ts`) and the Justice Department's (`lib/doj.ts`). Batch 82, the 2026-11-01
- * proposal 4, approved by the owner on 2026-11-01.
+ * (`lib/secPress.ts`) and the Justice Department's (`lib/doj.ts`), and since batches 83 and 84 the
+ * SEC's case captions (`lib/secCases.ts`) and the Federal Reserve Board's releases
+ * (`lib/fedPress.ts`). Batch 82, the 2026-11-01 proposal 4, approved by the owner on 2026-11-01.
  *
  * The SEC charges a bank's securities units by their own names — "Banc of America Securities",
  * "Merrill Lynch", "Morgan Keegan" — and the rules knew a company only by the names its record

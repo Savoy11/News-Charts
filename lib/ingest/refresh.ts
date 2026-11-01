@@ -53,6 +53,9 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   // The SEC files a litigation release or an order most working days; a daily look at each
   // listing's newest page finds each one the day it is posted (batch 83).
   sec_cases: 1440,
+  // The Board posts a few releases a working day, every subject together in one file; a daily look
+  // finds each the day it is posted (batch 84).
+  fed_press: 1440,
   // Digitised newspapers from before 1963. These will never change again.
   loc_chronam: 10080,
   // Halvings and network upgrades are settled history; Phase 0 holds nothing live.

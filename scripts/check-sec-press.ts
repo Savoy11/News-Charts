@@ -358,8 +358,8 @@ const TODAY = "2026-10-29";
     [["2014-39", "GLDI", false], ["2021-213", "GLDI", false], ["2012-233", "GLDI", false], ["2012-233", "JPM", true], ["2009-29", "AMUB", false]]);
   check("  …where before this batch GLDI's page took Credit Suisse's own",
     secPressEvents([storedRelease("2014-39"), storedRelease("2021-213")], namesOf("GLDI")).length === 2);
-  check("the map: seven banks, each unit with its reason, each day well formed, and the two notes records not mapped to any",
-    Object.keys(RELEASE_NAMES).length === 7 && Object.keys(NOTES_RECORDS).length === 2 &&
+  check("the map: eleven banks (seven in batch 82, Deutsche Bank, State Street, BNY and Barclays in batch 83), each unit with its reason, each day well formed, and the three notes records mapped to none",
+    Object.keys(RELEASE_NAMES).length === 11 && Object.keys(NOTES_RECORDS).length === 3 &&
       Object.values(RELEASE_NAMES).every((b) => b.names.every((n) => n.why.length > 20 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.keys(NOTES_RECORDS).every((cik) => !(cik in RELEASE_NAMES)) &&
       Object.entries(RELEASE_NAMES).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)) &&
@@ -379,12 +379,15 @@ const TODAY = "2026-10-29";
   const t0 = Date.now();
   const replay = replayListing();
   const entries = [...replay.values()].reduce((n, l) => n + l.length, 0);
-  check("the 6,894 stored releases give 252 page entries on 124 companies, 44 more than before this batch's names, as replayed in full",
-    stored.length === 6894 && entries === 252 && replay.size === 124, `${stored.length} releases → ${entries} entries on ${replay.size} companies in ${Date.now() - t0} ms`);
-  const pinned: Record<string, number> = { BAC: 28, MS: 17, C: 13, UBS: 11, JPM: 11, WFC: 10, GS: 8, DB: 7, RF: 3 };
+  // batch 83 added the units the SEC's case captions name in full, and three more releases land:
+  // UBS's units' auction-rate settlement of 2008, Morgan Stanley Investment Management's charge of
+  // 2011 and Barclays Capital's of 2014
+  check("the 6,894 stored releases give 255 page entries on 124 companies, 47 more than before batch 82's names, as replayed in full",
+    stored.length === 6894 && entries === 255 && replay.size === 124, `${stored.length} releases → ${entries} entries on ${replay.size} companies in ${Date.now() - t0} ms`);
+  const pinned: Record<string, number> = { BAC: 28, MS: 18, C: 13, UBS: 12, JPM: 11, WFC: 10, GS: 8, DB: 7, BCS: 4, RF: 3 };
   const got = Object.fromEntries(Object.keys(pinned).map((t) => [t, replay.get(t)?.length ?? 0]));
-  check("  …Bank of America 28 (8 before), Morgan Stanley 17, Citigroup 13, UBS Group 11 (none), JPMorgan 11, Wells Fargo 10, Regions 3, and the notes records none",
-    Object.entries(pinned).every(([t, n]) => got[t] === n) && !replay.has("GLDI") && !replay.has("AMUB"), JSON.stringify(got));
+  check("  …Bank of America 28 (8 before), Morgan Stanley 18, Citigroup 13, UBS Group 12 (none), JPMorgan 11, Wells Fargo 10, Barclays 4, Regions 3, and the notes records none",
+    Object.entries(pinned).every(([t, n]) => got[t] === n) && !replay.has("GLDI") && !replay.has("AMUB") && !replay.has("ATMP"), JSON.stringify(got));
 
   console.log("\nAs timeline events");
   const gs = secPressEvents(fixture.releases, namesOf("GS"));

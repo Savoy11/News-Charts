@@ -223,14 +223,46 @@ Barney until 2009-05-30 and Citigroup Global Markets for Citigroup; Morgan Stanl
 2009-05-31; Morgan Keegan for Regions from 2001-03-30 to 2012-04-01. By the owner's calls of
 2026-11-01, "J.P. Morgan" and "JPMorgan" are JPMorgan Chase's from its merger with J.P. Morgan & Co.
 on 2000-12-31, a bare "UBS" is UBS Group's and Credit Suisse its own from 2023-06-12, and the banks'
-notes records (UBS AG's AMUB and Credit Suisse AG's GLDI) take none. Merrill Lynch's Enron charge of
-2003 stays Merrill Lynch's. The map is read by the release rules alone, never by headline scoring.
-Read against every company in the index under its current names, 252 of the 6,894 stored releases
-land on 124 companies, 150 of them before 2017 (Bank of America 28, Morgan Stanley 17, Citigroup 13,
-UBS Group 11, JPMorgan 11, Wells Fargo 10, Goldman Sachs 8, Deutsche Bank 7), each read by hand
+notes records (UBS AG's AMUB, Credit Suisse AG's GLDI, and from batch 83 Barclays Bank PLC's ATMP)
+take none. Merrill Lynch's Enron charge of 2003 stays Merrill Lynch's. Batch 83 added the units the
+SEC's case captions name in full (J.P. Morgan Securities, UBS Financial Services, Wells Fargo's
+brokerages, Deutsche Bank Securities, State Street Bank and Trust, BNY Mellon Securities, Barclays
+Bank and Barclays Capital). The map is read by the release rules alone, never by headline scoring.
+Read against every company in the index under its current names, 255 of the 6,894 stored releases
+land on 124 companies, 153 of them before 2017 (Bank of America 28, Morgan Stanley 18, Citigroup 13,
+UBS Group 12, JPMorgan 11, Wells Fargo 10, Goldman Sachs 8, Deutsche Bank 7), each read by hand
 (batch 78, after the 2026-10-30 audit; Deutsche Bank's since batch 81, when its everyday name lost its
 "AKTIENGESELLSCHAFT"; the banks' units since batch 82). `check:sec-press` replays the whole stored
 listing against the index and pins the count.
+
+### SEC litigation releases and administrative proceedings (`lib/secCases.ts`)
+
+The SEC's record of each case it brings: a litigation release for each step of a suit in court,
+an administrative proceeding for each order it issues itself, back to 1995, the first year either
+listing holds. Most press releases have one behind them, and most of these have no press release:
+the 2010-11-04 customs-bribery charges against Transocean, Noble and Tidewater have no press release
+naming any of them. Both listings are read by year for every company at once, as the press releases
+are (`lib/ingest/secCasesWalk.ts`, kept in `sec_cases` and `sec_cases_years`): 1995–2026 is 344
+pages and 30,654 rows, 100 a page, the most in one year 11 pages (measured 2026-11-01). Each row
+gives a caption listing the defendants or respondents ("Huntington Bancshares, Inc.; Thomas E.
+Hoaglin, Michael J. McMennamin, and John Van Fleet, CPA"), and a company keeps the rows that name it
+as a party of its own: its name, or its full legal name, followed only by legal words (Inc., Corp.,
+LLC, plc, N.A., S.A.), from one entry of the caption to the next. "Southern Financial Group, Inc."
+is not Southern Company, "Reliance Holdings, LLC" not Reliance, "Lucent Technologies Inc." not
+Lucent, Inc.; a stock is not a party ("Unknown Purchasers of Securities of Martek"), nor a relief
+defendant, nor an amicus brief; a one-word name with no legal word counts only standing alone
+("Sanofi"), so "Dow, Mitchell B." is a person and "Fox, Reusch & Co." another firm. A bank's units
+reach it through the release rules' map, while it owned them. Namesakes the rule cannot tell from
+the company — another Acorn Energy, "McDonalds Ltd.", the American National Steel of 2001, lists of
+revoked registrations naming a shell called "Telos, Inc." — were read by hand and are kept off by
+CIK (`NOT_THE_COMPANY`). A company's rows of a day make one event, titled by its own party ("SEC
+litigation release: Transocean Inc."), with the whole caption, each release number and a
+proceeding's file number in its description. Read against every company in the index under its
+current names, the 30,654 rows give 1,022 company days on 352 companies, 478 of them before 2017
+(Bank of America 72, Morgan Stanley 66, Wells Fargo 47, UBS Group 46, JPMorgan 46, Citigroup 44); a
+company's former names add more, and its first price keeps it off the years before it listed.
+`check:sec-cases` replays the kept rows and pins the count. A case is a regulation event and is
+scored without the model.
 What is refused: a release about a company's people ("SEC Charges Former Carter's Executive", "Board
 Member of Goldman Sachs and Procter & Gamble Charged"), a name followed by "of" ("SEC Charges City of
 Miami" is not City Holding), by a hyphen or an "-ing" word ("Crypto-Focused Advisory Firm"), the
@@ -773,6 +805,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 73 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
 | U.S. Department of Justice | Press releases since 2009 in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | SEC newsroom (press releases) | Press releases since 1997 in which a company is the party — the SEC charges, sues or sanctions it, or it settles | The year listing, read once for every company (`lib/ingest/secPressWalk.ts`); kept only when the headline makes the company the party (`lib/secPress.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
+| SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |

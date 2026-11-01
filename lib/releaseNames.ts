@@ -54,6 +54,13 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
         from: "2008-12-31",
         why: "bought 2008-12-31 (\"Successfully closed Wachovia acquisition on December 31, 2008\", its 8-K filed 2009-01-28): Wachovia's settlements of 2004 and 2008 are Wachovia's",
       },
+      { name: "Wachovia Securities", from: "2008-12-31", why: "Wachovia's securities firm, from the same day, named in full (batch 83)" },
+      { name: "Wells Fargo Bank", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
+      { name: "Wells Fargo Advisors", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
+      { name: "Wells Fargo Advisors Financial Network", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
+      { name: "Wells Fargo Brokerage Services", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
+      { name: "Wells Fargo Clearing Services", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
+      { name: "Wells Fargo Securities", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
     ],
   },
   19617: {
@@ -65,6 +72,9 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
         why: "the owner's call (a), 2026-11-01, with J.P. Morgan Securities: J.P. Morgan & Co. merged into Chase Manhattan, the company's own record, on 2000-12-31 (its 8-K of that day); before, \"J.P. Morgan\" was that company's",
       },
       { name: "JPMorgan", from: "2000-12-31", why: "the owner's call (a), 2026-11-01: the same name without its stops" },
+      { name: "J.P. Morgan Securities", from: "2000-12-31", why: "its securities firm from the merger of 2000-12-31, named in full, as a caption names it (batch 83)" },
+      { name: "J.P. Morgan Investment Management", from: "2000-12-31", why: "its fund adviser from the merger of 2000-12-31, named in full (batch 83)" },
+      { name: "JPMorgan Chase Bank", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
       {
         name: "Bear Stearns",
         from: "2008-05-31",
@@ -76,6 +86,7 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
     ticker: "C",
     names: [
       { name: "Citigroup Global Markets", why: "its securities unit, named after it" },
+      { name: "Citigroup Alternative Investments", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
       {
         name: "Smith Barney",
         to: "2009-05-30",
@@ -91,6 +102,7 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
         from: "2009-05-31",
         why: "its venture with Citigroup's Smith Barney, formed 2009-05-31 (its 8-K filed 2009-06-01), 51 percent the company's from the start (the press release with it)",
       },
+      { name: "Morgan Stanley Investment Management", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
     ],
   },
   1281761: {
@@ -104,6 +116,29 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
       },
     ],
   },
+  1159508: {
+    ticker: "DB",
+    names: [
+      { name: "Deutsche Bank Securities", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
+      {
+        name: "Deutsche Bank Trust Company Americas",
+        from: "1999-06-04",
+        why: "Bankers Trust of New York, bought 1999-06-04 (its 20-F filed 2003-03-27), as the Board's map has it (batch 83)",
+      },
+    ],
+  },
+  312069: {
+    ticker: "BCS",
+    names: [
+      { name: "Barclays Bank", why: "its bank, named after it, whose own record is a notes record (ATMP) (batch 83)" },
+      { name: "Barclays Capital", why: "its investment bank, named after it (batch 83)" },
+    ],
+  },
+  93751: { ticker: "STT", names: [{ name: "State Street Bank and Trust", why: "its bank, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" }] },
+  1390777: {
+    ticker: "BNY",
+    names: [{ name: "BNY Mellon Securities", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" }],
+  },
   1610520: {
     ticker: "UBS",
     names: [
@@ -116,6 +151,10 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
         from: "2023-06-12",
         why: "bought 2023-06-12 (Credit Suisse AG's 6-K of 2023-09-29), as the Board's map has it: Credit Suisse's releases before are Credit Suisse's",
       },
+      { name: "UBS Securities", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
+      { name: "UBS Financial Services", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
+      { name: "UBS Financial Services Inc. of Puerto Rico", why: "its Puerto Rico brokerage, named after it, as the captions write it (batch 83)" },
+      { name: "UBS Financial Services Incorporated of Puerto Rico", why: "the same, its legal form written out (batch 83)" },
     ],
   },
 };
@@ -126,6 +165,10 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
  * — the owner's call (c), 2026-11-01, as batch 74 kept the Board's actions off both.
  */
 export const NOTES_RECORDS: Readonly<Record<number, { ticker: string; why: string }>> = {
+  312070: {
+    ticker: "ATMP",
+    why: "Barclays Bank PLC, the bank, whose record lists its iPath notes: its cases are Barclays PLC's (batch 83, the owner's call (c) applied to a third notes record; it took 11 SEC cases, and no press release)",
+  },
   1114446: { ticker: "AMUB", why: "UBS AG, the bank, whose record lists UBS's ETRACS notes: its releases are UBS Group's" },
   1053092: {
     ticker: "GLDI",

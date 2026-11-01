@@ -253,7 +253,7 @@ async function main(): Promise<void> {
       justiceQueryNames("BANK OF AMERICA CORP /DE/", []).join("|") === "BANK OF AMERICA",
     justiceQueryNames("BANK OF AMERICA CORP /DE/", [], "", 70858).join("|"));
   check("a name under five characters stands in for no longer one, since its ask stops at a page when crowded: UBS Group keeps \"UBS Group\", Dell \"Dell Technologies\"",
-    justiceQueryNames("UBS Group AG", [], "", 1610520).join("|") === "UBS Group|UBS|Credit Suisse" &&
+    justiceQueryNames("UBS Group AG", [], "", 1610520).join("|") === "UBS Group|UBS|Credit Suisse|UBS Securities|UBS Financial Services" &&
       dojQueryNames(["Dell Technologies", "Dell"]).join("|") === "Dell Technologies|Dell" && dojQueryNames(["JPMORGAN CHASE", "JPMorgan"]).join("|") === "JPMorgan",
     `${justiceQueryNames("UBS Group AG", [], "", 1610520).join("|")} · ${dojQueryNames(["Dell Technologies", "Dell"]).join("|")}`);
   let notesAsked = 0;

@@ -988,6 +988,77 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 79: a new opportunity-scout run, five proposals for the owner (2026-11-01)
+
+The 2026-10-28 proposals are all built (batches 73–77), and batch 78's audit findings are fixed. So
+the `opportunity-scout` read the repository again at `5dc6cb2` and wrote
+`docs/proposals/2026-11-01-proposals.md`: five proposals, all **PENDING**, ranked with securities
+depth first. Nothing is built in this batch.
+
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ Marked 2026-11-01: all five approved, both new sources (2, 5) included; none rejected or
+      deferred. The calls:
+      - (1) groups (a), (b) and (c), and of the options SB-2 and 10-12B; 10-12G stays out, a
+        registration under section 12(g) rather than for an exchange listing;
+      - (4a) "J.P. Morgan" and "JPMorgan" are JPMorgan's names in the release rules' map;
+      - (4b) a bare "UBS" is UBS Group's there;
+      - (4c) Credit Suisse's releases come off GLDI;
+      - all three of (4) apply in the release rules' own map only, never to the names headlines
+        are scored by.
+      1. `P1` **The small-business reports and the 1990s tender offers.** Ingest already downloads
+         these forms, and the form filter drops them: 10-KSB, 10-QSB and 10-KSB40 with their
+         amendments; SC 14D1 and SC 13E4, the tender forms Schedule TO replaced in 2000; and
+         10-K405/A. SB-2 and 10-12B are optional.
+         - In three of EDGAR's quarterly indexes the scout found 1,192 such reports on 464 index
+           companies, Take-Two, Axon, XPO and Halozyme among them. Over 1996–2008 it estimates
+           10,000–15,000 rows, an estimate, not a count.
+         - No new request. **The owner's call:** which groups, as on 2026-10-26.
+      2. `P1` **The SEC's litigation releases and administrative proceedings, by the parties their
+         captions name.** A new dataset on the same host and under the same licence as the press
+         releases, so it is a source decision.
+         - In all of 2010 (1,178 rows) the scout counted 25 events on 16 companies; for 21 of them
+           no press release names the company that day.
+         - It reopens a source the 2026-10-22 note did not shortlist, and says what changed since.
+         - **The owner's call:** yes or no on the source.
+      3. `P1` **A legal form left in a company's everyday name**, on 14 companies including
+         Deutsche Bank, Fresenius SE and YPF. Every lookup asks for "DEUTSCHE BANK
+         AKTIENGESELLSCHAFT"; with the fix its SEC releases go from 0 to 7, and about 8 Justice
+         Department release days become its own. Raised before (batch 74). Proposed with no owner
+         call, since "AG" is already stripped and "Aktiengesellschaft" is the word it shortens.
+      4. `P2` **The banks' securities units while they owned them**, under the ownership rule the
+         other maps use: Banc of America Securities, Merrill Lynch after 2009, Wachovia, J.P. Morgan
+         Securities, Citigroup Global Markets, Morgan Stanley Smith Barney and Morgan Keegan. They
+         add 33 SEC releases, 20 of them before 2017; Bank of America goes from 8 to 28.
+         - **Three owner calls, all raised before:**
+           - (a) "J.P. Morgan" and "JPMorgan" as JPMorgan's names, 8 more releases;
+           - (b) a bare "UBS" for UBS Group, about 18 releases;
+           - (c) Credit Suisse's 7 releases taken off GLDI, its notes record, which would leave them
+             on no page.
+      5. `P2` **The Federal Reserve Board's press-release feed, as a source decision.** One file a
+         day for every bank: 157 of its 463 approvals of bank applications name an index company as
+         the applicant, on 89 companies (83 before 2017), and 34 policy releases name a large bank.
+         Every match needs reading by hand; one namesake is known (Fortis). It also covers Popular,
+         Inc., missing from the Fed map. **The owner's call:** yes or no on the source.
+- **Checked here:**
+  - `lib/sec.ts`'s form filter (`wanted`, line 869) has no 10-KSB, 10-QSB, SC 14D1 or SC 13E4.
+  - `commonName("DEUTSCHE BANK AKTIENGESELLSCHAFT")` returns the name unchanged.
+- **Not ranked, in the file's "Considered and cut":**
+  - Fresenius Vial's one recall;
+  - the Form 25 / 25-NSE labels, which belong to the code-auditor;
+  - the CFPB's 386 enforcement actions, suggested for the next run.
+- **Found on the way, for the next audit:** Deutsche Bank's headline-scoring names include
+  "deutsche" and "aktiengesellschaft".
+- **Requests made by the scout:** 28 in all, sec.gov hosts paced at about one a second:
+  - www.sec.gov 18 (three quarterly form indexes, 13 enforcement-listing pages for 2010, 2 for 2004);
+  - data.sec.gov 4;
+  - www.justice.gov 4;
+  - www.federalreserve.gov 1;
+  - www.consumerfinance.gov 1.
+
+  All with the project's User-Agent, which carries the owner's contact address.
+- `npm run check` passes and `npm run lint` is clean. Nothing in the code changed.
+
 ## NC ledger — batch 78: the audit of batches 72–77, and its four findings fixed (2026-10-30)
 
 The `code-auditor` read batches 72–77 (`3243d71..1353574`). Its report is

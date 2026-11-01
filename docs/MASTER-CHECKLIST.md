@@ -988,6 +988,64 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 80: the small-business reports and the 1990s tender offers (2026-11-01)
+
+The first of the five proposals the owner approved on 2026-11-01 (#1), with the pick: groups (a),
+(b) and (c), and SB-2 and 10-12B. This batch also carries the scout's FILE pass, which filed all
+five approved proposals into "Scope refocus — exchange-traded securities"; it ran after batch 79's
+pull request was merged.
+
+- [x] **A smaller company's annual and quarterly reports are kept** (`MATERIAL_FORMS`,
+      `lib/secForms.ts`).
+      - **Kept:** 10KSB, 10KSB40 and 10QSB, the forms a small company reported on until 2008, written
+        without a hyphen, titled "Annual report (10KSB)" and "Quarterly report (10QSB)". They go on
+        the Earnings chip, as a 10-K and a 10-Q do.
+      - **Their amendments** (10KSB/A, 10KSB40/A, 10QSB/A) are kept as corrections, as a 10-K/A is.
+      - **Search:** "10-K" finds a 10KSB, and "10-Q" a 10QSB (`lib/focus.ts`).
+      - **The filing list:** a stack's form summary names the new forms (`components/EventList.tsx`).
+- [x] **The tender offers before Schedule TO, the amended 10-K405, SB-2 and 10-12B are kept:**
+      - SC 14D1 and its amendments, an outside bidder's offer, follow batch 65's file-number rule.
+        One the company made about another company carries no file number on its record, and is
+        named as its own offer (`DEAL_FORM`, `FOR_ANOTHER_COMPANY`); its amendments make a row a
+        month (`MONTHLY_FORM`).
+      - SC 13E4, the company's offer for its own shares, reads as SC TO-I does.
+      - 10-K405/A is an amended annual report.
+      - SB-2 is a small company's registration to sell shares.
+      - 10-12B is a registration of shares for an exchange listing.
+      - 10-12G stays out, on the owner's call.
+- **Measured** on two real records, pinned from the scout's run (no new request):
+  - **Eagle Bancorp**'s 1998–2002 go from one report, the 10-Q of 1999-05-14, to 19: 14 10QSB and
+    4 10KSB beside it. Its SB-2 of 1997-12-12, the offering its record begins with, is kept as a
+    filing.
+  - **Dillard's** 1998 offer for Mercantile Stores (SC 14D1, 1998-05-21) reads "Its tender offer for
+    another company's shares". Its nine amendments to 1998-08-19 make three rows, one a month.
+  - **Dillard's** 10-K405/A of 1995-04-28 is kept as a correction.
+  - Across EDGAR the scout estimated 10,000–15,000 small-business rows over 1996–2008 on at least
+    464 index companies. They reach a page on its next full read of the older shards, which ingest
+    already downloads.
+- **Known limit, from the proposal:** a few of these records were shells or blank-check companies
+  then (QXO's 2007 10KSB is Trey Resources'). Their reports read under today's name, as those
+  records' 8-Ks of the same years already do.
+- **Checks:**
+  - 10 new cases in `check:sec-forms` (134 in all) on the two records
+    (`scripts/fixtures/small-business-records.json`): Eagle Bancorp's 1997–2003 and Dillard's
+    1995–1999, every row of each window;
+  - 1 in `check:focus` (78 in all);
+  - on main, 10 of the 11 fail. The one that passes there checks that the forms still left out
+    (S-2, S-8, Form 4…) stay out.
+- **Docs:** README's data-sources table and COVERAGE-MAP name the newly kept forms.
+- **Fixed on the way:** batch 79's box called Deutsche Bank's legal form "raised before (batch
+  74)"; it was batch 73's "Found on the way". The scout's FILE pass noticed it.
+- **The scout's FILE pass, for the owner to confirm:**
+  - **(4b):** the filed entry also counts "Credit Suisse" as UBS Group's from the day UBS bought it,
+    as the proposal did; the owner's words named only the bare "UBS".
+  - **(4c):** the entry also keeps the banks' releases off AMUB, UBS AG's notes record, beside GLDI.
+  - **(5):** the entry marks Popular, Inc.'s rows in `FED_BANKS` as open, raised before, not approved
+    with the source.
+- **Requests made:** none.
+- `npm run check` passes and `npm run lint` is clean. HawkScan was not run: `HAWK_API_KEY` is not
+  set.
+
 ## NC ledger — batch 79: a new opportunity-scout run, five proposals for the owner (2026-11-01)
 
 The 2026-10-28 proposals are all built (batches 73–77), and batch 78's audit findings are fixed. So
@@ -1024,7 +1082,7 @@ depth first. Nothing is built in this batch.
       3. `P1` **A legal form left in a company's everyday name**, on 14 companies including
          Deutsche Bank, Fresenius SE and YPF. Every lookup asks for "DEUTSCHE BANK
          AKTIENGESELLSCHAFT"; with the fix its SEC releases go from 0 to 7, and about 8 Justice
-         Department release days become its own. Raised before (batch 74). Proposed with no owner
+         Department release days become its own. Raised before (batch 73). Proposed with no owner
          call, since "AG" is already stripped and "Aktiengesellschaft" is the word it shortens.
       4. `P2` **The banks' securities units while they owned them**, under the ownership rule the
          other maps use: Banc of America Securities, Merrill Lynch after 2009, Wachovia, J.P. Morgan
@@ -5348,6 +5406,208 @@ already held, but new investment goes to securities coverage first.
         the party, 125 of them before 2017. Units named otherwise ("J.P. Morgan Securities", "Banc
         of America Securities") are not reached: the names a company's record carries do not
         include them.
+- [x] `P1` **The small-business reports, the 1990s tender offers and 10-K405/A: forms ingest
+      downloads and the form filter drops.** The 10-K405 is kept as "the annual report's own form
+      until 2002, which the older shards reach" (`lib/secForms.ts:120-121`), and so are SC TO-T,
+      SC TO-T/A and SC TO-I (`:125-130`). The forms a small company reported on until 2008, and the
+      tender-offer forms Schedule TO replaced in 2000, are not: the filter (`lib/sec.ts:869-894`)
+      drops any form outside `wanted`, `MATERIAL_FORMS`, 8-K/A and the 424B prospectuses, and none
+      of them is named anywhere in the code. Batch 65's count read 45 large companies' records,
+      which file no small-business report, and did not list the old tender forms.
+      - ✅ **The owner's pick, 2026-11-01: groups (a), (b) and (c), and of the options SB-2 and
+        10-12B.** 10-12G stays out: a registration under section 12(g), not for an exchange
+        listing.
+        - (a) the small-business annual and quarterly reports, 10KSB, 10KSB40 and 10QSB (EDGAR
+          writes them without a hyphen), with their amendments, labelled and typed earnings as the
+          10-K and 10-Q are;
+        - (b) the tender-offer forms before 2000: SC 14D1, an outside bidder's offer, read by batch
+          65's file-number rule as the company's own offer when it made one, its amendments a row
+          a month as SC TO-T/A's are; and SC 13E4, the company's offer for its own shares, as
+          SC TO-I is;
+        - (c) 10-K405/A, the amended annual report of the 10-K405 years, beside the 10-K/A kept;
+        - SB-2, a small company's registration to sell shares, beside the S-1 kept, and 10-12B, a
+          spin-off's registration of its shares for an exchange listing.
+      - Measured 2026-11-01 on EDGAR's quarterly form indexes (`full-index/Y/QTRn/form.gz`, every
+        filing of the quarter by form and CIK), kept to the CIKs in `data/edgar-tickers.json`:
+
+        | Quarter | Rows on index companies | Kept today | 10QSB | 10KSB, 10KSB40 | amendments |
+        |---|---:|---:|---:|---:|---:|
+        | 1998 Q2 | 6,482 | 4,282 | 151 | 50 | 30 |
+        | 2003 Q2 | 24,478 | 9,353 | 248 | 84 | 80 |
+        | 2007 Q2 | 48,097 | 15,435 | 326 | 151 | 72 |
+
+        That is 1,192 small-business reports on **464 companies** in three quarters, Take-Two
+        (TTWO, a 10QSB of 1998-06-15), Axon (as TASER International, 2003), XPO (as Segmentz,
+        2003), Halozyme, Celsius (2007), Universal Display, Neogen, Gulfport Energy and BJ's
+        Restaurants (as Chicago Pizza & Brewery, 1998) among them. Estimated from the three
+        quarters rather than counted: about 700 a year in 1998 and 1,300 to 1,600 in 2003–2007, on
+        the order of 10,000–15,000 rows over 1996–2008.
+      - Eagle Bancorp's record (EGBN, its older shard), read whole: 18 small-business reports from
+        1998-04-28 to 2002-11-14, 4 10KSB and 14 10QSB. Of its reports for 1998–2002 the filter
+        keeps one, the 10-Q of 1999-05-14; its SB-2 of 1997-12-12, the offering its record begins
+        with, is dropped too.
+      - The tender forms in 1998 Q2, on index companies: five offers they made (SPX's for Echlin,
+        Viad's for MoneyGram Payment Systems, Dillard's for Mercantile Stores, Tyco's for Sigma
+        Circuits on JCI's record, Armstrong's for Triangle Pacific); 39 amendments on 11 companies
+        (Abbott, Alcoa on Howmet's record, Motorola, Snap-on, Cendant on Avis Budget's…); and The
+        Limited's offer for its own shares (BBWI's record) and SAP's. None in 2003 or 2007.
+        Dillard's SC 14D1 of 1998-05-21 and its nine amendments to 1998-08-19 carry no file number,
+        while its 1990s 10-Ks, 10-Qs, 8-Ks and 13Gs all carry one, so `DEAL_FORM`'s rule
+        (`lib/secForms.ts:172`) reads them as its own offer, as it reads Pfizer's SC TO-T filings.
+      - 10-K405/A: 42 rows on 39 index companies in 1998 Q2 (AMD, ATI, AXP, AAL…), none later.
+        SB-2: 3, 7 and 31 rows in the three quarters; 10-12B and 10-12G together 5, 4 and 3.
+      - The work: rows in `MATERIAL_FORMS`; SC 14D1 and SC 14D1/A in `DEAL_FORM`,
+        `FOR_ANOTHER_COMPANY` and `MONTHLY_FORM`. Focus reads a 10-K405 as a 10-K
+        (`lib/focus.ts:67-68`) and should read a 10KSB so, and a 10QSB as a 10-Q; `EventList`'s
+        form pattern names 10-K405 (`components/EventList.tsx:416`) and needs the new forms.
+      - A caveat to state: a few of these records were shells or blank-check companies then —
+        QXO's 2007 10KSB is Trey Resources', Primoris's is Rhapsody Acquisition's. Their reports
+        read under today's name, as those records' 8-Ks of the same years already do; how many of
+        the 464 are such records was not counted.
+      - Cases in `check:sec-forms` on rows pinned from the two records read: EGBN's 10QSB of
+        1998-04-28 (report date 1998-03-31) is kept as a quarterly report typed earnings, and its
+        10KSB of 1999-03-30 as an annual report; Dillard's SC 14D1 of 1998-05-21 is kept as its own
+        tender offer, its amendments one row a month; a 10-K405/A is kept as an amended annual
+        report; by the pick, EGBN's SB-2 of 1997-12-12 is kept and a 10-12G is not. In
+        `check:focus`, "10-K" finds a 10KSB and "10-Q" a 10QSB. On main each row is dropped at
+        `lib/sec.ts:894`, so the cases fail. No key, licence, recurring cost or request — the rows
+        are in the older shards ingest already reads; small, offline.
+      - *Derived from [`docs/proposals/2026-11-01-proposals.md`](proposals/2026-11-01-proposals.md)
+        #1, approved 2026-11-01 with the pick. Importance high · Efficiency very high ·
+        Practicality high (one owner pick, made 2026-11-01).*
+      - ✅ **Done in batch 80** (see its section): the twelve forms kept, Eagle Bancorp's 1998–2002
+        going from 1 report to 19 and Dillard's 1998 offer for Mercantile Stores on its page.
+- [ ] `P1` **The SEC's litigation releases and administrative proceedings, by the parties their
+      captions name.** A new source, approved by the owner 2026-11-01: the SEC's other two
+      enforcement listings, on the host and under the licence of the press releases batch 73 reads
+      back to 1997 — "Information presented on sec.gov is considered public information and may be
+      copied or further distributed by users of the web site without the SEC's permission. Please
+      consider appropriate citation to the SEC as the source" (`lib/secPress.ts:13-16`, read
+      2026-10-28) — and no key. They are the SEC's record of each case it brings, in every sector,
+      and reach into the 1963–2017 stretch `docs/COVERAGE-MAP.md:88` calls the corpus's biggest
+      hole. The 2026-10-22 note did not shortlist them: "finding a company means reading every
+      year's pages, and the latest page of litigation releases named individuals and small firms
+      only" (`docs/proposals/2026-10-22-news-sources.md:170-172`). Reading every year once is now
+      built — batch 73's walk read 293 pages and never asks a closed year again — and the latest
+      page is not the year: 2010, read whole, names 16 listed companies.
+      - ✅ **The owner's call, 2026-11-01: yes to the source.**
+      - The listings: litigation releases at
+        `www.sec.gov/enforcement-litigation/litigation-releases?year=Y&month=All&page=N`, and
+        `administrative-proceedings` in the same shape, 100 rows a page, newest first. Each row has
+        a `<time>` instant; the caption, which lists the defendants or respondents ("Huntington
+        Bancshares, Inc.; Thomas E. Hoaglin, Michael J. McMennamin, and John Van Fleet, CPA"); the
+        release numbers (LR-21795, 34-63571); a proceeding's file number (3-14153); and a link.
+      - Measured 2026-11-01: 2010 holds 439 litigation releases on 5 pages and 739 proceedings on
+        8. A party matched to an index company by its exact everyday name gives **25 events (a
+        company and a day) on 16 companies**:
+        - litigation releases: Transocean, Tidewater and Noble (all 2010-11-04, the
+          customs-bribery cases), ABB, Universal Corp, Citigroup, General Electric, Eni, Innospec,
+          Assurant, Bank of America (three days in January and February), and Morgan Stanley &
+          Co. among the dealers named on 03-19;
+        - proceedings: Morgan Stanley & Co. (four days), Value Line (four days, under one
+          caption), Huntington Bancshares (11-09), Daxor and China Yuchai;
+        - only 4 of the 25 fall on a day a press release names the company (Innospec 03-18, GE
+          07-27, Citigroup 07-29, ABB 09-29; `sec_press_releases`, `chronolens_b73`). The press
+          release of 2010-11-04 (2010-214) names none of the three drillers.
+
+        2004's first pages (October to December, 200 rows) give 4 events on 3 companies: Disney,
+        AIG and Morgan Stanley. If 2010 is typical, about 20 a year, roughly 450 for 1995–2016,
+        beside the 120 press releases before 2017 on pages today; not sized past the years read.
+      - A second year walk beside the press releases' (`lib/ingest/secPressWalk.ts`), its rows
+        stored once as `sec_press_releases` and `sec_press_years` are, each closed year read once
+        and never asked again, and each company matched at its ingest. The caption is split into
+        its parties (at ";", ", and", "Defendants", "et al.", "(n/k/a …)"), and each party is
+        compared with the company's names for that year (`namesForYear`, as the press releases and
+        the Federal Register walk do), under the longer-listed-name and shared-name guards already
+        written. A day's releases on one company make one row; a proceeding's file number ties its
+        steps. The `<time>` is an instant, so the day is Washington's (`easternDay`,
+        `lib/secPress.ts:57`). Registered in `SOURCES`, credited, and scored without the model, as
+        the press releases are.
+      - What the rule must refuse, all on those pages:
+        - a namesake: "Overland Energy, Inc., Acorn Energy, Inc., Garry B. Smith, …" (2010-11-10),
+          whose co-defendants are not Acorn Energy's (ACFN) people;
+        - relief defendants, who are not charged ("…, Defendants, and Tega Operating Company,
+          Relief Defendant");
+        - a company's stock as the subject: "One or More Unknown Purchasers of Securities of Martek
+          Biosciences Corporation", "…of Options of InterMune, Inc.";
+        - the lists of delinquent registrants whose registration is revoked, five to seven shells a
+          caption ("EC Power, Inc., Electro Energy, Inc., EMB Corporation (n/k/a AMTGroup, Inc.),
+          …", 2010-12-21);
+        - an acquisition's past: "Jefferies and Co., Inc." (2010-12-09) was Jefferies Group's, which
+          Leucadia, today's JEF (CIK 96223), bought in 2013; "Janus Capital Management LLC"
+          (12-01) is Janus's, which merged with Henderson in 2017.
+      - Units the captions name exactly — "Banc of America Securities LLC" (four rows in November
+        and December 2010), "Wachovia Securities, LLC", "J.P. Morgan Securities Inc." and "Bear,
+        Stearns & Co. Inc." — reach their banks through the release rules' unit map (the `P2` from
+        the same proposals, at this section's end). The exact names do not need it.
+      - A new check on rows pinned from 2010's pages: Transocean, Tidewater and Noble land on RIG,
+        TDW and NE on 2010-11-04 (Noble's through its predecessor in `lib/predecessors.ts`), and
+        Huntington's on HBAN; Acorn Energy's case is refused for ACFN; Martek's unknown purchasers,
+        the revocation lists and a relief defendant land on no company; with the unit map, Banc of
+        America Securities' order of 2010-12-17 lands on BAC and Jefferies and Co.'s is refused for
+        JEF; a closed year is not asked twice. On main it cannot run: the adapter does not exist.
+        No key, licence fee or recurring cost: reading 1995–2025 once is roughly 300–400 requests
+        if other years are 2010's size, a second apart, once for all companies; then each listing's
+        newest page a day. A cloud session builds it (sec.gov answers from the container,
+        measured).
+      - *Derived from [`docs/proposals/2026-11-01-proposals.md`](proposals/2026-11-01-proposals.md)
+        #2, approved 2026-11-01 with the new source. Importance high · Efficiency medium-high ·
+        Practicality medium (the source approved; the namesakes a caption can carry).*
+- [ ] `P1` **A legal form left in the everyday name: Deutsche Bank, Fresenius SE, YPF and eleven
+      others.** `commonName` strips "AG", "S.A." and "SE" (`lib/edgarName.ts:16-17`) and not the
+      words they abbreviate, so 14 everyday names in the committed index keep a legal form:
+      DEUTSCHE BANK AKTIENGESELLSCHAFT (DB, 287th in the index), Fresenius SE & Co. KGaA (FSNUY,
+      494th) and YPF SOCIEDAD ANONIMA (YPF, 641st); Ottobock, Turk Altin Isletmeleri (A.S), SCHOTT
+      Pharma, Springer Nature, InoBat, LuxExperience, Loma Negra, Cementos Pacasmayo (SAA), Meridian
+      Mining UK (Societas), Com7 (PCL) and TKMS. Every name-based source then asks for a phrase no
+      headline, title or caption writes. The check that should catch it, "no everyday name in the
+      committed index keeps a mark or a legal form" (`scripts/check-recall.ts:92-95`), passes,
+      because its pattern knows only the short forms: "DEUTSCHE LUFTHANSA A G" is a case there
+      (`:73`), "AKTIENGESELLSCHAFT" is not. Deutsche Bank's part was raised in batch 73 (its "Found
+      on the way") and confirmed by the 2026-10-30 audit.
+      - ✅ **The owner's approval, 2026-11-01: as proposed, with no call.** It is the rule's own
+        reach, not a new name: "AG" is stripped wherever it stands, and "Aktiengesellschaft" is the
+        word it abbreviates. The calls on the unit map (the `P2` at this section's end) add names a
+        company's record does not carry; this only finishes cleaning the one it does.
+      - What each source asks for Deutsche Bank today, from the code's own functions:
+        - GDELT: "DEUTSCHE BANK AKTIENGESELLSCHAFT" (`gdeltNewsPlan`, `scripts/ingest.ts:671`);
+        - the Justice Department's title search: the same (`dojQueryNames`);
+        - the SEC and Federal Register title rules: the same (`companyNames`);
+        - its scoring names include "aktiengesellschaft" (`companyScoringAliases`), and Wikidata
+          gives it no other name (`data/company-aliases.json`).
+
+        Fresenius SE and YPF are asked the same way, by "Fresenius SE & Co. KGaA" and "YPF SOCIEDAD
+        ANONIMA".
+      - Measured 2026-11-01: the 6,894 stored SEC releases (`chronolens_b73`), replayed with the
+        rule unchanged and "Deutsche Bank" as the name, make it the party in 7, 4 before 2017 —
+        among them 2004-120 (Deutsche Bank Securities, research conflicts), 2009-127 (auction-rate
+        securities, which lands today on Bank of America and RBC only), 2015-99 ("SEC Charges
+        Deutsche Bank With Misstating Financial Reports During Financial Crisis") and 2016-264.
+        Under today's name, none. The Justice Department, asked for "Deutsche Bank", has 21 titles,
+        none containing the name the adapter asks; about 8 days make the bank a party — "Deutsche
+        Bank Agrees to Pay $7.2 Billion for Misleading Investors in its Sale of Residential
+        Mortgage-Backed Securities" (2017-01-17), its London subsidiary's LIBOR plea (2015-04-23),
+        the 2014-12-08 suit over a tax scheme, "United States Sues Deutsche Bank and Subsidiary
+        MortgageIT" (2011-05-03). The rest are about the bank's people, which the rule refuses.
+      - Strip the long forms of the legal suffixes the rule already strips in short:
+        Aktiengesellschaft ("AG"), KGaA, Sociedad Anonima ("S.A."), S.A.A., B.V., A.S., PCL and
+        Societas ("SE"); then extend the index-wide check's pattern to them. Nothing to re-read by
+        hand: the GDELT months and Federal Register years are kept by the names they were asked
+        under ("months not yet asked under this query", `lib/ingest/newsBackfill.ts:78`;
+        `lib/ingest/frBackfill.ts:107`), so a corrected name is asked afresh on its own. Two things
+        to watch: "Fresenius" alone then names Fresenius SE, while "Fresenius Medical Care" stays
+        FMC's by the longer-name rule (`longerListedNameIn`); "YPF" is under five letters, so GDELT
+        is asked with its legal form, as Visa is (`docs/COVERAGE-MAP.md`, the GDELT row).
+      - Deutsche Bank's scoring names change with it. Whether "deutsche" alone should stay among
+        them is batch 79's note for the next audit, not part of this item.
+      - Cases in `check:recall`: "DEUTSCHE BANK AKTIENGESELLSCHAFT" is "DEUTSCHE BANK", "Fresenius
+        SE & Co. KGaA" is "Fresenius", "CEMENTOS PACASMAYO SAA" is "CEMENTOS PACASMAYO"; the
+        index-wide check, its pattern extended, finds none of the 14. A `check:sec-press` case:
+        2015-99 lands on DB. On main the cases fail, and the extended index-wide check finds 14. No
+        key, licence, recurring cost or request beyond each company's usual ones; small, offline.
+      - *Derived from [`docs/proposals/2026-11-01-proposals.md`](proposals/2026-11-01-proposals.md)
+        #3, approved 2026-11-01 as proposed. Importance medium-high · Efficiency very high ·
+        Practicality high (no call, as the owner agreed).*
 - [ ] `P2` The rest of the securities-coverage depth set: **GDELT year-window backfill** (GDELT
       answers from this container but throttles hard — 429/503 — so this needs the production
       host to develop against) and **richer paid-tier evidence** (needs a paid key). The LoC
@@ -5681,6 +5941,142 @@ already held, but new investment goes to securities coverage first.
       - ✅ **Done in batch 77** (see its section): Ford's page gains 56 recalls and 29
         investigations of Volvo, Jaguar and Land Rover from 1990 to 2010, GM's 12 and 9 of Saab from
         2000 to 2010, each day from Ford's and GM's own filings.
+- [ ] `P2` **The banks as the SEC names them: their securities units while they owned them, and
+      three names in the release rules' own map.** The FDA, Federal Reserve and NHTSA maps count a
+      unit the company owned while it owned it ("A unit the company sold stops counting the day it
+      left", `lib/fedActions.ts:51`; `lib/fdaRecalls.ts:78`; `RecallMaker.to`). The SEC's and the
+      Justice Department's rules know a company only by the names its own record carries, so
+      "Units named otherwise ('J.P. Morgan Securities', 'Banc of America Securities') are not
+      reached" (batch 73's note on the SEC press-release item above). JPMorgan's "J.P. Morgan" and
+      UBS Group's missing "UBS" were raised in batch 73, and Credit Suisse's 7 releases on GLDI in
+      batch 78; all three were left as owner calls.
+      - ✅ **The owner's calls, 2026-11-01:**
+        - (a) yes: "J.P. Morgan" and "JPMorgan" are JPMorgan Chase's names in the release rules'
+          map;
+        - (b) yes: a bare "UBS" is UBS Group's there. As proposed, (b) also reads "Credit Suisse"
+          as UBS Group's from UBS's purchase of it; the call's words name only the bare "UBS";
+        - (c) yes: Credit Suisse's releases come off GLDI, Credit Suisse AG's notes record. As
+          proposed, the banks' releases stay off AMUB (UBS AG's) too, as batch 74 kept their Fed
+          actions off both;
+        - all three in the release rules' own map only, never in the names headlines are scored
+          by. CLAUDE.md's one place for those stays `companyScoringAliases`; a name hand-added to
+          `newsNamesFor` (`scripts/ingest.ts:448`) would reach news, scoring and the Justice
+          Department search too. JPMorgan's scoring names already include "jpmorgan".
+      - A dated map of the units the SEC charges by name, read only by the release rules (the SEC's
+        press releases, the litigation releases and proceedings above, the Justice Department's
+        releases), as `FED_BANKS` is the Fed adapter's own. Each day comes from the company's own
+        filings, as batch 74 dated its banks' purchases:
+        - Bank of America: Banc of America Securities, Investment Services and Capital Management,
+          and Merrill Lynch from its purchase;
+        - Wells Fargo: Wachovia from its purchase;
+        - JPMorgan Chase: J.P. Morgan Securities, and Bear Stearns from its purchase;
+        - Citigroup: Citigroup Global Markets, and Smith Barney until it went into the joint
+          venture;
+        - Morgan Stanley: Morgan Stanley Smith Barney from that venture's start;
+        - Regions: Morgan Keegan while it owned it.
+      - Measured 2026-11-01 on the 6,894 stored releases (`chronolens_b73`), replayed with
+        `secReleaseNamesParty` unchanged, each company's names of today (and JPMorgan's former
+        name), and the names below inside sizing windows; the real days come from the filings:
+
+        | Bank | Names added | On its page today | Added | Of them before 2017 |
+        |---|---|---:|---:|---:|
+        | Bank of America | its three units; Merrill Lynch from 2009-01-01 | 8 | 20 | 12 |
+        | JPMorgan Chase | J.P. Morgan Securities · call (a) | 2 | 3 · 8 | 2 · 4 |
+        | Citigroup | Citigroup Global Markets; Smith Barney until 2009-06-01 | 10 | 3 | 2 |
+        | Morgan Stanley | Morgan Stanley Smith Barney from 2009-06-01 | 14 | 3 | 0 |
+        | Regions | Morgan Keegan, 2001-06-29 to 2012-04-02 | 0 | 3 | 3 |
+        | Wells Fargo | Wachovia from 2008-12-31 | 9 | 1 | 1 |
+        | UBS Group | call (b) | 0 | about 18, read by hand | about 14 |
+
+        The units add 33 releases (20 before 2017), call (a) 8 more and call (b) about 18. With
+        Deutsche Bank's 7 (the legal-form `P1` above), about 66 on 8 banks, beside the 201 on 122
+        companies today. Among them: "Banc of America Capital Management, BACAP Distributors and
+        Banc of America Securities to Pay $375 Million…" (2005-16); "Merrill Lynch to Pay $415
+        Million for Misusing Customer Cash…" (2016-128); "Morgan Keegan to Pay $200 Million to
+        Settle Fraud Charges Related to Subprime Mortgage-Backed Securities" (2011-132); "J.P.
+        Morgan to Pay $153.6 Million to Settle SEC Charges of Misleading Investors in CDO…"
+        (2011-131); "UBS Agrees to Pay $200 Million…" (2009-29).
+      - What stays out under the rule unchanged: a unit before its purchase (Merrill Lynch's Enron
+        charge of 2003 and its auction-rate settlement of 2008, Wachovia's of 2004 and 2008, Bear
+        Stearns' of 2006); people ("SEC Charges Two J.P. Morgan Traders…", 2013-154; "Former
+        Countrywide Executives", 2009-129). GLDI carries 7 Credit Suisse releases today, 2012-11-16
+        to 2021-10-19 (the audit's list); off the notes record they sit on no page, since Credit
+        Suisse Group is not in the index. Only a release after 2023-06-12 would be UBS's ("Credit
+        Suisse Entities to Pay $10 Million…", 2023-12-13). Bare "UBS" today names UBS AG's notes
+        record and is outranked there by UBS Group (`outrankingNameFor`), so neither page takes it;
+        UBS AG stays out of UBS Group's history (`lib/predecessors.ts:20-21`).
+      - The Justice Department, asked here: "Merrill Lynch" has 5 titles, one of them a party
+        (Merrill Lynch Commodities, 2019-06-25); "J.P. Morgan" 4, none; "Banc of America" 1, none.
+        Its gain is Deutsche Bank's.
+      - Cases in `check:sec-press` on the stored rows: Banc of America Securities' charge of
+        2010-12-07 (2010-239) lands on BAC; Merrill Lynch's 2016-128 lands on BAC, and its 2003-32
+        does not; Morgan Keegan's 2011-132 lands on RF; "Two J.P. Morgan Traders" lands nowhere; by
+        the calls, 2011-131 lands on JPM, 2009-29 on UBS, and nothing on GLDI. Then the whole stored
+        listing replayed against the index with its count pinned, as the 2026-10-30 audit
+        suggested (`docs/audits/2026-10-30-code-audit.md:211`), so the change shows its full effect.
+        On main the unit cases fail. No key, licence or recurring cost: the releases are stored,
+        and only the purchase days need EDGAR. About a dozen rows; a cloud session builds it.
+      - *Derived from [`docs/proposals/2026-11-01-proposals.md`](proposals/2026-11-01-proposals.md)
+        #4, approved 2026-11-01 with the three calls. Importance medium · Efficiency high ·
+        Practicality medium (the three calls made 2026-11-01; the units needed none).*
+- [ ] `P2` **The Federal Reserve Board's own announcements about a bank: its approvals of banks'
+      acquisitions since 2006.** A new source, approved by the owner 2026-11-01: the Board's
+      press-release feed, `https://www.federalreserve.gov/json/ne-press.json`, on the host the
+      enforcement files and FOMC statements are read from, and no key. Licence: "Unless otherwise
+      indicated, information on Board's website is in the public domain and may be copied and
+      distributed without permission. Please cite to the Board as the source of the information."
+      (`federalreserve.gov/disclaimer.htm`, read 2026-10-26, quoted for the enforcement files at
+      `lib/ingest/store.ts:318-320`; not re-read for this item). The feed announces by name each
+      approval of a bank's acquisition, and no page reads it: on a bank's page a deal carries its
+      8-Ks, not the approval that let it close.
+      - ✅ **The owner's call, 2026-11-01: yes to the source.**
+      - Measured 2026-11-01: the feed is 1.0 MB, 4,650 releases from 2006-01-10 to 2026-10-29,
+        each with its day (most with a time), title, type and link. By type: Enforcement Actions
+        1,335, Banking and Consumer Regulatory Policy 1,103, Monetary Policy 1,076, Other
+        Announcements 672, Orders on Banking Applications 463.
+        - Of the 463 orders, **157 name an index company as the applicant** by its exact everyday
+          name, 83 of them before 2017, on 89 companies: "Approval of proposal by Wells Fargo &
+          Company to acquire Wachovia Corporation" (2008-10-12); "…by Bank of America to acquire
+          Merrill Lynch" (2008-11-26); "…by Mitsubishi UFJ Financial Group to acquire voting shares
+          of Morgan Stanley" (2008-10-06). PNC has 7, Huntington 6, Bank of America 5, and TD,
+          Capital One, Scotiabank, Old National and Ameris 4 each; the other 81, most of them
+          regional banks, have one to three.
+        - 34 policy releases name a large bank, 21 before 2017, counted by a list of names, not by
+          a rule: the joint statement on Citigroup (2008-11-23); "Treasury, Federal Reserve, and
+          the FDIC Provide Assistance to Bank of America" (2009-01-16); Goldman Sachs and Morgan
+          Stanley's applications to become bank holding companies (2008-09-21); the capital plans,
+          among them "…requiring Bank of America Corporation to resubmit its capital plan and to
+          suspend planned increases in capital distributions" (2014-04-28).
+        - Most releases carry their time ("10/29/2026 4:30:00 PM"), so batch 68's after-the-close
+          mark applies, as it does for a filing; 468, all before 2017, give a day only
+          ("1/2/2008").
+      - Read the feed once a day, one file for every bank. On a bank's page, keep an "Orders on
+        Banking Applications" release whose applicant is the bank, read from "by X" in the title
+        and matched as the Federal Register company titles are (`lib/frCompany.ts`'s rules, the
+        longer listed name owning the mention); and a policy release that names the bank as the
+        one acted on (its capital plan objected to, its rescue), through the same party rule. The
+        Fed map's rule holds: a bank's own history counts, an acquisition's past does not.
+        Registered in `SOURCES`, credited, scored without the model.
+      - Namesakes, so the 157 and the 34 are read by hand, as batch 73's 209 were: "Approval of
+        proposal by Fortis" (2007-12-04) is the Belgian bank, not Fortis Inc. (FTS); a looser first
+        match also took "Banco Popular Español" (2006-02-08) for Popular, Inc., and Michigan's
+        "Citizens Banking Corporation" (2006) for Citizens, Inc.
+      - **Open, raised before:** Popular, Inc. (BPOP) is missing from the Fed map (batch 74's
+        "Found on the way"). Its order of 2010-04-30 ("…approves Banco Popular de Puerto Rico to
+        acquire assets and assume liabilities of Westernbank Puerto Rico") is in the feed, beside
+        its three actions in the enforcement files, and one row in `FED_BANKS` would serve both.
+        The proposal carried it as a note in this item, and the call above is on the source.
+      - A new check on rows pinned from the feed: Wells Fargo's approval of 2008-10-12 lands on WFC;
+        Bank of America's of 2008-11-26 lands on BAC; MUFG's of 2008-10-06 lands on MUFG and Morgan
+        Stanley; "Fortis" is refused for FTS, and "Banco Popular Español" for BPOP; the
+        capital-plan release of 2014-04-28 lands on BAC; an approval released after the close
+        carries its time, and a 2008 release with a day only carries none. On main it cannot run:
+        the adapter does not exist. No key, licence fee or recurring cost — one request of about
+        1 MB a day for every bank; a cloud session builds it (federalreserve.gov answers from the
+        container, measured). Not measured: the Board's orders before 2006, on yearly pages.
+      - *Derived from [`docs/proposals/2026-11-01-proposals.md`](proposals/2026-11-01-proposals.md)
+        #5, approved 2026-11-01 with the new source. Importance medium · Efficiency high ·
+        Practicality medium-high (the source approved; a hand read of 191 matches).*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

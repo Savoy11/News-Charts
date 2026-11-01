@@ -64,8 +64,11 @@ export const termLabel = (term: string): string => (isFormTerm(term) ? term.repl
 const normalise = (s: string): string =>
   s
     .toLowerCase()
-    // the annual report's form until 2002, "Annual report (10-K405)", is a 10-K to a reader
+    // the annual report's form until 2002, "Annual report (10-K405)", is a 10-K to a reader, and a
+    // small company's "(10KSB)" and "(10QSB)" of the same years a 10-K and a 10-Q (batch 80)
     .replace(/\b10-k405\b/g, "10-k")
+    .replace(/\b10ksb(?:40)?\b/g, "10-k")
+    .replace(/\b10qsb\b/g, "10-q")
     // a late-filing notice is no report: "(NT 10-K)" is not a 10-K (batch 65)…
     .replace(/\bnt (10|20)-([kqf])\b/g, "nt$1$2")
     // …while an automatic shelf is an S-3 or an F-3: "(S-3ASR)"

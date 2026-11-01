@@ -434,6 +434,7 @@ async function main(): Promise<void> {
 
   await fundSeriesFilings();
   await unitTrustReports();
+  await smallBusinessReports();
   await filingTimes();
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
@@ -557,6 +558,71 @@ async function unitTrustReports(): Promise<void> {
     reports.length > 0 && reports.every((e) => REGISTRANT_FORM.test(e.title)) && REGISTRANT_FORM.test("SPDR S&P 500 ETF TRUST: Shareholder report (N-30D)"));
   check("the forms the list still leaves out stay out: the trust's NSAR-U and proxy material",
     !events.some((e) => /\((?:NSAR-U|DEFA14A|24F-2NT)\)$/.test(e.title)));
+}
+
+/**
+ * The small-business reports and the 1990s tender offers (batch 80, the 2026-11-01 proposal 1,
+ * approved with groups (a)–(c), SB-2 and 10-12B). A smaller company reported on 10KSB and 10QSB
+ * until 2008, and a tender offer before 2000 was an SC 14D1, and the form filter dropped every one.
+ * Against two real records, pinned from the scout's run of 2026-11-01: Eagle Bancorp's of
+ * 1997–2003 and Dillard's of 1995–1999.
+ */
+async function smallBusinessReports(): Promise<void> {
+  console.log("\nThe small-business reports and the 1990s tender offers (batch 80)");
+  const { getFilings } = await import("../lib/sec");
+  const { MATERIAL_FORMS } = await import("../lib/secForms");
+  const pinned = JSON.parse(readFileSync("scripts/fixtures/small-business-records.json", "utf8")) as {
+    records: Record<string, { cik: string; name: string; recent: Record<string, string[]> }>;
+  };
+  const filingsOf = async (ticker: string, edit?: (recent: Record<string, string[]>) => void): Promise<TimelineEvent[]> => {
+    const r = pinned.records[ticker];
+    const recent = JSON.parse(JSON.stringify(r.recent)) as Record<string, string[]>;
+    edit?.(recent);
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (async () => new Response(JSON.stringify({ name: r.name, filings: { recent, files: [] } }), { status: 200 })) as unknown as typeof fetch;
+    try {
+      return await getFilings({ ticker, cik: r.cik, name: r.name });
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  };
+  const egbn = await filingsOf("EGBN");
+  const at = (events: TimelineEvent[], date: string, form: string) => events.find((e) => e.date === date && e.title.endsWith(`(${form})`));
+  const q = at(egbn, "1998-04-28", "10QSB");
+  check("Eagle Bancorp's quarterly report of 1998-04-28 is kept, on the Earnings chip, as a 10-Q is",
+    q?.type === "earnings" && q.title === "EAGLE BANCORP INC: Quarterly report (10QSB)", q && `${q.type} ${q.title}`);
+  const k = at(egbn, "1999-03-30", "10KSB");
+  check("  …and its annual report of 1999-03-30, as a 10-K is", k?.type === "earnings" && k.title === "EAGLE BANCORP INC: Annual report (10KSB)", k && `${k.type} ${k.title}`);
+  const reports = egbn.filter((e) => e.type === "earnings" && e.date < "2003-01-01");
+  check("  …so its 1998–2002 carry 19 reports, its 14 10QSB and 4 10KSB beside the one 10-Q the filter kept",
+    reports.length === 19 && reports.filter((e) => /\(10QSB\)$/.test(e.title)).length === 14 && reports.filter((e) => /\(10KSB\)$/.test(e.title)).length === 4,
+    `${reports.length}: ${reports.map((e) => e.title.replace(/^.*\(/, "(")).join(" ")}`);
+  const sb2 = at(egbn, "1997-12-12", "SB-2");
+  check("  …and the share offering its record begins with, a filing, not a report",
+    sb2?.type === "filing" && sb2.title === "EAGLE BANCORP INC: Registration to sell shares (small company) (SB-2)", sb2?.title);
+  check("  …while what the list still leaves out stays out: S-2, S-8, 8-A12G, Form 4, SB-2/A",
+    !egbn.some((e) => /\((?:S-2|S-2\/A|S-8|8-A12G|4|4\/A|SB-2\/A)\)$/.test(e.title)));
+
+  const dds = await filingsOf("DDS");
+  const offer = at(dds, "1998-05-21", "SC 14D1");
+  check("Dillard's offer for Mercantile Stores of 1998-05-21 is kept as its own tender offer: it carries no file number on its record",
+    offer?.type === "filing" && offer.title === "DILLARD'S, INC.: Its tender offer for another company's shares (SC 14D1)", offer?.title);
+  const rows = pageFilings(dds, pinned.records.DDS.cik).filter((e) => /\(SC 14D1\/A\)$/.test(e.title));
+  check("  …and its nine amendments, June to August 1998, make a row a month",
+    rows.length === 3 && rows.map((e) => e.date).join() === "1998-06-01,1998-07-01,1998-08-01" &&
+      rows[2].title === "DILLARD'S, INC.: Update to its tender offer for another company's shares ×4 (SC 14D1/A)",
+    rows.map((e) => `${e.date} ${e.title}`).join(" | "));
+  const bid = (await filingsOf("DDS", (r) => {
+    r.fileNumber[r.form.indexOf("SC 14D1")] = "005-12345";
+  })).find((e) => /\(SC 14D1\)$/.test(e.title));
+  check("  …while one with the company's own file number is a bid for it (a constructed row)",
+    bid?.title === "DILLARD'S, INC.: Tender offer by an outside bidder (SC 14D1)", bid?.title);
+  const amended = at(dds, "1995-04-28", "10-K405/A");
+  check("Dillard's amended annual report of 1995-04-28 is kept, as a 10-K/A is: a correction, not a report",
+    amended?.type === "filing" && amended.title === "DILLARD'S, INC.: Amended annual report (10-K405/A)", amended?.title);
+  check("the company's offer for its own shares reads as SC TO-I does; a spin-off's exchange listing is kept, 10-12G left out on the owner's call",
+    MATERIAL_FORMS["SC 13E4"]?.label === MATERIAL_FORMS["SC TO-I"]?.label && !!MATERIAL_FORMS["10-12B"] && !MATERIAL_FORMS["10-12G"] &&
+      MATERIAL_FORMS["10KSB40"]?.earnings === true && MATERIAL_FORMS["10QSB/A"]?.earnings === undefined);
 }
 
 /**

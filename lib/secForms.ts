@@ -119,6 +119,16 @@ export const MATERIAL_FORMS: Record<string, { label: string; earnings?: true }> 
   "40-F/A": { label: "Amended annual report" },
   // the annual report's own form until 2002, which the older shards reach
   "10-K405": { label: "Annual report", earnings: true },
+  "10-K405/A": { label: "Amended annual report" },
+  // a smaller company's annual and quarterly reports until 2008, written without a hyphen: Eagle
+  // Bancorp's 18 of 1998–2002, Take-Two's, Axon's as TASER International (batch 80, the 2026-11-01
+  // proposal 1)
+  "10KSB": { label: "Annual report", earnings: true },
+  "10KSB40": { label: "Annual report", earnings: true },
+  "10QSB": { label: "Quarterly report", earnings: true },
+  "10KSB/A": { label: "Amended annual report" },
+  "10KSB40/A": { label: "Amended annual report" },
+  "10QSB/A": { label: "Amended quarterly report" },
   // mergers and buyouts
   "S-4": { label: "Merger or exchange registration" },
   DEFM14A: { label: "Merger vote proxy" },
@@ -128,6 +138,11 @@ export const MATERIAL_FORMS: Record<string, { label: string; earnings?: true }> 
   "F-4": { label: "Merger or exchange registration" },
   "SC TO-T/A": { label: "Update to a tender offer by an outside bidder" },
   "SC TO-I": { label: "The company's own tender or exchange offer" },
+  // the tender-offer forms Schedule TO replaced in 2000: Dillard's offer for Mercantile Stores of
+  // 1998, The Limited's for its own shares (batch 80)
+  "SC 14D1": { label: "Tender offer by an outside bidder" },
+  "SC 14D1/A": { label: "Update to a tender offer by an outside bidder" },
+  "SC 13E4": { label: "The company's own tender or exchange offer" },
   // late-filing notices, which tend to come before a restatement: Apple's of 2006, NVIDIA's of 2002
   "NT 10-K": { label: "Notice that the annual report will be late" },
   "NT 10-Q": { label: "Notice that the quarterly report will be late" },
@@ -153,6 +168,11 @@ export const MATERIAL_FORMS: Record<string, { label: string; earnings?: true }> 
   "F-10": { label: "Registration for new securities (Canadian company)" },
   // a foreign company's listing: ARM's of 2023, Alibaba's of 2014
   "F-1": { label: "Registration to sell shares (foreign company)" },
+  // a small company's, beside the S-1 kept: Eagle Bancorp's of 1997, its record's first (batch 80)
+  "SB-2": { label: "Registration to sell shares (small company)" },
+  // a spin-off's or a listing's registration of its shares on an exchange (batch 80); 10-12G, a
+  // registration that comes with no exchange listing, is left out on the owner's call
+  "10-12B": { label: "Registration of shares for an exchange listing" },
   // exits
   "25": { label: "Delisting notice" },
   "25-NSE": { label: "Removed from an exchange" },
@@ -169,12 +189,14 @@ export const MATERIAL_FORMS: Record<string, { label: string; earnings?: true }> 
  * schedules follow (`STAKE_FORM`, lib/sec.ts). Read with the default label, Pfizer's own bids read
  * "Tender offer by an outside bidder" on its page (batch 65).
  */
-export const DEAL_FORM = /^(?:SC TO-T(?:\/A)?|PREC14A|DEFC14A|DFAN14A)$/;
+export const DEAL_FORM = /^(?:SC TO-T(?:\/A)?|SC 14D1(?:\/A)?|PREC14A|DEFC14A|DFAN14A)$/;
 
 /** Their labels when the company made them about another company. */
 export const FOR_ANOTHER_COMPANY: Record<string, string> = {
   "SC TO-T": "Its tender offer for another company's shares",
   "SC TO-T/A": "Update to its tender offer for another company's shares",
+  "SC 14D1": "Its tender offer for another company's shares",
+  "SC 14D1/A": "Update to its tender offer for another company's shares",
   PREC14A: "Its proxy fight at another company: preliminary proxy statement",
   DEFC14A: "Its proxy fight at another company: proxy statement",
   DFAN14A: "Its proxy material in a vote at another company",
@@ -185,7 +207,7 @@ export const FOR_ANOTHER_COMPANY: Record<string, string> = {
  * 2024; Pfizer's tender-offer updates, eight in July 2019. Grouped a row a month, as busy
  * prospectus months are (`pageFilings`).
  */
-export const MONTHLY_FORM = /^(?:DFAN14A|SC TO-T\/A)$/;
+export const MONTHLY_FORM = /^(?:DFAN14A|SC TO-T\/A|SC 14D1\/A)$/;
 
 /**
  * Prospectuses for new securities. Kept, but grouped into one row per form per day: a bank files
@@ -201,7 +223,7 @@ export const STAKE_FORM = /^(?:SC 13[DG]|SCHEDULE 13[DG])(?:\/A)?$/;
 export const BUSY_PROSPECTUS_DAYS = 5;
 
 const PROSPECTUS_ROW = /^(.*): Prospectus(?:es ×(\d+))? \((424B[1-8])\)$/;
-const MONTHLY_ROW = /^(.*): (.+) \((DFAN14A|SC TO-T\/A)\)$/;
+const MONTHLY_ROW = /^(.*): (.+) \((DFAN14A|SC TO-T\/A|SC 14D1\/A)\)$/;
 
 /**
  * A company page's filing rows, as the page should carry them (audit 2026-10-21 #4).

@@ -278,6 +278,18 @@ const strip = renderToStaticMarkup(
 ).replace(/<[^>]+>/g, " ");
 check("the best matches name the form as it is written: “10-K” in the headline, never \"10 k\"",
   strip.includes("“10-K” in the headline") && !/10 k\b/.test(strip), strip.replace(/\s+/g, " ").slice(0, 160));
+// batch 80: a small company's reports of the same years, as EDGAR writes their forms, unhyphenated
+const small = [
+  ev("EAGLE BANCORP INC: Annual report (10KSB)", "earnings"),
+  ev("EAGLE BANCORP INC: Quarterly report (10QSB)", "earnings"),
+  ev("EAGLE BANCORP INC: Amended annual report (10KSB/A)", "filing"),
+  ev("DILLARD'S, INC.: Amended annual report (10-K405/A)", "filing"),
+  ev("EAGLE BANCORP INC: Registration to sell shares (small company) (SB-2)", "filing"),
+];
+check("\"10-K\" finds a small company's annual reports and their amendments, \"10-Q\" its quarterly ones (batch 80)",
+  applyFocus(small, "10-K").matched === 3 && applyFocus(small, "10-Q").matched === 1 &&
+    applyFocus(small, "10-Q").events[0].title.endsWith("(10QSB)"),
+  `${applyFocus(small, "10-K").events.map((e) => e.title).join(" | ")} // ${applyFocus(small, "10-Q").matched}`);
 
 console.log("\nThe forms batch 65 keeps, as a focus reads them");
 const more = [

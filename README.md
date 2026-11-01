@@ -144,8 +144,9 @@ The foreign banks with a page here are mapped too (batch 74): the bank, its US h
 branches, and a US bank it bought from the day it did, each day read from its own SEC filing.
 Bankers Trust's agreement of 1994 is not Deutsche Bank's, which bought it in 1999; RBC Centura's
 penalty of 2007 is RBC's, between its purchase in 2001 and its sale to PNC in 2012; Credit
-Suisse's actions are UBS's only from 2023-06-12. Measured 2026-10-30: 37 events on the 14 of them,
-27 before 2017 (HSBC 7, Deutsche Bank 7, Santander 4), eight with a penalty of $100 million or
+Suisse's actions are UBS's only from 2023-06-12; Compass Bank's are BBVA's from its purchase on
+2007-09-07 to its sale to PNC on 2021-06-01 (batch 78). Measured 2026-10-30: 38 events on the 14 of
+them, 28 before 2017 (HSBC 7, Deutsche Bank 7, Santander 4), eight with a penalty of $100 million or
 more.
 
 ### FDA recalls (`lib/fdaRecalls.ts`)
@@ -209,16 +210,22 @@ until the day they stopped, as in the Federal Register walk), from its first pri
 
 A release is the party's when the company pays, settles, agrees or is charged (the Justice
 Department rule's subject test), or when the SEC charges, sues or sanctions it, or brings
-proceedings, an action or an order against it. Read against every company in the index under its
-current names, 209 of the 6,898 releases land on 122 companies, 125 of them before 2017 (Morgan
-Stanley 13, Citigroup 10, Wells Fargo 9, Goldman Sachs 8, Bank of America 8), each read by hand.
+proceedings, an action or an order against it; two parties a comma joins ("Morgan Stanley,
+Citigroup Charged") are both its subject. Read against every company in the index under its current
+names, 201 of the 6,898 releases land on 122 companies, 120 of them before 2017 (Morgan Stanley 14,
+Citigroup 10, Wells Fargo 9, Goldman Sachs 8, Bank of America 8), each read by hand (batch 78, after
+the 2026-10-30 audit).
 What is refused: a release about a company's people ("SEC Charges Former Carter's Executive", "Board
 Member of Goldman Sachs and Procter & Gamble Charged"), a name followed by "of" ("SEC Charges City of
 Miami" is not City Holding), by a hyphen or an "-ing" word ("Crypto-Focused Advisory Firm"), the
 SEC's own divisions ("Division of Risk, Strategy, and Financial Innovation"), and a name more than
-one listed company has ("First Bancorp" is three banks'). A release's day is the day in Washington,
-and its identity is its number and its day, since the SEC has given one number twice. A release is
-a regulation event and is scored without the model.
+one listed company has ("First Bancorp" is three banks'), and a short name a bigger listed company's
+name begins with, unless a legal word of its own follows it: "Prudential to Pay $600 Million" is no
+more Prudential plc's than Prudential Financial's, and "UBS Agrees to Pay" no more the record of UBS
+AG's notes than UBS Group's, so both land on no page; "Crown Holdings to Pay" would still be Crown
+Holdings', beneath Crown Castle. The Justice Department rule refuses the same. A release's day is
+the day in Washington, and its identity is its number and its day, since the SEC has given one
+number twice. A release is a regulation event and is scored without the model.
 
 ### Source planning (`lib/enrich/plan.ts`)
 

@@ -465,6 +465,9 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     line("industry", "no SIC code from EDGAR");
   }
 
+  // first: the Federal Register's years, the SEC's releases and GDELT's months begin at the first price
+  await companyPrices(client, subjectId, company, due, scoring);
+
   const renames: Rename[] = [];
   const othersStakes: string[] = [];
   // set inside the run below, which TypeScript does not follow into
@@ -784,6 +787,22 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     collapseNearDuplicates(e)
   );
 
+  return { ingested: true };
+}
+
+/**
+ * The company's daily closes (NC-103, NC-077), read before the sources that begin at its first
+ * price: the Federal Register's years, the SEC's releases and GDELT's months each start there,
+ * and on a company's first ingest, read last, they found none, and the SEC's releases were
+ * marked read for a day (the 2026-10-30 audit's finding 4).
+ */
+async function companyPrices(
+  client: PoolClient,
+  subjectId: number,
+  company: { ticker: string },
+  due: Set<SourceKey>,
+  scoring: ScoringContext
+): Promise<void> {
   /**
    * Prices under a key of their own (NC-103). They shared the RSS feed's window and were never
    * logged, so a refused or empty chart fetch left no trace: the Sources panel showed Yahoo as
@@ -792,13 +811,13 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   if (!due.has("yahoo_prices")) {
     line("yahoo_prices", `fresh     inside its ${ttlFor("yahoo_prices")} min window`);
-    return { ingested: true };
+    return;
   }
   await assertCommercialOk(client, "yahoo_prices");
   const priceBackoff = await shouldBackOff(client, "yahoo_prices", subjectId, BACKOFF_MINUTES);
   if (priceBackoff) {
     line("yahoo_prices", `skipped   last attempt ${priceBackoff}, within ${BACKOFF_MINUTES} min backoff`);
-    return { ingested: true };
+    return;
   }
 
   /**
@@ -855,7 +874,6 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
       ? `ok        ${daily.points.length} daily closes (${withVolume} with volume), ${daily.actions.length} corporate actions`
       : `${daily.outcome.padEnd(9)} ${daily.detail ?? "no closes"}`
   );
-  return { ingested: true };
 }
 
 /**

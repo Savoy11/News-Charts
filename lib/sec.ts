@@ -753,6 +753,33 @@ export function listedCompaniesNamed(everyday: string): number {
   return ciks.size;
 }
 
+const outrankedCache = new Map<string, string | null>();
+
+/**
+ * A bigger listed company whose everyday name begins with this one, which a headline saying only
+ * this name more likely means: "PRUDENTIAL", Prudential plc's, begins "PRUDENTIAL FINANCIAL",
+ * ranked above it, so the SEC's "Prudential to Pay $600 Million" is no more Prudential plc's than
+ * Prudential Financial's (the 2026-10-30 audit's finding 1). Ranked by the committed index, which
+ * keeps the SEC's order, roughly by size, as the name-prefix search rung does: "Apple" stays Apple
+ * Inc.'s though "Apple Hospitality REIT" begins with it, and "BP" BP's. Null when no company has
+ * this everyday name, or none above it extends it.
+ */
+export function outrankingNameFor(everyday: string): string | null {
+  const own = phrase(everyday);
+  const cached = outrankedCache.get(own);
+  if (cached !== undefined) return cached;
+  const ranked = everydayByRank();
+  const at = own ? ranked.indexOf(own) : -1;
+  // only a name some company has, and only a longer one listed above its first holder
+  const found = at < 0 ? null : (ranked.slice(0, at).find((theirs) => theirs.startsWith(`${own} `)) ?? null);
+  outrankedCache.set(own, found);
+  return found;
+}
+
+let rankedRows: string[] | null = null;
+/** Every listed company's everyday name as a phrase, in the index's order. */
+const everydayByRank = () => (rankedRows ??= localCompanies().map((r) => phrase(commonName(r.title))));
+
 export interface Industry {
   /** 4-digit SIC code, e.g. "3674" */
   sic: string;

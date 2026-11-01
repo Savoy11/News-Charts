@@ -10,7 +10,7 @@ import { SOURCE_TTL_MINUTES } from "../lib/ingest/refresh";
 import { QUOTAS } from "../lib/ingest/quota";
 import { SOURCES } from "../lib/ingest/store";
 import { deterministicScore } from "../lib/enrich/relevance";
-import { newsNamesFor, possessiveNameFor } from "../lib/sec";
+import { newsNamesFor, outrankingNameFor, possessiveNameFor } from "../lib/sec";
 import {
   SEC_PRESS_FROM,
   easternDay,
@@ -230,6 +230,33 @@ const TODAY = "2026-10-29";
     releaseNamesParty(release("99-119").title, namesOf("CHCO")(1999)) && releaseNamesParty(release("2009-199").title, namesOf("MSTR")(2009)) &&
       releaseNamesParty(release("2011-53").title, namesOf("PG")(2011)));
 
+  /**
+   * The 2026-10-30 audit's findings 1 and 2 (batch 78). Prudential plc's everyday name is
+   * "PRUDENTIAL", and the SEC's "Prudential to Pay $600 Million" is Prudential Financial's
+   * settlement — the release names "a … subsidiary of Prudential Financial, Inc." — so a short name
+   * a bigger listed company's name begins with names neither on its own. And a headline joining
+   * two parties with a comma names the first as well as the second.
+   */
+  console.log("\nA short name a bigger company's name begins with, and two parties a comma joins (batch 78)");
+  expectOff("Prudential Financial's 2006 settlement is not Prudential plc's, nor UBS's 2009 one the record of UBS AG's notes",
+    [["2006-145", ["PUK", "PRU"]], ["2009-29", ["AMUB"]]]);
+  check("  …because \"Prudential\" begins Prudential Financial's name and \"UBS\" UBS Group's, both ranked above",
+    outrankingNameFor("PRUDENTIAL") === "prudential financial" && outrankingNameFor("UBS") === "ubs group",
+    `${outrankingNameFor("PRUDENTIAL")} | ${outrankingNameFor("UBS")}`);
+  check("  …while \"Apple\" stays Apple's, above Apple Hospitality REIT, and \"Goldman Sachs\" Goldman's",
+    outrankingNameFor("APPLE") === null && outrankingNameFor("Goldman Sachs") === null && outrankingNameFor("GOLDMAN SACHS GROUP") === null);
+  check("  …and the short name still counts with a legal word of its own (constructed headlines)",
+    secReleaseNamesParty("Crown Holdings to Pay $10 Million to Settle SEC Charges", ["CROWN"]) &&
+      !secReleaseNamesParty("Crown to Pay $10 Million to Settle SEC Charges", ["CROWN"]) &&
+      releaseNamesParty("Southern Company Agrees to Pay $10 Million", ["SOUTHERN"]) && !releaseNamesParty("Southern Agrees to Pay $10 Million", ["SOUTHERN"]));
+  check("  …and the Justice Department rule refuses Prudential plc the same headline",
+    !releaseNamesParty(release("2006-145").title, namesOf("PUK")(2006)));
+  expectOn("  …while Goldman's, Morgan Stanley's and BlackRock's still land", [["2010-59", ["GS"]], ["2003-159", ["MS"]], ["2015-71", ["BLK"]]]);
+  expectOn("two parties a comma joins are both charged: Morgan Stanley with Citigroup, Barclays, BOK Financial, Freddie Mac",
+    [["2017-30", ["MS", "C"]], ["2016-16", ["BCS"]], ["2016-182", ["BOKF"]], ["2007-205", ["FMCC"]]]);
+  check("  …in the Justice Department rule too, which shares the subject test",
+    releaseNamesParty(release("2017-30").title, namesOf("MS")(2017)) && releaseNamesParty(release("2016-16").title, namesOf("BCS")(2016)));
+
   console.log("\nAs timeline events");
   const gs = secPressEvents(fixture.releases, namesOf("GS"));
   check("Goldman's releases, newest first, as regulation events credited to the SEC and linked to sec.gov",
@@ -340,6 +367,14 @@ const TODAY = "2026-10-29";
   check("company ingest walks the years, then keeps the company's releases under its names and its possessive",
     (COMPANY_SOURCES as readonly string[]).includes("sec_press") &&
       /await run\("sec_press", [^\n]+, async \(\) => \{\s+const walked = await walkSecPress\(client\);[\s\S]{0,400}return secPressFor\(client, subjectId, \{ edgarName: company\.name, alsoKnownAs, possessive: dojPossessive\(company\.name, possessive\) \}, walked\);/.test(ingest));
+  // the 2026-10-30 audit's finding 4 (batch 78): prices were read last, so a company's first
+  // ingest found no first price, stored no release and marked the source read for a day
+  const company = ingest.slice(ingest.indexOf("export async function ingestCompany"), ingest.indexOf("\n}\n", ingest.indexOf("export async function ingestCompany")));
+  const at = (s: string) => company.indexOf(s);
+  check("  …after the company's prices are read, as are the Federal Register's years and GDELT's months, which also begin at the first price",
+    at("await companyPrices(") > 0 && [`await run("sec_press"`, "backfillRegulations(", "backfillNews("].every((s) => at(s) > at("await companyPrices(")) &&
+      /async function companyPrices\([\s\S]*?writePrices\(client, subjectId, daily\.points/.test(ingest),
+    `prices at ${at("await companyPrices(")}, sec_press at ${at('await run("sec_press"')}`);
   check("check:feeds reports this year's newest page as ingest keeps it",
     /reportFetch\("SEC press releases"/.test(read("scripts/check-feeds.ts")) && /"SEC press releases": "sec_press"/.test(read("scripts/check-feeds.ts")));
   const migration = read("db/032_sec_press.sql");

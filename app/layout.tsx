@@ -100,7 +100,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               defect investigations from the National Highway Traffic Safety Administration,
               drug, device and food recalls from the U.S. Food and Drug Administration, and
               press releases from the U.S. Department of Justice and the U.S. Securities and
-              Exchange Commission.
+              Exchange Commission, with the SEC&apos;s litigation releases and administrative
+              proceedings.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

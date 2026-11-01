@@ -41,6 +41,7 @@ import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { companyNames, fetchCompanyRegulations, frDailySince, frSearchTerm } from "../lib/frCompany";
 import { backfillRegulations } from "../lib/ingest/frBackfill";
 import { secPressFor, walkSecPress } from "../lib/ingest/secPressWalk";
+import { secCasesFor, walkSecCases } from "../lib/ingest/secCasesWalk";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
@@ -90,6 +91,8 @@ export const COMPANY_SOURCES = [
   "doj_press",
   // …and the SEC's own releases by the same test: it is charged, sued or settles (batch 73)
   "sec_press",
+  // …and the SEC's record of its cases, where a caption names the company as a party (batch 83)
+  "sec_cases",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -662,6 +665,22 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
         (walked.stopped ? ` (${walked.stopped})` : ""));
     }
     return secPressFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik }, walked);
+  });
+
+  /**
+   * The SEC's record of the cases it brings — a litigation release for each step of a suit in
+   * court, an administrative proceeding for each order — back to 1995 (batch 83). Like the press
+   * releases, both listings are read by year for every company at once (`walkSecCases`), and the
+   * company keeps the rows whose caption names it, by its legal name, as a defendant or a
+   * respondent, one event a day. Scored without the model.
+   */
+  await run("sec_cases", `SEC cases naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")} as a party`, async () => {
+    const walked = await walkSecCases(client);
+    if (walked.due) {
+      line("sec_cases", `years     ${walked.read} of ${walked.due} read, ${walked.pages} pages, ${walked.cases} cases stored` +
+        (walked.stopped ? ` (${walked.stopped})` : ""));
+    }
+    return secCasesFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik }, walked);
   });
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no

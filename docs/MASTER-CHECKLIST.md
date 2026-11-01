@@ -988,6 +988,113 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 83: the SEC's litigation releases and administrative proceedings (2026-11-01)
+
+The second of the five proposals the owner approved on 2026-11-01 (#2), with the owner's yes to the
+source.
+
+- [x] **A new source, `sec_cases`** (`lib/secCases.ts`, `lib/ingest/secCasesWalk.ts`, `db/033`).
+      - **What it reads:** the SEC's two case listings, `www.sec.gov/enforcement-litigation/
+        litigation-releases` and `…/administrative-proceedings`, by year, 100 rows a page.
+      - **Licence:** the press releases' own ("public information … may be copied or further
+        distributed"), on the same host; no key. Registered as source 28, credited in the footer,
+        the Terms page and README, and scored without the model.
+      - **How it walks:** in the shape of batch 73's press-release walk. Each closed year of each
+        listing is read once, every page, and never asked again. The current year is read again a
+        day later, down to a row already kept. The budget is 120 pages a process, 1 s apart.
+      - **Measured:** 1995 is the first year either listing holds. 1995–2026 is 344 pages (139
+        litigation, 205 proceedings) and 30,654 rows; the most pages one year takes is 11.
+- [x] **Who a caption names** (`captionParty`). A row lists its defendants or respondents. A company
+      is a party when one entry of the caption is its name, or its legal name, followed only by legal
+      words (Inc., Corp., LLC, plc, N.A., S.A., AG…).
+      - **Why legal words only:** the press releases' `DESIGNATOR` also lets "Holdings", "Financial",
+        "Securities" or "Technologies" follow a name. On litigation releases alone it gave 231 rows
+        to 127 companies, many of them namesakes: "Southern Financial Group" on Southern Company,
+        "Reliance Holdings" on Reliance, "Lucent Technologies" on Lucent, Inc. Legal words only gave
+        170 rows on 112 companies.
+      - **The legal name counts too,** with its own legal form left for the caption to write:
+        "RenaissanceRe Holdings Ltd.", and "Dana Holding Corporation" under Dana's former name. Where
+        the shortened name is shared, the legal name as filed still counts: "Rio Tinto plc" is RIO's.
+      - **A one-word name with no legal word** counts only standing alone, as "Sanofi" and
+        "TransUnion" are their captions. "Dow, Mitchell B." is a person; "Fox, Reusch & Co." and
+        "City (U.K.), Ltd." are other firms.
+      - **Legal words are taken whole:** "Appian, Inc. Bulk Storage Software, Inc." names no
+        "Appian".
+      - **Refused, as the proposal asked:**
+        - a stock ("Unknown Purchasers of Securities of Martek");
+        - relief defendants, cut off at "Defendants";
+        - an amicus brief in someone else's suit;
+        - a name more than one listed company has, and a longer listed company's name.
+- [x] **Namesakes read by hand** (`NOT_THE_COMPANY`, by CIK; 28 rows on 10 companies):
+      - another Acorn Energy (2010);
+      - "McDonalds Ltd." (2000, 2003);
+      - the American National Steel of 2001 on CSN, whose EDGAR name is NATIONAL STEEL CO;
+      - a 2001 "Spectrum Brands Corp." (that record was Zapata's then);
+      - Trinity Capital Corporation of Los Alamos (2015–2021);
+      - lists of revoked registrations naming "Telos, Inc.", "TSS Ltd.", "First Community, Inc.",
+        "Valor Energy Corp." and "Carlin Resources Corp. (n/k/a Carlin Gold Corp.)". Carlin Gold
+        Corp's record holds only private-placement notices (data.sec.gov, 1 request).
+      - **Left to the first price**, which keeps a company off the years before it listed (not
+        measured here): old Broadcom Corp. (2008), General Motors Corporation (2009-01), Dell
+        Inc. (2010), Ingersoll-Rand Company Ltd. (2007), The Cronos Group (1999), Bausch & Lomb
+        (1997), Agora, Inc. (2003), Centuri (1996), Loomis Ltd. (1997).
+- [x] **The bank units the captions name in full join the release rules' map** (`lib/releaseNames.ts`):
+      - JPMorgan: J.P. Morgan Securities, J.P. Morgan Investment Management (both from 2000-12-31),
+        JPMorgan Chase Bank;
+      - Citigroup Alternative Investments; Morgan Stanley Investment Management;
+      - Wells Fargo: Wachovia Securities (from 2008-12-31), Wells Fargo Bank, Advisors, Advisors
+        Financial Network, Brokerage Services, Clearing Services, Securities;
+      - UBS Group: UBS Securities, UBS Financial Services and its Puerto Rico firm;
+      - new banks: Deutsche Bank Securities, and Deutsche Bank Trust Company Americas from
+        1999-06-04; State Street Bank and Trust; BNY Mellon Securities; Barclays Bank and Barclays
+        Capital;
+      - **a third notes record, ATMP (Barclays Bank PLC):** the owner's call (c) applied to a record
+        of the same kind. It had taken 11 SEC cases and three Justice Department releases that are
+        Barclays'. This is my extension of the call, flagged for the owner.
+      - **Effect on the press releases:** 252 → 255 (UBS's 2008 auction-rate settlement, Morgan
+        Stanley Investment Management's 2011 charge, Barclays Capital's 2014 charge), 153 before
+        2017.
+      - **Effect on the Justice Department, measured live:**
+        - Barclays 1 → 4: Barclays Bank PLC's $298 million forfeiture of 2010, its 2012 LIBOR
+          admission and the 2016 mortgage-securities suit, all three off ATMP;
+        - UBS Group 0 → 2: the $1.435 billion settlement of 2023 and the 2018 suit;
+        - **the cost:** UBS Group is asked two more names a run.
+- [x] **One event a company a day,** titled by its own party ("SEC litigation release:
+      Transocean Inc."). The description carries the whole caption, each release number and a
+      proceeding's file number. The company's CIK is in the event's identity, so two banks one
+      caption names each get their own.
+- **Measured** on the 30,654 rows against the committed index, under current names (former names
+  and first prices aside):
+  - **The totals:** 1,056 rows matched, 1,022 company days on 352 companies, 478 before 2017.
+  - **Most have no press release:** 813 of the 1,022 fall on a day no SEC press release names the
+    company.
+  - **The biggest:** Bank of America 72, Morgan Stanley 66, Wells Fargo 47, UBS Group 46, JPMorgan
+    46, Citigroup 44, Deutsche Bank 19, Barclays 18.
+  - **2010:** 55 company days on 24 companies, against the scout's 25 on 16 by exact names. They
+    include Transocean, Noble (through its predecessor's name) and Tidewater on 2010-11-04, and
+    Huntington on 2010-11-09.
+  - **Per year:** from 1 to 22 a year before 2005, 23 to 55 from 2005 to 2022, and 99 in 2023.
+- **Real Postgres** (`chronolens_b83`, every migration applied): the walk stored 2010's two
+  listing-years from the saved pages, 438 and 738 rows, each listing's one duplicate kept once. A
+  second walk asked nothing, and Huntington's 2010 proceeding came back as its event.
+- **Checks:**
+  - **`check:sec-cases`, new in the chain, 47 checks:** on real rows (`scripts/fixtures/
+    sec-cases.json`: every matched row and the refusals, 1,421 rows, 237 KB) and three real page
+    samples. It covers the parser, the party rule and each refusal, the namesakes, the units by
+    day, the events, the full replay pinned at 1,022 on 352, the walk, the company step, and the
+    registration and wiring. On main it cannot run: the adapter does not exist.
+  - **`check:sec-press`:** the map now holds eleven banks and three notes records, and the replay
+    is pinned at 255.
+  - **`check:doj`:** UBS Group's query names updated.
+  - **`check:live`:** a case on 2010's first pages (Transocean, Huntington) and its last litigation
+    page. **`check:feeds`:** each listing's newest page.
+- **Docs:** README (a section and a sources row; the press-release counts), COVERAGE-MAP (a row, the
+  gaps paragraph, 28 sources), CLAUDE.md (the caption rule and the map).
+- **Requests made:** www.sec.gov 344 (every page of both listings, once, 1 s apart), data.sec.gov 1,
+  www.justice.gov 10.
+- `npm run check` passes and `npm run lint` is clean. HawkScan was not run: `HAWK_API_KEY` is not
+  set.
+
 ## NC ledger — batch 82: the banks as the SEC names them (2026-11-01)
 
 The fourth of the five proposals the owner approved on 2026-11-01 (#4), with the three calls:
@@ -5639,7 +5746,7 @@ already held, but new investment goes to securities coverage first.
         Practicality high (one owner pick, made 2026-11-01).*
       - ✅ **Done in batch 80** (see its section): the twelve forms kept, Eagle Bancorp's 1998–2002
         going from 1 report to 19 and Dillard's 1998 offer for Mercantile Stores on its page.
-- [ ] `P1` **The SEC's litigation releases and administrative proceedings, by the parties their
+- [x] `P1` **The SEC's litigation releases and administrative proceedings, by the parties their
       captions name.** A new source, approved by the owner 2026-11-01: the SEC's other two
       enforcement listings, on the host and under the licence of the press releases batch 73 reads
       back to 1997 — "Information presented on sec.gov is considered public information and may be
@@ -5715,6 +5822,13 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-11-01-proposals.md`](proposals/2026-11-01-proposals.md)
         #2, approved 2026-11-01 with the new source. Importance high · Efficiency medium-high ·
         Practicality medium (the source approved; the namesakes a caption can carry).*
+      - ✅ **Done in batch 83** (see its section): both listings read whole once, 1995–2026, 344
+        pages and 30,654 rows. A caption entry names a company only by its name or legal name with
+        legal words after it, so "Southern Financial Group, Inc." is not Southern Company. Replayed
+        against the index: 1,022 company days on 352 companies, 478 before 2017, 813 of them on a
+        day no press release names the company. 2010 gives 55 on 24 companies; the scout's exact
+        names gave 25 on 16. Ten namesakes the rule cannot tell apart were read by hand and are kept
+        off by CIK.
 - [x] `P1` **A legal form left in the everyday name: Deutsche Bank, Fresenius SE, YPF and eleven
       others.** `commonName` strips "AG", "S.A." and "SE" (`lib/edgarName.ts:16-17`) and not the
       words they abbreviate, so 14 everyday names in the committed index keep a legal form:

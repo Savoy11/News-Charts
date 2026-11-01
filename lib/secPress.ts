@@ -142,7 +142,7 @@ const ABOUT_PEOPLE = /^(?:\S+\s+){0,3}(?:Board\s+Members?|Directors?|Executives?
  * A name as a pattern, its initials with or without their stops: the SEC wrote "J.P. Morgan
  * Chase" where EDGAR's former name is J P MORGAN CHASE & CO.
  */
-function pressName(name: string): string {
+export function pressName(name: string): string {
   const words = name.trim().split(/[\s-]+/);
   let out = "";
   words.forEach((w, i) => {

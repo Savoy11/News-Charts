@@ -52,7 +52,8 @@ export type SourceKey =
   | "fed_enforcement"
   | "doj_press"
   | "fda_enforcement"
-  | "sec_press";
+  | "sec_press"
+  | "sec_cases";
 
 export interface TimelineEvent {
   id: string;

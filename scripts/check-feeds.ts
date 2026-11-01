@@ -37,6 +37,8 @@ import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { dojPossessive, fetchJusticeReleases, justiceQueryNames } from "../lib/doj";
 import { isNotesRecord, releaseNamesOn } from "../lib/releaseNames";
 import { fetchListingPage, secPressEvents } from "../lib/secPress";
+import { fetchCasePage, secCaseEvents } from "../lib/secCases";
+import { withoutTag } from "../lib/edgarName";
 import { mayCarryRelease, readFilingHeadline } from "../lib/secHeadlines";
 import {
   fetchYahooFinanceNews,
@@ -96,6 +98,7 @@ const SOURCE_OF: Record<string, SourceKey> = {
   "Federal Reserve actions": "fed_enforcement",
   "Justice Department": "doj_press",
   "SEC press releases": "sec_press",
+  "SEC cases": "sec_cases",
 };
 
 const INGESTED: ReadonlySet<SourceKey> = new Set([...TOPIC_SOURCES, ...COMPANY_SOURCES]);
@@ -208,6 +211,18 @@ async function main() {
       httpStatus: newest.httpStatus,
       detail: newest.detail,
     }, `(the ${newest.releases.length} newest this year; the walk reads every year since 1997)`);
+    // …and the newest page of each case listing, as ingest keeps them (batch 83)
+    const year = new Date().getUTCFullYear();
+    const pages = [await fetchCasePage("litigation", year, 0), await fetchCasePage("proceeding", year, 0)];
+    const refused = pages.find((p) => p.outcome !== "ok");
+    reportFetch("SEC cases", {
+      events: isNotesRecord(company.cik) ? [] : secCaseEvents(pages.flatMap((p) => p.cases),
+        () => [...companyNames(company.name, alsoKnownAs), ...(own ? [own] : []), withoutTag(company.name)],
+        { cik: company.cik, namesOn: (day) => releaseNamesOn(company.cik, day) }),
+      outcome: refused ? refused.outcome : pages.some((p) => p.cases.length) ? "ok" : "empty",
+      httpStatus: refused?.httpStatus ?? pages[0].httpStatus,
+      detail: refused?.detail,
+    }, `(the ${pages[0].cases.length} and ${pages[1].cases.length} newest this year; the walk reads every year since 1995)`);
   } else {
     reportFetch("GDELT", await tried(fetchNews(name)), "(throttles ~1 req/5s; rerun if 0)");
   }

@@ -339,6 +339,21 @@ export const SOURCES: {
     reviewedOn: "2026-10-29",
     notes: "the newsroom's releases since 1997 whose headline makes a listed company the party (lib/secPress.ts); no key (batch 73)",
   },
+  {
+    id: 28,
+    key: "sec_cases",
+    name: "SEC litigation releases and administrative proceedings",
+    license: "public domain",
+    attribution: "U.S. Securities and Exchange Commission",
+    // The press releases' licence, on the same host: "Information presented on sec.gov is
+    // considered public information and may be copied or further distributed by users of the web
+    // site without the SEC's permission. Please consider appropriate citation to the SEC as the
+    // source." (sec.gov/about/privacy-information, "Website Dissemination", read 2026-10-28). Used:
+    // each row's caption, day, numbers and a link to it. Approved by the owner on 2026-11-01.
+    commercialOk: true,
+    reviewedOn: "2026-11-01",
+    notes: "the SEC's two case listings since 1995, kept where a caption names a listed company as a defendant or respondent (lib/secCases.ts); no key (batch 83)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

@@ -46,6 +46,7 @@ import { fetchRecalls } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
 import { fetchFedActions } from "../lib/fedActions";
 import { fetchListingPage, secPressEvents } from "../lib/secPress";
+import { fetchCasePage, secCaseEvents } from "../lib/secCases";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
 import { FR_COMPANY_CAP, fetchCompanyRegulations, fetchCompanyYear, frDailySince, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
@@ -737,6 +738,30 @@ export const CASES: LiveCase[] = [
       await new Promise((r) => setTimeout(r, 1_000));
       const past = await fetchListingPage(2010, 11);
       if (past.outcome !== "ok" || past.releases.length) out.push(`2010 page 12, past the last, answered ${past.outcome} with ${past.releases.length} releases`);
+      return out;
+    },
+  },
+  {
+    name: "SEC cases — a closed year's pages as the walk reads them; Transocean's and Huntington's 2010 cases by the caption rule (batch 83)",
+    covers: ["sec_cases"],
+    hosts: ["www.sec.gov"],
+    async run() {
+      // measured 2026-11-01: 2010 holds 439 litigation releases and 739 proceedings, 100 a page,
+      // newest first; Transocean's LR-21725 of Nov. 4 and Huntington's 34-63290 of Nov. 9 are on
+      // their first pages, and each listing's fifth and eighth pages are their last
+      const lit = await fetchCasePage("litigation", 2010, 0);
+      const out = lit.outcome === "ok" ? [] : [`litigation 2010 page 1: ${lit.outcome} ${lit.httpStatus ?? ""} ${lit.detail ?? ""}`.trim()];
+      if (lit.cases.length !== 100) out.push(`litigation 2010 page 1 holds ${lit.cases.length} rows, not 100`);
+      const rig = secCaseEvents(lit.cases, () => ["Transocean"], { cik: 1451505 });
+      if (!rig.some((e) => e.date === "2010-11-04" && /Transocean Inc\./.test(e.title))) out.push("Transocean's 2010-11-04 litigation release not kept from page 1");
+      await new Promise((r) => setTimeout(r, 1_000));
+      const ap = await fetchCasePage("proceeding", 2010, 0);
+      if (ap.outcome !== "ok") out.push(`proceedings 2010 page 1: ${ap.outcome} ${ap.httpStatus ?? ""}`.trim());
+      const hban = secCaseEvents(ap.cases, () => ["HUNTINGTON BANCSHARES"], { cik: 49196 });
+      if (!hban.some((e) => e.date === "2010-11-09" && e.externalId === "proceeding:34-63290@2010-11-09")) out.push("Huntington's 34-63290 of 2010-11-09 not kept from page 1");
+      await new Promise((r) => setTimeout(r, 1_000));
+      const last = await fetchCasePage("litigation", 2010, 4);
+      if (last.outcome !== "ok" || last.cases.length !== 39) out.push(`litigation 2010 page 5, the last, answered ${last.outcome} with ${last.cases.length} rows, not 39`);
       return out;
     },
   },

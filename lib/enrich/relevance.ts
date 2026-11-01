@@ -386,6 +386,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "sec_cases") {
         return { score: 0.95, reason: "an SEC case naming the company as a defendant or respondent" };
       }
+      // …and a Federal Reserve Board release whose order names the company as the applicant or the
+      // bank it buys, or whose policy names it as the one the Board acts on (lib/fedPress.ts, batch 84)
+      if (subject.kind === "company" && row.sourceKey === "fed_press") {
+        return { score: 0.95, reason: "a Federal Reserve Board release naming the company as a party" };
+      }
       // …but a company's own document reaches it only when the title names it (lib/frCompany.ts),
       // so on a company subject that title is the evidence (2026-10-17 proposal 4).
       if (subject.kind === "company" && mentions(row.title, aliases) === "named") {

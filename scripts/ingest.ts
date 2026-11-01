@@ -42,6 +42,7 @@ import { companyNames, fetchCompanyRegulations, frDailySince, frSearchTerm } fro
 import { backfillRegulations } from "../lib/ingest/frBackfill";
 import { secPressFor, walkSecPress } from "../lib/ingest/secPressWalk";
 import { secCasesFor, walkSecCases } from "../lib/ingest/secCasesWalk";
+import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
@@ -93,6 +94,8 @@ export const COMPANY_SOURCES = [
   "sec_press",
   // …and the SEC's record of its cases, where a caption names the company as a party (batch 83)
   "sec_cases",
+  // …and the Federal Reserve Board's releases: the bank applies, or the Board acts on it (batch 84)
+  "fed_press",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -682,6 +685,16 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     }
     return secCasesFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik }, walked);
   });
+
+  /**
+   * The Federal Reserve Board's own announcements since 2006 (batch 84): an order on an
+   * application the company made or that buys it, and a policy release that acts on it — a rescue,
+   * a capital plan objected to. One file of every release, read once a process for every company;
+   * the company keeps the releases that make it a party by the names it had that year, its legal
+   * ones among them. Scored without the model.
+   */
+  await run("fed_press", `Federal Reserve Board releases naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")} as a party`, () =>
+    fedPressFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik }));
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
   // headline that says "Ford" — the common name is the query, exactly as the comment above

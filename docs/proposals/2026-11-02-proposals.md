@@ -51,7 +51,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. The SEC News Digest, 1956 to the mid-1990s: the SEC's own daily record before EDGAR — a source for the owner to decide, and a count first · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-02: yes to the source, with the count first. Whether the Digest keeps the first-price floor stays open until the count shows what it removes.
 **Owner's reason (if rejected):**
 
 **Anchor:** the gap the coverage map calls "the single biggest hole in the corpus"

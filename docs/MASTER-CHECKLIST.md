@@ -997,6 +997,8 @@ depth first. Nothing is built in this batch.
 
 - [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ Marked 2026-11-02 for #1: approved, yes to the source with the count first; filed under
+      Scope refocus as a `P1` item. #2–#5 are not marked yet.
       1. `P1` **The SEC News Digest, 1956 to the mid-1990s:** the SEC's daily summary of companies'
          filings and cases before EDGAR (8-K reports with their items, registrations, 13D and
          14D-1 filings, enforcement and delisting orders), on sec.gov under the press releases'
@@ -6151,6 +6153,44 @@ already held, but new investment goes to securities coverage first.
       - ✅ **Done in batch 81** (see its section): 17 everyday names cleaned, not 14 — the spaced
         "A S" left Novo Nordisk, Turkcell and Anadolu Efes too; Deutsche Bank's SEC releases go from
         0 to 7.
+- [ ] `P1` **The SEC News Digest, 1956 to the mid-1990s: the SEC's own daily record before EDGAR,
+      a count first.** A new source, approved by the owner 2026-11-02: the Digest's yearly archive
+      pages (`www.sec.gov/news/digest/digarchives/digarchYYYY.shtml`, 1956–2013), one PDF an issue
+      with a text layer, on sec.gov under the licence `lib/secCases.ts` quotes ("Information
+      presented on sec.gov is considered public information and may be copied or further
+      distributed…", re-read 2026-11-02). No key. Before 1995 a company's page holds Yahoo's
+      dividends and splits and a few EDGAR filings (IBM's 1963–1993 is 127 events, every one a
+      dividend or split); the Digest is the SEC's daily summary of the same business before that.
+      - ✅ **The owner's call, 2026-11-02: yes to the source, with the count first.**
+      - What an issue holds, from six read by the scout (1965–1990): enforcement actions with their
+        release numbers; Holding Company and Investment Company Act orders (Deutsche Bank AG's
+        IC-14293, 1985); Securities Act registrations by registrant; the 8-K reports filed, by
+        company, with their items and month (247 in the 1975-06-16 issue, Abbott's and PepsiCo's
+        among them); 13D and 14D-1 filings (Hasbro, 1990); listing and delisting orders.
+      - Index companies in the six, read by hand: 0 to 10 an issue, about 3 on average. An estimate,
+        not a count: on the order of 750 entries a year, 25,000–30,000 over 1956–1993.
+      - **Step 1, the count:** `npm run digest-report -- <year>` reads one year's issues once
+        (~250 requests, ~140 MB), takes each PDF's text, splits it into its sections, and prints,
+        per index company and section, the entries that name it under its names and EDGAR former
+        names. Nothing is stored, as batch 13's `fr-company-report` sized the Federal Register.
+      - **Step 2, only if the count holds:** a year walk in the shape of the SEC press-release
+        walk, entries stored once and matched at each company's ingest, typed by section and
+        linked to the issue's PDF; the 8-K entries a row a month. 1956–1993 is about 9,500 PDFs,
+        ~5.4 GB, read once.
+      - What the rule must refuse or cannot reach: an underwriter named inside another company's
+        registration; a record younger than the name (McGraw Hill, MH, listed 2025); names older
+        than EDGAR's former names (Caterpillar Tractor, Middle South Utilities) without a hand map;
+        OCR noise in the column tables.
+      - **Open after the count:** whether the Digest keeps the first-price floor (Yahoo's daily
+        data begins 1962 at the earliest); the count reports the entries it would remove.
+      - A PDF text reader on the ingest path: poppler's `pdftotext` (in this container) or
+        `pdfjs-dist` (Apache-2.0). A new check on the six issues' text: Abbott's 8-K of May 1975
+        lands on ABT on 1975-06-16, 3M's under its EDGAR former name, Deutsche Bank AG's IC-14293
+        on DB, Hasbro's five 13D rows make one row, the 1980 underwriter on no page, McGraw-Hill's
+        1990 delisting not on MH. On main it cannot run: the reader does not exist.
+      - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
+        #1, approved 2026-11-02 with the count first. Importance high · Efficiency medium ·
+        Practicality low-medium (OCR, names older than EDGAR, and the count first).*
 - [ ] `P2` The rest of the securities-coverage depth set: **GDELT year-window backfill** (GDELT
       answers from this container but throttles hard — 429/503 — so this needs the production
       host to develop against) and **richer paid-tier evidence** (needs a paid key). The LoC

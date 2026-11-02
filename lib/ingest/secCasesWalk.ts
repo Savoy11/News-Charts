@@ -2,10 +2,11 @@ import type { PoolClient } from "pg";
 import { withoutTag } from "../edgarName";
 import { companyNames } from "../frCompany";
 import { isNotesRecord, releaseNamesOn } from "../releaseNames";
+import { monthsToReread } from "../listingGaps";
 import { CASE_LISTINGS, SEC_CASES_FROM, SEC_CASES_PAGE_SIZE, caseKey, fetchCasePage, secCaseEvents, type CaseListing, type CasePage, type SecCase } from "../secCases";
 import type { FetchResult } from "../types";
 import { namesForYear, storedFormerNames } from "./frBackfill";
-import type { PressPlan } from "./secPressWalk";
+import { FUND_SERIES, NO_PRICES, type PressPlan } from "./secPressWalk";
 
 /**
  * The SEC's litigation releases and administrative proceedings, read a year at a time, once for
@@ -20,9 +21,10 @@ import type { PressPlan } from "./secPressWalk";
  * Bounded as the press releases' walk is: at most `PAGES_PER_RUN` pages a process, `GAP_MS` apart,
  * newest year first, both listings of a year before the year before it, and a year is begun only
  * while a whole year's pages are left. It stops at the first refusal or failure, and a year is
- * stored only when every page it asked answered. Measured 2026-11-01: 1995–2026 is 344 pages (139 of
- * litigation releases, 205 of proceedings) and 30,654 rows, the most in one year 11 pages, so the
- * past is read in three processes.
+ * stored only when every page it asked answered. Measured 2026-11-01: 1995–2026 is 342 pages (138 of
+ * litigation releases, 204 of proceedings), the most in one year 11 pages, so the past is read in
+ * three processes. They showed 30,654 distinct rows of the 30,750 the listings count; the 75 months
+ * that hold the other 93 add 86 pages, and 3 rows stay unshown (batch 85).
  */
 export const PAGES_PER_RUN = 120;
 export const GAP_MS = 1_000;
@@ -40,6 +42,8 @@ export interface CasesWalk {
   pages: number;
   /** rows stored from them, new or corrected */
   cases: number;
+  /** rows a listing-year's own count holds that neither its pages nor its months showed */
+  short?: number;
   stopped?: string;
   failure?: { outcome: "throttled" | "error"; httpStatus?: number; detail?: string };
 }
@@ -48,7 +52,10 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Reads the listing-years not yet read, and each listing's current year when its last read is a
- * day old. `fetchPage` and `gapMs` are replaceable so the check can run it offline.
+ * day old. A past year whose pages showed fewer distinct rows than the listing's own count is
+ * filled from the months its repeated rows fall in (`monthsToReread`, batch 85), and a year read
+ * before batch 85, which kept no count, is asked its first page once to compare. `fetchPage` and
+ * `gapMs` are replaceable so the check can run it offline.
  */
 export async function walkSecCases(
   client: PoolClient,
@@ -61,45 +68,55 @@ export async function walkSecCases(
     today?: string;
     budget?: { left: number };
     gapMs?: number;
-    fetchPage?: (listing: CaseListing, year: number, page: number) => Promise<CasePage>;
+    fetchPage?: (listing: CaseListing, year: number, page: number, month?: number) => Promise<CasePage>;
   } = {}
 ): Promise<CasesWalk> {
   const current = Number(today.slice(0, 4));
-  const { rows } = await client.query<{ listing: CaseListing; year: number; complete: boolean; stale: boolean }>(
-    "SELECT listing, year, complete, read_at < now() - interval '1 day' AS stale FROM sec_cases_years"
+  const { rows } = await client.query<{ listing: CaseListing; year: number; complete: boolean; stale: boolean; listed: number | null; cases: number }>(
+    "SELECT listing, year, complete, read_at < now() - interval '1 day' AS stale, listed, cases FROM sec_cases_years"
   );
   const held = new Map(rows.map((r) => [`${r.listing}:${Number(r.year)}`, r]));
   const due: [CaseListing, number][] = [];
   for (let y = current; y >= SEC_CASES_FROM; y--) {
     for (const listing of CASE_LISTINGS) {
       const h = held.get(`${listing}:${y}`);
-      if (y === current ? !h || h.stale : !h?.complete) due.push([listing, y]);
+      if (y === current ? !h || h.stale : !h?.complete || h.listed === null) due.push([listing, y]);
     }
   }
 
   const walk: CasesWalk = { due: due.length, read: 0, pages: 0, cases: 0 };
+  const ask = async (listing: CaseListing, year: number, page: number, month?: number): Promise<CasePage> => {
+    budget.left--;
+    if (gapMs) await sleep(gapMs);
+    walk.pages++;
+    try {
+      return await fetchPage(listing, year, page, month);
+    } catch (err) {
+      return { cases: [], outcome: "error", detail: String(err).slice(0, 200) };
+    }
+  };
+  const failed = (got: CasePage, where: string): CasesWalk => {
+    const detail = `${where}${got.detail ? `: ${got.detail}` : ""}`;
+    return { ...walk, stopped: got.outcome, failure: { outcome: got.outcome as "throttled" | "error", httpStatus: got.httpStatus, detail } };
+  };
   for (const [listing, year] of due) {
     if (budget.left < YEAR_PAGES) return { ...walk, stopped: "this run's pages are spent" };
+    const h = held.get(`${listing}:${year}`);
     // a current year read in full once is read again only down to the rows already kept
-    const known = year === current && held.has(`${listing}:${year}`) ? await keptKeys(client, listing, year) : null;
+    const known = year === current && h ? await keptKeys(client, listing, year) : null;
+    // a past year read in full before batch 85 kept no count: its first page says whether the
+    // rows kept are all the listing holds
+    const recount = year < current && h?.complete === true && h.listed === null;
     const cases: SecCase[] = [];
+    let listed: number | undefined;
     let page = 0;
     for (;;) {
-      budget.left--;
-      if (gapMs) await sleep(gapMs);
-      let got: CasePage;
-      try {
-        got = await fetchPage(listing, year, page);
-      } catch (err) {
-        got = { cases: [], outcome: "error", detail: String(err).slice(0, 200) };
-      }
-      walk.pages++;
-      if (got.outcome !== "ok") {
-        const detail = `${listing} ${year} page ${page + 1}${got.detail ? `: ${got.detail}` : ""}`;
-        return { ...walk, stopped: got.outcome, failure: { outcome: got.outcome, httpStatus: got.httpStatus, detail } };
-      }
+      const got = await ask(listing, year, page);
+      if (got.outcome !== "ok") return failed(got, `${listing} ${year} page ${page + 1}`);
+      if (page === 0) listed = got.total;
       cases.push(...got.cases);
       page++;
+      if (recount && listed !== undefined && h!.cases >= listed) break;
       if (got.cases.length < SEC_CASES_PAGE_SIZE) break;
       if (known && got.cases.some((c) => known.has(caseKey(c)))) break;
       // more pages than any year has held: the listing has changed, and a year cut short must
@@ -109,7 +126,28 @@ export async function walkSecCases(
         return { ...walk, stopped: "error", failure: { outcome: "error", httpStatus: got.httpStatus, detail } };
       }
     }
-    walk.cases += await storeYear(client, listing, year, year < current, page, cases);
+    if (recount && listed !== undefined && h!.cases >= listed) {
+      await client.query("UPDATE sec_cases_years SET listed = $3 WHERE listing = $1 AND year = $2", [listing, year, listed]);
+      walk.read++;
+      continue;
+    }
+    // rows shown twice where a page ends hide others of their day: read those months on their own
+    if (!known && listed !== undefined && new Set(cases.map(caseKey)).size < listed) {
+      for (const month of monthsToReread(cases.map((c) => ({ key: caseKey(c), day: c.day })))) {
+        for (let p = 0; ; p++) {
+          if (budget.left <= 0) return { ...walk, stopped: "this run's pages are spent" };
+          const got = await ask(listing, year, p, month);
+          if (got.outcome !== "ok") return failed(got, `${listing} ${year}-${String(month).padStart(2, "0")} page ${p + 1}`);
+          cases.push(...got.cases);
+          page++;
+          if (got.cases.length < SEC_CASES_PAGE_SIZE) break;
+          if (p + 1 >= YEAR_PAGES) return { ...walk, stopped: "error", failure: { outcome: "error", detail: `${listing} ${year}-${month} has more than ${YEAR_PAGES} pages` } };
+        }
+      }
+      const still = listed - new Set(cases.map(caseKey)).size;
+      if (still > 0) walk.short = (walk.short ?? 0) + still;
+    }
+    walk.cases += await storeYear(client, listing, year, year < current, page, cases, listed);
     walk.read++;
   }
   return walk;
@@ -125,7 +163,7 @@ async function keptKeys(client: PoolClient, listing: CaseListing, year: number):
 }
 
 /** Stores a listing's year and that it was read; returns how many rows were new or changed. */
-async function storeYear(client: PoolClient, listing: CaseListing, year: number, complete: boolean, pages: number, read: SecCase[]): Promise<number> {
+async function storeYear(client: PoolClient, listing: CaseListing, year: number, complete: boolean, pages: number, read: SecCase[], listed?: number): Promise<number> {
   // one row a case: a statement may not write a row twice
   const cases = [...new Map(read.map((c) => [caseKey(c), c])).values()];
   await client.query("BEGIN");
@@ -139,10 +177,10 @@ async function storeYear(client: PoolClient, listing: CaseListing, year: number,
       [listing, cases.map((c) => c.number), cases.map((c) => c.day), cases.map((c) => c.caption), cases.map((c) => c.fileNo ?? null), cases.map((c) => c.url)]
     );
     await client.query(
-      `INSERT INTO sec_cases_years (listing, year, complete, pages, cases) VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO sec_cases_years (listing, year, complete, pages, cases, listed) VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (listing, year) DO UPDATE
-          SET complete = EXCLUDED.complete, pages = EXCLUDED.pages, cases = EXCLUDED.cases, read_at = now()`,
-      [listing, year, complete, pages, cases.length]
+          SET complete = EXCLUDED.complete, pages = EXCLUDED.pages, cases = EXCLUDED.cases, listed = EXCLUDED.listed, read_at = now()`,
+      [listing, year, complete, pages, cases.length, listed ?? cases.length]
     );
     await client.query("COMMIT");
     return rowCount ?? 0;
@@ -191,9 +229,10 @@ export async function partyNamesFor(
 export async function secCasesFor(client: PoolClient, subjectId: number, plan: PressPlan & { cik: number | string }, walked: CasesWalk): Promise<FetchResult> {
   const failure = walked.failure;
   const failed = failure ? { outcome: failure.outcome, httpStatus: failure.httpStatus, detail: failure.detail } : null;
+  if (plan.fundSeries) return failed ? { events: [], ...failed } : FUND_SERIES();
   if (isNotesRecord(plan.cik)) return failed ? { events: [], ...failed } : { events: [], outcome: "empty", detail: "a bank's notes record: its cases are its group's page's" };
   const { listed, namesIn } = await partyNamesFor(client, subjectId, plan);
-  if (!listed) return failed ? { events: [], ...failed } : { events: [], outcome: "empty", detail: "no prices to start from" };
+  if (!listed) return failed ? { events: [], ...failed } : NO_PRICES();
   const events = secCaseEvents(await storedSecCases(client), namesIn, { cik: plan.cik, from: listed, namesOn: (day) => releaseNamesOn(plan.cik, day) });
   if (failed) return { events, ...failed };
   return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };

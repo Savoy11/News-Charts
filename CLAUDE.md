@@ -77,6 +77,8 @@ filings give (Merrill Lynch is Bank of America's from 2009-01-01), and the notes
 release. It is not a scoring list; keep it that way. A caption names a company only by its name or
 its legal name with legal words after it; the namesakes that rule cannot tell apart were read by
 hand and are listed by CIK in `NOT_THE_COMPANY` (one list in `lib/secCases.ts`, one in `lib/fedPress.ts`).
+A fund's series is never a party to any of these four rules (`FUND_SERIES`): its page knows only its
+series name, and "Growth Fund, Ltd." is a Ponzi scheme's fund, not American Century's.
 
 A ticker whose company moved to a new SEC record — a holding-company reorganisation or redomicile
 (XOM in 2026, Alphabet in 2015, Disney in 2019) — reads its earlier filings from the predecessor's

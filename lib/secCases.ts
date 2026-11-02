@@ -1,3 +1,4 @@
+import { listingTotal } from "./listingGaps";
 import { plainText } from "./doj";
 import { longerListedNameIn } from "./frCompany";
 import { listedCompaniesNamed, outrankingNameFor } from "./sec";
@@ -13,8 +14,8 @@ import type { TimelineEvent } from "./types";
  * record of each case: a litigation release for each step of a suit it brings in court, an
  * administrative proceeding for each order it issues itself. Most press releases have one
  * behind them, and most of these have no press release: of the 1,022 company days the index's
- * companies have in 1995–2026, 813 fall on a day no press release names the company (measured
- * 2026-11-01, under current names).
+ * companies had in 1995–2026, 813 fell on a day no press release names the company (measured
+ * 2026-11-01, under current names; 1,047 since batch 85).
  *
  * Read from the two year listings, www.sec.gov/enforcement-litigation/litigation-releases and
  * …/administrative-proceedings, ?year=Y&month=All&page=N, 100 rows a page, newest first. Each row
@@ -86,14 +87,16 @@ export function parseCaseListing(html: string, listing: CaseListing): SecCase[] 
 
 export interface CasePage {
   cases: SecCase[];
+  /** the page's own count of the rows its view holds ("1 to 100 of 439 items"), where it gives one */
+  total?: number;
   outcome: "ok" | "throttled" | "error";
   httpStatus?: number;
   detail?: string;
 }
 
-/** One page of a listing's year, newest first; `page` counts from 0. */
-export async function fetchCasePage(listing: CaseListing, year: number, page: number): Promise<CasePage> {
-  const params = new URLSearchParams({ year: String(year), month: "All", page: String(page) });
+/** One page of a listing's year, or of one month (1–12) of it, newest first; `page` counts from 0. */
+export async function fetchCasePage(listing: CaseListing, year: number, page: number, month?: number): Promise<CasePage> {
+  const params = new URLSearchParams({ year: String(year), month: month ? String(month) : "All", page: String(page) });
   try {
     const res = await fetch(`${SEC_CASE_LISTINGS[listing]}?${params}`, { headers: UA, signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (res.status === 403 || res.status === 429 || res.status === 503) return { cases: [], outcome: "throttled", httpStatus: res.status };
@@ -104,7 +107,8 @@ export async function fetchCasePage(listing: CaseListing, year: number, page: nu
     if (!/pr-list-page-row|views-view-table|views-empty/.test(html)) {
       return { cases: [], outcome: "error", httpStatus: res.status, detail: "no listing on the page" };
     }
-    return { cases: parseCaseListing(html, listing), outcome: "ok", httpStatus: res.status };
+    const total = listingTotal(html);
+    return { cases: parseCaseListing(html, listing), ...(total === undefined ? {} : { total }), outcome: "ok", httpStatus: res.status };
   } catch (err) {
     return { cases: [], outcome: "error", detail: String(err).slice(0, 200) };
   }
@@ -115,8 +119,8 @@ export async function fetchCasePage(listing: CaseListing, year: number, page: nu
  * words that give an entity's other name ("EMB Corporation (n/k/a AMTGroup, Inc.)").
  */
 const LEAD = String.raw`(?:^|[;,]\s*|\band\s+|\b(?:n\/k\/a|f\/k\/a|a\/k\/a|d\/b\/a|formerly(?:\s+known\s+as)?|now\s+known\s+as)\s+)`;
-/** …and where it ends: the caption's end, the next party, a bracket, "et al." */
-const TAIL = String.raw`(?=\s*(?:$|[;,()]|\band\b|\bet\s+al\b))`;
+/** …and where it ends: the caption's end, the next party, a bracket, "et al.", or its other name ("…, L.P. f/k/a Spear, Leeds & Kellogg, L.P.") */
+const TAIL = String.raw`(?=\s*(?:$|[;,()]|\band\b|\bet\s+al\b|\b(?:n\/k\/a|f\/k\/a|a\/k\/a|d\/b\/a|formerly)\b))`;
 
 /**
  * The words a caption may write after a company's name and still mean the company: its legal form
@@ -195,7 +199,8 @@ const alnum = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 /**
  * The cases a caption names a listed company's exact name in that are another company's, each read
- * by hand on 2026-11-01 among every match the 30,654 rows of 1995–2026 gave the index, by CIK. The
+ * by hand on 2026-11-01 among every match the 30,654 rows of 1995–2026 gave the index (and on
+ * 2026-11-02 among the 30,747 of batch 85), by CIK. The
  * rule cannot tell a namesake from the company, and the company's first price, which keeps a
  * company off the years before it listed, does not reach these, or not all of their rows.
  * The SEC revokes the registrations of delinquent filers in lists of five to seven shells, which
@@ -212,6 +217,7 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; caption:
   1049659: [{ ticker: "SID", caption: /^National Steel Corporation$/, why: "the American steelmaker of 2001, not Companhia Siderúrgica Nacional, whose EDGAR name is NATIONAL STEEL CO" }],
   109177: [{ ticker: "SPB", caption: /^Spectrum Brands Corp\./, why: "a 2001 promoter's company; the record that is Spectrum Brands Holdings today was Zapata's then, and took the name in 2018" }],
   1786108: [{ ticker: "TRIN", caption: /^Trinity Capital Corporation$/, why: "Trinity Capital Corporation of Los Alamos, a bank's holding company, charged 2015–2021, not Trinity Capital Inc., the lender listed in 2021" }],
+  709283: [{ ticker: "QMCO", caption: /\bQuantum Corp\. a\/k\/a Quantum Trading\b/, why: "\"Quantum Corp. a/k/a Quantum Trading\", one of Teddy Wayne Solomon's companies in a 1997 fraud (LR-15555), not Quantum Corporation, the storage maker (batch 85)" }],
 };
 
 /** What each listing is, as a title and a source line say it. */

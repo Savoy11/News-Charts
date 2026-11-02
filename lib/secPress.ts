@@ -1,3 +1,4 @@
+import { listingTotal } from "./listingGaps";
 import { DESIGNATOR, PARTY_VERB, START, escapeName, namedAsSubject, outrankedName, plainText } from "./doj";
 import { longerListedNameIn } from "./frCompany";
 import { listedCompaniesNamed } from "./sec";
@@ -78,14 +79,16 @@ export function parseListing(html: string): SecRelease[] {
 
 export interface ListingPage {
   releases: SecRelease[];
+  /** the page's own count of the releases its view holds ("1 to 25 of 258 items"), where it gives one */
+  total?: number;
   outcome: "ok" | "throttled" | "error";
   httpStatus?: number;
   detail?: string;
 }
 
-/** One page of a year's listing, newest first; `page` counts from 0. */
-export async function fetchListingPage(year: number, page: number): Promise<ListingPage> {
-  const params = new URLSearchParams({ year: String(year), month: "All", page: String(page) });
+/** One page of a year's listing, or of one month (1–12) of it, newest first; `page` counts from 0. */
+export async function fetchListingPage(year: number, page: number, month?: number): Promise<ListingPage> {
+  const params = new URLSearchParams({ year: String(year), month: month ? String(month) : "All", page: String(page) });
   try {
     const res = await fetch(`${SEC_PRESS_LISTING}?${params}`, { headers: UA, signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (res.status === 403 || res.status === 429 || res.status === 503) return { releases: [], outcome: "throttled", httpStatus: res.status };
@@ -96,7 +99,8 @@ export async function fetchListingPage(year: number, page: number): Promise<List
     if (!/pr-list-page-row|views-view-table|views-empty/.test(html)) {
       return { releases: [], outcome: "error", httpStatus: res.status, detail: "no listing on the page" };
     }
-    return { releases: parseListing(html), outcome: "ok", httpStatus: res.status };
+    const total = listingTotal(html);
+    return { releases: parseListing(html), ...(total === undefined ? {} : { total }), outcome: "ok", httpStatus: res.status };
   } catch (err) {
     return { releases: [], outcome: "error", detail: String(err).slice(0, 200) };
   }
@@ -138,17 +142,24 @@ const AFTER = String.raw`(?=\s*$|\s*[,.;:!?()/–—]|\s+(?:for|to|over|in|on|al
 const ABOUT_PEOPLE = /^(?:\S+\s+){0,3}(?:Board\s+Members?|Directors?|Executives?|Officers?|CEOs?|CFOs?|Chairm[ae]n|Employees?|Traders?|Bankers?|Brokers?|Analysts?|Partners?|Founders?|Presidents?|Insiders?|Managers?)\s+(?:of|at)\b/i;
 
 
+/** Initials written together, "J.P."; and a word that runs initials into a name, "JPMorgan". */
+const INITIALS = /^(?:\p{L}\.){2,}$/u;
+const RUN_ON = /^(\p{Lu}{2,})(\p{Lu}\p{Ll}.*)$/u;
+
 /**
- * A name as a pattern, its initials with or without their stops: the SEC wrote "J.P. Morgan
- * Chase" where EDGAR's former name is J P MORGAN CHASE & CO.
+ * A name as a pattern, its initials with or without their stops or the spaces between them: the
+ * SEC wrote "J.P. Morgan Chase" where EDGAR's former name is J P MORGAN CHASE & CO, and its
+ * captions write "J. P. Morgan Securities LLC" and "JP Morgan Chase & Co." (batch 85).
  */
 export function pressName(name: string): string {
+  const letters = (s: string) => [...s.replace(/\./g, "")].map((c) => `${c}\\.?`).join(String.raw`\s*`);
   const words = name.trim().split(/[\s-]+/);
   let out = "";
   words.forEach((w, i) => {
     const initial = /^\p{L}\.?$/u.test(w);
     if (i) out += initial && /^\p{L}\.?$/u.test(words[i - 1]) ? String.raw`\s*` : String.raw`[\s-]+`;
-    out += initial ? `${w[0]}\\.?` : escapeName(w);
+    const run = RUN_ON.exec(w);
+    out += initial ? `${w[0]}\\.?` : INITIALS.test(w) ? letters(w) : run ? `${letters(run[1])}\\s*${escapeName(run[2])}` : escapeName(w);
   });
   return out;
 }

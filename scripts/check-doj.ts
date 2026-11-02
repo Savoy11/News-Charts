@@ -249,7 +249,7 @@ async function main(): Promise<void> {
     dojEvents([{ ...units[2], date: "1700000000" }], namesOf("UBS"), ubsOn).map((e) => e.date).join(",") === "2023-11-14");
   check("the units are asked for with the company's names, whatever their days, since the filter knows none",
     justiceQueryNames("BANK OF AMERICA CORP /DE/", [], "", 70858).join("|") ===
-      "BANK OF AMERICA|Banc of America Securities|Banc of America Investment Services|Banc of America Capital Management|Merrill Lynch" &&
+      "BANK OF AMERICA|Banc of America Securities|Banc of America Investment Services|Banc of America Capital Management|BofA Securities|Merrill Lynch" &&
       justiceQueryNames("BANK OF AMERICA CORP /DE/", []).join("|") === "BANK OF AMERICA",
     justiceQueryNames("BANK OF AMERICA CORP /DE/", [], "", 70858).join("|"));
   check("a name under five characters stands in for no longer one, since its ask stops at a page when crowded: UBS Group keeps \"UBS Group\", Dell \"Dell Technologies\"",
@@ -283,9 +283,9 @@ async function main(): Promise<void> {
     deterministicScore({ ...sued, sourceKey: "doj_press" }, google, ["alphabet", "google"])?.score === 0.95 &&
       deterministicScore({ ...sued, sourceKey: "federal_register" }, google, ["alphabet", "google"]) === null);
   const ingest = read("scripts/ingest.ts");
-  check("company ingest asks for the company's releases under its names, its possessive and its units (batch 82)",
+  check("company ingest asks for the company's releases under its names, its possessive and its units (batch 82), and a fund's series asks nothing (batch 85)",
     (COMPANY_SOURCES as readonly string[]).includes("doj_press") &&
-      /await run\("doj_press", justiceQueryNames\(company\.name, alsoKnownAs, possessive, company\.cik\)\.join\(" \| "\), \(\) =>\s*fetchJusticeReleases\(company\.name, alsoKnownAs, possessive, company\.cik\)/.test(ingest));
+      /const fundSeries = fundSeriesId\(company\.ticker\) !== null;\s*await run\("doj_press", justiceQueryNames\(company\.name, alsoKnownAs, possessive, company\.cik\)\.join\(" \| "\), async \(\) =>\s*fundSeries \? FUND_SERIES\(\) : fetchJusticeReleases\(company\.name, alsoKnownAs, possessive, company\.cik\)/.test(ingest));
   check("the Justice Department is credited where the other sources are",
     /press releases from the\s+U\.S\. Department of Justice/.test(read("app/layout.tsx")) &&
       /press releases from\s+the U\.S\. Department of Justice/.test(read("app/legal/terms/page.tsx")) &&

@@ -40,6 +40,7 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
       { name: "Banc of America Securities", why: "its securities unit, named after it" },
       { name: "Banc of America Investment Services", why: "its brokerage unit, named after it" },
       { name: "Banc of America Capital Management", why: "its fund adviser, named after it" },
+      { name: "BofA Securities", why: "its securities unit, named after it, which a case caption names in full (batch 85, the 2026-11-01 audit's finding 2)" },
       {
         name: "Merrill Lynch",
         from: "2009-01-01",
@@ -73,6 +74,11 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
         why: "the owner's call (a), 2026-11-01, with J.P. Morgan Securities: J.P. Morgan & Co. merged into Chase Manhattan, the company's own record, on 2000-12-31 (its 8-K of that day); before, \"J.P. Morgan\" was that company's",
       },
       { name: "JPMorgan", from: "2000-12-31", why: "the owner's call (a), 2026-11-01: the same name without its stops" },
+      {
+        name: "JPMorgan Chase",
+        from: "2000-12-31",
+        why: "the company's own name as it writes it, from the merger of 2000-12-31; a caption writes it \"JP Morgan Chase & Co.\" (34-79335, 2016) and the pattern reads both (batch 85)",
+      },
       { name: "J.P. Morgan Securities", from: "2000-12-31", why: "its securities firm from the merger of 2000-12-31, named in full, as a caption names it (batch 83)" },
       { name: "J.P. Morgan Investment Management", from: "2000-12-31", why: "its fund adviser from the merger of 2000-12-31, named in full (batch 83)" },
       { name: "JPMorgan Chase Bank", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
@@ -89,6 +95,15 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
       { name: "Citigroup Global Markets", why: "its securities unit, named after it" },
       { name: "Citigroup Alternative Investments", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
       {
+        name: "Citibank, N.A.",
+        from: "1998-10-08",
+        why: "Citicorp's bank, the company's from the merger \"At 12:01 a.m., Eastern time, on October 8, 1998\" (its 8-K of that day); before, Citicorp's. Named with its legal form, since the index lists \"Citibank,N.A./ADR\", its depositary record, whose longer name would own a bare \"Citibank\" (batch 85)",
+      },
+      {
+        name: "Salomon Smith Barney",
+        why: "its securities firm, formed on this record (Travelers Group's, Citigroup's from 1998) and renamed Citigroup Global Markets in 2003: the name was never another company's (batch 85)",
+      },
+      {
         name: "Smith Barney",
         to: "2009-05-30",
         why: "its brokerage, Travelers Group's on the same record before it took the name Citigroup in 1998, until it went into Morgan Stanley Smith Barney on 2009-05-31 (\"On May 31, 2009, Citigroup Inc. … and Morgan Stanley consummated\", its 8-K filed 2009-06-03)",
@@ -104,6 +119,17 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
         why: "its venture with Citigroup's Smith Barney, formed 2009-05-31 (its 8-K filed 2009-06-01), 51 percent the company's from the start (the press release with it)",
       },
       { name: "Morgan Stanley Investment Management", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
+      {
+        name: "Morgan Stanley DW",
+        why: "its brokerage, Dean Witter Reynolds renamed, on this record (Dean Witter, Discover & Co.'s, which took Morgan Stanley's name in 1997) until it merged into Morgan Stanley & Co.: the name was never another company's (batch 85)",
+      },
+    ],
+  },
+  886982: {
+    ticker: "GS",
+    names: [
+      { name: "Goldman Sachs Execution & Clearing", why: "its clearing firm, named after it, which a case caption names in full (batch 85)" },
+      { name: "Goldman Sachs Asset Management", why: "its fund adviser, named after it, which a case caption names in full (batch 85)" },
     ],
   },
   1281761: {

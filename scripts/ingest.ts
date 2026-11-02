@@ -40,7 +40,7 @@ import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { companyNames, fetchCompanyRegulations, frDailySince, frSearchTerm } from "../lib/frCompany";
 import { backfillRegulations } from "../lib/ingest/frBackfill";
-import { secPressFor, walkSecPress } from "../lib/ingest/secPressWalk";
+import { FUND_SERIES, secPressFor, walkSecPress } from "../lib/ingest/secPressWalk";
 import { secCasesFor, walkSecCases } from "../lib/ingest/secCasesWalk";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
@@ -649,8 +649,11 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    * below, the securities units the company owned count, each between its days, and a bank's notes
    * record is asked nothing (lib/releaseNames.ts, batch 82).
    */
-  await run("doj_press", justiceQueryNames(company.name, alsoKnownAs, possessive, company.cik).join(" | "), () =>
-    fetchJusticeReleases(company.name, alsoKnownAs, possessive, company.cik)
+  // a fund's series is no party to any of these: its page knows only the series name, "GROWTH
+  // FUND", which names some other firm's case (batch 85, `FUND_SERIES`)
+  const fundSeries = fundSeriesId(company.ticker) !== null;
+  await run("doj_press", justiceQueryNames(company.name, alsoKnownAs, possessive, company.cik).join(" | "), async () =>
+    fundSeries ? FUND_SERIES() : fetchJusticeReleases(company.name, alsoKnownAs, possessive, company.cik)
   );
 
   /**
@@ -665,9 +668,9 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     const walked = await walkSecPress(client);
     if (walked.due) {
       line("sec_press", `years     ${walked.read} of ${walked.due} read, ${walked.pages} pages, ${walked.releases} releases stored` +
-        (walked.stopped ? ` (${walked.stopped})` : ""));
+        (walked.short ? `, ${walked.short} the listing counts but never showed` : "") + (walked.stopped ? ` (${walked.stopped})` : ""));
     }
-    return secPressFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik }, walked);
+    return secPressFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
   });
 
   /**
@@ -681,9 +684,9 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     const walked = await walkSecCases(client);
     if (walked.due) {
       line("sec_cases", `years     ${walked.read} of ${walked.due} read, ${walked.pages} pages, ${walked.cases} cases stored` +
-        (walked.stopped ? ` (${walked.stopped})` : ""));
+        (walked.short ? `, ${walked.short} the listings count but never showed` : "") + (walked.stopped ? ` (${walked.stopped})` : ""));
     }
-    return secCasesFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik }, walked);
+    return secCasesFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
   });
 
   /**
@@ -694,7 +697,7 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    * ones among them. Scored without the model.
    */
   await run("fed_press", `Federal Reserve Board releases naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")} as a party`, () =>
-    fedPressFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik }));
+    fedPressFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }));
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
   // headline that says "Ford" — the common name is the query, exactly as the comment above

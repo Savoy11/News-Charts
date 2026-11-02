@@ -1,4 +1,4 @@
-{"note":"Every SEC press release stored on 2026-10-30 (chronolens_b73, 1997-01-15 to 2026-10-29): number, day and headline, as the newsroom listing gave them. check:sec-press replays them all against the committed index (batch 82). Public information (sec.gov/about/privacy-information, 'Website Dissemination').","releases":[
+{"note":"Every SEC press release stored on 2026-10-30 (chronolens_b73, 1997-01-15 to 2026-10-29): number, day and headline, as the newsroom listing gave them, and the three its year pages never showed (97-90, 98-106, 2006-200), read on 2026-11-02 from the months that hold them (batch 85): 6,897 in all, one short of the listing's own count (2024). check:sec-press replays them all against the committed index (batch 82). Public information (sec.gov/about/privacy-information, 'Website Dissemination').","releases":[
 ["98-4","1997-01-15","Barry D. Miller Selected Associate Director in the Division of Investment Management"],
 ["97-18","1997-03-12","SEC ANNOUNCES NEW PUBLIC INTERNET MAILBOXES"],
 ["97-19","1997-03-21","EDGAR SERVICE TEMPORARILY DISRUPTED"],
@@ -69,6 +69,7 @@
 ["97-87","1997-10-03","CHIEF ACCOUNTANT SELECTS AN INTERNATIONAL PROFESSIONAL ACCOUNTING FELLOW AND IS SEEKING CANDIDATES FOR THREE OTHER PROFESSIONAL ACCOUNTING FELLOW POSITIONS"],
 ["97-88","1997-10-07","TRANSACTION FEE RATE ADVISORY"],
 ["97-89","1997-10-08","SECURITIES AND EXCHANGE COMMISSION ANNOUNCES THAT CHARLES V. SENATORE, SOUTHEAST REGIONAL DIRECTOR, TO LEAVE THE SEC FOR MERRILL LYNCH"],
+["97-90","1997-10-08","CHAIRMAN LEVITT ANNOUNCES THE SELECTION OF RANDALL J. FONS TO HEAD THE SEC’S SOUTHEAST REGIONAL OFFICE"],
 ["97-91","1997-10-09","MEDIA ADVISORY"],
 ["97-92","1997-10-17","SEC AND GERMAN BAWe SIGN MEMORANDUM OF UNDERSTANDING"],
 ["97-93","1997-10-22","FEE RATE ADVISORY"],
@@ -195,6 +196,7 @@
 ["98-103","1998-10-13","Fee Rate Advisory"],
 ["98-104","1998-10-14","SEC to Consider Two Items at an Open Meeting"],
 ["98-105","1998-10-14","Annette Nazareth Named Acting Director of the Division of Investment Management"],
+["98-106","1998-10-14","Fee Rate Advisory"],
 ["98-107","1998-10-15","Media Advisory"],
 ["98-108","1998-10-16","Fee Rate Advisory"],
 ["98-109","1998-10-19","SEC Chairman Arthur Levitt Says Investor Protection Must Be Paramount Under Any Plan to Invest Social Security"],
@@ -1660,6 +1662,7 @@
 ["2006-197","2006-11-30","SEC Announces Emergency Action to Halt Ongoing Fraud Against Senior Citizens"],
 ["2006-198","2006-12-04","Jefferies Settles SEC Charges Involving Illegal Gifts and Entertainment"],
 ["2006-199","2006-12-04","SEC Staff Announces Possible Topics for 2007 CCOutreach Regional Seminars"],
+["2006-200","2006-12-04","SEC Files Fraud Charges Against China Energy Savings Technology, Inc. and Others; Court Orders Asset Freeze"],
 ["2006-201","2006-12-05","SEC Files Emergency Enforcement Action to Halt $18.2 Million Cross-Border Prime Bank Scheme"],
 ["2006-202","2006-12-06","Commission to Consider Recommendation to Repropose Deregistration Rules for Foreign Private Issuers"],
 ["2006-203","2006-12-08","Fee Rate Advisory #5 for Fiscal Year 2007"],
@@ -6892,4 +6895,5 @@
 ["2026-107","2026-10-20","SEC, FSA Hold Autumn Financial Regulatory Dialogue"],
 ["2026-108","2026-10-20","SEC and AMF Announce Supervisory MOU To Enhance Cooperation for Investment Advisers and Investment Service Providers"],
 ["2026-109","2026-10-23","SEC Announces Fiscal Year 2027 Examination Priorities"],
-["2026-110","2026-10-29","Two Entities Charged in $130 Million Fraud Scheme That Used False SEC Filings to Boost Investor Confidence"]]}
+["2026-110","2026-10-29","Two Entities Charged in $130 Million Fraud Scheme That Used False SEC Filings to Boost Investor Confidence"]
+]}

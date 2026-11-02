@@ -988,6 +988,104 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 85: the audit of batches 78–84, and its five findings fixed (2026-11-02)
+
+The `code-auditor` read batches 78–84 (`1353574..960c3be`). Its report is
+`docs/audits/2026-11-01-code-audit.md`. It found the mechanics sound: the previous audit's fixes,
+the bank map's days, the Fed feed's parser, times and cache, and every count the docs give, replayed
+on the full saved data. It found five defects. All five were reproduced here and are fixed, each
+with cases that fail on main.
+
+- [x] **1. Mutual funds named only "Growth Fund", "Income Fund" or "Total Return Fund" took other
+      firms' fraud cases, scored 0.95** (`P2`).
+      - **The defect:** a fund's page knows only its series name ("GROWTH FUND" for TWCGX), and the
+        caption rule read "Growth Fund, Ltd." (LR-18525, 2003, James P. Lewis's Ponzi scheme) as
+        its. Replayed against all 19,540 series names, the captions gave 10 cases on 9 fund pages
+        (TWCGX, VCULX, HNASX, MNRGX, CFGRX, FOINX, TWCIX, NOTEX, JHTRX), every one another firm's.
+        No check had ever replayed a fund.
+      - **The fix:** a fund's series is never a party to the release rules (`FUND_SERIES` in
+        `lib/ingest/secPressWalk.ts`). Ingest passes `fundSeries` to the SEC press releases, the
+        SEC's cases and the Board's releases, and a fund asks the Justice Department nothing.
+      - **Measured:** the press releases and the Board's releases give the 19,540 series nothing
+        either way; the Justice Department was not measured (no request was made), and the same rule
+        keeps it off a series name.
+- [x] **2. The caption rule missed the biggest banks' own spellings and units** (`P3`).
+      - **The defect:** "JP Morgan Chase & Co." (the 2016 FCPA order, the London Whale orders of
+        2017 and 2019) and "J. P. Morgan Securities LLC" (2023) matched no name, since initials
+        were read only one letter a word. Morgan Stanley DW, Citibank, Salomon Smith Barney, BofA
+        Securities and Goldman Sachs's clearing firm and fund adviser were not in the map.
+      - **The fix:** `pressName` reads initials written together, spaced or run into a name ("J.P.",
+        "J. P.", "JP Morgan" and "JPMorgan" are one pattern). The map adds "JPMorgan Chase" (from
+        2000-12-31), Morgan Stanley DW, "Citibank, N.A." from 1998-10-08, Salomon Smith Barney, BofA
+        Securities, and a Goldman Sachs entry (Execution & Clearing, Asset Management).
+        - Citibank's day is Citigroup's 8-K of 1998-10-08: "At 12:01 a.m., Eastern time, on October
+          8, 1998 … Citicorp merged with and into Citi Merger Sub Inc." (2 requests to EDGAR).
+        - It is named with its legal form, because the index lists "Citibank,N.A./ADR" (JTGEY), its
+          ADR depositary record, whose longer name would own a bare "Citibank".
+        - A party now ends before its other name as it already began after one ("…, L.P. f/k/a
+          Spear, Leeds & Kellogg, L.P."), which gives Goldman its 2007 order and Grown Rogue its own
+          of 2022 under its former name Novicius.
+        - **Read by hand on the way:** "Quantum Corp. a/k/a Quantum Trading" (LR-15555, 1997) is a
+          fraud's shell, now kept off Quantum Corporation by CIK. Smith Barney Fund Management's
+          order of 2007 stays off Citigroup: Legg Mason had bought it in 2005.
+      - **Measured:** cases 1,022 → 1,044 company days (+22: every one the audit listed but Smith
+        Barney Fund Management's and the two the SEC's typo "Goldman and Sachs & Co." names, plus
+        J.P. Morgan Chase's own case of 2003-07-28 and Grown Rogue's of 2022); press releases 255
+        → 259 (Citibank's 2001 settlement, J.P. Morgan Chase's of 2003, J. P. Morgan Securities' 2011
+        charge, Goldman Sachs Asset Management's 2022 ESG charge); the Board's releases unchanged
+        at 225. The Justice Department is asked BofA Securities with Bank of America's names, and
+        Goldman Sachs's two units with its.
+- [x] **3. The SEC's listings lost rows where their pages overlapped, and marked those years read
+      for good** (`P3`).
+      - **The defect:** the listings sort a year by day alone. Where rows tie on a day across a page
+        boundary, the next page shows some of them again and never shows others. The pages state
+        their own count ("1 to 100 of 439 items"): 40 of the 66 case listing-years were short by 96
+        rows, and 4 press years by one each (2006-200, beside the repeated 2006-198).
+      - **The fix** (`lib/listingGaps.ts`, both walks, `db/034`): a past year whose pages show fewer
+        distinct rows than its count reads again, alone, the months its repeated rows fall in. The
+        count is kept in a new `listed` column. A year stored before this batch has none, so its
+        first page is asked once: where the rows kept reach the count only the count is recorded,
+        otherwise the year is read again with its months. Nothing is deleted or reset. Rows a
+        month's own pages still never show are counted and reported in the run's log line.
+      - **Measured,** with the 79 months read once from sec.gov (91 requests, 1 s apart): 93 of the 96
+        case rows and 3 of the 4 releases came back. Three of the rows name a listed company
+        (J.P. Morgan Securities' 2009 order, UBS Securities' of 2011, Citigroup Global Markets' of
+        2017). 4 stay unshown (two proceedings of 2007, one of 2019, a release of 2024).
+      - **Real Postgres** (`chronolens_b85`, every migration applied, pages served from the saved
+        files): a first walk stored all 30,747 rows in 430 pages and reported 3 short; a second asked
+        nothing; years made to look read before this batch were recounted from one page each, and
+        the one short by a row was read again and restored to its 839.
+      - **Docs:** the "344 pages" for 1995–2026 counted 1994's two empty pages; the walk reads 342.
+- [x] **4. `check:sec-cases` and `check:fed-press` replayed only their own samples, and never a
+      fund** (`P3`).
+      - **The fix:** both now replay the full saved data, committed gzipped: every case row both
+        listings hold (`scripts/fixtures/sec-cases-all.json.gz`, 30,747 rows, 874 KB) and the
+        Board's whole feed (`scripts/fixtures/fed-press-feed.json.gz`, 4,650 rows, 138 KB). They
+        replace the two samples. Each replays every company and every fund series in the index,
+        through an index of the text's four-letter pieces (about 8 s and 11 s).
+      - **Pinned:** cases 1,047 company days on 353 companies, 495 before 2017 (Bank of America 73,
+        Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47, Goldman Sachs
+        20), the 10 cases fund series names would take, and the Board's 225 on 103 with 0 for the
+        series. The press-release listing gains the 3 recovered releases (6,897).
+- [x] **5. A company with no prices yet logged its SEC releases, cases and Board releases as
+      "empty", which counts as asked for a day** (`P3`, the rest of the 2026-10-30 audit's finding
+      4).
+      - **The fix:** that outcome is now an error (`NO_PRICES`), so the next run asks again.
+- **Set aside, as the audit did:** a year closes on the UTC date; former legal names have no start
+  day (no caption found that it matters for); IMPP, MRDN, LASE, BKR and JCI left to the first price
+  (JCI's Tyco-record case of 2016 is an ownership call for the owner); `companyPrices` is not wrapped
+  like `runSource`.
+- **Checks:**
+  - `check:sec-cases` 63, `check:sec-press` 75, `check:fed-press` 43, `check:doj` 54.
+  - On main, `check:sec-cases` cannot load (no `lib/listingGaps.ts`); `check:sec-press` fails 7,
+    `check:fed-press` 3 and `check:doj` 2.
+- **Docs:** README (the press releases, the cases and the Board's sections), COVERAGE-MAP (three
+  rows and the gaps paragraph), CLAUDE.md (a fund's series is no party), and the walks' comments.
+- **Requests made:** www.sec.gov 93 here (79 months in 91 pages, and Citigroup's 8-K list and filing
+  of 1998); the audit made 2 (www.sec.gov 1, query1.finance.yahoo.com 1).
+- `npm run check` passes (53 suites) and `npm run lint` is clean. HawkScan was not run:
+  `HAWK_API_KEY` is not set.
+
 ## NC ledger — batch 84: the Federal Reserve Board's press releases (2026-11-01)
 
 The last of the five proposals the owner approved on 2026-11-01 (#5), with the owner's yes to the

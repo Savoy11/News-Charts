@@ -1,3 +1,4 @@
+import { monthsToReread } from "../listingGaps";
 import type { PoolClient } from "pg";
 import { companyNames } from "../frCompany";
 import { isNotesRecord, releaseNamesOn } from "../releaseNames";
@@ -18,8 +19,9 @@ import { namesForYear, storedFormerNames } from "./frBackfill";
  * process, `GAP_MS` apart, newest year first, and a year is begun only while a whole year's pages
  * are left, so a year is never cut in half. It stops at the first refusal or failure, and a year
  * is stored only when every page it asked answered, so a refused year is read again later.
- * Measured 2026-10-29: 1997–2026 is 293 pages and 6,898 releases, the most in one year 14 pages
- * (2020's 344 releases), so the past is read in three processes.
+ * Measured 2026-10-29: 1997–2026 is 293 pages and 6,898 releases by the listing's count, the most
+ * in one year 14 pages (2020's 344 releases), so the past is read in three processes. The pages
+ * showed 6,894 distinct; their months gave 3 more, and one of 2024 stays unshown (batch 85).
  */
 export const PAGES_PER_RUN = 120;
 export const GAP_MS = 1_000;
@@ -37,6 +39,8 @@ export interface PressWalk {
   pages: number;
   /** releases stored from them, new or corrected */
   releases: number;
+  /** releases a year's own count holds that neither its pages nor its months showed */
+  short?: number;
   /** why it stopped short, if it did */
   stopped?: string;
   /** the refusal or failure that stopped it, for the ingest's fetch log */
@@ -46,8 +50,11 @@ export interface PressWalk {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Reads the years not yet read, and the current year when its last read is a day old. `fetchPage`
- * and `gapMs` are replaceable so the check can run it offline.
+ * Reads the years not yet read, and the current year when its last read is a day old. A past year
+ * whose pages showed fewer distinct releases than the listing's own count is filled from the
+ * months its repeated rows fall in (`monthsToReread`, batch 85), and a year read before batch 85,
+ * which kept no count, is asked its first page once to compare. `fetchPage` and `gapMs` are
+ * replaceable so the check can run it offline.
  */
 export async function walkSecPress(
   client: PoolClient,
@@ -60,42 +67,55 @@ export async function walkSecPress(
     today?: string;
     budget?: { left: number };
     gapMs?: number;
-    fetchPage?: (year: number, page: number) => Promise<ListingPage>;
+    fetchPage?: (year: number, page: number, month?: number) => Promise<ListingPage>;
   } = {}
 ): Promise<PressWalk> {
   const current = Number(today.slice(0, 4));
-  const { rows } = await client.query<{ year: number; complete: boolean; stale: boolean }>(
-    "SELECT year, complete, read_at < now() - interval '1 day' AS stale FROM sec_press_years"
+  const { rows } = await client.query<{ year: number; complete: boolean; stale: boolean; listed: number | null; releases: number }>(
+    "SELECT year, complete, read_at < now() - interval '1 day' AS stale, listed, releases FROM sec_press_years"
   );
   const held = new Map(rows.map((r) => [Number(r.year), r]));
   const due: number[] = [];
   const now = held.get(current);
   if (!now || now.stale) due.push(current);
-  for (let y = current - 1; y >= SEC_PRESS_FROM; y--) if (!held.get(y)?.complete) due.push(y);
+  for (let y = current - 1; y >= SEC_PRESS_FROM; y--) {
+    const h = held.get(y);
+    if (!h?.complete || h.listed === null) due.push(y);
+  }
 
   const walk: PressWalk = { due: due.length, read: 0, pages: 0, releases: 0 };
+  const ask = async (year: number, page: number, month?: number): Promise<ListingPage> => {
+    budget.left--;
+    if (gapMs) await sleep(gapMs);
+    walk.pages++;
+    try {
+      return await fetchPage(year, page, month);
+    } catch (err) {
+      return { releases: [], outcome: "error", detail: String(err).slice(0, 200) };
+    }
+  };
+  const failed = (got: ListingPage, where: string): PressWalk => {
+    const detail = `${where}${got.detail ? `: ${got.detail}` : ""}`;
+    return { ...walk, stopped: got.outcome, failure: { outcome: got.outcome as "throttled" | "error", httpStatus: got.httpStatus, detail } };
+  };
   for (const year of due) {
     if (budget.left < YEAR_PAGES) return { ...walk, stopped: "this run's pages are spent" };
+    const h = held.get(year);
     // a current year read in full once is read again only down to the releases already kept
     const known = year === current && now ? await keptNumbers(client, year) : null;
+    // a past year read in full before batch 85 kept no count: its first page says whether the
+    // releases kept are all the listing holds
+    const recount = year < current && h?.complete === true && h.listed === null;
     const releases: SecRelease[] = [];
+    let listed: number | undefined;
     let page = 0;
     for (;;) {
-      budget.left--;
-      if (gapMs) await sleep(gapMs);
-      let got: ListingPage;
-      try {
-        got = await fetchPage(year, page);
-      } catch (err) {
-        got = { releases: [], outcome: "error", detail: String(err).slice(0, 200) };
-      }
-      walk.pages++;
-      if (got.outcome !== "ok") {
-        const detail = `${year} page ${page + 1}${got.detail ? `: ${got.detail}` : ""}`;
-        return { ...walk, stopped: got.outcome, failure: { outcome: got.outcome, httpStatus: got.httpStatus, detail } };
-      }
+      const got = await ask(year, page);
+      if (got.outcome !== "ok") return failed(got, `${year} page ${page + 1}`);
+      if (page === 0) listed = got.total;
       releases.push(...got.releases);
       page++;
+      if (recount && listed !== undefined && h!.releases >= listed) break;
       if (got.releases.length < SEC_PRESS_PAGE_SIZE) break;
       if (known && got.releases.some((r) => known.has(releaseKey(r)))) break;
       // more pages than any year has held: the listing has changed, and a year cut short must
@@ -105,7 +125,28 @@ export async function walkSecPress(
         return { ...walk, stopped: "error", failure: { outcome: "error", httpStatus: got.httpStatus, detail } };
       }
     }
-    walk.releases += await storeYear(client, year, year < current, page, releases);
+    if (recount && listed !== undefined && h!.releases >= listed) {
+      await client.query("UPDATE sec_press_years SET listed = $2 WHERE year = $1", [year, listed]);
+      walk.read++;
+      continue;
+    }
+    // releases shown twice where a page ends hide others of their day: read those months alone
+    if (!known && listed !== undefined && new Set(releases.map(releaseKey)).size < listed) {
+      for (const month of monthsToReread(releases.map((r) => ({ key: releaseKey(r), day: r.day })))) {
+        for (let p = 0; ; p++) {
+          if (budget.left <= 0) return { ...walk, stopped: "this run's pages are spent" };
+          const got = await ask(year, p, month);
+          if (got.outcome !== "ok") return failed(got, `${year}-${String(month).padStart(2, "0")} page ${p + 1}`);
+          releases.push(...got.releases);
+          page++;
+          if (got.releases.length < SEC_PRESS_PAGE_SIZE) break;
+          if (p + 1 >= YEAR_PAGES) return { ...walk, stopped: "error", failure: { outcome: "error", detail: `${year}-${month} has more than ${YEAR_PAGES} pages` } };
+        }
+      }
+      const still = listed - new Set(releases.map(releaseKey)).size;
+      if (still > 0) walk.short = (walk.short ?? 0) + still;
+    }
+    walk.releases += await storeYear(client, year, year < current, page, releases, listed);
     walk.read++;
   }
   return walk;
@@ -121,7 +162,7 @@ async function keptNumbers(client: PoolClient, year: number): Promise<Set<string
 }
 
 /** Stores a year's releases and that it was read; returns how many rows were new or changed. */
-async function storeYear(client: PoolClient, year: number, complete: boolean, pages: number, read: SecRelease[]): Promise<number> {
+async function storeYear(client: PoolClient, year: number, complete: boolean, pages: number, read: SecRelease[], listed?: number): Promise<number> {
   // one row a release: the listing has shown one twice (2006-198), and a statement may not
   // write a row twice
   const releases = [...new Map(read.map((r) => [releaseKey(r), r])).values()];
@@ -136,10 +177,10 @@ async function storeYear(client: PoolClient, year: number, complete: boolean, pa
       [releases.map((r) => r.number), releases.map((r) => r.day), releases.map((r) => r.title), releases.map((r) => r.url)]
     );
     await client.query(
-      `INSERT INTO sec_press_years (year, complete, pages, releases) VALUES ($1, $2, $3, $4)
+      `INSERT INTO sec_press_years (year, complete, pages, releases, listed) VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (year) DO UPDATE
-          SET complete = EXCLUDED.complete, pages = EXCLUDED.pages, releases = EXCLUDED.releases, read_at = now()`,
-      [year, complete, pages, releases.length]
+          SET complete = EXCLUDED.complete, pages = EXCLUDED.pages, releases = EXCLUDED.releases, listed = EXCLUDED.listed, read_at = now()`,
+      [year, complete, pages, releases.length, listed ?? releases.length]
     );
     await client.query("COMMIT");
     return rowCount ?? 0;
@@ -164,7 +205,26 @@ export interface PressPlan {
   possessive?: string;
   /** its CIK, for the units the release rules give it and the notes records they give none (lib/releaseNames.ts) */
   cik?: number | string;
+  /** a fund's series (`fundSeriesId`), which no release rule reads as a party (`FUND_SERIES`) */
+  fundSeries?: boolean;
 }
+
+/**
+ * A fund's series takes no release a rule finds by name (batch 85, the 2026-11-01 audit's finding
+ * 1). A fund's page knows only its series name, "GROWTH FUND" for American Century's TWCGX, and a
+ * series is not a firm the SEC, the Board or the Justice Department charges or approves: a caption
+ * naming "Growth Fund, Ltd." (LR-18525, 2003, a Ponzi scheme's fund) is some other firm's. Read
+ * against all 19,558 series in the index, the case captions gave 10 events on 9 fund pages, every
+ * one another firm's; the press releases and the Board's releases gave none.
+ */
+export const FUND_SERIES = (): FetchResult => ({ events: [], outcome: "empty", detail: "a fund's series: the release rules name firms, not a series" });
+
+/**
+ * A step that begins at the first price, run before the company has one (Yahoo in back-off, or its
+ * read failed): a failure, not "empty", which counts as asked for a day, so the next run asks
+ * again (batch 85, the 2026-11-01 audit's finding 5).
+ */
+export const NO_PRICES = (): FetchResult => ({ events: [], outcome: "error", detail: "no prices to start from: asked again on the next run" });
 
 /**
  * The company's SEC releases: the walk first, then every kept release whose headline makes it the
@@ -185,6 +245,7 @@ export async function secPressFor(
   );
   const listed = rows[0]?.listed;
   const failure = walked.failure;
+  if (plan.fundSeries) return failure ? { events: [], outcome: failure.outcome, httpStatus: failure.httpStatus, detail: failure.detail } : FUND_SERIES();
   if (plan.cik !== undefined && isNotesRecord(plan.cik)) {
     const detail = "a bank's notes record: its releases are its group's page's";
     return failure ? { events: [], outcome: failure.outcome, httpStatus: failure.httpStatus, detail: failure.detail } : { events: [], outcome: "empty", detail };
@@ -192,7 +253,7 @@ export async function secPressFor(
   if (!listed) {
     return failure
       ? { events: [], outcome: failure.outcome, httpStatus: failure.httpStatus, detail: failure.detail }
-      : { events: [], outcome: "empty", detail: "no prices to start from" };
+      : NO_PRICES();
   }
   const former = await storedFormerNames(client, subjectId);
   const own = plan.possessive ? [plan.possessive] : [];

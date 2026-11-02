@@ -64,7 +64,8 @@ function release(number: string, day?: string): SecRelease {
   return r;
 }
 /**
- * Every release the SEC listing held on 2026-10-30, 6,894 of them (scripts/fixtures/sec-press-listing.json):
+ * Every release the SEC listing held on 2026-10-30, 6,894 of them, and the three its year pages never
+ * showed, read from their months in batch 85: 6,897 (scripts/fixtures/sec-press-listing.json):
  * number, day and headline, linked as the listing links them.
  */
 const listing: { releases: [number: string, day: string, title: string][] } = JSON.parse(read("scripts/fixtures/sec-press-listing.json"));
@@ -143,7 +144,7 @@ function expectOff(name: string, cases: [number: string, tickers: string[], day?
 const JPM_FORMER = { JPM: [{ name: "J P MORGAN CHASE & CO", until: "2011-10-06" }] };
 
 interface Db {
-  years: Map<number, { complete: boolean; stale: boolean; pages: number; releases: number }>;
+  years: Map<number, { complete: boolean; stale: boolean; pages: number; releases: number; count?: number | null }>;
   releases: Map<string, SecRelease>;
   listed: string | null;
   renames: { until: string; body: string }[];
@@ -157,7 +158,12 @@ function fakeDb(db: Db): PoolClient {
     query: async (sql: string, params: unknown[] = []) => {
       const s = sql.trim();
       if (/^(BEGIN|COMMIT|ROLLBACK)$/.test(s)) return { rows: [] };
-      if (/^SELECT year, complete/.test(s)) return { rows: [...db.years].map(([year, y]) => ({ year, complete: y.complete, stale: y.stale })) };
+      if (/^SELECT year, complete/.test(s)) return { rows: [...db.years].map(([year, y]) => ({ year, complete: y.complete, stale: y.stale, listed: y.count ?? null, releases: y.releases })) };
+      if (/^UPDATE sec_press_years SET listed = \$2 WHERE year = \$1$/.test(s)) {
+        const [year, count] = params as [number, number];
+        db.years.get(year)!.count = count;
+        return { rows: [], rowCount: 1 };
+      }
       if (/^SELECT release_no, released_on::text AS day FROM sec_press_releases WHERE/.test(s)) {
         const [from, to] = params as [string, string];
         return { rows: [...db.releases.values()].filter((r) => r.day >= from && r.day < to).map((r) => ({ release_no: r.number, day: r.day })) };
@@ -178,8 +184,8 @@ function fakeDb(db: Db): PoolClient {
         return { rows: [], rowCount: changed };
       }
       if (/^INSERT INTO sec_press_years/.test(s)) {
-        const [year, complete, pages, releases] = params as [number, boolean, number, number];
-        db.years.set(year, { complete, stale: false, pages, releases });
+        const [year, complete, pages, releases, count] = params as [number, boolean, number, number, number | null];
+        db.years.set(year, { complete, stale: false, pages, releases, count });
         return { rows: [] };
       }
       if (/^SELECT release_no, released_on::text AS day, title, url FROM sec_press_releases ORDER BY/.test(s)) {
@@ -358,8 +364,8 @@ const TODAY = "2026-10-29";
     [["2014-39", "GLDI", false], ["2021-213", "GLDI", false], ["2012-233", "GLDI", false], ["2012-233", "JPM", true], ["2009-29", "AMUB", false]]);
   check("  …where before this batch GLDI's page took Credit Suisse's own",
     secPressEvents([storedRelease("2014-39"), storedRelease("2021-213")], namesOf("GLDI")).length === 2);
-  check("the map: eleven banks (seven in batch 82, Deutsche Bank, State Street, BNY and Barclays in batch 83), each unit with its reason, each day well formed, and the three notes records mapped to none",
-    Object.keys(RELEASE_NAMES).length === 11 && Object.keys(NOTES_RECORDS).length === 3 &&
+  check("the map: twelve banks (seven in batch 82, Deutsche Bank, State Street, BNY and Barclays in batch 83, Goldman Sachs in batch 85), each unit with its reason, each day well formed, and the three notes records mapped to none",
+    Object.keys(RELEASE_NAMES).length === 12 && Object.keys(NOTES_RECORDS).length === 3 &&
       Object.values(RELEASE_NAMES).every((b) => b.names.every((n) => n.why.length > 20 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.keys(NOTES_RECORDS).every((cik) => !(cik in RELEASE_NAMES)) &&
       Object.entries(RELEASE_NAMES).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)) &&
@@ -382,11 +388,13 @@ const TODAY = "2026-10-29";
   // batch 83 added the units the SEC's case captions name in full, and three more releases land:
   // UBS's units' auction-rate settlement of 2008, Morgan Stanley Investment Management's charge of
   // 2011 and Barclays Capital's of 2014
-  check("the 6,894 stored releases give 255 page entries on 124 companies, 47 more than before batch 82's names, as replayed in full",
-    stored.length === 6894 && entries === 255 && replay.size === 124, `${stored.length} releases → ${entries} entries on ${replay.size} companies in ${Date.now() - t0} ms`);
-  const pinned: Record<string, number> = { BAC: 28, MS: 18, C: 13, UBS: 12, JPM: 11, WFC: 10, GS: 8, DB: 7, BCS: 4, RF: 3 };
+  check("the 6,897 stored releases give 259 page entries on 124 companies, 51 more than before batch 82's names, as replayed in full",
+    stored.length === 6897 && entries === 259 && replay.size === 124, `${stored.length} releases → ${entries} entries on ${replay.size} companies in ${Date.now() - t0} ms`);
+  // batch 85 added Citibank's settlement of 2001, J.P. Morgan Chase's of 2003 and J. P. Morgan
+  // Securities' charge of 2011 (the initials as the SEC spaces them), and Goldman Sachs Asset Management's of 2022
+  const pinned: Record<string, number> = { BAC: 28, MS: 18, C: 14, UBS: 12, JPM: 13, WFC: 10, GS: 9, DB: 7, BCS: 4, RF: 3 };
   const got = Object.fromEntries(Object.keys(pinned).map((t) => [t, replay.get(t)?.length ?? 0]));
-  check("  …Bank of America 28 (8 before), Morgan Stanley 18, Citigroup 13, UBS Group 12 (none), JPMorgan 11, Wells Fargo 10, Barclays 4, Regions 3, and the notes records none",
+  check("  …Bank of America 28 (8 before), Morgan Stanley 18, Citigroup 14, UBS Group 12 (none), JPMorgan 13, Wells Fargo 10, Goldman Sachs 9, Barclays 4, Regions 3, and the notes records none",
     Object.entries(pinned).every(([t, n]) => got[t] === n) && !replay.has("GLDI") && !replay.has("AMUB") && !replay.has("ATMP"), JSON.stringify(got));
 
   console.log("\nAs timeline events");
@@ -459,6 +467,28 @@ const TODAY = "2026-10-29";
   const once = await walkSecPress(fakeDb(doubled), { today: TODAY, budget: { left: 10_000 }, gapMs: 0, fetchPage: repeat });
   check("a release the listing shows twice (2006-198) is stored once, without failing the year",
     doubled.doubled === 0 && once.read === years && doubled.releases.size === years && once.releases === years);
+  // the 2026-11-01 audit's finding 3 (batch 85): the listing sorts by day alone, so 2006-198 showed
+  // twice where a page ended and 2006-200, of the same day, never; December 2006 alone is one page
+  const tie = (year: number, p: number, month?: number): Promise<ListingPage> => {
+    const all = Array.from({ length: 30 }, (_, i) => ({ number: `${year}-${200 - i}`, day: `${year}-12-04`, title: `Release ${200 - i}`, url: `https://www.sec.gov/newsroom/press-releases/${year}-${200 - i}` }));
+    if (year !== 2006) return Promise.resolve({ releases: [], total: 0, outcome: "ok" as const, httpStatus: 200 });
+    const pages = month ? [all.slice(0, 25), all.slice(25)] : [all.slice(0, 25), [all[24], ...all.slice(26)]];
+    return Promise.resolve({ releases: pages[p] ?? [], total: 30, outcome: "ok" as const, httpStatus: 200 });
+  };
+  const tiedDb = freshDb();
+  const tiedAsked: string[] = [];
+  const tied = await walkSecPress(fakeDb(tiedDb), { today: TODAY, budget: { left: 10_000 }, gapMs: 0, fetchPage: (y, p, m) => (tiedAsked.push(`${y}${m ? `-${m}` : ""}:${p}`), tie(y, p, m)) });
+  check("a year whose pages show a release twice and another never reads that release's month alone, and keeps all 30 (batch 85)",
+    tiedAsked.filter((a) => a.startsWith("2006")).join(",") === "2006:0,2006:1,2006-12:0,2006-12:1" && tiedDb.years.get(2006)?.releases === 30 &&
+      tiedDb.years.get(2006)?.count === 30 && [...tiedDb.releases.keys()].some((k) => k.startsWith("2006-175")) && !tied.short,
+    tiedAsked.filter((a) => a.startsWith("2006")).join(","));
+  const oldDb = freshDb();
+  for (let y = 1997; y <= 2025; y++) oldDb.years.set(y, { complete: true, stale: false, pages: 1, releases: y === 2006 ? 29 : 0, count: null });
+  const recountAsked: string[] = [];
+  await walkSecPress(fakeDb(oldDb), { today: "2026-10-29", budget: { left: 10_000 }, gapMs: 0, fetchPage: (y, p, m) => (recountAsked.push(`${y}${m ? `-${m}` : ""}:${p}`), tie(y, p, m)) });
+  check("  …and a year read before batch 85 is asked its first page once: kept as it is where its count is reached, read again with its month where not",
+    recountAsked.filter((a) => a.startsWith("2005")).join(",") === "2005:0" && oldDb.years.get(2005)?.count === 0 &&
+      recountAsked.filter((a) => a.startsWith("2006")).length === 4 && oldDb.years.get(2006)?.releases === 30, recountAsked.slice(0, 6).join(","));
   const endless = async (): Promise<ListingPage> => ({ releases: Array.from({ length: 25 }, (_, i) => ({ number: `x-${Math.random()}-${i}`, day: "2026-01-02", title: "t", url: "https://www.sec.gov/x" })), outcome: "ok", httpStatus: 200 });
   const runaway = freshDb();
   const long = await walkSecPress(fakeDb(runaway), { today: TODAY, budget: { left: 10_000 }, gapMs: 0, fetchPage: endless });
@@ -477,7 +507,8 @@ const TODAY = "2026-10-29";
   const gsKept = await secPressFor(fakeDb({ ...kept, listed: "2006-01-03" }), 1, { edgarName: "GOLDMAN SACHS GROUP INC", alsoKnownAs: newsNamesFor(886982) }, ok);
   check("  …from the company's first price on", gsKept.events.map((e) => e.date).join(",") === "2010-07-15,2010-04-16");
   const unpriced = await secPressFor(fakeDb({ ...kept, listed: null }), 1, jpmPlan, ok);
-  check("  …and none for a company with no prices yet", unpriced.outcome === "empty" && unpriced.events.length === 0 && unpriced.detail === "no prices to start from");
+  // …not "empty", which counts as asked for a day: the next run asks again (batch 85, the 2026-11-01 audit's finding 5)
+  check("  …and none for a company with no prices yet, recorded as a failure so the next run asks again", unpriced.outcome === "error" && unpriced.events.length === 0 && /^no prices to start from/.test(unpriced.detail ?? ""));
   const refusedWalk: PressWalk = { ...ok, stopped: "throttled", failure: { outcome: "throttled", httpStatus: 403, detail: "2024 page 3" } };
   const stillKept = await secPressFor(fakeDb(kept), 1, jpmPlan, refusedWalk);
   check("a walk the SEC refused still gives the company what is kept, and reports the refusal for the back-off",
@@ -498,7 +529,7 @@ const TODAY = "2026-10-29";
   const ingest = read("scripts/ingest.ts");
   check("company ingest walks the years, then keeps the company's releases under its names and its possessive",
     (COMPANY_SOURCES as readonly string[]).includes("sec_press") &&
-      /await run\("sec_press", [^\n]+, async \(\) => \{\s+const walked = await walkSecPress\(client\);[\s\S]{0,400}return secPressFor\(client, subjectId, \{ edgarName: company\.name, alsoKnownAs, possessive: dojPossessive\(company\.name, possessive\), cik: company\.cik \}, walked\);/.test(ingest));
+      /await run\("sec_press", [^\n]+, async \(\) => \{\s+const walked = await walkSecPress\(client\);[\s\S]{0,400}return secPressFor\(client, subjectId, \{ edgarName: company\.name, alsoKnownAs, possessive: dojPossessive\(company\.name, possessive\), cik: company\.cik, fundSeries \}, walked\);/.test(ingest));
   // the 2026-10-30 audit's finding 4 (batch 78): prices were read last, so a company's first
   // ingest found no first price, stored no release and marked the source read for a day
   const company = ingest.slice(ingest.indexOf("export async function ingestCompany"), ingest.indexOf("\n}\n", ingest.indexOf("export async function ingestCompany")));

@@ -228,12 +228,24 @@ take none. Merrill Lynch's Enron charge of 2003 stays Merrill Lynch's. Batch 83 
 SEC's case captions name in full (J.P. Morgan Securities, UBS Financial Services, Wells Fargo's
 brokerages, Deutsche Bank Securities, State Street Bank and Trust, BNY Mellon Securities, Barclays
 Bank and Barclays Capital). The map is read by the release rules alone, never by headline scoring.
-Read against every company in the index under its current names, 255 of the 6,894 stored releases
-land on 124 companies, 153 of them before 2017 (Bank of America 28, Morgan Stanley 18, Citigroup 13,
-UBS Group 12, JPMorgan 11, Wells Fargo 10, Goldman Sachs 8, Deutsche Bank 7), each read by hand
-(batch 78, after the 2026-10-30 audit; Deutsche Bank's since batch 81, when its everyday name lost its
-"AKTIENGESELLSCHAFT"; the banks' units since batch 82). `check:sec-press` replays the whole stored
-listing against the index and pins the count.
+Batch 85 added the units the 2026-11-01 audit found missing (Morgan Stanley DW, Citibank, N.A. from
+1998-10-08, Salomon Smith Barney, BofA Securities, and Goldman Sachs's clearing firm and fund adviser),
+and initials as the SEC spaces them ("J. P. Morgan", "JP Morgan Chase"). Read against every company
+in the index under its current names, 259 of the 6,897 stored releases land on 124 companies, 156 of
+them before 2017 (Bank of America 28, Morgan Stanley 18, Citigroup 14, JPMorgan 13, UBS Group 12,
+Wells Fargo 10, Goldman Sachs 9, Deutsche Bank 7), each read by hand (batch 78, after the 2026-10-30
+audit; Deutsche Bank's since batch 81, when its everyday name lost its "AKTIENGESELLSCHAFT"; the
+banks' units since batches 82 and 85). `check:sec-press` replays the whole stored listing against
+the index and pins the count.
+
+The listing sorts a year by day alone, so where releases tie on a day across a page boundary the
+next page shows some again and never shows others: 2006-198 came twice and 2006-200 not at all.
+Each page states its view's own count ("1 to 25 of 258 items"); a past year whose pages show fewer
+distinct releases is filled from the months its repeated releases fall in (`lib/listingGaps.ts`,
+batch 85), and the count is kept (db/034). The three releases the year pages never showed came
+back that way; one of 2024 is still missing from its month, and the walk reports it. A fund's
+series is never the party of a release, nor of a case below or a Board release: its page knows
+only its series name, and "Growth Fund" is another firm's (batch 85).
 
 What is refused: a release about a company's people ("SEC Charges Former Carter's Executive", "Board
 Member of Goldman Sachs and Procter & Gamble Charged"), a name followed by "of" ("SEC Charges City of
@@ -255,8 +267,11 @@ an administrative proceeding for each order it issues itself, back to 1995, the 
 listing holds. Most press releases have one behind them, and most of these have no press release:
 the 2010-11-04 customs-bribery charges against Transocean, Noble and Tidewater have no press release
 naming any of them. Both listings are read by year for every company at once, as the press releases
-are (`lib/ingest/secCasesWalk.ts`, kept in `sec_cases` and `sec_cases_years`): 1995–2026 is 344
-pages and 30,654 rows, 100 a page, the most in one year 11 pages (measured 2026-11-01). Each row
+are (`lib/ingest/secCasesWalk.ts`, kept in `sec_cases` and `sec_cases_years`): 1995–2026 is 342
+pages, 100 rows a page, the most in one year 11 pages (measured 2026-11-01). They showed 30,654
+distinct rows of the 30,750 the listings count; the 93 they repeated others in place of came back
+from the 75 months that hold them (batch 85, as for the press releases above), so 30,747 are kept,
+and 3 the months' own pages never showed are reported. Each row
 gives a caption listing the defendants or respondents ("Huntington Bancshares, Inc.; Thomas E.
 Hoaglin, Michael J. McMennamin, and John Van Fleet, CPA"), and a company keeps the rows that name it
 as a party of its own: its name, or its full legal name, followed only by legal words (Inc., Corp.,
@@ -271,10 +286,12 @@ revoked registrations naming a shell called "Telos, Inc." — were read by hand 
 CIK (`NOT_THE_COMPANY`). A company's rows of a day make one event, titled by its own party ("SEC
 litigation release: Transocean Inc."), with the whole caption, each release number and a
 proceeding's file number in its description. Read against every company in the index under its
-current names, the 30,654 rows give 1,022 company days on 352 companies, 478 of them before 2017
-(Bank of America 72, Morgan Stanley 66, Wells Fargo 47, UBS Group 46, JPMorgan 46, Citigroup 44); a
-company's former names add more, and its first price keeps it off the years before it listed.
-`check:sec-cases` replays the kept rows and pins the count. A case is a regulation event and is
+current names, the 30,747 rows give 1,047 company days on 353 companies, 495 of them before 2017
+(Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47,
+Goldman Sachs 20); a company's former names add more, and its first price keeps it off the years
+before it listed. A party ends before its other name ("…, L.P. f/k/a Spear, Leeds & Kellogg") as it
+begins after one. `check:sec-cases` replays every row against every company and every fund series
+in the index and pins the count. A case is a regulation event and is
 scored without the model.
 
 ### Federal Reserve Board press releases (`lib/fedPress.ts`)
@@ -301,7 +318,9 @@ close. Read against every company in the index under its current names, the 2,21
 types read give 225 matches on 103 companies, 126 before 2017, 181 of them orders, each read by hand;
 `check:fed-press` replays them and pins the count. Not given yet: an order filed under a bank whose
 name is not its holding company's ("Regions Bank", "Frost Bank", "Banco Popular de Puerto Rico") and
-that no map row gives the company. A release is a regulation event and is scored without the model.
+that no map row gives the company. A fund's series takes none (batch 85): replayed against all 19,540
+series names in the index, the feed gives them nothing, and the case captions would have given 10
+other firms' cases. A release is a regulation event and is scored without the model.
 
 ### Source planning (`lib/enrich/plan.ts`)
 

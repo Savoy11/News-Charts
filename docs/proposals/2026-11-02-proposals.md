@@ -349,7 +349,7 @@ pages, the rule written · *Practicality:* high — the same source and licence
 
 ## 4. The listed banks and brokers by their units' names: their banks in the Board's orders, their broker-dealers and advisers in the SEC's cases — the owner's open call · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-02, with the calls: (a) yes, widen the maps; (b) yes, American Express Financial Advisors' cases before the 2005 spin-off go on both pages, American Express's (its unit then) and Ameriprise's (its own record's former name); (c) Prudential Securities goes on Prudential Financial (PRU), not Prudential plc (PUK).
 **Owner's reason (if rejected):**
 
 **Raised before:**
@@ -462,7 +462,7 @@ day per row from filings
 
 ## 5. The Consumer Financial Protection Bureau's enforcement actions, from 2012 — a source for the owner to decide · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-02: yes to the source.
 **Owner's reason (if rejected):**
 
 **Raised before:** in the 2026-11-01 cut list, "its list holds 386 actions", with one page read and

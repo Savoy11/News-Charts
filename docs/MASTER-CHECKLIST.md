@@ -997,8 +997,14 @@ depth first. Nothing is built in this batch.
 
 - [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
-      ✅ Marked 2026-11-02 for #1: approved, yes to the source with the count first; filed under
-      Scope refocus as a `P1` item. #2–#5 are not marked yet.
+      ✅ Marked 2026-11-02 for #1, #4 and #5, each filed under Scope refocus:
+      - #1 approved: yes to the source, with the count first (`P1`);
+      - #4 approved with the calls: (a) yes, widen the maps; (b) yes, American Express Financial
+        Advisors' cases before the 2005 spin-off go on both American Express's and Ameriprise's
+        pages; (c) Prudential Securities goes on Prudential Financial (PRU), not Prudential plc
+        (`P2`);
+      - #5 approved: yes to the source (`P2`);
+      - #2 and #3 are not marked yet.
       1. `P1` **The SEC News Digest, 1956 to the mid-1990s:** the SEC's daily summary of companies'
          filings and cases before EDGAR (8-K reports with their items, registrations, 13D and
          14D-1 filings, enforcement and delisting orders), on sec.gov under the press releases'
@@ -6673,6 +6679,76 @@ already held, but new investment goes to securities coverage first.
         BB&T's orders on Truist's page), and the licence was re-read on 2026-11-01. Popular's row in
         the Fed map is still the owner's, and orders filed under a bank whose name is not its
         holding company's are not given yet (about two dozen, listed in the section).
+- [ ] `P2` **The listed banks' and brokers' own units: their banks in the Board's orders, their
+      broker-dealers and advisers in the SEC's cases.** Approved by the owner 2026-11-02. Batch 84's
+      open call and batch 74's Popular, Inc. row, now with the same firms' units in the case
+      captions.
+      - ✅ **The owner's calls, 2026-11-02:** (a) yes, widen the maps; (b) American Express
+        Financial Advisors' cases before the 2005 spin-off go on **both** pages — American
+        Express's, whose unit it was, and Ameriprise's, whose own record carries the name (AMP's
+        EDGAR former names "AMERICAN EXPRESS FINANCIAL ADVISORS", 1995-10-25 to 2003-03-10, and
+        "AMERICAN EXPRESS FINANCIAL CORP", to 2005-07-26); (c) Prudential Securities (2000–2003)
+        goes on Prudential Financial (PRU), not Prudential plc (PUK).
+      - **What:** rows in the release rules' map (`lib/releaseNames.ts`) and in `FED_BANKS` for the
+        Board's orders, each unit counting while the company owned it, each day read from the
+        company's filings, as batch 82 dated its banks:
+        - the own banks of batch 84's list: Regions Bank, Frost Bank, Origin Bank, Centennial Bank,
+          PlainsCapital Bank, Simmons Bank, Green Dot Bank, Five Star Bank, Equity Bank, Banco de
+          Crédito del Perú, National Westminster Bank, ING Bank, Lloyds Bank Corporate Markets;
+        - Popular's Banco Popular de Puerto Rico, Banco Popular North America and Popular
+          Securities, and Popular in `FED_BANKS` (its three enforcement actions too);
+        - the broker-dealers and advisers named after their parents: Ameriprise Financial Services,
+          FTN Financial Securities, First Horizon Advisors, BB&T Securities, Hilltop Securities,
+          Fifth Third Securities, BlackRock Advisors, NASDAQ Execution Services, Fiserv Securities,
+          Lazard Capital Markets, Oppenheimer Asset Management, U.S. Bancorp Piper Jaffray until
+          the spin-off, and the eleven others the proposal lists.
+      - **Measured** by the scout on the saved case rows: 62 company days on 24 companies, 25 before
+        2017, on no page today; with batch 84's ~25 orders and Popular's 3. About 35 map rows, ~70
+        EDGAR requests once for the days.
+      - **Refused, as the proposal found:** Reliance Financial Advisors (not RS), Southern Financial
+        Services (not SO), Seaboard Investment Advisers, Meridian Securities, and U.S. Bancorp Piper
+        Jaffray after the spin-off.
+      - Cases in `check:sec-cases`: Regions Bank's case of 2009-09-21 on RF, Fifth Third
+        Securities' of 2002-06-18 on FITB, U.S. Bancorp Piper Jaffray's of 2002-11-05 on USB and
+        its 2005-09-02 not, Ameriprise Financial Services' of 2009-07-10 on AMP, Hilltop
+        Securities' of 2016-02-02 on HTH, Nasdaq's of 2013-05-29 on NDAQ, American Express Financial
+        Advisors' of 2004-02-12 on AXP and AMP, Prudential Securities on PRU and not PUK, Reliance
+        Financial Advisors on no page; the full replay re-pinned. In `check:fed-press`: Frost
+        Bank's approval of 2019-06-20 on CFR, Popular's of 2010-04-30 on BPOP. On main the unit
+        cases fail.
+      - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
+        #4, approved 2026-11-02 with the three calls. Importance medium · Efficiency high ·
+        Practicality medium (a day per row from filings).*
+- [ ] `P2` **The Consumer Financial Protection Bureau's enforcement actions, from 2012.** A new
+      source, approved by the owner 2026-11-02: the Bureau's action list
+      (`www.consumerfinance.gov/enforcement/actions/?page=N`, 25 a page, read once) and its feed
+      (`/enforcement/actions/feed/`, the newest 25, once a day), one read for every company. Licence:
+      "Information created by the CFPB is in the public domain and you may reproduce, publish, or
+      otherwise use it without the Bureau's permission. Please consider appropriate citation to the
+      Bureau as the source." (consumerfinance.gov/privacy/website-privacy-policy/, "Legal
+      notices", read 2026-11-02). No key.
+      - ✅ **The owner's call, 2026-11-02: yes to the source.**
+      - Keep an action on a company's page when its title, which names the respondents, names the
+        company or a unit the map gives it, by the caption rule (`captionParty`); one event a
+        company a day. Registered in `SOURCES`, credited, scored without the model.
+      - **Measured** by the scout: 2012–2016 holds 164 actions, read by hand as 34 company days on
+        27 listed companies (Capital One Bank 2012, American Express's banks 2012 and 2013,
+        JPMorgan Chase Bank 2013, Bank of America and FIA Card Services 2014, Citibank 2015, the
+        four mortgage insurers of 2013-04-04, Wells Fargo Bank 2016…). About 14 match by names the
+        rules already hold; about 20 need the units above, so it builds after them. The 222
+        actions of 2017–2026 were not read.
+      - **Not their own:** Discover Bank, Sprint, Hudson City Savings Bank and Flagstar Bank (2014,
+        before today's FLG took the name), each an acquisition's past; GE Capital Retail Bank and
+        Synchrony Bank before SYF's listing of 2014-07-31, and PayPal's of 2015-05-19 before its
+        spin-off, are left to the first price.
+      - A new check on the saved list pages: Wells Fargo Bank's action of 2016-09-08 on WFC,
+        Citibank's of 2015-07-21 on C, Capital One Bank's of 2012-07-18 on COF, Discover Bank's on
+        no page, Flagstar Bank's of 2014 not on FLG, Synchrony Bank's of 2014-06-19 refused by SYF's
+        first price, a day's three American Express actions one event. On main it cannot run: the
+        adapter does not exist.
+      - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
+        #5, approved 2026-11-02 with the new source. Importance medium-low · Efficiency high ·
+        Practicality medium (the units above first).*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

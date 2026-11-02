@@ -988,6 +988,63 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 86: a new opportunity-scout run, five proposals for the owner (2026-11-02)
+
+The 2026-11-01 proposals are all built (batches 80–84), and batch 85's audit findings are fixed. So
+the `opportunity-scout` read the repository again at `5defee6` and wrote
+`docs/proposals/2026-11-02-proposals.md`: five proposals, all **PENDING**, ranked with securities
+depth first. Nothing is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      1. `P1` **The SEC News Digest, 1956 to the mid-1990s:** the SEC's daily summary of companies'
+         filings and cases before EDGAR (8-K reports with their items, registrations, 13D and
+         14D-1 filings, enforcement and delisting orders), on sec.gov under the press releases'
+         licence.
+         - Six issues read by hand (1965–1990, one every five years) named 0 to 10 index
+           companies each. The scout estimates about 750 entries a year, 25,000–30,000 over
+           1956–1993: an estimate, not a count.
+         - The largest one-off build here: about 9,500 PDFs, 5.4 GB read once, and a PDF text
+           reader on the ingest path. It is gated on a count step that reads one year first.
+         - **The owner's call:** yes or no on the source, and on the count first.
+      2. `P1` **The Justice Department's releases of 2001–2008, from its archive.** Today's adapter
+         stops at 2009, where the API begins. Same releases, same licence.
+         - In two archive months, the party rule found 5 of 93 titles (AEP, Weyerhaeuser, Akzo
+           Nobel, Wal-Mart, BB&T; 2 of them under former names). The scout estimates 200–250
+           events in every sector.
+         - 96 month pages, read once. The archive's index page answered the scout with a bot
+           check, so how the month pages are reached is part of the build.
+         - No source call; the owner may want to say yes to the walk first.
+      3. `P2` **The Federal Reserve Board's orders of 1996–2005, from its yearly pages.** Same
+         source and licence as batch 84.
+         - All ten pages read: 469 orders. Replayed under current names they give 117 matches on
+           55 companies, all before 2006; former names (NationsBank, Norwest, Travelers, Chase
+           Manhattan) add about 22.
+         - That roughly doubles the Board's releases before 2017. No owner call.
+      4. `P2` **The listed banks' and brokers' own units: their banks in the Board's orders, and
+         their broker-dealers and advisers in the SEC's cases.** Batch 84's open call, with
+         Popular, Inc. folded in.
+         - New, measured on the saved case rows: 62 company days on 24 companies, 25 before 2017,
+           on no page today. That is on top of batch 84's ~25 orders and Popular's 3.
+         - About 35 map rows, each dated from a filing (~70 EDGAR requests once).
+         - **The owner's calls:** (a) widen the maps at all; (b) American Express Financial
+           Advisors before the 2005 spin-off — American Express's page, Ameriprise's (it is that
+           record's own former name), or both; (c) Prudential Securities (2000–2003) on
+           Prudential Financial (PRU), not Prudential plc (PUK).
+      5. `P2` **The CFPB's enforcement actions, from 2012.** A new source, public domain by its
+         own website policy, no key.
+         - 2012–2016 read whole: 164 actions, which the scout read by hand as 34 company days on
+           27 listed companies. About 20 of the 34 need #4's unit names.
+         - **The owner's call:** yes or no on the source.
+- **Owner calls carried, not ranked:** CPSC recalls (the 2026-10-22 shortlist), with nothing new
+  measured; JCI's 2016 case on Tyco's record (batch 85's set-aside), a note at the end of the file.
+  Insider-trade forms stay out (2026-10-18).
+- **Requests the scout made:** 42 in all, each with the project's User-Agent, sec.gov hosts paced
+  about one a second: www.federalreserve.gov 14, www.consumerfinance.gov 9, www.sec.gov 8,
+  www.justice.gov 5 (two 404s and a bot check), www.fdic.gov 3, data.sec.gov 3. The local database
+  was only read (`chronolens_b73`).
+- `npm run check` passes and `npm run lint` is clean; nothing but documents changed.
+
 ## NC ledger — batch 85: the audit of batches 78–84, and its five findings fixed (2026-11-02)
 
 The `code-auditor` read batches 78–84 (`1353574..960c3be`). Its report is

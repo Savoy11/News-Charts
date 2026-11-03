@@ -988,6 +988,71 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 86: a new opportunity-scout run, five proposals for the owner (2026-11-02)
+
+The 2026-11-01 proposals are all built (batches 80–84), and batch 85's audit findings are fixed. So
+the `opportunity-scout` read the repository again at `5defee6` and wrote
+`docs/proposals/2026-11-02-proposals.md`: five proposals, all **PENDING**, ranked with securities
+depth first. Nothing is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ Marked 2026-11-02 for #1, #4 and #5, each filed under Scope refocus:
+      - #1 approved: yes to the source, with the count first (`P1`);
+      - #4 approved with the calls: (a) yes, widen the maps; (b) yes, American Express Financial
+        Advisors' cases before the 2005 spin-off go on both American Express's and Ameriprise's
+        pages; (c) Prudential Securities goes on Prudential Financial (PRU), not Prudential plc
+        (`P2`);
+      - #5 approved: yes to the source (`P2`);
+      - #2 and #3 are not marked yet.
+      1. `P1` **The SEC News Digest, 1956 to the mid-1990s:** the SEC's daily summary of companies'
+         filings and cases before EDGAR (8-K reports with their items, registrations, 13D and
+         14D-1 filings, enforcement and delisting orders), on sec.gov under the press releases'
+         licence.
+         - Six issues read by hand (1965–1990, one every five years) named 0 to 10 index
+           companies each. The scout estimates about 750 entries a year, 25,000–30,000 over
+           1956–1993: an estimate, not a count.
+         - The largest one-off build here: about 9,500 PDFs, 5.4 GB read once, and a PDF text
+           reader on the ingest path. It is gated on a count step that reads one year first.
+         - **The owner's call:** yes or no on the source, and on the count first.
+      2. `P1` **The Justice Department's releases of 2001–2008, from its archive.** Today's adapter
+         stops at 2009, where the API begins. Same releases, same licence.
+         - In two archive months, the party rule found 5 of 93 titles (AEP, Weyerhaeuser, Akzo
+           Nobel, Wal-Mart, BB&T; 2 of them under former names). The scout estimates 200–250
+           events in every sector.
+         - 96 month pages, read once. The archive's index page answered the scout with a bot
+           check, so how the month pages are reached is part of the build.
+         - No source call; the owner may want to say yes to the walk first.
+      3. `P2` **The Federal Reserve Board's orders of 1996–2005, from its yearly pages.** Same
+         source and licence as batch 84.
+         - All ten pages read: 469 orders. Replayed under current names they give 117 matches on
+           55 companies, all before 2006; former names (NationsBank, Norwest, Travelers, Chase
+           Manhattan) add about 22.
+         - That roughly doubles the Board's releases before 2017. No owner call.
+      4. `P2` **The listed banks' and brokers' own units: their banks in the Board's orders, and
+         their broker-dealers and advisers in the SEC's cases.** Batch 84's open call, with
+         Popular, Inc. folded in.
+         - New, measured on the saved case rows: 62 company days on 24 companies, 25 before 2017,
+           on no page today. That is on top of batch 84's ~25 orders and Popular's 3.
+         - About 35 map rows, each dated from a filing (~70 EDGAR requests once).
+         - **The owner's calls:** (a) widen the maps at all; (b) American Express Financial
+           Advisors before the 2005 spin-off — American Express's page, Ameriprise's (it is that
+           record's own former name), or both; (c) Prudential Securities (2000–2003) on
+           Prudential Financial (PRU), not Prudential plc (PUK).
+      5. `P2` **The CFPB's enforcement actions, from 2012.** A new source, public domain by its
+         own website policy, no key.
+         - 2012–2016 read whole: 164 actions, which the scout read by hand as 34 company days on
+           27 listed companies. About 20 of the 34 need #4's unit names.
+         - **The owner's call:** yes or no on the source.
+- **Owner calls carried, not ranked:** CPSC recalls (the 2026-10-22 shortlist), with nothing new
+  measured; JCI's 2016 case on Tyco's record (batch 85's set-aside), a note at the end of the file.
+  Insider-trade forms stay out (2026-10-18).
+- **Requests the scout made:** 42 in all, each with the project's User-Agent, sec.gov hosts paced
+  about one a second: www.federalreserve.gov 14, www.consumerfinance.gov 9, www.sec.gov 8,
+  www.justice.gov 5 (two 404s and a bot check), www.fdic.gov 3, data.sec.gov 3. The local database
+  was only read (`chronolens_b73`).
+- `npm run check` passes and `npm run lint` is clean; nothing but documents changed.
+
 ## NC ledger — batch 85: the audit of batches 78–84, and its five findings fixed (2026-11-02)
 
 The `code-auditor` read batches 78–84 (`1353574..960c3be`). Its report is
@@ -6094,6 +6159,44 @@ already held, but new investment goes to securities coverage first.
       - ✅ **Done in batch 81** (see its section): 17 everyday names cleaned, not 14 — the spaced
         "A S" left Novo Nordisk, Turkcell and Anadolu Efes too; Deutsche Bank's SEC releases go from
         0 to 7.
+- [ ] `P1` **The SEC News Digest, 1956 to the mid-1990s: the SEC's own daily record before EDGAR,
+      a count first.** A new source, approved by the owner 2026-11-02: the Digest's yearly archive
+      pages (`www.sec.gov/news/digest/digarchives/digarchYYYY.shtml`, 1956–2013), one PDF an issue
+      with a text layer, on sec.gov under the licence `lib/secCases.ts` quotes ("Information
+      presented on sec.gov is considered public information and may be copied or further
+      distributed…", re-read 2026-11-02). No key. Before 1995 a company's page holds Yahoo's
+      dividends and splits and a few EDGAR filings (IBM's 1963–1993 is 127 events, every one a
+      dividend or split); the Digest is the SEC's daily summary of the same business before that.
+      - ✅ **The owner's call, 2026-11-02: yes to the source, with the count first.**
+      - What an issue holds, from six read by the scout (1965–1990): enforcement actions with their
+        release numbers; Holding Company and Investment Company Act orders (Deutsche Bank AG's
+        IC-14293, 1985); Securities Act registrations by registrant; the 8-K reports filed, by
+        company, with their items and month (247 in the 1975-06-16 issue, Abbott's and PepsiCo's
+        among them); 13D and 14D-1 filings (Hasbro, 1990); listing and delisting orders.
+      - Index companies in the six, read by hand: 0 to 10 an issue, about 3 on average. An estimate,
+        not a count: on the order of 750 entries a year, 25,000–30,000 over 1956–1993.
+      - **Step 1, the count:** `npm run digest-report -- <year>` reads one year's issues once
+        (~250 requests, ~140 MB), takes each PDF's text, splits it into its sections, and prints,
+        per index company and section, the entries that name it under its names and EDGAR former
+        names. Nothing is stored, as batch 13's `fr-company-report` sized the Federal Register.
+      - **Step 2, only if the count holds:** a year walk in the shape of the SEC press-release
+        walk, entries stored once and matched at each company's ingest, typed by section and
+        linked to the issue's PDF; the 8-K entries a row a month. 1956–1993 is about 9,500 PDFs,
+        ~5.4 GB, read once.
+      - What the rule must refuse or cannot reach: an underwriter named inside another company's
+        registration; a record younger than the name (McGraw Hill, MH, listed 2025); names older
+        than EDGAR's former names (Caterpillar Tractor, Middle South Utilities) without a hand map;
+        OCR noise in the column tables.
+      - **Open after the count:** whether the Digest keeps the first-price floor (Yahoo's daily
+        data begins 1962 at the earliest); the count reports the entries it would remove.
+      - A PDF text reader on the ingest path: poppler's `pdftotext` (in this container) or
+        `pdfjs-dist` (Apache-2.0). A new check on the six issues' text: Abbott's 8-K of May 1975
+        lands on ABT on 1975-06-16, 3M's under its EDGAR former name, Deutsche Bank AG's IC-14293
+        on DB, Hasbro's five 13D rows make one row, the 1980 underwriter on no page, McGraw-Hill's
+        1990 delisting not on MH. On main it cannot run: the reader does not exist.
+      - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
+        #1, approved 2026-11-02 with the count first. Importance high · Efficiency medium ·
+        Practicality low-medium (OCR, names older than EDGAR, and the count first).*
 - [ ] `P2` The rest of the securities-coverage depth set: **GDELT year-window backfill** (GDELT
       answers from this container but throttles hard — 429/503 — so this needs the production
       host to develop against) and **richer paid-tier evidence** (needs a paid key). The LoC
@@ -6576,6 +6679,76 @@ already held, but new investment goes to securities coverage first.
         BB&T's orders on Truist's page), and the licence was re-read on 2026-11-01. Popular's row in
         the Fed map is still the owner's, and orders filed under a bank whose name is not its
         holding company's are not given yet (about two dozen, listed in the section).
+- [ ] `P2` **The listed banks' and brokers' own units: their banks in the Board's orders, their
+      broker-dealers and advisers in the SEC's cases.** Approved by the owner 2026-11-02. Batch 84's
+      open call and batch 74's Popular, Inc. row, now with the same firms' units in the case
+      captions.
+      - ✅ **The owner's calls, 2026-11-02:** (a) yes, widen the maps; (b) American Express
+        Financial Advisors' cases before the 2005 spin-off go on **both** pages — American
+        Express's, whose unit it was, and Ameriprise's, whose own record carries the name (AMP's
+        EDGAR former names "AMERICAN EXPRESS FINANCIAL ADVISORS", 1995-10-25 to 2003-03-10, and
+        "AMERICAN EXPRESS FINANCIAL CORP", to 2005-07-26); (c) Prudential Securities (2000–2003)
+        goes on Prudential Financial (PRU), not Prudential plc (PUK).
+      - **What:** rows in the release rules' map (`lib/releaseNames.ts`) and in `FED_BANKS` for the
+        Board's orders, each unit counting while the company owned it, each day read from the
+        company's filings, as batch 82 dated its banks:
+        - the own banks of batch 84's list: Regions Bank, Frost Bank, Origin Bank, Centennial Bank,
+          PlainsCapital Bank, Simmons Bank, Green Dot Bank, Five Star Bank, Equity Bank, Banco de
+          Crédito del Perú, National Westminster Bank, ING Bank, Lloyds Bank Corporate Markets;
+        - Popular's Banco Popular de Puerto Rico, Banco Popular North America and Popular
+          Securities, and Popular in `FED_BANKS` (its three enforcement actions too);
+        - the broker-dealers and advisers named after their parents: Ameriprise Financial Services,
+          FTN Financial Securities, First Horizon Advisors, BB&T Securities, Hilltop Securities,
+          Fifth Third Securities, BlackRock Advisors, NASDAQ Execution Services, Fiserv Securities,
+          Lazard Capital Markets, Oppenheimer Asset Management, U.S. Bancorp Piper Jaffray until
+          the spin-off, and the eleven others the proposal lists.
+      - **Measured** by the scout on the saved case rows: 62 company days on 24 companies, 25 before
+        2017, on no page today; with batch 84's ~25 orders and Popular's 3. About 35 map rows, ~70
+        EDGAR requests once for the days.
+      - **Refused, as the proposal found:** Reliance Financial Advisors (not RS), Southern Financial
+        Services (not SO), Seaboard Investment Advisers, Meridian Securities, and U.S. Bancorp Piper
+        Jaffray after the spin-off.
+      - Cases in `check:sec-cases`: Regions Bank's case of 2009-09-21 on RF, Fifth Third
+        Securities' of 2002-06-18 on FITB, U.S. Bancorp Piper Jaffray's of 2002-11-05 on USB and
+        its 2005-09-02 not, Ameriprise Financial Services' of 2009-07-10 on AMP, Hilltop
+        Securities' of 2016-02-02 on HTH, Nasdaq's of 2013-05-29 on NDAQ, American Express Financial
+        Advisors' of 2004-02-12 on AXP and AMP, Prudential Securities on PRU and not PUK, Reliance
+        Financial Advisors on no page; the full replay re-pinned. In `check:fed-press`: Frost
+        Bank's approval of 2019-06-20 on CFR, Popular's of 2010-04-30 on BPOP. On main the unit
+        cases fail.
+      - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
+        #4, approved 2026-11-02 with the three calls. Importance medium · Efficiency high ·
+        Practicality medium (a day per row from filings).*
+- [ ] `P2` **The Consumer Financial Protection Bureau's enforcement actions, from 2012.** A new
+      source, approved by the owner 2026-11-02: the Bureau's action list
+      (`www.consumerfinance.gov/enforcement/actions/?page=N`, 25 a page, read once) and its feed
+      (`/enforcement/actions/feed/`, the newest 25, once a day), one read for every company. Licence:
+      "Information created by the CFPB is in the public domain and you may reproduce, publish, or
+      otherwise use it without the Bureau's permission. Please consider appropriate citation to the
+      Bureau as the source." (consumerfinance.gov/privacy/website-privacy-policy/, "Legal
+      notices", read 2026-11-02). No key.
+      - ✅ **The owner's call, 2026-11-02: yes to the source.**
+      - Keep an action on a company's page when its title, which names the respondents, names the
+        company or a unit the map gives it, by the caption rule (`captionParty`); one event a
+        company a day. Registered in `SOURCES`, credited, scored without the model.
+      - **Measured** by the scout: 2012–2016 holds 164 actions, read by hand as 34 company days on
+        27 listed companies (Capital One Bank 2012, American Express's banks 2012 and 2013,
+        JPMorgan Chase Bank 2013, Bank of America and FIA Card Services 2014, Citibank 2015, the
+        four mortgage insurers of 2013-04-04, Wells Fargo Bank 2016…). About 14 match by names the
+        rules already hold; about 20 need the units above, so it builds after them. The 222
+        actions of 2017–2026 were not read.
+      - **Not their own:** Discover Bank, Sprint, Hudson City Savings Bank and Flagstar Bank (2014,
+        before today's FLG took the name), each an acquisition's past; GE Capital Retail Bank and
+        Synchrony Bank before SYF's listing of 2014-07-31, and PayPal's of 2015-05-19 before its
+        spin-off, are left to the first price.
+      - A new check on the saved list pages: Wells Fargo Bank's action of 2016-09-08 on WFC,
+        Citibank's of 2015-07-21 on C, Capital One Bank's of 2012-07-18 on COF, Discover Bank's on
+        no page, Flagstar Bank's of 2014 not on FLG, Synchrony Bank's of 2014-06-19 refused by SYF's
+        first price, a day's three American Express actions one event. On main it cannot run: the
+        adapter does not exist.
+      - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
+        #5, approved 2026-11-02 with the new source. Importance medium-low · Efficiency high ·
+        Practicality medium (the units above first).*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

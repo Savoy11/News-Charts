@@ -322,6 +322,48 @@ that no map row gives the company. A fund's series takes none (batch 85): replay
 series names in the index, the feed gives them nothing, and the case captions would have given 10
 other firms' cases. A release is a regulation event and is scored without the model.
 
+### The SEC News Digest, counted (`lib/secDigest.ts`)
+
+Not a source yet: the count the owner asked for first (2026-11-02 proposal 1). The Digest is the
+SEC's daily summary of its business from 1956 — the 8-K reports filed, registration statements,
+13D and 14D-1 filings, Holding Company and Investment Company Act orders, enforcement actions,
+listing and delisting orders — one scanned PDF an issue on yearly archive pages
+(www.sec.gov/news/digest/digarchives/digarchYYYY.shtml). `npm run digest-report -- 1985` reads one
+year's issues once, a second apart, takes each PDF's text with poppler's `pdftotext` (on the host,
+not a package), splits each issue into its entries and prints, per listed company and section, the
+rows that name it. It stores nothing.
+
+An entry is about one name as printed: a table row's company, a registration's registrant, a
+heading cut to its parties ("CLARENCE E. LONG AND JOSEPH A. LUGO ENJOINED"), or a listing order's
+item. An entry's body never names its party, so the underwriter of another company's offering and
+the parent named in its subsidiary's order are no one's entry. A row names a company when it is one
+of the company's conformed names, of two words or more and with the same registration tag if it
+carries one ("&" dropped as the 8-K lists drop it, "COMPANY" read as "CO"), or that name read back
+letter by letter through the scans' misreadings ("AIERICAI EIPRESS CO", 1990, but not "MITEL CORP"
+for Intel). A heading or item names it as a case caption names a party, and a one-word name only
+with its legal words, at the entry's head. A name another listed company has today names neither,
+and an entry two companies' names both claim that day is neither's.
+
+The names are dated. A former name counts only while the company's EDGAR record had it
+(data.sec.gov/submissions). Before EDGAR, a record counts only under the name it filed under in its
+first quarter of EDGAR's 1993–1996 company indexes, and only if EDGAR opened it by the end of 1996.
+So 1985's Chase Manhattan, BankAmerica, Wells Fargo and Chubb are not JPMorgan's, Bank of
+America's, Wells Fargo's or Chubb's records (in 1994 those were Chemical Banking, NationsBank,
+Norwest and ACE), and the McGraw-Hill of 1990 is S&P Global's, not McGraw Hill's (a 2022 record).
+`lib/predecessors.ts` adds a predecessor's names before its handover. An issue's entries on one
+company in one section are one row. Each matched company's first trading day comes from Yahoo, and
+the rows before it — today's first-price floor for every source — are counted apart.
+
+The count of 1985, the 250 issues (batch 87): 23,922 entries read, 517 naming a listed company in 508
+rows on 258 companies — 184 8-K reports, 129 registrations, 109 registrations made effective, 30
+13D or 14D-1 filings, 53 orders (most of them on utilities, under the Holding Company Act), 3 other.
+199 of the rows are under a name other than today's (Minnesota Mining & Manufacturing, FPL Group,
+New Orleans Public Service), and 50 of 50 sampled by hand were the company's own. Every name, undated,
+would have given 594 rows. Of the 86 the dates take away, 58 are on records EDGAR opened after 1996
+(Deutsche Bank's, 2002) and 28 were another company's then. The first-price floor keeps 361 of the
+508. `check:digest` replays six issues, one every five years from 1965 to 1990, against every listed
+company under its dated names.
+
 ### Source planning (`lib/enrich/plan.ts`)
 
 ```

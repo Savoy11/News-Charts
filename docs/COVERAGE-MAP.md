@@ -107,7 +107,10 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   mid-2012 to 2016 for 38 drug, device and food companies, many of them: Medtronic has 532
   recalls, 147 of them before 2017 (Philips 232 of 590, Johnson & Johnson 298 of 485). The
   Federal Reserve's enforcement actions add a few material events for large banks, 79 of their 110
-  before 2017.
+  before 2017. Before EDGAR (1993) a company's page holds little but Yahoo's dividends and splits;
+  the SEC News Digest covers 1956 to the mid-1990s and is counted, not ingested. Batch 87's count of
+  1985 found 508 rows on 258 listed companies under the names they had that year, 361 of them after
+  the first-price floor (`npm run digest-report`). Building it is the owner's call.
 - **The keyed aggregators are not ingested.** Their free tiers bar commercial use, so the
   adapters exist for diagnostics only. Even licensed, they are days-to-weeks deep: breadth for the
   present, never depth for the past.

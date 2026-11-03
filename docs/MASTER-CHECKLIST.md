@@ -988,6 +988,85 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 87: the SEC News Digest, one year counted (2026-11-03)
+
+The owner approved the Digest on 2026-11-02 with a count first (proposal 1, step 1). This batch
+builds the reader and the count, and runs it on 1985. Nothing is stored and no page changes.
+
+- [x] **The reader** (`lib/secDigest.ts`). It reads a year's archive page, turns each issue's PDF
+      into text with poppler's `pdftotext`, and splits the issue into entries. An entry is one name as
+      printed: an 8-K row, the company bought in a 13D row, a registration's registrant, a heading cut
+      to its parties, or an item of a listing order. It never takes a name from an entry's body, so an
+      underwriter of someone else's offering lands on no page.
+      - Sections are found through the scans' OCR ("RECENT 81( FILINGS"), by their opening sentence
+        where the heading was a graphic (1990), and with headings spaced wide (1975).
+      - The 1960s run-in paragraphs are read by their capitals lead-in. The 1960s two-column 8-K
+        lists, in mixed case, are not read yet (Curtiss-Wright and Wiley, 1965).
+- [x] **The name rule.**
+      - A table row must be one of the company's conformed names: two words or more, the same
+        registration tag, "&" dropped, "COMPANY" read as "CO".
+      - Failing that, a row may be that name read back letter by letter through the scans'
+        misreadings. "AIERICAI EIPRESS CO" is American Express; "MITEL CORP" is not Intel.
+      - A heading names a company as a case caption names a party. A one-word name needs its legal
+        words and must lead the heading, so "ARKANSAS POWER AND LIGHT COMPANY" is not Light S.A.'s.
+      - A name another listed company has today names neither, and an entry two companies' names
+        both claim that day is neither's.
+- [x] **The names are dated.**
+      - A former name counts only while the company's EDGAR record had it.
+      - Before EDGAR, a record counts only under the name it filed under in its first quarter of
+        EDGAR's 1993–1996 company indexes, and only if EDGAR opened it by 1996.
+      - `lib/predecessors.ts` adds a predecessor's names before its handover.
+      - This is what keeps 1985's Chase Manhattan off JPMorgan (whose record was Chemical Banking
+        then), BankAmerica off Bank of America (NationsBank), Wells Fargo off Wells Fargo (Norwest),
+        Chubb off Chubb (ACE), and 1990's McGraw-Hill off McGraw Hill (MH, a 2022 record).
+      - The first run had none of this. Read by hand, it gave 607 rows on 307 companies with these
+        errors in them. The rules above came from that reading.
+- [x] **`npm run digest-report -- <year>`.** Pass 1 finds every entry's candidates under every name
+      EDGAR lists (`cik-lookup-data.txt`, one request). Pass 2 reads each candidate's EDGAR record and
+      the 16 company indexes, and keeps an entry only under a name the company had that day. It prints
+      the rows per company and section, why each dropped row was dropped, and the rows before each
+      company's first price (Yahoo).
+- [x] **The count of 1985** (250 issues):
+      - 23,922 entries read; 517 name a listed company, in **508 rows on 258 companies**:
+        184 8-K reports, 129 registrations, 109 registrations made effective, 30 13D or 14D-1
+        filings, 53 orders (most on utilities, under the Holding Company Act), 2 enforcement
+        actions, 1 other.
+      - Grouped a row a month, the 8-K reports are 177 rows.
+      - 199 rows are under a name other than today's (Minnesota Mining & Manufacturing, FPL Group,
+        New Orleans Public Service).
+      - **50 of 50 rows sampled by hand were the company's own record.**
+      - Every name, undated, gave 594 rows. The dates took away 86: 58 on 37 records EDGAR opened
+        after 1996 (Deutsche Bank's, 2002), and 28 under a name that was another company's then.
+      - **The first-price floor keeps 361 of the 508** (147 rows on 71 companies fall before the
+        first price, many of them utility subsidiaries whose listed security is a preferred or a
+        note: Georgia Power, Entergy Arkansas).
+      - The scout's estimate was about 750 a year. Under dated names it is about 500 for 1985, or
+        360 with the floor.
+- [x] **`check:digest`** (48 checks), on six issues (1965–1990), every listed company's EDGAR names,
+      and the dated records of every company the issues' entries could be:
+      - Abbott's May 1975 8-K lands on ABT;
+      - 3M lands under Minnesota Mining & Manufacturing;
+      - Humana's S-16 lands on HUM;
+      - Hasbro's five 13D rows are one row;
+      - the 1980 underwriter is on no page;
+      - McGraw-Hill's 1990 delisting is S&P Global's, not MH's.
+      - Deutsche Bank AG's 1985 order is named by its heading but kept off DB, whose record began in
+        2002. The filed plan expected it on DB; the dates say no, as the floor would.
+      - On main it cannot run: `lib/secDigest.ts` does not exist.
+- [ ] **Owner: is the count enough to build step 2, the walk?** And three calls with it:
+      - **The first-price floor.** Keep it (361 rows in 1985) or not (508)?
+      - **Records EDGAR opened after 1996.** Keep them off their earlier years, or map them one by
+        one in `lib/predecessors.ts`? The floor alone would have kept 8 of their 58 rows in 1985:
+        ONEOK, Newmont, TDS, Comcast, Toyota, ASA.
+      - **The 1960s two-column 8-K lists.** Read them as part of step 2, or leave them?
+      - Step 2 also needs, at ingest, each company's dated names and first-quarter names. Today only
+        the day each former name stopped is stored.
+- Requests, all runs: www.sec.gov 280 (the archive page was saved by the scout; 245 issue PDFs,
+  ~173 MB; 1 retry; 7 answers of 503 in a first run that was stopped and resumed with retries; the
+  name list; 16 company indexes; 4 size checks), data.sec.gov 319 (EDGAR records), Yahoo 321 (first
+  trading days). `npm run check` and `npm run lint` pass. HawkScan cannot run here (`HAWK_API_KEY`
+  is unset).
+
 ## NC ledger — batch 86: a new opportunity-scout run, five proposals for the owner (2026-11-02)
 
 The 2026-11-01 proposals are all built (batches 80–84), and batch 85's audit findings are fixed. So
@@ -6168,6 +6247,11 @@ already held, but new investment goes to securities coverage first.
       dividends and splits and a few EDGAR filings (IBM's 1963–1993 is 127 events, every one a
       dividend or split); the Digest is the SEC's daily summary of the same business before that.
       - ✅ **The owner's call, 2026-11-02: yes to the source, with the count first.**
+      - ✅ **Step 1 done in batch 87:** `npm run digest-report -- 1985` counted 508 rows on 258
+        listed companies, all under the names their EDGAR records had that day. 361 remain after
+        the first-price floor; 50 of 50 sampled rows were right. The count read ~173 MB, not ~140.
+        The dated names keep Deutsche Bank AG's order (IC-14293) off DB, whose record began in 2002.
+        Step 2 waits on the owner's read of the count; see batch 87's ledger section.
       - What an issue holds, from six read by the scout (1965–1990): enforcement actions with their
         release numbers; Holding Company and Investment Company Act orders (Deutsche Bank AG's
         IC-14293, 1985); Securities Act registrations by registrant; the 8-K reports filed, by

@@ -1,7 +1,7 @@
 import type { PoolClient } from "pg";
 import { withoutTag } from "../edgarName";
 import { companyNames } from "../frCompany";
-import { isNotesRecord, releaseNamesOn } from "../releaseNames";
+import { isNotesRecord, releaseNamesBefore, releaseNamesOn } from "../releaseNames";
 import { monthsToReread } from "../listingGaps";
 import { CASE_LISTINGS, SEC_CASES_FROM, SEC_CASES_PAGE_SIZE, caseKey, fetchCasePage, secCaseEvents, type CaseListing, type CasePage, type SecCase } from "../secCases";
 import type { FetchResult } from "../types";
@@ -233,7 +233,12 @@ export async function secCasesFor(client: PoolClient, subjectId: number, plan: P
   if (isNotesRecord(plan.cik)) return failed ? { events: [], ...failed } : { events: [], outcome: "empty", detail: "a bank's notes record: its cases are its group's page's" };
   const { listed, namesIn } = await partyNamesFor(client, subjectId, plan);
   if (!listed) return failed ? { events: [], ...failed } : NO_PRICES();
-  const events = secCaseEvents(await storedSecCases(client), namesIn, { cik: plan.cik, from: listed, namesOn: (day) => releaseNamesOn(plan.cik, day) });
+  const events = secCaseEvents(await storedSecCases(client), namesIn, {
+    cik: plan.cik,
+    from: listed,
+    namesOn: (day) => releaseNamesOn(plan.cik, day),
+    namesBefore: (day) => releaseNamesBefore(plan.cik, day),
+  });
   if (failed) return { events, ...failed };
   return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
 }

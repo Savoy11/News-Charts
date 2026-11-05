@@ -197,7 +197,10 @@ that was not about the company. A release is a regulation event and is scored wi
 The SEC releases' map of a bank's units is read here too (`lib/releaseNames.ts`, batch 82): the
 units are asked for whatever their days, and a release counts only inside them — Wachovia Bank's
 2011 admission is Wells Fargo's, and the record $13 billion settlement "with JPMorgan" of 2013
-JPMorgan's. A bank's notes record is asked nothing. A name under five characters stands in for no
+JPMorgan's. As the other release rules read, a release counts only from the company's first price
+(batch 90): Citizens Republic Bancorp's settlement of 2011 with its own Citizens Bank is not Citizens
+Financial Group's, listed in 2014, and a company with no prices yet is asked again on the next run.
+A bank's notes record is asked nothing. A name under five characters stands in for no
 longer one when the API is asked, since its ask stops at one page when crowded.
 
 ### SEC press releases (`lib/secPress.ts`)
@@ -238,15 +241,20 @@ Franklin Advisers, KeyBanc Capital Markets, U.S. Bancorp Piper Jaffray until its
 of 2003…), each bought or sold one between the days its filings give, read through EDGAR's full-text
 search. American Express Financial Advisors' cases before the 2005 spin-off are on both American
 Express's and Ameriprise's pages, and Prudential Securities' on Prudential Financial's, the owner's
-calls. Lazard Capital Markets was LFCM Holdings', not Lazard's, and Fiserv Securities' case of 2005
+calls; those two units are the only names read before their company's first price (`beforeListing`,
+batch 90), so the case of 2004-02-12 reaches Ameriprise, listed 2005-09-15, and Prudential
+Securities' three of 2000–2001 reach Prudential, listed 2001-12-13. Lazard Capital Markets was LFCM Holdings', not Lazard's, and Fiserv Securities' case of 2005
 came after Fiserv sold it: neither is on a page. Batch 89 added the units the Consumer Financial
-Protection Bureau charges, 22 more companies' and seven names for banks already mapped: Capital One
+Protection Bureau charges, 22 more companies' and ten names for six banks already mapped: Capital One
 Bank, American Express Centurion Bank, U.S. Bank National Association, Chase Bank USA, CitiMortgage,
 Goldman Sachs Bank USA, the mortgage insurers (MGIC's, Genworth's, Radian's, Old Republic's and AIG's
 United Guaranty until its sale at the end of 2016), Toyota's and Honda's US lenders, Verizon
 Wireless, National City Bank on PNC's page from its purchase on 2008-12-31, and OneMain's from
 2015-11-15; they add TD Bank's SEC case and press release of 2013 and U.S. Bank's own SEC order of
-2005. Read against every company
+2005. Batch 90 added four more companies', which the Bureau's titles name and their own filings
+list: Mastercard International, Conduent Business Services and Conduent Education Services,
+Sterling Jewelers (from Signet's first filing that names it, 2003-04-24) and Acima (Upbound's from
+2021-02-17). Read against every company
 in the index under its current names, 264 of the 6,897 stored releases land on 127 companies, 160 of
 them before 2017 (Bank of America 28, Morgan Stanley 18, Citigroup 14, JPMorgan 13, UBS Group 12,
 Wells Fargo 10, Goldman Sachs 9, Deutsche Bank 7), each read by hand (batch 78, after the 2026-10-30
@@ -355,13 +363,19 @@ its name, or its legal name with legal words after it, or a unit the release rul
 since the Bureau charges the bank, not its holding company ("Capital One Bank", 2012-07-18). The
 Bureau's "dba" and "d/ba/" are read as "d/b/a". A company's actions of a day make one event
 (American Express's three of 2012-10-01). Read against every company in the index under its current
-names, the 386 actions give 87 company days on 46 companies, 35 before 2017 (Bank of America, Wells
+names, the 386 actions give 92 company days on 50 companies, 35 before 2017 (Bank of America, Wells
 Fargo and Citigroup 6 each, JPMorgan 5, U.S. Bancorp 4), each read by hand; without batch 89's
-units they gave 44 on 21. Not their own, and on no page: Discover Bank's, Hudson City Savings
-Bank's and Sprint's, each an acquisition's past; Flagstar Bank, F.S.B.'s of 2014, before today's
-FLG took the name; the tax-refund lender "formerly d/b/a H&R Block" (by CIK, `NOT_THE_COMPANY`); and
-Synchrony Bank's of 2014-06-19 and PayPal's of 2015-05-19, before each company's first price.
-`check:cfpb` replays every action against every company and fund series and pins the count. Public
+units they gave 44 on 21, and batch 90 added Mastercard International, Conduent's two units,
+Sterling Jewelers and Acima (from its purchase on 2021-02-17). Ingest reads a company's actions from
+its first price on, so 87 of them reach a page, on 45 companies, 31 before 2017; the five before
+their company's first price are Ally's of 2013-12-20, Chime's of 2024-05-07, PayPal's of 2015-05-19,
+Santander Holdings USA's of 2016-07-14 and Synchrony Bank's of 2014-06-19. Not their own, and on no
+page: Discover Bank's, Hudson City Savings Bank's and Sprint's, each an acquisition's past; Flagstar
+Bank, F.S.B.'s of 2014, before today's FLG took the name; and the tax-refund lender "formerly d/b/a
+H&R Block" (by CIK, `NOT_THE_COMPANY`). GE Capital Retail Bank's two (2013 and 2014) are on no page
+either: whether they are GE's is the ownership call the proposal left to the owner, with PayPal's of
+2015 on eBay's. `check:cfpb` replays every action against every company and fund series, and pins
+both counts with each company's first trading day. Public
 domain, cited to the Bureau; no key. An action is a regulation event and is scored without the
 model.
 

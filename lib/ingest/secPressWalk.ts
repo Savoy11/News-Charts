@@ -1,7 +1,7 @@
 import { monthsToReread } from "../listingGaps";
 import type { PoolClient } from "pg";
 import { companyNames } from "../frCompany";
-import { isNotesRecord, releaseNamesOn } from "../releaseNames";
+import { isNotesRecord, releaseNamesBefore, releaseNamesOn } from "../releaseNames";
 import { SEC_PRESS_FROM, SEC_PRESS_PAGE_SIZE, fetchListingPage, releaseKey, secPressEvents, type ListingPage, type SecRelease } from "../secPress";
 import type { FetchResult } from "../types";
 import { namesForYear, storedFormerNames } from "./frBackfill";
@@ -226,6 +226,12 @@ export const FUND_SERIES = (): FetchResult => ({ events: [], outcome: "empty", d
  */
 export const NO_PRICES = (): FetchResult => ({ events: [], outcome: "error", detail: "no prices to start from: asked again on the next run" });
 
+/** The company's first price, the day the release rules read it from, or null before it has one. */
+export async function firstPriceDay(client: PoolClient, subjectId: number): Promise<string | null> {
+  const { rows } = await client.query<{ listed: string | null }>("SELECT min(on_date)::text AS listed FROM prices WHERE subject_id = $1", [subjectId]);
+  return rows[0]?.listed ?? null;
+}
+
 /**
  * The company's SEC releases: the walk first, then every kept release whose headline makes it the
  * party under the names it had that year, from its first price on — as the Federal Register walk
@@ -262,6 +268,7 @@ export async function secPressFor(
     (year) => [...companyNames(plan.edgarName, namesForYear(year, plan.alsoKnownAs, former)), ...own],
     listed,
     plan.cik === undefined ? undefined : (day) => releaseNamesOn(plan.cik!, day),
+    plan.cik === undefined ? undefined : (day) => releaseNamesBefore(plan.cik!, day),
   );
   if (failure) return { events, outcome: failure.outcome, httpStatus: failure.httpStatus, detail: failure.detail };
   return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };

@@ -242,6 +242,32 @@ async function main(): Promise<void> {
   check("  …neither under the bank's own names alone", dojEvents(units, namesOf("WFC")).length === 0 && dojEvents(units, namesOf("JPM")).length === 0);
   check("  …nor before the purchase: the same Wachovia release dated 2008-12-30",
     dojEvents([{ ...units[0], date: String(Date.UTC(2008, 11, 30, 12) / 1000) }], namesOf("WFC"), (day) => releaseNamesOn(72971, day)).length === 0);
+  /**
+   * Batch 90, the 2026-11-05 audit's finding 1: the Justice step read no first price, so batch 89's
+   * "Citizens Bank" unit gave CFG another bank's settlement of 2011. Every release the title filter
+   * "Citizens Bank" returned on 2026-11-05.
+   */
+  const cfgRows = fixture.CFG.releases;
+  const cfgOn = (day: string) => releaseNamesOn(759944, day);
+  const settlement = dojEvents(cfgRows, namesOf("CFG"), cfgOn);
+  check("CFG's unit \"Citizens Bank\" reads Citizens Republic Bancorp's lending settlement of 2011-05-05 as a party, of the 25 releases the filter returns — the robberies and tellers aside",
+    cfgRows.length === 25 && settlement.map((e) => e.date).join(",") === "2011-05-05" && /Citizens Republic Bancorp/.test(settlement[0]?.title ?? ""),
+    settlement.map((e) => `${e.date} ${e.title.slice(0, 60)}`).join(" · "));
+  check("  …and from CFG's first price, 2014-09-24, as the other release rules read, it is not CFG's",
+    dojEvents(cfgRows, namesOf("CFG"), cfgOn, "2014-09-24").length === 0 && dojEvents(units, namesOf("WFC"), (day) => releaseNamesOn(72971, day), "1972-06-01").length === 1);
+  let floorAsked = 0;
+  try {
+    globalThis.fetch = (async () => {
+      floorAsked++;
+      return new Response(JSON.stringify({ results: cfgRows, metadata: { resultset: { count: cfgRows.length } } }), { status: 200 });
+    }) as typeof fetch;
+    const floored = await fetchJusticeReleases("CITIZENS FINANCIAL GROUP INC/RI", newsNamesFor(759944), "", 759944, { from: "2014-09-24" });
+    const unfloored = await fetchJusticeReleases("CITIZENS FINANCIAL GROUP INC/RI", newsNamesFor(759944), "", 759944);
+    check("  …through the fetch too: from its first price the step keeps none of them",
+      floored.outcome === "empty" && floored.events.length === 0 && unfloored.events.length === 1 && floorAsked > 0);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
   const ubsOn = (day: string) => releaseNamesOn(1610520, day);
   check("Credit Suisse's $5.28 billion settlement of 2017 is UBS Group's no more than it was before UBS bought Credit Suisse on 2023-06-12",
     dojEvents(units, namesOf("UBS"), ubsOn).length === 0);
@@ -285,7 +311,10 @@ async function main(): Promise<void> {
   const ingest = read("scripts/ingest.ts");
   check("company ingest asks for the company's releases under its names, its possessive and its units (batch 82), and a fund's series asks nothing (batch 85)",
     (COMPANY_SOURCES as readonly string[]).includes("doj_press") &&
-      /const fundSeries = fundSeriesId\(company\.ticker\) !== null;\s*await run\("doj_press", justiceQueryNames\(company\.name, alsoKnownAs, possessive, company\.cik\)\.join\(" \| "\), async \(\) =>\s*fundSeries \? FUND_SERIES\(\) : fetchJusticeReleases\(company\.name, alsoKnownAs, possessive, company\.cik\)/.test(ingest));
+      /const fundSeries = fundSeriesId\(company\.ticker\) !== null;\s*await run\("doj_press", justiceQueryNames\(company\.name, alsoKnownAs, possessive, company\.cik\)\.join\(" \| "\), async \(\) => \{\s*if \(fundSeries\) return FUND_SERIES\(\);/.test(ingest));
+  check("  …from its first price, read after its prices, and asked again next run while it has none (batch 90)",
+    /const listed = isNotesRecord\(company\.cik\) \? "" : await firstPriceDay\(client, subjectId\);\s*if \(listed === null\) return NO_PRICES\(\);\s*return fetchJusticeReleases\(company\.name, alsoKnownAs, possessive, company\.cik, \{ from: listed \}\);/.test(ingest) &&
+      ingest.indexOf('await run("doj_press"') > ingest.indexOf("await companyPrices("));
   check("the Justice Department is credited where the other sources are",
     /press releases from the\s+U\.S\. Department of Justice/.test(read("app/layout.tsx")) &&
       /press releases from\s+the U\.S\. Department of Justice/.test(read("app/legal/terms/page.tsx")) &&

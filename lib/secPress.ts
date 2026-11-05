@@ -200,19 +200,22 @@ export function secReleaseNamesParty(title: string, names: readonly string[]): b
  * the day they stopped, as the Federal Register walk counts them (`namesForYear`) — and a
  * release from before `from`, the company's first price, is not its. `namesOn(day)` gives the
  * names a release of that day may add: the units the company then owned (`releaseNamesOn`, batch
- * 82), Merrill Lynch from 2009-01-01 for Bank of America.
+ * 82), Merrill Lynch from 2009-01-01 for Bank of America. Before `from` only the units
+ * `namesBefore(day)` gives count (`releaseNamesBefore`, the owner's calls b and c, batch 90).
  */
 export function secPressEvents(
   releases: readonly SecRelease[],
   namesIn: (year: number) => string[],
   from = "",
   namesOn?: (day: string) => string[],
+  namesBefore?: (day: string) => string[],
 ): TimelineEvent[] {
   const byYear = new Map<number, string[]>();
   const names = (year: number) => byYear.get(year) ?? byYear.set(year, namesIn(year)).get(year)!;
-  const on = (day: string) => (namesOn ? [...names(Number(day.slice(0, 4))), ...namesOn(day)] : names(Number(day.slice(0, 4))));
+  const on = (day: string) =>
+    day < from ? (namesBefore?.(day) ?? []) : namesOn ? [...names(Number(day.slice(0, 4))), ...namesOn(day)] : names(Number(day.slice(0, 4)));
   return releases
-    .filter((r) => r.day >= from && /^https:\/\/www\.sec\.gov\//.test(r.url) && secReleaseNamesParty(r.title, on(r.day)))
+    .filter((r) => /^https:\/\/www\.sec\.gov\//.test(r.url) && (r.day >= from || !!namesBefore) && secReleaseNamesParty(r.title, on(r.day)))
     .sort((a, b) => b.day.localeCompare(a.day) || b.number.localeCompare(a.number))
     .map((r) => ({
       id: `sec-press-${r.number}-${r.day}`,

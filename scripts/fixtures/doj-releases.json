@@ -1050,6 +1050,312 @@
    }
   ]
  },
+ "CFG": {
+  "edgar": "CITIZENS FINANCIAL GROUP INC/RI",
+  "note": "Read from justice.gov's API on 2026-11-05 for batch 90 (the 2026-11-05 audit's finding 1): every release the title filter \"Citizens Bank\" returned, 25, one page, the unit batch 89 gave CFG. Citizens Republic Bancorp's settlement of 2011-05-05 is its own bank's, three years before CFG's first price of 2014-09-24.",
+  "releases": [
+   {
+    "title": "Two Brothers Sentenced to Prison for Multi-District Scheme to Defraud the United States Postal Service, UPS, and Citizens Bank",
+    "date": "1710763200",
+    "url": "https://www.justice.gov/usao-edpa/pr/two-brothers-sentenced-prison-multi-district-scheme-defraud-united-states-postal-0",
+    "teaser": "",
+    "uuid": "08aa6c74-971d-47ed-acdb-95516d9f4dd6",
+    "component": [
+     {
+      "name": "USAO - Pennsylvania, Eastern"
+     }
+    ]
+   },
+   {
+    "title": "Three Brothers Convicted of Multi-District Scheme to Defraud the United States Postal Service, UPS and Citizens Bank",
+    "date": "1683633600",
+    "url": "https://www.justice.gov/usao-edpa/pr/three-brothers-convicted-multi-district-scheme-defraud-united-states-postal-service",
+    "teaser": "",
+    "uuid": "aa30af58-5854-4f94-b654-a7845013ea10",
+    "component": [
+     {
+      "name": "USAO - Pennsylvania, Eastern"
+     }
+    ]
+   },
+   {
+    "title": "Putnam County Man Sentenced for Defrauding Elderly Citizens and Local Bank",
+    "date": "1650888000",
+    "url": "https://www.justice.gov/usao-sdwv/pr/putnam-county-man-sentenced-defrauding-elderly-citizens-and-local-bank",
+    "teaser": "",
+    "uuid": "33b3cd68-e6eb-4424-86c8-607e484e2a84",
+    "component": [
+     {
+      "name": "USAO - West Virginia, Southern"
+     }
+    ]
+   },
+   {
+    "title": "Putnam County Man Pleads Guilty to Defrauding Elderly Citizens and Local Bank",
+    "date": "1642593600",
+    "url": "https://www.justice.gov/usao-sdwv/pr/putnam-county-man-pleads-guilty-defrauding-elderly-citizens-and-local-bank",
+    "teaser": "",
+    "uuid": "3f0f35f4-8021-4ba4-9350-9592dd3091a5",
+    "component": [
+     {
+      "name": "USAO - West Virginia, Southern"
+     }
+    ]
+   },
+   {
+    "title": "Russian Bank Founder Sentenced For Evading Exit Tax Upon Renouncing U.S. Citizenship",
+    "date": "1635508800",
+    "url": "https://www.justice.gov/usao-ndca/pr/russian-bank-founder-sentenced-evading-exit-tax-upon-renouncing-us-citizenship",
+    "teaser": "",
+    "uuid": "aedde99a-69bb-4819-b063-767480169852",
+    "component": [
+     {
+      "name": "USAO - California, Northern"
+     }
+    ]
+   },
+   {
+    "title": "Founder of Russian Bank Sentenced for Felony Tax Conviction Arising from Scheme to Evade Exit Tax while Renouncing his U.S. Citizenship",
+    "date": "1635508800",
+    "url": "https://www.justice.gov/archives/opa/pr/founder-russian-bank-sentenced-felony-tax-conviction-arising-scheme-evade-exit-tax-while",
+    "teaser": "<p>The founder of a Russian bank was sentenced today for his felony conviction for filing a false tax return. As required under his plea agreement, prior to sentencing, Oleg Tinkov, aka Oleg Tinkoff, paid $508,936,184, more than double what he had sought to escape paying to the U.S. Treasury through a scheme to renounce his U.S. citizenship and conceal from the IRS large stock gains that he knew were reportable. This includes $248,525,339 in taxes, statutory interest on that tax and a nearly $100 million fraud penalty. Tinkov was additionally fined $250,000, which is the maximum allowed by sta",
+    "uuid": "4d5ece67-4baa-4dfa-8362-69500f9663dc",
+    "component": [
+     {
+      "name": "Tax Division"
+     }
+    ]
+   },
+   {
+    "title": "Three Brothers Charged in Multi-District Scheme to Defraud the United States Postal Service, UPS, and Citizens Bank",
+    "date": "1632398400",
+    "url": "https://www.justice.gov/usao-edpa/pr/three-brothers-charged-multi-district-scheme-defraud-united-states-postal-service-ups",
+    "teaser": "",
+    "uuid": "72e5acd6-565c-43f8-ad3a-f578cf3ae46c",
+    "component": [
+     {
+      "name": "USAO - Pennsylvania, Eastern"
+     }
+    ]
+   },
+   {
+    "title": "“Happy Holidays” Bank Robber Pleads Guilty in Armed Heist of Citizens Bank in Crafton",
+    "date": "1561550400",
+    "url": "https://www.justice.gov/usao-wdpa/pr/happy-holidays-bank-robber-pleads-guilty-armed-heist-citizens-bank-crafton",
+    "teaser": "",
+    "uuid": "9309ab80-02d5-42ab-a568-90144bd3a20b",
+    "component": [
+     {
+      "name": "USAO - Pennsylvania, Western"
+     }
+    ]
+   },
+   {
+    "title": "Two Cuban Citizens Indicted For Conspiracy To Commit Bank Fraud And Bank Fraud",
+    "date": "1548676800",
+    "url": "https://www.justice.gov/usao-mdfl/pr/two-cuban-citizens-indicted-conspiracy-commit-bank-fraud-and-bank-fraud",
+    "teaser": "<p>Orlando, Florida – On January 4, 2019, United States Attorney Maria Chapa Lopez announced the return of an indictment charging Catiel Marquez Gonzalez (21) and Yeran Antigua Martinez (37), citizens of Cuba, with conspiracy to commit bank fraud. The indictment also charges Marquez Gonzalez with three substantive counts of bank fraud and Antigua Martinez with eight substantive counts of bank fraud. If convicted, each faces a maximum penalty of 30 years in federal prison on each count.</p>\n",
+    "uuid": "3c9daddb-a366-47b9-bb88-c1dafa00bab1",
+    "component": [
+     {
+      "name": "USAO - Florida, Middle"
+     }
+    ]
+   },
+   {
+    "title": "Two Charged following Armed Robbery of Citizens Bank in Crafton",
+    "date": "1543492800",
+    "url": "https://www.justice.gov/usao-wdpa/pr/two-charged-following-armed-robbery-citizens-bank-crafton",
+    "teaser": "",
+    "uuid": "d88e487d-aa28-492e-9d57-2d17d2255feb",
+    "component": [
+     {
+      "name": "USAO - Pennsylvania, Western"
+     }
+    ]
+   },
+   {
+    "title": "Burbank Man Who Allegedly Led Prescription Drug Ring Arrested on New Charges of Fraudulently Procuring U.S. Citizenship",
+    "date": "1533643200",
+    "url": "https://www.justice.gov/usao-cdca/pr/burbank-man-who-allegedly-led-prescription-drug-ring-arrested-new-charges-fraudulently",
+    "teaser": "<p>A Burbank man who operated a string of allegedly sham medical clinics – and who already faces federal charges of using the clinics to orchestrate a massive narcotics scheme – was arrested today on new charges that he unlawfully procured United States citizenship.</p>\n",
+    "uuid": "32f872c6-7beb-4fba-9e3e-cf754ef96f89",
+    "component": [
+     {
+      "name": "USAO - California, Central"
+     }
+    ]
+   },
+   {
+    "title": "Mount Oliver Man Admits Robbing PNC Bank in Homestead, Citizens Bank in Monroeville",
+    "date": "1528459200",
+    "url": "https://www.justice.gov/usao-wdpa/pr/mount-oliver-man-admits-robbing-pnc-bank-homestead-citizens-bank-monroeville",
+    "teaser": "",
+    "uuid": "04ca9a24-d17d-43ca-8c7a-cb90ecc526cb",
+    "component": [
+     {
+      "name": "USAO - Pennsylvania, Western"
+     }
+    ]
+   },
+   {
+    "title": "Justice Department Seeks to Revoke Citizenship of Convicted Felons Who Conspired to Defraud U.S. Export-Import Bank of More Than $24 Million",
+    "date": "1525780800",
+    "url": "https://www.justice.gov/archives/opa/pr/justice-department-seeks-revoke-citizenship-convicted-felons-who-conspired-defraud-us-export",
+    "teaser": "<p>The Justice Department today filed denaturalization lawsuits against two individuals convicted of conspiring to defraud the United States Export-Import Bank (“Ex-Im Bank”) of more than $24 million, conduct they allegedly concealed during their naturalization proceedings. The civil complaints were filed in federal court in the Southern District of Florida.</p>\n",
+    "uuid": "ea38b126-5c3e-4081-b3db-8eb60a5bb435",
+    "component": [
+     {
+      "name": "Civil Division"
+     }
+    ]
+   },
+   {
+    "title": "Pittsburgh Man Admits Defrauding Citizens and First Niagara Banks",
+    "date": "1476964800",
+    "url": "https://www.justice.gov/usao-wdpa/pr/pittsburgh-man-admits-defrauding-citizens-and-first-niagara-banks",
+    "teaser": "",
+    "uuid": "0dc5b8af-69b1-43d3-8f47-e36adff7a08a",
+    "component": [
+     {
+      "name": "USAO - Pennsylvania, Western"
+     }
+    ]
+   },
+   {
+    "title": "Overland Park Couple Arrested In Bank Fraud, Citizenship Fraud Case ",
+    "date": "1463572800",
+    "url": "https://www.justice.gov/usao-ks/pr/overland-park-couple-arrested-bank-fraud-citizenship-fraud-case",
+    "teaser": "",
+    "uuid": "11013a17-7038-4355-894a-5ac959700b5a",
+    "component": [
+     {
+      "name": "USAO - Kansas"
+     }
+    ]
+   },
+   {
+    "title": "Former Citizens Bank Branch Manager Facing Federal Fraud Charges",
+    "date": "1447934400",
+    "url": "https://www.justice.gov/usao-wdpa/pr/former-citizens-bank-branch-manager-facing-federal-fraud-charges",
+    "teaser": "",
+    "uuid": "f9bd27ae-fcab-400b-9cac-77c0f4adf393",
+    "component": [
+     {
+      "name": "USAO - Pennsylvania, Western"
+     }
+    ]
+   },
+   {
+    "title": "Former New York State Assemblywoman Sentenced In Manhattan Federal Court For Citizenship And Bankruptcy Fraud Schemes",
+    "date": "1412337600",
+    "url": "https://www.justice.gov/usao-sdny/pr/former-new-york-state-assemblywoman-sentenced-manhattan-federal-court-citizenship-and",
+    "teaser": "",
+    "uuid": "af06069e-87dc-4c94-9d51-f8480c466455",
+    "component": [
+     {
+      "name": "USAO - New York, Southern"
+     }
+    ]
+   },
+   {
+    "title": "Manhattan U.S. Attorney Announces Guilty Plea Of New York State Assemblywoman To Citizenship And Bankruptcy Fraud Schemes",
+    "date": "1403870400",
+    "url": "https://www.justice.gov/usao-sdny/pr/manhattan-us-attorney-announces-guilty-plea-new-york-state-assemblywoman-citizenship",
+    "teaser": "",
+    "uuid": "825df652-08d3-4dd3-92b7-23ab185b1f85",
+    "component": [
+     {
+      "name": "USAO - New York, Southern"
+     }
+    ]
+   },
+   {
+    "title": "Bank Employee Sentenced For Embezzling From Senior Citizens’ Accounts",
+    "date": "1399550400",
+    "url": "https://www.justice.gov/usao-sdoh/pr/bank-employee-sentenced-embezzling-senior-citizens-accounts",
+    "teaser": "",
+    "uuid": "834046f2-5fdb-4a9a-ba43-66642ead31e6",
+    "component": [
+     {
+      "name": "USAO - Ohio, Southern"
+     }
+    ]
+   },
+   {
+    "title": "Judge Sentences Tarentum Woman To 3 Years In Prison For Defrauding Citizens Bank",
+    "date": "1393934400",
+    "url": "https://www.justice.gov/usao-wdpa/pr/judge-sentences-tarentum-woman-3-years-prison-defrauding-citizens-bank",
+    "teaser": "",
+    "uuid": "8611ec75-9ade-465e-9f12-45e38526b6fd",
+    "component": [
+     {
+      "name": "USAO - Pennsylvania, Western"
+     }
+    ]
+   },
+   {
+    "title": "Former Citizens Bank Teller Sentenced For Embezzlement",
+    "date": "1368014400",
+    "url": "https://www.justice.gov/usao-ma/pr/former-citizens-bank-teller-sentenced-embezzlement",
+    "teaser": "",
+    "uuid": "d419ddd3-4a5f-4884-bfc5-4fb2f937167e",
+    "component": [
+     {
+      "name": "USAO - Massachusetts"
+     }
+    ]
+   },
+   {
+    "title": "Woman Sentenced For Her Role In Hold-up Of Citizens Bank In Hutchinson",
+    "date": "1366113600",
+    "url": "https://www.justice.gov/usao-mn/pr/woman-sentenced-her-role-hold-citizens-bank-hutchinson",
+    "teaser": "",
+    "uuid": "c74169b0-8218-45c2-88be-7c4a48ffad2d",
+    "component": [
+     {
+      "name": "USAO - Minnesota"
+     }
+    ]
+   },
+   {
+    "title": "Las Cruces Man Sentenced to Fifty-One Months in Prison for Robbing Citizens Bank of Las Cruces in August 2010",
+    "date": "1360584000",
+    "url": "https://www.justice.gov/usao-nm/pr/las-cruces-man-sentenced-fifty-one-months-prison-robbing-citizens-bank-las-cruces-august",
+    "teaser": "",
+    "uuid": "ef190117-7798-4dcf-b680-30b7f760afc3",
+    "component": [
+     {
+      "name": "USAO - New Mexico"
+     }
+    ]
+   },
+   {
+    "title": "Former Citizens Bank Teller Pleads Guilty To Embezzlement",
+    "date": "1357905600",
+    "url": "https://www.justice.gov/usao-ma/pr/former-citizens-bank-teller-pleads-guilty-embezzlement",
+    "teaser": "",
+    "uuid": "84944a14-7333-4565-8822-c53dac2560a0",
+    "component": [
+     {
+      "name": "USAO - Massachusetts"
+     }
+    ]
+   },
+   {
+    "title": "Justice Department Reaches Settlement with Citizens Republic Bancorp Inc. and Citizens Bank Regarding Alleged Lending Discrimination in Detroit",
+    "date": "1304596800",
+    "url": "https://www.justice.gov/archives/opa/pr/justice-department-reaches-settlement-citizens-republic-bancorp-inc-and-citizens-bank",
+    "teaser": "<p>Citizens Republic Bancorp Inc. (CRBC) and Citizens Bank of Flint, Mich., will open a loan production office in an African-American neighborhood in Detroit, invest approximately $3.6 million in Wayne County, Mich., and take other steps as part of a settlement to resolve allegations that they engaged in a pattern or practice of discrimination on the basis of race and color.</p>\n",
+    "uuid": "8fe4f9be-ac20-43b0-8b51-42c473947960",
+    "component": [
+     {
+      "name": "Civil Rights Division"
+     }
+    ]
+   }
+  ]
+ },
  "BANK_UNITS": {
   "edgar": "",
   "note": "Read from justice.gov's API on 2026-11-01 for batch 82: a unit's release on its bank's page from the day the bank bought it, and Credit Suisse's on no page",

@@ -249,15 +249,35 @@ const newAction = (n: number): CfpbAction => ({ day: "2025-09-01", path: `/enfor
     !on("HRB", "2015-04-14") && !!cfpbEvents(actions.filter((a) => a.day === "2015-04-14"), namesOf("HRB"), { cik: 1 }).length &&
       !on("TMUS", "2014-12-17") && !on("PYPL", "2015-05-19", { from: "2015-07-06" }));
 
+  // batch 90, the 2026-11-05 audit's finding 3: units the companies' own filings list, which no
+  // name matched
+  check("batch 90's units: Mastercard International's of 2017-02-01 on MA, Conduent's two of 2017-11-20 and 2019-05-01 on CNDT, Sterling Jewelers' of 2019-01-16 on SIG, Acima's of 2024-07-26 on UPBD — and none of them without the units",
+    [["MA", "2017-02-01"], ["CNDT", "2017-11-20"], ["CNDT", "2019-05-01"], ["SIG", "2019-01-16"], ["UPBD", "2024-07-26"]].every(([t, d]) => !!on(t, d) && !on(t, d, { units: false })));
+  const acima = actions.find((a) => a.path === "/enforcement/actions/acima-allred/")!;
+  check("  …Acima only from its purchase on 2021-02-17, and GE Capital Retail Bank's two left off GE, the ownership call the proposal left to the owner",
+    cfpbEvents([{ ...acima, day: "2021-02-16" }], namesOf("UPBD"), { cik: 933036, namesOn: (d) => releaseNamesOn(933036, d) }).length === 0 &&
+      !on("GE", "2013-12-10") && !on("GE", "2014-06-19") && RELEASE_NAMES[933036].names.every((n) => n.from === "2021-02-17"));
+
   console.log("\nEvery saved action against every company and every fund series");
   const days = replayed.companies.flatMap(([, e]) => e);
-  check("the 386 actions give 87 company days on 46 companies, 35 before 2017 (44 on 21, 13 before 2017, without batch 89's units), and no fund series takes one",
-    days.length === 87 && replayed.companies.length === 46 && days.filter((e) => e.date < "2017").length === 35 && replayed.funds.length === 0,
+  check("the 386 actions give 92 company days on 50 companies, 35 before 2017 (87 on 46 before batch 90's units, 44 on 21 without batch 89's), and no fund series takes one",
+    days.length === 92 && replayed.companies.length === 50 && days.filter((e) => e.date < "2017").length === 35 && replayed.funds.length === 0,
     `${days.length} on ${replayed.companies.length}, ${days.filter((e) => e.date < "2017").length} before 2017, funds ${replayed.funds.length}, in ${replayMs} ms`);
   const counts = Object.fromEntries(replayed.companies.map(([t, e]) => [t, e.length]));
   const pinned: Record<string, number> = { BAC: 6, WFC: 6, C: 6, JPM: 5, USB: 4, AXP: 3, FITB: 3, EFX: 3, TRU: 3, SAN: 3 };
   check("  …Bank of America, Wells Fargo and Citigroup 6 each, JPMorgan 5, U.S. Bancorp 4, American Express, Fifth Third, Equifax, TransUnion and Santander 3",
     Object.entries(pinned).every(([t, n]) => counts[t] === n), JSON.stringify(Object.fromEntries(Object.keys(pinned).map((t) => [t, counts[t]]))));
+  // Ingest reads a company's actions from its first price on (`cfpbFor`), which the replay sets
+  // aside. Each company's first trading day, as Yahoo's firstTradeDate gave it (read 2026-11-05;
+  // batch 90, the 2026-11-05 audit's finding 2).
+  const FIRST_PRICES: Record<string, string> = { AAPL: "1980-12-12", ACIW: "1995-02-24", AIG: "1973-01-02", ALLY: "2014-01-28", AUB: "1993-10-06", AXP: "1972-06-01", BAC: "1973-02-21", C: "1977-01-03", CACC: "1992-06-05", CFG: "2014-09-24", CHYM: "2025-06-12", CNDT: "2016-12-13", COF: "1994-11-16", ECPG: "1999-07-09", EFX: "1980-03-17", ENVA: "2014-11-13", EZPW: "1991-08-27", FCFS: "1991-06-10", FITB: "1980-03-17", GNW: "2004-05-25", GS: "1999-05-04", HMC: "1980-03-17", JPM: "1980-03-17", MA: "2006-05-25", MTB: "1980-03-17", MTG: "1991-08-07", NAVI: "2014-04-17", OMF: "2013-10-16", ORI: "1980-03-17", PNC: "1975-11-17", PRAA: "2002-11-08", PYPL: "2015-07-06", RDN: "1992-10-30", RF: "1980-03-17", RKT: "2020-08-06", SAN: "1987-07-30", SIG: "1988-07-14", "SNUS-PI": "2026-08-28", SYF: "2014-07-31", TD: "1996-08-30", TM: "1980-03-17", TRMK: "1980-03-17", TRU: "2015-06-25", UPBD: "1995-01-25", USB: "1973-05-03", VZ: "1983-11-21", WAFD: "1982-11-09", WFC: "1972-06-01", WMT: "1972-08-25", XYZ: "2015-11-19" };
+  const onPage = replayed.companies.map(([t, e]) => [t, e.filter((x) => x.date >= FIRST_PRICES[t])] as const).filter(([, e]) => e.length);
+  const shown = onPage.flatMap(([, e]) => e);
+  const off = replayed.companies.flatMap(([t, e]) => e.filter((x) => x.date < FIRST_PRICES[t]).map((x) => `${t} ${x.date}`)).sort();
+  check("  …of which 87 reach a page on 45 companies, 31 before 2017: five fall before their company's first price — Ally's of 2013-12-20, Chime's of 2024-05-07, PayPal's of 2015-05-19, Santander Holdings USA's of 2016-07-14 and Synchrony's of 2014-06-19",
+    replayed.companies.every(([t]) => t in FIRST_PRICES) && shown.length === 87 && onPage.length === 45 && shown.filter((e) => e.date < "2017").length === 31 &&
+      off.join() === "ALLY 2013-12-20,CHYM 2024-05-07,PYPL 2015-05-19,SNUS-PI 2016-07-14,SYF 2014-06-19",
+    `${shown.length} on ${onPage.length}, ${shown.filter((e) => e.date < "2017").length} before 2017; off: ${off.join(", ")}`);
   check("  …every event a regulation from the Bureau's own page, one a company a day",
     days.every((e) => e.type === "regulation" && e.sourceKey === "cfpb" && e.source === "Consumer Financial Protection Bureau" && !!e.url?.startsWith("https://www.consumerfinance.gov/enforcement/actions/")) &&
       replayed.companies.every(([, e]) => new Set(e.map((x) => x.date)).size === e.length));

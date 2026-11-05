@@ -453,6 +453,24 @@ IBM's ThinkPad batteries of 2006). A work of the U.S. Government, public domain;
 site refused this session's requests (403), so the basis is the law's and the federal catalog's,
 not a page re-read.
 
+### CFTC enforcement actions (`lib/cftc.ts`)
+
+The Commodity Futures Trading Commission's orders and suits, from 1995-07-27: the benchmark-rigging,
+spoofing, swaps-reporting and record-keeping cases against the banks and brokers, and the
+energy-trading cases of 2001–2004 against the utilities' trading arms. Read from the Commission's
+enforcement list (`www.cftc.gov/LawRegulation/EnforcementActions/index.htm`, 10 a page, 261 pages
+and 2,607 actions on 2026-11-05) for every company at once (`lib/ingest/cftcWalk.ts`, db/039): the
+whole list once a year, and its newest page once a day. A company keeps an action whose title makes
+it the party by the Justice Department's rule, with the release map's units ("Deutsche Bank
+Securities", "Merrill Lynch" from 2009), and the Commission's own forms: the company as the object of
+its order ("CFTC Orders UBS to Pay"), and a registrant's name with its comma ("Goldman, Sachs &
+Co."). Four guards measured on the list: a count before a name ("Six Financial Institutions"), a name
+only ever after "Former", another company's unit ("Prudential Securities" is Prudential Financial's,
+not Prudential plc's), and an everyday word with a possessive ("People’s Alternative"). Against every
+company in the index, before first prices: 83 company days on 33 companies, 42 before 2017 (JPMorgan
+12, Morgan Stanley 7, Goldman Sachs 6, Citigroup 5, Deutsche Bank 5; AEP's suit of 2003, Duke
+Energy's and Xcel's trading units of 2003–2004). Public domain, acknowledged to the CFTC.
+
 ### The SEC News Digest, counted (`lib/secDigest.ts`)
 
 Not a source yet: the count the owner asked for first (2026-11-02 proposal 1). The Digest is the
@@ -1034,6 +1052,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
 | U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form (`lib/epaCases.ts`); the orders with no penalty grouped a row a month. Public domain under EPA's open data licence; no key |
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
+| Commodity Futures Trading Commission | The Commission's enforcement actions since 1995 whose title makes the company the party — a bank's benchmark-rigging order, an energy trader's manipulation suit | The enforcement list, read whole once a year and its newest page once a day, for every company (`lib/ingest/cftcWalk.ts`); kept by the Justice Department's title rule with the release map's units (`lib/cftc.ts`). Public domain, acknowledged to the CFTC; no key |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |

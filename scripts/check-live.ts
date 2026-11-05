@@ -51,6 +51,7 @@ import { cachedFedFeed, fedPressEvents } from "../lib/fedPress";
 import { cfpbEvents, fetchCfpbPage, type CfpbAction } from "../lib/cfpb";
 import { epaEvents, fetchCaseFile } from "../lib/epaCases";
 import { cpscEvents, fetchRecalls as fetchCpscRecalls } from "../lib/cpscRecalls";
+import { fetchCftcPage } from "../lib/cftc";
 import { releaseNamesOn } from "../lib/releaseNames";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
@@ -819,6 +820,20 @@ export const CASES: LiveCase[] = [
       const past = await fetchCfpbPage(pages + 1);
       const last = oldest.slice(-1)[0]?.path;
       if (past.outcome === "ok" && past.actions.slice(-1)[0]?.path !== last) out.push(`page ${pages + 1}, past the last, no longer repeats the last page: the walk's stop needs a look`);
+      return out;
+    },
+  },
+  {
+    name: "CFTC enforcement actions — the list as the walk reads it; Goldman's ISDAFIX order of 2016-12-22 by the title rule (batch 97)",
+    covers: ["cftc"],
+    hosts: ["www.cftc.gov"],
+    async run() {
+      // measured 2026-11-05: 261 pages of 10, 2,610 actions, the newest of 2026-11-03
+      const first = await fetchCftcPage(0);
+      if (first.outcome !== "ok") return [`page 0: ${first.outcome} ${first.httpStatus ?? ""} ${first.detail ?? ""}`.trim()];
+      const out: string[] = [];
+      if (first.actions.length !== 10) out.push(`page 0 holds ${first.actions.length} actions, not 10`);
+      if ((first.lastPage ?? 0) < 260) out.push(`the pager's last page is ${first.lastPage}, before the 260 of 2026-11-05`);
       return out;
     },
   },

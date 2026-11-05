@@ -416,6 +416,21 @@ export const SOURCES: {
     reviewedOn: "2026-11-05",
     notes: "the Commission's consumer-product recalls from 1973, kept where a listed company made, imported, distributed or sold the product (lib/cpscRecalls.ts); one keyless answer a week (batch 96)",
   },
+  {
+    id: 33,
+    key: "cftc",
+    name: "CFTC enforcement actions",
+    license: "public domain",
+    attribution: "Commodity Futures Trading Commission",
+    // "Government information at the CFTC website is in the public domain. Public domain
+    // information may be freely distributed and copied, but it is requested that in any subsequent
+    // use the CFTC be given appropriate acknowledgement." (www.cftc.gov/WebPolicy/index.htm,
+    // "Copyright", read 2026-11-05.) Used: each action's title, day and link. Approved by the owner
+    // on 2026-11-05.
+    commercialOk: true,
+    reviewedOn: "2026-11-05",
+    notes: "the Commission's enforcement actions since 1995, kept where the title makes a listed company the party (lib/cftc.ts); no key (batch 97)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

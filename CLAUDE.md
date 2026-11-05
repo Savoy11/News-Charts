@@ -93,7 +93,9 @@ civil enforcement cases come from its whole case file, a zip read once a month (
 Power and Light Company" is one name; "RETHERFORD, DANA" is a person), and money stays numeric. The
 CPSC's recalls (`lib/cpscRecalls.ts`) go on every listed company a recall names: its makers,
 importers and distributors by the caption rule, its stores as whole items of the "Sold at" line, a
-store's recalls of other makers' products grouped a row a month.
+store's recalls of other makers' products grouped a row a month. The
+CFTC's actions (`lib/cftc.ts`) are read by the Justice rule with the release map's units, plus the
+Commission's object form ("CFTC Orders UBS to Pay") and four guards of its own; read its header first.
 
 A ticker whose company moved to a new SEC record — a holding-company reorganisation or redomicile
 (XOM in 2026, Alphabet in 2015, Disney in 2019) — reads its earlier filings from the predecessor's

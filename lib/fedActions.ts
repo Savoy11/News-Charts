@@ -224,6 +224,37 @@ export const FED_BANKS: Readonly<Record<number, { ticker: string; orgs: readonly
   927971: { ticker: "BMO", orgs: [{ match: /\bBank of Montreal\b|\bBMO (?:Financial Corp|Harris Bank)\b/i, why: "the company, its US holding company and its Chicago branch" }] },
   9631: { ticker: "BNS", orgs: [{ match: /\bBank of Nova Scotia\b/i, why: "the company, with its New York agency" }] },
   1045520: { ticker: "CM", orgs: [{ match: /\bCanadian Imperial Bank of Commerce\b/i, why: "the company" }] },
+  // Batch 98, the 2026-11-05 proposal 3: the 23 listed banks the Board has acted against that the
+  // map left out, each by its own legal name, or its bank named after it, and its home city, read by
+  // hand against every row of both files on 2026-11-05. A namesake elsewhere stays off: "TCSB
+  // Bancorp, Traverse City" is not CSB Bancorp, and Commerce Bancshares of Catoosa, Centennial
+  // Bank of Lubbock and Community West Bancshares of Goleta are no mapped company's.
+  717538: { ticker: "AROW", orgs: [{ match: /\bArrow Financial Corporation,? Glens Falls\b/i, why: "the company, of Glens Falls, New York" }] },
+  880417: { ticker: "CSBB", orgs: [{ match: /(?<!T)\bCSB Bancorp,? Inc\.?,? Millersburg\b/i, why: "the company, of Millersburg, Ohio, with its Commercial and Savings Bank" }] },
+  1279967: {
+    ticker: "CRARF",
+    orgs: [{ match: /\b(?:Cr[eé]dit Agricole,? S\.?A\.?|Caisse Nationale de Credit Ar?gricole),? ?Paris\b/i, why: "the company, of Paris, and before 2001 its predecessor Caisse Nationale de Crédit Agricole (written \"Argricole\" in the Board's row of 2000-11-30)" }],
+  },
+  1161125: { ticker: "BCH", orgs: [{ match: /\bBanco de Chile,? Santiago\b/i, why: "the company, of Santiago, with its Miami branch" }] },
+  1069157: { ticker: "EWBC", orgs: [{ match: /\bEast West Bank,? Pasadena\b/i, why: "its bank, East West Bank of Pasadena, named after it" }] },
+  860413: { ticker: "FIBK", orgs: [{ match: /\bFirst Interstate Bank,? Billings\b/i, why: "its bank, First Interstate Bank of Billings, named after it" }] },
+  1109242: { ticker: "HAFC", orgs: [{ match: /\bHanmi (?:Financial Corporation|Bank),? Los Angeles\b/i, why: "the company and its bank, Hanmi Bank of Los Angeles, named after it" }] },
+  1001171: { ticker: "BYFC", orgs: [{ match: /\bBroadway Financial Corporation,? Los Angeles\b/i, why: "the company, of Los Angeles" }] },
+  701347: { ticker: "CPF", orgs: [{ match: /\bCentral Pacific Financial Corporation,? Honolulu\b/i, why: "the company, of Honolulu" }] },
+  1163389: { ticker: "NWPP", orgs: [{ match: /\bNew Peoples (?:Bankshares,? Inc\.?|Bank),? Honaker\b/i, why: "the company and its bank, New Peoples Bank of Honaker, Virginia, named after it" }] },
+  1288855: { ticker: "OPHC", orgs: [{ match: /\bOptimum ?bank Holdings,? Inc\.?,? Fort Lauderdale\b/i, why: "the company, of Fort Lauderdale" }] },
+  357173: { ticker: "OSBC", orgs: [{ match: /\bOld Second Bancorp,? Inc\.?,? Aurora\b/i, why: "the company, of Aurora, Illinois" }] },
+  1168455: { ticker: "PLBC", orgs: [{ match: /\bPlumas Bancorp,? Quincy\b/i, why: "the company, of Quincy, California" }] },
+  826154: { ticker: "ORRF", orgs: [{ match: /\bOrrstown (?:Financial Services|Bank)\b[^;]*\bShippensburg\b/i, why: "the company and its bank, Orrstown Bank of Shippensburg, named after it" }] },
+  1098146: { ticker: "PNBK", orgs: [{ match: /\bPatriot National Bancorp,? Inc\.?,?[^;]*\bStamford\b/i, why: "the company, of Stamford, Connecticut" }] },
+  1099219: { ticker: "MET", orgs: [{ match: /\bMetLife,? Inc\.?,? New York\b/i, why: "the company, a bank holding company until 2013, of New York" }] },
+  779152: { ticker: "JKHY", orgs: [{ match: /\bJack Henry & Associates,? Inc\.?,? Monett\b/i, why: "the company, a technology provider to banks, of Monett, Missouri" }] },
+  1041368: { ticker: "RVSB", orgs: [{ match: /\bRiverview Bancorp,? Inc\.?,? Vancouver\b/i, why: "the company, of Vancouver, Washington" }] },
+  700564: { ticker: "FULT", orgs: [{ match: /\bFulton Financial Corporation,? Lancaster\b/i, why: "the company, of Lancaster, Pennsylvania, with its Lafayette Ambassador Bank" }] },
+  1015328: { ticker: "WTFC", orgs: [{ match: /\bWintrust Financial Corporation,? Rosemont\b/i, why: "the company, of Rosemont, Illinois" }] },
+  1386278: { ticker: "GDOT", orgs: [{ match: /\bGreen Dot (?:Bank,? Provo|Corporation,? Austin)\b/i, why: "the company, of Austin, and its bank, Green Dot Bank of Provo, named after it" }] },
+  1488813: { ticker: "CUBI", orgs: [{ match: /\bCustomers (?:Bancorp,? Inc\.?,? West Reading|Bank,? (?:Phoenixville|Malvern))\b/i, why: "the company, of West Reading, and its bank, Customers Bank of Phoenixville and later Malvern, named after it" }] },
+  46195: { ticker: "BOH", orgs: [{ match: /\bBank of Hawaii,? Honolulu\b/i, why: "the company's bank, of Honolulu, the company's own name" }] },
 };
 
 /** The organisations that are the company's, or null for a company that is not a mapped bank. */

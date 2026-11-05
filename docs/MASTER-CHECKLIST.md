@@ -988,6 +988,70 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 91: a new opportunity-scout run, three proposals for the owner (2026-11-05)
+
+The approved 2026-11-02 proposals are built (batches 87–89), and batch 90 fixed the audit of
+batches 85–89. So the `opportunity-scout` read the repository again at `73a88f7` and wrote
+`docs/proposals/2026-11-05-proposals.md`: three proposals, all **PENDING**, ranked with securities
+depth first. Nothing is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      1. `P1` **The EPA's civil enforcement cases, from the 1970s.** The regulator's own record
+         for chemical, oil, paper, industrial and utility companies, which today have only the
+         Justice Department's releases from 2009.
+         - **Measured:** EPA's case file (82 MB, 137,108 cases) gives 6,406 cases on 663 companies
+           under their present names, 5,505 before 2017.
+         - **With a materiality rule** (its own row for a court case or an order with a penalty,
+           naming three defendants or fewer): 1,662 company days on 418 companies, 1,348 before
+           2017.
+         - **Read by hand:** 31 of 40 sampled rows are right. Six of the nine wrong ones fall
+           before the company listed, so the first-price floor drops them. The other three need
+           two guards the caption rule lacks.
+         - **The owner's call:** yes or no on the source, after reading two of EPA's own texts.
+           Its data licence says EPA's data is public domain. Its disclaimers page says the site's
+           documents are for non-commercial use. The file quotes both.
+         - Most of JCI's rows follow the open JCI call.
+      2. `P2` **The CFTC's enforcement actions, from 1995**, on banks', brokers' and energy
+         traders' pages.
+         - The CFTC states its site is public domain.
+         - The list holds 2,610 actions. Of 100 titles before 2017 read by hand, 6 make a listed
+           company the party (AEP 2003, Goldman 2012 and 2016, UBS 2012, RBC 2014, Deutsche Bank
+           Securities 2014). The existing rules find 4 of them.
+         - About 100–120 such releases before 2017: an estimate.
+         - **The owner's call:** yes or no on the source.
+      3. `P2` **The Board's enforcement actions against the 23 listed banks its map leaves out.**
+         The same files and source, with rows added to `FED_BANKS`.
+         - Matched against every listed company, the two files give 54 days on banks the map
+           does not hold.
+         - Read city by city: 29 days on 23 banks are their own, 23 of them before 2017. Ten fall
+           before the bank listed, and 15 are namesakes or another company's past.
+- **Cut, with reasons in the file:**
+      - the FTC's cases (404 from here) and the OCC's search (redirected);
+      - USDA FSIS recalls (403);
+      - the FDIC's failed-bank list (still no licence stated);
+      - the FDA and vehicle maps' units in the release rules (1 new day on the saved rows);
+      - EPA's informal actions and inspections;
+      - the SEC cases' accounting-release labels.
+- **Still waiting, not raised again:** the 2026-11-02 #2 (the Justice Department's 2001–2008
+  archive) and #3 (the Board's 1996–2005 orders); CPSC recalls; JCI's 2016 case; GE Capital Retail
+  Bank on GE and PayPal's 2015 action on eBay; the Digest's step 2.
+- **The scout's closing note on `captionParty`, checked here.** It flagged two shapes:
+  "Pennsylvania Power and Light Company" read as a party "Light Company", and a person written
+  surname first ("Retherford, Dana") read as a one-word company.
+      - Neither reaches a page today. The saved 30,747 SEC case rows hold neither shape: a replay
+        of every company found 0 one-word parties after a surname, and the 4 parties after an "and"
+        were all right (KBR, MCD, MDLZ, SEIC).
+      - The Bureau's 92 days and the Board's 252 matches were each read by hand when built.
+      - Both shapes are in EPA's file, which is why proposal 1 lists the two guards.
+- **Requests** (the scout's, listed in the file's header): 26, about 31 with redirects.
+      - www.cftc.gov 12, echo.epa.gov 3, www.epa.gov 1, edg.epa.gov 1, www.federalreserve.gov 2;
+      - www.ftc.gov 2, www.occ.gov 1, apps.occ.gov 2, api.fdic.gov 1, www.fsis.usda.gov 1;
+      - each with the User-Agent `News Charts Research`, with no email address.
+
+      This batch made none of its own.
+- **Checks:** `npm run check` and `npm run lint` pass. The batch changes docs only.
+
 ## NC ledger — batch 90: the audit of batches 85–89, and its four findings fixed (2026-11-05)
 
 The `code-auditor` read batches 85–89 (`960c3be..d22927c`). Its report is

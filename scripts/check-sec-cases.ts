@@ -372,6 +372,11 @@ const TODAY = "2026-11-01";
     `${usbOn("2005-09-02")?.externalId ?? "no 2005-09-02 event"}`);
   check("  …Ameriprise Financial Services' of 2009-07-10 on AMP; American Express Financial Advisors' of 2004-02-12 on both AXP and AMP (the owner's call b), its \"(now known as Ameriprise…)\" of 2005-12-01, after the spin-off, on AMP only",
     replayedOn("AMP", "2009-07-10") && replayedOn("AMP", "2004-02-12") && replayedOn("AXP", "2004-02-12") && replayedOn("AMP", "2005-12-01") && !replayedOn("AXP", "2005-12-01"));
+  // batch 93, the owner's rule of 2026-11-05 that a case goes on every company it involves: old
+  // Johnson Controls' FCPA order of 2016-07-11, two months before it merged into Tyco's record,
+  // which took its name, stays on JCI's page (the 2026-11-01 audit's set-aside)
+  check("Johnson Controls, Inc.'s order of 2016-07-11 on JCI, the record its business merged into, by the owner's rule",
+    pageTakes(row("34-78287", "2016-07-11"), "JCI") && rowOf("JCI")[0] === 833444);
   // The replay above sets the first price aside; ingest reads a company's rows from it on
   // (`secCasesFor`). The owner's calls (b) and (c) reach before it, through the units marked
   // `beforeListing` and those alone (batch 90, the 2026-11-05 audit's finding 2). First prices are
@@ -395,16 +400,17 @@ const TODAY = "2026-11-01";
     pruDays.length === 19 && ["2000-04-06", "2001-01-29", "2001-01-30"].every((d) => pruDays.includes(d)) && floored("PRU", "2001-12-13", pruRows, false).length === 16,
     `${pruDays.length}: ${pruDays.slice(-3).join(",")}`);
   const amfs = rows.find((r) => /Ameriprise Financial Services/.test(r.caption) && r.day >= "2009")!;
-  check("  …before its first price only a marked unit counts: Ameriprise Financial Services' case, set before AMP listed, is refused, and the marked units are these two alone",
+  check("  …before its first price only a marked unit counts: Ameriprise Financial Services' case, set before AMP listed, is refused; the marked units are these two and batch 93's Synchrony Bank and PayPal",
     floored("AMP", "2005-09-15", [amfs]).length === 1 && floored("AMP", "2005-09-15", [{ ...amfs, day: "2004-01-02" }]).length === 0 &&
-      Object.values(RELEASE_NAMES).flatMap((b) => b.names.filter((n) => n.beforeListing).map((n) => `${b.ticker}:${n.name}`)).join() === "AMP:American Express Financial Advisors,PRU:Prudential Securities");
+      Object.values(RELEASE_NAMES).flatMap((b) => b.names.filter((n) => n.beforeListing).map((n) => `${b.ticker}:${n.name}`)).sort().join() ===
+        "AMP:American Express Financial Advisors,PRU:Prudential Securities,PYPL:PayPal,SYF:Synchrony Bank");
   check("  …Prudential Securities' cases on PRU (the owner's call c), none on Prudential plc",
     replayedOn("PRU", "2003-07-10") && replayedOn("PRU", "2006-08-28") && !replayed.companies.some(([t, e]) => t === "PUK" && e.some((x) => /Prudential (?:Securities|Equity)/.test(x.title))));
   check("  …and the namesakes and the units not theirs on no page: Reliance Financial Advisors not RS, Southern Financial Services not SO, Lazard Capital Markets (LFCM's) not LAZ, Fiserv Securities after its sale not FISV",
     !replayedOn("RS", "2014-12-10") && !replayedOn("SO", "2005-01-31") && !replayedOn("LAZ", "2008-10-30") && !replayedOn("FISV", "2005-04-21") &&
       rows.some((r) => r.day === "2008-10-30" && /Lazard Capital Markets/.test(r.caption)) && rows.some((r) => r.day === "2005-04-21" && /Fiserv Securities/.test(r.caption)));
-  check("  …each company in one map or the other, each unit with its reason, each day well formed, each ticker the index's (34 companies in batch 88, 56 with batch 89's, 60 with batch 90's)",
-    Object.keys(BANK_UNITS).length === 60 && Object.keys(BANK_UNITS).every((c) => RELEASE_NAMES[Number(c)] === BANK_UNITS[Number(c)]) &&
+  check("  …each company in one map or the other, each unit with its reason, each day well formed, each ticker the index's (34 companies in batch 88, 56 with batch 89's, 60 with batch 90's, 63 with batch 93's)",
+    Object.keys(BANK_UNITS).length === 63 && Object.keys(BANK_UNITS).every((c) => RELEASE_NAMES[Number(c)] === BANK_UNITS[Number(c)]) &&
       Object.values(BANK_UNITS).every((b) => b.names.every((n) => n.why.length > 20 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.entries(BANK_UNITS).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)));
   const most = Object.fromEntries(replayed.companies.filter(([t]) => ["BAC", "MS", "WFC", "UBS", "JPM", "C", "GS"].includes(t)).map(([t, e]) => [t, e.length]));

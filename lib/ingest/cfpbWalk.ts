@@ -1,6 +1,6 @@
 import type { PoolClient } from "pg";
 import { CFPB_PAGE_SIZE, cfpbEvents, fetchCfpbPage, type CfpbAction, type CfpbAnswer } from "../cfpb";
-import { isNotesRecord, releaseNamesOn } from "../releaseNames";
+import { isNotesRecord, releaseNamesBefore, releaseNamesOn } from "../releaseNames";
 import type { FetchResult } from "../types";
 import { partyNamesFor } from "./secCasesWalk";
 import { FUND_SERIES, NO_PRICES, type PressPlan } from "./secPressWalk";
@@ -171,7 +171,12 @@ export async function cfpbFor(client: PoolClient, subjectId: number, plan: Press
   if (isNotesRecord(plan.cik)) return failed ? { events: [], ...failed } : { events: [], outcome: "empty", detail: "a bank's notes record: its actions are its group's page's" };
   const { listed, namesIn } = await partyNamesFor(client, subjectId, plan);
   if (!listed) return failed ? { events: [], ...failed } : NO_PRICES();
-  const events = cfpbEvents(await storedCfpbActions(client), namesIn, { cik: plan.cik, from: listed, namesOn: (day) => releaseNamesOn(plan.cik, day) });
+  const events = cfpbEvents(await storedCfpbActions(client), namesIn, {
+    cik: plan.cik,
+    from: listed,
+    namesOn: (day) => releaseNamesOn(plan.cik, day),
+    namesBefore: (day) => releaseNamesBefore(plan.cik, day),
+  });
   if (failed) return { events, ...failed };
   return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
 }

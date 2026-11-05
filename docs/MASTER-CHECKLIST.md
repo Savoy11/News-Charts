@@ -988,6 +988,57 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 93: a case goes on every company it involves (2026-11-05)
+
+The owner's rule of 2026-11-05: "for any instance that multiple companies are involved in a case
+add the story to all relevant companies pages". The release rules already give each listed company
+a case names its own event. This batch applies the rule to the three ownership calls it settles.
+
+- [x] **GE Capital Retail Bank's CFPB actions on GE's page.**
+      - GE owned the bank, later named Synchrony Bank, until the split-off of Synchrony ("On
+        November 17, 2015", its 8-K filed 2015-11-23, and "completed the split-off", its 8-K
+        filed 2015-11-30).
+      - `BANK_UNITS` gives GE "GE Capital Retail Bank" and "Synchrony Bank" to 2015-11-16. The
+        orders of 2013-12-10 and 2014-06-19 are on GE's page.
+- [x] **PayPal's CFPB action of 2015-05-19 on eBay's page.**
+      - eBay owned PayPal from its purchase ("On October 3, 2002", its 8-K filed that day) until
+        the spin-off ("On July 17, 2015", its 8-K filed 2015-07-20).
+      - `BANK_UNITS` gives eBay "PayPal" between those days.
+- [x] **The same actions on the companies the units are now.** Synchrony Bank's order fell six
+      weeks before Synchrony listed (2014-07-31), and PayPal's seven weeks before PayPal Holdings
+      did (2015-07-06). The first-price floor kept both off, so each unit is now marked
+      `beforeListing`:
+      - SYF's "Synchrony Bank", a name first given in 2014;
+      - PYPL's "PayPal" from its own record's registration (the Form 10 filed 2015-02-25), so
+        eBay-era rows stay eBay's.
+
+      The Bureau's rule now reads marked units before a first price, as the SEC's two do; the
+      company's own names still wait for it.
+- [x] **JCI's case of 2016 stays on JCI's page.** Johnson Controls, Inc.'s order of 2016-07-11 came
+      two months before the business merged into Tyco's record, which took its name. The rule keeps
+      it, as the code already did; `check:sec-cases` pins it.
+- [x] **Measured, the Bureau's 386 actions:**
+      - 95 company days on 52 companies, 38 before 2017 (92 on 50 before);
+      - 92 of them reach a page, on 49 companies, 36 before 2017;
+      - three still fall before their company's first price and stay off: Ally's of 2013-12-20,
+        Chime's of 2024-05-07 and Santander Holdings USA's of 2016-07-14. Each names one company
+        alone.
+
+      The SEC's cases and releases, the Board's and the Justice Department's counts are unchanged.
+- **Requests:** efts.sec.gov 8 (the phrases above and the two records' first filings);
+  query1.finance.yahoo.com 1 (eBay's first trading day).
+- **Checks:**
+      - `check:cfpb` 50: GE's, eBay's, Synchrony's and PayPal Holdings' days, each unit's bounds,
+        and both counts with 52 first trading days;
+      - `check:sec-cases` 74: JCI's case, and the four marked units;
+      - `check:sec-press` 76;
+      - `check:contact` 11, which now reads itself too, since batch 92 committed it: its test
+        addresses are on example.org, the domains reserved for examples, and it leaves itself out
+        of the count of the shared header's 26 readers;
+      - the rest of `npm run check` (56 suites) and `npm run lint` pass.
+
+      On main the GE, eBay and PayPal cases fail.
+
 ## NC ledger — batch 92: no personal email in the build, and the owner's decisions filed (2026-11-05)
 
 The owner, 2026-11-05: "Lets move forward with all of the proposals. Yes I would like to add product
@@ -7268,13 +7319,17 @@ already held, but new investment goes to securities coverage first.
       matched through `orderParties`, which also reads the older titles' "of".
       - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
         #3, approved 2026-11-05.*
-- [ ] `P2` **A case naming several companies goes on every relevant company's page** — the owner's
+- [x] `P2` **A case naming several companies goes on every relevant company's page** — the owner's
       rule, 2026-11-05: "for any instance that multiple companies are involved in a case add the
       story to all relevant companies pages". The rules already give each named listed company its
       own event. The rule settles the three ownership calls left open:
       - GE Capital Retail Bank's CFPB actions (2013, 2014) on GE, its owner then;
       - PayPal's CFPB action of 2015-05-19 on eBay, its owner until the spin-off;
       - JCI's case of 2016 on Tyco's record, on Johnson Controls' page.
+      - ✅ **Done in batch 93:** GE's bank to 2015-11-16 and eBay's PayPal from 2002-10-03 to
+        2015-07-16 in `BANK_UNITS`; Synchrony's and PayPal Holdings' own units marked to count
+        before listing; JCI's case pinned. The Bureau's 386 actions now give 95 days on 52
+        companies, 92 of them on a page.
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

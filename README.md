@@ -241,9 +241,11 @@ Franklin Advisers, KeyBanc Capital Markets, U.S. Bancorp Piper Jaffray until its
 of 2003…), each bought or sold one between the days its filings give, read through EDGAR's full-text
 search. American Express Financial Advisors' cases before the 2005 spin-off are on both American
 Express's and Ameriprise's pages, and Prudential Securities' on Prudential Financial's, the owner's
-calls; those two units are the only names read before their company's first price (`beforeListing`,
-batch 90), so the case of 2004-02-12 reaches Ameriprise, listed 2005-09-15, and Prudential
-Securities' three of 2000–2001 reach Prudential, listed 2001-12-13. Lazard Capital Markets was LFCM Holdings', not Lazard's, and Fiserv Securities' case of 2005
+calls; those two units, and batch 93's Synchrony Bank and PayPal (the owner's rule that a case goes
+on every company it involves), are the only names read before their company's first price
+(`beforeListing`), so the case of 2004-02-12 reaches Ameriprise, listed 2005-09-15, and Prudential
+Securities' three of 2000–2001 reach Prudential, listed 2001-12-13. Johnson Controls, Inc.'s order of
+2016-07-11 stays on JCI's page: the business merged that September into the record JCI now uses. Lazard Capital Markets was LFCM Holdings', not Lazard's, and Fiserv Securities' case of 2005
 came after Fiserv sold it: neither is on a page. Batch 89 added the units the Consumer Financial
 Protection Bureau charges, 22 more companies' and ten names for six banks already mapped: Capital One
 Bank, American Express Centurion Bank, U.S. Bank National Association, Chase Bank USA, CitiMortgage,
@@ -363,19 +365,22 @@ its name, or its legal name with legal words after it, or a unit the release rul
 since the Bureau charges the bank, not its holding company ("Capital One Bank", 2012-07-18). The
 Bureau's "dba" and "d/ba/" are read as "d/b/a". A company's actions of a day make one event
 (American Express's three of 2012-10-01). Read against every company in the index under its current
-names, the 386 actions give 92 company days on 50 companies, 35 before 2017 (Bank of America, Wells
+names, the 386 actions give 95 company days on 52 companies, 38 before 2017 (Bank of America, Wells
 Fargo and Citigroup 6 each, JPMorgan 5, U.S. Bancorp 4), each read by hand; without batch 89's
 units they gave 44 on 21, and batch 90 added Mastercard International, Conduent's two units,
-Sterling Jewelers and Acima (from its purchase on 2021-02-17). Ingest reads a company's actions from
-its first price on, so 87 of them reach a page, on 45 companies, 31 before 2017; the five before
-their company's first price are Ally's of 2013-12-20, Chime's of 2024-05-07, PayPal's of 2015-05-19,
-Santander Holdings USA's of 2016-07-14 and Synchrony Bank's of 2014-06-19. Not their own, and on no
-page: Discover Bank's, Hudson City Savings Bank's and Sprint's, each an acquisition's past; Flagstar
-Bank, F.S.B.'s of 2014, before today's FLG took the name; and the tax-refund lender "formerly d/b/a
-H&R Block" (by CIK, `NOT_THE_COMPANY`). GE Capital Retail Bank's two (2013 and 2014) are on no page
-either: whether they are GE's is the ownership call the proposal left to the owner, with PayPal's of
-2015 on eBay's. `check:cfpb` replays every action against every company and fund series, and pins
-both counts with each company's first trading day. Public
+Sterling Jewelers and Acima (from its purchase on 2021-02-17). A case naming several companies goes
+on each of their pages, the owner's rule of 2026-11-05 (batch 93): GE Capital Retail Bank's two of
+2013 and 2014 are on GE's page, its owner until the split-off of Synchrony on 2015-11-17, and PayPal's
+of 2015-05-19 on eBay's, its owner until the spin-off of 2015-07-17. Synchrony's and PayPal
+Holdings' pages carry theirs too, though each fell weeks before the company listed, through the
+units marked to count before listing. Ingest reads a company's other actions from its first price
+on, so 92 of the 95 reach a page, on 49 companies, 36 before 2017; the three before their company's
+first price are Ally's of 2013-12-20, Chime's of 2024-05-07 and Santander Holdings USA's of
+2016-07-14. Not their own, and on no page: Discover Bank's, Hudson City Savings Bank's and Sprint's,
+each an acquisition's past; Flagstar Bank, F.S.B.'s of 2014, before today's FLG took the name; and
+the tax-refund lender "formerly d/b/a H&R Block" (by CIK, `NOT_THE_COMPANY`). `check:cfpb` replays
+every action against every company and fund series, and pins both counts with each company's first
+trading day. Public
 domain, cited to the Bureau; no key. An action is a regulation event and is scored without the
 model.
 

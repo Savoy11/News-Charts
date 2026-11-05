@@ -364,8 +364,8 @@ const TODAY = "2026-10-29";
     [["2014-39", "GLDI", false], ["2021-213", "GLDI", false], ["2012-233", "GLDI", false], ["2012-233", "JPM", true], ["2009-29", "AMUB", false]]);
   check("  …where before this batch GLDI's page took Credit Suisse's own",
     secPressEvents([storedRelease("2014-39"), storedRelease("2021-213")], namesOf("GLDI")).length === 2);
-  check("the map: twelve banks (seven in batch 82, Deutsche Bank, State Street, BNY and Barclays in batch 83, Goldman Sachs in batch 85) and batch 88's 34 companies' units, each unit with its reason, each day well formed, and the three notes records mapped to none",
-    Object.keys(RELEASE_NAMES).length === 46 && Object.keys(NOTES_RECORDS).length === 3 &&
+  check("the map: twelve banks (seven in batch 82, Deutsche Bank, State Street, BNY and Barclays in batch 83, Goldman Sachs in batch 85), batch 88's 34 companies' units and batch 89's 22 more, each unit with its reason, each day well formed, and the three notes records mapped to none",
+    Object.keys(RELEASE_NAMES).length === 68 && Object.keys(NOTES_RECORDS).length === 3 &&
       Object.values(RELEASE_NAMES).every((b) => b.names.every((n) => n.why.length > 20 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.keys(NOTES_RECORDS).every((cik) => !(cik in RELEASE_NAMES)) &&
       Object.entries(RELEASE_NAMES).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)) &&
@@ -388,8 +388,10 @@ const TODAY = "2026-10-29";
   // batch 83 added the units the SEC's case captions name in full, and three more releases land:
   // UBS's units' auction-rate settlement of 2008, Morgan Stanley Investment Management's charge of
   // 2011 and Barclays Capital's of 2014
-  check("the 6,897 stored releases give 263 page entries on 126 companies, 55 more than before batch 82's names (4 of them batch 88's units), as replayed in full",
-    stored.length === 6897 && entries === 263 && replay.size === 126, `${stored.length} releases → ${entries} entries on ${replay.size} companies in ${Date.now() - t0} ms`);
+  // batch 89's TD Bank adds "SEC Charges TD Bank and Former Executive for Roles in Rothstein Ponzi
+  // Scheme in South Florida" (2013-09-23)
+  check("the 6,897 stored releases give 264 page entries on 127 companies, 56 more than before batch 82's names (4 of them batch 88's units, 1 batch 89's), as replayed in full",
+    stored.length === 6897 && entries === 264 && replay.size === 127 && (replay.get("TD") ?? []).length === 1, `${stored.length} releases → ${entries} entries on ${replay.size} companies in ${Date.now() - t0} ms`);
   // batch 85 added Citibank's settlement of 2001, J.P. Morgan Chase's of 2003 and J. P. Morgan
   // Securities' charge of 2011 (the initials as the SEC spaces them), and Goldman Sachs Asset Management's of 2022
   const pinned: Record<string, number> = { BAC: 28, MS: 18, C: 14, UBS: 12, JPM: 13, WFC: 10, GS: 9, DB: 7, BCS: 4, RF: 4, BEN: 2, IVZ: 1 };

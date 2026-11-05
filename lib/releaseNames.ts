@@ -1,9 +1,10 @@
 /**
  * The names the SEC's and the Justice Department's releases give a listed company beyond those
  * its own record carries, read only by the release rules: the SEC's press releases
- * (`lib/secPress.ts`) and the Justice Department's (`lib/doj.ts`), and since batches 83 and 84 the
- * SEC's case captions (`lib/secCases.ts`) and the Federal Reserve Board's releases
- * (`lib/fedPress.ts`). Batch 82, the 2026-11-01 proposal 4, approved by the owner on 2026-11-01.
+ * (`lib/secPress.ts`) and the Justice Department's (`lib/doj.ts`), and since batches 83, 84 and 89
+ * the SEC's case captions (`lib/secCases.ts`), the Federal Reserve Board's releases
+ * (`lib/fedPress.ts`) and the CFPB's actions (`lib/cfpb.ts`). Batch 82, the 2026-11-01 proposal 4,
+ * approved by the owner on 2026-11-01.
  *
  * The SEC charges a bank's securities units by their own names — "Banc of America Securities",
  * "Merrill Lynch", "Morgan Keegan" — and the rules knew a company only by the names its record
@@ -45,6 +46,13 @@ export interface ReleaseName {
  * Refused, as their filings say: Lazard Capital Markets, "a subsidiary of LFCM Holdings" (Lazard's
  * proxy filed 2008-03-24), a company its working members owned, so its case of 2008 is not
  * Lazard's; and Fiserv Securities' case of 2005-04-21, after Fiserv sold it.
+ *
+ * Batch 89 added the units the Consumer Financial Protection Bureau charges (lib/cfpb.ts): the card
+ * banks, national banks, mortgage insurers, carmakers' lenders and debt buyers its actions name
+ * where the company is their owner. A bank the company bought counts from the day it did: National
+ * City Bank's action of 2013 is PNC's, and Hudson City Savings Bank's of 2015-09-24, before M&T
+ * bought it, Discover Bank's before Capital One did, and Flagstar Bank's of 2014 are no listed
+ * company's.
  */
 export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readonly ReleaseName[] }>> = {
   39263: { ticker: "CFR", names: [{ name: "Frost Bank", why: "its bank, named after it, which the Board's orders of 2016, 2017 and 2019 name" }] },
@@ -140,6 +148,9 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
         to: "2005-09-29",
         why: "the owner's call (b), 2026-11-02: its unit until Ameriprise's spin-off (\"On September 30, 2005, the Company completed\" and \"completed the spin-off of Ameriprise\", its 10-Q filed 2005-11-09)",
       },
+      { name: "American Express Centurion Bank", why: "its card bank, named after it, which the CFPB's actions of 2012, 2013 and 2017 name (batch 89)" },
+      { name: "American Express Bank", why: "its savings bank, American Express Bank, FSB, named after it, which the CFPB's actions of 2012, 2013 and 2017 name (batch 89)" },
+      { name: "American Express Travel Related Services", why: "its card issuer, named after it, which the CFPB's actions of 2012 and 2013 name (batch 89)" },
     ],
   },
   36104: {
@@ -150,6 +161,7 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
         to: "2003-12-30",
         why: "its securities firm until Piper Jaffray's spin-off (\"December 31, 2003, the Company completed the distribution\" and \"distribution of Piper Jaffray\", its 10-K filed 2004-02-27): the captions of 2005 and 2010 that still write the name are Piper Jaffray's",
       },
+      { name: "U.S. Bank National Association", why: "its bank, named after it, which the CFPB's actions of 2013, 2014, 2022 and 2023 name in full (batch 89)" },
     ],
   },
   36966: {
@@ -160,7 +172,13 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
     ],
   },
   92230: { ticker: "TFC", names: [{ name: "BB&T Securities", why: "its broker-dealer, named after the company's own name until 2019, BB&T" }] },
-  35527: { ticker: "FITB", names: [{ name: "Fifth Third Securities", why: "its broker-dealer, named after it" }] },
+  35527: {
+    ticker: "FITB",
+    names: [
+      { name: "Fifth Third Securities", why: "its broker-dealer, named after it" },
+      { name: "Fifth Third Bank", why: "its bank, named after it, which the CFPB's actions of 2015, 2020 and 2024 name (batch 89)" },
+    ],
+  },
   2012383: { ticker: "BLK", names: [{ name: "BlackRock Advisors", why: "its fund adviser, named after it" }] },
   1120193: {
     ticker: "NDAQ",
@@ -202,6 +220,11 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
     names: [
       { name: "PNC Investments", why: "its broker-dealer, named after it" },
       { name: "PNC Capital Markets", why: "its securities firm, named after it" },
+      {
+        name: "National City Bank",
+        from: "2008-12-31",
+        why: "National City's bank, the company's from its purchase of National City (\"On December 31, 2008, PNC\" and \"completed its acquisition of National City\", its 8-K filed 2009-01-02), so the CFPB's action of 2013-12-23 against it is PNC's (batch 89)",
+      },
     ],
   },
   1163653: { ticker: "NMR", names: [{ name: "Nomura Securities International", why: "its US securities firm, named after it" }] },
@@ -211,6 +234,89 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
   38777: { ticker: "BEN", names: [{ name: "Franklin Advisers", why: "its fund adviser, named after it" }] },
   875357: { ticker: "BOKF", names: [{ name: "BOK Financial Securities", why: "its broker-dealer, named after it" }] },
   880631: { ticker: "WT", names: [{ name: "WisdomTree Asset Management", why: "its fund adviser, named after it" }] },
+  927628: { ticker: "COF", names: [{ name: "Capital One Bank", why: "its card bank, named after it, which the CFPB's first order, of 2012-07-18, names (batch 89)" }] },
+  876437: {
+    ticker: "MTG",
+    names: [{ name: "Mortgage Guaranty Insurance", why: "its mortgage insurer, Mortgage Guaranty Insurance Corporation, MGIC, the company's name in initials, which the CFPB's action of 2013-04-04 names (batch 89)" }],
+  },
+  1276520: {
+    ticker: "GNW",
+    names: [{ name: "Genworth Mortgage Insurance", why: "its mortgage insurer, named after it, as its 10-K filed 2013-02-28 lists it, which the CFPB's action of 2013-04-04 names (batch 89)" }],
+  },
+  890926: { ticker: "RDN", names: [{ name: "Radian Guaranty", why: "its mortgage insurer, named after it, which the CFPB's action of 2013-04-04 names (batch 89)" }] },
+  5272: {
+    ticker: "AIG",
+    names: [
+      {
+        name: "United Guaranty",
+        to: "2016-12-30",
+        why: "its mortgage insurer, United Guaranty Corporation, until it was sold to Arch (\"On December 31, 2016\" and \"completed the sale of United Guaranty\", its 8-K filed 2017-01-03), which the CFPB's action of 2013-04-04 names (batch 89)",
+      },
+    ],
+  },
+  74260: {
+    ticker: "ORI",
+    names: [{ name: "Republic Mortgage Insurance", why: "its mortgage insurer, Republic Mortgage Insurance Company, as its 10-K filed 2013-03-01 lists it, which the CFPB's action of 2013-11-15 names (batch 89)" }],
+  },
+  36270: {
+    ticker: "MTB",
+    names: [{ name: "Manufacturers and Traders Trust", why: "its bank, Manufacturers and Traders Trust Company, M&T, the company's name in initials, which the CFPB's action of 2014-10-09 names (batch 89)" }],
+  },
+  732712: {
+    ticker: "VZ",
+    names: [
+      { name: "Cellco Partnership", why: "its wireless business, Verizon Wireless, on the company's own record (Bell Atlantic's, which took Verizon's name in 2000), which its 8-K filed 2014-01-30 names, and the CFPB's action of 2015-05-12 (batch 89)" },
+      { name: "Verizon Wireless", why: "the same business, named after it (batch 89)" },
+    ],
+  },
+  715153: {
+    ticker: "HMC",
+    names: [{ name: "American Honda Finance", why: "its US lender, American Honda Finance Corporation, named after it, as its 20-F filed 2015-06-26 names it, which the CFPB's actions of 2015 and 2025 name (batch 89)" }],
+  },
+  1094517: {
+    ticker: "TM",
+    names: [{ name: "Toyota Motor Credit", why: "its US lender, Toyota Motor Credit Corporation, named after it, as its 20-F filed 2015-06-24 names it, which the CFPB's actions of 2016 and 2023 name (batch 89)" }],
+  },
+  759944: { ticker: "CFG", names: [{ name: "Citizens Bank", why: "its bank, Citizens Bank, N.A., named after it, which the CFPB's action of 2020-01-30 names; the company's first price, of 2014, bounds it (batch 89)" }] },
+  891478: {
+    ticker: "SAN",
+    names: [
+      { name: "Santander Bank", why: "its US bank, named after it (Sovereign Bank, renamed in 2013), which the CFPB's action of 2016-07-14 names (batch 89)" },
+      { name: "Santander Consumer USA", why: "its US auto lender, named after it, as its 6-Ks of 2018 name it, which the CFPB's actions of 2018 and 2020 name (batch 89)" },
+    ],
+  },
+  811830: {
+    ticker: "SNUS-PI",
+    names: [{ name: "Santander Bank", why: "its own bank, Santander Bank, N.A., as its 10-Q filed 2013-11-08 names it (Sovereign Bank, on Sovereign Bancorp's record, renamed in 2013), which the CFPB's action of 2016-07-14 names (batch 89)" }],
+  },
+  1185348: {
+    ticker: "PRAA",
+    names: [{ name: "Portfolio Recovery Associates", why: "its debt buyer, named after the company's own name until 2014, as its 10-K filed 2014-02-28 lists it, which the CFPB's actions of 2015 and 2023 name (batch 89)" }],
+  },
+  936528: { ticker: "WAFD", names: [{ name: "Washington Federal Bank", why: "its bank, named after the company's own name until 2023, Washington Federal, which the CFPB's action of 2020-10-27 names (batch 89)" }] },
+  947263: { ticker: "TD", names: [{ name: "TD Bank", why: "its US bank, TD Bank, N.A., named after it, which the CFPB's actions of 2020 and 2024 name (batch 89)" }] },
+  1601712: { ticker: "SYF", names: [{ name: "Synchrony Bank", why: "its bank, named after it, which the CFPB's action of 2014-06-19 names, before the company's first price of 2014-07-31 (batch 89)" }] },
+  36146: { ticker: "TRMK", names: [{ name: "Trustmark National Bank", why: "its bank, named after it, which the CFPB's action of 2021-10-22 names (batch 89)" }] },
+  883948: { ticker: "AUB", names: [{ name: "Atlantic Union Bank", why: "its bank, named after it, which the CFPB's action of 2023-12-07 names (batch 89)" }] },
+  1584207: {
+    ticker: "OMF",
+    names: [
+      {
+        name: "OneMain Financial Holdings",
+        from: "2015-11-15",
+        why: "bought from Citigroup (\"On November 15, 2015\" and \"OneMain Financial Holdings\", its 8-K filed 2015-11-17), so the CFPB's action of 2023-05-31 is the company's (batch 89)",
+      },
+      { name: "OneMain Financial Group", from: "2015-11-15", why: "the same business's lender, from the same day (batch 89)" },
+    ],
+  },
+  1552033: {
+    ticker: "TRU",
+    names: [{ name: "Trans Union", why: "its credit bureau, Trans Union LLC, named after it, as its 10-K filed 2015-03-30 lists it, which the CFPB's actions of 2022 and 2023 name (batch 89)" }],
+  },
+  1805284: {
+    ticker: "RKT",
+    names: [{ name: "Rocket Homes Real Estate", why: "its real-estate brokerage, named after it, as its prospectus filed 2020-08-07 names it, which the CFPB's suit of 2024-12-23 names (batch 89)" }],
+  },
   1137774: {
     ticker: "PRU",
     names: [
@@ -272,6 +378,8 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
       { name: "J.P. Morgan Securities", from: "2000-12-31", why: "its securities firm from the merger of 2000-12-31, named in full, as a caption names it (batch 83)" },
       { name: "J.P. Morgan Investment Management", from: "2000-12-31", why: "its fund adviser from the merger of 2000-12-31, named in full (batch 83)" },
       { name: "JPMorgan Chase Bank", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
+      { name: "Chase Bank USA", why: "its card bank, named after it, which the CFPB's actions of 2013 and 2015 name (batch 89)" },
+      { name: "Chase BankCard Services", why: "its card servicer, named after it, which the CFPB's action of 2015-07-08 names (batch 89)" },
       {
         name: "Bear Stearns",
         from: "2008-05-31",
@@ -298,6 +406,11 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
         to: "2009-05-30",
         why: "its brokerage, Travelers Group's on the same record before it took the name Citigroup in 1998, until it went into Morgan Stanley Smith Barney on 2009-05-31 (\"On May 31, 2009, Citigroup Inc. … and Morgan Stanley consummated\", its 8-K filed 2009-06-03)",
       },
+      { name: "CitiMortgage", why: "its mortgage servicer, named after it, as its 10-Ks filed 2015–2017 list it, which the CFPB's action of 2017-01-23 names (batch 89)" },
+      {
+        name: "CitiFinancial Servicing",
+        why: "its loan servicer, named after it, as its 10-Ks filed 2015 and 2016 list it and the CFPB's release of 2017-01-23 calls it, \"Citi Subsidiaries\" (batch 89)",
+      },
     ],
   },
   895421: {
@@ -320,6 +433,7 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
     names: [
       { name: "Goldman Sachs Execution & Clearing", why: "its clearing firm, named after it, which a case caption names in full (batch 85)" },
       { name: "Goldman Sachs Asset Management", why: "its fund adviser, named after it, which a case caption names in full (batch 85)" },
+      { name: "Goldman Sachs Bank USA", why: "its bank, named after it, which the CFPB's action of 2024-10-23 names (batch 89)" },
     ],
   },
   1281761: {

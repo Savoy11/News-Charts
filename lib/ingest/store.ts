@@ -369,6 +369,21 @@ export const SOURCES: {
     reviewedOn: "2026-11-01",
     notes: "the Board's press releases since 2006, kept where an order's applicant or a policy release's subject is a listed company (lib/fedPress.ts); one keyless file, no key (batch 84)",
   },
+  {
+    id: 30,
+    key: "cfpb",
+    name: "CFPB enforcement actions",
+    license: "public domain",
+    attribution: "Consumer Financial Protection Bureau",
+    // "Information created by the CFPB is in the public domain and you may reproduce, publish, or
+    // otherwise use it without the Bureau's permission. Please consider appropriate citation to the
+    // Bureau as the source." (consumerfinance.gov/privacy/website-privacy-policy/, "Legal notices",
+    // read 2026-11-02 and again 2026-11-05). Used: each action's respondents, day, one-sentence
+    // summary and a link to it. Approved by the owner on 2026-11-02.
+    commercialOk: true,
+    reviewedOn: "2026-11-05",
+    notes: "the Bureau's enforcement actions since 2012, kept where the respondents named are a listed company or a unit it owned (lib/cfpb.ts); no key (batch 89)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

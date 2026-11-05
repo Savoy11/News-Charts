@@ -239,8 +239,15 @@ of 2003…), each bought or sold one between the days its filings give, read thr
 search. American Express Financial Advisors' cases before the 2005 spin-off are on both American
 Express's and Ameriprise's pages, and Prudential Securities' on Prudential Financial's, the owner's
 calls. Lazard Capital Markets was LFCM Holdings', not Lazard's, and Fiserv Securities' case of 2005
-came after Fiserv sold it: neither is on a page. Read against every company
-in the index under its current names, 263 of the 6,897 stored releases land on 126 companies, 159 of
+came after Fiserv sold it: neither is on a page. Batch 89 added the units the Consumer Financial
+Protection Bureau charges, 22 more companies' and seven names for banks already mapped: Capital One
+Bank, American Express Centurion Bank, U.S. Bank National Association, Chase Bank USA, CitiMortgage,
+Goldman Sachs Bank USA, the mortgage insurers (MGIC's, Genworth's, Radian's, Old Republic's and AIG's
+United Guaranty until its sale at the end of 2016), Toyota's and Honda's US lenders, Verizon
+Wireless, National City Bank on PNC's page from its purchase on 2008-12-31, and OneMain's from
+2015-11-15; they add TD Bank's SEC case and press release of 2013 and U.S. Bank's own SEC order of
+2005. Read against every company
+in the index under its current names, 264 of the 6,897 stored releases land on 127 companies, 160 of
 them before 2017 (Bank of America 28, Morgan Stanley 18, Citigroup 14, JPMorgan 13, UBS Group 12,
 Wells Fargo 10, Goldman Sachs 9, Deutsche Bank 7), each read by hand (batch 78, after the 2026-10-30
 audit; Deutsche Bank's since batch 81, when its everyday name lost its "AKTIENGESELLSCHAFT"; the
@@ -295,7 +302,7 @@ revoked registrations naming a shell called "Telos, Inc." — were read by hand 
 CIK (`NOT_THE_COMPANY`). A company's rows of a day make one event, titled by its own party ("SEC
 litigation release: Transocean Inc."), with the whole caption, each release number and a
 proceeding's file number in its description. Read against every company in the index under its
-current names, the 30,747 rows give 1,146 company days on 369 companies, 557 of them before 2017
+current names, the 30,747 rows give 1,148 company days on 370 companies, 559 of them before 2017
 (Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47,
 Goldman Sachs 20); a company's former names add more, and its first price keeps it off the years
 before it listed. A party ends before its other name ("…, L.P. f/k/a Spear, Leeds & Kellogg") as it
@@ -331,6 +338,32 @@ through the release rules' map since batch 88, which added 27 of them; "Federal 
 Banco Popular de Puerto Rico to acquire…" names its applicant by the Board's verb. A fund's series takes none (batch 85): replayed against all 19,540
 series names in the index, the feed gives them nothing, and the case captions would have given 10
 other firms' cases. A release is a regulation event and is scored without the model.
+
+### CFPB enforcement actions (`lib/cfpb.ts`)
+
+The Consumer Financial Protection Bureau's orders and suits since its first, of 2012-07-17, against
+the banks, card issuers, lenders, servicers and debt buyers whose consumer business it regulates —
+which neither the Board's actions (holding companies) nor the SEC's cases (broker-dealers) reach.
+Read from the Bureau's list (www.consumerfinance.gov/enforcement/actions/, 25 a page, 386 actions on
+16 pages on 2026-11-05) once for every company (`lib/ingest/cfpbWalk.ts`, db/035): every page once a
+month, which also picks up a summary the Bureau corrects, and its first page once a day, with
+further pages only while each holds no action already kept. Not the Bureau's feed: it dates an item
+by when its page last changed (Apple's order of 2024-10-23 as 2025-09-22), where the list gives the
+day filed. Each title names the respondents ("JPMorgan Chase Bank, N.A.; and Chase Bank USA,
+N.A."), and a company keeps an action when the title names it as a case caption names a party —
+its name, or its legal name with legal words after it, or a unit the release rules' map gives it,
+since the Bureau charges the bank, not its holding company ("Capital One Bank", 2012-07-18). The
+Bureau's "dba" and "d/ba/" are read as "d/b/a". A company's actions of a day make one event
+(American Express's three of 2012-10-01). Read against every company in the index under its current
+names, the 386 actions give 87 company days on 46 companies, 35 before 2017 (Bank of America, Wells
+Fargo and Citigroup 6 each, JPMorgan 5, U.S. Bancorp 4), each read by hand; without batch 89's
+units they gave 44 on 21. Not their own, and on no page: Discover Bank's, Hudson City Savings
+Bank's and Sprint's, each an acquisition's past; Flagstar Bank, F.S.B.'s of 2014, before today's
+FLG took the name; the tax-refund lender "formerly d/b/a H&R Block" (by CIK, `NOT_THE_COMPANY`); and
+Synchrony Bank's of 2014-06-19 and PayPal's of 2015-05-19, before each company's first price.
+`check:cfpb` replays every action against every company and fund series and pins the count. Public
+domain, cited to the Bureau; no key. An action is a regulation event and is scored without the
+model.
 
 ### The SEC News Digest, counted (`lib/secDigest.ts`)
 
@@ -905,6 +938,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | SEC newsroom (press releases) | Press releases since 1997 in which a company is the party — the SEC charges, sues or sanctions it, or it settles | The year listing, read once for every company (`lib/ingest/secPressWalk.ts`); kept only when the headline makes the company the party (`lib/secPress.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Federal Reserve Board press releases | The Board's orders on a bank's applications since 2006, and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |
+| Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |

@@ -348,15 +348,21 @@ const TODAY = "2026-11-01";
   const t0 = Date.now();
   const replayed = replay();
   const companyDays = replayed.companies.flatMap(([, events]) => events);
-  check("the 30,747 rows of 1995–2026 give 1,146 company days on 369 companies, 557 before 2017, as replayed in full (1,047 on 353 before batch 88's units)",
-    rows.length === 30747 && companyDays.length === 1146 && replayed.companies.length === 369 && companyDays.filter((e) => e.date < "2017").length === 557,
+  // batch 89's consumer units add two: U.S. Bank's own order of 2005-09-02 (IC-27057) and the SEC's
+  // case against TD Bank of 2013-09-23 (33-9453), the Rothstein Ponzi scheme
+  check("the 30,747 rows of 1995–2026 give 1,148 company days on 370 companies, 559 before 2017, as replayed in full (1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's)",
+    rows.length === 30747 && companyDays.length === 1148 && replayed.companies.length === 370 && companyDays.filter((e) => e.date < "2017").length === 559,
     `${rows.length} rows → ${companyDays.length} on ${replayed.companies.length}, ${companyDays.filter((e) => e.date < "2017").length} before 2017, in ${Date.now() - t0} ms`);
   // batch 88, the 2026-11-02 proposal 4: the listed banks', brokers' and managers' own units
   const replayedOn = (t: string, d: string) => !!replayed.companies.find(([x]) => x === t)?.[1].some((e) => e.date === d);
   check("batch 88's units, on the saved rows: Regions Bank's case of 2009-09-21 on RF, Fifth Third Securities' of 2002-06-18 on FITB, Hilltop Securities' of 2016-02-02 on HTH, Nasdaq's exchange and routing broker of 2013-05-29 on NDAQ",
     replayedOn("RF", "2009-09-21") && replayedOn("FITB", "2002-06-18") && replayedOn("HTH", "2016-02-02") && replayedOn("NDAQ", "2013-05-29"));
-  check("  …U.S. Bancorp Piper Jaffray's of 2002-11-05 on USB, and its captions of 2005 and 2010, after Piper's spin-off, not",
-    replayedOn("USB", "2002-11-05") && !replayedOn("USB", "2005-09-02") && !replayedOn("USB", "2010-03-19") && RELEASE_NAMES[36104].names.find((n) => /Piper/.test(n.name))?.to === "2003-12-30");
+  // USB's day of 2005-09-02 is U.S. Bank's own order since batch 89; the Piper caption of that day is not in it
+  const usbOn = (d: string) => replayed.companies.find(([x]) => x === "USB")?.[1].find((e) => e.date === d);
+  check("  …U.S. Bancorp Piper Jaffray's of 2002-11-05 on USB, and its captions of 2005 and 2010, after Piper's spin-off, not (USB's 2005-09-02 is U.S. Bank's own order, batch 89)",
+    replayedOn("USB", "2002-11-05") && usbOn("2005-09-02")?.externalId === "proceeding:IC-27057@2005-09-02" && !/Piper/.test(usbOn("2005-09-02")?.description ?? "Piper") &&
+      !replayedOn("USB", "2010-03-19") && RELEASE_NAMES[36104].names.find((n) => /Piper/.test(n.name))?.to === "2003-12-30",
+    `${usbOn("2005-09-02")?.externalId ?? "no 2005-09-02 event"}`);
   check("  …Ameriprise Financial Services' of 2009-07-10 on AMP; American Express Financial Advisors' of 2004-02-12 on both AXP and AMP (the owner's call b), its \"(now known as Ameriprise…)\" of 2005-12-01, after the spin-off, on AMP only",
     replayedOn("AMP", "2009-07-10") && replayedOn("AMP", "2004-02-12") && replayedOn("AXP", "2004-02-12") && replayedOn("AMP", "2005-12-01") && !replayedOn("AXP", "2005-12-01"));
   check("  …Prudential Securities' cases on PRU (the owner's call c), none on Prudential plc",
@@ -364,8 +370,8 @@ const TODAY = "2026-11-01";
   check("  …and the namesakes and the units not theirs on no page: Reliance Financial Advisors not RS, Southern Financial Services not SO, Lazard Capital Markets (LFCM's) not LAZ, Fiserv Securities after its sale not FISV",
     !replayedOn("RS", "2014-12-10") && !replayedOn("SO", "2005-01-31") && !replayedOn("LAZ", "2008-10-30") && !replayedOn("FISV", "2005-04-21") &&
       rows.some((r) => r.day === "2008-10-30" && /Lazard Capital Markets/.test(r.caption)) && rows.some((r) => r.day === "2005-04-21" && /Fiserv Securities/.test(r.caption)));
-  check("  …each company in one map or the other, each unit with its reason, each day well formed, each ticker the index's",
-    Object.keys(BANK_UNITS).length === 34 && Object.keys(BANK_UNITS).every((c) => RELEASE_NAMES[Number(c)] === BANK_UNITS[Number(c)]) &&
+  check("  …each company in one map or the other, each unit with its reason, each day well formed, each ticker the index's (34 companies in batch 88, 56 with batch 89's)",
+    Object.keys(BANK_UNITS).length === 56 && Object.keys(BANK_UNITS).every((c) => RELEASE_NAMES[Number(c)] === BANK_UNITS[Number(c)]) &&
       Object.values(BANK_UNITS).every((b) => b.names.every((n) => n.why.length > 20 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.entries(BANK_UNITS).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)));
   const most = Object.fromEntries(replayed.companies.filter(([t]) => ["BAC", "MS", "WFC", "UBS", "JPM", "C", "GS"].includes(t)).map(([t, e]) => [t, e.length]));

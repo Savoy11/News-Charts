@@ -101,7 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               drug, device and food recalls from the U.S. Food and Drug Administration, and
               press releases from the U.S. Department of Justice and the U.S. Securities and
               Exchange Commission, with the SEC&apos;s litigation releases and administrative
-              proceedings.
+              proceedings, and enforcement actions from the Consumer Financial Protection Bureau.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

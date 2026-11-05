@@ -48,6 +48,8 @@ import { fetchFedActions } from "../lib/fedActions";
 import { fetchListingPage, secPressEvents } from "../lib/secPress";
 import { fetchCasePage, secCaseEvents } from "../lib/secCases";
 import { cachedFedFeed, fedPressEvents } from "../lib/fedPress";
+import { cfpbEvents, fetchCfpbPage, type CfpbAction } from "../lib/cfpb";
+import { releaseNamesOn } from "../lib/releaseNames";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
 import { FR_COMPANY_CAP, fetchCompanyRegulations, fetchCompanyYear, frDailySince, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
@@ -781,6 +783,39 @@ export const CASES: LiveCase[] = [
       if (!wfc.some((e) => e.date === "2008-10-12" && /to acquire Wachovia Corporation/.test(e.title))) out.push("Wells Fargo's Wachovia approval of 2008-10-12 not kept");
       const bac = fedPressEvents(releases, () => ["Bank of America", "BANK OF AMERICA CORP"], { cik: 70858 });
       if (!bac.some((e) => e.date === "2014-04-28" && /requiring Bank of America Corporation to resubmit/.test(e.title))) out.push("Bank of America's capital-plan release of 2014-04-28 not kept");
+      return out;
+    },
+  },
+  {
+    name: "CFPB enforcement actions — the list as the walk reads it; Capital One Bank's order of 2012-07-18 and American Express's three of 2012-10-01 by the caption rule (batch 89)",
+    covers: ["cfpb"],
+    hosts: ["www.consumerfinance.gov"],
+    async run() {
+      // measured 2026-11-05: 386 actions, 25 a page, newest filed first, the first of 2012-07-17;
+      // past the last page the Bureau serves the last page again, so the walk stops at the count
+      const first = await fetchCfpbPage(1);
+      if (first.outcome !== "ok") return [`page 1: ${first.outcome} ${first.httpStatus ?? ""} ${first.detail ?? ""}`.trim()];
+      const out: string[] = [];
+      if (first.actions.length !== 25) out.push(`page 1 holds ${first.actions.length} actions, not 25`);
+      if (first.total === undefined || first.total < 386) return [...out, `the list counts ${first.total ?? "no"} actions, fewer than the 386 of 2026-11-05`];
+      const pages = Math.ceil(first.total / 25);
+      const oldest: CfpbAction[] = [];
+      for (const p of first.total % 25 && first.total % 25 < 5 ? [pages - 1, pages] : [pages]) {
+        await new Promise((r) => setTimeout(r, 1_000));
+        const got = await fetchCfpbPage(p);
+        if (got.outcome !== "ok") return [...out, `page ${p}: ${got.outcome} ${got.httpStatus ?? ""}`.trim()];
+        oldest.push(...got.actions);
+      }
+      if (!oldest.some((a) => a.day === "2012-07-17")) out.push("no action of 2012-07-17, the list's first, on its last page");
+      const cof = cfpbEvents(oldest, () => ["Capital One", "CAPITAL ONE FINANCIAL CORP"], { cik: 927628, namesOn: (day) => releaseNamesOn(927628, day) });
+      if (!cof.some((e) => e.date === "2012-07-18" && /Capital One Bank/.test(e.title))) out.push("Capital One Bank's order of 2012-07-18 not kept for COF");
+      const axp = cfpbEvents(oldest, () => ["American Express", "AMERICAN EXPRESS CO"], { cik: 4962, namesOn: (day) => releaseNamesOn(4962, day) });
+      const day = axp.filter((e) => e.date === "2012-10-01");
+      if (day.length !== 1 || (day[0].description?.match(/ · /g) ?? []).length !== 2) out.push(`American Express's three actions of 2012-10-01 made ${day.length} events, not one of three`);
+      await new Promise((r) => setTimeout(r, 1_000));
+      const past = await fetchCfpbPage(pages + 1);
+      const last = oldest.slice(-1)[0]?.path;
+      if (past.outcome === "ok" && past.actions.slice(-1)[0]?.path !== last) out.push(`page ${pages + 1}, past the last, no longer repeats the last page: the walk's stop needs a look`);
       return out;
     },
   },

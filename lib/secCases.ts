@@ -234,20 +234,23 @@ const KIND: Record<CaseListing, { title: string; source: string }> = {
  * price, is not its. The title names the company as the caption does, and the description gives
  * the whole caption, each release number and a proceeding's file number, which every order in that
  * proceeding carries. The event is the company's own, `cik` in its identity: two banks one caption
- * names each get theirs, titled by their own party.
+ * names each get theirs, titled by their own party. Before `from` only the units `namesBefore(day)`
+ * gives count (`releaseNamesBefore`, the owner's calls b and c, batch 90), none of the company's
+ * own names.
  */
 export function secCaseEvents(
   cases: readonly SecCase[],
   namesIn: (year: number) => string[],
-  { cik, from = "", namesOn }: { cik: number | string; from?: string; namesOn?: (day: string) => string[] },
+  { cik, from = "", namesOn, namesBefore }: { cik: number | string; from?: string; namesOn?: (day: string) => string[]; namesBefore?: (day: string) => string[] },
 ): TimelineEvent[] {
   const byYear = new Map<number, string[]>();
   const names = (year: number) => byYear.get(year) ?? byYear.set(year, namesIn(year)).get(year)!;
   const byDay = new Map<string, { c: SecCase; party: string }[]>();
   for (const c of cases) {
-    if (c.day < from || !/^https:\/\/www\.sec\.gov\//.test(c.url)) continue;
+    if (!/^https:\/\/www\.sec\.gov\//.test(c.url)) continue;
     if (NOT_THE_COMPANY[Number(cik)]?.some((n) => n.caption.test(c.caption))) continue;
-    const held = [...names(Number(c.day.slice(0, 4))), ...(namesOn?.(c.day) ?? [])];
+    const held = c.day < from ? (namesBefore?.(c.day) ?? []) : [...names(Number(c.day.slice(0, 4))), ...(namesOn?.(c.day) ?? [])];
+    if (!held.length) continue;
     // a name can only be a party where the caption's letters and digits hold its own: most rows
     // are read no further
     const letters = alnum(c.caption);

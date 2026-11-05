@@ -13,7 +13,7 @@ import { SOURCE_TTL_MINUTES } from "../lib/ingest/refresh";
 import { QUOTAS } from "../lib/ingest/quota";
 import { SOURCES } from "../lib/ingest/store";
 import { deterministicScore } from "../lib/enrich/relevance";
-import { BANK_UNITS, RELEASE_NAMES, isNotesRecord, releaseNamesAsked, releaseNamesOn } from "../lib/releaseNames";
+import { BANK_UNITS, RELEASE_NAMES, isNotesRecord, releaseNamesAsked, releaseNamesBefore, releaseNamesOn } from "../lib/releaseNames";
 import { newsNamesFor, possessiveNameFor } from "../lib/sec";
 import {
   NOT_THE_COMPANY,
@@ -85,7 +85,7 @@ function row(number: string, day?: string): SecCase {
   if (!r) throw new Error(`no row ${number} in the fixture`);
   return r;
 }
-/** Whether the company's page takes the row, its first price aside, as ingest keeps it. */
+/** Whether the company's page takes the row, its first price aside (ingest's, checked below with the owner's calls), as ingest keeps it. */
 const pageTakes = (r: SecCase, ticker: string) => {
   const cik = rowOf(ticker)[0];
   return !isNotesRecord(cik) && secCaseEvents([r], namesOf(ticker), { cik, namesOn: (day) => releaseNamesOn(cik, day) }).length === 1;
@@ -365,13 +365,39 @@ const TODAY = "2026-11-01";
     `${usbOn("2005-09-02")?.externalId ?? "no 2005-09-02 event"}`);
   check("  …Ameriprise Financial Services' of 2009-07-10 on AMP; American Express Financial Advisors' of 2004-02-12 on both AXP and AMP (the owner's call b), its \"(now known as Ameriprise…)\" of 2005-12-01, after the spin-off, on AMP only",
     replayedOn("AMP", "2009-07-10") && replayedOn("AMP", "2004-02-12") && replayedOn("AXP", "2004-02-12") && replayedOn("AMP", "2005-12-01") && !replayedOn("AXP", "2005-12-01"));
+  // The replay above sets the first price aside; ingest reads a company's rows from it on
+  // (`secCasesFor`). The owner's calls (b) and (c) reach before it, through the units marked
+  // `beforeListing` and those alone (batch 90, the 2026-11-05 audit's finding 2). First prices are
+  // Yahoo's firstTradeDate, read 2026-11-05: AMP 2005-09-15, PRU 2001-12-13.
+  const floored = (ticker: string, from: string, rowsIn: SecCase[], before = true) => {
+    const cik = rowOf(ticker)[0];
+    return secCaseEvents(rowsIn, namesOf(ticker), {
+      cik,
+      from,
+      namesOn: (day) => releaseNamesOn(cik, day),
+      ...(before ? { namesBefore: (day: string) => releaseNamesBefore(cik, day) } : {}),
+    });
+  };
+  const aefa = row("33-8365", "2004-02-12");
+  check("the owner's call (b) on AMP's page with its first price applied: American Express Financial Advisors' case of 2004-02-12, 19 months before AMP listed, through the unit marked to count before listing — and not without the mark",
+    floored("AMP", "2005-09-15", [aefa]).length === 1 && floored("AMP", "2005-09-15", [aefa], false).length === 0 &&
+      floored("AXP", "1972-06-01", [aefa]).length === 1);
+  const pruRows = rows.filter((r) => /Prudential (?:Securities|Equity Group)/.test(r.caption));
+  const pruDays = floored("PRU", "2001-12-13", pruRows).map((e) => e.date);
+  check("  …and (c) on PRU's: all 19 of Prudential Securities' days, the three before its first price of 2001-12-13 among them (16 without the mark)",
+    pruDays.length === 19 && ["2000-04-06", "2001-01-29", "2001-01-30"].every((d) => pruDays.includes(d)) && floored("PRU", "2001-12-13", pruRows, false).length === 16,
+    `${pruDays.length}: ${pruDays.slice(-3).join(",")}`);
+  const amfs = rows.find((r) => /Ameriprise Financial Services/.test(r.caption) && r.day >= "2009")!;
+  check("  …before its first price only a marked unit counts: Ameriprise Financial Services' case, set before AMP listed, is refused, and the marked units are these two alone",
+    floored("AMP", "2005-09-15", [amfs]).length === 1 && floored("AMP", "2005-09-15", [{ ...amfs, day: "2004-01-02" }]).length === 0 &&
+      Object.values(RELEASE_NAMES).flatMap((b) => b.names.filter((n) => n.beforeListing).map((n) => `${b.ticker}:${n.name}`)).join() === "AMP:American Express Financial Advisors,PRU:Prudential Securities");
   check("  …Prudential Securities' cases on PRU (the owner's call c), none on Prudential plc",
     replayedOn("PRU", "2003-07-10") && replayedOn("PRU", "2006-08-28") && !replayed.companies.some(([t, e]) => t === "PUK" && e.some((x) => /Prudential (?:Securities|Equity)/.test(x.title))));
   check("  …and the namesakes and the units not theirs on no page: Reliance Financial Advisors not RS, Southern Financial Services not SO, Lazard Capital Markets (LFCM's) not LAZ, Fiserv Securities after its sale not FISV",
     !replayedOn("RS", "2014-12-10") && !replayedOn("SO", "2005-01-31") && !replayedOn("LAZ", "2008-10-30") && !replayedOn("FISV", "2005-04-21") &&
       rows.some((r) => r.day === "2008-10-30" && /Lazard Capital Markets/.test(r.caption)) && rows.some((r) => r.day === "2005-04-21" && /Fiserv Securities/.test(r.caption)));
-  check("  …each company in one map or the other, each unit with its reason, each day well formed, each ticker the index's (34 companies in batch 88, 56 with batch 89's)",
-    Object.keys(BANK_UNITS).length === 56 && Object.keys(BANK_UNITS).every((c) => RELEASE_NAMES[Number(c)] === BANK_UNITS[Number(c)]) &&
+  check("  …each company in one map or the other, each unit with its reason, each day well formed, each ticker the index's (34 companies in batch 88, 56 with batch 89's, 60 with batch 90's)",
+    Object.keys(BANK_UNITS).length === 60 && Object.keys(BANK_UNITS).every((c) => RELEASE_NAMES[Number(c)] === BANK_UNITS[Number(c)]) &&
       Object.values(BANK_UNITS).every((b) => b.names.every((n) => n.why.length > 20 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.entries(BANK_UNITS).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)));
   const most = Object.fromEntries(replayed.companies.filter(([t]) => ["BAC", "MS", "WFC", "UBS", "JPM", "C", "GS"].includes(t)).map(([t, e]) => [t, e.length]));
@@ -487,6 +513,9 @@ const TODAY = "2026-11-01";
   const dana = await secCasesFor(fakeDb(kept), 1, { edgarName: "DANA INC", alsoKnownAs: [], cik: 26780 }, ok);
   check("  …and by a stored former name, in use that year: Dana Holding Corporation's case of 2009", dana.events.some((e) => e.date === "2009-09-11"), dana.events.map((e) => e.date).join(","));
   kept.renames = [];
+  const amp = await secCasesFor(fakeDb({ ...kept, listed: "2005-09-15" }), 1, { edgarName: "Ameriprise Financial, Inc.", alsoKnownAs: newsNamesFor(820027), cik: 820027 }, ok);
+  check("  …and from its first price, the owner's call (b) still on it: Ameriprise's page, listed 2005-09-15, carries the case of 2004-02-12 (batch 90)",
+    amp.events.some((e) => e.date === "2004-02-12") && amp.events.every((e) => e.date >= "2005-09-15" || e.date === "2004-02-12"), amp.events.map((e) => e.date).join(","));
   const notes = await secCasesFor(fakeDb(kept), 1, { edgarName: "BARCLAYS BANK PLC", alsoKnownAs: [], cik: 312070 }, ok);
   const unpriced = await secCasesFor(fakeDb({ ...kept, listed: null }), 1, { edgarName: "HUNTINGTON BANCSHARES INC /MD/", alsoKnownAs: [], cik: 49196 }, ok);
   const refusedWalk: CasesWalk = { ...ok, stopped: "throttled", failure: { outcome: "throttled", httpStatus: 403, detail: "litigation 2026 page 1" } };

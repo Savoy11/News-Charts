@@ -269,12 +269,16 @@ export const DOJ_CAP = 60;
  * `namesOn(day)` gives the names a release of that day may add, the units the company then owned
  * (`releaseNamesOn`).
  */
-export function dojEvents(releases: readonly DojRelease[], names: readonly string[], namesOn?: (day: string) => string[]): TimelineEvent[] {
+export function dojEvents(releases: readonly DojRelease[], names: readonly string[], namesOn?: (day: string) => string[], from = ""): TimelineEvent[] {
   const byDay = new Map<string, { title: string; url: string; r: DojRelease; date: string }>();
   for (const r of releases) {
     const title = plainText(r.title ?? "");
     const date = releaseDate(r.date);
     if (!title || !date || !r.url || !/^https:\/\/www\.justice\.gov\//.test(r.url)) continue;
+    // a release from before the company's first price is not its, as the other release rules hold
+    // (batch 90): "Citizens Bank", Citizens Financial Group's unit, was Citizens Republic Bancorp's
+    // bank in the settlement of 2011-05-05, three years before the company listed
+    if (date < from) continue;
     if (!releaseNamesParty(title, namesOn ? [...names, ...namesOn(date)] : names)) continue;
     const cand = { title, url: r.url, r, date };
     const held = byDay.get(date);
@@ -318,9 +322,15 @@ export const justiceQueryNames = (edgarName: string, alsoKnownAs: readonly strin
 /**
  * The company's Justice Department releases: every release whose title contains one of its names,
  * newest first, kept only when the title makes it a party (`releaseNamesParty`) under the names it
- * had that day. A bank's notes record takes none (`isNotesRecord`).
+ * had that day, from `from`, its first price, on. A bank's notes record takes none (`isNotesRecord`).
  */
-export async function fetchJusticeReleases(edgarName: string, alsoKnownAs: string[] = [], possessive = "", cik?: number | string): Promise<FetchResult> {
+export async function fetchJusticeReleases(
+  edgarName: string,
+  alsoKnownAs: string[] = [],
+  possessive = "",
+  cik?: number | string,
+  { from = "" }: { from?: string } = {},
+): Promise<FetchResult> {
   if (cik !== undefined && isNotesRecord(cik)) return { events: [], outcome: "empty", detail: "a bank's notes record: its releases are its group's page's" };
   const own = dojPossessive(edgarName, possessive);
   // "Lowe's" names Lowe's where LOWES COMPANIES does not; "Moody's" adds nothing to MOODYS
@@ -355,6 +365,6 @@ export async function fetchJusticeReleases(edgarName: string, alsoKnownAs: strin
   } catch (err) {
     return { events: [], outcome: "error", detail: String(err).slice(0, 200) };
   }
-  const events = dojEvents(releases, names, cik === undefined ? undefined : (day) => releaseNamesOn(cik, day));
+  const events = dojEvents(releases, names, cik === undefined ? undefined : (day) => releaseNamesOn(cik, day), from);
   return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
 }

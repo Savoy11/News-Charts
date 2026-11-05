@@ -57,7 +57,9 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   // finds each the day it is posted (batch 84).
   fed_press: 1440,
   // The Bureau files a few actions a month, against every firm it regulates; a daily look at its
-  // list's newest page finds each one within a day of it being posted (batch 89).
+  // list's newest page finds each one filed since the newest kept within a day of it being posted
+  // (batch 89). One posted late, dated before an action already kept, waits for the monthly read of
+  // the whole list (batch 90: 0 of the 386 were out of filed order on 2026-11-05).
   cfpb: 1440,
   // Digitised newspapers from before 1963. These will never change again.
   loc_chronam: 10080,

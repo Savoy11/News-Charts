@@ -40,7 +40,7 @@ import { getOfficialDomain } from "../lib/wikidata";
 import { fetchRegulations, regulationQueryFor } from "../lib/federalregister";
 import { companyNames, fetchCompanyRegulations, frDailySince, frSearchTerm } from "../lib/frCompany";
 import { backfillRegulations } from "../lib/ingest/frBackfill";
-import { FUND_SERIES, secPressFor, walkSecPress } from "../lib/ingest/secPressWalk";
+import { FUND_SERIES, NO_PRICES, firstPriceDay, secPressFor, walkSecPress } from "../lib/ingest/secPressWalk";
 import { secCasesFor, walkSecCases } from "../lib/ingest/secCasesWalk";
 import { cfpbFor, walkCfpb } from "../lib/ingest/cfpbWalk";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
@@ -49,7 +49,7 @@ import { fetchInvestigations } from "../lib/investigations";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { FED_BANKS, fedBanksFor, fetchFedActions } from "../lib/fedActions";
 import { dojPossessive, fetchJusticeReleases, justiceQueryNames } from "../lib/doj";
-import { releaseNamesAsked } from "../lib/releaseNames";
+import { isNotesRecord, releaseNamesAsked } from "../lib/releaseNames";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
 import { MACRO_SUBJECT, fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
@@ -655,9 +655,14 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   // a fund's series is no party to any of these: its page knows only the series name, "GROWTH
   // FUND", which names some other firm's case (batch 85, `FUND_SERIES`)
   const fundSeries = fundSeriesId(company.ticker) !== null;
-  await run("doj_press", justiceQueryNames(company.name, alsoKnownAs, possessive, company.cik).join(" | "), async () =>
-    fundSeries ? FUND_SERIES() : fetchJusticeReleases(company.name, alsoKnownAs, possessive, company.cik)
-  );
+  await run("doj_press", justiceQueryNames(company.name, alsoKnownAs, possessive, company.cik).join(" | "), async () => {
+    if (fundSeries) return FUND_SERIES();
+    // from the company's first price on, as the other release rules read (batch 90); a notes
+    // record is asked nothing, and a company with no prices yet is asked again on the next run
+    const listed = isNotesRecord(company.cik) ? "" : await firstPriceDay(client, subjectId);
+    if (listed === null) return NO_PRICES();
+    return fetchJusticeReleases(company.name, alsoKnownAs, possessive, company.cik, { from: listed });
+  });
 
   /**
    * The SEC's own press releases in which the company is the party — it is charged, sued or

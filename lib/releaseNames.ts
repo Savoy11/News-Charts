@@ -32,6 +32,14 @@ export interface ReleaseName {
   to?: string;
   /** Why it is the company's, and why from or to that day. */
   why: string;
+  /**
+   * Whether its rows count before the company's first price too, which every other name of the
+   * company's waits for (batch 90): the owner's calls (b) and (c), whose units the company's own
+   * record, or its parent of the time, held before it listed. Read by the SEC's two rules alone,
+   * whose listings begin in 1995 and 1997; the Board's feed (2006), the Justice Department's
+   * (2009) and the Bureau's (2012) begin after both companies listed.
+   */
+  beforeListing?: true;
 }
 
 /**
@@ -132,7 +140,8 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
       { name: "Ameriprise Financial Services", why: "its broker-dealer, named after it" },
       {
         name: "American Express Financial Advisors",
-        why: "the same broker-dealer before it took the company's name in 2005, a unit of the company's own record, American Express Financial Corporation's: the owner's call (b), 2026-11-02, gives its cases before the spin-off to this page as well as American Express's",
+        why: "the same broker-dealer before it took the company's name in 2005, a unit of the company's own record, American Express Financial Corporation's: the owner's call (b), 2026-11-02, gives its cases before the spin-off to this page as well as American Express's, the case of 2004-02-12 among them, 19 months before the company's first price of 2005-09-15",
+        beforeListing: true,
       },
       {
         name: "American Express Financial Corporation",
@@ -317,12 +326,45 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
     ticker: "RKT",
     names: [{ name: "Rocket Homes Real Estate", why: "its real-estate brokerage, named after it, as its prospectus filed 2020-08-07 names it, which the CFPB's suit of 2024-12-23 names (batch 89)" }],
   },
+  1141391: {
+    ticker: "MA",
+    names: [{ name: "Mastercard International", why: "its operating company, Mastercard International Incorporated, named after it, as its 10-K filed 2016-02-12 lists it (exhibit 21), which the CFPB's action of 2017-02-01 names (batch 90)" }],
+  },
+  1677703: {
+    ticker: "CNDT",
+    names: [
+      { name: "Conduent Business Services", why: "its services business, named after it, as its 8-K filed 2017-04-11 names it, which the CFPB's order of 2017-11-20 names (batch 90)" },
+      { name: "Conduent Education Services", why: "its student-loan servicer, named after it, as its 10-K filed 2018-03-01 lists it (exhibit 21.1), which the CFPB's settlement of 2019-05-01 names (batch 90)" },
+    ],
+  },
+  832988: {
+    ticker: "SIG",
+    names: [
+      {
+        name: "Sterling Jewelers",
+        from: "2003-04-24",
+        why: "its US jeweller, from the first filing EDGAR's full-text search finds naming it, its 20-F filed 2003-04-24 (exhibit 8.1), as its 10-K filed 2018-04-02 still lists it; the CFPB's action of 2019-01-16 names it (batch 90)",
+      },
+    ],
+  },
+  933036: {
+    ticker: "UPBD",
+    names: [
+      {
+        name: "Acima Holdings",
+        from: "2021-02-17",
+        why: "bought by the company, then Rent-A-Center (\"On February 17, 2021\" and \"completed the acquisition of Acima\", its 8-K filed 2021-02-17), so the CFPB's suit of 2024-07-26 is the company's (batch 90)",
+      },
+      { name: "Acima Digital", from: "2021-02-17", why: "the same business's lender, bought the same day, as its 10-K filed 2023-02-24 lists it (exhibit 21.1) (batch 90)" },
+    ],
+  },
   1137774: {
     ticker: "PRU",
     names: [
       {
         name: "Prudential Securities",
-        why: "the owner's call (c), 2026-11-02: its securities firm, which kept the company's ownership as Prudential Equity Group after its retail brokerage went into Wachovia Securities (\"On July 1, 2003, we completed\" the \"combination of our retail securities brokerage\", its 10-Q filed 2003-08-13), so its cases are Prudential Financial's, not Prudential plc's",
+        why: "the owner's call (c), 2026-11-02: its securities firm, which kept the company's ownership as Prudential Equity Group after its retail brokerage went into Wachovia Securities (\"On July 1, 2003, we completed\" the \"combination of our retail securities brokerage\", its 10-Q filed 2003-08-13), so its cases are Prudential Financial's, not Prudential plc's; the call names its cases of 2000–2003, three of them before the company's first price of 2001-12-13",
+        beforeListing: true,
       },
       { name: "Prudential Equity Group", why: "the same firm from 2003, named after it, which captions write \"f/k/a Prudential Securities Inc.\"" },
     ],
@@ -518,6 +560,13 @@ const held = (n: ReleaseName, day: string) => (!n.from || day >= n.from) && (!n.
 /** The names a release of that day may give the company beyond its record's. */
 export const releaseNamesOn = (cik: number | string, day: string): string[] =>
   (RELEASE_NAMES[Number(cik)]?.names ?? []).filter((n) => held(n, day)).map((n) => n.name);
+
+/**
+ * The units whose rows count on `day` though it is before the company's first price
+ * (`beforeListing`): the only names a release rule reads such a row by.
+ */
+export const releaseNamesBefore = (cik: number | string, day: string): string[] =>
+  (RELEASE_NAMES[Number(cik)]?.names ?? []).filter((n) => n.beforeListing && held(n, day)).map((n) => n.name);
 
 /** Every one of them, whatever its days: what a search that knows no dates is asked for. */
 export const releaseNamesAsked = (cik: number | string): string[] => (RELEASE_NAMES[Number(cik)]?.names ?? []).map((n) => n.name);

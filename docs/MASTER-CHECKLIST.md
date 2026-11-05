@@ -988,6 +988,110 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 90: the audit of batches 85–89, and its four findings fixed (2026-11-05)
+
+The `code-auditor` read batches 85–89 (`960c3be..d22927c`). Its report is
+`docs/audits/2026-11-05-code-audit.md`. It found the mechanics sound:
+- batch 85's five fixes;
+- the CFPB parser and walk on the Bureau's real pages;
+- every unit day the saved rows exercise;
+- every replay count README gives;
+- batch 87's 1985 count.
+
+It found four defects. All four were reproduced here and are fixed, each with cases that fail on
+main.
+
+- [x] **1. Citizens Financial Group took another bank's 2011 Justice Department settlement**
+      (`P2`).
+      - **The defect:** batch 89 gave CFG the unit "Citizens Bank" and relied on the company's
+        first price to bound it. But the Justice step read no first price.
+      - Asked "Citizens Bank" on 2026-11-05, the API returns 25 titles. Among them is "Justice
+        Department Reaches Settlement with Citizens Republic Bancorp Inc. and Citizens Bank…"
+        (2011-05-05): another holding company's own bank, three years before CFG listed. It was
+        kept for CFG and scored 0.95.
+      - **The fix:** the Justice step reads a company from its first price on, as the SEC's two
+        rules, the Board's and the Bureau's already do. `fetchJusticeReleases` takes `from`, and
+        ingest passes the first price (`firstPriceDay`). A company with no prices yet is asked
+        again on the next run (`NO_PRICES`), and a notes record is still asked nothing.
+      - **Check:** `check:doj` holds the API's real answer (`fixture.CFG`, all 25 releases). The
+        settlement is read as a party, and from 2014-09-24 it is refused, through `dojEvents` and
+        through the fetch. The ingest wiring is pinned. On main the fixture entry, the `from` and
+        the wiring are missing.
+- [x] **2. The first-price floor overrode the owner's calls (b) and (c)** (`P3`).
+      - **The defect:** batch 88 recorded American Express Financial Advisors' case of
+        2004-02-12 as on Ameriprise's page, and all 19 of Prudential Securities' days as on
+        Prudential's. Ingest reads a company from its first price on: AMP's is 2005-09-15 and
+        PRU's 2001-12-13 (Yahoo's own first trading days). So the AEFA case and three Prudential
+        cases (2000-04-06, 2001-01-29, 2001-01-30) never reached the page. The checks set the
+        floor aside, so they asserted pages production never built.
+      - **The fix:** a unit can be marked `beforeListing` in `lib/releaseNames.ts`. Before the
+        company's first price, the SEC's two rules read only the marked units valid that day,
+        never the company's own names (`releaseNamesBefore`).
+        - Exactly two are marked, the owner's calls: AMP's American Express Financial Advisors and
+          PRU's Prudential Securities.
+        - The Board's feed (2006), the Justice Department's (2009) and the Bureau's (2012) begin
+          after both companies listed.
+      - **Check:** `check:sec-cases` runs both calls with the real first prices.
+        - The 2004 case reaches AMP only through the mark.
+        - All 19 Prudential days reach PRU (16 without the mark).
+        - Ameriprise Financial Services' case moved before AMP listed is refused.
+        - `secCasesFor`, given AMP's first price, keeps the 2004 case.
+        - `check:sec-press` holds the same for a release in the SEC's own wording, since the
+          saved listing has no pre-listing release for either unit.
+      - **The Bureau's counts after the floor.** The 87 days batch 89 pinned were before the
+        floor. Five fall before their company's first price:
+        - Ally's of 2013-12-20;
+        - Chime's of 2024-05-07;
+        - PayPal's of 2015-05-19;
+        - Santander Holdings USA's of 2016-07-14 (its preferred shares first traded on
+          2026-08-28);
+        - Synchrony Bank's of 2014-06-19.
+
+        README named only two of them. `check:cfpb` now pins each of the 50 companies' first
+        trading days and both counts.
+- [x] **3. The Bureau's rule missed 7 actions on 5 listed companies' own units** (`P3`).
+      - **The defect:** their titles name units the companies' own filings list, and none was in
+        the map.
+      - **The fix, four companies in `BANK_UNITS` (60 in all):**
+        - Mastercard International, on MA (its 10-K filed 2016-02-12, exhibit 21);
+        - Conduent Business Services and Conduent Education Services, on CNDT (its 8-K filed
+          2017-04-11, and its 10-K filed 2018-03-01, exhibit 21.1);
+        - Sterling Jewelers, on SIG, from Signet's first filing that names it (its 20-F filed
+          2003-04-24, exhibit 8.1), batch 88's rule for a unit with no purchase day in EDGAR;
+        - Acima Holdings and Acima Digital, on UPBD, from Rent-A-Center's purchase ("On February
+          17, 2021" and "completed the acquisition of Acima", its 8-K filed 2021-02-17).
+      - **Left to the owner:** GE Capital Retail Bank's two actions (2013-12-10, and 2014-06-19 as
+        "Synchrony Bank, f/k/a GE Capital Retail Bank") are not put on GE. The proposal named GE's
+        ownership of the bank an ownership call, beside PayPal's of 2015 on eBay. Both stay off
+        every page until the owner decides.
+      - **Measured:** the 386 actions now give 92 company days on 50 companies, 35 before 2017. Of
+        those, 87 reach a page, on 45 companies, 31 before 2017. The SEC's cases and releases, the
+        Board's releases and actions, and the Justice fixture are unchanged by the new units.
+- [x] **4. Stale figures in the docs** (`P3`).
+      - The coverage map's header now says 30 sources, 22 on the ingest path.
+      - Its Board row says 208 orders, as `check:fed-press` and README give.
+      - Batch 89's "seven more names" were ten names on six banks. The ledger, its entry and
+        README are corrected.
+- [x] **Set aside by the audit, one done here.** `lib/ingest/refresh.ts` no longer says the
+      Bureau's daily read finds every action within a day. An action posted with a day older than
+      one already kept waits for the monthly read; 0 of the 386 were out of filed order.
+- **Requests:**
+      - the auditor's 15: query1.finance.yahoo.com 5 (one a retry after a 429), efts.sec.gov 5,
+        www.justice.gov 5;
+      - this batch's 40: query1.finance.yahoo.com 36 (33 first trading days and 3 retries after a
+        429), efts.sec.gov 4.
+- **Checks:**
+      - `check:doj` 58;
+      - `check:sec-cases` 73;
+      - `check:sec-press` 76;
+      - `check:cfpb` 48;
+      - the rest of `npm run check` and `npm run lint` pass.
+- Not done:
+      - `fetchDigestArchive` and `fetchDigestIssue` (`lib/secDigest.ts`) still have no caller.
+        `digest-report` fetches through its own cached reader. They wait for the Digest's step 2,
+        which is the owner's call.
+      - The owner's ownership calls on GE Capital Retail Bank (GE) and PayPal's 2015 action (eBay).
+
 ## NC ledger — batch 89: the CFPB's enforcement actions, a new source (2026-11-05)
 
 The 2026-11-02 proposal 5, approved by the owner on 2026-11-02. The Consumer Financial Protection
@@ -1027,9 +1131,10 @@ reach those orders, so a card bank's or a national bank's consumer case was on n
         - Toyota's and Honda's US lenders, Verizon Wireless, Santander's bank (on Santander and on
           Santander Holdings USA, its owner) and Santander Consumer USA;
         - PRA Group's debt buyer, TransUnion's Trans Union LLC, and Rocket's real-estate brokerage.
-      - Seven more names for banks already mapped: American Express's three units, U.S. Bank
-        National Association, Fifth Third Bank, Chase Bank USA and Chase BankCard Services,
-        CitiMortgage and CitiFinancial Servicing, and Goldman Sachs Bank USA.
+      - Ten more names for six banks already mapped (counted as "seven" until batch 90 corrected
+        it): American Express's three units, U.S. Bank National Association, Fifth Third Bank,
+        Chase Bank USA and Chase BankCard Services, CitiMortgage and CitiFinancial Servicing, and
+        Goldman Sachs Bank USA.
       - **Bought units, from the day bought, read in the filings through EDGAR's full-text search:**
         - National City Bank on PNC's page from 2008-12-31;
         - OneMain's units from 2015-11-15;
@@ -6988,9 +7093,9 @@ already held, but new investment goes to securities coverage first.
         first price, a day's three American Express actions one event. On main it cannot run: the
         adapter does not exist.
       - ✅ **Done in batch 89:** `lib/cfpb.ts`, `lib/ingest/cfpbWalk.ts` and `db/035`, registered as
-        source 30, credited, scored without the model; 22 more companies' units and seven more
-        names for mapped banks. The 386 actions give 87 company days on 46 companies, 35 before
-        2017. The daily read is the list's first page, not the feed, which dates an item by its
+        source 30, credited, scored without the model; 22 more companies' units and ten more
+        names for six mapped banks. The 386 actions give 87 company days on 46 companies, 35
+        before 2017; batch 90 brought them to 92 on 50, 87 of which reach a page. The daily read is the list's first page, not the feed, which dates an item by its
         last edit. `check:cfpb` (45) holds every case above.
       - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
         #5, approved 2026-11-02 with the new source. Importance medium-low · Efficiency high ·

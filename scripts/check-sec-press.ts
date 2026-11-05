@@ -6,7 +6,7 @@ import { dojPossessive, releaseNamesParty } from "../lib/doj";
 import { companyNames } from "../lib/frCompany";
 import { namesForYear } from "../lib/ingest/frBackfill";
 import { GAP_MS, PAGES_PER_RUN, YEAR_PAGES, secPressFor, storedSecReleases, walkSecPress, type PressWalk } from "../lib/ingest/secPressWalk";
-import { NOTES_RECORDS, RELEASE_NAMES, isNotesRecord, releaseNamesAsked, releaseNamesOn } from "../lib/releaseNames";
+import { NOTES_RECORDS, RELEASE_NAMES, isNotesRecord, releaseNamesAsked, releaseNamesBefore, releaseNamesOn } from "../lib/releaseNames";
 import { SOURCE_TTL_MINUTES } from "../lib/ingest/refresh";
 import { QUOTAS } from "../lib/ingest/quota";
 import { SOURCES } from "../lib/ingest/store";
@@ -364,8 +364,8 @@ const TODAY = "2026-10-29";
     [["2014-39", "GLDI", false], ["2021-213", "GLDI", false], ["2012-233", "GLDI", false], ["2012-233", "JPM", true], ["2009-29", "AMUB", false]]);
   check("  …where before this batch GLDI's page took Credit Suisse's own",
     secPressEvents([storedRelease("2014-39"), storedRelease("2021-213")], namesOf("GLDI")).length === 2);
-  check("the map: twelve banks (seven in batch 82, Deutsche Bank, State Street, BNY and Barclays in batch 83, Goldman Sachs in batch 85), batch 88's 34 companies' units and batch 89's 22 more, each unit with its reason, each day well formed, and the three notes records mapped to none",
-    Object.keys(RELEASE_NAMES).length === 68 && Object.keys(NOTES_RECORDS).length === 3 &&
+  check("the map: twelve banks (seven in batch 82, Deutsche Bank, State Street, BNY and Barclays in batch 83, Goldman Sachs in batch 85), batch 88's 34 companies' units, batch 89's 22 more and batch 90's 4, each unit with its reason, each day well formed, and the three notes records mapped to none",
+    Object.keys(RELEASE_NAMES).length === 72 && Object.keys(NOTES_RECORDS).length === 3 &&
       Object.values(RELEASE_NAMES).every((b) => b.names.every((n) => n.why.length > 20 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.keys(NOTES_RECORDS).every((cik) => !(cik in RELEASE_NAMES)) &&
       Object.entries(RELEASE_NAMES).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)) &&
@@ -406,6 +406,14 @@ const TODAY = "2026-10-29";
       gs[0].source === "SEC press release 2010-123" && gs[0].externalId === "2010-123@2010-07-15" && gs[0].dedupBasis === "sec-press:2010-123@2010-07-15" && gs[0].occurredAt === undefined,
     gs.map((e) => `${e.date} ${e.externalId}`).join(" · "));
   check("  …none before the company's first price", secPressEvents(fixture.releases, namesOf("GS"), "2006-01-01").map((e) => e.date).join(",") === "2010-07-15,2010-04-16");
+  // the saved listing holds no release naming either marked unit before its company listed, so a
+  // headline in the SEC's own wording stands in for one (batch 90)
+  const early: SecRelease = { number: "2001-1", day: "2001-06-01", title: "SEC Charges Prudential Securities Incorporated With Fraud", url: "https://www.sec.gov/news/press/2001-1.txt" };
+  const pru = cikOf("PRU");
+  check("  …but a unit the owner's calls mark counts before it: Prudential Securities' release of 2001, before PRU's first price of 2001-12-13, through the mark alone",
+    secPressEvents([early], namesOf("PRU"), "2001-12-13", (day) => releaseNamesOn(pru, day), (day) => releaseNamesBefore(pru, day)).length === 1 &&
+      secPressEvents([early], namesOf("PRU"), "2001-12-13", (day) => releaseNamesOn(pru, day)).length === 0 &&
+      secPressEvents([{ ...early, title: "SEC Charges Prudential Financial, Inc. With Fraud" }], namesOf("PRU"), "2001-12-13", (day) => releaseNamesOn(pru, day), (day) => releaseNamesBefore(pru, day)).length === 0);
   const twice = [release("2022-123", "2022-07-18"), release("2022-123", "2023-06-29")];
   check("a number the SEC gave twice is two releases, told apart by their days",
     new Set(twice.map(releaseKey)).size === 2 && releaseKey(twice[1]) === "2022-123@2023-06-29");

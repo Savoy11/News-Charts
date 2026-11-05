@@ -50,6 +50,7 @@ import { fetchCasePage, secCaseEvents } from "../lib/secCases";
 import { cachedFedFeed, fedPressEvents } from "../lib/fedPress";
 import { cfpbEvents, fetchCfpbPage, type CfpbAction } from "../lib/cfpb";
 import { epaEvents, fetchCaseFile } from "../lib/epaCases";
+import { cpscEvents, fetchRecalls as fetchCpscRecalls } from "../lib/cpscRecalls";
 import { releaseNamesOn } from "../lib/releaseNames";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
@@ -818,6 +819,23 @@ export const CASES: LiveCase[] = [
       const past = await fetchCfpbPage(pages + 1);
       const last = oldest.slice(-1)[0]?.path;
       if (past.outcome === "ok" && past.actions.slice(-1)[0]?.path !== last) out.push(`page ${pages + 1}, past the last, no longer repeats the last page: the walk's stop needs a look`);
+      return out;
+    },
+  },
+  {
+    name: "CPSC product recalls — the whole recall set as the walk reads it; Bodum's of 2026-10-29 on Target, Walmart and Amazon (batch 96)",
+    covers: ["cpsc_recalls"],
+    hosts: ["www.saferproducts.gov"],
+    async run() {
+      // measured 2026-11-05: 10,070 recalls, the first of 1973-06-08
+      const got = await fetchCpscRecalls();
+      if (got.outcome !== "ok") return [`the service: ${got.outcome} ${got.httpStatus ?? ""} ${got.detail ?? ""}`.trim()];
+      const out: string[] = [];
+      if (got.recalls.length < 10_070) out.push(`the service holds ${got.recalls.length} recalls, fewer than the 10,070 of 2026-11-05`);
+      const bodum = got.recalls.filter((r) => r.number === "27055");
+      for (const [cik, names] of [[27419, ["Target"]], [104169, ["Walmart"]], [1018724, ["Amazon"]]] as const) {
+        if (!cpscEvents(bodum, () => [...names], { cik }).length) out.push(`Bodum's recall 27055 not kept for ${names[0]}, a store that sold it`);
+      }
       return out;
     },
   },

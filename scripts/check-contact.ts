@@ -64,8 +64,8 @@ const code = tracked("lib", "app", "components", "scripts", "proxy.ts").filter((
 const ownUA = code.filter((p) => p !== "lib/contact.ts" && /\bconst UA\s*[:=]/.test(read(p)));
 check("no module defines a User-Agent of its own: the 24 that wrote one import lib/contact.ts's", ownUA.length === 0, ownUA.join(", "));
 const importers = code.filter((p) => p !== "scripts/check-contact.ts" && /import \{[^}]*\bUA\b[^}]*\} from "(?:\.\.?\/)+(?:lib\/)?contact";/.test(read(p)));
-check("  …28 files read it, the release rules, EDGAR, Wikipedia, Wikidata and the rest among them, the Justice archive's (batch 94) and EPA's (batch 95)",
-  importers.length === 28 && ["lib/sec.ts", "lib/secCases.ts", "lib/doj.ts", "lib/dojArchive.ts", "lib/epaCases.ts", "lib/cfpb.ts", "lib/wiki.ts", "lib/wikidata.ts", "scripts/sync-tickers.ts"].every((p) => importers.includes(p)),
+check("  …29 files read it, the release rules, EDGAR, Wikipedia, Wikidata and the rest among them, the Justice archive's (batch 94), EPA's (batch 95) and the CPSC's (batch 96)",
+  importers.length === 29 && ["lib/sec.ts", "lib/secCases.ts", "lib/doj.ts", "lib/dojArchive.ts", "lib/epaCases.ts", "lib/cpscRecalls.ts", "lib/cfpb.ts", "lib/wiki.ts", "lib/wikidata.ts", "scripts/sync-tickers.ts"].every((p) => importers.includes(p)),
   `${importers.length}`);
 const literal = code.filter((p) => /"User-Agent":\s*"News Charts/.test(read(p)));
 check("  …and none writes the client's name into a header by hand", literal.length === 0, literal.join(", "));

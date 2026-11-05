@@ -988,6 +988,49 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 96: product safety recalls (2026-11-05)
+
+The 2026-10-22 shortlist's #4, approved by the owner on 2026-11-05: "Yes I would like to add
+product safety recalls."
+
+- [x] **A new source, `cpsc_recalls`.** The Consumer Product Safety Commission's keyless recall
+      service answers every recall at once (28 MB, 10,070 recalls from 1973-06-08).
+      - Read once a week for every company (`lib/ingest/cpscWalk.ts`, db/038). A whole answer
+        replaces the kept recalls; an answer of fewer than 9,000 is refused as broken.
+- [x] **Every listed company a recall names gets it** (the owner's rule), by its role
+      (`lib/cpscRecalls.ts`):
+      - a maker, importer or distributor by the caption rule, its place cut off ("Office Depot,
+        Inc., of Boca Raton, Fla."), or as the owner a firm names ("…, a division of Office Depot");
+      - a store as a whole item of the recall's "Sold at" line: Bodum's French presses of
+        2026-10-29 go on Target, Walmart and Amazon, but not on Home Depot for "home goods
+        stores", nor on Target for "Target Marketplace".
+
+      A recall the company made, imported or distributed has its own row. A store's recalls of
+      other makers' products are grouped a row a month, since Target, Walmart and Amazon each sold
+      the products of hundreds (the proposal's worry that they would fill a retailer's page).
+- [x] **Measured,** against every company in the index, before first prices: 2,331 rows on 218
+      companies; 713 as maker, importer or distributor. Target 292, Walmart 236, Amazon 206, Home
+      Depot 196 as stores; Mattel's first of 1978, GE's hair dryers of 1979, Dollar Tree's of 1996,
+      IBM's ThinkPad batteries of 2006, Mohawk's rugs of 2014 as their makers or importers.
+- [x] **Licence.** A work of the U.S. Government, outside copyright by 17 U.S.C. § 105. The federal
+      data catalog lists the Recalls API under the usa.gov public-domain label (the shortlist).
+      From this session cpsc.gov and saferproducts.gov's pages answered 403 and the catalog's
+      search 404, so neither was re-read; the service itself answered. No image is used. Credited
+      in the footer, the terms page and the README.
+- Not done here:
+      - first trading days for the 218 companies;
+      - former names: the replay read the companies' present names only. Polaris's recalls under
+        "Polaris Industries", its EDGAR name until 2019, reach it at ingest, where its former names
+        are read.
+- **Requests:** www.saferproducts.gov 2 (the whole answer, and its home page, which answered 403);
+  www.cpsc.gov 1 (403); catalog.data.gov 3 (404).
+- **Checks:** `check:cpsc` (23, new, in `npm run check`): the service's answer, the roles, the "Sold
+  at" line, the monthly grouping, the replay of every company over every recall (committed as
+  scripts/fixtures/cpsc-recalls.json.gz, the fields the adapter reads), the weekly read and the
+  wiring. On main it cannot run: `lib/cpscRecalls.ts` does not exist. `check:contact` counts 29
+  readers of the shared User-Agent; `check:live` has a case for the real service (outside the
+  offline chain, not run here). `npm run check` and `npm run lint` pass.
+
 ## NC ledger — batch 95: the EPA's civil enforcement cases, from the 1970s (2026-11-05)
 
 The 2026-11-05 proposal 1, approved by the owner that day, with the owner's multi-company rule:
@@ -7419,11 +7462,13 @@ already held, but new investment goes to securities coverage first.
       index, 106 reach 71 pages.
       - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
         #2, approved 2026-11-05.*
-- [ ] `P2` **CPSC product recalls, 1973 on.** A new source, approved by the owner 2026-11-05 ("Yes I
+- [x] `P2` **CPSC product recalls, 1973 on.** A new source, approved by the owner 2026-11-05 ("Yes I
       would like to add product safety recalls."): saferproducts.gov's keyless recall service, one
       answer of every recall, kept where a listed company is the maker, the importer or the
       retailer the recall names, under the owner's rule of the same day (every listed company a
-      recall names gets it).
+      recall names gets it). ✅ **Done in batch 96:** 10,070 recalls; against every company in the
+      index, 2,331 rows on 218 companies before first prices, 713 as maker, importer or
+      distributor.
       - *Derived from [`docs/proposals/2026-10-22-news-sources.md`](proposals/2026-10-22-news-sources.md)
         #4, approved 2026-11-05.*
 - [ ] `P2` **The CFTC's enforcement actions, from 1995.** A new source, approved by the owner

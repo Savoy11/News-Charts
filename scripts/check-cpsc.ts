@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import type { PoolClient } from "pg";
 import tickerIndex from "../data/edgar-tickers.json";
-import { RECALLS_URL, cpscEvents, fetchRecalls, firmIsCompany, firmName, parseRecalls, roleIn, soldAtCompany, unitsOf, type CpscRecall } from "../lib/cpscRecalls";
+import { NOT_THE_COMPANY, RECALLS_URL, cpscEvents, fetchRecalls, firmIsCompany, firmName, parseRecalls, roleIn, soldAtCompany, unitsOf, type CpscRecall } from "../lib/cpscRecalls";
 import { dojPossessive } from "../lib/doj";
 import { withoutTag } from "../lib/edgarName";
 import { deterministicScore } from "../lib/enrich/relevance";
@@ -93,6 +93,56 @@ async function main(): Promise<void> {
   const days = new Map<string, number>();
   for (const e of on("TGT")) days.set(e.dedupBasis ?? "", (days.get(e.dedupBasis ?? "") ?? 0) + 1);
   check("one event per company and day, or month", [...days.values()].every((n) => n === 1) && on("TGT").every((e) => /^cpsc:27419@\d{4}-\d{2}(?:-\d{2}|:sold)$/.test(e.dedupBasis ?? "")));
+  // batch 100, the audit of batches 94–99, finding 2: the service read once a week, as the walk
+  // reads it (READ_EVERY_DAYS), leaves no stored row that the latest read does not update
+  const orphans = (ticker: string) => {
+    const stored = new Set<string>();
+    let latest = new Set<string>();
+    for (let d = new Date("2025-01-01T00:00:00Z"); d <= new Date("2026-11-05T00:00:00Z"); d = new Date(d.getTime() + 7 * 86_400_000)) {
+      const day = d.toISOString().slice(0, 10);
+      latest = new Set(cpscEvents(recalls.filter((r) => r.day <= day), namesOf(ticker), { cik: rowOf(ticker)[0] }).map((e) => e.dedupBasis ?? ""));
+      for (const k of latest) stored.add(k);
+    }
+    return [...stored].filter((k) => !latest.has(k)).length;
+  };
+  const left = ["TGT", "WMT", "HD", "AMZN"].map((t) => `${t} ${orphans(t)}`).join(", ");
+  check("a month's sold recalls keep the month's key from the first: read weekly through 2025–2026, no row is left beside its month's (11, 10, 6 and 3 were)",
+    left === "TGT 0, WMT 0, HD 0, AMZN 0", left);
+  const lone = on("TGT").find((e) => /:sold$/.test(e.dedupBasis ?? "") && e.precision !== "month");
+  check("  …a lone one keeps its day and title, and a row stored under the old day key moves onto the month's",
+    !!lone && /^Sold in its stores: /.test(lone.title) && lone.legacyDedupBasis === `cpsc:27419@${lone.date}` && lone.dedupBasis === `cpsc:27419@${lone.date.slice(0, 7)}:sold`, JSON.stringify(lone).slice(0, 200));
+
+  console.log("\nOther firms and stores of a listed company's name (batch 100, the audit's finding 1)");
+  check("a place whose name holds \"of\" is a place: \"Asweets Global Inc., City of Industry, California\" is not City Holding's",
+    firmName("Asweets Global Inc., City of Industry, California") === "Asweets Global Inc." && firmName("CBB Group Inc., City of Commerce, Calif.") === "CBB Group Inc." &&
+      firmName("Office Depot, Inc., of Boca Raton, Fla.") === "Office Depot, Inc." && !on("CHCO").some((e) => /the company (?:made|imported|distributed) it/.test(e.description ?? "")),
+    on("CHCO").map((e) => e.title).join(" | ").slice(0, 200));
+  check("  …one name joined by \"and\" is one name: \"Allied Tube and Conduit Corporation\" is not Conduit's, \"Adam and Eve\" not Eve's; two firms each with its legal word are two",
+    !firmIsCompany("Allied Tube and Conduit Corporation", ["Conduit"]) && !firmIsCompany("Adam and Eve, of Hillsborough, N.C.", ["Eve"]) && firmIsCompany("Kohl's, Inc. and Target Corp.", ["Target"]));
+  const refusedFirms = [["GGG", /^Graco$/i], ["SLM", /^SLM\b/], ["SR", /^Spire LLC\b/], ["WWD", /^Woodward$/], ["ETN", /^Eaton$/], ["IVDN", /^Innovative Designs LLC\b/]] as const;
+  const firmsOf = (r: CpscRecall) => [...r.makers, ...r.importers, ...r.distributors].map(firmName);
+  const firmCase = refusedFirms.map(([t, re]) => {
+    const theirs = recalls.filter((r) => firmsOf(r).some((f) => re.test(f)));
+    const unguarded = cpscEvents(recalls, namesOf(t), {});
+    return { t, n: theirs.length, kept: theirs.filter((r) => has(on(t), r.number)).length, before: theirs.filter((r) => has(unguarded, r.number)).length };
+  });
+  check("namesakes read by hand are kept off by CIK: Graco Children's Products (10), SLM International's toys (2), Spire LLC, Woodward & Lothrop, a 1970s \"Eaton\" bat maker, Innovative Designs LLC",
+    firmCase.every((c) => c.n > 0 && c.kept === 0 && c.before > 0) && firmCase.find((c) => c.t === "GGG")?.before === 10 && refusedFirms.every(([t]) => NOT_THE_COMPANY[rowOf(t)[0]]?.some((n) => n.firm)),
+    firmCase.map((c) => `${c.t} ${c.before}→${c.kept}`).join(", "));
+  const hsn = recalls.find((r) => r.day === "2026-06-11" && firmsOf(r).some((f) => /^HSN\b/.test(f)));
+  check("  …HSN, Inc. is People Inc.'s only until IAC spun it off on 2008-08-20", !!hsn && !has(on("PPLI"), hsn.number) && has(cpscEvents([hsn], namesOf("PPLI"), {}), hsn.number) && NOT_THE_COMPANY[rowOf("PPLI")[0]]?.[0].from === "2008-08-20");
+  const never = ["NE", "WNRS", "POWW", "BJRI", "OSK", "QMCO", "OVTZ", "BPOP"];
+  check("a company that is no retailer takes no store line: Noble (\"Barnes and Noble\"), Winners, Outdoor Holding, BJ's Restaurants (\"BJ's\"), Oshkosh, Quantum, Oculus, Popular",
+    never.every((t) => !on(t).some((e) => /:sold$/.test(e.dedupBasis ?? "") || /sold it/.test(e.description ?? ""))) && never.every((t) => NOT_THE_COMPANY[rowOf(t)[0]]?.some((n) => n.store === "never")) &&
+      on("BJ").some((e) => /sold it|stores/.test(`${e.title} ${e.description}`)),
+    never.filter((t) => on(t).some((e) => /:sold$/.test(e.dedupBasis ?? ""))).join(" "));
+  const poolCorp = recalls.find((r) => r.day === "2017-06-07" && /Pool Corp\./.test(r.soldAt));
+  check("  …\"Pool and Spa dealers\" are not Pool Corporation, which keeps the line that names it (2017-06-07); Shop LC's channel on Comcast and Roku is no store of theirs",
+    !on("POOL").some((e) => recalls.some((r) => /\bPool and Spa\b/i.test(r.soldAt) && has([e], r.number))) && !!poolCorp && has(on("POOL"), poolCorp.number) &&
+      !on("CMCSA").some((e) => recalls.some((r) => /television networks? airing on/i.test(r.soldAt) && has([e], r.number))) && !on("ROKU").some((e) => /:sold$/.test(e.dedupBasis ?? "") && /Shop LC/.test(e.description ?? "")));
+  check("a store is a proper name: \"coffee and home goods stores\" is no Coffee Holding's, \"A&E stores\" no AES's, while \"Lowe's\" is Lowe's and \"amazon.com\" Amazon's",
+    !soldAtCompany(bodum.soldAt, namesOf("JVA")(2026)) && !soldAtCompany("A&E stores, Concord Stores", ["AES"]) && soldAtCompany("Lowe's stores nationwide", ["Lowes"]) &&
+      soldAtCompany("online at amazon.com", ["Amazon"]) && !has(on("JVA"), "27055") && !on("AES").length);
 
   console.log("\nEvery listed company against every recall");
   const letters = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -110,10 +160,10 @@ async function main(): Promise<void> {
   }
   const flat = [...out.values()].flat();
   const ownRows = flat.filter((e) => e.precision !== "month" && !/^Sold in its stores: /.test(e.title)).length;
-  check("before any first price: 2,331 rows on 218 companies, 1,688 a recall's own day, 713 as maker, importer or distributor; Target 292, Walmart 236, Amazon 206, Home Depot 196",
-    flat.length === 2331 && out.size === 218 && flat.filter((e) => e.precision !== "month").length === 1688 && ownRows === 713 &&
-      [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ") === "TGT 292, WMT 236, AMZN 206, HD 196",
-    `${flat.length} on ${out.size}; ${flat.filter((e) => e.precision !== "month").length} own; ${ownRows} as maker, importer or distributor`);
+  check("before any first price: 2,268 rows on 197 companies, 1,626 a recall's own day, 687 as maker, importer or distributor; Target 296, Walmart 236, Amazon 206, Home Depot 196 (2,331 on 218 before batch 100's namesakes and month keys)",
+    flat.length === 2268 && out.size === 197 && flat.filter((e) => e.precision !== "month").length === 1626 && ownRows === 687 &&
+      [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ") === "TGT 296, WMT 236, AMZN 206, HD 196",
+    `${flat.length} on ${out.size}; ${flat.filter((e) => e.precision !== "month").length} own; ${ownRows} as maker, importer or distributor; ${[...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ")}`);
 
   console.log("\nRead once a week, and kept");
   const db: FakeDb = { recalls: new Map(), read: null, listed: "1972-08-25" };

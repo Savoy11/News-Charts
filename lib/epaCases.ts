@@ -192,6 +192,8 @@ export function epaParty(defendant: string, names: readonly string[]): string | 
  */
 export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendant: RegExp; why: string }[]>> = {
   1049659: [{ ticker: "SID", defendant: /^NATIONAL STEEL\b/i, why: "National Steel Corporation, the American steelmaker of Mishawaka and Granite City, not Companhia Siderúrgica Nacional" }],
+  // batch 100, the audit of batches 94–99, finding 3
+  1552275: [{ ticker: "SUN", defendant: /^SUNOCO,?\s+(?:INC|INCORPORATED)\b/i, why: "Sunoco, Inc. (EDGAR CIK 95304), the refiner Energy Transfer bought in 2012, not Sunoco LP, which was Susser Petroleum Partners until 2014-10-27" }],
 };
 
 const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -224,6 +226,10 @@ function caseLine(c: EpaCase): string {
  * no penalty are grouped a row a month when a month holds two or more, as the Federal Register's
  * routine notices are (`pageRegulations`). Every listed defendant gets the case, under the
  * owner's rule of 2026-11-05.
+ *
+ * A month's cases with no penalty are kept under the month's key from the first (batch 100, the
+ * audit's finding 2), so a month read again when it holds two updates one row; a row stored under
+ * the old day key moves onto it (`legacyDedupBasis`) when no case of the company's own row is that day.
  */
 export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => string[], { cik, from = "" }: { cik?: number | string; from?: string } = {}): TimelineEvent[] {
   const refused = cik === undefined ? [] : (NOT_THE_COMPANY[Number(cik)] ?? []);
@@ -253,32 +259,32 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
     const key = ownRow(c) ? c.day : c.day.slice(0, 7);
     into.set(key, [...(into.get(key) ?? []), c]);
   }
-  for (const [month, rows] of [...routine]) {
-    if (rows.length > 1) continue;
-    routine.delete(month);
-    own.set(rows[0].day, [...(own.get(rows[0].day) ?? []), rows[0]]);
-  }
   const tag = cik === undefined ? "" : `${Number(cik)}`;
   const events: TimelineEvent[] = [];
-  for (const [d, rows] of own) {
+  const dayRow = (d: string, rows: readonly EpaCase[]) => {
     const sorted = [...rows].sort((a, b) => Number(b.penalty ?? 0) - Number(a.penalty ?? 0) || Number(b.court) - Number(a.court) || a.number.localeCompare(b.number));
     const lead = sorted[0];
     const more = sorted.length > 1 ? `, and ${sorted.length - 1} more case${sorted.length > 2 ? "s" : ""} that day` : "";
-    events.push({
-      id: `epa-${tag}-${d}`,
+    return {
       date: d,
-      type: "regulation",
+      type: "regulation" as const,
       title: `${caseTitle(lead)}${more}`,
       source: "EPA",
       url: caseReportUrl(lead.number),
       description: `${sorted.map(caseLine).join("; ")}. ${lead.step === "lodged" ? "The day the settlement was lodged in court." : lead.step === "order" ? "The day the final order was issued." : ""}`.trim(),
-      sourceKey: "epa_cases",
+      sourceKey: "epa_cases" as const,
       externalId: sorted.map((c) => c.number).join(","),
-      dedupBasis: `epa:${tag}@${d}`,
-    });
-  }
+    };
+  };
+  for (const [d, rows] of own) events.push({ id: `epa-${tag}-${d}`, ...dayRow(d, rows), dedupBasis: `epa:${tag}@${d}` });
   for (const [month, rows] of routine) {
     const sorted = [...rows].sort((a, b) => b.day.localeCompare(a.day) || a.number.localeCompare(b.number));
+    const first = sorted[sorted.length - 1].day;
+    const moved = own.has(first) ? {} : { legacyDedupBasis: `epa:${tag}@${first}` };
+    if (rows.length === 1) {
+      events.push({ id: `epa-${tag}-${month}-orders`, ...dayRow(rows[0].day, rows), dedupBasis: `epa:${tag}@${month}:no-penalty`, ...moved });
+      continue;
+    }
     const codes = [...new Set(sorted.flatMap((c) => c.laws))];
     const [y, m] = month.split("-");
     events.push({
@@ -293,6 +299,7 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
       sourceKey: "epa_cases",
       externalId: sorted.map((c) => c.number).join(","),
       dedupBasis: `epa:${tag}@${month}:no-penalty`,
+      ...moved,
     });
   }
   return events.sort((a, b) => b.date.localeCompare(a.date));

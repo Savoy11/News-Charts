@@ -5,7 +5,7 @@
 long one. This exists because that file is ~1,100 lines and mixes work that can be done in a
 build container with work only you can do. This is the second kind, in the order I'd do it.
 
-**Last updated:** 2026-10-17
+**Last updated:** 2026-11-05 (batch 100)
 
 ---
 
@@ -70,9 +70,11 @@ is one bounded gather the first time a subject is visited — so this is the onl
 refreshes a chart — and a scheduler that is not running looks exactly like a
 quiet news week. Until it runs, the corpus only changes when you run it by hand.
 
-Before the first run on a new deploy, apply the schema: `npm run db:migrate` (db/021–031 came
-with the October ledger batches; 031, from batch 63, keeps which past years of a company's Federal
-Register documents have been read).
+Before the first run on a new deploy, apply the schema: `npm run db:migrate` (db/021–039: the
+October ledger batches and the sources of November — the SEC's and the Justice Department's
+releases, the Board's and the CFPB's actions, EPA's cases, the CPSC's recalls and the CFTC's
+actions each keep their own tables; 031, from batch 63, keeps which past years of a company's
+Federal Register documents have been read).
 
 ```bash
 npm run refresh -- --dry-run   # what it would touch, spending nothing
@@ -160,7 +162,7 @@ npm run rekey:gdelt
 - **Re-sync the EDGAR ticker index about monthly.** From a host that reaches sec.gov:
   `npm run sync:tickers`, commit `data/edgar-tickers.json`, redeploy. The index is built into the
   site, so this needs a rebuild; `npm run refresh` prints a warning once the file is more than 35
-  days old (NC-051). It is 66 days old today.
+  days old (NC-051). It was last synced on 2026-10-27, so it is due again by the start of December.
 - **Re-sync the company alias index after the ticker index.** `npm run sync:aliases` reads
   Wikidata and writes `data/company-aliases.json` ("Google" → Alphabet, "Facebook" → Meta); it
   keeps only names for companies the ticker index lists, so run it second. Read the "overrides" it
@@ -198,6 +200,17 @@ Not blocking launch, but they shape what gets built next:
 - **Affiliate links** — whether at all, and if so the neutrality rule and per-link disclosure.
   Nothing is built; the checklist records the constraints.
 - **Accounts, i18n, geo-access** — each is a product direction rather than a task.
+
+Raised by the November batches, each recorded in the master checklist:
+
+- **The SEC News Digest, step 2** (batch 87). The one-year count is done (1985: 508 rows on 258
+  companies, 361 from first prices, 50 of 50 sampled right). Building the full 1956–1993 walk is
+  about 9,500 PDFs, ~5.4 GB, read once; it waits on your read of the count.
+- **A unit's cases on its owner's page** (batch 100). EPA's cases against Sunoco, Inc. after
+  Energy Transfer bought it (2012-10-05), and the CPSC's recalls by Graco Children's Products after
+  Newell bought it (1998), are kept off the namesakes' pages (Sunoco LP, Graco Inc.) but are on no
+  owner's page either. Putting them on Energy Transfer's and Newell's needs a unit map those two
+  sources do not read today.
 
 Raised by the October ledger batches, each recorded in the master checklist:
 

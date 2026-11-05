@@ -127,7 +127,8 @@ export function parseArchiveMonth(html: string, year: number, month: number): Pa
         // the number is the page's, and not always given: "( 05-67)", "(000000)", "()", "(08--928)",
         // or no span at all (the Civil Rights Division's housing cases, Kinder Morgan's of 2007)
         const number = /<span class="small">\s*\(\s*(\d\d)-+(\d+)\s*\)/i.exec(m[2]);
-        const title = plainText(m[2].replace(/<span class="small">[\s\S]*?<\/span>/gi, "")).replace(/\s*:$/, "");
+        // "VERIZON&#8216;S": an opening quote between a letter and its "s" is an apostrophe (batch 100)
+        const title = plainText(m[2].replace(/<span class="small">[\s\S]*?<\/span>/gi, "")).replace(/\s*:$/, "").replace(/(?<=[\p{L}\d])‘(?=s\b)/giu, "’");
         if (title) open = { title, number: number && Number(number[2]) ? `${number[1]}-${number[2]}` : null };
       } else if (m[3] !== undefined && open) {
         const href = /<a\s[^>]*href="([^"]+)"[^>]*>\s*\(?\s*Read more/i.exec(m[3])?.[1];

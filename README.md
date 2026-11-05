@@ -219,13 +219,17 @@ batch 94). The archive is closed: each of its 96 months is read once for every c
 a process, a second apart, a month stored only when its page answered with releases it could read.
 Two layouts: 2001–2004 a list, "#807: 12-30-04 HEALTHSOUTH TO PAY…", mostly in capitals; 2005–2008
 day headings over each title, from mid-2005 with its first lines, kept as the teaser. The old pages
-write Windows-1252's quotes, read as quotes. 5,712 releases; the 5 rows a slip leaves without a day
+write Windows-1252's quotes, read as quotes, and the 2005–2008 pages' possessive "VERIZON&#8216;S"
+as one (batch 100). 5,712 releases; the 5 rows a slip leaves without a day
 (a "02-30-02") are left unread, not guessed. Each company keeps the kept releases the rule above
 makes it a party to, under the names it had that year (Wal-Mart's of 2001–2004 under its own
 "Wal-Mart", BB&T's under Truist's former name), from its first price on: against every company in
-the index, 106 releases on 71 pages, every year of the eight (AEP's $30 million criminal penalty of
-2005, Weyerhaeuser's Kalamazoo River settlement, Akzo Nobel's antitrust plea; Walmart 6, Tenet 5,
-Exxon Mobil 4). Same source, `doj_press`, under the same terms.
+the index, 111 releases on 73 pages, every year of the eight (AEP's $30 million criminal penalty of
+2005, Weyerhaeuser's Kalamazoo River settlement, Akzo Nobel's antitrust plea, Whirlpool's Maytag and
+Verizon's MCI cases; Walmart 6, Tenet 5, Exxon Mobil 4). A one-word name that is only an industry's
+word for a company, The Bancorp's "Bancorp", names it after "the" but not after another capitalised
+word: "Berkshire Hills Bancorp and Legacy Bancorp" are two other banks (batch 100). Same source,
+`doj_press`, under the same terms.
 
 A one-word name that is an everyday word (`isEverydayWord`, `lib/wordNames.ts`) is read more
 strictly (batch 94). In a title written in capitals, as the Department's were to 2004, it names the
@@ -290,8 +294,8 @@ Wireless, National City Bank on PNC's page from its purchase on 2008-12-31, and 
 list: Mastercard International, Conduent Business Services and Conduent Education Services,
 Sterling Jewelers (from Signet's first filing that names it, 2003-04-24) and Acima (Upbound's from
 2021-02-17). Read against every company
-in the index under its current names, 264 of the 6,897 stored releases land on 127 companies, 160 of
-them before 2017 (Bank of America 28, Morgan Stanley 18, Citigroup 14, JPMorgan 13, UBS Group 12,
+in the index under its current names, 266 of the 6,897 stored releases land on 129 companies, 161 of
+them before 2017 (Daimler's and Novartis's bribery charges since batch 100 reads "AG" as a legal word) (Bank of America 28, Morgan Stanley 18, Citigroup 14, JPMorgan 13, UBS Group 12,
 Wells Fargo 10, Goldman Sachs 9, Deutsche Bank 7), each read by hand (batch 78, after the 2026-10-30
 audit; Deutsche Bank's since batch 81, when its everyday name lost its "AKTIENGESELLSCHAFT"; the
 banks' units since batches 82 and 85). `check:sec-press` replays the whole stored listing against
@@ -462,8 +466,12 @@ surname first is no company ("RETHERFORD, DANA" is not Dana). Every listed defen
 the owner's rule of 2026-11-05, so a Superfund site's settlement goes on each listed party's page
 and says how many parties it has. A court case or a case with a penalty has its own row, linked to
 EPA's case report; a month's orders with no penalty are grouped into one row, as the Federal
-Register's routine notices are. Against every company in the index, before first prices: 6,001
-rows on 665 companies, 5,169 before 2017 (GE 284, GM 221, ExxonMobil 163, Ford 163, FMC 133). The
+Register's routine notices are, under the month's key from its first, so a month read with one and
+again with two keeps one row. Against every company in the index, before first prices: 5,984 rows
+on 667 companies, 5,148 before 2017 (GE 284, GM 222, Ford 165, ExxonMobil 163, FMC 135; BP 4, 3M
+67, whose two-letter names the first count left out). Sunoco, Inc., the refiner Energy Transfer
+bought in 2012, is not Sunoco LP, which was Susser Petroleum Partners until 2014 (by CIK,
+`NOT_THE_COMPANY`; batch 100). The
 first price keeps a successor off its predecessor's years: today's GM listed in 2010, so the old
 GM's $11 million Clean Air Act decree of 1995 is not on it, and today's Kodak stock dates from 2013.
 Public domain under EPA's open data licence; EPA's note that commercial use of documents on its
@@ -481,9 +489,14 @@ Boca Raton, Fla.", or "Swinton Avenue Trading, a division of Office Depot"), and
 item of its "Sold at" line ("Target, Walmart, and … online at Bodum.com, Amazon.com": Target,
 Walmart and Amazon; not Home Depot for "home goods stores", nor Target for "Target Marketplace"). A
 recall the company made, imported or distributed has its own row; a store's recalls of other
-makers' products are grouped a row a month, since Target, Walmart and Amazon each sold the products
-of hundreds. Against every company in the index, before first prices: 2,331 rows on 218 companies,
-713 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
+makers' products are grouped a row a month, under the month's key from its first, since Target,
+Walmart and Amazon each sold the products of hundreds. A store is a proper name: "coffee and home
+goods stores" names no Coffee Holding. Batch 100 read every firm the recalls give the index by hand
+and keeps the namesakes off by CIK (`NOT_THE_COMPANY`): Graco Children's Products is not Graco Inc.,
+SLM International's toys not Sallie Mae's, "Asweets Global Inc., City of Industry" not City
+Holding's; eight companies that are no retailers take no store line ("Barnes and Noble" is not
+Noble's). Against every company in the index, before first prices: 2,268 rows on 197 companies,
+687 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
 IBM's ThinkPad batteries of 2006). A work of the U.S. Government, public domain; the Commission's
 site refused this session's requests (403), so the basis is the law's and the federal catalog's,
 not a page re-read.
@@ -501,10 +514,11 @@ Securities", "Merrill Lynch" from 2009), and the Commission's own forms: the com
 its order ("CFTC Orders UBS to Pay"), and a registrant's name with its comma ("Goldman, Sachs &
 Co."). Four guards measured on the list: a count before a name ("Six Financial Institutions"), a name
 only ever after "Former", another company's unit ("Prudential Securities" is Prudential Financial's,
-not Prudential plc's), and an everyday word with a possessive ("People’s Alternative"). Against every
-company in the index, before first prices: 83 company days on 33 companies, 42 before 2017 (JPMorgan
-12, Morgan Stanley 7, Goldman Sachs 6, Citigroup 5, Deutsche Bank 5; AEP's suit of 2003, Duke
-Energy's and Xcel's trading units of 2003–2004). Public domain, acknowledged to the CFTC.
+not Prudential plc's), and an everyday word with a possessive ("People’s Alternative"). The company
+may carry "AG" or follow where it is based ("Deutsche Bank AG", "London-Based Barclays Bank PLC",
+batch 100). Against every company in the index, before first prices: 88 company days on 33
+companies, 47 before 2017 (JPMorgan 12, Deutsche Bank 7, Morgan Stanley 7, Barclays 6, Goldman Sachs
+6; AEP's suit of 2003, NRG's of 2004, Duke Energy's and Xcel's trading units of 2003–2004). Public domain, acknowledged to the CFTC.
 
 ### The SEC News Digest, counted (`lib/secDigest.ts`)
 

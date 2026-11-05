@@ -988,6 +988,90 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 100: the audit of batches 94–99, and its seven findings fixed (2026-11-05)
+
+The `code-auditor` read batches 94–99 (`b3ce7e5..bf78d3b`). Its report is
+`docs/audits/2026-11-05-code-audit-b94-99.md`. It found the parsers and walks sound on the saved real
+data: the Justice archive's 5,712 releases, EPA's 137,103 cases, the CPSC's 10,070 recalls, the
+CFTC's 2,610 rows and the Board's 469 orders; every walk stores a read only when it is whole. It
+found seven defects, all reproduced here and fixed, each with cases that fail on main.
+
+- [x] **1. Other firms' recalls on 17 companies' pages** (`P2`). The CPSC rule had no namesake
+      list, and batch 96 read no firm match by hand.
+      - **Read here:** all 269 company-and-firm pairs the 10,070 recalls give the index, and every
+        doubtful store line.
+      - **Fixed** (`lib/cpscRecalls.ts`):
+        - a place whose name holds "of" is a place: "Asweets Global Inc., City of Industry,
+          California" no longer leaves "City" for City Holding (5 recalls);
+        - the EPA rule's "and" guard on firms: "Allied Tube and Conduit Corporation", "Adam and Eve";
+        - a store is a proper name ("coffee and home goods stores" names no Coffee Holding), and a
+          name's closing "s" drops only against a possessive ("A&E stores" is not AES);
+        - `NOT_THE_COMPANY` by CIK, each read by hand: Graco Children's Products (10, not Graco
+          Inc.), SLM International (2), Spire LLC, HSN after IAC's spin-off of 2008-08-20, Woodward &
+          Lothrop, a 1970s "Eaton" bat maker, Innovative Designs LLC; eight companies that are no
+          retailers take no store line (Noble, Winners, Outdoor Holding, BJ's Restaurants, Oshkosh,
+          Quantum, Oculus, Popular); "Pool and Spa" lines are not Pool Corporation's; Shop LC's
+          channel on Comcast and Roku is no store of theirs.
+      - **Measured:** 69 recall matches removed, every one intended, none added. 2,268 rows on 197
+        companies before first prices (2,331 on 218), 687 as maker, importer or distributor (713).
+      - Left to the floor, read but not listed: STIHL's VIKING GmbH (Viking Holdings, 2024),
+        Innovage LLC (InnovAge, 2021), the go-kart "Fox" (Fox Corp, 2019), Ingersoll-Rand Company
+        (Ingersoll Rand Inc., 2017).
+- [x] **2. A month's lone store recall or no-penalty order stayed twice** (`P2`). Its row was keyed
+      by its day; when the month gained a second, the month's row took a new key and nothing removed
+      the first. Weekly reads of 2025–2026 left Target 11, Walmart 10, Home Depot 6, Amazon 3.
+      - **Fixed** (`cpscEvents`, `epaEvents`): a month's sold recalls and no-penalty orders keep the
+        month's key from the first; a lone one keeps its own day and title. A row stored under the
+        old day key moves onto the month's (`legacyDedupBasis`) when the company has no row of its
+        own that day.
+      - A lone one no longer merges into a same-day row of the company's own, so 14 EPA companies
+        and Target show one more row (no case is lost or added).
+- [x] **3. Sunoco LP took Sunoco, Inc.'s EPA cases** (`P2`): 52 cases before the floor, 11 from its
+      first price. Sunoco, Inc. (CIK 95304) is the refiner Energy Transfer bought in 2012; Sunoco LP
+      was Susser Petroleum Partners until 2014-10-27. **Fixed:** EPA's `NOT_THE_COMPANY` for SUN.
+      Sunoco LP keeps its own five.
+- [x] **4. The Bancorp took two other banks' Justice releases** (`P2`): "Agreement with Berkshire
+      Hills Bancorp and Legacy Bancorp" (2011-05-18, from the API) and FleetBoston's and Summit
+      Bancorp's of 2001-01-25, which `check:doj` had pinned as kept off by the first price.
+      **Fixed** (`releaseNamesParty`): a one-word name that is only an industry word ("Bancorp")
+      names the company after "the", not after another capitalised word, and in capitals with its
+      legal word. Of the index's names, The Bancorp's alone is such a word.
+- [x] **5. Five merger cases missed** (`P3`): the archive's 2005–2008 pages write the possessive as
+      `&#8216;` ("VERIZON‘S ACQUISITION OF MCI"). **Fixed:** an opening quote between a letter and
+      its "s" is an apostrophe, in the parser and in the rule (stored titles too). Now on their
+      pages: Verizon 2005-10-27, Whirlpool 2006-03-29, AT&T 2006-10-11 and 2007-10-30, CEMEX
+      2007-04-04. The archive gives 131 releases on 87 companies, 111 on 73 pages from first prices
+      (127, 86, 106, 71).
+- [x] **6. The CFTC missed Deutsche Bank AG and Barclays after its place** (`P3`). **Fixed:** "AG"
+      is a legal word (`DESIGNATOR_WORD`), and the Commission's object may follow "X-Based"; a name
+      joined on by a hyphen is not the company ("Florida-Based Inter-Global Currency" is not Inter's,
+      found in the replay of this fix). Added: Deutsche Bank's two, Barclays's two, NRG's suit of
+      2004 ("MINNEAPOLIS-BASED NRG ENERGY, INC."). 88 company days on 33 companies (83 on 33).
+      The shared legal word also gives the SEC's releases two of their own, read and right:
+      Daimler AG's bribery charges of 2010 (Mercedes-Benz Group's page) and Novartis AG's of 2020;
+      266 entries on 129 companies (264 on 127). The Justice API's and the Board's replays are
+      unchanged.
+- [x] **7. A count and a claim the code did not give** (`P3`).
+      - EPA's slice was cut with three-letter names, ingest asks two: rebuilt with two (4,289 cases,
+        BP's and 3M's own among them). The full file and the slice now give the same 5,984 rows on 667
+        companies (README, COVERAGE-MAP corrected from 6,001 on 665).
+      - Batch 98's "reach a page only from the company's first price" was false for the Board's
+        actions, which take no floor: struck through and corrected in its section.
+- Set aside, as the audit did: the CFTC's whole-list read trusts page 0's pager (`check:live`
+  watches it); Valero's only name "VALERO ENERGY" misses "Clean Air Agreements With Valero and
+  Sunoco" (2005-06-16); "Huntington National Bank" is not in `BANK_UNITS`; a company ingested before
+  the archive is fully read heals the next day.
+- **For the owner** (not decided here): whether Sunoco, Inc.'s cases from 2012-10-05 belong on
+  Energy Transfer's page as its unit's, and Graco Children's Products' recalls from 1998 on Newell's.
+  Each would need a unit map EPA and the CPSC do not read today.
+- **Requests:** the audit's 25 (query1/query2.finance.yahoo.com 21, data.sec.gov 3,
+  www.justice.gov 1); none here: every fix was measured on the saved data.
+- **Checks:** `check:cpsc` 32 (9 new), `check:epa-cases` 43 (4 new), `check:doj` 94 (2 new),
+  `check:cftc` 29 (2 new), `check:sec-press` 76 (its replay re-pinned): the namesakes each refused and shown to match without the guard, the
+  weekly and two-read replays leaving no row behind, Sunoco, The Bancorp, the five mergers, the
+  four orders, the rebuilt slice. On main the new cases fail. `npm run check` and `npm run lint`
+  pass. HawkScan cannot run here (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 99: the Board's orders of 1996–2005 (2026-11-05)
 
 The 2026-11-02 proposal 3, approved by the owner on 2026-11-05. The same source (`fed_press`): the
@@ -1066,8 +1150,11 @@ The 2026-11-05 proposal 3, approved by the owner that day. No new source: rows i
       29 days; the banks named after the companies add the rest). Crédit Agricole 5, Customers
       Bancorp 4, East West and Hanmi 3. In all, 152 events on 56 of the 63 mapped banks, 113 before
       2017; the 40 banks mapped before keep every count.
-- Not done here: first trading days for the 23. Hanmi's agreement of 1994 and other early rows
-  reach a page only from the company's first price, as every rule reads.
+- Not done here: first trading days for the 23. ~~Hanmi's agreement of 1994 and other early rows
+  reach a page only from the company's first price, as every rule reads.~~ *Corrected in batch 100
+  (the audit's finding 7): the Board's actions take no first-price floor. Every row the
+  hand-checked map gives a bank on its days reaches its page, Hanmi's agreement of 1994-12-09
+  among them; the map's own day bounds are the limit.*
 - **Requests:** www.federalreserve.gov 2 (the two action files).
 - **Checks:** `check:fed-actions` 49 (5 new): Arrow Financial's of 1992 and Hanmi's of 2009, MetLife's
   order and penalty and Jack Henry's agreement, the banks named after the companies, the namesakes

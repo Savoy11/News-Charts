@@ -90,6 +90,13 @@ async function main(): Promise<void> {
   check("the comma rule is a registrant's name, not any comma: \"Morgan Stanley, Goldman\" still parts two parties",
     cftcNamesParty("CFTC Orders Goldman, Sachs & Co., a Commission Registrant, to Pay $1.5 Million", ["Goldman Sachs"]) && !cftcNamesParty("CFTC Charges Former Goldman Sachs Trader", ["Goldman Sachs"]));
 
+  check("the company in its own legal form, or after the place it is based (batch 100, the audit's finding 6): \"Deutsche Bank AG\" twice, \"London-Based\" and \"United Kingdom-Based Barclays Bank PLC\", \"MINNEAPOLIS-BASED NRG ENERGY, INC.\"",
+    lands("DB", "2015-10-01", /Deutsche Bank AG/) && lands("DB", "2016-08-19", /Deutsche Bank AG/) && lands("BCS", "2016-07-07", /London-Based Barclays/) &&
+      lands("BCS", "2016-09-23", /United Kingdom-Based Barclays/) && lands("NRG", "2004-07-01", /MINNEAPOLIS-BASED NRG/));
+  check("  …but a name joined on by a hyphen is another firm's: \"Florida-Based Inter-Global Currency & Precious Metals LLC\" is not Inter's",
+    !cftcNamesParty("CFTC Charges Florida-Based Inter-Global Currency & Precious Metals LLC and Stavros Papastavrou", ["Inter"]) &&
+      cftcNamesParty("CFTC Sues Minneapolis-Based NRG Energy, Inc., Charging NRG", ["NRG Energy"]) && !on("INTR").some((e) => e.date === "2014-09-30"));
+
   console.log("\nEvery listed company against every action");
   const letters = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
   const every = letters(actions.map((a) => a.title).join("#"));
@@ -177,7 +184,7 @@ async function main(): Promise<void> {
 }
 
 /** The replay's counts, measured 2026-11-05 on the saved list. */
-const EXPECTED = { total: 83, companies: 33, before2017: 42, top: "JPM 12, MS 7, GS 6, C 5, DB 5" };
+const EXPECTED = { total: 88, companies: 33, before2017: 47, top: "JPM 12, DB 7, MS 7, BCS 6, GS 6" };
 
 interface FakeDb {
   actions: Map<string, CftcAction>;

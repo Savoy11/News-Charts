@@ -57,6 +57,12 @@ Each feed reports one of three things, and the distinction is the point: `✓ N 
 
 ## 2. Turn on the scheduler (blocks everything)
 
+**First, set the build's contact address** (2026-11-05, batch 92): `NEWS_CHARTS_CONTACT=<the address
+made for this build>` in `.env.local` on every host that runs ingest. Every request to a public
+service sends it in its User-Agent (`lib/contact.ts`). The SEC refuses EDGAR requests that carry no
+contact, so without it filings, the SEC's releases and its cases stop arriving. Your personal
+address was removed from the code at your request and is not used anywhere.
+
 `npm run refresh`, hourly. Cron, a GitHub Actions workflow, or the host's scheduler.
 
 **Nothing runs this automatically yet.** Pages read the database — the only fetch on the page path

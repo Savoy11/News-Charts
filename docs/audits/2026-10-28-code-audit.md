@@ -6,7 +6,7 @@ Run by the `code-auditor` agent (read-only). It covers `git diff 5e2a1f7..0da40a
 
 **Where it ran:** the cloud build container (`/home/user/News-Charts`, Node 22.22.0), going out through the session proxy with `NODE_USE_ENV_PROXY=1`.
 
-**Network: 9 requests in all.** Each carried the User-Agent `News Charts Research marcusowens94@gmail.com`.
+**Network: 9 requests in all.** Each carried the User-Agent `News Charts Research` with the owner's contact address (removed from the repository in batch 92, at the owner's request).
 - **federalregister.gov, 4:** Solventum, Carrier Global, the old News Corporation, and Dow Inc.'s 2010.
 - **federalreserve.gov, 1:** `ea-old.json`.
 - **data.sec.gov, 3:** Perrigo's submissions record and its older shard, and News Corp's record.

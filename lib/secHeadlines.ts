@@ -1,3 +1,4 @@
+import { UA } from "./contact";
 /**
  * The press release inside an 8-K or a 6-K, read for its headline (batches 42–48).
  *
@@ -880,7 +881,6 @@ function splitRun(run: string): string[] {
   return rest ? [rest] : [];
 }
 
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const ARCHIVES = "https://www.sec.gov";
 
 /** One EDGAR request, with the contact User-Agent EDGAR requires. */

@@ -6,6 +6,7 @@ import { listedCompaniesNamed } from "./sec";
 import { captionParty } from "./secCases";
 import { decodeEntities } from "./secHeadlines";
 import type { FetchResult, TimelineEvent } from "./types";
+import { UA } from "./contact";
 
 /**
  * The Federal Reserve Board's own announcements about a listed company, from 2006, the first year
@@ -30,7 +31,6 @@ import type { FetchResult, TimelineEvent } from "./types";
  */
 
 export const FED_PRESS_FEED = "https://www.federalreserve.gov/json/ne-press.json";
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const TIMEOUT_MS = 30_000;
 
 /** The types read: the Board's orders on banks' applications, and its policy and other releases. */

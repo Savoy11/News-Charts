@@ -2,6 +2,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { parseSeriesPage, preferredClass, FundSeries } from "../lib/edgarSeries";
 import { backoffMs, createPacer } from "../lib/pace";
+import { UA } from "../lib/contact";
 
 /**
  * Rebuild the local EDGAR ticker index.
@@ -27,7 +28,6 @@ import { backoffMs, createPacer } from "../lib/pace";
  * put them in that order.
  */
 
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const OUT = "data/edgar-tickers.json";
 
 const COMPANIES = "https://www.sec.gov/files/company_tickers.json";

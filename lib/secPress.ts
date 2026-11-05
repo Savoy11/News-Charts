@@ -3,6 +3,7 @@ import { DESIGNATOR, PARTY_VERB, START, escapeName, namedAsSubject, outrankedNam
 import { longerListedNameIn } from "./frCompany";
 import { listedCompaniesNamed } from "./sec";
 import type { TimelineEvent } from "./types";
+import { UA } from "./contact";
 
 /**
  * The SEC's own press releases in which a listed company is the party — it is charged, sued or
@@ -26,7 +27,6 @@ export const SEC_PRESS_LISTING = "https://www.sec.gov/newsroom/press-releases";
 export const SEC_PRESS_FROM = 1997;
 /** A full page; a shorter one is a year's last. */
 export const SEC_PRESS_PAGE_SIZE = 25;
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const TIMEOUT_MS = 30_000;
 
 /**

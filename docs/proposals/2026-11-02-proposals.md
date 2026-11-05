@@ -27,7 +27,7 @@
 >   - www.fdic.gov 3: the failed-bank page, its CSV, and the website policies;
 >   - data.sec.gov 3: the submissions records of Ameriprise, Johnson Controls and Wells Fargo.
 >
->   42 in all, each with the User-Agent `News Charts Research marcusowens94@gmail.com`; sec.gov
+>   42 in all, each with the User-Agent `News Charts Research` with the owner's contact address (removed from the repository in batch 92, at the owner's request); sec.gov
 >   hosts paced at about one a second. GDELT, Wikipedia, Wikidata, Yahoo, the Federal Register,
 >   openFDA and NHTSA were not asked. Postgres 16 was running; I ran read-only queries on
 >   `chronolens_b73` (and listed the databases) and left it running.
@@ -171,7 +171,7 @@ names older than EDGAR, and the count first
 
 ## 2. The Justice Department's releases of 2001–2008, from its own archive · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-05: "Lets move forward with all of the proposals."
 **Owner's reason (if rejected):**
 
 **Anchor:** a floor that is the API's, not the Department's. The coverage map dates the source
@@ -258,7 +258,7 @@ index page
 
 ## 3. The Federal Reserve Board's orders of 1996–2005, from its yearly pages · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-05: "Lets move forward with all of the proposals."
 **Owner's reason (if rejected):**
 
 **Raised before:** as unmeasured, in the 2026-11-01 cut list ("a follow-up to #5 if approved") and

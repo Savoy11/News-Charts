@@ -241,13 +241,15 @@ const TODAY = "2026-10-29";
     asked.push({ url: new URL(String(u)), ua: new Headers(init?.headers).get("user-agent") ?? "" });
     return answers.shift()!;
   }) as typeof fetch;
+  const contactWas = process.env.NEWS_CHARTS_CONTACT;
+  process.env.NEWS_CHARTS_CONTACT = "builds@example.org";
   try {
     answers.push(new Response(fixture.listing, { status: 200 }));
     const ok = await fetchListingPage(2010, 0);
     check("a page is asked by year, every month and page number, with the project's contact User-Agent",
       ok.outcome === "ok" && ok.releases.length === 25 && asked[0].url.origin + asked[0].url.pathname === "https://www.sec.gov/newsroom/press-releases" &&
         asked[0].url.searchParams.get("year") === "2010" && asked[0].url.searchParams.get("month") === "All" &&
-        asked[0].url.searchParams.get("page") === "0" && /marcusowens94@gmail\.com/.test(asked[0].ua), asked[0].url.search);
+        asked[0].url.searchParams.get("page") === "0" && asked[0].ua === "News Charts Research builds@example.org", asked[0].url.search);
     answers.push(new Response(fixture.empty, { status: 200 }));
     const none = await fetchListingPage(2010, 11);
     check("  …a page past the last answers with none, which is not a failure", none.outcome === "ok" && none.releases.length === 0);
@@ -260,6 +262,8 @@ const TODAY = "2026-10-29";
       [notAListing.outcome, r403.outcome, r503.outcome, r500.outcome].join(" "));
   } finally {
     globalThis.fetch = realFetch;
+    if (contactWas === undefined) delete process.env.NEWS_CHARTS_CONTACT;
+    else process.env.NEWS_CHARTS_CONTACT = contactWas;
   }
 
   console.log("\nThe party: the SEC charges, sues or sanctions the company, or it pays or settles");

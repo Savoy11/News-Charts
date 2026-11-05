@@ -47,7 +47,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. The EPA's civil enforcement cases, from the 1970s: the regulator's own record for industrial companies — a source for the owner to decide · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-05: "Lets move forward with all of the proposals." With the owner's rule of the same day, "for any instance that multiple companies are involved in a case add the story to all relevant companies pages": a case naming several listed companies goes on each of their pages.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. No earlier proposal file, ledger or doc names the EPA or ECHO (searched).
@@ -189,7 +189,7 @@ reader
 
 ## 2. The CFTC's enforcement actions, from 1995: banks', brokers' and energy traders' cases before the derivatives regulator — a source for the owner to decide · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-05: "Lets move forward with all of the proposals." With the owner's rule of the same day, "for any instance that multiple companies are involved in a case add the story to all relevant companies pages": a case naming several listed companies goes on each of their pages.
 **Owner's reason (if rejected):**
 
 **Raised before:** no (searched every proposal file, the checklist, the coverage map and README).
@@ -290,7 +290,7 @@ cases
 
 ## 3. The Board's enforcement actions against the 23 listed banks its map leaves out · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-05: "Lets move forward with all of the proposals." With the owner's rule of the same day, "for any instance that multiple companies are involved in a case add the story to all relevant companies pages": a case naming several listed companies goes on each of their pages.
 **Owner's reason (if rejected):**
 
 **Raised before:** not as such. Batch 69 mapped 25 large banks by hand and named the foreign banks

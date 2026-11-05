@@ -7,8 +7,8 @@
  */
 import type { TimelineEvent } from "../types";
 import { chainOfRef, isFinal } from "./finality";
+import { UA } from "../contact";
 
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 
 /** Explorers rate-limit modestly and we ask for very little; one retry is plenty. */
 /**

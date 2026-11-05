@@ -1,4 +1,5 @@
 import { FetchResult, TimelineEvent, DatePrecision } from "./types";
+import { UA } from "./contact";
 
 /**
  * The Internet Archive: `advancedsearch` for dated items.
@@ -19,7 +20,6 @@ import { FetchResult, TimelineEvent, DatePrecision } from "./types";
  * "this site on that date" link on events needs no lookup (`waybackUrl` in lib/wikidata.ts).
  */
 
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 
 /** advancedsearch.php — one document per archived item. */
 interface IaDoc {

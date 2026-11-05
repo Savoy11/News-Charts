@@ -253,6 +253,11 @@ const TODAY = "2026-11-01";
   const realFetch = globalThis.fetch;
   const answers: Response[] = [];
   const asked: { url: URL; ua: string }[] = [];
+  // the build's contact address is set in NEWS_CHARTS_CONTACT (lib/contact.ts, batch 92); a
+  // stand-in on example.org for the run
+  const contactWas = process.env.NEWS_CHARTS_CONTACT;
+  process.env.NEWS_CHARTS_CONTACT = "builds@example.org";
+
   globalThis.fetch = (async (u: RequestInfo | URL, init?: RequestInit) => {
     asked.push({ url: new URL(String(u)), ua: new Headers(init?.headers).get("user-agent") ?? "" });
     return answers.shift()!;
@@ -263,7 +268,7 @@ const TODAY = "2026-11-01";
     check("a page is asked by listing, year and page, with the contact User-Agent",
       ok.outcome === "ok" && ok.cases.length === 3 && asked[0].url.pathname === "/enforcement-litigation/administrative-proceedings" &&
         asked[0].url.searchParams.get("year") === "2010" && asked[0].url.searchParams.get("month") === "All" && asked[0].url.searchParams.get("page") === "3" &&
-        /^News Charts Research \S+@\S+$/.test(asked[0].ua), asked[0].url.search);
+        asked[0].ua === "News Charts Research builds@example.org", asked[0].url.search);
     answers.push(new Response("", { status: 403 }), new Response("<p>Request Rate Threshold Exceeded</p>", { status: 200 }), new Response(pages.empty, { status: 200 }));
     const refused = await fetchCasePage("litigation", 2010, 0);
     const notAListing = await fetchCasePage("litigation", 2010, 0);
@@ -271,6 +276,8 @@ const TODAY = "2026-11-01";
     check("a refusal is throttled, a page without its table an error, and a year with none an empty answer",
       refused.outcome === "throttled" && refused.httpStatus === 403 && notAListing.outcome === "error" && none.outcome === "ok" && none.cases.length === 0);
   } finally {
+    if (contactWas === undefined) delete process.env.NEWS_CHARTS_CONTACT;
+    else process.env.NEWS_CHARTS_CONTACT = contactWas;
     globalThis.fetch = realFetch;
   }
 

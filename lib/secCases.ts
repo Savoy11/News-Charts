@@ -4,6 +4,7 @@ import { longerListedNameIn } from "./frCompany";
 import { listedCompaniesNamed, outrankingNameFor } from "./sec";
 import { easternDay, pressName } from "./secPress";
 import type { TimelineEvent } from "./types";
+import { UA } from "./contact";
 
 /**
  * The SEC's litigation releases and administrative proceedings in which a listed company is a
@@ -41,7 +42,6 @@ export const CASE_LISTINGS = Object.keys(SEC_CASE_LISTINGS) as CaseListing[];
 export const SEC_CASES_FROM = 1995;
 /** A full page; a shorter one is a year's last. */
 export const SEC_CASES_PAGE_SIZE = 100;
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const TIMEOUT_MS = 60_000;
 
 /** One row as the listing shows it. Its listing, release number and day together are its identity. */

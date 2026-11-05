@@ -2,6 +2,7 @@ import { companyNames, longerListedNameIn } from "./frCompany";
 import { isNotesRecord, releaseNamesAsked, releaseNamesOn } from "./releaseNames";
 import { commonName, outrankingNameFor } from "./sec";
 import type { FetchResult, TimelineEvent } from "./types";
+import { UA } from "./contact";
 
 /**
  * Justice Department press releases in which a listed company is a party — a settlement, a plea,
@@ -15,7 +16,6 @@ import type { FetchResult, TimelineEvent } from "./types";
  */
 
 const API = "https://www.justice.gov/api/v1/press_releases.json";
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const TIMEOUT_MS = 20_000;
 const PAGE_SIZE = 50;
 /**

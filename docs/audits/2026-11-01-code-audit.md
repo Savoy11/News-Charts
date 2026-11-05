@@ -13,7 +13,7 @@ Run by the `code-auditor` agent (read-only). It covers `git diff 1353574..960c3b
 
 Both sets sit in this session's scratch folder. They were parsed with the repository's own parsers, `parseCaseListing` and `parseFedFeed`, and replays through them give exactly the batches' pinned counts.
 
-**Network: 2 requests in all.** Each carried the User-Agent `News Charts Research marcusowens94@gmail.com`.
+**Network: 2 requests in all.** Each carried the User-Agent `News Charts Research` with the owner's contact address (removed from the repository in batch 92, at the owner's request).
 - **www.sec.gov, 1:** `/enforcement-litigation/litigation-releases?year=2010&month=10&page=0`, for finding 3.
 - **query1.finance.yahoo.com, 1:** `/v8/finance/chart/TWCGX?range=max&interval=3mo`, the fund's first price, for finding 1.
 

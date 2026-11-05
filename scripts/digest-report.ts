@@ -56,8 +56,8 @@ import {
   type DigestNames,
   type DigestRow,
 } from "../lib/secDigest";
+import { UA } from "../lib/contact";
 
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const LOOKUP_URL = "https://www.sec.gov/Archives/edgar/cik-lookup-data.txt";
 const PACE_MS = 1_000;
 

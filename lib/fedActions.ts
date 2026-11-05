@@ -1,4 +1,5 @@
 import type { FetchResult, TimelineEvent } from "./types";
+import { UA } from "./contact";
 
 /**
  * The Federal Reserve Board's enforcement actions against a listed bank, from 1989 (batch 69, the
@@ -24,7 +25,6 @@ import type { FetchResult, TimelineEvent } from "./types";
 const BASE = "https://www.federalreserve.gov";
 export const FED_FILES = [`${BASE}/supervisionreg/ea-old.json`, `${BASE}/supervisionreg/files/ea-cms-recent.json`] as const;
 // The same contact the other federal requests carry (lib/recalls.ts).
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const TIMEOUT_MS = 30_000;
 
 export interface FedOrg {

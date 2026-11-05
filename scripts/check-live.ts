@@ -64,6 +64,7 @@ import { fetchBitcoinHalvings } from "../lib/onchain/bitcoin";
 import { ETH_MILESTONES, getEthereumMilestones } from "../lib/onchain/ethereum";
 import { fetchUsdtSupplyMoves } from "../lib/onchain/usdt";
 import type { PricePoint, SourceKey, TimelineEvent } from "../lib/types";
+import { UA } from "../lib/contact";
 
 export type Verdict = "PASS" | "FAIL" | "UNREACHABLE" | "SKIPPED";
 
@@ -553,7 +554,7 @@ export const CASES: LiveCase[] = [
         UNION { ?m wdt:P5531 "0001326801" . ?m p:P1448/ps:P1448 ?name }
       }`;
       const res = await fetch(`https://query.wikidata.org/sparql?${new URLSearchParams({ query, format: "json" })}`, {
-        headers: { "User-Agent": "News Charts Research marcusowens94@gmail.com", Accept: "application/sparql-results+json" },
+        headers: { ...UA, Accept: "application/sparql-results+json" },
       });
       if (res.status === 429 || res.status === 503) throw new NoAnswer(`HTTP ${res.status}`);
       if (!res.ok) return [`HTTP ${res.status}`];

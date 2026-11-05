@@ -1,5 +1,6 @@
 import { captionParty, chargedParties } from "./secCases";
 import type { TimelineEvent } from "./types";
+import { UA } from "./contact";
 
 /**
  * The Consumer Financial Protection Bureau's enforcement actions, from its first of 2012-07-17
@@ -32,7 +33,6 @@ export const CFPB_LIST = `${BASE}/enforcement/actions/`;
 export const CFPB_PAGE_SIZE = 25;
 /** The Bureau's first action. */
 export const CFPB_FROM = "2012-07-17";
-const UA = { "User-Agent": "News Charts Research" };
 const TIMEOUT_MS = 60_000;
 
 export interface CfpbAction {

@@ -17,8 +17,8 @@
 >   listings, the whole year; the first page of each for 2004); data.sec.gov 4 (two submissions
 >   records and one older shard of each: Eagle Bancorp, Dillard's); www.justice.gov 4 (title
 >   searches); www.federalreserve.gov 1 (its press-release feed); www.consumerfinance.gov 1 (its
->   enforcement list). 28 in all, each with the User-Agent `News Charts Research
->   marcusowens94@gmail.com`; sec.gov hosts paced at about one a second. GDELT, Wikidata,
+>   enforcement list). 28 in all, each with the User-Agent `News Charts Research`
+>   and the owner's contact address (removed from the repository in batch 92); sec.gov hosts paced at about one a second. GDELT, Wikidata,
 >   Wikipedia, Yahoo, the Federal Register, openFDA and NHTSA were not asked. The local Postgres
 >   cluster was down; I started it for read-only queries on `chronolens_b73` and stopped it again.
 > - **Nothing here needs a key, a paid tier or a recurring charge.** Two proposals, #2 and #5,

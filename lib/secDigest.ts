@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { commonName, withoutTag } from "./edgarName";
 import { captionParty } from "./secCases";
 import { newsNamesFor, TICKER_INDEX_COMPANIES } from "./sec";
+import { UA } from "./contact";
 
 /**
  * The SEC News Digest, 1956 to the mid-1990s (2026-11-02 proposal 1, approved with the count
@@ -21,7 +22,6 @@ import { newsNamesFor, TICKER_INDEX_COMPANIES } from "./sec";
  */
 export const DIGEST_FROM = 1956;
 export const DIGEST_LAST = 2013;
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const TIMEOUT_MS = 60_000;
 
 export const digestArchiveUrl = (year: number): string =>

@@ -988,6 +988,66 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 95: the EPA's civil enforcement cases, from the 1970s (2026-11-05)
+
+The 2026-11-05 proposal 1, approved by the owner that day, with the owner's multi-company rule:
+industrial, chemical, energy, paper and utility pages had no regulator's record before 2009.
+
+- [x] **A new source, `epa_cases`.** EPA's whole case file, one 82 MB zip
+      (`echo.epa.gov/files/echodownloads/case_downloads.zip`, 137,108 cases):
+      - read once a month for every company (`lib/ingest/epaWalk.ts`, db/037), and not again while
+        EPA has not changed it (its Last-Modified);
+      - a new copy replaces the kept cases whole, and only when it reads as a whole file (100,000
+        cases or more);
+      - four of its tables read by a small zip reader and CSV reader of our own (`lib/zip.ts`, no
+        new dependency): 137,103 cases in 4 seconds, 5 left out for having no public day.
+- [x] **Each case's public day and title** (`lib/epaCases.ts`):
+      - a court case is dated by the day its settlement was lodged (Caterpillar's of 1998-10-22,
+        entered 1999-07-01), else entered, else filed; an administrative case by its final order,
+        else its complaint;
+      - the title says what EPA did, the penalty and the law: "EPA consent decree: $11,000,000 civil
+        penalty (Clean Air Act)". A Superfund settlement says how many parties it has;
+      - linked to EPA's own case report. Money is kept as digits, never a float.
+- [x] **On company pages.** A case is kept when one of its defendants is the company by the
+      caption rule, under its names that year, from its first price:
+      - every listed defendant gets the case (the owner's rule), so the proposal's three-defendant
+        limit is dropped;
+      - a court case or a case with a penalty has its own row; a company's cases of one day make
+        one row; a month's orders and complaints with no penalty are grouped into one row when
+        there are two or more.
+
+      Against every company in the index, before first prices: 6,001 rows on 665 companies, 5,169
+      before 2017, 5,743 of them a case's own day. Most: GE 284, GM 221, ExxonMobil 163, Ford 163,
+      FMC 133.
+- [x] **The guards the proposal named:**
+      - one name joined by "and" is one name: no "… Power and Light Company" is Light S.A.'s (it took
+        56 utilities' cases without the guard);
+      - a person written surname first is no company ("RETHERFORD, DANA", "FAYE, BALL");
+      - National Steel's cases are not Companhia Siderúrgica Nacional's (SID), by name.
+- [x] **The first price does its job here too.** GM's $11 million decree of 1995 names General
+      Motors, but today's GM listed in 2010, so the old GM's cases stay off it. Today's Kodak stock
+      dates from 2013, so Kodak's of 1995 is off KODK. Southland Corporation's of 1985 is off SLND.
+- [x] **Licence.** EPA's Standard Open Data License ("all data produced by the U.S EPA is by default
+      in the public domain") and the disclaimers page's note on documents are both quoted in
+      `lib/epaCases.ts` and `SOURCES`. Only the file's fields and a link are kept; no document is
+      copied. Credited in the footer, the terms page and the README.
+- Not done here:
+      - first trading days for all 665 companies, so how many rows reach pages is counted at each
+        company's ingest, not here;
+      - a map of the units EPA charges under their own names (BP Products North America, Motiva):
+        the replay read the companies' own names only;
+      - JCI's 45 rows, most of them Johnson Controls, Inc.'s before the 2016 merger, follow the
+        owner's earlier JCI call.
+- **Requests:** echo.epa.gov 1 (the 82 MB file); query1 and query2.finance.yahoo.com 9 (first
+  trading days for GM, Southland, Kodak and Caterpillar, with retries after refusals).
+- **Checks:** `check:epa-cases` (39, new, in `npm run check`): the zip and CSV readers, the cases the
+  proposal named, the guards, the first price, the grouping, the replay of every company over a
+  committed slice of the file (scripts/fixtures/epa-cases-slice.json.gz: 4,280 cases, every row of
+  the four tables they need), the monthly read, and the wiring. On main it cannot run:
+  `lib/epaCases.ts` does not exist. `check:contact` counts EPA's reader of the shared User-Agent, 28
+  files, and `check:live` has a case that reads the real file (outside the offline chain, not run
+  here). `npm run check` and `npm run lint` pass.
+
 ## NC ledger — batch 94: the Justice Department's releases of 2001–2008, from its archive (2026-11-05)
 
 The 2026-11-02 proposal 2, approved by the owner 2026-11-05. Justice releases stopped at 2009, the
@@ -7329,7 +7389,7 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
         #5, approved 2026-11-02 with the new source. Importance medium-low · Efficiency high ·
         Practicality medium (the units above first).*
-- [ ] `P1` **The EPA's civil enforcement cases, from the 1970s.** A new source, approved by the owner
+- [x] `P1` **The EPA's civil enforcement cases, from the 1970s.** A new source, approved by the owner
       2026-11-05 ("Lets move forward with all of the proposals."): EPA's case file
       (`echo.epa.gov/files/echodownloads/case_downloads.zip`, 82 MB, 137,108 cases), read once a
       month. A case is kept on a company's page when a defendant is the company by the caption rule,
@@ -7347,6 +7407,8 @@ already held, but new investment goes to securities coverage first.
         2017. Of 40 read by hand, 31 were right; the first-price floor drops six of the nine wrong
         ones, and two guards drop the rest: "Power and Light Company" is one name, and a trailing
         given name ("Retherford, Dana") is a person.
+      - ✅ **Done in batch 95:** 137,103 cases read from the file; against every company in the
+        index, 6,001 rows on 665 companies before first prices, 5,169 before 2017.
       - *Derived from [`docs/proposals/2026-11-05-proposals.md`](proposals/2026-11-05-proposals.md)
         #1, approved 2026-11-05.*
 - [x] `P1` **The Justice Department's releases of 2001–2008, from its archive.** The same source

@@ -44,6 +44,7 @@ import { FUND_SERIES, NO_PRICES, firstPriceDay, secPressFor, walkSecPress } from
 import { secCasesFor, walkSecCases } from "../lib/ingest/secCasesWalk";
 import { cfpbFor, walkCfpb } from "../lib/ingest/cfpbWalk";
 import { dojArchiveFor, walkDojArchive, withArchive } from "../lib/ingest/dojArchiveWalk";
+import { epaCasesFor, walkEpaCases } from "../lib/ingest/epaWalk";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
@@ -100,6 +101,8 @@ export const COMPANY_SOURCES = [
   "fed_press",
   // …and the CFPB's actions, where the respondents named are the company or a bank it owns (batch 89)
   "cfpb",
+  // …and the EPA's civil enforcement cases, where a defendant is the company (batch 95)
+  "epa_cases",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -728,6 +731,19 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
         (walked.short ? `, ${walked.short} the list counts but never showed` : "") + (walked.stopped ? ` (${walked.stopped})` : ""));
     }
     return cfpbFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
+  });
+
+  /**
+   * The EPA's civil enforcement cases in which the company is a defendant, from the 1970s on
+   * (batch 95): EPA's whole case file, read once a month for every company and kept
+   * (`walkEpaCases`), then every kept case one of whose defendants is the company by the caption
+   * rule, under the names it had that year, from its first price. Every listed defendant gets the
+   * case, the owner's rule of 2026-11-05; the orders with no penalty are grouped a row a month.
+   */
+  await run("epa_cases", `EPA cases naming ${companyNames(company.name, alsoKnownAs).join(" | ")} as a defendant`, async () => {
+    const walked = await walkEpaCases(client);
+    if (walked.due) line("epa_cases", `file      ${walked.read ?? "not read"}${walked.read === "stored" ? `, ${walked.cases} cases` : ""}${walked.stopped ? ` (${walked.stopped})` : ""}`);
+    return epaCasesFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
   });
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no

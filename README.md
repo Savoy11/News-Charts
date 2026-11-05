@@ -408,6 +408,32 @@ trading day. Public
 domain, cited to the Bureau; no key. An action is a regulation event and is scored without the
 model.
 
+### EPA civil enforcement cases (`lib/epaCases.ts`)
+
+The EPA's own record of the cases it brings, from the 1970s on: consent decrees lodged in court,
+suits filed, and the final orders of its administrative cases, each with its penalty and the law it
+enforces (Clean Air Act, Clean Water Act, the Superfund law…). For a chemical maker, an oil company,
+a paper mill, an industrial or a utility, the regulator's record that carmakers (NHTSA), drug makers
+(FDA) and banks (the Board, the SEC, the CFPB) already had. Read from EPA's case file, one 82 MB zip
+of CSV tables (`echo.epa.gov/files/echodownloads/case_downloads.zip`, 137,108 cases on 2026-10-31),
+once a month for every company (`lib/ingest/epaWalk.ts`, db/037) and not again while EPA has not
+changed it; four of its tables are read (`lib/zip.ts`, no dependency). A case's day is its public
+one: the day a court settlement was lodged (Caterpillar's of 1998-10-22, entered in 1999), else
+entered or filed; the day an administrative final order was issued, else the complaint's. A company
+keeps a case when one of its defendants is the company by the caption rule (`captionParty`), under
+its names that year, from its first price, with two guards a case file needs: one name joined by
+"and" is one name ("Pennsylvania Power and Light Company" is not Light S.A.), and a person written
+surname first is no company ("RETHERFORD, DANA" is not Dana). Every listed defendant gets the case,
+the owner's rule of 2026-11-05, so a Superfund site's settlement goes on each listed party's page
+and says how many parties it has. A court case or a case with a penalty has its own row, linked to
+EPA's case report; a month's orders with no penalty are grouped into one row, as the Federal
+Register's routine notices are. Against every company in the index, before first prices: 6,001
+rows on 665 companies, 5,169 before 2017 (GE 284, GM 221, ExxonMobil 163, Ford 163, FMC 133). The
+first price keeps a successor off its predecessor's years: today's GM listed in 2010, so the old
+GM's $11 million Clean Air Act decree of 1995 is not on it, and today's Kodak stock dates from 2013.
+Public domain under EPA's open data licence; EPA's note that commercial use of documents on its
+sites may be protected concerns documents, and none is copied — only the file's fields and a link.
+
 ### The SEC News Digest, counted (`lib/secDigest.ts`)
 
 Not a source yet: the count the owner asked for first (2026-11-02 proposal 1). The Digest is the
@@ -987,6 +1013,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Federal Reserve Board press releases | The Board's orders on a bank's applications since 2006, and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |
 | Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
+| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form (`lib/epaCases.ts`); the orders with no penalty grouped a row a month. Public domain under EPA's open data licence; no key |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |

@@ -149,6 +149,15 @@ Suisse's actions are UBS's only from 2023-06-12; Compass Bank's are BBVA's from 
 them, 28 before 2017 (HSBC 7, Deutsche Bank 7, Santander 4), eight with a penalty of $100 million or
 more.
 
+The listed banks the Board has acted against that the map left out are mapped too (batch 98): 23
+of them, most of them regional, each by its own legal name, or its bank named after it, and its home
+city. Arrow Financial's written agreement of 1992, the agreements of 2009–2012 with Hanmi, Central
+Pacific, Old Second, Plumas and Orrstown, MetLife's order of 2011 and penalty of 2012 while it was a
+bank holding company, Jack Henry's agreement of 2013, Crédit Agricole's five from 2000. A namesake
+elsewhere stays off: TCSB Bancorp of Traverse City is not CSB Bancorp, and Commerce Bancshares of
+Catoosa, Centennial Bank of Lubbock and Community West Bancshares of Goleta are no mapped company's.
+Measured 2026-11-05: 39 events on the 23, 32 before 2017; 152 on 56 of the 63 mapped banks in all.
+
 ### FDA recalls (`lib/fdaRecalls.ts`)
 
 A drug, device or food company's page carries its Class I and II recalls from the FDA's weekly
@@ -1043,7 +1052,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Federal Reserve | FOMC policy statements since 1994 | Economy subject; on company pages behind the Economy chip (off by default). `npm run ingest -- --macro` |
 | BLS | CPI release dates since 2008 | Same subject and chip; needs a contact `User-Agent` |
 | NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966; defect investigations since 1975 | Recalls of 10,000 vehicles or more, and every investigation NHTSA opened, only for the vehicle and tyre makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014). Public domain; no key |
-| Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 40 banks `lib/fedActions.ts` maps by hand to a listed company — 26 US bank holding companies and 14 foreign banks with their US arms; an action against a person is left out. Public domain, cited to the Board; two keyless files |
+| Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 63 banks `lib/fedActions.ts` maps by hand to a listed company — 49 US banks and 14 foreign banks with their US arms; an action against a person is left out. Public domain, cited to the Board; two keyless files |
 | FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 73 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
 | U.S. Department of Justice | Press releases since 2001 (the API's from 2009, the archive's month pages before) in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | SEC newsroom (press releases) | Press releases since 1997 in which a company is the party — the SEC charges, sues or sanctions it, or it settles | The year listing, read once for every company (`lib/ingest/secPressWalk.ts`); kept only when the headline makes the company the party (`lib/secPress.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |

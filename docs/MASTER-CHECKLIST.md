@@ -988,6 +988,35 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 98: the Board's actions for 23 more banks (2026-11-05)
+
+The 2026-11-05 proposal 3, approved by the owner that day. No new source: rows in `FED_BANKS`.
+
+- [x] **23 banks mapped** (`lib/fedActions.ts`), each by its own legal name and home city, read by
+      hand against every row of both of the Board's files on 2026-11-05:
+      - Arrow Financial, CSB Bancorp, Crédit Agricole, Banco de Chile, East West Bancorp, First
+        Interstate, Hanmi, Broadway Financial, Central Pacific, New Peoples Bankshares,
+        OptimumBank, Old Second, Plumas, Orrstown, Patriot National, MetLife, Jack Henry,
+        Riverview, Fulton, Wintrust, Green Dot, Customers Bancorp and Bank of Hawaii;
+      - a bank named after the company counts as batch 69's rule has it (East West Bank of Pasadena,
+        Hanmi Bank, Customers Bank, Orrstown Bank, New Peoples Bank), and Crédit Agricole's
+        predecessor before 2001, Caisse Nationale de Crédit Agricole;
+      - a namesake elsewhere stays off: TCSB Bancorp of Traverse City is not CSB Bancorp, and
+        Commerce Bancshares of Catoosa, Centennial Bank of Lubbock and Community West Bancshares of
+        Goleta are no mapped company's.
+- [x] **Measured:** 39 events on the 23, 32 before 2017 (the proposal's present-name replay found
+      29 days; the banks named after the companies add the rest). Crédit Agricole 5, Customers
+      Bancorp 4, East West and Hanmi 3. In all, 152 events on 56 of the 63 mapped banks, 113 before
+      2017; the 40 banks mapped before keep every count.
+- Not done here: first trading days for the 23. Hanmi's agreement of 1994 and other early rows
+  reach a page only from the company's first price, as every rule reads.
+- **Requests:** www.federalreserve.gov 2 (the two action files).
+- **Checks:** `check:fed-actions` 49 (5 new): Arrow Financial's of 1992 and Hanmi's of 2009, MetLife's
+  order and penalty and Jack Henry's agreement, the banks named after the companies, the namesakes
+  by city, and every mapped bank's count re-pinned. The saved rows add the 23 banks' and the
+  namesakes'. On main the new cases fail: none of the 23 is in `FED_BANKS`. `npm run check` and
+  `npm run lint` pass.
+
 ## NC ledger — batch 97: the CFTC's enforcement actions, from 1995 (2026-11-05)
 
 The 2026-11-05 proposal 2, approved by the owner that day. The banks' and energy traders' cases
@@ -7528,9 +7557,10 @@ already held, but new investment goes to securities coverage first.
       unit map, on every listed party's page.
       - *Derived from [`docs/proposals/2026-11-05-proposals.md`](proposals/2026-11-05-proposals.md)
         #2, approved 2026-11-05.*
-- [ ] `P2` **The Board's enforcement actions against the 23 listed banks its map leaves out.** The
+- [x] `P2` **The Board's enforcement actions against the 23 listed banks its map leaves out.** The
       same source (`fed_enforcement`), approved by the owner 2026-11-05: rows added to `FED_BANKS`
-      for the 29 own days the scout read city by city.
+      for the 29 own days the scout read city by city. ✅ **Done in batch 98:** 39 events on the 23,
+      read city by city with their banks named after them.
       - *Derived from [`docs/proposals/2026-11-05-proposals.md`](proposals/2026-11-05-proposals.md)
         #3, approved 2026-11-05.*
 - [ ] `P2` **The Board's orders of 1996–2005, from its yearly pages.** The same source

@@ -145,17 +145,32 @@ async function main(): Promise<void> {
     !compass?.match.test("Compass Bank, Columbus, Ohio") &&
       fed.fedActionEvents([{ id: 1, edt: "2006-05-01", tdt: "1950-01-01", bkorg: "Compass Bank, Birmingham, Alabama", type: "Written Agreement", url: "DNE" }], 842180).length === 0);
 
+  console.log("\nThe 23 banks batch 98 maps (the 2026-11-05 proposal 3)");
+  check("Arrow Financial's agreement of 1992-07-22 lands on AROW, and Hanmi's of 2009-11-02 on HAFC",
+    !!on("AROW", "1992-07-22") && !!on("HAFC", "2009-11-02"));
+  check("MetLife's order of 2011-04-13 and penalty of 2012-08-06 land on MET, and Jack Henry's agreement of 2013-12-04 on JKHY",
+    !!on("MET", "2011-04-13") && /3,200,000|3\.2 million/.test(`${on("MET", "2012-08-06")?.title} ${on("MET", "2012-08-06")?.description}`) && !!on("JKHY", "2013-12-04"),
+    `${on("MET", "2012-08-06")?.title}`);
+  check("  …a bank named after the company is its: East West Bank of Pasadena's three, Customers Bank's four, Crédit Agricole's five from 2000",
+    of("EWBC").length === 3 && of("CUBI").length === 4 && of("CRARF").length === 5 && !!on("CRARF", "2000-11-30"));
+  const cities = ["TCSB Bancorp, Inc., Traverse City, Michigan", "Centennial Bank, Lubbock, Texas", "Community West Bancshares, Goleta, California", "Commerce Bancshares, Inc., Catoosa, Oklahoma"];
+  check("a namesake elsewhere lands on no page: TCSB Bancorp of Traverse City is not CSB Bancorp, nor Centennial Bank of Lubbock, Community West of Goleta or Commerce Bancshares of Catoosa anyone's",
+    cities.every((c) => Object.values(fed.FED_BANKS).every((b) => b.orgs.every((o) => !o.match.test(c)))) && of("CSBB").length === 1 && !!on("CSBB", "2000-11-22"));
+
   console.log("\nWhat each mapped bank carries (the Board's files of 2026-10-27 and 2026-10-30)");
   const expected: Record<string, number> = {
     JPM: 10, C: 10, WFC: 7, GS: 7, BAC: 6, AXP: 5, USB: 4, PNC: 4, MS: 3, ALLY: 3, RF: 3, BNY: 3, BPOP: 3, MTB: 2, TFC: 1, COF: 1, STT: 1, FITB: 1, HBAN: 1,
     CFG: 0, KEY: 0, SCHW: 0, SYF: 0, NTRS: 0, ZION: 0, FHN: 0,
     HSBC: 7, DB: 7, SAN: 4, UBS: 3, BBVA: 3, NWG: 3, BCS: 2, SMFG: 2, MUFG: 2, RY: 1, TD: 1, BMO: 1, BNS: 1, CM: 1,
+    // batch 98's 23
+    CRARF: 5, CUBI: 4, EWBC: 3, HAFC: 3, FIBK: 2, NWPP: 2, ORRF: 2, PNBK: 2, MET: 2,
+    AROW: 1, CSBB: 1, BCH: 1, BYFC: 1, CPF: 1, OPHC: 1, OSBC: 1, PLBC: 1, JKHY: 1, RVSB: 1, FULT: 1, WTFC: 1, GDOT: 1, BOH: 1,
   };
   const counts = Object.fromEntries([...byTicker].map(([t, e]) => [t, e.length]));
   const off = Object.keys(expected).filter((t) => counts[t] !== expected[t]);
   const foreign = ["HSBC", "DB", "SAN", "UBS", "NWG", "BCS", "SMFG", "MUFG", "BBVA", "RY", "TD", "BMO", "BNS", "CM"].flatMap(of);
-  check("113 events on 33 of the 40 banks, each count as read: the 14 foreign banks add 38, 28 of them before 2017",
-    off.length === 0 && all.length === 113 && Object.keys(expected).length === 40 && Object.keys(fed.FED_BANKS).length === 40 &&
+  check("152 events on 56 of the 63 banks, each count as read: the 14 foreign banks add 38, 28 of them before 2017, and batch 98's 23 add 39",
+    off.length === 0 && all.length === 152 && Object.keys(expected).length === 63 && Object.keys(fed.FED_BANKS).length === 63 &&
       foreign.length === 38 && foreign.filter((e) => e.date < "2017-01-01").length === 28,
     off.map((t) => `${t} ${counts[t]}≠${expected[t]}`).join(", ") || `${all.length}, ${foreign.length} foreign`);
   check("every mapped bank says why each name is its own", Object.values(fed.FED_BANKS).every((b) => b.orgs.every((o) => o.why.length > 10)));

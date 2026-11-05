@@ -988,6 +988,72 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 88: the listed banks', brokers' and managers' own units (2026-11-05)
+
+The 2026-11-02 proposal 4, approved by the owner with three calls. The SEC's cases name a firm's
+broker-dealer or adviser by its own name, and the Board's orders name its bank. The release rules
+knew a company only by its own names, so those rows were on no page.
+
+- [x] **`BANK_UNITS` in `lib/releaseNames.ts`: 34 companies' units, read by every rule that reads
+      the map** (the SEC's cases and press releases, the Justice Department's releases, the Board's
+      press releases), and never by news scoring.
+      - **Their banks:** Regions Bank, Frost Bank, Origin Bank, Centennial Bank, PlainsCapital Bank,
+        Simmons Bank, Green Dot Bank, Five Star Bank, Equity Bank, Banco de Crédito del Perú,
+        National Westminster Bank, ING Bank, Lloyds Bank Corporate Markets, and Popular's Banco
+        Popular de Puerto Rico and Banco Popular North America.
+      - **Their broker-dealers and advisers:** Ameriprise Financial Services, Fifth Third
+        Securities, KeyBanc Capital Markets, Franklin Advisers, Hilltop Securities, BB&T
+        Securities, FTN Financial Securities, BlackRock Advisors, Nasdaq's exchange and routing
+        broker, and others.
+      - **Read by hand, each by its city:** the Board's six orders whose bank name another bank has
+        or could have (Centennial Bank of Conway, Five Star Bank of Warsaw, Equity Bank of Andover,
+        Origin Bank, Green Dot Bank, Simmons Bank).
+- [x] **Each bought or sold unit counts between the days its company's filings give.** The days were
+      read through EDGAR's full-text search, which says which filing holds a sentence; the SEC's
+      document server would have needed a contact email, and the search does not:
+      - U.S. Bancorp Piper Jaffray until the spin-off of 2003-12-31;
+      - Hilltop's PlainsCapital Bank from 2012-11-30;
+      - Home BancShares' Centennial Bank from 2008-01-01;
+      - NatWest's bank from RBS's purchase of 2000-03-06;
+      - Oppenheimer Asset Management from 2003-01-03;
+      - Financial Institutions' Five Star Bank from the first filing that names it (2005-11-04).
+- [x] **The owner's calls.**
+      - (b) American Express Financial Advisors' case of 2004-02-12 is on both American Express's
+        page (until the spin-off of 2005-09-30) and Ameriprise's.
+      - (c) Prudential Securities' cases are Prudential Financial's, not Prudential plc's. The firm
+        stayed Prudential's as Prudential Equity Group after its retail brokerage went into
+        Wachovia Securities on 2003-07-01.
+- [x] **Two of the proposal's rows refused, as the companies' filings say:**
+      - Lazard Capital Markets was "a subsidiary of LFCM Holdings" (Lazard's proxy filed
+        2008-03-24), so its case of 2008 is not Lazard's;
+      - Fiserv sold Fiserv Securities in the first quarter of 2005, before its case of 2005-04-21.
+- [x] **Popular in `FED_BANKS`:** its three enforcement actions (1999, 2000, 2023) reach its page;
+      Banco Popular de Ecuador and Banco Popular Español stay off.
+- [x] **The Board's verb names an applicant where no "by" does.** "Federal Reserve Board approves
+      Banco Popular de Puerto Rico to acquire…" (2010-04-30) is the one such title of the 463 orders.
+- [x] **What it adds, replayed on all the saved rows: 133 company events.**
+      - SEC cases: 99 days on 23 companies, 62 before 2017 (Prudential 19, Franklin 17, Ameriprise
+        15). The full replay is now 1,146 days on 369 companies.
+      - Board releases: 27 on 13 companies (now 252 on 112).
+      - SEC press releases: 4 (now 263 on 126).
+      - Fed enforcement actions: Popular's 3 (now 113 on 33 banks).
+      - The scout's measure was 62 days on 24 companies. The difference is Franklin Advisers'
+        market-timing cases of 2004–2011 and Prudential's.
+- [x] **Checks:** `check:sec-cases` 69, `check:fed-press` 47, `check:sec-press` 75,
+      `check:fed-actions` 45. The proposal's cases are all in, with the two refusals. On main the
+      unit cases fail and `check:sec-cases` cannot load `BANK_UNITS`.
+- Not done, outside this map:
+      - The press rule misses two releases that name a unit: "SEC Alleges …, Sanctions Prudential
+        Securities, Incorporated" (2003), whose verb comes after a comma, and "American Express
+        Financial Advisors (now known as …) to Pay" (2005). Each is the press rule's own wording,
+        pinned in `check:sec-press`.
+      - "Centennial Bank" and "Equity Bank" are names other banks have had. A future order by a
+        namesake would need a `NOT_THE_COMPANY` row.
+- Requests: efts.sec.gov 89 (85 searches, 4 asked again after a 500), www.federalreserve.gov 7 (the
+  orders read by hand), www.sec.gov 2 (both refused for want of a contact address, and not asked
+  again). `npm run check` and `npm run lint` pass. HawkScan cannot run here (`HAWK_API_KEY` is
+  unset).
+
 ## NC ledger — batch 87: the SEC News Digest, one year counted (2026-11-03)
 
 The owner approved the Digest on 2026-11-02 with a count first (proposal 1, step 1). This batch
@@ -6763,8 +6829,11 @@ already held, but new investment goes to securities coverage first.
         BB&T's orders on Truist's page), and the licence was re-read on 2026-11-01. Popular's row in
         the Fed map is still the owner's, and orders filed under a bank whose name is not its
         holding company's are not given yet (about two dozen, listed in the section).
-- [ ] `P2` **The listed banks' and brokers' own units: their banks in the Board's orders, their
-      broker-dealers and advisers in the SEC's cases.** Approved by the owner 2026-11-02. Batch 84's
+- [x] `P2` **The listed banks' and brokers' own units: their banks in the Board's orders, their
+      broker-dealers and advisers in the SEC's cases.** Approved by the owner 2026-11-02.
+      ✅ **Done in batch 88:** 34 companies' units in `BANK_UNITS`, 133 company events on the saved
+      rows; Lazard Capital Markets and Fiserv Securities' 2005 case refused as the filings say (see
+      batch 88's ledger section). Batch 84's
       open call and batch 74's Popular, Inc. row, now with the same firms' units in the case
       captions.
       - ✅ **The owner's calls, 2026-11-02:** (a) yes, widen the maps; (b) American Express

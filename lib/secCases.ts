@@ -15,7 +15,7 @@ import type { TimelineEvent } from "./types";
  * administrative proceeding for each order it issues itself. Most press releases have one
  * behind them, and most of these have no press release: of the 1,022 company days the index's
  * companies had in 1995–2026, 813 fell on a day no press release names the company (measured
- * 2026-11-01, under current names; 1,047 since batch 85).
+ * 2026-11-01, under current names; 1,047 since batch 85, 1,146 with batch 88's units).
  *
  * Read from the two year listings, www.sec.gov/enforcement-litigation/litigation-releases and
  * …/administrative-proceedings, ?year=Y&month=All&page=N, 100 rows a page, newest first. Each row

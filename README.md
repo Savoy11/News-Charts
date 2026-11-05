@@ -230,8 +230,17 @@ brokerages, Deutsche Bank Securities, State Street Bank and Trust, BNY Mellon Se
 Bank and Barclays Capital). The map is read by the release rules alone, never by headline scoring.
 Batch 85 added the units the 2026-11-01 audit found missing (Morgan Stanley DW, Citibank, N.A. from
 1998-10-08, Salomon Smith Barney, BofA Securities, and Goldman Sachs's clearing firm and fund adviser),
-and initials as the SEC spaces them ("J. P. Morgan", "JP Morgan Chase"). Read against every company
-in the index under its current names, 259 of the 6,897 stored releases land on 124 companies, 156 of
+and initials as the SEC spaces them ("J. P. Morgan", "JP Morgan Chase"). Batch 88 added the other
+listed banks', brokers' and asset managers' own units, 34 companies' (`BANK_UNITS`): their banks
+(Regions Bank, Frost Bank, Centennial Bank, Five Star Bank, PlainsCapital Bank, Banco Popular de Puerto
+Rico…) and their broker-dealers and advisers (Ameriprise Financial Services, Fifth Third Securities,
+Franklin Advisers, KeyBanc Capital Markets, U.S. Bancorp Piper Jaffray until its spin-off at the end
+of 2003…), each bought or sold one between the days its filings give, read through EDGAR's full-text
+search. American Express Financial Advisors' cases before the 2005 spin-off are on both American
+Express's and Ameriprise's pages, and Prudential Securities' on Prudential Financial's, the owner's
+calls. Lazard Capital Markets was LFCM Holdings', not Lazard's, and Fiserv Securities' case of 2005
+came after Fiserv sold it: neither is on a page. Read against every company
+in the index under its current names, 263 of the 6,897 stored releases land on 126 companies, 159 of
 them before 2017 (Bank of America 28, Morgan Stanley 18, Citigroup 14, JPMorgan 13, UBS Group 12,
 Wells Fargo 10, Goldman Sachs 9, Deutsche Bank 7), each read by hand (batch 78, after the 2026-10-30
 audit; Deutsche Bank's since batch 81, when its everyday name lost its "AKTIENGESELLSCHAFT"; the
@@ -286,7 +295,7 @@ revoked registrations naming a shell called "Telos, Inc." — were read by hand 
 CIK (`NOT_THE_COMPANY`). A company's rows of a day make one event, titled by its own party ("SEC
 litigation release: Transocean Inc."), with the whole caption, each release number and a
 proceeding's file number in its description. Read against every company in the index under its
-current names, the 30,747 rows give 1,047 company days on 353 companies, 495 of them before 2017
+current names, the 30,747 rows give 1,146 company days on 369 companies, 557 of them before 2017
 (Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47,
 Goldman Sachs 20); a company's former names add more, and its first price keeps it off the years
 before it listed. A party ends before its other name ("…, L.P. f/k/a Spear, Leeds & Kellogg") as it
@@ -315,10 +324,11 @@ company's former legal names count in the years it had them. "Approval of propos
 actions are not read here (batch 69 reads them from the Board's own files), nor monetary policy.
 A release carries its time where the feed gives one, so a release after 4 p.m. is marked after the
 close. Read against every company in the index under its current names, the 2,219 releases of the
-types read give 225 matches on 103 companies, 126 before 2017, 181 of them orders, each read by hand;
-`check:fed-press` replays them and pins the count. Not given yet: an order filed under a bank whose
-name is not its holding company's ("Regions Bank", "Frost Bank", "Banco Popular de Puerto Rico") and
-that no map row gives the company. A fund's series takes none (batch 85): replayed against all 19,540
+types read give 252 matches on 112 companies, 138 before 2017, 208 of them orders, each read by hand;
+`check:fed-press` replays them and pins the count. An order filed under a bank whose name is not its
+holding company's ("Regions Bank", "Frost Bank", "Banco Popular de Puerto Rico") is the company's
+through the release rules' map since batch 88, which added 27 of them; "Federal Reserve Board approves
+Banco Popular de Puerto Rico to acquire…" names its applicant by the Board's verb. A fund's series takes none (batch 85): replayed against all 19,540
 series names in the index, the feed gives them nothing, and the case captions would have given 10
 other firms' cases. A release is a regulation event and is scored without the model.
 
@@ -889,7 +899,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Federal Reserve | FOMC policy statements since 1994 | Economy subject; on company pages behind the Economy chip (off by default). `npm run ingest -- --macro` |
 | BLS | CPI release dates since 2008 | Same subject and chip; needs a contact `User-Agent` |
 | NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966; defect investigations since 1975 | Recalls of 10,000 vehicles or more, and every investigation NHTSA opened, only for the vehicle and tyre makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014). Public domain; no key |
-| Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 39 banks `lib/fedActions.ts` maps by hand to a listed company — 25 US bank holding companies and 14 foreign banks with their US arms; an action against a person is left out. Public domain, cited to the Board; two keyless files |
+| Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 40 banks `lib/fedActions.ts` maps by hand to a listed company — 26 US bank holding companies and 14 foreign banks with their US arms; an action against a person is left out. Public domain, cited to the Board; two keyless files |
 | FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 73 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
 | U.S. Department of Justice | Press releases since 2009 in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | SEC newsroom (press releases) | Press releases since 1997 in which a company is the party — the SEC charges, sues or sanctions it, or it settles | The year listing, read once for every company (`lib/ingest/secPressWalk.ts`); kept only when the headline makes the company the party (`lib/secPress.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |

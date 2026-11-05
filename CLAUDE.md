@@ -73,8 +73,9 @@ that scores a company's headlines — ingest, a first visit, `npm run score`, th
 names from one place, `companyScoringAliases` in `lib/scoringNames.ts`; build no second list. The
 SEC's and the Justice Department's release rules, the SEC's case captions (`lib/secCases.ts`) and
 the Federal Reserve Board's releases (`lib/fedPress.ts`) alone also read `lib/releaseNames.ts`: the securities units a bank owned, each between the days its
-filings give (Merrill Lynch is Bank of America's from 2009-01-01), and the notes records that take no
-release. It is not a scoring list; keep it that way. A caption names a company only by its name or
+filings give (Merrill Lynch is Bank of America's from 2009-01-01), the other listed banks', brokers' and
+managers' own banks, broker-dealers and advisers (`BANK_UNITS`, batch 88: Regions Bank, Ameriprise
+Financial Services, Franklin Advisers…), and the notes records that take no release. It is not a scoring list; keep it that way. A caption names a company only by its name or
 its legal name with legal words after it; the namesakes that rule cannot tell apart were read by
 hand and are listed by CIK in `NOT_THE_COMPANY` (one list in `lib/secCases.ts`, one in `lib/fedPress.ts`).
 A fund's series is never a party to any of these four rules (`FUND_SERIES`): its page knows only its

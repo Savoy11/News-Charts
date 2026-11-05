@@ -133,7 +133,9 @@ async function main(): Promise<void> {
   check("Union Bank of California's agreement of 2004, 62.1% the company's that year, is MUFG's; the Irwin, Highlands and Bowling Green Union Banks are no one's here",
     !!on("MUFG", "2004-10-18") && !all.some((e) => /Irwin|Highlands|Bowling Green/.test(e.description ?? "")));
   check("The Royal Bank of Scotland's are NatWest's, the same company renamed", of("NWG").map((e) => e.date).sort().join(",") === "2011-07-26,2013-12-11,2015-05-20");
-  check("Banks with no page here stay out: Asahi, Banco Popular", !all.some((e) => /Asahi|Popular/.test(e.description ?? "")));
+  check("Banks with no page here stay out: Asahi, Banco Popular de Ecuador", !all.some((e) => /Asahi|Ecuador/.test(e.description ?? "")));
+  check("  …and Popular's own three are its page's (batch 88): Banco Popular de Puerto Rico's of 1999 and 2000, Popular Bank of New York's of 2023",
+    of("BPOP").map((e) => e.date).sort().join(",") === "1999-06-21,2000-03-09,2023-01-20", of("BPOP").map((e) => e.date).join(","));
   // the 2026-10-30 audit's finding 3 (batch 78): the US bank BBVA bought was left out of its map
   const compass = fed.FED_BANKS[842180].orgs.find((o) => o.match.test("Compass Bank, Birmingham, Alabama"));
   check("Compass Bank's penalty of 2009-09-21 is BBVA's, between its purchase on 2007-09-07 and its sale on 2021-06-01",
@@ -145,15 +147,15 @@ async function main(): Promise<void> {
 
   console.log("\nWhat each mapped bank carries (the Board's files of 2026-10-27 and 2026-10-30)");
   const expected: Record<string, number> = {
-    JPM: 10, C: 10, WFC: 7, GS: 7, BAC: 6, AXP: 5, USB: 4, PNC: 4, MS: 3, ALLY: 3, RF: 3, BNY: 3, MTB: 2, TFC: 1, COF: 1, STT: 1, FITB: 1, HBAN: 1,
+    JPM: 10, C: 10, WFC: 7, GS: 7, BAC: 6, AXP: 5, USB: 4, PNC: 4, MS: 3, ALLY: 3, RF: 3, BNY: 3, BPOP: 3, MTB: 2, TFC: 1, COF: 1, STT: 1, FITB: 1, HBAN: 1,
     CFG: 0, KEY: 0, SCHW: 0, SYF: 0, NTRS: 0, ZION: 0, FHN: 0,
     HSBC: 7, DB: 7, SAN: 4, UBS: 3, BBVA: 3, NWG: 3, BCS: 2, SMFG: 2, MUFG: 2, RY: 1, TD: 1, BMO: 1, BNS: 1, CM: 1,
   };
   const counts = Object.fromEntries([...byTicker].map(([t, e]) => [t, e.length]));
   const off = Object.keys(expected).filter((t) => counts[t] !== expected[t]);
   const foreign = ["HSBC", "DB", "SAN", "UBS", "NWG", "BCS", "SMFG", "MUFG", "BBVA", "RY", "TD", "BMO", "BNS", "CM"].flatMap(of);
-  check("110 events on 32 of the 39 banks, each count as read: the 14 foreign banks add 38, 28 of them before 2017",
-    off.length === 0 && all.length === 110 && Object.keys(expected).length === 39 && Object.keys(fed.FED_BANKS).length === 39 &&
+  check("113 events on 33 of the 40 banks, each count as read: the 14 foreign banks add 38, 28 of them before 2017",
+    off.length === 0 && all.length === 113 && Object.keys(expected).length === 40 && Object.keys(fed.FED_BANKS).length === 40 &&
       foreign.length === 38 && foreign.filter((e) => e.date < "2017-01-01").length === 28,
     off.map((t) => `${t} ${counts[t]}≠${expected[t]}`).join(", ") || `${all.length}, ${foreign.length} foreign`);
   check("every mapped bank says why each name is its own", Object.values(fed.FED_BANKS).every((b) => b.orgs.every((o) => o.why.length > 10)));

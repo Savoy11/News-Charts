@@ -33,6 +33,196 @@ export interface ReleaseName {
   why: string;
 }
 
+/**
+ * The listed banks', brokers' and asset managers' own units (batch 88, the 2026-11-02 proposal 4,
+ * approved by the owner with three calls): their banks, which the Board's orders name, and their
+ * broker-dealers and advisers, which the SEC's case captions name. A unit named after the company
+ * counts with its name, from the company's first price; one it bought or sold counts between the
+ * days its own filings give. Read from the filings through EDGAR's full-text search, which says
+ * which filing holds a sentence: "On November 30, 2012" (Hilltop's 8-K filed 2012-12-05), "On
+ * September 30, 2005, the Company completed" (American Express's 10-Q filed 2005-11-09).
+ *
+ * Refused, as their filings say: Lazard Capital Markets, "a subsidiary of LFCM Holdings" (Lazard's
+ * proxy filed 2008-03-24), a company its working members owned, so its case of 2008 is not
+ * Lazard's; and Fiserv Securities' case of 2005-04-21, after Fiserv sold it.
+ */
+export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readonly ReleaseName[] }>> = {
+  39263: { ticker: "CFR", names: [{ name: "Frost Bank", why: "its bank, named after it, which the Board's orders of 2016, 2017 and 2019 name" }] },
+  1516912: { ticker: "OBK", names: [{ name: "Origin Bank", why: "its bank, named after it, of Choudrant, Louisiana, as the Board's order of 2016-05-05 gives it" }] },
+  1331520: {
+    ticker: "HOMB",
+    names: [
+      {
+        name: "Centennial Bank",
+        from: "2008-01-01",
+        why: "Centennial Bancshares' bank, bought 2008-01-01 (\"On January 1, 2008\", its 8-K filed 2008-01-02; \"acquisition of Centennial Bancshares\", its 10-K filed 2008-03-05), of Conway, Arkansas, as the Board's orders of 2010 and 2015 give it",
+      },
+    ],
+  },
+  1265131: {
+    ticker: "HTH",
+    names: [
+      {
+        name: "PlainsCapital Bank",
+        from: "2012-11-30",
+        why: "PlainsCapital Corporation's bank, the company's from the merger of 2012-11-30 (\"On November 30, 2012\", its 8-K filed 2012-12-05; \"PlainsCapital Merger\", its 10-K filed 2013-03-15)",
+      },
+      { name: "Hilltop Securities", why: "its broker-dealer, named after it" },
+    ],
+  },
+  90498: { ticker: "SFNC", names: [{ name: "Simmons Bank", why: "its bank, named after it, of Pine Bluff, Arkansas, as the Board's order of 2021 gives it" }] },
+  1386278: { ticker: "GDOT", names: [{ name: "Green Dot Bank", why: "its bank, named after it, of Provo, Utah, as the Board's order of 2013 gives it" }] },
+  862831: {
+    ticker: "FISI",
+    names: [
+      {
+        name: "Five Star Bank",
+        from: "2005-11-04",
+        why: "its bank, of Warsaw, New York, as the Board's order of 2012 gives it, first named in the company's filings in its 10-Q filed 2005-11-04 (none of 2001–2004 names it); Five Star Bancorp's bank in California (FSBC) is another",
+      },
+    ],
+  },
+  1227500: { ticker: "EQBK", names: [{ name: "Equity Bank", why: "its bank, named after it, of Andover, Kansas, as the Board's order of 2019 gives it" }] },
+  1001290: {
+    ticker: "BAP",
+    names: [
+      { name: "Banco de Credito del Peru", why: "its bank, which the company's own 6-K filed 2002-11-19 reports, as the Board writes it" },
+      { name: "Banco de Crédito del Perú", why: "the same, with its accents" },
+    ],
+  },
+  844150: {
+    ticker: "NWG",
+    names: [
+      {
+        name: "National Westminster Bank",
+        from: "2000-03-06",
+        why: "bought 2000-03-06 (\"6 March 2000\" and \"acquisition of NatWest\", its 20-F filed 2002-04-12)",
+      },
+    ],
+  },
+  1039765: {
+    ticker: "ING",
+    names: [
+      {
+        name: "ING Bank",
+        why: "its bank, named after it: ING Bank N.V., and ING Bank, fsb until Capital One bought it in 2012, which the Board's notices of 2011 and 2012 name as what Capital One buys",
+      },
+    ],
+  },
+  1160106: { ticker: "LYG", names: [{ name: "Lloyds Bank Corporate Markets", why: "its bank, named after it (its 20-F filed 2018-03-09)" }] },
+  763901: {
+    ticker: "BPOP",
+    names: [
+      { name: "Banco Popular de Puerto Rico", why: "its bank, named after it, which the Board's orders of 2010 and 2015 name; Banco Popular Español and Banco Popular de Ecuador are others" },
+      { name: "Banco Popular North America", why: "its US bank, named after it, which the Board's order of 2015 names" },
+      { name: "Popular Securities", why: "its broker-dealer, named after it" },
+    ],
+  },
+  820027: {
+    ticker: "AMP",
+    names: [
+      { name: "Ameriprise Financial Services", why: "its broker-dealer, named after it" },
+      {
+        name: "American Express Financial Advisors",
+        why: "the same broker-dealer before it took the company's name in 2005, a unit of the company's own record, American Express Financial Corporation's: the owner's call (b), 2026-11-02, gives its cases before the spin-off to this page as well as American Express's",
+      },
+      {
+        name: "American Express Financial Corporation",
+        why: "the company's own legal name until 2005 (its record's former name, to 2005-07-26), which captions of 2005–2019 write \"(now known as AmeripriseFinancial, Inc.)\", the company's name run together",
+      },
+    ],
+  },
+  4962: {
+    ticker: "AXP",
+    names: [
+      {
+        name: "American Express Financial Advisors",
+        to: "2005-09-29",
+        why: "the owner's call (b), 2026-11-02: its unit until Ameriprise's spin-off (\"On September 30, 2005, the Company completed\" and \"completed the spin-off of Ameriprise\", its 10-Q filed 2005-11-09)",
+      },
+    ],
+  },
+  36104: {
+    ticker: "USB",
+    names: [
+      {
+        name: "U.S. Bancorp Piper Jaffray",
+        to: "2003-12-30",
+        why: "its securities firm until Piper Jaffray's spin-off (\"December 31, 2003, the Company completed the distribution\" and \"distribution of Piper Jaffray\", its 10-K filed 2004-02-27): the captions of 2005 and 2010 that still write the name are Piper Jaffray's",
+      },
+    ],
+  },
+  36966: {
+    ticker: "FHN",
+    names: [
+      { name: "FTN Financial Securities", why: "its securities firm, named after its own former name, First Tennessee National" },
+      { name: "First Horizon Advisors", why: "its adviser, named after it" },
+    ],
+  },
+  92230: { ticker: "TFC", names: [{ name: "BB&T Securities", why: "its broker-dealer, named after the company's own name until 2019, BB&T" }] },
+  35527: { ticker: "FITB", names: [{ name: "Fifth Third Securities", why: "its broker-dealer, named after it" }] },
+  2012383: { ticker: "BLK", names: [{ name: "BlackRock Advisors", why: "its fund adviser, named after it" }] },
+  1120193: {
+    ticker: "NDAQ",
+    names: [
+      { name: "NASDAQ Stock Market", why: "its exchange, named after it, and the company's own name until 2006, The Nasdaq Stock Market, Inc." },
+      { name: "NASDAQ Execution Services", why: "its routing broker, named after it" },
+    ],
+  },
+  798354: {
+    ticker: "FISV",
+    names: [
+      {
+        name: "Fiserv Securities",
+        to: "2004-12-31",
+        why: "its broker-dealer until it was sold in the first quarter of 2005 (\"Company sold FSI\", its 10-Q filed 2005-04-29; its 10-K filed 2005-02-25 still lists \"Fiserv Securities, Inc. (FSI)\"): the last day the filings show it the company's",
+      },
+    ],
+  },
+  791963: {
+    ticker: "OPY",
+    names: [
+      {
+        name: "Oppenheimer Asset Management",
+        from: "2003-01-03",
+        why: "bought from CIBC 2003-01-03 (\"On January 3, 2003\" and \"Oppenheimer Asset Management\", its 8-K filed 2003-01-06); OppenheimerFunds, MassMutual's, was never the company's",
+      },
+    ],
+  },
+  91576: { ticker: "KEY", names: [{ name: "KeyBanc Capital Markets", why: "its securities firm, named after it" }] },
+  49196: {
+    ticker: "HBAN",
+    names: [
+      { name: "Huntington Investment Company", why: "its broker-dealer, named after it" },
+      { name: "Huntington Securities", why: "its broker-dealer, named after it" },
+    ],
+  },
+  713676: {
+    ticker: "PNC",
+    names: [
+      { name: "PNC Investments", why: "its broker-dealer, named after it" },
+      { name: "PNC Capital Markets", why: "its securities firm, named after it" },
+    ],
+  },
+  1163653: { ticker: "NMR", names: [{ name: "Nomura Securities International", why: "its US securities firm, named after it" }] },
+  914208: { ticker: "IVZ", names: [{ name: "Invesco Advisers", why: "its fund adviser, named after it" }] },
+  1535929: { ticker: "VOYA", names: [{ name: "Voya Financial Advisors", why: "its broker-dealer, named after it" }] },
+  750577: { ticker: "HWC", names: [{ name: "Hancock Whitney Investment Services", why: "its broker-dealer, named after it" }] },
+  38777: { ticker: "BEN", names: [{ name: "Franklin Advisers", why: "its fund adviser, named after it" }] },
+  875357: { ticker: "BOKF", names: [{ name: "BOK Financial Securities", why: "its broker-dealer, named after it" }] },
+  880631: { ticker: "WT", names: [{ name: "WisdomTree Asset Management", why: "its fund adviser, named after it" }] },
+  1137774: {
+    ticker: "PRU",
+    names: [
+      {
+        name: "Prudential Securities",
+        why: "the owner's call (c), 2026-11-02: its securities firm, which kept the company's ownership as Prudential Equity Group after its retail brokerage went into Wachovia Securities (\"On July 1, 2003, we completed\" the \"combination of our retail securities brokerage\", its 10-Q filed 2003-08-13), so its cases are Prudential Financial's, not Prudential plc's",
+      },
+      { name: "Prudential Equity Group", why: "the same firm from 2003, named after it, which captions write \"f/k/a Prudential Securities Inc.\"" },
+    ],
+  },
+};
+
 export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: readonly ReleaseName[] }>> = {
   70858: {
     ticker: "BAC",
@@ -141,6 +331,10 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
         to: "2012-04-01",
         why: "bought 2001-03-30 by the Regions the company was formed from with Union Planters in 2004 (that Regions' 8-K of the day; the company's S-4 filed 2004-02-27), as the company's own name in a release counts from its first price, and sold to Raymond James 2012-04-02 (the company's 8-K of that day)",
       },
+      {
+        name: "Regions Bank",
+        why: "its bank, named after it: the SEC's case of 2009-09-21 and the Board's orders of 2014–2021 name it, and a caption of 2008 names AmSouth Bank \"(now known as Regions Bank)\" (batch 88)",
+      },
     ],
   },
   1159508: {
@@ -184,6 +378,8 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
       { name: "UBS Financial Services Incorporated of Puerto Rico", why: "the same, its legal form written out (batch 83)" },
     ],
   },
+  // batch 88's units, each company in one map or the other (check:sec-cases)
+  ...BANK_UNITS,
 };
 
 /**

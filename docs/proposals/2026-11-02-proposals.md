@@ -351,6 +351,7 @@ pages, the rule written · *Practicality:* high — the same source and licence
 ## 4. The listed banks and brokers by their units' names: their banks in the Board's orders, their broker-dealers and advisers in the SEC's cases — the owner's open call · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
 **Status:** APPROVED — by the owner, 2026-11-02, with the calls: (a) yes, widen the maps; (b) yes, American Express Financial Advisors' cases before the 2005 spin-off go on both pages, American Express's (its unit then) and Ameriprise's (its own record's former name); (c) Prudential Securities goes on Prudential Financial (PRU), not Prudential plc (PUK).
+**Built:** batch 88: 34 companies' units, 133 company events on the saved rows; Lazard Capital Markets (LFCM Holdings') and Fiserv Securities' case of 2005 (after its sale) refused, as the filings say (`docs/MASTER-CHECKLIST.md`, batch 88's ledger section).
 **Owner's reason (if rejected):**
 
 **Raised before:**

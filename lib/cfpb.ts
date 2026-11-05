@@ -137,21 +137,25 @@ const alnum = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
 /**
  * The actions naming the company as a respondent, as timeline events, newest first. `namesIn(year)`
  * gives the names it had that year, `namesOn(day)` the units it then owned (`releaseNamesOn`), and
- * an action from before `from`, its first price, is not its. A day's actions on one company are one
- * event — American Express's three of 2012-10-01, one a unit — titled by its own party.
+ * an action from before `from`, its first price, is not its — but for the units `namesBefore(day)`
+ * gives (`releaseNamesBefore`, batch 93: the owner's rule that a case goes on every company it
+ * involves, so Synchrony Bank's order of 2014 is Synchrony's as well as GE's). A day's actions on
+ * one company are one event — American Express's three of 2012-10-01, one a unit — titled by its
+ * own party.
  */
 export function cfpbEvents(
   actions: readonly CfpbAction[],
   namesIn: (year: number) => string[],
-  { cik, from = "", namesOn }: { cik: number | string; from?: string; namesOn?: (day: string) => string[] },
+  { cik, from = "", namesOn, namesBefore }: { cik: number | string; from?: string; namesOn?: (day: string) => string[]; namesBefore?: (day: string) => string[] },
 ): TimelineEvent[] {
   const byYear = new Map<number, string[]>();
   const names = (year: number) => byYear.get(year) ?? byYear.set(year, namesIn(year)).get(year)!;
   const byDay = new Map<string, { a: CfpbAction; party: string }[]>();
   for (const a of actions) {
-    if (a.day < from || !a.path.startsWith("/enforcement/actions/")) continue;
+    if (!a.path.startsWith("/enforcement/actions/")) continue;
     if (NOT_THE_COMPANY[Number(cik)]?.some((n) => n.title.test(a.title))) continue;
-    const held = [...names(Number(a.day.slice(0, 4))), ...(namesOn?.(a.day) ?? [])];
+    const held = a.day < from ? (namesBefore?.(a.day) ?? []) : [...names(Number(a.day.slice(0, 4))), ...(namesOn?.(a.day) ?? [])];
+    if (!held.length) continue;
     // a name can only be a respondent where the title's letters and digits hold its own: most
     // actions are read no further
     const letters = alnum(a.title);

@@ -77,8 +77,9 @@ filings give (Merrill Lynch is Bank of America's from 2009-01-01), the other lis
 managers' own banks, broker-dealers and advisers (`BANK_UNITS`, batch 88: Regions Bank, Ameriprise
 Financial Services, Franklin Advisers…; batch 89: the units the CFPB charges, Capital One Bank, the
 mortgage insurers…), and the notes records that take no release. Every one of these rules reads a
-company from its first price on; the only names read before it are the two units the owner's calls
-mark `beforeListing` (batch 90). It is not a scoring list; keep it that way. A caption names a company only by its name or
+company from its first price on; the only names read before it are the units marked `beforeListing`
+(the owner's calls b and c, batch 90; the owner's rule of 2026-11-05 that a case goes on every
+company it involves, batch 93). It is not a scoring list; keep it that way. A caption names a company only by its name or
 its legal name with legal words after it; the namesakes that rule cannot tell apart were read by
 hand and are listed by CIK in `NOT_THE_COMPANY` (one list each in `lib/secCases.ts`, `lib/fedPress.ts`
 and `lib/cfpb.ts`). A fund's series is never a party to any of these five rules (`FUND_SERIES`): its page knows only its

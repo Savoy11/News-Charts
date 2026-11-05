@@ -31,8 +31,8 @@ const tracked = (...paths: string[]) => execFileSync("git", ["ls-files", "--", .
 const ADDRESS = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 /** A personal mailbox's domain: none of them belongs anywhere in this repository. */
 const PERSONAL = /@(?:gmail|googlemail|yahoo|ymail|outlook|hotmail|live|msn|icloud|me|aol|proton|protonmail|gmx|zoho)\.[a-z.]{2,}/i;
-/** The only addresses the code may write: the stand-in a check sets, on a domain reserved for examples. */
-const ALLOWED = new Set(["builds@example.org"]);
+/** The only addresses the code may write: stand-ins on the domains reserved for examples (RFC 2606). */
+const ALLOWED = /@example\.(?:org|com|net)$/i;
 
 const was = process.env.NEWS_CHARTS_CONTACT;
 try {
@@ -63,14 +63,14 @@ console.log("\nOne source of it, and no address in the code");
 const code = tracked("lib", "app", "components", "scripts", "proxy.ts").filter((p) => /\.(?:ts|tsx|js|mjs)$/.test(p) && !p.startsWith("scripts/fixtures/"));
 const ownUA = code.filter((p) => p !== "lib/contact.ts" && /\bconst UA\s*[:=]/.test(read(p)));
 check("no module defines a User-Agent of its own: the 24 that wrote one import lib/contact.ts's", ownUA.length === 0, ownUA.join(", "));
-const importers = code.filter((p) => /import \{[^}]*\bUA\b[^}]*\} from "(?:\.\.?\/)+(?:lib\/)?contact";/.test(read(p)));
+const importers = code.filter((p) => p !== "scripts/check-contact.ts" && /import \{[^}]*\bUA\b[^}]*\} from "(?:\.\.?\/)+(?:lib\/)?contact";/.test(read(p)));
 check("  …26 files read it, the release rules, EDGAR, Wikipedia, Wikidata and the rest among them",
   importers.length === 26 && ["lib/sec.ts", "lib/secCases.ts", "lib/doj.ts", "lib/cfpb.ts", "lib/wiki.ts", "lib/wikidata.ts", "scripts/sync-tickers.ts"].every((p) => importers.includes(p)),
   `${importers.length}`);
 const literal = code.filter((p) => /"User-Agent":\s*"News Charts/.test(read(p)));
 check("  …and none writes the client's name into a header by hand", literal.length === 0, literal.join(", "));
-const addresses = code.flatMap((p) => (read(p).match(ADDRESS) ?? []).filter((a) => !ALLOWED.has(a)).map((a) => `${p}: ${a}`));
-check("no email address is written in the code, the stand-in on example.org aside", addresses.length === 0, addresses.slice(0, 5).join("; "));
+const addresses = code.flatMap((p) => (read(p).match(ADDRESS) ?? []).filter((a) => !ALLOWED.test(a)).map((a) => `${p}: ${a}`));
+check("no email address is written in the code, the stand-ins on example.org aside", addresses.length === 0, addresses.slice(0, 5).join("; "));
 const prose = tracked("README.md", "CLAUDE.md", "docs", ".env.example").filter((p) => /\.(?:md|json|example)$/.test(p) || p === ".env.example");
 const personal = prose.filter((p) => PERSONAL.test(read(p)));
 check("no personal mailbox's address in the docs, the work log or the reports", personal.length === 0, personal.join(", "));

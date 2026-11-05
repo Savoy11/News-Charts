@@ -35,9 +35,11 @@ export interface ReleaseName {
   /**
    * Whether its rows count before the company's first price too, which every other name of the
    * company's waits for (batch 90): the owner's calls (b) and (c), whose units the company's own
-   * record, or its parent of the time, held before it listed. Read by the SEC's two rules alone,
-   * whose listings begin in 1995 and 1997; the Board's feed (2006), the Justice Department's
-   * (2009) and the Bureau's (2012) begin after both companies listed.
+   * record, or its parent of the time, held before it listed; and from batch 93 the owner's rule
+   * of 2026-11-05 that a case goes on every company it involves (Synchrony Bank, PayPal). Read by
+   * the SEC's two rules and the Bureau's. The Board's feed (2006) and the Justice Department's
+   * (2009) never read it: every marked company listed before them but PayPal, and PayPal's only
+   * pre-listing rows are the Bureau's.
    */
   beforeListing?: true;
 }
@@ -304,7 +306,49 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
   },
   936528: { ticker: "WAFD", names: [{ name: "Washington Federal Bank", why: "its bank, named after the company's own name until 2023, Washington Federal, which the CFPB's action of 2020-10-27 names (batch 89)" }] },
   947263: { ticker: "TD", names: [{ name: "TD Bank", why: "its US bank, TD Bank, N.A., named after it, which the CFPB's actions of 2020 and 2024 name (batch 89)" }] },
-  1601712: { ticker: "SYF", names: [{ name: "Synchrony Bank", why: "its bank, named after it, which the CFPB's action of 2014-06-19 names, before the company's first price of 2014-07-31 (batch 89)" }] },
+  1601712: {
+    ticker: "SYF",
+    names: [
+      {
+        name: "Synchrony Bank",
+        beforeListing: true,
+        why: "its bank, named after it, which the CFPB's action of 2014-06-19 names, six weeks before the company's first price of 2014-07-31 (batch 89). The owner's rule of 2026-11-05 puts a case on every company it involves, so the action reaches this page as well as GE's, its owner then (batch 93); the name was given in 2014, so it reaches nothing older",
+      },
+    ],
+  },
+  40545: {
+    ticker: "GE",
+    names: [
+      {
+        name: "GE Capital Retail Bank",
+        to: "2015-11-16",
+        why: "its consumer bank, named after it, until the split-off of Synchrony (\"On November 17, 2015\", its 8-K filed 2015-11-23, and \"completed the split-off\", its 8-K filed 2015-11-30): the owner's rule of 2026-11-05, which puts the CFPB's action of 2013-12-10 on GE's page (batch 93)",
+      },
+      { name: "Synchrony Bank", to: "2015-11-16", why: "the same bank under its name from 2014, GE's until the same split-off, so the CFPB's action of 2014-06-19 is on GE's page as well as Synchrony's (batch 93)" },
+    ],
+  },
+  1065088: {
+    ticker: "EBAY",
+    names: [
+      {
+        name: "PayPal",
+        from: "2002-10-03",
+        to: "2015-07-16",
+        why: "its payments business from its purchase (\"On October 3, 2002\", its 8-K filed that day) until the spin-off (\"On July 17, 2015\", its 8-K filed 2015-07-20): the owner's rule of 2026-11-05, which puts the CFPB's action of 2015-05-19 on eBay's page (batch 93)",
+      },
+    ],
+  },
+  1633917: {
+    ticker: "PYPL",
+    names: [
+      {
+        name: "PayPal",
+        from: "2015-02-25",
+        beforeListing: true,
+        why: "the company's own business, from its own record's registration (its Form 10 filed 2015-02-25) to its first price of 2015-07-06: the owner's rule of 2026-11-05 puts the CFPB's action of 2015-05-19 here as well as on eBay's page (batch 93)",
+      },
+    ],
+  },
   36146: { ticker: "TRMK", names: [{ name: "Trustmark National Bank", why: "its bank, named after it, which the CFPB's action of 2021-10-22 names (batch 89)" }] },
   883948: { ticker: "AUB", names: [{ name: "Atlantic Union Bank", why: "its bank, named after it, which the CFPB's action of 2023-12-07 names (batch 89)" }] },
   1584207: {

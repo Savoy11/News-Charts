@@ -391,6 +391,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "fed_press") {
         return { score: 0.95, reason: "a Federal Reserve Board release naming the company as a party" };
       }
+      // …and a CFPB action whose respondents are the company or a bank it owned, by the caption
+      // rule (lib/cfpb.ts, batch 89)
+      if (subject.kind === "company" && row.sourceKey === "cfpb") {
+        return { score: 0.95, reason: "a CFPB enforcement action naming the company as a respondent" };
+      }
       // …but a company's own document reaches it only when the title names it (lib/frCompany.ts),
       // so on a company subject that title is the evidence (2026-10-17 proposal 4).
       if (subject.kind === "company" && mentions(row.title, aliases) === "named") {

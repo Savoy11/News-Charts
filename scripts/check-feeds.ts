@@ -39,6 +39,7 @@ import { isNotesRecord, releaseNamesOn } from "../lib/releaseNames";
 import { fetchListingPage, secPressEvents } from "../lib/secPress";
 import { fetchCasePage, secCaseEvents } from "../lib/secCases";
 import { fetchFedPress } from "../lib/fedPress";
+import { cfpbEvents, fetchCfpbPage } from "../lib/cfpb";
 import { withoutTag } from "../lib/edgarName";
 import { mayCarryRelease, readFilingHeadline } from "../lib/secHeadlines";
 import {
@@ -101,6 +102,7 @@ const SOURCE_OF: Record<string, SourceKey> = {
   "SEC press releases": "sec_press",
   "SEC cases": "sec_cases",
   "Fed Board releases": "fed_press",
+  "CFPB actions": "cfpb",
 };
 
 const INGESTED: ReadonlySet<SourceKey> = new Set([...TOPIC_SOURCES, ...COMPANY_SOURCES]);
@@ -230,6 +232,17 @@ async function main() {
     reportFetch("Fed Board releases", isNotesRecord(company.cik) ? { events: [], outcome: "empty" } : await tried(fetchFedPress(
       () => [...companyNames(company.name, alsoKnownAs), ...(own ? [own] : []), withoutTag(company.name)],
       { cik: company.cik, namesOn: (day) => releaseNamesOn(company.cik, day) })), "(every release since 2006; former names are not read here)");
+    // …and the newest page of the CFPB's action list, as ingest keeps it (batch 89); the walk reads
+    // every page once a month, and the first-price bound is ingest's
+    const cfpbNewest = await fetchCfpbPage(1);
+    reportFetch("CFPB actions", {
+      events: isNotesRecord(company.cik) ? [] : cfpbEvents(cfpbNewest.actions,
+        () => [...companyNames(company.name, alsoKnownAs), ...(own ? [own] : []), withoutTag(company.name)],
+        { cik: company.cik, namesOn: (day) => releaseNamesOn(company.cik, day) }),
+      outcome: cfpbNewest.outcome === "ok" ? "ok" : cfpbNewest.outcome,
+      httpStatus: cfpbNewest.httpStatus,
+      detail: cfpbNewest.detail,
+    }, `(the ${cfpbNewest.actions.length} newest of ${cfpbNewest.total ?? "?"}; the walk reads every page once a month)`);
   } else {
     reportFetch("GDELT", await tried(fetchNews(name)), "(throttles ~1 req/5s; rerun if 0)");
   }

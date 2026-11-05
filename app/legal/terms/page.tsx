@@ -44,7 +44,8 @@ export default function TermsPage() {
         vehicle recalls and defect investigations from the National Highway Traffic Safety
         Administration, drug, device and food recalls from the U.S. Food and Drug Administration,
         press releases from the U.S. Department of Justice and the SEC, the SEC&apos;s litigation
-        releases and administrative proceedings, material from the
+        releases and administrative proceedings,
+        enforcement actions from the Consumer Financial Protection Bureau, material from the
         Internet Archive, text from Wikipedia under CC BY-SA, and headlines that
         link to their publishers. Those sources&apos; own terms and licences apply to their content.
         We link to the original wherever we can.

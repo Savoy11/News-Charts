@@ -42,6 +42,7 @@ import { companyNames, fetchCompanyRegulations, frDailySince, frSearchTerm } fro
 import { backfillRegulations } from "../lib/ingest/frBackfill";
 import { FUND_SERIES, secPressFor, walkSecPress } from "../lib/ingest/secPressWalk";
 import { secCasesFor, walkSecCases } from "../lib/ingest/secCasesWalk";
+import { cfpbFor, walkCfpb } from "../lib/ingest/cfpbWalk";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
@@ -96,6 +97,8 @@ export const COMPANY_SOURCES = [
   "sec_cases",
   // …and the Federal Reserve Board's releases: the bank applies, or the Board acts on it (batch 84)
   "fed_press",
+  // …and the CFPB's actions, where the respondents named are the company or a bank it owns (batch 89)
+  "cfpb",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -698,6 +701,22 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("fed_press", `Federal Reserve Board releases naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")} as a party`, () =>
     fedPressFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }));
+
+  /**
+   * The Consumer Financial Protection Bureau's enforcement actions since 2012 (batch 89): its
+   * orders and suits against the banks, card issuers, lenders and debt buyers whose consumer
+   * business it regulates. The list is read for every company at once (`walkCfpb`), and the company
+   * keeps the actions whose respondents are it or a bank it then owned, by the caption rule, one
+   * event a day. Scored without the model.
+   */
+  await run("cfpb", `CFPB actions naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")} as a respondent`, async () => {
+    const walked = await walkCfpb(client);
+    if (walked.due) {
+      line("cfpb", `list      ${walked.due === "list" ? "read whole" : "newest read"}, ${walked.pages} pages, ${walked.actions} actions stored` +
+        (walked.short ? `, ${walked.short} the list counts but never showed` : "") + (walked.stopped ? ` (${walked.stopped})` : ""));
+    }
+    return cfpbFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
+  });
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
   // headline that says "Ford" — the common name is the query, exactly as the comment above

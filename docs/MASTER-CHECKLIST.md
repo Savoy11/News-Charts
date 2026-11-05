@@ -988,6 +988,94 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 89: the CFPB's enforcement actions, a new source (2026-11-05)
+
+The 2026-11-02 proposal 5, approved by the owner on 2026-11-02. The Consumer Financial Protection
+Bureau charges the banks, card issuers, lenders and debt buyers whose consumer business it
+regulates. Neither the Board's actions (holding companies) nor the SEC's cases (broker-dealers)
+reach those orders, so a card bank's or a national bank's consumer case was on no page.
+
+- [x] **`lib/cfpb.ts`: the Bureau's list, read and matched.**
+      - Its list is `www.consumerfinance.gov/enforcement/actions/?page=N`: 25 a page, newest
+        first, 386 actions on 16 pages on 2026-11-05.
+      - Each action gives its day filed, its page, its respondents and a one-sentence summary.
+      - A company keeps an action when the title names it as a case caption names a party
+        (`captionParty`): its name, its legal name with legal words after it, or a unit the
+        release rules' map gives it.
+      - One event a company a day: American Express's three actions of 2012-10-01 are one.
+      - The Bureau's "dba" and its one "d/ba/" (Verizon Wireless, 2015) are read as "d/b/a".
+      - Licence, read again on 2026-11-05: "Information created by the CFPB is in the public
+        domain…". Source 30 in `SOURCES`, credited on every page and in the terms, scored 0.95
+        without the model.
+- [x] **`lib/ingest/cfpbWalk.ts` and `db/035_cfpb_actions.sql`: read once for every company.**
+      - The whole list once a month, which also picks up a summary the Bureau corrects.
+      - Its first page once a day, and the next only while every action on a page is new.
+      - It stops at the list's own count, since past the last page the Bureau serves the last
+        page again.
+      - Stored only when every page asked answered; at most 40 pages a process, a second apart.
+- [x] **Not the feed the proposal named.** The feed dates an item by when its page last changed.
+      On 2026-11-05, 2 of its 25 items were dated so: Apple's order of 2024-10-23 as 2025-09-22,
+      and Capital One's suit of 2025-01-14 as 2025-01-07. The list gives the day filed, the day each
+      summary itself states. The daily read is the list's first page instead: still one request a
+      day.
+- [x] **The units the Bureau charges, in `lib/releaseNames.ts`.**
+      - 22 more companies in `BANK_UNITS` (56 in all), among them:
+        - Capital One Bank, Synchrony Bank, TD Bank, Trustmark National Bank and Atlantic Union
+          Bank;
+        - the mortgage insurers: MGIC's, Genworth's, Radian's and Old Republic's, and AIG's United
+          Guaranty until its sale at the end of 2016;
+        - Toyota's and Honda's US lenders, Verizon Wireless, Santander's bank (on Santander and on
+          Santander Holdings USA, its owner) and Santander Consumer USA;
+        - PRA Group's debt buyer, TransUnion's Trans Union LLC, and Rocket's real-estate brokerage.
+      - Seven more names for banks already mapped: American Express's three units, U.S. Bank
+        National Association, Fifth Third Bank, Chase Bank USA and Chase BankCard Services,
+        CitiMortgage and CitiFinancial Servicing, and Goldman Sachs Bank USA.
+      - **Bought units, from the day bought, read in the filings through EDGAR's full-text search:**
+        - National City Bank on PNC's page from 2008-12-31;
+        - OneMain's units from 2015-11-15;
+        - United Guaranty on AIG's until 2016-12-30.
+      - CitiFinancial Servicing is Citigroup's by its 10-K subsidiary lists of 2015 and 2016 and the
+        Bureau's own release of 2017-01-23, "Citi Subsidiaries".
+- [x] **What it adds: 87 company days on 46 companies from the 386 actions, 35 before 2017.**
+      Without this batch's units the list gave 44 on 21. Among them:
+      - Bank of America, Wells Fargo and Citigroup have 6 each, JPMorgan 5 and U.S. Bancorp 4;
+      - the four mortgage insurers of 2013-04-04, and National City Bank's of 2013 on PNC.
+
+      Every day was read by hand. No fund series takes one.
+- [x] **Not their own, and on no page:**
+      - Discover Bank's, Hudson City Savings Bank's and Sprint's actions, each an acquisition's
+        past.
+      - Flagstar Bank, F.S.B.'s of 2014. FLG's record took the Flagstar name after buying the bank,
+        and its name in the index carries "National Association", which the rule reads as part of
+        the name, so the order needs no row. The check holds it there.
+      - The tax-refund lender "formerly d/b/a H&R Block" (2015-04-14), kept off H&R Block by CIK
+        (`NOT_THE_COMPANY`).
+      - Synchrony Bank's of 2014-06-19 and PayPal's of 2015-05-19, each before its company's first
+        price.
+- [x] **The units reach the other rules too:**
+      - TD Bank's SEC case and press release of 2013-09-23, for its part in the Rothstein Ponzi
+        scheme;
+      - U.S. Bank's own SEC order of 2005-09-02 (IC-27057), which the Piper Jaffray check now tells
+        apart from the Piper caption of that day.
+
+      The SEC cases' replay is now 1,148 days on 370 companies, and the SEC releases' 264 on 127.
+      The Board's releases and actions and the Justice Department's are unchanged.
+- [x] **Checks:**
+      - `check:cfpb` (45, new, in `npm run check`) runs on the saved list
+        (`scripts/fixtures/cfpb-actions.json.gz`: all 386 actions, and the first and last pages as
+        served). It holds the proposal's seven cases, the units' days, the full replay and the
+        walk.
+      - `check:sec-cases` and `check:sec-press` are re-pinned.
+      - `check:live` reads the list's count and its last page; `check:feeds` asks its newest page.
+      - On main `check:cfpb` cannot run: `lib/cfpb.ts` does not exist.
+- Requests this batch: www.consumerfinance.gov 20 (the 17 list pages, the feed, the licence page,
+  one action's page); efts.sec.gov 32, two of them retries after a server error.
+- Not done:
+      - The Bureau's actions against companies the index no longer lists (Discover, Comerica,
+        Hyundai Capital, Nissan, Experian) reach no page.
+      - Santander Consumer USA's actions stay off Santander Holdings USA's page: its share of the
+        lender was not read in its filings.
+
 ## NC ledger — batch 88: the listed banks', brokers' and managers' own units (2026-11-05)
 
 The 2026-11-02 proposal 4, approved by the owner with three calls. The SEC's cases name a firm's
@@ -6872,7 +6960,7 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
         #4, approved 2026-11-02 with the three calls. Importance medium · Efficiency high ·
         Practicality medium (a day per row from filings).*
-- [ ] `P2` **The Consumer Financial Protection Bureau's enforcement actions, from 2012.** A new
+- [x] `P2` **The Consumer Financial Protection Bureau's enforcement actions, from 2012.** A new
       source, approved by the owner 2026-11-02: the Bureau's action list
       (`www.consumerfinance.gov/enforcement/actions/?page=N`, 25 a page, read once) and its feed
       (`/enforcement/actions/feed/`, the newest 25, once a day), one read for every company. Licence:
@@ -6899,6 +6987,11 @@ already held, but new investment goes to securities coverage first.
         no page, Flagstar Bank's of 2014 not on FLG, Synchrony Bank's of 2014-06-19 refused by SYF's
         first price, a day's three American Express actions one event. On main it cannot run: the
         adapter does not exist.
+      - ✅ **Done in batch 89:** `lib/cfpb.ts`, `lib/ingest/cfpbWalk.ts` and `db/035`, registered as
+        source 30, credited, scored without the model; 22 more companies' units and seven more
+        names for mapped banks. The 386 actions give 87 company days on 46 companies, 35 before
+        2017. The daily read is the list's first page, not the feed, which dates an item by its
+        last edit. `check:cfpb` (45) holds every case above.
       - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
         #5, approved 2026-11-02 with the new source. Importance medium-low · Efficiency high ·
         Practicality medium (the units above first).*

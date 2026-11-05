@@ -466,6 +466,7 @@ day per row from filings
 
 **Status:** APPROVED — by the owner, 2026-11-02: yes to the source.
 **Owner's reason (if rejected):**
+**Built:** batch 89: 87 company days on 46 companies from the 386 actions, 35 before 2017, with 22 more companies' units; the daily read is the list's first page, since the feed dates an item by its last edit (`docs/MASTER-CHECKLIST.md`, batch 89's ledger section).
 
 **Raised before:** in the 2026-11-01 cut list, "its list holds 386 actions", with one page read and
 its licence not. What is new: the five years before 2017 read whole, and the licence.

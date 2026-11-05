@@ -56,6 +56,9 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   // The Board posts a few releases a working day, every subject together in one file; a daily look
   // finds each the day it is posted (batch 84).
   fed_press: 1440,
+  // The Bureau files a few actions a month, against every firm it regulates; a daily look at its
+  // list's newest page finds each one within a day of it being posted (batch 89).
+  cfpb: 1440,
   // Digitised newspapers from before 1963. These will never change again.
   loc_chronam: 10080,
   // Halvings and network upgrades are settled history; Phase 0 holds nothing live.

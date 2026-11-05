@@ -61,6 +61,9 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   // (batch 89). One posted late, dated before an action already kept, waits for the monthly read of
   // the whole list (batch 90: 0 of the 386 were out of filed order on 2026-11-05).
   cfpb: 1440,
+  // EPA's case file is read whole once a month for every company (lib/ingest/epaWalk.ts); a
+  // company's own rows are matched from the kept copy, so a day is plenty
+  epa_cases: 1440,
   // Digitised newspapers from before 1963. These will never change again.
   loc_chronam: 10080,
   // Halvings and network upgrades are settled history; Phase 0 holds nothing live.

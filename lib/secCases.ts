@@ -131,7 +131,7 @@ const TAIL = String.raw`(?=\s*(?:$|[;,()]|\band\b|\bet\s+al\b|\b(?:n\/k\/a|f\/k\
  * litigation releases to 127 companies, many of them namesakes like these (measured 2026-11-01).
  * A bank's securities firm reaches it by its own full name, from the release rules' map.
  */
-const LEGAL_WORD = String.raw`(?:,?\s+|\s*&\s*)(?:Inc\.?|Incorporated|Corp\.?|Corporation|Company|Co\.?|LLC|L\.\s?L\.\s?C\.?|L\.\s?P\.?|LP|Ltd\.?|Limited|plc|P\.L\.C\.?|N\.\s?A\.?|S\.\s?A\.?|S\.\s?p\.\s?A\.?|SpA|A\.?G\.?|N\.\s?V\.?|SE|AB|ASA|B\.\s?V\.?|GmbH|Pty\.?)(?![\w-])`;
+export const LEGAL_WORD = String.raw`(?:,?\s+|\s*&\s*)(?:Inc\.?|Incorporated|Corp\.?|Corporation|Company|Co\.?|LLC|L\.\s?L\.\s?C\.?|L\.\s?P\.?|LP|Ltd\.?|Limited|plc|P\.L\.C\.?|N\.\s?A\.?|S\.\s?A\.?|S\.\s?p\.\s?A\.?|SpA|A\.?G\.?|N\.\s?V\.?|SE|AB|ASA|B\.\s?V\.?|GmbH|Pty\.?)(?![\w-])`;
 
 /**
  * A name as a caption writes it: the press releases' pattern, its words also parted by a comma,

@@ -384,6 +384,22 @@ export const SOURCES: {
     reviewedOn: "2026-11-05",
     notes: "the Bureau's enforcement actions since 2012, kept where the respondents named are a listed company or a unit it owned (lib/cfpb.ts); no key (batch 89)",
   },
+  {
+    id: 31,
+    key: "epa_cases",
+    name: "EPA civil enforcement cases",
+    license: "public domain",
+    attribution: "U.S. Environmental Protection Agency",
+    // "Unless otherwise specified, all data produced by the U.S EPA is by default in the public
+    // domain and is not subject to domestic copyright protection under 17 U.S.C. § 105." (EPA
+    // Standard Open Data License, edg.epa.gov/EPA_Data_License.html, read 2026-11-05.) The
+    // disclaimers page's note that commercial use of documents on EPA's sites "may be protected"
+    // concerns documents; what is kept is the case file's fields and a link to EPA's case report.
+    // Approved by the owner on 2026-11-05 with both texts in front of them.
+    commercialOk: true,
+    reviewedOn: "2026-11-05",
+    notes: "EPA's civil enforcement cases from the 1970s, kept where a defendant is a listed company by the caption rule (lib/epaCases.ts); one keyless file a month (batch 95)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

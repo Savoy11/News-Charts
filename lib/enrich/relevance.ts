@@ -396,6 +396,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "cfpb") {
         return { score: 0.95, reason: "a CFPB enforcement action naming the company as a respondent" };
       }
+      // …and an EPA case one of whose defendants is the company, by the caption rule
+      // (lib/epaCases.ts, batch 95)
+      if (subject.kind === "company" && row.sourceKey === "epa_cases") {
+        return { score: 0.95, reason: "an EPA enforcement case naming the company as a defendant" };
+      }
       // …but a company's own document reaches it only when the title names it (lib/frCompany.ts),
       // so on a company subject that title is the evidence (2026-10-17 proposal 4).
       if (subject.kind === "company" && mentions(row.title, aliases) === "named") {

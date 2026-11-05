@@ -49,6 +49,7 @@ import { fetchListingPage, secPressEvents } from "../lib/secPress";
 import { fetchCasePage, secCaseEvents } from "../lib/secCases";
 import { cachedFedFeed, fedPressEvents } from "../lib/fedPress";
 import { cfpbEvents, fetchCfpbPage, type CfpbAction } from "../lib/cfpb";
+import { epaEvents, fetchCaseFile } from "../lib/epaCases";
 import { releaseNamesOn } from "../lib/releaseNames";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
@@ -817,6 +818,23 @@ export const CASES: LiveCase[] = [
       const past = await fetchCfpbPage(pages + 1);
       const last = oldest.slice(-1)[0]?.path;
       if (past.outcome === "ok" && past.actions.slice(-1)[0]?.path !== last) out.push(`page ${pages + 1}, past the last, no longer repeats the last page: the walk's stop needs a look`);
+      return out;
+    },
+  },
+  {
+    name: "EPA civil enforcement cases — the whole case file as the walk reads it; GM's decree of 1995 and Caterpillar's of 1998 by the caption rule (batch 95)",
+    covers: ["epa_cases"],
+    hosts: ["echo.epa.gov"],
+    async run() {
+      // measured 2026-11-05 on the copy of 2026-10-31: 137,108 cases, 137,103 with a public day
+      const got = await fetchCaseFile(null);
+      if (got.outcome !== "ok") return [`the file: ${got.outcome} ${got.httpStatus ?? ""} ${got.detail ?? ""}`.trim()];
+      const out: string[] = [];
+      if (got.cases.length < 137_000) out.push(`the file holds ${got.cases.length} cases with a day, fewer than the 137,103 of 2026-10-31`);
+      const gm = got.cases.find((c) => c.number === "HQ-1996-0001");
+      if (gm?.day !== "1995-11-30" || gm.penalty !== "11000000") out.push(`GM's HQ-1996-0001 reads ${JSON.stringify(gm)}, not lodged 1995-11-30 with $11,000,000`);
+      const cat = epaEvents(got.cases.filter((c) => c.number === "HQ-1998-0303"), () => ["Caterpillar", "CATERPILLAR INC"], { cik: 18230 });
+      if (cat[0]?.date !== "1998-10-22") out.push("Caterpillar's HQ-1998-0303 not kept for CAT on 1998-10-22");
       return out;
     },
   },

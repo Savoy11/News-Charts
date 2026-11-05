@@ -48,6 +48,7 @@ export const QUOTAS: Record<SourceKey, Quota> = {
   sec_press: { perDay: null, perSecond: 10, note: "the SEC newsroom's year listing, sec.gov's 10 req/s; each past year read once for every company (about 290 pages, 1s apart), then a page or two a day" },
   fed_press: { perDay: null, note: "one public JSON file of about 1 MB, no published cap; read once a process, whatever the number of companies" },
   cfpb: { perDay: null, note: "the Bureau's public action list, no published cap; every page once a month for every company (16 pages, 1s apart), and its newest page once a day" },
+  epa_cases: { perDay: null, note: "EPA's public case file, one 82 MB zip, no key or published cap; read whole once a month for every company, and not again while EPA has not changed it" },
   sec_cases: { perDay: null, perSecond: 10, note: "the SEC's litigation-release and administrative-proceeding year listings, sec.gov's 10 req/s; each past year of each read once for every company (342 pages for 1995–2026, and 86 more for the months that fill a year's repeated rows, 1s apart), then a page or two a day" },
   fda_enforcement: { perDay: 1000, note: "openFDA without a key: 1,000 requests a day, 240 a minute; three to six a day per mapped company" },
   yahoo_finance: { perDay: null, note: "undocumented and unofficial — the licence question, not the quota, is the risk" },

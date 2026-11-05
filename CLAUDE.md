@@ -87,7 +87,10 @@ series name, and "Growth Fund, Ltd." is a Ponzi scheme's fund, not American Cent
 Justice Department's releases of 2001–2008, which its API does not hold, come from its archive's
 month pages, each read once and kept (`lib/dojArchive.ts`, batch 94), under the same rule; a one-word
 name that is an everyday word ("CITY", "TARGET") needs its legal word in a title written in
-capitals, and as an object is the word after "the" or before "of" (`isEverydayWord`).
+capitals, and as an object is the word after "the" or before "of" (`isEverydayWord`). EPA's
+civil enforcement cases come from its whole case file, a zip read once a month (`lib/epaCases.ts`,
+`lib/zip.ts`); a defendant is the company by the same caption rule, with two guards of its own ("…
+Power and Light Company" is one name; "RETHERFORD, DANA" is a person), and money stays numeric.
 
 A ticker whose company moved to a new SEC record — a holding-company reorganisation or redomicile
 (XOM in 2026, Alphabet in 2015, Disney in 2019) — reads its earlier filings from the predecessor's

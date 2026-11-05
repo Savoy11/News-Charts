@@ -10,6 +10,7 @@ import {
   CASE_FILE_URL,
   CASE_TABLES,
   MANY_PARTIES,
+  NOT_THE_COMPANY,
   caseReportUrl,
   caseTitle,
   dollars,
@@ -40,7 +41,7 @@ import { COMPANY_SOURCES } from "./ingest";
  *   npm run check:epa-cases
  *
  * Replays a committed slice of EPA's case file of 2026-10-31 (scripts/fixtures/epa-cases-slice.json.gz):
- * every row of the four tables the adapter reads for the 4,280 cases whose defendants hold a
+ * every row of the four tables the adapter reads for the 4,289 cases whose defendants hold a
  * listed company's name, and the cases the guards are measured on. Offline: the file's fetch and
  * the database are stood in for. On main none of it runs: lib/epaCases.ts does not exist.
  */
@@ -70,7 +71,7 @@ function namesOf(ticker: string): (year: number) => string[] {
   return (year) => [...companyNames(title, namesForYear(year, newsNamesFor(cik), [])), ...(own ? [own] : []), withoutTag(title)];
 }
 /** First trading days as Yahoo gave them on 2026-11-05 (`firstTradeDate`), which a company's stored prices begin with. */
-const FIRST_PRICES: Record<string, string> = { CAT: "1962-01-02", GM: "2010-11-18", KODK: "2013-09-23", SLND: "2021-12-23" };
+const FIRST_PRICES: Record<string, string> = { CAT: "1962-01-02", GM: "2010-11-18", KODK: "2013-09-23", SLND: "2021-12-23", SUN: "2012-09-20" };
 const eventsOn = (ticker: string, from = "") => epaEvents(cases, namesOf(ticker), { cik: rowOf(ticker)[0], from });
 const has = (events: TimelineEvent[], number: string) => events.some((e) => (e.externalId ?? "").split(",").includes(number));
 
@@ -98,7 +99,10 @@ async function main(): Promise<void> {
     broken = String(err);
   }
   check("  …and refuses what is no zip", /no end of central directory/.test(broken), broken);
-  check("the slice holds the cases the replay reads, each with its day", cases.length === 4280 && cases.every((c) => /^\d{4}-\d{2}-\d{2}$/.test(c.day)), `${cases.length}`);
+  check("the slice holds the cases the replay reads, each with its day", cases.length === 4289 && cases.every((c) => /^\d{4}-\d{2}-\d{2}$/.test(c.day)), `${cases.length}`);
+  check("  …rebuilt with the two-letter names ingest asks (batch 100, the audit of batches 94–99, finding 7): BP's and 3M's own cases are in it",
+    eventsOn("BP").length === 4 && eventsOn("MMM").length === 67 && /two letters or more as ingest asks/.test(SLICE.provenance),
+    `BP ${eventsOn("BP").length}, MMM ${eventsOn("MMM").length}`);
 
   const gm = byNumber.get("HQ-1996-0001");
   const cat = byNumber.get("HQ-1998-0303");
@@ -146,7 +150,7 @@ async function main(): Promise<void> {
     !!big && big.defendants.length >= 100 && /with \d{3} parties/.test(caseTitle(big)) && !!bigOnGm && eventsOn("DAN").some((e) => has([e], "05-1982-0017")),
     `${big?.defendants.length} defendants; ${bigOnGm?.title}`);
   const days = new Map<string, number>();
-  for (const e of eventsOn("DAN")) days.set(e.date, (days.get(e.date) ?? 0) + 1);
+  for (const e of eventsOn("DAN").filter((x) => !/:no-penalty$/.test(x.dedupBasis ?? ""))) days.set(e.date, (days.get(e.date) ?? 0) + 1);
   const dana2008 = eventsOn("DAN").find((e) => e.date === "2008-06-18");
   check("a company's cases of one day make one event, the largest penalty's title, every case number kept",
     [...days.values()].every((k) => k === 1) && !!dana2008 && /and 3 more cases that day$/.test(dana2008.title) && (dana2008.externalId ?? "").split(",").length === 4,
@@ -157,6 +161,30 @@ async function main(): Promise<void> {
     !!olin && /^EPA: \d+ orders or complaints with no penalty, [A-Z][a-z]+ \d{4}/.test(olin.title) && olin.date.endsWith("-01") &&
       eventsOn("OLN").filter((e) => e.precision !== "month").some((e) => grouped.some((c) => has([e], c.number))), olin?.title);
   check("  …one event per company and day, or month, keyed by the company", eventsOn("GE").every((e) => /^epa:40545@\d{4}-\d{2}(?:-\d{2}|:no-penalty)$/.test(e.dedupBasis ?? "")));
+  // batch 100, the audit's finding 2: a month read when it held one case with no penalty, and again
+  // when it held two, leaves one row, where the first read's row under its day stayed beside the month's
+  const olnMonth = [...new Set(grouped.filter((c) => eventsOn("OLN").some((e) => e.precision === "month" && has([e], c.number))).map((c) => c.day.slice(0, 7)))][0];
+  const monthCases = grouped.filter((c) => c.day.slice(0, 7) === olnMonth && eventsOn("OLN").some((e) => has([e], c.number))).sort((a, b) => a.day.localeCompare(b.day));
+  const firstRead = epaEvents(cases.filter((c) => !monthCases.slice(1).includes(c)), namesOf("OLN"), { cik: rowOf("OLN")[0] });
+  const secondRead = epaEvents(cases, namesOf("OLN"), { cik: rowOf("OLN")[0] });
+  const kept = new Set(secondRead.map((e) => e.dedupBasis));
+  const lone = firstRead.find((e) => has([e], monthCases[0].number));
+  check("a month's cases with no penalty keep the month's key from the first: read with one, then two, every row the first read stored is one the second updates",
+    monthCases.length >= 2 && firstRead.every((e) => kept.has(e.dedupBasis)) && lone?.dedupBasis === `epa:${rowOf("OLN")[0]}@${olnMonth}:no-penalty` && lone.date === monthCases[0].day && lone.precision !== "month",
+    `${olnMonth}: ${monthCases.length} cases; lone ${lone?.dedupBasis} ${lone?.date}`);
+  check("  …and a row stored under the old day key moves onto the month's, unless the company has its own row that day",
+    secondRead.filter((e) => /:no-penalty$/.test(e.dedupBasis ?? "")).every((e) => {
+      const first = cases.filter((c) => (e.externalId ?? "").split(",").includes(c.number)).map((c) => c.day).sort()[0];
+      const ownThatDay = secondRead.some((x) => x.dedupBasis === `epa:${rowOf("OLN")[0]}@${first}`);
+      return ownThatDay ? e.legacyDedupBasis === undefined : e.legacyDedupBasis === `epa:${rowOf("OLN")[0]}@${first}`;
+    }));
+  const sunoco = cases.find((c) => c.day === "2013-04-18" && c.defendants.some((d) => /^SUNOCO,?\s+INC\b/i.test(d)));
+  const sunFrom = eventsOn("SUN", FIRST_PRICES.SUN);
+  check("Sunoco, Inc.'s cases are not Sunoco LP's (finding 3): the Superfund order of 2013-04-18, 253 parties, is refused by name; from its first price Sunoco LP keeps its own five",
+    !!sunoco && !has(eventsOn("SUN"), sunoco.number) && has(epaEvents(cases, namesOf("SUN"), {}), sunoco.number) &&
+      sunFrom.length === 5 && sunFrom.every((e) => cases.filter((c) => has([e], c.number)).some((c) => c.defendants.some((d) => /^SUNOCO(?:,?\s+(?:LP|LLC))?$|^SUNOCO LP\b/i.test(d)))) &&
+      NOT_THE_COMPANY[1552275]?.[0].defendant.test("SUNOCO INCORPORATED (R & M)") && NOT_THE_COMPANY[1552275]?.[0].defendant.test("Sunoco, Inc. (R&M)"),
+    `${sunoco?.number} ${sunoco?.defendants.length} parties; SUN ${eventsOn("SUN").length}, from its first price ${sunFrom.length}`);
   check("a case title never runs past two laws", cases.every((c) => (caseTitle(c).match(/\(/g) ?? []).length <= 3) && MANY_PARTIES === 10);
 
   console.log("\nEvery listed company against the slice");
@@ -180,10 +208,10 @@ async function main(): Promise<void> {
   const total = [...out.values()].reduce((n, v) => n + v.length, 0);
   const before2017 = [...out.values()].flat().filter((e) => e.date < "2017").length;
   const own = [...out.values()].flat().filter((e) => e.precision !== "month").length;
-  check("before any first price: 6,001 rows on 665 companies, 5,169 before 2017; 5,743 of them a case's own day",
-    total === 6001 && out.size === 665 && before2017 === 5169 && own === 5743, `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
+  check("before any first price: 5,984 rows on 667 companies, 5,148 before 2017; 5,734 of them a case's own day (6,001 on 665 before batch 100's slice, month keys and Sunoco guard)",
+    total === 5984 && out.size === 667 && before2017 === 5148 && own === 5734, `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
   const top = [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 5).map(([t, v]) => `${t} ${v.length}`).join(", ");
-  check("  …most on GE 284, GM 221, ExxonMobil 163, Ford 163, FMC 133", top === "GE 284, GM 221, XOM 163, F 163, FMC 133", top);
+  check("  …most on GE 284, GM 222, Ford 165, ExxonMobil 163, FMC 135", top === "GE 284, GM 222, F 165, XOM 163, FMC 135", top);
 
   console.log("\nRead once a month, and kept");
   const db: FakeDb = { cases: new Map(), reads: null, listed: "1962-01-02" };
@@ -193,19 +221,19 @@ async function main(): Promise<void> {
     return since === modified ? { cases: [], modified, outcome: "unchanged", httpStatus: 304 } : { cases, modified, outcome: "ok", httpStatus: 200 };
   };
   const first = await walkEpaCases(fakeDb(db), { budget: { left: 1 }, fetchFile: serve("Sat, 31 Oct 2026 16:07:24 GMT") });
-  check("the first run reads the file and keeps every case", first.read === "stored" && first.cases === 4280 && db.cases.size === 4280 && db.reads?.modified === "Sat, 31 Oct 2026 16:07:24 GMT", JSON.stringify(first));
+  check("the first run reads the file and keeps every case", first.read === "stored" && first.cases === 4289 && db.cases.size === 4289 && db.reads?.modified === "Sat, 31 Oct 2026 16:07:24 GMT", JSON.stringify(first));
   const again = await walkEpaCases(fakeDb(db), { budget: { left: 1 }, fetchFile: serve("Sat, 31 Oct 2026 16:07:24 GMT") });
   check("  …a run within the month asks nothing", !again.due && asked.length === 1);
   db.reads = { ...(db.reads as NonNullable<FakeDb["reads"]>), ageDays: 31 };
   const same = await walkEpaCases(fakeDb(db), { budget: { left: 1 }, fetchFile: serve("Sat, 31 Oct 2026 16:07:24 GMT") });
   check("  …a month on, a copy EPA has not changed is not read again: it is asked with its Last-Modified",
-    same.read === "unchanged" && asked[1] === "Sat, 31 Oct 2026 16:07:24 GMT" && db.reads?.ageDays === 0 && db.cases.size === 4280);
+    same.read === "unchanged" && asked[1] === "Sat, 31 Oct 2026 16:07:24 GMT" && db.reads?.ageDays === 0 && db.cases.size === 4289);
   db.reads = { ...(db.reads as NonNullable<FakeDb["reads"]>), ageDays: 31 };
   const spent = await walkEpaCases(fakeDb(db), { budget: { left: 0 }, fetchFile: serve("x") });
   const refused = await walkEpaCases(fakeDb(db), { budget: { left: 1 }, fetchFile: async () => ({ cases: [], modified: null, outcome: "throttled", httpStatus: 429 }) });
-  check("  …one read a process, and a refusal keeps the cases kept and is asked again", spent.stopped === "this run's read is spent" && refused.failure?.httpStatus === 429 && db.cases.size === 4280 && db.reads?.ageDays === 31);
+  check("  …one read a process, and a refusal keeps the cases kept and is asked again", spent.stopped === "this run's read is spent" && refused.failure?.httpStatus === 429 && db.cases.size === 4289 && db.reads?.ageDays === 31);
   const fetched = await withFetch(async () => new Response(new Blob([makeZip(CASE_TABLES.map((t) => [t, SLICE.tables[t], true] as [string, string, boolean])) as Uint8Array<ArrayBuffer>]), { status: 200, headers: { "last-modified": "Sun, 01 Nov 2026 00:00:00 GMT" } }), () => fetchCaseFile(null));
-  check("a file that reads as a few thousand cases is refused as broken, not stored: EPA's holds 137,108", fetched.outcome === "error" && /only 4280 cases read/.test(fetched.detail ?? ""), JSON.stringify({ ...fetched, cases: fetched.cases.length }));
+  check("a file that reads as a few thousand cases is refused as broken, not stored: EPA's holds 137,108", fetched.outcome === "error" && /only 4289 cases read/.test(fetched.detail ?? ""), JSON.stringify({ ...fetched, cases: fetched.cases.length }));
   const unchanged = await withFetch(async () => new Response(null, { status: 304, headers: { "last-modified": "Sat, 31 Oct 2026 16:07:24 GMT" } }), () => fetchCaseFile("Sat, 31 Oct 2026 16:07:24 GMT"));
   check("  …and EPA's \"not modified\" is no read", unchanged.outcome === "unchanged");
 

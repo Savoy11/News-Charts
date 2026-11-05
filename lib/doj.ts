@@ -33,10 +33,10 @@ const SHORT_NAME = 5;
 /**
  * Words that may follow a company's name and still be the company: "Wells Fargo Bank, N.A.",
  * "JPMorgan Chase & Co.", "ExxonMobil Pipeline Company", "Wells Fargo Dealer Services", "Lowe’s Home
- * Centers". One of them; a short name a bigger company's name begins with must carry one
+ * Centers", "Deutsche Bank AG" (batch 100: the CFTC's "Orders Deutsche Bank AG to Pay" missed it). One of them; a short name a bigger company's name begins with must carry one
  * (`outrankedName`).
  */
-const DESIGNATOR_WORD = String.raw`(?:(?:,?\s+|\s*&\s*)(?:Inc\.?|Incorporated|Corp\.?|Corporation|Company|Co\.?|LLC|L\.L\.C\.|L\.P\.|Ltd\.?|Limited|plc|N\.\s?A\.|USA|U\.S\.A?\.?|America|Holdings?|Group|Bank|Securities|Financial|Advisors|Mortgage|Home|Loans|Dealer|Services|Pipeline|Motor|Motors|Communications|Technologies|Laboratories|Health|Healthcare|Aerospace|Centers))`;
+const DESIGNATOR_WORD = String.raw`(?:(?:,?\s+|\s*&\s*)(?:Inc\.?|Incorporated|Corp\.?|Corporation|Company|Co\.?|LLC|L\.L\.C\.|L\.P\.|Ltd\.?|Limited|plc|AG|N\.\s?A\.|USA|U\.S\.A?\.?|America|Holdings?|Group|Bank|Securities|Financial|Advisors|Mortgage|Home|Loans|Dealer|Services|Pipeline|Motor|Motors|Communications|Technologies|Laboratories|Health|Healthcare|Aerospace|Centers))`;
 /** Any number of them. */
 export const DESIGNATOR = String.raw`${DESIGNATOR_WORD}*`;
 
@@ -102,6 +102,9 @@ export const START = String.raw`(?<![\w$&.-])`;
  */
 const CLAUSE_START = String.raw`(?:^|[,;:]\s*|\b(?:After|As|When|While|Because)\s+)(?:The\s+)?(?:(?:[A-Z][\w-]*\s+){0,2}(?:Maker|Manufacturer|Company|Contractor|Giant|Firm|Retailer|Insurer|Lender|Carrier|Distributor|Wholesaler|Producer|Operator|Provider|Chain)\s+|[A-Z][\w.&'’-]*(?:\s+[A-Z][\w.&'’-]*)?\s+and\s+)?`;
 
+/** One-word names that are only an industry's word for a company (batch 100): of the index's, The Bancorp's alone. */
+const INDUSTRY_WORD = /^(?:bancorp|bancorporation|bancshares|bankshares|banc|holdings?|group|financial|trust|capital|industries|enterprises|partners|resources|technologies|systems|international|services|brands)$/i;
+
 /** A release about a trader in a deal, not the deal: "Insider Trading In The Walt Disney Company's Acquisition". */
 const TRADER = /\b(?:insider\s+trading|securities\s+fraud|trading\s+ahead|man|woman|men|women)\b/i;
 
@@ -147,21 +150,27 @@ export const outrankedName = (name: string, pattern: string, own: readonly strin
  * listed company's name owns the mention: "Portland General Electric" is not GE.
  */
 export function releaseNamesParty(title: string, names: readonly string[]): boolean {
-  const t = title.replace(/\s+/g, " ").trim();
+  // the archive's pages of 2005–2008 write the possessive with an opening quote, "VERIZON&#8216;S
+  // ACQUISITION OF MCI": between a letter and its "s" it is an apostrophe (batch 100, finding 5)
+  const t = title.replace(/\s+/g, " ").trim().replace(/(?<=[\p{L}\d])‘(?=s\b)/giu, "’");
   const aboutAPerson = /^(?:Former|Ex-)\b/i.test(t);
   const capitals = !/\p{Ll}/u.test(t);
   for (const name of names) {
     if (name.trim().length < 2 || longerListedNameIn(t, name)) continue;
     const key = oneWordName(name);
     const everyday = key !== null && isEverydayWord(key);
+    // …and a name that is only an industry word, The Bancorp's "Bancorp" (batch 100, the audit's
+    // finding 4): the object after "the", "Settles With The Bancorp", not after another capitalised
+    // word, "Agreement with Berkshire Hills Bancorp and Legacy Bancorp" is two other banks'
+    const industry = key !== null && INDUSTRY_WORD.test(key);
     // An everyday word as a name (batch 94): written in capitals, as the Department's titles were
     // to 2004, "TARGET" or "CITY" cannot be told from the word, so it names the company only with a
     // legal word after it, "TARGET CORPORATION". In any title, the object of an action is the word
     // when "the" or another capitalised word comes before it or "of" after: "Lawsuit Against the
     // City of Marion", "Suit Against Newport News Shipbuilding" are not City Holding's or News
     // Corp's. "Sues Visa for Monopolizing" stays Visa's.
-    const n = everyday && capitals ? `${escapeName(name)}${DESIGNATOR_WORD}` : outrankedName(name, escapeName(name), names);
-    const alongside = everyday ? ALONGSIDE_LIST : ALONGSIDE;
+    const n = (everyday || industry) && capitals ? `${escapeName(name)}${DESIGNATOR_WORD}` : outrankedName(name, escapeName(name), names);
+    const alongside = everyday ? ALONGSIDE_LIST : industry ? String.raw`${ALONGSIDE_LIST}(?:the\s+)?` : ALONGSIDE;
     const notTheWord = everyday ? String.raw`(?!\s+of\b)` : "";
     const owner = String.raw`,\s+an?\s+${n}${DESIGNATOR}\s*(?:Company|Subsidiary|Unit|Affiliate|Business)\b`;
     const object = new RegExp(String.raw`(?:\b${ACTION}\s+${alongside}${n}${notTheWord}${DESIGNATOR}${FOLLOWS}|${owner})`, "i");

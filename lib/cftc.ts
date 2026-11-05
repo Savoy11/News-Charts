@@ -75,7 +75,9 @@ export function cftcNamesParty(title: string, names: readonly string[], cik?: nu
     const n = outrankedName(name, escapeName(name).replaceAll(String.raw`[\s-]+`, String.raw`,?[\s-]+`), held);
     const key = oneWordName(name);
     const follows = key && isEverydayWord(key) ? OBJECT_FOLLOWS : FOLLOWS;
-    const object = new RegExp(String.raw`\b(?:CFTC|Commission|Court)\s+(?:Orders|Sues|Charges|Fines|Sanctions|Files\s+(?:a\s+)?(?:Complaint|Suit|Action|Charges)\s+Against)\s+${n}${DESIGNATOR}${follows}`, "i");
+    // "CFTC Orders London-Based Barclays Bank PLC to Pay", "…United Kingdom-Based Barclays Bank PLC" (batch 100, finding 6);
+    // a name joined on by a hyphen is another's: "Florida-Based Inter-Global Currency" is not Inter's
+    const object = new RegExp(String.raw`\b(?:CFTC|Commission|Court)\s+(?:Orders|Sues|Charges|Fines|Sanctions|Files\s+(?:a\s+)?(?:Complaint|Suit|Action|Charges)\s+Against)\s+(?:(?:[A-Z][\w.]*\s+){0,2}[A-Z][\w.]*-Based\s+)?${n}(?!-\p{L})${DESIGNATOR}${follows}`, "iu");
     const m = object.exec(t);
     if (m && !/\bwho\b/i.test(t.slice(0, m.index))) return true;
   }

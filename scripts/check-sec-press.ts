@@ -394,8 +394,8 @@ const TODAY = "2026-10-29";
   // 2011 and Barclays Capital's of 2014
   // batch 89's TD Bank adds "SEC Charges TD Bank and Former Executive for Roles in Rothstein Ponzi
   // Scheme in South Florida" (2013-09-23)
-  check("the 6,897 stored releases give 264 page entries on 127 companies, 56 more than before batch 82's names (4 of them batch 88's units, 1 batch 89's), as replayed in full",
-    stored.length === 6897 && entries === 264 && replay.size === 127 && (replay.get("TD") ?? []).length === 1, `${stored.length} releases → ${entries} entries on ${replay.size} companies in ${Date.now() - t0} ms`);
+  check("the 6,897 stored releases give 266 page entries on 129 companies, 58 more than before batch 82's names (4 of them batch 88's units, 1 batch 89's, 2 batch 100's \"AG\": Daimler's bribery charges of 2010, Novartis's of 2020), as replayed in full",
+    stored.length === 6897 && entries === 266 && replay.size === 129 && (replay.get("TD") ?? []).length === 1 && (replay.get("NVS") ?? []).includes("2020-144@2020-06-25") && (replay.get("MBGAF") ?? []).includes("2010-51@2010-04-01"), `${stored.length} releases → ${entries} entries on ${replay.size} companies in ${Date.now() - t0} ms`);
   // batch 85 added Citibank's settlement of 2001, J.P. Morgan Chase's of 2003 and J. P. Morgan
   // Securities' charge of 2011 (the initials as the SEC spaces them), and Goldman Sachs Asset Management's of 2022
   const pinned: Record<string, number> = { BAC: 28, MS: 18, C: 14, UBS: 12, JPM: 13, WFC: 10, GS: 9, DB: 7, BCS: 4, RF: 4, BEN: 2, IVZ: 1 };

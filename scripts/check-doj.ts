@@ -360,7 +360,7 @@ async function main(): Promise<void> {
  */
 const ARCHIVE: { provenance: string; months: Record<string, string> } = JSON.parse(gunzipSync(readFileSync(join(root, "scripts/fixtures/doj-archive-months.json.gz"))).toString("utf8"));
 const pageOf = (key: string) => decodePage(new Uint8Array(Buffer.from(ARCHIVE.months[key], "latin1")));
-const ARCHIVE_FIRST_PRICES: Record<string, string> = { AA: "1962-01-02", AAL: "2005-09-27", ABT: "1980-03-17", ADM: "1980-03-17", AEP: "1962-01-02", AIG: "1973-01-02", AKZOY: "1989-05-09", AMC: "2013-12-18", ASH: "1980-03-17", AXP: "1972-06-01", BA: "1962-01-02", BCC: "2013-02-06", BMY: "1972-06-01", BP: "1962-01-02", BPOP: "1980-03-17", BUSE: "1998-10-06", CM: "1997-11-13", CMCSA: "1980-03-17", COMP: "2021-04-01", COP: "1981-12-31", CVS: "1973-02-21", CVX: "1962-01-02", DAL: "2007-05-03", DD: "1972-06-01", DDD: "1988-03-10", DGX: "1996-12-17", ECHO: "2008-01-02", ELV: "2001-10-30", EXC: "1973-05-02", FITB: "1980-03-17", FLS: "1980-03-17", GE: "1962-01-02", GPK: "1992-12-10", GWW: "1973-02-21", HD: "1981-09-22", HON: "1962-01-02", HXL: "1980-03-17", IFNNY: "2000-03-13", IR: "2017-05-12", ITT: "1995-12-15", KMI: "2011-02-11", LLY: "1972-06-01", LMT: "1962-01-02", LUCN: "2024-09-13", MCK: "1994-11-10", MDT: "1973-05-02", MMM: "1962-01-02", MRK: "1962-01-02", MSFT: "1986-03-13", MTW: "1990-03-26", NBHC: "2012-09-20", NCLH: "2013-01-18", NOC: "1981-12-31", NWSA: "2013-06-19", ORCL: "1986-03-12", PEG: "1980-01-02", PFE: "1972-06-01", PRU: "2001-12-13", PSO: "1996-11-18", QCOM: "1991-12-13", RF: "1980-03-17", RSG: "1998-07-01", RY: "1995-10-16", SAIC: "2013-09-16", SFD: "2025-01-28", SUN: "2012-09-20", T: "1983-11-21", TBBK: "2004-02-03", TFC: "1980-03-18", TGT: "1973-02-21", THC: "1980-03-17", TM: "1980-03-17", TSN: "1980-03-17", TXT: "1973-02-21", UAL: "2006-02-06", UIS: "1972-06-01", UNH: "1984-10-17", USB: "1973-05-03", VLO: "1982-01-04", VZ: "1983-11-21", WAB: "1995-06-16", WELPP: "1994-04-08", WFC: "1972-06-01", WMT: "1972-08-25", WY: "1973-05-03", XOM: "1962-01-02" };
+const ARCHIVE_FIRST_PRICES: Record<string, string> = { AA: "1962-01-02", AAL: "2005-09-27", ABT: "1980-03-17", ADM: "1980-03-17", AEP: "1962-01-02", AIG: "1973-01-02", AKZOY: "1989-05-09", AMC: "2013-12-18", ASH: "1980-03-17", AXP: "1972-06-01", BA: "1962-01-02", BCC: "2013-02-06", BMY: "1972-06-01", BP: "1962-01-02", BPOP: "1980-03-17", BUSE: "1998-10-06", CM: "1997-11-13", CMCSA: "1980-03-17", COMP: "2021-04-01", COP: "1981-12-31", CVS: "1973-02-21", CVX: "1962-01-02", DAL: "2007-05-03", DD: "1972-06-01", DDD: "1988-03-10", DGX: "1996-12-17", ECHO: "2008-01-02", ELV: "2001-10-30", EXC: "1973-05-02", FITB: "1980-03-17", FLS: "1980-03-17", GE: "1962-01-02", GPK: "1992-12-10", GWW: "1973-02-21", HD: "1981-09-22", HON: "1962-01-02", HXL: "1980-03-17", IFNNY: "2000-03-13", IR: "2017-05-12", ITT: "1995-12-15", KMI: "2011-02-11", LLY: "1972-06-01", LMT: "1962-01-02", LUCN: "2024-09-13", MCK: "1994-11-10", MDT: "1973-05-02", MMM: "1962-01-02", MRK: "1962-01-02", MSFT: "1986-03-13", MTW: "1990-03-26", NBHC: "2012-09-20", NCLH: "2013-01-18", NOC: "1981-12-31", NWSA: "2013-06-19", ORCL: "1986-03-12", PEG: "1980-01-02", PFE: "1972-06-01", PRU: "2001-12-13", PSO: "1996-11-18", QCOM: "1991-12-13", RF: "1980-03-17", RSG: "1998-07-01", RY: "1995-10-16", SAIC: "2013-09-16", SFD: "2025-01-28", SUN: "2012-09-20", T: "1983-11-21", TBBK: "2004-02-03", TFC: "1980-03-18", TGT: "1973-02-21", THC: "1980-03-17", TM: "1980-03-17", TSN: "1980-03-17", TXT: "1973-02-21", UAL: "2006-02-06", UIS: "1972-06-01", UNH: "1984-10-17", USB: "1973-05-03", VLO: "1982-01-04", VZ: "1983-11-21", WAB: "1995-06-16", WELPP: "1994-04-08", WFC: "1972-06-01", WHR: "1973-02-21", WMT: "1972-08-25", WY: "1973-05-03", XOM: "1962-01-02", CX: "1999-09-15" };
 /** EDGAR's former names for the companies the cases read under one, as data.sec.gov gave them on 2026-11-05. */
 const ARCHIVE_FORMER: Record<string, { name: string; until: string }[]> = {
   WMT: [{ name: "WAL MART STORES INC", until: "2018-01-30" }],
@@ -538,18 +538,28 @@ async function archiveChecks(): Promise<void> {
   console.log("\nEvery listed company against every release");
   const { all, shown } = replayArchive(releases);
   const count = (m: Map<string, TimelineEvent[]>) => [...m.values()].reduce((n, v) => n + v.length, 0);
-  check("127 releases name 86 companies; from each one's first price, 106 reach 71 pages",
-    count(all) === 127 && all.size === 86 && count(shown) === 106 && shown.size === 71 && [...all.keys()].every((t) => t in ARCHIVE_FIRST_PRICES),
+  check("131 releases name 87 companies; from each one's first price, 111 reach 73 pages (127, 86, 106 and 71 before batch 100)",
+    count(all) === 131 && all.size === 87 && count(shown) === 111 && shown.size === 73 && [...all.keys()].every((t) => t in ARCHIVE_FIRST_PRICES),
     `${count(all)} on ${all.size}; ${count(shown)} on ${shown.size}; no first price: ${[...all.keys()].filter((t) => !(t in ARCHIVE_FIRST_PRICES)).join(",")}`);
   const off = [...all].flatMap(([t, v]) => v.filter((e) => !(shown.get(t) ?? []).some((x) => x.id === e.id)).map((e) => `${t} ${e.date}`));
-  check("  …the 21 kept off are from before the company listed: News Corp's of 2001 and 2003, Kinder Morgan's of 2007, Norwegian Cruise Line's",
-    off.length === 21 && ["NWSA 2001-04-11", "NWSA 2003-12-19", "KMI 2007-05-21", "NCLH 2002-07-31", "NBHC 2001-12-03", "TBBK 2001-01-25"].every((x) => off.includes(x)), off.join(", "));
+  check("  …the 20 kept off are from before the company listed: News Corp's of 2001 and 2003, Kinder Morgan's of 2007, Norwegian Cruise Line's",
+    off.length === 20 && ["NWSA 2001-04-11", "NWSA 2003-12-19", "KMI 2007-05-21", "NCLH 2002-07-31", "NBHC 2001-12-03"].every((x) => off.includes(x)), off.join(", "));
+  check("  …and The Bancorp's \"Bancorp\" names no other bank (batch 100, the audit's finding 4): not FleetBoston's and Summit Bancorp's of 2001-01-25, which batch 94 counted as kept off by the first price",
+    !all.has("TBBK") && !off.some((x) => x.startsWith("TBBK")) &&
+      !releaseNamesParty("Justice Department Reaches Agreement with Berkshire Hills Bancorp and Legacy Bancorp on Divestitures", ["Bancorp"]) &&
+      // a title written for the check, the rule's own case: the company's name is "The Bancorp, Inc."
+      releaseNamesParty("Justice Department Settles With The Bancorp Over Prepaid Card Fees", ["Bancorp"]) && releaseNamesParty("THE BANCORP, INC. AGREES TO PAY", ["Bancorp"]));
+  const merger = (t: string, d: string) => shown.get(t)?.some((e) => e.date === d) ?? false;
+  check("  …and the 2005–2008 pages' \"VERIZON&#8216;S\" is a possessive (finding 5): Verizon's MCI case of 2005-10-27, Whirlpool's Maytag of 2006-03-29, AT&T's BellSouth and Dobson, CEMEX's Rinker",
+    merger("VZ", "2005-10-27") && merger("WHR", "2006-03-29") && merger("T", "2006-10-11") && merger("T", "2007-10-30") && merger("CX", "2007-04-04") &&
+      releases.every((r) => !/[\p{L}\d]‘s\b/iu.test(r.title)) && releaseNamesParty("REQUIRES DIVESTITURES IN VERIZON‘S ACQUISITION OF MCI", ["Verizon"]),
+    ["VZ 2005-10-27", "WHR 2006-03-29", "T 2006-10-11", "T 2007-10-30", "CX 2007-04-04"].filter((x) => !merger(...(x.split(" ") as [string, string]))).join(", "));
   check("  …and City Holding gets none of the 46 releases about cities that the word alone would give it", !all.has("CHCO"));
   const shownYears = new Map<string, number>();
   for (const v of shown.values()) for (const e of v) shownYears.set(e.date.slice(0, 4), (shownYears.get(e.date.slice(0, 4)) ?? 0) + 1);
   const yearLine = [...shownYears].sort().map(([y, k]) => `${y} ${k}`).join(", ");
-  check("  …in every year of the eight: 2001 14, 2002 8, 2003 13, 2004 10, 2005 7, 2006 17, 2007 13, 2008 24; Walmart 6, Tenet 5, Exxon Mobil 4",
-    yearLine === "2001 14, 2002 8, 2003 13, 2004 10, 2005 7, 2006 17, 2007 13, 2008 24" &&
+  check("  …in every year of the eight: 2001 14, 2002 8, 2003 13, 2004 10, 2005 8, 2006 19, 2007 15, 2008 24; Walmart 6, Tenet 5, Exxon Mobil 4",
+    yearLine === "2001 14, 2002 8, 2003 13, 2004 10, 2005 8, 2006 19, 2007 15, 2008 24" &&
       shown.get("WMT")?.length === 6 && shown.get("THC")?.length === 5 && shown.get("XOM")?.length === 4,
     yearLine);
   const aepEvent = shown.get("AEP")?.find((e) => e.date === "2005-01-26");

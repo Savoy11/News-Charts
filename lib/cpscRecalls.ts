@@ -1,5 +1,5 @@
 import { UA } from "./contact";
-import { captionParty } from "./secCases";
+import { epaParty } from "./epaCases";
 import type { TimelineEvent } from "./types";
 
 /**
@@ -89,23 +89,34 @@ export function parseRecalls(json: unknown): CpscRecall[] {
 
 /**
  * A firm as a recall writes it, without its place: "Office Depot, Inc., of Boca Raton, Fla." →
- * "Office Depot, Inc."; "The Wick & Petal Co. of Indianapolis, Ind." → "The Wick & Petal Co.".
+ * "Office Depot, Inc."; "The Wick & Petal Co. of Indianapolis, Ind." → "The Wick & Petal Co.";
+ * "Asweets Global Inc., City of Industry, California" → "Asweets Global Inc." (batch 100: the
+ * place was cut at its "of", which left "…Inc., City", and "City" named City Holding).
  */
 export function firmName(entry: string): string {
-  // "…, a division of Office Depot, Inc." names an owner, not a place
-  return clean(entry).replace(/(?<!\b(?:division|subsidiary|unit|affiliate)),?\s+of\s+[A-Z][^,]*(?:,\s*[A-Z][\w. ]*)*\.?$/i, "").replace(/,\s*$/, "").trim();
+  return (
+    clean(entry)
+      // a place whose own name holds "of": "City of Industry", "City of Commerce", "Town of Wheatland"
+      .replace(/,\s+(?:City|Town|Village|Borough|Township)\s+of\s+[A-Z][^,]*(?:,\s*[A-Z][\w. ]*)*\.?$/, "")
+      // "…, a division of Office Depot, Inc." names an owner, not a place
+      .replace(/(?<!\b(?:division|subsidiary|unit|affiliate|City|Town|Village|Borough|Township)),?\s+of\s+[A-Z][^,]*(?:,\s*[A-Z][\w. ]*)*\.?$/i, "")
+      .replace(/,\s*$/, "")
+      .trim()
+  );
 }
 
 /**
  * Whether a firm the recall names as maker, importer or distributor is the company: the firm by
- * the caption rule (`captionParty`), or the parent it names as its owner ("Swinton Avenue
- * Trading, a division of Office Depot").
+ * the caption rule with the EPA rule's two guards (`epaParty`: one name joined by "and" is one
+ * name, so "Allied Tube and Conduit Corporation" is not Conduit's and "Adam and Eve" not Eve's;
+ * a person written surname first is no company), or the parent it names as its owner ("Swinton
+ * Avenue Trading, a division of Office Depot").
  */
 export function firmIsCompany(entry: string, names: readonly string[]): boolean {
   const firm = firmName(entry);
   const parent = /,?\s+an?\s+(?:division|subsidiary|unit|affiliate)\s+of\s+(.+)$/i.exec(firm);
-  if (captionParty(parent ? firm.slice(0, parent.index) : firm, names)) return true;
-  return !!parent && !!captionParty(firmName(parent[1]), names);
+  if (epaParty(parent ? firm.slice(0, parent.index) : firm, names)) return true;
+  return !!parent && !!epaParty(firmName(parent[1]), names);
 }
 
 const letters = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -125,7 +136,11 @@ function lettersOf(r: CpscRecall): string {
  * Walmart, and coffee and home goods stores nationwide and online at Bodum.com, Amazon.com,
  * Target.com"), so a store counts only as a whole item of the list, its name and nothing else
  * but a web address's ".com" or "stores": "Target" and "Target.com" are Target's, "Target
- * Marketing Systems" is not, nor is "home goods stores" Home Depot's.
+ * Marketing Systems" is not, nor is "home goods stores" Home Depot's. A store is a proper name
+ * (batch 100): an item written all in small letters is a kind of store, "coffee and home goods
+ * stores" names no Coffee Holding, unless it is a web address ("amazon.com"); and a name's
+ * closing "s" is dropped only against an item written with a possessive, so "Lowe's" is
+ * Lowe's and "A&E stores" is not AES.
  */
 export function soldAtCompany(soldAt: string, names: readonly string[]): boolean {
   const keys = new Set(names.map(letters).filter((k) => k.length >= 3));
@@ -134,23 +149,57 @@ export function soldAtCompany(soldAt: string, names: readonly string[]): boolean
     .replace(/^\s*sold\s+(?:exclusively\s+)?(?:at|by|through)\s*:?\s*/i, "")
     .replace(/\s+(?:from|between|during|in)\s+(?:about\s+)?(?:January|February|March|April|May|June|July|August|September|October|November|December|\d{4})\b.*$/i, "");
   for (const raw of text.split(/\s*(?:[,;:/]|\band\b|\bor\b|\n)\s*/i)) {
-    const item = raw
+    const named = raw
       .replace(/^(?:and\s+)?(?:(?:exclusively|online|nationwide)\s+)*(?:at|through|by|on|in)?\s*(?:the\s+)?/i, "")
-      .replace(/\s+(?:retail\s+)?(?:stores?|locations|nationwide|online|websites?|catalogs?|outlets?|clubs?)(?:\s+(?:nationwide|online|and\s+online))*$/i, "")
-      .replace(/\.com$/i, "")
-      .replace(/['’]s$/i, "")
-      .trim();
-    const key = letters(item);
-    if (key && [...keys].some((k) => key === k || key === letters(k.replace(/s$/, "")))) return true;
+      .replace(/\s+(?:retail\s+)?(?:stores?|locations|nationwide|online|websites?|catalogs?|outlets?|clubs?)(?:\s+(?:nationwide|online|and\s+online))*$/i, "");
+    const web = /\.(?:com|net)$/i.test(named);
+    if (!web && !/\p{Lu}/u.test(named)) continue;
+    const possessive = /['’]s$/i.test(named);
+    const key = letters(named.replace(/\.(?:com|net)$/i, "").replace(/['’]s$/i, "").trim());
+    if (key && [...keys].some((k) => key === k || (possessive && key === letters(k.replace(/s$/, ""))))) return true;
   }
   return false;
 }
 
+/**
+ * The firms and stores a recall names that are another company's though they carry a listed
+ * company's name, read by hand on 2026-11-05 (batch 100, the audit of batches 94–99) among the 269
+ * firm names and the stores the 10,070 recalls gave the index, by CIK. `firm` refuses a maker,
+ * importer or distributor the pattern matches, from `from` when given; `store` refuses a store
+ * line the pattern matches, or every one ("never") for a company that is no retailer. Firms that
+ * are other companies' but whose recalls come before the company's first price are left to the
+ * floor: STIHL's VIKING GmbH (Viking Holdings, 2024), Innovage LLC (InnovAge, 2021), the go-kart
+ * "Fox" (Fox Corp, 2019), Ingersoll-Rand Company (Ingersoll Rand Inc., 2017).
+ */
+export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; firm?: RegExp; from?: string; store?: RegExp | "never"; why: string }[]>> = {
+  42888: [{ ticker: "GGG", firm: /^Graco(?:\s+Children['’]s\s+Products\b.*)?$/i, why: "Graco Children's Products of Elverson, Pennsylvania (strollers, swings, playards), not Graco Inc., the Minneapolis pump and sprayer maker" }],
+  1032033: [{ ticker: "SLM", firm: /^SLM\b/i, why: "SLM International, Buddy L's toy-making parent, not SLM Corporation (Sallie Mae)" }],
+  1126956: [{ ticker: "SR", firm: /^Spire LLC\b/i, why: "Spire LLC d/b/a StoreYourBoard.com of Troy, Virginia, not Spire Inc., the gas utility" }],
+  1800227: [{ ticker: "PPLI", firm: /^HSN\b/i, from: "2008-08-20", why: "HSN, Inc., the shopping network IAC spun off on 2008-08-20; before that HSN was IAC's own" }],
+  108312: [{ ticker: "WWD", firm: /^Woodward$/i, why: "Woodward & Lothrop, the department store, which the 1985 recall lists as \"Woodward\" and \"Lothrop\", not Woodward, Inc." }],
+  1551182: [{ ticker: "ETN", firm: /^Eaton$/i, why: "an \"Eaton\" among the aluminum bat makers of 1975 and 1976, which the recalls do not tie to Eaton Corporation" }],
+  1190370: [{ ticker: "IVDN", firm: /^Innovative Designs LLC\b/i, why: "Innovative Designs LLC of New York (light-up bracelets), not Innovative Designs, Inc. of Pittsburgh" }],
+  1895262: [{ ticker: "NE", store: "never", why: "Noble Corporation drills offshore wells; \"Barnes and Noble\" is the bookseller" }],
+  1587603: [{ ticker: "WNRS", store: "never", why: "Winners, Inc. is a sports-betting media company; \"Winners\" is TJX's Canadian chain" }],
+  1015383: [{ ticker: "POWW", store: "never", why: "Outdoor Holding sells ammunition; \"Outdoor and ski supply stores\" is a kind of store" }],
+  1013488: [{ ticker: "BJRI", store: "never", why: "BJ's Restaurants sells no products; \"BJ's\" is BJ's Wholesale Club" }],
+  775158: [{ ticker: "OSK", store: "never", why: "Oshkosh Corporation makes trucks; \"OshKosh\" stores are OshKosh B'gosh's, Carter's brand" }],
+  709283: [{ ticker: "QMCO", store: "never", why: "Quantum Corporation makes data storage; \"Quantum and e4L\" were television marketers" }],
+  1107280: [{ ticker: "OVTZ", store: "never", why: "Oculus Inc. is not Oculus.com, Meta's store" }],
+  763901: [{ ticker: "BPOP", store: "never", why: "Popular, Inc. is a bank; \"Popular Club\" was a mail-order catalog" }],
+  945841: [{ ticker: "POOL", store: /\bPool and Spa\b/i, why: "\"Pool and Spa dealers\" and \"Pool and Spa Depot\" are kinds and names of stores, not Pool Corporation" }],
+  1166691: [{ ticker: "CMCSA", store: /\btelevision networks? airing on\b/i, why: "Shop LC's television network airing on Comcast's channels: Shop LC sold it" }],
+  1428439: [{ ticker: "ROKU", store: /\btelevision networks? airing on\b/i, why: "Shop LC's television network airing on Roku: Shop LC sold it" }],
+};
+
 /** How the company is named in a recall: as one that made, imported or distributed it, or only sold it. */
-export function roleIn(r: CpscRecall, names: readonly string[]): "maker" | "importer" | "distributor" | "seller" | null {
-  if (r.makers.some((m) => firmIsCompany(m, names))) return "maker";
-  if (r.importers.some((m) => firmIsCompany(m, names))) return "importer";
-  if (r.distributors.some((m) => firmIsCompany(m, names))) return "distributor";
+export function roleIn(r: CpscRecall, names: readonly string[], cik?: number | string): "maker" | "importer" | "distributor" | "seller" | null {
+  const refused = cik === undefined ? [] : (NOT_THE_COMPANY[Number(cik)] ?? []);
+  const firm = (entry: string) => firmIsCompany(entry, names) && !refused.some((n) => n.firm && (!n.from || r.day >= n.from) && n.firm.test(firmName(entry)));
+  if (r.makers.some(firm)) return "maker";
+  if (r.importers.some(firm)) return "importer";
+  if (r.distributors.some(firm)) return "distributor";
+  if (refused.some((n) => n.store === "never" || (n.store instanceof RegExp && n.store.test(r.soldAt)))) return null;
   if (soldAtCompany(r.soldAt, names)) return "seller";
   return null;
 }
@@ -165,6 +214,13 @@ const noticeOf = (r: CpscRecall) => r.url ?? `https://www.cpsc.gov/Recalls?searc
  * The recalls naming the company, as timeline events, from `from`, its first price. One a recall
  * the company made, imported or distributed — its recalls of one day one row — and, for a recall
  * it only sold, a row a month when a month holds two or more.
+ *
+ * A month's sold recalls are kept under the month's key from the first (batch 100, the audit of
+ * batches 94–99, finding 2): a month read when it held one, and again when it held two, updates
+ * one row, where a lone recall stored under its day stayed on the page beside the month's row
+ * once a second arrived. A row stored under the old day key moves onto the month's
+ * (`legacyDedupBasis`): the month's first recall's day, when no recall of the company's own is
+ * that day.
  */
 export function cpscEvents(recalls: readonly CpscRecall[], namesIn: (year: number) => string[], { cik, from = "" }: { cik?: number | string; from?: string } = {}): TimelineEvent[] {
   const tag = cik === undefined ? "" : `${Number(cik)}`;
@@ -182,28 +238,23 @@ export function cpscEvents(recalls: readonly CpscRecall[], namesIn: (year: numbe
     }
     const all = lettersOf(r);
     if (!held.keys.some((k) => all.includes(k))) continue;
-    const role = roleIn(r, held.names);
+    const role = roleIn(r, held.names, cik);
     if (!role) continue;
     if (role === "seller") sold.set(r.day.slice(0, 7), [...(sold.get(r.day.slice(0, 7)) ?? []), r]);
     else own.set(r.day, [...(own.get(r.day) ?? []), { r, role }]);
   }
   const events: TimelineEvent[] = [];
-  for (const [month, rows] of sold) {
-    if (rows.length > 1) continue;
-    sold.delete(month);
-    own.set(rows[0].day, [...(own.get(rows[0].day) ?? []), { r: rows[0], role: "seller" }]);
-  }
+  const what = (x: { r: CpscRecall; role: keyof typeof ROLE }) =>
+    `${x.r.title} — the company ${ROLE[x.role]}${x.r.units ? `; ${unitsOf(x.r.units)}` : ""}${x.r.hazard ? `. ${x.r.hazard}` : ""}`;
   for (const [day, rows] of own) {
-    const sorted = [...rows].sort((a, b) => Number(a.role === "seller") - Number(b.role === "seller") || a.r.number.localeCompare(b.r.number));
+    const sorted = [...rows].sort((a, b) => a.r.number.localeCompare(b.r.number));
     const lead = sorted[0];
     const more = sorted.length > 1 ? ` (and ${sorted.length - 1} more recall${sorted.length > 2 ? "s" : ""} that day)` : "";
-    const what = (x: { r: CpscRecall; role: keyof typeof ROLE }) =>
-      `${x.r.title} — the company ${ROLE[x.role]}${x.r.units ? `; ${unitsOf(x.r.units)}` : ""}${x.r.hazard ? `. ${x.r.hazard}` : ""}`;
     events.push({
       id: `cpsc-${tag}-${day}`,
       date: day,
       type: "regulation",
-      title: `${lead.role === "seller" ? "Sold in its stores: " : ""}${lead.r.title}${more}`,
+      title: `${lead.r.title}${more}`,
       source: "CPSC",
       url: noticeOf(lead.r),
       description: sorted.map(what).join(" · ").slice(0, 600),
@@ -215,19 +266,19 @@ export function cpscEvents(recalls: readonly CpscRecall[], namesIn: (year: numbe
   for (const [month, rows] of sold) {
     const sorted = [...rows].sort((a, b) => b.day.localeCompare(a.day) || a.number.localeCompare(b.number));
     const [y, m] = month.split("-");
-    events.push({
-      id: `cpsc-${tag}-${month}-sold`,
-      date: `${month}-01`,
-      precision: "month",
-      type: "regulation",
-      title: `CPSC: ${rows.length} recalls of products sold in its stores, ${MONTH[Number(m) - 1]} ${y}`,
-      source: "CPSC",
-      url: noticeOf(sorted[0]),
-      description: `${rows.length} recalls this month of other makers' products the company sold, grouped into one row: ${sorted.slice(0, 3).map((r) => `"${r.title}"`).join("; ")}${rows.length > 3 ? `; and ${rows.length - 3} more` : ""}. The link opens the newest.`,
-      sourceKey: "cpsc_recalls",
-      externalId: sorted.map((r) => r.number).join(","),
-      dedupBasis: `cpsc:${tag}@${month}:sold`,
-    });
+    const first = sorted[sorted.length - 1].day;
+    const moved = own.has(first) ? {} : { legacyDedupBasis: `cpsc:${tag}@${first}` };
+    const kept = { id: `cpsc-${tag}-${month}-sold`, type: "regulation" as const, source: "CPSC", url: noticeOf(sorted[0]), sourceKey: "cpsc_recalls" as const, externalId: sorted.map((r) => r.number).join(","), dedupBasis: `cpsc:${tag}@${month}:sold`, ...moved };
+    if (rows.length === 1)
+      events.push({ ...kept, date: rows[0].day, title: `Sold in its stores: ${rows[0].title}`, description: what({ r: rows[0], role: "seller" }).slice(0, 600) });
+    else
+      events.push({
+        ...kept,
+        date: `${month}-01`,
+        precision: "month",
+        title: `CPSC: ${rows.length} recalls of products sold in its stores, ${MONTH[Number(m) - 1]} ${y}`,
+        description: `${rows.length} recalls this month of other makers' products the company sold, grouped into one row: ${sorted.slice(0, 3).map((r) => `"${r.title}"`).join("; ")}${rows.length > 3 ? `; and ${rows.length - 3} more` : ""}. The link opens the newest.`,
+      });
   }
   return events.sort((a, b) => b.date.localeCompare(a.date));
 }

@@ -91,6 +91,18 @@ export const FED_BANKS: Readonly<Record<number, { ticker: string; orgs: readonly
   },
   35527: { ticker: "FITB", orgs: [{ match: /\bFifth Third Bancorp\b/i, why: "the company, with its bank where the Board names both" }] },
   1281761: { ticker: "RF", orgs: [{ match: /\bRegions (?:Bank|Financial Corporation),? Birmingham\b/i, why: "the company's bank" }] },
+  // batch 88, the 2026-11-02 proposal 4: Popular, open since batch 74
+  763901: {
+    ticker: "BPOP",
+    orgs: [
+      { match: /\bPopular,? Inc\b/i, why: "the company" },
+      {
+        match: /\bBanco Popular de Puerto Rico\b/i,
+        why: "its bank, of Hato Rey and San Juan: the Board's penalty of 1999 and written agreement of 2000; Banco Popular de Ecuador and Banco Popular Español are others",
+      },
+      { match: /^Popular Bank,? New York\b/i, why: "its US bank, Banco Popular North America renamed, of New York: the Board's penalty of 2023" },
+    ],
+  },
   36270: {
     ticker: "MTB",
     orgs: [{ match: /\bM&T Bank\b[^;]*\bBuffalo\b/i, why: "the company and its bank, Manufacturers & Traders Trust, both of Buffalo" }],

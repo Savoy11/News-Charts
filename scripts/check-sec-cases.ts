@@ -13,7 +13,7 @@ import { SOURCE_TTL_MINUTES } from "../lib/ingest/refresh";
 import { QUOTAS } from "../lib/ingest/quota";
 import { SOURCES } from "../lib/ingest/store";
 import { deterministicScore } from "../lib/enrich/relevance";
-import { isNotesRecord, releaseNamesAsked, releaseNamesOn } from "../lib/releaseNames";
+import { BANK_UNITS, RELEASE_NAMES, isNotesRecord, releaseNamesAsked, releaseNamesOn } from "../lib/releaseNames";
 import { newsNamesFor, possessiveNameFor } from "../lib/sec";
 import {
   NOT_THE_COMPANY,
@@ -348,9 +348,26 @@ const TODAY = "2026-11-01";
   const t0 = Date.now();
   const replayed = replay();
   const companyDays = replayed.companies.flatMap(([, events]) => events);
-  check("the 30,747 rows of 1995–2026 give 1,047 company days on 353 companies, 495 before 2017, as replayed in full",
-    rows.length === 30747 && companyDays.length === 1047 && replayed.companies.length === 353 && companyDays.filter((e) => e.date < "2017").length === 495,
+  check("the 30,747 rows of 1995–2026 give 1,146 company days on 369 companies, 557 before 2017, as replayed in full (1,047 on 353 before batch 88's units)",
+    rows.length === 30747 && companyDays.length === 1146 && replayed.companies.length === 369 && companyDays.filter((e) => e.date < "2017").length === 557,
     `${rows.length} rows → ${companyDays.length} on ${replayed.companies.length}, ${companyDays.filter((e) => e.date < "2017").length} before 2017, in ${Date.now() - t0} ms`);
+  // batch 88, the 2026-11-02 proposal 4: the listed banks', brokers' and managers' own units
+  const replayedOn = (t: string, d: string) => !!replayed.companies.find(([x]) => x === t)?.[1].some((e) => e.date === d);
+  check("batch 88's units, on the saved rows: Regions Bank's case of 2009-09-21 on RF, Fifth Third Securities' of 2002-06-18 on FITB, Hilltop Securities' of 2016-02-02 on HTH, Nasdaq's exchange and routing broker of 2013-05-29 on NDAQ",
+    replayedOn("RF", "2009-09-21") && replayedOn("FITB", "2002-06-18") && replayedOn("HTH", "2016-02-02") && replayedOn("NDAQ", "2013-05-29"));
+  check("  …U.S. Bancorp Piper Jaffray's of 2002-11-05 on USB, and its captions of 2005 and 2010, after Piper's spin-off, not",
+    replayedOn("USB", "2002-11-05") && !replayedOn("USB", "2005-09-02") && !replayedOn("USB", "2010-03-19") && RELEASE_NAMES[36104].names.find((n) => /Piper/.test(n.name))?.to === "2003-12-30");
+  check("  …Ameriprise Financial Services' of 2009-07-10 on AMP; American Express Financial Advisors' of 2004-02-12 on both AXP and AMP (the owner's call b), its \"(now known as Ameriprise…)\" of 2005-12-01, after the spin-off, on AMP only",
+    replayedOn("AMP", "2009-07-10") && replayedOn("AMP", "2004-02-12") && replayedOn("AXP", "2004-02-12") && replayedOn("AMP", "2005-12-01") && !replayedOn("AXP", "2005-12-01"));
+  check("  …Prudential Securities' cases on PRU (the owner's call c), none on Prudential plc",
+    replayedOn("PRU", "2003-07-10") && replayedOn("PRU", "2006-08-28") && !replayed.companies.some(([t, e]) => t === "PUK" && e.some((x) => /Prudential (?:Securities|Equity)/.test(x.title))));
+  check("  …and the namesakes and the units not theirs on no page: Reliance Financial Advisors not RS, Southern Financial Services not SO, Lazard Capital Markets (LFCM's) not LAZ, Fiserv Securities after its sale not FISV",
+    !replayedOn("RS", "2014-12-10") && !replayedOn("SO", "2005-01-31") && !replayedOn("LAZ", "2008-10-30") && !replayedOn("FISV", "2005-04-21") &&
+      rows.some((r) => r.day === "2008-10-30" && /Lazard Capital Markets/.test(r.caption)) && rows.some((r) => r.day === "2005-04-21" && /Fiserv Securities/.test(r.caption)));
+  check("  …each company in one map or the other, each unit with its reason, each day well formed, each ticker the index's",
+    Object.keys(BANK_UNITS).length === 34 && Object.keys(BANK_UNITS).every((c) => RELEASE_NAMES[Number(c)] === BANK_UNITS[Number(c)]) &&
+      Object.values(BANK_UNITS).every((b) => b.names.every((n) => n.why.length > 20 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
+      Object.entries(BANK_UNITS).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)));
   const most = Object.fromEntries(replayed.companies.filter(([t]) => ["BAC", "MS", "WFC", "UBS", "JPM", "C", "GS"].includes(t)).map(([t, e]) => [t, e.length]));
   // batch 83 gave BAC 72, MS 66, WFC 47, UBS 46, JPM 46, C 44 on the 30,654 rows; batch 85 adds the
   // banks' own spellings and units (finding 2) and the 93 rows the pages never showed (finding 3)
@@ -455,8 +472,9 @@ const TODAY = "2026-11-01";
   for (const r of rows) kept.cases.set(caseKey(r), r);
   const ok: CasesWalk = { due: 0, read: 0, pages: 0, cases: 0 };
   const hban = await secCasesFor(fakeDb(kept), 1, { edgarName: "HUNTINGTON BANCSHARES INC /MD/", alsoKnownAs: newsNamesFor(49196), cik: 49196 }, ok);
-  check("Huntington's page gets its proceedings of 2005 to 2018, one a day",
-    hban.outcome === "ok" && hban.events.length === 12 && hban.events.at(-1)!.date === "2005-06-02", `${hban.events.length}: ${hban.events.map((e) => e.date).join(",")}`);
+  check("Huntington's page gets its proceedings of 2005 to 2018, one a day, and its broker-dealer's of 2019 and 2024 (batch 88)",
+    hban.outcome === "ok" && hban.events.length === 14 && hban.events.at(-1)!.date === "2005-06-02" && ["2019-03-11", "2024-02-09"].every((d) => hban.events.some((e) => e.date === d)),
+    `${hban.events.length}: ${hban.events.map((e) => e.date).join(",")}`);
   const rnr = await secCasesFor(fakeDb(kept), 1, { edgarName: "RENAISSANCERE HOLDINGS LTD", alsoKnownAs: newsNamesFor(rowOf("RNR")[0]), cik: rowOf("RNR")[0] }, ok);
   check("  …a company found by its legal name, whose everyday name dropped \"Holdings\"", rnr.events.map((e) => e.date).join(",") === "2007-02-06");
   kept.renames = [{ until: "2016-07-31", body: "EDGAR's company record lists DANA HOLDING CORP as a former name of this filer, in use until this day." }];
@@ -469,7 +487,7 @@ const TODAY = "2026-11-01";
   const still = await secCasesFor(fakeDb(kept), 1, { edgarName: "HUNTINGTON BANCSHARES INC /MD/", alsoKnownAs: [], cik: 49196 }, refusedWalk);
   check("a notes record takes none, a company with no prices none, and a refused walk still gives what is kept and reports the refusal",
     notes.outcome === "empty" && /notes record/.test(notes.detail ?? "") && /^no prices to start from/.test(unpriced.detail ?? "") &&
-      still.outcome === "throttled" && still.events.length === 12);
+      still.outcome === "throttled" && still.events.length === 14);
   // "empty" counts as asked for a day; a company first ingested while Yahoo is in back-off would
   // have had none of its cases until the next day (the 2026-11-01 audit's finding 5)
   check("  …and no prices yet is a failure, not \"empty\", so the next run asks again", unpriced.outcome === "error" && unpriced.events.length === 0);

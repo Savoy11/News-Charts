@@ -102,7 +102,12 @@ export function parseFedFeed(rows: readonly FeedRow[]): FedRelease[] {
  */
 export function orderParties(title: string): string[] {
   // "…its approval for UBS Group AG to acquire the U.S. subsidiaries of Credit Suisse Group AG" (2023-04-14)
-  const by = /\b(?:(?:proposals?|applications?|notices?|requests?)\s+(?:\w+\s+){0,2}?by|approval\s+for)\s+(?:the\s+)?(.+)$/i.exec(title);
+  // …and, only where no "by" or "for" gives the applicant, the Board's verb before it: "Federal Reserve
+  // Board approves Banco Popular de Puerto Rico to acquire assets … of Westernbank Puerto Rico"
+  // (2010-04-30, the one such title of the 463 orders read; batch 88)
+  const by =
+    /\b(?:(?:proposals?|applications?|notices?|requests?)\s+(?:\w+\s+){0,2}?by|approval\s+for)\s+(?:the\s+)?(.+)$/i.exec(title) ??
+    /\bBoard\s+approves\s+(?:the\s+)?(.+)$/i.exec(title);
   if (!by) return [];
   const rest = by[1];
   const verb = /\s+to\s+(acquire|merge\s+with|purchase|become|establish|engage|retain|form|convert|increase|hold|invest|expand|open|own|control|make|operate|serve|relocate|redeem|sell|change|exceed|elect|indirectly|directly|continue|reduce)\b/i.exec(rest);

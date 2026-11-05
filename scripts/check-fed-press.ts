@@ -26,7 +26,7 @@ import { namesForYear } from "../lib/ingest/frBackfill";
 import { QUOTAS } from "../lib/ingest/quota";
 import { SOURCE_TTL_MINUTES } from "../lib/ingest/refresh";
 import { SOURCES } from "../lib/ingest/store";
-import { isNotesRecord, releaseNamesAsked, releaseNamesOn } from "../lib/releaseNames";
+import { RELEASE_NAMES, isNotesRecord, releaseNamesAsked, releaseNamesOn } from "../lib/releaseNames";
 import { newsNamesFor, possessiveNameFor } from "../lib/sec";
 import { COMPANY_SOURCES } from "./ingest";
 
@@ -123,7 +123,9 @@ function fakeDb(listed: string | null, renames: { until: string; body: string }[
     parties("2023-04-14", /UBS/)[0] === "UBS Group AG", JSON.stringify(parties("2023-04-14", /UBS/)));
   check("\"…announces public meetings on the notice by Bank of America to acquire Countrywide Financial\" names both",
     JSON.stringify(parties("2008-03-27", /Countrywide/)) === JSON.stringify(["Bank of America", "Countrywide Financial"]));
-  check("a release that names no applicant names no party", parties("2010-04-30", /Banco Popular/).length === 0 && parties("2008-09-22", /consummated/).length === 0);
+  check("a release that names no applicant names no party", parties("2008-09-22", /consummated/).length === 0);
+  check("  …but the Board's own verb names one where no \"by\" does: \"Federal Reserve Board approves Banco Popular de Puerto Rico to acquire…\" (2010-04-30, batch 88)",
+    parties("2010-04-30", /Banco Popular/)[0] === "Banco Popular de Puerto Rico" && parties("2015-02-27", /Banco Popular de Puerto Rico/)[0] === "Banco Popular de Puerto Rico");
 
   console.log("\nA company's page, from the real feed");
   check("Wells Fargo's: the Wachovia approval of 2008-10-12 and the Board's statement on it of 2008-10-21",
@@ -147,8 +149,14 @@ function fakeDb(listed: string | null, renames: { until: string; body: string }[
     !has("FTS", "2007-12-04") && NOT_THE_COMPANY[rowOf("FTS")[0]]?.length === 1 && releases.some((r) => r.day === "2007-12-04"));
   check("  …and by the rules: Banco Popular Español is not Popular, Inc., Michigan's Citizens Banking Corporation not Citizens, Inc. or Citizens Financial",
     !has("BPOP", "2006-02-08") && !has("CIA", "2006-12-12") && !has("CFG", "2006-12-12"));
-  check("Popular's own order of 2010-04-30, under its bank's name, is not given it: the map's row for Popular is the owner's to add",
-    !has("BPOP", "2010-04-30") && releases.some((r) => r.day === "2010-04-30"));
+  check("Popular's own orders under its banks' names are its own (batch 88): 2010-04-30, and the two of 2015-02-27",
+    has("BPOP", "2010-04-30") && daysOf("BPOP").join() === "2010-04-30,2015-02-27,2015-02-27", daysOf("BPOP").join());
+  check("  …Frost Bank's approval of 2019-06-20 on CFR, Centennial Bank's of 2010 and 2015 on Home BancShares, Regions Bank's four on RF",
+    has("CFR", "2019-06-20") && has("HOMB", "2010-11-19") && has("HOMB", "2015-02-27") && ["2014-09-26", "2017-07-19", "2019-02-06", "2021-02-08"].every((d) => has("RF", d)));
+  check("  …Five Star Bank's of 2012-07-27 on Financial Institutions (Warsaw, New York), not on Five Star Bancorp (California); PlainsCapital Bank's on Hilltop only after the merger of 2012-11-30",
+    has("FISI", "2012-07-27") && !has("FSBC", "2012-07-27") && has("HTH", "2017-02-24") && RELEASE_NAMES[1265131].names[0].from === "2012-11-30");
+  check("  …and ING Bank's sale to Capital One, the notices of 2011 and its approval of 2012-02-14, on ING as well as Capital One",
+    has("ING", "2011-08-26") && has("ING", "2012-02-14") && has("COF", "2012-02-14"));
   check("a release before the company's first price is not its: Live Oak's order of 2013-08-14, two years before its listing",
     has("LOB", "2013-08-14") && !daysOf("LOB", "2015-07-23").includes("2013-08-14"));
   const [ord] = fedPressEvents(releases.filter((r) => r.day === "2008-06-05" && /Bank of America$/.test(r.title)), namesOf("BAC"), { cik: 70858 });
@@ -207,8 +215,8 @@ function fakeDb(listed: string | null, renames: { until: string; body: string }[
     before2017 += got.filter((e) => e.date < "2017").length;
     orders += got.filter((e) => /order on a banking application/.test(e.description ?? "")).length;
   }
-  check("the 2,219 releases read give 225 matches on 103 companies, 126 before 2017, 181 of them orders, as replayed in full",
-    releases.length === 2219 && matches === 225 && named.size === 103 && before2017 === 126 && orders === 181,
+  check("the 2,219 releases read give 252 matches on 112 companies, 138 before 2017, 208 of them orders, as replayed in full (225 on 103 before batch 88's units)",
+    releases.length === 2219 && matches === 252 && named.size === 112 && before2017 === 138 && orders === 208,
     `${releases.length} releases → ${matches} on ${named.size}, ${before2017} before 2017, ${orders} orders, in ${Date.now() - t0} ms`);
   const seriesNames = tickerIndex.seriesNames as string[];
   const seriesSeen = new Set<string>();

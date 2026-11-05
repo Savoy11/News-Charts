@@ -7,11 +7,13 @@ import { captionParty } from "./secCases";
 import { decodeEntities } from "./secHeadlines";
 import type { FetchResult, TimelineEvent } from "./types";
 import { UA } from "./contact";
+import { ARCHIVED_ORDERS } from "./fedOrders";
 
 /**
  * The Federal Reserve Board's own announcements about a listed company, from 2006, the first year
  * its press-release feed holds (batch 84, the 2026-11-01 proposal 5, a source the owner approved on
- * 2026-11-01).
+ * 2026-11-01), and its orders of 1996–2005 from its yearly pages, committed (`lib/fedOrders.ts`,
+ * batch 99).
  *
  * The Board names each bank whose application it approves or denies — "Approval of proposal by
  * Wells Fargo & Company to acquire Wachovia Corporation" (2008-10-12) — and the banks its policy
@@ -45,6 +47,8 @@ export interface FedRelease {
   title: string;
   type: ReadType;
   url: string;
+  /** an archived order's page sentence naming its parties (batch 99, `lib/fedOrders.ts`) */
+  summary?: string;
 }
 
 /** One row as the feed writes it. */
@@ -106,7 +110,10 @@ export function orderParties(title: string): string[] {
   // Board approves Banco Popular de Puerto Rico to acquire assets … of Westernbank Puerto Rico"
   // (2010-04-30, the one such title of the 463 orders read; batch 88)
   const by =
-    /\b(?:(?:proposals?|applications?|notices?|requests?)\s+(?:\w+\s+){0,2}?by|approval\s+for)\s+(?:the\s+)?(.+)$/i.exec(title) ??
+    // the older titles, and the archived orders' own pages, write "of": "Approval of proposal of
+    // Norwest Corporation" (1998), "its approval of the proposal of Norwest Corporation,
+    // Minneapolis, Minnesota, to acquire Wells Fargo & Company" (batch 99)
+    /\b(?:(?:proposals?|applications?|notices?|requests?)\s+(?:\w+\s+){0,2}?(?:by|of)|approval\s+for)\s+(?:the\s+)?(.+)$/i.exec(title) ??
     /\bBoard\s+approves\s+(?:the\s+)?(.+)$/i.exec(title);
   if (!by) return [];
   const rest = by[1];
@@ -170,19 +177,31 @@ export function boardActsOn(title: string, names: readonly string[]): boolean {
  * company's where batch 69's hand-checked map gives it the organisation that day (`FED_BANKS`):
  * "Goldman Sachs Bank USA" (2016-03-21) is Goldman Sachs's bank, which no legal word ends.
  */
-export function fedReleaseNames(r: Pick<FedRelease, "day" | "title" | "type">, names: readonly string[], orgs: readonly FedOrg[] = []): boolean {
+export function fedReleaseNames(r: Pick<FedRelease, "day" | "title" | "type" | "summary">, names: readonly string[], orgs: readonly FedOrg[] = []): boolean {
   if (r.type !== "Orders on Banking Applications") return boardActsOn(r.title, names);
   const mapped = orgs.filter((o) => (!o.from || r.day >= o.from) && (!o.to || r.day <= o.to));
-  return orderParties(r.title).some((p) => captionParty(p, names) !== null || mapped.some((o) => o.match.test(p)));
+  const parties = [...orderParties(r.title), ...(r.summary ? orderParties(r.summary) : [])];
+  return parties.some((p) => captionParty(p, names) !== null || mapped.some((o) => o.match.test(p)));
 }
 
 /**
  * The releases a name of another company's took, read by hand on 2026-11-01, by CIK: the rule
  * cannot tell them from the company.
  */
-export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; title: RegExp; why: string }[]>> = {
+export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; title?: RegExp; summary?: RegExp; why: string }[]>> = {
   1666175: [{ ticker: "FTS", title: /^Approval of proposal by Fortis$/, why: "Fortis, the Belgian and Dutch bank of 2007, not Fortis Inc., the Canadian utility" }],
+  // the 1996–2005 orders (`lib/fedOrders.ts`), read by hand on 2026-11-05: each order's sentence gives every party's city
+  714562: [{ ticker: "THFF", summary: /\bFirst Financial Corporation, and its wholly owned subsidiary, First Financial Bank, F\.S\.B\., both in Stevens Point\b/, why: "First Financial Corporation of Stevens Point, Wisconsin, bought by Associated Banc-Corp in 1997, not the Terre Haute company" }],
+  706129: [{ ticker: "HBNC", summary: /\bHorizon Bancorp, Inc\., Beckley, West Virginia\b/, why: "Horizon Bancorp of Beckley, West Virginia, bought by City Holding in 1998, not the Michigan City, Indiana company" }],
+  921557: [{ ticker: "RBCAA", summary: /\bRepublic Bancorp, Inc\., Munden, Kansas\b/, why: "Republic Bancorp of Munden, Kansas, a new holding company of 2005, not the Louisville, Kentucky company" }],
+  842517: [{ ticker: "ISBA", summary: /\bIBT Bancorp, Inc\., and thereby indirectly acquire an interest in Irwin Bank & Trust Company, both in Irwin, Pennsylvania\b/, why: "IBT Bancorp of Irwin, Pennsylvania, in which S&T Bancorp bought a stake in 2003, not Isabella Bank's IBT Bancorp of Mount Pleasant, Michigan" }],
+  1471265: [{ ticker: "NWBI", summary: /\bNorthwest Bancshares, Inc\., and its wholly owned subsidiary bank, Northwest National Bank, both of Vancouver, Washington\b/, why: "Northwest Bancshares of Vancouver, Washington, bought by U.S. Bancorp in 1998, not the Pennsylvania company" }],
 };
+
+/** An archived order's sentence as the page shows it: whole up to 400 characters, else cut at a word. */
+export function shortened(sentence: string): string {
+  return sentence.length > 400 ? `${sentence.slice(0, 397).replace(/\s\S*$/, "")}…` : sentence;
+}
 
 /**
  * The releases naming the company as a party, as timeline events, newest first: the Board's own
@@ -202,10 +221,10 @@ export function fedPressEvents(
   const alnum = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
   const out: TimelineEvent[] = [];
   for (const r of releases) {
-    if (r.day < from || NOT_THE_COMPANY[Number(cik)]?.some((n) => n.title.test(r.title))) continue;
+    if (r.day < from || NOT_THE_COMPANY[Number(cik)]?.some((n) => n.title?.test(r.title) || n.summary?.test(r.summary ?? ""))) continue;
     const held = [...names(Number(r.day.slice(0, 4))), ...(namesOn?.(r.day) ?? [])];
-    // a name can only be a party where the title's letters and digits hold its own
-    const letters = alnum(r.title);
+    // a name can only be a party where the title's letters and digits, or an archived order's sentence's, hold its own
+    const letters = alnum(`${r.title} ${r.summary ?? ""}`);
     if (!held.some((n) => alnum(n).length >= 2 && letters.includes(alnum(n))) && !orgs.some((o) => o.match.test(r.title))) continue;
     if (!fedReleaseNames(r, held, orgs)) continue;
     const key = r.url.replace(/^https:\/\/www\.federalreserve\.gov/, "");
@@ -215,7 +234,7 @@ export function fedPressEvents(
       ...(r.at ? { occurredAt: r.at } : {}),
       type: "regulation",
       title: r.title,
-      description: r.type === "Orders on Banking Applications" ? "The Board's order on a banking application." : `A Board release: ${r.type}.`,
+      description: r.summary ? shortened(r.summary) : r.type === "Orders on Banking Applications" ? "The Board's order on a banking application." : `A Board release: ${r.type}.`,
       source: "Federal Reserve Board press release",
       url: r.url,
       sourceKey: "fed_press",
@@ -253,7 +272,8 @@ export async function fetchFedPress(
   opts: { cik: number | string; from?: string; namesOn?: (day: string) => string[] },
 ): Promise<FetchResult> {
   try {
-    const events = fedPressEvents(await cachedFedFeed(), namesIn, opts);
+    // the feed begins in 2006; the orders of 1996–2005 are the archive's (batch 99)
+    const events = fedPressEvents([...(await cachedFedFeed()), ...ARCHIVED_ORDERS], namesIn, opts);
     return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
   } catch (err) {
     const status = (err as { status?: number }).status;

@@ -382,6 +382,32 @@ Banco Popular de Puerto Rico to acquire…" names its applicant by the Board's v
 series names in the index, the feed gives them nothing, and the case captions would have given 10
 other firms' cases. A release is a regulation event and is scored without the model.
 
+The decade before the feed, the decade of the mergers that made today's largest banks, is read
+from the Board's ten yearly pages (www.federalreserve.gov/newsevents/press/all/1996all.htm to
+2005all.htm; batch 99, `lib/fedOrders.ts`). The archive is closed, so it was read once, by
+`npm run sync:fed-orders` (479 pages a second apart: the ten lists and each order's own page), into
+the committed `data/fed-orders-1996-2005.json`: the 469 orders the pages list, each with its day,
+title, link and its own page's first sentence, which gives every party and its city — "…the
+proposal of Norwest Corporation, Minneapolis, Minnesota, to acquire Wells Fargo & Company, San
+Francisco, California" (1998-10-14). Each company's ingest reads them beside the feed under the same
+rule, the title's parties and the sentence's: the sentence is kept whole, since an order can name
+fifteen banks ("Barnett Banks, Inc., …; BB&T Corporation, …; First Citizens Bancshares, …", 1997-10-06)
+and every listed one is a party, and the page shows it cut at 400 characters. A company's EDGAR
+former names count in the years it had them, so NationsBank's orders are Bank of America's, Norwest's
+Wells Fargo's, BB&T's and Southern National's Truist's, and the Royal Bank of Scotland's NatWest's;
+its first price bounds them, so Citizens, listed in 2014, takes none. Five namesakes, told apart by
+the city each sentence gives, are kept off by CIK (`NOT_THE_COMPANY` in `lib/fedPress.ts`): the
+First Financial Corporation of Stevens Point, Wisconsin (not Terre Haute's), the Horizon Bancorp of
+Beckley, West Virginia, the Republic Bancorp of Munden, Kansas, the Northwest Bancshares of
+Vancouver, Washington, and the IBT Bancorp of Irwin, Pennsylvania (not Isabella Bank's). Under the
+committed indexes' names the 469 give 141 matches on 59 companies (Wells Fargo 10, Royal Bank of
+Canada 7, JPMorgan and Popular 6); with every name each company has filed under, 179, each read by
+hand, before the first prices. Two orders have no sentence: FirstMerit's page of 1998-12-07 states
+no approval, and the release of 2003-09-08 is a guide, not an order. SierraCities.com's page of
+2000-04-12 lost its section signs on the Board's side ("12 U.S.C. � 1842") and is read with them.
+`check:fed-press` rebuilds the file from the saved pages (`scripts/fixtures/fed-orders-pages.json.gz`)
+and pins the count.
+
 ### CFPB enforcement actions (`lib/cfpb.ts`)
 
 The Consumer Financial Protection Bureau's orders and suits since its first, of 2012-07-17, against
@@ -1057,7 +1083,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | U.S. Department of Justice | Press releases since 2001 (the API's from 2009, the archive's month pages before) in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | SEC newsroom (press releases) | Press releases since 1997 in which a company is the party — the SEC charges, sues or sanctions it, or it settles | The year listing, read once for every company (`lib/ingest/secPressWalk.ts`); kept only when the headline makes the company the party (`lib/secPress.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
-| Federal Reserve Board press releases | The Board's orders on a bank's applications since 2006, and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |
+| Federal Reserve Board press releases | The Board's orders on a bank's applications since 1996 (1996–2005 from its yearly pages, committed), and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |
 | Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
 | U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form (`lib/epaCases.ts`); the orders with no penalty grouped a row a month. Public domain under EPA's open data licence; no key |
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |

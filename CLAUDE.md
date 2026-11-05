@@ -72,7 +72,8 @@ and routine rail-board, FERC and NRC notices are grouped a row a month on the pa
 that scores a company's headlines — ingest, a first visit, `npm run score`, the backfill — takes its
 names from one place, `companyScoringAliases` in `lib/scoringNames.ts`; build no second list. The
 SEC's and the Justice Department's release rules, the SEC's case captions (`lib/secCases.ts`),
-the Federal Reserve Board's releases (`lib/fedPress.ts`) and the CFPB's actions (`lib/cfpb.ts`) alone also read `lib/releaseNames.ts`: the securities units a bank owned, each between the days its
+the Federal Reserve Board's releases (`lib/fedPress.ts`; its orders of 1996–2005 from the committed
+`data/fed-orders-1996-2005.json`, each with its page's sentence naming every party, batch 99) and the CFPB's actions (`lib/cfpb.ts`) alone also read `lib/releaseNames.ts`: the securities units a bank owned, each between the days its
 filings give (Merrill Lynch is Bank of America's from 2009-01-01), the other listed banks', brokers' and
 managers' own banks, broker-dealers and advisers (`BANK_UNITS`, batch 88: Regions Bank, Ameriprise
 Financial Services, Franklin Advisers…; batch 89: the units the CFPB charges, Capital One Bank, the

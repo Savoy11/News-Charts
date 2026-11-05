@@ -94,6 +94,7 @@
     "check:source-labels": "tsx scripts/check-source-labels.ts",
     "check:index": "tsx scripts/check-index.ts",
     "sync:tickers": "tsx scripts/sync-tickers.ts",
+    "sync:fed-orders": "tsx scripts/sync-fed-orders.ts",
     "sync:aliases": "tsx scripts/sync-aliases.ts",
     "sync:word-names": "tsx scripts/sync-word-names.ts",
     "check:tickers": "tsx scripts/check-tickers.ts",

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import type { PoolClient } from "pg";
 import tickerIndex from "../data/edgar-tickers.json";
+import archive from "../data/fed-orders-1996-2005.json";
 import { dojPossessive } from "../lib/doj";
 import { withoutTag } from "../lib/edgarName";
 import { deterministicScore } from "../lib/enrich/relevance";
@@ -17,8 +18,11 @@ import {
   fetchFedPress,
   orderParties,
   parseFedFeed,
+  shortened,
+  type FedRelease,
   type FeedRow,
 } from "../lib/fedPress";
+import { ARCHIVED_ORDERS, orderSummary, parseYearPage, type ArchivedOrder } from "../lib/fedOrders";
 import { companyNames } from "../lib/frCompany";
 import { fedBanksFor } from "../lib/fedActions";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
@@ -170,41 +174,111 @@ function fakeDb(listed: string | null, renames: { until: string; body: string }[
     boardActsOn("Agencies permit Wells Fargo to begin using advanced approaches framework", ["Wells Fargo"]) &&
       !boardActsOn("Vice Chairman Quarles will voluntarily recuse himself from participating in matters specific to Wells Fargo", ["Wells Fargo"]));
 
+  console.log("\nThe Board's orders of 1996–2005, from its yearly pages (batch 99)");
+  const pages: { years: Record<string, string>; orders: Record<string, string> } = JSON.parse(
+    gunzipSync(readFileSync(join(process.cwd(), "scripts/fixtures/fed-orders-pages.json.gz"))).toString("utf8"),
+  );
+  const kept = archive.orders as ArchivedOrder[];
+  const listed = Object.values(pages.years).flatMap((html) => parseYearPage(html));
+  const rebuilt = [...new Map(listed.map((o) => [o.url, o])).values()].sort((a, b) => a.day.localeCompare(b.day) || a.url.localeCompare(b.url));
+  check("the ten yearly pages list the 469 orders the data file keeps, by day, title and link, each filed under its own year's folder, 1996 to 2005",
+    Object.keys(pages.years).join() === "1996,1997,1998,1999,2000,2001,2002,2003,2004,2005" && rebuilt.length === 469 &&
+      JSON.stringify(rebuilt) === JSON.stringify(kept.map(({ day, title, url }) => ({ day, title, url }))) &&
+      kept.every((o) => /^https:\/\/www\.federalreserve\.gov\/boarddocs\/press\/(?:bhc|orders)\/(\d{4})\//.exec(o.url)?.[1] === o.day.slice(0, 4)),
+    `${listed.length} listed, ${rebuilt.length} distinct, ${kept.length} kept`);
+  check("  …and none of the pages' other releases: the Board's general releases, its own actions, enforcement",
+    ["general", "boardacts", "enforcement"].every((k) => pages.years["1998"].includes(`/boarddocs/press/${k}/`)) && !listed.some((o) => !/\/boarddocs\/press\/(?:bhc|orders)\//.test(o.url)));
+  const pageOf = (o: ArchivedOrder) => pages.orders[o.url.slice("https://www.federalreserve.gov".length).replaceAll("/", "_")] ?? "";
+  const missing = kept.filter((o) => !o.summary).map((o) => `${o.day} ${o.title}`);
+  check("each order's own page gives the sentence the file keeps, 467 of the 469: FirstMerit's page of 1998-12-07 states no approval, and the guide of 2003-09-08 is no order",
+    kept.every((o) => orderSummary(pageOf(o)) === o.summary) && missing.length === 2 && /^1998-12-07 Approval of proposal of FirstMerit/.test(missing[0]) && /^2003-09-08 New online guide/.test(missing[1]),
+    missing.join(" | "));
+  const norwest = kept.find((o) => o.day === "1998-10-14" && /Norwest/.test(o.title));
+  check("Norwest's of 1998-10-14 names both parties: \"…the proposal of Norwest Corporation, Minneapolis, Minnesota, to acquire Wells Fargo & Company, San Francisco, California\"",
+    /the proposal of Norwest Corporation, Minneapolis, Minnesota, to acquire Wells Fargo & Company, San Francisco, California/.test(norwest?.summary ?? ""), norwest?.summary ?? "");
+  const usb = kept.find((o) => o.day === "1998-10-26" && /U\.S\. Bancorp/.test(o.title))?.summary ?? "";
+  check("  …a sentence runs past \"U.S.\" and \"Inc.\" to its own end",
+    /^The Federal Reserve Board today announced its approval of the application of U\.S\. Bancorp, Minneapolis, Minnesota, to acquire Northwest Bancshares, Inc\., and its wholly owned subsidiary bank, Northwest National Bank, both of Vancouver, Washington\.$/.test(usb), usb);
+  const erste = kept.find((o) => /Erste Bank/.test(o.title));
+  const sierra = kept.find((o) => o.day === "2000-04-12" && /SierraCities/.test(o.title));
+  check("  …named entities and the old pages' Windows-1252 letters read as letters: \"Erste Bank der österreichischen Sparkassen\", and no entity, stray control or replacement character left",
+    /Erste Bank der österreichischen Sparkassen/.test(erste?.title ?? "") && !kept.some((o) => /&(?:[a-z]+|#\d+);|\uFFFD|[\u0080-\u009F]/i.test(`${o.title} ${o.summary ?? ""}`)), erste?.title);
+  check("  …and the section signs SierraCities.com's page of 2000-04-12 lost on the Board's own side, \"12 U.S.C. � 1842(a)(1)\", read as §",
+    /\uFFFD/.test(pageOf(sierra!)) && /\(12 U\.S\.C\. § 1842\(a\)\(1\)\)/.test(sierra?.summary ?? "") && orderSummary("The Federal Reserve Board approved it under 12 U.S.C. � 1842.") === "The Federal Reserve Board approved it under 12 U.S.C. § 1842.");
+  const long = kept.filter((o) => (o.summary ?? "").length > 400);
+  const boston = ARCHIVED_ORDERS.find((r) => r.day === "1999-06-30" && /BankBoston/.test(r.title))!;
+  check("a sentence is kept whole, since every company it names is a party: 49 run past 400 characters, the longest 1,084, and none is cut",
+    long.length === 49 && Math.max(...long.map((o) => o.summary!.length)) === 1084 && !kept.some((o) => (o.summary ?? "").endsWith("…")) && (boston.summary ?? "").indexOf("HSBC Holdings PLC") > 400);
+  const shown = fedPressEvents([boston], namesOf("HSBC"), { cik: rowOf("HSBC")[0] })[0]?.description ?? "";
+  check("  …and the page shows it shortened at a word: BankBoston's notice of 1999-06-30 names HSBC past the 400th character, which its page's text no longer reaches",
+    shown.length <= 400 && shown.endsWith("…") && !/HSBC/.test(shown) && shown === shortened(boston.summary!) && shortened("short.") === "short.", shown);
+  const arch = (ticker: string, { from = "", former = [] as string[], cik = rowOf(ticker)[0] } = {}) =>
+    fedPressEvents(ARCHIVED_ORDERS, (y) => [...namesOf(ticker)(y), ...former.map(withoutTag)], { cik, from, namesOn: (d) => releaseNamesOn(rowOf(ticker)[0], d) }).map((e) => e.date);
+  check("one order, every listed company it names: BankBoston's of 1999-06-30 on JPMorgan as The Chase Manhattan Corporation, HSBC, and NatWest as The Royal Bank of Scotland Group",
+    arch("JPM", { former: ["CHASE MANHATTAN CORP /DE/"] }).includes("1999-06-30") && arch("HSBC").includes("1999-06-30") &&
+      arch("NWG", { former: ["ROYAL BANK OF SCOTLAND GROUP PLC"] }).includes("1999-06-30") && !arch("NWG").includes("1999-06-30"));
+  check("  …Barnett's and fourteen banks' of 1997-10-06 on First Citizens, Truist as BB&T, and Bank of America as NationsBank",
+    arch("FCNCA").includes("1997-10-06") && arch("TFC", { former: ["BB&T CORP"] }).includes("1997-10-06") && arch("BAC", { former: ["NATIONSBANK CORP"] }).includes("1997-10-06"));
+  check("  …and what an applicant acquires is a party too: Glen Burnie Bancorp, sought by First Mariner (1998-09-28); Wells Fargo, by Norwest (1998-10-14)",
+    arch("GLBZ").includes("1998-09-28") && arch("WFC").includes("1998-10-14"));
+  check("an order before the company's first price is not its: the Royal Bank of Scotland's and Citizens' of 2001-11-09, thirteen years before Citizens listed",
+    arch("CFG").includes("2001-11-09") && !arch("CFG", { from: "2014-09-24" }).includes("2001-11-09"));
+  const namesakes = [
+    ["THFF", "1997-09-08", "First Financial Corporation of Stevens Point, Wisconsin"],
+    ["HBNC", "1998-11-30", "Horizon Bancorp of Beckley, West Virginia"],
+    ["RBCAA", "2005-04-26", "Republic Bancorp of Munden, Kansas"],
+    ["NWBI", "1998-10-26", "Northwest Bancshares of Vancouver, Washington"],
+    ["ISBA", "2003-11-25", "IBT Bancorp of Irwin, Pennsylvania"],
+  ] as const;
+  const isba = ["IBT BANCORP INC /MI/"];
+  check("namesakes read by hand, by the city each order gives: " + namesakes.map(([t, , who]) => `${who} (${t})`).join(", "),
+    namesakes.every(([t, d]) => !arch(t, { former: t === "ISBA" ? isba : [] }).includes(d) && arch(t, { former: t === "ISBA" ? isba : [], cik: -1 }).includes(d) && NOT_THE_COMPANY[rowOf(t)[0]]?.some((n) => n.summary)),
+    namesakes.filter(([t, d]) => arch(t, { former: t === "ISBA" ? isba : [] }).includes(d)).join(" "));
+  check("  …while their own are kept: First Financial's of 1998-02-23 in Terre Haute, City Holding's of 1998-11-30, U.S. Bancorp's of 1998-10-26",
+    arch("THFF").includes("1998-02-23") && arch("CHCO").includes("1998-11-30") && arch("USB").includes("1998-10-26"));
+
   console.log("\nEvery release of the feed against every listed company and every fund series");
   const t0 = Date.now();
   const alnum = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const heads = releases.map((r) => alnum(r.title));
-  const grams = new Map<string, number[]>();
-  heads.forEach((h, i) => {
-    const got = new Set<string>();
-    for (let k = 0; k + 4 <= h.length; k++) got.add(h.slice(k, k + 4));
-    for (const g of got) (grams.get(g) ?? grams.set(g, []).get(g)!).push(i);
-  });
-  const holding = (key: string): number[] => {
-    if (key.length < 4) return heads.flatMap((h, i) => (h.includes(key) ? [i] : []));
-    let best: number[] | undefined;
-    for (let k = 0; k + 4 <= key.length; k++) {
-      const p = grams.get(key.slice(k, k + 4));
-      if (!p) return [];
-      if (!best || p.length < best.length) best = p;
-    }
-    return best!.filter((i) => heads[i].includes(key));
+  /** A four-letter index over each release's title and sentence: a company's names are tried only on the releases holding them. */
+  const indexed = (list: readonly FedRelease[]) => {
+    const heads = list.map((r) => alnum(`${r.title} ${r.summary ?? ""}`));
+    const grams = new Map<string, number[]>();
+    heads.forEach((h, i) => {
+      const got = new Set<string>();
+      for (let k = 0; k + 4 <= h.length; k++) got.add(h.slice(k, k + 4));
+      for (const g of got) (grams.get(g) ?? grams.set(g, []).get(g)!).push(i);
+    });
+    return (key: string): number[] => {
+      if (key.length < 4) return heads.flatMap((h, i) => (h.includes(key) ? [i] : []));
+      let best: number[] | undefined;
+      for (let k = 0; k + 4 <= key.length; k++) {
+        const p = grams.get(key.slice(k, k + 4));
+        if (!p) return [];
+        if (!best || p.length < best.length) best = p;
+      }
+      return best!.filter((i) => heads[i].includes(key));
+    };
   };
-  const replayOne = (cik: number, title: string, units: boolean) => {
+  const feedHolding = indexed(releases);
+  const archiveHolding = indexed(ARCHIVED_ORDERS);
+  const replayOne = (cik: number, title: string, units: boolean, list: readonly FedRelease[] = releases, holding = feedHolding) => {
     const own = dojPossessive(title, possessiveNameFor(cik));
     const aka = newsNamesFor(cik);
     const names = (y: number) => [...companyNames(title, namesForYear(y, aka, [])), ...(own ? [own] : []), withoutTag(title)];
     const keys = [...new Set([...names(2026), ...(units ? releaseNamesAsked(cik) : [])].map(alnum).filter((a) => a.length >= 2))];
     const orgs = units ? (fedBanksFor(cik) ?? []) : [];
     const ids = new Set(keys.flatMap(holding));
-    releases.forEach((r, i) => orgs.some((o) => o.match.test(r.title)) && ids.add(i));
-    const held = [...ids].sort((a, b) => a - b).map((i) => releases[i]);
+    list.forEach((r, i) => orgs.some((o) => o.match.test(r.title)) && ids.add(i));
+    const held = [...ids].sort((a, b) => a - b).map((i) => list[i]);
     return held.length ? fedPressEvents(held, names, { cik, namesOn: (d) => (units ? releaseNamesOn(cik, d) : []) }) : [];
   };
   let matches = 0;
   let before2017 = 0;
   let orders = 0;
+  let archived = 0;
   const named = new Set<string>();
+  const archiveNamed = new Set<string>();
   const seen = new Set<number>();
   for (const [cik, ticker, title] of companies) {
     if (seen.has(cik) || isNotesRecord(cik)) continue;
@@ -214,6 +288,9 @@ function fakeDb(listed: string | null, renames: { until: string; body: string }[
     matches += got.length;
     before2017 += got.filter((e) => e.date < "2017").length;
     orders += got.filter((e) => /order on a banking application/.test(e.description ?? "")).length;
+    const old = replayOne(cik, title, true, ARCHIVED_ORDERS, archiveHolding);
+    if (old.length) archiveNamed.add(ticker);
+    archived += old.length;
   }
   check("the 2,219 releases read give 252 matches on 112 companies, 138 before 2017, 208 of them orders, as replayed in full (225 on 103 before batch 88's units)",
     releases.length === 2219 && matches === 252 && named.size === 112 && before2017 === 138 && orders === 208,
@@ -225,9 +302,11 @@ function fakeDb(listed: string | null, renames: { until: string; body: string }[
     const cik = (tickerIndex.seriesCiks as number[])[i];
     if (seriesSeen.has(`${cik}:${name}`)) return;
     seriesSeen.add(`${cik}:${name}`);
-    fundMatches += replayOne(cik, name, false).length;
+    fundMatches += replayOne(cik, name, false).length + replayOne(cik, name, false, ARCHIVED_ORDERS, archiveHolding).length;
   });
-  check("  …and every fund series' name none, read as a company's (batch 85, the 2026-11-01 audit's finding 4)", seriesSeen.size > 19_000 && fundMatches === 0,
+  check("  …and the 469 orders of 1996–2005 (batch 99) give 141 matches on 59 companies, under the names the committed indexes give, before the first price and the EDGAR former names a company's ingest adds",
+    ARCHIVED_ORDERS.length === 469 && archived === 141 && archiveNamed.size === 59, `${archived} on ${archiveNamed.size}`);
+  check("  …and every fund series' name none, in the feed or the archive, read as a company's (batch 85, the 2026-11-01 audit's finding 4)", seriesSeen.size > 19_000 && fundMatches === 0,
     `${seriesSeen.size} series names, ${fundMatches} matches, ${Date.now() - t0} ms in all`);
 
   console.log("\nRead once a process, for every company");
@@ -252,8 +331,9 @@ function fakeDb(listed: string | null, renames: { until: string; body: string }[
     answer = () => new Response("﻿" + JSON.stringify(fixture.rows), { status: 200 });
     const one = await fetchFedPress(namesOf("WFC"), { cik: 72971 });
     const two = await fetchFedPress(namesOf("BAC"), { cik: 70858 });
-    check("  …the next company asks again; after an answer, the file, its byte-order mark read past, serves every company with no second request",
+    check("  …the next company asks again; after an answer, the file, its byte-order mark read past, serves every company with no second request, the 1996–2005 orders read beside it",
       asked === 2 && one.outcome === "ok" && two.outcome === "ok" && one.events.some((e) => e.date === "2008-10-12") && two.events.some((e) => e.date === "2014-04-28") &&
+        one.events.some((e) => e.date === "1998-10-14") &&
         (await cachedFedFeed()).length === releases.length, `${asked} requests`);
   } finally {
     if (contactWas === undefined) delete process.env.NEWS_CHARTS_CONTACT;
@@ -264,12 +344,25 @@ function fakeDb(listed: string | null, renames: { until: string; body: string }[
   console.log("\nA company's releases, at ingest");
   const tfc = { edgarName: "TRUIST FINANCIAL CORP", alsoKnownAs: [], cik: 92230 };
   const unnamed = (await fedPressFor(fakeDb("1990-01-02"), 1, tfc)).events.filter((e) => /BB&T Corporation/.test(e.title)).map((e) => e.date);
-  check("Truist's page gets BB&T's six orders of 2006 to 2019 through batch 69's map, which gives it BB&T until 2019-12-05",
-    unnamed.length === 6 && unnamed.includes("2006-03-27") && unnamed.includes("2019-11-19") && !unnamed.includes("2013-08-23"), unnamed.join(","));
+  check("Truist's page gets BB&T's six orders of 2006 to 2019 through batch 69's map, which gives it BB&T until 2019-12-05, and the archive's five of 1997–2003 (batch 99)",
+    unnamed.length === 11 && unnamed.includes("2006-03-27") && unnamed.includes("2019-11-19") && unnamed.includes("1997-09-17") && unnamed.includes("2003-05-13") && !unnamed.includes("2013-08-23"),
+    unnamed.join(","));
   const renamed = await fedPressFor(fakeDb("1990-01-02", [{ until: "2019-12-06", body: "EDGAR's company record lists BB&T CORP as a former name of this filer, in use until this day." }]), 1, tfc);
   const bbt = renamed.events.filter((e) => /BB&T Corporation/.test(e.title)).map((e) => e.date);
   check("  …and BB&T's capital plan of 2013, a policy release, by its stored former legal name",
-    renamed.outcome === "ok" && bbt.length === 7 && bbt.includes("2013-08-23"), bbt.join(","));
+    renamed.outcome === "ok" && bbt.length === 12 && bbt.includes("2013-08-23"), bbt.join(","));
+  const rename = (name: string, until: string) => ({ until, body: `EDGAR's company record lists ${name} as a former name of this filer, in use until this day.` });
+  const wfc = await fedPressFor(fakeDb("1972-06-01", [rename("NORWEST CORP", "1998-10-21")]), 1, { edgarName: "WELLS FARGO & COMPANY/MN", alsoKnownAs: [], cik: 72971 });
+  const merger = wfc.events.find((e) => e.date === "1998-10-14" && /Norwest/.test(e.title));
+  check("Wells Fargo's page reads Norwest's orders under its stored former name, the merger's of 1998-10-14 with its sentence naming Wells Fargo & Company (batch 99)",
+    ["1996-12-02", "1997-01-13", "1998-05-26", "1998-10-14"].every((d) => wfc.events.some((e) => e.date === d)) && /to acquire Wells Fargo & Company, San Francisco/.test(merger?.description ?? "") &&
+      merger?.url === "https://www.federalreserve.gov/boarddocs/press/bhc/1998/19981014/" && merger.sourceKey === "fed_press",
+    wfc.events.filter((e) => e.date < "2006").map((e) => e.date).join(","));
+  const bofa = await fedPressFor(fakeDb("1973-01-02", [rename("NATIONSBANK CORP", "1998-09-28"), rename("BANKAMERICA CORP/DE/", "1999-04-23")]), 1, { edgarName: "BANK OF AMERICA CORP /DE/", alsoKnownAs: [], cik: 70858 });
+  const unlisted = await fedPressFor(fakeDb("2014-09-24"), 1, { edgarName: "Citizens Financial Group Inc/RI", alsoKnownAs: [], cik: 759944 });
+  check("  …Bank of America's, NationsBank's of 1998-08-17; and Citizens', listed in 2014, none of 1996–2005",
+    bofa.events.some((e) => e.date === "1998-08-17") && bofa.events.some((e) => e.date === "1997-10-06") && !unlisted.events.some((e) => e.date < "2006"),
+    `${bofa.events.filter((e) => e.date < "2006").length} of BAC's before 2006`);
   const notes = await fedPressFor(fakeDb("1990-01-02"), 1, { edgarName: "BARCLAYS BANK PLC", alsoKnownAs: [], cik: 312070 });
   const unpriced = await fedPressFor(fakeDb(null), 1, { edgarName: "WELLS FARGO & COMPANY/MN", alsoKnownAs: [], cik: 72971 });
   check("a bank's notes record takes none, nor a company with no prices", notes.outcome === "empty" && /notes record/.test(notes.detail ?? "") && /^no prices to start from/.test(unpriced.detail ?? ""));
@@ -296,6 +389,10 @@ function fakeDb(listed: string | null, renames: { until: string; body: string }[
   check("check:feeds reports the feed as ingest keeps it, and check:live asks the real file",
     /reportFetch\("Fed Board releases"/.test(read("scripts/check-feeds.ts")) && /"Fed Board releases": "fed_press"/.test(read("scripts/check-feeds.ts")) &&
       /covers: \["fed_press"\]/.test(read("scripts/check-live.ts")));
+  const sync = read("scripts/sync-fed-orders.ts");
+  check("the 1996–2005 orders are rebuilt by npm run sync:fed-orders, a second between pages, under the build's contact, or from saved pages with --dir (batch 99)",
+    /"sync:fed-orders": "tsx scripts\/sync-fed-orders\.ts"/.test(read("package.json")) && /await sleep\(1_000\)/.test(sync) && /headers: \{ \.\.\.UA,/.test(sync) &&
+      /--dir/.test(sync) && /public domain/i.test(archive.about) && /fedPressEvents\(\[\.\.\.\(await cachedFedFeed\(\)\), \.\.\.ARCHIVED_ORDERS\]/.test(read("lib/fedPress.ts")));
   check("the Board's press releases are credited where the other sources are",
     /press releases and\s+enforcement actions from the Federal Reserve Board/.test(read("app/layout.tsx")) &&
       /press releases and enforcement actions from the Federal Reserve Board/.test(read("app/legal/terms/page.tsx")) &&

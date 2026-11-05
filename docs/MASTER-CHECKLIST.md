@@ -988,6 +988,64 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 99: the Board's orders of 1996–2005 (2026-11-05)
+
+The 2026-11-02 proposal 3, approved by the owner on 2026-11-05. The same source (`fed_press`): the
+Board's feed begins in January 2006, and the decade before it, the decade of the mergers that made
+today's largest banks, was on its yearly pages only.
+
+- [x] **Read once, committed** (`lib/fedOrders.ts`, `npm run sync:fed-orders`,
+      `data/fed-orders-1996-2005.json`, 231 KB):
+      - the ten yearly pages, 1996all.htm to 2005all.htm, give 469 orders (filed under `bhc` to
+        2002, `orders` after), each with its day, title and link; the pages' general releases, the
+        Board's own actions and its enforcement releases are left out;
+      - each order's own page gives its first sentence telling of the Board's approval, which names
+        every party and its city; 467 of the 469 have one (FirstMerit's page of 1998-12-07 states no
+        approval; the release of 2003-09-08 is a guide, not an order);
+      - the sentence runs past "U.S.", "N.A." and "Inc." to its own end, named entities and the old
+        pages' Windows-1252 letters are read as letters, and the section signs SierraCities.com's
+        page of 2000-04-12 lost on the Board's side ("12 U.S.C. � 1842") are read as §.
+- [x] **Every company the sentence names is a party** (the owner's rule of 2026-11-05):
+      - the sentence is kept whole: 49 run past 400 characters, the longest 1,084, and one order
+        can name fifteen banks (Barnett's and fourteen others', 1997-10-06); the page shows it cut at
+        400 characters (`shortened`);
+      - `fedPressEvents` reads the title's parties and the sentence's, and `orderParties` reads the
+        older titles' "of" ("Approval of proposal of Norwest Corporation");
+      - a company's EDGAR former names count in the years it had them: NationsBank's orders are
+        Bank of America's, Norwest's Wells Fargo's, BB&T's and Southern National's Truist's, the
+        Royal Bank of Scotland's NatWest's; its first price bounds them, so Citizens, listed in
+        2014, takes none of its own or the Royal Bank of Scotland's.
+- [x] **Read by hand, every match:** 179 in a replay that gives each company every name it has
+      filed under (the Digest's name list), before first prices. Five namesakes, told apart by the
+      city each sentence gives, are kept off by CIK (`NOT_THE_COMPANY` now reads the sentence too):
+      - the First Financial Corporation of Stevens Point, Wisconsin, bought by Associated Banc-Corp
+        in 1997 (not Terre Haute's, whose own order of 1998-02-23 stays);
+      - the Horizon Bancorp of Beckley, West Virginia, bought by City Holding in 1998;
+      - the Republic Bancorp of Munden, Kansas, of 2005;
+      - the Northwest Bancshares of Vancouver, Washington, bought by U.S. Bancorp in 1998;
+      - the IBT Bancorp of Irwin, Pennsylvania, of S&T Bancorp's stake of 2003 (not Isabella Bank's
+        IBT Bancorp of Mount Pleasant, Michigan).
+      What an applicant acquires is a party too: Glen Burnie Bancorp, sought by First Mariner
+      (1998-09-28). Matches before a company's first price (Citizens', First Hawaiian's as BancWest,
+      Piper Sandler's as Piper Jaffray, Merchants Bancorp's namesake) are left to the floor.
+- [x] **Measured:** under the committed indexes' names, the 469 give 141 matches on 59 companies
+      (Wells Fargo 10, Royal Bank of Canada 7, JPMorgan and Popular 6, Citigroup, CIBC, U.S. Bancorp,
+      Truist and Citizens 5), 138 orders, 3 of them on two pages or more; a company's stored former
+      names add more at ingest. Truist's page now holds 11 BB&T orders, 5 of them from the archive.
+- Not done here: the Board's other releases of 1996–2005 (policy, enforcement): enforcement comes
+  from its own files (batch 69), and the old policy releases name no bank as the feed's do.
+- **Requests:** www.federalreserve.gov 479 (the ten yearly pages and 469 order pages, a second
+  apart), data.sec.gov 4 (former names for Bank of America, Wells Fargo, JPMorgan and Citigroup).
+- **Checks:** `check:fed-press` 66 (19 new): the file rebuilt from the saved pages
+  (`scripts/fixtures/fed-orders-pages.json.gz`, 890 KB) and compared whole, the two orders without
+  a sentence, the abbreviations, entities and section signs, the whole sentence and its page cut,
+  the multi-bank orders on every named company's page, the first-price floor, the five namesakes
+  by city (and each one shown to match without its guard), the former names through the ingest
+  path, the archive replay pinned (141 on 59) with every fund series still taking none, and the
+  sync's wiring. Truist's pins move from 6 and 7 to 11 and 12. `check:contact` counts 31 files.
+  On main the new cases fail: `lib/fedOrders.ts` and the data file do not exist. `npm run check`
+  and `npm run lint` pass.
+
 ## NC ledger — batch 98: the Board's actions for 23 more banks (2026-11-05)
 
 The 2026-11-05 proposal 3, approved by the owner that day. No new source: rows in `FED_BANKS`.
@@ -7563,9 +7621,11 @@ already held, but new investment goes to securities coverage first.
       read city by city with their banks named after them.
       - *Derived from [`docs/proposals/2026-11-05-proposals.md`](proposals/2026-11-05-proposals.md)
         #3, approved 2026-11-05.*
-- [ ] `P2` **The Board's orders of 1996–2005, from its yearly pages.** The same source
+- [x] `P2` **The Board's orders of 1996–2005, from its yearly pages.** The same source
       (`fed_press`), approved by the owner 2026-11-05: the ten yearly pages read once, the orders
-      matched through `orderParties`, which also reads the older titles' "of".
+      matched through `orderParties`, which also reads the older titles' "of". ✅ **Done in batch
+      99:** 469 orders committed with each page's sentence naming every party; 141 matches on 59
+      companies under the committed names, five namesakes kept off by city.
       - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
         #3, approved 2026-11-05.*
 - [x] `P2` **A case naming several companies goes on every relevant company's page** — the owner's

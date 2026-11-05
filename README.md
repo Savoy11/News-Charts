@@ -203,6 +203,30 @@ Financial Group's, listed in 2014, and a company with no prices yet is asked aga
 A bank's notes record is asked nothing. A name under five characters stands in for no
 longer one when the API is asked, since its ask stops at one page when crowded.
 
+The API holds nothing before 2009, so the releases of 2001–2008 come from the Department's own
+archive, one page a month at `www.justice.gov/archive/opa/pr/YYYY/Month/` (`lib/dojArchive.ts`,
+batch 94). The archive is closed: each of its 96 months is read once for every company and kept
+(`doj_archive_releases` and `doj_archive_months`, `lib/ingest/dojArchiveWalk.ts`), at most 24 months
+a process, a second apart, a month stored only when its page answered with releases it could read.
+Two layouts: 2001–2004 a list, "#807: 12-30-04 HEALTHSOUTH TO PAY…", mostly in capitals; 2005–2008
+day headings over each title, from mid-2005 with its first lines, kept as the teaser. The old pages
+write Windows-1252's quotes, read as quotes. 5,712 releases; the 5 rows a slip leaves without a day
+(a "02-30-02") are left unread, not guessed. Each company keeps the kept releases the rule above
+makes it a party to, under the names it had that year (Wal-Mart's of 2001–2004 under its own
+"Wal-Mart", BB&T's under Truist's former name), from its first price on: against every company in
+the index, 106 releases on 71 pages, every year of the eight (AEP's $30 million criminal penalty of
+2005, Weyerhaeuser's Kalamazoo River settlement, Akzo Nobel's antitrust plea; Walmart 6, Tenet 5,
+Exxon Mobil 4). Same source, `doj_press`, under the same terms.
+
+A one-word name that is an everyday word (`isEverydayWord`, `lib/wordNames.ts`) is read more
+strictly (batch 94). In a title written in capitals, as the Department's were to 2004, it names the
+company only with a legal word after it: "TARGET CORPORATION" is Target's, "CITY AGREES TO PAY" is not
+City Holding's. In any title, as the object of an action, it is the word when "the" or another
+capitalised word comes before it or "of" after: "Lawsuit Against the City of Marion" and "Suit
+Against Newport News Shipbuilding" are no company's, while "Justice Department Sues Visa for
+Monopolizing Debit Markets" stays Visa's. Without it, City Holding would take 46 of the archive's
+releases about cities.
+
 ### SEC press releases (`lib/secPress.ts`)
 
 A company's page carries the SEC's own press releases in which it is the party, back to 1997: "SEC
@@ -958,7 +982,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966; defect investigations since 1975 | Recalls of 10,000 vehicles or more, and every investigation NHTSA opened, only for the vehicle and tyre makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014). Public domain; no key |
 | Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 40 banks `lib/fedActions.ts` maps by hand to a listed company — 26 US bank holding companies and 14 foreign banks with their US arms; an action against a person is left out. Public domain, cited to the Board; two keyless files |
 | FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 73 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
-| U.S. Department of Justice | Press releases since 2009 in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
+| U.S. Department of Justice | Press releases since 2001 (the API's from 2009, the archive's month pages before) in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | SEC newsroom (press releases) | Press releases since 1997 in which a company is the party — the SEC charges, sues or sanctions it, or it settles | The year listing, read once for every company (`lib/ingest/secPressWalk.ts`); kept only when the headline makes the company the party (`lib/secPress.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Federal Reserve Board press releases | The Board's orders on a bank's applications since 2006, and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |

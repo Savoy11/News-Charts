@@ -988,6 +988,66 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 94: the Justice Department's releases of 2001–2008, from its archive (2026-11-05)
+
+The 2026-11-02 proposal 2, approved by the owner 2026-11-05. Justice releases stopped at 2009, the
+oldest the Department's API holds; the Department keeps the earlier ones on month pages.
+
+- [x] **The archive, read once.**
+      - `lib/dojArchive.ts` reads the 96 month pages of 2001–2008 in their two layouts: a list,
+        2001–2004, and day headings with a teaser, 2005–2008. It reads a title with no number
+        (Kinder Morgan's of 2007), a link typed with spaces, and the old pages' Windows-1252 quotes.
+      - 5,712 releases. 5 rows a typing slip leaves without a usable day are left unread, not
+        guessed.
+      - `lib/ingest/dojArchiveWalk.ts` and `db/036_doj_archive.sql` keep them. A month is stored
+        once, only when its page answered with releases it could read, and never asked again.
+        At most 24 months a process, a second apart, so four runs read it all.
+      - A page that lists nothing readable is an error, not a quiet month: a bot check answers 200.
+- [x] **On company pages.** Each company's ingest keeps the stored releases that the Justice rule
+      makes it a party to, beside the API's, under the same source (`doj_press`):
+      - under the names it had that year, its legal names among them;
+      - from its first price on, plus the units marked to count before listing (the owner's
+        multi-company rule; the Justice rule now reads them too).
+
+      Against every company in the index: 127 releases name 86 companies, and 106 reach 71 pages,
+      in every year of the eight. Among them: AEP's $30 million criminal penalty of 2005,
+      Weyerhaeuser's Kalamazoo River settlement, Akzo Nobel's antitrust plea, Verizon's Alltel case.
+      Walmart gets 6, Tenet 5, Exxon Mobil 4. The 21 kept off came before the company listed (News
+      Corp's of 2001, Norwegian Cruise Line's).
+- [x] **Two names, read from the companies' own filings:**
+      - "Wal-Mart", Walmart's own short name until 2018 (its 10-K filed 2001-04-10): five releases of
+        2001–2008 write it alone;
+      - "American Express Bank International", American Express's until it sold American Express
+        Bank Ltd. on 2008-02-29 (its 8-K of that day): its deferred prosecution of 2007-08-06.
+- [x] **An everyday word as a name** (`isEverydayWord`):
+      - In a title written in capitals, it needs a legal word after it: "TARGET CORPORATION" is
+        Target's, "CITY AGREES TO PAY" is not City Holding's.
+      - In any title, as an object, it is the word when "the" or another word comes before it or
+        "of" after: "Lawsuit Against the City of Marion", "Newport News Shipbuilding".
+
+      Without the rule, City Holding would have taken 46 of the archive's releases about cities.
+      The API's "Sues Visa for Monopolizing" and "Sues Apple for Monopolizing" stay theirs. One loss,
+      accepted: "U.S. V. ORACLE" (2004), in capitals, is no longer Oracle's.
+- [x] **The text cleaner reads "&#146;" as "’"** (and the other Windows-1252 codes), shared with the
+      API's titles. It found seven more merger cases written with a possessive ("Verizon’s
+      Acquisition of Alltel").
+- Not done here:
+      - the optional read of each matched release's own page for a first paragraph (2001–2005
+        releases carry no teaser);
+      - a pre-2001 archive: the proposal measured 404s for 1994–1995;
+      - a two-word name built of everyday words ("National Bank" for National Bank Holdings) can
+        still take another bank's release in the API's years. In the archive every such row falls
+        before the company listed. Left for the audit batch.
+- **Requests:** www.justice.gov 98 (the 96 month pages, and two API asks for the Visa and Apple
+  suits' titles); data.sec.gov 2 (Walmart's and Truist's former names); efts.sec.gov 9 (filing
+  phrases); query1 and query2.finance.yahoo.com 104 (first trading days for 86 companies, with
+  retries after refusals).
+- **Checks:** `check:doj` 92 (34 new): the parser on every saved page, the cases the proposal named,
+  the everyday-word rule, the replay of every company, the walk, and the wiring. On main they cannot
+  run: `lib/dojArchive.ts` does not exist. `check:sec-press` now pins the map's 76 entries, and that
+  the Justice rule no longer keeps the City of Miami; `check:contact` counts the archive's reader
+  of the shared User-Agent, 27 files. `npm run check` and `npm run lint` pass.
+
 ## NC ledger — batch 93: a case goes on every company it involves (2026-11-05)
 
 The owner's rule of 2026-11-05: "for any instance that multiple companies are involved in a case
@@ -7289,11 +7349,12 @@ already held, but new investment goes to securities coverage first.
         given name ("Retherford, Dana") is a person.
       - *Derived from [`docs/proposals/2026-11-05-proposals.md`](proposals/2026-11-05-proposals.md)
         #1, approved 2026-11-05.*
-- [ ] `P1` **The Justice Department's releases of 2001–2008, from its archive.** The same source
+- [x] `P1` **The Justice Department's releases of 2001–2008, from its archive.** The same source
       (`doj_press`), approved by the owner 2026-11-05. Read each month page of 2001–2008 once (the
       archive is closed), store its rows, and match them at each company's ingest through
       `releaseNamesParty`, from the company's first price, with its names that year and the release
-      map.
+      map. ✅ **Done in batch 94:** 5,712 releases from the 96 months; against every company in the
+      index, 106 reach 71 pages.
       - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
         #2, approved 2026-11-05.*
 - [ ] `P2` **CPSC product recalls, 1973 on.** A new source, approved by the owner 2026-11-05 ("Yes I

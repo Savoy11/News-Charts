@@ -43,6 +43,7 @@ import { backfillRegulations } from "../lib/ingest/frBackfill";
 import { FUND_SERIES, NO_PRICES, firstPriceDay, secPressFor, walkSecPress } from "../lib/ingest/secPressWalk";
 import { secCasesFor, walkSecCases } from "../lib/ingest/secCasesWalk";
 import { cfpbFor, walkCfpb } from "../lib/ingest/cfpbWalk";
+import { dojArchiveFor, walkDojArchive, withArchive } from "../lib/ingest/dojArchiveWalk";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
@@ -655,13 +656,19 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   // a fund's series is no party to any of these: its page knows only the series name, "GROWTH
   // FUND", which names some other firm's case (batch 85, `FUND_SERIES`)
   const fundSeries = fundSeriesId(company.ticker) !== null;
-  await run("doj_press", justiceQueryNames(company.name, alsoKnownAs, possessive, company.cik).join(" | "), async () => {
+  await run("doj_press", `${justiceQueryNames(company.name, alsoKnownAs, possessive, company.cik).join(" | ")} + the 2001–2008 archive`, async () => {
     if (fundSeries) return FUND_SERIES();
     // from the company's first price on, as the other release rules read (batch 90); a notes
     // record is asked nothing, and a company with no prices yet is asked again on the next run
     const listed = isNotesRecord(company.cik) ? "" : await firstPriceDay(client, subjectId);
     if (listed === null) return NO_PRICES();
-    return fetchJusticeReleases(company.name, alsoKnownAs, possessive, company.cik, { from: listed });
+    const api = await fetchJusticeReleases(company.name, alsoKnownAs, possessive, company.cik, { from: listed });
+    if (isNotesRecord(company.cik)) return api;
+    // the releases of 2001–2008, from the Department's archive (batch 94): the months not kept
+    // yet, then every kept release naming the company under the names it had that year
+    const walked = await walkDojArchive(client);
+    const archive = await dojArchiveFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik });
+    return withArchive(api, archive ?? [], walked);
   });
 
   /**

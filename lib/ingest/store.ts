@@ -279,7 +279,7 @@ export const SOURCES: {
     // Used: the release's title, date, teaser and link — never its photos.
     commercialOk: true,
     reviewedOn: "2026-10-22",
-    notes: "releases since 2009 whose title makes a listed company a party (lib/doj.ts); no key (batch 32)",
+    notes: "releases since 2001 whose title makes a listed company a party: the API's from 2009 (lib/doj.ts, batch 32), the archive's month pages for 2001–2008 (lib/dojArchive.ts, batch 94); no key",
   },
   {
     id: 24,

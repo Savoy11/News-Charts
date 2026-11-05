@@ -37,9 +37,9 @@ export interface ReleaseName {
    * company's waits for (batch 90): the owner's calls (b) and (c), whose units the company's own
    * record, or its parent of the time, held before it listed; and from batch 93 the owner's rule
    * of 2026-11-05 that a case goes on every company it involves (Synchrony Bank, PayPal). Read by
-   * the SEC's two rules and the Bureau's. The Board's feed (2006) and the Justice Department's
-   * (2009) never read it: every marked company listed before them but PayPal, and PayPal's only
-   * pre-listing rows are the Bureau's.
+   * the SEC's two rules, the Bureau's and, from batch 94, the Justice Department's, whose archive
+   * reaches back to 2001, before Ameriprise and Prudential Financial listed (none of its titles
+   * names their units, measured 2026-11-05). The Board's feed (2006) never reads it.
    */
   beforeListing?: true;
 }
@@ -162,6 +162,11 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
       { name: "American Express Centurion Bank", why: "its card bank, named after it, which the CFPB's actions of 2012, 2013 and 2017 name (batch 89)" },
       { name: "American Express Bank", why: "its savings bank, American Express Bank, FSB, named after it, which the CFPB's actions of 2012, 2013 and 2017 name (batch 89)" },
       { name: "American Express Travel Related Services", why: "its card issuer, named after it, which the CFPB's actions of 2012 and 2013 name (batch 89)" },
+      {
+        name: "American Express Bank International",
+        to: "2008-02-28",
+        why: "its private bank, named after it, among its subsidiaries in its 10-K filed 2001-03-30, until it sold American Express Bank Ltd. (\"On February 29, 2008\" and \"American Express Bank Ltd. to Standard Chartered\", its 8-K filed 2008-02-29); the Justice Department's deferred prosecution of 2007-08-06 names it (batch 94)",
+      },
     ],
   },
   36104: {
@@ -576,6 +581,15 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
       { name: "UBS Financial Services", why: "its unit, named after it, which the SEC's litigation releases and proceedings name in full (batch 83)" },
       { name: "UBS Financial Services Inc. of Puerto Rico", why: "its Puerto Rico brokerage, named after it, as the captions write it (batch 83)" },
       { name: "UBS Financial Services Incorporated of Puerto Rico", why: "the same, its legal form written out (batch 83)" },
+    ],
+  },
+  104169: {
+    ticker: "WMT",
+    names: [
+      {
+        name: "Wal-Mart",
+        why: "its own short name before it became Walmart Inc. in 2018 (\"Wal-Mart Stores, Inc. (\"Wal-Mart\"\", its 10-K filed 2001-04-10), which the Justice Department's titles of 2001–2008 write alone, \"Settlement With Retail Giant Wal-Mart\" (batch 94); its EDGAR record carries only WAL MART STORES INC",
+      },
     ],
   },
   // batch 88's units, each company in one map or the other (check:sec-cases)

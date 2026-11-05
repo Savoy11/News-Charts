@@ -293,8 +293,8 @@ const TODAY = "2026-10-29";
     [["2011-53", ["PG", "GS"]], ["2007-20", ["TTWO"]], ["2003-184", ["UVV"]]]);
   expectOff("a name three listed banks share names none of them, nor one a dual listing shares",
     [["2007-161", ["FBP", "FBNC", "FNLC"]], ["2023-46", ["RIO", "RTNTF"]]]);
-  check("  …where the Justice Department rule, run on SEC headlines, would have kept the city, the division and the board member",
-    releaseNamesParty(release("99-119").title, namesOf("CHCO")(1999)) && releaseNamesParty(release("2009-199").title, namesOf("MSTR")(2009)) &&
+  check("  …where the Justice Department rule, run on SEC headlines, would have kept the division and the board member (the city it refuses too since batch 94)",
+    !releaseNamesParty(release("99-119").title, namesOf("CHCO")(1999)) && releaseNamesParty(release("2009-199").title, namesOf("MSTR")(2009)) &&
       releaseNamesParty(release("2011-53").title, namesOf("PG")(2011)));
 
   /**
@@ -368,8 +368,8 @@ const TODAY = "2026-10-29";
     [["2014-39", "GLDI", false], ["2021-213", "GLDI", false], ["2012-233", "GLDI", false], ["2012-233", "JPM", true], ["2009-29", "AMUB", false]]);
   check("  …where before this batch GLDI's page took Credit Suisse's own",
     secPressEvents([storedRelease("2014-39"), storedRelease("2021-213")], namesOf("GLDI")).length === 2);
-  check("the map: twelve banks (seven in batch 82, Deutsche Bank, State Street, BNY and Barclays in batch 83, Goldman Sachs in batch 85), batch 88's 34 companies' units, batch 89's 22 more, batch 90's 4 and batch 93's 3, each unit with its reason, each day well formed, and the three notes records mapped to none",
-    Object.keys(RELEASE_NAMES).length === 75 && Object.keys(NOTES_RECORDS).length === 3 &&
+  check("the map: twelve banks (seven in batch 82, Deutsche Bank, State Street, BNY and Barclays in batch 83, Goldman Sachs in batch 85), batch 88's 34 companies' units, batch 89's 22 more, batch 90's 4, batch 93's 3 and batch 94's Walmart, each unit with its reason, each day well formed, and the three notes records mapped to none",
+    Object.keys(RELEASE_NAMES).length === 76 && Object.keys(NOTES_RECORDS).length === 3 &&
       Object.values(RELEASE_NAMES).every((b) => b.names.every((n) => n.why.length > 20 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.keys(NOTES_RECORDS).every((cik) => !(cik in RELEASE_NAMES)) &&
       Object.entries(RELEASE_NAMES).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)) &&

@@ -83,7 +83,11 @@ company it involves, batch 93). It is not a scoring list; keep it that way. A ca
 its legal name with legal words after it; the namesakes that rule cannot tell apart were read by
 hand and are listed by CIK in `NOT_THE_COMPANY` (one list each in `lib/secCases.ts`, `lib/fedPress.ts`
 and `lib/cfpb.ts`). A fund's series is never a party to any of these five rules (`FUND_SERIES`): its page knows only its
-series name, and "Growth Fund, Ltd." is a Ponzi scheme's fund, not American Century's.
+series name, and "Growth Fund, Ltd." is a Ponzi scheme's fund, not American Century's. The
+Justice Department's releases of 2001–2008, which its API does not hold, come from its archive's
+month pages, each read once and kept (`lib/dojArchive.ts`, batch 94), under the same rule; a one-word
+name that is an everyday word ("CITY", "TARGET") needs its legal word in a title written in
+capitals, and as an object is the word after "the" or before "of" (`isEverydayWord`).
 
 A ticker whose company moved to a new SEC record — a holding-company reorganisation or redomicile
 (XOM in 2026, Alphabet in 2015, Disney in 2019) — reads its earlier filings from the predecessor's

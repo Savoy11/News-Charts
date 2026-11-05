@@ -61,6 +61,16 @@ export function namedWithCapital(title: string, key: string): boolean {
 }
 
 /**
+ * Whether a one-word name, as a name key, is an everyday word: a company's one-word name in the
+ * file ("TARGET", "ORACLE") or a word of a longer one ("CITY" of City Holding, "VISA" of Visa
+ * Inc.). The Justice Department's titles read such a name only where a capital cannot be told
+ * from a common word's (`releaseNamesParty`, batch 94).
+ */
+export function isEverydayWord(key: string): boolean {
+  return WORDS.has(key) || PIECES.has(key);
+}
+
+/**
  * A one-word name as headline scoring keeps it: with its capital when it is an everyday word, so
  * it names only a headline that writes it so ("visa" → "Visa", "lowe's" → "Lowe's"); any other
  * name as it came (batch 59).

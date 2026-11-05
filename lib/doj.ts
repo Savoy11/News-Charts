@@ -1,13 +1,15 @@
 import { companyNames, longerListedNameIn } from "./frCompany";
-import { isNotesRecord, releaseNamesAsked, releaseNamesOn } from "./releaseNames";
+import { isNotesRecord, releaseNamesAsked, releaseNamesBefore, releaseNamesOn } from "./releaseNames";
 import { commonName, outrankingNameFor } from "./sec";
 import type { FetchResult, TimelineEvent } from "./types";
 import { UA } from "./contact";
+import { isEverydayWord, oneWordName } from "./wordNames";
 
 /**
  * Justice Department press releases in which a listed company is a party — a settlement, a plea,
  * a lawsuit against it, an antitrust case over its merger — from 2009 on (batch 32, the second
- * candidate in `docs/proposals/2026-10-22-news-sources.md`).
+ * candidate in `docs/proposals/2026-10-22-news-sources.md`), and from 2001 through the
+ * Department's archive, whose titles the same rule reads (`lib/dojArchive.ts`, batch 94).
  *
  * Read from justice.gov's keyless JSON API. Public domain: "Unless otherwise indicated,
  * information on Department of Justice websites is in the public domain and may be copied and
@@ -61,7 +63,8 @@ const ACTION = String.raw`(?:(?:Settlements?|Agreements?|Consent\s+Decree|Lawsui
  * Other companies named alongside it — "Settlements with CarMax, Axis Analytics, Capital One Bank
  * and Walmart" — or one word before it, "Sues Monopolist Google". Kept honest by FOLLOWS.
  */
-const ALONGSIDE = String.raw`(?:(?:[A-Z][\w.&'’-]*\s+){0,3}[A-Z][\w.&'’-]*(?:,\s+|,?\s+and\s+)){0,5}(?:the\s+)?(?:[A-Z][a-z]+\s+)?`;
+const ALONGSIDE_LIST = String.raw`(?:(?:[A-Z][\w.&'’-]*\s+){0,3}[A-Z][\w.&'’-]*(?:,\s+|,?\s+and\s+)){0,5}`;
+const ALONGSIDE = String.raw`${ALONGSIDE_LIST}(?:the\s+)?(?:[A-Z][a-z]+\s+)?`;
 
 /**
  * What may come straight after a company named as the object, so that "Charges Against Violent
@@ -146,11 +149,22 @@ export const outrankedName = (name: string, pattern: string, own: readonly strin
 export function releaseNamesParty(title: string, names: readonly string[]): boolean {
   const t = title.replace(/\s+/g, " ").trim();
   const aboutAPerson = /^(?:Former|Ex-)\b/i.test(t);
+  const capitals = !/\p{Ll}/u.test(t);
   for (const name of names) {
     if (name.trim().length < 2 || longerListedNameIn(t, name)) continue;
-    const n = outrankedName(name, escapeName(name), names);
+    const key = oneWordName(name);
+    const everyday = key !== null && isEverydayWord(key);
+    // An everyday word as a name (batch 94): written in capitals, as the Department's titles were
+    // to 2004, "TARGET" or "CITY" cannot be told from the word, so it names the company only with a
+    // legal word after it, "TARGET CORPORATION". In any title, the object of an action is the word
+    // when "the" or another capitalised word comes before it or "of" after: "Lawsuit Against the
+    // City of Marion", "Suit Against Newport News Shipbuilding" are not City Holding's or News
+    // Corp's. "Sues Visa for Monopolizing" stays Visa's.
+    const n = everyday && capitals ? `${escapeName(name)}${DESIGNATOR_WORD}` : outrankedName(name, escapeName(name), names);
+    const alongside = everyday ? ALONGSIDE_LIST : ALONGSIDE;
+    const notTheWord = everyday ? String.raw`(?!\s+of\b)` : "";
     const owner = String.raw`,\s+an?\s+${n}${DESIGNATOR}\s*(?:Company|Subsidiary|Unit|Affiliate|Business)\b`;
-    const object = new RegExp(String.raw`(?:\b${ACTION}\s+${ALONGSIDE}${n}${DESIGNATOR}${FOLLOWS}|${owner})`, "i");
+    const object = new RegExp(String.raw`(?:\b${ACTION}\s+${alongside}${n}${notTheWord}${DESIGNATOR}${FOLLOWS}|${owner})`, "i");
     const deal = new RegExp(String.raw`(?:${START}${n}${DESIGNATOR}${DEAL}|\b(?:Buy|Buying|Acquire|Acquiring)\s+${n}${DESIGNATOR}${BOUGHT})`, "i");
     if (namedAsSubject(t, name, n)) return true;
     if (object.test(t) || (deal.test(t) && !aboutAPerson && !TRADER.test(t))) return true;
@@ -189,15 +203,24 @@ export interface DojRelease {
 
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 
+/**
+ * A character from 0x80 to 0x9F as Windows-1252 writes it, as HTML reads one: the archive's pages
+ * (batch 94) write "&#146;" and "&#147;" for "’" and "“", and some carry the bytes themselves.
+ * Written out, since Node's own "windows-1252" decoder leaves these as control characters.
+ */
+const WINDOWS_1252_HIGH = "€\u0081‚ƒ„…†‡ˆ‰Š‹Œ\u008dŽ\u008f\u0090‘’“”•–—˜™š›œ\u009džŸ";
+const cp1252 = (code: number) => (code >= 0x80 && code <= 0x9f ? WINDOWS_1252_HIGH[code - 0x80] : String.fromCodePoint(code));
+
 /** HTML to plain text: titles carry "<br />" line breaks, "&amp;" and "&nbsp;"; teasers carry "<p>". */
 export const plainText = (html: string): string =>
   html
     .replace(/<[^>]*>/g, " ")
     .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e: string) =>
       e[0] === "#"
-        ? String.fromCodePoint(e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : Number(e.slice(1)))
+        ? cp1252(e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : Number(e.slice(1)))
         : (ENTITIES[e.toLowerCase()] ?? m),
     )
+    .replace(/[\u0080-\u009f]/g, (c) => cp1252(c.charCodeAt(0)))
     .replace(/\s+/g, " ")
     .trim();
 
@@ -267,9 +290,17 @@ export const DOJ_CAP = 60;
 /**
  * The releases naming the company as a party, as timeline events — one a day, newest first.
  * `namesOn(day)` gives the names a release of that day may add, the units the company then owned
- * (`releaseNamesOn`).
+ * (`releaseNamesOn`). Before `from`, its first price, only `namesBefore(day)`'s count: the units
+ * marked to count before it listed (`releaseNamesBefore`, the owner's rule of 2026-11-05 that a
+ * case goes on every company it involves), which the archive's 2001–2008 reach (batch 94).
  */
-export function dojEvents(releases: readonly DojRelease[], names: readonly string[], namesOn?: (day: string) => string[], from = ""): TimelineEvent[] {
+export function dojEvents(
+  releases: readonly DojRelease[],
+  names: readonly string[],
+  namesOn?: (day: string) => string[],
+  from = "",
+  namesBefore?: (day: string) => string[],
+): TimelineEvent[] {
   const byDay = new Map<string, { title: string; url: string; r: DojRelease; date: string }>();
   for (const r of releases) {
     const title = plainText(r.title ?? "");
@@ -277,9 +308,10 @@ export function dojEvents(releases: readonly DojRelease[], names: readonly strin
     if (!title || !date || !r.url || !/^https:\/\/www\.justice\.gov\//.test(r.url)) continue;
     // a release from before the company's first price is not its, as the other release rules hold
     // (batch 90): "Citizens Bank", Citizens Financial Group's unit, was Citizens Republic Bancorp's
-    // bank in the settlement of 2011-05-05, three years before the company listed
-    if (date < from) continue;
-    if (!releaseNamesParty(title, namesOn ? [...names, ...namesOn(date)] : names)) continue;
+    // bank in the settlement of 2011-05-05, three years before the company listed; the units
+    // marked to count before it aside
+    const asked = date < from ? (namesBefore?.(date) ?? []) : namesOn ? [...names, ...namesOn(date)] : names;
+    if (!asked.length || !releaseNamesParty(title, asked)) continue;
     const cand = { title, url: r.url, r, date };
     const held = byDay.get(date);
     if (!held || better(cand, held)) byDay.set(date, cand);
@@ -365,6 +397,12 @@ export async function fetchJusticeReleases(
   } catch (err) {
     return { events: [], outcome: "error", detail: String(err).slice(0, 200) };
   }
-  const events = dojEvents(releases, names, cik === undefined ? undefined : (day) => releaseNamesOn(cik, day), from);
+  const events = dojEvents(
+    releases,
+    names,
+    cik === undefined ? undefined : (day) => releaseNamesOn(cik, day),
+    from,
+    cik === undefined ? undefined : (day) => releaseNamesBefore(cik, day),
+  );
   return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
 }

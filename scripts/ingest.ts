@@ -45,6 +45,7 @@ import { secCasesFor, walkSecCases } from "../lib/ingest/secCasesWalk";
 import { cfpbFor, walkCfpb } from "../lib/ingest/cfpbWalk";
 import { dojArchiveFor, walkDojArchive, withArchive } from "../lib/ingest/dojArchiveWalk";
 import { epaCasesFor, walkEpaCases } from "../lib/ingest/epaWalk";
+import { cpscFor, walkCpsc } from "../lib/ingest/cpscWalk";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
@@ -103,6 +104,8 @@ export const COMPANY_SOURCES = [
   "cfpb",
   // …and the EPA's civil enforcement cases, where a defendant is the company (batch 95)
   "epa_cases",
+  // …and the CPSC's product recalls, where the company made, imported, distributed or sold it (batch 96)
+  "cpsc_recalls",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -744,6 +747,20 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     const walked = await walkEpaCases(client);
     if (walked.due) line("epa_cases", `file      ${walked.read ?? "not read"}${walked.read === "stored" ? `, ${walked.cases} cases` : ""}${walked.stopped ? ` (${walked.stopped})` : ""}`);
     return epaCasesFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
+  });
+
+  /**
+   * The CPSC's consumer-product recalls naming the company, from 1973 (batch 96): the Commission's
+   * whole recall set, read once a week for every company and kept (`walkCpsc`), then every kept
+   * recall naming it as maker, importer or distributor, or as a store that sold the product, under
+   * the names it had that year, from its first price. Every listed company a recall names gets it,
+   * the owner's rule of 2026-11-05; a store's recalls of other makers' products are grouped a row a
+   * month.
+   */
+  await run("cpsc_recalls", `CPSC recalls naming ${companyNames(company.name, alsoKnownAs).join(" | ")}`, async () => {
+    const walked = await walkCpsc(client);
+    if (walked.due) line("cpsc_recalls", `service   ${walked.stopped ? `not read (${walked.stopped})` : `read, ${walked.recalls} recalls`}`);
+    return cpscFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
   });
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no

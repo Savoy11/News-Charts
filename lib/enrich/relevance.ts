@@ -401,6 +401,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "epa_cases") {
         return { score: 0.95, reason: "an EPA enforcement case naming the company as a defendant" };
       }
+      // …and a CPSC recall naming the company as the firm that made, imported, distributed or
+      // sold the product (lib/cpscRecalls.ts, batch 96)
+      if (subject.kind === "company" && row.sourceKey === "cpsc_recalls") {
+        return { score: 0.95, reason: "a CPSC recall naming the company as a firm behind the product" };
+      }
       // …but a company's own document reaches it only when the title names it (lib/frCompany.ts),
       // so on a company subject that title is the evidence (2026-10-17 proposal 4).
       if (subject.kind === "company" && mentions(row.title, aliases) === "named") {

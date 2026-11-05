@@ -400,6 +400,22 @@ export const SOURCES: {
     reviewedOn: "2026-11-05",
     notes: "EPA's civil enforcement cases from the 1970s, kept where a defendant is a listed company by the caption rule (lib/epaCases.ts); one keyless file a month (batch 95)",
   },
+  {
+    id: 32,
+    key: "cpsc_recalls",
+    name: "CPSC product recalls",
+    license: "public domain",
+    attribution: "U.S. Consumer Product Safety Commission",
+    // The Commission's own recalls, a work of the U.S. Government, outside copyright by 17 U.S.C.
+    // § 105; the federal data catalog lists the Recalls API under the usa.gov public-domain label
+    // (docs/proposals/2026-10-22-news-sources.md #4). Not re-read 2026-11-05: cpsc.gov answered this
+    // session 403 and the catalog's search 404; the service itself answered. Used: a recall's
+    // title, day, hazard, units, the firms it names and a link to its notice, never its images.
+    // Approved by the owner on 2026-11-05.
+    commercialOk: true,
+    reviewedOn: "2026-11-05",
+    notes: "the Commission's consumer-product recalls from 1973, kept where a listed company made, imported, distributed or sold the product (lib/cpscRecalls.ts); one keyless answer a week (batch 96)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

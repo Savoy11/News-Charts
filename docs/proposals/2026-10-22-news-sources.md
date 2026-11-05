@@ -122,7 +122,7 @@ about 4,700 recalls from batch 41, which added Johnson & Johnson and the busines
 
 ## 4. CPSC product recalls — 1973 to today, public domain
 
-**Status:** awaiting the owner
+**Status:** APPROVED — by the owner, 2026-11-05: "Yes I would like to add product safety recalls."
 
 - **What it is:** consumer-product recalls: toys, tools, appliances, furniture.
 - **How it is read:** a keyless REST service, `https://www.saferproducts.gov/RestWebServices/Recall?format=json`.

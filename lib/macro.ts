@@ -6,6 +6,7 @@ import {
   parseFomcStatements,
   type MacroDate,
 } from "./macroParse";
+import { UA } from "./contact";
 
 /**
  * Federal Reserve policy decisions and CPI inflation releases — the economy-wide dates a stock's
@@ -24,7 +25,6 @@ export const MACRO_SUBJECT = {
 } as const;
 
 // The same contact the EDGAR requests carry; bls.gov refuses scripted requests without one.
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const FED = "https://www.federalreserve.gov/monetarypolicy";
 const CPI_ARCHIVE = "https://www.bls.gov/bls/news-release/cpi.htm";
 const TIMEOUT_MS = 20_000;

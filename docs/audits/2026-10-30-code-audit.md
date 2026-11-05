@@ -6,7 +6,7 @@ Run by the `code-auditor` agent (read-only). It covers `git diff 3243d71..135357
 
 **Where it ran:** the cloud build container (`/home/user/News-Charts`, Node 22.22.0). It went out through the session proxy, using curl.
 
-**Network: 6 requests in all.** Each carried the User-Agent `News Charts Research marcusowens94@gmail.com`.
+**Network: 6 requests in all.** Each carried the User-Agent `News Charts Research` with the owner's contact address (removed from the repository in batch 92, at the owner's request).
 - **www.federalreserve.gov, 2:** `ea-old.json` and `ea-cms-recent.json`.
 - **www.sec.gov, 2:** release 2006-145 (Prudential), and release 2012-233 at its odd `2012-2012-233htm` address.
 - **data.transportation.gov, 2:** the adapters' own recall and investigation queries for the sold-brand makers.

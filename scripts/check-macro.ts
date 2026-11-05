@@ -92,11 +92,15 @@ async function main(): Promise<void> {
         : pages[`fomcHistorical${url.match(/fomchistorical(\d{4})/)?.[1]}`] ?? "<html></html>";
       return new Response(body, { status: 200 });
     }) as typeof fetch;
+  // bls.gov refuses a script that names no contact; the build's own is set in NEWS_CHARTS_CONTACT
+  // (lib/contact.ts, batch 92), so a stand-in on example.org is set for the run
+  const contactWas = process.env.NEWS_CHARTS_CONTACT;
+  process.env.NEWS_CHARTS_CONTACT = "builds@example.org";
   try {
     globalThis.fetch = serve();
     const light = await fetchFomcStatements();
     check("a scheduled run reads the calendar alone", light.outcome === "ok" && light.events.length === 46 && seen.length === 1, `${light.events.length} from ${seen.length} request(s)`);
-    check("  …and says who is asking — bls.gov refuses scripts that do not", seen.every((s) => /@/.test(s.ua)));
+    check("  …and says who is asking — bls.gov refuses scripts that do not — with the build's contact address", seen.every((s) => s.ua === "News Charts Research builds@example.org"), seen[0]?.ua);
     seen.length = 0;
     const full = await fetchFomcStatements({ history: true, gapMs: 0 });
     check("a backfill reads every year page from 1994 to the calendar's first year, and no other",
@@ -130,6 +134,8 @@ async function main(): Promise<void> {
     check("a search about interest rates finds the Fed rows (lib/concepts.ts)", matchesFocus(fomc, focusTerms("interest rates")) && matchesFocus(fomc, focusTerms("rate hikes")));
     check("  …and one about inflation finds the CPI rows", matchesFocus(cpiEv, focusTerms("inflation")) && !matchesFocus(cpiEv, focusTerms("interest rates")));
   } finally {
+    if (contactWas === undefined) delete process.env.NEWS_CHARTS_CONTACT;
+    else process.env.NEWS_CHARTS_CONTACT = contactWas;
     globalThis.fetch = realFetch;
   }
 

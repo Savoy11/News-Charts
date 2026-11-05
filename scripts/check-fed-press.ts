@@ -232,13 +232,17 @@ function fakeDb(listed: string | null, renames: { until: string; body: string }[
 
   console.log("\nRead once a process, for every company");
   const realFetch = globalThis.fetch;
+  // the build's contact address is set in NEWS_CHARTS_CONTACT (lib/contact.ts, batch 92); a
+  // stand-in on example.org for the run
+  const contactWas = process.env.NEWS_CHARTS_CONTACT;
+  process.env.NEWS_CHARTS_CONTACT = "builds@example.org";
   let asked = 0;
   let answer: () => Response = () => new Response("﻿" + JSON.stringify(fixture.rows), { status: 200 });
   globalThis.fetch = (async (url: string | URL | Request, init?: RequestInit) => {
     asked++;
     if (String(url) !== FED_PRESS_FEED) throw new Error(`unexpected request: ${String(url)}`);
     const ua = new Headers(init?.headers).get("user-agent") ?? "";
-    if (!/^News Charts Research /.test(ua)) throw new Error(`no contact in the user agent: ${ua}`);
+    if (ua !== "News Charts Research builds@example.org") throw new Error(`no contact in the user agent: ${ua}`);
     return answer();
   }) as typeof fetch;
   try {
@@ -252,6 +256,8 @@ function fakeDb(listed: string | null, renames: { until: string; body: string }[
       asked === 2 && one.outcome === "ok" && two.outcome === "ok" && one.events.some((e) => e.date === "2008-10-12") && two.events.some((e) => e.date === "2014-04-28") &&
         (await cachedFedFeed()).length === releases.length, `${asked} requests`);
   } finally {
+    if (contactWas === undefined) delete process.env.NEWS_CHARTS_CONTACT;
+    else process.env.NEWS_CHARTS_CONTACT = contactWas;
     globalThis.fetch = realFetch;
   }
 

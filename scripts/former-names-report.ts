@@ -12,8 +12,8 @@
  * confirm that assumption. Read-only, and it needs a host that reaches data.sec.gov.
  */
 import { formerNameAliases, renamesFrom, resolveCompany, resolveTickerLocally, type FormerName } from "../lib/sec";
+import { UA } from "../lib/contact";
 
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 
 async function main(): Promise<void> {
   const asked = process.argv.slice(2).filter((a) => !a.startsWith("--"));

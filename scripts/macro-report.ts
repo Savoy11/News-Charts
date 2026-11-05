@@ -12,8 +12,8 @@
  */
 import { writeFileSync } from "node:fs";
 import { parseCpiReleases, parseFomcHistoricalYears, parseFomcStatements } from "../lib/macroParse";
+import { UA } from "../lib/contact";
 
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const FED = "https://www.federalreserve.gov/monetarypolicy";
 
 /** The year pages pinned: one per era of the Fed's statement addresses. */

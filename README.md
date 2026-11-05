@@ -598,6 +598,11 @@ running Postgres role is infrastructure work, and the docs describe the database
 exists). **It shares nothing with any other project on this machine** — no credentials, no
 schema, no data. `DATABASE_URL` lives in `.env.local` (gitignored).
 
+Every request to a public service sends one User-Agent, `News Charts Research` and the build's
+contact address from `NEWS_CHARTS_CONTACT` in `.env.local` (`lib/contact.ts`, batch 92). The SEC asks
+automated clients for a contact and refuses EDGAR requests without one, so ingest needs it set. The
+address is never written in the code; `check:contact` fails if one appears.
+
 ```
 npm run db:gen      # regenerate db/001_init.sql from docs/EVENTS-SCHEMA.md
 npm run db:migrate  # apply pending db/*.sql, tracked in schema_migrations

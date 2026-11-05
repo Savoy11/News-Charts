@@ -143,6 +143,10 @@ async function main(): Promise<void> {
   const realFetch = globalThis.fetch;
   const asked: URL[] = [];
   const agents: string[] = [];
+  // the build's contact address is set in NEWS_CHARTS_CONTACT (lib/contact.ts, batch 92); a
+  // stand-in on example.org for the run
+  const contactWas = process.env.NEWS_CHARTS_CONTACT;
+  process.env.NEWS_CHARTS_CONTACT = "builds@example.org";
   try {
     const page = (n: number) => fixture.BA.releases.concat(Array.from({ length: n }, (_, i) => ({ ...fixture.BA.releases[2], uuid: `pad${i}` })));
     globalThis.fetch = (async (input: string | URL, init?: RequestInit) => {
@@ -158,7 +162,7 @@ async function main(): Promise<void> {
     check("  …asking for the company's name in titles, newest first, 50 a page",
       asked.every((u) => u.origin + u.pathname === "https://www.justice.gov/api/v1/press_releases.json" && u.searchParams.get("parameters[title]") === "BOEING" &&
         u.searchParams.get("sort") === "date" && u.searchParams.get("direction") === "DESC" && u.searchParams.get("pagesize") === "50"));
-    check("  …with the contact User-Agent", agents.every((a) => /^News Charts Research \S+@\S+$/.test(a)), agents[0]);
+    check("  …with the contact User-Agent, the build's own", agents.length > 0 && agents.every((a) => a === "News Charts Research builds@example.org"), agents[0]);
     check("  …and keeps only what names Boeing as a party", res.outcome === "ok" && res.events.length === 2 && res.events.every((e) => /Boeing/.test(e.title)),
       res.events.map((e) => e.title).join(" | "));
     globalThis.fetch = (async () => new Response("slow down", { status: 429 })) as typeof fetch;
@@ -173,6 +177,8 @@ async function main(): Promise<void> {
     const none = await fetchJusticeReleases("COCA COLA CO", []);
     check("releases that only mention the company leave it honestly empty", none.outcome === "empty" && none.events.length === 0);
   } finally {
+    if (contactWas === undefined) delete process.env.NEWS_CHARTS_CONTACT;
+    else process.env.NEWS_CHARTS_CONTACT = contactWas;
     globalThis.fetch = realFetch;
   }
 

@@ -1,5 +1,6 @@
 import type { FetchResult, TimelineEvent } from "./types";
 import { heldOn, makersWhere, recallHeadline, recallMakersFor, type RecallMaker } from "./recalls";
+import { UA } from "./contact";
 
 /**
  * The defect investigations NHTSA opened into a listed carmaker, from 1975 (batch 66, the
@@ -23,7 +24,6 @@ import { heldOn, makersWhere, recallHeadline, recallMakersFor, type RecallMaker 
 
 const DATASET = "https://data.transportation.gov/resource/b3rp-be92.json";
 // The same contact the other federal requests carry (lib/recalls.ts).
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const TIMEOUT_MS = 20_000;
 /** Far above any company's count (Ford: 684 on 2026-10-27); reaching it is reported. */
 const ROW_LIMIT = 5000;

@@ -1,4 +1,5 @@
 import type { FetchResult, TimelineEvent } from "./types";
+import { UA } from "./contact";
 
 /**
  * Vehicle safety recalls a listed company filed with NHTSA, from 1966 (batch 30, NC-095).
@@ -17,7 +18,6 @@ import type { FetchResult, TimelineEvent } from "./types";
 
 const DATASET = "https://data.transportation.gov/resource/6axg-epim.json";
 // The same contact the other federal requests carry (lib/macro.ts).
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const TIMEOUT_MS = 20_000;
 /** Far above any company's count at the floor (Ford: 861 on 2026-10-22); reaching it is reported. */
 const ROW_LIMIT = 5000;

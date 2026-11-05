@@ -988,6 +988,57 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 92: no personal email in the build, and the owner's decisions filed (2026-11-05)
+
+The owner, 2026-11-05: "Lets move forward with all of the proposals. Yes I would like to add product
+safety recalls. Also for any instance that multiple companies are involved in a case add the story
+to all relevant companies pages. Dont use my personal email, I will make a new one for the purpose
+of this build."
+
+- [x] **The personal email is out of the code, the docs and the reports.**
+      - Until now 24 modules each wrote the owner's personal address into their own User-Agent:
+        the SEC, Wikipedia, Wikidata, the Library of Congress, the Federal Reserve, the Justice
+        Department, FDA, NHTSA and the rest.
+      - Every request now sends one User-Agent from `lib/contact.ts`: "News Charts Research" and
+        the build's contact address from `NEWS_CHARTS_CONTACT` in `.env.local`. The owner will
+        make that address for this build. 26 files read it.
+      - The headers are read when a request is built, not when a module loads. A script loads
+        `.env.local` in its own body, after the modules it imports have run, so an address read at
+        load time would always be missing.
+      - Without the setting the name goes alone. sec.gov refuses EDGAR requests without a contact,
+        so ingest needs it set before the scheduler runs: `.env.example`, README and
+        `docs/OWNER-ACTIONS.md` say so.
+      - Five reports that quoted the address as the User-Agent their requests carried now describe
+        it instead. The git history still holds the old commits; nothing here rewrites history.
+      - **Check:** `check:contact` (11, new, in `npm run check`). It holds that:
+        - the User-Agent is the name alone, or the name and one address;
+        - the headers are read at request time;
+        - no module defines its own;
+        - no email address is written in the code, the stand-in on example.org aside;
+        - no personal mailbox's domain appears in the docs, the work log or the reports;
+        - the setting is documented.
+
+        `check:sec-press`, `check:sec-cases`, `check:doj`, `check:fed-press` and `check:macro`
+        each set a stand-in address on example.org for their stubbed requests, and assert it is
+        the one sent. `check:sec-headlines` pins the shared header. On main `check:contact`
+        cannot run: `lib/contact.ts` does not exist.
+- [x] **The owner's decisions, filed under Scope refocus:**
+      - all five open proposals approved: the 2026-11-05 #1 (the EPA's cases), #2 (the CFTC's
+        actions) and #3 (the Board's actions for 23 more banks), and the 2026-11-02 #2 (the
+        Justice Department's 2001–2008 archive) and #3 (the Board's 1996–2005 orders);
+      - CPSC product recalls (the 2026-10-22 shortlist #4) approved;
+      - the multi-company rule: a case naming several listed companies goes on each of their pages.
+        It settles the three ownership calls left open (GE Capital Retail Bank on GE, PayPal's 2015
+        action on eBay, JCI's Tyco-record case), and the EPA proposal's three-defendant limit gives
+        way to it.
+
+      Each proposal file carries the owner's words in its Status line. The two "Owner: mark each
+      proposal" items (batches 86 and 91) are ticked.
+- Not done here: the builds themselves, one batch each, from batch 93. The Digest's step 2 was not
+  among the proposals and stays the owner's call.
+- **Requests:** none.
+- **Checks:** `npm run check` (56 suites) and `npm run lint` pass.
+
 ## NC ledger — batch 91: a new opportunity-scout run, three proposals for the owner (2026-11-05)
 
 The approved 2026-11-02 proposals are built (batches 87–89), and batch 90 fixed the audit of
@@ -995,8 +1046,10 @@ batches 85–89. So the `opportunity-scout` read the repository again at `73a88f
 `docs/proposals/2026-11-05-proposals.md`: three proposals, all **PENDING**, ranked with securities
 depth first. Nothing is built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ **Marked 2026-11-05: all three approved** ("Lets move forward with all of the proposals."),
+      filed under Scope refocus by batch 92.
       1. `P1` **The EPA's civil enforcement cases, from the 1970s.** The regulator's own record
          for chemical, oil, paper, industrial and utility companies, which today have only the
          Justice Department's releases from 2009.
@@ -1397,16 +1450,17 @@ the `opportunity-scout` read the repository again at `5defee6` and wrote
 `docs/proposals/2026-11-02-proposals.md`: five proposals, all **PENDING**, ranked with securities
 depth first. Nothing is built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
-      ✅ Marked 2026-11-02 for #1, #4 and #5, each filed under Scope refocus:
+      ✅ Marked 2026-11-02 for #1, #4 and #5, each filed under Scope refocus; #2 and #3 on 2026-11-05:
       - #1 approved: yes to the source, with the count first (`P1`);
       - #4 approved with the calls: (a) yes, widen the maps; (b) yes, American Express Financial
         Advisors' cases before the 2005 spin-off go on both American Express's and Ameriprise's
         pages; (c) Prudential Securities goes on Prudential Financial (PRU), not Prudential plc
         (`P2`);
       - #5 approved: yes to the source (`P2`);
-      - #2 and #3 are not marked yet.
+      - #2 and #3 approved 2026-11-05 ("Lets move forward with all of the proposals."), filed by
+        batch 92.
       1. `P1` **The SEC News Digest, 1956 to the mid-1990s:** the SEC's daily summary of companies'
          filings and cases before EDGAR (8-K reports with their items, registrations, 13D and
          14D-1 filings, enforcement and delisting orders), on sec.gov under the press releases'
@@ -7164,6 +7218,63 @@ already held, but new investment goes to securities coverage first.
       - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
         #5, approved 2026-11-02 with the new source. Importance medium-low · Efficiency high ·
         Practicality medium (the units above first).*
+- [ ] `P1` **The EPA's civil enforcement cases, from the 1970s.** A new source, approved by the owner
+      2026-11-05 ("Lets move forward with all of the proposals."): EPA's case file
+      (`echo.epa.gov/files/echodownloads/case_downloads.zip`, 82 MB, 137,108 cases), read once a
+      month. A case is kept on a company's page when a defendant is the company by the caption rule,
+      from its first price, dated by its lodging or final order, titled with what EPA did and the
+      penalty, and linked to its ECHO case report.
+      - **The owner's rule of the same day applies:** a case naming several listed companies goes on
+        each of their pages. The proposal's "three defendants or fewer" own-row limit gives way:
+        every listed defendant gets the case. Orders without a penalty are grouped a row a month,
+        as routine Federal Register notices are.
+      - **Licence, for the build to quote:** EPA's Standard Open Data License ("all data produced by
+        the U.S EPA is by default in the public domain") and the disclaimers page's note on
+        documents, both quoted in the proposal. The owner approved with both in front of them. The
+        build stores the file's fields and links to EPA's page; it copies no document.
+      - **Measured** by the scout: 6,406 cases on 663 companies under present names, 5,505 before
+        2017. Of 40 read by hand, 31 were right; the first-price floor drops six of the nine wrong
+        ones, and two guards drop the rest: "Power and Light Company" is one name, and a trailing
+        given name ("Retherford, Dana") is a person.
+      - *Derived from [`docs/proposals/2026-11-05-proposals.md`](proposals/2026-11-05-proposals.md)
+        #1, approved 2026-11-05.*
+- [ ] `P1` **The Justice Department's releases of 2001–2008, from its archive.** The same source
+      (`doj_press`), approved by the owner 2026-11-05. Read each month page of 2001–2008 once (the
+      archive is closed), store its rows, and match them at each company's ingest through
+      `releaseNamesParty`, from the company's first price, with its names that year and the release
+      map.
+      - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
+        #2, approved 2026-11-05.*
+- [ ] `P2` **CPSC product recalls, 1973 on.** A new source, approved by the owner 2026-11-05 ("Yes I
+      would like to add product safety recalls."): saferproducts.gov's keyless recall service, one
+      answer of every recall, kept where a listed company is the maker, the importer or the
+      retailer the recall names, under the owner's rule of the same day (every listed company a
+      recall names gets it).
+      - *Derived from [`docs/proposals/2026-10-22-news-sources.md`](proposals/2026-10-22-news-sources.md)
+        #4, approved 2026-11-05.*
+- [ ] `P2` **The CFTC's enforcement actions, from 1995.** A new source, approved by the owner
+      2026-11-05: the Commission's enforcement-action list, its site in the public domain by its web
+      policy, kept where a release makes a listed company the party, by the release rules and the
+      unit map, on every listed party's page.
+      - *Derived from [`docs/proposals/2026-11-05-proposals.md`](proposals/2026-11-05-proposals.md)
+        #2, approved 2026-11-05.*
+- [ ] `P2` **The Board's enforcement actions against the 23 listed banks its map leaves out.** The
+      same source (`fed_enforcement`), approved by the owner 2026-11-05: rows added to `FED_BANKS`
+      for the 29 own days the scout read city by city.
+      - *Derived from [`docs/proposals/2026-11-05-proposals.md`](proposals/2026-11-05-proposals.md)
+        #3, approved 2026-11-05.*
+- [ ] `P2` **The Board's orders of 1996–2005, from its yearly pages.** The same source
+      (`fed_press`), approved by the owner 2026-11-05: the ten yearly pages read once, the orders
+      matched through `orderParties`, which also reads the older titles' "of".
+      - *Derived from [`docs/proposals/2026-11-02-proposals.md`](proposals/2026-11-02-proposals.md)
+        #3, approved 2026-11-05.*
+- [ ] `P2` **A case naming several companies goes on every relevant company's page** — the owner's
+      rule, 2026-11-05: "for any instance that multiple companies are involved in a case add the
+      story to all relevant companies pages". The rules already give each named listed company its
+      own event. The rule settles the three ownership calls left open:
+      - GE Capital Retail Bank's CFPB actions (2013, 2014) on GE, its owner then;
+      - PayPal's CFPB action of 2015-05-19 on eBay, its owner until the spin-off;
+      - JCI's case of 2016 on Tyco's record, on Johnson Controls' page.
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

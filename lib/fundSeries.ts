@@ -1,5 +1,6 @@
 import type { TimelineEvent } from "./types";
 import { REGISTRANT_FORM } from "./secForms";
+import { UA } from "./contact";
 
 /**
  * A fund's own filings, by the series EDGAR tags them with (batch 67, the 2026-10-26 proposal 5).
@@ -23,7 +24,6 @@ import { REGISTRANT_FORM } from "./secForms";
 
 const BASE = "https://www.sec.gov/cgi-bin/browse-edgar";
 // The contact EDGAR asks every client for, as the other SEC requests carry it (lib/sec.ts).
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const edgarFetch = (url: string) => fetch(url, { headers: UA });
 /** what one request lists, EDGAR's largest page */
 export const SERIES_PAGE = 100;

@@ -1,6 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { buildCompanyAliases, type AliasIndexFile, type WikidataCompany } from "../lib/companyAliases";
 import { commonName, companyTickers, titleMatch, TICKER_INDEX_COMPANIES } from "../lib/sec";
+import { UA } from "../lib/contact";
 
 /**
  * Rebuild the committed index of other names for listed companies (NC-004).
@@ -17,7 +18,6 @@ import { commonName, companyTickers, titleMatch, TICKER_INDEX_COMPANIES } from "
  * also writes every dropped name with its reason, and the Wikidata items it read.
  */
 
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com", Accept: "application/sparql-results+json" };
 const OUT = "data/company-aliases.json";
 const ENDPOINT = "https://query.wikidata.org/sparql";
 // Wikidata moved language-neutral labels to "mul" in 2024; Walmart's English label is one.
@@ -52,7 +52,7 @@ const FORMER = `SELECT ?item ?cik ?pcik ?n ?kind ?links WHERE {
 type Binding = Record<string, { value: string }>;
 
 async function sparql(query: string): Promise<Binding[]> {
-  const res = await fetch(`${ENDPOINT}?${new URLSearchParams({ query, format: "json" })}`, { headers: UA });
+  const res = await fetch(`${ENDPOINT}?${new URLSearchParams({ query, format: "json" })}`, { headers: { ...UA, Accept: "application/sparql-results+json" } });
   if (!res.ok) throw new Error(`Wikidata SPARQL → HTTP ${res.status}`);
   return ((await res.json()) as { results: { bindings: Binding[] } }).results.bindings;
 }

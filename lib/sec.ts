@@ -10,7 +10,6 @@ import {
   worthFuzzyMatching,
 } from "./fuzzy";
 
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 
 interface TickerRow {
   cik_str: number;
@@ -37,6 +36,7 @@ import { foldAccents } from "./fold";
 import { predecessorsOf } from "./predecessors";
 import { commonName } from "./edgarName";
 import { eastern } from "./marketTime";
+import { UA } from "./contact";
 
 export { commonName };
 

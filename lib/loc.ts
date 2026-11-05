@@ -1,6 +1,6 @@
 import { FetchResult, TimelineEvent } from "./types";
+import { UA } from "./contact";
 
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 interface LocResult {

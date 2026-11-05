@@ -528,7 +528,7 @@ async function main(): Promise<void> {
   check("the first pass applies headlines already stored and never reads EDGAR for them",
     /applyHeadlines\(filings, await storedHeadlines\(client,/.test(firstPass) && /for \(const ev of titled\) await upsertEvent/.test(firstPass) && !/readFilingHeadline|withSecHeadlines/.test(firstPass));
   check("the table is created by its migration", /CREATE TABLE IF NOT EXISTS sec_headlines \(\s*accession text PRIMARY KEY/.test(read("db/029_sec_headlines.sql")));
-  check("the EDGAR requests carry the contact User-Agent", /"User-Agent": "News Charts Research /.test(read("lib/secHeadlines.ts")));
+  check("the EDGAR requests carry the contact User-Agent, the build's own (lib/contact.ts, batch 92)", /import \{ UA \} from "\.\/contact";/.test(read("lib/secHeadlines.ts")) && /headers: UA/.test(read("lib/secHeadlines.ts")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   process.exit(fail ? 1 : 0);

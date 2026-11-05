@@ -1,4 +1,5 @@
 import type { FetchResult, TimelineEvent } from "./types";
+import { UA } from "./contact";
 
 /**
  * Drug, medical-device and food recalls a listed company made, from the FDA's weekly enforcement
@@ -15,7 +16,6 @@ import type { FetchResult, TimelineEvent } from "./types";
 
 const API = "https://api.fda.gov";
 // The same contact the other federal requests carry (lib/recalls.ts).
-const UA = { "User-Agent": "News Charts Research marcusowens94@gmail.com" };
 const TIMEOUT_MS = 20_000;
 /** openFDA's largest page. */
 const PAGE = 1000;

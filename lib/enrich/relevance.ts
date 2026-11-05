@@ -406,6 +406,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "cpsc_recalls") {
         return { score: 0.95, reason: "a CPSC recall naming the company as a firm behind the product" };
       }
+      // …and a CFTC action whose title makes the company the party, by the Justice Department's
+      // rule (lib/cftc.ts, batch 97)
+      if (subject.kind === "company" && row.sourceKey === "cftc") {
+        return { score: 0.95, reason: "a CFTC enforcement action naming the company as the party" };
+      }
       // …but a company's own document reaches it only when the title names it (lib/frCompany.ts),
       // so on a company subject that title is the evidence (2026-10-17 proposal 4).
       if (subject.kind === "company" && mentions(row.title, aliases) === "named") {

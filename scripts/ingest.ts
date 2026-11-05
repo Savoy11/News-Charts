@@ -46,6 +46,7 @@ import { cfpbFor, walkCfpb } from "../lib/ingest/cfpbWalk";
 import { dojArchiveFor, walkDojArchive, withArchive } from "../lib/ingest/dojArchiveWalk";
 import { epaCasesFor, walkEpaCases } from "../lib/ingest/epaWalk";
 import { cpscFor, walkCpsc } from "../lib/ingest/cpscWalk";
+import { cftcFor, walkCftc } from "../lib/ingest/cftcWalk";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
@@ -106,6 +107,8 @@ export const COMPANY_SOURCES = [
   "epa_cases",
   // …and the CPSC's product recalls, where the company made, imported, distributed or sold it (batch 96)
   "cpsc_recalls",
+  // …and the CFTC's enforcement actions, where the title makes the company the party (batch 97)
+  "cftc",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -761,6 +764,18 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     const walked = await walkCpsc(client);
     if (walked.due) line("cpsc_recalls", `service   ${walked.stopped ? `not read (${walked.stopped})` : `read, ${walked.recalls} recalls`}`);
     return cpscFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
+  });
+
+  /**
+   * The CFTC's enforcement actions in which the company is the party, from 1995 (batch 97): the
+   * Commission's list, read whole once a year and its newest page once a day for every company
+   * (`walkCftc`), then every kept action whose title makes the company the party by the Justice
+   * Department's rule, under its names that year and the units it then owned, from its first price.
+   */
+  await run("cftc", `CFTC actions naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")} as the party`, async () => {
+    const walked = await walkCftc(client);
+    if (walked.due) line("cftc", `list      ${walked.due === "list" ? "read whole" : "newest read"}, ${walked.pages} pages, ${walked.actions} actions stored${walked.stopped ? ` (${walked.stopped})` : ""}`);
+    return cftcFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
   });
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no

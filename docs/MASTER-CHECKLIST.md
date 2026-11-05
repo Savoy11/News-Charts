@@ -988,6 +988,56 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 97: the CFTC's enforcement actions, from 1995 (2026-11-05)
+
+The 2026-11-05 proposal 2, approved by the owner that day. The banks' and energy traders' cases
+before the derivatives regulator had no source.
+
+- [x] **A new source, `cftc`.** The Commission's enforcement list, ten a page, 261 pages:
+      - read whole once a year and its newest page once a day, for every company
+        (`lib/ingest/cftcWalk.ts`, db/039), as the CFPB's list is;
+      - 2,610 rows, 2,607 actions (three listed twice), from 1995-07-27 to 2026-11-03;
+      - a page without the list is an error, not an empty page.
+- [x] **The company is the party** (`lib/cftc.ts`): the Justice Department's rule with the release
+      map's units, from the company's first price, one event a company a day, plus the two forms
+      the proposal measured:
+      - the company as the Commission's object, a one-word name too: "CFTC Orders UBS to Pay $700
+        Million" (2012-12-20);
+      - a registrant's name with its comma: "Goldman, Sachs & Co., a Commission Registrant"
+        (2012-12-08).
+- [x] **Four guards, read from the matches by hand:**
+      - a count before a name: "CFTC Orders Six Financial Institutions to Pay" is not Financial
+        Institutions, Inc.'s (4 actions);
+      - a name only ever after "Former": Citigroup's traders of 2017-06-30 are not Citigroup's;
+      - another company's unit owns its whole name: Prudential Securities (2002) is Prudential
+        Financial's, not Prudential plc's;
+      - an everyday word as the object takes no possessive: "People’s Alternative" is not People
+        Inc.'s. Other names keep the Justice rule's: "CME Group’s New York Mercantile Exchange" is
+        CME's case, "CHS Hedging, LLC" CHS's.
+
+      And one namesake by CIK (`NOT_THE_COMPANY`): CTS Financial Publishing is not CTS Corporation.
+- [x] **Measured,** against every company in the index, before first prices: 83 company days on 33
+      companies, 42 before 2017. JPMorgan 12, Morgan Stanley 7, Goldman Sachs 6, Citigroup 5,
+      Deutsche Bank 5; AEP's suit of 2003 and its settlement of 2005, Duke Energy's and Xcel's
+      trading units of 2003–2004, Black Hills' Enserco, BP's $303 million of 2007. Every case the
+      proposal named lands, and Hartford Financial Group's of 1999 and the Avista officer's stay off.
+- [x] **Licence,** quoted in `lib/cftc.ts` and `SOURCES`: "Government information at the CFTC
+      website is in the public domain…" Acknowledged to the CFTC in the footer, the terms page and
+      the README.
+- Not done here:
+      - first trading days for the 33 companies;
+      - Avista Energy (2001), Avista's trading unit, needs a release-map entry to reach AVA;
+        "Avista Energy" is not "Avista" with a legal word;
+      - the proposal estimated 100–120 releases before 2017; the rule finds 42. The rest name units
+        the map does not hold, or people.
+- **Requests:** www.cftc.gov 263 (every list page, a second apart, and one past the last that held
+  no list).
+- **Checks:** `check:cftc` (27, new, in `npm run check`): the list on every saved page
+  (scripts/fixtures/cftc-list.json.gz, each page's table), the cases the proposal named, the guards,
+  the replay of every company, the walk, and the wiring. On main it cannot run: `lib/cftc.ts` does
+  not exist. `check:contact` counts 30 readers of the shared User-Agent; `check:live` has a case
+  for the real list. `npm run check` and `npm run lint` pass.
+
 ## NC ledger — batch 96: product safety recalls (2026-11-05)
 
 The 2026-10-22 shortlist's #4, approved by the owner on 2026-11-05: "Yes I would like to add
@@ -7471,7 +7521,8 @@ already held, but new investment goes to securities coverage first.
       distributor.
       - *Derived from [`docs/proposals/2026-10-22-news-sources.md`](proposals/2026-10-22-news-sources.md)
         #4, approved 2026-11-05.*
-- [ ] `P2` **The CFTC's enforcement actions, from 1995.** A new source, approved by the owner
+- [x] `P2` **The CFTC's enforcement actions, from 1995.** ✅ **Done in batch 97:** 2,607 actions; 83
+      company days on 33 companies before first prices. A new source, approved by the owner
       2026-11-05: the Commission's enforcement-action list, its site in the public domain by its web
       policy, kept where a release makes a listed company the party, by the release rules and the
       unit map, on every listed party's page.

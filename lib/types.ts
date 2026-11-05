@@ -57,7 +57,8 @@ export type SourceKey =
   | "fed_press"
   | "cfpb"
   | "epa_cases"
-  | "cpsc_recalls";
+  | "cpsc_recalls"
+  | "cftc";
 
 export interface TimelineEvent {
   id: string;

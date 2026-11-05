@@ -66,6 +66,8 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   epa_cases: 1440,
   // the recall service is read whole once a week for every company (lib/ingest/cpscWalk.ts)
   cpsc_recalls: 1440,
+  // the Commission's list: its newest page once a day for every company (lib/ingest/cftcWalk.ts)
+  cftc: 1440,
   // Digitised newspapers from before 1963. These will never change again.
   loc_chronam: 10080,
   // Halvings and network upgrades are settled history; Phase 0 holds nothing live.

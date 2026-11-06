@@ -47,6 +47,7 @@ import { dojArchiveFor, walkDojArchive, withArchive } from "../lib/ingest/dojArc
 import { epaCasesFor, walkEpaCases } from "../lib/ingest/epaWalk";
 import { cpscFor, walkCpsc } from "../lib/ingest/cpscWalk";
 import { cftcFor, walkCftc } from "../lib/ingest/cftcWalk";
+import { digestFor, walkDigest } from "../lib/ingest/secDigestWalk";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
@@ -109,6 +110,9 @@ export const COMPANY_SOURCES = [
   "cpsc_recalls",
   // …and the CFTC's enforcement actions, where the title makes the company the party (batch 97)
   "cftc",
+  // …and the SEC News Digest of 1956–1993, where an entry's party is the company under the name its
+  // record had that day (batch 102)
+  "sec_digest",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -776,6 +780,22 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     const walked = await walkCftc(client);
     if (walked.due) line("cftc", `list      ${walked.due === "list" ? "read whole" : "newest read"}, ${walked.pages} pages, ${walked.actions} actions stored${walked.stopped ? ` (${walked.stopped})` : ""}`);
     return cftcFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
+  });
+
+  /**
+   * The SEC News Digest's entries on the company, 1956–1993 (batch 102): the Digest's archive, each
+   * year's page and each issue's PDF read once for every company, a run's share at a time, and kept
+   * (`walkDigest`), then every kept entry whose party is the company under the names its EDGAR record
+   * (or a predecessor's) had on the issue's day, and no other company's name that day, from its
+   * first price. The 8-K reports listed are grouped a row a month.
+   */
+  await run("sec_digest", `SEC News Digest entries naming ${company.name} under its names of 1956–1993`, async () => {
+    const walked = await walkDigest(client);
+    if (walked.years || walked.issues || walked.missing || walked.stopped) {
+      line("sec_digest", `archive   ${walked.years} year pages, ${walked.issues} issues read (${walked.entries} entries)` + (walked.missing ? `, ${walked.missing} missing` : "") +
+        (walked.left !== undefined ? `, ${walked.left} left` : "") + (walked.stopped ? ` (${walked.stopped})` : ""));
+    }
+    return digestFor(client, subjectId, { edgarName: company.name, alsoKnownAs, cik: company.cik, fundSeries }, walked);
   });
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no

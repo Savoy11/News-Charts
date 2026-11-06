@@ -101,7 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               drug, device and food recalls from the U.S. Food and Drug Administration, and
               press releases from the U.S. Department of Justice and the U.S. Securities and
               Exchange Commission, with the SEC&apos;s litigation releases and administrative
-              proceedings, enforcement actions from the Consumer Financial Protection Bureau,
+              proceedings and its News Digest of 1956–1993, enforcement actions from the Consumer Financial Protection Bureau,
               civil enforcement cases from the U.S. Environmental Protection Agency, product recalls
               from the U.S. Consumer Product Safety Commission, and enforcement actions from the
               Commodity Futures Trading Commission.

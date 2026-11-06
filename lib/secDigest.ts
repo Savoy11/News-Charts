@@ -1,8 +1,11 @@
 import { execFile } from "node:child_process";
+import digestRecords from "../data/digest-records.json";
 import { commonName, withoutTag } from "./edgarName";
+import { predecessorsOf } from "./predecessors";
 import { captionParty } from "./secCases";
 import { newsNamesFor, TICKER_INDEX_COMPANIES } from "./sec";
 import { UA } from "./contact";
+import type { TimelineEvent } from "./types";
 
 /**
  * The SEC News Digest, 1956 to the mid-1990s (2026-11-02 proposal 1, approved with the count
@@ -22,6 +25,11 @@ import { UA } from "./contact";
  */
 export const DIGEST_FROM = 1956;
 export const DIGEST_LAST = 2013;
+/**
+ * The walk's last year (batch 102, step 2): EDGAR holds the filings themselves from 1993 on, and the
+ * names are dated by EDGAR's first company indexes, so the Digest is read for the years before it.
+ */
+export const DIGEST_TO = 1993;
 const TIMEOUT_MS = 60_000;
 
 export const digestArchiveUrl = (year: number): string =>
@@ -89,6 +97,11 @@ export function digestPdfText(pdf: Buffer): Promise<string> {
     });
     child.stdin?.end(pdf);
   });
+}
+
+/** Whether poppler's `pdftotext` answers on this host, asked before the walk reads anything. */
+export function havePdfText(): Promise<boolean> {
+  return new Promise((resolve) => execFile("pdftotext", ["-v"], (err) => resolve(!err || (err as NodeJS.ErrnoException).code !== "ENOENT")));
 }
 
 // ─── sections and entries ──────────────────────────────────────────────────────────────────────
@@ -800,3 +813,166 @@ export function digestIssueRows(
  * record younger than the name.
  */
 export const digestOnPage = (day: string, firstPrice: string | null | undefined): boolean => !!firstPrice && day >= firstPrice;
+
+/**
+ * Step 2 (batch 102, approved by the owner on 2026-11-06): the entries of every issue of 1956–1993
+ * are kept (`lib/ingest/secDigestWalk.ts`, db/040), and each company's ingest finds its own among
+ * them by the rule above, under the names its record had on each issue's day.
+ *
+ * The names are dated by the committed `data/digest-records.json` (`npm run sync:digest-records`):
+ * what EDGAR's company indexes of 1993–1996 called each listed company and each predecessor
+ * `lib/predecessors.ts` maps — the first filing, the first quarter's names, each name's first and
+ * last day. A record absent from them is one EDGAR opened after its phase-in, with no name before.
+ */
+type StoredRecord = { firstFiled: string; firstNames: string[]; names: [string, string, string][] };
+const RECORDS = (digestRecords as unknown as { records: Record<string, StoredRecord> }).records;
+
+/** A record as `namesInUse` reads it, from the committed file, or null where EDGAR did not have it by 1996. */
+export function digestRecordOf(cik: number | string): EdgarRecord | null {
+  const r = RECORDS[String(Number(cik))];
+  return r ? { formerNames: r.names.map(([name, from, to]) => ({ name, from, to })), firstFiled: r.firstFiled, firstNames: [...r.firstNames] } : null;
+}
+
+const NO_RECORD: EdgarRecord = { formerNames: [], firstFiled: null };
+
+/**
+ * Every listed company that can be in the Digest, with its dated names: the one-name rule needs all
+ * of them at once, since an entry two companies' names claim on its day is neither's. Built once a
+ * process from the ticker index and `data/digest-records.json`.
+ */
+export class DigestBook {
+  readonly index: DigestNameIndex;
+  private readonly titles = new Map<number, string>();
+  private readonly records = new Map<number, EdgarRecord>();
+  private readonly before = new Map<number, { name: string; until: string; record: EdgarRecord }[]>();
+  private readonly undated = new Map<number, DigestNames>();
+
+  constructor(companies: readonly (readonly [number, string])[] = TICKER_INDEX_COMPANIES, recordOf: (cik: number) => EdgarRecord | null = digestRecordOf) {
+    for (const [cik, title] of companies) {
+      if (this.titles.has(cik)) continue;
+      const record = recordOf(cik);
+      const preds = predecessorsOf(cik).flatMap((p) => {
+        const r = recordOf(p.cik);
+        return r ? [{ name: p.name, until: p.until, record: r }] : [];
+      });
+      if (!record && !preds.length) continue;
+      this.titles.set(cik, title);
+      if (record) this.records.set(cik, record);
+      this.before.set(cik, preds);
+      const own = record ? [...(record.firstNames ?? []), ...record.formerNames.map((f) => f.name)] : [];
+      const theirs = preds.flatMap((p) => [p.name, ...(p.record.firstNames ?? []), ...p.record.formerNames.map((f) => f.name)]);
+      this.undated.set(cik, digestNames(cik, title, [...own, ...theirs]));
+    }
+    this.index = new DigestNameIndex(this.undated);
+  }
+
+  /** Whether the company can be in the Digest at all: a record EDGAR had by 1996, its own or a predecessor's. */
+  has(cik: number | string): boolean {
+    return this.titles.has(Number(cik));
+  }
+
+  /** Its names on a day (`digestNamesOn`), or null for a company the book does not hold. */
+  namesOn(day: string, cik: number): DigestNames | null {
+    const title = this.titles.get(cik);
+    return title === undefined ? null : digestNamesOn(day, cik, title, this.records.get(cik) ?? NO_RECORD, this.before.get(cik));
+  }
+
+  /** An issue's rows under every company's names on its day (`digestIssueRows`). */
+  rows(day: string, entries: readonly DigestEntry[], onShared?: (entry: DigestEntry, ciks: number[]) => void): DigestRow[] {
+    return digestIssueRows(day, entries, this.index, (cik) => this.namesOn(day, cik), onShared);
+  }
+
+  /**
+   * What the kept entries are asked by for one company: its names' conformed keys, folded keys (a
+   * table row read through the OCR) and the lead words a heading begins with — a superset, which
+   * `rows` then decides.
+   */
+  lookupKeys(cik: number | string): { keys: string[]; folded: string[]; leads: string[] } {
+    const n = this.undated.get(Number(cik));
+    if (!n) return { keys: [], folded: [], leads: [] };
+    return {
+      keys: [...new Set(n.conformed.map(conformedKey).filter(Boolean))],
+      folded: [...new Set(n.conformed.map(foldedKey).filter(Boolean))],
+      leads: [...new Set(n.names.map(lead).filter((k) => k.length >= 2))],
+    };
+  }
+}
+
+/** How a stored entry is asked for: its party's conformed key, folded key and `loose` text (batch 102). */
+export const entryKeys = (party: string) => ({ key: conformedKey(party), folded: foldedKey(party), loose: loose(party) });
+
+/** A Digest row with the issue it came from. */
+export interface DigestPageRow extends DigestRow {
+  url: string;
+}
+
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const longDay = (day: string) => `${MONTH_NAMES[Number(day.slice(5, 7)) - 1]} ${Number(day.slice(8, 10))}, ${day.slice(0, 4)}`;
+const KIND_TITLE: Record<DigestKind, string> = {
+  "8-K report": "8-K report filed",
+  registration: "registration statement filed",
+  "registration effective": "registration statement declared effective",
+  stake: "13D or 14D-1 filing on its shares",
+  order: "SEC order",
+  enforcement: "SEC enforcement action",
+  listing: "listing order",
+  other: "SEC announcement",
+};
+const HEADED: readonly DigestKind[] = ["order", "enforcement", "listing", "other"];
+const kindSlug = (k: DigestKind) => k.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+const quoted = (s: string) => `"${s.replace(/\s+/g, " ").trim().slice(0, 200)}"`;
+
+/**
+ * A company's Digest rows as timeline events, newest first, from `from`, its first price (the
+ * owner's floor, kept for the Digest as for every source). One event an issue and kind, as
+ * `digestIssueRows` groups them, linked to the issue's PDF; a month's 8-K reports one row, under the
+ * month's key from the first (batch 100's lesson), since a company filed one most months. A
+ * registration or a stake is a filing; an order, an enforcement action or a listing order is the
+ * SEC acting, and its heading as printed is the title.
+ */
+export function digestEvents(rows: readonly DigestPageRow[], { cik, from = "" }: { cik: number | string; from?: string }): TimelineEvent[] {
+  const tag = `${Number(cik)}`;
+  const kept = rows.filter((r) => r.day >= from && r.cik === Number(cik));
+  const events: TimelineEvent[] = [];
+  const months = new Map<string, DigestPageRow[]>();
+  for (const r of kept) {
+    if (r.kind === "8-K report") {
+      months.set(r.day.slice(0, 7), [...(months.get(r.day.slice(0, 7)) ?? []), r]);
+      continue;
+    }
+    const lead = r.entries[0];
+    const headed = HEADED.includes(r.kind);
+    const lines = r.entries.map((e) => quoted(e.line));
+    events.push({
+      id: `digest-${tag}-${r.day}-${kindSlug(r.kind)}`,
+      date: r.day,
+      type: headed && r.kind !== "other" ? "regulation" : "filing",
+      title: headed ? `SEC News Digest: ${lead.line.replace(/\s+/g, " ").trim().slice(0, 160)}` : `SEC News Digest: ${KIND_TITLE[r.kind]}`,
+      description: `The SEC's daily summary of ${longDay(r.day)} (${KIND_TITLE[r.kind]}): ${lines.join("; ")}.`.slice(0, 600),
+      source: "SEC News Digest",
+      url: r.url,
+      sourceKey: "sec_digest",
+      externalId: `${r.url}#${kindSlug(r.kind)}`,
+      dedupBasis: `digest:${tag}@${r.day}:${kindSlug(r.kind)}`,
+    });
+  }
+  for (const [month, list] of months) {
+    const sorted = [...list].sort((a, b) => b.day.localeCompare(a.day));
+    const one = sorted.length === 1;
+    const [y, m] = month.split("-");
+    events.push({
+      id: `digest-${tag}-${month}-8-k`,
+      date: one ? sorted[0].day : `${month}-01`,
+      ...(one ? {} : { precision: "month" as const }),
+      type: "filing",
+      title: one ? "SEC News Digest: 8-K report filed" : `SEC News Digest: ${sorted.length} 8-K reports listed, ${MONTH_NAMES[Number(m) - 1]} ${y}`,
+      description: `The SEC's daily summary lists the company's current reports (Form 8-K): ${sorted.map((r) => `${longDay(r.day)}, ${r.entries.map((e) => quoted(e.line)).join("; ")}`).join(" · ")}.`.slice(0, 600),
+      source: "SEC News Digest",
+      url: sorted[0].url,
+      sourceKey: "sec_digest",
+      externalId: sorted.map((r) => `${r.url}#8-k`).join(","),
+      dedupBasis: `digest:${tag}@${month}:8-k`,
+    });
+  }
+  return events.sort((a, b) => b.date.localeCompare(a.date));
+}

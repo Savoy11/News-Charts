@@ -988,6 +988,78 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 102: the SEC News Digest, step 2 — every issue of 1956–1993 kept, each company's own on its page (2026-11-06)
+
+The owner's call of 2026-11-06, "Go ahead with the Digest step 2", on the count batch 87 made
+(the 2026-11-02 proposal 1). A new source, `sec_digest` (id 34), under the licence the SEC cases
+quote ("Information presented on sec.gov is considered public information…"). No key.
+
+- [x] **The walk** (`lib/ingest/secDigestWalk.ts`, `db/040_sec_digest.sql`). Each year's archive
+      page, 1993 back to 1956, is read once for its list of issues. Then each issue's PDF is read
+      once, newest first, and its entries are kept: party, section, the line as printed, and the
+      keys a company is asked by. The PDFs are not kept.
+      - 60 requests a process, a second apart: the ~9,500 issues take about a week of hourly runs.
+      - Only an answer is stored, or an issue www.sec.gov answers 404 for, kept as missing and not
+        asked again. A refusal (403, 429, 503), or a page that is no PDF (a block page), ends the
+        process's asking. A PDF whose text cannot be read is passed over until the next run and
+        reported as an error, so one bad scan cannot hold back the issues behind it. A host without
+        `pdftotext` asks nothing at all.
+- [x] **The dated names** (`DigestBook` in `lib/secDigest.ts`, `data/digest-records.json`). The new
+      `npm run sync:digest-records` writes what EDGAR's sixteen company indexes of 1993–1996 called
+      each listed company and each predecessor `lib/predecessors.ts` maps: the first filing, the
+      first quarter's names, and each name's first and last day.
+      - Built from batch 87's saved zips: 1,455 records of 8,098 companies and predecessors. 3M is
+        MINNESOTA MINING & MANUFACTURING CO from 1993-08-13. JPMorgan's record is CHEMICAL BANKING
+        CORP, then CHASE MANHATTAN CORP /DE/ from 1996-04-02.
+      - A company whose record EDGAR opened after 1996 has no name in the Digest's years, and gets
+        no row.
+- [x] **The company step** (`digestFor`). The kept entries are asked by the keys of the company's
+      names, a superset the book then decides by batch 87's rule: under the names its record had
+      on the issue's day, and no other company's name that day.
+      - Rows count from the company's first price.
+      - A month's 8-K reports are one row, keyed by the month from the first (batch 100's lesson).
+      - An order, an enforcement action or a listing order is the SEC acting (a regulation event),
+        titled by its heading as printed. A registration or a stake is a filing.
+      - Each row links to its issue's PDF. Relevance trusts the rule (0.95); the site's credit line
+        and the terms name the Digest.
+- [x] **Measured on 1985** (the 250 issues batch 87 saved, 23,922 entries): 509 rows on 259
+      companies.
+      - That is one more than batch 87's 508 on 258: Crane Co.'s registration declared effective on
+        1985-10-11 (25445, now Crane NXT). Batch 87's undated first pass counted today's Crane
+        Company (1944013, a record of 2023) as a second claimant of the name; the book holds only
+        records EDGAR had by 1996.
+      - From first prices: 362 rows on 188 pages, as 358 events.
+      - Through the stored-entry lookup, each of the 259 companies gets exactly the replay's events.
+      - **On a real Postgres 16** (local, db/040 applied by `npm run db:migrate`): the walk read the
+        250 saved PDFs through `pdftotext` into the tables in 8.1 s, 23,922 entries. A second walk
+        asked nothing. `digestFor` gave all 259 companies the replay's events, 358 in all, about
+        7 ms a company, the party-key index in use. The rows were deleted afterwards.
+- **Defaults kept, each the owner's to change:**
+  - The first-price floor, as for every source. In 1985 it removes 147 of 509 rows, Georgia
+    Power's 14 among them (its notes trade from 2018).
+  - Names older than EDGAR's (Caterpillar Tractor, Middle South Utilities) stay out of reach
+    without a hand map.
+  - 1994–2013 is not read: EDGAR and the SEC's own listings cover those years.
+- **Not yet run: the walk itself.** www.sec.gov answers 403 to a client without a contact address
+  (batch 101). The walk starts once three things are done on the host that runs ingest:
+  `NEWS_CHARTS_CONTACT` is set, poppler's `pdftotext` is installed, and `npm run db:migrate` has
+  applied db/040. `check:live`'s new case needs the same.
+- **Requests:** none. Everything was built from batch 87's saved files.
+- **Checks:**
+  - New `check:digest-walk` (51 cases):
+    - the names file;
+    - the book's replay of all of 1985, Crane Co. included;
+    - the floor;
+    - the events: month rows, titles, keys, links;
+    - the walk on fake fetchers and a fake database: the order, the run's share, no read twice,
+      every refusal and failure, a missing issue kept as missing, an unreadable one passed over;
+    - the company step through the stored-entry lookup, for all 259 companies;
+    - the wiring.
+  - On main it fails: `data/digest-records.json` and the walk do not exist.
+  - `check:contact` now counts 32 files that read the contact (the sync script).
+  - `check:live-harness` passes with the new live case.
+  - `npm run check` and `npm run lint` pass. HawkScan cannot run here (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 101: Sunoco, Inc. on Energy Transfer, Graco on Newell (2026-11-06)
 
 The owner's call of 2026-11-06, "Put Sunoco on Energy Transfer and Graco on Newell", on the
@@ -7088,7 +7160,7 @@ already held, but new investment goes to securities coverage first.
       - ✅ **Done in batch 81** (see its section): 17 everyday names cleaned, not 14 — the spaced
         "A S" left Novo Nordisk, Turkcell and Anadolu Efes too; Deutsche Bank's SEC releases go from
         0 to 7.
-- [ ] `P1` **The SEC News Digest, 1956 to the mid-1990s: the SEC's own daily record before EDGAR,
+- [x] `P1` **The SEC News Digest, 1956 to the mid-1990s: the SEC's own daily record before EDGAR,
       a count first.** A new source, approved by the owner 2026-11-02: the Digest's yearly archive
       pages (`www.sec.gov/news/digest/digarchives/digarchYYYY.shtml`, 1956–2013), one PDF an issue
       with a text layer, on sec.gov under the licence `lib/secCases.ts` quotes ("Information
@@ -7102,6 +7174,12 @@ already held, but new investment goes to securities coverage first.
         the first-price floor; 50 of 50 sampled rows were right. The count read ~173 MB, not ~140.
         The dated names keep Deutsche Bank AG's order (IC-14293) off DB, whose record began in 2002.
         Step 2 waits on the owner's read of the count; see batch 87's ledger section.
+      - ✅ **The owner's call, 2026-11-06: "Go ahead with the Digest step 2".**
+      - ✅ **Done in batch 102** (see its section): the walk keeps every issue's entries of
+        1956–1993, and each company's ingest puts its own on its page, under the names its EDGAR
+        record had on the issue's day, from its first price. On 1985 it gives 509 rows on 259
+        companies and 358 events on 188 pages. The walk itself starts once `NEWS_CHARTS_CONTACT`
+        and poppler's `pdftotext` are on the ingest host (`docs/OWNER-ACTIONS.md`).
       - What an issue holds, from six read by the scout (1965–1990): enforcement actions with their
         release numbers; Holding Company and Investment Company Act orders (Deutsche Bank AG's
         IC-14293, 1985); Securities Act registrations by registrant; the 8-K reports filed, by
@@ -7123,6 +7201,8 @@ already held, but new investment goes to securities coverage first.
         OCR noise in the column tables.
       - **Open after the count:** whether the Digest keeps the first-price floor (Yahoo's daily
         data begins 1962 at the earliest); the count reports the entries it would remove.
+        Batch 102 kept it, as for every source: in 1985 it removes 147 of 509 rows. Lifting it is
+        the owner's call.
       - A PDF text reader on the ingest path: poppler's `pdftotext` (in this container) or
         `pdfjs-dist` (Apache-2.0). A new check on the six issues' text: Abbott's 8-K of May 1975
         lands on ABT on 1975-06-16, 3M's under its EDGAR former name, Deutsche Bank AG's IC-14293

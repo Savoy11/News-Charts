@@ -526,9 +526,10 @@ batch 100). Against every company in the index, before first prices: 88 company 
 companies, 47 before 2017 (JPMorgan 12, Deutsche Bank 7, Morgan Stanley 7, Barclays 6, Goldman Sachs
 6; AEP's suit of 2003, NRG's of 2004, Duke Energy's and Xcel's trading units of 2003–2004). Public domain, acknowledged to the CFTC.
 
-### The SEC News Digest, counted (`lib/secDigest.ts`)
+### The SEC News Digest (`lib/secDigest.ts`, `lib/ingest/secDigestWalk.ts`)
 
-Not a source yet: the count the owner asked for first (2026-11-02 proposal 1). The Digest is the
+A source since batch 102 (`sec_digest`, the 2026-11-02 proposal 1: the owner asked for a count
+first, then said go ahead on 2026-11-06). The Digest is the
 SEC's daily summary of its business from 1956 — the 8-K reports filed, registration statements,
 13D and 14D-1 filings, Holding Company and Investment Company Act orders, enforcement actions,
 listing and delisting orders — one scanned PDF an issue on yearly archive pages
@@ -567,6 +568,26 @@ would have given 594 rows. Of the 86 the dates take away, 58 are on records EDGA
 (Deutsche Bank's, 2002) and 28 were another company's then. The first-price floor keeps 361 of the
 508. `check:digest` replays six issues, one every five years from 1965 to 1990, against every listed
 company under its dated names.
+
+Step 2, the source (batch 102). The walk reads each year's archive page, 1993 back to 1956, once
+for its issues, then each issue's PDF once, newest first, 60 a process and a second apart (about
+9,500 issues, a week or so of hourly runs). It keeps every entry, with the keys a company is asked
+by, in `sec_digest_years`, `sec_digest_issues` and `sec_digest_entries` (db/040); the PDFs are not
+kept. Only an answer is stored, or an issue www.sec.gov answers 404 for, kept as missing. A refusal
+or a block page ends the process's asking; a PDF whose text cannot be read is passed over until the
+next run, so one bad scan holds back nothing; a host without `pdftotext` asks nothing. Each company's ingest then asks the kept entries by its names' keys and keeps those
+the rule above makes its own, under the names its record had on the issue's day, from its first
+price. A month's 8-K reports are one row; an order, an action or a listing order is the SEC acting,
+titled by its heading; each row links to its issue's PDF. The dated names come from the committed
+`data/digest-records.json`: what EDGAR's sixteen company indexes of 1993–1996 called each listed
+company and each mapped predecessor (1,455 records), written by `npm run sync:digest-records`
+(sixteen zips a second apart from www.sec.gov, or `-- --dir <path>` for saved ones; run after
+`npm run sync:tickers`). On 1985 the source gives 509 rows on 259 companies, 358 events on 188
+pages: batch 87's 508 and Crane Co.'s registration of 1985-10-11, which batch 87's first pass gave
+to no one because today's Crane Company (a 2023 record) seemed to share the name. www.sec.gov
+answers 403 to a client without a contact address, so the walk needs `NEWS_CHARTS_CONTACT`, and
+poppler's `pdftotext`, on the host that runs ingest. `check:digest-walk` replays all of 1985
+through the walk's tables and the company step.
 
 ### Source planning (`lib/enrich/plan.ts`)
 
@@ -1108,6 +1129,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form (`lib/epaCases.ts`); the orders with no penalty grouped a row a month. Public domain under EPA's open data licence; no key |
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
 | Commodity Futures Trading Commission | The Commission's enforcement actions since 1995 whose title makes the company the party — a bank's benchmark-rigging order, an energy trader's manipulation suit | The enforcement list, read whole once a year and its newest page once a day, for every company (`lib/ingest/cftcWalk.ts`); kept by the Justice Department's title rule with the release map's units (`lib/cftc.ts`). Public domain, acknowledged to the CFTC; no key |
+| SEC News Digest | The SEC's daily summary of 1956–1993: the 8-K reports a company filed, its registration statements, the 13D and 14D-1 filings on its shares, the SEC's orders and actions on it, its listing orders | Every issue's PDF read once for every company, 60 a run (`lib/ingest/secDigestWalk.ts`); kept when an entry's party is the company under the name its EDGAR record had that day and no other company's (`lib/secDigest.ts`), from its first price; a month's 8-K reports one row. Public information the SEC lets anyone copy, cited to the SEC; no key; needs `pdftotext` and `NEWS_CHARTS_CONTACT` |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
 | Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |

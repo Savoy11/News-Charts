@@ -44,7 +44,7 @@ export default function TermsPage() {
         vehicle recalls and defect investigations from the National Highway Traffic Safety
         Administration, drug, device and food recalls from the U.S. Food and Drug Administration,
         press releases from the U.S. Department of Justice and the SEC, the SEC&apos;s litigation
-        releases and administrative proceedings,
+        releases and administrative proceedings and its News Digest of 1956–1993,
         enforcement actions from the Consumer Financial Protection Bureau, civil enforcement
         cases from the U.S. Environmental Protection Agency, product recalls from the U.S.
         Consumer Product Safety Commission, enforcement actions from the Commodity Futures Trading

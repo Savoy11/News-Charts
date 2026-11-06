@@ -63,6 +63,10 @@ service sends it in its User-Agent (`lib/contact.ts`). The SEC refuses EDGAR req
 contact, so without it filings, the SEC's releases and its cases stop arriving. Your personal
 address was removed from the code at your request and is not used anywhere.
 
+**And install poppler's `pdftotext`** on the same host (batch 102): the SEC News Digest's issues are
+scanned PDFs, and the walk reads their text with it. Without it the walk asks nothing and the
+Digest's step reports an error each run; every other source runs as before.
+
 `npm run refresh`, hourly. Cron, a GitHub Actions workflow, or the host's scheduler.
 
 **Nothing runs this automatically yet.** Pages read the database — the only fetch on the page path
@@ -203,9 +207,14 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
-- **The SEC News Digest, step 2** (batch 87). The one-year count is done (1985: 508 rows on 258
-  companies, 361 from first prices, 50 of 50 sampled right). Building the full 1956–1993 walk is
-  about 9,500 PDFs, ~5.4 GB, read once; it waits on your read of the count.
+- ~~**The SEC News Digest, step 2** (batch 87).~~ **Decided 2026-11-06 ("Go ahead with the Digest
+  step 2") and built in batch 102.** Three things on the host that runs ingest start the walk of
+  ~9,500 issues (about a week of hourly runs): set `NEWS_CHARTS_CONTACT`, which www.sec.gov needs
+  (it answers 403 without one); install poppler's `pdftotext` (`apt-get install poppler-utils`, or
+  the poppler package for Windows, on the PATH); and run `npm run db:migrate` for db/040. Until
+  then no page carries a Digest row. Two defaults kept, each yours to change: the first-price floor
+  (it removes 147 of 1985's 509 rows), and names older than EDGAR's (Caterpillar Tractor) left
+  out without a hand map.
 - ~~**A unit's cases on its owner's page** (batch 100).~~ **Decided 2026-11-06 and done in batch
   101:** Sunoco, Inc.'s EPA cases are on Energy Transfer's page from 2012-10-05, and Graco Children's
   Products' recalls on Newell's from 1999-03-24, when Newell merged with Rubbermaid, Graco's owner

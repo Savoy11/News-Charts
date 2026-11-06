@@ -52,7 +52,8 @@ reason for anything rejected. Then run the scout in FILE mode.
 ## 1. The SEC News Digest, 1956 to the mid-1990s: the SEC's own daily record before EDGAR — a source for the owner to decide, and a count first · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
 **Status:** APPROVED — by the owner, 2026-11-02: yes to the source, with the count first. Whether the Digest keeps the first-price floor stays open until the count shows what it removes.
-**Counted:** batch 87, 1985: 508 rows on 258 listed companies under the names their EDGAR records had that year, 361 after the first-price floor (`docs/MASTER-CHECKLIST.md`, batch 87's ledger section). Step 2 waits on the owner's read of it.
+**Counted:** batch 87, 1985: 508 rows on 258 listed companies under the names their EDGAR records had that year, 361 after the first-price floor (`docs/MASTER-CHECKLIST.md`, batch 87's ledger section).
+**Step 2:** approved by the owner 2026-11-06 ("Go ahead with the Digest step 2"); built in batch 102, the first-price floor kept.
 **Owner's reason (if rejected):**
 
 **Anchor:** the gap the coverage map calls "the single biggest hole in the corpus"

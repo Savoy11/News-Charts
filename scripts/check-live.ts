@@ -52,6 +52,7 @@ import { cfpbEvents, fetchCfpbPage, type CfpbAction } from "../lib/cfpb";
 import { epaEvents, fetchCaseFile } from "../lib/epaCases";
 import { cpscEvents, fetchRecalls as fetchCpscRecalls } from "../lib/cpscRecalls";
 import { fetchCftcPage } from "../lib/cftc";
+import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue } from "../lib/secDigest";
 import { releaseNamesOn } from "../lib/releaseNames";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
@@ -834,6 +835,30 @@ export const CASES: LiveCase[] = [
       const out: string[] = [];
       if (first.actions.length !== 10) out.push(`page 0 holds ${first.actions.length} actions, not 10`);
       if ((first.lastPage ?? 0) < 260) out.push(`the pager's last page is ${first.lastPage}, before the 260 of 2026-11-05`);
+      return out;
+    },
+  },
+  {
+    name: "SEC News Digest — 1985's archive page and its first issue as the walk reads them; Georgia Power's order by the dated names (batch 102)",
+    covers: ["sec_digest"],
+    hosts: ["www.sec.gov"],
+    async run() {
+      // measured 2026-11-03 (batch 87): the 1985 page lists 250 issues, the first of 1985-01-02, whose
+      // orders section names Georgia Power Company (41091) under its own name; www.sec.gov answers
+      // 403 to a client without a contact (NEWS_CHARTS_CONTACT)
+      const year = await fetchDigestArchive(1985);
+      if (!year.ok) return [`the 1985 page: ${year.httpStatus ?? ""} ${year.detail}`.trim()];
+      const out: string[] = [];
+      if (year.issues.length !== 250) out.push(`the 1985 page lists ${year.issues.length} issues, not 250`);
+      const first = year.issues[0];
+      if (first?.day !== "1985-01-02") return [...out, `the first 1985 issue is ${first?.day}, not 1985-01-02`];
+      await new Promise((r) => setTimeout(r, 1_000));
+      const issue = await fetchDigestIssue(first.url);
+      if (!issue.ok) return [...out, `${first.url}: ${issue.httpStatus ?? ""} ${issue.detail}`.trim()];
+      if (issue.pdf.subarray(0, 5).toString("latin1") !== "%PDF-") return [...out, `${first.url} is not a PDF`];
+      const entries = digestEntries(await digestPdfText(issue.pdf));
+      const rows = new DigestBook().rows(first.day, entries);
+      if (!rows.some((r) => r.cik === 41091 && r.kind === "order")) out.push("no order on Georgia Power (41091) in the 1985-01-02 issue");
       return out;
     },
   },

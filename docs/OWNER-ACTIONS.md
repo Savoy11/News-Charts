@@ -207,6 +207,14 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- **The 2026-11-06 proposals** (batch 103, `docs/proposals/2026-11-06-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`.
+  1. the FDA's new-drug approvals since 1985 on the company that applied (a new source: 461
+     approvals on 82 companies, 279 before 2017);
+  2. EPA's cases filed under the companies' own operating units (Chevron 20→258 rows, BP 4→238,
+     Shell 15→208), with one call inside it: Shell's units from Shell's first price, or from
+     2005-07-20;
+  3. "Also on" links from a case's row to the other listed companies it names.
 - ~~**The SEC News Digest, step 2** (batch 87).~~ **Decided 2026-11-06 ("Go ahead with the Digest
   step 2") and built in batch 102.** Three things on the host that runs ingest start the walk of
   ~9,500 issues (about a week of hourly runs): set `NEWS_CHARTS_CONTACT`, which www.sec.gov needs

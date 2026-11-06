@@ -206,11 +206,10 @@ Raised by the November batches, each recorded in the master checklist:
 - **The SEC News Digest, step 2** (batch 87). The one-year count is done (1985: 508 rows on 258
   companies, 361 from first prices, 50 of 50 sampled right). Building the full 1956–1993 walk is
   about 9,500 PDFs, ~5.4 GB, read once; it waits on your read of the count.
-- **A unit's cases on its owner's page** (batch 100). EPA's cases against Sunoco, Inc. after
-  Energy Transfer bought it (2012-10-05), and the CPSC's recalls by Graco Children's Products after
-  Newell bought it (1998), are kept off the namesakes' pages (Sunoco LP, Graco Inc.) but are on no
-  owner's page either. Putting them on Energy Transfer's and Newell's needs a unit map those two
-  sources do not read today.
+- ~~**A unit's cases on its owner's page** (batch 100).~~ **Decided 2026-11-06 and done in batch
+  101:** Sunoco, Inc.'s EPA cases are on Energy Transfer's page from 2012-10-05, and Graco Children's
+  Products' recalls on Newell's from 1999-03-24, when Newell merged with Rubbermaid, Graco's owner
+  (batch 100 said "1998" by mistake).
 
 Raised by the October ledger batches, each recorded in the master checklist:
 

@@ -1,5 +1,5 @@
 import type { PoolClient } from "pg";
-import { cpscEvents, fetchRecalls, type CpscRecall, type RecallsAnswer } from "../cpscRecalls";
+import { cpscEvents, fetchRecalls, type CpscRecall, type RecallsAnswer, unitKeysOf } from "../cpscRecalls";
 import { isNotesRecord } from "../releaseNames";
 import type { FetchResult } from "../types";
 import { partyNamesFor } from "./secCasesWalk";
@@ -125,7 +125,8 @@ export async function cpscFor(client: PoolClient, subjectId: number, plan: Press
   if (!listed) return failed ? { events: [], ...failed } : NO_PRICES();
   const first = Number(listed.slice(0, 4));
   const years = Array.from({ length: Math.max(1, new Date().getUTCFullYear() - first + 1) }, (_, k) => first + k);
-  const keys = [...new Set(years.flatMap(namesIn).map(letters).filter((k) => k.length >= 2))];
+  // …and the units it owned (`UNITS`): Graco Children's Products' recalls name Graco
+  const keys = [...new Set([...years.flatMap(namesIn).map(letters).filter((k) => k.length >= 2), ...unitKeysOf(plan.cik)])];
   const events = cpscEvents(await storedRecalls(client, keys, listed), namesIn, { cik: plan.cik, from: listed });
   if (failed) return { events, ...failed };
   return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };

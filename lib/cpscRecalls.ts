@@ -192,10 +192,30 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; firm?: R
   1428439: [{ ticker: "ROKU", store: /\btelevision networks? airing on\b/i, why: "Shop LC's television network airing on Roku: Shop LC sold it" }],
 };
 
+/**
+ * The units a listed company owned that recalls name by their own name, by the owner's CIK, each
+ * from the day the company owned it (the owner's call of 2026-11-06: "Put … Graco on Newell"),
+ * read by hand. `key` is the letters the stored recalls are asked by.
+ *
+ * - Graco Children's Products is Newell's from 1999-03-24, the day Newell merged with Rubbermaid,
+ *   Graco's owner: Newell's EDGAR record ends its name "NEWELL CO" on 1999-03-23 and its 8-K of
+ *   1999-03-25 reports an acquisition completed on 1999-03-24 (item 2). Graco's recalls before
+ *   are no listed company's, and none is Graco Inc.'s (`NOT_THE_COMPANY`).
+ */
+export const UNITS: Readonly<Record<number, { ticker: string; unit: string; firm: RegExp; key: string; from: string; to?: string }[]>> = {
+  814453: [{ ticker: "NWL", unit: "Graco Children's Products", firm: /^Graco(?:\s+Children['’]s\s+Products\b.*)?$/i, key: "graco", from: "1999-03-24" }],
+};
+
+/** The letters a company's stored recalls are asked by for its units (`UNITS`). */
+export const unitKeysOf = (cik: number | string): string[] => (UNITS[Number(cik)] ?? []).map((u) => u.key);
+
 /** How the company is named in a recall: as one that made, imported or distributed it, or only sold it. */
 export function roleIn(r: CpscRecall, names: readonly string[], cik?: number | string): "maker" | "importer" | "distributor" | "seller" | null {
   const refused = cik === undefined ? [] : (NOT_THE_COMPANY[Number(cik)] ?? []);
-  const firm = (entry: string) => firmIsCompany(entry, names) && !refused.some((n) => n.firm && (!n.from || r.day >= n.from) && n.firm.test(firmName(entry)));
+  const units = cik === undefined ? [] : (UNITS[Number(cik)] ?? []);
+  const owned = (entry: string) => units.some((u) => r.day >= u.from && (!u.to || r.day <= u.to) && u.firm.test(firmName(entry)));
+  const firm = (entry: string) =>
+    owned(entry) || (firmIsCompany(entry, names) && !refused.some((n) => n.firm && (!n.from || r.day >= n.from) && n.firm.test(firmName(entry))));
   if (r.makers.some(firm)) return "maker";
   if (r.importers.some(firm)) return "importer";
   if (r.distributors.some(firm)) return "distributor";
@@ -233,7 +253,7 @@ export function cpscEvents(recalls: readonly CpscRecall[], namesIn: (year: numbe
     let held = cache.get(year);
     if (!held) {
       const n = namesIn(year);
-      held = { names: n, keys: [...new Set(n.map(letters).filter((k) => k.length >= 2))] };
+      held = { names: n, keys: [...new Set([...n.map(letters).filter((k) => k.length >= 2), ...(cik === undefined ? [] : unitKeysOf(cik))])] };
       cache.set(year, held);
     }
     const all = lettersOf(r);

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import type { PoolClient } from "pg";
 import tickerIndex from "../data/edgar-tickers.json";
-import { NOT_THE_COMPANY, RECALLS_URL, cpscEvents, fetchRecalls, firmIsCompany, firmName, parseRecalls, roleIn, soldAtCompany, unitsOf, type CpscRecall } from "../lib/cpscRecalls";
+import { NOT_THE_COMPANY, RECALLS_URL, UNITS, cpscEvents, fetchRecalls, firmIsCompany, firmName, parseRecalls, roleIn, soldAtCompany, unitsOf, type CpscRecall } from "../lib/cpscRecalls";
 import { dojPossessive } from "../lib/doj";
 import { withoutTag } from "../lib/edgarName";
 import { deterministicScore } from "../lib/enrich/relevance";
@@ -160,8 +160,8 @@ async function main(): Promise<void> {
   }
   const flat = [...out.values()].flat();
   const ownRows = flat.filter((e) => e.precision !== "month" && !/^Sold in its stores: /.test(e.title)).length;
-  check("before any first price: 2,268 rows on 197 companies, 1,626 a recall's own day, 687 as maker, importer or distributor; Target 296, Walmart 236, Amazon 206, Home Depot 196 (2,331 on 218 before batch 100's namesakes and month keys)",
-    flat.length === 2268 && out.size === 197 && flat.filter((e) => e.precision !== "month").length === 1626 && ownRows === 687 &&
+  check("before any first price: 2,290 rows on 197 companies, 1,648 a recall's own day, 709 as maker, importer or distributor; Target 296, Walmart 236, Amazon 206, Home Depot 196 (2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
+    flat.length === 2290 && out.size === 197 && flat.filter((e) => e.precision !== "month").length === 1648 && ownRows === 709 &&
       [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ") === "TGT 296, WMT 236, AMZN 206, HD 196",
     `${flat.length} on ${out.size}; ${flat.filter((e) => e.precision !== "month").length} own; ${ownRows} as maker, importer or distributor; ${[...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ")}`);
 
@@ -199,6 +199,14 @@ async function main(): Promise<void> {
   check("a company's ingest finds its kept recalls by its names, from its first price; with no prices it asks again",
     page.events.length === wmt.length && later.events.every((e) => e.date >= "2020-01") && later.events.length < page.events.length && none.outcome === "error",
     `${page.events.length} / ${wmt.length}; ${later.events.length} from 2020`);
+  // the owner's call of 2026-11-06 (batch 101): Graco Children's Products is Newell's from 1999-03-24
+  const gracos = recalls.filter((r) => [...r.makers, ...r.importers, ...r.distributors].some((f) => /^Graco(?:\s+Children['’]s\s+Products\b.*)?$/i.test(firmName(f))));
+  const nwlPage = await cpscFor(fakeDb({ ...db, listed: "1990-01-02" }), 1, plan("NWL"), noWalk); // a stand-in first price before the merger
+  const onNwl = gracos.filter((r) => has(nwlPage.events, r.number));
+  check("Graco Children's Products' recalls are Newell's from its merger with Rubbermaid, Graco's owner, on 1999-03-24: 22, from 1999-08-27 to 2020-12-16, asked under Graco's name; none before, none on Graco Inc.",
+    onNwl.length === 22 && onNwl.every((r) => r.day >= "1999-03-24") && gracos.some((r) => r.day === "1998-11-24" && !has(nwlPage.events, r.number)) &&
+      UNITS[rowOf("NWL")[0]]?.[0].from === "1999-03-24" && on("GGG").length === 0 && on("NWL").some((e) => e.date === "2020-12-16" && /the company imported it/.test(e.description ?? "")),
+    `${onNwl.length} on NWL: ${onNwl.map((r) => r.day).slice(0, 4).join(",")}…`);
 
   console.log("\nRegistered, licensed, wired");
   const src = SOURCES.find((s) => s.key === "cpsc_recalls");

@@ -988,6 +988,39 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 101: Sunoco, Inc. on Energy Transfer, Graco on Newell (2026-11-06)
+
+The owner's call of 2026-11-06, "Put Sunoco on Energy Transfer and Graco on Newell", on the
+question batch 100 left open. No new source: each of the two sources keeps a short hand-checked
+list of units filed under their own names (`UNITS`), read on the owner's page from the day it owned
+the unit, and its company step asks the stored rows by the unit's name too (`unitKeysOf`). The
+release map (`lib/releaseNames.ts`) is not used: its stems would read "Sunoco" in "Sunoco LP".
+
+- [x] **Sunoco, Inc. on Energy Transfer from 2012-10-05** (`lib/epaCases.ts`, `lib/ingest/epaWalk.ts`).
+      Sunoco, Inc.'s own 8-K of 2012-10-11 reports the completed acquisition and the change of
+      control that day (items 2.01 and 5.01, its EDGAR record). Ten cases, 2012-10-16 to 2020-01-13,
+      the Superfund order of 2013-04-18 among them; the order of 2012-09-27, before the purchase, is
+      on no page, and Sunoco LP keeps only its own.
+- [x] **Graco Children's Products on Newell from 1999-03-24** (`lib/cpscRecalls.ts`,
+      `lib/ingest/cpscWalk.ts`). Newell came to own Graco by merging with Rubbermaid, Graco's owner:
+      Newell's EDGAR record ends its name "NEWELL CO" on 1999-03-23, and its 8-K of 1999-03-25
+      reports an acquisition completed on 1999-03-24 (item 2); Graco's Wikipedia article gives the chain
+      (Rubbermaid, then Newell in 1999). Batch 100 wrote "1998" for Newell's purchase: wrong, and
+      corrected in its section and in `docs/OWNER-ACTIONS.md`. 22 recalls, 1999-08-27 to 2020-12-16,
+      each as maker or importer as the recall names Graco; the two of 1998 are no listed company's,
+      and none is Graco Inc.'s.
+- [x] **Measured:** EPA 5,994 rows on 667 companies before first prices (5,984), CPSC 2,290 on 197
+      (2,268), 709 as maker, importer or distributor (687). No other company's count moves.
+- **Requests:** data.sec.gov 2 (Newell's two filing lists), www.sec.gov 1 (Sunoco's 8-K, refused
+  403 without a contact address, so its event day was read from data.sec.gov's record instead),
+  www.federalregister.gov 1 (no clearance notice for the Graco deal), en.wikipedia.org 2 (the first
+  answered 429). Sunoco's record was the audit's saved copy.
+- **Checks:** `check:epa-cases` 44 (1 new), `check:cpsc` 33 (1 new): each unit through the company
+  step's stored-row lookup, the day it begins, the rows before it on no page, the namesakes still
+  refused; the replays re-pinned, EPA's now asking by unit names as ingest does. On main the new
+  cases fail: `UNITS` does not exist. `npm run check` and `npm run lint` pass. HawkScan cannot run
+  here (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 100: the audit of batches 94–99, and its seven findings fixed (2026-11-05)
 
 The `code-auditor` read batches 94–99 (`b3ce7e5..bf78d3b`). Its report is
@@ -1062,8 +1095,10 @@ found seven defects, all reproduced here and fixed, each with cases that fail on
   Sunoco" (2005-06-16); "Huntington National Bank" is not in `BANK_UNITS`; a company ingested before
   the archive is fully read heals the next day.
 - **For the owner** (not decided here): whether Sunoco, Inc.'s cases from 2012-10-05 belong on
-  Energy Transfer's page as its unit's, and Graco Children's Products' recalls from 1998 on Newell's.
-  Each would need a unit map EPA and the CPSC do not read today.
+  Energy Transfer's page as its unit's, and Graco Children's Products' recalls ~~from 1998~~ on Newell's.
+  Each would need a unit map EPA and the CPSC do not read today. ✅ **Decided 2026-11-06 ("Put
+  Sunoco on Energy Transfer and Graco on Newell") and done in batch 101**; Graco became Newell's on
+  1999-03-24, not in 1998.
 - **Requests:** the audit's 25 (query1/query2.finance.yahoo.com 21, data.sec.gov 3,
   www.justice.gov 1); none here: every fix was measured on the saved data.
 - **Checks:** `check:cpsc` 32 (9 new), `check:epa-cases` 43 (4 new), `check:doj` 94 (2 new),

@@ -83,7 +83,9 @@ company from its first price on; the only names read before it are the units mar
 company it involves, batch 93). It is not a scoring list; keep it that way. A caption names a company only by its name or
 its legal name with legal words after it; the namesakes that rule cannot tell apart were read by
 hand and are listed by CIK in `NOT_THE_COMPANY` (one list each in `lib/secCases.ts`, `lib/fedPress.ts`,
-`lib/cfpb.ts`, `lib/epaCases.ts`, `lib/cftc.ts` and `lib/cpscRecalls.ts`; batch 100 read every CPSC firm by hand). A fund's series is never a party to any of these five rules (`FUND_SERIES`): its page knows only its
+`lib/cfpb.ts`, `lib/epaCases.ts`, `lib/cftc.ts` and `lib/cpscRecalls.ts`; batch 100 read every CPSC firm by hand). EPA and
+the CPSC hold their own short `UNITS` lists instead of the release map: a unit filed under its own name, on its owner's page
+from the day the owner bought it (Sunoco, Inc. on Energy Transfer, Graco Children's Products on Newell; batch 101). A fund's series is never a party to any of these five rules (`FUND_SERIES`): its page knows only its
 series name, and "Growth Fund, Ltd." is a Ponzi scheme's fund, not American Century's. The
 Justice Department's releases of 2001–2008, which its API does not hold, come from its archive's
 month pages, each read once and kept (`lib/dojArchive.ts`, batch 94), under the same rule; a one-word

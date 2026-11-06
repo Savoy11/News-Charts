@@ -11,6 +11,8 @@ import {
   CASE_TABLES,
   MANY_PARTIES,
   NOT_THE_COMPANY,
+  UNITS,
+  unitKeysOf,
   caseReportUrl,
   caseTitle,
   dollars,
@@ -199,7 +201,8 @@ async function main(): Promise<void> {
     seen.add(cik);
     const own = dojPossessive(title, possessiveNameFor(cik));
     const namesIn = (year: number) => [...companyNames(title, namesForYear(year, newsNamesFor(cik), [])), ...(own ? [own] : []), withoutTag(title)];
-    const keys = [...new Set(namesIn(2020).map(alnum).filter((k) => k.length >= 2))].filter((k) => everyKey.includes(k));
+    // …and its units' names, as its ingest asks them (`unitKeysOf`, batch 101)
+    const keys = [...new Set([...namesIn(2020).map(alnum).filter((k) => k.length >= 2), ...unitKeysOf(cik)])].filter((k) => everyKey.includes(k));
     if (!keys.length) continue;
     const held = cases.filter((_, i) => keys.some((k) => keysOf[i].includes(k)));
     const ev = held.length ? epaEvents(held, namesIn, { cik }) : [];
@@ -208,8 +211,8 @@ async function main(): Promise<void> {
   const total = [...out.values()].reduce((n, v) => n + v.length, 0);
   const before2017 = [...out.values()].flat().filter((e) => e.date < "2017").length;
   const own = [...out.values()].flat().filter((e) => e.precision !== "month").length;
-  check("before any first price: 5,984 rows on 667 companies, 5,148 before 2017; 5,734 of them a case's own day (6,001 on 665 before batch 100's slice, month keys and Sunoco guard)",
-    total === 5984 && out.size === 667 && before2017 === 5148 && own === 5734, `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
+  check("before any first price: 5,994 rows on 667 companies, 5,156 before 2017; 5,744 of them a case's own day (5,984 before batch 101's Sunoco, Inc. on Energy Transfer; 6,001 on 665 before batch 100)",
+    total === 5994 && out.size === 667 && before2017 === 5156 && own === 5744, `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
   const top = [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 5).map(([t, v]) => `${t} ${v.length}`).join(", ");
   check("  …most on GE 284, GM 222, Ford 165, ExxonMobil 163, FMC 135", top === "GE 284, GM 222, F 165, XOM 163, FMC 135", top);
 
@@ -253,6 +256,14 @@ async function main(): Promise<void> {
   const failed = await epaCasesFor(fakeDb({ ...db, listed: FIRST_PRICES.CAT }), 1, plan("CAT"), { due: true, cases: 0, failure: { outcome: "throttled", httpStatus: 429 } });
   check("  …asks again while it has no prices, takes none for a fund's series, and a refused read is the run's failure with the kept cases still given",
     none.outcome === "error" && fund.events.length === 0 && failed.outcome === "throttled" && failed.events.length === catPage.events.length);
+  // the owner's call of 2026-11-06 (batch 101): Sunoco, Inc. is Energy Transfer's from 2012-10-05
+  const sunocoInc = cases.filter((c) => c.defendants.some((d) => /^SUNOCO,?\s+(?:INC|INCORPORATED)\b/i.test(d)));
+  const etPage = await epaCasesFor(fakeDb({ ...db, listed: "2012-01-03" }), 1, plan("ET"), noWalk); // a stand-in first price before the purchase
+  const onEt = sunocoInc.filter((c) => has(etPage.events, c.number));
+  check("Sunoco, Inc.'s cases are Energy Transfer's from the day it bought Sunoco, 2012-10-05: ten, from 2012-10-16 to 2020-01-13, the Superfund order of 2013-04-18 among them, asked under Sunoco's name",
+    onEt.length === 10 && onEt.every((c) => c.day >= "2012-10-05") && has(etPage.events, "04-2013-3751") && !has(etPage.events, "02-2012-7305") &&
+      UNITS[rowOf("ET")[0]]?.[0].from === "2012-10-05" && !has(eventsOn("SUN"), "04-2013-3751") && sunocoInc.some((c) => c.day === "2012-09-27"),
+    `${onEt.length} on ET: ${onEt.map((c) => c.day).join(",")}`);
 
   console.log("\nRegistered, licensed, wired");
   const src = SOURCES.find((s) => s.key === "epa_cases");

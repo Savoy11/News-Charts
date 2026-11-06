@@ -467,11 +467,14 @@ the owner's rule of 2026-11-05, so a Superfund site's settlement goes on each li
 and says how many parties it has. A court case or a case with a penalty has its own row, linked to
 EPA's case report; a month's orders with no penalty are grouped into one row, as the Federal
 Register's routine notices are, under the month's key from its first, so a month read with one and
-again with two keeps one row. Against every company in the index, before first prices: 5,984 rows
-on 667 companies, 5,148 before 2017 (GE 284, GM 222, Ford 165, ExxonMobil 163, FMC 135; BP 4, 3M
-67, whose two-letter names the first count left out). Sunoco, Inc., the refiner Energy Transfer
-bought in 2012, is not Sunoco LP, which was Susser Petroleum Partners until 2014 (by CIK,
-`NOT_THE_COMPANY`; batch 100). The
+again with two keeps one row. A unit the company owned whose cases EPA files under the unit's
+name counts from the day it owned it (`UNITS`, read by hand; the owner's call of 2026-11-06):
+Sunoco, Inc.'s cases are Energy Transfer's from 2012-10-05, the day Sunoco's own 8-K gives for the
+completed acquisition, ten of them from 2012-10-16 to 2020-01-13. Sunoco, Inc. is not Sunoco LP,
+which was Susser Petroleum Partners until 2014 (by CIK, `NOT_THE_COMPANY`; batch 100). Against every
+company in the index, before first prices: 5,994 rows on 667 companies, 5,156 before 2017 (GE 284,
+GM 222, Ford 165, ExxonMobil 163, FMC 135; BP 4, 3M 67, whose two-letter names the first count left
+out). The
 first price keeps a successor off its predecessor's years: today's GM listed in 2010, so the old
 GM's $11 million Clean Air Act decree of 1995 is not on it, and today's Kodak stock dates from 2013.
 Public domain under EPA's open data licence; EPA's note that commercial use of documents on its
@@ -495,8 +498,11 @@ goods stores" names no Coffee Holding. Batch 100 read every firm the recalls giv
 and keeps the namesakes off by CIK (`NOT_THE_COMPANY`): Graco Children's Products is not Graco Inc.,
 SLM International's toys not Sallie Mae's, "Asweets Global Inc., City of Industry" not City
 Holding's; eight companies that are no retailers take no store line ("Barnes and Noble" is not
-Noble's). Against every company in the index, before first prices: 2,268 rows on 197 companies,
-687 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
+Noble's). A unit the company owned counts from the day it owned it (`UNITS`; the owner's call of
+2026-11-06): Graco Children's Products' recalls are Newell's from 1999-03-24, the day Newell merged
+with Rubbermaid, Graco's owner (Newell's EDGAR record and 8-K), 22 of them from 1999 to 2020; those
+before are no listed company's. Against every company in the index, before first prices: 2,290 rows
+on 197 companies, 709 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
 IBM's ThinkPad batteries of 2006). A work of the U.S. Government, public domain; the Commission's
 site refused this session's requests (403), so the basis is the law's and the federal catalog's,
 not a page re-read.

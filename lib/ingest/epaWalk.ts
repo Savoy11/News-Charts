@@ -1,5 +1,5 @@
 import type { PoolClient } from "pg";
-import { epaEvents, fetchCaseFile, type CaseFileAnswer, type EpaCase } from "../epaCases";
+import { epaEvents, fetchCaseFile, type CaseFileAnswer, type EpaCase, unitKeysOf } from "../epaCases";
 import { isNotesRecord } from "../releaseNames";
 import type { FetchResult } from "../types";
 import { partyNamesFor } from "./secCasesWalk";
@@ -139,7 +139,8 @@ export async function epaCasesFor(client: PoolClient, subjectId: number, plan: P
   const { listed, namesIn } = await partyNamesFor(client, subjectId, plan);
   if (!listed) return failed ? { events: [], ...failed } : NO_PRICES();
   const years = Array.from({ length: Math.max(1, new Date().getUTCFullYear() - Number(listed.slice(0, 4)) + 1) }, (_, k) => Number(listed.slice(0, 4)) + k);
-  const keys = [...new Set(years.flatMap(namesIn).map(alnum).filter((k) => k.length >= 2))];
+  // …and the units it owned (`UNITS`): Sunoco, Inc.'s cases are filed under Sunoco's name
+  const keys = [...new Set([...years.flatMap(namesIn).map(alnum).filter((k) => k.length >= 2), ...unitKeysOf(plan.cik)])];
   const events = epaEvents(await storedEpaCases(client, keys, listed), namesIn, { cik: plan.cik, from: listed });
   if (failed) return { events, ...failed };
   return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };

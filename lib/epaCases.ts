@@ -196,6 +196,22 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
   1552275: [{ ticker: "SUN", defendant: /^SUNOCO,?\s+(?:INC|INCORPORATED)\b/i, why: "Sunoco, Inc. (EDGAR CIK 95304), the refiner Energy Transfer bought in 2012, not Sunoco LP, which was Susser Petroleum Partners until 2014-10-27" }],
 };
 
+/**
+ * The units a listed company owned whose cases EPA files under the unit's own name, by the owner's
+ * CIK, each from the day the company owned it (the owner's call of 2026-11-06: "Put Sunoco on
+ * Energy Transfer"), read by hand. `key` is the letters the stored cases are asked by.
+ *
+ * - Sunoco, Inc. is Energy Transfer's from 2012-10-05: Sunoco, Inc.'s own 8-K of 2012-10-11
+ *   reports the completion of the acquisition and the change of control that day (items 2.01 and
+ *   5.01). Its cases before are no listed company's; Sunoco LP's own stay Sunoco LP's.
+ */
+export const UNITS: Readonly<Record<number, { ticker: string; unit: string; defendant: RegExp; key: string; from: string; to?: string }[]>> = {
+  1276187: [{ ticker: "ET", unit: "Sunoco, Inc.", defendant: /^SUNOCO,?\s+(?:INC|INCORPORATED)\b/i, key: "sunoco", from: "2012-10-05" }],
+};
+
+/** The letters a company's stored cases are asked by for its units (`UNITS`). */
+export const unitKeysOf = (cik: number | string): string[] => (UNITS[Number(cik)] ?? []).map((u) => u.key);
+
 const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 const lawsOf = (codes: readonly string[]) => codes.map((c) => LAWS[c] ?? c);
@@ -225,7 +241,7 @@ function caseLine(c: EpaCase): string {
  * penalty has its own row, the company's cases of one day one row; the orders and complaints with
  * no penalty are grouped a row a month when a month holds two or more, as the Federal Register's
  * routine notices are (`pageRegulations`). Every listed defendant gets the case, under the
- * owner's rule of 2026-11-05.
+ * owner's rule of 2026-11-05, and a unit the company then owned (`UNITS`).
  *
  * A month's cases with no penalty are kept under the month's key from the first (batch 100, the
  * audit's finding 2), so a month read again when it holds two updates one row; a row stored under
@@ -233,6 +249,7 @@ function caseLine(c: EpaCase): string {
  */
 export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => string[], { cik, from = "" }: { cik?: number | string; from?: string } = {}): TimelineEvent[] {
   const refused = cik === undefined ? [] : (NOT_THE_COMPANY[Number(cik)] ?? []);
+  const units = cik === undefined ? [] : (UNITS[Number(cik)] ?? []);
   const own = new Map<string, EpaCase[]>();
   const routine = new Map<string, EpaCase[]>();
   // the rule runs only on a defendant that holds one of the names' letters at all: a case can name
@@ -252,6 +269,7 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
     const { names, keys } = namesFor(Number(c.day.slice(0, 4)));
     const named = c.defendants.some((d) => {
       const letters = alnum(d);
+      if (units.some((u) => c.day >= u.from && (!u.to || c.day <= u.to) && u.defendant.test(d))) return true;
       return keys.some((k) => letters.includes(k)) && !refused.some((r) => r.defendant.test(d)) && epaParty(d, names) !== null;
     });
     if (!named) continue;

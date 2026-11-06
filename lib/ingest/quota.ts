@@ -51,6 +51,7 @@ export const QUOTAS: Record<SourceKey, Quota> = {
   epa_cases: { perDay: null, note: "EPA's public case file, one 82 MB zip, no key or published cap; read whole once a month for every company, and not again while EPA has not changed it" },
   cpsc_recalls: { perDay: null, note: "the CPSC's public recall service, no key or published cap; every recall in one 28 MB answer, read once a week for every company" },
   cftc: { perDay: null, note: "the CFTC's public enforcement list, no published cap; read whole once a year for every company (about 261 pages, 1s apart), and its newest page once a day" },
+  fda_approvals: { perDay: null, note: "the FDA's compilation of new-drug approvals, one workbook of about 300 KB read once a year by npm run sync:fda-approvals and committed; ingest asks nothing" },
   sec_digest: { perDay: null, note: "the SEC News Digest's closed archive of 1956–1993 on www.sec.gov, no published cap past sec.gov's 10 req/s; each year's page and each issue's PDF read once for every company (38 pages and about 9,500 PDFs), at most 60 a run, 1s apart" },
   sec_cases: { perDay: null, perSecond: 10, note: "the SEC's litigation-release and administrative-proceeding year listings, sec.gov's 10 req/s; each past year of each read once for every company (342 pages for 1995–2026, and 86 more for the months that fill a year's repeated rows, 1s apart), then a page or two a day" },
   fda_enforcement: { perDay: 1000, note: "openFDA without a key: 1,000 requests a day, 240 a minute; three to six a day per mapped company" },

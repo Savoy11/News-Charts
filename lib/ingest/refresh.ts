@@ -71,6 +71,8 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   // the Digest's archive is closed: what is left of it is read a run at a time for every company
   // (lib/ingest/secDigestWalk.ts), so a company's rows can only grow while the walk is unfinished
   sec_digest: 1440,
+  // the approvals are a committed file (lib/fdaApprovals.ts): a company's are read from it, no request
+  fda_approvals: 1440,
   // Digitised newspapers from before 1963. These will never change again.
   loc_chronam: 10080,
   // Halvings and network upgrades are settled history; Phase 0 holds nothing live.

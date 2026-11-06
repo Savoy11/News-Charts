@@ -188,6 +188,37 @@ Siemens AG's, which has no page here (298 from the listing, 2026-10-30). Freseni
 Kabi's recalls and, while it controlled Fresenius Medical Care through FMC's general partner, FMC's
 too, until FMC's deconsolidation on 2023-11-30 (125).
 
+### FDA new-drug approvals (`lib/fdaApprovals.ts`)
+
+A drugmaker's page carries the new drugs and new therapeutic biologics the FDA's drug centre
+approved on its application, from 1985: "FDA approves Prozac (fluoxetine hydrochloride), a new
+molecular entity", on its approval day, with its indication and review beneath, and a link to the
+application's Drugs@FDA page. The source is CDER's compilation of new molecular entities and new
+biologics, one workbook of 1,387 approvals read once a year into the committed
+`data/fda-nme-approvals.json` (`npm run sync:fda-approvals`; the workbook's sheet is read by
+`lib/xlsx.ts`, with the repository's own zip reader, no dependency). Its applicant is the one the
+approval letter names, so an approval is the page of the company that applied, not of the
+company that holds the drug today: Lipitor (1996) was Parke-Davis's, Celebrex (1998) Searle's, and
+neither is on Pfizer's page; Humira (2002) is Abbott's, not AbbVie's.
+
+An applicant is the company when, on the approval's day, it is the company's name by the caption
+rule, one of the FDA recall map's firms on its days (`FDA_FIRMS`), or a name only approvals use
+(`APPLICANT_NAMES`): the company's own other names ("Zeneca", "Lilly", "Bristol-Myers", "Ortho",
+"R.W. Johnson") and the units it bought, from the day each deal closed by the bought company's own
+filings: Celgene on Bristol-Myers Squibb from 2019-11-20, Wyeth on Pfizer from 2009-10-15, Loxo
+Oncology on Lilly from 2019-02-15, Millennium and Ariad on Takeda, Human Genome Sciences on GSK,
+Advanced Accelerator Applications on Novartis from 2018-01-22. Batch 105 gave the recall map's
+Alcon (Novartis from 2010-08-26) and Genzyme (Sanofi from 2011-04-08) the start days the recall
+reports, beginning in 2012, never needed. Joint ventures are no one's (DuPont Merck, Astra Merck,
+Lilly ICOS, TAP), and two applicants are refused by name (`NOT_THE_APPLICANT`): DuPont's
+pharmaceuticals of 1986–2001 are not DuPont de Nemours's, whose record is DowDuPont's of 2015, and
+Block Drug's Actinex (1992) is not Block, Inc.'s. From the first prices of the 26 drugmakers Yahoo
+gave: 435 approvals, 302 before 2017, 66 before EDGAR (1994); most on Johnson & Johnson 47, Merck
+45, Novartis 44, Pfizer 41, Bristol-Myers Squibb 39 and Lilly 34. Left out, read but undecided:
+"Schering" (Schering-Plough's US company, whose record CIK 310158 is today Merck's) and Organon
+before its 2021 spin-off (Akzo Nobel's to 2007, then Schering-Plough's and Merck's). Public domain
+by the FDA's website policies; no key.
+
 ### Justice Department releases (`lib/doj.ts`)
 
 A company's page carries the Justice Department press releases in which it is a party, back to
@@ -1130,6 +1161,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966; defect investigations since 1975 | Recalls of 10,000 vehicles or more, and every investigation NHTSA opened, only for the vehicle and tyre makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014). Public domain; no key |
 | Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 63 banks `lib/fedActions.ts` maps by hand to a listed company — 49 US banks and 14 foreign banks with their US arms; an action against a person is left out. Public domain, cited to the Board; two keyless files |
 | FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 73 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
+| FDA (CDER's new-drug approvals) | New molecular entities and new biologics since 1985, on the page of the company that applied | One committed workbook a year (`npm run sync:fda-approvals`); kept when the applicant is the company by the caption rule, a recall-map firm or a unit it then owned (`lib/fdaApprovals.ts`), from its first price; linked to Drugs@FDA. Public domain; no key |
 | U.S. Department of Justice | Press releases since 2001 (the API's from 2009, the archive's month pages before) in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | SEC newsroom (press releases) | Press releases since 1997 in which a company is the party — the SEC charges, sues or sanctions it, or it settles | The year listing, read once for every company (`lib/ingest/secPressWalk.ts`); kept only when the headline makes the company the party (`lib/secPress.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |

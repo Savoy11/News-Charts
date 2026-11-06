@@ -209,7 +209,9 @@ Raised by the November batches, each recorded in the master checklist:
 
 - ~~**The 2026-11-06 proposals** (batch 103, `docs/proposals/2026-11-06-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`.~~ **Decided 2026-11-06: all three approved, Shell from
-  2005-07-20.** #2 is built (batch 104); #1 and #3 follow.
+  2005-07-20.** #2 is built (batch 104), #1 too (batch 105); #3 follows. Once a year, in the spring
+  when the FDA adds the year before, run `npm run sync:fda-approvals` and commit the file it
+  writes.
   1. the FDA's new-drug approvals since 1985 on the company that applied (a new source: 461
      approvals on 82 companies, 279 before 2017);
   2. EPA's cases filed under the companies' own operating units (Chevron 20→258 rows, BP 4→238,

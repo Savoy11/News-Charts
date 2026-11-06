@@ -42,7 +42,8 @@ export default function TermsPage() {
         decisions, press releases and enforcement actions from the Federal Reserve Board, inflation
         reports from the Bureau of Labor Statistics,
         vehicle recalls and defect investigations from the National Highway Traffic Safety
-        Administration, drug, device and food recalls from the U.S. Food and Drug Administration,
+        Administration, drug, device and food recalls and new-drug approvals from the U.S. Food and Drug
+        Administration,
         press releases from the U.S. Department of Justice and the SEC, the SEC&apos;s litigation
         releases and administrative proceedings and its News Digest of 1956–1993,
         enforcement actions from the Consumer Financial Protection Bureau, civil enforcement

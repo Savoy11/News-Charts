@@ -988,6 +988,79 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 105: the FDA's new-drug approvals since 1985 (2026-11-06)
+
+The owner's approval of 2026-11-06 of the 2026-11-06 proposal 1. A new source, `fda_approvals`
+(id 35): CDER's compilation of new molecular entities and new biologics, in the public domain by the
+FDA's website policies (quoted in `lib/fdaApprovals.ts`). No key, and no request at ingest.
+
+- [x] **The file.** The FDA's workbook (`www.fda.gov/media/177921/download`), read once a year into
+      the committed `data/fda-nme-approvals.json` (new `npm run sync:fda-approvals`).
+      - The sheet is read by the new `lib/xlsx.ts` with the repository's own zip reader, no
+        dependency.
+      - 1,387 approvals, from Lupron (1985-04-09) to Nereus (2025-12-30): 943 before 2017, 279
+        biologics.
+      - The 14 rows of late 2025 whose day the sheet writes as text are read too.
+      - The reading agrees with an independent reading (Python's openpyxl, by the scout) on every
+        row's day and applicant.
+- [x] **The rule** (`approvalIsCompany`). An approval is the company's when its applicant, on its
+      day, is any of:
+      - the company's name by the caption rule;
+      - one of the FDA recall map's firms on its days (`FDA_FIRMS`);
+      - a name only approvals use (`APPLICANT_NAMES`):
+        - the companies' own other names: AstraZeneca and Zeneca, "Lilly", Bristol-Myers, Ortho,
+          R.W. Johnson, McNeil, Takeda, Biogen;
+        - the units they bought, each from the day the deal closed by the bought company's own
+          EDGAR filing list: Celgene on BMS from 2019-11-20, Wyeth on Pfizer from 2009-10-15, Loxo
+          Oncology on Lilly from 2019-02-15, Millennium (2008-05-14) and Ariad (2017-02-16) on
+          Takeda, Human Genome Sciences on GSK from 2012-08-02, Advanced Accelerator Applications on
+          Novartis from 2018-01-22, Centocor on J&J from its Form 15 of 1999-10-13;
+        - two undated deals given a safe bound: Squibb on BMS from 1990, after the 1989 merger;
+          Tibotec on J&J from 2003, after its 2002 purchase.
+
+      An acquisition's past is never the buyer's: Parke-Davis's Lipitor and Searle's Celebrex are
+      no page's.
+- [x] **The fixes the proposal asked for.**
+      - The recall map's Alcon counts on Novartis from 2010-08-26: Alcon's 6-K that day, and
+        Novartis's 13D amendment of 2010-08-30, follow the purchase of Nestlé's majority.
+      - Its Genzyme counts on Sanofi from 2011-04-08 (Genzyme's Form 25). Neither date changes a
+        recall, since the reports begin in 2012.
+      - Joint ventures are no owner's: DuPont Merck, Astra Merck, Lilly ICOS (Cialis), TAP.
+      - `NOT_THE_APPLICANT` refuses DuPont's pharmaceuticals of 1986–2001 on DuPont de Nemours,
+        whose record is DowDuPont's of 2015, and Block Drug's Actinex on Block, Inc.
+- [x] **Measured.**
+      - **From the 26 drugmakers' first prices** (Yahoo's, as the scout read them): 435 approvals,
+        302 before 2017, 66 before EDGAR (1994).
+      - **Largest pages:** Johnson & Johnson 47, Merck 45, Novartis 44, Pfizer 41, Bristol-Myers
+        Squibb 39, Lilly 34, AstraZeneca 24 (Zeneca's of 1995–1997 among them), GSK 23.
+      - **Before any first price:** 556 on 87 companies. The floor then keeps off each company's
+        years before it listed: Alcon's before 2019, Sandoz's before Novartis's listing,
+        Organon's before 2021.
+      - **Read by hand:** every row of the eleven largest pages, and the rest by applicant. Every
+        one is the applicant's company on its day.
+- **Left out, read but undecided:**
+  - "Schering" (12 approvals, 1985–2011): Schering-Plough's US company. MRK's EDGAR record, CIK
+    310158, is Schering-Plough's own; old Merck's was 64978, and `lib/predecessors.ts` maps
+    neither. Whether Schering-Plough's past is Merck's page's is for the next audit, here and in
+    every other source.
+  - Organon before its 2021 spin-off: Akzo Nobel's to 2007, then Schering-Plough's.
+- **Requests:** 14 in all.
+  - data.sec.gov 13: the filing lists of the bought companies: Alcon, Genzyme, Centocor,
+    Millennium, Ariad, Wyeth, Pharmacia, AAA, HGS, Loxo, Aventis, Celgene, Merck.
+  - www.accessdata.fda.gov 1: Prozac's Drugs@FDA page, to prove the link pattern.
+
+  Each carried the User-Agent `News Charts Research`, with no email address, at least 1.1 s apart.
+- **Checks:**
+  - new `check:fda-approvals` (40): the workbook reader, the committed file against the committed
+    workbook (`scripts/fixtures/fda-nme-2026-11-06.xlsx`), each proposal case and unit, the
+    replay, the company step and the wiring;
+  - `check:fda-recalls` 61, unchanged;
+  - `check:contact` now counts 33 files that read the contact;
+  - `check:live` has a new case reading the workbook from www.fda.gov.
+
+  On main the new check fails: the module does not exist. `npm run check` and `npm run lint`
+  pass. HawkScan cannot run here (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 104: EPA's cases under the companies' own operating units (2026-11-06)
 
 The owner's call of 2026-11-06, "Approve all three, Shell from 2005-07-20", on the 2026-11-06
@@ -8029,7 +8102,7 @@ already held, but new investment goes to securities coverage first.
         case of the earlier 5,994 rows lost.
       - *Derived from [`docs/proposals/2026-11-06-proposals.md`](proposals/2026-11-06-proposals.md)
         #2, approved 2026-11-06.*
-- [ ] `P1` **The FDA's new-drug approvals since 1985, on the page of the company that applied.** A
+- [x] `P1` **The FDA's new-drug approvals since 1985, on the page of the company that applied.** A
       new source, approved by the owner 2026-11-06: the FDA's compilation of new-drug approvals
       (`www.fda.gov/media/177921/download`, one Excel file, 1,387 approvals from 1985), whose
       applicant is the one the approval letter names (Lipitor is Parke-Davis's, Humira Abbott's).
@@ -8042,6 +8115,9 @@ already held, but new investment goes to securities coverage first.
         Before building: give the recall map's units their start days (Alcon on Novartis, Genzyme on
         Sanofi) and keep the joint ventures (DuPont Merck, Astra Merck) off Merck; add the older
         names by hand (Zeneca, Ortho, Tibotec, "Lilly", Squibb), about 57 more (an estimate).
+      - ✅ **Done in batch 105** (see its section): the 1,387 approvals committed and read by the
+        repository's own workbook reader; from the 26 drugmakers' first prices, 435 approvals, 302
+        before 2017, 66 before EDGAR; every row of the eleven largest pages read by hand.
       - *Derived from [`docs/proposals/2026-11-06-proposals.md`](proposals/2026-11-06-proposals.md)
         #1, approved 2026-11-06.*
 - [ ] `P2` **A case's other listed companies, linked from its row** ("Also on Ford, General Motors

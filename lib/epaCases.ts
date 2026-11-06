@@ -198,15 +198,156 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
 
 /**
  * The units a listed company owned whose cases EPA files under the unit's own name, by the owner's
- * CIK, each from the day the company owned it (the owner's call of 2026-11-06: "Put Sunoco on
- * Energy Transfer"), read by hand. `key` is the letters the stored cases are asked by.
+ * CIK, each between the days the company owned it, read by hand. `key` is the letters the stored
+ * cases are asked by; a unit with no `from` is the company's own from its first price, which every
+ * rule reads from anyway. A unit `branded` is a brand others also trade under: a station, store or
+ * numbered site under the name (`BRANDED_SITE`) is not the owner's unit. Joint ventures are no
+ * owner's unit (Chevron Phillips Chemical, Motiva, Equilon, Nucor-Yamato). Each day is read from
+ * the owner's or the other party's EDGAR filing list (data.sec.gov, 2026-11-06, batch 104):
  *
  * - Sunoco, Inc. is Energy Transfer's from 2012-10-05: Sunoco, Inc.'s own 8-K of 2012-10-11
  *   reports the completion of the acquisition and the change of control that day (items 2.01 and
- *   5.01). Its cases before are no listed company's; Sunoco LP's own stay Sunoco LP's.
+ *   5.01). Its cases before are no listed company's; Sunoco LP's own stay Sunoco LP's (batch 101).
+ * - Chevron: its operating companies (Chevron U.S.A., its products, pipeline, environmental
+ *   management and other companies) its own; Chevron Chemical to 2000-06-30, the day before Phillips
+ *   Petroleum's 8-K reports the joint venture formed (item 2, 2000-07-01); Texaco from 2001-10-09
+ *   (Chevron's 8-K, item 2; Texaco deregistered the next day); Unocal and Union Oil Company of
+ *   California from 2005-08-10 (Chevron's 8-K, item 2.01; Unocal's Form 15 that day).
+ * - Shell: Shell Oil Company and its chemical, pipeline, offshore and other US companies from
+ *   2005-07-20, when Royal Dutch Shell plc, Shell plc's record, became the group's single parent
+ *   (its listing and S-8 filings of that day): the owner's call of 2026-11-06.
+ * - BP: its US companies its own; Amoco from 1998-12-31 (Amoco's 8-K, items 1 and 4); Atlantic
+ *   Richfield and its units from 2000-04-18 (ARCO's 8-K, items 1 and 4), ARCO Products and BP West
+ *   Coast Products to 2013-05-31 (Tesoro's 8-K of their purchase, item 2.01, 2013-06-01). ARCO
+ *   Chemical went to Lyondell in 1998 and ARCO Alaska to Phillips in 2000, so neither is BP's; a
+ *   bare "ARCO" is left out, since Arco is also a town in Idaho.
+ * - ExxonMobil: Exxon's and ExxonMobil's companies its own; Mobil's from 1999-11-30, when EXXON
+ *   CORP became EXXON MOBIL CORP (its record; Mobil's Form 4 and 13D that day).
+ * - Union Pacific: Union Pacific Railroad its own; Union Pacific Resources to 1996-10-14 (UNP's
+ *   8-K of its distribution, item 2, 1996-10-15). CSX Transportation, Norfolk Southern Railway and
+ *   Consolidated Edison Company of New York their owners' own.
+ * - Waste Management: the state companies ("Waste Management of Illinois") from 1998-07-16, when
+ *   USA Waste Services completed its merger with Waste Management (its 8-K, item 2).
+ * - Murphy Oil USA: Murphy Oil's to 2013-08-29, Murphy USA's from 2013-08-30, the day of the
+ *   spin-off (Murphy USA's 8-K filed 2013-09-05, items 2.01 and 5.01).
+ * - Northrop Grumman: its companies its own, its shipbuilders to 2011-03-30 and Huntington
+ *   Ingalls's from 2011-03-31, the day of the spin-off (HII's 8-K of 2011-04-04, item 2.01).
+ * - Dow Inc.: The Dow Chemical Company and Union Carbide from 2019-04-01, when Dow Inc. became
+ *   their parent (its 8-K of that day).
+ * - PPL: its companies its own, PPL Montana and the other generation companies to 2015-05-31 (Talen
+ *   Energy's 8-K of the spin-off, item 2.01, filed 2015-06-02).
+ * - Verizon: its telephone companies its own; Verizon Information Services and Directories to
+ *   2006-11-16 (Idearc's 8-K of the spin-off, item 2.01); Verizon California, Florida, Texas and
+ *   Southwest to 2016-03-31 and Verizon Northwest, North and West Virginia to 2010-06-30
+ *   (Frontier's 8-Ks of their purchase, item 2.01, 2016-04-01 and 2010-06-30). Verizon Hawaii and
+ *   Micronesia/Pacifica are left out: no filing here gives their sale.
+ * - Akzo Nobel: its coatings companies its own. Its chemicals companies (now Nouryon) are left out:
+ *   AkzoNobel files nothing with the SEC, and the day of their 2018 sale was not read here.
+ * - The rest are each company's own operating companies, under its name: Clean Harbors,
+ *   Halliburton, Nucor, Occidental, Lockheed Martin, General Dynamics, Boeing, Entergy, Duke Energy's
+ *   utilities, Toyota Motor, Home Depot U.S.A., Lowe's Home Centers, Procter & Gamble,
+ *   Kimberly-Clark, Bunge, CEMEX and Silgan.
  */
-export const UNITS: Readonly<Record<number, { ticker: string; unit: string; defendant: RegExp; key: string; from: string; to?: string }[]>> = {
-  1276187: [{ ticker: "ET", unit: "Sunoco, Inc.", defendant: /^SUNOCO,?\s+(?:INC|INCORPORATED)\b/i, key: "sunoco", from: "2012-10-05" }],
+export interface EpaUnit {
+  ticker: string;
+  unit: string;
+  defendant: RegExp;
+  key: string;
+  from?: string;
+  to?: string;
+  branded?: true;
+}
+
+/**
+ * A station, store, dealer or numbered site under an oil brand, or the brand listed with the business
+ * that trades under it ("BP AMOCO; PARTY PLACE"): the brand owner's unit only by name.
+ */
+export const BRANDED_SITE = /\b(?:SERVICE\s+STATIONS?|STATIONS?|STA\b|SVC|TRUCK\s+STOP|CAR\s+WASH|FOOD\s*MART|MINI[- ]?MART|MART|STORES?|DEALER|JOBBER|DISTRIBUTOR|CONVENIENCE|AM\s*\/?\s*PM)\b|#\s*\d|;/i;
+
+const unit = (ticker: string, name: string, defendant: RegExp, key: string, days: { from?: string; to?: string; branded?: true } = {}): EpaUnit => ({ ticker, unit: name, defendant, key, ...days });
+const OIL = { branded: true as const };
+
+export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
+  // Energy Transfer (batch 101)
+  1276187: [unit("ET", "Sunoco, Inc.", /^SUNOCO,?\s+(?:INC|INCORPORATED)\b/i, "sunoco", { from: "2012-10-05" })],
+  // Chevron
+  93410: [
+    unit("CVX", "Chevron U.S.A.", /^CHEVRON,?\s+U\.?\s?S\.?\s?A\b/i, "chevron", OIL),
+    unit("CVX", "Chevron's products, pipeline, environmental and other companies", /^CHEVRON,?\s+(?:PRODUCTS|PIPE ?LINE|ENVIRONMENTAL|ORONITE|RESEARCH|MINING|SHIPPING|NORTH AMERICA|ENERGY TECHNOLOGY)\b/i, "chevron", OIL),
+    unit("CVX", "Chevron Chemical", /^CHEVRON CHEMICAL\b/i, "chevron", { to: "2000-06-30" }),
+    unit("CVX", "Texaco", /^TEXACO,?\s+(?:INC|INCORPORATED|REFINING|CHEMICAL|EXPLORATION|PIPELINE|OIL|U\.?S\.?A|CORP|PRODUCTS|DOWNSTREAM)\b/i, "texaco", { from: "2001-10-09", ...OIL }),
+    unit("CVX", "Unocal", /^UNOCAL\b/i, "unocal", { from: "2005-08-10", ...OIL }),
+    unit("CVX", "Union Oil Company of California", /^UNION OIL CO(?:MPANY)?\.?,? OF CALIFORNIA\b/i, "unionoil", { from: "2005-08-10", ...OIL }),
+  ],
+  // Shell, from the day Shell plc's record became the group's parent (the owner's call)
+  1306965: [unit("SHEL", "Shell Oil Company and its US companies", /^SHELL\s+(?:OIL|CHEMICALS?|PIPE ?LINE|OFFSHORE|WESTERN|DEER PARK|MARTINEZ|EXPLORATION)\b/i, "shell", { from: "2005-07-20", ...OIL })],
+  // BP
+  313807: [
+    unit("BP", "BP's US companies", /^BP\s+(?:PRODUCTS|EXPLORATION|AMOCO|OIL|AMERICA|PIPELINES?|CHEMICALS?|CORPORATION NORTH AMERICA|NORTH AMERICA)\b/i, "bp", OIL),
+    unit("BP", "BP West Coast Products", /^BP\s+WEST COAST\b/i, "bpwestcoast", { to: "2013-05-31", ...OIL }),
+    unit("BP", "Amoco", /^AMOCO,?\s+(?:OIL|CHEMICALS?|CORP|PRODUCTION|PIPE ?LINE|REFINING|COMPANY|POLYMERS)\b/i, "amoco", { from: "1998-12-31", ...OIL }),
+    unit("BP", "Atlantic Richfield", /^ATLANTIC RICHFIELD\b/i, "atlanticrichfield", { from: "2000-04-18", ...OIL }),
+    unit("BP", "ARCO's units", /^ARCO\s+(?:METALS?|TERMINAL|ENVIRONMENTAL|PIPE ?LINE|OIL|COAL|TRANSPORTATION|MARINE)\b/i, "arco", { from: "2000-04-18", ...OIL }),
+    unit("BP", "ARCO Products", /^ARCO\s+PRODUCTS\b/i, "arcoproducts", { from: "2000-04-18", to: "2013-05-31", ...OIL }),
+  ],
+  // ExxonMobil (its record of 2026; the predecessor's to the handover, lib/predecessors.ts)
+  2115436: [
+    unit("XOM", "Exxon's and ExxonMobil's companies", /^EXXON\s?MOBIL\s+(?:OIL|PRODUCTION|PIPELINE|CHEMICAL|REFINING|RESEARCH|GLOBAL)\b|^EXXON,?\s+(?:CHEMICAL|COMPANY,?\s+U\.?S\.?A|U\.?S\.?A|PIPELINE|RESEARCH|PRODUCTION|COAL)\b/i, "exxon", OIL),
+    unit("XOM", "Mobil", /^MOBIL\s+(?:OIL|CHEMICAL|CORP|EXPLORATION|PIPE ?LINE|PRODUCING)\b/i, "mobil", { from: "1999-11-30", ...OIL }),
+  ],
+  // the railroads
+  100885: [
+    unit("UNP", "Union Pacific Railroad", /^UNION PACIFIC RAIL ?ROAD\b/i, "unionpacific"),
+    unit("UNP", "Union Pacific Resources", /^UNION PACIFIC RESOURCES\b/i, "unionpacific", { to: "1996-10-14" }),
+  ],
+  277948: [unit("CSX", "CSX Transportation", /^CSX\s+(?:TRANSPORTATION|TRANSPORATION|INTERMODAL|REAL PROPERTY)\b/i, "csx")],
+  702165: [unit("NSC", "Norfolk Southern Railway", /^NORFOLK SOUTHERN RAILWAY\b/i, "norfolksouthern")],
+  // Waste Management, from its merger with USA Waste Services
+  823768: [unit("WM", "Waste Management's state companies", /^WASTE MANAGEMENT,?\s+(?:INC\.?,?\s+)?OF\b/i, "wastemanagement", { from: "1998-07-16" })],
+  // Murphy Oil USA, before and after its spin-off
+  717423: [unit("MUR", "Murphy Oil USA", /^MURPHY OIL\s+U\.?\s?S\.?\s?A\b/i, "murphyoil", { to: "2013-08-29" })],
+  1573516: [unit("MUSA", "Murphy Oil USA", /^MURPHY OIL\s+U\.?\s?S\.?\s?A\b/i, "murphyoil", { from: "2013-08-30" })],
+  // Northrop Grumman's shipbuilders, Huntington Ingalls's from the spin-off
+  1133421: [
+    unit("NOC", "Northrop Grumman's companies", /^NORTHROP GRUMMAN\b(?!\s*[-,]?\s*(?:SHIP|SHIPBUILDING|NEWPORT|GULFPORT|AVONDALE|INGALLS|PASCAGOULA))/i, "northropgrumman"),
+    unit("NOC", "Northrop Grumman's shipbuilders", /^NORTHROP GRUMMAN\s*[-,]?\s*(?:SHIP|SHIPBUILDING|NEWPORT|GULFPORT|AVONDALE|INGALLS|PASCAGOULA)/i, "northropgrumman", { to: "2011-03-30" }),
+  ],
+  1501585: [unit("HII", "Northrop Grumman's shipbuilders", /^NORTHROP GRUMMAN\s*[-,]?\s*(?:SHIP|SHIPBUILDING|NEWPORT|GULFPORT|AVONDALE|INGALLS|PASCAGOULA)/i, "northropgrumman", { from: "2011-03-31" })],
+  // Dow Inc., from the day it became the parent
+  1751788: [unit("DOW", "The Dow Chemical Company", /^(?:THE\s+)?DOW CHEMICAL\b/i, "dowchemical", { from: "2019-04-01" }), unit("DOW", "Union Carbide", /^UNION CARBIDE\b/i, "unioncarbide", { from: "2019-04-01" })],
+  // PPL, its generation companies to the Talen spin-off
+  922224: [
+    unit("PPL", "PPL's companies", /^PPL\b(?!\s+(?:MONTANA|ENERGY SUPPLY|GENERATION|ENERGYPLUS|SUSQUEHANNA|BRUNNER|MARTINS CREEK|HOLTWOOD))/i, "ppl"),
+    unit("PPL", "PPL Montana and the generation companies", /^PPL\s+(?:MONTANA|ENERGY SUPPLY|GENERATION|ENERGYPLUS|SUSQUEHANNA|BRUNNER|MARTINS CREEK|HOLTWOOD)\b/i, "ppl", { to: "2015-05-31" }),
+  ],
+  // Verizon, each sold company to its sale
+  732712: [
+    unit("VZ", "Verizon's telephone companies", /^VERIZON\b(?![\s/,]+(?:MICRONESIA|PACIFICA|HAWAII|INFORMATION SERVICES|DIRECTORIES|CALIFORNIA|FLORIDA|TEXAS|SOUTHWEST|SW|NORTHWEST|NORTH|WEST VIRGINIA)\b)/i, "verizon"),
+    unit("VZ", "Verizon Information Services", /^VERIZON\s+(?:INFORMATION SERVICES|DIRECTORIES)\b/i, "verizon", { to: "2006-11-16" }),
+    unit("VZ", "Verizon California, Florida, Texas and Southwest", /^VERIZON\s+(?:CALIFORNIA|FLORIDA|TEXAS|SOUTHWEST|SW)\b/i, "verizon", { to: "2016-03-31" }),
+    unit("VZ", "Verizon Northwest, North and West Virginia", /^VERIZON\s+(?:NORTHWEST|NORTH|WEST VIRGINIA)\b/i, "verizon", { to: "2010-06-30" }),
+  ],
+  // Akzo Nobel's coatings companies
+  3124: [unit("AKZOY", "Akzo Nobel's coatings companies", /^AKZO[- ]?NOBEL\b(?![\s,]+(?:CHEMICALS?|SURFACE|FUNCTIONAL|POLYMER|PULP|INDUSTRIAL|BASE|SALT)\b)/i, "akzonobel")],
+  // each company's own operating companies
+  822818: [unit("CLH", "Clean Harbors' companies", /^CLEAN HARBORS\b/i, "cleanharbors")],
+  1047862: [unit("ED", "Consolidated Edison Company of New York", /^CONSOLIDATED EDISON\s+(?:CO(?:MPANY)?\.?\s+)?OF\s+N/i, "consolidatededison")],
+  45012: [unit("HAL", "Halliburton's companies", /^HALLIBURTON\b/i, "halliburton")],
+  73309: [unit("NUE", "Nucor's steel companies", /^NUCOR\b(?![- ]?\s*(?:YAMATO|TAMATO))/i, "nucor")],
+  797468: [unit("OXY", "Occidental Chemical and Occidental's companies", /^OCCIDENTAL\s+(?:CHEMICAL|PETROLEUM|OIL|EXPLORATION|PERMIAN)\b/i, "occidental")],
+  936468: [unit("LMT", "Lockheed Martin's companies", /^LOCKHEED MARTIN\b/i, "lockheedmartin")],
+  40533: [unit("GD", "General Dynamics' companies", /^GENERAL DYNAMICS\b/i, "generaldynamics")],
+  12927: [unit("BA", "Boeing's companies", /^BOEING\b/i, "boeing")],
+  65984: [unit("ETR", "Entergy's utilities", /^ENTERGY\b/i, "entergy")],
+  1326160: [unit("DUK", "Duke Energy's utilities", /^DUKE ENERGY\s+(?:CAROLINAS|FLORIDA|INDIANA|OHIO|PROGRESS|KENTUCKY)\b/i, "dukeenergy")],
+  1094517: [unit("TM", "Toyota Motor's US companies", /^TOYOTA MOTOR\b/i, "toyotamotor")],
+  354950: [unit("HD", "Home Depot U.S.A.", /^(?:THE\s+)?HOME DEPOT,?\s+(?:U\.?\s?S\.?\s?A|NORTHEASTERN)/i, "homedepot")],
+  60667: [unit("LOW", "Lowe's Home Centers", /^LOWE'?S\s+HOME\s+CENTER/i, "loweshomecenter")],
+  80424: [unit("PG", "Procter & Gamble's companies", /^PROCTER\s+(?:&|AND)\s+GAMBLE\b/i, "procter")],
+  55785: [unit("KMB", "Kimberly-Clark's companies", /^KIMBERLY[- ]?CLARK\b(?!\s+PRINTING)/i, "kimberlyclark")],
+  1996862: [unit("BG", "Bunge North America", /^BUNGE\b/i, "bunge")],
+  1076378: [unit("CX", "CEMEX's US companies", /^CEMEX\b/i, "cemex")],
+  849869: [unit("SLGN", "Silgan's companies", /^SILGAN\b/i, "silgan")],
 };
 
 /** The letters a company's stored cases are asked by for its units (`UNITS`). */
@@ -269,7 +410,7 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
     const { names, keys } = namesFor(Number(c.day.slice(0, 4)));
     const named = c.defendants.some((d) => {
       const letters = alnum(d);
-      if (units.some((u) => c.day >= u.from && (!u.to || c.day <= u.to) && u.defendant.test(d))) return true;
+      if (units.some((u) => c.day >= (u.from ?? "") && (!u.to || c.day <= u.to) && u.defendant.test(d.trim()) && !(u.branded && BRANDED_SITE.test(d)))) return true;
       return keys.some((k) => letters.includes(k)) && !refused.some((r) => r.defendant.test(d)) && epaParty(d, names) !== null;
     });
     if (!named) continue;

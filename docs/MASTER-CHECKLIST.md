@@ -988,6 +988,87 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 103: a new opportunity-scout run, three proposals for the owner (2026-11-06)
+
+Every proposal of 2026-11-02 and 2026-11-05 is approved and built (batches 87–102). So the
+`opportunity-scout` read the repository again at `9718f0e` and wrote
+`docs/proposals/2026-11-06-proposals.md`: three proposals, all **PENDING**, ranked with securities
+depth first. Nothing is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      1. `P1` **The FDA's new-drug approvals since 1985, on the page of the company that applied.**
+         A new source for the owner to decide.
+         - **Why it is back:** the 2026-10-26 run cut drug approvals because Drugs@FDA's sponsor
+           field names today's holder. The FDA's compilation of new-drug approvals records the
+           applicant from the approval letter: Lipitor (1996) is Parke-Davis's, Celebrex Searle's,
+           Humira (2002) Abbott's, not AbbVie's.
+         - **The file:** one 294 KB Excel file, read once a year into a committed file. It holds
+           1,387 approvals from 1985-04-09 to 2025-12-30: 943 before 2017, 208 before 1993.
+         - **Measured** through the caption rule and the recall map's firms, from first prices:
+           461 approvals on 82 companies, 279 of them before 2017 on 38 companies, 53 before 1993.
+           Most: Merck 47, Novartis 45, Pfizer 39, J&J 32, BMS 30, Lilly 27.
+         - **Read by hand:** 12 need fixing (Alcon's five on Novartis before Novartis owned it,
+           Genzyme's five on Sanofi, the DuPont Merck and Astra Merck ventures on Merck), because
+           the recall map's units have no start day. A hand list of older names (Zeneca, Ortho,
+           Tibotec, "Lilly", Squibb) would add about 57 more: an estimate.
+         - **Licence:** the FDA's website policies put its content in the public domain (quoted in
+           the file). No key, no recurring cost.
+      2. `P1` **EPA's cases against the companies' own operating units.** No new source: more
+         hand-checked entries in batch 101's `UNITS`.
+         - **The gap:** ExxonMobil's page has 163 EPA rows, Chevron's 20, Shell's 15, Union
+           Pacific's 6 and Norfolk Southern's none. EPA files the cases under the subsidiaries'
+           names (Chevron U.S.A., Shell Oil Company, Union Pacific Railroad), which the caption
+           rule rightly refuses.
+         - **The proposal:** about 70 unit patterns on 33 companies, each with the days its owner
+           held it, a guard against branded stations ("SHELL SERVICE STATION #000329"), and joint
+           ventures left out.
+         - **Measured** on batch 95's saved case file, from first prices: 1,607 rows added, 1,382
+           before 2017, 715 of them a court case or a penalty. Chevron 20→258, BP 4→238, Shell
+           15→208, Occidental 10→152, Union Pacific 6→98, CSX 5→77. In a fixed random sample of 40
+           cases, every one names the company or its unit; six fall outside the ownership days,
+           which drop them.
+         - **One new owner call:** whether Shell's units count from Shell's first price (100
+           court-or-penalty days from 1984) or from 2005-07-20, when Royal Dutch Shell plc became
+           the group's single parent (22 days).
+      3. `P2` **A case's other listed companies, linked from its row** ("Also on Ford, General
+         Motors and 25 more").
+         - **Why it is back:** cut on 2026-10-26 with "nothing to show". The owner's rule that a
+           case goes on every company it involves (batch 93), and four sources built since (EPA,
+           the CPSC, the CFTC, the Board's 1996–2005 orders), change that.
+         - **Measured** on batch 95's saved replay: 543 EPA cases are on two or more companies'
+           pages; 2,659 of 5,996 rows (44%) hold a case another page also holds; one case is on
+           30 companies.
+         - **Build:** one read beside `loadEvents` and one line in `EventList`; no new data. It
+           can only name companies whose pages are held, so those counts are a ceiling.
+- **Cut, with reasons in the file:**
+  - the Treasury's TARP capital purchases: 707 institutions, 109 matches on 108 companies, at least
+    7 of them namesakes; in a sample of five banks, 9 of 11 investment and exit days already carry
+    the bank's own 8-K within four days;
+  - OFAC's civil penalties: 11 matches on 3 of its 23 yearly pages, the large penalties on
+    companies with no SEC record here;
+  - not retried: the FTC, the OCC and USDA FSIS (unreachable on 2026-11-05); the FDIC's failed-bank
+    list (still no licence stated);
+  - not measured: a drug's later indications, device approvals, the NTSB, PHMSA.
+- **Not raised again:** the open owner calls (JCI's 2016 case on Tyco's record, GE Capital Retail
+  Bank on GE, PayPal's 2015 action on eBay, the Digest's first-price floor and its names older
+  than EDGAR's).
+- **Two things the scout noticed in passing, for the next audit** (not checked or fixed here):
+  - "Independent Bank Corp." is the EDGAR name of two listed companies (INDB, Rockland,
+    Massachusetts, and IBCP, Michigan). In the scout's TARP replay the caption rule gave the
+    Rockland bank's investment to both, and a source read by that rule could do the same.
+  - The old Waste Management, Inc.'s Superfund consent decree of 1998-05-11 (case 04-1996-0208),
+    from before its 1998 merger with USA Waste Services, is on WM's page under WM's present name.
+    The saved replay confirms the row is there, with three more of 1997–1998. Whether a
+    predecessor's cases belong on WM's page is for the audit to settle.
+- **Requests** (the scout's, listed in the file's header): 63, every one answered 200, none
+  redirected, each at least 1.1 s apart, with the User-Agent `News Charts Research` and no email
+  address.
+  - query1.finance.yahoo.com 38 (first trading days), data.sec.gov 12, home.treasury.gov 5,
+    www.fda.gov 4, ofac.treasury.gov 4.
+  - No www.sec.gov page was asked, and Postgres was not used. This batch made none of its own.
+- **Checks:** `npm run check` and `npm run lint` pass. The batch changes docs only.
+
 ## NC ledger — batch 102: the SEC News Digest, step 2 — every issue of 1956–1993 kept, each company's own on its page (2026-11-06)
 
 The owner's call of 2026-11-06, "Go ahead with the Digest step 2", on the count batch 87 made

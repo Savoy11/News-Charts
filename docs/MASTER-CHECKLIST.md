@@ -988,6 +988,96 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 104: EPA's cases under the companies' own operating units (2026-11-06)
+
+The owner's call of 2026-11-06, "Approve all three, Shell from 2005-07-20", on the 2026-11-06
+proposals. This batch files all three into Scope refocus and builds #2. No new source: batch 101's
+hand-checked `UNITS` list in `lib/epaCases.ts` grows from one entry (Sunoco, Inc.) to 53, adding 52 on
+34 companies, each between the days its owner held it. #1 (the FDA's new-drug approvals) and #3 ("Also on" links) are next.
+
+- [x] **The units, each day read from an EDGAR filing list** (data.sec.gov):
+      - **Chevron:** its operating companies (Chevron U.S.A., products, pipeline, environmental
+        management, mining…) its own; Chevron Chemical to 2000-06-30, the day before Phillips
+        Petroleum's 8-K reports the joint venture formed (item 2, 2000-07-01); Texaco from 2001-10-09
+        (Chevron's 8-K, item 2); Unocal and Union Oil Company of California from 2005-08-10
+        (Chevron's 8-K, item 2.01).
+      - **Shell:** Shell Oil Company and its US companies from 2005-07-20, the owner's call: that
+        day Royal Dutch Shell plc, Shell plc's record, filed its listing and S-8.
+      - **BP:** its US companies its own; Amoco from 1998-12-31 (Amoco's 8-K, items 1 and 4);
+        Atlantic Richfield and its units from 2000-04-18 (ARCO's 8-K, items 1 and 4); ARCO
+        Products and BP West Coast Products to 2013-05-31 (Tesoro's 8-K of their purchase, item
+        2.01). ARCO Chemical (Lyondell's from 1998) and ARCO Alaska (Phillips's) are not BP's, and a
+        bare "ARCO" is left out: in EPA's file it is also Arco, Idaho's airport.
+      - **ExxonMobil:** its companies its own; Mobil's from 1999-11-30, when EXXON CORP became EXXON
+        MOBIL CORP (its record).
+      - **Union Pacific Railroad** its owner's; Union Pacific Resources to 1996-10-14 (UNP's 8-K of
+        its distribution, item 2). **CSX Transportation**, **Norfolk Southern Railway** and **Con
+        Edison of New York** their owners'.
+      - **Waste Management's state companies** from 1998-07-16, the merger with USA Waste Services
+        (its 8-K, item 2).
+      - **Murphy Oil USA:** Murphy Oil's to 2013-08-29, Murphy USA's from 2013-08-30 (Murphy USA's
+        8-K, items 2.01 and 5.01).
+      - **Northrop Grumman's shipbuilders** to 2011-03-30, then Huntington Ingalls's (HII's 8-K of
+        the spin-off, item 2.01): Northrop Grumman Ship Systems' decree of 2016 is on HII's page.
+      - **Dow Inc.:** The Dow Chemical Company and Union Carbide from 2019-04-01 (its 8-K).
+      - **PPL:** PPL Montana and the other generation companies to 2015-05-31 (Talen Energy's 8-K of
+        the spin-off, item 2.01).
+      - **Verizon:** Information Services to 2006-11-16 (Idearc's 8-K, item 2.01); California,
+        Florida, Texas and Southwest to 2016-03-31, and Northwest, North and West Virginia to
+        2010-06-30 (Frontier's 8-Ks, item 2.01). Hawaii and Micronesia/Pacifica are left out: no
+        filing here gives their sale.
+      - **Akzo Nobel's coatings companies.** Its chemicals companies (now Nouryon) are left out:
+        AkzoNobel files nothing with the SEC, and Wikipedia answered 429, so the 2018 sale's day was
+        not read.
+      - **Each company's own operating companies** under its name: Clean Harbors, Halliburton, Nucor
+        (not Nucor-Yamato, a joint venture), Occidental, Lockheed Martin, General Dynamics, Boeing,
+        Entergy, Duke Energy's utilities, Toyota Motor, Home Depot U.S.A., Lowe's Home Centers,
+        Procter & Gamble, Kimberly-Clark (not "Kimberly Clark Printing", 2001), Bunge, CEMEX, Silgan.
+- [x] **The guards:**
+      - a station, store, dealer, numbered site or "AM/PM" under an oil brand is not the brand's unit
+        (`BRANDED_SITE`). It refuses 15 defendant entries in the slice: "AMOCO OIL CO. (#0234)", "MOBIL OIL
+        R/S #12634", "UNOCAL (SERVICE STATIONS)"; and so does a brand listed with its dealer ("BP
+        AMOCO; PARTY PLACE");
+      - joint ventures are no owner's unit: Chevron Phillips Chemical, Motiva, Equilon,
+        Nucor-Yamato.
+- [x] **Measured** on the slice, rebuilt from batch 95's saved copy of EPA's file with every case a
+      unit names on any day (4,289 → 6,028 cases). The old rule on the new slice gives exactly the old
+      5,994 rows on 667 companies, so the rebuild changes nothing by itself.
+      - **Before first prices:** 7,436 rows on 670 companies, 6,376 before 2017. Of the earlier 5,994
+        rows, every case is still on its page; the rows that changed took another case of the same
+        day.
+      - **From first prices,** the largest gains: Chevron 20→258, BP 4→230, Occidental 10→152,
+        Union Pacific 6→98, ExxonMobil 163→273, Waste Management 29→103, CSX 5→77, Shell 15→79
+        (from 2005-07-20), Clean Harbors 18→70, Akzo Nobel 8→40 (coatings only), Norfolk
+        Southern 0→30, Dow 0→22.
+      - **Read by hand:** a fixed random sample of 40 of the 674 added court or penalty cases.
+        Every one names the company or its unit inside the owner's days: Mobil Oil's Superfund
+        decree of 2000 on ExxonMobil, Union Carbide's of 2019 on Dow, Glidden's of 2010 on Akzo
+        Nobel (before the PPG sale), Murphy Oil USA's of 1997 on Murphy Oil. The doubtful names were
+        read by their days too: General Dynamics' Fort Worth division (1991, before the 1993 sale)
+        and Mobil Oil Guam (2000–2010).
+- **Left for later:** Akzo Nobel's chemicals companies, Verizon Hawaii and Micronesia (their sale
+  days); the other ~630 companies with EPA rows, whose units no one has read; former names, which
+  ingest adds.
+- **Requests:** 33 in all.
+  - data.sec.gov 29: the filing lists of 21 companies, several in two parts. One, asked at a mistyped
+    address, answered 404 and was asked again.
+  - en.wikipedia.org 4: three answered 429, and one returned AkzoNobel's summary without the date.
+
+  Each carried the User-Agent `News Charts Research`, with no email address, at least 1.1 s apart.
+- **Checks:** `check:epa-cases` 56 (12 new):
+  - each proposal case: Chevron U.S.A.'s decree of 1995, Shell Oil's of 1996 on no page and its
+    decree of 2005 on Shell's, Atlantic Richfield's of 2011 on BP and of 1997 on none, Amoco's of
+    1984 on none, Murphy Oil USA's of 2002 on Murphy Oil;
+  - Mobil before and after the merger, Union Carbide before and after 2019, Northrop's shipbuilder
+    on HII, Verizon's directories, the station guard, bare ARCO, the joint ventures;
+  - the company step asking stored cases by the units' names (Atlantic Richfield's 2000 order on
+    BP's page);
+  - the replay re-pinned.
+
+  On main the new cases fail: neither the units nor `BRANDED_SITE` exist. `npm run check` and `npm
+  run lint` pass. HawkScan cannot run here (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 103: a new opportunity-scout run, three proposals for the owner (2026-11-06)
 
 Every proposal of 2026-11-02 and 2026-11-05 is approved and built (batches 87–102). So the
@@ -995,8 +1085,10 @@ Every proposal of 2026-11-02 and 2026-11-05 is approved and built (batches 87–
 `docs/proposals/2026-11-06-proposals.md`: three proposals, all **PENDING**, ranked with securities
 depth first. Nothing is built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ **Marked 2026-11-06: all three approved** ("Approve all three, Shell from 2005-07-20"),
+      filed under Scope refocus by batch 104.
       1. `P1` **The FDA's new-drug approvals since 1985, on the page of the company that applied.**
          A new source for the owner to decide.
          - **Why it is back:** the 2026-10-26 run cut drug approvals because Drugs@FDA's sponsor
@@ -7922,6 +8014,44 @@ already held, but new investment goes to securities coverage first.
         2015-07-16 in `BANK_UNITS`; Synchrony's and PayPal Holdings' own units marked to count
         before listing; JCI's case pinned. The Bureau's 386 actions now give 95 days on 52
         companies, 92 of them on a page.
+- [x] `P1` **EPA's cases against the companies' own operating units.** No new source: approved by the
+      owner 2026-11-06 ("Approve all three, Shell from 2005-07-20"). EPA files a company's cases
+      under its subsidiaries' names (Chevron U.S.A., Shell Oil Company, Union Pacific Railroad),
+      which the caption rule rightly refuses. Extend batch 101's `UNITS` with each owner's units and
+      the days it held them, read from the filings; a branded station is not the brand's unit, and
+      joint ventures are no one's. **The owner's call:** Shell's units count from 2005-07-20, when
+      Royal Dutch Shell plc became the group's single parent.
+      - **Measured** by the scout on the saved case file: 1,607 rows added on 33 companies; Chevron
+        20→258, BP 4→238, Shell 15→208 from its first price (22 court-or-penalty days from
+        2005-07-20).
+      - ✅ **Done in batch 104** (see its section): 52 unit entries on 34 companies, each day read
+        from EDGAR filing lists; 1,442 rows added before first prices, 40 of 40 sampled cases right, no
+        case of the earlier 5,994 rows lost.
+      - *Derived from [`docs/proposals/2026-11-06-proposals.md`](proposals/2026-11-06-proposals.md)
+        #2, approved 2026-11-06.*
+- [ ] `P1` **The FDA's new-drug approvals since 1985, on the page of the company that applied.** A
+      new source, approved by the owner 2026-11-06: the FDA's compilation of new-drug approvals
+      (`www.fda.gov/media/177921/download`, one Excel file, 1,387 approvals from 1985), whose
+      applicant is the one the approval letter names (Lipitor is Parke-Davis's, Humira Abbott's).
+      Read once a year into a committed file, as the Board's 1996–2005 orders are; an approval is
+      kept on a company's page when its applicant is the company by the caption rule or one of
+      `FDA_FIRMS`' hand-checked firms on its days, from its first price.
+      - **Licence, for the build to quote:** the FDA's website policies put its content in the
+        public domain (quoted in the proposal). No key, no recurring cost.
+      - **Measured** by the scout: 461 approvals on 82 companies from first prices, 279 before 2017.
+        Before building: give the recall map's units their start days (Alcon on Novartis, Genzyme on
+        Sanofi) and keep the joint ventures (DuPont Merck, Astra Merck) off Merck; add the older
+        names by hand (Zeneca, Ortho, Tibotec, "Lilly", Squibb), about 57 more (an estimate).
+      - *Derived from [`docs/proposals/2026-11-06-proposals.md`](proposals/2026-11-06-proposals.md)
+        #1, approved 2026-11-06.*
+- [ ] `P2` **A case's other listed companies, linked from its row** ("Also on Ford, General Motors
+      and 25 more"). Approved by the owner 2026-11-06. No new data: one read beside `loadEvents`
+      for the other held pages holding the same source's same case, and one line in `EventList`.
+      - **Measured** by the scout: 543 EPA cases are on two or more companies' pages; 2,659 of
+        5,996 rows (44%) hold a case another page also holds. The counts are a ceiling: only held
+        pages can be named.
+      - *Derived from [`docs/proposals/2026-11-06-proposals.md`](proposals/2026-11-06-proposals.md)
+        #3, approved 2026-11-06.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

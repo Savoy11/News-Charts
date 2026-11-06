@@ -50,7 +50,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. The FDA's new-drug approvals since 1985, on the page of the company that applied — a source for the owner to decide · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-06: "Approve all three, Shell from 2005-07-20".
 **Owner's reason (if rejected):**
 
 **Raised before:** yes, and cut. The 2026-10-26 file cut "Drug approvals from Drugs@FDA" because
@@ -193,7 +193,7 @@ EDGAR · *Efficiency:* high — one small file a year, the recall map reused · 
 
 ## 2. EPA's cases against the companies' own operating units: Chevron U.S.A., Shell Oil Company, Union Pacific Railroad, Atlantic Richfield… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-06: "Approve all three, Shell from 2005-07-20". Shell's units count from 2005-07-20. Built in batch 104.
 **Owner's reason (if rejected):**
 
 **Raised before:** only as a line, never as a box. Batch 95 lists, under "Not done here", "a map
@@ -341,7 +341,7 @@ this source today · *Efficiency:* high — one list; the source is already read
 
 ## 3. A case's other listed companies, linked from its row: "Also on Ford, General Motors and 25 more" · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08), beside "Route topic pages to the securities they share events with"
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-06: "Approve all three, Shell from 2005-07-20".
 **Owner's reason (if rejected):**
 
 **Raised before:** yes, and cut. The 2026-10-26 file cut "'Also on' links between held companies:

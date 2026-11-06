@@ -471,10 +471,19 @@ again with two keeps one row. A unit the company owned whose cases EPA files und
 name counts from the day it owned it (`UNITS`, read by hand; the owner's call of 2026-11-06):
 Sunoco, Inc.'s cases are Energy Transfer's from 2012-10-05, the day Sunoco's own 8-K gives for the
 completed acquisition, ten of them from 2012-10-16 to 2020-01-13. Sunoco, Inc. is not Sunoco LP,
-which was Susser Petroleum Partners until 2014 (by CIK, `NOT_THE_COMPANY`; batch 100). Against every
-company in the index, before first prices: 5,994 rows on 667 companies, 5,156 before 2017 (GE 284,
-GM 222, Ford 165, ExxonMobil 163, FMC 135; BP 4, 3M 67, whose two-letter names the first count left
-out). The
+which was Susser Petroleum Partners until 2014 (by CIK, `NOT_THE_COMPANY`; batch 100). Batch 104,
+on the owner's approval of 2026-11-06, read the operating units of 34 more companies into the same
+list (52 entries), each between the days its owner held it as the owners' filings give them:
+Chevron U.S.A., Texaco from 2001-10-09 and Unocal from 2005-08-10 on Chevron; Atlantic Richfield
+from 2000-04-18 and Amoco from 1998-12-31 on BP; Mobil from 1999-11-30 on ExxonMobil; Shell Oil
+Company from 2005-07-20 on Shell (the owner's call); Union Pacific Railroad, CSX Transportation,
+Norfolk Southern Railway, Occidental Chemical, Waste Management's state companies from 1998-07-16,
+Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Carbide on Dow Inc. from
+2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
+(`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
+every company in the index, before first prices: 7,436 rows on 670 companies, 6,376 before 2017
+(GE 284, ExxonMobil 273, Chevron 258, BP 230, GM 222; 5,994 on 667 before the units, every one of
+whose cases is still there; BP 4 and 3M 67 by their own names). The
 first price keeps a successor off its predecessor's years: today's GM listed in 2010, so the old
 GM's $11 million Clean Air Act decree of 1995 is not on it, and today's Kodak stock dates from 2013.
 Public domain under EPA's open data licence; EPA's note that commercial use of documents on its
@@ -1126,7 +1135,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Federal Reserve Board press releases | The Board's orders on a bank's applications since 1996 (1996–2005 from its yearly pages, committed), and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |
 | Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
-| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form (`lib/epaCases.ts`); the orders with no penalty grouped a row a month. Public domain under EPA's open data licence; no key |
+| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 35 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month. Public domain under EPA's open data licence; no key |
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
 | Commodity Futures Trading Commission | The Commission's enforcement actions since 1995 whose title makes the company the party — a bank's benchmark-rigging order, an energy trader's manipulation suit | The enforcement list, read whole once a year and its newest page once a day, for every company (`lib/ingest/cftcWalk.ts`); kept by the Justice Department's title rule with the release map's units (`lib/cftc.ts`). Public domain, acknowledged to the CFTC; no key |
 | SEC News Digest | The SEC's daily summary of 1956–1993: the 8-K reports a company filed, its registration statements, the 13D and 14D-1 filings on its shares, the SEC's orders and actions on it, its listing orders | Every issue's PDF read once for every company, 60 a run (`lib/ingest/secDigestWalk.ts`); kept when an entry's party is the company under the name its EDGAR record had that day and no other company's (`lib/secDigest.ts`), from its first price; a month's 8-K reports one row. Public information the SEC lets anyone copy, cited to the SEC; no key; needs `pdftotext` and `NEWS_CHARTS_CONTACT` |

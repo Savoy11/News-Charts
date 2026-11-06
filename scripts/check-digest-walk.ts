@@ -398,7 +398,7 @@ async function main(): Promise<void> {
   const ingest = read("scripts/ingest.ts");
   check(
     "the ingest walks the archive and then asks the company's own entries, under its CIK",
-    /"sec_digest",\n\s*"gdelt",/.test(ingest) &&
+    /\n\s*"sec_digest",\n/.test(ingest) &&
       /await run\("sec_digest", [^\n]+\n\s*const walked = await walkDigest\(client\);[\s\S]{0,400}return digestFor\(client, subjectId, \{[^}]*cik: company\.cik, fundSeries \}, walked\);/.test(ingest),
   );
   const store = read("lib/ingest/store.ts");

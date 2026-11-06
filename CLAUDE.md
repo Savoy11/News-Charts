@@ -108,6 +108,11 @@ sync:digest-records`): a company is in the Digest only under the names its EDGAR
 mapped predecessor's, had by 1996, and an entry two companies' names claim on its day is neither's.
 The walk needs `NEWS_CHARTS_CONTACT` and poppler's `pdftotext` on the host.
 
+The FDA's new-drug approvals since 1985 (`lib/fdaApprovals.ts`, batch 105) come from a committed
+workbook read once a year (`npm run sync:fda-approvals`, `lib/xlsx.ts`): an approval is the page of
+the company that applied, by the caption rule, the recall map's firms (`FDA_FIRMS`) or the names only
+approvals use (`APPLICANT_NAMES`), each on its days; an acquisition's past is never the buyer's.
+
 A ticker whose company moved to a new SEC record — a holding-company reorganisation or redomicile
 (XOM in 2026, Alphabet in 2015, Disney in 2019) — reads its earlier filings from the predecessor's
 record up to the handover day, through the hand-checked map in `lib/predecessors.ts`; read its
@@ -153,6 +158,7 @@ npm run ingest -- …      # pull events for a subject (see README)
 npm run sync:aliases     # rebuild data/company-aliases.json from Wikidata (after sync:tickers)
 npm run sync:word-names  # rebuild data/english-word-names.json and data/shared-name-words.json (after sync:tickers)
 npm run sync:digest-records # rebuild data/digest-records.json from EDGAR's 1993–1996 indexes (after sync:tickers)
+npm run sync:fda-approvals  # rebuild data/fda-nme-approvals.json from the FDA's workbook (once a year, in the spring)
 ```
 
 The `check-*.ts` scripts in the `check` chain are offline by construction (network/fetch is

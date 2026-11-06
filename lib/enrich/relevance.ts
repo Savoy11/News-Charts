@@ -411,6 +411,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "cftc") {
         return { score: 0.95, reason: "a CFTC enforcement action naming the company as the party" };
       }
+      // …and a new-drug approval whose applicant is the company, its firm or its unit that day
+      // (lib/fdaApprovals.ts, batch 105)
+      if (subject.kind === "company" && row.sourceKey === "fda_approvals") {
+        return { score: 0.95, reason: "an FDA new-drug approval whose applicant is the company" };
+      }
       // …and an SEC News Digest entry whose party is the company under the name its record had
       // that day, and no other company's (lib/secDigest.ts, batch 102)
       if (subject.kind === "company" && row.sourceKey === "sec_digest") {

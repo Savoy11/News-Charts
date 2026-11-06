@@ -261,7 +261,12 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
         why: "its consumer business until it went into GSK's consumer joint venture on 2015-03-02 (Novartis's 20-F for 2015)",
       },
       { search: "Sandoz", to: "2023-10-03", why: "its generics business until the spin-off on 2023-10-04 (Novartis's 6-K filed 2023-10-04)" },
-      { search: "Alcon", to: "2019-04-08", why: "its eye-care business until the spin-off on 2019-04-09 (Alcon's 20-F for 2019)" },
+      {
+        search: "Alcon",
+        from: "2010-08-26",
+        to: "2019-04-08",
+        why: "its eye-care business from Novartis's purchase of Nestlé's majority in August 2010 (Alcon's 6-K of 2010-08-26, Novartis's 13D amendment of 2010-08-30; batch 105, for the approvals before the recall reports begin) until the spin-off on 2019-04-09 (Alcon's 20-F for 2019)",
+      },
     ],
   },
   1167379: {
@@ -579,7 +584,7 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
     ticker: "SNY",
     firms: [
       { search: "Sanofi", why: "the company and its units (Sanofi-Aventis, Sanofi Pasteur, Sanofi Genzyme)" },
-      { search: "Genzyme", why: "Sanofi's since April 2011 (Sanofi's 20-F for 2024), before the reports begin" },
+      { search: "Genzyme", from: "2011-04-08", why: "Sanofi's from its merger with Genzyme, 2011-04-08 (Genzyme's Form 25 of that day; Sanofi's 20-F for 2024): batch 105 dates it for the approvals before the recall reports begin" },
       {
         search: "Chattem",
         to: "2025-04-29",

@@ -447,6 +447,22 @@ export const SOURCES: {
     reviewedOn: "2026-11-06",
     notes: "the SEC's daily summary of 1956–1993, kept where an entry's party is a listed company under the name its EDGAR record had that day (lib/secDigest.ts); no key (batch 102)",
   },
+  {
+    id: 35,
+    key: "fda_approvals",
+    name: "FDA new-drug approvals",
+    license: "public domain",
+    attribution: "U.S. Food and Drug Administration",
+    // "Unless otherwise noted, the contents of the FDA website (www.fda.gov) — both text and
+    // graphics — are not copyrighted. They are in the public domain and may be republished,
+    // reprinted and otherwise used freely by anyone without the need to obtain permission from
+    // FDA." (www.fda.gov/about-fda/about-website/website-policies, read 2026-11-06.) Used: each
+    // approval's day, names, applicant, application, indication and review, and a link to
+    // Drugs@FDA. Approved by the owner on 2026-11-06.
+    commercialOk: true,
+    reviewedOn: "2026-11-06",
+    notes: "CDER's new molecular entities and new biologics since 1985, kept where the applicant is a listed company, its firm or a unit it then owned (lib/fdaApprovals.ts); one committed workbook a year, no key (batch 105)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

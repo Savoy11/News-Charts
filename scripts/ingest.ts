@@ -48,6 +48,7 @@ import { epaCasesFor, walkEpaCases } from "../lib/ingest/epaWalk";
 import { cpscFor, walkCpsc } from "../lib/ingest/cpscWalk";
 import { cftcFor, walkCftc } from "../lib/ingest/cftcWalk";
 import { digestFor, walkDigest } from "../lib/ingest/secDigestWalk";
+import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
@@ -113,6 +114,8 @@ export const COMPANY_SOURCES = [
   // …and the SEC News Digest of 1956–1993, where an entry's party is the company under the name its
   // record had that day (batch 102)
   "sec_digest",
+  // …and the FDA's new-drug approvals since 1985, where the applicant is the company (batch 105)
+  "fda_approvals",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -797,6 +800,15 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     }
     return digestFor(client, subjectId, { edgarName: company.name, alsoKnownAs, cik: company.cik, fundSeries }, walked);
   });
+
+  /**
+   * The FDA's new-drug approvals naming the company as the applicant, from 1985 (batch 105): the
+   * committed compilation, read once a year, matched under the names it had that year, the FDA
+   * recall map's firms and the units it then owned, from its first price. No request.
+   */
+  await run("fda_approvals", `FDA new-drug approvals whose applicant is ${company.name}`, () =>
+    fdaApprovalsFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
   // headline that says "Ford" — the common name is the query, exactly as the comment above

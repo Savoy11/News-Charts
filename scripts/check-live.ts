@@ -53,6 +53,7 @@ import { epaEvents, fetchCaseFile } from "../lib/epaCases";
 import { cpscEvents, fetchRecalls as fetchCpscRecalls } from "../lib/cpscRecalls";
 import { fetchCftcPage } from "../lib/cftc";
 import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue } from "../lib/secDigest";
+import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
 import { releaseNamesOn } from "../lib/releaseNames";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
@@ -835,6 +836,23 @@ export const CASES: LiveCase[] = [
       const out: string[] = [];
       if (first.actions.length !== 10) out.push(`page 0 holds ${first.actions.length} actions, not 10`);
       if ((first.lastPage ?? 0) < 260) out.push(`the pager's last page is ${first.lastPage}, before the 260 of 2026-11-05`);
+      return out;
+    },
+  },
+  {
+    name: "FDA new-drug approvals — the compilation workbook as `npm run sync:fda-approvals` reads it; Prozac on Eli Lilly (batch 105)",
+    covers: ["fda_approvals"],
+    hosts: ["www.fda.gov"],
+    async run() {
+      // measured 2026-11-06: 1,387 approvals, 1985-04-09 (Lupron) to 2025-12-30 (Nereus); Prozac,
+      // NDA 18936, 1987-12-29, Eli Lilly
+      const res = await fetch(NME_FILE, { headers: { ...UA }, signal: AbortSignal.timeout(60_000) });
+      if (!res.ok) return [`the workbook: HTTP ${res.status}`];
+      const approvals = readApprovals(new Uint8Array(await res.arrayBuffer()));
+      const out: string[] = [];
+      if (approvals.length < 1_387) out.push(`the workbook holds ${approvals.length} approvals, fewer than the 1,387 of 2026-11-06`);
+      const prozac = approvals.find((a) => a.application === "18936");
+      if (prozac?.day !== "1987-12-29" || prozac.applicant !== "Eli Lilly") out.push(`Prozac reads ${JSON.stringify(prozac)}`);
       return out;
     },
   },

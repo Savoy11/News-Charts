@@ -411,6 +411,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "cftc") {
         return { score: 0.95, reason: "a CFTC enforcement action naming the company as the party" };
       }
+      // …and an SEC News Digest entry whose party is the company under the name its record had
+      // that day, and no other company's (lib/secDigest.ts, batch 102)
+      if (subject.kind === "company" && row.sourceKey === "sec_digest") {
+        return { score: 0.95, reason: "an SEC News Digest entry naming the company as its party" };
+      }
       // …but a company's own document reaches it only when the title names it (lib/frCompany.ts),
       // so on a company subject that title is the evidence (2026-10-17 proposal 4).
       if (subject.kind === "company" && mentions(row.title, aliases) === "named") {

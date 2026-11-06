@@ -431,6 +431,22 @@ export const SOURCES: {
     reviewedOn: "2026-11-05",
     notes: "the Commission's enforcement actions since 1995, kept where the title makes a listed company the party (lib/cftc.ts); no key (batch 97)",
   },
+  {
+    id: 34,
+    key: "sec_digest",
+    name: "SEC News Digest",
+    license: "public domain",
+    attribution: "U.S. Securities and Exchange Commission",
+    // "Information presented on sec.gov is considered public information and may be copied or
+    // further distributed by users of the web site without the SEC's permission. Please consider
+    // appropriate citation to the SEC as the source." (www.sec.gov/about/privacy-information,
+    // re-read 2026-11-02, docs/proposals/2026-11-02-proposals.md #1.) Used: each entry's party,
+    // section, day, its line of the issue and a link to the issue's PDF; the PDFs are not kept.
+    // Approved by the owner on 2026-11-02 (the source) and 2026-11-06 (step 2).
+    commercialOk: true,
+    reviewedOn: "2026-11-06",
+    notes: "the SEC's daily summary of 1956–1993, kept where an entry's party is a listed company under the name its EDGAR record had that day (lib/secDigest.ts); no key (batch 102)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

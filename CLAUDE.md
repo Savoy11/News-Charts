@@ -100,6 +100,13 @@ store's recalls of other makers' products grouped a row a month. The
 CFTC's actions (`lib/cftc.ts`) are read by the Justice rule with the release map's units, plus the
 Commission's object form ("CFTC Orders UBS to Pay") and four guards of its own; read its header first.
 
+The SEC News Digest of 1956–1993 (`lib/secDigest.ts`, batch 102) is read once, issue by issue, into
+db/040's tables (`lib/ingest/secDigestWalk.ts`), and each company's own entries are found there at
+its ingest. Its names are dated by the committed `data/digest-records.json` (`npm run
+sync:digest-records`): a company is in the Digest only under the names its EDGAR record, or a
+mapped predecessor's, had by 1996, and an entry two companies' names claim on its day is neither's.
+The walk needs `NEWS_CHARTS_CONTACT` and poppler's `pdftotext` on the host.
+
 A ticker whose company moved to a new SEC record — a holding-company reorganisation or redomicile
 (XOM in 2026, Alphabet in 2015, Disney in 2019) — reads its earlier filings from the predecessor's
 record up to the handover day, through the hand-checked map in `lib/predecessors.ts`; read its
@@ -144,6 +151,7 @@ npm run db:migrate       # apply db/*.sql in order
 npm run ingest -- …      # pull events for a subject (see README)
 npm run sync:aliases     # rebuild data/company-aliases.json from Wikidata (after sync:tickers)
 npm run sync:word-names  # rebuild data/english-word-names.json and data/shared-name-words.json (after sync:tickers)
+npm run sync:digest-records # rebuild data/digest-records.json from EDGAR's 1993–1996 indexes (after sync:tickers)
 ```
 
 The `check-*.ts` scripts in the `check` chain are offline by construction (network/fetch is

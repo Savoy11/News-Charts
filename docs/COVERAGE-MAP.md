@@ -25,6 +25,7 @@ because it will be trusted.
 | **any** | Wikipedia citations | as far as the references go | Dated external articles |
 | **any** | Internet Archive | 1780 for companies (a bound on impossibility); topics effectively none | Catalogued items: reports, catalogues, film — relevance-ranked |
 | **1934 – now** | SEC EDGAR | electronic filings from ~1993 | Filings, earnings; an 8-K, or a foreign company's 6-K, titled by the headline of the press release filed with it, from 1994 (`lib/secHeadlines.ts`). A smaller company's annual and quarterly reports until 2008 (10KSB, 10QSB) and the tender offers before 2000 (SC 14D1, SC 13E4), from the older records ingest already reads (batch 80). A fund's own filings, by the list EDGAR keeps for its series, from February 2006, when the lists begin; its trust's older ones stay, hedged (`lib/fundSeries.ts`, batch 67) |
+| **1956 – 1993** | SEC News Digest | 1956, the first archive year (rows from each company's first price, Yahoo's from 1962 at the earliest) | The SEC's daily summary: the 8-K reports a company filed, its registrations, the 13D and 14D-1 filings on its shares, the SEC's orders and actions on it, its listing orders, under the name its EDGAR record had that day (`lib/secDigest.ts`, batch 102). On 1985: 509 rows on 259 companies, 358 events on 188 pages; the walk of ~9,500 issues waits on `NEWS_CHARTS_CONTACT` and `pdftotext` on the ingest host |
 | **1966 – now** | NHTSA vehicle recalls | 1966, the first campaigns | Safety recalls of 10,000 vehicles or more, for the vehicle and tyre makers `lib/recalls.ts` maps (Ford, GM, Stellantis from 2014, Toyota, Honda, Tesla, Harley-Davidson, PACCAR, the RV makers Thor and Winnebago with the brands they bought, Berkshire Hathaway's Forest River, and others), and the brands Ford and GM sold, while they owned them (batch 77): Volvo, Jaguar and Land Rover on Ford's page, 56 recalls from 1990 to 2010; Saab on GM's, 12 from 2001 to 2008 |
 | **1975 – now** | NHTSA defect investigations | 1975, the first opened | Every investigation NHTSA opened into the same makers, shown with their recalls (batch 66): 1,766 for 18 companies, 1,579 before 2017 (Ford 684, GM 651); batch 77 adds the 38 opened into the brands Ford and GM later sold, all before 2011 (Ford 29, GM 9) |
 | **1973 – now** | CPSC product recalls | 1973-06-08, the Commission's first | Consumer-product recalls naming the company as maker, importer, distributor or a store that sold it (`lib/cpscRecalls.ts`, batch 96): against every company in the index, before first prices, 2,290 rows on 197 companies, 709 as maker, importer or distributor (Mattel, GE, Whirlpool, Hasbro, Polaris), every firm read by hand (batch 100), Graco Children's Products' on Newell from 1999 (batch 101); a store's recalls of other makers' products grouped a row a month |
@@ -115,9 +116,10 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   recalls, 147 of them before 2017 (Philips 232 of 590, Johnson & Johnson 298 of 485). The
   Federal Reserve's enforcement actions add a few material events for large banks, 81 of their 113
   before 2017. Before EDGAR (1993) a company's page holds little but Yahoo's dividends and splits;
-  the SEC News Digest covers 1956 to the mid-1990s and is counted, not ingested. Batch 87's count of
-  1985 found 508 rows on 258 listed companies under the names they had that year, 361 of them after
-  the first-price floor (`npm run digest-report`). Building it is the owner's call.
+  the SEC News Digest covers 1956–1993, a source since batch 102. On 1985 it gives 509 rows on 259
+  listed companies under the names they had that year, 362 of them after the first-price floor, as
+  358 events on 188 pages. Its walk reads ~9,500 issues once, 60 a run, and starts once the ingest
+  host has `NEWS_CHARTS_CONTACT` and poppler's `pdftotext`; until then no page carries a Digest row.
 - **The keyed aggregators are not ingested.** Their free tiers bar commercial use, so the
   adapters exist for diagnostics only. Even licensed, they are days-to-weeks deep: breadth for the
   present, never depth for the past.

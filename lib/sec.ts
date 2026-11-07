@@ -33,7 +33,7 @@ import rawTickerIndex from "../data/edgar-tickers.json";
 import rawCompanyAliases from "../data/company-aliases.json";
 import { nameKey, type AliasIndexFile } from "./companyAliases";
 import { foldAccents } from "./fold";
-import { ownRecordFrom, predecessorsOf } from "./predecessors";
+import { predecessorsOf } from "./predecessors";
 import { commonName, withoutTag } from "./edgarName";
 import { eastern } from "./marketTime";
 import { UA } from "./contact";
@@ -1178,14 +1178,9 @@ export async function getFilingsDeep(
     const dropped = last && !own(last) ? `sec-rename-${cik}-${last.on}` : null;
     return events.filter((e) => inSpan(e.date, e.id.startsWith("sec-rename-")) && e.id !== dropped);
   });
-  // …and a record that was another company until it took this one's ticker keeps its own filings and
-  // renames only from that day: before, they are that other company's (Schering-Plough's on MRK's
-  // record, `OWN_RECORD_FROM`, batch 108)
-  const ownFrom = ownRecordFrom(company.cik);
-  const ownRenames: Rename[] = [];
-  const [ownAll, ...before] = await Promise.all([recordFilings(company, includeOlder, ownRenames, othersStakes), ...earlier]);
-  const own = ownFrom ? ownAll.filter((e) => e.date >= ownFrom) : ownAll;
-  renames.push(...ownRenames.filter((r) => !ownFrom || r.on >= ownFrom));
+  // a record that was another company until it took this one's ticker keeps its own past too, which
+  // the page labels as that company's (Schering-Plough's on MRK's record, `ownPastLabelled`, batch 110)
+  const [own, ...before] = await Promise.all([recordFilings(company, includeOlder, renames, othersStakes), ...earlier]);
   // one row a filing: one the two records share is the successor's
   const seen = new Set(own.map((e) => e.id));
   return [...own, ...before.flat().filter((e) => !seen.has(e.id) && seen.add(e.id))];

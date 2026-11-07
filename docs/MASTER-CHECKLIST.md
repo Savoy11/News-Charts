@@ -988,6 +988,56 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 110: Schering-Plough's past on Merck's page, labelled (2026-11-07)
+
+The owner's call of 2026-11-07, asked when they said "Lets update mercks history": **"Add
+Schering-Plough, labelled"**, the audit's option (c). Batch 108 had built option (a): old Merck's
+record as MRK's history, and the record's own past, Schering-Plough's, on no page.
+
+- [x] **Old Merck stays Merck's history** (`lib/predecessors.ts`, batch 108), matching the price
+      chart back to 1962. Its rows carry no label.
+- [x] **Schering-Plough's past comes back, labelled.** It covers MRK's record's own filings before
+      2009-11-04, its rename into Merck's name, the cases its former name gives, and its Digest
+      entries.
+      - **The label** is set at read time (`ownPastLabelled`, in `loadEvents`): the source reads
+        "… · Schering-Plough, before its 2009 merger with Merck".
+      - **Filing titles** carry its name: "Schering-Plough: Annual report (10-K)", where EDGAR's
+        record now says Merck's.
+      - **What gets the label:** a case, approval or Digest row before the merger that names
+        Schering-Plough or its Organon, and not Merck. One naming both is old Merck's history too,
+        and stays unlabelled.
+      - **What changed in code.** `OWN_RECORD_FROM` now labels the record's past instead of dropping
+        it. The filings reader and the Digest book keep it, and batch 108's `unlinkOwnRecordBefore`
+        is gone: rows that step took off any database come back at the next run.
+      - **What stays.** Batch 108's other fix stands: a predecessor's last rename before the handover
+        (old Merck into Merck Sharp & Dohme) is no rename of the company's.
+- [x] **Schering-Plough's drug approvals on Merck's page** (`APPLICANT_NAMES` for MRK).
+      - **"Schering"**: eleven approvals before the merger are labelled, Dormalin (1985) to Noxafil
+        (2006), Claritin, Zetia and Cedax among them. Victrelis (2011) comes after it and is Merck's
+        own.
+      - **Organon**: from 2007-11-19 to 2021-06-02. Its start is Schering-Plough's 8-K reporting the
+        purchase; its end is Organon & Co.'s 8-K of 2021-06-03, reporting the spin-off completed the
+        day before (item 2.01). That brings Saphris (2009), labelled as Schering-Plough's.
+      - **Totals:** 583 approvals on 88 companies before first prices (570); from the 26 drugmakers'
+        first prices 452, 316 before 2017, 71 before 1994 (439, 303, 66). Merck now has the most: 58.
+- [x] **On a real database** (the local Postgres 16, seeded rows, deleted after). Through
+      `loadEvents`:
+      - Schering-Plough's 2005 annual report reads "Schering-Plough: Annual report (10-K)", with the
+        label;
+      - its 2004 Justice Department settlement is labelled;
+      - old Merck's 2008 annual report and MRK's own 2012 one are as filed.
+- **Requests:** 1, to data.sec.gov: Organon & Co.'s filing list (1821825), for its spin-off day.
+  User-Agent `News Charts Research`, no email address.
+- **Checks:**
+  - check:predecessors 36 (+1): Schering-Plough's filings and rename kept, the labels and titles on
+    the page, and the read's wiring;
+  - check:digest-walk 55: MRK read by both records' names;
+  - check:fda-approvals 49 (+1), with its totals;
+  - check:unlink 12 (−2, the removed step);
+  - check:sec-forms 134, its wiring pattern following the read's new line.
+
+  `npm run check` and `npm run lint` pass. HawkScan cannot run here (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 109: a whole name two listed companies hold names neither (2026-11-07)
 
 The 2026-11-07 audit's question 2, under the owner's "go ahead and fix what it finds". The audit

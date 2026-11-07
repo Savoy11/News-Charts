@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { PoolClient } from "pg";
 import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
-import { unlinkGone, unlinkOwnRecordBefore } from "../lib/ingest/store";
+import { unlinkGone } from "../lib/ingest/store";
 import { dedupKey } from "../lib/ingest/keys";
 import { ARCHIVE_LAST_YEAR } from "../lib/dojArchive";
 import type { TimelineEvent } from "../lib/types";
@@ -75,15 +75,6 @@ async function main(): Promise<void> {
   asked.length = 0;
   await unlinkGone(recorder, 7, "cfpb", []);
   check("  …with no day, every date", asked[0].args[3] === null && (asked[0].args[2] as unknown[]).length === 0);
-
-  console.log("\nA record that was another company");
-  asked.length = 0;
-  await unlinkOwnRecordBefore(recorder, 9, "2009-11-04", [{ ...ev("x"), externalId: "000095012308002050" }]);
-  check("its filings and renames dated before the day come off, but not those this run's filings hold (old Merck's)",
-    /e\.occurred_on < \$2::date/.test(asked[0].sql) && /s\.key = 'sec_edgar'/.test(asked[0].sql) && /a\.external_id = ANY \(\$3::text\[\]\)/.test(asked[0].sql) &&
-      JSON.stringify(asked[0].args) === JSON.stringify([9, "2009-11-04", ["000095012308002050"]]));
-  check("  …asked by the ingest on a run that read the filings, for a record with such a day only",
-    /const ownFrom = ownRecordFrom\(company\.cik\);\n\s*if \(ownFrom && filed\.length\) \{\n\s*const gone = await unlinkOwnRecordBefore\(client, subjectId, ownFrom, filed\);/.test(ingest) && /const filed = await run\("sec_edgar"/.test(ingest));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   process.exit(fail ? 1 : 0);

@@ -14,7 +14,7 @@
  */
 import type { PoolClient } from "pg";
 import tickerIndex from "../data/edgar-tickers.json";
-import { OWN_RECORD_FROM, PREDECESSORS, ownRecordFrom, predecessorsOf } from "../lib/predecessors";
+import { OWN_RECORD_FROM, PREDECESSORS, ownPastLabelled, ownRecordFrom, predecessorsOf } from "../lib/predecessors";
 import { getFilingsDeep, newsNamesFor, type Rename } from "../lib/sec";
 import { withSecHeadlines } from "../lib/ingest/headlines";
 import { aliasesFor, mentions } from "../lib/enrich/relevance";
@@ -174,10 +174,10 @@ async function main(): Promise<void> {
 
   // batch 108, the 2026-11-07 audit's question 1: MRK's record was Schering-Plough's until it took
   // old Merck's name and ticker at the merger of 2009-11-03
-  check("Merck's history is old Merck's record to the merger, and its own record is MRK's only from it",
+  check("Merck's history is old Merck's record to the merger, and its own record is MRK's from it, Schering-Plough's before",
     predecessorsOf(cikOf("MRK"))[0]?.cik === 64978 && predecessorsOf(cikOf("MRK"))[0]?.until === "2009-11-04" && ownRecordFrom(cikOf("MRK")) === "2009-11-04" && cikOf("MRK") === 310158);
   check("  …and every record with such a day is a mapped successor whose day is its handover's or after",
-    Object.entries(OWN_RECORD_FROM).every(([c, r]) => predecessorsOf(c).length > 0 && r.from >= predecessorsOf(c)[0].until && tickersOf(Number(c)).includes(r.ticker) && r.why.length > 40));
+    Object.entries(OWN_RECORD_FROM).every(([c, r]) => predecessorsOf(c).length > 0 && r.from >= predecessorsOf(c)[0].until && tickersOf(Number(c)).includes(r.ticker) && r.why.length > 40 && r.label.includes(r.name)));
   records["0000310158"] = {
     name: "Merck & Co., Inc.",
     formerNames: [{ name: "SCHERING PLOUGH CORP", from: "1994-03-07T00:00:00.000Z", to: "2009-10-29T00:00:00.000Z" }],
@@ -220,11 +220,29 @@ async function main(): Promise<void> {
   const mrkIds = new Set(mrk.map((e) => e.id));
   check("MRK's page has old Merck's annual report and last quarter, and its own record's filings from the merger on",
     ["sec-000095012308002050", "sec-000095012309055961", "sec-000119312509223917", "sec-000031015826000050"].every((id) => mrkIds.has(id)), [...mrkIds].join(", "));
-  check("  …not Schering-Plough's annual report or last quarter, nor old Merck's own 8-K of its delisting, nor the subsidiary's debt after",
-    !mrkIds.has("sec-000031015805000010") && !mrkIds.has("sec-000095012309054872") && !mrkIds.has("sec-000119312509223934") && !mrkIds.has("sec-000006497815000020"));
-  check("  …and neither Schering-Plough's name nor old Merck's rename into its subsidiary's at the merger is a rename of MRK's",
-    !mrk.some((e) => /SCHERING|MERCK SHARP/i.test(e.title)) && !mrkRenames.some((r) => /SCHERING|MERCK SHARP/i.test(`${r.from} ${r.to}`)),
+  // the owner's call of 2026-11-07 (batch 110): Schering-Plough's past stays, labelled as its
+  check("  …and Schering-Plough's annual report and last quarter, its record's own past; not old Merck's own 8-K of its delisting, nor the subsidiary's debt after",
+    mrkIds.has("sec-000031015805000010") && mrkIds.has("sec-000095012309054872") && !mrkIds.has("sec-000119312509223934") && !mrkIds.has("sec-000006497815000020"));
+  check("  …Schering-Plough's own rename into Merck's name is on the page, a name its cases are read by; old Merck's into its subsidiary's at the merger is not",
+    mrkRenames.some((r) => r.from === "SCHERING PLOUGH CORP") && !mrk.some((e) => /MERCK SHARP/i.test(e.title)) && !mrkRenames.some((r) => /MERCK SHARP/i.test(`${r.from} ${r.to}`)),
     `${mrk.filter((e) => e.type === "corporate_action").map((e) => e.title).join(" | ")} · ${JSON.stringify(mrkRenames)}`);
+  const page = (id: string) => ownPastLabelled(mrk.find((e) => e.id === id)!, 310158);
+  const label = "Schering-Plough, before its 2009 merger with Merck";
+  check("  …on the page, Schering-Plough's filings say whose and are titled with its name; old Merck's and MRK's own after the merger are as filed",
+    page("sec-000031015805000010").title === "Schering-Plough: Annual report (10-K)" && page("sec-000031015805000010").source.endsWith(` · ${label}`) &&
+      page("sec-000095012308002050").title === "Merck & Co., Inc.: Annual report (10-K)" && !page("sec-000095012308002050").source.includes(label) &&
+      !page("sec-000031015826000050").source.includes(label) && page("sec-000031015826000050").title === "Merck & Co., Inc.: Quarterly report (10-Q)",
+    ["sec-000031015805000010", "sec-000095012308002050", "sec-000031015826000050"].map((id) => `${page(id).title} | ${page(id).source}`).join(" ; "));
+  const row = (date: string, title: string, description?: string) => ownPastLabelled({ date, title, source: "Justice Department", url: "https://www.justice.gov/x", description }, 310158);
+  check("  …and a case or approval before the merger naming Schering-Plough or its Organon, and not Merck, is labelled; one naming Merck, or both, is old Merck's own",
+    row("2004-07-30", "Schering-Plough to Pay $345 Million to Resolve Criminal and Civil Liabilities").source.endsWith(label) &&
+      row("2009-08-13", "FDA approves Saphris (asenapine), a new molecular entity", "Approved August 13, 2009 on Organon USA's NDA 22117").source.endsWith(label) &&
+      !row("2008-02-07", "Merck to Pay More than $650 Million").source.includes(label) && !row("2000-03-22", "EPA consent decree", "Schering Corporation; Merck & Co., Inc.").source.includes(label) &&
+      !row("2011-05-13", "FDA approves Victrelis", "on Schering's NDA").source.includes(label) && !ownPastLabelled({ date: "2004-07-30", title: "Schering-Plough to Pay", source: "x" }, 320193).source.includes(label));
+
+  const read = (await import("node:fs")).readFileSync(`${__dirname}/../lib/store/read.ts`, "utf8");
+  check("  …the page's read labels them: each row by its subject's record",
+    /sj\.cik AS subject_cik/.test(read) && /const own = ownPastLabelled\(ev, r\.subject_cik\);/.test(read));
 
   console.log("\nIts headlines are read under the record they live in");
   const readAs: string[] = [];

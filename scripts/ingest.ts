@@ -20,11 +20,9 @@ import {
   emptyStats,
   loadLastFetched,
   unlinkGone,
-  unlinkOwnRecordBefore,
   type UpsertStats,
   type ScoringContext,
 } from "../lib/ingest/store";
-import { ownRecordFrom } from "../lib/predecessors";
 import { ARCHIVE_LAST_YEAR } from "../lib/dojArchive";
 import { aliasesFor } from "../lib/enrich/relevance";
 import { selectStaleSources, ttlFor } from "../lib/ingest/refresh";
@@ -509,7 +507,7 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   const othersStakes: string[] = [];
   // set inside the run below, which TypeScript does not follow into
   let fundSplit = null as OwnSeriesSplit | null;
-  const filed = await run("sec_edgar", company.ticker, async () => {
+  await run("sec_edgar", company.ticker, async () => {
     /**
      * The scheduler takes the WHOLE history, not just EDGAR's recent block.
      *
@@ -582,16 +580,6 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   const stakes = await unlinkFilings(client, subjectId, othersStakes);
   if (stakes) line("sec_edgar", `unlinked ${stakes} of its own stakes in other issuers`);
 
-  /**
-   * A record that was another company until it took this one's ticker (`OWN_RECORD_FROM`, batch
-   * 108): its own filings and renames before that day, which every ingest before batch 108 linked
-   * here, are unlinked, on a run that read the filings. Schering-Plough's, on MRK's page.
-   */
-  const ownFrom = ownRecordFrom(company.cik);
-  if (ownFrom && filed.length) {
-    const gone = await unlinkOwnRecordBefore(client, subjectId, ownFrom, filed);
-    if (gone) line("sec_edgar", `unlinked ${gone} of its record's filings and renames before ${ownFrom}, another company's (lib/predecessors.ts)`);
-  }
 
   /**
    * A fund's siblings' filings, linked here by every ingest before batch 67, are unlinked from it

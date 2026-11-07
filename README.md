@@ -215,12 +215,13 @@ reports, beginning in 2012, never needed. Joint ventures are no one's (DuPont Me
 Lilly ICOS, TAP), and two applicants are refused by name (`NOT_THE_APPLICANT`): DuPont's
 pharmaceuticals of 1986–2001 are not DuPont de Nemours's, whose record is DowDuPont's of 2015, and
 Block Drug's Actinex (1992) is not Block, Inc.'s. From the first prices of the 26 drugmakers Yahoo
-gave: 439 approvals, 303 before 2017, 66 before EDGAR (1994); most on Johnson & Johnson 47, Merck
-45, Novartis 44, Pfizer 42, Bristol-Myers Squibb 39 and Lilly 34. Organon's approvals of 1990–2001
+gave: 452 approvals, 316 before 2017, 71 before EDGAR (1994); most on Merck 58, Johnson & Johnson
+47, Novartis 44, Pfizer 42, Bristol-Myers Squibb 39 and Lilly 34. Organon's approvals of 1990–2001
 (Remeron, NuvaRing…) are Akzo Nobel's, which owned it until Schering-Plough bought it on 2007-11-19
-(batch 108). "Schering" (Schering-Plough's US company) stays on no page: Merck's history is old
-Merck's, and Schering-Plough's past is not Merck's (`lib/predecessors.ts`, batch 108), so neither are
-its approvals, nor Organon's Saphris of 2009. Public domain by the FDA's website policies; no key.
+(batch 108). Schering-Plough's own, by its US company "Schering" (Claritin, Zetia…), and Organon's
+Saphris of 2009 are on Merck's page as Schering-Plough's, labelled so, before the 2009 merger
+(batch 110, the owner's call); Victrelis (2011) is Merck's own. Public domain by the FDA's website
+policies; no key.
 
 ### Justice Department releases (`lib/doj.ts`)
 
@@ -601,9 +602,9 @@ first quarter of EDGAR's 1993–1996 company indexes, and only if EDGAR opened i
 So 1985's Chase Manhattan, BankAmerica, Wells Fargo and Chubb are not JPMorgan's, Bank of
 America's, Wells Fargo's or Chubb's records (in 1994 those were Chemical Banking, NationsBank,
 Norwest and ACE), and the McGraw-Hill of 1990 is S&P Global's, not McGraw Hill's (a 2022 record).
-`lib/predecessors.ts` adds a predecessor's names before its handover, and a record that was another
-company until long after (MRK's, Schering-Plough's until 2009) gives none of its own: Merck is read
-by old Merck's names (batch 108). An issue's entries on one
+`lib/predecessors.ts` adds a predecessor's names before its handover: Merck is read by old Merck's
+names (batch 108), and by its record's own, Schering-Plough's, whose rows the page labels as
+Schering-Plough's (batch 110). An issue's entries on one
 company in one section are one row. Each matched company's first trading day comes from Yahoo, and
 the rows before it — today's first-price floor for every source — are counted apart.
 
@@ -827,8 +828,17 @@ Digest, the FDA's approvals) builds a company's rows from data kept whole, so it
 complete: a run takes the company off that source's stored rows its rules no longer give it
 (`unlinkGone`, batch 108). Only the link goes, and only for a row no other source attests; the
 Justice Department's API answers, capped, and the Federal Reserve Board's live feed are never read
-as complete. A batch that refuses a case (the old Waste Management's on WM, Schering-Plough's on
-Merck) takes it off the page at the company's next run, not only off new ones.
+as complete. A batch that refuses a case (the old Waste Management's on WM) takes it off the page at
+the company's next run, not only off new ones.
+
+**A record that was another company labels that company's past** (batch 110, the owner's call of
+2026-11-07). MRK's SEC record was Schering-Plough's until the 2009 merger, when it took old Merck's
+name and ticker. Old Merck's record is Merck's history (`lib/predecessors.ts`, batch 108), matching
+the price chart back to 1962, and Schering-Plough's past stays on the page beside it. Each row of
+it says whose: "Schering-Plough: Annual report (10-K)", from "SEC EDGAR · Schering-Plough, before
+its 2009 merger with Merck" (`ownPastLabelled`, at read time). Labelled rows are the record's own
+filings before 2009-11-04, and the cases, approvals and Digest entries of those years that name
+Schering-Plough or its Organon and not Merck. One naming both is old Merck's history too.
 
 ```
 npm run db:gen      # regenerate db/001_init.sql from docs/EVENTS-SCHEMA.md

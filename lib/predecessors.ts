@@ -30,8 +30,9 @@
  * EDGAR record is Schering-Plough's, and old Merck's record, 64978, became a subsidiary with no
  * ticker. No notice of succession was filed. MRK's price history is old Merck's, back to 1962, and
  * under this project's rules a predecessor whose ticker the company carries is its history while an
- * acquisition's past is never the buyer's: old Merck's record is MRK's to the merger, and the
- * record's own past before it, Schering-Plough's, is not (`OWN_RECORD_FROM`). `notice` is the
+ * acquisition's past is never the buyer's: old Merck's record is MRK's to the merger. The record's
+ * own past before it, Schering-Plough's, stays on the page labelled as Schering-Plough's, the
+ * owner's call of 2026-11-07 (`OWN_RECORD_FROM`, batch 110). `notice` is the
  * successor record's 8-K of the merger (items 2.01 and 5.03), filed 2009-11-04; old Merck's own 8-K
  * that day reports its delisting and the change of control (items 3.01 and 5.01).
  *
@@ -225,22 +226,71 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
 
 /**
  * A successor record that was another company until the day it took the listed company's name and
- * ticker (batch 108). Its filings, its former names and its Digest names before that day are that
- * other company's, and none of them is the listed company's: the history is its predecessor's.
+ * ticker (batch 108). Its own past before that day is that other company's: its filings, the cases
+ * and approvals its names then give, its Digest entries. The company's history is its predecessor's
+ * (old Merck's, above), and the record's own past stays on the page beside it, each row labelled as
+ * the other company's (`ownPastLabelled`): the owner's call of 2026-11-07, "Add Schering-Plough,
+ * labelled" (batch 110).
+ *
+ * A row before the day is the other company's when it is one of the record's own filings, or when
+ * its text names the other company (`names`) and not the listed one (`unless`): a case against
+ * Schering-Plough alone is its; one against Merck, or against both, is old Merck's history too.
  */
-export const OWN_RECORD_FROM: Readonly<Record<number, { ticker: string; from: string; why: string }>> = {
+export interface OwnRecordPast {
+  ticker: string;
+  /** the day the record became the listed company */
+  from: string;
+  why: string;
+  /** the other company, as a filing's title names it: "Schering-Plough: Annual report (10-K)" */
+  name: string;
+  /** what a row of its past says it is */
+  label: string;
+  /** words that name it, or the units it owned then, in a row's text */
+  names: RegExp;
+  /** the listed company's own name: a row naming it is the listed company's history */
+  unless: RegExp;
+}
+
+export const OWN_RECORD_FROM: Readonly<Record<number, OwnRecordPast>> = {
   310158: {
     ticker: "MRK",
     from: "2009-11-04",
     why:
       "Schering-Plough Corporation's record (former name SCHERING PLOUGH CORP to 2009-10-29) until it took Merck & Co.'s name and ticker at the merger of 2009-11-03: " +
       "its 8-K filed 2009-11-04 reports the merger completed (items 2.01 and 5.03), and its name is Merck & Co. Inc. from that day",
+    name: "Schering-Plough",
+    label: "Schering-Plough, before its 2009 merger with Merck",
+    // Organon was Schering-Plough's from 2007-11-19 (lib/fdaApprovals.ts)
+    names: /\b(?:schering|organon)\b/i,
+    unless: /\bmerck\b/i,
   },
 };
 
 /** The day a company's own record became the company, where it was another before; null for nearly all. */
 export function ownRecordFrom(cik: number | string): string | null {
   return OWN_RECORD_FROM[Number(cik)]?.from ?? null;
+}
+
+/**
+ * A page's row as the other company's, where it is one of the record's own past (batch 110): its
+ * source says whose, and a filing is titled with that company's name, not the listed one's, which
+ * EDGAR's record now carries ("Merck & Co., Inc.: Annual report (10-K)" was Schering-Plough's).
+ */
+export function ownPastLabelled<T extends { date: string; title: string; source: string; url?: string; description?: string }>(ev: T, cik: number | string | null | undefined): T {
+  const past = cik == null ? undefined : OWN_RECORD_FROM[Number(cik)];
+  if (!past || ev.date >= past.from) return ev;
+  const n = Number(cik);
+  // a filing or a rename under the record itself: EDGAR's archive path or its company page
+  const ownFiling = new RegExp(String.raw`/edgar/data/${n}/|[?&]CIK=0*${n}(?:&|$)`, "i").test(ev.url ?? "");
+  const text = `${ev.title} ${ev.description ?? ""}`;
+  if (!ownFiling && !(past.names.test(text) && !past.unless.test(text))) return ev;
+  return {
+    ...ev,
+    // "Merck & Co., Inc.: Annual report (10-K)" → "Schering-Plough: Annual report (10-K)"; a title of
+    // its own, a press release's headline, stays as it is
+    title: ownFiling ? ev.title.replace(/^[^:]{2,80}?(?=:\s)/, (prefix) => (past.unless.test(prefix) ? past.name : prefix)) : ev.title,
+    source: `${ev.source} · ${past.label}`,
+  };
 }
 
 /** The records a company's history continues under, newest first; none for most companies. */

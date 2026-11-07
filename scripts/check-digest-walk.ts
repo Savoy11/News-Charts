@@ -200,11 +200,12 @@ async function main(): Promise<void> {
     crane.length === 1 && crane[0].day === "1985-10-11" && crane[0].kind === "registration effective" && !book.has(1944013) && book.has(25445),
     crane,
   );
-  // batch 108, the 2026-11-07 audit's question 1: MRK's record was Schering-Plough's until 2009
+  // batch 108, the 2026-11-07 audit's question 1: MRK's record was Schering-Plough's until 2009, and
+  // old Merck's record is its history; batch 110, the owner's call: Schering-Plough's past stays, labelled
   const mrkRows = rows.filter((r) => r.cik === 310158);
-  check("  …MRK is read by old Merck's names, its predecessor's, never by Schering-Plough's, its record's own of the 1990s: old Merck's three 8-K reports of 1985",
+  check("  …MRK is read by old Merck's names, its predecessor's, and by Schering-Plough's, its record's own, whose rows the page labels: old Merck's three 8-K reports of 1985 (Schering-Plough's one entry that year is misread in the scan)",
     mrkRows.length === 3 && mrkRows.every((r) => r.kind === "8-K report" && /^MERCK\b/.test(r.entries[0].party)) &&
-      JSON.stringify(book.namesOn("1985-06-01", 310158)?.conformed) === JSON.stringify(["MERCK & CO INC"]) && !book.lookupKeys(310158).keys.some((k) => /SCHERING/.test(k)),
+      JSON.stringify([...(book.namesOn("1985-06-01", 310158)?.conformed ?? [])].sort()) === JSON.stringify(["MERCK & CO INC", "SCHERING PLOUGH CORP"]),
     mrkRows.map((r) => `${r.day} ${r.entries[0].party}`));
   check("  …the book holds only companies with a record by 1996, their own or a predecessor's", book.has(66740) && book.has(19617) && !book.has(cikOf("PLTR")));
   const shared: string[] = [];

@@ -34,7 +34,7 @@ import rawCompanyAliases from "../data/company-aliases.json";
 import { nameKey, type AliasIndexFile } from "./companyAliases";
 import { foldAccents } from "./fold";
 import { ownRecordFrom, predecessorsOf } from "./predecessors";
-import { commonName } from "./edgarName";
+import { commonName, withoutTag } from "./edgarName";
 import { eastern } from "./marketTime";
 import { UA } from "./contact";
 
@@ -738,18 +738,24 @@ export function listedNamesContaining(everyday: string): string[] {
 const namedCache = new Map<string, number>();
 
 /**
- * How many listed companies have this everyday name: "First Bancorp" is three banks' — North
- * Carolina's, Puerto Rico's and Maine's — so a title naming "First Bancorp" names none of them
- * for certain (batch 73).
+ * How many listed companies have this name, as their everyday name or as their legal name: "First
+ * Bancorp" is three banks' — North Carolina's, Puerto Rico's and Maine's — so a title naming "First
+ * Bancorp" names none of them for certain (batch 73). The legal name counts too (batch 109, the
+ * 2026-11-07 audit's question 2): "INDEPENDENT BANK CORP" is the Massachusetts bank's record and,
+ * its tag "/MI/" off, the Michigan bank's, so a caption naming "Independent Bank Corp." is neither's,
+ * while "Rio Tinto plc", one record's legal name, stays its own though "Rio Tinto" is two records'.
  */
-export function listedCompaniesNamed(everyday: string): number {
-  const own = phrase(everyday);
+export function listedCompaniesNamed(name: string): number {
+  const own = phrase(name);
   const cached = namedCache.get(own);
   if (cached !== undefined) return cached;
-  const ciks = new Set<number>();
-  for (const r of everydayRows()) if (r.phrase === own) ciks.add(r.cik);
-  namedCache.set(own, ciks.size);
-  return ciks.size;
+  const everyday = new Set<number>();
+  for (const r of everydayRows()) if (r.phrase === own) everyday.add(r.cik);
+  const legal = new Set<number>();
+  for (const r of legalRows()) if (r.phrase === own) legal.add(r.cik);
+  const n = Math.max(everyday.size, legal.size);
+  namedCache.set(own, n);
+  return n;
 }
 
 const outrankedCache = new Map<string, number[]>();
@@ -801,6 +807,9 @@ let phraseRows: { cik: number; phrase: string }[] | null = null;
  * SEC releases against the index spent 70 of its 80 seconds making them again).
  */
 const everydayRows = () => (phraseRows ??= localCompanies().map((r) => ({ cik: r.cik_str, phrase: phrase(commonName(r.title)) })));
+let legalPhraseRows: { cik: number; phrase: string }[] | null = null;
+/** Every listed company's legal name as a phrase, its registration tag off ("INDEPENDENT BANK CORP /MI/"). */
+const legalRows = () => (legalPhraseRows ??= localCompanies().map((r) => ({ cik: r.cik_str, phrase: phrase(withoutTag(r.title)) })));
 
 let rankedRows: string[] | null = null;
 /** Every listed company's everyday name as a phrase, in the index's order. */

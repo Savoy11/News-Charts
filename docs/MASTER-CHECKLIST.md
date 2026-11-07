@@ -988,6 +988,65 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 109: a whole name two listed companies hold names neither (2026-11-07)
+
+The 2026-11-07 audit's question 2, under the owner's "go ahead and fix what it finds". The audit
+found "INDEPENDENT BANK CORP" was the EDGAR name of both INDB (Rockland, Massachusetts) and IBCP
+(Michigan), and "FIRST BANCORP" of both FBP and FBNC. Every case, release, notice or headline naming
+either name landed on both pages, and both asked the news the same query. This batch looked further
+and found twelve everyday names held by more than one listed record.
+
+- [x] **The twelve, read by hand** (`check:shared-names`, from the committed index):
+      - **one group's two records, which keep the name** (`ONE_GROUP`, `lib/sharedNames.ts`):
+        - Rio Tinto plc and Rio Tinto Ltd, the two halves of one dual-listed group;
+        - Resolution Minerals and its depositary's ADR record, which files only Form F-6;
+        - WISeQey Corp. and the WISeKey record it succeeded by an 8-K12B of 2026;
+      - **nine names held by different companies:**
+        - Independent Bank (INDB, IBCP);
+        - First Bancorp (FBP, FBNC, FNLC);
+        - Toro (TTC, the mower maker; TORO, a shipping company);
+        - Graham (GHC, GHM);
+        - Citizens (CIA, CIZN);
+        - Blue Owl Capital (OWL, OBDC);
+        - Farmers & Merchants Bancorp (FMCB, FMAO);
+        - Meridian (MRBK, MRDN);
+        - Fluent (FLNT, CNTMF).
+- [x] **The rule.** For the nine, the shared name names neither:
+      - **`listedCompaniesNamed`** counts a legal name as well as an everyday one. "INDEPENDENT BANK
+        CORP" is two records' once the "/MI/" tag is off, so the caption rules of the SEC, the Board
+        and every source that reads them refuse it. Before, they refused only an everyday name two
+        companies hold (batch 73).
+      - **`companyNames`** gives such a company its own legal name instead, where no other listed
+        company's is the same: "TORO CO", "First Bancorp, Inc" for Maine's. Otherwise it gives none,
+        so the two Independent Bank banks and FBP and FBNC are asked nothing by name: the Federal
+        Register and the Justice Department's search ask nothing.
+      - **The Justice Department's rule** (and the CFTC's, which reads it) skips a shared name, as
+        the SEC's rules did.
+      - **Headline scoring** (`aliasesFor`) drops the name and its words, and keeps the company's own
+        legal name and its ticker. "Independent Bank Group to pay penalty" is neither bank's news;
+        "Independent Bank Corp. (NASDAQ: INDB) reports…" is INDB's.
+- [x] **Measured on the saved data.** Every case source's replay but one is unchanged. The CPSC's
+      loses one recall on two pages: Toro's riding-mower recall of 2001-07-20 was TTC's and Toro
+      Corp.'s "sold in its stores" only by the line "Toro and Exmark commercial dealers". The slice
+      gives 2,288 rows on 196 companies (2,290 on 197).
+- **The price, and what is left:**
+  - "Toro beats estimates" no longer names the mower maker, as it names the shipping company as
+    much; TTC keeps "Toro Co" and its ticker.
+  - The CPSC rule reads no maker from a recall's title, so that Toro recall, "CPSC, The Toro
+    Company Announce Recall of Riding Mowers", is now on no page. Its right page is TTC's, by its
+    maker; left for the next audit.
+  - FBP's own litigation release of 2007 ("First BanCorp") stays missed: its name is FBNC's too.
+- **Requests:** 3, all to data.sec.gov: the filing lists of the WISeQey records (2107968, 1738699)
+  and of the Resolution Minerals ADR record (2086869), to read whether each is one company's. Each
+  carried the User-Agent `News Charts Research`, with no email address, at least 1.1 s apart.
+- **Checks:**
+  - new `check:shared-names` (14): the twelve, the counts, the names, the rules, headlines, and that
+    a company with no name of its own asks nothing;
+  - `check:cpsc` 34 (+1, the Toro store line), with its totals.
+
+  On main the new check fails. `npm run check` and `npm run lint` pass. HawkScan cannot run here
+  (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 108: Merck's history, the old Waste Management's cases, and stale rows taken off (2026-11-07)
 
 The 2026-11-07 audit's questions 1, 3 and 4 and its set-aside, under the owner's word of 2026-11-07:
@@ -1127,7 +1186,7 @@ put wrong rows on pages; they are batch 108's. The shared bank names are batch 1
   - [x] **Old Waste Management.** ✅ **Done in batch 108.** Six EPA rows of 1994–1998 on WM's page are the old Waste
         Management's, before USA Waste Services (WM's record) took its name on 1998-07-16. Batch 108
         reads WM's present name only from that day, as the Digest already does.
-  - [ ] **"Independent Bank Corp."** INDB and IBCP are read by the same names, so a case or headline
+  - [x] **"Independent Bank Corp."** ✅ **Done in batch 109.** INDB and IBCP are read by the same names, so a case or headline
         naming it lands on both, and both ask GDELT the same query. No saved case row is affected
         yet. First Bancorp (FBP, FBNC) shares a name the same way, and FBP's own litigation release
         of 2007 is missed. Batch 109.

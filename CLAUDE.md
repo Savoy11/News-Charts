@@ -80,7 +80,11 @@ Financial Services, Franklin Advisers…; batch 89: the units the CFPB charges, 
 mortgage insurers…), and the notes records that take no release. Every one of these rules reads a
 company from its first price on; the only names read before it are the units marked `beforeListing`
 (the owner's calls b and c, batch 90; the owner's rule of 2026-11-05 that a case goes on every
-company it involves, batch 93). It is not a scoring list; keep it that way. A caption names a company only by its name or
+company it involves, batch 93). It is not a scoring list; keep it that way. A whole name two different listed companies hold, as
+everyday or legal name, names neither anywhere (`listedCompaniesNamed`, batch 109): `companyNames`
+gives such a company its own legal name instead, or none ("Independent Bank", INDB's and IBCP's), and
+headlines name it by its ticker; one group's two records keep theirs (`ONE_GROUP` in
+`lib/sharedNames.ts`), and check:shared-names lists the twelve held now. A caption names a company only by its name or
 its legal name with legal words after it; the namesakes that rule cannot tell apart were read by
 hand and are listed by CIK in `NOT_THE_COMPANY` (one list each in `lib/secCases.ts`, `lib/fedPress.ts`,
 `lib/cfpb.ts`, `lib/epaCases.ts`, `lib/cftc.ts` and `lib/cpscRecalls.ts`; batch 100 read every CPSC firm by hand). EPA and

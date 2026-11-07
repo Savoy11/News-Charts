@@ -7,6 +7,8 @@ import { dataBlock, untrustedNotice } from "./untrusted";
 import { REGISTRANT_FORM } from "../secForms";
 import { parseScoreReply } from "../scoreReply";
 import { isListedWord, isOwnShortName, oneWordName, sharedBy, withCapital } from "../wordNames";
+import { listedCompaniesNamed } from "../sec";
+import { isOneGroupName } from "../sharedNames";
 
 export { parseScoreReply };
 
@@ -67,14 +69,19 @@ export function aliasesFor(subject: SubjectContext, extraAliases: string[] = [])
   const company = subject.kind === "company";
   const shown = company ? withoutTag(subject.displayName) : subject.displayName;
   const common = company ? commonName(shown) : shown;
+  // an everyday name another listed company's also is names neither, nor do its words (batch 109):
+  // "Independent Bank Group to pay penalty" is neither the Massachusetts bank's nor the Michigan
+  // bank's news. The company keeps its legal name where that is its own, and its ticker; one group's
+  // two records keep theirs ("Rio Tinto", `ONE_GROUP`)
+  const sharedName = company && listedCompaniesNamed(common) > 1 && !isOneGroupName(common);
   const aliases = new Set<string>();
-  for (const word of nameWords(subject)) {
+  for (const word of sharedName ? [] : nameWords(subject)) {
     if (company && nameKey(word) !== nameKey(common) && sharedBy(nameKey(word)) >= SHARED_ALONE) continue;
     aliases.add(word);
   }
-  aliases.add(shown.toLowerCase());
-  if (company && common.includes(" ")) aliases.add(common.toLowerCase());
-  const short = company ? shortName(common) : null;
+  if (!sharedName || listedCompaniesNamed(shown) <= 1) aliases.add(shown.toLowerCase());
+  if (company && !sharedName && common.includes(" ")) aliases.add(common.toLowerCase());
+  const short = company && !sharedName ? shortName(common) : null;
   if (short && isOwnShortName(nameKey(short))) aliases.add(short.toLowerCase().replace(/(?<![\p{L}\p{N}'])\p{L}/gu, (c) => c.toUpperCase()));
   if (subject.ticker) aliases.add(CAPITALS.test(subject.ticker) ? subject.ticker : subject.ticker.toLowerCase());
   for (const phrase of extraAliases) {

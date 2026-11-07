@@ -147,6 +147,11 @@ async function main(): Promise<void> {
   console.log("\nEvery listed company against every recall");
   const letters = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
   const all = letters(recalls.map((r) => [...r.makers, ...r.importers, ...r.distributors, r.soldAt].join(" ")).join("#"));
+  // batch 109, the 2026-11-07 audit's question 2: "Toro" is the mower maker's (TTC) and a shipping
+  // company's (TORO), so "Toro and Exmark commercial dealers" is neither's store line
+  const toroDealers = recall("01526");
+  check("a store line naming a name two listed companies hold is neither's: Toro's riding-mower recall of 2001-07-20 is no store's of TTC's or of Toro Corp.'s",
+    !!toroDealers && /Toro and Exmark commercial dealers/.test(JSON.stringify(toroDealers)) && !has(on("TTC"), "01526") && !has(on("TORO"), "01526"));
   const out = new Map<string, TimelineEvent[]>();
   const seen = new Set<number>();
   for (const [cik, ticker, title] of companies) {
@@ -160,8 +165,8 @@ async function main(): Promise<void> {
   }
   const flat = [...out.values()].flat();
   const ownRows = flat.filter((e) => e.precision !== "month" && !/^Sold in its stores: /.test(e.title)).length;
-  check("before any first price: 2,290 rows on 197 companies, 1,648 a recall's own day, 709 as maker, importer or distributor; Target 296, Walmart 236, Amazon 206, Home Depot 196 (2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
-    flat.length === 2290 && out.size === 197 && flat.filter((e) => e.precision !== "month").length === 1648 && ownRows === 709 &&
+  check("before any first price: 2,288 rows on 196 companies, 1,646 a recall's own day, 709 as maker, importer or distributor; Target 296, Walmart 236, Amazon 206, Home Depot 196 (2,290 on 197 before batch 109's shared names; 2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
+    flat.length === 2288 && out.size === 196 && flat.filter((e) => e.precision !== "month").length === 1646 && ownRows === 709 &&
       [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ") === "TGT 296, WMT 236, AMZN 206, HD 196",
     `${flat.length} on ${out.size}; ${flat.filter((e) => e.precision !== "month").length} own; ${ownRows} as maker, importer or distributor; ${[...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ")}`);
 

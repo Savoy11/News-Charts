@@ -1069,6 +1069,24 @@ American Airlines), while the companies' own feeds named them 2,009 times agains
 are in `data/shared-name-words.json`, rebuilt by `npm run sync:word-names`. A web address's "com"
 names no company either: "AMAZON COM INC" made "Investing.com's stocks of the week" Amazon's.
 
+**A whole name two listed companies hold names neither** (batch 109). Twelve everyday names are two
+or more listed records' (`check:shared-names` lists them). Three are one group's two records, which
+keep it (`ONE_GROUP` in `lib/sharedNames.ts`: Rio Tinto plc and Ltd, Resolution Minerals and its ADR,
+WISeQey and the record it succeeded). The other nine are different companies':
+- "Independent Bank" is the Massachusetts bank's (INDB) and the Michigan bank's (IBCP);
+- "First Bancorp" is Puerto Rico's, North Carolina's and Maine's;
+- "Toro" is the mower maker's and a shipping company's;
+- and Graham, Citizens, Blue Owl Capital, Farmers & Merchants Bancorp, Meridian and Fluent.
+
+For those, the name, and the words of it, name neither in any source: a headline, a case caption, a
+Justice Department or Federal Register title. Each company is named instead by its own legal name
+where no other listed company's is the same ("TORO CO", "First Bancorp, Inc"), and in headlines by
+its ticker. The two Independent Bank banks and Puerto Rico's and North Carolina's First Bancorp have
+the same legal names, so they are asked nothing by name. The SEC's caption rule already refused an
+everyday name two companies hold (batch 73); a legal name is now counted too (`listedCompaniesNamed`).
+The price: "Toro beats estimates" is no longer the mower maker's news, since it is as much the
+shipping company's.
+
 A stored score follows a corrected rule on the story's next ingest,
 or at once with `--rescore`, which works out the free tier's own scores again and hands those it
 no longer settles back to the model; a model's score is never touched. It reaches the newest 500

@@ -1,6 +1,7 @@
 import { companyNames, longerListedNameIn } from "./frCompany";
 import { isNotesRecord, releaseNamesAsked, releaseNamesBefore, releaseNamesOn } from "./releaseNames";
-import { commonName, outrankingNameFor } from "./sec";
+import { commonName, listedCompaniesNamed, outrankingNameFor } from "./sec";
+import { isOneGroupName } from "./sharedNames";
 import type { FetchResult, TimelineEvent } from "./types";
 import { UA } from "./contact";
 import { isEverydayWord, oneWordName } from "./wordNames";
@@ -157,6 +158,9 @@ export function releaseNamesParty(title: string, names: readonly string[]): bool
   const capitals = !/\p{Ll}/u.test(t);
   for (const name of names) {
     if (name.trim().length < 2 || longerListedNameIn(t, name)) continue;
+    // a name two listed companies hold, everyday or legal, is neither's (batch 109): "Independent Bank
+    // Agrees to Pay" names no one bank; one group's two records keep theirs ("Rio Tinto")
+    if (listedCompaniesNamed(name) > 1 && !isOneGroupName(name)) continue;
     const key = oneWordName(name);
     const everyday = key !== null && isEverydayWord(key);
     // …and a name that is only an industry word, The Bancorp's "Bancorp" (batch 100, the audit's

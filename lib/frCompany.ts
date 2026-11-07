@@ -1,5 +1,7 @@
 import { foldAccents } from "./fold";
-import { commonName, listedNamesContaining } from "./sec";
+import { commonName, listedCompaniesNamed, listedNamesContaining } from "./sec";
+import { withoutTag } from "./edgarName";
+import { isOneGroupName } from "./sharedNames";
 import type { FetchResult, TimelineEvent } from "./types";
 
 /**
@@ -70,7 +72,14 @@ const companyWordAt = (tokens: string[], j: number): boolean =>
  */
 export function companyNames(edgarName: string, alsoKnownAs: readonly string[] = []): string[] {
   // a leading "the" is the article, not part of the name: "the Hartford Core Bond ETF" (batch 28)
-  const names = [commonName(edgarName).replace(/^the\s+/i, "")];
+  const common = commonName(edgarName).replace(/^the\s+/i, "");
+  // an everyday name another listed company's also is names neither (batch 109): "Toro" is the mower
+  // maker's and a shipping company's. Its legal name stands for it where that is its own ("TORO
+  // CO"), and nothing where it is not ("INDEPENDENT BANK CORP", the Massachusetts and the Michigan
+  // bank's); the records of one group keep theirs (`ONE_GROUP`: "Rio Tinto")
+  const legal = withoutTag(edgarName).trim();
+  const own = !common || listedCompaniesNamed(common) <= 1 || isOneGroupName(common) ? common : legal && listedCompaniesNamed(legal) <= 1 ? legal : "";
+  const names = own ? [own] : [];
   for (const raw of alsoKnownAs) {
     const n = raw.replace(/^the\s+/i, "");
     if (!names.some((m) => words(m) === words(n))) names.push(n);
@@ -192,6 +201,7 @@ export async function fetchCompanyMentions(
   since: string,
   alsoKnownAs: string[] = []
 ): Promise<{ hits: FrHit[]; total: number } | { error: string }> {
+  if (!frSearchTerm(edgarName, alsoKnownAs)) return { hits: [], total: 0 };
   const params = new URLSearchParams({
     per_page: "1000",
     order: "newest",
@@ -293,6 +303,8 @@ export async function fetchCompanyRegulations(
   since = frDailySince(),
   alsoKnownAs: string[] = []
 ): Promise<FetchResult> {
+  // a company with no name of its own to search (a name another listed company shares, batch 109) is asked nothing
+  if (!frSearchTerm(edgarName, alsoKnownAs)) return { events: [], outcome: "empty", detail: "no name of its own to search: another listed company's is the same" };
   try {
     const res = await fetch(searchUrl(frSearchTerm(edgarName, alsoKnownAs), since, null), {
       next: { revalidate: 21600 },
@@ -321,6 +333,7 @@ export async function fetchCompanyYear(edgarName: string, year: number, alsoKnow
   const term = frSearchTerm(edgarName, alsoKnownAs);
   const docs: FrDocument[] = [];
   let documents = 0;
+  if (!term) return { events: [], documents, outcome: "empty", detail: "no name of its own to search: another listed company's is the same" };
   try {
     for (let page = 1; page <= FR_YEAR_PAGES; page++) {
       const res = await fetch(searchUrl(term, `${year}-01-01`, `${year}-12-31`, page));

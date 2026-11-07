@@ -4,6 +4,8 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import EventList from "../components/EventList";
 import { ALSO_ON_SHOWN, ALSO_ON_SOURCES, ALSO_ON_SOURCE_IDS, alsoOnMore, alsoOnSql, groupAlsoOn } from "../lib/alsoOn";
+import { GROUPED_ROW_SOURCES, GROUPED_ROW_SOURCE_IDS, corroborations } from "../lib/corroboration";
+import { readdirSync } from "node:fs";
 import { SOURCES } from "../lib/ingest/store";
 import type { TimelineEvent } from "../lib/types";
 
@@ -100,6 +102,31 @@ check("a page's events load their other companies with them, and a failed query 
   /const \[\{ rows \}, alsoOn\] = await Promise\.all\(\[getPool\(\)\.query\(/.test(store) && /loadAlsoOn\(subjectId\)\]\);/.test(store) &&
     /alsoOn\.has\(Number\(r\.id\)\) \? \{ alsoOn: alsoOn\.get\(Number\(r\.id\)\) \} : \{\}/.test(store) && /catch \(err\) \{\s*console\.error\(`also-on/.test(store));
 check("  …and both list layouts render the line", (read("components/EventList.tsx").match(/<EventRow ev=\{ev\} \/>\s*<AlsoOnLine ev=\{ev\} \/>/g) ?? []).length === 2);
+
+console.log("\nThe sources a row counts (batch 107, the 2026-11-07 audit's finding 1)");
+const groupedIds = GROUPED_ROW_SOURCES.map((k) => SOURCES.find((s) => s.key === k)?.id);
+check("the sources whose one row carries several cases' numbers are EPA's, the CPSC's, the CFTC's, the SEC's litigation releases, the CFPB's and the Digest's, by their own ids",
+  JSON.stringify(groupedIds) === JSON.stringify(GROUPED_ROW_SOURCE_IDS) && JSON.stringify([...GROUPED_ROW_SOURCES].sort()) === JSON.stringify(["cfpb", "cftc", "cpsc_recalls", "epa_cases", "sec_cases", "sec_digest"]),
+  { groupedIds, GROUPED_ROW_SOURCE_IDS });
+// every builder that joins numbers into one row's id, and the source it writes
+const joining = readdirSync(join(__dirname, "..", "lib"))
+  .filter((f) => f.endsWith(".ts"))
+  .flatMap((f) => {
+    const text = read(`lib/${f}`);
+    if (!/externalId:[^\n]*\.join\(","\)/.test(text)) return [];
+    return [{ file: f, keys: [...new Set([...text.matchAll(/sourceKey: "([a-z_]+)"/g)].map((m) => m[1]))] }];
+  });
+check("  …and every source file that joins case numbers into a row's id writes one of them, so no grouped row is counted as several sources",
+  joining.length >= 6 && joining.every((j) => j.keys.length > 0 && j.keys.every((k) => (GROUPED_ROW_SOURCES as readonly string[]).includes(k))),
+  joining);
+const gdelt = SOURCES.find((s) => s.key === "gdelt")?.id ?? -1;
+check("a row whose list grew counts once: an SEC day row stored under two lists, a CPSC month under five, is one source",
+  corroborations([28, 28]) === 1 && corroborations(["32", "32", "32", "32", "32"]) === 1 && corroborations([30, 30, 23]) === 2);
+check("  …but a story twelve papers carried is still twelve, and a row with no attestation none",
+  gdelt > 0 && corroborations(Array(12).fill(gdelt)) === 12 && corroborations(null) === 0 && corroborations([]) === 0, gdelt);
+check("  …and a page's rows are counted that way: their attestations' sources, not their number",
+  /array_agg\(x\.source_id\) FROM event_attestations x WHERE x\.event_id = e\.id\) AS attestation_sources/.test(store) &&
+    /const attestations = corroborations\(r\.attestation_sources\);/.test(store) && !/count\(\*\) FROM event_attestations x/.test(store));
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);
 process.exit(fail ? 1 : 0);

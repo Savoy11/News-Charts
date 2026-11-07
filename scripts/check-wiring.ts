@@ -539,6 +539,12 @@ const sectorRows = [
 check("a document on both the company and its sector is listed once",
   withoutSharedSectorRows(ownRows, sectorRows).map((e) => e.id).join() === "sector-8");
 check("  …and the company page uses that", /withoutSharedSectorRows\(events, sector\)/.test(read("lib/page-data.ts")));
+// batch 107, the 2026-11-07 audit's finding 5: the map's header kept 33 sources after two more were added
+const mapHeader = /^\*\*Last updated:\*\* \d{4}-\d{2}-\d{2} · (\d+) sources \((\d+) on the ingest path; the (\d+) keyed ones are held back by their licences\)$/m.exec(read("docs/COVERAGE-MAP.md"));
+const commercial = SOURCES.filter((s) => s.commercialOk).length;
+check("the coverage map's header counts the sources `SOURCES` registers, and how many the licence gate lets ingest read",
+  !!mapHeader && Number(mapHeader[1]) === SOURCES.length && Number(mapHeader[2]) === commercial && Number(mapHeader[3]) === SOURCES.length - commercial,
+  `${mapHeader?.slice(1).join("/") ?? "no header"} against ${SOURCES.length}/${commercial}/${SOURCES.length - commercial}`);
 
 Promise.all([frSearch, frSearch2]).then(() => {
   console.log(`\n${pass}/${pass + fail} checks passed\n`);

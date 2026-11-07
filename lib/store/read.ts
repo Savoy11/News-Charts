@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { getPool } from "../db";
+import { corroborations } from "../corroboration";
 import { ALSO_ON_SOURCE_IDS, alsoOnSql, groupAlsoOn, type AlsoOn } from "../alsoOn";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
 import { OWN_SERIES_SCORER, asOwnSeriesFiling } from "../fundSeries";
@@ -233,8 +234,9 @@ export async function loadSubject(slug: string): Promise<SubjectRow | null> {
 }
 
 /**
- * The site's hot read. Joins the primary attestation for the link, and counts
- * attestations so corroborated events can be distinguished later.
+ * The site's hot read. Joins the primary attestation for the link, and counts the documents that
+ * attest each row, so a corroborated one can say so: every attestation once, but the versions of a
+ * row whose list of cases grew once (`corroborations`, batch 107).
  *
  * A fund's own filing, by its series' filing list, is shown under the fund's name: the stored row
  * names the trust, because it is the same row on every sibling's page (`asOwnSeriesFiling`).
@@ -245,7 +247,7 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
             es.relevance,
             CASE WHEN es.scored_by = $3 THEN sj.display_name END AS own_series_of,
             a.url, a.source_label, a.external_id,
-            (SELECT count(*) FROM event_attestations x WHERE x.event_id = e.id) AS attestations
+            (SELECT array_agg(x.source_id) FROM event_attestations x WHERE x.event_id = e.id) AS attestation_sources
        FROM events e
        JOIN event_subjects es ON es.event_id = e.id
        JOIN subjects sj ON sj.id = es.subject_id
@@ -262,7 +264,8 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
       r.occurred_on instanceof Date
         ? r.occurred_on.toISOString().slice(0, 10)
         : String(r.occurred_on).slice(0, 10);
-    const attestations = Number(r.attestations);
+    // a grouped row's versions are one document, not corroboration (lib/corroboration.ts, batch 107)
+    const attestations = corroborations(r.attestation_sources);
     const ev = {
       id: `db-${r.id}`,
       date,

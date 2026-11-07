@@ -118,7 +118,11 @@ CFTC) says which other held company pages carry the same case: "Also on Ford Mot
 and 25 more" (`lib/alsoOn.ts`, batch 106). A case is the same source's same number, compared as a set
 for a grouped row (db/041's index); a release held once on several pages counts too. It is read
 beside `loadEvents` and never breaks a page; adding a multi-party source means adding it to
-`ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and db/041's list, which check:also-on holds together.
+`ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and db/041's list, which check:also-on holds together. A row
+whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months) is stored again
+when its list grows, so its versions count once in "· N sources" (`GROUPED_ROW_SOURCES` in
+`lib/corroboration.ts`, batch 107); a new source that joins numbers goes there too, and check:also-on
+finds one that does not.
 
 A ticker whose company moved to a new SEC record — a holding-company reorganisation or redomicile
 (XOM in 2026, Alphabet in 2015, Disney in 2019) — reads its earlier filings from the predecessor's

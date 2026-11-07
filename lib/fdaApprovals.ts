@@ -81,8 +81,9 @@ export const APPROVALS: readonly FdaApproval[] = (approvalsFile as unknown as { 
 
 /**
  * The names only an approval uses, by CIK, read by hand against the compilation's 681 applicant
- * names (batch 105). Each day is read from the bought company's EDGAR filing list (data.sec.gov,
- * 2026-11-06): the day its deal closed, its listing ended or control passed.
+ * names (batch 105; Alexion, Anacor, Bioverativ, Ablynx and Jazz's Irish company, batch 107). Each
+ * day is read from the bought company's EDGAR filing list (data.sec.gov, 2026-11-06 and 2026-11-07):
+ * the day its deal closed, its listing ended or control passed.
  */
 export const APPLICANT_NAMES: Readonly<Record<number, { ticker: string; names: readonly FdaFirm[] }>> = {
   901832: {
@@ -90,6 +91,11 @@ export const APPLICANT_NAMES: Readonly<Record<number, { ticker: string; names: r
     names: [
       { search: "AstraZeneca", match: /^AstraZeneca\b/i, why: "the company and its units (AstraZeneca Pharmaceuticals LP, AstraZeneca AB)" },
       { search: "Zeneca", match: /^Zeneca\b/i, why: "the company's record under its own earlier name, ZENECA GROUP PLC, before the 1999 merger with Astra" },
+      {
+        search: "Alexion Pharmaceuticals",
+        from: "2021-07-21",
+        why: "bought 2021-07-21 (Alexion's Form 25 of that day, and its 8-K of the merger, items 2.01 and 5.01, reporting it; batch 107)",
+      },
     ],
   },
   59478: {
@@ -136,7 +142,36 @@ export const APPLICANT_NAMES: Readonly<Record<number, { ticker: string; names: r
   },
   78003: {
     ticker: "PFE",
-    names: [{ search: "Wyeth", from: "2009-10-15", why: "bought 2009-10-15 (Wyeth's 8-K of that day, item 5.01)" }],
+    names: [
+      { search: "Wyeth", from: "2009-10-15", why: "bought 2009-10-15 (Wyeth's 8-K of that day, item 5.01)" },
+      {
+        search: "Anacor",
+        match: /^Anacor\b/i,
+        from: "2016-06-24",
+        why: "bought 2016-06-24 (Anacor's 8-K of that day, items 2.01 and 5.01); the file writes Eucrisa's applicant \"Anacor Pharmacueticals\" (batch 107)",
+      },
+    ],
+  },
+  1121404: {
+    ticker: "SNY",
+    names: [
+      { search: "Bioverativ", from: "2018-03-08", why: "bought 2018-03-08 (Bioverativ's 8-K of that day, items 2.01 and 5.01; batch 107)" },
+      {
+        search: "Ablynx",
+        from: "2018-06-12",
+        why: "bought in 2018 by a tender offer: from Ablynx's Form 25 of 2018-06-12, which ends its listing, a day surely after control passed (Sanofi's 13D of 2018-05-25; batch 107)",
+      },
+    ],
+  },
+  1232524: {
+    ticker: "JAZZ",
+    names: [
+      {
+        search: "Jazz Pharmaceuticals Ireland",
+        match: /^Jazz Pharmaceuticals Ireland\b/i,
+        why: "the company's Irish company, the applicant of Rylaze (2021) and Ziihera (2024); \"Ireland Limited\" is not legal words alone, so the caption rule refuses it (batch 107)",
+      },
+    ],
   },
   1114448: {
     ticker: "NVS",

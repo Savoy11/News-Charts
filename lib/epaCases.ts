@@ -262,7 +262,7 @@ export interface EpaUnit {
  * A station, store, dealer or numbered site under an oil brand, or the brand listed with the business
  * that trades under it ("BP AMOCO; PARTY PLACE"): the brand owner's unit only by name.
  */
-export const BRANDED_SITE = /\b(?:SERVICE\s+STATIONS?|STATIONS?|STA\b|SVC|TRUCK\s+STOP|CAR\s+WASH|FOOD\s*MART|MINI[- ]?MART|MART|STORES?|DEALER|JOBBER|DISTRIBUTOR|CONVENIENCE|AM\s*\/?\s*PM)\b|#\s*\d|;/i;
+export const BRANDED_SITE = /\b(?:SERVICE\s+STATIONS?|STATIONS?|STA\b|SVC|TRUCK\s+STOP|CAR\s+WASH|FOOD\s*MART|MINI[- ]?MART|MART|STORES?|DEALER|JOBBER|DISTRIBUTOR|CONVENIENCE|AM\s*\/?\s*PM)\b|#\s*\d|;\s*\S/i;
 
 const unit = (ticker: string, name: string, defendant: RegExp, key: string, days: { from?: string; to?: string; branded?: true } = {}): EpaUnit => ({ ticker, unit: name, defendant, key, ...days });
 const OIL = { branded: true as const };

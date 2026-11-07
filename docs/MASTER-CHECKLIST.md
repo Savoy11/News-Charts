@@ -988,6 +988,104 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 107: the audit of batches 101–106, and its five findings fixed (2026-11-07)
+
+The `code-auditor` read batches 101–106 (`9c580cf..013ecc8`); its report is
+`docs/audits/2026-11-07-code-audit-b101-106.md`. The owner's word, 2026-11-07: "go ahead and fix what
+it finds". It found the batches' mechanics sound on the saved real data:
+- each of the 24 dated unit days matches its EDGAR filing;
+- the 53 EPA unit patterns take only their owners' companies, inside their days;
+- the FDA reader agrees with an independent reading on all 1,387 approvals;
+- "Also on" uses its index unforced at 330,000 attestations, about 0.3 s for a 409-row page.
+
+It found five defects, each reproduced here and fixed, each with cases that fail on main. It also
+answered the four questions batches 104–106 left open. Two of them, Merck and old Waste Management,
+put wrong rows on pages; they are batch 108's. The shared bank names are batch 109's.
+
+- [x] **1. "· 2 sources" (up to 5) on a row one agency attests** (`P2`).
+      - **The cause.** A row of the six sources that join several cases' numbers into one row is
+        stored again when its list grows, as a second attestation of the same event. The page counted
+        attestations as sources. Batch 106 brought this to SEC and CFPB day rows; CPSC months already
+        showed it ("CPSC: 14 recalls of products sold in its stores, January 2025 · 4 sources" on
+        Amazon's page).
+      - **The audit's one-word fix, not taken.** Counting distinct sources would make a story twelve
+        papers carried read as one: the news feeds attest each paper under one source id.
+      - **Fixed** (`lib/corroboration.ts`, `loadEvents`). The page reads its rows' attestations'
+        sources and counts each attestation once, but a grouped source's versions once
+        (`GROUPED_ROW_SOURCES`: SEC cases, CFPB, EPA, CPSC, CFTC, the Digest). "Also on" still reads
+        every version's numbers.
+      - **On a real database** (the local Postgres 16, the audit's own re-ingest of RF's 2009-09-21,
+        and JPMorgan's and Wells Fargo's 2015-01-22): the three rows no longer say "· 2 sources", and
+        JPMorgan's and Wells Fargo's still name each other. The database returns the sources as a
+        list of numbers: three news attestations and two versions of one SEC row count 4.
+- [x] **2. Six FDA approvals of listed companies' own or bought units on no page** (`P3`). **Fixed**
+      in `APPLICANT_NAMES`, each day read from the bought company's filing list:
+      - Alexion on AstraZeneca from 2021-07-21 (its Form 25 that day, and its 8-K of the merger):
+        Voydeya (2024);
+      - Anacor on Pfizer from 2016-06-24 (its 8-K, items 2.01 and 5.01): Eucrisa (2016);
+      - Bioverativ on Sanofi from 2018-03-08 (its 8-K, items 2.01 and 5.01): Enjaymo (2022);
+      - Ablynx on Sanofi from 2018-06-12, its Form 25, a day surely after control passed (Sanofi's
+        13D of 2018-05-25): Cablivi (2019);
+      - Jazz's Irish company, "Jazz Pharmaceuticals Ireland Limited", as Jazz's own name: Rylaze
+        (2021) and Ziihera (2024).
+
+      Each bought company's earlier approvals stay its own: Soliris and Ultomiris are not
+      AstraZeneca's, Kerydin is not Pfizer's. **Measured:** 562 approvals on 87 companies before first
+      prices (556); from the 26 drugmakers' first prices 439, 303 before 2017 (435, 302). Left out:
+      AstraZeneca's Calquence (2017), filed by Acerta Pharma, a private company of which AstraZeneca
+      bought a majority in 2016; no filing gives the day.
+- [x] **3. One unreadable year page of the Digest's archive stopped every walk before any issue**
+      (`P3`). **Fixed** (`walkDigest`): a year page that fails or lists no issue is passed over for
+      the run, reported as an error, and asked again on the next run; the other years' issues are
+      read. A refusal still stops the run and the process's asking.
+- [x] **4. "Texaco Inc;" refused as a branded station, keeping the Star Lake Canal Superfund order
+      of 2016-09-26 (06-2016-2953) off Chevron's page** (`P3`). **Fixed:** the guard's semicolon
+      now needs a second name after it ("BP AMOCO; PARTY PLACE" is still refused). The order joins
+      Chevron's other no-penalty order of September 2016 in one month row. The slice's rows stay
+      7,436, of which 7,034 are a case's own day (7,035).
+- [x] **5. The coverage map counted 33 sources** (`P3`). **Fixed:** 35, 27 on the ingest path, now
+      pinned against `SOURCES` by check:wiring.
+- **The four questions** (the audit's answers, with counts):
+  - [ ] **Merck.** MRK's EDGAR record, CIK 310158, is Schering-Plough's; old Merck's is 64978, and no
+        notice of succession links them. MRK's page holds Schering-Plough's 864 filings of 1994–2009,
+        its Digest names and, by its former name, its cases (4 EPA rows, 2 SEC cases, 1 SEC press, 2
+        Justice releases, Cedax), beside old Merck's cases and approvals by the name "Merck". Old
+        Merck's 1,342 filings are missing. Batch 108 takes the audit's option (a): old Merck is MRK's
+        history to 2009-11-03, under the project's rules that a predecessor whose ticker a company
+        carries counts and an acquisition's past is never the buyer's.
+  - [ ] **Old Waste Management.** Six EPA rows of 1994–1998 on WM's page are the old Waste
+        Management's, before USA Waste Services (WM's record) took its name on 1998-07-16. Batch 108
+        reads WM's present name only from that day, as the Digest already does.
+  - [ ] **"Independent Bank Corp."** INDB and IBCP are read by the same names, so a case or headline
+        naming it lands on both, and both ask GDELT the same query. No saved case row is affected
+        yet. First Bancorp (FBP, FBNC) shares a name the same way, and FBP's own litigation release
+        of 2007 is missed. Batch 109.
+  - **Organon:** nothing is wrongly on OGN's page. Nine approvals and one EPA case before its 2021
+    spin-off are on no page; Saphris (2009) hangs on the Merck answer.
+- **Set aside:**
+  - [ ] **A rule change that takes a case off a company leaves the stored link** (only filings and
+        the Federal Register unlink). Batch 108 needs one for Merck and Waste Management.
+  - `event_subjects` has no full index on `subject_id`: 256–319 ms for a 409-row page at 337,000
+    links, inside a page cached 15 minutes. Older than these batches.
+  - BP Amoco Chemical's rows of 2022 and 2024 on BP's page, after BP sold its aromatics and acetyls
+    business to INEOS at the end of 2020: whether the named company went with it was not read.
+- **Requests:** 7, all to data.sec.gov.
+  - 3 XBRL frames, the companies' assets at the end of 2015 and 2017, to find the bought companies'
+    records: Alexion 899866, Anacor 1411158, Bioverativ 1681689, Ablynx 1617582.
+  - 4 of their filing lists.
+
+  Each carried the User-Agent `News Charts Research`, with no email address, at least 1.1 s apart.
+- **Checks:**
+  - check:also-on 20 (+5: the six sources by id, every builder that joins numbers writes one of them,
+    the count, and the page's read);
+  - check:fda-approvals 47 (+7);
+  - check:digest-walk 54 (+3);
+  - check:epa-cases 58 (+2);
+  - check:wiring 248 (+1).
+
+  On main the new cases fail. `npm run check` and `npm run lint` pass. HawkScan cannot run here
+  (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 106: "Also on" — a case's other listed companies, linked from its row (2026-11-06)
 
 The owner's approval of 2026-11-06 of the 2026-11-06 proposal 3, the last of the three. No new data

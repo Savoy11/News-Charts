@@ -94,13 +94,25 @@ export async function walkDigest(
 
   const { rows: yearRows } = await client.query<{ year: number; issues: DigestIssue[] }>("SELECT year, issues FROM sec_digest_years");
   const listed = new Map(yearRows.map((r) => [r.year, r.issues]));
+  // a year page that fails, or lists no issue, is passed over for this run, not fatal: one bad page
+  // must not hold back the issues of the years already listed (batch 107, the 2026-11-07 audit's
+  // finding 3). It is not stored, so the next run asks it again, and it is reported as an error. A
+  // refusal still stops the run, as everywhere.
+  const yearsFailed: { year: number; detail: string }[] = [];
+  const yearsDetail = () =>
+    yearsFailed.length ? `the archive page of ${yearsFailed.map((y) => `${y.year} (${y.detail})`).join(", ")} not read` : "";
   for (let year = to; year >= from; year--) {
     if (listed.has(year)) continue;
-    if (budget.left <= 0) return { ...walk, stopped: "this run's requests are spent" };
+    if (budget.left <= 0) {
+      return { ...walk, stopped: "this run's requests are spent", ...(yearsFailed.length ? { failure: { outcome: "error" as const, detail: yearsDetail() } } : {}) };
+    }
     await pace();
     const got = await fetchArchive(year);
-    if (!got.ok) return fail(got, `the archive page of ${year}`);
-    if (!got.issues.length) return fail({ detail: "no issue on the page" }, `the archive page of ${year}`);
+    if (!got.ok && refused(got.httpStatus)) return fail(got, `the archive page of ${year}`);
+    if (!got.ok || !got.issues.length) {
+      yearsFailed.push({ year, detail: !got.ok ? (got.detail ?? `HTTP ${got.httpStatus ?? "error"}`) : "no issue on the page" });
+      continue;
+    }
     await client.query("INSERT INTO sec_digest_years (year, issues) VALUES ($1, $2::jsonb) ON CONFLICT (year) DO UPDATE SET issues = EXCLUDED.issues, read_at = now()", [
       year,
       JSON.stringify(got.issues),
@@ -121,8 +133,13 @@ export async function walkDigest(
   // an issue its text cannot be read from is passed over for this run, not fatal: one bad scan must
   // not hold back the ~9,500 behind it. It is asked again on the next run, and reported as an error
   const end = (stopped?: string): DigestWalk => {
-    if (!skipped.length) return { ...walk, left: left(), ...(stopped ? { stopped } : {}) };
-    const detail = `${skipped.length} issue${skipped.length > 1 ? "s" : ""} not read, the first ${skipped[0].url}: ${skipped[0].detail}`;
+    if (!skipped.length && !yearsFailed.length) return { ...walk, left: left(), ...(stopped ? { stopped } : {}) };
+    const detail = [
+      yearsDetail(),
+      skipped.length ? `${skipped.length} issue${skipped.length > 1 ? "s" : ""} not read, the first ${skipped[0].url}: ${skipped[0].detail}` : "",
+    ]
+      .filter(Boolean)
+      .join("; ");
     return { ...walk, left: left(), stopped: stopped ?? "error", failure: { outcome: "error", detail } };
   };
   for (const issue of pending) {

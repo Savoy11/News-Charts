@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EventType, TimelineEvent } from "@/lib/types";
 import { waybackUrl, waybackCouldHave } from "@/lib/wikidata";
@@ -103,6 +104,31 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
     >
       {body}
     </a>
+  );
+}
+
+/**
+ * "Also on Ford, General Motors and 25 more" (batch 106): the other held company pages carrying
+ * the same case. Under the row rather than in it, since the row is one big anchor and links do not
+ * nest. Only held pages can be named, so the count says "more" pages, never "parties".
+ */
+export function AlsoOnLine({ ev }: { ev: TimelineEvent }) {
+  const a = ev.alsoOn;
+  if (!a || !a.shown.length) return null;
+  const more = a.total - a.shown.length;
+  return (
+    <p className="-mt-1 px-3 pb-2 pl-[4.5rem] text-xs text-slate-500" data-also-on>
+      Also on{" "}
+      {a.shown.map((c, i) => (
+        <span key={c.ticker}>
+          {i > 0 ? (i === a.shown.length - 1 && more <= 0 ? " and " : ", ") : ""}
+          <Link href={`/company/${encodeURIComponent(c.ticker)}`} className="text-slate-400 underline decoration-slate-700 underline-offset-2 hover:text-sky-300">
+            {c.name}
+          </Link>
+        </span>
+      ))}
+      {more > 0 ? ` and ${more} more` : ""}
+    </p>
   );
 }
 
@@ -890,6 +916,7 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
                     >
                       <div className="min-w-0 flex-1">
                         <EventRow ev={ev} />
+                        <AlsoOnLine ev={ev} />
                       </div>
                       {siteDomain && <SiteSnapshotLink domain={siteDomain} date={ev.date} />}
                     </li>
@@ -915,6 +942,7 @@ export default function EventList({ events, order = "asc", siteDomain, persistKe
                   >
                     <div className="min-w-0 flex-1">
                       <EventRow ev={ev} />
+                      <AlsoOnLine ev={ev} />
                     </div>
                     {siteDomain && <SiteSnapshotLink domain={siteDomain} date={ev.date} />}
                   </li>

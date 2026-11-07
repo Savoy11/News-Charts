@@ -988,6 +988,62 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 106: "Also on" — a case's other listed companies, linked from its row (2026-11-06)
+
+The owner's approval of 2026-11-06 of the 2026-11-06 proposal 3, the last of the three. No new data
+and no request: a read beside `loadEvents` and one line in `EventList`.
+
+- [x] **The read** (`lib/alsoOn.ts`, `loadAlsoOn` in `lib/store/read.ts`). For each of a page's
+      events attested by one of the eight multi-party sources, the other held company pages with an
+      event attested by the same source under an overlapping number:
+      - **two ways a case is held.** An EPA case, a CPSC recall, a CFTC order, an SEC litigation
+        release or a CFPB action is one event a company. A Justice Department, SEC or Board press
+        release is one event, linked to every page it names. The read counts the row's own event
+        too, so the second way is found as well as the first.
+      - **a grouped row's numbers as a set.** A day's or a month's row carries its cases' numbers
+        joined by commas, so the numbers are compared as arrays. The new `db/041_also_on.sql` is a
+        GIN index on them, partial on the eight sources. The query writes the same eight ids as
+        literals, so the planner can use it.
+      - **never the page itself.** Not the page's own company, nor another ticker of its own SEC
+        record (GOOG on GOOGL's page), nor a page the case sits below the relevance floor on, nor a
+        topic.
+      - One company once a row, by name; the first three named, then "and N more".
+      - A failed read logs and leaves the rows without the line; the page still renders.
+- [x] **Every case's number on a grouped row.** An SEC litigation or CFPB row of several cases on
+      one day carried only its first case's number, so another page sharing a later one could not
+      find it. It now carries all of them, as EPA's, the CPSC's and the CFTC's rows did; a day of
+      one case keeps the number it had, so stored rows change only where they held several.
+      - On the saved data, 14 SEC cases and 5 CFPB actions are on two or more pages. One was
+        missed before: the CFPB's Genuine Title action of 2015-01-22, second on both JPMorgan's day
+        and Wells Fargo's.
+      - Ingest keeps the old number's attestation and adds the new one, so the set only grows.
+- [x] **The line** (`AlsoOnLine` in `components/EventList.tsx`): "Also on Ford Motor, General Motors,
+      Caterpillar and 24 more", each name a link to its page, on its own line under the row in both
+      list layouts. The row is itself one link, and links do not nest.
+- [x] **Run against a real database** (the local Postgres 16, db/041 applied). Six seeded pages and
+      seven events gave, on the first company's page:
+      - its EPA case: the second company only. Its own other share class, a page below the floor,
+        and a CPSC recall with the same number were left out.
+      - its Justice Department release shared with the second company and a topic: the second
+        company only.
+
+      On the second company's page, its grouped row named both share classes of the first. A row
+      whose numbers only its own page holds said nothing. With sequential scans off, the plan reads
+      the overlap from `event_attestations_case_numbers`. The seeded rows were deleted after.
+- [x] **Measured** on batch 104's replay of EPA's cases: 672 of 5,322 cases are on two or more
+      companies' pages; 3,366 of 7,436 rows hold a case another page holds; two cases are on 36
+      pages (02-2009-2006, 04-2013-3751). The scout counted 543, 2,659 of 5,996 and 30 before
+      batch 104's units.
+- **Checks:**
+  - new `check:also-on` (15): the sources against `SOURCES` and db/041, the query's shape, the
+    grouping, the line's render (three names and "and 24 more", two names, none), and the wiring;
+  - `check:sec-cases` 75 (+1, RF's 2009-09-21 row carries both its keys) and `check:cfpb` 51 (+1,
+    Genuine Title on both JPMorgan's and Wells Fargo's rows).
+
+  On main the new check fails (the module does not exist), and so do the two new cases. `npm run check` and `npm run lint` pass. HawkScan
+  cannot run here (`HAWK_API_KEY` unset).
+- With this batch every 2026-11-06 proposal is built.
+
 ## NC ledger — batch 105: the FDA's new-drug approvals since 1985 (2026-11-06)
 
 The owner's approval of 2026-11-06 of the 2026-11-06 proposal 1. A new source, `fda_approvals`
@@ -8120,12 +8176,15 @@ already held, but new investment goes to securities coverage first.
         before 2017, 66 before EDGAR; every row of the eleven largest pages read by hand.
       - *Derived from [`docs/proposals/2026-11-06-proposals.md`](proposals/2026-11-06-proposals.md)
         #1, approved 2026-11-06.*
-- [ ] `P2` **A case's other listed companies, linked from its row** ("Also on Ford, General Motors
+- [x] `P2` **A case's other listed companies, linked from its row** ("Also on Ford, General Motors
       and 25 more"). Approved by the owner 2026-11-06. No new data: one read beside `loadEvents`
       for the other held pages holding the same source's same case, and one line in `EventList`.
       - **Measured** by the scout: 543 EPA cases are on two or more companies' pages; 2,659 of
         5,996 rows (44%) hold a case another page also holds. The counts are a ceiling: only held
         pages can be named.
+      - ✅ **Done in batch 106** (see its section): all eight multi-party sources, a release held
+        once on several pages included; run against a real database; on batch 104's replay, 672
+        EPA cases on two or more pages, 3,366 of 7,436 rows.
       - *Derived from [`docs/proposals/2026-11-06-proposals.md`](proposals/2026-11-06-proposals.md)
         #3, approved 2026-11-06.*
 

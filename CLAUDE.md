@@ -113,6 +113,13 @@ workbook read once a year (`npm run sync:fda-approvals`, `lib/xlsx.ts`): an appr
 the company that applied, by the caption rule, the recall map's firms (`FDA_FIRMS`) or the names only
 approvals use (`APPLICANT_NAMES`), each on its days; an acquisition's past is never the buyer's.
 
+A row of one of the eight multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
+CFTC) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
+and 25 more" (`lib/alsoOn.ts`, batch 106). A case is the same source's same number, compared as a set
+for a grouped row (db/041's index); a release held once on several pages counts too. It is read
+beside `loadEvents` and never breaks a page; adding a multi-party source means adding it to
+`ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and db/041's list, which check:also-on holds together.
+
 A ticker whose company moved to a new SEC record — a holding-company reorganisation or redomicile
 (XOM in 2026, Alphabet in 2015, Disney in 2019) — reads its earlier filings from the predecessor's
 record up to the handover day, through the hand-checked map in `lib/predecessors.ts`; read its

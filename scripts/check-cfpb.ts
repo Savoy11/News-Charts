@@ -214,6 +214,11 @@ const newAction = (n: number): CfpbAction => ({ day: "2025-09-01", path: `/enfor
   check("  …Capital One Bank's of 2012-07-18 on COF, by its unit — and without the unit, not",
     on("COF", "2012-07-18")?.title === "CFPB enforcement action: Capital One Bank" && !on("COF", "2012-07-18", { units: false }) &&
       on("COF", "2012-07-18")?.url === "https://www.consumerfinance.gov/enforcement/actions/capital-one-bank/");
+  const genuine = (t: string) => (on(t, "2015-01-22")?.externalId ?? "").split(",");
+  check("a day's row carries every action's path, so the Genuine Title action of 2015-01-22, second on both JPMorgan's and Wells Fargo's day, links the two (\"Also on\", batch 106)",
+    genuine("JPM").includes("/enforcement/actions/genuine-title/") && genuine("WFC").includes("/enforcement/actions/genuine-title/") && genuine("JPM").length === 2 &&
+      genuine("JPM")[0] === "/enforcement/actions/genuine-title-jp-morgan/" && on("WFC", "2016-09-08")?.externalId === "/enforcement/actions/wells-fargo-bank-2016/",
+    `${genuine("JPM")} · ${genuine("WFC")} · ${on("WFC", "2016-09-08")?.externalId}`);
   const discover = actions.filter((a) => /^Discover Bank\b/.test(a.title));
   const t0 = Date.now();
   const replayed = replay();

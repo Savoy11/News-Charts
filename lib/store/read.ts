@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { getPool } from "../db";
+import { ALSO_ON_SOURCE_IDS, alsoOnSql, groupAlsoOn, type AlsoOn } from "../alsoOn";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
 import { OWN_SERIES_SCORER, asOwnSeriesFiling } from "../fundSeries";
 import { SIMILARITY_FLOOR, worthFuzzyMatching } from "../fuzzy";
@@ -239,7 +240,7 @@ export async function loadSubject(slug: string): Promise<SubjectRow | null> {
  * names the trust, because it is the same row on every sibling's page (`asOwnSeriesFiling`).
  */
 export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
-  const { rows } = await getPool().query(
+  const [{ rows }, alsoOn] = await Promise.all([getPool().query(
     `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title, e.body, e.image_url, e.occurred_at,
             es.relevance,
             CASE WHEN es.scored_by = $3 THEN sj.display_name END AS own_series_of,
@@ -254,7 +255,7 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
         AND (es.relevance IS NULL OR es.relevance >= $2)
       ORDER BY e.occurred_on`,
     [subjectId, RELEVANCE_THRESHOLD, OWN_SERIES_SCORER]
-  );
+  ), loadAlsoOn(subjectId)]);
 
   return rows.map((r) => {
     const date: string =
@@ -285,9 +286,29 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
       // The stored subject-aboutness score, surfaced so ranking can use it. It was only ever
       // an invisible SQL gate before — a score that can hide a row but never order one.
       relevance: r.relevance == null ? undefined : Number(r.relevance),
+      // the other held company pages with the same case (batch 106)
+      ...(alsoOn.has(Number(r.id)) ? { alsoOn: alsoOn.get(Number(r.id)) } : {}),
     } satisfies TimelineEvent;
     return r.own_series_of ? asOwnSeriesFiling(ev, r.own_series_of) : ev;
   });
+}
+
+/**
+ * Each of a page's events' other held company pages carrying the same case (lib/alsoOn.ts). An
+ * enrichment: if the query fails, the page shows its rows without the line, never no rows.
+ */
+export async function loadAlsoOn(subjectId: number): Promise<Map<number, AlsoOn>> {
+  try {
+    const { rows } = await getPool().query<{ event_id: string; ticker: string | null; display_name: string }>(alsoOnSql(ALSO_ON_SOURCE_IDS), [
+      subjectId,
+      ALSO_ON_SOURCE_IDS,
+      RELEVANCE_THRESHOLD,
+    ]);
+    return groupAlsoOn(rows);
+  } catch (err) {
+    console.error(`also-on for subject ${subjectId}: ${String(err).slice(0, 200)}`);
+    return new Map();
+  }
 }
 
 /**

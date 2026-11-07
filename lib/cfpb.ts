@@ -180,8 +180,10 @@ export function cfpbEvents(
         source: "Consumer Financial Protection Bureau",
         url: `${BASE}${a.path}`,
         sourceKey: "cfpb" as const,
-        externalId: a.path,
-        // the company's one event a day: actions learned later the same day change its description only
+        // every action of the day, so another page holding any of them finds this row ("Also on",
+        // batch 106); a day of one action keeps the path it always had
+        externalId: rows.map((r) => r.a.path).join(","),
+        // the company's one event a day: actions learned later the same day change its description and add their paths
         dedupBasis: `cfpb:${Number(cik)}@${day}`,
       };
     });

@@ -105,6 +105,11 @@ export interface TimelineEvent {
    * never as evidence against the event.
    */
   relevance?: number;
+  /**
+   * The other held company pages carrying the same case, from the sources whose one case names
+   * several parties (lib/alsoOn.ts, batch 106): the first few by name, and how many in all.
+   */
+  alsoOn?: { shown: { ticker: string; name: string }[]; total: number };
 }
 
 /** What a source fetch returned, so ingest can tell "nothing" from "rate limited". */

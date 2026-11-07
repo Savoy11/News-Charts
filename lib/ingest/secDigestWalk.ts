@@ -256,6 +256,7 @@ export async function digestFor(client: PoolClient, subjectId: number, plan: Pre
     for (const r of theBook.rows(issue.day, issue.entries)) if (r.cik === cik) rows.push({ ...r, url: issue.url });
   }
   const events = digestEvents(rows, { cik, from: listed });
-  if (failed) return { events, ...failed };
-  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
+  // every kept row the rules give it: a complete answer, so a row they no longer give comes off (batch 108)
+  if (failed) return { events, ...failed, complete: {} };
+  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200, complete: {} };
 }

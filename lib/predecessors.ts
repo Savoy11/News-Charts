@@ -25,6 +25,16 @@
  * merger into a new company, a bank whose old filings went to its bank regulator, …) are in
  * docs/MASTER-CHECKLIST.md.
  *
+ * One entry rests on a merger's 8-Ks instead of a notice: Merck's (batch 108, the 2026-11-07 audit's
+ * question 1). Schering-Plough bought Merck on 2009-11-03 and took its name and its ticker, so MRK's
+ * EDGAR record is Schering-Plough's, and old Merck's record, 64978, became a subsidiary with no
+ * ticker. No notice of succession was filed. MRK's price history is old Merck's, back to 1962, and
+ * under this project's rules a predecessor whose ticker the company carries is its history while an
+ * acquisition's past is never the buyer's: old Merck's record is MRK's to the merger, and the
+ * record's own past before it, Schering-Plough's, is not (`OWN_RECORD_FROM`). `notice` is the
+ * successor record's 8-K of the merger (items 2.01 and 5.03), filed 2009-11-04; old Merck's own 8-K
+ * that day reports its delisting and the change of control (items 3.01 and 5.01).
+ *
  * `news` is the predecessor's own name as headlines write it, where the successor's name is not
  * it: "Exxon Mobil" for ExxonMobil Holdings, "Cigna" for The Cigna Group. A name that is also an
  * everyday word or a common surname ("Apache", "Ferguson") is left out, as batch 34 left them out.
@@ -204,11 +214,34 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   1453015: [{ cik: 933777, name: "Ballard Power Systems Inc.", until: "2009-01-02", notice: "0000912282-09-000004" }],
   // BTE — Baytex Energy Corp. (a trust from 2004 to 2010)
   1279495: [{ cik: 1046182, name: "Baytex Energy Ltd.", until: "2004-02-19", notice: "0000950142-04-000530" }],
+  // MRK — Merck & Co., Inc.: Schering-Plough's record took old Merck's name and ticker at the merger
+  // of 2009-11-03 (batch 108); no notice of succession, see the header
+  310158: [{ cik: 64978, name: "Merck & Co., Inc.", until: "2009-11-04", notice: "0001193125-09-223917" }],
   // CCK — Crown Holdings, Inc. (a new parent)
   1219601: [
     { cik: 25890, name: "Crown Cork & Seal Company, Inc.", until: "2003-02-26", notice: "0000950168-03-000549", news: ["Crown Cork"] },
   ],
 };
+
+/**
+ * A successor record that was another company until the day it took the listed company's name and
+ * ticker (batch 108). Its filings, its former names and its Digest names before that day are that
+ * other company's, and none of them is the listed company's: the history is its predecessor's.
+ */
+export const OWN_RECORD_FROM: Readonly<Record<number, { ticker: string; from: string; why: string }>> = {
+  310158: {
+    ticker: "MRK",
+    from: "2009-11-04",
+    why:
+      "Schering-Plough Corporation's record (former name SCHERING PLOUGH CORP to 2009-10-29) until it took Merck & Co.'s name and ticker at the merger of 2009-11-03: " +
+      "its 8-K filed 2009-11-04 reports the merger completed (items 2.01 and 5.03), and its name is Merck & Co. Inc. from that day",
+  },
+};
+
+/** The day a company's own record became the company, where it was another before; null for nearly all. */
+export function ownRecordFrom(cik: number | string): string | null {
+  return OWN_RECORD_FROM[Number(cik)]?.from ?? null;
+}
 
 /** The records a company's history continues under, newest first; none for most companies. */
 export function predecessorsOf(cik: number | string): Predecessor[] {

@@ -118,6 +118,13 @@ export interface FetchResult {
   outcome: FetchOutcome;
   httpStatus?: number;
   detail?: string;
+  /**
+   * Set when `events` are every event this source's rules give the subject now, read from data kept
+   * whole (a walk's stored rows, a committed file), before `before` where only part of the source is
+   * (batch 108). Ingest then takes the subject off this source's stored rows the rules no longer give
+   * it (`unlinkGone`): a rule change that refuses a case takes it off the page, not only off new runs.
+   */
+  complete?: { before?: string };
 }
 
 export interface PricePoint {

@@ -628,7 +628,7 @@ async function archiveChecks(): Promise<void> {
     `${a.outcome} ${b.outcome} ${c.outcome}:${c.detail} ${e.outcome}`);
   const ingest = read("scripts/ingest.ts");
   check("company ingest walks the archive after the API's ask and keeps the company's kept rows beside it, none for a notes record",
-    /const api = await fetchJusticeReleases\([^)]*\);\s*if \(isNotesRecord\(company\.cik\)\) return api;[\s\S]{0,300}const walked = await walkDojArchive\(client\);\s*const archive = await dojArchiveFor\(client, subjectId, \{[^}]*cik: company\.cik \}\);\s*return withArchive\(api, archive \?\? \[\], walked\);/.test(ingest));
+    /const api = await fetchJusticeReleases\([^)]*\);\s*if \(isNotesRecord\(company\.cik\)\) return api;[\s\S]{0,300}const walked = await walkDojArchive\(client\);\s*const archive = await dojArchiveFor\(client, subjectId, \{[^}]*cik: company\.cik \}\);\s*const answer = withArchive\(api, archive \?\? \[\], walked\);/.test(ingest));
   const migration = read("db/036_doj_archive.sql");
   check("  …into tables of its own (db/036)", /CREATE TABLE IF NOT EXISTS doj_archive_releases \(\s*path\s+text PRIMARY KEY/.test(migration) && /CREATE TABLE IF NOT EXISTS doj_archive_months \(\s*month\s+date PRIMARY KEY/.test(migration));
   check("  …asking only www.justice.gov's archive, with the build's User-Agent",

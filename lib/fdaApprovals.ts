@@ -188,6 +188,20 @@ export const APPLICANT_NAMES: Readonly<Record<number, { ticker: string; names: r
     ticker: "GSK",
     names: [{ search: "Human Genome Sciences", from: "2012-08-02", why: "bought 2012-08-02 (HGS's 8-K of the merger, items 2.01 and 5.01)" }],
   },
+  // batch 108, the 2026-11-07 audit's question 4
+  3124: {
+    ticker: "AKZOY",
+    names: [
+      {
+        search: "Organon",
+        match: /^Organon\b/i,
+        to: "2007-11-18",
+        why:
+          "Akzo Nobel's pharmaceutical company until Schering-Plough bought it: Schering-Plough's 8-K of 2007-11-26 reports the purchase completed on 2007-11-19 (item 2.01). " +
+          "Its approvals of 1990–2001 are Akzo Nobel's; Saphris (2009) was Schering-Plough's, which is no page's (lib/predecessors.ts), and today's Organon & Co. is Merck's spin-off of 2021",
+      },
+    ],
+  },
   875045: {
     ticker: "BIIB",
     names: [{ search: "Biogen", match: /^Biogen\b/i, why: "the company, Biogen Idec from 2003 to 2015" }],

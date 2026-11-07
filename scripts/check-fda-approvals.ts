@@ -176,6 +176,12 @@ async function main(): Promise<void> {
     ["JAZZ", "Ziihera", "Jazz's Irish company"],
   ];
   for (const [t, drug, why] of sixUnits) check(`  ${why}: ${drug} is ${t}'s`, on(t, named(drug)));
+  // batch 108, the 2026-11-07 audit's question 4: Organon was Akzo Nobel's until 2007-11-19; AKZOY's
+  // first price, 1989-05-09, is Yahoo's as batch 103's scout read it
+  const akzo = approvalEvents(APPROVALS, namesOf("AKZOY"), { cik: rowOf("AKZOY")[0], from: "1989-05-09" });
+  check("  Organon on Akzo Nobel to 2007-11-18: its eight approvals of 1990–2001, Remeron and NuvaRing among them, from Akzo Nobel's first price; Saphris (2009), Schering-Plough's, is not",
+    akzo.length === 8 && on("AKZOY", named("Remeron")) && on("AKZOY", named("NuvaRing")) && !on("AKZOY", named("Saphris")) && !on("MRK", named("Saphris")),
+    akzo.map((e) => e.title).join(" | "));
   check("  …and a bought company's approvals before its purchase stay its own: Alexion's Soliris (2007) and Ultomiris (2018) are not AstraZeneca's, Anacor's Kerydin (2014) not Pfizer's",
     !on("AZN", named("Soliris")) && !on("AZN", named("Ultomiris")) && !on("PFE", named("Kerydin")));
   check("every hand-read name says why, and every day is a day",
@@ -190,8 +196,8 @@ async function main(): Promise<void> {
   }
   const total = [...out.values()].reduce((n, v) => n + v.length, 0);
   const before2017 = [...out.values()].flat().filter((e) => e.date < "2017").length;
-  check("before any first price: 562 approvals on 87 companies, 353 before 2017 (556 and 352 before batch 107's six; the first price then keeps off each company's years before it listed: Alcon's before 2019, Bausch + Lomb's before 2022, Organon's before 2021, Sandoz's before Novartis's listing)",
-    total === 562 && out.size === 87 && before2017 === 353, `${total} on ${out.size}; ${before2017} before 2017`);
+  check("before any first price: 570 approvals on 88 companies, 361 before 2017 (562 on 87 and 353 before batch 108's Organon on Akzo Nobel; 556 and 352 before batch 107's six; the first price then keeps off each company's years before it listed: Alcon's before 2019, Bausch + Lomb's before 2022, Organon's before 2021, Sandoz's before Novartis's listing)",
+    total === 570 && out.size === 88 && before2017 === 361, `${total} on ${out.size}; ${before2017} before 2017`);
   const floored = Object.entries(FIRST_PRICES).map(([t, from]) => approvalEvents(APPROVALS, namesOf(t), { cik: rowOf(t)[0], from }));
   const onPages = floored.flat();
   check("from the 26 drugmakers' first prices: 439 approvals, 303 before 2017, 66 before EDGAR (1994) (435 and 302 before batch 107's units)",

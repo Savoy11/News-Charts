@@ -142,6 +142,7 @@ export async function epaCasesFor(client: PoolClient, subjectId: number, plan: P
   // …and the units it owned (`UNITS`): Sunoco, Inc.'s cases are filed under Sunoco's name
   const keys = [...new Set([...years.flatMap(namesIn).map(alnum).filter((k) => k.length >= 2), ...unitKeysOf(plan.cik)])];
   const events = epaEvents(await storedEpaCases(client, keys, listed), namesIn, { cik: plan.cik, from: listed });
-  if (failed) return { events, ...failed };
-  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
+  // every kept row the rules give it: a complete answer, so a row they no longer give comes off (batch 108)
+  if (failed) return { events, ...failed, complete: {} };
+  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200, complete: {} };
 }

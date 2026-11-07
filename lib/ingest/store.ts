@@ -832,10 +832,62 @@ export interface UpsertStats {
   attestations: number;
   newAttestations: number;
   links: number;
+  /** links taken off rows the source's rules no longer give the subject (`unlinkGone`) */
+  unlinked?: number;
 }
 
 export function emptyStats(): UpsertStats {
   return { events: 0, newEvents: 0, attestations: 0, newAttestations: 0, links: 0 };
+}
+
+/**
+ * Takes the subject off one source's stored rows that this run's complete answer no longer holds
+ * (batch 108, the 2026-11-07 audit's set-aside). Only links go: a row another company's rules give
+ * it stays on that company's page, and the event itself is kept.
+ *
+ * A row is this source's alone (no other source attests it), and outside `events` by identity: a
+ * row moved onto a new key this run (`legacyDedupBasis`) was re-keyed before, so it is not taken off.
+ * With `before`, only rows dated before it, where the source is read whole: the Justice
+ * Department's archive of 2001–2008 is, its API's capped answers are not.
+ */
+export async function unlinkGone(
+  client: PoolClient,
+  subjectId: number,
+  sourceKey: SourceKey,
+  events: readonly TimelineEvent[],
+  { before }: { before?: string } = {},
+): Promise<number> {
+  const keys = events.map((ev) => dedupKey(ev.dedupBasis ?? ev.title));
+  const { rowCount } = await client.query(
+    `DELETE FROM event_subjects es
+       USING events e
+      WHERE es.subject_id = $1 AND e.id = es.event_id
+        AND e.dedup_key <> ALL ($3::bytea[])
+        AND ($4::date IS NULL OR e.occurred_on < $4::date)
+        AND EXISTS (SELECT 1 FROM event_attestations a JOIN sources s ON s.id = a.source_id WHERE a.event_id = e.id AND s.key = $2)
+        AND NOT EXISTS (SELECT 1 FROM event_attestations a JOIN sources s ON s.id = a.source_id WHERE a.event_id = e.id AND s.key <> $2)`,
+    [subjectId, sourceKey, keys, before ?? null],
+  );
+  return rowCount ?? 0;
+}
+
+/**
+ * Takes the subject off the filings and renames of its own record dated before the day the record
+ * became the company (`OWN_RECORD_FROM`, lib/predecessors.ts, batch 108), where this run's filings
+ * do not hold them: Schering-Plough's filings and its rename, stored on MRK's page before. Only
+ * links go.
+ */
+export async function unlinkOwnRecordBefore(client: PoolClient, subjectId: number, from: string, kept: readonly TimelineEvent[]): Promise<number> {
+  const ids = kept.map((ev) => ev.externalId ?? ev.url ?? ev.id);
+  const { rowCount } = await client.query(
+    `DELETE FROM event_subjects es
+       USING events e
+      WHERE es.subject_id = $1 AND e.id = es.event_id AND e.occurred_on < $2::date
+        AND EXISTS (SELECT 1 FROM event_attestations a JOIN sources s ON s.id = a.source_id WHERE a.event_id = e.id AND s.key = 'sec_edgar')
+        AND NOT EXISTS (SELECT 1 FROM event_attestations a WHERE a.event_id = e.id AND a.external_id = ANY ($3::text[]))`,
+    [subjectId, from, ids],
+  );
+  return rowCount ?? 0;
 }
 
 /**

@@ -188,12 +188,24 @@ export function epaParty(defendant: string, names: readonly string[]): string | 
  * The defendants a case names that are another company's though they carry a listed company's
  * name, read by hand on 2026-11-05, by CIK. "NATIONAL STEEL CORP." is the American steelmaker,
  * not Companhia Siderúrgica Nacional, whose EDGAR name is NATIONAL STEEL CO (as the SEC's cases
- * hold, `NOT_THE_COMPANY` in lib/secCases.ts).
+ * hold, `NOT_THE_COMPANY` in lib/secCases.ts). An entry with `before` refuses the name only on a
+ * case before that day: the day the company's record took a name another company had held.
  */
-export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendant: RegExp; why: string }[]>> = {
+export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendant: RegExp; before?: string; why: string }[]>> = {
   1049659: [{ ticker: "SID", defendant: /^NATIONAL STEEL\b/i, why: "National Steel Corporation, the American steelmaker of Mishawaka and Granite City, not Companhia Siderúrgica Nacional" }],
   // batch 100, the audit of batches 94–99, finding 3
   1552275: [{ ticker: "SUN", defendant: /^SUNOCO,?\s+(?:INC|INCORPORATED)\b/i, why: "Sunoco, Inc. (EDGAR CIK 95304), the refiner Energy Transfer bought in 2012, not Sunoco LP, which was Susser Petroleum Partners until 2014-10-27" }],
+  // batch 108, the 2026-11-07 audit's question 3: an acquisition's past is never the buyer's
+  823768: [
+    {
+      ticker: "WM",
+      defendant: /^WASTE\s+MANAGEMENT\b/i,
+      before: "1998-07-16",
+      why:
+        "the old Waste Management, Inc. (WMX Technologies to 1997), another company until USA Waste Services, WM's record, bought it and took its name: " +
+        "the record's former name USA WASTE SERVICES INC runs to 1998-07-10, and its 8-K of 1998-07-16 reports the acquisition (items 2, 5 and 7)",
+    },
+  ],
 };
 
 /**
@@ -411,7 +423,7 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
     const named = c.defendants.some((d) => {
       const letters = alnum(d);
       if (units.some((u) => c.day >= (u.from ?? "") && (!u.to || c.day <= u.to) && u.defendant.test(d.trim()) && !(u.branded && BRANDED_SITE.test(d)))) return true;
-      return keys.some((k) => letters.includes(k)) && !refused.some((r) => r.defendant.test(d)) && epaParty(d, names) !== null;
+      return keys.some((k) => letters.includes(k)) && !refused.some((r) => (!r.before || c.day < r.before) && r.defendant.test(d)) && epaParty(d, names) !== null;
     });
     if (!named) continue;
     const into = ownRow(c) ? own : routine;

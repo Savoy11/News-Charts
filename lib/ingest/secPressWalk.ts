@@ -270,6 +270,7 @@ export async function secPressFor(
     plan.cik === undefined ? undefined : (day) => releaseNamesOn(plan.cik!, day),
     plan.cik === undefined ? undefined : (day) => releaseNamesBefore(plan.cik!, day),
   );
-  if (failure) return { events, outcome: failure.outcome, httpStatus: failure.httpStatus, detail: failure.detail };
-  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
+  // every kept release the rules give it: a complete answer, so one they no longer give comes off (batch 108)
+  if (failure) return { events, outcome: failure.outcome, httpStatus: failure.httpStatus, detail: failure.detail, complete: {} };
+  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200, complete: {} };
 }

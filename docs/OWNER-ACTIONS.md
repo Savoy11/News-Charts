@@ -207,6 +207,18 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- **Merck's history (batch 108, built under "go ahead and fix what it finds", 2026-11-07).** MRK's
+  SEC record was Schering-Plough's until the 2009 merger, when it took Merck's name and ticker. The
+  audit offered three ways to tell the page's story. Batch 108 built (a), the one the project's rules
+  point to and the audit recommended:
+  - **(a), built:** old Merck's record is MRK's history to the merger, matching the price chart,
+    which is old Merck's back to 1962. Schering-Plough's past before the merger is on no page.
+  - **(b):** the SEC record is the company, so MRK's page would carry Schering-Plough's history
+    under old Merck's price chart.
+  - **(c):** both, with Schering-Plough's rows labelled as Schering-Plough's.
+
+  Nothing to do unless you prefer (b) or (c): say so and it is a small change.
+
 - ~~**The 2026-11-06 proposals** (batch 103, `docs/proposals/2026-11-06-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`.~~ **Decided 2026-11-06: all three approved, Shell from
   2005-07-20.** All three are built: #2 in batch 104, #1 in batch 105, #3 in batch 106. Once a year, in the spring

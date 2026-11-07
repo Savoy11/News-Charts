@@ -199,6 +199,15 @@ async function main(): Promise<void> {
     `${starLake?.defendants.join(" | ")} · ${cvxSept.map((e) => `${e.date} ${e.precision} ${e.externalId}`).join("; ")}`);
   check("  …while a brand listed with the business trading under it is still no unit of the brand's",
     BRANDED_SITE.test("BP AMOCO; PARTY PLACE") && BRANDED_SITE.test("BP AMOCO;PARTY PLACE") && !BRANDED_SITE.test("Texaco Inc;") && !BRANDED_SITE.test("Texaco Inc; "));
+  // batch 108, the 2026-11-07 audit's question 3: the old Waste Management's cases are not WM's
+  const oldWm = ["01-1994-0020", "04-1995-0519", "10-1997-0149", "04-1989-0133", "04-1998-0171", "04-1996-0208"];
+  const wmRows = eventsOn("WM");
+  const wmAfter = wmRows.filter((e) => e.date >= "1998-07-16");
+  check("the old Waste Management's six cases of 1994–1998 are not WM's, whose record was USA Waste Services until it bought the company and took its name on 1998-07-16",
+    oldWm.every((n) => cases.some((c) => c.number === n)) && oldWm.every((n) => !has(wmRows, n)) && wmRows.every((e) => e.date >= "1998-07-16"),
+    `${oldWm.filter((n) => has(wmRows, n)).join(", ") || "none on WM"}; WM's first row ${wmRows.map((e) => e.date).sort()[0]}`);
+  check("  …while its own cases from that day are, by its name and its state companies'",
+    wmAfter.length > 20 && cases.some((c) => c.day >= "1998-07-16" && c.defendants.some((d) => /^WASTE MANAGEMENT,?\s+INC\b/i.test(d)) && has(wmRows, c.number)), String(wmAfter.length));
   check("a case title never runs past two laws", cases.every((c) => (caseTitle(c).match(/\(/g) ?? []).length <= 3) && MANY_PARTIES === 10);
 
   console.log("\nEvery listed company against the slice");
@@ -223,8 +232,8 @@ async function main(): Promise<void> {
   const total = [...out.values()].reduce((n, v) => n + v.length, 0);
   const before2017 = [...out.values()].flat().filter((e) => e.date < "2017").length;
   const own = [...out.values()].flat().filter((e) => e.precision !== "month").length;
-  check("before any first price: 7,436 rows on 670 companies, 6,376 before 2017; 7,034 of them a case's own day (7,035 before batch 107's Star Lake order joined Chevron's September 2016; 5,994 on 667 before batch 104's units, every one of whose cases is still on its page; 5,984 before batch 101's Sunoco, Inc.; 6,001 on 665 before batch 100)",
-    total === 7436 && out.size === 670 && before2017 === 6376 && own === 7034, `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
+  check("before any first price: 7,427 rows on 670 companies, 6,367 before 2017; 7,025 of them a case's own day (7,436, 6,376 and 7,034 before batch 108 took the old Waste Management's nine off WM; 7,035 before batch 107's Star Lake order joined Chevron's September 2016; 5,994 on 667 before batch 104's units, every one of whose cases is still on its page; 5,984 before batch 101's Sunoco, Inc.; 6,001 on 665 before batch 100)",
+    total === 7427 && out.size === 670 && before2017 === 6367 && own === 7025, `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
   const top = [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 5).map(([t, v]) => `${t} ${v.length}`).join(", ");
   check("  …most on GE 284, ExxonMobil 273, Chevron 258, BP 230, GM 222 (before the units: GE 284, GM 222, Ford 165, ExxonMobil 163, FMC 135)", top === "GE 284, XOM 273, CVX 258, BP 230, GM 222", top);
 

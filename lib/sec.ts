@@ -33,7 +33,7 @@ import rawTickerIndex from "../data/edgar-tickers.json";
 import rawCompanyAliases from "../data/company-aliases.json";
 import { nameKey, type AliasIndexFile } from "./companyAliases";
 import { foldAccents } from "./fold";
-import { predecessorsOf } from "./predecessors";
+import { ownRecordFrom, predecessorsOf } from "./predecessors";
 import { commonName } from "./edgarName";
 import { eastern } from "./marketTime";
 import { UA } from "./contact";
@@ -1155,19 +1155,28 @@ export async function getFilingsDeep(
     const cik = String(p.cik).padStart(10, "0");
     const theirs: Rename[] = [];
     const events = await recordFilings({ ...company, cik }, includeOlder, theirs, othersStakes);
-    // A predecessor that took a subsidiary's name as its ticker passed on ("BlackRock Inc." to
-    // "BlackRock Finance, Inc." five days before) renamed itself, not the company: its last rename
-    // goes, unless it was into the name the company still had then ("Exxon Corp" to "Exxon Mobil").
-    const last = theirs.reduce<Rename | null>((a, r) => (!a || r.on > a.on ? r : a), null);
-    const own = (r: Rename) => r !== last || phrase(commonName(r.to)) === phrase(commonName(p.name));
     // the record's span as the company's: before the handover, and from the day the shell it began
     // as became the business, not the shell's rename that day (DraftKings' SPAC, batch 55)
     const inSpan = (date: string, rename = false) => date < p.until && (!p.since || (rename ? date > p.since : date >= p.since));
+    // A predecessor that took a subsidiary's name as its ticker passed on ("BlackRock Inc." to
+    // "BlackRock Finance, Inc." five days before) renamed itself, not the company: its last rename
+    // before the handover goes, unless it was into the name the company still had then ("Exxon
+    // Corp" to "Exxon Mobil"). The last one before it, not the record's last: old Merck became Merck
+    // Sharp & Dohme Corp. two days before the merger and an LLC thirteen years after (batch 108).
+    const last = theirs.filter((r) => inSpan(r.on, true)).reduce<Rename | null>((a, r) => (!a || r.on > a.on ? r : a), null);
+    const own = (r: Rename) => r !== last || phrase(commonName(r.to)) === phrase(commonName(p.name));
     renames.push(...theirs.filter((r) => inSpan(r.on, true) && own(r)));
     const dropped = last && !own(last) ? `sec-rename-${cik}-${last.on}` : null;
     return events.filter((e) => inSpan(e.date, e.id.startsWith("sec-rename-")) && e.id !== dropped);
   });
-  const [own, ...before] = await Promise.all([recordFilings(company, includeOlder, renames, othersStakes), ...earlier]);
+  // …and a record that was another company until it took this one's ticker keeps its own filings and
+  // renames only from that day: before, they are that other company's (Schering-Plough's on MRK's
+  // record, `OWN_RECORD_FROM`, batch 108)
+  const ownFrom = ownRecordFrom(company.cik);
+  const ownRenames: Rename[] = [];
+  const [ownAll, ...before] = await Promise.all([recordFilings(company, includeOlder, ownRenames, othersStakes), ...earlier]);
+  const own = ownFrom ? ownAll.filter((e) => e.date >= ownFrom) : ownAll;
+  renames.push(...ownRenames.filter((r) => !ownFrom || r.on >= ownFrom));
   // one row a filing: one the two records share is the successor's
   const seen = new Set(own.map((e) => e.id));
   return [...own, ...before.flat().filter((e) => !seen.has(e.id) && seen.add(e.id))];

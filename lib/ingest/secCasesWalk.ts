@@ -239,6 +239,7 @@ export async function secCasesFor(client: PoolClient, subjectId: number, plan: P
     namesOn: (day) => releaseNamesOn(plan.cik, day),
     namesBefore: (day) => releaseNamesBefore(plan.cik, day),
   });
-  if (failed) return { events, ...failed };
-  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
+  // every kept row the rules give it: a complete answer, so a row they no longer give comes off (batch 108)
+  if (failed) return { events, ...failed, complete: {} };
+  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200, complete: {} };
 }

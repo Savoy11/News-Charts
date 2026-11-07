@@ -988,6 +988,77 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 108: Merck's history, the old Waste Management's cases, and stale rows taken off (2026-11-07)
+
+The 2026-11-07 audit's questions 1, 3 and 4 and its set-aside, under the owner's word of 2026-11-07:
+"go ahead and fix what it finds". For Merck the audit gave three options and recommended (a); this
+batch builds (a), which the project's written rules point to. The owner can still choose (b) or (c)
+(`docs/OWNER-ACTIONS.md`).
+
+- [x] **A rule change reaches the stored pages** (the set-aside).
+      - **The problem.** Only filings and the Federal Register ever took a stored row off a page. A
+        refusal a later batch added — Sunoco, Inc.'s cases off Sunoco LP, Graco Children's strollers
+        off Graco Inc. (batch 100), and this batch's two — reached new runs and never the stored pages.
+      - **Fixed.** A case source whose company step builds its rows from data kept whole marks its
+        answer complete (`FetchResult.complete`). That covers the SEC's cases and press releases, the
+        CFPB's, EPA's, the CPSC's and the CFTC's actions, the Digest and the FDA's approvals, plus the
+        Justice Department's archive years, before 2009. Ingest then takes the company off that
+        source's stored rows the answer no longer holds (`unlinkGone`, in the run's own transaction).
+      - **What it never does.** It takes off only links, never events, and only from rows no other
+        source attests. It never acts on an answer that stopped short: no first price yet, a fund's
+        series, a failure with no rows, a transform that dropped rows. The Justice Department's API,
+        whose answers are capped, and the Federal Reserve Board's live feed, never kept, are never
+        read as complete.
+      - **On a real database** (the local Postgres 16, seeded rows, all deleted after): of four
+        stored EPA rows, the one the answer no longer held came off the company's page, and stayed on
+        another company's that holds it. A row another source also attests stayed, and so did one
+        after the answer's window.
+- [x] **Merck** (question 1, option (a)).
+      - **The predecessor.** `lib/predecessors.ts` maps old Merck's record (64978) as MRK's to
+        2009-11-04. There is no notice of succession: the entry rests on the merger's 8-K on MRK's
+        record (0001193125-09-223917, items 2.01 and 5.03), and old Merck's own 8-K that day reports
+        its delisting.
+      - **Its own record's past.** `OWN_RECORD_FROM` (new) keeps MRK's own record's past before that
+        day off the page: its filings, its former name SCHERING PLOUGH CORP (so its cases by that
+        name), and its Digest names. Stored ones come off at the next run (`unlinkOwnRecordBefore`).
+      - **A predecessor's rename at the handover.** Its last rename before the handover, not the
+        record's last, is the one tested. Old Merck became Merck Sharp & Dohme Corp. two days before
+        the merger, and an LLC thirteen years after; neither is a rename of MRK's.
+      - **The Digest.** `data/digest-records.json` gains old Merck's record (1,456 records, rebuilt
+        offline from the sixteen saved EDGAR indexes of 1993–1996; no other record changed). Merck is
+        read in 1985 by "MERCK & CO INC": three 8-K reports of 1985, and no Schering-Plough name.
+      - **Measured** (the audit's counts): MRK's page loses Schering-Plough's 864 filings of 1994–2009
+        and gains old Merck's 1,342. Of its case rows, 4 EPA rows, 2 SEC cases, 1 SEC press release,
+        2 Justice releases and Cedax were Schering-Plough's alone, by its name, and come off. Old
+        Merck's cases and approvals, by "Merck", stay.
+      - **On a real database:** Schering-Plough's annual report and its rename came off the test
+        page, and with them the former name the case sources read it by. Old Merck's annual report,
+        MRK's own later filings and a news story stayed.
+- [x] **The old Waste Management** (question 3). EPA's `NOT_THE_COMPANY` takes a day (`before`):
+      "Waste Management" names WM only from 1998-07-16, when USA Waste Services, WM's record, bought
+      the old company and took its name (its 8-K that day, items 2, 5 and 7). Nine rows come off WM:
+      the audit's six of 1994–1998 and three earlier the first price already kept off. No other
+      company changes, and WM keeps 97 rows from 1998-07-16. The slice gives 7,427 rows on 670
+      companies (7,436), 6,367 before 2017.
+- [x] **Organon** (question 4, option (a)). Organon was Akzo Nobel's until Schering-Plough bought it
+      on 2007-11-19, by Schering-Plough's 8-K of 2007-11-26 (item 2.01). Its eight approvals of
+      1990–2001, from Arduan to NuvaRing, are now on Akzo Nobel's page (AKZOY, first price
+      1989-05-09). Saphris (2009) was Schering-Plough's and stays on no page. The approvals give 570
+      on 88 companies before first prices (562 on 87); the 26 drugmakers' totals are unchanged.
+- **Requests:** none. The merger's filings come from the audit's saved filing lists of both
+  records, and the Digest names from batch 87's saved EDGAR indexes.
+- **Checks:**
+  - new `check:unlink` (14): which answers are complete, what a run does with one, and the two
+    queries;
+  - check:predecessors 33 (+5): MRK's filings across both records, and the renames;
+  - check:digest-walk 55 (+1, and its 1985 counts);
+  - check:epa-cases 60 (+2);
+  - check:fda-approvals 48 (+1);
+  - check:doj 94, its wiring pattern following the Justice step's new form.
+
+  On main the new cases fail. `npm run check` and `npm run lint` pass. HawkScan cannot run here
+  (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 107: the audit of batches 101–106, and its five findings fixed (2026-11-07)
 
 The `code-auditor` read batches 101–106 (`9c580cf..013ecc8`); its report is
@@ -1046,14 +1117,14 @@ put wrong rows on pages; they are batch 108's. The shared bank names are batch 1
 - [x] **5. The coverage map counted 33 sources** (`P3`). **Fixed:** 35, 27 on the ingest path, now
       pinned against `SOURCES` by check:wiring.
 - **The four questions** (the audit's answers, with counts):
-  - [ ] **Merck.** MRK's EDGAR record, CIK 310158, is Schering-Plough's; old Merck's is 64978, and no
+  - [x] **Merck.** ✅ **Done in batch 108.** MRK's EDGAR record, CIK 310158, is Schering-Plough's; old Merck's is 64978, and no
         notice of succession links them. MRK's page holds Schering-Plough's 864 filings of 1994–2009,
         its Digest names and, by its former name, its cases (4 EPA rows, 2 SEC cases, 1 SEC press, 2
         Justice releases, Cedax), beside old Merck's cases and approvals by the name "Merck". Old
         Merck's 1,342 filings are missing. Batch 108 takes the audit's option (a): old Merck is MRK's
         history to 2009-11-03, under the project's rules that a predecessor whose ticker a company
         carries counts and an acquisition's past is never the buyer's.
-  - [ ] **Old Waste Management.** Six EPA rows of 1994–1998 on WM's page are the old Waste
+  - [x] **Old Waste Management.** ✅ **Done in batch 108.** Six EPA rows of 1994–1998 on WM's page are the old Waste
         Management's, before USA Waste Services (WM's record) took its name on 1998-07-16. Batch 108
         reads WM's present name only from that day, as the Digest already does.
   - [ ] **"Independent Bank Corp."** INDB and IBCP are read by the same names, so a case or headline
@@ -1063,7 +1134,7 @@ put wrong rows on pages; they are batch 108's. The shared bank names are batch 1
   - **Organon:** nothing is wrongly on OGN's page. Nine approvals and one EPA case before its 2021
     spin-off are on no page; Saphris (2009) hangs on the Merck answer.
 - **Set aside:**
-  - [ ] **A rule change that takes a case off a company leaves the stored link** (only filings and
+  - [x] **A rule change that takes a case off a company leaves the stored link** ✅ **Done in batch 108.** (only filings and
         the Federal Register unlink). Batch 108 needs one for Merck and Waste Management.
   - `event_subjects` has no full index on `subject_id`: 256–319 ms for a 409-row page at 337,000
     links, inside a page cached 15 minutes. Older than these batches.

@@ -127,7 +127,12 @@ finds one that does not.
 A ticker whose company moved to a new SEC record — a holding-company reorganisation or redomicile
 (XOM in 2026, Alphabet in 2015, Disney in 2019) — reads its earlier filings from the predecessor's
 record up to the handover day, through the hand-checked map in `lib/predecessors.ts`; read its
-header before adding an entry.
+header before adding an entry. Merck's is a merger the other way round (batch 108): MRK's record was
+Schering-Plough's until it took old Merck's name and ticker on 2009-11-03, so old Merck's record is
+MRK's history and the record's own past before is no one's (`OWN_RECORD_FROM`): its filings, its
+former name and its Digest names. A case source's answer is complete when it is built from data kept
+whole (`FetchResult.complete`), and a run then takes the company off that source's stored rows its
+rules no longer give it (`unlinkGone`, check:unlink); an answer from a capped API or a live feed is not.
 
 A fund's CIK is its trust's, and the trust files for every fund it sells. Which filings are a fund's
 own comes from the filing list EDGAR keeps for its series (`lib/fundSeries.ts`; the id is in

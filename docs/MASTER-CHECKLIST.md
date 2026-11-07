@@ -988,6 +988,81 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 112: a new opportunity-scout run, three proposals for the owner (2026-11-07)
+
+Every proposal of 2026-11-06 is approved and built (batches 104–106), and batches 107–111 fixed what
+the 2026-11-07 audit found. So the `opportunity-scout` read the repository again at `d349d4b` and
+wrote `docs/proposals/2026-11-07-proposals.md`: three proposals, all **PENDING**, ranked with
+securities depth first. Nothing is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      1. `P1` **EPA's own figures on the case rows pages already hold.** No new source: one more
+         table (`CASE_ENFORCEMENT_CONCLUSIONS`) and three more columns of the zip the monthly walk
+         already reads.
+         - **The gap:** on the replay's 7,026 own rows, 1,122 show no penalty though EPA's
+           settlement record has one (779 before 2017). AEP's 2007 decree reads as a bare "consent
+           decree"; EPA records $6,225,000 and $750,000 federal penalties on its two case numbers
+           that day, and $2.16 billion of work ordered.
+         - **The rule:** a case with one settlement takes that settlement's penalty: 1,079 rows (755
+           before 2017). Where both figures exist they agree: 797 of 810 on the replay's cases to the
+           dollar, 12 on the federal share, 1 apart. 44 cases with several settlements and no total
+           stay as they are (Deepwater Horizon among them).
+         - **Also:** EPA's estimate of the work ordered on 2,523 rows (2,120 before 2017), written
+           "among N parties" on a multi-party row; and 246 cases now grouped as "no penalty" though
+           EPA records one. Optionally EPA's summary text (4,203 of 4,630 cases; 20 of a sample of 30
+           informative).
+      2. `P2` **New indications and other efficacy supplements, for drugs whose holder never
+         changed.** A dataset for the owner to decide: Drugs@FDA through openFDA, CC0, no key.
+         - **Why it is back:** the 2026-10-26 run cut Drugs@FDA because its sponsor is today's
+           holder. Batch 105's compilation gives the applicant at approval; where today's sponsor is
+           the same applicant, the holder never changed (523 applications).
+         - **Measured** through batch 105's rule from first prices: 973 supplements on 27 pages, 352
+           before 2017, 121 before 2005. Merck 179, BMS 160, J&J 79, Lilly 72, Novartis 69. In a
+           sample of 25 rows and all 58 page–sponsor pairs, no false match.
+         - **What one is:** of 12 approval letters read, 7 add an indication, 1 widens a population,
+           3 change labelling or dosing, 1 is a correction. "About 60% new indications" is an
+           estimate. One owner call inside it: titles from the data alone, or each letter read once
+           (about 900 PDFs, then 60–85 a year).
+      3. `P2` **EPA's cases against the utilities' operating companies.** No new source: about 60
+         more `UNITS` patterns on 31 utility holding companies (Georgia Power on Southern, Ohio
+         Edison on FirstEnergy, PSE&G on PSEG).
+         - **Measured:** 442 cases, 213 a court case or a penalty, 186 of those before 2017. 13
+           pages with no EPA row gain some: PSEG 0→44, Exelon 0→22, NextEra, NiSource, DTE, WEC.
+           NIPSCO's 2011 decree ($609.5M of work) and Consumers Energy's of 2014 ($1B) reach their
+           owners' pages.
+         - **Read by hand:** all 257 names the patterns take and 25 sampled cases. One false match:
+           "Mississippi Power & Light" is Entergy's, which needs a guard.
+         - **Not yet read:** the ownership days are the scout's estimates; each is to be read from
+           EDGAR filings at build time, as batch 104's were.
+- **Cut, with reasons in the file:**
+  - device approvals (PMA): the applicant field is today's holder (St. Jude's 1982 heart valve reads
+    "ABBOTT MEDICAL"), with no compilation that fixes it;
+  - supplements whose holder changed (Humira, GSK's oncology drugs, Viatris), and renames inside one
+    company ("PF Prism", "MSD SUB MERCK"): a possible later hand list;
+  - pipeline and conglomerate units in EPA's file (BNSF, Pratt & Whitney, Otis, Carrier, El Paso):
+    not measured, a follow-on if #3 is approved;
+  - EPA's facility table: cosmetic beside #1.
+- **Checked by this session:** the zip holds `CASE_ENFORCEMENT_CONCLUSIONS.csv` and the three
+  columns, and `lib/epaCases.ts` reads none of them; AEP's two 2007 case numbers carry $6,225,000 and
+  $750,000 in EPA's settlement table and nothing in the case total; across the whole file, 22,152 of
+  the 22,199 cases with one settlement and both figures agree to the dollar, and 39,494 have a
+  settlement penalty and no case total.
+- **Requests:** 44, logged in the session scratchpad (`b112/requests.log`):
+  - query1.finance.yahoo.com 22: the utilities' first trading days;
+  - www.accessdata.fda.gov 18: approval letters (6 `http://` addresses would not resolve and were
+    asked again at `https://`);
+  - download.open.fda.gov 2: the Drugs@FDA and PMA files;
+  - api.fda.gov 1 and open.fda.gov 1, its licence page.
+
+  Each carried the User-Agent `News Charts Research`, with no email address, at least 1.2 s apart.
+  No SEC host was asked. Postgres was not used.
+- **For the next audit:** 246 EPA cases sit in "no penalty" month rows though EPA records a penalty
+  (`ownRow` reads only the case total); two utility cases (05-2003-0333, 03-2000-0138) are dated by
+  orders lodged in 2014 and 2016, though their complaints were filed in 2003.
+
+  `npm run check` and `npm run lint` pass.
+
 ## NC ledger — batch 111: a legal form in either spelling (Toro's recalls), and two page-speed fixes (2026-11-07)
 
 From the 2026-11-07 audit's set-asides and batch 109's leftover, under the owner's "Merge and

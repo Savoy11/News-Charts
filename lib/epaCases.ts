@@ -124,7 +124,12 @@ export const SUMMARY_CAP = 600;
 // ON 12/10/07", "COST RECOVERY AGMT."
 const SUMMARY_SAYS_NOTHING = new RegExp(
   [
-    String.raw`(?:no\s+)?case summary(?:\s+requested)?`,
+    String.raw`(?:no\s+)?case summary(?:\s+(?:requested|submitted))?`,
+    // batch 116, the audit's finding 5: "AWAITING CASE SUMMARY FROM ATTORNEY", "WILL PROVIDE AT A LATER
+    // DATE", and a summary that only points to another's: "PLEASE SEE BLUFF ROAD SUMMARY", "SEE CASE
+    // SUMMARY OF 08-97-0150", "ALSO SEE 05-2000-0575 FOR SUMMARY ON SCREEN 6"
+    String.raw`awaiting case summary(?:\s+from\s+[a-z ]+)?|will provide (?:at a later date|later)`,
+    String.raw`-*\s*(?:[a-z-]+\s+){0,3}?(?:please\s+|also\s+)?see\s+(?:case\s+summary\s+(?:of\s+)?[\w#-]+|[\w#.,\s-]{1,40}?\s+summary|[\w#-]+\s+for\s+summary(?:\s+on\s+screen\s+\d+)?)\s*-*`,
     String.raw`to be (?:entered|determined|added)`,
     String.raw`pending|tbd|n\/?a|none|x+|see (?:attached|case|file)|need(?:s)? additional information`,
     String.raw`'?cost recovery(?: agmt| agreement)?'?|field citation|order issued to one respondent`,
@@ -132,6 +137,56 @@ const SUMMARY_SAYS_NOTHING = new RegExp(
   ].map((p) => `(?:${p})`).join("|"),
   "i",
 );
+// a step and its day and no more: "CAFO effective 10/28/2022", "This order was signed 8/13/25", "On
+// 8/11/26 a NOW was issued.", "Case finish date January 6, 2025." (batch 116): every word but the day
+// is one of these
+const SUMMARY_DAY = String.raw`(?:\d{1,2}\/\d{1,2}\/\d{2,4}|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4})`;
+const STEP_WORDS = new Set(
+  "this the a an was is on as of into effect effective issued signed entered filed lodged finish date case cafo order now notice determination agreement consent decree final administrative ao aoc complaint and".split(" "),
+);
+function onlyAStepAndADay(bare: string): boolean {
+  if (!new RegExp(SUMMARY_DAY, "i").test(bare)) return false;
+  const words = bare.replace(new RegExp(SUMMARY_DAY, "gi"), " ").toLowerCase().split(/[^a-z]+/).filter(Boolean);
+  return words.length > 0 && words.every((w) => STEP_WORDS.has(w));
+}
+
+/**
+ * What a run of replacement characters stood for, read by its length and its place (batch 116, the
+ * audit's finding 5, on the 39 page cases of the whole file that hold one). EPA's text lost one
+ * character as one mark (a Windows character), two (a two-byte one, "§") or three (a three-byte one, a
+ * curly quote or apostrophe), and two "§" as four:
+ *  - before a number, a section sign: "42 U.S.C. �� 9607" is "§ 9607"; two before a list or for four
+ *    marks: "�� 9606, 9607 AND 9622", "���� 11004(b) and 11004(c)";
+ *  - between a letter and an "s" that ends the word, an apostrophe: "EPA���s", "SPENCER�S";
+ *  - alone between two spaces, a dash: "(Denver, CO � April 20, 2023)";
+ *  - before a word, an opening quotation mark, and the next run after a word its closing one:
+ *    "(�AOC�)", "REFERRED TO AS �RESPONDENTS�.";
+ *  - after a word's "s" and no open quotation, a plural's apostrophe: "Defendants� Nelson Dewey",
+ *    "the United States� claims";
+ *  - else a quotation mark.
+ */
+function repairLost(text: string): string {
+  let open = false;
+  return text.replace(/\uFFFD+/g, (run: string, at: number, all: string) => {
+    const before = all[at - 1] ?? "";
+    const after = all[at + run.length] ?? "";
+    const rest = all.slice(at + run.length);
+    // …two when four marks stood for them, or when the number begins a list: "§§ 9606, 9607 AND 9622"
+    if (/^\s*\d/.test(rest)) return run.length >= 4 || /^\s*\d[\w().]*,\s*\d/.test(rest) ? "§§" : "§";
+    if (/[A-Za-z]/.test(before) && /^[sS](?![A-Za-z])/.test(rest)) return "'";
+    if (before === " " && after === " ") return "–";
+    if ((before === "" || /[\s(\[]/.test(before)) && /[\w$]/.test(after)) {
+      open = true;
+      return '"';
+    }
+    if (open) {
+      open = false;
+      return '"';
+    }
+    return /[sS]/.test(before) ? "'" : '"';
+  });
+}
+
 // a facility's record and no more: "FACILITY ADDR: 800 PHILLIPS RD…", "* FACILITY NAME: TEXAS INSTRUMENTS INC 34 FOREST ST…"
 const SUMMARY_IS_ADDRESS = /^\W*(?:facility\s*(?:name|addr(?:ess)?|location|info(?:rmation)?)|address|location)\b/i;
 
@@ -141,25 +196,27 @@ const SUMMARY_IS_ADDRESS = /^\W*(?:facility\s*(?:name|addr(?:ess)?|location|info
  * broken with a space, "ENVIRONMEN- TAL" (172 cases on the replay's pages), is left as written: in
  * capitals nothing but a dictionary tells it from "OZONE- DEPLETING".
  *
- * EPA's file holds a replacement character, sometimes three, where its text lost one: between a
- * letter and an "s" it was an apostrophe ("EPA�S"), before a number a section sign ("42 U.S.C. ��
- * 9607"), and otherwise a quotation mark ("(�AOC�)"). Read by hand on the 36 page cases that hold one.
+ * EPA's file holds a replacement character, sometimes two to four, where its text lost one: each run
+ * is read by its length and its place (`repairLost`).
  *
- * Null when it says nothing: under `SUMMARY_FLOOR` characters, a placeholder or form note, or a
- * facility's address. Cut at a word after `SUMMARY_CAP` characters.
+ * Null when it says nothing: under `SUMMARY_FLOOR` characters, a placeholder or form note, a pointer
+ * to another case's summary, a step and its day alone, or a facility's address. Cut at a word after
+ * `SUMMARY_CAP` characters.
  */
 export function summaryOf(raw: string): string | null {
   const text = raw
     .replace(/\r\n?/g, "\n")
     .replace(/([A-Za-z])-\n\s*([A-Za-z])/g, "$1$2")
-    .replace(/([A-Za-z])\uFFFD+([sS])\b/g, "$1'$2")
-    .replace(/\uFFFD{1,2}(?=\s*\d)/g, (m) => "§".repeat(m.length))
-    .replace(/\uFFFD+/g, '"')
     .replace(/\*{2,}/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  const bare = text.replace(/[.\s]+$/, "");
-  if (bare.length < SUMMARY_FLOOR || SUMMARY_IS_ADDRESS.test(bare) || new RegExp(`^(?:${SUMMARY_SAYS_NOTHING.source})$`, "i").test(bare)) return null;
+  const repaired = repairLost(text);
+  const bare = repaired.replace(/[.\s]+$/, "");
+  if (bare.length < SUMMARY_FLOOR || SUMMARY_IS_ADDRESS.test(bare) || new RegExp(`^(?:${SUMMARY_SAYS_NOTHING.source})$`, "i").test(bare) || onlyAStepAndADay(bare)) return null;
+  return capped(repaired);
+}
+
+function capped(text: string): string {
   if (text.length <= SUMMARY_CAP) return text;
   const cut = text.slice(0, SUMMARY_CAP);
   const space = cut.lastIndexOf(" ");
@@ -314,6 +371,26 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
       why:
         "the old Waste Management, Inc. (WMX Technologies to 1997), another company until USA Waste Services, WM's record, bought it and took its name: " +
         "the record's former name USA WASTE SERVICES INC runs to 1998-07-10, and its 8-K of 1998-07-16 reports the acquisition (items 2, 5 and 7)",
+    },
+  ],
+  // batch 116, the 2026-11-07 audit of batches 108–115, finding 1: the same, for AT&T
+  732717: [
+    {
+      ticker: "T",
+      defendant: /^AT\s*&\s*T\b/i,
+      before: "2005-11-18",
+      why:
+        "AT&T Corp., another company until SBC Communications, T's record, bought it and took its name: the record's former name SBC COMMUNICATIONS INC runs to " +
+        "2005-11-18, and its 8-K filed 2005-11-21 reports the merger completed that day (items 2.01 and 5.03). T's prices from 1983 are SBC's",
+    },
+  ],
+  // …finding 6: EPA's "THE TORO CORPORATION" of 2001 is the mower maker's Superfund order, whose
+  // respondent its summary calls "TORO"; Toro Corp. is a shipping company formed in 2022
+  1941131: [
+    {
+      ticker: "TORO",
+      defendant: /^THE\s+TORO\s+CORPORATION$/i,
+      why: "EPA's spelling of The Toro Company in its 2001 Chippewa Avenue order (05-2002-0076), not Toro Corp., the shipping company formed in 2022, which files as \"Toro Corp.\"",
     },
   ],
 };
@@ -655,7 +732,9 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("DTE", "Michigan Consolidated Gas", /^MICHCON\b/i, "michcon", { from: "2001-05-31" }),
   ],
   811156: [
-    unit("CMS", "Consumers Energy", /^CONSUMERS (?:POWER|ENERGY)\b/i, "consumers"),
+    // "CONSUMERS POWER CO(MPANY)" and "Consumers Energy Company"; "CONSUMERS POWER, INC.", a Region 10
+    // case of 1993 at an Illinois facility, is not Michigan's company (batch 116, the audit's finding 2)
+    unit("CMS", "Consumers Energy", /^CONSUMERS (?:POWER\s+CO(?:MPANY)?\b|ENERGY\b)/i, "consumers"),
   ],
   1111711: [
     unit("NI", "Northern Indiana Public Service", /^NORTHERN INDIANA PUBLIC SERVICE\b/i, "northernindianapublicservice"),
@@ -763,9 +842,24 @@ export function caseTitle(c: EpaCase): string {
  * $1,923,940,000, EPA's estimate, among 9 parties". The penalty is said here when the row's title
  * does not: on a day of several cases. The work ordered is the settlement's whole, so a case of
  * several parties says among how many (batch 113).
+ *
+ * A case of several defendants named for its site or another party, not the company, names the
+ * page's own defendants (`mine`), up to three: "AMERICAN CYANAMID (FIKE CHEMICAL SITE) (case 03-1990-0627), against SCHERING-PLOUGH CORP.
+ * and 63 other defendants". A reader sees why the row is on the page, and a row of Schering-Plough's
+ * own past on Merck's page carries its label (batch 116, the audit's finding 3).
  */
-function caseLine(c: EpaCase, withPenalty = false): string {
-  const others = c.defendants.length > 1 ? `, with ${c.defendants.length - 1} other defendant${c.defendants.length > 2 ? "s" : ""}` : "";
+/** A row's lines as a sentence: one full stop, though a line ends in "INC." */
+const sentence = (x: string) => `${x.replace(/\.+$/, "")}.`;
+
+function caseLine(c: EpaCase, withPenalty = false, mine: readonly string[] = []): string {
+  // a case of one defendant is that defendant's case, whatever spelling its name has
+  const shown = c.defendants.length > 1 ? mine.filter((d) => !alnum(c.name).includes(alnum(d))).slice(0, 3) : [];
+  const rest = c.defendants.length - (shown.length ? shown.length : 1);
+  const others = shown.length
+    ? `, against ${shown.join(", ")}${rest > 0 ? ` and ${rest} other defendant${rest > 1 ? "s" : ""}` : ""}`
+    : c.defendants.length > 1
+      ? `, with ${c.defendants.length - 1} other defendant${c.defendants.length > 2 ? "s" : ""}`
+      : "";
   const money = [
     ...(withPenalty && c.penalty ? [`${dollars(c.penalty)} civil penalty`] : []),
     ...(c.workOrdered ? [`work ordered ${dollars(c.workOrdered)}, EPA's estimate${c.defendants.length > 1 ? `, among ${c.defendants.length} parties` : ""}`] : []),
@@ -802,15 +896,20 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
     }
     return held;
   };
+  // the page's own defendants of each case it holds, which its row names (`caseLine`)
+  const mineOf = new Map<EpaCase, string[]>();
   for (const c of cases) {
     if (c.day < from) continue;
     const { names, keys } = namesFor(Number(c.day.slice(0, 4)));
-    const named = c.defendants.some((d) => {
+    const mine = c.defendants.filter((d) => {
       const letters = alnum(d);
       if (units.some((u) => c.day >= (u.from ?? "") && (!u.to || c.day <= u.to) && u.defendant.test(d.trim()) && !(u.branded && BRANDED_SITE.test(d)))) return true;
       return keys.some((k) => letters.includes(k)) && !refused.some((r) => (!r.before || c.day < r.before) && r.defendant.test(d)) && epaParty(d, names) !== null;
     });
-    if (!named) continue;
+    if (!mine.length) continue;
+    // …only where the case's own name does not already name the company: AEP's "AMERICAN ELECTRIC
+    // POWER CO (NATIONAL CASE)" needs no list of its operating companies
+    mineOf.set(c, epaParty(c.name, names) === null ? mine : []);
     const into = ownRow(c) ? own : routine;
     const key = ownRow(c) ? c.day : c.day.slice(0, 7);
     into.set(key, [...(into.get(key) ?? []), c]);
@@ -830,7 +929,7 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
       title: `${caseTitle(lead)}${more}`,
       source: "EPA",
       url: caseReportUrl(lead.number),
-      description: `${sorted.map((c) => caseLine(c, sorted.length > 1)).join("; ")}. ${lead.step === "lodged" ? "The day the settlement was lodged in court." : lead.step === "order" ? "The day the final order was issued." : ""}${summary}`.replace(/\s+/g, " ").trim(),
+      description: `${sentence(sorted.map((c) => caseLine(c, sorted.length > 1, mineOf.get(c))).join("; "))} ${lead.step === "lodged" ? "The day the settlement was lodged in court." : lead.step === "order" ? "The day the final order was issued." : ""}${summary}`.replace(/\s+/g, " ").trim(),
       sourceKey: "epa_cases" as const,
       externalId: sorted.map((c) => c.number).join(","),
     };
@@ -867,7 +966,7 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
       title: `EPA: ${rows.length} orders or complaints with no penalty, ${MONTH[Number(m) - 1]} ${y}${codes.length ? ` (${lawsOf(codes).slice(0, 2).join(", ")}${codes.length > 2 ? "…" : ""})` : ""}`,
       source: "EPA",
       url: caseReportUrl(sorted[0].number),
-      description: `${rows.length} cases with no penalty this month, grouped into one row: ${sorted.slice(0, 3).map((c) => caseLine(c)).join("; ")}${rows.length > 3 ? `; and ${rows.length - 3} more` : ""}. The link opens the newest.`,
+      description: `${rows.length} cases with no penalty this month, grouped into one row: ${sentence(`${sorted.slice(0, 3).map((c) => caseLine(c, false, mineOf.get(c))).join("; ")}${rows.length > 3 ? `; and ${rows.length - 3} more` : ""}`)} The link opens the newest.`,
       sourceKey: "epa_cases",
       externalId: sorted.map((c) => c.number).join(","),
       dedupBasis: `epa:${tag}@${month}:no-penalty`,

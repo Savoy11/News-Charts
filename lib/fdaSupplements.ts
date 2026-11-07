@@ -211,8 +211,26 @@ export function supplementTitle(a: FdaApproval): string {
   return a.name ? `FDA approves an efficacy supplement to ${a.name} (${a.ingredient})` : `FDA approves an efficacy supplement to ${a.ingredient}`;
 }
 
-/** The letter's address, always at https: the file links about three in four at http:// */
-export const letterUrl = (path: string) => `${LETTERS}${path.split("/").map(encodeURIComponent).join("/")}`;
+/** A path's part as written, its escapes read: Drugs@FDA writes some already encoded ("s015,%20s016"). */
+function unescaped(part: string): string {
+  try {
+    return decodeURIComponent(part);
+  } catch {
+    // a "%" that begins no escape is a character of the name
+    return part;
+  }
+}
+
+/**
+ * The letter's address, always at https: the file links about three in four at http://. Each part is
+ * encoded once, from its plain form, as Drugs@FDA lists it (a comma or semicolon as it is, a space as
+ * "%20"), so a path Drugs@FDA already encoded is not encoded twice
+ * (batch 116, the audit's finding 4: Retevmo's letter of 2025 linked "%2520" and answered 404).
+ */
+export const letterUrl = (path: string) => `${LETTERS}${path.split("/").map((part) => encodePart(unescaped(part))).join("/")}`;
+
+/** A path's part as an address writes it: what a path may hold as it is (RFC 3986's pchar), the rest escaped. */
+const encodePart = (part: string) => encodeURIComponent(part).replace(/%(?:21|24|26|27|28|29|2A|2B|2C|3B|3D|3A|40)/g, (e) => decodeURIComponent(e));
 
 const approvalOf = new Map(APPROVALS.map((a) => [`${a.kind}${a.application}`, a]));
 

@@ -221,6 +221,18 @@ Raised by the November batches, each recorded in the master checklist:
   3. EPA's cases against the utilities' operating companies (442 cases on 31 utilities; PSEG 0→44,
      Exelon 0→22), each ownership day to be read from filings at build time.
 
+- **DuPont's past on DD's page** (the 2026-11-07 audit of batches 108–115, its open question). DD's
+  EDGAR record is DowDuPont's of 2015, which took DuPont's name and ticker in 2017. E. I. du Pont's own
+  record went with Corteva. Yahoo's DD prices start in 1972, so the chart before 2017 is old DuPont's,
+  and 29 of DD's EPA rows before 2017-08-31 are old E. I. du Pont's ("DuPont Mt Clemens EPCRA 313",
+  2012). Batch 105 already keeps DuPont's drug approvals of 1986–2001 off DD. This is a call like Merck's
+  was:
+  1. keep old DuPont's rows on DD, as its chart is DuPont's (as old Merck's history is MRK's);
+  2. take them off before the merger, as with old Waste Management and AT&T Corp.;
+  3. keep them, labelled as E. I. du Pont's (as Schering-Plough's are on MRK).
+
+  Nothing changes until you choose.
+
 - **Drugs whose holder changed** (batch 115): 553 of the FDA's efficacy supplements (374 before
   2017) were filed by a company on its page that day, but the drug has since moved and Drugs@FDA
   does not say when. They stay off every page, as the proposal said. Two hand lists could bring

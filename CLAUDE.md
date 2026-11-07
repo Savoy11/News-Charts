@@ -99,7 +99,11 @@ name that is an everyday word ("CITY", "TARGET") needs its legal word in a title
 capitals, and as an object is the word after "the" or before "of" (`isEverydayWord`). EPA's
 civil enforcement cases come from its whole case file, a zip read once a month (`lib/epaCases.ts`,
 `lib/zip.ts`); a defendant is the company by the same caption rule, with two guards of its own ("…
-Power and Light Company" is one name; "RETHERFORD, DANA" is a person), and money stays numeric. The
+Power and Light Company" is one name; "RETHERFORD, DANA" is a person), and money stays numeric. A
+case EPA gives no penalty total takes its one settlement's, the row names the work ordered ("among N
+parties" on a settlement of several) and carries EPA's own summary when it says something (batch
+113, `summaryOf`); text is stored without control characters, since a NUL made Postgres refuse the
+whole month's read. The
 CPSC's recalls (`lib/cpscRecalls.ts`) go on every listed company a recall names: its makers,
 importers and distributors by the caption rule, its stores as whole items of the "Sold at" line, a
 store's recalls of other makers' products grouped a row a month. The

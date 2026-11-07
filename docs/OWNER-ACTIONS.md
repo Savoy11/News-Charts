@@ -207,8 +207,10 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
-- **The 2026-11-07 proposals** (batch 112, `docs/proposals/2026-11-07-proposals.md`): mark each
-  `APPROVED`, `REJECTED` or `DEFERRED`.
+- ~~**The 2026-11-07 proposals** (batch 112, `docs/proposals/2026-11-07-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`.~~ **Decided 2026-11-07: all three approved, titles from the
+  FDA's data.** #1 is built in batch 113; #3 and #2 are next (batches 114 and 115). After deploying
+  batch 113, run `npm run db:migrate` (db/043): the next ingest reads EPA's file again whole.
   1. EPA's own penalty and work-ordered figures on the EPA rows pages already hold (1,079 rows gain
      the penalty EPA's settlement record gives, 755 before 2017; AEP's 2007 decree among them);
   2. new indications and other efficacy supplements from Drugs@FDA, only for drugs whose holder never

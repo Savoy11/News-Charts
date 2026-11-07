@@ -516,9 +516,27 @@ Norfolk Southern Railway, Occidental Chemical, Waste Management's state companie
 Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Carbide on Dow Inc. from
 2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
 (`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
-every company in the index, before first prices: 7,428 rows on 670 companies, 6,368 before 2017
-(GE 284, ExxonMobil 273, Chevron 258, BP 230, GM 222; 5,994 on 667 before the units, every one of
-whose cases is still there; BP 4 and 3M 67 by their own names). An acquisition's past is not the
+every company in the index, before first prices: 7,545 rows on 670 companies, 6,463 before 2017
+(ExxonMobil 288, GE 284, Chevron 269, BP 248, GM 225; 5,994 on 667 before the units, every one of
+whose cases is still there; BP 4 and 3M 67 by their own names).
+
+**EPA's own figures on each row** (batch 113, the owner's approval of 2026-11-07). The same zip holds
+each case's settlements (`CASE_ENFORCEMENT_CONCLUSIONS.csv`), EPA's estimate of the cost of the work a
+case orders, and EPA's own summary of it. A case EPA gives no penalty total takes its one
+settlement's federal and state penalty, added in whole cents; a case of several settlements keeps
+none, since a sum would put other parties' settlements of other years on one row (Deepwater
+Horizon's four of 2012–2015). EPA's case totals stop in the 2010s, so before this no row from 2017
+on gave a penalty; now 2,125 rows do, 1,250 more, among them AEP's 2007 decree ($6,225,000 and
+$750,000 on its two cases, $2.16 billion of work ordered) and Cummins's diesel decree of 2024
+($1,675,000,000). The row names the work ordered on 2,805 rows, "among N parties" on a settlement of
+several ("among 271 parties", Omega Chemical's Superfund site). EPA's summary is the row's
+description on 6,417 rows when it says something: at least 25 characters, not a placeholder ("CASE
+SUMMARY REQUESTED", "TO BE ENTERED") or a facility's address, cut at a word after 600; the characters
+EPA's file lost are read back as an apostrophe, a section sign or a quotation mark. A case that now
+has a penalty has its own row, and a month row of "no penalty" its cases all left moves onto the
+first of their rows (`legacyDedupBasis`), so no stored row loses its history. Text is stored without
+control characters: a NUL in the case "H.O.D. LANDFILL" made Postgres refuse the whole month's read
+before batch 113 (db/043 also forgets the last read, so the next run reads the file whole). An acquisition's past is not the
 buyer's here either: WM's record was USA Waste Services until it bought the old Waste Management and
 took its name on 1998-07-16, so the old company's nine cases before are not WM's (`NOT_THE_COMPANY`
 with a day, batch 108). The

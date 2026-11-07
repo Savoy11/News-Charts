@@ -346,6 +346,45 @@ async function main(): Promise<void> {
   db = emptyDb();
   walked = await walkDigest(fakeDb(db), { ...fakes({ fetchArchive: async () => ({ ok: true as const, issues: [] }) }), budget: { left: 10 } });
   check("  …a year's page that lists no issue is an error, not an empty year", walked.failure?.outcome === "error" && /no issue on the page/.test(walked.failure.detail ?? "") && db.years.size === 0, walked);
+  // batch 107, the 2026-11-07 audit's finding 3: one bad year page held back every other year's issues
+  type YearAnswer = Awaited<ReturnType<NonNullable<NonNullable<Parameters<typeof walkDigest>[1]>["fetchArchive"]>>>;
+  const badYears: [string, YearAnswer][] = [
+    ["lists no issue", { ok: true, issues: [] }],
+    ["fails", { ok: false, httpStatus: 500, detail: "HTTP 500" }],
+  ];
+  for (const [how, answer] of badYears) {
+    db = emptyDb();
+    asked = [];
+    const oneBad = fakes({
+      fetchArchive: async (year: number) => {
+        asked.push(`year ${year}`);
+        return year === 1985 ? answer : { ok: true as const, issues: yearIssues(year) };
+      },
+    });
+    walked = await walkDigest(fakeDb(db), { ...oneBad, budget: { left: 10 } });
+    const first = { asked: [...asked], walked };
+    asked = [];
+    const again = await walkDigest(fakeDb(db), { ...oneBad, budget: { left: 10 } });
+    check(
+      `  …a year page that ${how} is passed over: the other years' issues are read, the year is reported, and the next run asks it again`,
+      first.walked.issues === yearIssues(1984).length && first.walked.issues > 0 && db.years.size === 1 && db.years.has(1984) && first.walked.failure?.outcome === "error" &&
+        /archive page of 1985/.test(first.walked.failure?.detail ?? "") && JSON.stringify(asked) === JSON.stringify(["year 1985"]) && again.issues === 0,
+      { first, again, asked },
+    );
+  }
+  db = emptyDb();
+  asked = [];
+  const budget403 = { left: 10 };
+  walked = await walkDigest(fakeDb(db), {
+    ...fakes({
+      fetchArchive: async (year: number) => {
+        asked.push(`year ${year}`);
+        return { ok: false as const, httpStatus: 403, detail: "HTTP 403" };
+      },
+    }),
+    budget: budget403,
+  });
+  check("  …but a refusal of a year page still stops the run and the process's asking", walked.stopped === "throttled" && budget403.left === 0 && asked.length === 1, { walked, asked });
   db = emptyDb();
   asked = [];
   walked = await walkDigest(fakeDb(db), { ...fakes(), budget: { left: 0 } });

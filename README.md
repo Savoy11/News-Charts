@@ -207,14 +207,16 @@ rule, one of the FDA recall map's firms on its days (`FDA_FIRMS`), or a name onl
 "R.W. Johnson") and the units it bought, from the day each deal closed by the bought company's own
 filings: Celgene on Bristol-Myers Squibb from 2019-11-20, Wyeth on Pfizer from 2009-10-15, Loxo
 Oncology on Lilly from 2019-02-15, Millennium and Ariad on Takeda, Human Genome Sciences on GSK,
-Advanced Accelerator Applications on Novartis from 2018-01-22. Batch 105 gave the recall map's
+Advanced Accelerator Applications on Novartis from 2018-01-22; and, since batch 107, Alexion on
+AstraZeneca from 2021-07-21, Anacor on Pfizer from 2016-06-24, Bioverativ (2018-03-08) and Ablynx
+(from its Form 25 of 2018-06-12) on Sanofi, and Jazz's Irish company on Jazz. Batch 105 gave the recall map's
 Alcon (Novartis from 2010-08-26) and Genzyme (Sanofi from 2011-04-08) the start days the recall
 reports, beginning in 2012, never needed. Joint ventures are no one's (DuPont Merck, Astra Merck,
 Lilly ICOS, TAP), and two applicants are refused by name (`NOT_THE_APPLICANT`): DuPont's
 pharmaceuticals of 1986–2001 are not DuPont de Nemours's, whose record is DowDuPont's of 2015, and
 Block Drug's Actinex (1992) is not Block, Inc.'s. From the first prices of the 26 drugmakers Yahoo
-gave: 435 approvals, 302 before 2017, 66 before EDGAR (1994); most on Johnson & Johnson 47, Merck
-45, Novartis 44, Pfizer 41, Bristol-Myers Squibb 39 and Lilly 34. Left out, read but undecided:
+gave: 439 approvals, 303 before 2017, 66 before EDGAR (1994); most on Johnson & Johnson 47, Merck
+45, Novartis 44, Pfizer 42, Bristol-Myers Squibb 39 and Lilly 34. Left out, read but undecided:
 "Schering" (Schering-Plough's US company, whose record CIK 310158 is today Merck's) and Organon
 before its 2021 spin-off (Akzo Nobel's to 2007, then Schering-Plough's and Merck's). Public domain
 by the FDA's website policies; no key.
@@ -614,8 +616,9 @@ for its issues, then each issue's PDF once, newest first, 60 a process and a sec
 9,500 issues, a week or so of hourly runs). It keeps every entry, with the keys a company is asked
 by, in `sec_digest_years`, `sec_digest_issues` and `sec_digest_entries` (db/040); the PDFs are not
 kept. Only an answer is stored, or an issue www.sec.gov answers 404 for, kept as missing. A refusal
-or a block page ends the process's asking; a PDF whose text cannot be read is passed over until the
-next run, so one bad scan holds back nothing; a host without `pdftotext` asks nothing. Each company's ingest then asks the kept entries by its names' keys and keeps those
+or a block page ends the process's asking; a PDF whose text cannot be read, or a year page that
+fails or lists no issue, is passed over until the next run, so one bad scan or page holds back
+nothing (the year page since batch 107); a host without `pdftotext` asks nothing. Each company's ingest then asks the kept entries by its names' keys and keeps those
 the rule above makes its own, under the names its record had on the issue's day, from its first
 price. A month's 8-K reports are one row; an order, an action or a listing order is the SEC acting,
 titled by its heading; each row links to its issue's PDF. The dated names come from the committed
@@ -1127,6 +1130,13 @@ can be named, so the line is a floor of the companies a case involves. On the ba
 EPA's cases, 672 are on two or more pages, 3,366 of 7,436 rows hold a case another page holds, and
 one case is on 36. The line is read beside the page's events; if the read fails, the rows show
 without it.
+
+**A row says how many documents attest it.** "· 3 sources" after a description counts its
+attestations: a story twelve papers carried says twelve. A row of the six sources whose one row
+carries several cases' numbers (EPA, the CPSC, the CFTC, the SEC's litigation releases, the CFPB,
+the Digest's month rows) is stored again when its list grows, and its versions count once
+(`lib/corroboration.ts`, batch 107): Amazon's months of CPSC recalls no longer read as if several
+sources confirmed each.
 
 A small `stored` badge on each page carries the date that copy was last refreshed. It replaced a
 `stored` / `live` badge, which after the cut-over had one reachable value and implied a

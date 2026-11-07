@@ -166,6 +166,18 @@ async function main(): Promise<void> {
     hgs.length === 2 && on("GSK", hgs.find((a) => a.day === "2012-12-14")!) && !on("GSK", named("Benlysta")) &&
       approvalEvents([hgs.find((a) => a.day === "2012-12-14")!], namesOf("GSK"), { cik: rowOf("GSK")[0] })[0]?.title === "FDA approves raxibacumab, a new biologic");
   check("  …Tibotec's Prezista (2006) is Johnson & Johnson's", on("JNJ", named("Prezista")));
+  // batch 107, the 2026-11-07 audit's finding 2: six approvals of listed companies' own or bought units were on no page
+  const sixUnits: [string, string, string][] = [
+    ["AZN", "Voydeya", "Alexion from 2021-07-21"],
+    ["PFE", "Eucrisa", "Anacor from 2016-06-24"],
+    ["SNY", "Enjaymo", "Bioverativ from 2018-03-08"],
+    ["SNY", "Cablivi", "Ablynx from 2018-06-12"],
+    ["JAZZ", "Rylaze", "Jazz's Irish company"],
+    ["JAZZ", "Ziihera", "Jazz's Irish company"],
+  ];
+  for (const [t, drug, why] of sixUnits) check(`  ${why}: ${drug} is ${t}'s`, on(t, named(drug)));
+  check("  …and a bought company's approvals before its purchase stay its own: Alexion's Soliris (2007) and Ultomiris (2018) are not AstraZeneca's, Anacor's Kerydin (2014) not Pfizer's",
+    !on("AZN", named("Soliris")) && !on("AZN", named("Ultomiris")) && !on("PFE", named("Kerydin")));
   check("every hand-read name says why, and every day is a day",
     Object.values(APPLICANT_NAMES).every((c) => c.names.every((n) => n.why.length > 15 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.entries(APPLICANT_NAMES).every(([cik, c]) => companies.some(([x, t]) => x === Number(cik) && t === c.ticker)));
@@ -178,15 +190,15 @@ async function main(): Promise<void> {
   }
   const total = [...out.values()].reduce((n, v) => n + v.length, 0);
   const before2017 = [...out.values()].flat().filter((e) => e.date < "2017").length;
-  check("before any first price: 556 approvals on 87 companies, 352 before 2017 (the first price then keeps off each company's years before it listed: Alcon's before 2019, Bausch + Lomb's before 2022, Organon's before 2021, Sandoz's before Novartis's listing)",
-    total === 556 && out.size === 87 && before2017 === 352, `${total} on ${out.size}; ${before2017} before 2017`);
+  check("before any first price: 562 approvals on 87 companies, 353 before 2017 (556 and 352 before batch 107's six; the first price then keeps off each company's years before it listed: Alcon's before 2019, Bausch + Lomb's before 2022, Organon's before 2021, Sandoz's before Novartis's listing)",
+    total === 562 && out.size === 87 && before2017 === 353, `${total} on ${out.size}; ${before2017} before 2017`);
   const floored = Object.entries(FIRST_PRICES).map(([t, from]) => approvalEvents(APPROVALS, namesOf(t), { cik: rowOf(t)[0], from }));
   const onPages = floored.flat();
-  check("from the 26 drugmakers' first prices: 435 approvals, 302 before 2017, 66 before EDGAR (1994)",
-    onPages.length === 435 && onPages.filter((e) => e.date < "2017").length === 302 && onPages.filter((e) => e.date < "1994").length === 66,
+  check("from the 26 drugmakers' first prices: 439 approvals, 303 before 2017, 66 before EDGAR (1994) (435 and 302 before batch 107's units)",
+    onPages.length === 439 && onPages.filter((e) => e.date < "2017").length === 303 && onPages.filter((e) => e.date < "1994").length === 66,
     `${onPages.length}; ${onPages.filter((e) => e.date < "2017").length} before 2017; ${onPages.filter((e) => e.date < "1994").length} before 1994`);
   const top = Object.keys(FIRST_PRICES).map((t, i) => [t, floored[i].length] as const).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([t, n]) => `${t} ${n}`).join(", ");
-  check("  …most on Johnson & Johnson 47, Merck 45, Novartis 44, Pfizer 41, Bristol-Myers Squibb 39, Lilly 34", top === "JNJ 47, MRK 45, NVS 44, PFE 41, BMY 39, LLY 34", top);
+  check("  …most on Johnson & Johnson 47, Merck 45, Novartis 44, Pfizer 42, Bristol-Myers Squibb 39, Lilly 34", top === "JNJ 47, MRK 45, NVS 44, PFE 42, BMY 39, LLY 34", top);
   const nvsBefore = approvalEvents(APPROVALS, namesOf("NVS"), { cik: rowOf("NVS")[0] }).filter((e) => e.date < FIRST_PRICES.NVS);
   check("  …the first price keeps a company's years before its listing off: Novartis's Ciba-Geigy and Sandoz approvals before 1996-11-07", nvsBefore.length === 0 || nvsBefore.every((e) => e.date < "1996-11-07"));
 

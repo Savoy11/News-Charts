@@ -188,6 +188,28 @@ export const APPLICANT_NAMES: Readonly<Record<number, { ticker: string; names: r
     ticker: "GSK",
     names: [{ search: "Human Genome Sciences", from: "2012-08-02", why: "bought 2012-08-02 (HGS's 8-K of the merger, items 2.01 and 5.01)" }],
   },
+  // batch 110, the owner's call of 2026-11-07: Schering-Plough's past on Merck's page, labelled
+  310158: {
+    ticker: "MRK",
+    names: [
+      {
+        search: "Schering",
+        match: /^Schering\b/i,
+        why:
+          "Schering Corporation, Schering-Plough's US company: its approvals before the merger of 2009-11-03 are on MRK's page as Schering-Plough's (lib/predecessors.ts, OWN_RECORD_FROM), " +
+          "Victrelis (2011) after it Merck's own, Schering Corporation then being Merck's subsidiary",
+      },
+      {
+        search: "Organon",
+        match: /^Organon\b/i,
+        from: "2007-11-19",
+        to: "2021-06-02",
+        why:
+          "Organon, Schering-Plough's from 2007-11-19 (its 8-K of 2007-11-26, item 2.01), Merck's from the merger of 2009-11-03, until Organon & Co.'s spin-off, " +
+          "which its 8-K of 2021-06-03 reports completed on 2021-06-02 (item 2.01): Saphris (2009) is Schering-Plough's, labelled on MRK's page",
+      },
+    ],
+  },
   // batch 108, the 2026-11-07 audit's question 4
   3124: {
     ticker: "AKZOY",

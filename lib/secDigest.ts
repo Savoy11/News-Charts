@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import digestRecords from "../data/digest-records.json";
 import { commonName, withoutTag } from "./edgarName";
-import { ownRecordFrom, predecessorsOf } from "./predecessors";
+import { predecessorsOf } from "./predecessors";
 import { captionParty } from "./secCases";
 import { newsNamesFor, TICKER_INDEX_COMPANIES } from "./sec";
 import { UA } from "./contact";
@@ -850,10 +850,9 @@ export class DigestBook {
   constructor(companies: readonly (readonly [number, string])[] = TICKER_INDEX_COMPANIES, recordOf: (cik: number) => EdgarRecord | null = digestRecordOf) {
     for (const [cik, title] of companies) {
       if (this.titles.has(cik)) continue;
-      // a record that was another company until long after the Digest's years carries that
-      // company's names of 1993–1996, never this one's: Schering-Plough's on MRK's (batch 108)
-      const from = ownRecordFrom(cik);
-      const record = from && from >= "1997-01-01" ? null : recordOf(cik);
+      // a record that was another company until it took this one's ticker carries that company's
+      // names too, Schering-Plough's on MRK's, whose rows the page labels as its (batch 110)
+      const record = recordOf(cik);
       const preds = predecessorsOf(cik).flatMap((p) => {
         const r = recordOf(p.cik);
         return r ? [{ name: p.name, until: p.until, record: r }] : [];

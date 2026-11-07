@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { getPool } from "../db";
 import { corroborations } from "../corroboration";
+import { ownPastLabelled } from "../predecessors";
 import { ALSO_ON_SOURCE_IDS, alsoOnSql, groupAlsoOn, type AlsoOn } from "../alsoOn";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
 import { OWN_SERIES_SCORER, asOwnSeriesFiling } from "../fundSeries";
@@ -245,7 +246,7 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
   const [{ rows }, alsoOn] = await Promise.all([getPool().query(
     `SELECT e.id, e.kind, e.occurred_on, e.date_precision, e.title, e.body, e.image_url, e.occurred_at,
             es.relevance,
-            CASE WHEN es.scored_by = $3 THEN sj.display_name END AS own_series_of,
+            CASE WHEN es.scored_by = $3 THEN sj.display_name END AS own_series_of, sj.cik AS subject_cik,
             a.url, a.source_label, a.external_id,
             (SELECT array_agg(x.source_id) FROM event_attestations x WHERE x.event_id = e.id) AS attestation_sources
        FROM events e
@@ -292,7 +293,9 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
       // the other held company pages with the same case (batch 106)
       ...(alsoOn.has(Number(r.id)) ? { alsoOn: alsoOn.get(Number(r.id)) } : {}),
     } satisfies TimelineEvent;
-    return r.own_series_of ? asOwnSeriesFiling(ev, r.own_series_of) : ev;
+    // a row of the record's own past, another company's, says whose (Schering-Plough's on MRK's, batch 110)
+    const own = ownPastLabelled(ev, r.subject_cik);
+    return r.own_series_of ? asOwnSeriesFiling(own, r.own_series_of) : own;
   });
 }
 

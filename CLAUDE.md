@@ -133,8 +133,9 @@ A ticker whose company moved to a new SEC record — a holding-company reorganis
 record up to the handover day, through the hand-checked map in `lib/predecessors.ts`; read its
 header before adding an entry. Merck's is a merger the other way round (batch 108): MRK's record was
 Schering-Plough's until it took old Merck's name and ticker on 2009-11-03, so old Merck's record is
-MRK's history and the record's own past before is no one's (`OWN_RECORD_FROM`): its filings, its
-former name and its Digest names. A case source's answer is complete when it is built from data kept
+MRK's history; the record's own past before it, Schering-Plough's filings, cases, approvals and
+Digest entries, stays on the page labelled as Schering-Plough's (`OWN_RECORD_FROM`,
+`ownPastLabelled` at read time, batch 110, the owner's call). A case source's answer is complete when it is built from data kept
 whole (`FetchResult.complete`), and a run then takes the company off that source's stored rows its
 rules no longer give it (`unlinkGone`, check:unlink); an answer from a capped API or a live feed is not.
 

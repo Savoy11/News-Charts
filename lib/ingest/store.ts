@@ -872,25 +872,6 @@ export async function unlinkGone(
 }
 
 /**
- * Takes the subject off the filings and renames of its own record dated before the day the record
- * became the company (`OWN_RECORD_FROM`, lib/predecessors.ts, batch 108), where this run's filings
- * do not hold them: Schering-Plough's filings and its rename, stored on MRK's page before. Only
- * links go.
- */
-export async function unlinkOwnRecordBefore(client: PoolClient, subjectId: number, from: string, kept: readonly TimelineEvent[]): Promise<number> {
-  const ids = kept.map((ev) => ev.externalId ?? ev.url ?? ev.id);
-  const { rowCount } = await client.query(
-    `DELETE FROM event_subjects es
-       USING events e
-      WHERE es.subject_id = $1 AND e.id = es.event_id AND e.occurred_on < $2::date
-        AND EXISTS (SELECT 1 FROM event_attestations a JOIN sources s ON s.id = a.source_id WHERE a.event_id = e.id AND s.key = 'sec_edgar')
-        AND NOT EXISTS (SELECT 1 FROM event_attestations a WHERE a.event_id = e.id AND a.external_id = ANY ($3::text[]))`,
-    [subjectId, from, ids],
-  );
-  return rowCount ?? 0;
-}
-
-/**
  * Write a daily price series for a subject.
  *
  * `replace` swaps the whole stored history for this one, in the caller's transaction — what a

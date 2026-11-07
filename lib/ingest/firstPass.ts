@@ -314,7 +314,7 @@ export async function firstPassCompany(rawQuery: string): Promise<FirstPassOutco
 
       const ctx = { kind: "company" as const, displayName: resolved.name, ticker: resolved.ticker };
       // the names ingest scores with, so a first visit's scores are the ones its next ingest keeps
-      const scoring: ScoringContext = { subject: ctx, aliases: companyScoringAliases(resolved) };
+      const scoring: ScoringContext = { subject: ctx, aliases: companyScoringAliases(resolved), cik: resolved.cik };
       const stats = emptyStats();
       await client.query("BEGIN");
       try {

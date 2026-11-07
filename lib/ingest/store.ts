@@ -12,6 +12,8 @@ import { fullHistoryQuery } from "../prices";
 export interface ScoringContext {
   subject: SubjectContext;
   aliases: string[];
+  /** a company's EDGAR CIK: its rows are read against the names its record took (lib/takenNames.ts, batch 117) */
+  cik?: number | string;
 }
 
 export const SOURCES: {

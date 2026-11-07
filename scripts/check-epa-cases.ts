@@ -42,6 +42,7 @@ import { newsNamesFor, possessiveNameFor } from "../lib/sec";
 import type { TimelineEvent } from "../lib/types";
 import { eachCsvRow, readZip } from "../lib/zip";
 import { COMPANY_SOURCES } from "./ingest";
+import { TAKEN_NAMES } from "../lib/takenNames";
 
 /**
  * The EPA's civil enforcement cases on the pages of the companies they charge (batch 95, the
@@ -211,7 +212,8 @@ async function main(): Promise<void> {
   const wmRows = eventsOn("WM");
   const wmAfter = wmRows.filter((e) => e.date >= "1998-07-16");
   check("the old Waste Management's six cases of 1994–1998 are not WM's, whose record was USA Waste Services until it bought the company and took its name on 1998-07-16",
-    oldWm.every((n) => cases.some((c) => c.number === n)) && oldWm.every((n) => !has(wmRows, n)) && wmRows.every((e) => e.date >= "1998-07-16"),
+    oldWm.every((n) => cases.some((c) => c.number === n)) && oldWm.every((n) => !has(wmRows, n)) && wmRows.every((e) => e.date >= "1998-07-16") &&
+      TAKEN_NAMES[rowOf("WM")[0]]?.from === "1998-07-16" && !NOT_THE_COMPANY[rowOf("WM")[0]],
     `${oldWm.filter((n) => has(wmRows, n)).join(", ") || "none on WM"}; WM's first row ${wmRows.map((e) => e.date).sort()[0]}`);
   check("  …while its own cases from that day are, by its name and its state companies'",
     wmAfter.length > 20 && cases.some((c) => c.day >= "1998-07-16" && c.defendants.some((d) => /^WASTE MANAGEMENT,?\s+INC\b/i.test(d)) && has(wmRows, c.number)), String(wmAfter.length));
@@ -250,8 +252,8 @@ async function main(): Promise<void> {
   // penalty, so 1,250 more rows give one and a no-penalty month's cases that all have one now each
   // have their own row (402 month rows become 277)
   // batch 114's utilities' operating companies add 419 rows on 31 companies, 13 of which had none
-  check("before any first price: 7,954 rows on 683 companies, 6,806 before 2017; 7,675 of them a case's own day, which EPA's whole file gives too (7,969, 6,821 and 7,688 on 684 before batch 116 took old AT&T's 13 off T, Consumers Power, Inc.'s 1 off CMS and Toro Corp.'s 1 off TORO; 7,964, 6,817 and 7,683 on 683 on batch 114's slice, which lacked 5 of the file's page cases; 7,545, 6,463 and 7,268 on 670 before batch 114's utilities; 7,428, 6,368 and 7,026 before batch 113's settlement figures; 7,427, 6,367 and 7,025 before batch 111's legal-form spellings; 7,436, 6,376 and 7,034 before batch 108 took the old Waste Management's nine off WM; 7,035 before batch 107's Star Lake order joined Chevron's September 2016; 5,994 on 667 before batch 104's units, every one of whose cases is still on its page; 5,984 before batch 101's Sunoco, Inc.; 6,001 on 665 before batch 100)",
-    total === 7954 && out.size === 683 && before2017 === 6806 && own === 7675 && (out.get("OLN") ?? []).some((e) => e.date === "1995-10-26"), `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
+  check("before any first price: 7,899 rows on 679 companies, 6,754 before 2017; 7,621 of them a case's own day, which EPA's whole file gives too (7,954, 6,806 and 7,675 on 683 before batch 117's table of taken names took Ingersoll-Rand's 36 off IR, Linde AG's 9 off LIN, Spectrum Brands' 4 off SPB, Sunoco, Inc.'s 3 off SUN and one each off HOS, VTOL and FUN; 7,969, 6,821 and 7,688 on 684 before batch 116 took old AT&T's 13 off T, Consumers Power, Inc.'s 1 off CMS and Toro Corp.'s 1 off TORO; 7,964, 6,817 and 7,683 on 683 on batch 114's slice, which lacked 5 of the file's page cases; 7,545, 6,463 and 7,268 on 670 before batch 114's utilities; 7,428, 6,368 and 7,026 before batch 113's settlement figures; 7,427, 6,367 and 7,025 before batch 111's legal-form spellings; 7,436, 6,376 and 7,034 before batch 108 took the old Waste Management's nine off WM; 7,035 before batch 107's Star Lake order joined Chevron's September 2016; 5,994 on 667 before batch 104's units, every one of whose cases is still on its page; 5,984 before batch 101's Sunoco, Inc.; 6,001 on 665 before batch 100)",
+    total === 7899 && out.size === 679 && before2017 === 6754 && own === 7621 && (out.get("OLN") ?? []).some((e) => e.date === "1995-10-26"), `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
   const top = [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 5).map(([t, v]) => `${t} ${v.length}`).join(", ");
   check("  …most on ExxonMobil 288, GE 284, Chevron 269, BP 248, GM 225 (GE 284, XOM 273, CVX 258, BP 230, GM 222 before batch 113; before the units: GE 284, GM 222, Ford 165, ExxonMobil 163, FMC 135)",
     top === "XOM 288, GE 284, CVX 269, BP 248, GM 225", top);
@@ -280,15 +282,15 @@ async function main(): Promise<void> {
     omega?.description?.slice(0, 200));
   check("no month of orders \"with no penalty\" holds a case EPA's settlement gives a penalty",
     rows.filter(({ e }) => e.precision === "month").every(({ e }) => (e.externalId ?? "").split(",").every((n) => byNumber.get(n)?.penalty === null)) &&
-      rows.filter(({ e }) => e.precision === "month").length === 279);
+      rows.filter(({ e }) => e.precision === "month").length === 278, `${rows.filter(({ e }) => e.precision === "month").length} month rows`);
   const shown = rows.filter(({ e }) => /civil penalty/.test(e.title));
   // on batch 113's slice: 2,125 rows, 1,765 before 2017, 1,250 and 890 more than before it; batch 114's units add the rest
-  check("2,271 rows give a penalty, 1,888 of them before 2017 (2,272 and 1,890 before batch 116's AT&T and Consumers Power, Inc.); none from 2017 on gave one before batch 113, since EPA's case totals stop and its settlements go on",
-    shown.length === 2271 && shown.filter(({ e }) => e.date < "2017").length === 1888, `${shown.length}, ${shown.filter(({ e }) => e.date < "2017").length} before 2017`);
-  check("  …2,963 rows name the work ordered, 2,489 before 2017; 6,750 carry EPA's summary, 5,675 before 2017 (2,968, 2,495, 6,785 and 5,703 before batch 116 dropped placeholders and old AT&T's rows; 2,805, 2,363, 6,417 and 5,395 on batch 113's slice)",
-    rows.filter(({ e }) => /work ordered/.test(e.description ?? "")).length === 2963 && rows.filter(({ e }) => /work ordered/.test(e.description ?? "") && e.date < "2017").length === 2489 &&
-      rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "")).length === 6750 && rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "") && e.date < "2017").length === 5675,
-    `${rows.filter(({ e }) => /work ordered/.test(e.description ?? "")).length} work; ${rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "")).length} summaries`);
+  check("2,261 rows give a penalty, 1,879 of them before 2017 (2,271 and 1,888 before batch 117's taken names; 2,272 and 1,890 before batch 116's AT&T and Consumers Power, Inc.); none from 2017 on gave one before batch 113, since EPA's case totals stop and its settlements go on",
+    shown.length === 2261 && shown.filter(({ e }) => e.date < "2017").length === 1879, `${shown.length}, ${shown.filter(({ e }) => e.date < "2017").length} before 2017`);
+  check("  …2,942 rows name the work ordered, 2,469 before 2017; 6,707 carry EPA's summary, 5,634 before 2017 (2,963, 2,489, 6,750 and 5,675 before batch 117's taken names; 2,968, 2,495, 6,785 and 5,703 before batch 116 dropped placeholders and old AT&T's rows; 2,805, 2,363, 6,417 and 5,395 on batch 113's slice)",
+    rows.filter(({ e }) => /work ordered/.test(e.description ?? "")).length === 2942 && rows.filter(({ e }) => /work ordered/.test(e.description ?? "") && e.date < "2017").length === 2469 &&
+      rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "")).length === 6707 && rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "") && e.date < "2017").length === 5634,
+    `${rows.filter(({ e }) => /work ordered/.test(e.description ?? "")).length} work, ${rows.filter(({ e }) => /work ordered/.test(e.description ?? "") && e.date < "2017").length} before 2017; ${rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "")).length} summaries, ${rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "") && e.date < "2017").length} before 2017`);
   // the rule before batch 113: a penalty was the case total alone
   const before113 = (c: EpaCase): EpaCase => (c.settled ? { ...c, penalty: null, settled: false } : c);
   let taken = 0;
@@ -304,8 +306,8 @@ async function main(): Promise<void> {
       else lost.push(`${t} ${e.dedupBasis}`);
     }
   }
-  check("every row the rule before kept under a month's key and this one does not moves onto the first own row of its cases: 1,008, none lost, so a row keeps its history (1,007 on batch 114's slice, 950 on batch 113's)",
-    taken === 1008 && lost.length === 0, `${taken} taken; lost ${lost.slice(0, 4).join(" ; ")}`);
+  check("every row the rule before kept under a month's key and this one does not moves onto the first own row of its cases: 1,001, none lost, so a row keeps its history (1,008 before batch 117's taken names, 1,007 on batch 114's slice, 950 on batch 113's)",
+    taken === 1001 && lost.length === 0, `${taken} taken; lost ${lost.slice(0, 4).join(" ; ")}`);
   check("money is digits throughout: added in whole cents, never through a float",
     addAmounts("1478000000", "197000000") === "1675000000" && addAmounts("4505902", "900000") === "5405902" && addAmounts("0.10", "0.20") === "0.30" &&
       addAmounts("5100.5", null) === "5100.5" && addAmounts(null, null) === null && cases.every((c) => [c.penalty, c.workOrdered].every((m) => m == null || /^\d+(?:\.\d{2})?$/.test(m))));
@@ -457,7 +459,7 @@ async function main(): Promise<void> {
   const att = eventsOn("T");
   check("finding 1: old AT&T Corp.'s 13 rows of 1986–2002 are off T, whose record was SBC's until it took AT&T's name on 2005-11-18; its EPCRA penalty of 2001 among them; T's own 5 stay",
     att.length === 5 && !has(att, "HQ-2000-6010") && !has(att, "03-1981-0363") && att.every((e) => e.date >= "2005-11-18") && has(att, "04-2012-3754") &&
-      NOT_THE_COMPANY[rowOf("T")[0]]?.[0]?.before === "2005-11-18",
+      TAKEN_NAMES[rowOf("T")[0]]?.from === "2005-11-18" && !NOT_THE_COMPANY[rowOf("T")[0]],
     att.map((e) => `${e.date} ${e.externalId}`).join(" | "));
   const cmsUnit = (UNITS[rowOf("CMS")[0]] ?? []).find((u) => u.key === "consumers")!;
   check("finding 2: \"CONSUMERS POWER, INC.\", a Region 10 case of 1993 at an Illinois facility, is not Michigan's Consumers Power Company; \"CONSUMERS POWER CO.\" and \"Consumers Energy Company\" are",

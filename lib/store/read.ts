@@ -2,6 +2,7 @@ import { cache } from "react";
 import { getPool } from "../db";
 import { corroborations } from "../corroboration";
 import { ownPastLabelled } from "../predecessors";
+import { hiddenAsTaken } from "../takenNames";
 import { ALSO_ON_SOURCE_IDS, alsoOnSql, groupAlsoOn, type AlsoOn } from "../alsoOn";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
 import { OWN_SERIES_SCORER, asOwnSeriesFiling } from "../fundSeries";
@@ -260,11 +261,14 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
     [subjectId, RELEVANCE_THRESHOLD, OWN_SERIES_SCORER]
   ), loadAlsoOn(subjectId)]);
 
-  return rows.map((r) => {
+  return rows.flatMap((r) => {
     const date: string =
       r.occurred_on instanceof Date
         ? r.occurred_on.toISOString().slice(0, 10)
         : String(r.occurred_on).slice(0, 10);
+    // another company's row from before the record took its name, stored before batch 117 or by a
+    // source no run takes off, is not this page's (lib/takenNames.ts)
+    if (hiddenAsTaken(r.subject_cik, date, `${r.title} ${r.body ?? ""}`, r.attestation_sources)) return [];
     // a grouped row's versions are one document, not corroboration (lib/corroboration.ts, batch 107)
     const attestations = corroborations(r.attestation_sources);
     const ev = {
@@ -295,7 +299,7 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
     } satisfies TimelineEvent;
     // a row of the record's own past, another company's, says whose (Schering-Plough's on MRK's, batch 110)
     const own = ownPastLabelled(ev, r.subject_cik);
-    return r.own_series_of ? asOwnSeriesFiling(own, r.own_series_of) : own;
+    return [r.own_series_of ? asOwnSeriesFiling(own, r.own_series_of) : own];
   });
 }
 
@@ -305,7 +309,7 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
  */
 export async function loadAlsoOn(subjectId: number): Promise<Map<number, AlsoOn>> {
   try {
-    const { rows } = await getPool().query<{ event_id: string; ticker: string | null; display_name: string }>(alsoOnSql(ALSO_ON_SOURCE_IDS), [
+    const { rows } = await getPool().query<{ event_id: string; ticker: string | null; display_name: string; cik: string | null; occurred_on: string; title: string; body: string | null }>(alsoOnSql(ALSO_ON_SOURCE_IDS), [
       subjectId,
       ALSO_ON_SOURCE_IDS,
       RELEVANCE_THRESHOLD,

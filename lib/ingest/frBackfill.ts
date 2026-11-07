@@ -2,6 +2,7 @@ import type { PoolClient } from "pg";
 import type { TimelineEvent } from "../types";
 import { commonName } from "../edgarName";
 import { FR_COMPANY_FROM, fetchCompanyYear, frSearchTerm, type YearResult } from "../frCompany";
+import { withoutTakenNames, yearSearchNames } from "../takenNames";
 import { assertCommercialOk, emptyStats, logFetch, shouldBackOff, upsertEvent, type ScoringContext } from "./store";
 
 /**
@@ -144,7 +145,7 @@ export async function backfillRegulations(
     budget = regulationBudget,
     gapMs = GAP_MS,
     former,
-    fetch = (year, names) => fetchCompanyYear(plan.edgarName, year, names),
+    fetch = (year, names, edgarName = plan.edgarName) => fetchCompanyYear(edgarName, year, names),
     store = async (events) => {
       const stats = emptyStats();
       for (const ev of events) await upsertEvent(client, ev, subjectId, stats, plan.scoring);
@@ -155,7 +156,7 @@ export async function backfillRegulations(
     budget?: { left: number };
     gapMs?: number;
     former?: FormerName[];
-    fetch?: (year: number, names: string[]) => Promise<YearResult>;
+    fetch?: (year: number, names: string[], edgarName?: string) => Promise<YearResult>;
     store?: (events: TimelineEvent[]) => Promise<void>;
   } = {}
 ): Promise<RegulationStats> {
@@ -176,8 +177,10 @@ export async function backfillRegulations(
   const stored = new Map(rows.map((r) => [r.starts_on, r.query]));
   const due = closedYears(today, listed > FR_COMPANY_FROM ? listed : FR_COMPANY_FROM)
     .map((year) => {
-      const names = namesForYear(year, plan.alsoKnownAs, formerNames);
-      return { year, names, query: frSearchTerm(plan.edgarName, names) };
+      // a year before the record took a name another company held is asked under its own name of
+      // that year (lib/takenNames.ts, batch 117): T's 1994–2004 under Southwestern Bell's and SBC's
+      const { edgarName, names } = yearSearchNames(plan.scoring.cik, year, plan.edgarName, namesForYear(year, plan.alsoKnownAs, formerNames), formerNames);
+      return { year, names, edgarName, query: frSearchTerm(edgarName, names) };
     })
     .filter((w) => stored.get(`${w.year}-01-01`) !== w.query);
   const stats: RegulationStats = { due: due.length, read: 0, documents: 0, left: due.length, ...(unlinked ? { unlinked } : {}) };
@@ -195,7 +198,7 @@ export async function backfillRegulations(
     const label = `${w.query} · ${w.year}`;
     let result: YearResult;
     try {
-      result = await fetch(w.year, w.names);
+      result = await fetch(w.year, w.names, w.edgarName);
     } catch (err) {
       result = { events: [], documents: 0, outcome: "error", detail: String(err).slice(0, 200) };
     }
@@ -203,14 +206,16 @@ export async function backfillRegulations(
       await logFetch(client, "federal_register", subjectId, label, result.outcome, 0, result.httpStatus, result.detail);
       return { ...stats, stopped: result.outcome };
     }
+    // and a row of the other company's from before that day is not kept, in any year (batch 117)
+    const kept = withoutTakenNames(result.events, plan.scoring.cik, "federal_register");
     await client.query("BEGIN");
     try {
-      await store(result.events);
+      await store(kept);
       await client.query(
         `INSERT INTO fr_windows (subject_id, starts_on, query, documents, kept) VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (subject_id, starts_on) DO UPDATE
             SET query = EXCLUDED.query, documents = EXCLUDED.documents, kept = EXCLUDED.kept, read_at = now()`,
-        [subjectId, `${w.year}-01-01`, w.query, result.documents, result.events.length]
+        [subjectId, `${w.year}-01-01`, w.query, result.documents, kept.length]
       );
       await client.query("COMMIT");
     } catch (err) {
@@ -219,7 +224,7 @@ export async function backfillRegulations(
       return { ...stats, stopped: "error" };
     }
     stats.read++;
-    stats.documents += result.events.length;
+    stats.documents += kept.length;
     stats.left--;
   }
   return stats;

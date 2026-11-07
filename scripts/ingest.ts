@@ -59,6 +59,7 @@ import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { FED_BANKS, fedBanksFor, fetchFedActions } from "../lib/fedActions";
 import { dojPossessive, fetchJusticeReleases, justiceQueryNames } from "../lib/doj";
 import { isNotesRecord, releaseNamesAsked } from "../lib/releaseNames";
+import { withoutTakenNames } from "../lib/takenNames";
 import { CRYPTO_SUBJECTS, fetchOnchainFor } from "../lib/onchain";
 import { sectorsFor } from "../lib/onchain/sectors";
 import { MACRO_SUBJECT, fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
@@ -243,6 +244,10 @@ async function runSource(
     line(sourceKey, `FAILED    ${(err as Error).message}`);
     return [];
   }
+  // a row of another company's from before the record took its name is not the record's, from any
+  // source that finds a company by name (lib/takenNames.ts, batch 117): part of the answer, so a
+  // complete answer still takes the subject off a stored one
+  result = { ...result, events: withoutTakenNames(result.events, scoring?.cik, sourceKey) };
   const events = transform(result.events);
   const stats = emptyStats();
 
@@ -489,7 +494,7 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   // Score at link time, by the names every path scores a company's headlines with: the common
   // name the feeds were queried under is the name their headlines will use.
   const companyCtx = { kind: "company" as const, displayName: company.name, ticker: company.ticker };
-  const scoring: ScoringContext = { subject: companyCtx, aliases: companyScoringAliases(company) };
+  const scoring: ScoringContext = { subject: companyCtx, aliases: companyScoringAliases(company), cik: company.cik };
   const run = runnerFor(client, subjectId, due, scoring);
 
   if (industry) {

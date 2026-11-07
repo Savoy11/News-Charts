@@ -8,6 +8,7 @@ import { decodeEntities } from "./secHeadlines";
 import type { FetchResult, TimelineEvent } from "./types";
 import { UA } from "./contact";
 import { ARCHIVED_ORDERS } from "./fedOrders";
+import { takenBefore } from "./takenNames";
 
 /**
  * The Federal Reserve Board's own announcements about a listed company, from 2006, the first year
@@ -222,6 +223,8 @@ export function fedPressEvents(
   const out: TimelineEvent[] = [];
   for (const r of releases) {
     if (r.day < from || NOT_THE_COMPANY[Number(cik)]?.some((n) => n.title?.test(r.title) || n.summary?.test(r.summary ?? ""))) continue;
+    // a name the record took from another company is that company's before the day (lib/takenNames.ts, batch 117)
+    if (takenBefore(cik, r.day, `${r.title} ${r.summary ?? ""}`)) continue;
     const held = [...names(Number(r.day.slice(0, 4))), ...(namesOn?.(r.day) ?? [])];
     // a name can only be a party where the title's letters and digits, or an archived order's sentence's, hold its own
     const letters = alnum(`${r.title} ${r.summary ?? ""}`);

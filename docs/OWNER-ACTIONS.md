@@ -228,7 +228,8 @@ Raised by the November batches, each recorded in the master checklist:
   2012). Batch 105 already keeps DuPont's drug approvals of 1986–2001 off DD. This is a call like Merck's
   was:
   1. keep old DuPont's rows on DD, as its chart is DuPont's (as old Merck's history is MRK's);
-  2. take them off before the merger, as with old Waste Management and AT&T Corp.;
+  2. take them off before the merger, as with old Waste Management and AT&T Corp. (one entry in
+     batch 117's table of taken names, `lib/takenNames.ts`, would do it for every source);
   3. keep them, labelled as E. I. du Pont's (as Schering-Plough's are on MRK).
 
   Nothing changes until you choose.

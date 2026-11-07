@@ -4,6 +4,7 @@ import { fetchNews, gdeltQuery, type NewsWindow } from "../news";
 import { mentions } from "../enrich/relevance";
 import { collapseNearDuplicates } from "../newsQuality";
 import { MEASURED_WORD_NAMES, everydayWordName, namedWithCapital } from "../wordNames";
+import { withoutTakenNames } from "../takenNames";
 import { assertCommercialOk, emptyStats, logFetch, shouldBackOff, upsertEvent, type ScoringContext } from "./store";
 
 /**
@@ -152,8 +153,14 @@ export async function backfillNews(
       return { ...stats, stopped: result.outcome };
     }
     // dedupe after the filter: syndicated copies of one story are one story
+    // …and a story from before the record took a name another company held, naming only that
+    // company, is that company's (lib/takenNames.ts, batch 117): old Chubb's 2015 news on ACE's page
     const kept = collapseNearDuplicates(
-      result.events.filter((e) => namesCompany(e.title, plan.scoring.aliases) && (!word || namedWithCapital(e.title, word)))
+      withoutTakenNames(
+        result.events.filter((e) => namesCompany(e.title, plan.scoring.aliases) && (!word || namedWithCapital(e.title, word))),
+        plan.scoring.cik,
+        "gdelt",
+      )
     );
     await client.query("BEGIN");
     try {

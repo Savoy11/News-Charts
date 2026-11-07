@@ -4,6 +4,7 @@ import { longerListedNameIn } from "./frCompany";
 import { RELEASE_NAMES } from "./releaseNames";
 import { isEverydayWord, oneWordName } from "./wordNames";
 import type { TimelineEvent } from "./types";
+import { takenBefore } from "./takenNames";
 
 /**
  * The Commodity Futures Trading Commission's enforcement actions on the pages of the companies
@@ -143,6 +144,8 @@ export function cftcEvents(
     // the rule runs only on a title holding one of the names' letters at all
     const t = lettersOf(a);
     if (!asked.length || !asked.some((n) => { const k = letters(n); return k.length >= 2 && t.includes(k); }) || !cftcNamesParty(a.title, asked, cik)) continue;
+    // a name the record took from another company is that company's before the day (lib/takenNames.ts, batch 117)
+    if (takenBefore(cik, a.day, a.title)) continue;
     byDay.set(a.day, [...(byDay.get(a.day) ?? []), a]);
   }
   return [...byDay]

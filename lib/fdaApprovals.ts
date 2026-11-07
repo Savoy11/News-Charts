@@ -3,6 +3,7 @@ import { FDA_FIRMS, firmFor, type FdaFirm } from "./fdaRecalls";
 import { captionParty } from "./secCases";
 import type { TimelineEvent } from "./types";
 import { excelDay, readSheet } from "./xlsx";
+import { takenBefore } from "./takenNames";
 
 /**
  * The FDA's new-drug approvals since 1985, on the page of the company that applied (batch 105, the
@@ -232,9 +233,10 @@ export const APPLICANT_NAMES: Readonly<Record<number, { ticker: string; names: r
 
 /**
  * Applicants a rule would give a company that are not its, by CIK, read by hand: a name it shares or
- * a past no record of its holds, for good or until a day (`before`).
+ * a past no record of its holds. A name its record took from another company is refused before the
+ * day it took it by lib/takenNames.ts (batch 117).
  */
-export const NOT_THE_APPLICANT: Readonly<Record<number, { ticker: string; applicant: RegExp; before?: string; why: string }[]>> = {
+export const NOT_THE_APPLICANT: Readonly<Record<number, { ticker: string; applicant: RegExp; why: string }[]>> = {
   1666700: [
     {
       ticker: "DD",
@@ -244,17 +246,7 @@ export const NOT_THE_APPLICANT: Readonly<Record<number, { ticker: string; applic
   ],
   1512673: [{ ticker: "XYZ", applicant: /^Block\b/i, why: "Block Drug Company (Actinex, 1992), not Block, Inc." }],
   310158: [{ ticker: "MRK", applicant: /\b(?:Du ?Pont|Astra)\s+Merck\b/i, why: "DuPont Merck and Astra Merck, joint ventures, no owner's alone" }],
-  // batch 115: read by hand with the efficacy supplements' page-and-sponsor pairs
-  875045: [
-    {
-      ticker: "BIIB",
-      applicant: /^Biogen\b(?!\s+Idec\b)/i,
-      before: "2003-11-12",
-      why:
-        "old Biogen, Inc., which IDEC Pharmaceuticals, this record, bought on 2003-11-12 and whose name it took: the record's 8-K of that day reports it (items 2, 5 and 7), " +
-        "and its name is IDEC PHARMACEUTICALS CORP / DE until that day and BIOGEN IDEC INC from it (data.sec.gov, read 2026-11-07). Avonex (1996) and Amevive (2003-01-30) are old Biogen's",
-    },
-  ],
+  // batch 115's BIIB entry, old Biogen before 2003-11-12, is lib/takenNames.ts's (batch 117)
 };
 
 /** The firms and names that make an applicant the company's on a day, its own refused names aside. */
@@ -264,7 +256,9 @@ function whoseOn(cik: number): readonly FdaFirm[] {
 
 /** Whether an approval's applicant is the company on its day, by one of the three rules. */
 export function approvalIsCompany(a: FdaApproval, cik: number, namesIn: (year: number) => string[]): boolean {
-  if (NOT_THE_APPLICANT[cik]?.some((r) => r.applicant.test(a.applicant) && (!r.before || a.day < r.before))) return false;
+  if (NOT_THE_APPLICANT[cik]?.some((r) => r.applicant.test(a.applicant))) return false;
+  // a name the record took from another company is that company's before the day (lib/takenNames.ts, batch 117)
+  if (takenBefore(cik, a.day, a.applicant)) return false;
   if (firmFor(a.applicant, a.day, whoseOn(cik))) return true;
   return captionParty(a.applicant, namesIn(Number(a.day.slice(0, 4)))) !== null;
 }

@@ -6,6 +6,7 @@ import { legalSpellings } from "./edgarName";
 import { easternDay, pressName } from "./secPress";
 import type { TimelineEvent } from "./types";
 import { UA } from "./contact";
+import { takenBefore } from "./takenNames";
 
 /**
  * The SEC's litigation releases and administrative proceedings in which a listed company is a
@@ -252,6 +253,8 @@ export function secCaseEvents(
   for (const c of cases) {
     if (!/^https:\/\/www\.sec\.gov\//.test(c.url)) continue;
     if (NOT_THE_COMPANY[Number(cik)]?.some((n) => n.caption.test(c.caption))) continue;
+    // a name the record took from another company is that company's before the day (lib/takenNames.ts, batch 117)
+    if (takenBefore(cik, c.day, c.caption)) continue;
     const held = c.day < from ? (namesBefore?.(c.day) ?? []) : [...names(Number(c.day.slice(0, 4))), ...(namesOn?.(c.day) ?? [])];
     if (!held.length) continue;
     // a name can only be a party where the caption's letters and digits hold its own: most rows

@@ -29,6 +29,7 @@ import { isNotesRecord } from "../lib/releaseNames";
 import { newsNamesFor, possessiveNameFor } from "../lib/sec";
 import { excelDay, readSheet } from "../lib/xlsx";
 import { COMPANY_SOURCES } from "./ingest";
+import { TAKEN_NAMES } from "../lib/takenNames";
 
 /**
  * The FDA's new-drug approvals (batch 105, the 2026-11-06 proposal 1, approved by the owner on
@@ -190,7 +191,7 @@ async function main(): Promise<void> {
   // batch 115: IDEC Pharmaceuticals, BIIB's record, bought Biogen, Inc. on 2003-11-12 and took its name
   check("  old Biogen's approvals before IDEC bought it and took its name on 2003-11-12 are no page's: Avonex (1996) and Amevive (2003-01-30); Tysabri (2004, Biogen Idec) and Spinraza (2016, Biogen) are BIIB's",
     pagesOf(named("Avonex")).length === 0 && pagesOf(named("Amevive")).length === 0 && on("BIIB", named("Tysabri")) && on("BIIB", named("Spinraza")) &&
-      NOT_THE_APPLICANT[rowOf("BIIB")[0]]?.[0]?.before === "2003-11-12");
+      TAKEN_NAMES[rowOf("BIIB")[0]]?.from === "2003-11-12" && !NOT_THE_APPLICANT[rowOf("BIIB")[0]]);
   check("every hand-read name says why, and every day is a day",
     Object.values(APPLICANT_NAMES).every((c) => c.names.every((n) => n.why.length > 15 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.entries(APPLICANT_NAMES).every(([cik, c]) => companies.some(([x, t]) => x === Number(cik) && t === c.ticker)));

@@ -359,8 +359,10 @@ const TODAY = "2026-11-01";
   // case against TD Bank of 2013-09-23 (33-9453), the Rothstein Ponzi scheme
   // batch 111's legal-form spellings add two: Rio Tinto Limited's own cases with Rio Tinto plc, of 2018
   // and 2023, on RTNTF, whose record writes "RIO TINTO LTD"
-  check("the 30,747 rows of 1995–2026 give 1,150 company days on 371 companies, 559 before 2017, as replayed in full (1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's, 1,148 on 370 before batch 111's spellings)",
-    rows.length === 30747 && companyDays.length === 1150 && replayed.companies.length === 371 && companyDays.filter((e) => e.date < "2017").length === 559,
+  // batch 117's table of taken names takes two off: Ingersoll-Rand Company Ltd.'s case of 2007 (LR-20353) off IR, whose record was
+  // Gardner Denver's until 2020, and the old Bristow Group's of 2007 (34-56533) off VTOL, whose record was Era's until 2020
+  check("the 30,747 rows of 1995–2026 give 1,148 company days on 369 companies, 557 before 2017, as replayed in full (1,150 on 371 before batch 117's taken names, 1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's, 1,148 on 370 before batch 111's spellings)",
+    rows.length === 30747 && companyDays.length === 1148 && replayed.companies.length === 369 && companyDays.filter((e) => e.date < "2017").length === 557,
     `${rows.length} rows → ${companyDays.length} on ${replayed.companies.length}, ${companyDays.filter((e) => e.date < "2017").length} before 2017, in ${Date.now() - t0} ms`);
   // batch 88, the 2026-11-02 proposal 4: the listed banks', brokers' and managers' own units
   const replayedOn = (t: string, d: string) => !!replayed.companies.find(([x]) => x === t)?.[1].some((e) => e.date === d);

@@ -1,6 +1,7 @@
 import { UA } from "./contact";
 import { epaParty } from "./epaCases";
 import type { TimelineEvent } from "./types";
+import { takenBefore } from "./takenNames";
 
 /**
  * Consumer-product recalls on the pages of the companies that made, imported, distributed or sold
@@ -165,14 +166,15 @@ export function soldAtCompany(soldAt: string, names: readonly string[]): boolean
  * The firms and stores a recall names that are another company's though they carry a listed
  * company's name, read by hand on 2026-11-05 (batch 100, the audit of batches 94–99) among the 269
  * firm names and the stores the 10,070 recalls gave the index, by CIK. `firm` refuses a maker,
- * importer or distributor the pattern matches, from `from` when given and before `before` (the day
- * the company's record took a name another company had held); `store` refuses a store
+ * importer or distributor the pattern matches, from `from` when given (a name the company's record
+ * took from another company is refused before that day by lib/takenNames.ts, batch 117); `store` refuses a store
  * line the pattern matches, or every one ("never") for a company that is no retailer. Firms that
  * are other companies' but whose recalls come before the company's first price are left to the
  * floor: STIHL's VIKING GmbH (Viking Holdings, 2024), Innovage LLC (InnovAge, 2021), the go-kart
- * "Fox" (Fox Corp, 2019), Ingersoll-Rand Company (Ingersoll Rand Inc., 2017).
+ * "Fox" (Fox Corp, 2019). Ingersoll-Rand Company's are refused on Ingersoll Rand Inc. by its taken
+ * name's day, 2020-02-28 (lib/takenNames.ts, batch 117).
  */
-export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; firm?: RegExp; from?: string; before?: string; store?: RegExp | "never"; why: string }[]>> = {
+export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; firm?: RegExp; from?: string; store?: RegExp | "never"; why: string }[]>> = {
   42888: [{ ticker: "GGG", firm: /^Graco(?:\s+Children['’]s\s+Products\b.*)?$/i, why: "Graco Children's Products of Elverson, Pennsylvania (strollers, swings, playards), not Graco Inc., the Minneapolis pump and sprayer maker" }],
   1032033: [{ ticker: "SLM", firm: /^SLM\b/i, why: "SLM International, Buddy L's toy-making parent, not SLM Corporation (Sallie Mae)" }],
   1126956: [{ ticker: "SR", firm: /^Spire LLC\b/i, why: "Spire LLC d/b/a StoreYourBoard.com of Troy, Virginia, not Spire Inc., the gas utility" }],
@@ -191,17 +193,7 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; firm?: R
   945841: [{ ticker: "POOL", store: /\bPool and Spa\b/i, why: "\"Pool and Spa dealers\" and \"Pool and Spa Depot\" are kinds and names of stores, not Pool Corporation" }],
   1166691: [{ ticker: "CMCSA", store: /\btelevision networks? airing on\b/i, why: "Shop LC's television network airing on Comcast's channels: Shop LC sold it" }],
   1428439: [{ ticker: "ROKU", store: /\btelevision networks? airing on\b/i, why: "Shop LC's television network airing on Roku: Shop LC sold it" }],
-  // batch 116, found checking the 2026-11-07 audit's finding 1 beyond EPA: AT&T Corp.'s phone charger of 1995
-  732717: [
-    {
-      ticker: "T",
-      firm: /^AT\s*&\s*T\b/i,
-      before: "2005-11-18",
-      why:
-        "AT&T Corp., another company until SBC Communications, T's record, bought it and took its name on 2005-11-18 (SBC's 8-K filed 2005-11-21, items 2.01 and 5.03): " +
-        "the 1995 recall of a Mascot charger made for AT&T's and Nokia's phones is not SBC's",
-    },
-  ],
+  // batch 116's T entry, AT&T Corp.'s 1995 charger, is lib/takenNames.ts's (batch 117)
 };
 
 /**
@@ -227,7 +219,11 @@ export function roleIn(r: CpscRecall, names: readonly string[], cik?: number | s
   const units = cik === undefined ? [] : (UNITS[Number(cik)] ?? []);
   const owned = (entry: string) => units.some((u) => r.day >= u.from && (!u.to || r.day <= u.to) && u.firm.test(firmName(entry)));
   const firm = (entry: string) =>
-    owned(entry) || (firmIsCompany(entry, names) && !refused.some((n) => n.firm && (!n.from || r.day >= n.from) && (!n.before || r.day < n.before) && n.firm.test(firmName(entry))));
+    owned(entry) ||
+    (firmIsCompany(entry, names) &&
+      !refused.some((n) => n.firm && (!n.from || r.day >= n.from) && n.firm.test(firmName(entry))) &&
+      // …and not a name the record took from another company, before the day (lib/takenNames.ts, batch 117)
+      !takenBefore(cik, r.day, firmName(entry)));
   if (r.makers.some(firm)) return "maker";
   if (r.importers.some(firm)) return "importer";
   if (r.distributors.some(firm)) return "distributor";

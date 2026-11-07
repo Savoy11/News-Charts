@@ -1,3 +1,4 @@
+import { hiddenAsTaken } from "./takenNames";
 import type { SourceKey, TimelineEvent } from "./types";
 
 /**
@@ -42,25 +43,40 @@ export type AlsoOn = NonNullable<TimelineEvent["alsoOn"]>;
 export function alsoOnSql(sourceIds: readonly number[]): string {
   const ids = sourceIds.map((n) => Number(n)).filter((n) => Number.isInteger(n) && n > 0);
   if (!ids.length) throw new Error("no source ids for Also on");
-  return `SELECT DISTINCT a.event_id, o.ticker, o.display_name
+  return `SELECT DISTINCT a.event_id, o.ticker, o.display_name, o.cik, e2.occurred_on::text AS occurred_on, e2.title, e2.body
        FROM event_subjects es
        JOIN event_attestations a ON a.event_id = es.event_id AND a.source_id = ANY ($2::smallint[])
        JOIN event_attestations b ON b.source_id IN (${ids.join(", ")}) AND b.source_id = a.source_id
             AND string_to_array(b.external_id, ',') && string_to_array(a.external_id, ',')
        JOIN event_subjects es2 ON es2.event_id = b.event_id AND es2.subject_id <> $1 AND (es2.relevance IS NULL OR es2.relevance >= $3)
        JOIN subjects o ON o.id = es2.subject_id AND o.kind = 'company'
+       JOIN events e2 ON e2.id = b.event_id
       WHERE es.subject_id = $1
         AND o.cik IS DISTINCT FROM (SELECT cik FROM subjects WHERE id = $1)`;
 }
 
 /**
  * The query's rows as each event's other companies: one company once an event, however many of
- * its cases or attestations overlap; ordered by name, the first `ALSO_ON_SHOWN` shown.
+ * its cases or attestations overlap; ordered by name, the first `ALSO_ON_SHOWN` shown. A company
+ * whose own page leaves its row off, as another company's from before its record took that
+ * company's name, is not named (lib/takenNames.ts, batch 117): "Also on AT&T" under a 1999 case of
+ * AT&T Corp.'s would send a reader to a page without it.
  */
-export function groupAlsoOn(rows: readonly { event_id: number | string; ticker: string | null; display_name: string }[]): Map<number, AlsoOn> {
+export function groupAlsoOn(
+  rows: readonly {
+    event_id: number | string;
+    ticker: string | null;
+    display_name: string;
+    cik?: number | string | null;
+    occurred_on?: string | null;
+    title?: string | null;
+    body?: string | null;
+  }[],
+): Map<number, AlsoOn> {
   const byEvent = new Map<number, Map<string, string>>();
   for (const r of rows) {
     if (!r.ticker) continue;
+    if (r.occurred_on && hiddenAsTaken(r.cik, String(r.occurred_on).slice(0, 10), `${r.title ?? ""} ${r.body ?? ""}`, null)) continue;
     const id = Number(r.event_id);
     const companies = byEvent.get(id) ?? byEvent.set(id, new Map()).get(id)!;
     if (!companies.has(r.ticker)) companies.set(r.ticker, r.display_name);

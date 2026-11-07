@@ -216,7 +216,8 @@ Lilly ICOS, TAP), and two applicants are refused by name (`NOT_THE_APPLICANT`): 
 pharmaceuticals of 1986–2001 are not DuPont de Nemours's, whose record is DowDuPont's of 2015, and
 Block Drug's Actinex (1992) is not Block, Inc.'s; since batch 115, nor is old Biogen, Inc.'s past
 Biogen's: IDEC Pharmaceuticals, Biogen's record, bought it on 2003-11-12 and took its name, so
-Avonex (1996) and Amevive (early 2003) are no page's. From the first prices of the 26 drugmakers
+Avonex (1996) and Amevive (early 2003) are no page's (since batch 117 by the one table of taken names,
+below). From the first prices of the 26 drugmakers
 Yahoo gave: 450 approvals, 314 before 2017, 71 before EDGAR (1994); most on Merck 58, Johnson &
 Johnson 47, Novartis 44, Pfizer 42, Bristol-Myers Squibb 39 and Lilly 34. Organon's approvals of 1990–2001
 (Remeron, NuvaRing…) are Akzo Nobel's, which owned it until Schering-Plough bought it on 2007-11-19
@@ -412,7 +413,7 @@ revoked registrations naming a shell called "Telos, Inc." — were read by hand 
 CIK (`NOT_THE_COMPANY`). A company's rows of a day make one event, titled by its own party ("SEC
 litigation release: Transocean Inc."), with the whole caption, each release number and a
 proceeding's file number in its description. Read against every company in the index under its
-current names, the 30,747 rows give 1,150 company days on 371 companies, 559 of them before 2017
+current names, the 30,747 rows give 1,148 company days on 369 companies, 557 of them before 2017
 (Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47,
 Goldman Sachs 20); a company's former names add more, and its first price keeps it off the years
 before it listed. A party ends before its other name ("…, L.P. f/k/a Spear, Leeds & Kellogg") as it
@@ -545,12 +546,13 @@ Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Car
 2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
 (`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
 every company in the index, on EPA's whole file of 2026-10-31 (the committed slice gives the same
-rows since batch 116), before first prices: 7,954 rows on 683 companies, 6,806 before 2017
+rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 7,899 rows on 679 companies, 6,754 before 2017
 (ExxonMobil 288, GE 284, Chevron 269, BP 248, GM 225; 5,994 on 667 before the units, every one of
 whose cases is still there; BP 4 and 3M 67 by their own names). A record that took a bought
 company's name does not take that company's past: old Waste Management's cases are not WM's before
 1998-07-16, nor AT&T Corp.'s AT&T Inc.'s before 2005-11-18, when SBC Communications, T's record,
-bought it and took its name (batch 116). A case of several defendants named for its site or another
+bought it and took its name, nor Ingersoll-Rand's 36 Ingersoll Rand Inc.'s, nor Linde AG's Praxair's
+(the table of taken names, batch 117). A case of several defendants named for its site or another
 party says which of them is the page's: "AMERICAN CYANAMID (FIKE CHEMICAL SITE) … against
 SCHERING-PLOUGH CORP. and 63 other defendants".
 
@@ -595,8 +597,8 @@ first of their rows (`legacyDedupBasis`), so no stored row loses its history. Te
 control characters: a NUL in the case "H.O.D. LANDFILL" made Postgres refuse the whole month's read
 before batch 113 (db/043 also forgets the last read, so the next run reads the file whole). An acquisition's past is not the
 buyer's here either: WM's record was USA Waste Services until it bought the old Waste Management and
-took its name on 1998-07-16, so the old company's nine cases before are not WM's (`NOT_THE_COMPANY`
-with a day, batch 108). The
+took its name on 1998-07-16, so the old company's nine cases before are not WM's (batch 108; since
+batch 117 by the table of taken names). The
 first price keeps a successor off its predecessor's years: today's GM listed in 2010, so the old
 GM's $11 million Clean Air Act decree of 1995 is not on it, and today's Kodak stock dates from 2013.
 Public domain under EPA's open data licence; EPA's note that commercial use of documents on its
@@ -624,8 +626,9 @@ Noble's). A unit the company owned counts from the day it owned it (`UNITS`; the
 2026-11-06): Graco Children's Products' recalls are Newell's from 1999-03-24, the day Newell merged
 with Rubbermaid, Graco's owner (Newell's EDGAR record and 8-K), 22 of them from 1999 to 2020; those
 before are no listed company's. AT&T Corp.'s phone charger of 1995 is not AT&T Inc.'s, whose record was
-SBC's until it took AT&T's name on 2005-11-18 (batch 116). Against every company in the index, before
-first prices: 2,301 rows on 196 companies, 722 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
+SBC's until it took AT&T's name on 2005-11-18 (batch 116), nor Ingersoll-Rand Company's of 2002
+Ingersoll Rand Inc.'s (batch 117). Against every company in the index, before
+first prices: 2,300 rows on 195 companies, 721 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
 IBM's ThinkPad batteries of 2006). A work of the U.S. Government, public domain; the Commission's
 site refused this session's requests (403), so the basis is the law's and the federal catalog's,
 not a page re-read.
@@ -915,6 +918,18 @@ it says whose: "Schering-Plough: Annual report (10-K)", from "SEC EDGAR · Scher
 its 2009 merger with Merck" (`ownPastLabelled`, at read time). Labelled rows are the record's own
 filings before 2009-11-04, and the cases, approvals and Digest entries of those years that name
 Schering-Plough or its Organon and not Merck. One naming both is old Merck's history too.
+
+**A record that took another company's name never takes that company's past** (batch 117). SBC's
+record took AT&T's name in 2005, ACE's Chubb's in 2016, Norwest's Wells Fargo's in 1998: 28 such
+records are in one table (`lib/takenNames.ts`), each with the day the name became the record's,
+read from a filing. Before that day, a row that names the taken name and none of the record's own
+names of then is the other company's: "AT&T Corp. cuts 7,000 jobs" of 2004 is not on T's page, while
+"SBC to acquire AT&T" is. Every source that finds a company by name reads the table (the caption
+rules, the news, the Federal Register, whose earlier years are asked under the record's own name of
+then), a page and its "Also on" leave stored rows of it off, and the record's own filings and prices
+are never read this way. On the saved sources it takes 15 rows off LIN (Linde AG's), SPB, HOS and FUN
+that nothing took off before. A committed scan of 173 renamed records, each read
+(`scripts/fixtures/taken-names-scan.json`), keeps the table whole (`check:taken-names`).
 
 ```
 npm run db:gen      # regenerate db/001_init.sql from docs/EVENTS-SCHEMA.md

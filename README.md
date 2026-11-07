@@ -384,7 +384,7 @@ revoked registrations naming a shell called "Telos, Inc." — were read by hand 
 CIK (`NOT_THE_COMPANY`). A company's rows of a day make one event, titled by its own party ("SEC
 litigation release: Transocean Inc."), with the whole caption, each release number and a
 proceeding's file number in its description. Read against every company in the index under its
-current names, the 30,747 rows give 1,148 company days on 370 companies, 559 of them before 2017
+current names, the 30,747 rows give 1,150 company days on 371 companies, 559 of them before 2017
 (Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47,
 Goldman Sachs 20); a company's former names add more, and its first price keeps it off the years
 before it listed. A party ends before its other name ("…, L.P. f/k/a Spear, Leeds & Kellogg") as it
@@ -516,7 +516,7 @@ Norfolk Southern Railway, Occidental Chemical, Waste Management's state companie
 Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Carbide on Dow Inc. from
 2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
 (`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
-every company in the index, before first prices: 7,427 rows on 670 companies, 6,367 before 2017
+every company in the index, before first prices: 7,428 rows on 670 companies, 6,368 before 2017
 (GE 284, ExxonMobil 273, Chevron 258, BP 230, GM 222; 5,994 on 667 before the units, every one of
 whose cases is still there; BP 4 and 3M 67 by their own names). An acquisition's past is not the
 buyer's here either: WM's record was USA Waste Services until it bought the old Waste Management and
@@ -548,8 +548,8 @@ Holding's; eight companies that are no retailers take no store line ("Barnes and
 Noble's). A unit the company owned counts from the day it owned it (`UNITS`; the owner's call of
 2026-11-06): Graco Children's Products' recalls are Newell's from 1999-03-24, the day Newell merged
 with Rubbermaid, Graco's owner (Newell's EDGAR record and 8-K), 22 of them from 1999 to 2020; those
-before are no listed company's. Against every company in the index, before first prices: 2,290 rows
-on 197 companies, 709 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
+before are no listed company's. Against every company in the index, before first prices: 2,302 rows
+on 196 companies, 723 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
 IBM's ThinkPad batteries of 2006). A work of the U.S. Government, public domain; the Commission's
 site refused this session's requests (403), so the basis is the law's and the federal catalog's,
 not a page re-read.
@@ -1097,6 +1097,15 @@ everyday name two companies hold (batch 73); a legal name is now counted too (`l
 The price: "Toro beats estimates" is no longer the mower maker's news, since it is as much the
 shipping company's.
 
+A legal name is read in both spellings of the form it ends with (batch 111, `legalSpellings` in
+`lib/edgarName.ts`): Co and Company, Corp and Corporation, Inc and Incorporated, Ltd and Limited.
+EDGAR keeps one ("TORO CO"), and a recall, a caption or a title writes either ("The Toro Company").
+Toro's page held 5 of the recalls naming it, and holds 19: 16 as maker, from the riding mowers of
+2001 to the snowthrowers of 2021, and 3 it imported or distributed. The SEC's two cases against Rio
+Tinto plc and Rio Tinto Limited, of 2018 and 2023, are now also on RTNTF, the Limited's record
+("RIO TINTO LTD"). The two spellings count as one name, so "Independent Bank Corporation" is still
+both banks' and neither's.
+
 A stored score follows a corrected rule on the story's next ingest,
 or at once with `--rescore`, which works out the free tier's own scores again and hands those it
 no longer settles back to the model; a model's score is never touched. It reaches the newest 500
@@ -1168,7 +1177,8 @@ release once, linked to every page it names. A row of one of those eight sources
 its own beneath it, which other held company pages carry the same case: "Also on Ford Motor, General
 Motors, Caterpillar and 24 more", each a link to its page (`lib/alsoOn.ts`, batch 106). A case is the
 same source's same number, and a day's or a month's grouped row carries all its cases' numbers (an
-SEC or CFPB row too, since batch 106), so they are compared as sets (db/041 indexes them). The page's own company is never named, nor another
+SEC or CFPB row too, since batch 106), so they are compared as sets (db/041 indexes them, taking each new row straight into the index since
+batch 111's db/042). The page's own company is never named, nor another
 ticker of its own SEC record, nor a page the case sits below the relevance floor on. Only held pages
 can be named, so the line is a floor of the companies a case involves. On the batch 104 replay of
 EPA's cases, 672 are on two or more pages, 3,366 of 7,436 rows hold a case another page holds, and

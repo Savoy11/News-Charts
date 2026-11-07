@@ -988,6 +988,71 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 111: a legal form in either spelling (Toro's recalls), and two page-speed fixes (2026-11-07)
+
+From the 2026-11-07 audit's set-asides and batch 109's leftover, under the owner's "Merge and
+continue".
+
+- [x] **A legal form in either spelling** (`legalSpellings` and `shortForms` in `lib/edgarName.ts`).
+      EDGAR keeps one spelling of a legal name's form ("TORO CO"); a recall, a caption or a title
+      writes either ("The Toro Company").
+      - The forms: Co and Company, Corp and Corporation, Inc and Incorporated, Ltd and Limited. A form
+        is a whole word at the end, so "PepsiCo" and "Bancorp" end in none.
+      - Read where a company is named by its legal name: `companyNames` for a company whose everyday
+        name is shared, the SEC's caption rule (`captionParty`, which EPA's, the CPSC's, the CFPB's,
+        the Board's, the FDA's and the Digest's rules share), and headline scoring (`aliasesFor`).
+      - `listedCompaniesNamed` counts the two spellings as one name, so "Independent Bank
+        Corporation" is still both banks' legal name and neither's.
+- [x] **Batch 109's Toro leftover was this, not the title.** Batch 109 said the CPSC rule reads no
+      maker from a recall's title, so Toro's riding-mower recall of 2001-07-20 was on no page. Its
+      maker line does name it, "The Toro Company, of Bloomington, Minn."; the rule missed it because
+      "Company" was not "CO".
+      - Toro's page (TTC) held 5 of the recalls naming it and now holds 19: 16 as maker, from 2000 to
+        the Power Max snowthrowers of 2021, and 3 mowers it imported or distributed (2013, 2015).
+      - Toro Corp. (TORO), the shipping company, gets none, and "Toro and Exmark commercial dealers"
+        is still no store line.
+      - The 9 recalls of 1985–1999 naming plain "Toro" as maker (the Lawn-Boy recalls among them)
+        stay on no page: "Toro" is both companies' name.
+- [x] **Measured on the saved data**, every replay against main's:
+      - CPSC: 2,302 rows on 196 companies (2,288), all 14 new rows Toro's own;
+      - SEC cases: 1,150 company days on 371 companies (1,148 on 370). Rio Tinto Limited's two cases
+        with Rio Tinto plc, LR-24085 (2018-03-27) and LR-25898 (2023-11-21), are now also on RTNTF,
+        whose record writes "RIO TINTO LTD"; the 2023 proceeding naming only the plc is not;
+      - EPA: 7,428 rows on 670 companies (7,427). "OLIN-CORPORATION", Olin's legal name spelled
+        out, is among the 55 defendants of the Distler Brickyard settlement of 1995-10-26;
+      - the Justice Department's, the SEC's releases, the Board's, the CFPB's, the CFTC's, the
+        Digest's and the FDA's: unchanged.
+- [x] **A recall's count in the Commission's own words.** "about Approximately 39,000 units" now
+      reads "approximately 39,000"; 74 recalls qualify their count this way ("Approximately" 56,
+      "More than" 15, "Up to" 3).
+- [x] **A page's links found by its subject** (db/042, the audit's set-aside). `event_subjects`'
+      key begins with the event, and only the unscored backlog's partial index began with the
+      subject. On a local Postgres 16 with 337,034 links and a 409-row page, the page's events took
+      24–33 ms and take 2.7–3.0 ms.
+- [x] **"Also on" without a queue to read** (db/042). Measuring the index found the larger cost.
+      db/041's case-number index is a GIN index, which queues new entries in a pending list until a
+      vacuum merges them, and every lookup reads the whole list meanwhile.
+      - After 30,000 case rows were written, each of the page's lookups took 2–4 ms and "Also on"
+        434–754 ms; with the list merged, 32–51 ms.
+      - db/042 turns the queue off (`fastupdate = off`) and merges the list the index had. Writing
+        30,000 rows straight into the index took 516 ms, against 506 ms queued.
+      - What is left of the 51 ms is a read of the links table, which Postgres picks while it is
+        cheaper than the 7,000 key lookups it estimates; on a larger table it picks the lookups.
+      - Applied through `npm run db:migrate` on the local database. Every probe row was written in a
+        transaction rolled back after.
+- **Requests:** none.
+- **Checks:**
+  - check:shared-names 19 (+5): both spellings, a form as a whole word, the count of one name,
+    captions and headlines;
+  - check:cpsc 36 (+2): Toro's 19 and the qualified counts, with its totals;
+  - check:sec-cases 76 (+1): Rio Tinto Limited's two cases, with its totals;
+  - check:epa-cases 60: its totals, Olin's settlement among them;
+  - check:also-on 23 (+3): db/042's index, both of a page's queries starting from it, and the queue
+    turned off.
+
+  On main the new cases fail. `npm run check` and `npm run lint` pass. HawkScan cannot run here
+  (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 110: Schering-Plough's past on Merck's page, labelled (2026-11-07)
 
 The owner's call of 2026-11-07, asked when they said "Lets update mercks history": **"Add
@@ -1082,9 +1147,10 @@ and found twelve everyday names held by more than one listed record.
 - **The price, and what is left:**
   - "Toro beats estimates" no longer names the mower maker, as it names the shipping company as
     much; TTC keeps "Toro Co" and its ticker.
-  - The CPSC rule reads no maker from a recall's title, so that Toro recall, "CPSC, The Toro
+  - [x] **The CPSC rule reads no maker from a recall's title** ✅ **Done in batch 111**, so that Toro recall, "CPSC, The Toro
     Company Announce Recall of Riding Mowers", is now on no page. Its right page is TTC's, by its
-    maker; left for the next audit.
+    maker; left for the next audit. (Batch 111: its maker line names "The Toro Company", which the
+    rule did not read as "TORO CO"; it is TTC's again, with 13 more.)
   - FBP's own litigation release of 2007 ("First BanCorp") stays missed: its name is FBNC's too.
 - **Requests:** 3, all to data.sec.gov: the filing lists of the WISeQey records (2107968, 1738699)
   and of the Resolution Minerals ADR record (2086869), to read whether each is one company's. Each
@@ -1245,7 +1311,7 @@ put wrong rows on pages; they are batch 108's. The shared bank names are batch 1
 - **Set aside:**
   - [x] **A rule change that takes a case off a company leaves the stored link** ✅ **Done in batch 108.** (only filings and
         the Federal Register unlink). Batch 108 needs one for Merck and Waste Management.
-  - `event_subjects` has no full index on `subject_id`: 256–319 ms for a 409-row page at 337,000
+  - [x] **`event_subjects` has no full index on `subject_id`** ✅ **Done in batch 111** (db/042, which also turns off the case-number index's pending list): 256–319 ms for a 409-row page at 337,000
     links, inside a page cached 15 minutes. Older than these batches.
   - BP Amoco Chemical's rows of 2022 and 2024 on BP's page, after BP sold its aromatics and acetyls
     business to INEOS at the end of 2020: whether the named company went with it was not read.

@@ -1,7 +1,7 @@
 import tickerIndex from "../data/edgar-tickers.json";
 import { nameKey } from "../lib/companyAliases";
 import { releaseNamesParty, fetchJusticeReleases } from "../lib/doj";
-import { commonName, withoutTag } from "../lib/edgarName";
+import { commonName, legalSpellings, shortForms, withoutTag } from "../lib/edgarName";
 import { aliasesFor, mentions } from "../lib/enrich/relevance";
 import { companyNames, fetchCompanyRegulations, frSearchTerm, titleNamesCompany } from "../lib/frCompany";
 import { listedCompaniesNamed } from "../lib/sec";
@@ -47,13 +47,32 @@ async function main(): Promise<void> {
       listedCompaniesNamed("Rio Tinto plc") === 1 && listedCompaniesNamed("TORO CO") === 1,
     ["INDEPENDENT BANK CORP", "FIRST BANCORP", "Rio Tinto plc", "TORO CO"].map((n) => `${n} ${listedCompaniesNamed(n)}`));
 
+  console.log("\nA legal form's two spellings (batch 111)");
+  check("a legal name ending in a form is also the name in the form's other spelling: Co and Company, Corp and Corporation, Inc and Incorporated, Ltd and Limited",
+    JSON.stringify(legalSpellings("TORO CO")) === JSON.stringify(["TORO CO", "TORO Co", "TORO Company"]) &&
+      JSON.stringify(legalSpellings("Graham Corporation")) === JSON.stringify(["Graham Corporation", "Graham Corp"]) &&
+      JSON.stringify(legalSpellings("First Bancorp, Inc.")) === JSON.stringify(["First Bancorp, Inc.", "First Bancorp, Inc", "First Bancorp, Incorporated"]) &&
+      JSON.stringify(legalSpellings("RIO TINTO LTD")) === JSON.stringify(["RIO TINTO LTD", "RIO TINTO Ltd", "RIO TINTO Limited"]),
+    [legalSpellings("TORO CO"), legalSpellings("Graham Corporation"), legalSpellings("First Bancorp, Inc."), legalSpellings("RIO TINTO LTD")]);
+  check("  …a form is a whole word at the end: \"PepsiCo\" and \"Bancorp\" are no Co or Corp, and a name ending in none is itself alone",
+    JSON.stringify(legalSpellings("PepsiCo")) === JSON.stringify(["PepsiCo"]) && JSON.stringify(legalSpellings("First Bancorp")) === JSON.stringify(["First Bancorp"]) &&
+      JSON.stringify(legalSpellings("Rio Tinto plc")) === JSON.stringify(["Rio Tinto plc"]) && JSON.stringify(legalSpellings("Co-Diagnostics")) === JSON.stringify(["Co-Diagnostics"]));
+  check("  …and two spellings of one legal name count as one: \"Independent Bank Corporation\" is the two banks' legal name, \"TORO Company\" Toro's alone",
+    shortForms("independent bank corporation") === "independent bank corp" && listedCompaniesNamed("Independent Bank Corporation") === 2 &&
+      listedCompaniesNamed("TORO Company") === 1 && listedCompaniesNamed("Graham Corporation") === 1,
+    ["Independent Bank Corporation", "TORO Company", "Graham Corporation"].map((n) => `${n} ${listedCompaniesNamed(n)}`));
+
   console.log("\nThe names a company is asked and read by");
   const names = (title: string) => companyNames(title);
   check("the two Independent Bank banks and the two First Bancorps have no name of their own: their legal names are each other's",
     [names("INDEPENDENT BANK CORP"), names("INDEPENDENT BANK CORP /MI/"), names("FIRST BANCORP /PR/"), names("FIRST BANCORP /NC/")].every((n) => n.length === 0));
-  check("  …a company whose everyday name is shared and whose legal name is its own goes by that: Maine's First Bancorp, Toro, Graham",
-    JSON.stringify(names("First Bancorp, Inc /ME/")) === JSON.stringify(["First Bancorp, Inc"]) && JSON.stringify(names("TORO CO")) === JSON.stringify(["TORO CO"]) &&
-      JSON.stringify(names("TORO CORP.")) === JSON.stringify(["TORO CORP."]) && JSON.stringify(names("GRAHAM CORP")) === JSON.stringify(["GRAHAM CORP"]));
+  // batch 111: in both spellings of its legal form, since a recall, caption or title writes either
+  check("  …a company whose everyday name is shared and whose legal name is its own goes by that, in both spellings of its form: Maine's First Bancorp, Toro, Graham",
+    JSON.stringify(names("First Bancorp, Inc /ME/")) === JSON.stringify(["First Bancorp, Inc", "First Bancorp, Incorporated"]) &&
+      JSON.stringify(names("TORO CO")) === JSON.stringify(["TORO CO", "TORO Co", "TORO Company"]) &&
+      JSON.stringify(names("TORO CORP.")) === JSON.stringify(["TORO CORP.", "TORO Corp", "TORO Corporation"]) &&
+      JSON.stringify(names("GRAHAM CORP")) === JSON.stringify(["GRAHAM CORP", "GRAHAM Corp", "GRAHAM Corporation"]),
+    [names("First Bancorp, Inc /ME/"), names("TORO CO"), names("TORO CORP."), names("GRAHAM CORP")]);
   check("  …one group's two records keep the group's name, and every other company its everyday name, as before",
     JSON.stringify(names("RIO TINTO PLC")) === JSON.stringify(["RIO TINTO"]) && JSON.stringify(names("RIO TINTO LTD")) === JSON.stringify(["RIO TINTO"]) &&
       JSON.stringify(names("FORD MOTOR CO")) === JSON.stringify(["FORD MOTOR"]) && JSON.stringify(companyNames("Alphabet Inc.", ["Google"])) === JSON.stringify(["Alphabet", "Google"]),
@@ -70,6 +89,10 @@ async function main(): Promise<void> {
     !releaseNamesParty("Independent Bank Agrees to Pay $1 Million", ["Independent Bank", "Independent Bank Corp"]) &&
       !releaseNamesParty("Independent Bank Group Agrees to Pay Penalty", partyNames("INDEPENDENT BANK CORP /MI/")) &&
       releaseNamesParty("Rio Tinto Agrees to Pay $15 Million", companyNames("RIO TINTO PLC")) && releaseNamesParty("Ford Motor Company Agrees to Pay $165 Million", companyNames("FORD MOTOR CO")));
+  check("  …nor \"Independent Bank Corporation\", the long spelling of both banks' legal name, while \"The Toro Company\" is the mower maker's and not Toro Corp.'s (batch 111)",
+    captionParty("Independent Bank Corporation", partyNames("INDEPENDENT BANK CORP")) === null && captionParty("Independent Bank Corporation", partyNames("INDEPENDENT BANK CORP /MI/")) === null &&
+      captionParty("The Toro Company", partyNames("TORO CO")) !== null && captionParty("The Toro Company", partyNames("TORO CORP.")) === null &&
+      captionParty("Rio Tinto Limited", partyNames("RIO TINTO LTD")) !== null);
   check("a Federal Register title naming \"Independent Bank Corporation\" is neither's",
     !titleNamesCompany("Independent Bank Corporation; Formation of, Acquisition by, or Merger of Bank Holding Companies", "INDEPENDENT BANK CORP") &&
       !titleNamesCompany("Independent Bank Corporation; Formation of, Acquisition by, or Merger of Bank Holding Companies", "INDEPENDENT BANK CORP /MI/"));
@@ -80,6 +103,11 @@ async function main(): Promise<void> {
   check("a headline naming Independent Bank, or Texas's Independent Bank Group, is neither bank's news",
     ["Independent Bank Corp. reports third-quarter results", "Independent Bank Group to pay penalty", "Independent directors sue"].every((h) => mentions(h, indb) === "none" && mentions(h, ibcp) === "none"),
     { indb, ibcp });
+  const ttc = aliasesFor({ kind: "company", displayName: "TORO CO", ticker: "TTC" });
+  check("  …a headline naming Toro by its legal name in either spelling is the mower maker's, and plain \"Toro\" still neither's (batch 111)",
+    mentions("The Toro Company reports fourth-quarter results", ttc) !== "none" && mentions("Toro Co. raises dividend", ttc) !== "none" && mentions("Toro bull statue unveiled", ttc) === "none" &&
+      mentions("The Toro Company reports fourth-quarter results", aliasesFor({ kind: "company", displayName: "TORO CORP.", ticker: "TORO" })) === "none",
+    ttc);
   check("  …one naming its ticker is its own", mentions("Independent Bank Corp. (NASDAQ: INDB) reports third-quarter results", indb) !== "none" &&
     mentions("Independent Bank Corp. (NASDAQ: INDB) reports third-quarter results", ibcp) === "none");
   check("  …and one group's records and every other company keep their names: Rio Tinto, Ford",

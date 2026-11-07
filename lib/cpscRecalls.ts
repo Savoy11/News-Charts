@@ -226,8 +226,15 @@ export function roleIn(r: CpscRecall, names: readonly string[], cik?: number | s
 
 const ROLE = { maker: "made it", importer: "imported it", distributor: "distributed it", seller: "sold it" } as const;
 const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-/** "1.7 million" → "about 1.7 million units"; "About 8,000 (in addition, …)" as the Commission wrote it. */
-export const unitsOf = (units: string) => (/^about\b/i.test(units) ? units.replace(/^About/, "about") : `about ${units}${/\bunits?\b/i.test(units) ? "" : " units"}`);
+// a count the Commission qualified itself: 7,836 recalls say "About", 56 "Approximately", 15 "More than"
+const QUALIFIED_COUNT = /^(?:about|approximately|more than|up to|over|nearly|roughly|between|less than|fewer than|an estimated)\b/i;
+
+/**
+ * "1.7 million" → "about 1.7 million units"; "About 8,000 (in addition, …)" and "Approximately
+ * 39,000" as the Commission wrote them, which read "about Approximately 39,000 units" before batch 111.
+ */
+export const unitsOf = (units: string) =>
+  QUALIFIED_COUNT.test(units) ? units.charAt(0).toLowerCase() + units.slice(1) : `about ${units}${/\bunits?\b/i.test(units) ? "" : " units"}`;
 const noticeOf = (r: CpscRecall) => r.url ?? `https://www.cpsc.gov/Recalls?search_api_fulltext=${encodeURIComponent(r.number)}`;
 
 /**

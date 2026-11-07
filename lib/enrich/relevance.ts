@@ -1,7 +1,7 @@
 import { EventType, SourceKey } from "../types";
 import { foldAccents } from "../fold";
 import { nameKey } from "../companyAliases";
-import { commonName, withoutTag } from "../edgarName";
+import { commonName, legalSpellings, withoutTag } from "../edgarName";
 import { WEAK_TOKENS } from "../newsQuality";
 import { dataBlock, untrustedNotice } from "./untrusted";
 import { REGISTRANT_FORM } from "../secForms";
@@ -79,7 +79,8 @@ export function aliasesFor(subject: SubjectContext, extraAliases: string[] = [])
     if (company && nameKey(word) !== nameKey(common) && sharedBy(nameKey(word)) >= SHARED_ALONE) continue;
     aliases.add(word);
   }
-  if (!sharedName || listedCompaniesNamed(shown) <= 1) aliases.add(shown.toLowerCase());
+  if (!sharedName) aliases.add(shown.toLowerCase());
+  else if (listedCompaniesNamed(shown) <= 1) for (const s of legalSpellings(shown)) aliases.add(s.toLowerCase());
   if (company && !sharedName && common.includes(" ")) aliases.add(common.toLowerCase());
   const short = company && !sharedName ? shortName(common) : null;
   if (short && isOwnShortName(nameKey(short))) aliases.add(short.toLowerCase().replace(/(?<![\p{L}\p{N}'])\p{L}/gu, (c) => c.toUpperCase()));

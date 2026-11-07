@@ -34,7 +34,7 @@ import rawCompanyAliases from "../data/company-aliases.json";
 import { nameKey, type AliasIndexFile } from "./companyAliases";
 import { foldAccents } from "./fold";
 import { predecessorsOf } from "./predecessors";
-import { commonName, withoutTag } from "./edgarName";
+import { commonName, shortForms, withoutTag } from "./edgarName";
 import { eastern } from "./marketTime";
 import { UA } from "./contact";
 
@@ -751,8 +751,10 @@ export function listedCompaniesNamed(name: string): number {
   if (cached !== undefined) return cached;
   const everyday = new Set<number>();
   for (const r of everydayRows()) if (r.phrase === own) everyday.add(r.cik);
+  // a legal form in either spelling is one form: "Independent Bank Corporation" is still the two banks'
+  const ownLegal = shortForms(own);
   const legal = new Set<number>();
-  for (const r of legalRows()) if (r.phrase === own) legal.add(r.cik);
+  for (const r of legalRows()) if (r.phrase === ownLegal) legal.add(r.cik);
   const n = Math.max(everyday.size, legal.size);
   namedCache.set(own, n);
   return n;
@@ -809,7 +811,7 @@ let phraseRows: { cik: number; phrase: string }[] | null = null;
 const everydayRows = () => (phraseRows ??= localCompanies().map((r) => ({ cik: r.cik_str, phrase: phrase(commonName(r.title)) })));
 let legalPhraseRows: { cik: number; phrase: string }[] | null = null;
 /** Every listed company's legal name as a phrase, its registration tag off ("INDEPENDENT BANK CORP /MI/"). */
-const legalRows = () => (legalPhraseRows ??= localCompanies().map((r) => ({ cik: r.cik_str, phrase: phrase(withoutTag(r.title)) })));
+const legalRows = () => (legalPhraseRows ??= localCompanies().map((r) => ({ cik: r.cik_str, phrase: shortForms(phrase(withoutTag(r.title))) })));
 
 let rankedRows: string[] | null = null;
 /** Every listed company's everyday name as a phrase, in the index's order. */

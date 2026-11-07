@@ -544,9 +544,15 @@ Norfolk Southern Railway, Occidental Chemical, Waste Management's state companie
 Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Carbide on Dow Inc. from
 2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
 (`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
-every company in the index, before first prices: 7,964 rows on 683 companies, 6,817 before 2017
+every company in the index, on EPA's whole file of 2026-10-31 (the committed slice gives the same
+rows since batch 116), before first prices: 7,954 rows on 683 companies, 6,806 before 2017
 (ExxonMobil 288, GE 284, Chevron 269, BP 248, GM 225; 5,994 on 667 before the units, every one of
-whose cases is still there; BP 4 and 3M 67 by their own names).
+whose cases is still there; BP 4 and 3M 67 by their own names). A record that took a bought
+company's name does not take that company's past: old Waste Management's cases are not WM's before
+1998-07-16, nor AT&T Corp.'s AT&T Inc.'s before 2005-11-18, when SBC Communications, T's record,
+bought it and took its name (batch 116). A case of several defendants named for its site or another
+party says which of them is the page's: "AMERICAN CYANAMID (FIKE CHEMICAL SITE) … against
+SCHERING-PLOUGH CORP. and 63 other defendants".
 
 **The utilities' operating companies** (batch 114, the owner's approval of 2026-11-07). EPA files a
 utility's cases under its operating companies, whose names do not carry the parent's: Georgia Power is
@@ -560,10 +566,13 @@ company bought is never its buyer's before: Progress Energy's cases, all before 
 Duke's. Two purchases are older than EDGAR (Southern's of Savannah Electric in 1988, Northeast
 Utilities' of PSNH in 1992), so those units count from their first filings in the buyer's system and
 four of their cases wait for those days. "MISSISSIPPI POWER & LIGHT" is Entergy Mississippi's old
-name, not Southern's. On the replay, 419 more rows on 31 companies, 261 of them a court case or a
-penalty, 218 before 2017; thirteen companies had no EPA row and now do: PSEG 44 (43 from its first
-price), Exelon 22, NextEra 19, NiSource and DTE 16, WEC 13, Vistra, OGE, Hawaiian Electric, MGE,
-IDACORP, TXNM and Evergy.
+name, not Southern's, and "CONSUMERS POWER, INC.", a Region 10 case of 1993, is not Michigan's Consumers
+Power Company (batch 116). On the slice batch 114 replayed, 419 more rows on 31 companies, 261 of them a
+court case or a penalty, 218 before 2017; EPA's whole file gives 422, with three cases EPA lists with
+no defendant, read by their names (Ohio Edison's of 1988, Wisconsin Power and Light's of 1988, NIPSCO
+Bailly's of 1985). Thirteen companies had no EPA row and now do: PSEG 44 (43 from its first price),
+Exelon 22, NextEra 19, NiSource 17, DTE 16, WEC 13, Vistra, OGE, Hawaiian Electric, MGE, IDACORP, TXNM
+and Evergy.
 
 **EPA's own figures on each row** (batch 113, the owner's approval of 2026-11-07). The same zip holds
 each case's settlements (`CASE_ENFORCEMENT_CONCLUSIONS.csv`), EPA's estimate of the cost of the work a
@@ -576,8 +585,11 @@ $750,000 on its two cases, $2.16 billion of work ordered) and Cummins's diesel d
 ($1,675,000,000). The row names the work ordered on 2,805 rows, "among N parties" on a settlement of
 several ("among 271 parties", Omega Chemical's Superfund site). EPA's summary is the row's
 description on 6,417 rows when it says something: at least 25 characters, not a placeholder ("CASE
-SUMMARY REQUESTED", "TO BE ENTERED") or a facility's address, cut at a word after 600; the characters
-EPA's file lost are read back as an apostrophe, a section sign or a quotation mark. A case that now
+SUMMARY REQUESTED", "TO BE ENTERED"; since batch 116 also "NO CASE SUMMARY SUBMITTED", a pointer to
+another case's summary, or a step and its day alone, "CAFO effective 10/28/2022") or a facility's
+address, cut at a word after 600; the characters EPA's file lost are read back by the length and place
+of each run of marks, as an apostrophe ("Defendants' Nelson Dewey"), a section sign ("§ 9607", "§§
+11004(b) and 11004(c)"), a dash or a quotation mark (batch 116). A case that now
 has a penalty has its own row, and a month row of "no penalty" its cases all left moves onto the
 first of their rows (`legacyDedupBasis`), so no stored row loses its history. Text is stored without
 control characters: a NUL in the case "H.O.D. LANDFILL" made Postgres refuse the whole month's read
@@ -611,8 +623,9 @@ Holding's; eight companies that are no retailers take no store line ("Barnes and
 Noble's). A unit the company owned counts from the day it owned it (`UNITS`; the owner's call of
 2026-11-06): Graco Children's Products' recalls are Newell's from 1999-03-24, the day Newell merged
 with Rubbermaid, Graco's owner (Newell's EDGAR record and 8-K), 22 of them from 1999 to 2020; those
-before are no listed company's. Against every company in the index, before first prices: 2,302 rows
-on 196 companies, 723 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
+before are no listed company's. AT&T Corp.'s phone charger of 1995 is not AT&T Inc.'s, whose record was
+SBC's until it took AT&T's name on 2005-11-18 (batch 116). Against every company in the index, before
+first prices: 2,301 rows on 196 companies, 722 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
 IBM's ThinkPad batteries of 2006). A work of the U.S. Government, public domain; the Commission's
 site refused this session's requests (403), so the basis is the law's and the federal catalog's,
 not a page re-read.

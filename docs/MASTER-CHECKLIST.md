@@ -988,6 +988,90 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 116: the audit of batches 108–115, and its seven findings fixed (2026-11-07)
+
+The `code-auditor` read batches 108–115 (`92d7a59..126af0c`); its report is
+`docs/audits/2026-11-07-code-audit-b108-115.md`. The owner's word, 2026-11-07: "go ahead with the
+audit". It found the batches' mechanics sound on the saved real data:
+- 40 of batch 114's unit days match their filings;
+- batch 113's figures agree with an independent reading of EPA's raw tables on all 137,103 cases;
+- batch 115's reader and measurement reproduce exactly, and no accepted holder pair is false;
+- `unlinkGone` takes off only what it should.
+
+It found seven defects. Each was reproduced here on EPA's whole file and fixed, and each has checks
+that fail on main.
+
+- [x] **1. Old AT&T Corp.'s 13 EPA rows of 1986–2002 on AT&T Inc.'s page** (`P2`).
+      - **The cause.** T's EDGAR record was SBC Communications' until it bought AT&T Corp. and took its
+        name. The record's former name SBC COMMUNICATIONS INC runs to 2005-11-18, and its 8-K filed
+        2005-11-21 reports the merger completed that day (items 2.01 and 5.03; data.sec.gov, read
+        here). T's prices from 1983 are SBC's.
+      - **Fixed** as old Waste Management was in batch 108: `NOT_THE_COMPANY` takes "AT&T…" off T before
+        that day. Among the 13 is AT&T Corp.'s $90,469 EPCRA penalty of 2001. T keeps its 5 rows from 2009
+        on.
+      - **The same in the CPSC's recalls**, found checking the other sources: AT&T Corp.'s phone
+        charger of 1995 (recall 96043). The CPSC's list gains a `before` day for it. The Justice archive,
+        the SEC's cases and its press releases give T no such row.
+      - **The class is not closed:** the Federal Register's yearly search asks the present name in every
+        year, so a new checklist item (`P2`, Scope refocus) asks for one table that every source reads.
+- [x] **2. "CONSUMERS POWER, INC." on CMS** (`P3`). It is a Region 10 case of 1993, with an $8,500 PCB
+      penalty, at an Illinois facility, not Michigan's Consumers Power Company. Batch 114's pattern now
+      takes "CONSUMERS POWER CO(MPANY)" and "Consumers Energy" only. CMS has 17 rows.
+- [x] **3. Two of Schering-Plough's four EPA rows on Merck's page carried no label** (`P3`). The label
+      reads a row's text, and a Superfund row names its site.
+      - **Fixed:** a case of several defendants, named for its site or another party and not the
+        company, now names the page's own defendants, up to three: "AMERICAN CYANAMID (FIKE CHEMICAL
+        SITE) (case 03-1990-0627), against SCHERING-PLOUGH CORP. and 63 other defendants". With
+        MRK's former name, all four are labelled.
+      - **4,145 rows' descriptions change** the same way. A case of one defendant, or one whose name
+        names the company (AEP's national case), reads as before.
+- [x] **4. Retevmo's 2025 supplement linked a 404** (`P3`). Drugs@FDA lists 3 letters already
+      encoded ("s015,%20s016"), and `letterUrl` encoded them again ("%2520"). Each part is now encoded
+      once, from its plain form, and keeps what a path may hold as it is. A comma or semicolon stays, as
+      Drugs@FDA lists it. Both forms were asked of www.accessdata.fda.gov: Retevmo's (by the audit)
+      and a semicolon letter of 2019 (here) answer their PDFs.
+- [x] **5. EPA's placeholders shown as its summary, and lost characters misread** (`P3`).
+      - **Dropped:** "NO CASE SUMMARY SUBMITTED", "WILL PROVIDE AT A LATER DATE.", "AWAITING CASE
+        SUMMARY FROM ATTORNEY.", a pointer to another case's summary ("SEE CASE SUMMARY OF
+        08-97-0150"), and a step and its day alone ("CAFO effective 10/28/2022", "On 8/11/26 a NOW was
+        issued."): 24 page cases. A step that says what was done stays ("4/8/16 - PESTICIDE DENIED
+        ENTRY INTO U.S.").
+      - **Read by length and place** (`repairLost`), on the 39 page cases of the whole file that hold a
+        lost character. One mark is a Windows character, two a two-byte one ("§"), three a curly quote
+        or apostrophe, and four are "§§". So:
+        - two marks before a number are one "§" (13 cases), unless a list follows ("§§ 9606, 9607 AND
+          9622"); batch 113 made them "§§";
+        - a word's "s" before a mark is a plural's apostrophe ("Defendants' Nelson Dewey", "the United
+          States' claims");
+        - a lone mark between spaces is a dash ("Denver, CO – April 20");
+        - an opened quotation is closed ("REFERRED TO AS "RESPONDENTS"").
+- [x] **6. EPA's "THE TORO CORPORATION" of 2001 read as Toro Corp.'s** (`P3`). Batch 111's spelling
+      rule did it; only the first-price floor kept it off. It is The Toro Company's Superfund order,
+      and its summary calls the respondent "TORO". `NOT_THE_COMPANY` refuses that one spelling on Toro
+      Corp., the shipping company formed in 2022. Toro Corp.'s own "Toro Corp." is untouched.
+- [x] **7. The EPA slice lacked 5 of the whole file's page cases** (`P3`). These were the cases EPA
+      lists with no defendant, which a page reads by the case's name, and the two Toro cases batch 111's
+      spellings read.
+      - **Fixed:** the slice gains every row of the five tables for those 5 cases, from the same copy.
+        It now gives exactly the whole file's rows: 7,954 on 683 companies, row for row.
+      - **The counts the ledger and README quoted were the slice's.** The whole file gave 7,969 on 684
+        before this batch, and batch 114 added 422 rows, not 419 (FirstEnergy 26, NiSource 17, Alliant 12).
+        The README now gives the file's counts.
+- **On the whole file, after the fixes:** 7,954 rows on 683 companies, 6,806 before 2017; 15 rows
+  fewer (T 13, CMS 1, TORO 1); no other row lost. Penalties on 2,271 rows; summaries on 6,750.
+- **Left for the owner:** DuPont's past on DD's page, the audit's open question (OWNER-ACTIONS).
+  Old E. I. du Pont's 29 EPA rows before 2017 are on DD, whose record is DowDuPont's.
+- **Requests:** 3, logged in the session scratchpad (`b116/requests.log`), with User-Agent `News
+  Charts Research` and no email address: data.sec.gov 2 (AT&T's older filing pages), and
+  www.accessdata.fda.gov 1 (a letter). The audit's 93 are in its report.
+- **Checks:**
+  - check:epa-cases 96 (+9): each finding, and every count re-pinned on the fuller slice;
+  - check:cpsc 37 (+1): AT&T Corp.'s charger;
+  - check:fda-supplements 58 (+1): Retevmo's letter.
+
+  On main the new cases fail. `npm run check` and `npm run lint` pass. HawkScan cannot run here
+  (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 115: the FDA's efficacy supplements, for drugs whose holder never changed (2026-11-07)
 
 The 2026-11-07 proposal 2, approved by the owner that day ("Approve all three, titles from the FDA's
@@ -8906,6 +8990,23 @@ already held, but new investment goes to securities coverage first.
         2003 come off Biogen's page.
       - *Derived from [`docs/proposals/2026-11-07-proposals.md`](proposals/2026-11-07-proposals.md)
         #2, approved 2026-11-07.*
+- [ ] `P2` **A record that took a bought company's name: one rule for every source.** A company's
+      present EDGAR name is read in every year, so where its record took the name of a company it
+      bought, that company's past reaches the page. Fixed so far one entry at a time:
+      - old Waste Management on WM before 1998-07-16 (EPA, batch 108);
+      - old Biogen on BIIB before 2003-11-12 (FDA approvals, batch 115);
+      - AT&T Corp. on T before 2005-11-18 (EPA and CPSC, batch 116).
+
+      **Not yet measured:** the Federal Register's yearly search asks the present name for every year
+      back to 1994 (`frSearchTerm(plan.edgarName, …)` in lib/ingest/frBackfill.ts), so its documents of
+      1994–2005 naming AT&T Corp. are likely on T's page, and old Waste Management's and old Biogen's
+      likewise. That needs the network. The Justice archive, the SEC's cases and press releases give T
+      no such row (batch 116). On EPA's file, the audit found none for HON, RTX, WFC, BAC, USB or TMUS.
+      - **The fix to build:** one table of these takeovers, each with its day and the filing that gives
+        it, read by every case rule and by the Federal Register's names. A check that lists every index
+        company whose present EDGAR name began after its first price would keep the table whole. The
+        2026-11-07 audit of batches 108–115 proposed it.
+      - *Raised by batch 116. Next: batch 117.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

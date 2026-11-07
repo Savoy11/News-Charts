@@ -136,6 +136,12 @@ async function main(): Promise<void> {
     firmCase.map((c) => `${c.t} ${c.before}→${c.kept}`).join(", "));
   const hsn = recalls.find((r) => r.day === "2026-06-11" && firmsOf(r).some((f) => /^HSN\b/.test(f)));
   check("  …HSN, Inc. is People Inc.'s only until IAC spun it off on 2008-08-20", !!hsn && !has(on("PPLI"), hsn.number) && has(cpscEvents([hsn], namesOf("PPLI"), {}), hsn.number) && NOT_THE_COMPANY[rowOf("PPLI")[0]]?.[0].from === "2008-08-20");
+  // batch 116, found checking the 2026-11-07 audit's finding 1 beyond EPA
+  const charger = recalls.find((r) => r.number === "96043");
+  check("  …AT&T Corp.'s 1995 phone charger is not AT&T Inc.'s, whose record was SBC's until it took AT&T's name on 2005-11-18; a recall of AT&T's from that day on is",
+    !!charger && !has(on("T"), "96043") && has(cpscEvents([charger], namesOf("T"), {}), "96043") && has(cpscEvents([{ ...charger, day: "2006-01-10" }], namesOf("T"), { cik: rowOf("T")[0] }), "96043") &&
+      NOT_THE_COMPANY[rowOf("T")[0]]?.[0].before === "2005-11-18",
+    on("T").map((e) => `${e.date} ${e.title}`).join(" | "));
   const never = ["NE", "WNRS", "POWW", "BJRI", "OSK", "QMCO", "OVTZ", "BPOP"];
   check("a company that is no retailer takes no store line: Noble (\"Barnes and Noble\"), Winners, Outdoor Holding, BJ's Restaurants (\"BJ's\"), Oshkosh, Quantum, Oculus, Popular",
     never.every((t) => !on(t).some((e) => /:sold$/.test(e.dedupBasis ?? "") || /sold it/.test(e.description ?? ""))) && never.every((t) => NOT_THE_COMPANY[rowOf(t)[0]]?.some((n) => n.store === "never")) &&
@@ -176,8 +182,8 @@ async function main(): Promise<void> {
   }
   const flat = [...out.values()].flat();
   const ownRows = flat.filter((e) => e.precision !== "month" && !/^Sold in its stores: /.test(e.title)).length;
-  check("before any first price: 2,302 rows on 196 companies, 1,660 a recall's own day, 723 as maker, importer or distributor; Target 296, Walmart 236, Amazon 206, Home Depot 196 (2,288 before batch 111's legal-form spellings; 2,290 on 197 before batch 109's shared names; 2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
-    flat.length === 2302 && out.size === 196 && flat.filter((e) => e.precision !== "month").length === 1660 && ownRows === 723 &&
+  check("before any first price: 2,301 rows on 196 companies, 1,659 a recall's own day, 722 as maker, importer or distributor; Target 296, Walmart 236, Amazon 206, Home Depot 196 (2,302 before batch 116 took AT&T Corp.'s 1995 charger off T; 2,288 before batch 111's legal-form spellings; 2,290 on 197 before batch 109's shared names; 2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
+    flat.length === 2301 && out.size === 196 && flat.filter((e) => e.precision !== "month").length === 1659 && ownRows === 722 &&
       [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ") === "TGT 296, WMT 236, AMZN 206, HD 196",
     `${flat.length} on ${out.size}; ${flat.filter((e) => e.precision !== "month").length} own; ${ownRows} as maker, importer or distributor; ${[...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ")}`);
 

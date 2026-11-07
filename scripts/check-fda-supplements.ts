@@ -166,9 +166,17 @@ async function main(): Promise<void> {
   check("  …a letter off the FDA's own host, or one stepping out of its folder, is no letter; a supplement not approved, with no whole day, or of another class is none",
     synthetic.length === 1 && syn.sponsor === "PARKE DAVIS" && syn.supplements.length === 2 && syn.supplements[0].number === "7" && syn.supplements[0].letter === null && syn.supplements[0].review === null,
     synthetic);
-  check("  …and of two letters the supplement's own is kept, its file name's spaces and semicolons encoded in its address",
+  // batch 116, the 2026-11-07 audit's finding 4: Drugs@FDA wrote Retevmo's letter of 2025 already
+  // encoded, and the page linked it encoded twice ("%2520"), which www.accessdata.fda.gov answered 404
+  const retevmo = fromSlice.find((s) => s.application === "NDA213246")!.supplements.find((s) => s.number === "15")!;
+  check("  …a letter Drugs@FDA lists already encoded is encoded once: Retevmo's of 2025-11-20 links as the FDA lists it, which answers its PDF",
+    retevmo.letter === "appletter/2025/213246Orig1s015,%20s016,%20218160Orig1s005,%20s006ltr.pdf" &&
+      letterUrl(retevmo.letter) === "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2025/213246Orig1s015,%20s016,%20218160Orig1s005,%20s006ltr.pdf" &&
+      letterUrl("appletter/x/100%pure.pdf") === "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/x/100%25pure.pdf",
+    letterUrl(retevmo.letter ?? ""));
+  check("  …and of two letters the supplement's own is kept, its file name's spaces encoded and its semicolons kept, as Drugs@FDA lists them",
     syn.supplements[1].letter === "appletter/2001/20702s011; 20703s004ltr.pdf" && syn.supplements[1].orphan && syn.supplements[1].review === "priority" &&
-      letterUrl(syn.supplements[1].letter!) === "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2001/20702s011%3B%2020703s004ltr.pdf",
+      letterUrl(syn.supplements[1].letter!) === "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2001/20702s011;%2020703s004ltr.pdf",
     syn.supplements[1]);
 
   console.log("\nThe committed file");

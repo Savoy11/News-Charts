@@ -361,8 +361,9 @@ const TODAY = "2026-11-01";
   // and 2023, on RTNTF, whose record writes "RIO TINTO LTD"
   // batch 117's table of taken names takes two off: Ingersoll-Rand Company Ltd.'s case of 2007 (LR-20353) off IR, whose record was
   // Gardner Denver's until 2020, and the old Bristow Group's of 2007 (34-56533) off VTOL, whose record was Era's until 2020
-  check("the 30,747 rows of 1995–2026 give 1,148 company days on 369 companies, 557 before 2017, as replayed in full (1,150 on 371 before batch 117's taken names, 1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's, 1,148 on 370 before batch 111's spellings)",
-    rows.length === 30747 && companyDays.length === 1148 && replayed.companies.length === 369 && companyDays.filter((e) => e.date < "2017").length === 557,
+  // batch 118's Meridian Holdings takes two more off MRDN: the other Meridian Holdings, Inc.'s cases of 2007 and 2009 (LR-20318, LR-20898)
+  check("the 30,747 rows of 1995–2026 give 1,146 company days on 368 companies, 555 before 2017, as replayed in full (1,148 on 369 before batch 118's, 1,150 on 371 before batch 117's taken names, 1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's, 1,148 on 370 before batch 111's spellings)",
+    rows.length === 30747 && companyDays.length === 1146 && replayed.companies.length === 368 && companyDays.filter((e) => e.date < "2017").length === 555,
     `${rows.length} rows → ${companyDays.length} on ${replayed.companies.length}, ${companyDays.filter((e) => e.date < "2017").length} before 2017, in ${Date.now() - t0} ms`);
   // batch 88, the 2026-11-02 proposal 4: the listed banks', brokers' and managers' own units
   const replayedOn = (t: string, d: string) => !!replayed.companies.find(([x]) => x === t)?.[1].some((e) => e.date === d);

@@ -988,6 +988,69 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 118: what batch 117's scan left open (2026-11-07)
+
+The `P3` batch 117 raised. The owner's word, 2026-11-07: "Lets continue".
+
+- [x] **Four more names in the table** (`TAKEN_NAMES`, now 32), each day read from the record's
+      filing list on data.sec.gov:
+      - **Lightbridge** on LTBR from 2009-09-21: Thorium Power's record took the name (8-K, item
+        5.03). Lightbridge, Inc., another record, had held it until 2007.
+      - **Valor Energy** on VAI from 2026-08-25: Senmiao Technology's record (item 5.03).
+      - **Meridian Holdings** on MRDN from 2026-02-26: Golden Matrix Group's record (items 3.03 and
+        5.03).
+      - **Dawson Geophysical** on DWSN from 2015-02-11: TGC Industries' record merged with Dawson
+        and took its name and ticker (items 2.01 and 5.03). Batch 117 read it as the ticker's own
+        history, as Merck's is. Yahoo's split record says otherwise: DWSN's prices before 2015 hold
+        TGC's 5% stock dividends and its 1-for-3 reverse split of February 2015, so the chart is TGC's
+        and old Dawson's past is another company's.
+- [x] **Two histories mapped, as Merck's is** (lib/predecessors.ts):
+      - **SSYS:** old Stratasys, Inc.'s record is the page's history to 2012-12-04. Objet's record
+        took its name and ticker at the merger of 2012-12-01 (6-K filed 2012-12-04). Yahoo's SSYS
+        prices from 1994 hold Stratasys's splits of 2003 and 2007.
+      - **WCN:** old Waste Connections, Inc.'s record is the page's history to 2016-06-07.
+        Progressive Waste Solutions' record took its name and ticker at the merger of 2016-06-01
+        (8-K filed 2016-06-07, items 2.01 and 5.03). WCN's prices from 1998 hold Waste Connections's
+        3:2 splits of 2004, 2007 and 2010.
+      - Their filings before then reach the pages at the next ingest. Old Stratasys's list holds 13
+        annual reports, 42 quarterly and 76 current reports from 1998; old Waste Connections's recent
+        list holds 9, 25 and 111 from 2008, and an older file the rest.
+      - **The record's own past before stays, labelled** (`OWN_RECORD_FROM`), as Schering-Plough's is
+        on Merck's page by the owner's call of 2026-11-07: "Objet, before its 2012 merger with
+        Stratasys"; "Progressive Waste Solutions, before its 2016 merger with Waste Connections", its
+        IESI and BFI Canada units included.
+- [x] **GDELT's months before the day asked under the record's own name of then**
+      (`thenNameIn`, lib/ingest/newsBackfill.ts):
+      - Eldorado's months to June 2020 are asked as "Eldorado Resorts", Gardner Denver's as "Gardner
+        Denver", Era's as "Era Group", II-VI's as "II-VI", Hudson Global's, Helix's, Golden Matrix's,
+        Senmiao's and Complete Solaria's likewise.
+      - A story is kept when its headline names either name and not only the taken one, and it is
+        scored with both.
+      - A then-name that is a one-word name not yet measured keeps today's names. CenturyLink is the
+        one: its months stay "Lumen Technologies", and the table leaves the namesake's off.
+- [x] **A flaw in batch 117's Federal Register years, fixed.** Linde plc's and Six Flags' records
+      were new companies two others merged into, and their only earlier EDGAR names are the merger
+      shells' ("ZAMALIGHT PLC", "CopperSteel HoldCo"). Batch 117 would have asked their years before
+      the day under those. Now a record marked `noOwnNameBefore` keeps the present name for them, and
+      the rule reads the answers.
+      - The same reading keeps SCP Pool's "SCP POOL CORP" as its own name for 1996–2005. Batch 117
+        dropped it because it holds "Pool Corp".
+- **Measured on the saved sources:** from first prices, the four new names take nothing off; their
+  risk is in the news, the Federal Register and the Justice Department's API. Without the floor, as
+  the checks count, the SEC's case days become 1,146 on 368 companies: the other Meridian Holdings,
+  Inc.'s cases of 2007 and 2009 (Anthony C. Dike's) come off MRDN. No case row on the saved sources
+  is labelled as Objet's or Progressive Waste's.
+- **Requests:** 6, logged in the session scratchpad (`b118/requests.log`), with User-Agent `News
+  Charts Research` and no email address: data.sec.gov 3 (the old records' filing lists), Yahoo's
+  chart 3 (the split histories).
+- **Checks:**
+  - check:taken-names gains 9 checks (40): the four entries, the then-name rule, the two histories
+    and their labels, and GDELT's walk against a stand-in database;
+  - check:predecessors passes with the two new entries; check:sec-cases re-pins its count.
+
+  On main the new checks fail. `npm run check` and `npm run lint` pass. HawkScan cannot run here
+  (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 117: one table of the names a record took from another company (2026-11-07)
 
 The checklist's `P2` raised by batch 116 and proposed by the 2026-11-07 audit. The owner's word,
@@ -9085,19 +9148,16 @@ already held, but new investment goes to securities coverage first.
         one-source entries are gone into it. check:taken-names holds it to a committed scan of 173
         renamed records, each read.
       - *Raised by batch 116; the 2026-11-07 audit of batches 108–115 proposed it.*
-- [ ] `P3` **What batch 117's scan of renamed records left open.** Three readings need more than the
-      table:
-      - **Three namesakes, not yet dated:** LTBR, VAI and MRDN carry a name another record held
-        (Lightbridge, Inc., renamed Authorize.Net Holdings in 2007; two microcaps), and no day for
-        them has been read from a filing.
-      - **Three tickers whose history is another record's, as Merck's is MRK's:** SSYS (Objet took
-        Stratasys's name and ticker in 2012), WCN (Progressive Waste, Waste Connections's, 2016) and
-        DWSN (TGC Industries, Dawson's, 2015). Their pages' prices before are the old record's, whose
-        filings lib/predecessors.ts does not yet map.
-      - **GDELT's months before a taken name's day are asked under the present name.** The table
-        drops what they return about the other company (old Chubb's 2015 news on CB's page), but the
-        record's own news of then (ACE's) is not sought. Asking those months under the then-name, as
-        the Federal Register's years now are, would find it.
+- [x] `P3` **What batch 117's scan of renamed records left open.** Three readings needed more than
+      the table: three namesakes not yet dated (LTBR, VAI, MRDN), three tickers whose history looked
+      like another record's (SSYS, WCN, DWSN), and GDELT's months before a taken name's day, asked
+      under the present name.
+      - ✅ **Done in batch 118** (see its section): the three namesakes are dated from their filings,
+        and so is Dawson, whose chart turned out to be TGC's, so its old record's past is a taken
+        name's. Stratasys's and Waste Connections's histories are mapped to the old records, as
+        Merck's is, with Objet's and Progressive Waste's own past labelled. GDELT's months before the
+        day are asked under the record's own name of then. Linde plc and Six Flags, which had no
+        name of their own before, keep the present one.
       - *Raised by batch 117.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)

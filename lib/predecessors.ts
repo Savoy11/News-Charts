@@ -36,6 +36,16 @@
  * successor record's 8-K of the merger (items 2.01 and 5.03), filed 2009-11-04; old Merck's own 8-K
  * that day reports its delisting and the change of control (items 3.01 and 5.01).
  *
+ * Two more rest on the same reading (batch 118, from batch 117's scan of renamed records): a record
+ * that took another company's name and ticker, whose page's prices before are that company's, as
+ * Yahoo's splits show. Objet's record took Stratasys, Inc.'s at the merger of 2012-12-01 (its 6-K
+ * filed 2012-12-04; Stratasys's splits of 2003 and 2007 are in SSYS's history), and Progressive Waste
+ * Solutions' took Waste Connections, Inc.'s at the merger of 2016-06-01 (its 8-K filed 2016-06-07,
+ * items 2.01 and 5.03; Waste Connections's 3:2 splits of 2004, 2007 and 2010 are in WCN's). Dawson
+ * Geophysical is not one: TGC Industries' record took its name and ticker in 2015, but DWSN's prices
+ * before are TGC's (its 5% stock dividends, its reverse split), so old Dawson's past is a taken
+ * name's (lib/takenNames.ts).
+ *
  * `news` is the predecessor's own name as headlines write it, where the successor's name is not
  * it: "Exxon Mobil" for ExxonMobil Holdings, "Cigna" for The Cigna Group. A name that is also an
  * everyday word or a common surname ("Apache", "Ferguson") is left out, as batch 34 left them out.
@@ -183,6 +193,9 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   1692115: [{ cik: 92416, name: "Southwest Gas Corporation", until: "2017-01-03", notice: "0001193125-17-000274" }],
   // BUD — Anheuser-Busch InBev SA/NV, with SABMiller (the ticker carried on)
   1668717: [{ cik: 1140467, name: "Anheuser-Busch InBev SA/NV", until: "2016-10-11", notice: "0001193125-16-734655" }],
+  // WCN — Waste Connections, Inc.: Progressive Waste Solutions' record took old Waste Connections's
+  // name and ticker at the merger of 2016-06-01 (batch 118); no notice of succession, see the header
+  1318220: [{ cik: 1057058, name: "Waste Connections, Inc.", until: "2016-06-07", notice: "0001144204-16-107288" }],
   // CPHC — Canterbury Park Holding Corp (a new parent)
   1672909: [{ cik: 926761, name: "Canterbury Park Holding Corporation", until: "2016-07-14", notice: "0000897101-16-002658" }],
   // GOOGL — Alphabet Inc.
@@ -201,6 +214,9 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   1570585: [{ cik: 1316631, name: "Liberty Global, Inc.", until: "2013-06-07", notice: "0001193125-13-251863" }],
   // ETN — Eaton Corporation plc
   1551182: [{ cik: 31277, name: "Eaton Corporation", until: "2012-12-04", notice: "0001193125-12-490737" }],
+  // SSYS — Stratasys Ltd.: Objet's record took old Stratasys's name and ticker at the merger of
+  // 2012-12-01 (batch 118); no notice of succession, see the header
+  1517396: [{ cik: 915735, name: "Stratasys, Inc.", until: "2012-12-04", notice: "0001104659-12-081872" }],
   // TAOP — Taoping Inc. (redomiciled from Nevada as China Information Technology); a shell, Irish Mag, before 2007
   1552670: [
     { cik: 1350684, name: "China Information Technology, Inc.", until: "2012-10-31", notice: "0001062993-12-004382", since: "2007-02-08" },
@@ -263,6 +279,30 @@ export const OWN_RECORD_FROM: Readonly<Record<number, OwnRecordPast>> = {
     // Organon was Schering-Plough's from 2007-11-19 (lib/fdaApprovals.ts)
     names: /\b(?:schering|organon)\b/i,
     unless: /\bmerck\b/i,
+  },
+  // batch 118: the same, on the record's own past as Objet's and as Progressive Waste's, labelled as Merck's is
+  1517396: {
+    ticker: "SSYS",
+    from: "2012-12-04",
+    why:
+      "Objet Ltd.'s record (former name OBJET LTD to 2012-12-03) until it took Stratasys, Inc.'s name and ticker at the merger of 2012-12-01: its 6-K " +
+      "filed 2012-12-04 reports it, and its name is Stratasys Ltd. from that day",
+    name: "Objet",
+    label: "Objet, before its 2012 merger with Stratasys",
+    names: /\bobjet\b/i,
+    unless: /\bstratasys\b/i,
+  },
+  1318220: {
+    ticker: "WCN",
+    from: "2016-06-07",
+    why:
+      "Progressive Waste Solutions Ltd.'s record (IESI-BFC to 2011, BFI Canada before) until it took Waste Connections, Inc.'s name and ticker at the " +
+      "merger of 2016-06-01: its 8-K filed 2016-06-07 reports both (items 2.01 and 5.03)",
+    name: "Progressive Waste Solutions",
+    label: "Progressive Waste Solutions, before its 2016 merger with Waste Connections",
+    // its units of then: IESI Corporation in the United States, BFI Canada in Canada
+    names: /\b(?:progressive\s+waste|iesi(?:-bfc)?|bfi\s+canada)\b/i,
+    unless: /\bwaste\s+connections\b/i,
   },
 };
 

@@ -1,10 +1,12 @@
 import type { PoolClient } from "pg";
 import type { FetchResult, TimelineEvent } from "../types";
-import { fetchNews, gdeltQuery, type NewsWindow } from "../news";
-import { mentions } from "../enrich/relevance";
+import { commonName } from "../edgarName";
+import { fetchNews, gdeltNewsPlan, gdeltQuery, type NewsWindow } from "../news";
+import { aliasesFor, mentions } from "../enrich/relevance";
 import { collapseNearDuplicates } from "../newsQuality";
 import { MEASURED_WORD_NAMES, everydayWordName, namedWithCapital } from "../wordNames";
-import { withoutTakenNames } from "../takenNames";
+import { TAKEN_NAMES, thenNameIn, withoutTakenNames } from "../takenNames";
+import { storedFormerNames, type FormerName } from "./frBackfill";
 import { assertCommercialOk, emptyStats, logFetch, shouldBackOff, upsertEvent, type ScoringContext } from "./store";
 
 /**
@@ -34,6 +36,13 @@ import { assertCommercialOk, emptyStats, logFetch, shouldBackOff, upsertEvent, t
  *   month of its own is measured (`MEASURED_WORD_NAMES` in lib/wordNames.ts): "the headline names
  *   it" is true of the word. One month of Target kept "IMF urges retaining 5 % inflation target"
  *   (the 2026-10-26 audit).
+ *
+ * A month that ends before the company's record took another company's name is asked under the
+ * record's own name of then (batch 118, `thenNameIn` in lib/takenNames.ts): Linde plc's months are
+ * Linde's, but Eldorado Resorts' 2019 is asked as "Eldorado Resorts", not as Caesars, whose stories
+ * of then the table leaves off. Its stories are kept when their headline names either name, and
+ * scored with both. A then-name that is an everyday word not yet measured leaves the month asked
+ * under today's names, as before.
  */
 export const BACKFILL_FROM = "2017-01-01";
 export const WINDOWS_PER_RUN = 40;
@@ -75,6 +84,19 @@ export interface BackfillPlan {
   scoring: ScoringContext;
 }
 
+/** How one month is asked: under today's names, or under the record's own name of then. */
+export interface MonthAsk {
+  query: string;
+  alsoKnownAs: string[];
+  byRelevance: boolean;
+  /** the names a kept headline is read by, and its story scored with */
+  aliases: string[];
+  /** the query as stored for the month (`gdelt_windows.query`) */
+  asked: string;
+  /** the then-name, where the month is asked under one */
+  thenName?: string;
+}
+
 export interface BackfillStats {
   /** months not yet asked under this query */
   due: number;
@@ -101,20 +123,25 @@ export async function backfillNews(
     today = day(new Date()),
     budget = backfillBudget,
     gapMs = GAP_MS,
-    fetch = (window) => fetchNews(plan.query, plan.alsoKnownAs, { byRelevance: plan.byRelevance, window }),
-    store = async (events) => {
+    fetch = (window, ask) =>
+      fetchNews(ask?.query ?? plan.query, ask?.alsoKnownAs ?? plan.alsoKnownAs, { byRelevance: ask?.byRelevance ?? plan.byRelevance, window }),
+    store = async (events, scoring = plan.scoring) => {
       const stats = emptyStats();
-      for (const ev of events) await upsertEvent(client, ev, subjectId, stats, plan.scoring);
+      for (const ev of events) await upsertEvent(client, ev, subjectId, stats, scoring);
     },
+    former,
   }: {
     today?: string;
     budget?: { left: number };
     gapMs?: number;
-    fetch?: (window: NewsWindow) => Promise<FetchResult>;
-    store?: (events: TimelineEvent[]) => Promise<void>;
+    fetch?: (window: NewsWindow, ask?: MonthAsk) => Promise<FetchResult>;
+    store?: (events: TimelineEvent[], scoring?: ScoringContext) => Promise<void>;
+    /** the record's EDGAR former names; read from the database when the record took a name and none are given */
+    former?: FormerName[];
   } = {}
 ): Promise<BackfillStats> {
   const asked = gdeltQuery(plan.query, plan.alsoKnownAs, plan.byRelevance);
+  const present: MonthAsk = { query: plan.query, alsoKnownAs: plan.alsoKnownAs, byRelevance: plan.byRelevance, aliases: plan.scoring.aliases, asked };
   const { rows: first } = await client.query<{ listed: string | null }>(
     "SELECT min(on_date)::text AS listed FROM prices WHERE subject_id = $1",
     [subjectId]
@@ -126,25 +153,42 @@ export async function backfillNews(
     [subjectId]
   );
   const stored = new Map(rows.map((r) => [r.starts_on, r.query]));
-  const due = newsWindows(today, listed).filter((w) => stored.get(w.from) !== asked);
-  const stats: BackfillStats = { due: due.length, read: 0, stories: 0, left: due.length };
-  if (!due.length) return stats;
+  const cik = plan.scoring.cik;
+  const formerNames = cik != null && TAKEN_NAMES[Number(cik)] ? (former ?? (await storedFormerNames(client, subjectId))) : [];
+  const askFor = (w: NewsWindow): MonthAsk => {
+    const thenName = thenNameIn(cik, w.from, w.to, formerNames);
+    if (!thenName) return present;
+    const then = gdeltNewsPlan(thenName);
+    const thenWord = everydayWordName(then.query);
+    if (thenWord && !MEASURED_WORD_NAMES[thenWord]) return present;
+    const aliases = [...new Set([...plan.scoring.aliases, ...aliasesFor(plan.scoring.subject, [commonName(thenName)])])];
+    return { query: then.query, alsoKnownAs: [], byRelevance: then.byRelevance, aliases, asked: gdeltQuery(then.query, [], then.byRelevance), thenName };
+  };
   const word = everydayWordName(plan.query);
-  if (word && !MEASURED_WORD_NAMES[word]) return { ...stats, stopped: `"${word.toLowerCase()}" is an everyday word, not yet measured` };
+  const presentHeld = !!word && !MEASURED_WORD_NAMES[word];
+  const months = newsWindows(today, listed)
+    .map((window) => ({ window, ask: askFor(window) }))
+    .filter(({ window, ask }) => stored.get(window.from) !== ask.asked);
+  const stats: BackfillStats = { due: months.length, read: 0, stories: 0, left: months.length };
+  if (!months.length) return stats;
+  // a month asked under an everyday word waits for its measure; one asked under the then-name does not
+  const due = presentHeld ? months.filter(({ ask }) => ask !== present) : months;
+  if (!due.length) return { ...stats, stopped: `"${(word ?? "").toLowerCase()}" is an everyday word, not yet measured` };
   if (budget.left <= 0) return { ...stats, stopped: "this run's months are spent" };
 
   await assertCommercialOk(client, "gdelt");
   const backoff = await shouldBackOff(client, "gdelt", subjectId, BACKOFF_MINUTES);
   if (backoff) return { ...stats, stopped: `GDELT's last attempt ${backoff}` };
 
-  for (const window of due) {
+  for (const { window, ask } of due) {
     if (budget.left <= 0) return { ...stats, stopped: "this run's months are spent" };
     budget.left--;
     if (gapMs) await sleep(gapMs);
-    const label = `${asked} · ${window.from} to ${window.to}`;
+    const label = `${ask.asked} · ${window.from} to ${window.to}`;
+    const askWord = ask === present ? word : everydayWordName(ask.query);
     let result: FetchResult;
     try {
-      result = await fetch(window);
+      result = await fetch(window, ask);
     } catch (err) {
       result = { events: [], outcome: "error", detail: String(err).slice(0, 200) };
     }
@@ -157,19 +201,19 @@ export async function backfillNews(
     // company, is that company's (lib/takenNames.ts, batch 117): old Chubb's 2015 news on ACE's page
     const kept = collapseNearDuplicates(
       withoutTakenNames(
-        result.events.filter((e) => namesCompany(e.title, plan.scoring.aliases) && (!word || namedWithCapital(e.title, word))),
+        result.events.filter((e) => namesCompany(e.title, ask.aliases) && (!askWord || namedWithCapital(e.title, askWord))),
         plan.scoring.cik,
         "gdelt",
       )
     );
     await client.query("BEGIN");
     try {
-      await store(kept);
+      await store(kept, ask === present ? plan.scoring : { ...plan.scoring, aliases: ask.aliases });
       await client.query(
         `INSERT INTO gdelt_windows (subject_id, starts_on, query, articles, kept) VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (subject_id, starts_on) DO UPDATE
             SET query = EXCLUDED.query, articles = EXCLUDED.articles, kept = EXCLUDED.kept, read_at = now()`,
-        [subjectId, window.from, asked, result.events.length, kept.length]
+        [subjectId, window.from, ask.asked, result.events.length, kept.length]
       );
       await client.query("COMMIT");
     } catch (err) {

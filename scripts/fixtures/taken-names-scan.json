@@ -1,5 +1,5 @@
 {
- "about": "Every listed company (data/edgar-tickers.json) whose present EDGAR name another, older record held before it (EDGAR's cik-lookup-data.txt of every name each record has filed under), the other record older than CIK 1,100,000, not listed itself, not a mapped predecessor (lib/predecessors.ts) and not a depositary: 173 companies, read on 2026-11-07 (batch 117). `since` is the first day of the present name on the record (data.sec.gov formerNames), `first` the first price (Yahoo's firstTradeDate), `reading` why the name is or is not another company's past on the page: taken (lib/takenNames.ts), before (the name began by the first price, so nothing before it is read), own, brand, new, business, history, short, shared, namesake (another company held it; not entered), nostart, noprice.",
+ "about": "Every listed company (data/edgar-tickers.json) whose present EDGAR name another, older record held before it (EDGAR's cik-lookup-data.txt of every name each record has filed under), the other record older than CIK 1,100,000, not listed itself, not a mapped predecessor (lib/predecessors.ts) and not a depositary: 173 companies, read on 2026-11-07 (batch 117). `since` is the first day of the present name on the record (data.sec.gov formerNames), `first` the first price (Yahoo's firstTradeDate), `reading` why the name is or is not another company's past on the page: taken (lib/takenNames.ts), before (the name began by the first price, so nothing before it is read), own, brand, new, business, history (the ticker's history is the other record's, mapped in lib/predecessors.ts), short, shared, nostart, noprice. Batch 118 read the last three namesakes and Dawson, whose chart is TGC's, as taken.",
  "read": "2026-11-07",
  "companies": [
   {
@@ -625,7 +625,7 @@
     ]
    ],
    "reading": "history",
-   "why": "Progressive Waste took Waste Connections's name and ticker in 2016, and the page's prices from 1998 are old Waste Connections's: its history"
+   "why": "Progressive Waste took Waste Connections's name and ticker in 2016, and the page's prices from 1998 are old Waste Connections's: its history (lib/predecessors.ts, batch 118)"
   },
   {
    "cik": 820027,
@@ -1943,7 +1943,7 @@
     ]
    ],
    "reading": "history",
-   "why": "Objet took Stratasys's name and ticker in 2012, and the page's prices from 1994 are old Stratasys's: its history, as old Merck's is MRK's"
+   "why": "Objet took Stratasys's name and ticker in 2012, and the page's prices from 1994 are old Stratasys's: its history, as old Merck's is MRK's (lib/predecessors.ts, batch 118)"
   },
   {
    "cik": 1823652,
@@ -2232,8 +2232,7 @@
      "AUTHORIZE.NET HOLDINGS, INC."
     ]
    ],
-   "reading": "namesake",
-   "why": "Lightbridge, Inc., a namesake renamed Authorize.Net Holdings in 2007; no day read yet"
+   "reading": "taken"
   },
   {
    "cik": 1757715,
@@ -2326,8 +2325,7 @@
      "MERIDIAN HOLDINGS INC"
     ]
    ],
-   "reading": "namesake",
-   "why": "a namesake microcap; no day read yet"
+   "reading": "taken"
   },
   {
    "cik": 1726445,
@@ -2406,8 +2404,7 @@
      "DAWSON GEOPHYSICAL CO"
     ]
    ],
-   "reading": "history",
-   "why": "TGC Industries took Dawson's name and ticker in 2015; the page's prices are the ticker's history"
+   "reading": "taken"
   },
   {
    "cik": 1774675,
@@ -2469,8 +2466,7 @@
      "AQUATIC CELLULOSE INTERNATIONAL CORP"
     ]
    ],
-   "reading": "namesake",
-   "why": "a namesake microcap; no day read yet"
+   "reading": "taken"
   },
   {
    "cik": 754811,

@@ -128,6 +128,7 @@ export async function cpscFor(client: PoolClient, subjectId: number, plan: Press
   // …and the units it owned (`UNITS`): Graco Children's Products' recalls name Graco
   const keys = [...new Set([...years.flatMap(namesIn).map(letters).filter((k) => k.length >= 2), ...unitKeysOf(plan.cik)])];
   const events = cpscEvents(await storedRecalls(client, keys, listed), namesIn, { cik: plan.cik, from: listed });
-  if (failed) return { events, ...failed };
-  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
+  // every kept row the rules give it: a complete answer, so a row they no longer give comes off (batch 108)
+  if (failed) return { events, ...failed, complete: {} };
+  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200, complete: {} };
 }

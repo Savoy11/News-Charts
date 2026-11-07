@@ -18,5 +18,6 @@ export async function fdaApprovalsFor(client: PoolClient, subjectId: number, pla
   const { listed, namesIn } = await partyNamesFor(client, subjectId, plan);
   if (!listed) return NO_PRICES();
   const events = approvalEvents(APPROVALS, namesIn, { cik: plan.cik, from: listed });
-  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200 };
+  // the committed file whole: a complete answer, so an approval the rules no longer give comes off (batch 108)
+  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200, complete: {} };
 }

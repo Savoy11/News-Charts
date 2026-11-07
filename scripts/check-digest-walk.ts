@@ -43,18 +43,25 @@ const fx = JSON.parse(gunzipSync(readFileSync(join(__dirname, "fixtures", "diges
 const ticker = new Map<number, string>();
 for (const [cik, t] of tickerIndex.companies as [number, string, string][]) if (!ticker.has(cik)) ticker.set(cik, t);
 const cikOf = (t: string) => [...ticker].find(([, x]) => x === t)![0];
+// the fixture's first prices are batch 87's, read for the companies the book held then; MRK's is
+// Yahoo's of old Merck, 1962-01-02 (batch 87's cache), since batch 108 makes old Merck's record its history
+const firstPrices: Record<string, string | null> = { ...fx.firstPrices, "310158": "1962-01-02" };
 
-/** The 1985 replay's counts, measured 2026-11-06. Batch 87's undated first pass gave 508 rows on 258. */
+/**
+ * The 1985 replay's counts, measured 2026-11-06; batch 108 adds old Merck's record (1,455 records,
+ * 509 rows on 259, 184 8-K reports, 362 on 188 pages as 358 events before). Batch 87's undated first
+ * pass gave 508 rows on 258.
+ */
 const EXPECTED = {
-  records: 1455,
+  records: 1456,
   issues: 250,
   entries: 23922,
-  rows: 509,
-  companies: 259,
-  kinds: { "8-K report": 184, registration: 129, "registration effective": 110, order: 53, stake: 30, enforcement: 2, other: 1 } as Record<string, number>,
-  onPage: 362,
-  onPageCompanies: 188,
-  events: 358,
+  rows: 512,
+  companies: 260,
+  kinds: { "8-K report": 187, registration: 129, "registration effective": 110, order: 53, stake: 30, enforcement: 2, other: 1 } as Record<string, number>,
+  onPage: 365,
+  onPageCompanies: 189,
+  events: 361,
 };
 
 // ─── a fake database ───────────────────────────────────────────────────────────────────────────
@@ -186,13 +193,19 @@ async function main(): Promise<void> {
   check(`${EXPECTED.rows} rows on ${EXPECTED.companies} companies`, rows.length === EXPECTED.rows && ciks.length === EXPECTED.companies, { rows: rows.length, companies: ciks.length });
   const kinds: Record<string, number> = {};
   for (const r of rows) kinds[r.kind] = (kinds[r.kind] ?? 0) + 1;
-  check("  …by section: 184 8-K reports, 129 registrations, 110 declared effective, 53 orders, 30 stakes, 2 actions, 1 other", JSON.stringify(Object.entries(kinds).sort()) === JSON.stringify(Object.entries(EXPECTED.kinds).sort()), kinds);
+  check("  …by section: 187 8-K reports, 129 registrations, 110 declared effective, 53 orders, 30 stakes, 2 actions, 1 other", JSON.stringify(Object.entries(kinds).sort()) === JSON.stringify(Object.entries(EXPECTED.kinds).sort()), kinds);
   const crane = rows.filter((r) => r.cik === 25445);
   check(
     "  …the one row batch 87 lost: Crane Co. (25445, now CXT), declared effective 1985-10-11 — today's Crane Co (1944013) is no claimant, its record opened in 2023",
     crane.length === 1 && crane[0].day === "1985-10-11" && crane[0].kind === "registration effective" && !book.has(1944013) && book.has(25445),
     crane,
   );
+  // batch 108, the 2026-11-07 audit's question 1: MRK's record was Schering-Plough's until 2009
+  const mrkRows = rows.filter((r) => r.cik === 310158);
+  check("  …MRK is read by old Merck's names, its predecessor's, never by Schering-Plough's, its record's own of the 1990s: old Merck's three 8-K reports of 1985",
+    mrkRows.length === 3 && mrkRows.every((r) => r.kind === "8-K report" && /^MERCK\b/.test(r.entries[0].party)) &&
+      JSON.stringify(book.namesOn("1985-06-01", 310158)?.conformed) === JSON.stringify(["MERCK & CO INC"]) && !book.lookupKeys(310158).keys.some((k) => /SCHERING/.test(k)),
+    mrkRows.map((r) => `${r.day} ${r.entries[0].party}`));
   check("  …the book holds only companies with a record by 1996, their own or a predecessor's", book.has(66740) && book.has(19617) && !book.has(cikOf("PLTR")));
   const shared: string[] = [];
   for (const i of fx.issues) book.rows(i.day, i.entries, (e, c) => shared.push(`${i.day} ${e.party} ${c.join("/")}`));
@@ -203,7 +216,7 @@ async function main(): Promise<void> {
   let events = 0;
   const onPageCos = new Set<number>();
   for (const cik of ciks) {
-    const from = fx.firstPrices[cik];
+    const from = firstPrices[cik];
     if (!from) continue;
     const mine = rows.filter((r) => r.cik === cik);
     const kept = mine.filter((r) => r.day >= from);
@@ -213,7 +226,7 @@ async function main(): Promise<void> {
   }
   check(`${EXPECTED.onPage} rows on ${EXPECTED.onPageCompanies} pages from their first prices, as ${EXPECTED.events} events`, onPage === EXPECTED.onPage && onPageCos.size === EXPECTED.onPageCompanies && events === EXPECTED.events, { onPage, companies: onPageCos.size, events });
   const gpja = cikOf("GPJA");
-  check("  …Georgia Power's 14 rows of 1985 stay off its page: its notes trade from 2018", rows.filter((r) => r.cik === gpja).length === 14 && digestEvents(rows.filter((r) => r.cik === gpja), { cik: gpja, from: fx.firstPrices[gpja]! }).length === 0);
+  check("  …Georgia Power's 14 rows of 1985 stay off its page: its notes trade from 2018", rows.filter((r) => r.cik === gpja).length === 14 && digestEvents(rows.filter((r) => r.cik === gpja), { cik: gpja, from: firstPrices[gpja]! }).length === 0);
 
   // ─── the events ──────────────────────────────────────────────────────────────────────────────
   console.log("— the events a page gets");
@@ -400,9 +413,9 @@ async function main(): Promise<void> {
   const differ: string[] = [];
   let total = 0;
   for (const cik of ciks) {
-    all1985.listed = fx.firstPrices[cik];
+    all1985.listed = firstPrices[cik];
     const got = await digestFor(client, 1, plan(cik), { years: 0, issues: 0, entries: 0 }, book);
-    const want = digestEvents(rows.filter((r) => r.cik === cik), { cik, from: fx.firstPrices[cik]! });
+    const want = digestEvents(rows.filter((r) => r.cik === cik), { cik, from: firstPrices[cik]! });
     total += got.events.length;
     if (JSON.stringify(got.events) === JSON.stringify(want)) same++;
     else differ.push(`${ticker.get(cik)} ${got.events.length}/${want.length}`);

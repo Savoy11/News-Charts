@@ -216,10 +216,11 @@ Lilly ICOS, TAP), and two applicants are refused by name (`NOT_THE_APPLICANT`): 
 pharmaceuticals of 1986–2001 are not DuPont de Nemours's, whose record is DowDuPont's of 2015, and
 Block Drug's Actinex (1992) is not Block, Inc.'s. From the first prices of the 26 drugmakers Yahoo
 gave: 439 approvals, 303 before 2017, 66 before EDGAR (1994); most on Johnson & Johnson 47, Merck
-45, Novartis 44, Pfizer 42, Bristol-Myers Squibb 39 and Lilly 34. Left out, read but undecided:
-"Schering" (Schering-Plough's US company, whose record CIK 310158 is today Merck's) and Organon
-before its 2021 spin-off (Akzo Nobel's to 2007, then Schering-Plough's and Merck's). Public domain
-by the FDA's website policies; no key.
+45, Novartis 44, Pfizer 42, Bristol-Myers Squibb 39 and Lilly 34. Organon's approvals of 1990–2001
+(Remeron, NuvaRing…) are Akzo Nobel's, which owned it until Schering-Plough bought it on 2007-11-19
+(batch 108). "Schering" (Schering-Plough's US company) stays on no page: Merck's history is old
+Merck's, and Schering-Plough's past is not Merck's (`lib/predecessors.ts`, batch 108), so neither are
+its approvals, nor Organon's Saphris of 2009. Public domain by the FDA's website policies; no key.
 
 ### Justice Department releases (`lib/doj.ts`)
 
@@ -514,9 +515,12 @@ Norfolk Southern Railway, Occidental Chemical, Waste Management's state companie
 Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Carbide on Dow Inc. from
 2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
 (`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
-every company in the index, before first prices: 7,436 rows on 670 companies, 6,376 before 2017
+every company in the index, before first prices: 7,427 rows on 670 companies, 6,367 before 2017
 (GE 284, ExxonMobil 273, Chevron 258, BP 230, GM 222; 5,994 on 667 before the units, every one of
-whose cases is still there; BP 4 and 3M 67 by their own names). The
+whose cases is still there; BP 4 and 3M 67 by their own names). An acquisition's past is not the
+buyer's here either: WM's record was USA Waste Services until it bought the old Waste Management and
+took its name on 1998-07-16, so the old company's nine cases before are not WM's (`NOT_THE_COMPANY`
+with a day, batch 108). The
 first price keeps a successor off its predecessor's years: today's GM listed in 2010, so the old
 GM's $11 million Clean Air Act decree of 1995 is not on it, and today's Kodak stock dates from 2013.
 Public domain under EPA's open data licence; EPA's note that commercial use of documents on its
@@ -597,7 +601,9 @@ first quarter of EDGAR's 1993–1996 company indexes, and only if EDGAR opened i
 So 1985's Chase Manhattan, BankAmerica, Wells Fargo and Chubb are not JPMorgan's, Bank of
 America's, Wells Fargo's or Chubb's records (in 1994 those were Chemical Banking, NationsBank,
 Norwest and ACE), and the McGraw-Hill of 1990 is S&P Global's, not McGraw Hill's (a 2022 record).
-`lib/predecessors.ts` adds a predecessor's names before its handover. An issue's entries on one
+`lib/predecessors.ts` adds a predecessor's names before its handover, and a record that was another
+company until long after (MRK's, Schering-Plough's until 2009) gives none of its own: Merck is read
+by old Merck's names (batch 108). An issue's entries on one
 company in one section are one row. Each matched company's first trading day comes from Yahoo, and
 the rows before it — today's first-price floor for every source — are counted apart.
 
@@ -623,11 +629,12 @@ the rule above makes its own, under the names its record had on the issue's day,
 price. A month's 8-K reports are one row; an order, an action or a listing order is the SEC acting,
 titled by its heading; each row links to its issue's PDF. The dated names come from the committed
 `data/digest-records.json`: what EDGAR's sixteen company indexes of 1993–1996 called each listed
-company and each mapped predecessor (1,455 records), written by `npm run sync:digest-records`
+company and each mapped predecessor (1,456 records, old Merck's added in batch 108), written by `npm run sync:digest-records`
 (sixteen zips a second apart from www.sec.gov, or `-- --dir <path>` for saved ones; run after
-`npm run sync:tickers`). On 1985 the source gives 509 rows on 259 companies, 358 events on 188
-pages: batch 87's 508 and Crane Co.'s registration of 1985-10-11, which batch 87's first pass gave
-to no one because today's Crane Company (a 2023 record) seemed to share the name. www.sec.gov
+`npm run sync:tickers`). On 1985 the source gives 512 rows on 260 companies, 361 events on 189
+pages: batch 87's 508, Crane Co.'s registration of 1985-10-11, which batch 87's first pass gave
+to no one because today's Crane Company (a 2023 record) seemed to share the name, and old Merck's
+three 8-K reports (batch 108). www.sec.gov
 answers 403 to a client without a contact address, so the walk needs `NEWS_CHARTS_CONTACT`, and
 poppler's `pdftotext`, on the host that runs ingest. `check:digest-walk` replays all of 1985
 through the walk's tables and the company step.
@@ -813,6 +820,15 @@ Every request to a public service sends one User-Agent, `News Charts Research` a
 contact address from `NEWS_CHARTS_CONTACT` in `.env.local` (`lib/contact.ts`, batch 92). The SEC asks
 automated clients for a contact and refuses EDGAR requests without one, so ingest needs it set. The
 address is never written in the code; `check:contact` fails if one appears.
+
+**A rule change reaches the stored pages.** Every case source (the SEC's cases and press releases,
+the Justice Department's archive of 2001–2008, the CFPB's, EPA's, the CPSC's, the CFTC's actions, the
+Digest, the FDA's approvals) builds a company's rows from data kept whole, so its answer is
+complete: a run takes the company off that source's stored rows its rules no longer give it
+(`unlinkGone`, batch 108). Only the link goes, and only for a row no other source attests; the
+Justice Department's API answers, capped, and the Federal Reserve Board's live feed are never read
+as complete. A batch that refuses a case (the old Waste Management's on WM, Schering-Plough's on
+Merck) takes it off the page at the company's next run, not only off new ones.
 
 ```
 npm run db:gen      # regenerate db/001_init.sql from docs/EVENTS-SCHEMA.md

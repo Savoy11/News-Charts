@@ -19,9 +19,13 @@ import {
   splitNeedsFullHistory,
   emptyStats,
   loadLastFetched,
+  unlinkGone,
+  unlinkOwnRecordBefore,
   type UpsertStats,
   type ScoringContext,
 } from "../lib/ingest/store";
+import { ownRecordFrom } from "../lib/predecessors";
+import { ARCHIVE_LAST_YEAR } from "../lib/dojArchive";
 import { aliasesFor } from "../lib/enrich/relevance";
 import { selectStaleSources, ttlFor } from "../lib/ingest/refresh";
 import { collapseNearDuplicates } from "../lib/newsQuality";
@@ -136,7 +140,8 @@ function report(source: string, outcome: string, s: UpsertStats) {
   line(
     source,
     `${outcome.padEnd(9)} events ${s.events} (${s.newEvents} new)  ` +
-      `attestations ${s.attestations} (${s.newAttestations} new)  links +${s.links}`
+      `attestations ${s.attestations} (${s.newAttestations} new)  links +${s.links}` +
+      (s.unlinked ? `  unlinked ${s.unlinked} its rules no longer give` : "")
   );
 }
 
@@ -243,6 +248,11 @@ async function runSource(
   await client.query("BEGIN");
   try {
     for (const ev of events) await upsertEvent(client, ev, subjectId, stats, scoring);
+    // a complete answer takes the subject off the stored rows it no longer holds (batch 108); a
+    // transform could drop rows, so only an answer stored as it came is complete
+    if (result.complete && events.length === result.events.length) {
+      stats.unlinked = await unlinkGone(client, subjectId, sourceKey, events, result.complete);
+    }
     await logFetch(
       client,
       sourceKey,
@@ -499,7 +509,7 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   const othersStakes: string[] = [];
   // set inside the run below, which TypeScript does not follow into
   let fundSplit = null as OwnSeriesSplit | null;
-  await run("sec_edgar", company.ticker, async () => {
+  const filed = await run("sec_edgar", company.ticker, async () => {
     /**
      * The scheduler takes the WHOLE history, not just EDGAR's recent block.
      *
@@ -571,6 +581,17 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   const stakes = await unlinkFilings(client, subjectId, othersStakes);
   if (stakes) line("sec_edgar", `unlinked ${stakes} of its own stakes in other issuers`);
+
+  /**
+   * A record that was another company until it took this one's ticker (`OWN_RECORD_FROM`, batch
+   * 108): its own filings and renames before that day, which every ingest before batch 108 linked
+   * here, are unlinked, on a run that read the filings. Schering-Plough's, on MRK's page.
+   */
+  const ownFrom = ownRecordFrom(company.cik);
+  if (ownFrom && filed.length) {
+    const gone = await unlinkOwnRecordBefore(client, subjectId, ownFrom, filed);
+    if (gone) line("sec_edgar", `unlinked ${gone} of its record's filings and renames before ${ownFrom}, another company's (lib/predecessors.ts)`);
+  }
 
   /**
    * A fund's siblings' filings, linked here by every ingest before batch 67, are unlinked from it
@@ -684,7 +705,9 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     // yet, then every kept release naming the company under the names it had that year
     const walked = await walkDojArchive(client);
     const archive = await dojArchiveFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik });
-    return withArchive(api, archive ?? [], walked);
+    const answer = withArchive(api, archive ?? [], walked);
+    // the archive's years are read whole from the kept months, the API's capped (batch 108)
+    return archive ? { ...answer, complete: { before: `${ARCHIVE_LAST_YEAR + 1}-01-01` } } : answer;
   });
 
   /**

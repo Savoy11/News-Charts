@@ -14,7 +14,7 @@
  */
 import type { PoolClient } from "pg";
 import tickerIndex from "../data/edgar-tickers.json";
-import { PREDECESSORS, predecessorsOf } from "../lib/predecessors";
+import { OWN_RECORD_FROM, PREDECESSORS, ownRecordFrom, predecessorsOf } from "../lib/predecessors";
 import { getFilingsDeep, newsNamesFor, type Rename } from "../lib/sec";
 import { withSecHeadlines } from "../lib/ingest/headlines";
 import { aliasesFor, mentions } from "../lib/enrich/relevance";
@@ -171,6 +171,60 @@ async function main(): Promise<void> {
     dkngIds.has("sec-000177275722000010") && dkngIds.has("sec-000177275721000010"), [...dkngIds].join(", "));
   check("  …and not the SPAC's annual report, nor its rename that day", !dkngIds.has("sec-000177275720000010") && !dkng.some((e) => /Diamond Eagle/.test(e.title)),
     dkng.map((e) => e.title).join(" | "));
+
+  // batch 108, the 2026-11-07 audit's question 1: MRK's record was Schering-Plough's until it took
+  // old Merck's name and ticker at the merger of 2009-11-03
+  check("Merck's history is old Merck's record to the merger, and its own record is MRK's only from it",
+    predecessorsOf(cikOf("MRK"))[0]?.cik === 64978 && predecessorsOf(cikOf("MRK"))[0]?.until === "2009-11-04" && ownRecordFrom(cikOf("MRK")) === "2009-11-04" && cikOf("MRK") === 310158);
+  check("  …and every record with such a day is a mapped successor whose day is its handover's or after",
+    Object.entries(OWN_RECORD_FROM).every(([c, r]) => predecessorsOf(c).length > 0 && r.from >= predecessorsOf(c)[0].until && tickersOf(Number(c)).includes(r.ticker) && r.why.length > 40));
+  records["0000310158"] = {
+    name: "Merck & Co., Inc.",
+    formerNames: [{ name: "SCHERING PLOUGH CORP", from: "1994-03-07T00:00:00.000Z", to: "2009-10-29T00:00:00.000Z" }],
+    filings: {
+      recent: block([
+        ["2026-10-30", "10-Q", "0000310158-26-000050"],
+        ["2009-11-04", "8-K", "0001193125-09-223917"], // the merger, on the successor's record
+        ["2009-10-29", "10-Q", "0000950123-09-054872"], // Schering-Plough's last quarter
+        ["2005-03-01", "10-K", "0000310158-05-000010"], // Schering-Plough's annual report
+      ]),
+    },
+  };
+  records["0000064978"] = {
+    name: "MERCK SHARP & DOHME LLC",
+    formerNames: [
+      { name: "MERCK SHARP & DOHME CORP.", from: "2009-09-28T00:00:00.000Z", to: "2022-11-21T00:00:00.000Z" },
+      { name: "MERCK & CO INC", from: "1994-03-16T00:00:00.000Z", to: "2009-11-02T00:00:00.000Z" },
+    ],
+    filings: {
+      recent: block([
+        ["2015-05-01", "424B2", "0000064978-15-000020"], // the subsidiary's debt, after the merger
+        ["2009-11-04", "8-K", "0001193125-09-223934"], // its delisting and change of control
+        ["2009-11-02", "10-Q", "0000950123-09-055961"], // old Merck's last quarter
+        ["2008-02-28", "10-K", "0000950123-08-002050"], // old Merck's annual report
+      ]),
+    },
+  };
+  (globalThis as { fetch: unknown }).fetch = async (input: RequestInfo | URL) => {
+    const key = /CIK(\d{10})\.json$/.exec(String(input))?.[1] ?? "";
+    const body = records[key];
+    return { ok: body !== undefined, status: body ? 200 : 404, json: async () => body } as unknown as Response;
+  };
+  const mrkRenames: Rename[] = [];
+  let mrk: Awaited<ReturnType<typeof getFilingsDeep>> = [];
+  try {
+    mrk = await getFilingsDeep({ ticker: "MRK", cik: "0000310158", name: "Merck & Co., Inc." }, false, mrkRenames);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const mrkIds = new Set(mrk.map((e) => e.id));
+  check("MRK's page has old Merck's annual report and last quarter, and its own record's filings from the merger on",
+    ["sec-000095012308002050", "sec-000095012309055961", "sec-000119312509223917", "sec-000031015826000050"].every((id) => mrkIds.has(id)), [...mrkIds].join(", "));
+  check("  …not Schering-Plough's annual report or last quarter, nor old Merck's own 8-K of its delisting, nor the subsidiary's debt after",
+    !mrkIds.has("sec-000031015805000010") && !mrkIds.has("sec-000095012309054872") && !mrkIds.has("sec-000119312509223934") && !mrkIds.has("sec-000006497815000020"));
+  check("  …and neither Schering-Plough's name nor old Merck's rename into its subsidiary's at the merger is a rename of MRK's",
+    !mrk.some((e) => /SCHERING|MERCK SHARP/i.test(e.title)) && !mrkRenames.some((r) => /SCHERING|MERCK SHARP/i.test(`${r.from} ${r.to}`)),
+    `${mrk.filter((e) => e.type === "corporate_action").map((e) => e.title).join(" | ")} · ${JSON.stringify(mrkRenames)}`);
 
   console.log("\nIts headlines are read under the record they live in");
   const readAs: string[] = [];

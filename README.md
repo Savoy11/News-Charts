@@ -516,9 +516,26 @@ Norfolk Southern Railway, Occidental Chemical, Waste Management's state companie
 Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Carbide on Dow Inc. from
 2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
 (`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
-every company in the index, before first prices: 7,545 rows on 670 companies, 6,463 before 2017
+every company in the index, before first prices: 7,964 rows on 683 companies, 6,817 before 2017
 (ExxonMobil 288, GE 284, Chevron 269, BP 248, GM 225; 5,994 on 667 before the units, every one of
 whose cases is still there; BP 4 and 3M 67 by their own names).
+
+**The utilities' operating companies** (batch 114, the owner's approval of 2026-11-07). EPA files a
+utility's cases under its operating companies, whose names do not carry the parent's: Georgia Power is
+Southern's, Ohio Edison FirstEnergy's, Virginia Electric and Power Dominion's, Public Service Electric
+and Gas PSEG's. 140 more `UNITS` entries on 33 companies read them, each between the days its owner
+held it. Every day comes from data.sec.gov's filing lists, 63 lists and pages read: the buyer's 8-K reporting
+the completed merger, the bought company's change in control, or its deregistration that day. Gulf
+Power is Southern's to 2018-12-31 and NextEra's from 2019-01-01; Baltimore Gas and Electric
+Exelon's from 2012-03-12; Narragansett Electric National Grid's to 2022-05-24 and PPL's after. A
+company bought is never its buyer's before: Progress Energy's cases, all before 2012-07-02, are not
+Duke's. Two purchases are older than EDGAR (Southern's of Savannah Electric in 1988, Northeast
+Utilities' of PSNH in 1992), so those units count from their first filings in the buyer's system and
+four of their cases wait for those days. "MISSISSIPPI POWER & LIGHT" is Entergy Mississippi's old
+name, not Southern's. On the replay, 419 more rows on 31 companies, 261 of them a court case or a
+penalty, 218 before 2017; thirteen companies had no EPA row and now do: PSEG 44 (43 from its first
+price), Exelon 22, NextEra 19, NiSource and DTE 16, WEC 13, Vistra, OGE, Hawaiian Electric, MGE,
+IDACORP, TXNM and Evergy.
 
 **EPA's own figures on each row** (batch 113, the owner's approval of 2026-11-07). The same zip holds
 each case's settlements (`CASE_ENFORCEMENT_CONCLUSIONS.csv`), EPA's estimate of the cost of the work a

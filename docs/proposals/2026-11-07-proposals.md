@@ -319,7 +319,7 @@ the letters or careful wording
 
 ## 3. EPA's cases against the utilities' operating companies: Georgia Power, Appalachian Power, Public Service Electric and Gas, Virginia Electric and Power… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-07: "Approve all three, titles from the FDA's data". To be built in batch 114, each ownership day read from filings.
+**Status:** APPROVED — by the owner, 2026-11-07: "Approve all three, titles from the FDA's data". Built in batch 114, each ownership day read from filings.
 **Owner's reason (if rejected):**
 
 **Raised before:** only as a line. Batch 104 lists, under "Left for later", "the other ~630

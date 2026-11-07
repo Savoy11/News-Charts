@@ -369,6 +369,64 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
  *   Halliburton, Nucor, Occidental, Lockheed Martin, General Dynamics, Boeing, Entergy, Duke Energy's
  *   utilities, Toyota Motor, Home Depot U.S.A., Lowe's Home Centers, Procter & Gamble,
  *   Kimberly-Clark, Bunge, CEMEX and Silgan.
+ *
+ * The utilities' operating companies (batch 114, the 2026-11-07 proposal 3, approved by the owner
+ * that day), each day read from data.sec.gov's filing lists on 2026-11-07: the buyer's 8-K reporting
+ * the completed merger (its report day; item 2.01, or item 2 before 2004), else the bought company's
+ * 8-K reporting the change in control (item 5.01, or 1), else its deregistration that day (Form 15):
+ * - Southern: Alabama, Georgia and Mississippi Power, Southern Nuclear, Southern Company Services and
+ *   Southern Power its own; Gulf Power to 2018-12-31 and NextEra's from 2019-01-01 (Gulf Power's 8-K,
+ *   item 5.01, of that day); Southern Company Gas's utilities from 2016-07-01 (AGL Resources' 8-K,
+ *   items 2.01 and 5.01). Savannah Electric from 1994-03-28, its 10-K for 1993 being one filing with
+ *   Southern's: Southern bought it in 1988, before EDGAR, so its cases of 1990 and 1993 wait for that
+ *   day. "MISSISSIPPI POWER & LIGHT" is Entergy Mississippi's old name, not Southern's.
+ * - AEP: its operating companies its own; Central and South West's from 2000-06-15 (AEP's 8-K, item 2).
+ * - FirstEnergy: Ohio Edison's and Centerior's companies its own from its first price (1997-11-10);
+ *   GPU's from 2001-11-07 (FirstEnergy's 8-K, item 2); Allegheny Energy's from 2011-02-25 (Allegheny's
+ *   8-K, items 3.03 and 5.01); FirstEnergy Solutions and its generation and nuclear companies to
+ *   2018-03-30 (FirstEnergy's 8-K reporting their deconsolidation in bankruptcy, items 1.03 and 2.01,
+ *   2018-03-31).
+ * - Dominion: Virginia Electric and Power its own; Consolidated Natural Gas's from 2000-01-28
+ *   (Dominion's 8-K, item 2); SCANA's from 2019-01-01 (SCANA's 8-K, items 2.01 and 5.01).
+ * - Xcel: Northern States Power its own; New Century Energies' from 2000-08-18 (Xcel's 8-K, item 2).
+ * - Exelon: Commonwealth Edison, PECO and Exelon Generation from 2000-10-20 (Exelon's 8-K, item 2),
+ *   Exelon Generation to 2022-01-31 and Constellation's from 2022-02-01 (both 8-Ks of the separation,
+ *   2022-02-02); Baltimore Gas and Electric from 2012-03-12 (Exelon's 8-K, items 2.01 and 5.01, filed
+ *   2012-03-14; no case falls in the days around it); Pepco Holdings' from 2016-03-23 (its 8-K, items
+ *   2.01 and 5.01).
+ * - Sempra: San Diego Gas & Electric and Southern California Gas from 1998-06-26 (Sempra's 8-K, item 1).
+ * - Ameren: Union Electric and Central Illinois Public Service from 1997-12-31 (CIPSCO's 8-K, item 2);
+ *   Central Illinois Light from 2003-01-31 (CILCORP's 8-K, item 1); Illinois Power from 2004-10-01
+ *   (its 8-K, item 5.01).
+ * - DTE: Detroit Edison its own; Michigan Consolidated Gas from 2001-05-31 (DTE's 8-K, item 2).
+ * - NiSource: NIPSCO its own; Columbia Gas's distribution companies from 2000-11-01 (Columbia
+ *   Energy's Form 15 that day), Columbia Gas of Massachusetts to 2020-10-08 (NiSource's 8-K of its
+ *   sale, 2020-10-09).
+ * - WEC: Wisconsin Electric its own; Wisconsin Gas from 2000-04-26 (WICOR's 8-K, item 1); Integrys's
+ *   from 2015-06-29 (Integrys's 8-K12B, items 2.01 and 5.01).
+ * - Alliant: Wisconsin Power and Light its own; IES Utilities and Interstate Power from 1998-04-21
+ *   (both deregistered that day).
+ * - Evergy: Kansas City Power & Light and Westar's companies from 2018-06-04 (Evergy's 8-K12B).
+ * - Eversource: Connecticut Light and Power its own; Public Service of New Hampshire from 1994-02-09,
+ *   its first filing in Northeast Utilities' system (Northeast Utilities bought it in 1992, before
+ *   EDGAR; its 10-K for 1993 was filed by Northeast Utilities); NSTAR's from 2012-04-10 (Eversource's
+ *   8-K, item 2.01).
+ * - National Grid: Niagara Mohawk from 2002-01-31 and New England Electric System's from 2000-03-22
+ *   (each deregistered that day); KeySpan's from 2007-08-24 (KeySpan's 8-K, item 5.01); Narragansett
+ *   Electric to 2022-05-24 and PPL's from 2022-05-25 (PPL's 8-K, item 2.01).
+ * - PPL: Louisville Gas and Electric and Kentucky Utilities from 2010-11-01 (PPL's 8-K, item 2.01).
+ * - CenterPoint: Houston Lighting & Power its own; Vectren's from 2019-02-01 (Vectren's 8-K, items 2.01
+ *   and 5.01).
+ * - AES: Indianapolis Power & Light from 2001-03-27 (IPALCO's Form 15 that day); Dayton Power and
+ *   Light from 2011-11-28 (DPL's 8-K, item 5.01).
+ * - Duke: Duke Power its own; Cinergy's from 2006-04-03 (Cinergy's Form 15 that day); Progress
+ *   Energy's from 2012-07-02 (Progress's 8-K, items 2.01 and 5.01).
+ * - Con Edison: Orange and Rockland from 1999-07-08 (its 8-K, item 1).
+ * - Vistra: Luminant and TXU Energy its own from its first price (2016-10-05), TXU Electric Delivery
+ *   (now Oncor) not; Dynegy's from 2018-04-09 (Vistra's 8-K, item 2.01).
+ * - Each company's own and no more: NextEra's Florida Power & Light, PSEG's PSE&G, Edison
+ *   International's Southern California Edison, PG&E, CMS's Consumers, Pinnacle West's Arizona Public
+ *   Service, OGE, IDACORP, TXNM's Public Service of New Mexico, Hawaiian Electric and MGE.
  */
 export interface EpaUnit {
   ticker: string;
@@ -441,6 +499,10 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
   922224: [
     unit("PPL", "PPL's companies", /^PPL\b(?!\s+(?:MONTANA|ENERGY SUPPLY|GENERATION|ENERGYPLUS|SUSQUEHANNA|BRUNNER|MARTINS CREEK|HOLTWOOD))/i, "ppl"),
     unit("PPL", "PPL Montana and the generation companies", /^PPL\s+(?:MONTANA|ENERGY SUPPLY|GENERATION|ENERGYPLUS|SUSQUEHANNA|BRUNNER|MARTINS CREEK|HOLTWOOD)\b/i, "ppl", { to: "2015-05-31" }),
+    unit("PPL", "Narragansett Electric", /^(?:THE\s+)?NARRAGANSETT ELECTRIC\b/i, "narragansettelectric", { from: "2022-05-25" }),
+    unit("PPL", "Narragansett Electric", /^RHODE ISLAND ENERGY\b/i, "rhodeislandenergy", { from: "2022-05-25" }),
+    unit("PPL", "Louisville Gas and Electric and Kentucky Utilities", /^LOUISVILLE GAS\s*(?:&|AND)\s*ELECTRIC\b/i, "louisvillegas", { from: "2010-11-01" }),
+    unit("PPL", "Louisville Gas and Electric and Kentucky Utilities", /^KENTUCKY UTILITIES\b/i, "kentuckyutilities", { from: "2010-11-01" }),
   ],
   // Verizon, each sold company to its sale
   732712: [
@@ -453,7 +515,10 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
   3124: [unit("AKZOY", "Akzo Nobel's coatings companies", /^AKZO[- ]?NOBEL\b(?![\s,]+(?:CHEMICALS?|SURFACE|FUNCTIONAL|POLYMER|PULP|INDUSTRIAL|BASE|SALT)\b)/i, "akzonobel")],
   // each company's own operating companies
   822818: [unit("CLH", "Clean Harbors' companies", /^CLEAN HARBORS\b/i, "cleanharbors")],
-  1047862: [unit("ED", "Consolidated Edison Company of New York", /^CONSOLIDATED EDISON\s+(?:CO(?:MPANY)?\.?\s+)?OF\s+N/i, "consolidatededison")],
+  1047862: [
+    unit("ED", "Consolidated Edison Company of New York", /^CONSOLIDATED EDISON\s+(?:CO(?:MPANY)?\.?\s+)?OF\s+N/i, "consolidatededison"),
+    unit("ED", "Orange and Rockland", /^ORANGE\s*(?:&|AND)\s*ROCKLAND\b/i, "rockland", { from: "1999-07-08" }),
+  ],
   45012: [unit("HAL", "Halliburton's companies", /^HALLIBURTON\b/i, "halliburton")],
   73309: [unit("NUE", "Nucor's steel companies", /^NUCOR\b(?![- ]?\s*(?:YAMATO|TAMATO))/i, "nucor")],
   797468: [unit("OXY", "Occidental Chemical and Occidental's companies", /^OCCIDENTAL\s+(?:CHEMICAL|PETROLEUM|OIL|EXPLORATION|PERMIAN)\b/i, "occidental")],
@@ -461,7 +526,17 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
   40533: [unit("GD", "General Dynamics' companies", /^GENERAL DYNAMICS\b/i, "generaldynamics")],
   12927: [unit("BA", "Boeing's companies", /^BOEING\b/i, "boeing")],
   65984: [unit("ETR", "Entergy's utilities", /^ENTERGY\b/i, "entergy")],
-  1326160: [unit("DUK", "Duke Energy's utilities", /^DUKE ENERGY\s+(?:CAROLINAS|FLORIDA|INDIANA|OHIO|PROGRESS|KENTUCKY)\b/i, "dukeenergy")],
+  1326160: [
+    unit("DUK", "Duke Energy's utilities", /^DUKE ENERGY\s+(?:CAROLINAS|FLORIDA|INDIANA|OHIO|PROGRESS|KENTUCKY)\b/i, "dukeenergy"),
+    unit("DUK", "Duke Power", /^DUKE POWER\b/i, "dukepower"),
+    unit("DUK", "Cinergy's companies", /^CINCINNATI GAS\s*(?:&|AND)\s*ELECTRIC\b/i, "cincinnatigas", { from: "2006-04-03" }),
+    unit("DUK", "Cinergy's companies", /^PSI ENERGY\b/i, "psienergy", { from: "2006-04-03" }),
+    unit("DUK", "Cinergy's companies", /^CINERGY\b/i, "cinergy", { from: "2006-04-03" }),
+    unit("DUK", "Cinergy's companies", /^UNION LIGHT,?\s*HEAT\b/i, "unionlight", { from: "2006-04-03" }),
+    unit("DUK", "Progress Energy's companies", /^CAROLINA POWER\s*(?:&|AND)\s*LIGHT\b/i, "carolinapower", { from: "2012-07-02" }),
+    unit("DUK", "Progress Energy's companies", /^PROGRESS ENERGY\b/i, "progressenergy", { from: "2012-07-02" }),
+    unit("DUK", "Progress Energy's companies", /^FLORIDA POWER CORP(?:ORATION)?\b/i, "floridapowercorp", { from: "2012-07-02" }),
+  ],
   1094517: [unit("TM", "Toyota Motor's US companies", /^TOYOTA MOTOR\b/i, "toyotamotor")],
   354950: [unit("HD", "Home Depot U.S.A.", /^(?:THE\s+)?HOME DEPOT,?\s+(?:U\.?\s?S\.?\s?A|NORTHEASTERN)/i, "homedepot")],
   60667: [unit("LOW", "Lowe's Home Centers", /^LOWE'?S\s+HOME\s+CENTER/i, "loweshomecenter")],
@@ -470,6 +545,194 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
   1996862: [unit("BG", "Bunge North America", /^BUNGE\b/i, "bunge")],
   1076378: [unit("CX", "CEMEX's US companies", /^CEMEX\b/i, "cemex")],
   849869: [unit("SLGN", "Silgan's companies", /^SILGAN\b/i, "silgan")],
+  // batch 114, the 2026-11-07 proposal 3: the utilities' operating companies, each day read from a filing (above)
+  92122: [
+    unit("SO", "Southern's operating companies", /^ALABAMA POWER\b/i, "alabamapower"),
+    unit("SO", "Southern's operating companies", /^GEORGIA POWER\b/i, "georgiapower"),
+    unit("SO", "Southern's operating companies", /^MISSISSIPPI POWER\b(?!\s*(?:&|AND)\s*LIGHT)/i, "mississippipower"),
+    unit("SO", "Southern's operating companies", /^SOUTHERN COMPANY SERVICES\b/i, "southerncompanyservices"),
+    unit("SO", "Southern's operating companies", /^SOUTHERN NUCLEAR\b/i, "southernnuclear"),
+    unit("SO", "Southern's operating companies", /^SOUTHERN POWER CO(?:MPANY)?\b/i, "southernpowerco"),
+    unit("SO", "Savannah Electric", /^SAVANNAH ELECTRIC\b/i, "savannahelectric", { from: "1994-03-28" }),
+    unit("SO", "Gulf Power", /^GULF POWER\b/i, "gulfpower", { to: "2018-12-31" }),
+    unit("SO", "Southern Company Gas and its utilities", /^SOUTHERN COMPANY GAS\b/i, "southerncompanygas", { from: "2016-07-01" }),
+    unit("SO", "Southern Company Gas and its utilities", /^ATLANTA GAS LIGHT\b/i, "atlantagaslight", { from: "2016-07-01" }),
+    unit("SO", "Southern Company Gas and its utilities", /^NICOR GAS\b/i, "nicorgas", { from: "2016-07-01" }),
+    unit("SO", "Southern Company Gas and its utilities", /^NORTHERN ILLINOIS GAS\b/i, "northernillinoisgas", { from: "2016-07-01" }),
+  ],
+  753308: [
+    unit("NEE", "Florida Power & Light and NextEra's companies", /^FLORIDA POWER\s*(?:&|AND)\s*LIGHT\b/i, "floridapower"),
+    unit("NEE", "Florida Power & Light and NextEra's companies", /^FPL ENERGY\b/i, "fplenergy"),
+    unit("NEE", "Florida Power & Light and NextEra's companies", /^NEXTERA ENERGY RESOURCES\b/i, "nexteraenergyresources"),
+    unit("NEE", "Gulf Power", /^GULF POWER\b/i, "gulfpower", { from: "2019-01-01" }),
+  ],
+  4904: [
+    unit("AEP", "AEP's operating companies", /^APPALACHIAN POWER\b/i, "appalachianpower"),
+    unit("AEP", "AEP's operating companies", /^OHIO POWER\b/i, "ohiopower"),
+    unit("AEP", "AEP's operating companies", /^COLUMBUS SOUTHERN POWER\b/i, "columbussouthernpower"),
+    unit("AEP", "AEP's operating companies", /^INDIANA\s*(?:&|AND)?\s*MICHIGAN POWER\b/i, "michiganpower"),
+    unit("AEP", "AEP's operating companies", /^KENTUCKY POWER\b/i, "kentuckypower"),
+    unit("AEP", "AEP's operating companies", /^AMERICAN ELECTRIC POWER SERV/i, "americanelectricpowerserv"),
+    unit("AEP", "AEP's operating companies", /^AEP (?:GENERATING|OHIO|TEXAS|APPALACHIAN)\b/i, "aep"),
+    unit("AEP", "AEP's operating companies", /^WHEELING POWER\b/i, "wheelingpower"),
+    unit("AEP", "AEP's operating companies", /^KINGSPORT POWER\b/i, "kingsportpower"),
+    unit("AEP", "Central and South West's companies", /^SOUTHWESTERN ELECTRIC POWER\b/i, "southwesternelectricpower", { from: "2000-06-15" }),
+    unit("AEP", "Central and South West's companies", /^CENTRAL POWER\s*(?:&|AND)\s*LIGHT\b/i, "centralpower", { from: "2000-06-15" }),
+    unit("AEP", "Central and South West's companies", /^WEST TEXAS UTILITIES\b/i, "westtexasutilities", { from: "2000-06-15" }),
+    unit("AEP", "Central and South West's companies", /^PUBLIC SERVICE CO(?:MPANY)?\.?,? OF OKLAHOMA\b/i, "oklahoma", { from: "2000-06-15" }),
+  ],
+  1031296: [
+    unit("FE", "Ohio Edison's and Centerior's companies", /^OHIO EDISON\b/i, "ohioedison"),
+    unit("FE", "Ohio Edison's and Centerior's companies", /^CLEVELAND ELECTRIC ILLUMINATING\b/i, "clevelandelectricilluminating"),
+    unit("FE", "Ohio Edison's and Centerior's companies", /^TOLEDO EDISON\b/i, "toledoedison"),
+    unit("FE", "Ohio Edison's and Centerior's companies", /^PENNSYLVANIA POWER CO(?:MPANY)?\b/i, "pennsylvaniapowerco"),
+    unit("FE", "Ohio Edison's and Centerior's companies", /^FIRSTENERGY SERVICE\b/i, "firstenergyservice"),
+    unit("FE", "FirstEnergy Solutions and its generation and nuclear companies", /^FIRSTENERGY (?:GENERATION|NUCLEAR|SOLUTIONS)\b/i, "firstenergy", { to: "2018-03-30" }),
+    unit("FE", "GPU's companies", /^JERSEY CENTRAL POWER\b/i, "jerseycentralpower", { from: "2001-11-07" }),
+    unit("FE", "GPU's companies", /^METROPOLITAN EDISON\b/i, "metropolitanedison", { from: "2001-11-07" }),
+    unit("FE", "GPU's companies", /^PENNSYLVANIA ELECTRIC CO(?:MPANY)?\b/i, "pennsylvaniaelectricco", { from: "2001-11-07" }),
+    unit("FE", "Allegheny Energy's companies", /^MONONGAHELA POWER\b/i, "monongahelapower", { from: "2011-02-25" }),
+    unit("FE", "Allegheny Energy's companies", /^POTOMAC EDISON\b/i, "potomacedison", { from: "2011-02-25" }),
+    unit("FE", "Allegheny Energy's companies", /^WEST PENN POWER\b/i, "westpennpower", { from: "2011-02-25" }),
+    unit("FE", "Allegheny Energy's companies", /^ALLEGHENY ENERGY\b/i, "alleghenyenergy", { from: "2011-02-25" }),
+  ],
+  715957: [
+    unit("D", "Virginia Electric and Power and Dominion's companies", /^VIRGINIA ELECTRIC\s*(?:&|AND)\s*POWER\b/i, "virginiaelectric"),
+    unit("D", "Virginia Electric and Power and Dominion's companies", /^VIRGINIA POWER\b/i, "virginiapower"),
+    unit("D", "Virginia Electric and Power and Dominion's companies", /^DOMINION (?:VIRGINIA POWER|RESOURCES|TRANSMISSION|GENERATION|ENERGY (?:BRAYTON|KINCAID|STATE LINE|SALEM|MANCHESTER|NEW ENGLAND|TRANSMISSION|COVE POINT|SOUTH CAROLINA))\b/i, "dominion"),
+    unit("D", "Consolidated Natural Gas's companies", /^EAST OHIO GAS\b/i, "eastohiogas", { from: "2000-01-28" }),
+    unit("D", "Consolidated Natural Gas's companies", /^CNG TRANSMISSION\b/i, "cngtransmission", { from: "2000-01-28" }),
+    unit("D", "Consolidated Natural Gas's companies", /^CONSOLIDATED NATURAL GAS\b/i, "consolidatednaturalgas", { from: "2000-01-28" }),
+    unit("D", "SCANA's companies", /^SOUTH CAROLINA ELECTRIC\s*(?:&|AND)\s*GAS\b/i, "southcarolinaelectric", { from: "2019-01-01" }),
+    unit("D", "SCANA's companies", /^SCANA\b/i, "scana", { from: "2019-01-01" }),
+  ],
+  72903: [
+    unit("XEL", "Northern States Power", /^NORTHERN STATES POWER\b/i, "northernstatespower"),
+    unit("XEL", "New Century Energies' companies", /^PUBLIC SERVICE CO(?:MPANY)?\.?,? OF COLORADO\b/i, "colorado", { from: "2000-08-18" }),
+    unit("XEL", "New Century Energies' companies", /^SOUTHWESTERN PUBLIC SERVICE\b/i, "southwesternpublicservice", { from: "2000-08-18" }),
+  ],
+  1109357: [
+    unit("EXC", "Commonwealth Edison and PECO", /^COMMONWEALTH EDISON\b/i, "commonwealthedison", { from: "2000-10-20" }),
+    unit("EXC", "Commonwealth Edison and PECO", /^PECO ENERGY\b/i, "pecoenergy", { from: "2000-10-20" }),
+    unit("EXC", "Commonwealth Edison and PECO", /^PHILADELPHIA ELECTRIC\b/i, "philadelphiaelectric", { from: "2000-10-20" }),
+    unit("EXC", "Exelon Generation", /^EXELON GENERATION\b/i, "exelongeneration", { from: "2000-10-20", to: "2022-01-31" }),
+    unit("EXC", "Baltimore Gas and Electric", /^BALTIMORE GAS\s*(?:&|AND)\s*ELECTRIC\b/i, "baltimoregas", { from: "2012-03-12" }),
+    unit("EXC", "Pepco Holdings' companies", /^POTOMAC ELECTRIC POWER\b/i, "potomacelectricpower", { from: "2016-03-23" }),
+    unit("EXC", "Pepco Holdings' companies", /^DELMARVA POWER\b/i, "delmarvapower", { from: "2016-03-23" }),
+    unit("EXC", "Pepco Holdings' companies", /^ATLANTIC CITY ELECTRIC\b/i, "atlanticcityelectric", { from: "2016-03-23" }),
+  ],
+  1868275: [
+    unit("CEG", "Constellation Energy Generation", /^EXELON GENERATION\b/i, "exelongeneration", { from: "2022-02-01" }),
+    unit("CEG", "Constellation Energy Generation", /^CONSTELLATION ENERGY GENERATION\b/i, "constellationenergygeneration", { from: "2022-02-01" }),
+  ],
+  788784: [
+    unit("PEG", "Public Service Electric and Gas and PSEG's companies", /^PUBLIC SERVICE ELECTRIC\s*(?:&|AND)\s*GAS\b/i, "publicserviceelectric"),
+    unit("PEG", "Public Service Electric and Gas and PSEG's companies", /^PSE\s?&\s?G\b/i, "pseg"),
+    unit("PEG", "Public Service Electric and Gas and PSEG's companies", /^PSEG (?:POWER|FOSSIL|NUCLEAR)\b/i, "pseg"),
+  ],
+  827052: [
+    unit("EIX", "Southern California Edison", /^SOUTHERN CALIFORNIA EDISON\b/i, "southerncaliforniaedison"),
+  ],
+  1004980: [
+    unit("PCG", "Pacific Gas and Electric", /^PACIFIC GAS\s*(?:&|AND)\s*ELECTRIC\b/i, "pacificgas"),
+  ],
+  1032208: [
+    unit("SRE", "San Diego Gas & Electric and Southern California Gas", /^SAN DIEGO GAS\s*(?:&|AND)\s*ELECTRIC\b/i, "sandiegogas", { from: "1998-06-26" }),
+    unit("SRE", "San Diego Gas & Electric and Southern California Gas", /^SOUTHERN CALIFORNIA GAS\b/i, "southerncaliforniagas", { from: "1998-06-26" }),
+  ],
+  1002910: [
+    unit("AEE", "Union Electric and Central Illinois Public Service", /^UNION ELECTRIC CO(?:MPANY)?\b(?!.*STEEL)/i, "unionelectricco", { from: "1997-12-31" }),
+    unit("AEE", "Union Electric and Central Illinois Public Service", /^CENTRAL ILLINOIS PUBLIC SERVICE\b/i, "centralillinoispublicservice", { from: "1997-12-31" }),
+    unit("AEE", "Central Illinois Light", /^CENTRAL ILLINOIS LIGHT\b/i, "centralillinoislight", { from: "2003-01-31" }),
+    unit("AEE", "Illinois Power", /^ILLINOIS POWER CO(?:MPANY)?\b/i, "illinoispowerco", { from: "2004-10-01" }),
+  ],
+  936340: [
+    unit("DTE", "Detroit Edison and DTE's companies", /^DETROIT EDISON\b/i, "detroitedison"),
+    unit("DTE", "Detroit Edison and DTE's companies", /^DTE ELECTRIC\b/i, "dteelectric"),
+    unit("DTE", "Detroit Edison and DTE's companies", /^DTE GAS\b/i, "dtegas"),
+    unit("DTE", "Detroit Edison and DTE's companies", /^DTE ENERGY SERVICES\b/i, "dteenergyservices"),
+    unit("DTE", "Michigan Consolidated Gas", /^MICHIGAN CONSOLIDATED GAS\b/i, "michiganconsolidatedgas", { from: "2001-05-31" }),
+    unit("DTE", "Michigan Consolidated Gas", /^MICHCON\b/i, "michcon", { from: "2001-05-31" }),
+  ],
+  811156: [
+    unit("CMS", "Consumers Energy", /^CONSUMERS (?:POWER|ENERGY)\b/i, "consumers"),
+  ],
+  1111711: [
+    unit("NI", "Northern Indiana Public Service", /^NORTHERN INDIANA PUBLIC SERVICE\b/i, "northernindianapublicservice"),
+    unit("NI", "Northern Indiana Public Service", /^NIPSCO\b/i, "nipsco"),
+    unit("NI", "Columbia Gas's distribution companies", /^COLUMBIA GAS OF\b(?!\s+MASSACHUSETTS)/i, "columbiagasof", { from: "2000-11-01" }),
+    unit("NI", "Columbia Gas of Massachusetts", /^COLUMBIA GAS OF MASSACHUSETTS\b/i, "columbiagasofmassachusetts", { from: "2000-11-01", to: "2020-10-08" }),
+  ],
+  783325: [
+    unit("WEC", "Wisconsin Electric Power", /^WISCONSIN ELECTRIC POWER\b/i, "wisconsinelectricpower"),
+    unit("WEC", "Wisconsin Electric Power", /^WE ENERGIES\b/i, "weenergies"),
+    unit("WEC", "Wisconsin Gas", /^WISCONSIN GAS\b/i, "wisconsingas", { from: "2000-04-26" }),
+    unit("WEC", "Integrys's companies", /^WISCONSIN PUBLIC SERVICE\b/i, "wisconsinpublicservice", { from: "2015-06-29" }),
+    unit("WEC", "Integrys's companies", /^PEOPLES GAS LIGHT\b/i, "peoplesgaslight", { from: "2015-06-29" }),
+    unit("WEC", "Integrys's companies", /^NORTH SHORE GAS\b/i, "northshoregas", { from: "2015-06-29" }),
+  ],
+  352541: [
+    unit("LNT", "Wisconsin Power and Light", /^WISCONSIN POWER\s*(?:&|AND)\s*LIGHT\b/i, "wisconsinpower"),
+    unit("LNT", "IES Utilities and Interstate Power", /^INTERSTATE POWER\b(?!\s+SYSTEMS)/i, "interstatepower", { from: "1998-04-21" }),
+    unit("LNT", "IES Utilities and Interstate Power", /^IES UTILITIES\b/i, "iesutilities", { from: "1998-04-21" }),
+    unit("LNT", "IES Utilities and Interstate Power", /^IOWA ELECTRIC\b/i, "iowaelectric", { from: "1998-04-21" }),
+  ],
+  1711269: [
+    unit("EVRG", "Kansas City Power & Light and Westar's companies", /^KANSAS CITY POWER\b/i, "kansascitypower", { from: "2018-06-04" }),
+    unit("EVRG", "Kansas City Power & Light and Westar's companies", /^WESTAR ENERGY\b/i, "westarenergy", { from: "2018-06-04" }),
+    unit("EVRG", "Kansas City Power & Light and Westar's companies", /^KANSAS GAS\s*(?:&|AND)\s*ELECTRIC\b/i, "kansasgas", { from: "2018-06-04" }),
+  ],
+  72741: [
+    unit("ES", "Connecticut Light and Power and Western Massachusetts Electric", /^CONNECTICUT LIGHT\s*(?:&|AND)\s*POWER\b/i, "connecticutlight"),
+    unit("ES", "Connecticut Light and Power and Western Massachusetts Electric", /^WESTERN MASSACHUSETTS ELECTRIC\b/i, "westernmassachusettselectric"),
+    unit("ES", "Public Service Company of New Hampshire", /^PUBLIC SERVICE CO(?:MPANY)?\.?,? OF NEW HAMPSHIRE\b/i, "newhampshire", { from: "1994-02-09" }),
+    unit("ES", "NSTAR's companies", /^BOSTON EDISON\b/i, "bostonedison", { from: "2012-04-10" }),
+    unit("ES", "NSTAR's companies", /^NSTAR\b/i, "nstar", { from: "2012-04-10" }),
+    unit("ES", "NSTAR's companies", /^COMMONWEALTH ELECTRIC\b/i, "commonwealthelectric", { from: "2012-04-10" }),
+    unit("ES", "NSTAR's companies", /^CAMBRIDGE ELECTRIC\b/i, "cambridgeelectric", { from: "2012-04-10" }),
+  ],
+  1004315: [
+    unit("NGG", "Niagara Mohawk", /^NIAGARA MOHAWK\b/i, "niagaramohawk", { from: "2002-01-31" }),
+    unit("NGG", "New England Electric System's companies", /^NEW ENGLAND POWER\b/i, "newenglandpower", { from: "2000-03-22" }),
+    unit("NGG", "New England Electric System's companies", /^MASSACHUSETTS ELECTRIC\b(?!\s+CONSTRUCTION)/i, "massachusettselectric", { from: "2000-03-22" }),
+    unit("NGG", "New England Electric System's companies", /^NEW ENGLAND ELECTRIC SYSTEM\b/i, "newenglandelectricsystem", { from: "2000-03-22" }),
+    unit("NGG", "Narragansett Electric", /^(?:THE\s+)?NARRAGANSETT ELECTRIC\b/i, "narragansettelectric", { from: "2000-03-22", to: "2022-05-24" }),
+    unit("NGG", "KeySpan's companies", /^KEYSPAN\b/i, "keyspan", { from: "2007-08-24" }),
+    unit("NGG", "KeySpan's companies", /^BROOKLYN UNION GAS\b/i, "brooklynuniongas", { from: "2007-08-24" }),
+  ],
+  764622: [
+    unit("PNW", "Arizona Public Service", /^ARIZONA PUBLIC SERVICE\b/i, "arizonapublicservice"),
+  ],
+  1130310: [
+    unit("CNP", "Houston Lighting & Power and CenterPoint's companies", /^HOUSTON LIGHTING\s*(?:&|AND)\s*POWER\b/i, "houstonlighting"),
+    unit("CNP", "Houston Lighting & Power and CenterPoint's companies", /^CENTERPOINT ENERGY (?:HOUSTON|RESOURCES)\b/i, "centerpointenergy"),
+    unit("CNP", "Vectren's companies", /^SOUTHERN INDIANA GAS\s*(?:&|AND)\s*ELECTRIC\b/i, "southernindianagas", { from: "2019-02-01" }),
+    unit("CNP", "Vectren's companies", /^VECTREN\b/i, "vectren", { from: "2019-02-01" }),
+  ],
+  1021635: [
+    unit("OGE", "Oklahoma Gas and Electric", /^OKLAHOMA GAS\s*(?:&|AND)\s*ELECTRIC\b/i, "oklahomagas"),
+  ],
+  1057877: [
+    unit("IDA", "Idaho Power", /^IDAHO POWER\b/i, "idahopower"),
+  ],
+  1108426: [
+    unit("TXNM", "Public Service Company of New Mexico", /^PUBLIC SERVICE CO(?:MPANY)?\.?,? OF NEW MEXICO\b/i, "newmexico"),
+  ],
+  354707: [
+    unit("HE", "Hawaiian Electric", /^HAWAIIAN ELECTRIC CO(?:MPANY)?\b/i, "hawaiianelectricco"),
+  ],
+  1161728: [
+    unit("MGEE", "Madison Gas and Electric", /^MADISON GAS\s*(?:&|AND)\s*ELECTRIC\b/i, "madisongas"),
+  ],
+  874761: [
+    unit("AES", "Indianapolis Power & Light", /^INDIANAPOLIS POWER\s*(?:&|AND)\s*LIGHT\b/i, "indianapolispower", { from: "2001-03-27" }),
+    unit("AES", "Dayton Power and Light", /^DAYTON POWER\s*(?:&|AND)\s*LIGHT\b/i, "daytonpower", { from: "2011-11-28" }),
+  ],
+  1692819: [
+    unit("VST", "Luminant and TXU Energy", /^LUMINANT\b/i, "luminant"),
+    unit("VST", "Luminant and TXU Energy", /^TXU (?:GENERATION|ENERGY|ELECTRIC(?!\s+DELIVERY))\b/i, "txu"),
+    unit("VST", "Dynegy's companies", /^DYNEGY\b/i, "dynegy", { from: "2018-04-09" }),
+  ],
 };
 
 /** The letters a company's stored cases are asked by for its units (`UNITS`). */

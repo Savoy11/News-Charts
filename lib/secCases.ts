@@ -276,8 +276,10 @@ export function secCaseEvents(
         source: `${KIND[c.listing].source} ${c.number}`,
         url: c.url,
         sourceKey: "sec_cases" as const,
-        externalId: caseKey(c),
-        // the company's one event a day: rows learned later the same day change its description only
+        // every case of the day, so another page holding any of them finds this row ("Also on",
+        // batch 106); a day of one case keeps the key it always had
+        externalId: rows.map((r) => caseKey(r.c)).join(","),
+        // the company's one event a day: rows learned later the same day change its description and add their keys
         dedupBasis: `sec-cases:${Number(cik)}@${day}`,
       };
     });

@@ -1114,6 +1114,20 @@ they fit, and the newest one is always open. Each older year shows its header an
 opens on a click, with "Expand all", or by itself when the chart jumps into it. JPMorgan's page
 went from 2,212 rows laid out to 382. A page whose list fits opens whole, as before.
 
+**A case's row names the other companies it is on.** Under the owner's rule that a case goes on
+every listed company it involves, an EPA case, a CPSC recall, a CFTC order, an SEC litigation
+release or a CFPB action is held once for each company, and a Justice Department, SEC or Board press
+release once, linked to every page it names. A row of one of those eight sources says, on a line of
+its own beneath it, which other held company pages carry the same case: "Also on Ford Motor, General
+Motors, Caterpillar and 24 more", each a link to its page (`lib/alsoOn.ts`, batch 106). A case is the
+same source's same number, and a day's or a month's grouped row carries all its cases' numbers (an
+SEC or CFPB row too, since batch 106), so they are compared as sets (db/041 indexes them). The page's own company is never named, nor another
+ticker of its own SEC record, nor a page the case sits below the relevance floor on. Only held pages
+can be named, so the line is a floor of the companies a case involves. On the batch 104 replay of
+EPA's cases, 672 are on two or more pages, 3,366 of 7,436 rows hold a case another page holds, and
+one case is on 36. The line is read beside the page's events; if the read fails, the rows show
+without it.
+
 A small `stored` badge on each page carries the date that copy was last refreshed. It replaced a
 `stored` / `live` badge, which after the cut-over had one reachable value and implied a
 comparison the code no longer performed.

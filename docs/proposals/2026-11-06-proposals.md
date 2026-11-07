@@ -50,7 +50,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. The FDA's new-drug approvals since 1985, on the page of the company that applied — a source for the owner to decide · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-06: "Approve all three, Shell from 2005-07-20".
+**Status:** APPROVED — by the owner, 2026-11-06: "Approve all three, Shell from 2005-07-20". Built in batch 105.
 **Owner's reason (if rejected):**
 
 **Raised before:** yes, and cut. The 2026-10-26 file cut "Drug approvals from Drugs@FDA" because
@@ -341,7 +341,7 @@ this source today · *Efficiency:* high — one list; the source is already read
 
 ## 3. A case's other listed companies, linked from its row: "Also on Ford, General Motors and 25 more" · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08), beside "Route topic pages to the securities they share events with"
 
-**Status:** APPROVED — by the owner, 2026-11-06: "Approve all three, Shell from 2005-07-20".
+**Status:** APPROVED — by the owner, 2026-11-06: "Approve all three, Shell from 2005-07-20". Built in batch 106.
 **Owner's reason (if rejected):**
 
 **Raised before:** yes, and cut. The 2026-10-26 file cut "'Also on' links between held companies:

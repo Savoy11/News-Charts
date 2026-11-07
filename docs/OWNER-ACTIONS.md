@@ -209,7 +209,7 @@ Raised by the November batches, each recorded in the master checklist:
 
 - ~~**The 2026-11-06 proposals** (batch 103, `docs/proposals/2026-11-06-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`.~~ **Decided 2026-11-06: all three approved, Shell from
-  2005-07-20.** #2 is built (batch 104), #1 too (batch 105); #3 follows. Once a year, in the spring
+  2005-07-20.** All three are built: #2 in batch 104, #1 in batch 105, #3 in batch 106. Once a year, in the spring
   when the FDA adds the year before, run `npm run sync:fda-approvals` and commit the file it
   writes.
   1. the FDA's new-drug approvals since 1985 on the company that applied (a new source: 461

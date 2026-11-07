@@ -370,6 +370,10 @@ const TODAY = "2026-11-01";
     replayedOn("USB", "2002-11-05") && usbOn("2005-09-02")?.externalId === "proceeding:IC-27057@2005-09-02" && !/Piper/.test(usbOn("2005-09-02")?.description ?? "Piper") &&
       !replayedOn("USB", "2010-03-19") && RELEASE_NAMES[36104].names.find((n) => /Piper/.test(n.name))?.to === "2003-12-30",
     `${usbOn("2005-09-02")?.externalId ?? "no 2005-09-02 event"}`);
+  const rfDay = replayed.companies.find(([x]) => x === "RF")?.[1].find((e) => e.date === "2009-09-21");
+  check("a day's row carries every case's key, so another page holding any of the day's cases finds it (\"Also on\", batch 106): RF's 2009-09-21, a litigation release and a proceeding; a day of one case keeps its key",
+    rfDay?.externalId === "litigation:LR-21215@2009-09-21,proceeding:33-9065, 34-60699@2009-09-21" && hb[0].externalId === "proceeding:34-63290@2010-11-09",
+    rfDay?.externalId ?? "no 2009-09-21 event");
   check("  …Ameriprise Financial Services' of 2009-07-10 on AMP; American Express Financial Advisors' of 2004-02-12 on both AXP and AMP (the owner's call b), its \"(now known as Ameriprise…)\" of 2005-12-01, after the spin-off, on AMP only",
     replayedOn("AMP", "2009-07-10") && replayedOn("AMP", "2004-02-12") && replayedOn("AXP", "2004-02-12") && replayedOn("AMP", "2005-12-01") && !replayedOn("AXP", "2005-12-01"));
   // batch 93, the owner's rule of 2026-11-05 that a case goes on every company it involves: old

@@ -1,6 +1,6 @@
 import { foldAccents } from "./fold";
 import { commonName, listedCompaniesNamed, listedNamesContaining } from "./sec";
-import { withoutTag } from "./edgarName";
+import { legalSpellings, withoutTag } from "./edgarName";
 import { isOneGroupName } from "./sharedNames";
 import type { FetchResult, TimelineEvent } from "./types";
 
@@ -78,8 +78,8 @@ export function companyNames(edgarName: string, alsoKnownAs: readonly string[] =
   // CO"), and nothing where it is not ("INDEPENDENT BANK CORP", the Massachusetts and the Michigan
   // bank's); the records of one group keep theirs (`ONE_GROUP`: "Rio Tinto")
   const legal = withoutTag(edgarName).trim();
-  const own = !common || listedCompaniesNamed(common) <= 1 || isOneGroupName(common) ? common : legal && listedCompaniesNamed(legal) <= 1 ? legal : "";
-  const names = own ? [own] : [];
+  const own = !common || listedCompaniesNamed(common) <= 1 || isOneGroupName(common) ? [common] : legal && listedCompaniesNamed(legal) <= 1 ? legalSpellings(legal) : [];
+  const names = own.filter(Boolean);
   for (const raw of alsoKnownAs) {
     const n = raw.replace(/^the\s+/i, "");
     if (!names.some((m) => words(m) === words(n))) names.push(n);

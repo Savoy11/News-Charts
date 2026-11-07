@@ -232,8 +232,10 @@ async function main(): Promise<void> {
   const total = [...out.values()].reduce((n, v) => n + v.length, 0);
   const before2017 = [...out.values()].flat().filter((e) => e.date < "2017").length;
   const own = [...out.values()].flat().filter((e) => e.precision !== "month").length;
-  check("before any first price: 7,427 rows on 670 companies, 6,367 before 2017; 7,025 of them a case's own day (7,436, 6,376 and 7,034 before batch 108 took the old Waste Management's nine off WM; 7,035 before batch 107's Star Lake order joined Chevron's September 2016; 5,994 on 667 before batch 104's units, every one of whose cases is still on its page; 5,984 before batch 101's Sunoco, Inc.; 6,001 on 665 before batch 100)",
-    total === 7427 && out.size === 670 && before2017 === 6367 && own === 7025, `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
+  // batch 111's legal-form spellings add one: "OLIN-CORPORATION", Olin's legal name spelled out, among
+  // the Distler Brickyard settlement's 55 defendants of 1995-10-26
+  check("before any first price: 7,428 rows on 670 companies, 6,368 before 2017; 7,026 of them a case's own day (7,427, 6,367 and 7,025 before batch 111's legal-form spellings; 7,436, 6,376 and 7,034 before batch 108 took the old Waste Management's nine off WM; 7,035 before batch 107's Star Lake order joined Chevron's September 2016; 5,994 on 667 before batch 104's units, every one of whose cases is still on its page; 5,984 before batch 101's Sunoco, Inc.; 6,001 on 665 before batch 100)",
+    total === 7428 && out.size === 670 && before2017 === 6368 && own === 7026 && (out.get("OLN") ?? []).some((e) => e.date === "1995-10-26"), `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
   const top = [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 5).map(([t, v]) => `${t} ${v.length}`).join(", ");
   check("  …most on GE 284, ExxonMobil 273, Chevron 258, BP 230, GM 222 (before the units: GE 284, GM 222, Ford 165, ExxonMobil 163, FMC 135)", top === "GE 284, XOM 273, CVX 258, BP 230, GM 222", top);
 

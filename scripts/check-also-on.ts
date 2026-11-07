@@ -38,6 +38,18 @@ const indexed = /WHERE source_id IN \(([\d, ]+)\)/.exec(migration)?.[1].split(",
 check("db/041's partial index covers exactly those sources, on the case numbers as a set",
   JSON.stringify(indexed) === JSON.stringify(ALSO_ON_SOURCE_IDS) && /USING gin \(string_to_array\(external_id, ','\)\)/.test(migration), indexed);
 
+console.log("\nThe indexes a page reads by (batch 111, the 2026-11-07 audit's set-aside)");
+const pageIndex = read("db/042_event_subjects_subject.sql");
+const statements = pageIndex.split("\n").filter((l) => !l.startsWith("--")).join("\n");
+check("a page's links are found by its subject: the table's key begins with the event, so db/042 indexes the subject",
+  /CREATE INDEX IF NOT EXISTS event_subjects_subject ON event_subjects \(subject_id\);/.test(statements) &&
+    /PRIMARY KEY \(event_id, subject_id\)/.test(read("db/001_init.sql")) && !readdirSync(join(__dirname, "..", "db")).some((f) => f !== "001_init.sql" && f !== "042_event_subjects_subject.sql" && /ON event_subjects \(subject_id\)/.test(read(`db/${f}`))));
+check("  …and both queries a page makes start from it: its events, and the case numbers of its rows",
+  /WHERE es\.subject_id = \$1\s/.test(read("lib/store/read.ts")) && /WHERE es\.subject_id = \$1\s/.test(alsoOnSql(ALSO_ON_SOURCE_IDS)));
+check("the case-number index takes each new row straight in, with no pending list every lookup would read, and the list it had is merged",
+  /ALTER INDEX IF EXISTS event_attestations_case_numbers SET \(fastupdate = off\);/.test(statements) &&
+    /SELECT gin_clean_pending_list\('event_attestations_case_numbers'::regclass\);/.test(statements) && /CREATE INDEX IF NOT EXISTS event_attestations_case_numbers\b/.test(migration));
+
 console.log("\nThe query");
 const sql = alsoOnSql(ALSO_ON_SOURCE_IDS);
 check("it writes the index's source list as literals, so the planner can use the partial index", sql.includes(`b.source_id IN (${ALSO_ON_SOURCE_IDS.join(", ")})`));

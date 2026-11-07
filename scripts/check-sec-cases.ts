@@ -357,8 +357,10 @@ const TODAY = "2026-11-01";
   const companyDays = replayed.companies.flatMap(([, events]) => events);
   // batch 89's consumer units add two: U.S. Bank's own order of 2005-09-02 (IC-27057) and the SEC's
   // case against TD Bank of 2013-09-23 (33-9453), the Rothstein Ponzi scheme
-  check("the 30,747 rows of 1995–2026 give 1,148 company days on 370 companies, 559 before 2017, as replayed in full (1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's)",
-    rows.length === 30747 && companyDays.length === 1148 && replayed.companies.length === 370 && companyDays.filter((e) => e.date < "2017").length === 559,
+  // batch 111's legal-form spellings add two: Rio Tinto Limited's own cases with Rio Tinto plc, of 2018
+  // and 2023, on RTNTF, whose record writes "RIO TINTO LTD"
+  check("the 30,747 rows of 1995–2026 give 1,150 company days on 371 companies, 559 before 2017, as replayed in full (1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's, 1,148 on 370 before batch 111's spellings)",
+    rows.length === 30747 && companyDays.length === 1150 && replayed.companies.length === 371 && companyDays.filter((e) => e.date < "2017").length === 559,
     `${rows.length} rows → ${companyDays.length} on ${replayed.companies.length}, ${companyDays.filter((e) => e.date < "2017").length} before 2017, in ${Date.now() - t0} ms`);
   // batch 88, the 2026-11-02 proposal 4: the listed banks', brokers' and managers' own units
   const replayedOn = (t: string, d: string) => !!replayed.companies.find(([x]) => x === t)?.[1].some((e) => e.date === d);
@@ -370,6 +372,10 @@ const TODAY = "2026-11-01";
     replayedOn("USB", "2002-11-05") && usbOn("2005-09-02")?.externalId === "proceeding:IC-27057@2005-09-02" && !/Piper/.test(usbOn("2005-09-02")?.description ?? "Piper") &&
       !replayedOn("USB", "2010-03-19") && RELEASE_NAMES[36104].names.find((n) => /Piper/.test(n.name))?.to === "2003-12-30",
     `${usbOn("2005-09-02")?.externalId ?? "no 2005-09-02 event"}`);
+  const rioOn = (t: string) => (replayed.companies.find(([x]) => x === t)?.[1] ?? []).map((e) => e.externalId).sort();
+  check("a caption's \"Limited\" is the record's \"LTD\": Rio Tinto Limited's two cases with Rio Tinto plc are on RTNTF, and the one naming only the plc is not (batch 111)",
+    JSON.stringify(rioOn("RTNTF")) === JSON.stringify(["litigation:LR-24085@2018-03-27", "litigation:LR-25898@2023-11-21"]) && rioOn("RIO").length === 3,
+    `RTNTF ${rioOn("RTNTF").join(" ; ")}, RIO ${rioOn("RIO").length}`);
   const rfDay = replayed.companies.find(([x]) => x === "RF")?.[1].find((e) => e.date === "2009-09-21");
   check("a day's row carries every case's key, so another page holding any of the day's cases finds it (\"Also on\", batch 106): RF's 2009-09-21, a litigation release and a proceeding; a day of one case keeps its key",
     rfDay?.externalId === "litigation:LR-21215@2009-09-21,proceeding:33-9065, 34-60699@2009-09-21" && hb[0].externalId === "proceeding:34-63290@2010-11-09",

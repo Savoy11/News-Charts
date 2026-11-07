@@ -84,8 +84,9 @@ company it involves, batch 93). It is not a scoring list; keep it that way. A wh
 everyday or legal name, names neither anywhere (`listedCompaniesNamed`, batch 109): `companyNames`
 gives such a company its own legal name instead, or none ("Independent Bank", INDB's and IBCP's), and
 headlines name it by its ticker; one group's two records keep theirs (`ONE_GROUP` in
-`lib/sharedNames.ts`), and check:shared-names lists the twelve held now. A caption names a company only by its name or
-its legal name with legal words after it; the namesakes that rule cannot tell apart were read by
+`lib/sharedNames.ts`), and check:shared-names lists the twelve held now. A legal name is read in both
+spellings of its form, "TORO CO" as "TORO Company" (`legalSpellings`, batch 111), and the two count as one
+name. A caption names a company only by its name or its legal name with legal words after it; the namesakes that rule cannot tell apart were read by
 hand and are listed by CIK in `NOT_THE_COMPANY` (one list each in `lib/secCases.ts`, `lib/fedPress.ts`,
 `lib/cfpb.ts`, `lib/epaCases.ts`, `lib/cftc.ts` and `lib/cpscRecalls.ts`; batch 100 read every CPSC firm by hand). EPA and
 the CPSC hold their own `UNITS` lists instead of the release map: a unit filed under its own name, on its owner's page
@@ -120,7 +121,9 @@ approvals use (`APPLICANT_NAMES`), each on its days; an acquisition's past is ne
 A row of one of the eight multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
 CFTC) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
 and 25 more" (`lib/alsoOn.ts`, batch 106). A case is the same source's same number, compared as a set
-for a grouped row (db/041's index); a release held once on several pages counts too. It is read
+for a grouped row (db/041's index, with no pending list since db/042, batch 111: a GIN index's queue made
+every lookup read it); a release held once on several pages counts too. A page's links are found by
+db/042's `event_subjects (subject_id)` index; the key begins with the event. It is read
 beside `loadEvents` and never breaks a page; adding a multi-party source means adding it to
 `ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and db/041's list, which check:also-on holds together. A row
 whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months) is stored again

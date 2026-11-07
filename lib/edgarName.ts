@@ -100,3 +100,31 @@ export function commonName(title: string): string {
 export function withoutTag(title: string): string {
   return clean(title, TAG);
 }
+
+/** A legal form's short and long spellings, either of which a text writes for the other. */
+const FORM_SPELLINGS: readonly [RegExp, string, string][] = [
+  [/\b(?:co|company)\.?$/i, "Co", "Company"],
+  [/\b(?:corp|corporation)\.?$/i, "Corp", "Corporation"],
+  [/\b(?:inc|incorporated)\.?$/i, "Inc", "Incorporated"],
+  [/\b(?:ltd|limited)\.?$/i, "Ltd", "Limited"],
+];
+
+/**
+ * A legal name in both spellings of the legal form it ends with (batch 111): "TORO CO" is also
+ * "TORO Company", and "GRAHAM CORP" "GRAHAM Corporation". A recall, a caption or a title writes
+ * either; EDGAR keeps one. A name ending in no such form is itself alone.
+ */
+export function legalSpellings(name: string): string[] {
+  const n = name.trim();
+  for (const [form, short, long] of FORM_SPELLINGS) {
+    const m = form.exec(n);
+    if (!m) continue;
+    const stem = n.slice(0, m.index);
+    return [...new Set([n, `${stem}${short}`, `${stem}${long}`])];
+  }
+  return [n];
+}
+
+/** A phrase with its legal form words in their short spelling, so two spellings of one form compare equal. */
+export const shortForms = (phrase: string): string =>
+  phrase.replace(/\bcorporation\b/g, "corp").replace(/\bcompany\b/g, "co").replace(/\bincorporated\b/g, "inc").replace(/\blimited\b/g, "ltd");

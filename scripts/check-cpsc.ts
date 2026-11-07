@@ -67,6 +67,11 @@ async function main(): Promise<void> {
   check("a firm without its place: \"Office Depot, Inc., of Boca Raton, Fla.\", \"The Wick & Petal Co. of Indianapolis, Ind.\"",
     firmName("Office Depot, Inc., of Boca Raton, Fla.") === "Office Depot, Inc." && firmName("The Wick & Petal Co. of Indianapolis, Ind.") === "The Wick & Petal Co." && firmName("Titan") === "Titan");
   check("units read as the Commission wrote them", unitsOf("5.9 million") === "about 5.9 million units" && unitsOf("About 1.7 million") === "about 1.7 million" && unitsOf("14,000 units") === "about 14,000 units");
+  const qualified = recalls.map((r) => r.units ?? "").filter((u) => /^(?:approximately|more than|up to)\b/i.test(u));
+  check("  …a count it qualified otherwise keeps its own word: \"approximately 39,000\", \"more than 3.2 Million\", never \"about Approximately\" (74 recalls, batch 111)",
+    unitsOf("Approximately 39,000") === "approximately 39,000" && unitsOf("More than 3.2 Million") === "more than 3.2 Million" && unitsOf("Up to 500") === "up to 500" &&
+      qualified.length === 74 && qualified.every((u) => !/^about /.test(unitsOf(u))),
+    `${qualified.length}: ${qualified.filter((u) => /^about /.test(unitsOf(u))).slice(0, 3).join(" | ")}`);
 
   console.log("\nThe company is the maker, importer or distributor");
   check("Mattel's first of 1978-12-08, GE's of 1979-05-21 and Dollar Tree's of 1996-03-25 as their makers",
@@ -150,8 +155,14 @@ async function main(): Promise<void> {
   // batch 109, the 2026-11-07 audit's question 2: "Toro" is the mower maker's (TTC) and a shipping
   // company's (TORO), so "Toro and Exmark commercial dealers" is neither's store line
   const toroDealers = recall("01526");
+  const ttcDealers = on("TTC").find((e) => has([e], "01526"));
   check("a store line naming a name two listed companies hold is neither's: Toro's riding-mower recall of 2001-07-20 is no store's of TTC's or of Toro Corp.'s",
-    !!toroDealers && /Toro and Exmark commercial dealers/.test(JSON.stringify(toroDealers)) && !has(on("TTC"), "01526") && !has(on("TORO"), "01526"));
+    !!toroDealers && /Toro and Exmark commercial dealers/.test(JSON.stringify(toroDealers)) && !/sold it|Sold in its stores/.test(`${ttcDealers?.title} ${ttcDealers?.description}`) && !has(on("TORO"), "01526"));
+  // batch 111: EDGAR's "TORO CO" is the recalls' "The Toro Company", so the mower maker's own recalls are its page's
+  const ttcMade = on("TTC").filter((e) => /the company made it/.test(e.description ?? ""));
+  check("  …but the firm the recall names by its legal name, \"The Toro Company\" for EDGAR's \"TORO CO\", is TTC: 19 of its recalls, 16 as maker, 14 more than the record's spelling found, and none Toro Corp.'s",
+    on("TTC").length === 19 && ttcMade.length === 16 && /the company made it/.test(ttcDealers?.description ?? "") && ttcMade.some((e) => e.date === "2021-02-17") && !on("TORO").length,
+    `${ttcMade.length}: ${ttcMade.map((e) => e.date).join(" ")}`);
   const out = new Map<string, TimelineEvent[]>();
   const seen = new Set<number>();
   for (const [cik, ticker, title] of companies) {
@@ -165,8 +176,8 @@ async function main(): Promise<void> {
   }
   const flat = [...out.values()].flat();
   const ownRows = flat.filter((e) => e.precision !== "month" && !/^Sold in its stores: /.test(e.title)).length;
-  check("before any first price: 2,288 rows on 196 companies, 1,646 a recall's own day, 709 as maker, importer or distributor; Target 296, Walmart 236, Amazon 206, Home Depot 196 (2,290 on 197 before batch 109's shared names; 2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
-    flat.length === 2288 && out.size === 196 && flat.filter((e) => e.precision !== "month").length === 1646 && ownRows === 709 &&
+  check("before any first price: 2,302 rows on 196 companies, 1,660 a recall's own day, 723 as maker, importer or distributor; Target 296, Walmart 236, Amazon 206, Home Depot 196 (2,288 before batch 111's legal-form spellings; 2,290 on 197 before batch 109's shared names; 2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
+    flat.length === 2302 && out.size === 196 && flat.filter((e) => e.precision !== "month").length === 1660 && ownRows === 723 &&
       [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ") === "TGT 296, WMT 236, AMZN 206, HD 196",
     `${flat.length} on ${out.size}; ${flat.filter((e) => e.precision !== "month").length} own; ${ownRows} as maker, importer or distributor; ${[...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ")}`);
 

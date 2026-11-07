@@ -147,14 +147,18 @@ header before adding an entry. Merck's is a merger the other way round (batch 10
 Schering-Plough's until it took old Merck's name and ticker on 2009-11-03, so old Merck's record is
 MRK's history; the record's own past before it, Schering-Plough's filings, cases, approvals and
 Digest entries, stays on the page labelled as Schering-Plough's (`OWN_RECORD_FROM`,
-`ownPastLabelled` at read time, batch 110, the owner's call). The reverse, a record that took another
+`ownPastLabelled` at read time, batch 110, the owner's call); Stratasys's and Waste Connections's are
+the same (batch 118: Objet's and Progressive Waste's records took their names and tickers, and the
+charts are the old companies', as Yahoo's splits show). The reverse, a record that took another
 company's name, never takes that company's past: one table, `TAKEN_NAMES` in `lib/takenNames.ts`
-(batch 117: 28 records; SBC's took AT&T's name, ACE's Chubb's, Norwest's Wells Fargo's…, each day
-read from a filing), refuses a row before the day that names only the taken name and none of the record's own
-names of then. Every caption rule reads it (`takenBefore`), ingest drops such rows from every source
-found by name, news and the Federal Register included (`withoutTakenNames`), a page and its "Also on"
-leave stored ones off (`hiddenAsTaken`), and the Federal Register asks those years under the then
-name (`yearSearchNames`); the record's own filings and prices are never read this way
+(batches 117–118: 32 records; SBC's took AT&T's name, ACE's Chubb's, Norwest's Wells Fargo's, TGC's
+Dawson's…, each day read from a filing), refuses a row before the day that names only the taken name
+and none of the record's own names of then. Every caption rule reads it (`takenBefore`), ingest
+drops such rows from every source found by name, news and the Federal Register included
+(`withoutTakenNames`), a page and its "Also on" leave stored ones off (`hiddenAsTaken`), and the
+Federal Register's years and GDELT's months before the day are asked under the record's own name
+of then (`thenNameIn`; a record with none of its own, Linde plc's, keeps the present name,
+`noOwnNameBefore`); the record's own filings and prices are never read this way
 (`OWN_RECORD_SOURCES`). Add a takeover there, never as one source's entry; check:taken-names holds it
 to the committed scan of 173 renamed records (`scripts/fixtures/taken-names-scan.json`). A case
 source's answer is complete when it is built from data kept whole (`FetchResult.complete`), and a

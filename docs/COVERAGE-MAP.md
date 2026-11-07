@@ -34,7 +34,7 @@ because it will be trusted.
 | **1994 – now** | Federal Reserve | February 1994, the first FOMC statement | Fed policy statements — on company pages behind the Economy chip, off by default |
 | **1995 – now** | CFTC enforcement actions | 1995-07-27, the list's first | Orders and suits whose title makes the company the party (`lib/cftc.ts`, batch 97): against every company in the index, before first prices, 88 company days on 33 companies, 47 before 2017 (JPMorgan 12, Deutsche Bank 7, Morgan Stanley 7, Barclays 6, Goldman Sachs 6; AEP, NRG, Duke Energy and Xcel's energy-trading cases of 2003–2004; batch 100) |
 | **1997 – now** | SEC press releases | 1997, the first year the newsroom lists | Charges, suits and settlements whose headline makes the company the party (`lib/secPress.ts`, batch 73): against every company in the index, 266 of the 6,897 stored releases on 129 companies, 161 before 2017 (Bank of America 28, Morgan Stanley 18, Citigroup 14, JPMorgan 13, UBS Group 12; batch 78; Deutsche Bank's 7 from batch 81; the banks' securities units, while they owned them, from batches 82 and 85, `lib/releaseNames.ts`) |
-| **1995 – now** | SEC litigation releases and administrative proceedings | 1995, the first year either listing holds | The SEC's record of each case whose caption names the company, by its name and legal form, as a defendant or respondent (`lib/secCases.ts`, batch 83): against every company in the index, 1,148 company days on 369 companies from the 30,747 rows, 557 before 2017 (Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47; batch 85 added the banks' own spellings and the 93 rows the year pages never showed); most fall on days no press release names the company |
+| **1995 – now** | SEC litigation releases and administrative proceedings | 1995, the first year either listing holds | The SEC's record of each case whose caption names the company, by its name and legal form, as a defendant or respondent (`lib/secCases.ts`, batch 83): against every company in the index, 1,146 company days on 368 companies from the 30,747 rows, 555 before 2017 (Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47; batch 85 added the banks' own spellings and the 93 rows the year pages never showed); most fall on days no press release names the company |
 | **1996 – 2005** | Federal Reserve Board orders, from its yearly pages | 1996, the first yearly page | The Board's orders on a bank's applications before its feed begins, each with its own page's sentence naming every party (`lib/fedOrders.ts`, batch 99; read once into `data/fed-orders-1996-2005.json`, 469 orders): under the committed indexes' names 141 matches on 59 companies (Wells Fargo 10, Royal Bank of Canada 7, JPMorgan and Popular 6), more under a company's EDGAR former names — NationsBank's on Bank of America, BB&T's on Truist |
 | **2006 – now** | Federal Reserve Board press releases | January 2006, the first in the Board's feed | The Board's orders on a bank's applications, kept when the company is the applicant or what it buys, and its policy releases that act on a named bank — a rescue, a capital plan (`lib/fedPress.ts`, batch 84): against every company in the index, 252 matches on 112 companies, 138 before 2017, 208 of them orders (Morgan Stanley and Bank of America 11 each, Capital One 8, Wells Fargo, Truist and PNC 7) |
 | **2008 – now** | BLS CPI release archive | February 2008, the oldest archived release | Monthly CPI releases — on company pages behind the Economy chip, off by default |
@@ -97,9 +97,10 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
 
 - **A name a record took from another company is read from the day it took it** (batch 117,
   `lib/takenNames.ts`): before it, every source that finds a company by name leaves the other
-  company's rows off, the news and the Federal Register included. 28 records are in the table; three
-  namesakes (LTBR, VAI, MRDN) are read but not yet dated, and GDELT's months before a taken name's day
-  are still asked under the present name, so the record's own news of then is not sought.
+  company's rows off, the news and the Federal Register included. 32 records are in the table, and
+  the Federal Register's years and GDELT's months before the day are asked under the record's own
+  name of then (batch 118). Two had no name of their own before (Linde plc, Six Flags) and keep the
+  present one; a one-word then-name not yet measured (CenturyLink) keeps today's names for GDELT.
 - **1963 – 2017 is the thin stretch** — and the NYT and the Guardian, which cover it, are not
   ingested; they reach only a visitor who brings a key. Chronicling
   America stops around 1963 (copyright, not interest), GDELT starts in 2017, and the keyed
@@ -113,7 +114,7 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   but few a company, and only the cases the Department announced. The SEC's own releases reach
   further, to 1997, in the same way: 161 of the 266 that name a company here as the party fall
   before 2017, most of them on the largest banks and brokers. The SEC's litigation releases and
-  administrative proceedings reach 1995 and every sector: 557 of the 1,148 company days they give
+  administrative proceedings reach 1995 and every sector: 555 of the 1,146 company days they give
   fall before 2017 (batches 83 and 85). The Federal Reserve Board's own press releases add 2006–2016 for the
   banks: 138 of their 252 matches fall before 2017, among them the 2008 approvals and rescues
   (batch 84). The CFPB's enforcement actions add 2012–2016 for the card issuers, banks, mortgage

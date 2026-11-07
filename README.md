@@ -413,7 +413,7 @@ revoked registrations naming a shell called "Telos, Inc." — were read by hand 
 CIK (`NOT_THE_COMPANY`). A company's rows of a day make one event, titled by its own party ("SEC
 litigation release: Transocean Inc."), with the whole caption, each release number and a
 proceeding's file number in its description. Read against every company in the index under its
-current names, the 30,747 rows give 1,148 company days on 369 companies, 557 of them before 2017
+current names, the 30,747 rows give 1,146 company days on 368 companies, 555 of them before 2017
 (Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47,
 Goldman Sachs 20); a company's former names add more, and its first price keeps it off the years
 before it listed. A party ends before its other name ("…, L.P. f/k/a Spear, Leeds & Kellogg") as it
@@ -913,21 +913,23 @@ the company's next run, not only off new ones.
 **A record that was another company labels that company's past** (batch 110, the owner's call of
 2026-11-07). MRK's SEC record was Schering-Plough's until the 2009 merger, when it took old Merck's
 name and ticker. Old Merck's record is Merck's history (`lib/predecessors.ts`, batch 108), matching
-the price chart back to 1962, and Schering-Plough's past stays on the page beside it. Each row of
+the price chart back to 1962, and Schering-Plough's past stays on the page beside it. Stratasys's
+and Waste Connections's pages are read the same way since batch 118: old Stratasys's and old Waste
+Connections's records are their history, and Objet's and Progressive Waste's past is labelled. Each row of
 it says whose: "Schering-Plough: Annual report (10-K)", from "SEC EDGAR · Schering-Plough, before
 its 2009 merger with Merck" (`ownPastLabelled`, at read time). Labelled rows are the record's own
 filings before 2009-11-04, and the cases, approvals and Digest entries of those years that name
 Schering-Plough or its Organon and not Merck. One naming both is old Merck's history too.
 
 **A record that took another company's name never takes that company's past** (batch 117). SBC's
-record took AT&T's name in 2005, ACE's Chubb's in 2016, Norwest's Wells Fargo's in 1998: 28 such
-records are in one table (`lib/takenNames.ts`), each with the day the name became the record's,
-read from a filing. Before that day, a row that names the taken name and none of the record's own
+record took AT&T's name in 2005, ACE's Chubb's in 2016, Norwest's Wells Fargo's in 1998, TGC's
+Dawson's in 2015: 32 such records are in one table (`lib/takenNames.ts`), each with the day the name
+became the record's, read from a filing. Before that day, a row that names the taken name and none of the record's own
 names of then is the other company's: "AT&T Corp. cuts 7,000 jobs" of 2004 is not on T's page, while
 "SBC to acquire AT&T" is. Every source that finds a company by name reads the table (the caption
 rules, the news, the Federal Register, whose earlier years are asked under the record's own name of
-then), a page and its "Also on" leave stored rows of it off, and the record's own filings and prices
-are never read this way. On the saved sources it takes 15 rows off LIN (Linde AG's), SPB, HOS and FUN
+then, as are GDELT's months since batch 118), a page and its "Also on" leave stored rows of it off,
+and the record's own filings and prices are never read this way. On the saved sources it takes 15 rows off LIN (Linde AG's), SPB, HOS and FUN
 that nothing took off before. A committed scan of 173 renamed records, each read
 (`scripts/fixtures/taken-names-scan.json`), keeps the table whole (`check:taken-names`).
 

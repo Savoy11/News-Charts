@@ -20,7 +20,8 @@ import type { SourceKey } from "./types";
  *  - a page leaves off a stored row of it, and another page's "Also on" does not name the record
  *    for it (`hiddenAsTaken`, lib/store/read.ts);
  *  - the Federal Register's yearly search asks a year that ends before `from` under the record's
- *    own name of that year, not the taken one (`yearSearchNames`).
+ *    own name of that year, not the taken one (`yearSearchNames`), and GDELT's month walk a month
+ *    that ends before it (`thenNameIn`, batch 118).
  * The record's own sources (its EDGAR filings, its prices) are never read this way: a filing of
  * SBC's own titled "AT&T Shareholders Approve Merger" is SBC's.
  *
@@ -50,6 +51,13 @@ export interface TakenName {
   filing: string;
   /** bought: the record bought the company; merged: a merger the record survived; namesake: neither */
   kind: "bought" | "merged" | "namesake";
+  /**
+   * The record had no name of its own before the day: a new company two others merged into, whose
+   * only earlier EDGAR name is the merger's shell ("ZAMALIGHT PLC", "CopperSteel HoldCo"). Its
+   * earlier years and months are asked under the present name and read by the rule, as before
+   * batch 118, never under the shell's (`thenNameIn`).
+   */
+  noOwnNameBefore?: true;
   why: string;
 }
 
@@ -208,6 +216,7 @@ export const TAKEN_NAMES: Readonly<Record<number, TakenName>> = {
     from: "2018-10-31",
     filing: "0001193125-18-313073",
     kind: "merged",
+    noOwnNameBefore: true,
     why:
       "Praxair and Linde AG combined under Linde plc, LIN's record, which took Linde's name: its 8-K of 2018-10-31 reports the merger (items 2.01 and " +
       "5.03). The page's prices before it are Praxair's; Linde was Linde AG's",
@@ -219,6 +228,7 @@ export const TAKEN_NAMES: Readonly<Record<number, TakenName>> = {
     from: "2024-07-01",
     filing: "0001193125-24-173290",
     kind: "merged",
+    noOwnNameBefore: true,
     why:
       "Cedar Fair and Six Flags combined under FUN's record, which took Six Flags' name: its notice of succession (8-K12B) of 2024-07-01 reports the " +
       "merger and the name (items 2.01 and 5.03). The page's prices before it are Cedar Fair's; Six Flags was Six Flags Entertainment Corporation's " +
@@ -368,6 +378,52 @@ export const TAKEN_NAMES: Readonly<Record<number, TakenName>> = {
       "CenturyLink, LUMN's record, took the brand Lumen Technologies in September 2020 and the legal name in January 2021 (its 8-K filed 2021-01-26, " +
       "item 5.03); the day is its first 8-K of that September. Before, Lumen Technologies, Inc. was another record's name (EDGAR CIK 1008114, BEC Group before)",
   },
+  // batch 118: the three namesakes batch 117 read but did not date, and Dawson, whose chart is TGC's
+  799165: {
+    ticker: "DWSN",
+    name: /\bDawson\b/i,
+    then: /\bTGC\b|\bEagle\s+Canada\b/i,
+    from: "2015-02-11",
+    filing: "0001104659-15-008902",
+    kind: "merged",
+    why:
+      "TGC Industries, DWSN's record, merged with Dawson Geophysical Company (EDGAR CIK 351231) and took its name and ticker: its 8-K of 2015-02-11 reports " +
+      "both (items 2.01 and 5.03). The page's prices before are TGC's, not old Dawson's: Yahoo's DWSN history holds TGC's 5% stock dividends and its 1-for-3 " +
+      "reverse split of February 2015",
+  },
+  1084554: {
+    ticker: "LTBR",
+    name: /\bLightbridge\b/i,
+    then: /\bThorium\b|\bNovastar\b/i,
+    from: "2009-09-21",
+    filing: "0001144204-09-049924",
+    kind: "namesake",
+    why:
+      "Thorium Power, LTBR's record (Novastar Resources before 2006), took the name Lightbridge on 2009-09-21 (its 8-K filed 2009-09-25, item 5.03); before, " +
+      "Lightbridge, Inc. was another record's (EDGAR CIK 1017172), which took the name Authorize.Net Holdings in 2007",
+  },
+  1711012: {
+    ticker: "VAI",
+    name: /\bValor\s+Energy\b/i,
+    then: /\bSenmiao\b/i,
+    from: "2026-08-25",
+    filing: "0001213900-26-093717",
+    kind: "namesake",
+    why:
+      "Senmiao Technology, VAI's record, took the name Valor Energy on 2026-08-25 (its 8-K filed 2026-08-26, item 5.03); before, Valor Energy was another " +
+      "record's name (EDGAR CIK 1081242)",
+  },
+  1437925: {
+    ticker: "MRDN",
+    name: /\bMeridian\s+Holdings\b/i,
+    then: /\bGolden\s+Matrix\b|\bSource\s+Gold\b/i,
+    from: "2026-02-26",
+    filing: "0001477932-26-001129",
+    kind: "namesake",
+    why:
+      "Golden Matrix Group, MRDN's record (Source Gold before 2016), took the name Meridian Holdings on 2026-02-26 (its 8-K filed 2026-03-03, items 3.03 " +
+      "and 5.03); before, Meridian Holdings was other records' names (EDGAR CIK 1071758 and 1093819)",
+  },
 };
 
 /**
@@ -416,11 +472,32 @@ export function hiddenAsTaken(
 }
 
 /**
+ * The record's own EDGAR name in a span that ends before it took its name, the former name in use
+ * then: the one in use from `from` that ends first, never the taken name unless it is the record's
+ * own then too ("SCP POOL CORP", which holds "Pool Corp"). Null when the span reaches the day, when
+ * the record is not in the table, when it had no name of its own before (`noOwnNameBefore`), or
+ * when no former name of the time is known.
+ */
+export function thenNameIn(
+  cik: number | string | null | undefined,
+  from: string,
+  to: string,
+  former: readonly { name: string; until: string }[],
+): string | null {
+  const t = cik == null ? undefined : TAKEN_NAMES[Number(cik)];
+  if (!t || t.noOwnNameBefore || to >= t.from) return null;
+  const then = former
+    .filter((f) => f.until >= from && (!t.name.test(f.name) || t.then.test(f.name)))
+    .sort((a, b) => a.until.localeCompare(b.until))[0];
+  return then?.name ?? null;
+}
+
+/**
  * The names a Federal Register year is searched under. A year that ends before the record took
- * its name is searched under the record's own name of that year, its EDGAR former name then in use,
- * and the taken name is left out of the other names; a year it took the name in keeps both, and
- * its rows are read by `withoutTakenNames`. Without a former name of the time, the year keeps its
- * present names, and the same reading leaves the taken ones off.
+ * its name is searched under the record's own EDGAR name of that year (`thenNameIn`), and the taken
+ * name is left out of the other names; a year it took the name in keeps both, and its rows are
+ * read by `withoutTakenNames`. Without a name of its own then, the year keeps its present names, and
+ * the same reading leaves the taken ones off.
  */
 export function yearSearchNames(
   cik: number | string | null | undefined,
@@ -429,11 +506,8 @@ export function yearSearchNames(
   names: readonly string[],
   former: readonly { name: string; until: string }[],
 ): { edgarName: string; names: string[] } {
-  const t = cik == null ? undefined : TAKEN_NAMES[Number(cik)];
-  if (!t || `${year}-12-31` >= t.from) return { edgarName, names: [...names] };
-  const then = former
-    .filter((f) => f.until >= `${year}-01-01` && !t.name.test(f.name))
-    .sort((a, b) => a.until.localeCompare(b.until))[0];
+  const then = thenNameIn(cik, `${year}-01-01`, `${year}-12-31`, former);
   if (!then) return { edgarName, names: [...names] };
-  return { edgarName: then.name, names: names.filter((n) => !t.name.test(n)) };
+  const t = TAKEN_NAMES[Number(cik)];
+  return { edgarName: then, names: names.filter((n) => !t.name.test(n) || t.then.test(n)) };
 }

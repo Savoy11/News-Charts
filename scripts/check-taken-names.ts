@@ -12,12 +12,15 @@ import { frSearchTerm } from "../lib/frCompany";
 import { backfillRegulations, namesForYear } from "../lib/ingest/frBackfill";
 import { SOURCES } from "../lib/ingest/store";
 import { secCaseEvents } from "../lib/secCases";
+import { OWN_RECORD_FROM, ownPastLabelled, predecessorsOf } from "../lib/predecessors";
+import { backfillNews } from "../lib/ingest/newsBackfill";
 import {
   OWN_RECORD_SOURCES,
   OWN_RECORD_SOURCE_IDS,
   TAKEN_NAMES,
   hiddenAsTaken,
   takenBefore,
+  thenNameIn,
   withoutTakenNames,
   yearSearchNames,
 } from "../lib/takenNames";
@@ -47,7 +50,7 @@ const nameOf = (cik: number) => rows.find(([c]) => c === cik)?.[2];
 
 console.log("The table");
 const entries = Object.entries(TAKEN_NAMES).map(([cik, t]) => ({ cik: Number(cik), ...t }));
-check("28 records, each the ticker the committed index gives its CIK", entries.length === 28 && entries.every((e) => rows.some(([c, t]) => c === e.cik && t === e.ticker)),
+check("32 records, each the ticker the committed index gives its CIK", entries.length === 32 && entries.every((e) => rows.some(([c, t]) => c === e.cik && t === e.ticker)),
   entries.filter((e) => !rows.some(([c, t]) => c === e.cik && t === e.ticker)).map((e) => `${e.ticker} ${e.cik}`));
 check("  …each with a day, the accession of the filing that gives it, a kind and its reasons",
   entries.every((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.from) && /^\d{10}-\d{2}-\d{6}$/.test(e.filing) && ["bought", "merged", "namesake"].includes(e.kind) && e.why.length > 80 && e.why.includes(e.ticker)));
@@ -193,7 +196,56 @@ async function walk() {
   );
   return { asked, stored, windows };
 }
-walk().then(({ asked, stored, windows }) => {
+// batch 118: GDELT's months before the day, asked under the record's own name of then
+async function newsWalk(ticker: "CZR" | "LUMN") {
+  const asked: { from: string; query: string }[] = [];
+  const kept: { title: string; aliases: string[] }[] = [];
+  const client = {
+    query: async (sql: string) => {
+      const s = sql.trim();
+      if (/^(BEGIN|COMMIT|ROLLBACK)$/.test(s)) return { rows: [] };
+      if (/FROM prices/.test(s)) return { rows: [{ listed: ticker === "CZR" ? "2014-09-22" : "1980-03-17" }] };
+      if (/^SELECT starts_on/.test(s)) return { rows: [] };
+      if (/^SELECT commercial_ok FROM sources/.test(s)) return { rows: [{ commercial_ok: true }] };
+      if (/FROM source_fetches/.test(s)) return { rows: [{ mine: null, latest: null }] };
+      if (/^INSERT INTO (source_fetches|gdelt_windows)/.test(s)) return { rows: [] };
+      throw new Error(`unexpected query: ${s.slice(0, 80)}`);
+    },
+  } as unknown as PoolClient;
+  const name = ticker === "CZR" ? "Caesars Entertainment" : "Lumen Technologies";
+  const ctx = { kind: "company" as const, displayName: name, ticker };
+  const ev = (d: string, title: string): TimelineEvent => ({ id: `${title}@${d}`, date: d, type: "news", title, source: "GDELT", sourceKey: "gdelt" });
+  await backfillNews(
+    client,
+    1,
+    { query: name, alsoKnownAs: [], byRelevance: false, scoring: { subject: ctx, aliases: aliasesFor(ctx, [name]), cik: ticker === "CZR" ? 1590895 : 18926 } },
+    {
+      today: ticker === "CZR" ? "2020-10-15" : "2020-03-15",
+      gapMs: 0,
+      budget: { left: 200 },
+      former:
+        ticker === "CZR"
+          ? [{ name: "Eldorado Resorts, Inc.", until: "2020-07-17" }, { name: "Eclair Holdings Co", until: "2014-09-19" }]
+          : [{ name: "CENTURYLINK, INC", until: "2021-01-20" }],
+      fetch: async (w, ask) => {
+        asked.push({ from: w.from, query: ask?.asked ?? "" });
+        const events =
+          w.from === "2019-06-01"
+            ? [ev("2019-06-24", "Eldorado Resorts to buy Caesars Entertainment"), ev("2019-06-10", "Eldorado Resorts profit rises"), ev("2019-06-05", "Caesars Entertainment quarterly loss")]
+            : w.from === "2020-08-01"
+              ? [ev("2020-08-03", "Caesars Entertainment reopens Las Vegas casinos")]
+              : [];
+        return { events, outcome: events.length ? "ok" : "empty" };
+      },
+      store: async (events, scoring) => {
+        for (const e of events) kept.push({ title: e.title, aliases: scoring?.aliases ?? [] });
+      },
+    },
+  );
+  return { asked, kept };
+}
+
+walk().then(async ({ asked, stored, windows }) => {
   const of = (year: number) => asked.find((a) => a.year === year);
   check("the walk asks 1994–2004 under the record's own names and 2005–2006 under both, and stores no AT&T Corp. order of 2005 before the day",
     of(1994)?.edgarName === "SOUTHWESTERN BELL CORP" && of(2004)?.edgarName === "SBC COMMUNICATIONS INC" && of(2005)?.edgarName === "AT&T INC." && of(2006)?.edgarName === "AT&T INC." &&
@@ -207,8 +259,8 @@ walk().then(({ asked, stored, windows }) => {
   const c = scan.companies;
   const readings = new Map<string, number>();
   for (const x of c) readings.set(x.reading, (readings.get(x.reading) ?? 0) + 1);
-  check("173 companies whose present name an older record carried, each read: 28 took it from another company, 25 had it by their first price, 86 are the same company's other record, 34 for the other reasons",
-    c.length === 173 && readings.get("taken") === 28 && readings.get("before") === 25 && readings.get("own") === 86 && new Set(c.map((x) => x.cik)).size === 173 &&
+  check("173 companies whose present name an older record carried, each read: 32 took it from another company, 25 had it by their first price, 86 are the same company's other record, 30 for the other reasons",
+    c.length === 173 && readings.get("taken") === 32 && readings.get("before") === 25 && readings.get("own") === 86 && new Set(c.map((x) => x.cik)).size === 173 &&
       [...readings.keys()].every((k) => ["taken", "before", "own", "brand", "new", "business", "history", "short", "shared", "namesake", "nostart", "noprice"].includes(k)),
     Object.fromEntries(readings));
   check("  …every one the table holds is read \"taken\" in the scan, and every \"taken\" in the scan is in the table",
@@ -222,8 +274,50 @@ walk().then(({ asked, stored, windows }) => {
       return !!x.first && e.from > x.first;
     }),
     entries.map((e) => `${e.ticker} ${c.find((y) => y.cik === e.cik)?.first} < ${e.from}`));
-  check("  …three namesakes are read but not yet entered (Lightbridge, Valor Energy, Meridian Holdings), and the checklist names them",
-    c.filter((x) => x.reading === "namesake").map((x) => x.ticker).sort().join() === "LTBR,MRDN,VAI" && /LTBR, VAI and MRDN/.test(read("docs/MASTER-CHECKLIST.md")));
+  // batch 118: batch 117's three namesakes dated, and the tickers whose history is another record's mapped
+  check("  …no namesake is left undated: Lightbridge, Valor Energy and Meridian Holdings are in the table (batch 118), with Dawson",
+    !c.some((x) => x.reading === "namesake") && ["LTBR", "VAI", "MRDN", "DWSN"].every((t) => c.find((x) => x.ticker === t)?.reading === "taken"));
+  check("  …and every ticker whose history is another record's is mapped to it, its record's own past labelled, as Merck's: MRK, SSYS, WCN",
+    c.filter((x) => x.reading === "history").map((x) => x.ticker).sort().join() === "MRK,SSYS,WCN" &&
+      c.filter((x) => x.reading === "history").every((x) => predecessorsOf(x.cik).length > 0 && !!OWN_RECORD_FROM[x.cik] && OWN_RECORD_FROM[x.cik].from === predecessorsOf(x.cik)[0].until));
+
+  console.log("\nBatch 118: what the scan left open");
+  const DWSN = 799165;
+  check("TGC's record took Dawson Geophysical's name and ticker on 2015-02-11, and DWSN's chart before is TGC's: old Dawson's 2013 news is not DWSN's, the merger's own is",
+    takenBefore(DWSN, "2013-05-01", "Dawson Geophysical wins seismic contract") && !takenBefore(DWSN, "2014-10-09", "TGC Industries and Dawson Geophysical to merge") &&
+      !takenBefore(DWSN, "2016-01-01", "Dawson Geophysical reports"));
+  check("  …and the three namesakes are dated: Lightbridge from 2009-09-21, Valor Energy from 2026-08-25, Meridian Holdings from 2026-02-26",
+    TAKEN_NAMES[1084554]?.from === "2009-09-21" && TAKEN_NAMES[1711012]?.from === "2026-08-25" && TAKEN_NAMES[1437925]?.from === "2026-02-26" &&
+      takenBefore(1084554, "2006-04-01", "Lightbridge, Inc. reports results") && !takenBefore(1084554, "2007-03-01", "Thorium Power and Lightbridge sign"));
+  const linFormer = [{ name: "ZAMALIGHT PLC", until: "2017-07-12" }];
+  check("a record with no name of its own before the day asks those years under the present name, never its merger's shell: Linde plc's 2017 is not \"Zamalight\", Six Flags' 2023 not \"CopperSteel\"",
+    thenNameIn(1707925, "2017-01-01", "2017-12-31", linFormer) === null && yearSearchNames(1707925, 2017, "LINDE PLC", ["Linde Group"], linFormer).edgarName === "LINDE PLC" &&
+      yearSearchNames(1999001, 2023, "Six Flags Entertainment Corporation/NEW", [], [{ name: "CopperSteel HoldCo, Inc.", until: "2024-06-26" }]).edgarName === "Six Flags Entertainment Corporation/NEW" &&
+      entries.filter((e) => e.noOwnNameBefore).map((e) => e.ticker).sort().join() === "FUN,LIN");
+  check("  …a former name holding the taken name is still the record's own where it holds its then-name too: \"SCP POOL CORP\" for SCP Pool's 2005",
+    thenNameIn(945841, "2005-01-01", "2005-12-31", [{ name: "SCP POOL CORP", until: "2006-05-11" }]) === "SCP POOL CORP" &&
+      yearSearchNames(945841, 2005, "POOL CORP", ["SCP Pool"], [{ name: "SCP POOL CORP", until: "2006-05-11" }]).names.join() === "SCP Pool");
+  const objet = { date: "2012-06-01", title: "Objet Ltd.: Registration (F-4)", source: "SEC EDGAR", url: "https://www.sec.gov/Archives/edgar/data/1517396/000110465912000001/x.htm" };
+  const iesi = { date: "2014-02-01", title: "EPA final order (Clean Air Act)", source: "EPA", description: "IESI NY CORPORATION (case 02-2014-0001)" };
+  const wcn = { date: "2014-02-01", title: "EPA final order (Clean Air Act)", source: "EPA", description: "WASTE CONNECTIONS OF KANSAS, INC. (case 07-2014-0001)" };
+  check("Stratasys's and Waste Connections's histories are the old records', to their mergers; Objet's and Progressive Waste's own past before says whose, theirs does not",
+    predecessorsOf(1517396)[0]?.cik === 915735 && predecessorsOf(1517396)[0]?.until === "2012-12-04" && predecessorsOf(1318220)[0]?.cik === 1057058 &&
+      predecessorsOf(1318220)[0]?.until === "2016-06-07" && ownPastLabelled(objet, 1517396).source === "SEC EDGAR · Objet, before its 2012 merger with Stratasys" &&
+      ownPastLabelled(iesi, 1318220).source === "EPA · Progressive Waste Solutions, before its 2016 merger with Waste Connections" && ownPastLabelled(wcn, 1318220).source === "EPA",
+    [ownPastLabelled(objet, 1517396).source, ownPastLabelled(iesi, 1318220).source, ownPastLabelled(wcn, 1318220).source]);
+  const czr = await newsWalk("CZR");
+  const q = (from: string) => czr.asked.find((a) => a.from === from)?.query ?? "";
+  check("GDELT's months before Eldorado took Caesars's name are asked as Eldorado Resorts, from July 2020 as Caesars Entertainment",
+    /Eldorado Resorts/.test(q("2019-06-01")) && !/Caesars/.test(q("2019-06-01")) && /Eldorado Resorts/.test(q("2020-06-01")) && /Caesars Entertainment/.test(q("2020-07-01")) &&
+      /Caesars Entertainment/.test(q("2020-08-01")) && czr.asked.length === 45,
+    czr.asked.filter((a) => ["2019-06-01", "2020-06-01", "2020-07-01"].includes(a.from)));
+  check("  …kept when a headline names either name and not only the taken one, and scored with both: Eldorado's buy and its results, not old Caesars's loss",
+    czr.kept.map((k) => k.title).join(" | ") === "Caesars Entertainment reopens Las Vegas casinos | Eldorado Resorts to buy Caesars Entertainment | Eldorado Resorts profit rises" &&
+      czr.kept[2].aliases.some((a) => /eldorado/i.test(a)) && !czr.kept[0].aliases.some((a) => /eldorado/i.test(a)),
+    czr.kept);
+  const lumn = await newsWalk("LUMN");
+  check("  …while a then-name that is a one-word name not yet measured leaves its months under today's names: CenturyLink's 2020 is asked as Lumen Technologies",
+    lumn.asked.length === 38 && lumn.asked.every((a) => /Lumen Technologies/.test(a.query) && !/CENTURYLINK/i.test(a.query)), lumn.asked.slice(0, 2));
 
   console.log(failures ? `\n${failures} check(s) failed` : "\nall taken-name checks passed");
   process.exit(failures ? 1 : 0);

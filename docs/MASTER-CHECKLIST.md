@@ -988,6 +988,88 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 114: EPA's cases under the utilities' operating companies (2026-11-07)
+
+The 2026-11-07 proposal 3, approved by the owner that day ("Approve all three, titles from the FDA's
+data"). No new source: 140 more entries in `UNITS` (`lib/epaCases.ts`) on 33 utility holding
+companies, each between the days its owner held the operating company, as batch 104's are.
+
+- [x] **The days, each read from a filing** (data.sec.gov, 63 filing lists and older pages). Each
+      date comes from the first of these that exists:
+      - the buyer's 8-K reporting the completed merger (its report day; item 2.01, or item 2 before
+        2004);
+      - else the bought company's 8-K reporting the change in control (item 5.01, or 1);
+      - else its deregistration that day (Form 15).
+
+      The list is in the comment above `UNITS`. Among them:
+      - Gulf Power is Southern's to 2018-12-31 and NextEra's from 2019-01-01 (Gulf Power's 8-K, item
+        5.01);
+      - Central and South West's companies are AEP's from 2000-06-15;
+      - GPU's are FirstEnergy's from 2001-11-07, and Allegheny's from 2011-02-25;
+      - Consolidated Natural Gas's are Dominion's from 2000-01-28, and SCANA's from 2019-01-01;
+      - ComEd and PECO are Exelon's from 2000-10-20, BGE from 2012-03-12, Pepco's from 2016-03-23;
+      - Integrys's are WEC's from 2015-06-29, and Wisconsin Gas from 2000-04-26 (WICOR's 8-K, the
+        scout's draft having no day);
+      - Narragansett Electric is National Grid's to 2022-05-24 and PPL's from 2022-05-25 (a sale the
+        draft did not have);
+      - Columbia Gas of Massachusetts is NiSource's to its sale of 2020-10-09.
+- [x] **Corrections to the scout's draft**, found reading the filings and the names:
+      - Illinois Power is still Ameren's (now Ameren Illinois): no end day;
+      - Bay State Gas, Yankee Gas, Holyoke Water Power and Edison Mission are left out, adding
+        nothing: no case names the first three after their purchase, nor Edison Mission while
+        Edison International held it;
+      - FirstEnergy Solutions and its generation and nuclear companies end on 2018-03-30, the day
+        before FirstEnergy's 8-K reports them gone in bankruptcy;
+      - Vistra's Luminant and TXU Energy count from its first price (2016-10-05, read from Yahoo),
+        and "TXU ELECTRIC DELIVERY", now Oncor, is not Vistra's;
+      - names that are no utility's are kept off: "SOUTHERN POWER DISTRICT" (Nebraska's),
+        "INTERSTATE POWER SYSTEMS" (an engine dealer), "MISSISSIPPI POWER & LIGHT" (Entergy
+        Mississippi's old name);
+      - each unit is asked by a key of its own, never one inside unrelated words ("dte" sits
+        inside "unitedtechnologies", "generation" in thousands of names).
+- [x] **Two purchases older than EDGAR.** Southern bought Savannah Electric in 1988, and Northeast
+      Utilities bought PSNH in 1992. EDGAR's 1993 indexes hold no filing of either, so each unit counts
+      from its first filing in the buyer's system:
+      - Savannah Electric from 1994-03-28: its 10-K for 1993 is one filing with Southern's;
+      - PSNH from 1994-02-09: its holding-company certificate, its 10-K for 1993 filed by Northeast
+        Utilities.
+
+      Four of their cases (1990, 1992, 1993 ×2) wait for those days, which www.sec.gov's documents
+      give once `NEWS_CHARTS_CONTACT` is set.
+- [x] **Read by hand:** all 253 distinct defendant names the patterns take on EPA's whole file, each
+      inside its days. None is another company's.
+- [x] **Measured on the replay** (before first prices):
+      - 7,964 rows on 683 companies (7,545 on 670), 6,817 before 2017, and no row of before lost;
+      - 419 more rows on 31 companies, 261 of them a court case or a penalty, 218 before 2017;
+      - 13 companies had no EPA row and now do: PSEG 44, Exelon 22, NextEra 19, NiSource and DTE 16,
+        WEC 13, Vistra 11 (4 from its first price), OGE 6, Hawaiian Electric 5, MGE, IDACORP and TXNM
+        4, Evergy 1;
+      - among the larger pages: AEP 5→40, Southern 3→37, Dominion 2→34, National Grid 5→27,
+        FirstEnergy 3→25.
+      - Ohio Edison's New Source Review decree of 2005 is now on FirstEnergy's page, NIPSCO's of 2011
+        on NiSource's, Consumers Energy's of 2014 on CMS's. Batch 113's figures come with them.
+- [x] **The slice** gains every row of the five tables for the 1,133 cases the new units' keys name,
+      from the same copy of 2026-10-31: 7,161 cases, 2.32 MB. Its old rows are untouched.
+- **Left as it is:** the Justice Department archive's titles naming these companies (PSEG Fossil,
+  Ohio Edison, Alabama Power, FirstEnergy Nuclear) are not in the release map. Whether today's rule
+  gives them to the parent was not replayed.
+- **Requests:** 64, all logged in the session scratchpad (`b114/requests.log`), each with User-Agent
+  `News Charts Research` and no email address, at least 1.1 s apart:
+  - data.sec.gov 63: 52 companies' filing lists and 11 older pages;
+  - query1.finance.yahoo.com 1: Vistra's first trading day.
+- **Checks:** check:epa-cases 87 (+11):
+  - NIPSCO's, Consumers Energy's and Ohio Edison's decrees, and Ohio Edison's past off FirstEnergy
+    before its first price;
+  - Gulf Power and Narragansett on each side of their sales, Columbia Gas of Massachusetts to its
+    sale, and Progress Energy and PECO only from their purchases;
+  - the guards, and the Georgia Power cases on Southern and GPJA;
+  - the utilities' counts, every key inside every name it serves, and PSEG's ingest by its units'
+    keys alone;
+  - the totals and batch 113's figures re-pinned on the larger slice.
+
+  On main the new cases fail. `npm run check` and `npm run lint` pass. HawkScan cannot run here
+  (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 113: EPA's own figures on its rows, and the 2026-11-07 approvals filed (2026-11-07)
 
 The owner's call of 2026-11-07, "Approve all three, titles from the FDA's data", on the 2026-11-07
@@ -8702,15 +8784,18 @@ already held, but new investment goes to securities coverage first.
         database, is dropped.
       - *Derived from [`docs/proposals/2026-11-07-proposals.md`](proposals/2026-11-07-proposals.md)
         #1, approved 2026-11-07.*
-- [ ] `P2` **EPA's cases against the utilities' operating companies.** No new source: approved by
+- [x] `P2` **EPA's cases against the utilities' operating companies.** No new source: approved by
       the owner 2026-11-07. About 60 more `UNITS` patterns on 31 utility holding companies (Georgia
       Power on Southern, Ohio Edison on FirstEnergy, PSE&G on PSEG), each ownership day read from an
       EDGAR filing at build time, as batch 104's were, and a guard for "Mississippi Power & Light"
       (Entergy's, not Southern's).
       - **Measured** by the scout: 442 cases, 213 a court case or a penalty, 186 of those before
         2017; 13 pages gain their first EPA rows (PSEG 0→44, Exelon 0→22).
+      - ✅ **Done in batch 114** (see its section): 140 unit entries on 33 companies, each day read
+        from 63 data.sec.gov filing lists and pages; 419 more rows on 31 companies, 261 a court case
+        or a penalty; 13 companies gain their first EPA rows; every caught name read by hand.
       - *Derived from [`docs/proposals/2026-11-07-proposals.md`](proposals/2026-11-07-proposals.md)
-        #3, approved 2026-11-07. Next: batch 114.*
+        #3, approved 2026-11-07.*
 - [ ] `P2` **New indications and other efficacy supplements, for drugs whose holder never
       changed.** A new dataset, approved by the owner 2026-11-07: Drugs@FDA through openFDA (CC0, no
       key), kept only where today's sponsor is the applicant batch 105's compilation names, so a

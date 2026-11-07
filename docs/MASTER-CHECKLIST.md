@@ -988,6 +988,103 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 115: the FDA's efficacy supplements, for drugs whose holder never changed (2026-11-07)
+
+The 2026-11-07 proposal 2, approved by the owner that day ("Approve all three, titles from the FDA's
+data"). A new source, `fda_supplements` (id 36): Drugs@FDA as openFDA publishes it, public domain
+under CC0, no key and no request at ingest.
+
+- [x] **The file.** `npm run sync:fda-supplements` reads openFDA's Drugs@FDA zip (about 9 MB) and
+      writes `data/fda-supplements.json` (418 KB). It keeps the approved efficacy supplements of the
+      compilation's applications: class "EFFICACY", status "AP", on that status's day.
+      - 3,132 supplements on 861 applications, from openFDA's copy of 2026-11-06;
+      - each keeps its number, day, review, orphan mark and the letter Drugs@FDA lists;
+      - 2,743 have a letter: 2,721 PDFs and 22 pages of the 1990s.
+
+      A letter is kept only as a path on the FDA's own document host, and is always asked at
+      https://. About three in four are linked at http:// in the file.
+- [x] **Whose a supplement is.** A supplement is a company's only where the drug's holder never left
+      it, and then by batch 105's rule unchanged, on the supplement's own day, from the first price.
+      The holder never left when one of these is true:
+      - today's sponsor is the applicant by name. Legal, kind and place words and Drugs@FDA's
+        shortenings are left out, so "NOVARTIS PHARMS CORP" is "Novartis Pharmaceuticals
+        Corporation" (`sameName`);
+      - or today's sponsor is one of the company's own names of any year. So Celgene's Revlimid
+        (BRISTOL MYERS SQUIBB today) is BMS's from 2019-11-20, and Loxo's Retevmo is Lilly's;
+      - or it is one of three short forms Drugs@FDA writes, read by hand: "LILLY", "BRISTOL"
+        and "NOVO" (`SPONSOR_SPELLINGS`).
+
+      The scout's looser test, a shared word, was not taken: it passes "Aventis → SANOFI AVENTIS
+      US", "Upjohn → PHARMACIA AND UPJOHN" and "LG Life Sciences → LG CHEM", where the holder
+      changed.
+- [x] **Titles from the data alone,** the owner's call. A row reads "FDA approves an efficacy
+      supplement to Keytruda (pembrolizumab)". It gives the supplement's number, the applicant's
+      application, the day, the review and the orphan mark, and links the letter, or Drugs@FDA's
+      page where none is listed. No row says "new indication", which only a letter can.
+- [x] **Read by hand:** all 135 page, applicant and sponsor pairs the rule makes. Each is one of:
+      - the company's own name;
+      - a unit on its days: Centocor, Genzyme, Alexion, Human Genome Sciences, Anacor, Millennium,
+        Ariad;
+      - Sandoz on Novartis from the merger;
+      - Schering and Organon on Merck under batch 110's label (14 rows);
+      - Organon on Akzo Nobel to 2007;
+      - GE HealthCare on GE, then on GEHC.
+
+      One was wrong, and it was batch 105's: old Biogen, Inc.'s past was on Biogen's page.
+- [x] **A fix to batch 105:** IDEC Pharmaceuticals, Biogen's record (CIK 875045), bought Biogen, Inc.
+      on 2003-11-12 and took its name. The record's 8-K of that day reports it (items 2, 5 and 7), and
+      its name changes that day (data.sec.gov). So "Biogen" before that day is no page's
+      (`NOT_THE_APPLICANT` gains a `before` day). Avonex (1996) and Amevive (2003-01-30) come off
+      BIIB; batch 105's counts become 581 and 450 (from 583 and 452).
+- [x] **Measured** with the committed index's names and Yahoo's first trading days (batch 105's 26,
+      Akzo Nobel's, and 28 read now):
+      - before first prices: 1,212 supplements on 51 companies, 441 before 2017;
+      - from first prices: 1,191 on 48 companies, 420 before 2017 and 131 before 2005. By decade:
+        1990s 56, 2000s 162, 2010s 408, 2020s 565;
+      - most on Bristol-Myers Squibb 172, Merck 171, Novartis 116, Lilly 97, Johnson & Johnson 96,
+        AstraZeneca 71, Gilead 71, Amgen 58, AbbVie 45, Regeneron 38, Pfizer 33 and Novo Nordisk 28.
+        The scout's strict test gave 973 on 27 pages.
+- **Left off, as the proposal said:** 553 supplements (374 before 2017) whose applicant was the
+  company that day but whose holder changed and no field says when. Among them:
+  - GSK's oncology drugs now Novartis's (40);
+  - Abbott's now AbbVie's (43);
+  - Merck's and Schering's now Organon's (48);
+  - BMS's diabetes drugs now AstraZeneca's (15);
+  - Pfizer's now Viatris's and Upjohn's (26).
+
+  Also left off are moves inside one company that no name shows:
+  - Pfizer's held by PF Prism and CPPI, Wyeth's among them (54);
+  - J&J's by Janssen, Tibotec's and R.W. Johnson's among them (53);
+  - Merck's by "MSD SUB MERCK", "MSD" and "MSD MERCK CO" (42);
+  - old Merck's and Schering's under "MERCK SHARP DOHME" (16).
+
+  A hand list could date the sales or join the moves; that is a question for the owner
+  (OWNER-ACTIONS).
+- **Requests:** 37, all logged in the session scratchpad (`b115/requests.log`). Each was sent with
+  User-Agent `News Charts Research` and no email address, at least 1.1 s apart:
+  - query1.finance.yahoo.com 30: 28 first trading days and 2 retries after a 429;
+  - data.sec.gov 2: Biogen's filing list and its older page;
+  - open.fda.gov 2: the licence and the download page;
+  - www.fda.gov 1: the Drugs@FDA glossary, which defines no "efficacy supplement";
+  - www.sec.gov 1: Biogen's 8-K, refused (403) without a contact;
+  - download.open.fda.gov 1: the new live case, which passes.
+
+  The file itself is the scout's saved copy of 2026-11-06.
+- **Checks:** check:fda-supplements is new, with 57 checks on a committed slice of the raw file (17
+  applications and an ANDA). They cover:
+  - the reader;
+  - the committed file;
+  - the name test;
+  - the proposal's eight cases: Keytruda's S-016 on MRK; Remicade's of 2006 on JNJ through
+    Centocor; no Humira supplement on any page; Schering's of 2008 labelled on MRK; Organon's of
+    2002 and 2005 on AKZOY; Celgene's before 2019-11-20 on no page; the http letter asked at
+    https; and no "new indication";
+  - the totals, the company step and the wiring.
+
+  check:fda-approvals is 50 (+1, old Biogen); check:contact counts 34 readers. The live case is
+  check:live's `fda_supplements`. On main the new check cannot run, since the reader does not
+  exist. `npm run check` and `npm run lint` pass. HawkScan cannot run here (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 114: EPA's cases under the utilities' operating companies (2026-11-07)
 
 The 2026-11-07 proposal 3, approved by the owner that day ("Approve all three, titles from the FDA's
@@ -8796,15 +8893,19 @@ already held, but new investment goes to securities coverage first.
         or a penalty; 13 companies gain their first EPA rows; every caught name read by hand.
       - *Derived from [`docs/proposals/2026-11-07-proposals.md`](proposals/2026-11-07-proposals.md)
         #3, approved 2026-11-07.*
-- [ ] `P2` **New indications and other efficacy supplements, for drugs whose holder never
+- [x] `P2` **New indications and other efficacy supplements, for drugs whose holder never
       changed.** A new dataset, approved by the owner 2026-11-07: Drugs@FDA through openFDA (CC0, no
       key), kept only where today's sponsor is the applicant batch 105's compilation names, so a
       supplement is never an acquirer's. **The owner's call:** titles from the data alone; no
       approval letter is read.
       - **Measured** by the scout through batch 105's rule from first prices: 973 supplements on 27
         pages, 352 before 2017; no false match in 25 sampled rows and all 58 page–sponsor pairs.
+      - ✅ **Done in batch 115** (see its section): a new source, `fda_supplements` (id 36), and a
+        committed file of 3,132 supplements; 1,191 on 48 pages from first prices, 420 before 2017;
+        all 135 page, applicant and sponsor pairs read by hand. Old Biogen's two approvals of before
+        2003 come off Biogen's page.
       - *Derived from [`docs/proposals/2026-11-07-proposals.md`](proposals/2026-11-07-proposals.md)
-        #2, approved 2026-11-07. Next: batch 115.*
+        #2, approved 2026-11-07.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

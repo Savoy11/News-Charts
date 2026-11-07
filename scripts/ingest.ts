@@ -51,6 +51,7 @@ import { cpscFor, walkCpsc } from "../lib/ingest/cpscWalk";
 import { cftcFor, walkCftc } from "../lib/ingest/cftcWalk";
 import { digestFor, walkDigest } from "../lib/ingest/secDigestWalk";
 import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
+import { fdaSupplementsFor } from "../lib/ingest/fdaSupplementsFor";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
@@ -118,6 +119,8 @@ export const COMPANY_SOURCES = [
   "sec_digest",
   // …and the FDA's new-drug approvals since 1985, where the applicant is the company (batch 105)
   "fda_approvals",
+  // …and their later efficacy supplements, where the drug never left the company (batch 115)
+  "fda_supplements",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -819,6 +822,15 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("fda_approvals", `FDA new-drug approvals whose applicant is ${company.name}`, () =>
     fdaApprovalsFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
+
+  /**
+   * The FDA's later approvals of those drugs, each efficacy supplement on its day (batch 115): the
+   * committed Drugs@FDA file, read monthly, where the drug never left the company and the applicant
+   * was the company, its firm or its unit that day, from its first price. No request.
+   */
+  await run("fda_supplements", `FDA efficacy supplements to drugs ${company.name} held`, () =>
+    fdaSupplementsFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
   );
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no

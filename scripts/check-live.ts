@@ -54,6 +54,8 @@ import { cpscEvents, fetchRecalls as fetchCpscRecalls } from "../lib/cpscRecalls
 import { fetchCftcPage } from "../lib/cftc";
 import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue } from "../lib/secDigest";
 import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
+import { DRUGSFDA_ENTRY, DRUGSFDA_FILE, readSupplements } from "../lib/fdaSupplements";
+import { readZip } from "../lib/zip";
 import { releaseNamesOn } from "../lib/releaseNames";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
@@ -853,6 +855,29 @@ export const CASES: LiveCase[] = [
       if (approvals.length < 1_387) out.push(`the workbook holds ${approvals.length} approvals, fewer than the 1,387 of 2026-11-06`);
       const prozac = approvals.find((a) => a.application === "18936");
       if (prozac?.day !== "1987-12-29" || prozac.applicant !== "Eli Lilly") out.push(`Prozac reads ${JSON.stringify(prozac)}`);
+      return out;
+    },
+  },
+  {
+    name: "FDA efficacy supplements — openFDA's Drugs@FDA file as `npm run sync:fda-supplements` reads it; Keytruda's S-016 (batch 115)",
+    covers: ["fda_supplements"],
+    hosts: ["download.open.fda.gov"],
+    async run() {
+      // measured 2026-11-06: 29,446 applications; of the compilation's, 3,132 approved efficacy
+      // supplements on 861; Keytruda's S-016, 2017-05-10, a priority review, sponsor MERCK SHARP DOHME
+      const res = await fetch(DRUGSFDA_FILE, { headers: { ...UA }, signal: AbortSignal.timeout(120_000) });
+      if (!res.ok) return [`the file: HTTP ${res.status}`];
+      const entry = readZip(new Uint8Array(await res.arrayBuffer()), [DRUGSFDA_ENTRY]).get(DRUGSFDA_ENTRY);
+      if (!entry) return [`the zip holds no ${DRUGSFDA_ENTRY}`];
+      const results = (JSON.parse(entry.toString("utf8")) as { results?: unknown[] }).results ?? [];
+      const apps = readSupplements(results as Parameters<typeof readSupplements>[0]);
+      const out: string[] = [];
+      const n = apps.reduce((k, a) => k + a.supplements.length, 0);
+      if (results.length < 29_446) out.push(`the file holds ${results.length} applications, fewer than the 29,446 of 2026-11-06`);
+      if (n < 3_132) out.push(`${n} efficacy supplements read, fewer than the 3,132 of 2026-11-06`);
+      const keytruda = apps.find((a) => a.application === "BLA125514");
+      const s016 = keytruda?.supplements.find((s) => s.number === "16");
+      if (keytruda?.sponsor !== "MERCK SHARP DOHME" || s016?.day !== "2017-05-10" || s016.review !== "priority") out.push(`Keytruda reads ${JSON.stringify({ sponsor: keytruda?.sponsor, s016 })}`);
       return out;
     },
   },

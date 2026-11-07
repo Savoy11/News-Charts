@@ -187,6 +187,10 @@ async function main(): Promise<void> {
     ["Claritin", "Zetia", "Cedax", "Dormalin", "Noxafil", "Saphris", "Victrelis"].every((d) => on("MRK", named(d))) && !on("MRK", named("Remeron")));
   check("  …and a bought company's approvals before its purchase stay its own: Alexion's Soliris (2007) and Ultomiris (2018) are not AstraZeneca's, Anacor's Kerydin (2014) not Pfizer's",
     !on("AZN", named("Soliris")) && !on("AZN", named("Ultomiris")) && !on("PFE", named("Kerydin")));
+  // batch 115: IDEC Pharmaceuticals, BIIB's record, bought Biogen, Inc. on 2003-11-12 and took its name
+  check("  old Biogen's approvals before IDEC bought it and took its name on 2003-11-12 are no page's: Avonex (1996) and Amevive (2003-01-30); Tysabri (2004, Biogen Idec) and Spinraza (2016, Biogen) are BIIB's",
+    pagesOf(named("Avonex")).length === 0 && pagesOf(named("Amevive")).length === 0 && on("BIIB", named("Tysabri")) && on("BIIB", named("Spinraza")) &&
+      NOT_THE_APPLICANT[rowOf("BIIB")[0]]?.[0]?.before === "2003-11-12");
   check("every hand-read name says why, and every day is a day",
     Object.values(APPLICANT_NAMES).every((c) => c.names.every((n) => n.why.length > 15 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.entries(APPLICANT_NAMES).every(([cik, c]) => companies.some(([x, t]) => x === Number(cik) && t === c.ticker)));
@@ -199,12 +203,12 @@ async function main(): Promise<void> {
   }
   const total = [...out.values()].reduce((n, v) => n + v.length, 0);
   const before2017 = [...out.values()].flat().filter((e) => e.date < "2017").length;
-  check("before any first price: 583 approvals on 88 companies, 374 before 2017 (570 and 361 before batch 110's Schering-Plough on MRK; 562 on 87 and 353 before batch 108's Organon on Akzo Nobel; 556 and 352 before batch 107's six; the first price then keeps off each company's years before it listed: Alcon's before 2019, Bausch + Lomb's before 2022, Organon's before 2021, Sandoz's before Novartis's listing)",
-    total === 583 && out.size === 88 && before2017 === 374, `${total} on ${out.size}; ${before2017} before 2017`);
+  check("before any first price: 581 approvals on 88 companies, 372 before 2017 (583 and 374 before batch 115 took old Biogen's two off BIIB; 570 and 361 before batch 110's Schering-Plough on MRK; 562 on 87 and 353 before batch 108's Organon on Akzo Nobel; 556 and 352 before batch 107's six; the first price then keeps off each company's years before it listed: Alcon's before 2019, Bausch + Lomb's before 2022, Organon's before 2021, Sandoz's before Novartis's listing)",
+    total === 581 && out.size === 88 && before2017 === 372, `${total} on ${out.size}; ${before2017} before 2017`);
   const floored = Object.entries(FIRST_PRICES).map(([t, from]) => approvalEvents(APPROVALS, namesOf(t), { cik: rowOf(t)[0], from }));
   const onPages = floored.flat();
-  check("from the 26 drugmakers' first prices: 452 approvals, 316 before 2017, 71 before EDGAR (1994) (439, 303 and 66 before batch 110's Schering-Plough; 435 and 302 before batch 107's units)",
-    onPages.length === 452 && onPages.filter((e) => e.date < "2017").length === 316 && onPages.filter((e) => e.date < "1994").length === 71,
+  check("from the 26 drugmakers' first prices: 450 approvals, 314 before 2017, 71 before EDGAR (1994) (452 and 316 before batch 115's old Biogen; 439, 303 and 66 before batch 110's Schering-Plough; 435 and 302 before batch 107's units)",
+    onPages.length === 450 && onPages.filter((e) => e.date < "2017").length === 314 && onPages.filter((e) => e.date < "1994").length === 71,
     `${onPages.length}; ${onPages.filter((e) => e.date < "2017").length} before 2017; ${onPages.filter((e) => e.date < "1994").length} before 1994`);
   const top = Object.keys(FIRST_PRICES).map((t, i) => [t, floored[i].length] as const).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([t, n]) => `${t} ${n}`).join(", ");
   check("  …most on Merck 58, Johnson & Johnson 47, Novartis 44, Pfizer 42, Bristol-Myers Squibb 39, Lilly 34", top === "MRK 58, JNJ 47, NVS 44, PFE 42, BMY 39, LLY 34", top);
@@ -239,8 +243,8 @@ async function main(): Promise<void> {
   check("  …the ingest asks it for every company", /await run\("fda_approvals", [^\n]+\n\s*fdaApprovalsFor\(client, subjectId, \{[^}]*cik: company\.cik, fundSeries \}\),/.test(read("scripts/ingest.ts")));
   check("  …synced by `npm run sync:fda-approvals` from the FDA's workbook, and credited",
     /"sync:fda-approvals": "tsx scripts\/sync-fda-approvals\.ts"/.test(read("package.json")) && NME_FILE === "https://www.fda.gov/media/177921/download?attachment" &&
-      /new-drug approvals from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
-      /new-drug approvals from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
+      /new-drug approvals (?:and their efficacy supplements )?from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
+      /new-drug approvals (?:and their efficacy supplements )?from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   process.exit(fail ? 1 : 0);

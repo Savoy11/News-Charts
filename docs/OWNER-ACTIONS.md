@@ -209,8 +209,10 @@ Raised by the November batches, each recorded in the master checklist:
 
 - ~~**The 2026-11-07 proposals** (batch 112, `docs/proposals/2026-11-07-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`.~~ **Decided 2026-11-07: all three approved, titles from the
-  FDA's data.** #1 is built in batch 113 and #3 in batch 114; #2 is next (batch 115). After deploying
-  batch 113, run `npm run db:migrate` (db/043): the next ingest reads EPA's file again whole.
+  FDA's data.** #1 is built in batch 113, #3 in batch 114 and #2 in batch 115. After deploying
+  batch 113, run `npm run db:migrate` (db/043): the next ingest reads EPA's file again whole. After
+  deploying batch 115, run `npm run sync:fda-supplements` monthly, and after each yearly
+  `npm run sync:fda-approvals`; it reads one file from openFDA, with no key.
   1. EPA's own penalty and work-ordered figures on the EPA rows pages already hold (1,079 rows gain
      the penalty EPA's settlement record gives, 755 before 2017; AEP's 2007 decree among them);
   2. new indications and other efficacy supplements from Drugs@FDA, only for drugs whose holder never
@@ -218,6 +220,23 @@ Raised by the November batches, each recorded in the master checklist:
      each approval letter read once;
   3. EPA's cases against the utilities' operating companies (442 cases on 31 utilities; PSEG 0→44,
      Exelon 0→22), each ownership day to be read from filings at build time.
+
+- **Drugs whose holder changed** (batch 115): 553 of the FDA's efficacy supplements (374 before
+  2017) were filed by a company on its page that day, but the drug has since moved and Drugs@FDA
+  does not say when. They stay off every page, as the proposal said. Two hand lists could bring
+  some back; each is yours to approve or leave:
+  1. **the moves inside one company**, no sale at all. These would be joined by hand:
+     - Pfizer's drugs held by PF Prism and CPPI (54);
+     - J&J's by Janssen (53);
+     - Merck's by "MSD" (42);
+     - old Merck's and Schering's under "MERCK SHARP DOHME" (16).
+  2. **the sales**, dated by each sale's close in the seller's or buyer's filings, so that each
+     supplement before the sale counts for the seller:
+     - Abbott's drugs to AbbVie on 2013-01-01 (43);
+     - Merck's to Organon in 2021 (48);
+     - GSK's oncology drugs to Novartis in 2015 (40);
+     - Pfizer's to Viatris in 2020 (26);
+     - BMS's diabetes drugs to AstraZeneca in 2014 (15).
 
 - ~~**Merck's history** (batch 108).~~ **Decided 2026-11-07: "Add Schering-Plough, labelled", built
   in batch 110.** MRK's SEC record was Schering-Plough's until the 2009 merger, when it took Merck's

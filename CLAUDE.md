@@ -121,6 +121,11 @@ The FDA's new-drug approvals since 1985 (`lib/fdaApprovals.ts`, batch 105) come 
 workbook read once a year (`npm run sync:fda-approvals`, `lib/xlsx.ts`): an approval is the page of
 the company that applied, by the caption rule, the recall map's firms (`FDA_FIRMS`) or the names only
 approvals use (`APPLICANT_NAMES`), each on its days; an acquisition's past is never the buyer's.
+Their later efficacy supplements (`lib/fdaSupplements.ts`, batch 115) come from Drugs@FDA through
+openFDA, a committed file read monthly (`npm run sync:fda-supplements`): a supplement is a page's only
+where the drug's holder never left the company (`holderKept`: today's sponsor is the applicant by
+name, a name of the company, or one of `SPONSOR_SPELLINGS`), then by the same rule on its own day;
+its title says only "an efficacy supplement", never "new indication".
 
 A row of one of the eight multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
 CFTC) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
@@ -187,6 +192,7 @@ npm run sync:aliases     # rebuild data/company-aliases.json from Wikidata (afte
 npm run sync:word-names  # rebuild data/english-word-names.json and data/shared-name-words.json (after sync:tickers)
 npm run sync:digest-records # rebuild data/digest-records.json from EDGAR's 1993–1996 indexes (after sync:tickers)
 npm run sync:fda-approvals  # rebuild data/fda-nme-approvals.json from the FDA's workbook (once a year, in the spring)
+npm run sync:fda-supplements # rebuild data/fda-supplements.json from openFDA's Drugs@FDA file (monthly, and after sync:fda-approvals)
 ```
 
 The `check-*.ts` scripts in the `check` chain are offline by construction (network/fetch is

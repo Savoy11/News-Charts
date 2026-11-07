@@ -207,6 +207,16 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- **The 2026-11-07 proposals** (batch 112, `docs/proposals/2026-11-07-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`.
+  1. EPA's own penalty and work-ordered figures on the EPA rows pages already hold (1,079 rows gain
+     the penalty EPA's settlement record gives, 755 before 2017; AEP's 2007 decree among them);
+  2. new indications and other efficacy supplements from Drugs@FDA, only for drugs whose holder never
+     changed (973 on 27 pages, 352 before 2017), with one call inside it: titles from the data, or
+     each approval letter read once;
+  3. EPA's cases against the utilities' operating companies (442 cases on 31 utilities; PSEG 0→44,
+     Exelon 0→22), each ownership day to be read from filings at build time.
+
 - ~~**Merck's history** (batch 108).~~ **Decided 2026-11-07: "Add Schering-Plough, labelled", built
   in batch 110.** MRK's SEC record was Schering-Plough's until the 2009 merger, when it took Merck's
   name and ticker. Merck's page carries old Merck's history to the merger, as batch 108 built, and

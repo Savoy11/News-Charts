@@ -64,10 +64,10 @@ async function store(client: PoolClient, cases: readonly EpaCase[], modified: st
     for (let i = 0; i < unique.length; i += CHUNK) {
       const part = unique.slice(i, i + CHUNK);
       await client.query(
-        `INSERT INTO epa_cases (case_number, name, court, filed_on, step, penalty, laws, defendants, docket, name_keys)
-         SELECT n, nm, ct, d, st, p::numeric, string_to_array(l, '|'), string_to_array(df, '|'), dk, k
-           FROM unnest($1::text[], $2::text[], $3::boolean[], $4::date[], $5::text[], $6::text[], $7::text[], $8::text[], $9::text[], $10::text[])
-             AS t(n, nm, ct, d, st, p, l, df, dk, k)`,
+        `INSERT INTO epa_cases (case_number, name, court, filed_on, step, penalty, laws, defendants, docket, name_keys, penalty_settled, work_ordered, summary)
+         SELECT n, nm, ct, d, st, p::numeric, string_to_array(l, '|'), string_to_array(df, '|'), dk, k, ps, w::numeric, sm
+           FROM unnest($1::text[], $2::text[], $3::boolean[], $4::date[], $5::text[], $6::text[], $7::text[], $8::text[], $9::text[], $10::text[], $11::boolean[], $12::text[], $13::text[])
+             AS t(n, nm, ct, d, st, p, l, df, dk, k, ps, w, sm)`,
         [
           part.map((c) => c.number),
           part.map((c) => c.name),
@@ -79,6 +79,9 @@ async function store(client: PoolClient, cases: readonly EpaCase[], modified: st
           part.map((c) => c.defendants.map((d) => d.replaceAll("|", "/")).join("|")),
           part.map((c) => c.docket),
           part.map((c) => c.defendants.map(alnum).join("|")),
+          part.map((c) => !!c.settled),
+          part.map((c) => c.workOrdered ?? null),
+          part.map((c) => c.summary ?? null),
         ],
       );
     }
@@ -107,8 +110,11 @@ export async function storedEpaCases(client: PoolClient, keys: readonly string[]
     laws: string[];
     defendants: string[];
     docket: string | null;
+    penalty_settled: boolean;
+    work_ordered: string | null;
+    summary: string | null;
   }>(
-    `SELECT case_number, name, court, filed_on::text AS day, step, penalty::text AS penalty, laws, defendants, docket
+    `SELECT case_number, name, court, filed_on::text AS day, step, penalty::text AS penalty, laws, defendants, docket, penalty_settled, work_ordered::text AS work_ordered, summary
        FROM epa_cases WHERE filed_on >= $1::date AND name_keys LIKE ANY ($2::text[]) ORDER BY filed_on, case_number`,
     [from, keys.map((k) => `%${k}%`)],
   );
@@ -120,6 +126,9 @@ export async function storedEpaCases(client: PoolClient, keys: readonly string[]
     step: r.step,
     // numeric comes back as "11000000.00": the cases' own form drops cents that are none
     penalty: r.penalty === null ? null : r.penalty.replace(/\.00$/, ""),
+    settled: r.penalty_settled,
+    workOrdered: r.work_ordered === null ? null : r.work_ordered.replace(/\.00$/, ""),
+    summary: r.summary,
     laws: r.laws,
     defendants: r.defendants,
     docket: r.docket,

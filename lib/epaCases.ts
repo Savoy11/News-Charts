@@ -29,6 +29,13 @@ export const caseReportUrl = (caseNumber: string) => `https://echo.epa.gov/enfor
 
 /** The four tables a case is read from. */
 export const CASE_TABLES = ["CASE_ENFORCEMENTS.csv", "CASE_DEFENDANTS.csv", "CASE_MILESTONES.csv", "CASE_LAW_SECTIONS.csv"] as const;
+/**
+ * The settlements table, each settlement's penalty and the cost of the work it orders (batch 113,
+ * the 2026-11-07 proposal 1). Read when the file holds it; a file without it gives the case totals
+ * alone, as before.
+ */
+export const SETTLEMENT_TABLE = "CASE_ENFORCEMENT_CONCLUSIONS.csv";
+export type CaseTables = Record<(typeof CASE_TABLES)[number], string> & { [SETTLEMENT_TABLE]?: string };
 
 export interface EpaCase {
   /** EPA's case number, "HQ-1996-0001" */
@@ -38,8 +45,17 @@ export interface EpaCase {
   /** the case's public day (YYYY-MM-DD) and what happened on it */
   day: string;
   step: "lodged" | "entered" | "filed" | "order" | "complaint";
-  /** the penalty assessed, in whole dollars as EPA writes it, or null for none; never a float */
+  /**
+   * the penalty assessed, in whole dollars as EPA writes it, or null for none; never a float. The
+   * case's total, or, where EPA gives none, its one settlement's federal and state penalty (batch 113)
+   */
   penalty: string | null;
+  /** the penalty is the settlement's, EPA giving the case no total (batch 113) */
+  settled?: boolean;
+  /** EPA's estimate of the cost of the work the case orders, by the same rule; null for none */
+  workOrdered?: string | null;
+  /** EPA's own summary of the case, when it says something (`summaryOf`); null for none */
+  summary?: string | null;
   /** the laws, by EPA's code, in its order: "CAA", "CWA", "CERCLA" */
   laws: string[];
   defendants: string[];
@@ -87,13 +103,84 @@ export const dollars = (amount: string) => {
   return `$${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${cents ? `.${cents}` : ""}`;
 };
 
+/** Two amounts as `penaltyOf` gives them, added in whole cents: never through a float. Null when both are. */
+export function addAmounts(a: string | null, b: string | null): string | null {
+  if (a === null || b === null) return a ?? b;
+  const HUNDRED = BigInt(100);
+  const cents = (x: string) => {
+    const [whole, part = ""] = x.split(".");
+    return BigInt(whole) * HUNDRED + BigInt(part.padEnd(2, "0"));
+  };
+  const sum = cents(a) + cents(b);
+  return penaltyOf(`${sum / HUNDRED}.${(sum % HUNDRED).toString().padStart(2, "0")}`);
+}
+
+/** A summary this short says too little to show: EPA's case report link holds the rest. */
+export const SUMMARY_FLOOR = 25;
+/** …and one this long is cut at a word, so a page with hundreds of cases still carries its news. */
+export const SUMMARY_CAP = 600;
+// a summary that is only a placeholder, a step or a form note, read by hand on the 5,318 cases the
+// replay's pages hold (batch 113): "CASE SUMMARY REQUESTED", "TO BE ENTERED", "CONSENT DECREE ENTERED
+// ON 12/10/07", "COST RECOVERY AGMT."
+const SUMMARY_SAYS_NOTHING = new RegExp(
+  [
+    String.raw`(?:no\s+)?case summary(?:\s+requested)?`,
+    String.raw`to be (?:entered|determined|added)`,
+    String.raw`pending|tbd|n\/?a|none|x+|see (?:attached|case|file)|need(?:s)? additional information`,
+    String.raw`'?cost recovery(?: agmt| agreement)?'?|field citation|order issued to one respondent`,
+    String.raw`(?:consent decree|cafo|order|final order|complaint)\s+(?:was\s+)?(?:entered|issued|filed|lodged|signed)\s+(?:on\s+)?\d{1,2}\/\d{1,2}\/\d{2,4}`,
+  ].map((p) => `(?:${p})`).join("|"),
+  "i",
+);
+// a facility's record and no more: "FACILITY ADDR: 800 PHILLIPS RD…", "* FACILITY NAME: TEXAS INSTRUMENTS INC 34 FOREST ST…"
+const SUMMARY_IS_ADDRESS = /^\W*(?:facility\s*(?:name|addr(?:ess)?|location|info(?:rmation)?)|address|location)\b/i;
+
+/**
+ * EPA's own summary of a case, as the row's description says it (batch 113): its spaces collapsed, a
+ * word broken across a line ("INITIA-\nTIVE") joined, its capitals as EPA wrote them. A word EPA wrote
+ * broken with a space, "ENVIRONMEN- TAL" (172 cases on the replay's pages), is left as written: in
+ * capitals nothing but a dictionary tells it from "OZONE- DEPLETING".
+ *
+ * EPA's file holds a replacement character, sometimes three, where its text lost one: between a
+ * letter and an "s" it was an apostrophe ("EPA�S"), before a number a section sign ("42 U.S.C. ��
+ * 9607"), and otherwise a quotation mark ("(�AOC�)"). Read by hand on the 36 page cases that hold one.
+ *
+ * Null when it says nothing: under `SUMMARY_FLOOR` characters, a placeholder or form note, or a
+ * facility's address. Cut at a word after `SUMMARY_CAP` characters.
+ */
+export function summaryOf(raw: string): string | null {
+  const text = raw
+    .replace(/\r\n?/g, "\n")
+    .replace(/([A-Za-z])-\n\s*([A-Za-z])/g, "$1$2")
+    .replace(/([A-Za-z])\uFFFD+([sS])\b/g, "$1'$2")
+    .replace(/\uFFFD{1,2}(?=\s*\d)/g, (m) => "§".repeat(m.length))
+    .replace(/\uFFFD+/g, '"')
+    .replace(/\*{2,}/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const bare = text.replace(/[.\s]+$/, "");
+  if (bare.length < SUMMARY_FLOOR || SUMMARY_IS_ADDRESS.test(bare) || new RegExp(`^(?:${SUMMARY_SAYS_NOTHING.source})$`, "i").test(bare)) return null;
+  if (text.length <= SUMMARY_CAP) return text;
+  const cut = text.slice(0, SUMMARY_CAP);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > SUMMARY_CAP / 2 ? cut.slice(0, space) : cut).replace(/[\s,;:.-]+$/, "")}…`;
+}
+
+/**
+ * A text field as Postgres can hold it: without NUL and the other control characters. EPA's file
+ * holds 15 NULs (2026-10-31), one in the case "H.O.D. LANDFILL \u0000", and Postgres refuses any text
+ * holding one, so the whole month's read failed and kept nothing (batch 113, found storing the
+ * slice in a real database).
+ */
+const plain = (x: string) => x.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ");
+
 /**
  * The cases, from the four tables' text. A case's public day: for a court case the day its
  * settlement was lodged ("Final Order Lodged"), else entered, else the day the suit was filed; for
  * an administrative case the day its final order was issued, else the day the complaint was. A
  * case with none of these days is left out (5 of 137,108).
  */
-export function readCases(tables: Record<(typeof CASE_TABLES)[number], string>): EpaCase[] {
+export function readCases(tables: CaseTables): EpaCase[] {
   const first = new Map<string, Map<string, string>>();
   const WANTED = new Set(["FOL", "FOE", "CMF", "CAFO", "CPOA"]);
   eachCsvRow(tables["CASE_MILESTONES.csv"], ["CASE_NUMBER", "SUB_ACTIVITY_TYPE_CODE", "ACTUAL_DATE"], ([caseNumber, code, actual]) => {
@@ -107,7 +194,7 @@ export function readCases(tables: Record<(typeof CASE_TABLES)[number], string>):
   });
   const defendants = new Map<string, string[]>();
   eachCsvRow(tables["CASE_DEFENDANTS.csv"], ["CASE_NUMBER", "DEFENDANT_NAME"], ([caseNumber, raw]) => {
-    const name = raw.replace(/\s+/g, " ").trim();
+    const name = plain(raw).replace(/\s+/g, " ").trim();
     if (!name) return;
     const list = defendants.get(caseNumber) ?? [];
     if (!list.includes(name)) list.push(name);
@@ -121,8 +208,24 @@ export function readCases(tables: Record<(typeof CASE_TABLES)[number], string>):
     list.push({ rank: Number(rank) || 99, code });
     laws.set(caseNumber, list);
   });
+  // each settlement once, by its id: its federal and state penalty and the work it orders
+  const settlements = new Map<string, Map<string, { penalty: string | null; work: string | null }>>();
+  if (tables[SETTLEMENT_TABLE] !== undefined) {
+    eachCsvRow(tables[SETTLEMENT_TABLE], ["CASE_NUMBER", "ENF_CONCLUSION_ID", "FED_PENALTY_ASSESSED_AMT", "STATE_LOCAL_PENALTY_AMT", "COMPLIANCE_ACTION_COST"], ([caseNumber, id, fed, state, work]) => {
+      const held = settlements.get(caseNumber) ?? new Map();
+      held.set(id || `${held.size}`, { penalty: addAmounts(penaltyOf(fed), penaltyOf(state)), work: penaltyOf(work) });
+      settlements.set(caseNumber, held);
+    });
+  }
+  // a case of one settlement and no total of its own takes the settlement's figure; a case of
+  // several keeps its own total, since a sum would put other parties' settlements of other years on
+  // one row (Deepwater Horizon's four, 2012–2015)
+  const only = (caseNumber: string) => {
+    const held = settlements.get(caseNumber);
+    return held && held.size === 1 ? [...held.values()][0] : null;
+  };
   const out: EpaCase[] = [];
-  const COLUMNS = ["CASE_NUMBER", "CASE_NAME", "ACTIVITY_TYPE_CODE", "TOTAL_PENALTY_ASSESSED_AMT", "DOJ_DOCKET_NMBR"] as const;
+  const COLUMNS = ["CASE_NUMBER", "CASE_NAME", "ACTIVITY_TYPE_CODE", "TOTAL_PENALTY_ASSESSED_AMT", "DOJ_DOCKET_NMBR", "TOTAL_COMP_ACTION_AMT", "ENF_SUMMARY_TEXT"] as const;
   eachCsvRow(tables["CASE_ENFORCEMENTS.csv"], COLUMNS, (values) => {
     const r = Object.fromEntries(COLUMNS.map((c, k) => [c, values[k]])) as Record<(typeof COLUMNS)[number], string>;
     const number = r.CASE_NUMBER.trim();
@@ -133,7 +236,7 @@ export function readCases(tables: Record<(typeof CASE_TABLES)[number], string>):
       : [["CAFO", "order"], ["CPOA", "complaint"]]
     ).find(([code]) => steps.has(code)) as [string, EpaCase["step"]] | undefined;
     if (!number || !pick) return;
-    const name = r.CASE_NAME.replace(/\s+/g, " ").trim();
+    const name = plain(r.CASE_NAME).replace(/\s+/g, " ").trim();
     const ranked = (laws.get(number) ?? []).sort((a, b) => a.rank - b.rank).map((l) => l.code);
     out.push({
       number,
@@ -141,10 +244,13 @@ export function readCases(tables: Record<(typeof CASE_TABLES)[number], string>):
       court,
       day: steps.get(pick[0]) as string,
       step: pick[1],
-      penalty: penaltyOf(r.TOTAL_PENALTY_ASSESSED_AMT),
+      penalty: penaltyOf(r.TOTAL_PENALTY_ASSESSED_AMT) ?? only(number)?.penalty ?? null,
+      settled: !penaltyOf(r.TOTAL_PENALTY_ASSESSED_AMT) && !!only(number)?.penalty,
+      workOrdered: penaltyOf(r.TOTAL_COMP_ACTION_AMT ?? "") ?? only(number)?.work ?? null,
+      summary: summaryOf(plain(r.ENF_SUMMARY_TEXT ?? "")),
       laws: [...new Set(ranked)],
       defendants: defendants.get(number) ?? (name ? [name] : []),
-      docket: r.DOJ_DOCKET_NMBR.trim() || null,
+      docket: plain(r.DOJ_DOCKET_NMBR).trim() || null,
     });
   });
   return out;
@@ -152,10 +258,14 @@ export function readCases(tables: Record<(typeof CASE_TABLES)[number], string>):
 
 /** The cases in EPA's zip. */
 export function readCaseFile(zip: Uint8Array): EpaCase[] {
-  const files = readZip(zip, CASE_TABLES);
+  const files = readZip(zip, [...CASE_TABLES, SETTLEMENT_TABLE]);
   const missing = CASE_TABLES.filter((t) => !files.has(t));
   if (missing.length) throw new Error(`the case file lacks ${missing.join(", ")}`);
-  return readCases(Object.fromEntries(CASE_TABLES.map((t) => [t, decodeText(files.get(t) as Buffer)])) as Record<(typeof CASE_TABLES)[number], string>);
+  const settled = files.get(SETTLEMENT_TABLE);
+  return readCases({
+    ...(Object.fromEntries(CASE_TABLES.map((t) => [t, decodeText(files.get(t) as Buffer)])) as Record<(typeof CASE_TABLES)[number], string>),
+    ...(settled ? { [SETTLEMENT_TABLE]: decodeText(settled) } : {}),
+  });
 }
 
 const alnum = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -372,6 +482,8 @@ const what = (c: EpaCase) =>
   c.step === "lodged" || c.step === "entered" ? "EPA consent decree" : c.step === "filed" ? "EPA suit filed in court" : c.step === "order" ? "EPA final order" : "EPA administrative complaint";
 /** A case with its own row: one in court, or one with a penalty. The rest are grouped a row a month. */
 export const ownRow = (c: EpaCase) => c.court || c.penalty !== null;
+/** …as it was before batch 113, when a penalty was the case total alone: where its stored row is kept. */
+const ownRowBefore = (c: EpaCase) => c.court || (c.penalty !== null && !c.settled);
 
 /** A case of this many defendants or more says so in its title: a Superfund site's settlement often names hundreds. */
 export const MANY_PARTIES = 10;
@@ -383,9 +495,19 @@ export function caseTitle(c: EpaCase): string {
   return `${what(c)}${parties}${c.penalty ? `: ${dollars(c.penalty)} civil penalty` : ""}${law}`;
 }
 
-function caseLine(c: EpaCase): string {
+/**
+ * "AEP (case 03-1999-0388), with 8 other defendants: $6,225,000 civil penalty; work ordered
+ * $1,923,940,000, EPA's estimate, among 9 parties". The penalty is said here when the row's title
+ * does not: on a day of several cases. The work ordered is the settlement's whole, so a case of
+ * several parties says among how many (batch 113).
+ */
+function caseLine(c: EpaCase, withPenalty = false): string {
   const others = c.defendants.length > 1 ? `, with ${c.defendants.length - 1} other defendant${c.defendants.length > 2 ? "s" : ""}` : "";
-  return `${c.name} (case ${c.number}${c.docket ? `, Justice Department docket ${c.docket}` : ""})${others}`;
+  const money = [
+    ...(withPenalty && c.penalty ? [`${dollars(c.penalty)} civil penalty`] : []),
+    ...(c.workOrdered ? [`work ordered ${dollars(c.workOrdered)}, EPA's estimate${c.defendants.length > 1 ? `, among ${c.defendants.length} parties` : ""}`] : []),
+  ];
+  return `${c.name} (case ${c.number}${c.docket ? `, Justice Department docket ${c.docket}` : ""})${others}${money.length ? `: ${money.join("; ")}` : ""}`;
 }
 
 /**
@@ -436,18 +558,34 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
     const sorted = [...rows].sort((a, b) => Number(b.penalty ?? 0) - Number(a.penalty ?? 0) || Number(b.court) - Number(a.court) || a.number.localeCompare(b.number));
     const lead = sorted[0];
     const more = sorted.length > 1 ? `, and ${sorted.length - 1} more case${sorted.length > 2 ? "s" : ""} that day` : "";
+    // EPA's own words, from the first case that says something: the lead's, else the next one's
+    const said = sorted.find((c) => c.summary);
+    const summary = said?.summary ? ` EPA's summary${sorted.length > 1 ? ` of case ${said.number}` : ""}: ${said.summary}` : "";
     return {
       date: d,
       type: "regulation" as const,
       title: `${caseTitle(lead)}${more}`,
       source: "EPA",
       url: caseReportUrl(lead.number),
-      description: `${sorted.map(caseLine).join("; ")}. ${lead.step === "lodged" ? "The day the settlement was lodged in court." : lead.step === "order" ? "The day the final order was issued." : ""}`.trim(),
+      description: `${sorted.map((c) => caseLine(c, sorted.length > 1)).join("; ")}. ${lead.step === "lodged" ? "The day the settlement was lodged in court." : lead.step === "order" ? "The day the final order was issued." : ""}${summary}`.replace(/\s+/g, " ").trim(),
       sourceKey: "epa_cases" as const,
       externalId: sorted.map((c) => c.number).join(","),
     };
   };
-  for (const [d, rows] of own) events.push({ id: `epa-${tag}-${d}`, ...dayRow(d, rows), dedupBasis: `epa:${tag}@${d}` });
+  // a month whose cases had no penalty before batch 113 and all have one now: its stored row moves
+  // onto the first of their own rows, so the case keeps its history and a follower sees nothing new
+  const movedFrom = new Map<string, string>();
+  for (const [d, rows] of own) {
+    const month = d.slice(0, 7);
+    if (routine.has(month) || !rows.some((c) => !ownRowBefore(c))) continue;
+    const was = movedFrom.get(month);
+    if (!was || d < was) movedFrom.set(month, d);
+  }
+  for (const [d, rows] of own) {
+    const month = d.slice(0, 7);
+    const moved = movedFrom.get(month) === d ? { legacyDedupBasis: `epa:${tag}@${month}:no-penalty` } : {};
+    events.push({ id: `epa-${tag}-${d}`, ...dayRow(d, rows), dedupBasis: `epa:${tag}@${d}`, ...moved });
+  }
   for (const [month, rows] of routine) {
     const sorted = [...rows].sort((a, b) => b.day.localeCompare(a.day) || a.number.localeCompare(b.number));
     const first = sorted[sorted.length - 1].day;
@@ -466,7 +604,7 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
       title: `EPA: ${rows.length} orders or complaints with no penalty, ${MONTH[Number(m) - 1]} ${y}${codes.length ? ` (${lawsOf(codes).slice(0, 2).join(", ")}${codes.length > 2 ? "…" : ""})` : ""}`,
       source: "EPA",
       url: caseReportUrl(sorted[0].number),
-      description: `${rows.length} cases with no penalty this month, grouped into one row: ${sorted.slice(0, 3).map(caseLine).join("; ")}${rows.length > 3 ? `; and ${rows.length - 3} more` : ""}. The link opens the newest.`,
+      description: `${rows.length} cases with no penalty this month, grouped into one row: ${sorted.slice(0, 3).map((c) => caseLine(c)).join("; ")}${rows.length > 3 ? `; and ${rows.length - 3} more` : ""}. The link opens the newest.`,
       sourceKey: "epa_cases",
       externalId: sorted.map((c) => c.number).join(","),
       dedupBasis: `epa:${tag}@${month}:no-penalty`,

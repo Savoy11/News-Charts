@@ -50,7 +50,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. EPA's own figures on the case rows pages already hold: the penalty its settlement record gives, the cost of the work ordered, and (optionally) its summary · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-07: "Approve all three, titles from the FDA's data". Built in batch 113, parts (a) and (b).
 **Owner's reason (if rejected):**
 
 **Raised before:** no. EPA's inspections and informal actions were cut on 2026-11-05 ("volume
@@ -187,7 +187,7 @@ measured on the saved file; (b) needs a floor tuned by hand
 
 ## 2. New indications and other efficacy supplements, on the page of the company that held the drug — a dataset for the owner to decide · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-07: "Approve all three, titles from the FDA's data". The owner's call inside it: titles from the data alone, no letter read. To be built in batch 115.
 **Owner's reason (if rejected):**
 
 **Raised before:** yes, as a line, never measured.
@@ -319,7 +319,7 @@ the letters or careful wording
 
 ## 3. EPA's cases against the utilities' operating companies: Georgia Power, Appalachian Power, Public Service Electric and Gas, Virginia Electric and Power… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-07: "Approve all three, titles from the FDA's data". To be built in batch 114, each ownership day read from filings.
 **Owner's reason (if rejected):**
 
 **Raised before:** only as a line. Batch 104 lists, under "Left for later", "the other ~630

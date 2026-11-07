@@ -10,6 +10,11 @@ import {
   CASE_FILE_URL,
   CASE_TABLES,
   MANY_PARTIES,
+  SETTLEMENT_TABLE,
+  SUMMARY_CAP,
+  addAmounts,
+  readCaseFile,
+  summaryOf,
   NOT_THE_COMPANY,
   BRANDED_SITE,
   UNITS,
@@ -44,8 +49,9 @@ import { COMPANY_SOURCES } from "./ingest";
  *   npm run check:epa-cases
  *
  * Replays a committed slice of EPA's case file of 2026-10-31 (scripts/fixtures/epa-cases-slice.json.gz):
- * every row of the four tables the adapter reads for the 4,289 cases whose defendants hold a
- * listed company's name, and the cases the guards are measured on. Offline: the file's fetch and
+ * every row of the four tables the adapter reads for the 6,028 cases whose defendants hold a
+ * listed company's name, and the cases the guards are measured on; and, since batch 113, the
+ * settlements table and the case table's work-ordered and summary columns for the same cases. Offline: the file's fetch and
  * the database are stood in for. On main none of it runs: lib/epaCases.ts does not exist.
  */
 
@@ -59,7 +65,7 @@ function check(name: string, ok: boolean, detail = ""): void {
 const root = join(__dirname, "..");
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 const companies = tickerIndex.companies as [number, string, string][];
-const SLICE: { provenance: string; tables: Record<(typeof CASE_TABLES)[number], string> } = JSON.parse(gunzipSync(readFileSync(join(root, "scripts/fixtures/epa-cases-slice.json.gz"))).toString("utf8"));
+const SLICE: { provenance: string; tables: Record<(typeof CASE_TABLES)[number] | typeof SETTLEMENT_TABLE, string> } = JSON.parse(gunzipSync(readFileSync(join(root, "scripts/fixtures/epa-cases-slice.json.gz"))).toString("utf8"));
 const cases = readCases(SLICE.tables);
 const byNumber = new Map(cases.map((c) => [c.number, c]));
 const rowOf = (ticker: string) => {
@@ -216,6 +222,8 @@ async function main(): Promise<void> {
   // one pass over every defendant at once tells which names appear at all, so only those are matched case by case
   const everyKey = keysOf.join("#");
   const out = new Map<string, TimelineEvent[]>();
+  // each page's cases and names, for replaying a rule before this one (batch 113)
+  const inputs = new Map<string, { held: EpaCase[]; namesIn: (year: number) => string[]; cik: number }>();
   const seen = new Set<number>();
   for (const [cik, ticker, title] of companies) {
     if (seen.has(cik) || isNotesRecord(cik)) continue;
@@ -227,17 +235,91 @@ async function main(): Promise<void> {
     if (!keys.length) continue;
     const held = cases.filter((_, i) => keys.some((k) => keysOf[i].includes(k)));
     const ev = held.length ? epaEvents(held, namesIn, { cik }) : [];
-    if (ev.length) out.set(ticker, ev);
+    if (ev.length) {
+      out.set(ticker, ev);
+      inputs.set(ticker, { held, namesIn, cik });
+    }
   }
   const total = [...out.values()].reduce((n, v) => n + v.length, 0);
   const before2017 = [...out.values()].flat().filter((e) => e.date < "2017").length;
   const own = [...out.values()].flat().filter((e) => e.precision !== "month").length;
   // batch 111's legal-form spellings add one: "OLIN-CORPORATION", Olin's legal name spelled out, among
   // the Distler Brickyard settlement's 55 defendants of 1995-10-26
-  check("before any first price: 7,428 rows on 670 companies, 6,368 before 2017; 7,026 of them a case's own day (7,427, 6,367 and 7,025 before batch 111's legal-form spellings; 7,436, 6,376 and 7,034 before batch 108 took the old Waste Management's nine off WM; 7,035 before batch 107's Star Lake order joined Chevron's September 2016; 5,994 on 667 before batch 104's units, every one of whose cases is still on its page; 5,984 before batch 101's Sunoco, Inc.; 6,001 on 665 before batch 100)",
-    total === 7428 && out.size === 670 && before2017 === 6368 && own === 7026 && (out.get("OLN") ?? []).some((e) => e.date === "1995-10-26"), `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
+  // batch 113's settlement figures: a case of one settlement and no case total takes the settlement's
+  // penalty, so 1,250 more rows give one and a no-penalty month's cases that all have one now each
+  // have their own row (402 month rows become 277)
+  check("before any first price: 7,545 rows on 670 companies, 6,463 before 2017; 7,268 of them a case's own day (7,428, 6,368 and 7,026 before batch 113's settlement figures; 7,427, 6,367 and 7,025 before batch 111's legal-form spellings; 7,436, 6,376 and 7,034 before batch 108 took the old Waste Management's nine off WM; 7,035 before batch 107's Star Lake order joined Chevron's September 2016; 5,994 on 667 before batch 104's units, every one of whose cases is still on its page; 5,984 before batch 101's Sunoco, Inc.; 6,001 on 665 before batch 100)",
+    total === 7545 && out.size === 670 && before2017 === 6463 && own === 7268 && (out.get("OLN") ?? []).some((e) => e.date === "1995-10-26"), `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
   const top = [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 5).map(([t, v]) => `${t} ${v.length}`).join(", ");
-  check("  …most on GE 284, ExxonMobil 273, Chevron 258, BP 230, GM 222 (before the units: GE 284, GM 222, Ford 165, ExxonMobil 163, FMC 135)", top === "GE 284, XOM 273, CVX 258, BP 230, GM 222", top);
+  check("  …most on ExxonMobil 288, GE 284, Chevron 269, BP 248, GM 225 (GE 284, XOM 273, CVX 258, BP 230, GM 222 before batch 113; before the units: GE 284, GM 222, Ford 165, ExxonMobil 163, FMC 135)",
+    top === "XOM 288, GE 284, CVX 269, BP 248, GM 225", top);
+
+  console.log("\nEPA's own figures: the settlement's penalty, the work ordered, EPA's summary (batch 113, the 2026-11-07 proposal 1)");
+  const rows = [...out].flatMap(([t, evs]) => evs.map((e) => ({ t, e })));
+  const rowOn = (t: string, d: string) => out.get(t)?.find((e) => e.date === d);
+  const aep = rowOn("AEP", "2007-10-09");
+  check("AEP's 2007 decree, a case total of none, gives both cases' settlement penalties and the work each orders",
+    !!aep && aep.title === "EPA consent decree: $6,225,000 civil penalty (Clean Air Act), and 1 more case that day" &&
+      /\(case 03-1999-0388\), with 5 other defendants: \$6,225,000 civil penalty; work ordered \$1,923,940,000, EPA's estimate, among 6 parties/.test(aep.description ?? "") &&
+      /\(case 04-1999-9000\): \$750,000 civil penalty; work ordered \$231,800,000, EPA's estimate\./.test(aep.description ?? ""),
+    aep?.description?.slice(0, 400));
+  const cummins = rowOn("CMI", "2024-01-10");
+  check("  …Cummins's diesel decree of 2024, whose row gave no penalty, gives its $1,675,000,000: federal $1,478,000,000 and state $197,000,000",
+    cummins?.title === "EPA consent decree: $1,675,000,000 civil penalty (Clean Air Act)" && byNumber.get("HQ-2020-0001")?.settled === true && /work ordered \$326,000,000/.test(cummins.description ?? ""),
+    cummins?.title);
+  const deepwater = byNumber.get("04-2010-9036");
+  const bpSpill = rowOn("BP", "2015-11-30");
+  check("a case of several settlements and no total keeps no penalty: Deepwater Horizon's four (MOEX, Transocean, BP and Anadarko) are not added on one row",
+    !!deepwater && deepwater.penalty === null && !deepwater.settled && deepwater.workOrdered === null && !!bpSpill && !/civil penalty/.test(bpSpill.title), bpSpill?.title);
+  const omega = rowOn("CVX", "2010-07-16");
+  check("  …the work a many-party settlement orders is the whole settlement's, and says among how many: Omega Chemical's 271",
+    /work ordered \$5,600,000, EPA's estimate, among 271 parties/.test(omega?.description ?? "") &&
+      rows.filter(({ e }) => /work ordered/.test(e.description ?? "")).every(({ e }) => !/with \d+ other defendants?: (?:[^;]*; )?work ordered [^;.]*EPA's estimate(?!, among)/.test(e.description ?? "")),
+    omega?.description?.slice(0, 200));
+  check("no month of orders \"with no penalty\" holds a case EPA's settlement gives a penalty",
+    rows.filter(({ e }) => e.precision === "month").every(({ e }) => (e.externalId ?? "").split(",").every((n) => byNumber.get(n)?.penalty === null)) &&
+      rows.filter(({ e }) => e.precision === "month").length === 277);
+  const shown = rows.filter(({ e }) => /civil penalty/.test(e.title));
+  check("1,250 more rows give a penalty, 890 of them before 2017; none from 2017 on gave one before, since EPA's case totals stop and its settlements go on",
+    shown.length === 2125 && shown.filter(({ e }) => e.date < "2017").length === 1765, `${shown.length}, ${shown.filter(({ e }) => e.date < "2017").length} before 2017`);
+  check("  …2,805 rows name the work ordered, 2,363 before 2017; 6,417 carry EPA's summary, 5,395 before 2017",
+    rows.filter(({ e }) => /work ordered/.test(e.description ?? "")).length === 2805 && rows.filter(({ e }) => /work ordered/.test(e.description ?? "") && e.date < "2017").length === 2363 &&
+      rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "")).length === 6417 && rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "") && e.date < "2017").length === 5395);
+  // the rule before batch 113: a penalty was the case total alone
+  const before113 = (c: EpaCase): EpaCase => (c.settled ? { ...c, penalty: null, settled: false } : c);
+  let taken = 0;
+  const lost: string[] = [];
+  for (const [t, evs] of out) {
+    const { held, namesIn, cik } = inputs.get(t)!;
+    const keys = new Set(evs.map((e) => e.dedupBasis));
+    const legacy = new Set(evs.map((e) => e.legacyDedupBasis).filter(Boolean));
+    const was = epaEvents(held.map(before113), namesIn, { cik });
+    for (const e of was) {
+      if (keys.has(e.dedupBasis)) continue;
+      if (legacy.has(e.dedupBasis)) taken++;
+      else lost.push(`${t} ${e.dedupBasis}`);
+    }
+  }
+  check("every row the rule before kept under a month's key and this one does not moves onto the first own row of its cases: 950, none lost, so a row keeps its history",
+    taken === 950 && lost.length === 0, `${taken} taken; lost ${lost.slice(0, 4).join(" ; ")}`);
+  check("money is digits throughout: added in whole cents, never through a float",
+    addAmounts("1478000000", "197000000") === "1675000000" && addAmounts("4505902", "900000") === "5405902" && addAmounts("0.10", "0.20") === "0.30" &&
+      addAmounts("5100.5", null) === "5100.5" && addAmounts(null, null) === null && cases.every((c) => [c.penalty, c.workOrdered].every((m) => m == null || /^\d+(?:\.\d{2})?$/.test(m))));
+  check("EPA's summary: spaces collapsed, a word broken across a line joined, and its lost characters read as an apostrophe, a section sign or a quotation mark",
+    summaryOf("THE FACILITY FAILED TO SUBMIT\r\n  ITS REPORTS FOR THE INITIA-\nTIVE, AS REQUIRED.") === "THE FACILITY FAILED TO SUBMIT ITS REPORTS FOR THE INITIATIVE, AS REQUIRED." &&
+      summaryOf("Ohio EPA\uFFFDs order under 42 U.S.C. \uFFFD\uFFFD 9607 and the \uFFFD\uFFFD\uFFFDAOC\uFFFD\uFFFD\uFFFD.") === "Ohio EPA's order under 42 U.S.C. §§ 9607 and the \"AOC\".");
+  check("  …nothing shown when it says nothing: a placeholder, a step and a day, a facility's address, a fragment",
+    ["CASE SUMMARY REQUESTED", "TO BE ENTERED", "Pending.", "X", "CONSENT DECREE ENTERED ON 12/10/07", "COST RECOVERY AGMT.", "FACILITY ADDR: 800 PHILLIPS RD WEBSTER, NY 14580", "* FACILITY NAME: TEXAS INSTRUMENTS INC 34 FOREST ST ATTLEBORO, MA 02703 OWNERSHIP: P", "PCB VIOLATIONS", " ."].every((t) => summaryOf(t) === null) &&
+      summaryOf("The pesticide product being imported was misbranded.") !== null && byNumber.get("03-1999-0388")?.summary === null);
+  const cut = cases.map((c) => c.summary ?? "").filter((t) => t.endsWith("…"));
+  const longest = summaryOf(`${"WORD ".repeat(200)}END`) ?? "";
+  check("  …and a long one is cut at a word, so a page with hundreds of cases still carries its news",
+    cut.length > 1000 && cases.every((c) => (c.summary ?? "").length <= SUMMARY_CAP + 1) && longest.length <= SUMMARY_CAP + 1 && /WORD…$/.test(longest), `${cut.length} cut`);
+  const plain = readCases(Object.fromEntries(CASE_TABLES.map((t) => [t, SLICE.tables[t]])) as Parameters<typeof readCases>[0]);
+  check("a file without the settlements table gives the case totals alone, as before: degraded, not broken",
+    plain.length === cases.length && plain.every((c) => !c.settled) && plain.find((c) => c.number === "HQ-2020-0001")?.penalty === null && plain.find((c) => c.number === "HQ-1996-0001")?.penalty === "11000000");
+  const zipped = readCaseFile(makeZip(([...CASE_TABLES, SETTLEMENT_TABLE] as const).map((t) => [t, SLICE.tables[t], true] as [string, string, boolean])));
+  check("  …and the monthly read finds the table in EPA's zip", zipped.find((c) => c.number === "HQ-2020-0001")?.penalty === "1675000000");
 
   console.log("\nRead once a month, and kept");
   const db: FakeDb = { cases: new Map(), reads: null, listed: "1962-01-02" };
@@ -340,6 +422,15 @@ async function main(): Promise<void> {
   const ingest = read("scripts/ingest.ts");
   check("  …company ingest walks the file, then keeps the company's cases", /await run\("epa_cases", [^\n]+\n\s*const walked = await walkEpaCases\(client\);[\s\S]{0,400}return epaCasesFor\(client, subjectId, \{[^}]*cik: company\.cik, fundSeries \}, walked\);/.test(ingest));
   check("  …into tables of its own (db/037)", /CREATE TABLE IF NOT EXISTS epa_cases \(\s*case_number\s+text PRIMARY KEY/.test(read("db/037_epa_cases.sql")) && /penalty\s+numeric\(16, 2\)/.test(read("db/037_epa_cases.sql")));
+  const figures = read("db/043_epa_case_figures.sql");
+  check("  …which keep, since db/043, whether a penalty is the settlement's, the work ordered as a number and EPA's summary, and forget the last read so the next run reads the file whole (batch 113)",
+    /ADD COLUMN IF NOT EXISTS penalty_settled boolean NOT NULL DEFAULT false/.test(figures) && /ADD COLUMN IF NOT EXISTS work_ordered numeric\(16, 2\)/.test(figures) &&
+      /ADD COLUMN IF NOT EXISTS summary text/.test(figures) && /^DELETE FROM epa_reads;$/m.test(figures));
+  const nul = cases.find((c) => c.number === "05-1992-0130");
+  check("  …and text without control characters: Postgres refuses a NUL, and EPA's \"H.O.D. LANDFILL \\u0000\" made it refuse the whole month's read",
+    !!nul && nul.name === "H.O.D. LANDFILL" && /\u0000/.test(SLICE.tables["CASE_ENFORCEMENTS.csv"]) &&
+      cases.every((c) => ![c.name, c.summary ?? "", c.docket ?? "", ...c.defendants].some((t) => /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(t))),
+    JSON.stringify(nul?.name));
   check("  …and EPA is credited where the other sources are",
     /civil enforcement cases from the U\.S\. Environmental Protection Agency/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
       /civil enforcement cases from the U\.S\. Environmental Protection Agency/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")) &&
@@ -416,10 +507,13 @@ function fakeDb(db: FakeDb): PoolClient {
         db.cases.clear();
         return { rows: [] };
       }
-      if (/^INSERT INTO epa_cases \(case_number, name, court, filed_on, step, penalty, laws, defendants, docket, name_keys\)/.test(s)) {
-        const [n, nm, ct, d, st, p, l, df, dk, k] = params as [string[], string[], boolean[], string[], EpaCase["step"][], (string | null)[], string[], string[], (string | null)[], string[]];
+      if (/^INSERT INTO epa_cases \(case_number, name, court, filed_on, step, penalty, laws, defendants, docket, name_keys, penalty_settled, work_ordered, summary\)/.test(s)) {
+        const [n, nm, ct, d, st, p, l, df, dk, k, ps, w, sm] = params as [string[], string[], boolean[], string[], EpaCase["step"][], (string | null)[], string[], string[], (string | null)[], string[], boolean[], (string | null)[], (string | null)[]];
         n.forEach((number, i) =>
-          db.cases.set(number, { number, name: nm[i], court: ct[i], day: d[i], step: st[i], penalty: p[i], laws: l[i] ? l[i].split("|") : [], defendants: df[i] ? df[i].split("|") : [], docket: dk[i], keys: k[i] }),
+          db.cases.set(number, {
+            number, name: nm[i], court: ct[i], day: d[i], step: st[i], penalty: p[i], laws: l[i] ? l[i].split("|") : [], defendants: df[i] ? df[i].split("|") : [], docket: dk[i], keys: k[i],
+            settled: ps[i], workOrdered: w[i], summary: sm[i],
+          }),
         );
         return { rows: [] };
       }
@@ -428,13 +522,16 @@ function fakeDb(db: FakeDb): PoolClient {
         db.reads = { modified, cases: count, ageDays: 0 };
         return { rows: [] };
       }
-      if (/^SELECT case_number, name, court, filed_on::text AS day, step, penalty::text AS penalty, laws, defendants, docket\s+FROM epa_cases WHERE filed_on >= \$1::date AND name_keys LIKE ANY \(\$2::text\[\]\) ORDER BY filed_on, case_number$/.test(s)) {
+      if (/^SELECT case_number, name, court, filed_on::text AS day, step, penalty::text AS penalty, laws, defendants, docket, penalty_settled, work_ordered::text AS work_ordered, summary\s+FROM epa_cases WHERE filed_on >= \$1::date AND name_keys LIKE ANY \(\$2::text\[\]\) ORDER BY filed_on, case_number$/.test(s)) {
         const [from, patterns] = params as [string, string[]];
         const keys = patterns.map((p) => p.replace(/^%|%$/g, ""));
         const rows = [...db.cases.values()]
           .filter((c) => c.day >= from && keys.some((k) => c.keys.includes(k)))
           .sort((a, b) => a.day.localeCompare(b.day) || a.number.localeCompare(b.number))
-          .map((c) => ({ case_number: c.number, name: c.name, court: c.court, day: c.day, step: c.step, penalty: c.penalty === null ? null : `${c.penalty}${c.penalty.includes(".") ? "" : ".00"}`, laws: c.laws, defendants: c.defendants, docket: c.docket }));
+          .map((c) => ({
+            case_number: c.number, name: c.name, court: c.court, day: c.day, step: c.step, penalty: c.penalty === null ? null : `${c.penalty}${c.penalty.includes(".") ? "" : ".00"}`, laws: c.laws, defendants: c.defendants, docket: c.docket,
+            penalty_settled: !!c.settled, work_ordered: c.workOrdered ? `${c.workOrdered}${c.workOrdered.includes(".") ? "" : ".00"}` : null, summary: c.summary ?? null,
+          }));
         return { rows };
       }
       if (/FROM prices/.test(s)) return { rows: [{ listed: db.listed }] };

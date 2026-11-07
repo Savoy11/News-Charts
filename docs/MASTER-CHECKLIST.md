@@ -988,6 +988,86 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 113: EPA's own figures on its rows, and the 2026-11-07 approvals filed (2026-11-07)
+
+The owner's call of 2026-11-07, "Approve all three, titles from the FDA's data", on the 2026-11-07
+proposals. This batch files all three into Scope refocus and builds #1, both its parts. No new
+source: one more table and three more columns of the zip the monthly walk already reads. #3 (the
+utilities' operating companies) and #2 (the drug supplements, titles from the data alone) are next.
+
+- [x] **The settlement's penalty where EPA gives the case none** (`readCases`, `addAmounts`).
+      - A case of one settlement and no case total takes the settlement's federal and state
+        penalty, added in whole cents, never through a float, and is marked as the settlement's
+        (`settled`). A case of several settlements keeps none: a sum would put other parties'
+        settlements of other years on one row. Deepwater Horizon's four (MOEX 2012, Transocean
+        2013, BP and Anadarko 2015) stay unsummed.
+      - EPA's case totals stop in the 2010s, so before this no row from 2017 on gave a penalty.
+        Now 2,125 rows do, 1,250 more, 890 of them before 2017:
+        - AEP's 2007 decree: $6,225,000 and $750,000 on its two case numbers;
+        - Cummins's diesel decree of 2024: $1,675,000,000, of which $1,478,000,000 federal and
+          $197,000,000 state;
+        - BP's Texas City refinery, 2009: $12,000,000.
+      - A case that now has a penalty has its own row, so no month row of "orders or complaints
+        with no penalty" holds one (402 month rows become 277).
+- [x] **The work ordered, EPA's estimate.** It is named on 2,805 rows, 2,363 of them before 2017:
+      AEP's $1,923,940,000 and $231,800,000, the Tennessee Valley Authority's $5,000,000,000 (2011).
+      A settlement of several parties says it is the whole settlement's: "among 271 parties"
+      (Omega Chemical's Superfund site). A day of several cases names each one's penalty in the
+      description, since the title gives only the largest.
+- [x] **EPA's own summary as the row's description** (`summaryOf`), on 6,417 rows, 5,395 before
+      2017.
+      - **Shown only when it says something.** It must be at least 25 characters, and not a
+        placeholder ("CASE SUMMARY REQUESTED", "TO BE ENTERED", "X"), a step and a day
+        ("CONSENT DECREE ENTERED ON 12/10/07") or a facility's address.
+      - **Read by hand:** every kind of dropped text on the 5,318 cases the replay's pages hold
+        (170 dropped of the 4,838 with any text), and a fixed sample of 30 shown before 2017. Of
+        the 30, 28 or 29 say what was wrong or what was ordered; the one facility record found
+        ("* FACILITY NAME: TEXAS INSTRUMENTS INC 34 FOREST ST…") is now dropped too.
+      - **Cleaned:** spaces collapsed; a word broken across a line joined; cut at a word after 600
+        characters, so a page of hundreds of cases still carries its news. ExxonMobil's EPA rows
+        weigh 230 KB of the page's 1,800 KB, against 112 KB before.
+      - **Lost characters.** EPA's file holds the replacement character where its text lost one
+        (36 page cases). It reads as an apostrophe between a letter and an "s" ("EPA'S"), as a
+        section sign before a number ("42 U.S.C. §§ 9607"), and otherwise as a quotation mark
+        ("AOC" in quotes).
+      - **Left as written:** a word EPA broke with a space, "ENVIRONMEN- TAL" (172 page cases),
+        stays as written. In capitals nothing but a dictionary tells it from "OZONE- DEPLETING".
+- [x] **A moved row keeps its history** (`legacyDedupBasis`, batch 100's mechanics). A month row of
+      "no penalty" whose cases all have a penalty now moves onto the first of their own rows.
+      - On the replay, all 950 such month rows are taken up and none is lost; check:epa-cases holds
+        this by replaying the rule before.
+      - **On the local Postgres 16** (seeded, in a rolled-back transaction): ExxonMobil's 273 stored
+        rows became 288 with 16 new events written. 272 kept their identity, and one merged into the
+        day row its case already had. GE's 284 kept all theirs. Nothing was left unlinked.
+- [x] **Found storing the slice in a real database: a NUL made every month's read fail.**
+      - EPA's file holds 15 NULs (2026-10-31), one in the case name "H.O.D. LANDFILL", and Postgres
+        refuses any text holding one. So since batch 95, the whole month's read would have rolled
+        back and kept nothing.
+      - Text is now stored without control characters (`plain`).
+      - No page was ever affected, since the scheduler has not run outside this container.
+      - **On the local Postgres:** all 6,028 slice cases were stored through the walk, and every
+        penalty, flag, work figure and summary read back as read from the file.
+- [x] **db/043** adds `penalty_settled`, `work_ordered` and `summary` to `epa_cases`, and forgets
+      the last read, so the next run reads the file whole and the kept cases gain them. A file
+      without the settlements table gives the case totals alone, as before: degraded, not broken.
+- [x] **The slice** (`scripts/fixtures/epa-cases-slice.json.gz`) gains, for its own 6,028 cases and
+      from the same copy of 2026-10-31:
+      - the settlements table (6,135 rows on 5,553 cases);
+      - the case table's work-ordered and summary columns.
+
+      Its old columns are byte for byte the file's, decoded as UTF-8. Read as Latin-1, one case name
+      differed, and that misreading is why the scout saw "ï¿½" where EPA's text holds "�". The slice
+      grows from 0.84 MB to 2.05 MB.
+- **Totals on the replay, before first prices:** 7,545 rows on 670 companies (7,428), 6,463 before
+  2017, 7,268 of them a case's own row. ExxonMobil 288, GE 284, Chevron 269, BP 248, GM 225.
+- **Requests:** none.
+- **Checks:** check:epa-cases 76 (+16): AEP, Cummins, Deepwater Horizon, Omega's 271 parties, the
+  month rows, the totals, every moved row kept, money in cents, the summary's cleaning and floor and
+  cap, a file without the table, the zip's table, db/043, and the NUL.
+
+  On main the new cases fail. `npm run check` and `npm run lint` pass. HawkScan cannot run here
+  (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 112: a new opportunity-scout run, three proposals for the owner (2026-11-07)
 
 Every proposal of 2026-11-06 is approved and built (batches 104–106), and batches 107–111 fixed what
@@ -995,8 +1075,10 @@ the 2026-11-07 audit found. So the `opportunity-scout` read the repository again
 wrote `docs/proposals/2026-11-07-proposals.md`: three proposals, all **PENDING**, ranked with
 securities depth first. Nothing is built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ **Marked 2026-11-07: all three approved** ("Approve all three, titles from the FDA's
+      data"), filed under Scope refocus by batch 113.
       1. `P1` **EPA's own figures on the case rows pages already hold.** No new source: one more
          table (`CASE_ENFORCEMENT_CONCLUSIONS`) and three more columns of the zip the monthly walk
          already reads.
@@ -8606,6 +8688,38 @@ already held, but new investment goes to securities coverage first.
         EPA cases on two or more pages, 3,366 of 7,436 rows.
       - *Derived from [`docs/proposals/2026-11-06-proposals.md`](proposals/2026-11-06-proposals.md)
         #3, approved 2026-11-06.*
+- [x] `P1` **EPA's own figures on the case rows pages already hold.** No new source: approved by the
+      owner 2026-11-07 ("Approve all three, titles from the FDA's data"). Read the settlements table
+      (`CASE_ENFORCEMENT_CONCLUSIONS.csv`) and the case table's work-ordered and summary columns of the
+      zip the monthly walk already reads. A case of one settlement and no case total takes the
+      settlement's penalty; the row names the work ordered, "among N parties" on a case of several;
+      EPA's summary, when it says something, is the row's description. Money stays numeric.
+      - **Measured** by the scout on the replay: 1,079 rows gain a penalty, 755 before 2017; 2,523
+        rows the work ordered; 4,203 of 4,630 page cases have a summary.
+      - ✅ **Done in batch 113** (see its section): 1,250 more rows give a penalty (890 before
+        2017), 2,805 name the work ordered and 6,417 carry EPA's summary; every moved row keeps its
+        stored identity; and a NUL in EPA's text, which made every month's read fail on a real
+        database, is dropped.
+      - *Derived from [`docs/proposals/2026-11-07-proposals.md`](proposals/2026-11-07-proposals.md)
+        #1, approved 2026-11-07.*
+- [ ] `P2` **EPA's cases against the utilities' operating companies.** No new source: approved by
+      the owner 2026-11-07. About 60 more `UNITS` patterns on 31 utility holding companies (Georgia
+      Power on Southern, Ohio Edison on FirstEnergy, PSE&G on PSEG), each ownership day read from an
+      EDGAR filing at build time, as batch 104's were, and a guard for "Mississippi Power & Light"
+      (Entergy's, not Southern's).
+      - **Measured** by the scout: 442 cases, 213 a court case or a penalty, 186 of those before
+        2017; 13 pages gain their first EPA rows (PSEG 0→44, Exelon 0→22).
+      - *Derived from [`docs/proposals/2026-11-07-proposals.md`](proposals/2026-11-07-proposals.md)
+        #3, approved 2026-11-07. Next: batch 114.*
+- [ ] `P2` **New indications and other efficacy supplements, for drugs whose holder never
+      changed.** A new dataset, approved by the owner 2026-11-07: Drugs@FDA through openFDA (CC0, no
+      key), kept only where today's sponsor is the applicant batch 105's compilation names, so a
+      supplement is never an acquirer's. **The owner's call:** titles from the data alone; no
+      approval letter is read.
+      - **Measured** by the scout through batch 105's rule from first prices: 973 supplements on 27
+        pages, 352 before 2017; no false match in 25 sampled rows and all 58 page–sponsor pairs.
+      - *Derived from [`docs/proposals/2026-11-07-proposals.md`](proposals/2026-11-07-proposals.md)
+        #2, approved 2026-11-07. Next: batch 115.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

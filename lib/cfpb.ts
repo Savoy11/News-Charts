@@ -1,6 +1,7 @@
 import { captionParty, chargedParties } from "./secCases";
 import type { TimelineEvent } from "./types";
 import { UA } from "./contact";
+import { takenBefore } from "./takenNames";
 
 /**
  * The Consumer Financial Protection Bureau's enforcement actions, from its first of 2012-07-17
@@ -154,6 +155,8 @@ export function cfpbEvents(
   for (const a of actions) {
     if (!a.path.startsWith("/enforcement/actions/")) continue;
     if (NOT_THE_COMPANY[Number(cik)]?.some((n) => n.title.test(a.title))) continue;
+    // a name the record took from another company is that company's before the day (lib/takenNames.ts, batch 117)
+    if (takenBefore(cik, a.day, a.title)) continue;
     const held = a.day < from ? (namesBefore?.(a.day) ?? []) : [...names(Number(a.day.slice(0, 4))), ...(namesOn?.(a.day) ?? [])];
     if (!held.length) continue;
     // a name can only be a respondent where the title's letters and digits hold its own: most

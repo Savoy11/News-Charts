@@ -828,7 +828,8 @@ async function fundSeriesFilings(): Promise<void> {
   check("the page reader shows the fund's own under its name",
     /CASE WHEN es\.scored_by = \$3 THEN sj\.display_name END AS own_series_of/.test(readSrc) &&
       /\[subjectId, RELEVANCE_THRESHOLD, OWN_SERIES_SCORER\]/.test(readSrc) &&
-      /return r\.own_series_of \? asOwnSeriesFiling\(own, r\.own_series_of\) : own;/.test(readSrc));
+      // batch 117: each row is a list of one, or none when it is another company's under a name the record took
+      /return \[r\.own_series_of \? asOwnSeriesFiling\(own, r\.own_series_of\) : own\];/.test(readSrc));
 }
 
 main();

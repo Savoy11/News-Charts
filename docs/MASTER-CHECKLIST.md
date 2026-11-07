@@ -988,6 +988,90 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 117: one table of the names a record took from another company (2026-11-07)
+
+The checklist's `P2` raised by batch 116 and proposed by the 2026-11-07 audit. The owner's word,
+2026-11-07: "Lets continue". A company's present EDGAR name was read in every year, so where its
+record took another company's name, that company's past reached the page: AT&T Corp.'s cases on
+T's page, whose prices before 2005 are SBC's.
+
+- [x] **One table** (`TAKEN_NAMES`, lib/takenNames.ts): 28 records, each with the day the name
+      became the record's, the filing that gives it (an 8-K's event day, or the day it names), the
+      record's own names of before, and why. Read by hand from each record's filing list on
+      data.sec.gov.
+      - **Bought or merged, 21:** T (SBC's, 2005-11-18), WM (USA Waste's, 1998-07-16), BIIB
+        (IDEC's, 2003-11-12), WFC (Norwest's, 1998-10-21), BAC (NationsBank's, 1998-09-30), CB (ACE's,
+        2016-01-14), USB (First Bank System's, 1997-08-01), KEY (Society's, 1994-03-01), COHR (II-VI's,
+        2022-07-01), CZR (Eldorado's, 2020-07-17), IR (Gardner Denver's, 2020-02-28), HOS (Helix's,
+        2026-08-28), VTOL (Era's, 2020-06-11), LIN (Praxair's chart, 2018-10-31), FUN (Cedar Fair's
+        chart, 2024-07-01), PLD (AMB's, 2011-06-02), OPY (Fahnestock's, 2003-01-02), SPB (Harbinger's,
+        2011-01-07), SPWR (Complete Solaria's, 2024-09-30), STRR (Hudson Global's, 2025-08-22), ZD (j2's,
+        2012-11-09) and IWSH (National Patent's, 2012-12-19).
+      - **A namesake's name, 6:** KMPR (Kemper, 2011-08-25), SUN (Sunoco, 2014-10-27), SR (Spire,
+        2016-04-28), POOL (Pool Company, 2006-05-16), RRC (Range Resources Ltd., 1998-08-25) and LUMN
+        (Lumen Technologies, Inc., 2020-09-11).
+      - **The rule:** before the day, a row that names the taken name and none of the record's own
+        names of then is the other company's. "SBC to acquire AT&T" stays on T; "AT&T Corp. cuts
+        7,000 jobs" of 2004 does not. "Ace to Buy Chubb" stays on CB, as headlines write ACE.
+- [x] **Read by every source that finds a company by its name:**
+      - **every caption rule** (SEC cases, the Board's releases, CFPB, EPA, CPSC, CFTC and the FDA's
+        approvals, `takenBefore`). The three one-source entries of batches 108, 115 and 116 are
+        gone into the table, and with them the lists' `before` fields;
+      - **ingest,** on every source's answer before it is stored, as part of the answer, so a
+        complete answer still takes a stored row off; and on the Federal Register's and GDELT's
+        walks, which store their own (`withoutTakenNames`). The news, the Justice Department's API,
+        the SEC's press releases and the Digest are read so too;
+      - **a page,** which leaves off a stored row of it, stored before this batch or by a source no
+        run takes off; and **"Also on"**, which no longer names the record under the other company's
+        case (`hiddenAsTaken`);
+      - **the Federal Register's yearly search:** a year that ends before the day is asked under
+        the record's own EDGAR name of that year, not the taken one (`yearSearchNames`). T's
+        1994–2004 are asked under Southwestern Bell's and SBC's names. Those years are asked once
+        more, since their query changes.
+      - **Never** the record's own sources: its EDGAR filings, its prices, the macro and on-chain
+        feeds, its Wikipedia article (`OWN_RECORD_SOURCES`). SBC's own 8-K titled "AT&T Shareholders
+        Approve Merger" is SBC's.
+- [x] **The scan that keeps it whole** (`scripts/fixtures/taken-names-scan.json`). Every listed
+      company whose present EDGAR name an older record had held (EDGAR's list of every name each
+      record has filed under; the other record older than CIK 1,100,000, not listed, not a mapped
+      predecessor and no depositary): 173, each read.
+      - 28 took it from another company (the table);
+      - 25 had it by their first price, so nothing before is read;
+      - 86 are the same company's other record: a new parent (Disney's of 2019, Duke's of 2006), a
+        redomicile, its own unit, its own fund's trust;
+      - 34 for the other reasons: a name that was new (AstraZeneca, ConocoPhillips), its own brand
+        (AutoNation, Orange), a blank-check company's business, the ticker's own history (MRK, SSYS,
+        WCN, DWSN), days of when-issued trading, a shared name, three namesakes not yet dated, and
+        five with no price or no start.
+      - **What it cannot see:** a name EDGAR writes another way. DowDuPont's "DuPont de Nemours"
+        took E. I. du Pont's, and old DuPont's past on DD stays the owner's open call (OWNER-ACTIONS).
+- **Measured on the saved sources** (EPA's whole file, the CPSC's, the SEC's cases and press
+  releases, the Justice archive, the Board's releases, CFPB, CFTC and the FDA's approvals), from each
+  company's first price:
+  - 15 rows come off 4 pages that nothing took off before: LIN 9 (Linde AG's, its US units'
+    included), SPB 4 (Spectrum Brands' of 2006–2009), HOS 1 (Hornbeck's of 2024), FUN 1 (Six
+    Flags' of 2005);
+  - T's 14, WM's 6 and BIIB's 2 stay off, now by the table;
+  - the other 21 lose nothing on these sources. Their risk is in the news, the Federal Register and
+    the Justice Department's API, which need the network: the rule is in place for each.
+  - **One may be the record's own:** of LIN's nine, a 2018 notice to "LINDE INC" could be Praxair's,
+    under its later name; EPA's file does not say.
+  - With no first-price floor, as the checks count: EPA 7,954 rows on 683 companies become 7,899 on
+    679 (IR's 36 old Ingersoll-Rand cases, Sunoco, Inc.'s 3 and Bristow's 1 among them), the CPSC's
+    2,301 become 2,300 (Ingersoll-Rand Company's 2002 recall), and the SEC's 1,150 case days on 371
+    companies become 1,148 on 369 (Ingersoll-Rand's and the old Bristow's of 2007).
+- **Requests:** 313, logged in the session scratchpad (`b117/requests.log`), with User-Agent `News
+  Charts Research` and no email address: data.sec.gov 187 (the 173 scanned records' filing lists and
+  14 older pages of them), Yahoo's chart 126 (first trading days for the scan).
+- **Checks:**
+  - check:taken-names is new, with 31 checks: the table, the rule, each place that reads it, the
+    Federal Register's walk against a stand-in database, and the scan;
+  - check:epa-cases, check:cpsc and check:fda-approvals read the table for the entries it replaces,
+    and re-pin their counts, as does check:sec-cases; check:sec-forms reads the page code's new form.
+
+  On main the new check fails. `npm run check` and `npm run lint` pass. HawkScan cannot run here
+  (`HAWK_API_KEY` unset).
+
 ## NC ledger — batch 116: the audit of batches 108–115, and its seven findings fixed (2026-11-07)
 
 The `code-auditor` read batches 108–115 (`92d7a59..126af0c`); its report is
@@ -8990,23 +9074,31 @@ already held, but new investment goes to securities coverage first.
         2003 come off Biogen's page.
       - *Derived from [`docs/proposals/2026-11-07-proposals.md`](proposals/2026-11-07-proposals.md)
         #2, approved 2026-11-07.*
-- [ ] `P2` **A record that took a bought company's name: one rule for every source.** A company's
+- [x] `P2` **A record that took a bought company's name: one rule for every source.** A company's
       present EDGAR name is read in every year, so where its record took the name of a company it
-      bought, that company's past reaches the page. Fixed so far one entry at a time:
-      - old Waste Management on WM before 1998-07-16 (EPA, batch 108);
-      - old Biogen on BIIB before 2003-11-12 (FDA approvals, batch 115);
-      - AT&T Corp. on T before 2005-11-18 (EPA and CPSC, batch 116).
-
-      **Not yet measured:** the Federal Register's yearly search asks the present name for every year
-      back to 1994 (`frSearchTerm(plan.edgarName, …)` in lib/ingest/frBackfill.ts), so its documents of
-      1994–2005 naming AT&T Corp. are likely on T's page, and old Waste Management's and old Biogen's
-      likewise. That needs the network. The Justice archive, the SEC's cases and press releases give T
-      no such row (batch 116). On EPA's file, the audit found none for HON, RTX, WFC, BAC, USB or TMUS.
-      - **The fix to build:** one table of these takeovers, each with its day and the filing that gives
-        it, read by every case rule and by the Federal Register's names. A check that lists every index
-        company whose present EDGAR name began after its first price would keep the table whole. The
-        2026-11-07 audit of batches 108–115 proposed it.
-      - *Raised by batch 116. Next: batch 117.*
+      bought, that company's past reaches the page. Batches 108, 115 and 116 fixed three such names
+      one source at a time (old Waste Management on WM, old Biogen on BIIB, AT&T Corp. on T).
+      - ✅ **Done in batch 117** (see its section): one table, `TAKEN_NAMES` in lib/takenNames.ts, of
+        28 records, each day read from a filing. Every caption rule reads it, ingest drops such rows
+        from every source found by name, a page and its "Also on" leave stored ones off, and the
+        Federal Register asks the years before under the record's own name of then. The three
+        one-source entries are gone into it. check:taken-names holds it to a committed scan of 173
+        renamed records, each read.
+      - *Raised by batch 116; the 2026-11-07 audit of batches 108–115 proposed it.*
+- [ ] `P3` **What batch 117's scan of renamed records left open.** Three readings need more than the
+      table:
+      - **Three namesakes, not yet dated:** LTBR, VAI and MRDN carry a name another record held
+        (Lightbridge, Inc., renamed Authorize.Net Holdings in 2007; two microcaps), and no day for
+        them has been read from a filing.
+      - **Three tickers whose history is another record's, as Merck's is MRK's:** SSYS (Objet took
+        Stratasys's name and ticker in 2012), WCN (Progressive Waste, Waste Connections's, 2016) and
+        DWSN (TGC Industries, Dawson's, 2015). Their pages' prices before are the old record's, whose
+        filings lib/predecessors.ts does not yet map.
+      - **GDELT's months before a taken name's day are asked under the present name.** The table
+        drops what they return about the other company (old Chubb's 2015 news on CB's page), but the
+        record's own news of then (ACE's) is not sought. Asking those months under the then-name, as
+        the Federal Register's years now are, would find it.
+      - *Raised by batch 117.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

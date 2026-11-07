@@ -463,6 +463,23 @@ export const SOURCES: {
     reviewedOn: "2026-11-06",
     notes: "CDER's new molecular entities and new biologics since 1985, kept where the applicant is a listed company, its firm or a unit it then owned (lib/fdaApprovals.ts); one committed workbook a year, no key (batch 105)",
   },
+  {
+    id: 36,
+    key: "fda_supplements",
+    name: "FDA efficacy supplements",
+    license: "public domain (CC0 1.0)",
+    attribution: "U.S. Food and Drug Administration (Drugs@FDA, via openFDA)",
+    // "unless otherwise noted, the content, data, documentation, code, and related materials on
+    // openFDA is public domain and made available with a Creative Commons CC0 1.0 Universal
+    // dedication. … You can copy, modify, distribute and perform the work, even for commercial
+    // purposes, all without asking permission." (open.fda.gov/license, "Data Licensing", last
+    // modified May 27, 2014, read 2026-11-07.) Used: each efficacy supplement's number, day, review
+    // and orphan mark, the application's sponsor today, and a link to the letter Drugs@FDA lists.
+    // Approved by the owner on 2026-11-07 (docs/proposals/2026-11-07-proposals.md #2).
+    commercialOk: true,
+    reviewedOn: "2026-11-07",
+    notes: "the approved efficacy supplements of the compilation's drugs, kept where the drug never left the company that held it on the day (lib/fdaSupplements.ts); one committed file a month, no key (batch 115)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

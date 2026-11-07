@@ -424,6 +424,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "fda_approvals") {
         return { score: 0.95, reason: "an FDA new-drug approval whose applicant is the company" };
       }
+      // …and a later efficacy supplement to one, where the drug never left the company
+      // (lib/fdaSupplements.ts, batch 115)
+      if (subject.kind === "company" && row.sourceKey === "fda_supplements") {
+        return { score: 0.95, reason: "an FDA efficacy supplement to a drug the company held" };
+      }
       // …and an SEC News Digest entry whose party is the company under the name its record had
       // that day, and no other company's (lib/secDigest.ts, batch 102)
       if (subject.kind === "company" && row.sourceKey === "sec_digest") {

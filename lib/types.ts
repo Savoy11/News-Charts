@@ -60,7 +60,8 @@ export type SourceKey =
   | "cpsc_recalls"
   | "cftc"
   | "sec_digest"
-  | "fda_approvals";
+  | "fda_approvals"
+  | "fda_supplements";
 
 export interface TimelineEvent {
   id: string;

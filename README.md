@@ -214,14 +214,42 @@ Alcon (Novartis from 2010-08-26) and Genzyme (Sanofi from 2011-04-08) the start 
 reports, beginning in 2012, never needed. Joint ventures are no one's (DuPont Merck, Astra Merck,
 Lilly ICOS, TAP), and two applicants are refused by name (`NOT_THE_APPLICANT`): DuPont's
 pharmaceuticals of 1986–2001 are not DuPont de Nemours's, whose record is DowDuPont's of 2015, and
-Block Drug's Actinex (1992) is not Block, Inc.'s. From the first prices of the 26 drugmakers Yahoo
-gave: 452 approvals, 316 before 2017, 71 before EDGAR (1994); most on Merck 58, Johnson & Johnson
-47, Novartis 44, Pfizer 42, Bristol-Myers Squibb 39 and Lilly 34. Organon's approvals of 1990–2001
+Block Drug's Actinex (1992) is not Block, Inc.'s; since batch 115, nor is old Biogen, Inc.'s past
+Biogen's: IDEC Pharmaceuticals, Biogen's record, bought it on 2003-11-12 and took its name, so
+Avonex (1996) and Amevive (early 2003) are no page's. From the first prices of the 26 drugmakers
+Yahoo gave: 450 approvals, 314 before 2017, 71 before EDGAR (1994); most on Merck 58, Johnson &
+Johnson 47, Novartis 44, Pfizer 42, Bristol-Myers Squibb 39 and Lilly 34. Organon's approvals of 1990–2001
 (Remeron, NuvaRing…) are Akzo Nobel's, which owned it until Schering-Plough bought it on 2007-11-19
 (batch 108). Schering-Plough's own, by its US company "Schering" (Claritin, Zetia…), and Organon's
 Saphris of 2009 are on Merck's page as Schering-Plough's, labelled so, before the 2009 merger
 (batch 110, the owner's call); Victrelis (2011) is Merck's own. Public domain by the FDA's website
 policies; no key.
+
+### FDA efficacy supplements (`lib/fdaSupplements.ts`)
+
+The approvals that follow a new drug's often move a drugmaker's stock more: a new indication, a new
+population, a new dose. A page carries each efficacy supplement the FDA approved to one of the
+compilation's drugs, on its day: "FDA approves an efficacy supplement to Keytruda (pembrolizumab)",
+with the supplement's number, the review and the orphan mark beneath, and a link to the letter
+Drugs@FDA lists for it (always at https://), or to Drugs@FDA's page where none is listed. The title
+says only what the data says, the owner's call: Drugs@FDA classes a supplement "EFFICACY" and no
+more, so a row never says "new indication", which only the letter can. The source is Drugs@FDA as
+openFDA publishes it, one zip of about 9 MB read monthly into the committed
+`data/fda-supplements.json` (`npm run sync:fda-supplements`): 3,132 supplements on 861 of the
+compilation's applications.
+
+Drugs@FDA's sponsor is today's holder, and no field says when a drug changed hands. A supplement
+is a company's only where the holder never left it, and then by batch 105's rule unchanged, on the
+supplement's own day, from the company's first price. The holder never left when today's sponsor is
+the compilation's applicant by name (legal, kind and place words and Drugs@FDA's shortenings left
+out: "NOVARTIS PHARMS CORP" is "Novartis Pharmaceuticals Corporation"), one of the company's own
+names (Celgene's Revlimid, "BRISTOL MYERS SQUIBB" today, is BMS's from 2019-11-20), or one of
+three short forms read by hand ("LILLY", "BRISTOL", "NOVO"). Humira, Abbott's then and AbbVie's now,
+lands on no page; neither do Merck's drugs now Organon's, nor the moves inside one company that no
+name shows (PF Prism's, Janssen's, "MSD SUB MERCK"). From first prices: 1,191 supplements on 48
+pages, 420 before 2017, 131 before 2005; most on Bristol-Myers Squibb 172, Merck 171, Novartis 116,
+Lilly 97, Johnson & Johnson 96, AstraZeneca and Gilead 71. Schering's before the 2009 merger are on
+Merck's page with batch 110's label. Public domain under CC0 (openFDA's licence); no key.
 
 ### Justice Department releases (`lib/doj.ts`)
 
@@ -1275,6 +1303,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 63 banks `lib/fedActions.ts` maps by hand to a listed company — 49 US banks and 14 foreign banks with their US arms; an action against a person is left out. Public domain, cited to the Board; two keyless files |
 | FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 73 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
 | FDA (CDER's new-drug approvals) | New molecular entities and new biologics since 1985, on the page of the company that applied | One committed workbook a year (`npm run sync:fda-approvals`); kept when the applicant is the company by the caption rule, a recall-map firm or a unit it then owned (`lib/fdaApprovals.ts`), from its first price; linked to Drugs@FDA. Public domain; no key |
+| FDA (Drugs@FDA, via openFDA) | Each approved efficacy supplement to those drugs, on its day | One committed file a month (`npm run sync:fda-supplements`); kept where the drug never left the company and the applicant was the company that day (`lib/fdaSupplements.ts`), from its first price; linked to the letter. Titles from the data alone. CC0; no key |
 | U.S. Department of Justice | Press releases since 2001 (the API's from 2009, the archive's month pages before) in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | SEC newsroom (press releases) | Press releases since 1997 in which a company is the party — the SEC charges, sues or sanctions it, or it settles | The year listing, read once for every company (`lib/ingest/secPressWalk.ts`); kept only when the headline makes the company the party (`lib/secPress.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |

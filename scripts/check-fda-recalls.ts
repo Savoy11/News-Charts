@@ -278,9 +278,9 @@ async function main(): Promise<void> {
     (COMPANY_SOURCES as readonly string[]).includes("fda_enforcement") &&
       /const fdaFirms = fdaFirmsFor\(company\.cik\);\s*if \(fdaFirms\) \{\s*await run\("fda_enforcement"/.test(ingest) && /fetchFdaRecalls\(company\.cik\)/.test(ingest));
   check("the FDA is credited where the other sources are",
-    // the recalls, and since batch 105 the new-drug approvals, in one credit
-    /drug, device and food recalls (?:and new-drug approvals )?from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
-      /drug, device and food recalls (?:and new-drug approvals )?from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
+    // the recalls, and since batch 105 the new-drug approvals (since batch 115 with their efficacy supplements), in one credit
+    /drug, device and food recalls(?: and new-drug approvals|, new-drug approvals and their efficacy supplements)? from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
+      /drug, device and food recalls(?: and new-drug approvals|, new-drug approvals and their efficacy supplements)? from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
   check("the sources plan records the owner's approval", /## 3\. FDA enforcement reports[^#]*\*\*Status:\*\* APPROVED/.test(read("docs/proposals/2026-10-22-news-sources.md")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);

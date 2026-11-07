@@ -187,7 +187,7 @@ measured on the saved file; (b) needs a floor tuned by hand
 
 ## 2. New indications and other efficacy supplements, on the page of the company that held the drug — a dataset for the owner to decide · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-07: "Approve all three, titles from the FDA's data". The owner's call inside it: titles from the data alone, no letter read. To be built in batch 115.
+**Status:** APPROVED — by the owner, 2026-11-07: "Approve all three, titles from the FDA's data". The owner's call inside it: titles from the data alone, no letter read. Built in batch 115: 1,191 supplements on 48 pages from first prices, 420 before 2017, under a name test of its own (legal, kind and place words and Drugs@FDA's shortenings left out), the company's own names and three short forms Drugs@FDA writes (LILLY, BRISTOL, NOVO); the moves inside one company stay off, as proposed.
 **Owner's reason (if rejected):**
 
 **Raised before:** yes, as a line, never measured.

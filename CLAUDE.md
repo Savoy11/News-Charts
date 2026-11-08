@@ -77,7 +77,7 @@ the Federal Reserve Board's releases (`lib/fedPress.ts`; its orders of 1996–20
 filings give (Merrill Lynch is Bank of America's from 2009-01-01), the other listed banks', brokers' and
 managers' own banks, broker-dealers and advisers (`BANK_UNITS`, batch 88: Regions Bank, Ameriprise
 Financial Services, Franklin Advisers…; batch 89: the units the CFPB charges, Capital One Bank, the
-mortgage insurers…), and the notes records that take no release. Every one of these rules reads a
+mortgage insurers…), the operating units EPA files under, by their own names on the same days (`OPERATING_UNITS`, batch 121: Pratt & Whitney, Ohio Edison, PacifiCorp…), and the notes records that take no release. Every one of these rules reads a
 company from its first price on; the only names read before it are the units marked `beforeListing`
 (the owner's calls b and c, batch 90; the owner's rule of 2026-11-05 that a case goes on every
 company it involves, batch 93). It is not a scoring list; keep it that way. A whole name two different listed companies hold, as
@@ -93,7 +93,7 @@ the CPSC hold their own `UNITS` lists instead of the release map: a unit filed u
 between the days the owner held it, each day read from a filing (Sunoco, Inc. on Energy Transfer, Graco Children's Products on Newell, batch 101;
 EPA's operating units of 34 more companies, Chevron U.S.A. to Union Carbide, batch 104, with a branded station never the brand's unit and a joint venture no one's; the utilities' operating companies, Georgia Power to PSE&G, on 33 companies, batch 114; BNSF on Berkshire to Kennecott on Rio Tinto, 28 more companies' units, batch 120, a unit sold to another listed company on that company's page from the day, each day read from data.sec.gov's filing lists). A name holding "&" is read with "and" too by the caption rule every one of these sources shares (`andSpellings`, batch 120), and the table of taken names reads "AT AND T" as "AT&T". A fund's series is never a party to any of these five rules (`FUND_SERIES`): its page knows only its
 series name, and "Growth Fund, Ltd." is a Ponzi scheme's fund, not American Century's. The
-Justice Department's releases of 2001–2008, which its API does not hold, come from its archive's
+Justice Department's API is asked by its `title` filter, which it reads; it ignores `parameters[title]` and answered every name asked that way with the same 488 releases (batch 121). Its releases of 2001–2008, which the API does not hold, come from its archive's
 month pages, each read once and kept (`lib/dojArchive.ts`, batch 94), under the same rule; a one-word
 name that is an everyday word ("CITY", "TARGET") needs its legal word in a title written in
 capitals, and as an object is the word after "the" or before "of" (`isEverydayWord`). EPA's

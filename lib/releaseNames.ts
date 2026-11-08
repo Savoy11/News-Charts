@@ -44,6 +44,11 @@ export interface ReleaseName {
   beforeListing?: true;
 }
 
+/** Why an operating unit's name is its owner's: EPA's units hold it on the same days, each read from a filing there. */
+const opWhy = (from?: string, to?: string): string =>
+  `its operating unit, as EPA's UNITS read it (lib/epaCases.ts)${from ? `, from ${from}` : ""}${to ? `, to ${to}` : ""}: each day there from the owner's or the other party's filing (batch 121)`;
+const op = (name: string, from?: string, to?: string): ReleaseName => ({ name, ...(from ? { from } : {}), ...(to ? { to } : {}), why: opWhy(from, to) });
+
 /**
  * The listed banks', brokers' and asset managers' own units (batch 88, the 2026-11-02 proposal 4,
  * approved by the owner with three calls): their banks, which the Board's orders name, and their
@@ -287,7 +292,12 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
   },
   715153: {
     ticker: "HMC",
-    names: [{ name: "American Honda Finance", why: "its US lender, American Honda Finance Corporation, named after it, as its 20-F filed 2015-06-26 names it, which the CFPB's actions of 2015 and 2025 name (batch 89)" }],
+    names: [
+      { name: "American Honda Finance", why: "its US lender, American Honda Finance Corporation, named after it, as its 20-F filed 2015-06-26 names it, which the CFPB's actions of 2015 and 2025 name (batch 89)" },
+      // batch 121: its operating units, here since a company is in one map only (check:sec-cases)
+      op("American Honda"),
+      op("Honda of America"),
+    ],
   },
   1094517: {
     ticker: "TM",
@@ -418,6 +428,436 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
       { name: "Prudential Equity Group", why: "the same firm from 2003, named after it, which captions write \"f/k/a Prudential Securities Inc.\"" },
     ],
   },
+};
+
+
+/**
+ * The operating units EPA files cases under (`UNITS`, lib/epaCases.ts, batches 104, 114 and 120), by
+ * their own names as the Justice Department's titles write them, on the same days (batch 121, the
+ * 2026-11-08 proposal 1(c), approved by the owner that day). The Department settles with the unit:
+ * "Pratt & Whitney and PCC Airfoils to Pay More Than $52 Million" (2008), "Firstenergy Nuclear Operating
+ * Company to Pay $28 Million" (2006), "Commonwealth Edison Agrees to Pay $200 Million" (2020),
+ * "PacifiCorp Agrees to Pay $575M" (2026), and the caption rule refuses a company's name followed by
+ * words that are not legal ones, so those sat on no page. A unit sold to another listed company is
+ * that company's from the day (Otis Elevator, Keystone, Trunkline, Gulf Power, Narragansett Electric),
+ * and a unit bought is its buyer's only from the day it was bought: Sikorsky's settlement of 2014 is
+ * RTX's, Raytheon Company's of 2024 too, Atlantic Richfield's of 1999 no page's. Sunoco, Inc. is left
+ * out: its name is Sunoco LP's own, and EPA's refusal of it on SUN's page (`NOT_THE_COMPANY`) has no
+ * counterpart in the release rules yet. Read by every release rule, as the banks' units are.
+ */
+export const OPERATING_UNITS: Readonly<Record<number, { ticker: string; names: readonly ReleaseName[] }>> = {
+  1276187: { ticker: "ET", names: [op("Panhandle Eastern Pipe Line", "2012-03-23"), op("Trunkline Gas", "2012-03-23")] },
+  93410: {
+    ticker: "CVX",
+    names: [
+      op("Chevron U.S.A."),
+      op("Texaco", "2001-10-09"),
+      op("Unocal", "2005-08-10"),
+      op("Union Oil Company of California", "2005-08-10"),
+    ],
+  },
+  1306965: { ticker: "SHEL", names: [op("Shell Oil", "2005-07-20")] },
+  313807: {
+    ticker: "BP",
+    names: [
+      op("BP Products North America"),
+      op("BP Exploration"),
+      op("BP America"),
+      op("BP West Coast Products", undefined, "2013-05-31"),
+      op("Amoco", "1998-12-31"),
+      op("Atlantic Richfield", "2000-04-18"),
+    ],
+  },
+  2115436: { ticker: "XOM", names: [op("Mobil", "1999-11-30"), op("ExxonMobil Oil"), op("Exxon Mobil Oil")] },
+  100885: { ticker: "UNP", names: [op("Union Pacific Railroad")] },
+  277948: { ticker: "CSX", names: [op("CSX Transportation")] },
+  702165: { ticker: "NSC", names: [op("Norfolk Southern Railway")] },
+  717423: { ticker: "MUR", names: [op("Murphy Oil USA", undefined, "2013-08-29")] },
+  1573516: { ticker: "MUSA", names: [op("Murphy Oil USA", "2013-08-30")] },
+  1133421: {
+    ticker: "NOC",
+    names: [
+      op("Northrop Grumman Ship Systems", undefined, "2011-03-30"),
+      op("Northrop Grumman Shipbuilding", undefined, "2011-03-30"),
+    ],
+  },
+  1501585: { ticker: "HII", names: [op("Northrop Grumman Ship Systems", "2011-03-31"), op("Northrop Grumman Shipbuilding", "2011-03-31")] },
+  1751788: { ticker: "DOW", names: [op("Dow Chemical", "2019-04-01"), op("Union Carbide", "2019-04-01")] },
+  922224: {
+    ticker: "PPL",
+    names: [
+      op("PPL Montana", undefined, "2015-05-31"),
+      op("Louisville Gas and Electric", "2010-11-01"),
+      op("Kentucky Utilities", "2010-11-01"),
+      op("Narragansett Electric", "2022-05-25"),
+      op("Rhode Island Energy", "2022-05-25"),
+    ],
+  },
+  797468: { ticker: "OXY", names: [op("Occidental Chemical")] },
+  1047862: { ticker: "ED", names: [op("Consolidated Edison Company of New York"), op("Orange and Rockland", "1999-07-08")] },
+  60667: { ticker: "LOW", names: [op("Lowe's Home Centers")] },
+  1326160: {
+    ticker: "DUK",
+    names: [
+      op("Duke Energy Carolinas"),
+      op("Duke Energy Progress"),
+      op("Duke Energy Florida"),
+      op("Duke Energy Indiana"),
+      op("Duke Energy Ohio"),
+      op("Duke Energy Kentucky"),
+      op("Duke Power"),
+      op("Cinergy", "2006-04-03"),
+      op("PSI Energy", "2006-04-03"),
+      op("Cincinnati Gas & Electric", "2006-04-03"),
+      op("Progress Energy", "2012-07-02"),
+      op("Carolina Power & Light", "2012-07-02"),
+      op("Florida Power Corporation", "2012-07-02"),
+      op("Texas Eastern Transmission", "1997-06-18", "2007-01-01"),
+      op("Algonquin Gas Transmission", "1997-06-18", "2007-01-01"),
+      op("Panhandle Eastern Pipe Line", "1997-06-18", "1999-03-28"),
+      op("Trunkline Gas", "1997-06-18", "1999-03-28"),
+    ],
+  },
+  92122: {
+    ticker: "SO",
+    names: [
+      op("Alabama Power"),
+      op("Georgia Power"),
+      op("Mississippi Power"),
+      op("Southern Company Services"),
+      op("Southern Nuclear"),
+      op("Southern Power Company"),
+      op("Savannah Electric", "1994-03-28"),
+      op("Gulf Power", undefined, "2018-12-31"),
+      op("Southern Company Gas", "2016-07-01"),
+      op("Atlanta Gas Light", "2016-07-01"),
+      op("Nicor Gas", "2016-07-01"),
+    ],
+  },
+  753308: {
+    ticker: "NEE",
+    names: [
+      op("Florida Power & Light"),
+      op("Florida Power and Light"),
+      op("FPL Energy"),
+      op("NextEra Energy Resources"),
+      op("Gulf Power", "2019-01-01"),
+    ],
+  },
+  4904: {
+    ticker: "AEP",
+    names: [
+      op("Appalachian Power"),
+      op("Ohio Power"),
+      op("Columbus Southern Power"),
+      op("Indiana Michigan Power"),
+      op("Kentucky Power"),
+      op("AEP Ohio"),
+      op("AEP Texas"),
+      op("Wheeling Power"),
+      op("Kingsport Power"),
+      op("Southwestern Electric Power", "2000-06-15"),
+      op("Central Power and Light", "2000-06-15"),
+      op("West Texas Utilities", "2000-06-15"),
+      op("Public Service Company of Oklahoma", "2000-06-15"),
+    ],
+  },
+  1031296: {
+    ticker: "FE",
+    names: [
+      op("Ohio Edison"),
+      op("Cleveland Electric Illuminating"),
+      op("Toledo Edison"),
+      op("Pennsylvania Power Company"),
+      op("FirstEnergy Nuclear Operating", undefined, "2018-03-30"),
+      op("FirstEnergy Solutions", undefined, "2018-03-30"),
+      op("FirstEnergy Generation", undefined, "2018-03-30"),
+      op("Jersey Central Power & Light", "2001-11-07"),
+      op("Metropolitan Edison", "2001-11-07"),
+      op("Pennsylvania Electric Company", "2001-11-07"),
+      op("Monongahela Power", "2011-02-25"),
+      op("Potomac Edison", "2011-02-25"),
+      op("West Penn Power", "2011-02-25"),
+      op("Allegheny Energy", "2011-02-25"),
+    ],
+  },
+  715957: {
+    ticker: "D",
+    names: [
+      op("Virginia Electric and Power"),
+      op("Dominion Virginia Power"),
+      op("Dominion Exploration & Production"),
+      op("Dominion Transmission"),
+      op("Dominion Energy Brayton Point"),
+      op("East Ohio Gas", "2000-01-28"),
+      op("CNG Transmission", "2000-01-28"),
+      op("Consolidated Natural Gas", "2000-01-28"),
+      op("South Carolina Electric & Gas", "2019-01-01"),
+      op("SCANA", "2019-01-01"),
+    ],
+  },
+  72903: {
+    ticker: "XEL",
+    names: [
+      op("Northern States Power"),
+      op("Public Service Company of Colorado", "2000-08-18"),
+      op("Southwestern Public Service", "2000-08-18"),
+    ],
+  },
+  1109357: {
+    ticker: "EXC",
+    names: [
+      op("Commonwealth Edison", "2000-10-20"),
+      op("PECO Energy", "2000-10-20"),
+      op("Exelon Generation", "2000-10-20", "2022-01-31"),
+      op("Baltimore Gas and Electric", "2012-03-12"),
+      op("Potomac Electric Power", "2016-03-23"),
+      op("Delmarva Power", "2016-03-23"),
+      op("Atlantic City Electric", "2016-03-23"),
+    ],
+  },
+  1868275: { ticker: "CEG", names: [op("Exelon Generation", "2022-02-01"), op("Constellation Energy Generation", "2022-02-01")] },
+  788784: { ticker: "PEG", names: [op("Public Service Electric and Gas"), op("PSE&G"), op("PSEG Fossil"), op("PSEG Power"), op("PSEG Nuclear")] },
+  827052: { ticker: "EIX", names: [op("Southern California Edison")] },
+  1004980: { ticker: "PCG", names: [op("Pacific Gas and Electric"), op("Pacific Gas & Electric")] },
+  1032208: { ticker: "SRE", names: [op("San Diego Gas & Electric", "1998-06-26"), op("Southern California Gas", "1998-06-26")] },
+  1002910: {
+    ticker: "AEE",
+    names: [
+      op("Union Electric", "1997-12-31"),
+      op("Central Illinois Public Service", "1997-12-31"),
+      op("Central Illinois Light", "2003-01-31"),
+      op("Illinois Power", "2004-10-01"),
+    ],
+  },
+  936340: {
+    ticker: "DTE",
+    names: [
+      op("Detroit Edison"),
+      op("DTE Electric"),
+      op("DTE Gas"),
+      op("Michigan Consolidated Gas", "2001-05-31"),
+      op("MichCon", "2001-05-31"),
+    ],
+  },
+  811156: { ticker: "CMS", names: [op("Consumers Energy"), op("Consumers Power")] },
+  1111711: {
+    ticker: "NI",
+    names: [
+      op("Northern Indiana Public Service"),
+      op("NIPSCO"),
+      op("Columbia Gas of Ohio", "2000-11-01"),
+      op("Columbia Gas of Pennsylvania", "2000-11-01"),
+      op("Columbia Gas of Virginia", "2000-11-01"),
+      op("Columbia Gas of Kentucky", "2000-11-01"),
+      op("Columbia Gas of Maryland", "2000-11-01"),
+      op("Columbia Gas of Massachusetts", "2000-11-01", "2020-10-08"),
+    ],
+  },
+  783325: {
+    ticker: "WEC",
+    names: [
+      op("Wisconsin Electric Power"),
+      op("We Energies"),
+      op("Wisconsin Gas", "2000-04-26"),
+      op("Wisconsin Public Service", "2015-06-29"),
+      op("Peoples Gas Light and Coke", "2015-06-29"),
+      op("North Shore Gas", "2015-06-29"),
+    ],
+  },
+  352541: {
+    ticker: "LNT",
+    names: [
+      op("Wisconsin Power and Light"),
+      op("Interstate Power and Light", "1998-04-21"),
+      op("IES Utilities", "1998-04-21"),
+    ],
+  },
+  1711269: {
+    ticker: "EVRG",
+    names: [
+      op("Kansas City Power & Light", "2018-06-04"),
+      op("Westar Energy", "2018-06-04"),
+      op("Kansas Gas and Electric", "2018-06-04"),
+    ],
+  },
+  72741: {
+    ticker: "ES",
+    names: [
+      op("Connecticut Light and Power"),
+      op("Connecticut Light & Power"),
+      op("Western Massachusetts Electric"),
+      op("Public Service Company of New Hampshire", "1994-02-09"),
+      op("NSTAR", "2012-04-10"),
+      op("Boston Edison", "2012-04-10"),
+      op("Commonwealth Electric", "2012-04-10"),
+      op("Cambridge Electric", "2012-04-10"),
+    ],
+  },
+  1004315: {
+    ticker: "NGG",
+    names: [
+      op("Niagara Mohawk", "2002-01-31"),
+      op("New England Power", "2000-03-22"),
+      op("Massachusetts Electric", "2000-03-22"),
+      op("New England Electric System", "2000-03-22"),
+      op("Narragansett Electric", "2000-03-22", "2022-05-24"),
+      op("KeySpan", "2007-08-24"),
+      op("Brooklyn Union Gas", "2007-08-24"),
+    ],
+  },
+  764622: { ticker: "PNW", names: [op("Arizona Public Service")] },
+  1130310: {
+    ticker: "CNP",
+    names: [
+      op("Houston Lighting & Power"),
+      op("CenterPoint Energy Houston Electric"),
+      op("CenterPoint Energy Resources"),
+      op("Vectren", "2019-02-01"),
+      op("Southern Indiana Gas and Electric", "2019-02-01"),
+    ],
+  },
+  1021635: { ticker: "OGE", names: [op("Oklahoma Gas and Electric")] },
+  1057877: { ticker: "IDA", names: [op("Idaho Power")] },
+  1108426: { ticker: "TXNM", names: [op("Public Service Company of New Mexico")] },
+  1161728: { ticker: "MGEE", names: [op("Madison Gas and Electric")] },
+  874761: { ticker: "AES", names: [op("Indianapolis Power & Light", "2001-03-27"), op("Dayton Power and Light", "2011-11-28")] },
+  1692819: { ticker: "VST", names: [op("Luminant"), op("TXU Energy"), op("Dynegy", "2018-04-09")] },
+  1067983: {
+    ticker: "BRK-B",
+    names: [
+      op("BNSF Railway", "2010-02-12"),
+      op("Burlington Northern Santa Fe", "2010-02-12"),
+      op("PacifiCorp", "2006-03-21"),
+      op("MidAmerican Energy", "2006-02-09"),
+      op("Northern Natural Gas", "2006-02-09"),
+      op("Kern River Gas", "2006-02-09"),
+      op("Nevada Power", "2013-12-19"),
+      op("Sierra Pacific Power", "2013-12-19"),
+      op("Lubrizol", "2011-09-16"),
+      op("Shaw Industries", "2001-01-10"),
+      op("Johns Manville", "2001-02-24"),
+      op("Precision Castparts", "2016-01-29"),
+      op("Fruit of the Loom", "2002-05-02"),
+    ],
+  },
+  1060391: { ticker: "RSG", names: [op("Allied Waste", "2008-12-05"), op("Browning-Ferris", "2008-12-05")] },
+  101829: {
+    ticker: "RTX",
+    names: [
+      op("Pratt & Whitney"),
+      op("Pratt and Whitney"),
+      op("Hamilton Sundstrand"),
+      op("Sikorsky Aircraft", undefined, "2015-11-05"),
+      op("Otis Elevator", undefined, "2020-04-01"),
+      op("Carrier Corporation", undefined, "2020-04-01"),
+      op("Goodrich Corporation", "2012-07-26"),
+      op("Rockwell Collins", "2018-11-26"),
+      op("Raytheon Company", "2020-04-02"),
+    ],
+  },
+  1781335: { ticker: "OTIS", names: [op("Otis Elevator", "2020-04-02")] },
+  1506307: {
+    ticker: "KMI",
+    names: [
+      op("El Paso Natural Gas", "2012-05-24"),
+      op("El Paso Corporation", "2012-05-24"),
+      op("Tennessee Gas Pipeline", "2012-05-24"),
+      op("Southern Natural Gas", "2012-05-24"),
+      op("Colorado Interstate Gas", "2012-05-24"),
+      op("SFPP"),
+      op("Kinder Morgan Energy Partners"),
+      op("Kinder Morgan Liquids Terminals"),
+    ],
+  },
+  107263: {
+    ticker: "WMB",
+    names: [
+      op("Transcontinental Gas Pipe Line", "1995-01-18"),
+      op("Northwest Pipeline"),
+      op("Williams Field Services"),
+      op("Williams Production", undefined, "2011-12-29"),
+    ],
+  },
+  895728: {
+    ticker: "ENB",
+    names: [
+      op("Enbridge Energy"),
+      op("Texas Eastern Transmission", "2017-02-27"),
+      op("Algonquin Gas Transmission", "2017-02-27"),
+      op("Spectra Energy", "2017-02-27"),
+    ],
+  },
+  1232384: {
+    ticker: "TRP",
+    names: [
+      op("ANR Pipeline", "2007-02-27"),
+      op("Columbia Gas Transmission", "2016-07-01"),
+      op("Columbia Gulf Transmission", "2016-07-01"),
+      op("TransCanada Keystone Pipeline", undefined, "2024-09-30"),
+    ],
+  },
+  2019061: { ticker: "SOBO", names: [op("TransCanada Keystone Pipeline", "2024-10-01")] },
+  1035002: {
+    ticker: "VLO",
+    names: [
+      op("Valero Refining"),
+      op("Valero Marketing"),
+      op("Ultramar Diamond Shamrock", "2001-12-31"),
+      op("Diamond Shamrock Refining", "2001-12-31"),
+      op("Premcor", "2005-09-01"),
+    ],
+  },
+  1307954: { ticker: "HUN", names: [op("Huntsman Petrochemical"), op("Huntsman International"), op("Huntsman Advanced Materials")] },
+  1262823: {
+    ticker: "WLK",
+    names: [
+      op("Westlake Vinyls"),
+      op("Westlake Polymers"),
+      op("Westlake Petrochemicals"),
+      op("Axiall", "2016-08-31"),
+      op("Georgia Gulf", "2016-08-31"),
+    ],
+  },
+  1489393: { ticker: "LYB", names: [op("Equistar"), op("Lyondell"), op("Houston Refining"), op("Millennium Petrochemicals")] },
+  879764: { ticker: "TTE", names: [op("Total Petrochemicals"), op("Total E&P USA")] },
+  831259: { ticker: "FCX", names: [op("Phelps Dodge", "2007-03-19"), op("Cyprus Amax", "2007-03-19"), op("Climax Molybdenum", "2007-03-19")] },
+  863064: { ticker: "RIO", names: [op("Kennecott"), op("U.S. Borax")] },
+  1285785: {
+    ticker: "MOS",
+    names: [
+      op("Mosaic Fertilizer", "2004-10-22"),
+      op("Mosaic Phosphates", "2004-10-22"),
+      op("IMC Phosphates", "2004-10-22"),
+      op("Cargill Fertilizer", "2004-10-22"),
+    ],
+  },
+  764065: { ticker: "CLF", names: [op("AK Steel", "2020-03-13"), op("ArcelorMittal USA", "2020-12-07")] },
+  87347: {
+    ticker: "SLB",
+    names: [
+      op("Schlumberger Technology"),
+      op("Smith International", "2010-08-27"),
+      op("Cameron International", "2016-04-01"),
+    ],
+  },
+  78003: {
+    ticker: "PFE",
+    names: [
+      op("Warner-Lambert", "2000-06-19"),
+      op("Parke-Davis", "2000-06-19"),
+      op("Pharmacia", "2003-04-16"),
+      op("Upjohn", "2003-04-16"),
+      op("Wyeth", "2009-10-15"),
+    ],
+  },
+  100493: { ticker: "TSN", names: [op("Tyson Fresh Meats"), op("Tyson Poultry"), op("IBP", "2001-09-28"), op("Hillshire Brands", "2014-08-28")] },
+  77476: { ticker: "PEP", names: [op("Frito-Lay"), op("Quaker Oats", "2001-08-02"), op("Pepsi Bottling Group", "2010-02-26")] },
+  24545: { ticker: "TAP", names: [op("Coors Brewing"), op("MillerCoors", "2016-10-11")] },
+  1668717: { ticker: "BUD", names: [op("Anheuser-Busch", "2008-11-18")] },
+  64803: { ticker: "CVS", names: [op("CVS Pharmacy")] },
+  315189: { ticker: "DE", names: [op("John Deere")] },
+  217346: { ticker: "TXT", names: [op("Bell Helicopter"), op("Cessna Aircraft", "1994-03-30"), op("E-Z-GO")] },
 };
 
 export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: readonly ReleaseName[] }>> = {
@@ -594,6 +1034,8 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
   },
   // batch 88's units, each company in one map or the other (check:sec-cases)
   ...BANK_UNITS,
+  // batch 121's operating units, none of whose companies is in either map above (check:sec-press)
+  ...OPERATING_UNITS,
 };
 
 /**

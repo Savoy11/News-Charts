@@ -392,7 +392,10 @@ export async function fetchJusticeReleases(
           page: String(page),
           sort: "date",
           direction: "DESC",
-          "parameters[title]": name,
+          // the API's title filter is `title` (batch 121): it ignores `parameters[title]`, which it
+          // once read, and answered every name asked that way with the same 488 releases naming
+          // none of them (Walmart, BNSF, "Pacific Gas"), measured 2026-11-08; `title=Walmart` gave 68
+          title: name,
         });
         const res = await fetch(`${API}?${params}`, { headers: UA, signal: AbortSignal.timeout(TIMEOUT_MS) });
         if (res.status === 429 || res.status === 503) return { events: [], outcome: "throttled", httpStatus: res.status };

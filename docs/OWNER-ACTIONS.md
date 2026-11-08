@@ -213,6 +213,9 @@ Raised by the November batches, each recorded in the master checklist:
   2006-02-09). #1's parts (a) and (b) are built in batch 120; its part (c), then #2 and #3, follow.
   Nothing to run after deploying batch 120: each company's next ingest reads its new units' cases from
   the EPA cases already kept.
+  After deploying batch 121, nothing to run either: each company's next Justice Department run asks
+  the API by the filter it reads, `title`. Since the API stopped reading `parameters[title]`, no page
+  found a release from 2009 on; the next runs fill them in.
   1. EPA's cases under 28 more companies' operating units (BNSF on Berkshire, Pratt & Whitney on RTX);
      three parts, each approvable alone, and two calls inside it: Pharmacia LLC on Pfizer, and the
      day MidAmerican Energy becomes Berkshire's;

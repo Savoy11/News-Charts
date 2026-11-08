@@ -368,8 +368,8 @@ const TODAY = "2026-10-29";
     [["2014-39", "GLDI", false], ["2021-213", "GLDI", false], ["2012-233", "GLDI", false], ["2012-233", "JPM", true], ["2009-29", "AMUB", false]]);
   check("  …where before this batch GLDI's page took Credit Suisse's own",
     secPressEvents([storedRelease("2014-39"), storedRelease("2021-213")], namesOf("GLDI")).length === 2);
-  check("the map: twelve banks (seven in batch 82, Deutsche Bank, State Street, BNY and Barclays in batch 83, Goldman Sachs in batch 85), batch 88's 34 companies' units, batch 89's 22 more, batch 90's 4, batch 93's 3 and batch 94's Walmart, each unit with its reason, each day well formed, and the three notes records mapped to none",
-    Object.keys(RELEASE_NAMES).length === 76 && Object.keys(NOTES_RECORDS).length === 3 &&
+  check("the map: twelve banks (seven in batch 82, Deutsche Bank, State Street, BNY and Barclays in batch 83, Goldman Sachs in batch 85), batch 88's 34 companies' units, batch 89's 22 more, batch 90's 4, batch 93's 3, batch 94's Walmart and batch 121's 74 companies' operating units, each unit with its reason, each day well formed, and the three notes records mapped to none",
+    Object.keys(RELEASE_NAMES).length === 150 && Object.keys(NOTES_RECORDS).length === 3 &&
       Object.values(RELEASE_NAMES).every((b) => b.names.every((n) => n.why.length > 20 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.keys(NOTES_RECORDS).every((cik) => !(cik in RELEASE_NAMES)) &&
       Object.entries(RELEASE_NAMES).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)) &&
@@ -394,8 +394,8 @@ const TODAY = "2026-10-29";
   // 2011 and Barclays Capital's of 2014
   // batch 89's TD Bank adds "SEC Charges TD Bank and Former Executive for Roles in Rothstein Ponzi
   // Scheme in South Florida" (2013-09-23)
-  check("the 6,897 stored releases give 266 page entries on 129 companies, 58 more than before batch 82's names (4 of them batch 88's units, 1 batch 89's, 2 batch 100's \"AG\": Daimler's bribery charges of 2010, Novartis's of 2020), as replayed in full",
-    stored.length === 6897 && entries === 266 && replay.size === 129 && (replay.get("TD") ?? []).length === 1 && (replay.get("NVS") ?? []).includes("2020-144@2020-06-25") && (replay.get("MBGAF") ?? []).includes("2010-51@2010-04-01"), `${stored.length} releases → ${entries} entries on ${replay.size} companies in ${Date.now() - t0} ms`);
+  check("the 6,897 stored releases give 267 page entries on 130 companies, 59 more than before batch 82's names (4 of them batch 88's units, 1 batch 89's, 2 batch 100's \"AG\": Daimler's bribery charges of 2010, Novartis's of 2020, 1 batch 121's operating units: John Deere's bribery charge of 2024), as replayed in full",
+    stored.length === 6897 && entries === 267 && replay.size === 130 && (replay.get("DE") ?? []).some((k) => k.endsWith("@2024-09-10")) && (replay.get("TD") ?? []).length === 1 && (replay.get("NVS") ?? []).includes("2020-144@2020-06-25") && (replay.get("MBGAF") ?? []).includes("2010-51@2010-04-01"), `${stored.length} releases → ${entries} entries on ${replay.size} companies in ${Date.now() - t0} ms`);
   // batch 85 added Citibank's settlement of 2001, J.P. Morgan Chase's of 2003 and J. P. Morgan
   // Securities' charge of 2011 (the initials as the SEC spaces them), and Goldman Sachs Asset Management's of 2022
   const pinned: Record<string, number> = { BAC: 28, MS: 18, C: 14, UBS: 12, JPM: 13, WFC: 10, GS: 9, DB: 7, BCS: 4, RF: 4, BEN: 2, IVZ: 1 };

@@ -988,6 +988,64 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 121: the operating units' own names for the release rules, and the Justice API's filter (2026-11-08)
+
+The 2026-11-08 proposal 1's part (c), approved by the owner that day ("All three"). The owner's word,
+2026-11-08: "Lets continue". It closes proposal 1; #2 (batch 122) and #3 (batch 123) are next.
+
+- [x] **The units' own names in the release map** (`OPERATING_UNITS`, lib/releaseNames.ts): 288 names
+      on 74 companies, plus Honda's two beside its lender in `BANK_UNITS`, since a company is in one map
+      only. Each name is an EPA unit of batches 104, 114 and 120 as the Justice Department's titles
+      write it, on the same days as `UNITS`, whose header names each day's filing.
+      - **Why:** the Department settles with the unit, and the caption rule refuses a company's name
+        followed by words that are not legal ones. So "Pratt & Whitney and PCC Airfoils to Pay More Than
+        $52 Million" (2008) and "Firstenergy Nuclear Operating Company to Pay $28 Million" (2006) sat on
+        no page.
+      - **The days hold:** Sikorsky is RTX's to its sale of 2015-11-05, Otis Elevator Otis Worldwide's
+        from 2020-04-02, Gulf Power NextEra's from 2019, and Raytheon Company RTX's only from the merger.
+      - **Left out:** Sunoco, Inc. Its name is Sunoco LP's own, and the release rules have no
+        counterpart yet to EPA's refusal of it on SUN's page.
+- [x] **The Justice API's filter, found broken and fixed** (`fetchJusticeReleases`, lib/doj.ts).
+      - **The fault:** the API ignores `parameters[title]`, the form the code sent. On 2026-11-08 every
+        name asked that way (Walmart, Pratt, BNSF, "Pacific Gas") came back with the same 488 releases,
+        none naming it. Asked with no sort, it gave all 275,584. So no company's page found a release
+        from 2009 on.
+      - **The fix:** the API reads `title`. `title=Walmart` gave 68 releases, newest first, Walmart's
+        $50 million opioid settlement of 2026-08-28 among them.
+      - **Nothing wrong was stored:** the rule kept the 488 off every page. Each company's next Justice
+        Department run reads its releases.
+- **Measured** from first prices, main's names against this branch's:
+  - **the 2001–2008 archive** (committed): 14 more releases on 9 pages. Pratt & Whitney's $52 million
+    (RTX), Warner-Lambert's $430 million Neurontin plea of 2004 (Pfizer), Atlantic Richfield's $187
+    million Montana settlement (BP), Davis-Besse's $28 million and two Ohio Edison releases
+    (FirstEnergy), PSEG Fossil's two, Wisconsin Electric's, Dominion Exploration & Production's,
+    MidAmerican Energy's (Berkshire), and Mobil's two and ExxonMobil Oil's (ExxonMobil).
+  - **the API's years**, asked through `title` for each of the 278 names, up to three pages of 50: 40
+    more on 19 pages. BP Exploration's record $4 billion Deepwater Horizon plea of 2013, PacifiCorp's
+    $575 million wildfire settlement of 2026 (Berkshire), Raytheon Company's $950 million of 2024 (RTX),
+    Commonwealth Edison's $200 million bribery case of 2020 (Exelon), Southern California Edison's three
+    fire cases, CVS Pharmacy's seven.
+  - Each of the 54 read by hand; none comes off any page.
+  - **The other release rules read the map too:** the SEC's 2024 bribery charge against John Deere,
+    SCANA's two SEC cases of 2020 (on Dominion, its owner from 2019), and the CFTC's propane charge
+    against BP Products North America (2006) and wash-sale penalty on San Diego Gas & Electric (2010).
+    The Board's releases and the CFPB's actions gain none.
+- **Requests:** 291, all to www.justice.gov's API, logged in the session scratchpad
+  (`b121/requests.log`), each with User-Agent `News Charts Research` and no email address, at least
+  1.1 s apart: 11 to find the fault and the filter that works, 280 for the 278 names (Mobil took three
+  pages).
+- **Checks:**
+  - check:doj gains 5 checks (99). The API's filter is asked as `title`, with no `parameters[title]`.
+    The archive releases each unit brings, the API-era examples and each unit's days are checked, as
+    is the map's shape.
+  - The archive's totals are now 145 releases on 92 companies, 125 on 78 pages from first prices (131,
+    87, 111 and 73 before). Five first trading days are added to its table: Berkshire, RTX, Dominion,
+    WEC and FirstEnergy.
+  - check:sec-press (the map's 150 companies; 267 entries on 130), check:sec-cases (1,148 on 369) and
+    check:cftc (90 on 34) are re-pinned with their reasons; check:short-names reads `title`.
+  - On main's code, 9 of check:doj's 99 fail: the 5 new ones, the two that ask the API by `title`, and
+    2 totals.
+
 ## NC ledger — batch 120: EPA's cases under 28 more companies' operating units, and "&" read as "and" (2026-11-08)
 
 The owner's calls of 2026-11-08 on the 2026-11-08 proposals: "All three", and on #1's two calls, "Yes,
@@ -9310,7 +9368,7 @@ already held, but new investment goes to securities coverage first.
         day are asked under the record's own name of then. Linde plc and Six Flags, which had no
         name of their own before, keep the present one.
       - *Raised by batch 117.*
-- [ ] `P1` **EPA's cases under 28 more companies' own operating units.** No new source: approved by
+- [x] `P1` **EPA's cases under 28 more companies' own operating units.** No new source: approved by
       the owner 2026-11-08 ("All three"), with both calls inside it as drafted: Pharmacia LLC on
       Pfizer's page from 2003, MidAmerican Energy Berkshire's from 2006-02-09. Three parts: (a) the
       units in `UNITS` (BNSF on Berkshire, Pratt & Whitney on RTX, AlliedSignal's on Honeywell), each
@@ -9322,7 +9380,10 @@ already held, but new investment goes to securities coverage first.
         companies, every day read from a filing; 906 cases and 818 rows more on 41 pages from first
         prices, none fewer, 471 of the cases a court case or a penalty, 345 before 2017; nine pages
         gain their first EPA rows.
-      - **Next: batch 121, part (c).**
+      - ✅ **Part (c) done in batch 121** (see its section): 288 unit names on 74 companies in the
+        release map, each on its EPA days; 54 more Justice Department releases on 23 pages from first
+        prices, 14 from the 2001–2008 archive and 40 from the API's years. The API's own filter, found
+        broken on the way, is fixed: it reads `title`, not `parameters[title]`.
       - *Derived from [`docs/proposals/2026-11-08-proposals.md`](proposals/2026-11-08-proposals.md)
         #1, approved 2026-11-08.*
 - [ ] `P2` **EPA's own days on the cases pages already hold.** No new source: approved by the owner

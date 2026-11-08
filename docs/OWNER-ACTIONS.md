@@ -226,6 +226,9 @@ Raised by the November batches, each recorded in the master checklist:
   filing's text, which www.sec.gov serves only with `NEWS_CHARTS_CONTACT` set (§2): Hino on Toyota,
   Kelly-Springfield on Goodyear, Buell on Harley-Davidson, Fisher-Price on Mattel, and Thor California
   and Thor America on Thor. Once the contact is set, a session can read their days and map them.
+  The audit of batches 117–123 (batch 124) adds two more for the same text: whether Southern Natural
+  Gas became a joint venture in 2016, which would end it on Kinder Morgan's page, and whose Babcock &
+  Wilcox's 2015 Superfund row is.
   1. EPA's cases under 28 more companies' operating units (BNSF on Berkshire, Pratt & Whitney on RTX);
      three parts, each approvable alone, and two calls inside it: Pharmacia LLC on Pfizer, and the
      day MidAmerican Energy becomes Berkshire's;

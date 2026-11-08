@@ -4,8 +4,10 @@
 -- The monthly read keeps two more things of each case from the same file: the day a court case's
 -- suit was filed (the milestone "Complaint Filed With Court"), and each settlement EPA dates, on its
 -- own day, with its own penalty and work ordered (CASE_ENFORCEMENT_CONCLUSIONS.csv's lodged day,
--- else its entered day). The four settlement arrays run in step, one place a settlement, in day
--- order; money stays numeric.
+-- else its entered day). The days and the lodged flags run in step, one place a settlement, in day
+-- order, and so do the figures, a null for none, but for a case of one settlement with no such figure,
+-- whose figure array is empty (string_to_array of "" is no element); the reader takes a missing place
+-- as none. Money stays numeric.
 ALTER TABLE epa_cases
   ADD COLUMN IF NOT EXISTS suit_filed date,                                  -- a court case's filing day; null for none
   ADD COLUMN IF NOT EXISTS settlement_days date[] NOT NULL DEFAULT '{}',     -- each settlement's day, lodged else entered

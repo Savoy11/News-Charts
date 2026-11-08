@@ -260,8 +260,9 @@ export function secCaseEvents(
     if (!held.length) continue;
     // a name can only be a party where the caption's letters and digits hold its own: most rows
     // are read no further
+    // …in either spelling of "&", as every other source's prefilter reads it (the 2026-11-08 audit, set aside 2)
     const letters = alnum(c.caption);
-    if (!held.some((n) => alnum(n).length >= 2 && letters.includes(alnum(n)))) continue;
+    if (!held.flatMap(andSpellings).some((n) => alnum(n).length >= 2 && letters.includes(alnum(n)))) continue;
     const party = captionParty(c.caption, held);
     if (!party) continue;
     (byDay.get(c.day) ?? byDay.set(c.day, []).get(c.day)!).push({ c, party });

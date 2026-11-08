@@ -588,6 +588,14 @@ const TODAY = "2026-11-01";
     /litigation releases and administrative\s+proceedings/.test(read("app/layout.tsx")) && /litigation\s+releases and administrative proceedings/.test(read("app/legal/terms/page.tsx")) &&
       /\| SEC litigation releases and administrative proceedings \|/.test(read("README.md")));
 
+  // the 2026-11-08 audit of batches 117–123, its set-asides fixed (batch 124)
+  console.log("\nThe 2026-11-08 audit's set-asides (batch 124)");
+  const andCaption: SecCase = { ...rows[0], number: "ZZ-AND", day: "2010-05-05", caption: "AIR PRODUCTS AND CHEMICALS, INC." };
+  const apd = rowOf("APD")[0];
+  check("the SEC's cases read a name's \"&\" as \"and\" in their own first pass too, as every other source's does: \"AIR PRODUCTS AND CHEMICALS, INC.\" is Air Products & Chemicals'",
+    secCaseEvents([andCaption], () => ["Air Products & Chemicals, Inc."], { cik: apd }).length === 1 &&
+      secCaseEvents([{ ...andCaption, caption: "AIR PRODUCTS & CHEMICALS, INC." }], () => ["Air Products & Chemicals, Inc."], { cik: apd }).length === 1);
+
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   process.exit(fail ? 1 : 0);
 })();

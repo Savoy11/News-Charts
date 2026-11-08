@@ -988,6 +988,57 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 124: the audit of batches 117–123, and what it confirmed fixed (2026-11-08)
+
+The `code-auditor` read batches 117–123 (`c1aae35..6a4e7f9`); its report is
+`docs/audits/2026-11-08-code-audit-b117-123.md`. The owner's word, 2026-11-08: "Continue".
+
+**What it found sound** on the saved real data:
+- batch 122's store and load on a real Postgres: EPA's whole file went through `walkEpaCases` and
+  `storedEpaCases` in a throwaway cluster, deleted after, and all 690 pages gave the same rows from
+  the database as from the file;
+- the whole file's totals, as the docs gave them;
+- 44 of batch 120's unit days, each matching its filing;
+- `OPERATING_UNITS`' days, equal to EPA's units', with no name on two companies on the same days;
+- the Justice archive's 14 releases from batch 121;
+- batch 123's makers, each the company's own at the time.
+
+It found three defects, all `P3`. Each was reproduced here; two are fixed with checks that fail on
+main, and one waits for a filing's text.
+
+- [x] **2. A misspelled defendant, "UNITED TECHNOLOGIES AUTOMOVTIVE, INC", took RTX's divisions'
+      pattern** (`P3`). The divisions' lookahead kept out only "AUTOMOTIVE", so the Lakeland Disposal
+      Superfund decree of 2007 (05-2005-0635) sat on RTX's page eight years after Lear bought UT
+      Automotive.
+      - **Fixed:** both patterns now read the stem, `AUTOM` (lib/epaCases.ts). Every UT Automotive case
+        is RTX's to 1999-05-03 and none after; the 2007 decree stays on its other parties' pages.
+      - **The counts:** RTX has 123 rows; the replay's totals are 9,155 rows on 690 companies and 7,768
+        before 2017, one fewer.
+- [x] **3. The README's sources table counted the EPA units of "35 companies"** (`P3`); `UNITS` holds 95.
+      Fixed, with a check that holds the line to `UNITS`.
+- [ ] **1. Southern Natural Gas stays Kinder Morgan's after 2016-08-31** (`P3`). Southern Company Gas's
+      8-K reports an interest in it bought that day (items 1.01 and 2.01). Whether that made SNG a joint
+      venture, which the rule gives no one, is in the filing's text, which needs `NEWS_CHARTS_CONTACT`.
+      EPA's own summaries do not say who owns it. Moved to the batch 123 item of what waits for a
+      filing's text, with the audit's question on Babcock & Wilcox's 2015 row.
+- **The set-asides:**
+  - **Fixed:** the SEC cases' first pass now reads a name's "&" as "and", as every other source's
+    prefilter does (lib/secCases.ts). No committed caption was lost to it; a check holds it.
+  - **Fixed in comments only:** db/044's and epaWalk's notes said the four settlement arrays always run
+    in step. A case of one settlement with no figure stores that figure's array empty, which the reader
+    takes as none, as the audit's Postgres run showed.
+  - **Left set aside, with a reason found here:** CMS's release name "Consumers Power" would take
+    "Consumers Power, Inc.", an Oregon cooperative's. Narrowing it to "Consumers Power Company" changes
+    nothing: the caption rule reads any legal name's stem with a legal word after. Only a refusal entry
+    in each release source would. No release names it today.
+  - **Left set aside, as the audit did:** Kennecott on Rio Tinto has no start day, and RIO's first price
+    of 1990 hides the earlier cases.
+- **Requests:** none here. The audit made 4 (data.sec.gov 3, the Justice API 1).
+- **Checks:**
+  - check:epa-cases gains 2 (128), and 4 totals are re-pinned with their reason. On main's code, 6 of
+    the 128 fail: the 2 new ones and the 4 totals.
+  - check:sec-cases gains 1 (77). On main's code, that one fails.
+
 ## NC ledger — batch 123: the NHTSA recalls under makers listed companies own (2026-11-08)
 
 The 2026-11-08 proposal 3, approved by the owner that day ("All three"). The owner's word, 2026-11-08:
@@ -1030,6 +1081,10 @@ filing's text.
       - Thor California and Thor America on Thor.
       - **Their rows:** 31 recalls and 13 investigations in the committed fixture. The check holds each
         off every page until a day is read.
+      - **Since batch 124, the 2026-11-08 audit's two that wait for the same text:** whether Southern
+        Company Gas's purchase of 2016-08-31 made Southern Natural Gas a joint venture, which would end
+        it on Kinder Morgan's page (its 2020 order and 2021 decree); and which of Babcock & Wilcox
+        Enterprises and BWXT kept The Babcock & Wilcox Company's site liabilities at the 2015 spin-off.
 - **Measured** on the rows read from data.transportation.gov on 2026-11-08, committed as
   `scripts/fixtures/nhtsa-owned-makers.json` (100 recalls at the floor and 37 investigations under
   the 22 makers):

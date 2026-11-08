@@ -86,7 +86,8 @@ async function store(client: PoolClient, cases: readonly EpaCase[], modified: st
           part.map((c) => !!c.settled),
           part.map((c) => c.workOrdered ?? null),
           part.map((c) => c.summary ?? null),
-          // the suit's day and each settlement's, its four arrays in step, "" a settlement's figure of none (batch 122)
+          // the suit's day and each settlement's (batch 122), the arrays in step, "" a figure of none; but a
+          // case of one settlement with no such figure stores that figure's array empty, read back as none
           part.map((c) => c.suitFiled ?? null),
           part.map((c) => (c.settlements ?? []).map((x) => x.day).join("|")),
           part.map((c) => (c.settlements ?? []).map((x) => String(x.lodged)).join("|")),

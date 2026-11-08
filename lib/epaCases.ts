@@ -931,8 +931,10 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("RTX", "Pratt & Whitney", new RegExp(UTC + String.raw`PRATT\s*(?:&|AND)\s*WHITNEY\b(?!\s+ROCKETDYNE)`, "i"), "pratt"),
     unit("RTX", "Pratt & Whitney Rocketdyne", /^PRATT\s*(?:&|AND)\s*WHITNEY\s+ROCKETDYNE\b/i, "pratt", { to: "2013-06-11" }),
     unit("RTX", "Hamilton Sundstrand", new RegExp(UTC + String.raw`HAMILTON (?:SUNDSTRAND|STANDARD)\b`, "i"), "hamilton"),
-    unit("RTX", "United Technologies' divisions", /^UNITED TECHNOLOGIES\b(?!\s+AUTOMOTIVE)/i, "unitedtechnologies", { to: "2020-04-01" }),
-    unit("RTX", "United Technologies Automotive", /^UNITED TECHNOLOGIES\s+AUTOMOTIVE\b/i, "unitedtechnologies", { to: "1999-05-03" }),
+    // UT Automotive by its stem, so EPA's misspellings stay Lear's after the sale: "UNITED TECHNOLOGIES
+    // AUTOMOVTIVE, INC", a defendant of 2007, took the divisions' pattern (the 2026-11-08 audit, finding 2)
+    unit("RTX", "United Technologies' divisions", /^UNITED TECHNOLOGIES\b(?!\s+AUTOM)/i, "unitedtechnologies", { to: "2020-04-01" }),
+    unit("RTX", "United Technologies Automotive", /^UNITED TECHNOLOGIES\s+AUTOM[A-Z]*\b/i, "unitedtechnologies", { to: "1999-05-03" }),
     unit("RTX", "Sikorsky", new RegExp(UTC + "SIKORSKY AIRCRAFT", "i"), "sikorsky", { to: "2015-11-05" }),
     unit("RTX", "Otis Elevator", new RegExp(UTC + "OTIS ELEVATOR", "i"), "otiselevator", { to: "2020-04-01" }),
     unit("RTX", "Carrier", new RegExp(UTC + String.raw`CARRIER (?:CORP|CORPORATION)\b`, "i"), "carriercorp", { to: "2020-04-01" }),

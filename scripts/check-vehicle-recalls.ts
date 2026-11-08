@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import tickerIndex from "../data/edgar-tickers.json";
-import { RECALL_FLOOR, RECALL_MAKERS, fetchRecalls, recallEvents, recallHeadline, recallMakersFor, recallQuery, type RecallRow } from "../lib/recalls";
+import { RECALL_FLOOR, RECALL_MAKERS, fetchRecalls, recallEvents, recallHeadline, recallMakersFor, recallQuery, type RecallMaker, type RecallRow } from "../lib/recalls";
 import { fetchInvestigations, investigationEvents, investigationQuery, isInvestigation, type InvestigationRow } from "../lib/investigations";
 import { markerPriority, markerStyle } from "../lib/markers";
 import { SOURCES } from "../lib/ingest/store";
@@ -32,7 +32,8 @@ function check(name: string, ok: boolean, detail = ""): void {
 const root = join(__dirname, "..");
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 const rows: RecallRow[] = JSON.parse(read("scripts/fixtures/nhtsa-recalls.json"));
-const makersOf = (ticker: string) => Object.values(RECALL_MAKERS).find((e) => e.ticker === ticker)!.makers;
+// a company the map lacks has no makers: its checks fail, rather than the run stopping (batch 123)
+const makersOf = (ticker: string): readonly RecallMaker[] => Object.values(RECALL_MAKERS).find((e) => e.ticker === ticker)?.makers ?? [];
 const fordEvents = recallEvents(rows, makersOf("F"));
 const titleOf = (id: string) => fordEvents.find((e) => e.externalId === id)?.title;
 
@@ -99,8 +100,14 @@ async function main(): Promise<void> {
   const entries = Object.entries(RECALL_MAKERS);
   check("every company it names is in the committed EDGAR index under its ticker",
     entries.every(([cik, e]) => listed.has(`${cik}:${e.ticker}`)), entries.filter(([cik, e]) => !listed.has(`${cik}:${e.ticker}`)).map(([, e]) => e.ticker).join(", "));
-  const names = entries.flatMap(([, e]) => e.makers.map((m) => m.name));
-  check("no maker belongs to two companies", new Set(names).size === names.length);
+  // since batch 123 one name may be on two pages, never on the same day: Carrier is RTX's to its
+  // separation and Carrier Global's after
+  const holders = entries.flatMap(([, e]) => e.makers.map((m) => ({ ticker: e.ticker, m })));
+  const shared = holders.filter((a, i) => holders.some((b, j) => j !== i && b.m.name === a.m.name));
+  const overlap = shared.filter((a) => shared.some((b) => b !== a && b.m.name === a.m.name && (a.m.from ?? "") <= (b.m.to ?? "9999") && (b.m.from ?? "") <= (a.m.to ?? "9999")));
+  check("no maker belongs to two companies on the same day: only Carrier Corporation is on two pages, RTX's to 2020-04-01 and Carrier Global's from 2020-04-02",
+    overlap.length === 0 && [...new Set(shared.map((x) => x.m.name))].join() === "Carrier Corporation" && shared.map((x) => x.ticker).sort().join() === "CARR,RTX",
+    shared.map((x) => `${x.ticker} ${x.m.name} ${x.m.from ?? ""}..${x.m.to ?? ""}`).join("; "));
   check("every maker says why it is the company's, and a start day is a real day",
     entries.every(([, e]) => e.makers.every((m) => m.why.length > 10 && (!m.from || /^\d{4}-\d{2}-\d{2}$/.test(m.from)))));
   const own = (ticker: string, name: string) => makersOf(ticker).find((m) => m.name === name);
@@ -285,9 +292,64 @@ async function main(): Promise<void> {
     makersOf("F").filter((m) => m.to).length === 4 && makersOf("GM").filter((m) => m.to).length === 1);
   check("  …a maker names its brand exactly when it has one, and a brand ends after it begins",
     entries.every(([, e]) => e.makers.every((m) => !!m.brand === !!m.to && (!m.to || /^\d{4}-\d{2}-\d{2}$/.test(m.to)) && (!m.from || !m.to || m.from < m.to))));
+  // …and RTX's Carrier since batch 123, whose start is older than the filings here: one day, one filing
+  const cites = (m: { why: string }) => (m.why.match(/\((?:old )?(?:Ford|GM|RTX)'s (?:8-K|10-K|10-Q) filed \d{4}-\d{2}-\d{2}(?:, items? [\d., and]+)?\)/g) ?? []).length;
   check("  …and each of its days cites the filing that gives it",
-    ended.length === 5 && ended.every((m) => (m.why.match(/\((?:old )?(?:Ford|GM)'s (?:8-K|10-K|10-Q) filed \d{4}-\d{2}-\d{2}\)/g) ?? []).length >= 2),
-    ended.filter((m) => (m.why.match(/\((?:old )?(?:Ford|GM)'s (?:8-K|10-K|10-Q) filed \d{4}-\d{2}-\d{2}\)/g) ?? []).length < 2).map((m) => m.name).join(", "));
+    ended.length === 6 && ended.every((m) => cites(m) >= (m.from ? 2 : 1)), ended.filter((m) => cites(m) < (m.from ? 2 : 1)).map((m) => m.name).join(", "));
+
+  /**
+   * The parts, tire, child seat and equipment makers listed companies own (batch 123, the 2026-11-08
+   * proposal 3). The rows are real, read from data.transportation.gov on 2026-11-08
+   * (scripts/fixtures/nhtsa-owned-makers.json): every recall at the floor and every investigation
+   * under the 16 makers batch 123 maps and the six it leaves for a filing's text.
+   */
+  console.log("\nThe parts, tire, child seat and equipment makers listed companies own (batch 123)");
+  const owned: { recalls: RecallRow[]; investigations: InvestigationRow[] } = JSON.parse(read("scripts/fixtures/nhtsa-owned-makers.json"));
+  const ownedOf = (ticker: string) => recallEvents(owned.recalls, makersOf(ticker));
+  const ownedInv = (ticker: string) => investigationEvents(owned.investigations, makersOf(ticker));
+  const idsOf = (ticker: string) => ownedOf(ticker).map((e) => e.externalId);
+  const onNoPage = (id: string) => Object.values(RECALL_MAKERS).every((c) => !recallEvents(owned.recalls, c.makers).some((e) => e.externalId === id));
+  const graco = ownedOf("NWL").find((e) => e.externalId === "14C001000");
+  check("Graco's buckle recall of 2014-02-10, 4,176,601 child seats, lands on Newell, its owner from the Rubbermaid merger of 1999-03-24",
+    graco?.date === "2014-02-10" && /^Recall of 4,176,601 child seats: /.test(graco.title) && ownedOf("NWL").length === 12 && makersOf("NWL")[0]?.from === "1999-03-24",
+    graco?.title);
+  check("  …but its seat recall of 1986 (86C006000) is on no page, and \"GRACO/MISSING HOOKS\" loses its prefix",
+    onNoPage("86C006000") && !/^Recall of [\d,]+ child seats: Graco/i.test(ownedOf("NWL").map((e) => e.title).join("\n")) && recallHeadline("GRACO/MISSING HOOKS") === "Missing hooks");
+  check("Dana's ten land on Dana, Dana Corporation's of 1978–1990 among them: the record is its own, Dana Corp to 2007",
+    ownedOf("DAN").length === 10 && idsOf("DAN").includes("78E012000") && idsOf("DAN").includes("24E048000"), idsOf("DAN").join(" "));
+  check("Lippert's nine land on LCI, its 2013 door lock recall of 528,228 the largest",
+    ownedOf("LCII").length === 9 && /^Recall of 528,228 units: /.test(ownedOf("LCII").find((e) => e.externalId === "13E067000")?.title ?? ""));
+  check("Supreme's recalls of 2016 and 2017 are on no page, its of 2018 on Wabash, its owner from 2017-09-27",
+    onNoPage("16V296000") && onNoPage("17V369000") && idsOf("WNC").join() === "18V168000" && makersOf("WNC").find((m) => m.name === "Supreme Corporation")?.from === "2017-09-27");
+  const carrier = ownedOf("RTX").find((e) => e.externalId === "16E087000");
+  check("Carrier's 2016 starter recall lands on RTX, naming the brand it no longer owns; its 2023 recall on Carrier Global",
+    carrier?.title === "Recall of 29,180 Carrier units: Starter Housing May Come Apart" && idsOf("CARR").join() === "23E026000" && !idsOf("RTX").includes("23E026000") && !idsOf("CARR").includes("16E087000"),
+    carrier?.title);
+  const counts = ["NWL", "DAN", "LCII", "ALV", "CAT", "RTX", "CARR", "SKY", "GE", "HON", "DORM", "PSNY", "ETN", "WGO", "THO", "WNC"].map((t) => `${t} ${ownedOf(t).length}`).join(", ");
+  check("Autoliv, Caterpillar, Skyline, GE, Honeywell, Dorman, Polestar, Eaton, Winnebago's towables and Thor's own name each land on their company",
+    counts === "NWL 12, DAN 10, LCII 9, ALV 6, CAT 5, RTX 4, CARR 1, SKY 4, GE 3, HON 3, DORM 3, PSNY 3, ETN 2, WGO 2, THO 1, WNC 1", counts);
+  check("  …a maker's name dropped from an old subject line: GE's \"GE/FMVSS 108/HEADLAMP BULBS\", Honeywell's Prestone",
+    ownedOf("GE").find((e) => e.externalId === "01E044000")?.title === "Recall of 90,098 units: FMVSS 108/headlamp bulbs" &&
+      /^Recall of 13,706 units: Prestone/i.test(ownedOf("HON").find((e) => e.externalId === "03E022000")?.title ?? ""),
+    `${ownedOf("GE").find((e) => e.externalId === "01E044000")?.title} | ${ownedOf("HON").find((e) => e.externalId === "03E022000")?.title}`);
+  check("  …Eaton's clutch recall of 2018, filed under Eaton Corporation itself, is Eaton's",
+    idsOf("ETN").includes("18E102000") && /Eaton Corporation \(Eaton\) is recalling/.test(ownedOf("ETN").find((e) => e.externalId === "18E102000")?.description ?? ""));
+  const left = ["12V555000", "98T002000", "99V105000", "94C035000", "98C019000", "06V208000", "07V127000"];
+  check("the six that wait for a filing's text are on no page yet: Hino's 12V555000, Kelly-Springfield's 98T002000, Buell's 99V105000, Fisher-Price's of 1994 and 1998, Thor California's and Thor America's",
+    left.every(onNoPage) && left.every((id) => owned.recalls.some((r) => r.nhtsa_id === id)), left.filter((id) => !onNoPage(id)).join(" "));
+  const all = Object.values(RECALL_MAKERS).flatMap((c) => recallEvents(owned.recalls, c.makers));
+  check("69 recalls on 16 pages, 45 of them before 2017; every maker named once a day",
+    all.length === 69 && all.filter((e) => e.date < "2017").length === 45 && new Set(all.map((e) => e.externalId)).size === 69, `${all.length}, ${all.filter((e) => e.date < "2017").length} before 2017`);
+  const invCounts = ["CAT", "NWL", "DAN", "RTX", "LCII", "ALV", "PSNY"].map((t) => `${t} ${ownedInv(t).length}`).join(", ");
+  check("their investigations come with them, on the same days: Caterpillar's ten, Graco's three from 2002, Carrier's three on RTX; Supreme's of 2002 on no page",
+    invCounts === "CAT 10, NWL 3, DAN 4, RTX 3, LCII 2, ALV 1, PSNY 1" && Object.values(RECALL_MAKERS).every((c) => !investigationEvents(owned.investigations, c.makers).some((e) => e.externalId === "PE02014")),
+    invCounts);
+  check("every day a new maker begins or ends on cites the filing list's report that gives it: Newell's 8-K of 1999-03-25, Wabash's of 2017-09-27, RTX's of 2020-04-08",
+    /\(Newell's 8-K filed 1999-03-25, item 2\)$/.test(makersOf("NWL")[0]?.why ?? "") && /\(Wabash's 8-K filed 2017-09-27, item 2\.01; batch 123\)$/.test(makersOf("WNC").find((m) => m.from)?.why ?? "") &&
+      [makersOf("RTX")[0], makersOf("CARR")[0]].every((m) => /\(RTX's 8-K filed 2020-04-08, items 1\.01 and 2\.01\)/.test(m?.why ?? "")));
+  const nwlWhere = decodeURIComponent(recallQuery(makersOf("NWL")).replace(/\+/g, " "));
+  check("  …and Newell's one request asks Graco only from its day",
+    nwlWhere.includes("(manufacturer = 'Graco Children''s Products, Inc.' AND report_received_date >= '1999-03-24T00:00:00')"), nwlWhere.slice(0, 200));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   process.exit(fail ? 1 : 0);

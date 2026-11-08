@@ -988,6 +988,67 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 123: the NHTSA recalls under makers listed companies own (2026-11-08)
+
+The 2026-11-08 proposal 3, approved by the owner that day ("All three"). The owner's word, 2026-11-08:
+"Continue". No new source: 16 more names in the recall map (`RECALL_MAKERS`, lib/recalls.ts), which
+the defect investigations read too. It closes the 2026-11-08 proposals, with six makers left open for a
+filing's text.
+
+- [x] **The makers mapped**, at the same floor (10,000) and by the same rules, each day from an SEC
+      filing list (data.sec.gov):
+      - **Bought, from the day the buyer's 8-K reports the purchase completed:**
+        - Graco's child seats on Newell from 1999-03-24 (Newell's 8-K filed 1999-03-25, item 2), the
+          day the CPSC's map gives it (batch 101). Its 1986 seat recall is no listed company's.
+        - Supreme on Wabash from 2017-09-27 (Wabash's 8-K filed that day, item 2.01). Its recalls of
+          2016 and 2017 are no listed company's.
+      - **Spun off, on the day:** Carrier Corporation is RTX's to 2020-04-01, its titles naming the
+        brand ("Recall of 29,180 Carrier units"), and Carrier Global's from 2020-04-02 (RTX's 8-K filed
+        2020-04-08, items 1.01 and 2.01, reporting 2020-04-02; the day batch 120 gave EPA).
+      - **The record's own:**
+        - Dana Corporation's recalls of 1978–1990 are Dana's (EDGAR's DANA CORP to 2007, Dana Holding
+          Corporation from 2008-01-31), and Dana Incorporated is the company itself.
+        - Skyline Corporation is Champion Homes' record's own (SKYLINE CORP to 2018).
+        - Eaton Corporation is ETN's predecessor record and its subsidiary since. Its 2018 clutch recall,
+          which the proposal flagged, is filed under Eaton Corporation itself, not the transmissions
+          venture with Cummins.
+      - **The company itself, or its operating company:** Lippert on LCI (the recalls name "Lippert
+        Components, Inc. (LCI)"), Autoliv, Caterpillar's engines, GE's lamps, Honeywell's Fram filters
+        and Prestone, Dorman, Polestar's U.S. company, Winnebago Towable, and "THOR INDUSTRIES", Thor's
+        own name on a recall of 2002, found in the makers list and not in the proposal.
+      - **Rules kept:** one name may be on two pages, never on the same day; that is the check that
+        replaces "no maker belongs to two companies". Old subject lines lose their maker's prefix for
+        GE, Graco, Honeywell and Caterpillar ("GE/FMVSS 108/HEADLAMP BULBS" reads "FMVSS 108/headlamp
+        bulbs").
+- [ ] `P2` **Six makers wait for a filing's text.** www.sec.gov serves a filing's text only to a request
+      naming a contact, and none is set (`NEWS_CHARTS_CONTACT`, OWNER-ACTIONS §2). The filing lists
+      give no day for these:
+      - Hino on Toyota: Toyota's control from 2001 and its end in 2026.
+      - Kelly-Springfield on Goodyear: its unit in the three recalls' years.
+      - Buell on Harley-Davidson: the 1998 purchase, which no 8-K reports.
+      - Fisher-Price on Mattel: the 1993 merger, before Mattel's first filing here, of 1994.
+      - Thor California and Thor America on Thor.
+      - **Their rows:** 31 recalls and 13 investigations in the committed fixture. The check holds each
+        off every page until a day is read.
+- **Measured** on the rows read from data.transportation.gov on 2026-11-08, committed as
+  `scripts/fixtures/nhtsa-owned-makers.json` (100 recalls at the floor and 37 investigations under
+  the 22 makers):
+  - **Recalls:** 69 on 16 pages, 45 before 2017. Newell 12 (Graco's 4,176,601 seats of 2014 the
+    largest), Dana 10, LCI 9, Autoliv 6, Caterpillar 5, RTX 4, Skyline 4, GE, Honeywell, Dorman and
+    Polestar 3 each, Eaton 2, Winnebago 2, Carrier Global, Thor and Wabash 1 each.
+  - **Investigations:** 24 with them. Caterpillar 10, Dana 4, Graco 3 on Newell, Carrier 3 on RTX, Lippert
+    2, Autoliv and Polestar 1 each. Carrier's 1996 steering-hose evaluation is kept: NHTSA files it under
+    Carrier Corporation, and nothing readable shows it is another company's.
+  - **The scout's count was 84 on 20 pages;** the difference is the six makers left open.
+- **Requests:** 16, logged in the session scratchpad (`b123/requests.log`), each with User-Agent `News
+  Charts Research` and no email address, at least 1.1 s apart: data.transportation.gov 3 (the recalls,
+  the investigations, one investigation's row), data.sec.gov 12 (the filing lists and former names of
+  nine companies), and one to www.sec.gov, refused (403) for want of a contact.
+- **Checks:** check:vehicle-recalls gains 14 (88). Two existing ones change: one maker on two pages but
+  never on the same day, and RTX's end day cites its filing. A company the map lacks now fails its checks
+  instead of stopping the run. On main's code, 15 of the 88 fail: 13 of the 14 new ones (the 14th, the
+  six left open, holds there too) and the 2 changed.
+
 ## NC ledger — batch 122: EPA's own days — the day a suit was filed, and each settlement on its own day (2026-11-08)
 
 The 2026-11-08 proposal 2, approved by the owner that day ("All three"). The owner's word, 2026-11-08:
@@ -9461,12 +9522,15 @@ already held, but new investment goes to securities coverage first.
         2012 on Murphy Oil). db/044 needs `npm run db:migrate`.
       - *Derived from [`docs/proposals/2026-11-08-proposals.md`](proposals/2026-11-08-proposals.md)
         #2, approved 2026-11-08.*
-- [ ] `P2` **NHTSA recalls under makers listed companies own that the map lacks.** No new source:
+- [x] `P2` **NHTSA recalls under makers listed companies own that the map lacks.** No new source:
       approved by the owner 2026-11-08. About 20 more makers in `RECALL_MAKERS` (lib/recalls.ts),
       each day read from a filing: Graco's child seats on Newell, Dana, Lippert on LCI, Hino on Toyota,
       Kelly-Springfield on Goodyear.
       - **Measured** by the scout: 84 recalls on 20 pages, 57 before 2017; six days were estimates.
-      - **Next: batch 123.**
+      - **Done in batch 123 for 16 makers:** 69 recalls on 16 pages, 45 before 2017, and 24
+        investigations. The six whose days need a filing's text (Hino, Kelly-Springfield, Buell,
+        Fisher-Price, two Thor companies) are an open item in the batch 123 ledger, waiting on
+        `NEWS_CHARTS_CONTACT`.
       - *Derived from [`docs/proposals/2026-11-08-proposals.md`](proposals/2026-11-08-proposals.md)
         #3, approved 2026-11-08.*
 

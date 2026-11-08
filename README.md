@@ -116,6 +116,21 @@ reader of today's Ford page would not otherwise know: 56 recalls on Ford's page 
 9 investigations. Before 2000 GM held half of Saab, a joint venture carried at equity, and those years stay
 out. Scored without the model, as a filing is.
 
+**The parts, tire, child seat and equipment makers listed companies own** (batch 123, the owner's
+approval of 2026-11-08). The dataset files a child seat, a part or a tire under its maker too, and
+16 more names are mapped, at the same floor and by the same rules: Graco's child seats on Newell from
+1999-03-24, the day the CPSC's map gives it (Newell's 8-K of 1999-03-25 reports the Rubbermaid merger
+completed); Dana Corporation and Dana Incorporated on Dana, its record's own; Lippert on LCI; Autoliv;
+Caterpillar's engines; Skyline; GE's lamps; Honeywell's Fram filters and Prestone; Dorman; Polestar;
+Eaton, whose clutch recall of 2018 is Eaton Corporation's own, not its transmissions venture's;
+Winnebago's towables; Thor's own name; and Supreme on Wabash from 2017-09-27 (Wabash's 8-K, item 2.01).
+Carrier Corporation is RTX's to 2020-04-01, its titles naming the brand RTX no longer owns, and Carrier
+Global's from 2020-04-02 (RTX's 8-K of the separation): one name on two pages, never on the same day.
+On the rows read on 2026-11-08, 69 recalls on 16 pages, 45 before 2017, Graco's 4,176,601 seats of
+2014 the largest, and 24 investigations with them. Six makers wait for a filing's text, which
+www.sec.gov serves only to a request naming a contact: Hino on Toyota, Kelly-Springfield on Goodyear,
+Buell on Harley-Davidson, Fisher-Price on Mattel, and Thor California and Thor America on Thor.
+
 The defect investigations NHTSA opened into the same makers come from the same open-data portal,
 through the same map and its dates (`lib/investigations.ts`, batch 66): preliminary evaluations,
 engineering analyses, defect-petition reviews and recall queries, back to 1975. Toyota's RQ10003,
@@ -1396,7 +1411,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Federal Register | Sector-level rules and notices; documents naming a company | Keyword hits attach to industries; a title naming the company, or one of its own other names ("Google LLC"), attaches to it (no airworthiness directives) |
 | Federal Reserve | FOMC policy statements since 1994 | Economy subject; on company pages behind the Economy chip (off by default). `npm run ingest -- --macro` |
 | BLS | CPI release dates since 2008 | Same subject and chip; needs a contact `User-Agent` |
-| NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966; defect investigations since 1975 | Recalls of 10,000 vehicles or more, and every investigation NHTSA opened, only for the vehicle and tyre makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014). Public domain; no key |
+| NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966; defect investigations since 1975 | Recalls of 10,000 vehicles or more, and every investigation NHTSA opened, only for the vehicle, tyre, part and child-seat makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014; Graco's child seats for Newell from 1999, batch 123). Public domain; no key |
 | Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 63 banks `lib/fedActions.ts` maps by hand to a listed company — 49 US banks and 14 foreign banks with their US arms; an action against a person is left out. Public domain, cited to the Board; two keyless files |
 | FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 73 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
 | FDA (CDER's new-drug approvals) | New molecular entities and new biologics since 1985, on the page of the company that applied | One committed workbook a year (`npm run sync:fda-approvals`); kept when the applicant is the company by the caption rule, a recall-map firm or a unit it then owned (`lib/fdaApprovals.ts`), from its first price; linked to Drugs@FDA. Public domain; no key |

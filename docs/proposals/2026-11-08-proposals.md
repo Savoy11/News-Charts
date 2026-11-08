@@ -366,7 +366,7 @@ the saved file; one threshold and the moved rows to watch
 
 ## 3. The NHTSA recalls filed under makers listed companies own and the map lacks: Graco's child seats on Newell, Dana, Lippert on LCI, Hino on Toyota, Kelly-Springfield on Goodyear… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-08: "All three". Next, in batch 123, each maker's day read from filings.
+**Status:** APPROVED — by the owner, 2026-11-08: "All three". Built in batch 123 for 16 makers, each day from an SEC filing list: 69 recalls on 16 pages, 45 before 2017, and 24 investigations (Graco on Newell from 1999-03-24, Dana, Lippert on LCI, Autoliv, Caterpillar, Carrier on RTX to 2020-04-01 and on Carrier Global after, Skyline, GE, Honeywell, Dorman, Polestar, Eaton, Winnebago Towable, Thor's own name, Supreme on Wabash from 2017-09-27). Six wait for a filing's text, which www.sec.gov serves only to a request naming a contact: Hino, Kelly-Springfield, Buell, Fisher-Price, Thor California and Thor America; the checks hold them off every page until then.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. Batches 30 and 31 mapped vehicle and RV makers. Tire, equipment and child-seat

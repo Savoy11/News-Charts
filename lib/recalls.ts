@@ -65,6 +65,19 @@ export interface RecallMaker {
  * 1999-03-31 to 2010-08-01, and its recalls before and after are Volvo's owners' then. Half of a
  * business is a joint venture, never the company's, as in those maps: Saab before 2000, when GM
  * held half of it, stays out.
+ *
+ * Batch 123 (the 2026-11-08 proposal 3, approved by the owner that day) adds the parts, tire, child
+ * seat and equipment makers listed companies own, at the same floor: Graco's child seats on Newell,
+ * Dana, Lippert on LCI, Autoliv, Caterpillar's engines, Carrier, Skyline, GE's lamps, Honeywell's
+ * Fram and Prestone, Dorman, Polestar, Eaton, Winnebago's towables, Thor's own name and Supreme on
+ * Wabash. Every day is read from an SEC filing list (data.sec.gov): a bought maker counts from the
+ * day the buyer's 8-K reports the purchase completed, and a maker one company spun off goes to the
+ * other on the day (Carrier Corporation is RTX's to 2020-04-01 and Carrier Global's from
+ * 2020-04-02), so one name is on two pages, never on the same day. Six wait for a filing's text,
+ * which www.sec.gov serves only to a request that names a contact: Hino on Toyota (Toyota's control
+ * from 2001 and its end in 2026), Kelly-Springfield on Goodyear, Buell on Harley-Davidson (the 1998
+ * purchase, which no 8-K reports), Fisher-Price on Mattel (the 1993 merger, before Mattel's first
+ * filing here, of 1994), and Thor California and Thor America on Thor.
  */
 export const RECALL_MAKERS: Readonly<Record<number, { ticker: string; makers: readonly RecallMaker[] }>> = {
   37996: {
@@ -160,6 +173,7 @@ export const RECALL_MAKERS: Readonly<Record<number, { ticker: string; makers: re
     makers: [
       { name: "Winnebago Industries, Inc.", why: "the company itself" },
       { name: "Grand Design RV, LLC", from: "2016-11-08", why: "bought 2016-11-08 (Winnebago's 8-K filed 2016-11-14)" },
+      { name: "Winnebago Towable", why: "Winnebago's own towable division, as its recalls name it (\"Winnebago Towable (Winnebago) is recalling\"; batch 123)" },
     ],
   },
   1067983: {
@@ -174,6 +188,7 @@ export const RECALL_MAKERS: Readonly<Record<number, { ticker: string; makers: re
   730263: {
     ticker: "THO",
     makers: [
+      { name: "THOR INDUSTRIES", why: "the company itself, its name on a recall of 2002 (batch 123)" },
       { name: "Thor Motor Coach", why: "Thor's own motorhome company, formed in 2010" },
       { name: "Airstream, Inc.", why: "Thor's from its founding in 1980, before its first recall here (1995)" },
       { name: "Dutchmen Manufacturing, Inc.", from: "1991-06-01", why: "bought in May 1991 (Thor's 10-K filed 1995-10-27)" },
@@ -185,9 +200,89 @@ export const RECALL_MAKERS: Readonly<Record<number, { ticker: string; makers: re
       { name: "Tiffin Motorhomes, Inc.", from: "2020-12-18", why: "bought 2020-12-18 (Thor's 8-K filed 2020-12-22)" },
     ],
   },
-  879526: { ticker: "WNC", makers: [{ name: "Wabash National Corporation", why: "the company itself" }] },
+  879526: {
+    ticker: "WNC",
+    makers: [
+      { name: "Wabash National Corporation", why: "the company itself" },
+      {
+        name: "Supreme Corporation",
+        from: "2017-09-27",
+        why: "Supreme Industries' truck bodies, Wabash's from the purchase completed 2017-09-27, its two recalls before it no listed company's (Wabash's 8-K filed 2017-09-27, item 2.01; batch 123)",
+      },
+    ],
+  },
   1874178: { ticker: "RIVN", makers: [{ name: "Rivian Automotive, LLC", why: "Rivian's operating company" }] },
   1811210: { ticker: "LCID", makers: [{ name: "Lucid USA, Inc.", why: "Lucid's U.S. operating company" }] },
+  // the parts, tire, child seat and equipment makers listed companies own (batch 123)
+  814453: {
+    ticker: "NWL",
+    makers: [
+      {
+        name: "Graco Children's Products, Inc.",
+        from: "1999-03-24",
+        why: "the child-seat maker Rubbermaid owned, Newell's from the merger with Rubbermaid completed 1999-03-24, the day the CPSC's map gives it (batch 101); its seat recall of 1986 is no listed company's, and none is Graco Inc.'s, the pump maker (Newell's 8-K filed 1999-03-25, item 2)",
+      },
+    ],
+  },
+  26780: {
+    ticker: "DAN",
+    makers: [
+      { name: "DANA CORPORATION", why: "the company's own record, EDGAR's DANA CORP to 2007, Dana Holding Corporation from 2008-01-31 and Dana Incorporated from 2016: its recalls of 1978–1990 are its own" },
+      { name: "Dana Incorporated", why: "the company itself, its name since 2016 (EDGAR's former names)" },
+    ],
+  },
+  763744: {
+    ticker: "LCII",
+    makers: [
+      {
+        name: "Lippert",
+        why: "LCI Industries' operating company, Lippert Components, Inc., as the recalls name it (\"Lippert Components, Inc. (LCI) is recalling\"); LCI was Drew Industries until 2016 (EDGAR's former names). Its first recall at the floor is of 2013",
+      },
+    ],
+  },
+  1034670: { ticker: "ALV", makers: [{ name: "Autoliv, Inc.", why: "the company itself" }] },
+  18230: { ticker: "CAT", makers: [{ name: "Caterpillar, Inc.", why: "the company itself: its engines and parts" }] },
+  101829: {
+    ticker: "RTX",
+    makers: [
+      {
+        name: "Carrier Corporation",
+        to: "2020-04-01",
+        brand: "Carrier",
+        why: "United Technologies' Carrier, RTX's record's, until the separation reported for 2020-04-02, the day EPA's and the release maps give it (RTX's 8-K filed 2020-04-08, items 1.01 and 2.01)",
+      },
+    ],
+  },
+  1783180: {
+    ticker: "CARR",
+    makers: [
+      {
+        name: "Carrier Corporation",
+        from: "2020-04-02",
+        why: "Carrier Global's operating company from its separation from United Technologies, reported for 2020-04-02; before it, RTX's (RTX's 8-K filed 2020-04-08, items 1.01 and 2.01)",
+      },
+    ],
+  },
+  90896: {
+    ticker: "SKY",
+    makers: [{ name: "Skyline Corporation", why: "the company's own record, EDGAR's SKYLINE CORP to 2018, Skyline Champion and then Champion Homes after the merger with Champion" }],
+  },
+  40545: { ticker: "GE", makers: [{ name: "GENERAL ELECTRIC COMPANY", why: "the company itself: its lamps and bulbs" }] },
+  773840: {
+    ticker: "HON",
+    makers: [{ name: "HONEYWELL INTERNATIONAL, INC.", why: "the company itself, its name since 1999, AlliedSignal before (EDGAR's former names): its Fram filters and Prestone products" }],
+  },
+  868780: { ticker: "DORM", makers: [{ name: "Dorman Products, Inc.", why: "the company itself" }] },
+  1884082: { ticker: "PSNY", makers: [{ name: "Polestar Automotive USA, Inc.", why: "Polestar's U.S. operating company" }] },
+  1551182: {
+    ticker: "ETN",
+    makers: [
+      {
+        name: "Eaton Corporation",
+        why: "the company's predecessor record until the redomicile of 2012 (lib/predecessors.ts) and its subsidiary since; the clutch recall of 2018 is Eaton Corporation's own, filed under its name, not the transmissions venture with Cummins",
+      },
+    ],
+  },
 };
 
 /** The makers whose recalls belong to a company, or null when it makes no vehicles we map. */
@@ -258,7 +353,7 @@ const sentence = (s: string) => {
  * maker's own page, and a sold brand's title names the brand already (`RecallMaker.brand`).
  */
 const MAKER_PREFIX =
-  /^(?:(?:FORD|GM|GENERAL MOTORS|CHEVROLET|CADILLAC|BUICK|PONTIAC|OLDSMOBILE|GMC|SATURN|LINCOLN|MERCURY|CHRYSLER|DODGE|JEEP|RAM|HONDA|ACURA|TOYOTA|LEXUS|SCION|TESLA|HARLEY-DAVIDSON|HARLEY|PACCAR|PETERBILT|KENWORTH|POLARIS|INDIAN|GOODYEAR|WINNEBAGO|BLUE BIRD|FERRARI|CUMMINS|THOR|AIRSTREAM|WABASH|RIVIAN|LUCID|MASERATI|LIVEWIRE|VOLVO CARS|VOLVO|JAGUAR|LAND ROVER|SAAB)\s*[/\\]\s*)+/;
+  /^(?:(?:FORD|GM|GENERAL MOTORS|CHEVROLET|CADILLAC|BUICK|PONTIAC|OLDSMOBILE|GMC|SATURN|LINCOLN|MERCURY|CHRYSLER|DODGE|JEEP|RAM|HONDA|ACURA|TOYOTA|LEXUS|SCION|TESLA|HARLEY-DAVIDSON|HARLEY|PACCAR|PETERBILT|KENWORTH|POLARIS|INDIAN|GOODYEAR|WINNEBAGO|BLUE BIRD|FERRARI|CUMMINS|THOR|AIRSTREAM|WABASH|RIVIAN|LUCID|MASERATI|LIVEWIRE|VOLVO CARS|VOLVO|JAGUAR|LAND ROVER|SAAB|GE|GRACO|HONEYWELL|CATERPILLAR)\s*[/\\]\s*)+/;
 
 /**
  * The recall's subject line, readable. The dataset's oldest rows carry NHTSA's component code in

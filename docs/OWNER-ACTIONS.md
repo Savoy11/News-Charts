@@ -211,7 +211,7 @@ Raised by the November batches, each recorded in the master checklist:
   `APPROVED`, `REJECTED` or `DEFERRED`.~~ **Decided 2026-11-08: "All three"; on #1's two calls, "Yes,
   both as drafted"** (Pharmacia LLC on Pfizer's page from 2003; MidAmerican Energy Berkshire's from
   2006-02-09). #1's parts (a) and (b) are built in batch 120, its part (c) in batch 121, #2 in batch
-  122; #3 follows.
+  122 and #3 in batch 123.
   Nothing to run after deploying batch 120: each company's next ingest reads its new units' cases from
   the EPA cases already kept.
   After deploying batch 121, nothing to run either: each company's next Justice Department run asks
@@ -222,6 +222,10 @@ Raised by the November batches, each recorded in the master checklist:
   threshold in it is the owner's to widen: a suit's row is kept only where the page's own are every
   defendant, or at least half of fewer than 10 (`MANY_PARTIES`); counting any of them among fewer than
   10 would give 380 cases on 144 pages instead of 254 on 106 (the committed slice, before first prices).
+  #3 is built in batch 123 for 16 makers; nothing to run after deploying it. Six more wait for a
+  filing's text, which www.sec.gov serves only with `NEWS_CHARTS_CONTACT` set (§2): Hino on Toyota,
+  Kelly-Springfield on Goodyear, Buell on Harley-Davidson, Fisher-Price on Mattel, and Thor California
+  and Thor America on Thor. Once the contact is set, a session can read their days and map them.
   1. EPA's cases under 28 more companies' operating units (BNSF on Berkshire, Pratt & Whitney on RTX);
      three parts, each approvable alone, and two calls inside it: Pharmacia LLC on Pfizer, and the
      day MidAmerican Energy becomes Berkshire's;

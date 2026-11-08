@@ -1,0 +1,1443 @@
+{
+ "provenance": "Read from data.transportation.gov on 2026-11-08 (batch 123): every recall of 10,000 or more (6axg-epim, the columns lib/recalls.ts asks) and every defect investigation (b3rp-be92, the columns lib/investigations.ts asks) under 22 makers: the 16 batch 123 maps, and the six it leaves for a filing's text (Hino, Kelly-Springfield, Buell, Fisher-Price, Thor California, Thor America). Public Domain U.S. Government.",
+ "recalls": [
+  {
+   "nhtsa_id": "26E032000",
+   "report_received_date": "2026-05-20T00:00:00.000",
+   "manufacturer": "Lippert",
+   "subject": "Incorrectly Tightened Shock Bolts",
+   "component": "SUSPENSION",
+   "recall_type": "Equipment",
+   "potentially_affected": "11774",
+   "defect_summary": "Lippert is recalling certain Curt Touring Coil Suspensions with part number 298315. The shock bolts may have been incorrectly tightened."
+  },
+  {
+   "nhtsa_id": "26E024000",
+   "report_received_date": "2026-04-29T00:00:00.000",
+   "manufacturer": "Dorman Products, Inc.",
+   "subject": "Detached Shift Cable Bushing/FMVSS 102, 114",
+   "component": "POWER TRAIN",
+   "recall_type": "Equipment",
+   "potentially_affected": "92791",
+   "defect_summary": "Dorman Products, Inc. (Dorman) is recalling certain Dorman Transmission Gearshift Cables, with part numbers 905-146, 905-644, 905-142, and Solutions Transmission Gearshift Cables with part numbers BK905-1146-1, and BK905-1142-1. The gearshift cable bushing may detach from the linkage, which can prevent the vehicle from shifting into gear properly, including \"Park\" position. As such, these vehicles fail to comply with the requirements of Federal Motor Vehicle Safety Standard (FMVSS) numbers 102, “Transmission shift position sequence, starter interlock, and transmission braking effect,\" and FMVSS number 114, \"Theft Protection.\""
+  },
+  {
+   "nhtsa_id": "25V615000",
+   "report_received_date": "2025-09-15T00:00:00.000",
+   "manufacturer": "Polestar Automotive USA, Inc.",
+   "subject": "Rearview Camera Image May Not Display",
+   "component": "BACK OVER PREVENTION",
+   "recall_type": "Vehicle",
+   "potentially_affected": "27816",
+   "defect_summary": "Polestar Automotive USA, Inc. (Polestar) is recalling certain 2021-2025 Polestar 2 vehicles. The rearview camera image may not display when the vehicle is placed in reverse."
+  },
+  {
+   "nhtsa_id": "25V280000",
+   "report_received_date": "2025-04-25T00:00:00.000",
+   "manufacturer": "Polestar Automotive USA, Inc.",
+   "subject": "Rearview Camera Image May Not Display/FMVSS 111",
+   "component": "BACK OVER PREVENTION",
+   "recall_type": "Vehicle",
+   "potentially_affected": "27816",
+   "defect_summary": "Polestar Automotive USA, Inc. (Polestar) is recalling certain 2021-2025 Polestar 2 vehicles.  The rearview camera image may not display when the vehicle is placed in reverse.  As such, these vehicles fail to comply with the requirements of Federal Motor Vehicle Safety Standard number 111, \"Rear Visibility.\""
+  },
+  {
+   "nhtsa_id": "25V057000",
+   "report_received_date": "2025-02-06T00:00:00.000",
+   "manufacturer": "Hino Motors Sales U.S.A., Inc.",
+   "subject": "Front Right Air Brake Tube Can Be Damaged and Leak",
+   "component": "SERVICE BRAKES, AIR",
+   "recall_type": "Vehicle",
+   "potentially_affected": "19026",
+   "defect_summary": "Hino Motors Sales U.S.A., Inc. (Hino) is recalling certain 2022-2025 NH7A, NJ7A, NJ7B, NJ7C, NV7A, NV7B, and NV7C trucks.  Contact with the fender can damage the front right brake tube and cause a leak."
+  },
+  {
+   "nhtsa_id": "24V477000",
+   "report_received_date": "2024-06-26T00:00:00.000",
+   "manufacturer": "Polestar Automotive USA, Inc.",
+   "subject": "Rearview Camera Image May Not Display/FMVSS 111",
+   "component": "BACK OVER PREVENTION",
+   "recall_type": "Vehicle",
+   "potentially_affected": "25825",
+   "defect_summary": "Polestar Automotive USA, Inc. (Polestar) is recalling certain 2021-2024 Polestar 2 vehicles.  The Infotainment Head Unit (IHU) software may prevent the rearview camera image from displaying.  As such, these vehicles fail to comply with the requirements of Federal Motor Vehicle Safety Standard number 111, \"Rear Visibility.\""
+  },
+  {
+   "nhtsa_id": "24E048000",
+   "report_received_date": "2024-06-10T00:00:00.000",
+   "manufacturer": "Dana Incorporated",
+   "subject": "Loss of Steering Control from Tie Rod Failure",
+   "component": "STEERING",
+   "recall_type": "Equipment",
+   "potentially_affected": "11089",
+   "defect_summary": "Dana Incorporated (Dana) is recalling certain D-Series and E-Series Steer Axles, and replacement tie rod assemblies for Dana D-Series and E-Series Steer Axles.  The tie rod assemblies in these steer axles contain ball studs that may have been incorrectly heat-treated, which can cause them to break, and possibly result in tie rod failure."
+  },
+  {
+   "nhtsa_id": "24E035000",
+   "report_received_date": "2024-05-03T00:00:00.000",
+   "manufacturer": "Autoliv, Inc.",
+   "subject": "Air Bag Inflators May Rupture",
+   "component": "AIR BAGS",
+   "recall_type": "Equipment",
+   "potentially_affected": "34974",
+   "defect_summary": "Autoliv, Inc. (Autoliv) is recalling certain roof rail air bag inflators with model numbers ACH4.0 (P7.5-30-325) and ACH4.0 (P3.5-30-312).  The air bag inflator may fail at the weld joint, which can cause gas to leak from the inflator or result in an inflator rupture."
+  },
+  {
+   "nhtsa_id": "24V285000",
+   "report_received_date": "2024-04-23T00:00:00.000",
+   "manufacturer": "Winnebago Towable",
+   "subject": "LED Backlight Circuit Board Failure May Cause Fire",
+   "component": "EQUIPMENT",
+   "recall_type": "Vehicle",
+   "potentially_affected": "13117",
+   "defect_summary": "Winnebago Towable (Winnebago) is recalling certain 2022-2024 Voyage, Micro Minnie, Micro Minnie FLX, Hike 200 and Minnie travel trailers.  The LED backlight circuit board in the cooktop range may fail, causing the board to overheat."
+  },
+  {
+   "nhtsa_id": "24V075000",
+   "report_received_date": "2024-02-07T00:00:00.000",
+   "manufacturer": "Hino Motors Sales U.S.A., Inc.",
+   "subject": "Improperly Secured Ground Connection",
+   "component": "ELECTRICAL SYSTEM",
+   "recall_type": "Vehicle",
+   "potentially_affected": "12118",
+   "defect_summary": "Hino Motors Sales U.S.A., Inc. (Hino) is recalling certain 2022-2024 Hino NE7A, NE7B, NH7A, NH9A, NH9B, NH9C, NJ7A, NJ7B, NJ7C, NV7A, NV7B, NV7C, NM9A, NM9B, TH9K, and TM9K vehicles.  The ground connection in the telematics control unit harness may not be secured properly, which can result in the ground connection overheating."
+  },
+  {
+   "nhtsa_id": "23E075000",
+   "report_received_date": "2023-10-04T00:00:00.000",
+   "manufacturer": "Dorman Products, Inc.",
+   "subject": "Ball Stud May Separate Causing Loss of Control",
+   "component": "SUSPENSION",
+   "recall_type": "Equipment",
+   "potentially_affected": "27528",
+   "defect_summary": "Dorman Products, Inc. (Dorman) is recalling certain Suspension Ball Joints, with part number BJ50075, and 2601797.  The ball stud may separate from the lower control arm which can lead to loss of steering control."
+  },
+  {
+   "nhtsa_id": "23E050000",
+   "report_received_date": "2023-07-05T00:00:00.000",
+   "manufacturer": "Lippert",
+   "subject": "Improperly Tightened U-Bolt",
+   "component": "SUSPENSION",
+   "recall_type": "Equipment",
+   "potentially_affected": "13997",
+   "defect_summary": "Lippert (Lippert) is recalling certain Curt 7000 and 8000 lb axles.  The U-bolts may have been improperly tightened, which can cause the axle to move out of position."
+  },
+  {
+   "nhtsa_id": "23V270000",
+   "report_received_date": "2023-04-14T00:00:00.000",
+   "manufacturer": "Winnebago Towable",
+   "subject": "Bumper Mounted Spare Tire Carrier May Detach",
+   "component": "STRUCTURE",
+   "recall_type": "Vehicle",
+   "potentially_affected": "10492",
+   "defect_summary": "Winnebago Towable (Winnebago) is recalling certain 2021-2023 Micro Minnie travel trailers.  The spare tire carrier may fail when loaded with a certain off-road style tire."
+  },
+  {
+   "nhtsa_id": "23E026000",
+   "report_received_date": "2023-03-29T00:00:00.000",
+   "manufacturer": "Carrier Corporation",
+   "subject": "Clutch Overheating May Cause Fire",
+   "component": "EQUIPMENT",
+   "recall_type": "Equipment",
+   "potentially_affected": "15046",
+   "defect_summary": "Carrier Corporation (Carrier) is recalling certain Carrier Transicold refrigeration units, Supra models 950, 950MT, and 960.  The centrifugal clutch may overheat under certain conditions break apart."
+  },
+  {
+   "nhtsa_id": "22E055000",
+   "report_received_date": "2022-07-05T00:00:00.000",
+   "manufacturer": "Lippert",
+   "subject": "Awning Fabric May Detach Causing Awning to Drop",
+   "component": "EQUIPMENT",
+   "recall_type": "Equipment",
+   "potentially_affected": "73230",
+   "defect_summary": "Lippert is recalling certain Electric Retractable Awnings, up to 18 feet in length.  The welded seam on the fabric may separate, potentially allowing the awning to drop beyond normal operation."
+  },
+  {
+   "nhtsa_id": "21E052000",
+   "report_received_date": "2021-06-14T00:00:00.000",
+   "manufacturer": "Autoliv, Inc.",
+   "subject": "Automatic Locking Retractor Malfunction/FMVSS 208",
+   "component": "SEAT BELTS",
+   "recall_type": "Equipment",
+   "potentially_affected": "266772",
+   "defect_summary": "Autoliv, Inc. (Autoliv) is recalling certain Automatic Locking Retractor (ALR) seat belt assemblies.  The ALR may deactivate early, before the webbing is fully retracted.  As such, these assemblies fail to comply with the requirements of Federal Motor Vehicle Safety Standard number 208, \"Occupant Crash Protection.\""
+  },
+  {
+   "nhtsa_id": "21E047000",
+   "report_received_date": "2021-05-21T00:00:00.000",
+   "manufacturer": "Lippert",
+   "subject": "Window Adhesive Failure",
+   "component": "EQUIPMENT",
+   "recall_type": "Equipment",
+   "potentially_affected": "46281",
+   "defect_summary": "Lippert is recalling certain Hehr 6400 Series Windows built between 10/01/2018 and 08/13/2020.  The adhesive that bonds the vented portion of the window may fail."
+  },
+  {
+   "nhtsa_id": "20E039000",
+   "report_received_date": "2020-06-15T00:00:00.000",
+   "manufacturer": "Lippert",
+   "subject": "Frameless Window Glass Panels May Detach",
+   "component": "VISIBILITY",
+   "recall_type": "Equipment",
+   "potentially_affected": "10242",
+   "defect_summary": "Lippert Components, Inc. (LCI) is recalling certain 3000 Series Frameless windows sold for installation into recreational vehicles.  The adhesive bond between the glass and the metal hinge frame of the frameless crank out vent windows may fail which could then allow the glass to detach and fall out."
+  },
+  {
+   "nhtsa_id": "20V244000",
+   "report_received_date": "2020-04-30T00:00:00.000",
+   "manufacturer": "Hino Motors Sales U.S.A., Inc.",
+   "subject": "Insufficient Battery Ground Cable Length",
+   "component": "ELECTRICAL SYSTEM",
+   "recall_type": "Vehicle",
+   "potentially_affected": "12470",
+   "defect_summary": "Hino Motors Sales U.S.A., Inc. (Hino) is recalling certain 2020-2021 NV8J, NJ8J, NE8J, NJ8A, NV8A, NE8A, NE8G, NJ8C, NE8C, and NV8G trucks.  The ground cable that connects the negative battery terminal to the frame may be too short and may break as a result."
+  },
+  {
+   "nhtsa_id": "18E102000",
+   "report_received_date": "2018-11-07T00:00:00.000",
+   "manufacturer": "Eaton Corporation",
+   "subject": "Vehicle may Move after Clutch Component Fails",
+   "component": "POWER TRAIN",
+   "recall_type": "Equipment",
+   "potentially_affected": "79102",
+   "defect_summary": "Eaton Corporation (Eaton) is recalling certain ECA heavy-duty truck clutches, part numbers 122002-35, 122002-35A, 122002-42, and 122002-42A, for use in for automated manual transmission vehicles.  An internal component in the clutch assembly may fail, possibly resulting in unintended vehicle movement."
+  },
+  {
+   "nhtsa_id": "18E050000",
+   "report_received_date": "2018-07-02T00:00:00.000",
+   "manufacturer": "Lippert",
+   "subject": "Awning May Deploy While Moving",
+   "component": "EQUIPMENT",
+   "recall_type": "Equipment",
+   "potentially_affected": "14383",
+   "defect_summary": "Lippert Components, Inc. (LCI) is recalling certain Solera Smart Arm Awnings.  Water may enter the awning control module wiring harness and cause the awnings to partially deploy unexpectedly while the recreational vehicle is being driven."
+  },
+  {
+   "nhtsa_id": "18V168000",
+   "report_received_date": "2018-03-09T00:00:00.000",
+   "manufacturer": "Supreme Corporation",
+   "subject": "Fire Extinguisher May Be Clogged or Inoperable",
+   "component": "EQUIPMENT",
+   "recall_type": "Vehicle",
+   "potentially_affected": "33321",
+   "defect_summary": "Supreme Corporation (Supreme) is recalling certain 2003-2018 Supreme Signature Van, Iner-City, Kold King, and Service Body trucks, equipped with Kidde Plastic-Handle or Push Button 'Pindicator' Fire Extinguishers.  These extinguishers may become clogged, preventing the extinguisher from discharging as expected or requiring excessive force to activate the extinguisher.  Additionally, in certain models, the nozzle may detach from the valve assembly with enough force that it could cause injury and also render the product inoperable.  For a full list of the affected fire extinguisher models visit: https://static.nhtsa.gov/odi/rcl/2017/RMISC-17E062-5427.pdf"
+  },
+  {
+   "nhtsa_id": "17E074000",
+   "report_received_date": "2017-12-15T00:00:00.000",
+   "manufacturer": "Lippert",
+   "subject": "Cracking of the Electronic Jack Touch Pad",
+   "component": "EQUIPMENT",
+   "recall_type": "Equipment",
+   "potentially_affected": "12584",
+   "defect_summary": "Lippert Components, Inc. (Lippert) is recalling certain Power Tongue Jacks, Smart Jack model 426514.  These jacks are operated with a laminated plastic touch pad which can crack or separate allowing water to enter and cause the jack to automatically retract or extend without warning."
+  },
+  {
+   "nhtsa_id": "17E075000",
+   "report_received_date": "2017-12-12T00:00:00.000",
+   "manufacturer": "Autoliv, Inc.",
+   "subject": "Inflator Component may Detach During Deployment",
+   "component": "AIR BAGS",
+   "recall_type": "Equipment",
+   "potentially_affected": "13398",
+   "defect_summary": "Autoliv, Inc. (Autoliv) is recalling certain ACH 2.4 inflatable side curtain air bags.  The inflators for these air bags have a component that may detach during deployment of the inflatable curtain air bag."
+  },
+  {
+   "nhtsa_id": "17E041000",
+   "report_received_date": "2017-07-28T00:00:00.000",
+   "manufacturer": "Dana Incorporated",
+   "subject": "Tie Rod may Loosen",
+   "component": "STEERING",
+   "recall_type": "Equipment",
+   "potentially_affected": "25300",
+   "defect_summary": "Dana, Inc., (Dana) is recalling certain Spicer D-Series and E-Series steer axles.  The castellated nut on the steer axles may not be properly torqued, allowing the tie rod to loosen."
+  },
+  {
+   "nhtsa_id": "17V369000",
+   "report_received_date": "2017-06-08T00:00:00.000",
+   "manufacturer": "Supreme Corporation",
+   "subject": "Rear Reflectors may be Too High/FMVSS 108",
+   "component": "EXTERIOR LIGHTING",
+   "recall_type": "Vehicle",
+   "potentially_affected": "11414",
+   "defect_summary": "Supreme Corporation (Supreme) is recalling certain 2007-2017 Signature Van and Kold King vehicles equipped with oval taillights installed in the rear corner posts.  The affected vehicles have rear reflex reflectors that may have been mounted more than 60 inches above the road surface.  As such, these vehicles fail to comply with the requirements of Federal Motor Vehicle Safety Standard (FMVSS) number 108, \"Lamps, Reflective Devices, and Associated Equipment.\""
+  },
+  {
+   "nhtsa_id": "17C001000",
+   "report_received_date": "2017-05-10T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "Child Seat Webbing may Tear Under Load/FMVSS 213",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "25494",
+   "defect_summary": "Graco Children's Products Inc. (Graco) is recalling certain Graco My Ride 65 convertible child restraints, models 1871689, 1908152, 1813074, 1872691, 1853478, 1877535, 1813015, and 1794334.  In the event of a crash, the child seat webbing may not adequately restrain the child.  As such, these car seats fail to conform to Federal Motor Vehicle Safety Standard (FMVSS) number 213, \"Child Restraint Systems.\""
+  },
+  {
+   "nhtsa_id": "17E010000",
+   "report_received_date": "2017-02-20T00:00:00.000",
+   "manufacturer": "Autoliv, Inc.",
+   "subject": "Improper Intiator Generant Mix Ratio",
+   "component": "AIR BAGS",
+   "recall_type": "Equipment",
+   "potentially_affected": "16604",
+   "defect_summary": "Autoliv, Inc. (Autoliv) is recalling certain AI2 Air Bag Initiators manufactured June 16, 2016, to November 4, 2016.  The affected initiators could contain an improper generant mix ratio that may prevent the air bags from deploying properly in the event of a crash."
+  },
+  {
+   "nhtsa_id": "16E094000",
+   "report_received_date": "2016-12-15T00:00:00.000",
+   "manufacturer": "Autoliv, Inc.",
+   "subject": "Seatbelt Component may Detach and Enter the Cabin",
+   "component": "SEAT BELTS",
+   "recall_type": "Equipment",
+   "potentially_affected": "111500",
+   "defect_summary": "Autoliv, Inc. (Autoliv) is recalling certain seatbelt retractors equipped with pretensioners, models R200, R200 Long and R200.1, manufactured April 10, 2016, to October 15, 2016.  The Micro Gas Generator (MGG), a subcomponent part used on front, rear, and rear center seat belt retractors with pretensioners, may detach after the seatbelt retractor pretensioner is deployed."
+  },
+  {
+   "nhtsa_id": "16E095000",
+   "report_received_date": "2016-12-07T00:00:00.000",
+   "manufacturer": "Autoliv, Inc.",
+   "subject": "Improper Intiator Generant Mix Ratio",
+   "component": "AIR BAGS",
+   "recall_type": "Equipment",
+   "potentially_affected": "116820",
+   "defect_summary": "Autoliv, Inc. (Autoliv) is recalling certain AI2 Seat Belt and Air Bag Initiators manufactured June 16, 2016, to November 4, 2016.  The affected initiators could contain an improper generant mix ratio that may prevent the air bags and/or the seat belt pretensioners from deploying in the event of a crash."
+  },
+  {
+   "nhtsa_id": "16E087000",
+   "report_received_date": "2016-12-01T00:00:00.000",
+   "manufacturer": "Carrier Corporation",
+   "subject": "Starter Housing May Come Apart",
+   "component": "ELECTRICAL SYSTEM",
+   "recall_type": "Equipment",
+   "potentially_affected": "29180",
+   "defect_summary": "Carrier Corporation (Carrier) is recalling certain starters used for starting Carrier Transicold trailer refrigeration units.  The starters, Carrier Transicold or Performance Parts Group part number 25-39316-01, or Thermo Engine Supply part number R-25-39316-00, were manufactured April 1, 2009, to August 18, 2016.  These starter assemblies may come apart during the start cycle, and the pieces may strike someone that is in close proximity to the starter."
+  },
+  {
+   "nhtsa_id": "16V296000",
+   "report_received_date": "2016-05-12T00:00:00.000",
+   "manufacturer": "Supreme Corporation",
+   "subject": "Electrical Short in Marker Light May Cause Fire",
+   "component": "EXTERIOR LIGHTING",
+   "recall_type": "Vehicle",
+   "potentially_affected": "23238",
+   "defect_summary": "Supreme Corporation (Supreme) is recalling certain model year 2011-2014 Signature Van, Iner-City, and Kold King vehicles manufactured April 1, 2011, to December 31, 2014.  These vehicles have roof marker lights mounted on composite corner caps."
+  },
+  {
+   "nhtsa_id": "16C004000",
+   "report_received_date": "2016-04-25T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "Printed Instructions Missing Information/FMVSS 213",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "20505",
+   "defect_summary": "Graco Children's Products Inc. (Graco) is recalling certain Graco TurboBooster booster seats, models 1967886, 1963973, 1963974, 1963975, 1963976, and 1975173, manufactured between December 22, 2015, and April 5, 2016.  The instructions for the booster seats are missing the information that the seats should be securely belted to the vehicle at all times, even if the seat is unoccupied.  As such, these seats fail to comply with the requirements of Federal Motor Vehicle Safety Standard (FMVSS) number 213, \"Child Restraint Systems.\""
+  },
+  {
+   "nhtsa_id": "16C002000",
+   "report_received_date": "2016-02-02T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "Incorrect Position of Reclining Label/FMVSS 213",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "15064",
+   "defect_summary": "Graco Children's Products, Inc. (Graco) is recalling certain Extend2Fit Convertible child seats manufactured November 27, 2015, to January 20, 2016.  The affected child seats may have the recline label affixed at the wrong location, resulting in confusion about how to use the seat properly.  As such, these child seats fail to comply with the requirements of Federal Motor Vehicle Safety Standard (FMVSS) No. 213, \"Child Restraint Systems.\""
+  },
+  {
+   "nhtsa_id": "15E078000",
+   "report_received_date": "2015-09-24T00:00:00.000",
+   "manufacturer": "Lippert",
+   "subject": "Electric Entry Steps may be Unstable",
+   "component": "EQUIPMENT",
+   "recall_type": "Equipment",
+   "potentially_affected": "47340",
+   "defect_summary": "Lippert Components, Inc. (Lippert) is recalling certain Coachstep Double and Triple Electric Steps manufactured May 25, 2007, to December 18, 2014.  The bolt that attaches the fan gear assembly to the steps may fracture allowing the fan gear to disengage from the steps.  As a result, the steps may not remain in the expected position and may be unstable."
+  },
+  {
+   "nhtsa_id": "15C001000",
+   "report_received_date": "2015-03-18T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "Label Missing Instruction Manual Information",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "31838",
+   "defect_summary": "Graco Children's Products Inc. (Graco) is recalling certain ComfortSport child restraints, model numbers 1813040 and 1794333; Ready Ride child restraints, model numbers 1924520 and 1924519; and Classic Ride child restraints, model number 1812930.  These seats were manufactured between March 1, 2014, and February 28, 2015.  The affected convertible child restraints are missing a statement on the affixed label that informs of location of the instruction manual.  Without the notice on the fixed label, these seats fail to comply with the requirements of Federal Motor Vehicle Safety Standard No. 213 \"Child Restraint Systems.\""
+  },
+  {
+   "nhtsa_id": "14C004000",
+   "report_received_date": "2014-06-30T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "Buckle may not Unlatch",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "1910102",
+   "defect_summary": "Graco Children's Products (Graco) is recalling certain rear-facing child restraints manufactured between July 2010 and May 2013, models SnugRide, SnugRide Classic Connect (including Classic Connect 30 and 35), SnugRide 30, SnugRide 35, SnugRide Click Connect 40, and Aprica A30.  The defect involves difficulty in unlatching the harness buckle.  In some cases, the buckle becomes stuck in a latched condition so that it cannot be opened by depressing the buckle's release button."
+  },
+  {
+   "nhtsa_id": "14E017000",
+   "report_received_date": "2014-04-15T00:00:00.000",
+   "manufacturer": "Carrier Corporation",
+   "subject": "Wiring Harness Abrasion may cause a Fire",
+   "component": "ELECTRICAL SYSTEM",
+   "recall_type": "Equipment",
+   "potentially_affected": "13363",
+   "defect_summary": "Carrier Corporation (Carrier) is recalling certain Carrier Transicold X2 2100A, X2 2500A trailer refrigeration units, and aftermarket replacement part kits.  The affected units have certain taped wiring harnesses and optional field-installed unit bottom panels.  A bolt may protrude from the bottom panel and abrade the taped wiring harness."
+  },
+  {
+   "nhtsa_id": "14C001000",
+   "report_received_date": "2014-02-10T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "Buckle may not Unlatch",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "4176601",
+   "defect_summary": "On February 7, 2014, Graco Children's Products, Inc. (Graco) informed NHTSA that it would be recalling model year 2009 through 2013 toddler and booster child restraints, models Cozy Cline, Comfort Sport, Classic Ride 50, My Ride 65, My Ride w/Safety Surround, My Ride 70, Size 4 Me 70, Smart Seat, Nautilus, Nautilus Elite, and Argos 70. On March 7, 2014, Graco informed NHTSA it would be including an additional 403,222 seats in this recall, including certain model year 2006 through 2014 Argos 70 Elite, Ready Ride, Step 2, My Ride 65 with Safety Surround, My Size 70, Head Wise 70 with Safety Surround, Nautilus 3-in-1, Nautilus Plus, and Smart Seat with Safety Surround.  The defect involves difficulty in unlatching the harness buckle. In some cases, the buckle becomes stuck in a latched condition so that it cannot be opened by depressing the buckle's release button."
+  },
+  {
+   "nhtsa_id": "13V652000",
+   "report_received_date": "2013-12-09T00:00:00.000",
+   "manufacturer": "Skyline Corporation",
+   "subject": "Interior Side Door Lock May Become Inoperable",
+   "component": "LATCHES/LOCKS/LINKAGES",
+   "recall_type": "Vehicle",
+   "potentially_affected": "38434",
+   "defect_summary": "Skyline Corporation (Skyline) is recalling certain model year 2006-2013 recreational vehicle travel trailers and fifth-wheel trailers manufactured January 1, 2006, through May, 31, 2013 and equipped with Fastec-brand door locks.  It may be possible to remove the key from the lock in a way that potentially jams the deadbolt."
+  },
+  {
+   "nhtsa_id": "13E067000",
+   "report_received_date": "2013-11-07T00:00:00.000",
+   "manufacturer": "Lippert",
+   "subject": "Interior Side Door Lock May Become Inoperable",
+   "component": "LATCHES/LOCKS/LINKAGES",
+   "recall_type": "Equipment",
+   "potentially_affected": "528228",
+   "defect_summary": "Lippert Components, Inc. (Lippert) is recalling certain 2006-2013 doors equipped with Fastec-brand deadbolt cylinders manufactured January 1, 2006, through April 25, 2013 for use in travel trailers.  It may be possible to remove the key from the lock in a way that potentially jams the deadbolt."
+  },
+  {
+   "nhtsa_id": "12V555000",
+   "report_received_date": "2012-12-03T00:00:00.000",
+   "manufacturer": "Hino Motors Sales U.S.A., Inc.",
+   "subject": "Battery B+ Short Circuit/Possible Fire",
+   "component": "ELECTRICAL SYSTEM",
+   "recall_type": "Vehicle",
+   "potentially_affected": "35142",
+   "defect_summary": "Hino is recalling certain model year 2005 through 2013 medium duty trucks, models NA6J, NB6J, NC6J, ND8J, NE8J, NJ8J, NF8J, and NV8J, manufactured from August 18, 2003, through November 16, 2011.  Over time, the main B+ circuit from the battery to the starter could potentially short to ground due to wear that accumulates as a result of interference between the B+ circuit and its convoluted tubing sheath."
+  },
+  {
+   "nhtsa_id": "11E003000",
+   "report_received_date": "2011-01-25T00:00:00.000",
+   "manufacturer": "Carrier Corporation",
+   "subject": "EVAPORATOR ASSEMBLIES/POSSIBLE FIRE",
+   "component": "EQUIPMENT",
+   "recall_type": "Equipment",
+   "potentially_affected": "44915",
+   "defect_summary": "CARRIER IS RECALLING CERTAIN CARRIER GENV EM-1 EVAPORATOR UNITS (EM-1) MANUFACTURED FROM JANUARY 1, 2006 THROUGH DECEMBER 2010, CONTAINING A DELPHI PACK-CON III FUSE HOLDER IN AN ALLIED MOTION MOTOR ASSEMBLY; EM-1 UNIT PART NUMBERS 77-62112-XX AND 77-62512-XX, STARTING WITH SERIAL NUMBER KNT90890232 TO SERIAL NUMBER NNE91230058, SOLD AS AFTERMARKET EQUIPMENT AND INSTALLED AS ORIGINAL EQUIPMENT ON CERTAIN SCHOOL AND SHUTTLE BUSES.   DUE TO TIME, TEMPERATURE, AND/OR VIBRATION, THE FUSE MAY LOOSEN IN THE FUSE HOLDER RESULTING IN HIGH RESISTANCE AND ARCING."
+  },
+  {
+   "nhtsa_id": "10E003000",
+   "report_received_date": "2010-02-17T00:00:00.000",
+   "manufacturer": "Dana Incorporated",
+   "subject": "DRIVESHAFT FAILURE",
+   "component": "POWER TRAIN",
+   "recall_type": "Equipment",
+   "potentially_affected": "32560",
+   "defect_summary": "DANA HOLDING CORPORATION HAS NOTIFIED NHTSA ABOUT A DEFECT IN CERTAIN TUBE YOKES, MANUFACTURED FROM HEAT CODE NOS. SD231/DF AND SD258/DV AND FORGED IN SPECIFIC MOLDS (CAVITY 1 AND 3), USED IN DRIVESHAFTS INSTALLED AS ORIGINAL EQUIPMENT ON CERTAIN FORD, NISSAN, AND TOYOTA VEHICLES.  CERTAIN OF THESE FORGED COMPONENTS COULD CONTAIN CRACKS ALONG THE TUBE YOKE LUG EARS."
+  },
+  {
+   "nhtsa_id": "09E053000",
+   "report_received_date": "2009-09-02T00:00:00.000",
+   "manufacturer": "Carrier Corporation",
+   "subject": "AIRV CEILING ASSEMBLIES/HEATER ELEMENT",
+   "component": "EQUIPMENT",
+   "recall_type": "Equipment",
+   "potentially_affected": "16000",
+   "defect_summary": "CARRIER IS RECALLING CERTAIN AIRV CEILING ASSEMBLIES MANUFACTURED BETWEEN 2007 AND 2009, P/NOS 99-00469-11, 99-00469-02, AND 99-00469-17, SOLD TO BE INSTALLED AS ORIGINAL EQUIPMENT ON VARIOUS RECREATIONAL VEHICLES AND ALSO SOLD AS AFTERMARKET EQUIPMENT.  THE HEATER ELEMENT IN THESE ASSEMBLIES MAY BE DEFECTIVE WHICH COULD CAUSE THE UNIT TO CREATE SMOKE OR SPARKS."
+  },
+  {
+   "nhtsa_id": "09E020000",
+   "report_received_date": "2009-04-28T00:00:00.000",
+   "manufacturer": "Caterpillar, Inc.",
+   "subject": "P-CLIPS RETAINING THE OIL LINE/OIL LEAK/FIRE",
+   "component": "ENGINE AND ENGINE COOLING",
+   "recall_type": "Equipment",
+   "potentially_affected": "147777",
+   "defect_summary": "CATERPILLAR IS RECALLING 147,777 C15 6-CYLINDER, 15L TURBOCHARGED, AIR-TO-AIR AFTER COOLED DIESEL ENGINES OF 435-625 HORSEPOWER WITH SERIAL NO. PREFIXES BSX, MXS, NXS, TRB, KRA, AND JEP.  THE VARIABLE VALVE ACTUATION (VVA) OIL LINE MAY WEAR AGAINST THE P-CLIPS RETAINING THE OIL LINE, CAUSING AN OIL LEAK."
+  },
+  {
+   "nhtsa_id": "08C009000",
+   "report_received_date": "2008-12-04T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "FMVSS 213/AIRBAG WARNING LABEL/PARTIALLY OBSCURED",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "43994",
+   "defect_summary": "GRACO IS RECALLING 43,994 COMFORTSPORT TM CONVERTIBLE CAR SEATS, IN THE FRAZIER TM FASHION, MANUFACTURED FROM NOVEMBER 1, 2006 THROUGH OCTOBER 8, 2007. THESE SEATS WERE EQUIPPED WITH A LARGE SIZED, SUPPLEMENTAL PAD OR \"BODY PILLOW\" THAT PARTIALLY OBSCURES THE CHILD AIRBAG WARNING LABEL WHICH IS ON THE SEAT PAD.  THE PARTIAL OBSCURING OF THIS LABEL FAILS TO CONFORM WITH THE REQUIREMENTS OF FEDERAL MOTOR VEHICLE SAFETY STANDARD NO. 213, \"CHILD RESTRAINT SYSTEMS\"."
+  },
+  {
+   "nhtsa_id": "08V394000",
+   "report_received_date": "2008-08-06T00:00:00.000",
+   "manufacturer": "Skyline Corporation",
+   "subject": "REFRIGERATOR/DOMETIC",
+   "component": "EQUIPMENT",
+   "recall_type": "Vehicle",
+   "potentially_affected": "22372",
+   "defect_summary": "SKYLINE IS RECALLING 22,372 MY 2004-2007 ALLIANCE, ALJO, CELEBRITY, CENTURY, FREESTYLE, LAYTON, NOMAD, RAMPAGE, SEAVIEW, TRAILRIDER, AND WEEKENDER FIFTH WHEEL AND TRAVEL TRAILERS EQUIPPED WITH A TWO-DOOR REFRIGERATOR MANUFACTURED BY THE DOMETIC CORPORATION.   THE REFRIGERATOR MAY HAVE A DEFECT IN THE BOILER TUBE.  PRESSURIZED COOLANT SOLUTION COULD BE RELEASED INTO AN AREA WHERE AN IGNITION SOURCE (GAS FLAME) IS PRESENT."
+  },
+  {
+   "nhtsa_id": "08V195000",
+   "report_received_date": "2008-04-30T00:00:00.000",
+   "manufacturer": "Hino Motors Sales U.S.A., Inc.",
+   "subject": "FRONT SPRING HANGER ATTACHMENT BOLTS",
+   "component": "SUSPENSION",
+   "recall_type": "Vehicle",
+   "potentially_affected": "16805",
+   "defect_summary": "HINO IS RECALLING 16,805 MY 2005-2008 NA6J, NB6J, NC6J, ND8J, NE8J, NJ8J, AND NV8J TRUCKS.  THE TWO VERTICAL RIGHT/LEFT SIDE FRONT SPRING BRACKET BOLTS WERE NOT TIGHTENED PROPERLY DURING THE ASSEMBLY PROCESS.  THIS MAY CAUSE INCREASED STRESS ON THE SPRING BRACKET WHICH CAN LEAD TO CRACKING OF THE BRACKET."
+  },
+  {
+   "nhtsa_id": "08C005000",
+   "report_received_date": "2008-03-11T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "FMVSS 213/LABELED WITH THE WRONG TELEPHONE NO.",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "121042",
+   "defect_summary": "GRACO IS RECALLING 121,042 CARGO BOOSTER SEATS (CHILD RESTRAINT SYSTEMS) MANUFACTURED BETWEEN JANUARY 9, 2007 AND MARCH 3, 2008.  THESE SEATS WERE LABELED WITH AN INCORRECT TELEPHONE NUMBER FOR THE NATIONAL HIGHWAY TRAFFIC SAFETY ADMINISTRATION (NHTSA) WHICH FAILS TO CONFORM TO THE LABELING REQUIREMENTS OF FEDERAL MOTOR VEHICLE SAFETY STANDARD NO. 213, CHILD RESTRAINT SYSTEMS."
+  },
+  {
+   "nhtsa_id": "07E107000",
+   "report_received_date": "2007-12-17T00:00:00.000",
+   "manufacturer": "Eaton Corporation",
+   "subject": "FMVSS 106/AIR BRAKE HOSES",
+   "component": "SERVICE BRAKES, AIR",
+   "recall_type": "Equipment",
+   "potentially_affected": "22000",
+   "defect_summary": "CERTAIN EATON SYNFLEX ECLIPSE BRAND EXTRUDED NYLON TUBING OF VARIOUS DIAMETERS DESIGNED FOR USE AS AIR BRAKE HOSES FOR PETERBILT AND KENWORTH VEHICLES.  THE TUBING WAS MANUFACTURED WITH ONLY FOUR LAYERS OF EXTRUDED NYLON MATERIAL, INSTEAD OF THE SPECIFIED FIVE LAYERS."
+  },
+  {
+   "nhtsa_id": "07C011000",
+   "report_received_date": "2007-11-13T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "BACKING MATERIAL",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "304675",
+   "defect_summary": "CERTAIN GRACO SNUGRIDE CHILD RESTRAINT SYSTEMS, MODELS 8609, 8616, 8643, 8645, AND 8646, MANUFACTURED FROM AUGUST 1, 2006, THROUGH JUNE 30, 2007.  THE FIBER BACKING OF THESE SEATS ARE OF LESSER DENSITY AND MAY BE MORE PRONE TO DETERIORATION OR TEARING, ESPECIALLY AFTER WASHING.  IN ADDITION, THE PARTICULAR DESIGN OF THE SEAT PAD MAY ALLOW MORE READY ACCESS TO THE UNDERSIDE OF THE PADDING."
+  },
+  {
+   "nhtsa_id": "07E090000",
+   "report_received_date": "2007-10-30T00:00:00.000",
+   "manufacturer": "Dorman Products, Inc.",
+   "subject": "AUTOMOTIVE ELECTRICAL REPAIR KIT/ELECTRICAL FUSES",
+   "component": "ELECTRICAL SYSTEM",
+   "recall_type": "Equipment",
+   "potentially_affected": "23000",
+   "defect_summary": "CERTAIN DORMAN PRODUCTS AUTOMOTIVE ELECTRICAL REPAIR KITS, P/N 86689B, MANUFACTURED BETWEEN JANUARY 2006 TO OCTOBER 2007, SOLD FOR USE ON ALL MAKES AND MODELS OF BOTH FOREIGN AND DOMESTIC MOTOR VEHICLES.  THESE KITS CONTAIN FUSES THAT FAIL TO MELT AT THE MAXIMUM ELECTRICAL CURRENT AND TIME LIMIT DESIGNATION."
+  },
+  {
+   "nhtsa_id": "07E088000",
+   "report_received_date": "2007-10-24T00:00:00.000",
+   "manufacturer": "HONEYWELL INTERNATIONAL, INC.",
+   "subject": "OIL FILTER/OIL LEAK/POSSIBLE FIRE",
+   "component": "EQUIPMENT",
+   "recall_type": "Equipment",
+   "potentially_affected": "121680",
+   "defect_summary": "CERTAIN HONEYWELL FRAM RACING BRAND HP4 AND HP8 OIL FILTERS THAT WERE MANUFACTURED FROM MAY 25, 2006, THROUGH SEPTEMBER 14, 2007, AND SOLD FOR USE AS REPLACEMENT EQUIPMENT FOR VEHICLES LIST ABOVE.  THE AFFECTED FILTERS ARE MARKED WITH A DATE CODE A61451 THROUGH A72571 SEQUENTIALLY.  THE DATE CODE AND PART NUMBER APPEAR ON THE FILTER HOUSING.  FRAM RACING HP4 AND HP8 OIL FILTERS NOT BEARING A DATE CODE IN THIS RANGE ARE NOT AFFECTED BY THIS RECALL.  THE GASKET OF THE OIL FILTER BECOMES MORE PLIABLE UNDER HIGH TEMPERATURES AND PRESSURES."
+  },
+  {
+   "nhtsa_id": "07C006000",
+   "report_received_date": "2007-08-15T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "FMVSS 213/INCORRECTLY ROUTED LOWER ANCHORAGE BELT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "276921",
+   "defect_summary": "CERTAIN GRACO COMFORTSPORT 5 POINT HARNESS CONVERTIBLE (REAR/FORWARD FACING) CHILD RESTRAINT SYSTEMS MANUFACTURED FROM JANUARY 2 THROUGH JULY 31, 2007, MODEL NOS. 8433FOF, 8629TWL, 8630MTR, 8631DFT, 8631DRA, 8632PSO, 8635TAC, 8639COS, 8C00BLG, 8C00DMN, 8C00GRP, 8C00LNW, 8C00MID, 8C00TMB, 8C01SVD, 8C01WTN, 8C02MGI, 8C02MRC, 8C03HAL, 8C03WCF, 8C04FRR.  DURING PRODUCTION, THE LOWER ANCHORAGE BELT IN SOME OF THESE CHILD RESTRAINT SYSTEMS WAS INCORRECTLY ROUTED.  AS A RESULT, WHEN THESE CHILD RESTRAINT SYSTEMS ARE USED IN THE REAR-FACING MODE, ATTACHED WITH THE LOWER ANCHORAGE BELT, THEY FAIL TO CONFORM TO FEDERAL MOTOR VEHICLE SAFETY STANDARD NO. 213, 'CHILD RESTRAINT SYSTEMS.'"
+  },
+  {
+   "nhtsa_id": "07V208000",
+   "report_received_date": "2007-05-09T00:00:00.000",
+   "manufacturer": "Hino Motors Sales U.S.A., Inc.",
+   "subject": "AUTO TENSIONER",
+   "component": "ENGINE AND ENGINE COOLING",
+   "recall_type": "Vehicle",
+   "potentially_affected": "14588",
+   "defect_summary": "ON CERTAIN TRUCKS EQUIPPED WITH BANDO BELT TENSIONER, CORROSION OR RUST MAY DEVELOP ON THE TENSIONER SPINDLE OR BUSHING CAUSING THE AUTO TENSIONER TO BECOME STIFF OR BIND.   THIS CAN CAUSE THE DRIVE BELT TO SUDDENLY COME OFF OR THE AUTO TENSIONER MOUNTING BOLTS COULD SUDDENLY BREAK."
+  },
+  {
+   "nhtsa_id": "07V127000",
+   "report_received_date": "2007-03-20T00:00:00.000",
+   "manufacturer": "THOR AMERICA",
+   "subject": "REFRIGERATOR/DOMETIC",
+   "component": "EQUIPMENT",
+   "recall_type": "Vehicle",
+   "potentially_affected": "12000",
+   "defect_summary": "CERTAIN FIFTH WHEEL AND TRAVEL TRAILERS EQUIPPED WITH A TWO-DOOR REFRIGERATOR, MANUFACTURED BY THE DOMETIC CORPORATION, MAY HAVE A DEFECT IN THE BOILER TUBE.  PRESSURIZED COOLANT SOLUTION COULD BE RELEASED INTO AN AREA WHERE AN IGNITION SOURCE (GAS FLAME) IS PRESENT."
+  },
+  {
+   "nhtsa_id": "07V074000",
+   "report_received_date": "2007-03-05T00:00:00.000",
+   "manufacturer": "Skyline Corporation",
+   "subject": "REFRIGERATOR/DOMETIC",
+   "component": "EQUIPMENT",
+   "recall_type": "Vehicle",
+   "potentially_affected": "57295",
+   "defect_summary": "CERTAIN TRUCK CAMPERS, FIFTH WHEEL AND TRAVEL TRAILERS EQUIPPED WITH A TWO-DOOR REFRIGERATOR, MANUFACTURED BY THE DOMETIC CORPORATION, MAY HAVE A DEFECT IN THE BOILER TUBE.  PRESSURIZED COOLANT SOLUTION COULD BE RELEASED INTO AN AREA WHERE AN IGNITION SOURCE (GAS FLAME) IS PRESENT."
+  },
+  {
+   "nhtsa_id": "06V208000",
+   "report_received_date": "2006-06-13T00:00:00.000",
+   "manufacturer": "Thor California, Inc.",
+   "subject": "FURNACE EXHAUST VENT",
+   "component": "EQUIPMENT",
+   "recall_type": "Vehicle",
+   "potentially_affected": "64000",
+   "defect_summary": "ON CERTAIN TRAVEL AND FIFTH WHEEL TRAILERS EQUIPPED WITH SUBURBAN AND ATWOOD FURNACES, THE FURNACE EXHAUST VENT WAS IMPROPERLY INSTALLED.  THE FURNACE EXHAUST VENT WILL ALLOW LEAKAGE OF FUMES WHICH CONTAIN COMBUSTION PRODUCTS, INCLUDING A HIGH CONCENTRATION OF POTENTIALLY LETHAL CARBON MONOXIDE GAS."
+  },
+  {
+   "nhtsa_id": "06E043000",
+   "report_received_date": "2006-05-19T00:00:00.000",
+   "manufacturer": "HONEYWELL INTERNATIONAL, INC.",
+   "subject": "AFTERMARKET FUEL FILTERS/FUEL LEAK",
+   "component": "FUEL SYSTEM, GASOLINE",
+   "recall_type": "Equipment",
+   "potentially_affected": "88303",
+   "defect_summary": "CERTAIN REPLACEMENT FUEL FILTERS, FRAM BRAND NAME P/N G3727, WITH DATE CODES X52911 THROUGH X60801 SEQUENTIALLY OR X600141 AND A MEXICO COUNTRY OR ORIGIN MARKING ON THE FUEL FILTER HOUSING MANUFACTURED FROM OCTOBER 18, 2005, THROUGH MARCH 21, 2006, SOLD FOR USE ON THE VEHICLES LISTED ABOVE AND ON CERTAIN SCHOOL BUSES.  (TO SEE THE SCHOOL BUS ENGINE SIZES, CLICK ON \"DOCUMENT SEARCH\" AND THEN \"BUS APPLICATIONS\").  THE CONNECTOR ON THE FUEL FILTER WAS NOT MANUFACTURED TO HONEYWELL'S SPECIFICATION.  AS A RESULT, THE O-RING MAY NOT SEAT CORRECTLY ON THE FUEL LINE."
+  },
+  {
+   "nhtsa_id": "05E078000",
+   "report_received_date": "2005-12-12T00:00:00.000",
+   "manufacturer": "Caterpillar, Inc.",
+   "subject": "OIL LEAK/POSSIBLE FIRE",
+   "component": "ENGINE AND ENGINE COOLING",
+   "recall_type": "Equipment",
+   "potentially_affected": "55794",
+   "defect_summary": "CERTAIN 2004 AND 2005 C15 DIESEL ENGINES MANUFACTURED BY CATERPILLAR BETWEEN OCTOBER 2003 AND APRIL 2005.  THE VARIABLE VALVE ACTUATION OIL LINE (VVA LINE) USED ON 6 CYLINDER, 15L TURBOCHARGED AND AIR-TO-AIR AFTERCOOLED DIESEL ENGINES OF 435-550 HORSEPOWER MAY WEAR AGAINST THE SHARP EDGE OF THE CYLINDER HEAD IF NOT ORIENTED CORRECTLY."
+  },
+  {
+   "nhtsa_id": "05E056000",
+   "report_received_date": "2005-09-01T00:00:00.000",
+   "manufacturer": "GENERAL ELECTRIC COMPANY",
+   "subject": "FMVSS NO 108/FILAMENT MISALIGNMENT",
+   "component": "EXTERIOR LIGHTING",
+   "recall_type": "Equipment",
+   "potentially_affected": "297000",
+   "defect_summary": "TYPE 9007 REPLACEABLE LIGHT SOURCES MANUFACTURED BY GENERAL ELECTRIC FOR INSTALLATION IN HEADLAMP ASSEMBLIES.  THESE REPLACEABLE LIGHT SOURCES CAN BE USED IN A VARIETY OF VEHICLE APPLICATIONS.  THE FILAMENTS OF THE SUBJECT LIGHT SOURCES ARE NOT ALIGNED PROPERLY WHICH FAILS TO COMPLY WITH THE REQUIREMENTS OF FEDERAL MOTOR VEHICLE SAFETY STANDARD NO. 108, LAMPS, REFLECTIVE DEVICES AND ASSOCIATED EQUIPMENT."
+  },
+  {
+   "nhtsa_id": "03V448000",
+   "report_received_date": "2003-11-04T00:00:00.000",
+   "manufacturer": "Thor California, Inc.",
+   "subject": "THOR CALIFORNIA/SAMSUNG/MICROWAVE",
+   "component": "EQUIPMENT",
+   "recall_type": "Vehicle",
+   "potentially_affected": "14522",
+   "defect_summary": "ON CERTAIN TRAVEL TRAILERS EQUIPPED WITH SAMSUNG MICROWAVE OVENS, THESE OVENS WERE PRODUCED WITH A DEFECTIVE PANEL.  AN ELECTRICAL SHORT CAN OCCUR BETWEEN CIRCUIT PATTERNS ON THE MEMBRANE PANEL, ESPECIALLY OVERLAPPED BY A \"JUMPER\" OR JUMP WIRE.  THIS MAY CAUSE THE OVEN TO ACTIVATE WITHOUT PRESSING ANY KEY PADS."
+  },
+  {
+   "nhtsa_id": "03E022000",
+   "report_received_date": "2003-04-04T00:00:00.000",
+   "manufacturer": "HONEYWELL INTERNATIONAL, INC.",
+   "subject": "HONEYWELL/PRESTONE JUMPIT PLUS/OVERHEATING",
+   "component": "EQUIPMENT",
+   "recall_type": "Equipment",
+   "potentially_affected": "13706",
+   "defect_summary": "PRESTONE JUMPIT! PLUS PORTABLE POWER SOURCE, PART NO. AS901, MANUFACTURED BETWEEN JANUARY 17 AND MARCH 7, 2003.  DURING THE MANUFACTURING PROCESS, THREE HOUSING SRCEWS AFFIX THE HEAD OF THE AIR COMPRESSOR TO THE CYLINDER.  INCONSISTENT APPLICATION OF THESE SCREWS MAY INHIBIT MOVEMENT OF THE PISTON, CAUSING THE CYLINDER TO LOCK UP OR BE RENDERED INOPERATIVE, THEREBY DRAWING EXCESSIVE CURRENT, YEILDING HEAT."
+  },
+  {
+   "nhtsa_id": "03C003000",
+   "report_received_date": "2003-03-10T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "GRACO/INFANT CAR SEAT BASE/MISSING HOOKS AND PINS",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "683926",
+   "defect_summary": "GRACO IS RECALLING THE SNUGRIDE INFANT CAR SEATS.  MODELS THAT HAVE THE FOLLOWING NUMBERS WITHIN THE MODEL NUMBER: 8402, 8412, 8442, 8442L, 8443, 8443L, 8444, 8444L, 8446, 8446L, 8447, 8447L, 8448, 8448L, 8457, 8458, 8459, 8601, 8463, 8464, 8470, 8471, 8478 AND C844342, AND WERE MANUFACTURED BETWEEN MARCH 1, 2002, AND MARCH 6, 2003, ARE INCLUDED.  SOME OF THE SEATSMAY HAVE MISSING HARDWARE THAT IS TO ATTACH THE CARRIER TO THE BASE.  IF THE HARDWARE IS MISSING, THE CARRIER MAY NOT BE SECURELY ATTACHED TO THE BASE.    GRACO HAS DECIDED TO EXPAND THIS RECALL TO INCLUDE ADDITIONAL SNUGRIDE INFANT CHILD RESTRAINTS WHICH HAVE A MANUFACTURE DATE OF MARCH 7 OR 8, 2003.                  THE MODEL NUMBERS FOR THE ADDITIONAL SEATS ARE 8402L03, 840301, 840302, 840303, 8442GMP, 8442LBLW, 8442LCYP, 8442LMAD, 8444LHAB, 8444LHIG, 8446LFKB, 8446LVIN, 8447LHAV, 8448LSAR, 8463AMB, 8463GMP, 8463JUN, 8463YL, 8464MAC, 8464MEL, 8602AMB, 8602JUN, 8602MAN, 8603MIC, 8603MLL, 8605HIG, 8605KER, 8605PLT, 8607LAG, 8607NGS, 8608DIA, AND 8609FOF.  NOTIFICATION TO REGISTERED OWNERS OF THE ADDITIONAL INFANT CHILD RESTRAINTS IS EXPECTED TO BEGIN AUGUST 1, 2003."
+  },
+  {
+   "nhtsa_id": "02V276009",
+   "report_received_date": "2002-12-02T00:00:00.000",
+   "manufacturer": "THOR INDUSTRIES",
+   "subject": "THOR/REFRIGERATOR COOLING UNIT FIRE",
+   "component": "EQUIPMENT",
+   "recall_type": "Vehicle",
+   "potentially_affected": "54224",
+   "defect_summary": "CERTAIN TRAVEL TRAILERS AND FIFTH WHEEL TRAILERS EQUIPPED WITH  NORCOLD REFRIGERATOR COOLING UNITS. THESE REFRIGERATORS CAN EXPERIENCE A BREAK DOWN IN A RUBBER SEAL WITHIN THE GAS VALVE.  AS THE RUBBER SEAL AGES, A LEAK MAY OCCUR, ALLOWING PROPANE GAS TO ACCUMULATE IN THE BURNER AREA."
+  },
+  {
+   "nhtsa_id": "02C014000",
+   "report_received_date": "2002-03-18T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "GRACO/MISSING HOOKS",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "918930",
+   "defect_summary": "EQUIPMENT DESCRIPTION:  GRACO SNUGRIDE INFANT CAR SEATS, MODEL NOS. 7493G9, 7493RS, 7497HL, 7497SY, 7499LK, 7499N2, 841101, 841102, 841103, 841203, 8412T02, 8457D5, 8457DVB, 8457F3, 8457GP, 8457IND, 8457MA, 8457MV, 8457RG, 8457TMJ, 8457TMP, 8457YL, 8458A5, 8458AE, 8458B7, 8458D8, 8458FKB, 8458HE, 8458HH, 8458KY, 8458N5, 8459VL, 8460LV, 8462HAV, 8462JAM, 8471UVB, 8472BLW, 8472BRN, 8472CYP, 8472GMP, 8472MAD, 8472YL, 8474HAB, 8474MEL, 8476VIN, 8477HAV, 8477JAM, 8477NGS, 8478SAR, MANUFACTURED BETWEEN AUGUST 31, 1999, AND FEBRUARY 28, 2002.  THESE SEATS MAY BE MISSING COMPONENTS ON THE BASE OR THE CARRIER SHELL.  THE COMPONENTS ARE 1 OR 2 METAL HOOKS AND THEIR RETAINER PINS ON THE BASE, OR THE MATING \"U\" SHAPED BARS ON THE CARRIER SHELL THAT ARE USED TO ATTACH THE CARRIER TO THE BASE.  PLEASE NOTE:  ALL AFFECTED MODEL NUMBERS MAY ALSO BEGIN WITH THE LETTER \"A\".  A MODEL NUMBER LISTED, BUT BEGINNING WITH AN ADDITIONAL \"A\" IS ALSO INCLUDED IN THE RECALLED SEATS."
+  },
+  {
+   "nhtsa_id": "01E044000",
+   "report_received_date": "2001-09-11T00:00:00.000",
+   "manufacturer": "GENERAL ELECTRIC COMPANY",
+   "subject": "GE/FMVSS 108/HEADLAMP BULBS",
+   "component": "EXTERIOR LIGHTING",
+   "recall_type": "Equipment",
+   "potentially_affected": "90098",
+   "defect_summary": "EQUIPMENT DESCRIPTION:  MODEL 9007 AUTOMOTIVE HEADLAMP BULBS, PRODUCT CODES 20551, 22388, 26022, 26141, AND 47642, THAT GE MANUFACTURED BETWEEN FEBRUARY 4 AND MAY 25, 2001.  SOME OF THESE BULBS HAVE PLASTIC BASES WITH A PORTION OF THE MOLDED PLASTIC ALIGNED INCORRECTLY.  THE CONDITION ALLOWS THE BULB TO BE INSTALLED INCORRECTLY IN WHICH, WHEN OPERATED, THE HIGH BEAM WILL SHINE DOWNWARD.  THESE BULBS DO NOT MEET THE REQUIREMENTS OF FEDERAL MOTOR VEHICLE SAFETY STANDARD NO. 108, \"LAMPS, REFLECTIVE DEVICES, AND ASSOCIATED EQUIPMENT.\""
+  },
+  {
+   "nhtsa_id": "99E021000",
+   "report_received_date": "1999-06-23T00:00:00.000",
+   "manufacturer": "Caterpillar, Inc.",
+   "subject": "CATERPILLAR/DIESEL ENGINE",
+   "component": "ENGINE AND ENGINE COOLING",
+   "recall_type": "Equipment",
+   "potentially_affected": "33700",
+   "defect_summary": "EQUIPMENT DESCRIPTION:  MECHANICALLY UNIT INJECTED DIESEL ENGINES.  THE GOVERNOR OF THE ENGINE CONTROLS THE UNIT INJECTOR FUELING BY WAY OF A CONTROL ASSEMBLY.  IN THIS ASSEMBLY, A LINK TO THE GOVERNOR IS JOINED TO THE CONTROL ROD USING A RIVET.  THIS RIVET CAN LOOSEN AND THEN WEAR RESULTING IN ENGINE SPEED INSTABILITY."
+  },
+  {
+   "nhtsa_id": "99V105000",
+   "report_received_date": "1999-05-06T00:00:00.000",
+   "manufacturer": "BUELL-out of business",
+   "subject": "BUELL/FUEL TANK VENT VALVE ASSEMBLY",
+   "component": "FUEL SYSTEM, GASOLINE",
+   "recall_type": "Vehicle",
+   "potentially_affected": "12321",
+   "defect_summary": "VEHICLE DESCRIPTION:  MOTORCYCLES.  THESE MOTORCYCLES WERE BUILT WITH A FUEL TANK VENT VALVE ASSEMBLY THAT COULD BECOME PLUGGED."
+  },
+  {
+   "nhtsa_id": "99V104000",
+   "report_received_date": "1999-05-06T00:00:00.000",
+   "manufacturer": "BUELL-out of business",
+   "subject": "BUELL/FUEL TANK MOUNTING",
+   "component": "FUEL SYSTEM, GASOLINE",
+   "recall_type": "Vehicle",
+   "potentially_affected": "10556",
+   "defect_summary": "VEHICLE DESCRIPTION:  MOTORCYCLES.  THESE MOTORCYCLES WERE BUILT WITH A FUEL TANK MOUNT SYSTEM THAT COULD, IN THE EVENT OF A CRASH, ALLOW THE FUEL TANK TO SEPARATE FROM THE MOTORCYCLE."
+  },
+  {
+   "nhtsa_id": "99V097000",
+   "report_received_date": "1999-04-29T00:00:00.000",
+   "manufacturer": "BUELL-out of business",
+   "subject": "BUELL/SIDESTAND SWITCH",
+   "component": "UNKNOWN OR OTHER",
+   "recall_type": "Vehicle",
+   "potentially_affected": "10255",
+   "defect_summary": "VEHICLE DESCRIPTION:  MOTORCYCLES.   THESE MOTORCYCLES WERE BUILT WITH A SIDESTAND SWITCH THAT COULD BECOME INOPERATIVE"
+  },
+  {
+   "nhtsa_id": "98E027000",
+   "report_received_date": "1998-09-10T00:00:00.000",
+   "manufacturer": "GENERAL ELECTRIC COMPANY",
+   "subject": "GE/BUS TAIL LIGHT BULB",
+   "component": "EXTERIOR LIGHTING",
+   "recall_type": "Equipment",
+   "potentially_affected": "78000",
+   "defect_summary": "EQUIPMENT DESCRIPTION:  TAIL LIGHTS USED ON BUSES.  THE BULB HAS REVERSED FILAMENT CONTACTS, CAUSING THE LIGHTS TO DIM RATHER THAN BRIGHTEN WHEN THE BRAKES ARE APPLIED."
+  },
+  {
+   "nhtsa_id": "98C019000",
+   "report_received_date": "1998-07-24T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "FISHER-PRICE/RESTRAINT ADJUSTER",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "54500",
+   "defect_summary": "EQUIPMENT DESCRIPTION:  MODEL 79700 SAFE EMBRACE CONVERTIBLE CAR SEAT.  THE HARNESS ADJUSTER, USED TO TIGHTEN AND LOCK THE HARNESS BELTS AROUND A CHILD,  CAN MALFUNCTION IF A SPRING BREAKS OR DISLOCATES FROM THE CORRECT POSITION."
+  },
+  {
+   "nhtsa_id": "98T002000",
+   "report_received_date": "1998-04-21T00:00:00.000",
+   "manufacturer": "KELLY SPRINGFIELD TIRE CO",
+   "subject": "KELLY SPRINGFIELD/SIDEWALL CRACKS",
+   "component": "TIRES",
+   "recall_type": "Tire",
+   "potentially_affected": "594853",
+   "defect_summary": "TIRE DESCRIPTION: P205/70R14 AND P205/70R15 TIRES, SERIAL NUMBERS BEGINNING WITH \"PJ\" AND ENDING WITH A COMBINATION OF 136 THROUGH 367. THE TIRE BRANDS INVOLVED ARE: BIG O LEGACY TOUR PLUS, EMBASSY DIPLOMAT, ARIZONIAN LIMITED EDITION, KELLY AQUA TOUR, ULTRA TOURING GT, TELSTAR PREMIUM TOURING, LARAMIE PREMIUM TOURING, JETZON ULTRA QUAD +, SEARS SUPERGUARD FT, MOTOMASTER SK110, CO-OP GOLDEN MARK, CORDOVAN GRAND PRIX, SHELL TOURING 2000, MULTI-MILE GRAND AM, SIGMA SUPREME TOURING, CONCORDE TOURING 9000, AND SUMMIT TOURING TLR FOR BOTH SIZE TIRES.  UNICAL TOURING RADIAL AND POS-A-TRACTION  TIRES ARE IN SIZE P20570R15 ONLY.    A CIRCUMFERENTIAL CRACKING CONDITION IN THE LOWER SIDEWALL ABOVE THE BEAD AREA CAN OCCUR."
+  },
+  {
+   "nhtsa_id": "95E016002",
+   "report_received_date": "1995-07-31T00:00:00.000",
+   "manufacturer": "Skyline Corporation",
+   "subject": "ELECTRICAL SYSTEM:FUSE AND FUSE RECEPTICLE",
+   "component": "ELECTRICAL SYSTEM",
+   "recall_type": "Equipment",
+   "potentially_affected": "12945",
+   "defect_summary": "A SOLDER BRIDGE ON THE PRINTED CIRCUIT BOARD WITHIN THE FUSE PANEL OF THE POWER CONVERTER PASSED UNDETECTED THROUGH A TEST FIXTURE AND BYPASSES THE FUSE PROTECTING THE CIRCUIT."
+  },
+  {
+   "nhtsa_id": "94C035000",
+   "report_received_date": "1994-11-14T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "EQUIPMENT:CHILD SEAT: INDEPENDENT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "11020",
+   "defect_summary": "THE SEATS HAVE AN INCORRECTLY POSITIONED LABEL WARNING THAT ANY CAR SEAT USED IN THE REAR-FACING POSITION SHOULD NOT BE INSTALLED IN AN AUTOMOBILE SEAT ON WHICH AN AIR BAG MAY DEPLOY. THIS DOES NOT COMPLY WITH THE REQUIREMENTS OF FMVSS NO. 213, \"CHILD RESTRAINT SYSTEMS.\""
+  },
+  {
+   "nhtsa_id": "94T007000",
+   "report_received_date": "1994-10-27T00:00:00.000",
+   "manufacturer": "KELLY SPRINGFIELD TIRE CO",
+   "subject": "TIRES:BEAD",
+   "component": "TIRES",
+   "recall_type": "Tire",
+   "potentially_affected": "76699",
+   "defect_summary": "AN INSUFFICIENT CURE CONDITION IN THE BEAD WIRE RUBBER INSULATION WAS CAUSED BY A SMALL AMOUNT OF CONTAMINATED RUBBER."
+  },
+  {
+   "nhtsa_id": "92C021000",
+   "report_received_date": "1992-09-18T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "EQUIPMENT:CHILD SEAT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "14000",
+   "defect_summary": "THE RED BUTTON ON THE BUCKLE OF THE CHILD SAFETY SEAT CAN DISLODGE FROM THE CASING CAUSING ONE OF THE APPENDAGES ATTACHED TO THE BUTTON TO BE OUTSIDE ITS PROTECTIVE CASING."
+  },
+  {
+   "nhtsa_id": "92C019000",
+   "report_received_date": "1992-08-25T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "EQUIPMENT:CHILD SEAT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "472000",
+   "defect_summary": "THE SHOULDER BELTS ON CAR SEATS USING A PARTICULAR DESIGN OF CONNECTOR BAR CAN COME FREE OF THE CONNECTOR BAR AFTER EXTENDED USE."
+  },
+  {
+   "nhtsa_id": "92C018000",
+   "report_received_date": "1992-08-25T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "EQUIPMENT:CHILD SEAT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "423900",
+   "defect_summary": "PLASTIC LAMINATE ON THE BUCKLE SHIELD CAN BREAK AFTER FORCE IS APPLIED IN REPEATED USE."
+  },
+  {
+   "nhtsa_id": "92E005000",
+   "report_received_date": "1992-02-12T00:00:00.000",
+   "manufacturer": "Caterpillar, Inc.",
+   "subject": "ENGINE",
+   "component": "ENGINE AND ENGINE COOLING",
+   "recall_type": "Equipment",
+   "potentially_affected": "16000",
+   "defect_summary": "THE GOVERNOR SERVO PIN ON THE ENGINE CAN COME OUT WHILE THE ENGINE IS OPERATING DUE TO LACK OF AN ADEQUATE PRESS FIT AND/OR INADEQUATE STAKING AT THE END OF THE PIN BORE."
+  },
+  {
+   "nhtsa_id": "91C019000",
+   "report_received_date": "1991-05-21T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "EQUIPMENT:CHILD SEAT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "26700",
+   "defect_summary": "THE BREAST SHIELD COULD SEPARATE FROM THE TONGUE OF THE RESTRAINT ASSEMBLY IN CRASH CONDITIONS BECAUSE OF A FAULTY BUCKLE FRAME."
+  },
+  {
+   "nhtsa_id": "90C036000",
+   "report_received_date": "1990-10-26T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "EQUIPMENT:CHILD SEAT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "44000",
+   "defect_summary": "SEAT METAL LAMINATE SHIELD, LOCATED INSIDE SHIELD BUCKLE, CAN BREAK AFTER REPEATED USE."
+  },
+  {
+   "nhtsa_id": "90C038000",
+   "report_received_date": "1990-10-25T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "EQUIPMENT:CHILD SEAT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "2100000",
+   "defect_summary": "BUTTON ON SHIELD STRAP CAN BECOME LOOSE AND BE REMOVED BY A CHILD."
+  },
+  {
+   "nhtsa_id": "90C037000",
+   "report_received_date": "1990-10-25T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "EQUIPMENT:CHILD SEAT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "928000",
+   "defect_summary": "PLASTIC PIN INSIDE THE BUCKLE SHIELD CAN BREAK AFTER FORCE IS APPLIED IN REPEATED USE."
+  },
+  {
+   "nhtsa_id": "90C028000",
+   "report_received_date": "1990-09-05T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "EQUIPMENT:CHILD SEAT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "1770000",
+   "defect_summary": "THE METALLIC LABEL GLUED TO THE BREAST SHIELD OF THE SEAT CAN BECOME LOOSE OVER TIME."
+  },
+  {
+   "nhtsa_id": "90E024000",
+   "report_received_date": "1990-08-01T00:00:00.000",
+   "manufacturer": "Caterpillar, Inc.",
+   "subject": "ENGINE:OTHER PARTS",
+   "component": "ENGINE AND ENGINE COOLING",
+   "recall_type": "Equipment",
+   "potentially_affected": "11000",
+   "defect_summary": "INCORRECT TORQUE ON THE GOVERNOR INPUT ASSEMBLY COULD CAUSE IT TO LOOSEN AND BACK OUT, INTERFERING WITH THE GOVERNOR HOUSING OPERATION. ALSO THE TORSION SPRING ON THE ACCELERATOR INPUT WAS INSTALLED INCORRECTLY AND COULD DISLODGE, PREVENTING THE GOVERNOR AND ACCELERATOR FROM PROPERLY CONTROLLING THE ENGINE SPEED."
+  },
+  {
+   "nhtsa_id": "90E014000",
+   "report_received_date": "1990-06-01T00:00:00.000",
+   "manufacturer": "DANA CORPORATION",
+   "subject": "BRAKES:AIR:OVER:HYDRAULIC:DISC:LINES:HOSE:NON-META",
+   "component": "SERVICE BRAKES, AIR",
+   "recall_type": "Equipment",
+   "potentially_affected": "49086",
+   "defect_summary": "HOSE LAYER SEPARATION OCCURRED AT APPLIED TEST LOAD BELOW MINIMUM REQUIRED LOAD."
+  },
+  {
+   "nhtsa_id": "90C008000",
+   "report_received_date": "1990-04-04T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "EQUIPMENT:CHILD SEAT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "120000",
+   "defect_summary": "THE RETRACTOR ASSEMBLY HAS A 'TONGUE' USED TO ENGAGE THE BREAST SHIELD OF THE CHILD RESTRAINT;  A STAMPING DIE USED ON THIS TONGUE COULD CAUSE THE PART TO FAIL AND COMPLETELY SEPARATE IN A CRASH."
+  },
+  {
+   "nhtsa_id": "89E006000",
+   "report_received_date": "1989-03-10T00:00:00.000",
+   "manufacturer": "DANA CORPORATION",
+   "subject": "SUSPENSION:INDEPENDENT FRONT CONTROL ARM UPPER:BAL",
+   "component": "SUSPENSION",
+   "recall_type": "Equipment",
+   "potentially_affected": "15356",
+   "defect_summary": "THE UPPER BALL JOINT CASINGS ALL OUTSIDE THE CERTIFIED DESIGN HARDNESS."
+  },
+  {
+   "nhtsa_id": "89C005000",
+   "report_received_date": "1989-03-02T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "EQUIPMENT:CHILD SEAT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "1532000",
+   "defect_summary": "A CAR SEAT FOAM PIECE WHICH IS ATTACHED TO THE PLASTIC SEAT SHELL LOCATED UNDER THE SEAT COVER DOES NOT MEET THE FLAMMABILITY REQUIREMENTS OF FMVSS NO. 302."
+  },
+  {
+   "nhtsa_id": "88C024000",
+   "report_received_date": "1988-10-18T00:00:00.000",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "subject": "EQUIPMENT:CHILD SEAT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "390000",
+   "defect_summary": "A FOREIGN OBJECT OR SUBSTANCE CAN CAUSE THE WHITE LOCK LEVER TO BE STUCK IN THE DOWN POSITION AT THE TIME THE CHEST SHIELD IS UNBUCKLED TO REMOVE THE CHILD."
+  },
+  {
+   "nhtsa_id": "86E024000",
+   "report_received_date": "1986-08-22T00:00:00.000",
+   "manufacturer": "DANA CORPORATION",
+   "subject": "STEERING:LINKAGES:ARM:IDLER AND ATTACHMENT",
+   "component": "STEERING",
+   "recall_type": "Equipment",
+   "potentially_affected": "48299",
+   "defect_summary": "DUE TO A CHANGE IN THE ORIGINAL EQUIPMENT MANUFACTURERS   CENTER SECTION OF THE IDLER ARM, THE CASTELLATED NUT WHICH HOLDS THE IDLER ARM   COULD NOT BE TIGHTENED ENOUGH TO INSERT A COTTER PIN.                                                                                                             CONSEQUENCE OF DEFECT: OMISSION OF THE COTTER PIN COULD ALLOW THE CASTELLATED    NUT TO BACK OFF. WITHOUT THE NUT THE IDLER ARM/CENTER LINK CONNECTION WOULD BE   LOST, RESULTING IN A LOSS OF STEERING."
+  },
+  {
+   "nhtsa_id": "86C006000",
+   "report_received_date": "1986-04-28T00:00:00.000",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "subject": "EQUIPMENT:CHILD SEAT",
+   "component": "CHILD SEAT",
+   "recall_type": "Child Seat",
+   "potentially_affected": "62352",
+   "defect_summary": "IN SOME AUTOMOBILES THE REAR OF THE VEHICLE SEAT MAY      INTERFER WITH THE OPERATION OF THE RECLINE ADJUSTMENT LATCHING MECHANISM ON THE  CHILD RESTRAINT IN THE INFANT (REAR FACING) POSITION.  SHOULD THE ADJUSTMENT     LATCH BE HELD IN THE RELEASED (UNLOCKED) POSITION DURING AN ACCIDENT, THE        GT1000 WILL NOT PROVIDE OCCUPANT PROTECTION AS SPECIFIED BY FMVSS NO. 213.                                                                                        CONSEQUENCE OF DEFECT: AN UNLATCHED SEAT THAT HAS THE ADJUSTMENT RELEASE HANDLE  HELD IN THE RELEASED POSITION COULD CAUSE SERIOUS INJURY TO THE OCCUPANT OF THE  RESTRAINT AND TO OTHER OCCUPANTS OF THE AUTOMOBILE IF THE VEHICLE IS INVOLVED    IN AN ACCIDENT."
+  },
+  {
+   "nhtsa_id": "82E012000",
+   "report_received_date": "1982-05-26T00:00:00.000",
+   "manufacturer": "DANA CORPORATION",
+   "subject": "SUSPENSION:INDEPENDENT FRONT CONTROL ARM UPPER:BAL",
+   "component": "SUSPENSION",
+   "recall_type": "Equipment",
+   "potentially_affected": "60464",
+   "defect_summary": "THERE IS A POSSIBILITY THAT THE REQUIRED TORQUE TO TIGHTEN THE UPPER BALL JOINT INTO THE UPPER CONTROL ARM CANNOT BE REACHED, BECAUSE OF A MANUFACTURING DEFECT IN THE SIZE OF THE BALL CASE THREAD OF THE UPPER BALL JOINTS. THE THREAD MAY BE TOO SMALL."
+  },
+  {
+   "nhtsa_id": "80E023000",
+   "report_received_date": "1980-09-24T00:00:00.000",
+   "manufacturer": "DANA CORPORATION",
+   "subject": "SUSPENSION:INDEPENDENT FRONT CONTROL ARM:UNKNOWN T",
+   "component": "SUSPENSION",
+   "recall_type": "Equipment",
+   "potentially_affected": "35411",
+   "defect_summary": "BALL JOINTS MAY CONTAIN A 35/64 INCH THICK CASTELLATED NUT INSTEAD OF THE CORRECT 23/32 INCH THICK NUT. DUE TO THE INCORRECT SIZE, THE NUT MAY LOOSEN UNTIL IT COMES INTO CONTACT WITH THE COTTER PIN. CORRESPONDING LOOSENING OF THE TAPERED BALL STUD COULD LEAD TO FRACTURE OF THE BALL JOINT STUD. THIS WOULD RESULT IN SEPARATION OF THE BALL JOINT TO STEERING KNUCKLE CONNECTION AND COLLAPSE OF THE LOWER PART OF THE WHEEL ASSEMBLY."
+  },
+  {
+   "nhtsa_id": "80E019000",
+   "report_received_date": "1980-09-05T00:00:00.000",
+   "manufacturer": "DANA CORPORATION",
+   "subject": "STEERING:LINKAGES:DRAG:POWER ASSIST SYSTEM",
+   "component": "STEERING",
+   "recall_type": "Equipment",
+   "potentially_affected": "36558",
+   "defect_summary": "THE DRAG LINK ADAPTOR THREADS MAY UNDERGO ABNORMAL WEAR DUE TO IMPROPER CONNECTION OF THE ADAPTOR TO THE POWER STEERING VALVE HOUSING."
+  },
+  {
+   "nhtsa_id": "78E012000",
+   "report_received_date": "1978-05-10T00:00:00.000",
+   "manufacturer": "DANA CORPORATION",
+   "subject": "EQUIPMENT:SPEED CONTROL",
+   "component": "VEHICLE SPEED CONTROL",
+   "recall_type": "Equipment",
+   "potentially_affected": "65000",
+   "defect_summary": "THE CABLE LEADING FROM THE SPEED CONTROL SERVO UNIT TO THE THROTTLE LINKAGE MAY BECOME ENTRAPPED ON THE REHEOSTAT ADJUSTMENT SCREW. IF ENTRAPPED, THE CABLE WILL HOLD THE VEHICLE THROTTLE PARTIALLY OPEN WHETHER OR NOT THE SPEED CONTROL IS ENGAGED."
+  },
+  {
+   "nhtsa_id": "76T001000",
+   "report_received_date": "1976-01-30T00:00:00.000",
+   "manufacturer": "KELLY SPRINGFIELD TIRE CO",
+   "subject": "TIRES:TREAD",
+   "component": "TIRES",
+   "recall_type": "Tire",
+   "potentially_affected": "300000"
+  }
+ ],
+ "investigations": [
+  {
+   "nhtsa_action_number": "RQ25004",
+   "manufacturer": "Polestar Automotive USA, Inc.",
+   "investigation_type": "Recall Query",
+   "subject": "Loss of rear-view camera image",
+   "component": "BACK OVER PREVENTION",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=25V615",
+    "description": "25V615"
+   },
+   "open_date": "2025-07-09T00:00:00.000",
+   "closed_date": "2026-08-28T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE15007",
+   "manufacturer": "Lippert",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "LCI RV Entry Step Failures",
+   "component": "STRUCTURE",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=16V132",
+    "description": "16V132"
+   },
+   "open_date": "2015-02-27T00:00:00.000",
+   "closed_date": "2015-10-19T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EQ14008",
+   "manufacturer": "Lippert",
+   "investigation_type": "Equipment Query",
+   "subject": "Frame Spring Hanger Failure",
+   "component": "SUSPENSION",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=14V689",
+    "description": "14V689"
+   },
+   "open_date": "2014-07-14T00:00:00.000",
+   "closed_date": "2014-09-22T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EA13001",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "investigation_type": "Engineering Analysis",
+   "subject": "Child Seat Harness Buckle",
+   "component": "CHILD SEAT",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=14C004",
+    "description": "14C004"
+   },
+   "open_date": "2013-02-21T00:00:00.000",
+   "closed_date": "2014-12-01T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE12035",
+   "manufacturer": "BUELL-out of business",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "Motorcycle Stalling",
+   "component": "ELECTRICAL SYSTEM",
+   "open_date": "2012-11-16T00:00:00.000",
+   "closed_date": "2013-04-16T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE12031",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "Child Seat Harness Buckle",
+   "component": "CHILD SEAT",
+   "open_date": "2012-10-15T00:00:00.000",
+   "closed_date": "2013-03-04T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EQ12002",
+   "manufacturer": "Autoliv, Inc.",
+   "investigation_type": "Equipment Query",
+   "subject": "Autoliv Air Bag Propellant Mixture",
+   "component": "AIR BAGS",
+   "open_date": "2012-02-14T00:00:00.000",
+   "closed_date": "2012-05-08T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE11008",
+   "manufacturer": "Caterpillar, Inc.",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "Caterpillar C7 Hose Leak",
+   "component": "ENGINE AND ENGINE COOLING",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=11E051",
+    "description": "11E051"
+   },
+   "open_date": "2011-03-29T00:00:00.000",
+   "closed_date": "2012-01-30T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EQ11002",
+   "manufacturer": "Carrier Corporation",
+   "investigation_type": "Equipment Query",
+   "subject": "Carrier A/C Evaporator Fires",
+   "component": "EQUIPMENT",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=12V179",
+    "description": "12V179"
+   },
+   "open_date": "2011-02-17T00:00:00.000",
+   "closed_date": "2012-05-25T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EQ10008",
+   "manufacturer": "Caterpillar, Inc.",
+   "investigation_type": "Equipment Query",
+   "subject": "Caterpillar Engine Fuel Line Leak",
+   "component": "FUEL SYSTEM, DIESEL",
+   "open_date": "2010-10-15T00:00:00.000",
+   "closed_date": "2010-11-22T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EQ09008",
+   "manufacturer": "Caterpillar, Inc.",
+   "investigation_type": "Equipment Query",
+   "subject": "VVA LINE WEAR AND OIL LEAKS",
+   "component": "ENGINE AND ENGINE COOLING",
+   "open_date": "2009-09-10T00:00:00.000",
+   "closed_date": "2009-11-24T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EQ09005",
+   "manufacturer": "Carrier Corporation",
+   "investigation_type": "Equipment Query",
+   "subject": "CARRIER CORP. K410 CONDENSOR ASSEMBLIES",
+   "component": "EQUIPMENT",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=09V278",
+    "description": "09V278"
+   },
+   "open_date": "2009-05-14T00:00:00.000",
+   "closed_date": "2009-12-07T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EQ08003",
+   "manufacturer": "DANA CORPORATION",
+   "investigation_type": "Equipment Query",
+   "subject": "DANA CORPORATION DRIVESHAFTS",
+   "component": "POWER TRAIN",
+   "open_date": "2008-01-16T00:00:00.000",
+   "closed_date": "2008-04-02T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE05049",
+   "manufacturer": "Caterpillar, Inc.",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "ENGINE FIRES",
+   "component": "ENGINE AND ENGINE COOLING",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=06V030",
+    "description": "06V030"
+   },
+   "open_date": "2005-09-09T00:00:00.000",
+   "closed_date": "2005-12-16T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EA04029",
+   "manufacturer": "Caterpillar, Inc.",
+   "investigation_type": "Engineering Analysis",
+   "subject": "DISABLED VEHICLE",
+   "component": "ENGINE AND ENGINE COOLING",
+   "open_date": "2004-10-29T00:00:00.000",
+   "closed_date": "2005-07-12T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE04046",
+   "manufacturer": "Caterpillar, Inc.",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "CRANKSHAFT FAILURES",
+   "component": "ENGINE AND ENGINE COOLING",
+   "open_date": "2004-06-04T00:00:00.000",
+   "closed_date": "2004-10-29T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE03043",
+   "manufacturer": "BUELL-out of business",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "THROTTLE FAILS TO RETURN TO IDLE",
+   "component": "VEHICLE SPEED CONTROL",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=03V427",
+    "description": "03V427"
+   },
+   "open_date": "2003-09-23T00:00:00.000",
+   "closed_date": "2003-10-30T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE02025",
+   "manufacturer": "Graco Children's Products, Inc.",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "FALSE LATCHING OF CHILD SEAT TO BASE",
+   "component": "EQUIPMENT",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=02C014",
+    "description": "02C014"
+   },
+   "open_date": "2002-02-28T00:00:00.000",
+   "closed_date": "2002-08-09T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE02014",
+   "manufacturer": "Supreme Corporation",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "STRUCTURAL FAILURES OF BODY AND CHASSIS",
+   "component": "STRUCTURE",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=02V116",
+    "description": "02V116"
+   },
+   "open_date": "2002-02-01T00:00:00.000",
+   "closed_date": "2002-04-26T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE99032",
+   "manufacturer": "Caterpillar, Inc.",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "Uncontrolled Engine Speed",
+   "component": "ENGINE AND ENGINE COOLING",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=99V187",
+    "description": "99V187"
+   },
+   "open_date": "1999-05-05T00:00:00.000",
+   "closed_date": "1999-06-23T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE96058",
+   "manufacturer": "Carrier Corporation",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "ALLEGED POWER STEERING HOSE FAILURES",
+   "component": "STEERING",
+   "open_date": "1996-10-09T00:00:00.000",
+   "closed_date": "1997-01-15T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EA91059",
+   "manufacturer": "KELLY SPRINGFIELD TIRE CO",
+   "investigation_type": "Engineering Analysis",
+   "subject": "JACK FAILURE",
+   "component": "EQUIPMENT",
+   "open_date": "1991-12-31T00:00:00.000",
+   "closed_date": "1992-07-13T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EA91050",
+   "manufacturer": "Caterpillar, Inc.",
+   "investigation_type": "Engineering Analysis",
+   "subject": "LOSS OF THROTTLE CONTROL",
+   "component": "ENGINE AND ENGINE COOLING",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=92E005",
+    "description": "92E005"
+   },
+   "open_date": "1991-11-26T00:00:00.000",
+   "closed_date": "1992-02-24T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE91122",
+   "manufacturer": "KELLY SPRINGFIELD TIRE CO",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "JACK FAILURE",
+   "component": "EQUIPMENT",
+   "open_date": "1991-08-30T00:00:00.000",
+   "closed_date": "1991-12-31T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EA91035",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "investigation_type": "Engineering Analysis",
+   "subject": "SAFETY BELT RETRACTOR BRK",
+   "component": "EQUIPMENT",
+   "open_date": "1991-07-25T00:00:00.000",
+   "closed_date": "1992-06-10T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE91103",
+   "manufacturer": "Caterpillar, Inc.",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "GOVERNOR PIN/ENG THROTTLE",
+   "open_date": "1991-07-23T00:00:00.000",
+   "closed_date": "1991-11-26T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE91056",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "SAFETY BELT RETRACTORS BRK",
+   "component": "EQUIPMENT",
+   "open_date": "1991-03-05T00:00:00.000",
+   "closed_date": "1991-07-25T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE90121",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "BUCKLE BREAKAGE",
+   "component": "EQUIPMENT",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=90C036",
+    "description": "90C036"
+   },
+   "open_date": "1990-09-19T00:00:00.000",
+   "closed_date": "1990-11-07T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EA90020",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "investigation_type": "Engineering Analysis",
+   "subject": "LOOSE LOGO LABEL",
+   "component": "EQUIPMENT",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=90C028",
+    "description": "90C028"
+   },
+   "open_date": "1990-03-30T00:00:00.000",
+   "closed_date": "1990-09-19T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE89169",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "LABEL INGESTION",
+   "component": "EQUIPMENT",
+   "open_date": "1989-09-25T00:00:00.000",
+   "closed_date": "1990-03-30T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE89147",
+   "manufacturer": "DANA CORPORATION",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "CRACKED BRAKE DRUMS",
+   "component": "SERVICE BRAKES, HYDRAULIC",
+   "open_date": "1989-07-28T00:00:00.000",
+   "closed_date": "1989-11-16T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE89028",
+   "manufacturer": "DANA CORPORATION",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "ELECTRONIC ACCEL",
+   "component": "VEHICLE SPEED CONTROL",
+   "open_date": "1989-01-04T00:00:00.000",
+   "closed_date": "1989-08-29T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EA88013",
+   "manufacturer": "FISHER-PRICE, INC.",
+   "investigation_type": "Engineering Analysis",
+   "subject": "STRAP ACROSS NECK",
+   "component": "EQUIPMENT",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=88C024",
+    "description": "88C024"
+   },
+   "open_date": "1988-01-07T00:00:00.000",
+   "closed_date": "1989-02-24T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EA88012",
+   "manufacturer": "Caterpillar, Inc.",
+   "investigation_type": "Engineering Analysis",
+   "subject": "SHUTOFF SOLENOID",
+   "component": "VEHICLE SPEED CONTROL",
+   "open_date": "1988-01-04T00:00:00.000",
+   "closed_date": "1988-04-01T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "EA88002",
+   "manufacturer": "KELLY SPRINGFIELD TIRE CO",
+   "investigation_type": "Engineering Analysis",
+   "subject": "DRAWBAR",
+   "component": "STRUCTURE",
+   "open_date": "1987-10-01T00:00:00.000",
+   "closed_date": "1988-04-04T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE87007",
+   "manufacturer": "KELLY SPRINGFIELD TIRE CO",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "DEFECTIVE DRAW BAR",
+   "component": "STRUCTURE",
+   "open_date": "1986-11-25T00:00:00.000",
+   "closed_date": "1987-10-01T00:00:00.000",
+   "status": "Close"
+  },
+  {
+   "nhtsa_action_number": "PE86061",
+   "manufacturer": "DANA CORPORATION",
+   "investigation_type": "Preliminary Evaluation",
+   "subject": "DEFECTIVE CASTLE NUT",
+   "component": "STEERING",
+   "recall": {
+    "url": "https://www.nhtsa.gov/recalls?nhtsaId=86E024",
+    "description": "86E024"
+   },
+   "open_date": "1986-06-23T00:00:00.000",
+   "closed_date": "1986-09-04T00:00:00.000",
+   "status": "Close"
+  }
+ ]
+}

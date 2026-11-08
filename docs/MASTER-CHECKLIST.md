@@ -988,6 +988,69 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 119: a new opportunity-scout run, three proposals for the owner (2026-11-08)
+
+Every proposal of 2026-11-07 is approved and built (batches 113–115). Batches 116–118 fixed what the
+2026-11-07 audit found and built the table of taken names. So the `opportunity-scout` read the
+repository again at `5dc9b26` and wrote `docs/proposals/2026-11-08-proposals.md`: three proposals, all
+**PENDING**, ranked with securities depth first. The owner's word, 2026-11-07: "Lets continue".
+Nothing is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      1. `P1` **EPA's cases under 28 more companies' own operating units.** No new source; three
+         parts, each approvable alone.
+         - **(a) The units list** (`UNITS`, lib/epaCases.ts): about 100 patterns on 28 companies.
+           Examples: BNSF on Berkshire, Pratt & Whitney and Carrier on RTX, AlliedSignal's on
+           Honeywell, Valero's refining companies, Kennecott on Rio Tinto. Measured: 847 cases, 481
+           of them a court case or a penalty, 350 of those before 2017. Seven pages go from no EPA
+           row to some (Berkshire 0→80, TotalEnergies 0→34).
+         - **(b) A name with "&" read with "and" too:** 63 more court or penalty cases, mostly Air
+           Products and Goodyear. It needs the taken-names table to know "AT AND T" as well as
+           "AT&T".
+         - **(c) The same units' names in the release map:** 12 Justice Department releases of
+           2001–2008 on 8 pages. Davis-Besse's $28 million and Pratt & Whitney's $52 million are
+           among them.
+         - **Not yet read:** the ownership days are the scout's estimates, each to be read from
+           EDGAR at build time.
+         - **Two owner calls inside:** Pharmacia LLC (Monsanto's legacy company) on Pfizer, and the
+           day MidAmerican Energy becomes Berkshire's.
+      2. `P2` **EPA's own days on the cases pages already hold.**
+         - **(a) The day the suit was filed:** 178 cases on 85 pages, 128 before 2001. AEP's suit
+           of 1999-11-03 and Duke's of 2000-12-22 are among them.
+         - **(b) Each settlement of a case whose defendants are all the company's, on its own
+           day:** 26 cases, 46 settlements, GE's Hudson River decree of 2005 among them. This
+           reopens "split a case by settlement", which the 2026-11-07 run cut.
+         - It also fixes what the batch 112 ledger set aside for the audit: Wisconsin Electric's
+           05-2003-0333 sits on 2014-07-08 with no penalty, though EPA records a 2003 settlement
+           with $3.2 million in penalties and $620 million of work.
+      3. `P2` **NHTSA recalls under makers listed companies own that the map lacks.** About 20 more
+         makers in `RECALL_MAKERS` (lib/recalls.ts): 84 recalls on 20 pages, 57 before 2017.
+         Graco's child seats on Newell (4.2 million seats in 2014), Dana, Lippert on LCI, Hino on
+         Toyota and Kelly-Springfield on Goodyear are among them. Six days are estimates, to be read
+         from filings.
+- **Cut, with reasons in the file:**
+  - FDA recalls matched by name against every company: small and full of namesakes;
+  - PHMSA, FERC and the NRC: not reachable from this container (403, or nothing without a script);
+  - four more EPA unit sets, not drafted: ArcelorMittal, Baker Hughes, Hess on Chevron, Columbia Gas
+    Transmission.
+- **For the next audit, found by the scout and not fixed:**
+  - 26 EPA cases on 27 rows are dated by a later amendment and show no penalty, because `readCases`
+    takes the day from milestones that hold only one lodging (#2(b) would fix them);
+  - 38 of JCI's 45 EPA rows predate 2016-09-02 and are old Johnson Controls, Inc.'s, on a record
+    that was Tyco's: the owner's open JCI call now covers them too;
+  - "Encore Medical, LP", DJO's unit, would give a different listed company 61 FDA recalls under a
+    name-only rule. The hand-built FDA map avoids it today.
+- **Requests:** 44, logged in the session scratchpad (`b119/requests.log`), each with User-Agent
+  `News Charts Research` and no email address, at least 1.1 s apart:
+  - data.sec.gov 17 and query1.finance.yahoo.com 15;
+  - data.transportation.gov 2;
+  - download.open.fda.gov 3 and api.fda.gov 1;
+  - www.nrc.gov 3, api.us.socrata.com 1;
+  - www.phmsa.dot.gov 1 and www.ferc.gov 1, both refused.
+
+  No www.sec.gov page was asked. Postgres was not used. `npm run check` and `npm run lint` pass.
+
 ## NC ledger — batch 118: what batch 117's scan left open (2026-11-07)
 
 The `P3` batch 117 raised. The owner's word, 2026-11-07: "Lets continue".

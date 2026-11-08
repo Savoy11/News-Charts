@@ -207,6 +207,14 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- **The 2026-11-08 proposals** (batch 119, `docs/proposals/2026-11-08-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`:
+  1. EPA's cases under 28 more companies' operating units (BNSF on Berkshire, Pratt & Whitney on RTX);
+     three parts, each approvable alone, and two calls inside it: Pharmacia LLC on Pfizer, and the
+     day MidAmerican Energy becomes Berkshire's;
+  2. EPA's own days: the day a suit was filed, and each settlement of a case that is all the
+     company's;
+  3. NHTSA recalls under about 20 makers the map lacks (Graco on Newell, Hino on Toyota).
 - ~~**The 2026-11-07 proposals** (batch 112, `docs/proposals/2026-11-07-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`.~~ **Decided 2026-11-07: all three approved, titles from the
   FDA's data.** #1 is built in batch 113, #3 in batch 114 and #2 in batch 115. After deploying

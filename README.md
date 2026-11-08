@@ -566,9 +566,9 @@ Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Car
 2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
 (`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
 every company in the index, on EPA's whole file of 2026-10-31 (the committed slice gives the same
-rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 8,889 rows on 690 companies, 7,526 before 2017
-(ExxonMobil 288, GE 284, Chevron 269, BP 248, Honeywell 246; 7,899 on 679 before batch 120; 5,994 on 667 before the units, every one of
-whose cases is still there; BP 4 and 3M 67 by their own names). A record that took a bought
+rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 9,156 rows on 690 companies, 7,769 before 2017
+(GE 302, ExxonMobil 295, Chevron 278, BP 255, Honeywell 252; 8,889 before batch 122's suits filed and settlements on their days; 7,899 on 679 before batch 120; 5,994 on 667 before the units, every one of
+whose cases is still there; BP 4 and 3M 68 by their own names). A record that took a bought
 company's name does not take that company's past: old Waste Management's cases are not WM's before
 1998-07-16, nor AT&T Corp.'s AT&T Inc.'s before 2005-11-18, when SBC Communications, T's record,
 bought it and took its name, nor Ingersoll-Rand's 36 Ingersoll Rand Inc.'s, nor Linde AG's Praxair's
@@ -616,6 +616,32 @@ Inc.'s page: the table of taken names reads that spelling too. From first prices
 before 2017; Enbridge's $62,000,000 Marshall spill decree of 2016 and American Honda's $10,100,000 of 1998
 among them. Nine pages had no EPA row and now do: Berkshire 57, TotalEnergies 21, TC Energy 8, AB InBev
 5, Honda 5, Otis, South Bow, Aimco and Chicago Rivet.
+
+**EPA's own days: the day a suit was filed, and each settlement on its own day** (batch 122, the
+owner's approval of 2026-11-08). EPA's file dates more of a court case than the settlement its row
+was dated by: the day the suit was filed ("Complaint Filed With Court"), and each settlement's own
+lodging, with its own penalty and work ordered (`CASE_ENFORCEMENT_CONCLUSIONS.csv`). A suit filed more
+than 30 days before its first settlement (`SUIT_LEAD_DAYS`) has a row on the filing day, "EPA suit
+filed in court (Clean Air Act)", naming the case and the page's defendants and no money, which stays
+on the settlement's row: AEP's national New Source Review suit of 1999-11-03, its three case numbers
+one row, eight years before the 2007 settlement; Duke Energy's of 2000-12-22, settled in 2015. The
+rule's tests run on the filing day, so a unit counts only if its owner held it then (Mobil's suit of
+1996 is no ExxonMobil row, Cinergy's of 2000 no Duke row), and the row is kept only where the page's
+own that day are every defendant, or at least half of fewer than 10 (Chem-Dyne's Superfund suit of
+174 parties is no page's). A court case of settlements on several days has a row for each, on the
+page whose own are every defendant that day: Wisconsin Electric's of 2003-07-10 ($3,200,000, and
+$620,000,000 of work), whose only row was dated by a 2014 amendment and showed no penalty; GE's
+Hudson River decrees of 2005, 2009 and 2010; Muskingum River's first settlement joins AEP's row of
+2007-10-09. A unit's settlements before its sale stay its seller's: Murphy Oil USA's of 2010 and 2012
+are Murphy Oil's, its of 2019 and 2020 Murphy USA's. A case of several parties keeps one row, as
+before, since EPA names no settlement's party. The case's own day is a settlement's in 267 of the
+slice's 268 cases of several settlement days, so every stored row keeps its key, and EPA's summary
+stays on it alone; where it is not, the stored row moves onto the last settlement's
+(`legacyDedupBasis`). Before first prices, on the committed slice: 228 suit rows on 106 pages (254
+cases, 214 filed before 2017 and 162 before 2001; a fixed sample of 25 read by hand, each naming the
+page's company that day), and 39 settlement rows more on 24 pages, with 7 rows that now give a penalty
+and 14 that name the work ordered; every row the rule gave before is still given under its own key.
+db/044 keeps the two days and forgets the last read, so the next run reads EPA's file whole.
 
 **EPA's own figures on each row** (batch 113, the owner's approval of 2026-11-07). The same zip holds
 each case's settlements (`CASE_ENFORCEMENT_CONCLUSIONS.csv`), EPA's estimate of the cost of the work a
@@ -1380,7 +1406,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Federal Reserve Board press releases | The Board's orders on a bank's applications since 1996 (1996–2005 from its yearly pages, committed), and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |
 | Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
-| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 35 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month. Public domain under EPA's open data licence; no key |
+| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 35 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
 | Commodity Futures Trading Commission | The Commission's enforcement actions since 1995 whose title makes the company the party — a bank's benchmark-rigging order, an energy trader's manipulation suit | The enforcement list, read whole once a year and its newest page once a day, for every company (`lib/ingest/cftcWalk.ts`); kept by the Justice Department's title rule with the release map's units (`lib/cftc.ts`). Public domain, acknowledged to the CFTC; no key |
 | SEC News Digest | The SEC's daily summary of 1956–1993: the 8-K reports a company filed, its registration statements, the 13D and 14D-1 filings on its shares, the SEC's orders and actions on it, its listing orders | Every issue's PDF read once for every company, 60 a run (`lib/ingest/secDigestWalk.ts`); kept when an entry's party is the company under the name its EDGAR record had that day and no other company's (`lib/secDigest.ts`), from its first price; a month's 8-K reports one row. Public information the SEC lets anyone copy, cited to the SEC; no key; needs `pdftotext` and `NEWS_CHARTS_CONTACT` |

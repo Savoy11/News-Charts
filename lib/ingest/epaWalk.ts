@@ -65,10 +65,13 @@ async function store(client: PoolClient, cases: readonly EpaCase[], modified: st
     for (let i = 0; i < unique.length; i += CHUNK) {
       const part = unique.slice(i, i + CHUNK);
       await client.query(
-        `INSERT INTO epa_cases (case_number, name, court, filed_on, step, penalty, laws, defendants, docket, name_keys, penalty_settled, work_ordered, summary)
-         SELECT n, nm, ct, d, st, p::numeric, string_to_array(l, '|'), string_to_array(df, '|'), dk, k, ps, w::numeric, sm
-           FROM unnest($1::text[], $2::text[], $3::boolean[], $4::date[], $5::text[], $6::text[], $7::text[], $8::text[], $9::text[], $10::text[], $11::boolean[], $12::text[], $13::text[])
-             AS t(n, nm, ct, d, st, p, l, df, dk, k, ps, w, sm)`,
+        `INSERT INTO epa_cases (case_number, name, court, filed_on, step, penalty, laws, defendants, docket, name_keys, penalty_settled, work_ordered, summary,
+                                suit_filed, settlement_days, settlement_lodged, settlement_penalties, settlement_work)
+         SELECT n, nm, ct, d, st, p::numeric, string_to_array(l, '|'), string_to_array(df, '|'), dk, k, ps, w::numeric, sm,
+                sf, string_to_array(sd, '|')::date[], string_to_array(sl, '|')::boolean[], string_to_array(sp, '|', '')::numeric(16, 2)[], string_to_array(sw, '|', '')::numeric(16, 2)[]
+           FROM unnest($1::text[], $2::text[], $3::boolean[], $4::date[], $5::text[], $6::text[], $7::text[], $8::text[], $9::text[], $10::text[], $11::boolean[], $12::text[], $13::text[],
+                       $14::date[], $15::text[], $16::text[], $17::text[], $18::text[])
+             AS t(n, nm, ct, d, st, p, l, df, dk, k, ps, w, sm, sf, sd, sl, sp, sw)`,
         [
           part.map((c) => c.number),
           part.map((c) => c.name),
@@ -83,6 +86,12 @@ async function store(client: PoolClient, cases: readonly EpaCase[], modified: st
           part.map((c) => !!c.settled),
           part.map((c) => c.workOrdered ?? null),
           part.map((c) => c.summary ?? null),
+          // the suit's day and each settlement's, its four arrays in step, "" a settlement's figure of none (batch 122)
+          part.map((c) => c.suitFiled ?? null),
+          part.map((c) => (c.settlements ?? []).map((x) => x.day).join("|")),
+          part.map((c) => (c.settlements ?? []).map((x) => String(x.lodged)).join("|")),
+          part.map((c) => (c.settlements ?? []).map((x) => x.penalty ?? "").join("|")),
+          part.map((c) => (c.settlements ?? []).map((x) => x.work ?? "").join("|")),
         ],
       );
     }
@@ -114,25 +123,39 @@ export async function storedEpaCases(client: PoolClient, keys: readonly string[]
     penalty_settled: boolean;
     work_ordered: string | null;
     summary: string | null;
+    suit_filed: string | null;
+    settlement_days: string[];
+    settlement_lodged: boolean[];
+    settlement_penalties: (string | null)[];
+    settlement_work: (string | null)[];
   }>(
-    `SELECT case_number, name, court, filed_on::text AS day, step, penalty::text AS penalty, laws, defendants, docket, penalty_settled, work_ordered::text AS work_ordered, summary
+    `SELECT case_number, name, court, filed_on::text AS day, step, penalty::text AS penalty, laws, defendants, docket, penalty_settled, work_ordered::text AS work_ordered, summary,
+            suit_filed::text AS suit_filed, settlement_days::text[] AS settlement_days, settlement_lodged, settlement_penalties::text[] AS settlement_penalties, settlement_work::text[] AS settlement_work
        FROM epa_cases WHERE filed_on >= $1::date AND name_keys LIKE ANY ($2::text[]) ORDER BY filed_on, case_number`,
     [from, keys.map((k) => `%${k}%`)],
   );
+  // numeric comes back as "11000000.00": the cases' own form drops cents that are none
+  const money = (x: string | null) => (x === null ? null : x.replace(/\.00$/, ""));
   return rows.map((r) => ({
     number: r.case_number,
     name: r.name,
     court: r.court,
     day: r.day,
     step: r.step,
-    // numeric comes back as "11000000.00": the cases' own form drops cents that are none
-    penalty: r.penalty === null ? null : r.penalty.replace(/\.00$/, ""),
+    penalty: money(r.penalty),
     settled: r.penalty_settled,
-    workOrdered: r.work_ordered === null ? null : r.work_ordered.replace(/\.00$/, ""),
+    workOrdered: money(r.work_ordered),
     summary: r.summary,
     laws: r.laws,
     defendants: r.defendants,
     docket: r.docket,
+    suitFiled: r.suit_filed,
+    settlements: (r.settlement_days ?? []).map((d, k) => ({
+      day: d,
+      lodged: r.settlement_lodged?.[k] !== false,
+      penalty: money(r.settlement_penalties?.[k] ?? null),
+      work: money(r.settlement_work?.[k] ?? null),
+    })),
   }));
 }
 

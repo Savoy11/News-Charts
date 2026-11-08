@@ -988,6 +988,68 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 122: EPA's own days — the day a suit was filed, and each settlement on its own day (2026-11-08)
+
+The 2026-11-08 proposal 2, approved by the owner that day ("All three"). The owner's word, 2026-11-08:
+"Continue". No new source: two more columns of a table the monthly read already takes, and a milestone
+it already read and set aside. #3 (batch 123) is next.
+
+- [x] **(a) The day a suit was filed** (`epaEvents`, lib/epaCases.ts). A court case keeps its
+      "Complaint Filed With Court" day (`suitFiled`). A suit filed more than 30 days before its first
+      settlement (`SUIT_LEAD_DAYS`) has its own row that day: "EPA suit filed in court (Clean Air Act)",
+      the case, the page's defendants and the first settlement's day, and no money, which stays on
+      the settlement's row. A day's suits are one row (`…@day:filed`).
+      - **The rule's tests run on the filing day:** a unit counts only if its owner held it then.
+        Mobil's suit of 1996 is no ExxonMobil row (Mobil is its from 1999-11-30), Cinergy's of 2000 no
+        Duke row, Texaco's of 1993 no Chevron row; 10 such filings are refused.
+      - **The threshold, as drafted:** kept only where the page's own that day are every defendant, or
+        at least half of fewer than 10. Chem-Dyne's Superfund suit of 174 parties and JPMorgan's BKK
+        decree (one of three) have none; CSX's of 1992 (one of two) has one. Counting any of the page's
+        among fewer than 10 would give 380 cases on 144 pages; the owner may widen it (OWNER-ACTIONS).
+      - **Examples:** AEP's national New Source Review suit, three case numbers filed 1999-11-03, one
+        row, eight years before the 2007 decree; Duke Energy's of 2000-12-22, settled 2015-09-10;
+        Wisconsin Electric's of 2003-04-29.
+- [x] **(b) Each settlement on its own day** (`bySettlement`). The settlements table's lodged day,
+      else its entered day, is kept with each settlement's own penalty and work (`settlements`). A
+      court case of settlements on two days or more has a row for each day, on the page whose own are
+      every defendant that day; settlements of one day are one row, their figures added in whole cents.
+      - **Fixes what batch 112 set aside:** Wisconsin Electric's 05-2003-0333 sat on 2014-07-08 with no
+        penalty; its 2003-07-10 settlement now has its row, $3,200,000 ($3,100,000 federal and $100,000
+        state) and $620,000,000 of work. GE's Hudson River decrees have rows on 2005-10-06 ($150,000,000),
+        2009-03-23 and 2010-12-31 ($2,100,000,000); Pittsfield and the Housatonic six from 1999-10-07.
+        Muskingum River's first settlement, $8,025,000, joins AEP's 2007-10-09 row.
+      - **One change from the draft, by the rule's own test:** a unit's settlements before its sale stay
+        its seller's. Murphy Oil USA's of 2010 ($367,187.50) and 2012 are Murphy Oil's; its of 2019 and
+        2020 Murphy USA's. Texaco's of 1993 is no Chevron row; its 2013 one stays.
+      - **A case of several parties keeps one row,** as before: EPA names no settlement's party
+        (Deepwater Horizon's four).
+      - **No stored row moves:** the case's own day is a settlement's in 267 of the slice's 268 cases of
+        several settlement days, so each row keeps its key. Where it is not, the stored row moves onto
+        the last settlement's (`legacyDedupBasis`), and a month's orders of that day never take it.
+        EPA's summary of the case stays on that one row.
+- [x] **Stored** (db/044): `suit_filed` and four settlement arrays in step, money as `numeric(16, 2)[]`,
+      and the last read forgotten, so the next run reads EPA's file whole (`npm run db:migrate`;
+      OWNER-ACTIONS). `storedEpaCases` reads them back; a company's ingest gives the same rows from the
+      store as from the file.
+- **Measured** on the committed slice, before first prices, against main's rule:
+  - **(a):** 228 rows on 106 pages, 254 cases (259 a page's), 214 filed before 2017 and 162 before
+    2001; 189 rows on 95 pages from first prices where they are known (150 on 65) and unfloored on the
+    rest. A fixed sample of 25 read by hand: each names the page's company among the defendants on the
+    filing day.
+  - **(b):** 31 cases a page's (28 cases on 27 pages) on 75 settlement rows. 39 rows are new (on 24
+    pages, 14 with a penalty, 27 naming the work ordered, 29 before 2017), and of the rows before, 7
+    now give a penalty and 14 name the work ordered.
+  - **Totals:** 9,156 rows on 690 companies, 7,769 before 2017 (8,889 and 7,526 before). Every row the
+    rule gave before is still given under its own key; none moved, none lost.
+- **Requests:** none. The two columns came from the copy of EPA's file the slice was cut from (Last-
+  Modified 2026-10-31), kept in the session scratchpad.
+- **Checks:** check:epa-cases gains 17 (126). Its slice gains the settlements table's two day columns,
+  for the same 8,280 rows. Ten totals are re-pinned with their reasons. On main's code, 26 of the 126
+  fail: 16 of the new 17 (the 17th reads an older file as before) and the 10 totals; for the count, main
+  was given the two new exports as stubs and its fake database both forms of the insert.
+  - The check's Olin loop read the page once per case, which made it the suite's slowest. It now reads
+    the page once (68 s, from several minutes).
+
 ## NC ledger — batch 121: the operating units' own names for the release rules, and the Justice API's filter (2026-11-08)
 
 The 2026-11-08 proposal 1's part (c), approved by the owner that day ("All three"). The owner's word,
@@ -9386,14 +9448,17 @@ already held, but new investment goes to securities coverage first.
         broken on the way, is fixed: it reads `title`, not `parameters[title]`.
       - *Derived from [`docs/proposals/2026-11-08-proposals.md`](proposals/2026-11-08-proposals.md)
         #1, approved 2026-11-08.*
-- [ ] `P2` **EPA's own days on the cases pages already hold.** No new source: approved by the owner
+- [x] `P2` **EPA's own days on the cases pages already hold.** No new source: approved by the owner
       2026-11-08. Two tables of the zip the monthly walk already reads: (a) the day the suit was
       filed, a row of its own beside the decree's; (b) each settlement of a case whose defendants are
       all the company's, on its own day. It fixes the rows dated by a later amendment with no penalty
       (Wisconsin Electric's 05-2003-0333).
       - **Measured** by the scout: (a) 178 cases on 85 pages, 128 before 2001; (b) 26 cases, 46
         settlements.
-      - **Next: batch 122.**
+      - **Done in batch 122:** (a) 228 rows on 106 pages, 254 cases, 162 filed before 2001; (b) 39
+        settlement rows more on 24 pages, 7 rows that now give a penalty; every row before kept under
+        its key. A unit's settlements before its sale stay its seller's (Murphy Oil USA's 2010 and
+        2012 on Murphy Oil). db/044 needs `npm run db:migrate`.
       - *Derived from [`docs/proposals/2026-11-08-proposals.md`](proposals/2026-11-08-proposals.md)
         #2, approved 2026-11-08.*
 - [ ] `P2` **NHTSA recalls under makers listed companies own that the map lacks.** No new source:

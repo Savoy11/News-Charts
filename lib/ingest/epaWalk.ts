@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+import { andSpellings } from "../edgarName";
 import { epaEvents, fetchCaseFile, type CaseFileAnswer, type EpaCase, unitKeysOf } from "../epaCases";
 import { isNotesRecord } from "../releaseNames";
 import type { FetchResult } from "../types";
@@ -149,7 +150,7 @@ export async function epaCasesFor(client: PoolClient, subjectId: number, plan: P
   if (!listed) return failed ? { events: [], ...failed } : NO_PRICES();
   const years = Array.from({ length: Math.max(1, new Date().getUTCFullYear() - Number(listed.slice(0, 4)) + 1) }, (_, k) => Number(listed.slice(0, 4)) + k);
   // …and the units it owned (`UNITS`): Sunoco, Inc.'s cases are filed under Sunoco's name
-  const keys = [...new Set([...years.flatMap(namesIn).map(alnum).filter((k) => k.length >= 2), ...unitKeysOf(plan.cik)])];
+  const keys = [...new Set([...years.flatMap(namesIn).flatMap(andSpellings).map(alnum).filter((k) => k.length >= 2), ...unitKeysOf(plan.cik)])];
   const events = epaEvents(await storedEpaCases(client, keys, listed), namesIn, { cik: plan.cik, from: listed });
   // every kept row the rules give it: a complete answer, so a row they no longer give comes off (batch 108)
   if (failed) return { events, ...failed, complete: {} };

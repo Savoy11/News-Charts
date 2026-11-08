@@ -1,4 +1,5 @@
 import { UA } from "./contact";
+import { andSpellings } from "./edgarName";
 import { epaParty } from "./epaCases";
 import type { TimelineEvent } from "./types";
 import { takenBefore } from "./takenNames";
@@ -268,7 +269,7 @@ export function cpscEvents(recalls: readonly CpscRecall[], namesIn: (year: numbe
     let held = cache.get(year);
     if (!held) {
       const n = namesIn(year);
-      held = { names: n, keys: [...new Set([...n.map(letters).filter((k) => k.length >= 2), ...(cik === undefined ? [] : unitKeysOf(cik))])] };
+      held = { names: n, keys: [...new Set([...n.flatMap(andSpellings).map(letters).filter((k) => k.length >= 2), ...(cik === undefined ? [] : unitKeysOf(cik))])] };
       cache.set(year, held);
     }
     const all = lettersOf(r);

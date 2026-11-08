@@ -5,7 +5,7 @@ import type { PoolClient } from "pg";
 import tickerIndex from "../data/edgar-tickers.json";
 import { NOT_THE_COMPANY, RECALLS_URL, UNITS, cpscEvents, fetchRecalls, firmIsCompany, firmName, parseRecalls, roleIn, soldAtCompany, unitsOf, type CpscRecall } from "../lib/cpscRecalls";
 import { dojPossessive } from "../lib/doj";
-import { withoutTag } from "../lib/edgarName";
+import { andSpellings, withoutTag } from "../lib/edgarName";
 import { deterministicScore } from "../lib/enrich/relevance";
 import { companyNames } from "../lib/frCompany";
 import { cpscFor, walkCpsc, type CpscWalk } from "../lib/ingest/cpscWalk";
@@ -177,14 +177,15 @@ async function main(): Promise<void> {
     seen.add(cik);
     const own = dojPossessive(title, possessiveNameFor(cik));
     const namesIn = (year: number) => [...companyNames(title, namesForYear(year, newsNamesFor(cik), [])), ...(own ? [own] : []), withoutTag(title)];
-    if (!namesIn(2020).map(letters).some((k) => k.length >= 2 && all.includes(k))) continue;
+    // …a name's "&" as "and" too, as its ingest asks (batch 120)
+    if (!namesIn(2020).flatMap(andSpellings).map(letters).some((k) => k.length >= 2 && all.includes(k))) continue;
     const ev = cpscEvents(recalls, namesIn, { cik });
     if (ev.length) out.set(ticker, ev);
   }
   const flat = [...out.values()].flat();
   const ownRows = flat.filter((e) => e.precision !== "month" && !/^Sold in its stores: /.test(e.title)).length;
-  check("before any first price: 2,300 rows on 195 companies, 1,658 a recall's own day, 721 as maker, importer or distributor; Target 296, Walmart 236, Amazon 206, Home Depot 196 (2,301 on 196 before batch 117's table took Ingersoll-Rand Company's 2002 recall off IR, whose record was Gardner Denver's until 2020; 2,302 before batch 116 took AT&T Corp.'s 1995 charger off T; 2,288 before batch 111's legal-form spellings; 2,290 on 197 before batch 109's shared names; 2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
-    flat.length === 2300 && out.size === 195 && flat.filter((e) => e.precision !== "month").length === 1658 && ownRows === 721 &&
+  check("before any first price: 2,304 rows on 196 companies, 1,662 a recall's own day, 725 as maker, importer or distributor; Target 296, Walmart 236, Amazon 206, Home Depot 196 (2,300, 1,658 and 721 on 195 before batch 120 read a name's \"&\" as \"and\" too: Stanley Black and Decker's DeWALT mowers of 2024, Bath and Body Works' candles of 2004, John Wiley and Sons' candle-making book of 2003 and Academy Sports and Outdoors' heaters of 2003, before its listing; 2,301 on 196 before batch 117's table took Ingersoll-Rand Company's 2002 recall off IR, whose record was Gardner Denver's until 2020; 2,302 before batch 116 took AT&T Corp.'s 1995 charger off T; 2,288 before batch 111's legal-form spellings; 2,290 on 197 before batch 109's shared names; 2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
+    flat.length === 2304 && out.size === 196 && flat.filter((e) => e.precision !== "month").length === 1662 && ownRows === 725 &&
       [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ") === "TGT 296, WMT 236, AMZN 206, HD 196",
     `${flat.length} on ${out.size}; ${flat.filter((e) => e.precision !== "month").length} own; ${ownRows} as maker, importer or distributor; ${[...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ")}`);
 

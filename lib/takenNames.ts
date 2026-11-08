@@ -65,7 +65,8 @@ export const TAKEN_NAMES: Readonly<Record<number, TakenName>> = {
   // batch 116's EPA and CPSC entries
   732717: {
     ticker: "T",
-    name: /\bAT\s*&\s*T\b/i,
+    // …and "AT AND T", as a 1993 EPA order writes it, which the "and" spelling of "&" reads (batch 120)
+    name: /\bAT\s*&\s*T\b|\bAT\s+AND\s+T\b/i,
     then: /\bSBC\b|\bSouthwestern\s+Bell\b|\bPacific\s+(?:Bell|Telesis)\b|\bAmeritech\b|\bNevada\s+Bell\b|\bSouthern\s+New\s+England\s+Tel|\bSNET\b|\bCingular\b/i,
     from: "2005-11-18",
     filing: "0000950123-05-013901",

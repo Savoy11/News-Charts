@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+import { andSpellings } from "../edgarName";
 import { cpscEvents, fetchRecalls, type CpscRecall, type RecallsAnswer, unitKeysOf } from "../cpscRecalls";
 import { isNotesRecord } from "../releaseNames";
 import type { FetchResult } from "../types";
@@ -126,7 +127,7 @@ export async function cpscFor(client: PoolClient, subjectId: number, plan: Press
   const first = Number(listed.slice(0, 4));
   const years = Array.from({ length: Math.max(1, new Date().getUTCFullYear() - first + 1) }, (_, k) => first + k);
   // …and the units it owned (`UNITS`): Graco Children's Products' recalls name Graco
-  const keys = [...new Set([...years.flatMap(namesIn).map(letters).filter((k) => k.length >= 2), ...unitKeysOf(plan.cik)])];
+  const keys = [...new Set([...years.flatMap(namesIn).flatMap(andSpellings).map(letters).filter((k) => k.length >= 2), ...unitKeysOf(plan.cik)])];
   const events = cpscEvents(await storedRecalls(client, keys, listed), namesIn, { cik: plan.cik, from: listed });
   // every kept row the rules give it: a complete answer, so a row they no longer give comes off (batch 108)
   if (failed) return { events, ...failed, complete: {} };

@@ -207,8 +207,12 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
-- **The 2026-11-08 proposals** (batch 119, `docs/proposals/2026-11-08-proposals.md`): mark each
-  `APPROVED`, `REJECTED` or `DEFERRED`:
+- ~~**The 2026-11-08 proposals** (batch 119, `docs/proposals/2026-11-08-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`.~~ **Decided 2026-11-08: "All three"; on #1's two calls, "Yes,
+  both as drafted"** (Pharmacia LLC on Pfizer's page from 2003; MidAmerican Energy Berkshire's from
+  2006-02-09). #1's parts (a) and (b) are built in batch 120; its part (c), then #2 and #3, follow.
+  Nothing to run after deploying batch 120: each company's next ingest reads its new units' cases from
+  the EPA cases already kept.
   1. EPA's cases under 28 more companies' operating units (BNSF on Berkshire, Pratt & Whitney on RTX);
      three parts, each approvable alone, and two calls inside it: Pharmacia LLC on Pfizer, and the
      day MidAmerican Energy becomes Berkshire's;

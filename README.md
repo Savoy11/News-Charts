@@ -546,8 +546,8 @@ Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Car
 2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
 (`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
 every company in the index, on EPA's whole file of 2026-10-31 (the committed slice gives the same
-rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 7,899 rows on 679 companies, 6,754 before 2017
-(ExxonMobil 288, GE 284, Chevron 269, BP 248, GM 225; 5,994 on 667 before the units, every one of
+rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 8,889 rows on 690 companies, 7,526 before 2017
+(ExxonMobil 288, GE 284, Chevron 269, BP 248, Honeywell 246; 7,899 on 679 before batch 120; 5,994 on 667 before the units, every one of
 whose cases is still there; BP 4 and 3M 67 by their own names). A record that took a bought
 company's name does not take that company's past: old Waste Management's cases are not WM's before
 1998-07-16, nor AT&T Corp.'s AT&T Inc.'s before 2005-11-18, when SBC Communications, T's record,
@@ -575,6 +575,27 @@ no defendant, read by their names (Ohio Edison's of 1988, Wisconsin Power and Li
 Bailly's of 1985). Thirteen companies had no EPA row and now do: PSEG 44 (43 from its first price),
 Exelon 22, NextEra 19, NiSource 17, DTE 16, WEC 13, Vistra, OGE, Hawaiian Electric, MGE, IDACORP, TXNM
 and Evergy.
+
+**28 more companies' operating units, and "&" read as "and"** (batch 120, the owner's approval of
+2026-11-08). EPA files a conglomerate's, a pipeline's or a refiner's cases under its operating companies:
+BNSF Railway is Berkshire's, Pratt & Whitney and Carrier United Technologies', AlliedSignal's companies
+Honeywell's, Valero Refining-Texas Valero's, Enbridge Energy Enbridge's, Kennecott Utah Copper Rio
+Tinto's. 112 more `UNITS` entries read them, each between the days its owner held it, every day read
+from data.sec.gov's filing lists: BNSF from 2010-02-12, Sikorsky to 2015-11-05, Otis and Carrier to the
+separation of 2020-04-02, Premcor from 2005-09-01, El Paso's pipelines from 2012-05-24. A unit sold to
+another listed company goes to it on the day: Otis Elevator's 2022 decree is Otis Worldwide's, Keystone's
+2026 case South Bow's, Trunkline's 2019 order Energy Transfer's. Two days are the owner's calls:
+MidAmerican Energy is Berkshire's from 2006-02-09, and Pharmacia LLC, the old Monsanto Company's legal
+entity, is Pfizer's from 2003-04-16. Namesakes are refused by name: Huntsman Springs, Mosaic Life Care,
+Valero Terrestrial, El Paso Electric, Westlake Hardware, the old Total Petroleum, McMoRan's
+Freeport-McMoRan Energy. A name holding "&" is read with "and" in its place too (`andSpellings`,
+lib/edgarName.ts), by the caption rule every regulator source shares: EPA writes "Air Products and
+Chemicals, Inc." and "The Goodyear Tire and Rubber Company". "AT AND T", a 1993 order, stays off AT&T
+Inc.'s page: the table of taken names reads that spelling too. From first prices, on EPA's whole file:
+906 cases and 818 rows more on 41 pages, none fewer, 471 of the cases a court case or a penalty, 345
+before 2017; Enbridge's $62,000,000 Marshall spill decree of 2016 and American Honda's $10,100,000 of 1998
+among them. Nine pages had no EPA row and now do: Berkshire 57, TotalEnergies 21, TC Energy 8, AB InBev
+5, Honda 5, Otis, South Bow, Aimco and Chicago Rivet.
 
 **EPA's own figures on each row** (batch 113, the owner's approval of 2026-11-07). The same zip holds
 each case's settlements (`CASE_ENFORCEMENT_CONCLUSIONS.csv`), EPA's estimate of the cost of the work a
@@ -628,7 +649,7 @@ with Rubbermaid, Graco's owner (Newell's EDGAR record and 8-K), 22 of them from 
 before are no listed company's. AT&T Corp.'s phone charger of 1995 is not AT&T Inc.'s, whose record was
 SBC's until it took AT&T's name on 2005-11-18 (batch 116), nor Ingersoll-Rand Company's of 2002
 Ingersoll Rand Inc.'s (batch 117). Against every company in the index, before
-first prices: 2,300 rows on 195 companies, 721 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
+first prices: 2,304 rows on 196 companies, 725 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
 IBM's ThinkPad batteries of 2006). A work of the U.S. Government, public domain; the Commission's
 site refused this session's requests (403), so the basis is the law's and the federal catalog's,
 not a page re-read.
@@ -711,7 +732,7 @@ titled by its heading; each row links to its issue's PDF. The dated names come f
 `data/digest-records.json`: what EDGAR's sixteen company indexes of 1993–1996 called each listed
 company and each mapped predecessor (1,456 records, old Merck's added in batch 108), written by `npm run sync:digest-records`
 (sixteen zips a second apart from www.sec.gov, or `-- --dir <path>` for saved ones; run after
-`npm run sync:tickers`). On 1985 the source gives 512 rows on 260 companies, 361 events on 189
+`npm run sync:tickers`). On 1985 the source gives 520 rows on 260 companies, 361 events on 189
 pages: batch 87's 508, Crane Co.'s registration of 1985-10-11, which batch 87's first pass gave
 to no one because today's Crane Company (a 2023 record) seemed to share the name, and old Merck's
 three 8-K reports (batch 108). www.sec.gov

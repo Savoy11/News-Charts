@@ -223,7 +223,7 @@ medium — about 47 ownership days to read from filings, and two owner calls ins
 
 ## 2. EPA's own days on the cases pages already hold: the day the suit was filed, and each settlement of a case that is all the company's · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-08: "All three". Next, in batch 122.
+**Status:** APPROVED — by the owner, 2026-11-08: "All three". Built in batch 122, both parts, with the threshold as drafted: on the committed slice, before first prices, 228 suit-filed rows on 106 pages (254 cases, 214 filed before 2017, 162 before 2001), and 39 settlement rows more on 24 pages, 7 rows that now give a penalty and 14 that name the work ordered; every row the rule gave before is still given under its own key. One change from the draft, by the rule's own test: a case's settlements go on the page whose own are every defendant on each settlement's day, so a unit's settlements before its sale stay its seller's (Murphy Oil USA's of 2010 and 2012 on Murphy Oil, its of 2019 and 2020 on Murphy USA).
 **Owner's reason (if rejected):**
 
 **Raised before:**
@@ -366,7 +366,7 @@ the saved file; one threshold and the moved rows to watch
 
 ## 3. The NHTSA recalls filed under makers listed companies own and the map lacks: Graco's child seats on Newell, Dana, Lippert on LCI, Hino on Toyota, Kelly-Springfield on Goodyear… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-08: "All three". After #2, in batch 123, each maker's day read from filings.
+**Status:** APPROVED — by the owner, 2026-11-08: "All three". Next, in batch 123, each maker's day read from filings.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. Batches 30 and 31 mapped vehicle and RV makers. Tire, equipment and child-seat

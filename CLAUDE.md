@@ -103,7 +103,9 @@ Power and Light Company" is one name; "RETHERFORD, DANA" is a person), and money
 case EPA gives no penalty total takes its one settlement's, the row names the work ordered ("among N
 parties" on a settlement of several) and carries EPA's own summary when it says something (batch
 113, `summaryOf`); text is stored without control characters, since a NUL made Postgres refuse the
-whole month's read. The
+whole month's read. A suit filed over 30 days before its first settlement has a row on the filing day,
+the rule's tests run that day (batch 122), and a court case of settlements on several days has a row a
+day on the page whose own are every defendant that day; a case's own day keeps its row and key. The
 CPSC's recalls (`lib/cpscRecalls.ts`) go on every listed company a recall names: its makers,
 importers and distributors by the caption rule, its stores as whole items of the "Sold at" line, a
 store's recalls of other makers' products grouped a row a month. The

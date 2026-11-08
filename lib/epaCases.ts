@@ -63,6 +63,27 @@ export interface EpaCase {
   defendants: string[];
   /** the Justice Department's docket number for a court case, when EPA gives one */
   docket: string | null;
+  /**
+   * the day the suit was filed in court, EPA's milestone "Complaint Filed With Court", for a court
+   * case; null for none (batch 122, the 2026-11-08 proposal 2(a))
+   */
+  suitFiled?: string | null;
+  /** each settlement EPA dates, in day order: its own day, penalty and work ordered (batch 122, the proposal's 2(b)) */
+  settlements?: EpaSettlement[];
+  /**
+   * a row's view of one settlement day of a case split by settlement (`epaEvents`): which of the
+   * case's settlements, in day order, it holds, of how many
+   */
+  settlementOf?: { first: number; last: number; of: number };
+}
+
+/** One settlement of a case: the day it was lodged in court, else entered, and its own figures, as `penaltyOf` keeps them. */
+export interface EpaSettlement {
+  day: string;
+  /** the day is its lodging's; false when EPA gives only the day it was entered */
+  lodged: boolean;
+  penalty: string | null;
+  work: string | null;
 }
 
 /** The laws by EPA's code, as a reader knows them. */
@@ -238,6 +259,11 @@ const plain = (x: string) => x.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\
  * settlement was lodged ("Final Order Lodged"), else entered, else the day the suit was filed; for
  * an administrative case the day its final order was issued, else the day the complaint was. A
  * case with none of these days is left out (5 of 137,108).
+ *
+ * Since batch 122 (the 2026-11-08 proposal 2) a court case also keeps the day its suit was filed
+ * ("Complaint Filed With Court"), and every case each settlement the settlements table dates, on its
+ * own day, lodged else entered, with its own penalty and work ordered. A table without the two day
+ * columns, as an older copy's, gives no settlement a day: the case figures stay as before.
  */
 export function readCases(tables: CaseTables): EpaCase[] {
   const first = new Map<string, Map<string, string>>();
@@ -267,15 +293,24 @@ export function readCases(tables: CaseTables): EpaCase[] {
     list.push({ rank: Number(rank) || 99, code });
     laws.set(caseNumber, list);
   });
-  // each settlement once, by its id: its federal and state penalty and the work it orders
-  const settlements = new Map<string, Map<string, { penalty: string | null; work: string | null }>>();
-  if (tables[SETTLEMENT_TABLE] !== undefined) {
-    eachCsvRow(tables[SETTLEMENT_TABLE], ["CASE_NUMBER", "ENF_CONCLUSION_ID", "FED_PENALTY_ASSESSED_AMT", "STATE_LOCAL_PENALTY_AMT", "COMPLIANCE_ACTION_COST"], ([caseNumber, id, fed, state, work]) => {
+  // each settlement once, by its id: its federal and state penalty, the work it orders and, since
+  // batch 122, its own day, lodged else entered, where the table has those columns
+  const settlements = new Map<string, Map<string, { penalty: string | null; work: string | null; day: string | null; lodged: boolean }>>();
+  const SETTLED = tables[SETTLEMENT_TABLE];
+  if (SETTLED !== undefined) {
+    const dated = SETTLED.slice(0, SETTLED.indexOf("\n")).includes("SETTLEMENT_LODGED_DATE");
+    const columns = ["CASE_NUMBER", "ENF_CONCLUSION_ID", "FED_PENALTY_ASSESSED_AMT", "STATE_LOCAL_PENALTY_AMT", "COMPLIANCE_ACTION_COST", ...(dated ? ["SETTLEMENT_LODGED_DATE", "SETTLEMENT_ENTERED_DATE"] : [])];
+    eachCsvRow(SETTLED, columns, ([caseNumber, id, fed, state, work, lodged = "", entered = ""]) => {
       const held = settlements.get(caseNumber) ?? new Map();
-      held.set(id || `${held.size}`, { penalty: addAmounts(penaltyOf(fed), penaltyOf(state)), work: penaltyOf(work) });
+      held.set(id || `${held.size}`, { penalty: addAmounts(penaltyOf(fed), penaltyOf(state)), work: penaltyOf(work), day: day(lodged) ?? day(entered), lodged: day(lodged) !== null });
       settlements.set(caseNumber, held);
     });
   }
+  const datedSettlements = (caseNumber: string): EpaSettlement[] =>
+    [...(settlements.get(caseNumber)?.values() ?? [])]
+      .filter((s): s is { penalty: string | null; work: string | null; day: string; lodged: boolean } => s.day !== null)
+      .map(({ day: d, lodged, penalty, work }) => ({ day: d, lodged, penalty, work }))
+      .sort((a, b) => a.day.localeCompare(b.day));
   // a case of one settlement and no total of its own takes the settlement's figure; a case of
   // several keeps its own total, since a sum would put other parties' settlements of other years on
   // one row (Deepwater Horizon's four, 2012–2015)
@@ -310,6 +345,8 @@ export function readCases(tables: CaseTables): EpaCase[] {
       laws: [...new Set(ranked)],
       defendants: defendants.get(number) ?? (name ? [name] : []),
       docket: plain(r.DOJ_DOCKET_NMBR).trim() || null,
+      suitFiled: court ? (steps.get("CMF") ?? null) : null,
+      settlements: datedSettlements(number),
     });
   });
   return out;
@@ -1082,7 +1119,48 @@ function caseLine(c: EpaCase, withPenalty = false, mine: readonly string[] = [])
     ...(withPenalty && c.penalty ? [`${dollars(c.penalty)} civil penalty`] : []),
     ...(c.workOrdered ? [`work ordered ${dollars(c.workOrdered)}, EPA's estimate${c.defendants.length > 1 ? `, among ${c.defendants.length} parties` : ""}`] : []),
   ];
-  return `${c.name} (case ${c.number}${c.docket ? `, Justice Department docket ${c.docket}` : ""})${others}${money.length ? `: ${money.join("; ")}` : ""}`;
+  const of = c.settlementOf;
+  const settlement = of ? (of.first === of.last ? `, settlement ${of.first} of ${of.of}` : `, settlements ${of.first} to ${of.last} of ${of.of}`) : "";
+  return `${c.name} (case ${c.number}${settlement}${c.docket ? `, Justice Department docket ${c.docket}` : ""})${others}${money.length ? `: ${money.join("; ")}` : ""}`;
+}
+
+/** A suit filed this many days or fewer before its first settlement has no row of its own: the settlement's day says it. */
+export const SUIT_LEAD_DAYS = 30;
+
+const daysFrom = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
+
+/**
+ * A court case's first settlement: its own day when it is a settlement's (lodged or entered), else
+ * the first settlement EPA dates; null for a case with none.
+ */
+export function firstSettled(c: EpaCase): string | null {
+  const days = [...(c.court && (c.step === "lodged" || c.step === "entered") ? [c.day] : []), ...(c.settlements ?? []).map((x) => x.day)].sort();
+  return days[0] ?? null;
+}
+
+/**
+ * A court case of settlements on two days or more, as one view a settlement day: that day's
+ * settlements' own penalty and work ordered, added in whole cents when two were lodged the same day.
+ * Null for any other case (batch 122, the 2026-11-08 proposal 2(b)).
+ */
+export function bySettlement(c: EpaCase): EpaCase[] | null {
+  const all = c.court ? (c.settlements ?? []) : [];
+  const days = [...new Set(all.map((x) => x.day))];
+  if (days.length < 2) return null;
+  return days.map((d) => {
+    const first = all.findIndex((x) => x.day === d);
+    const held = all.filter((x) => x.day === d);
+    const penalty = held.reduce<string | null>((sum, x) => addAmounts(sum, x.penalty), null);
+    return {
+      ...c,
+      day: d,
+      step: held.some((x) => x.lodged) ? ("lodged" as const) : ("entered" as const),
+      penalty,
+      settled: penalty !== null,
+      workOrdered: held.reduce<string | null>((sum, x) => addAmounts(sum, x.work), null),
+      settlementOf: { first: first + 1, last: first + held.length, of: all.length },
+    };
+  });
 }
 
 /**
@@ -1092,6 +1170,20 @@ function caseLine(c: EpaCase, withPenalty = false, mine: readonly string[] = [])
  * no penalty are grouped a row a month when a month holds two or more, as the Federal Register's
  * routine notices are (`pageRegulations`). Every listed defendant gets the case, under the
  * owner's rule of 2026-11-05, and a unit the company then owned (`UNITS`).
+ *
+ * EPA's own days (batch 122, the 2026-11-08 proposal 2, approved by the owner that day):
+ *  - (a) A court case's suit filed more than `SUIT_LEAD_DAYS` before its first settlement has a row
+ *    of its own on the filing day, "EPA suit filed in court", with no money: that stays on the
+ *    settlement's row. The rule's tests run on the filing day, a unit counting only if its owner
+ *    held it then (Mobil's suit of 1996 is no ExxonMobil row), and the row is kept only where the
+ *    page's own that day are every defendant, or at least half of fewer than `MANY_PARTIES`. A day's
+ *    suits are one row, keyed apart from the day's settlements (`…@day:filed`).
+ *  - (b) A court case of settlements on two days or more has a row for each settlement day, with that
+ *    day's own penalty and work ordered, on the page whose own are every defendant that day: a
+ *    unit's settlements before its sale stay its seller's. A case of several parties keeps one row.
+ *    The case's own day is almost always a settlement's (267 of the slice's 268 such cases), so its
+ *    row keeps its key; where it is not, the stored row moves onto the last settlement's row
+ *    (`legacyDedupBasis`). EPA's summary of the case goes on that one row.
  *
  * A month's cases with no penalty are kept under the month's key from the first (batch 100, the
  * audit's finding 2), so a month read again when it holds two updates one row; a row stored under
@@ -1114,24 +1206,54 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
     }
     return held;
   };
+  // the page's own defendants of a case on a day: by its names that year, and the units it then held
+  const mineOn = (c: EpaCase, on: string): string[] => {
+    const { names, keys } = namesFor(Number(on.slice(0, 4)));
+    return c.defendants.filter((d) => {
+      const letters = alnum(d);
+      if (units.some((u) => on >= (u.from ?? "") && (!u.to || on <= u.to) && u.defendant.test(d.trim()) && !(u.branded && BRANDED_SITE.test(d)))) return true;
+      // …and not a name the record took from another company, before the day (lib/takenNames.ts, batch 117)
+      return keys.some((k) => letters.includes(k)) && !refused.some((r) => r.defendant.test(d)) && !takenBefore(cik, on, d) && epaParty(d, names) !== null;
+    });
+  };
+  // …which a row names only where the case's own name does not already name the company: AEP's
+  // "AMERICAN ELECTRIC POWER CO (NATIONAL CASE)" needs no list of its operating companies
+  const shownOf = (c: EpaCase, on: string, mine: string[]) => (epaParty(c.name, namesFor(Number(on.slice(0, 4))).names) === null ? mine : []);
   // the page's own defendants of each case it holds, which its row names (`caseLine`)
   const mineOf = new Map<EpaCase, string[]>();
+  // the suits filed in court before their first settlement, by the filing day (batch 122)
+  const suits = new Map<string, { c: EpaCase; settled: string }[]>();
+  // a day whose stored row a split case leaves, and the settlement day it moves to
+  const leaves = new Map<string, string>();
   for (const c of cases) {
     if (c.day < from) continue;
-    const { names, keys } = namesFor(Number(c.day.slice(0, 4)));
-    const mine = c.defendants.filter((d) => {
-      const letters = alnum(d);
-      if (units.some((u) => c.day >= (u.from ?? "") && (!u.to || c.day <= u.to) && u.defendant.test(d.trim()) && !(u.branded && BRANDED_SITE.test(d)))) return true;
-      // …and not a name the record took from another company, before the day (lib/takenNames.ts, batch 117)
-      return keys.some((k) => letters.includes(k)) && !refused.some((r) => r.defendant.test(d)) && !takenBefore(cik, c.day, d) && epaParty(d, names) !== null;
-    });
-    if (!mine.length) continue;
-    // …only where the case's own name does not already name the company: AEP's "AMERICAN ELECTRIC
-    // POWER CO (NATIONAL CASE)" needs no list of its operating companies
-    mineOf.set(c, epaParty(c.name, names) === null ? mine : []);
-    const into = ownRow(c) ? own : routine;
-    const key = ownRow(c) ? c.day : c.day.slice(0, 7);
-    into.set(key, [...(into.get(key) ?? []), c]);
+    // (a) the day the suit was filed, where the page's own that day are every defendant or at least
+    // half of fewer than `MANY_PARTIES`, under the rule's tests on that day
+    const settled = c.court && c.step !== "filed" && c.suitFiled && c.suitFiled >= from ? firstSettled(c) : null;
+    if (c.suitFiled && settled && daysFrom(c.suitFiled, settled) > SUIT_LEAD_DAYS) {
+      const then = mineOn(c, c.suitFiled);
+      if (then.length && (then.length === c.defendants.length || (c.defendants.length < MANY_PARTIES && then.length * 2 >= c.defendants.length))) {
+        const view = { ...c, penalty: null, settled: false, workOrdered: null };
+        mineOf.set(view, shownOf(c, c.suitFiled, then));
+        suits.set(c.suitFiled, [...(suits.get(c.suitFiled) ?? []), { c: view, settled }]);
+      }
+    }
+    const mine = mineOn(c, c.day);
+    // (b) a case of several settlements: each settlement on its own day, with its own figures, on the
+    // page whose own are every defendant that day. A unit's settlements before its sale stay its
+    // seller's: Murphy Oil USA's of 2010 are Murphy Oil's, its of 2019 and 2020 Murphy USA's
+    const split = (bySettlement(c) ?? []).filter((v) => v.day >= from && mineOn(c, v.day).length === c.defendants.length);
+    if (!mine.length && !split.length) continue;
+    // the case's own day keeps its row, or the last settlement takes it; that row alone carries EPA's
+    // summary of the case, which says the same on every settlement's
+    const home = split.find((v) => v.day === c.day) ?? split[split.length - 1];
+    if (mine.length && home && home.day !== c.day && !leaves.has(c.day)) leaves.set(c.day, home.day);
+    for (const v of split.length ? split.map((x) => (x === home ? x : { ...x, summary: null })) : [c]) {
+      mineOf.set(v, shownOf(c, v.day, v === c ? mine : mineOn(c, v.day)));
+      const into = ownRow(v) ? own : routine;
+      const key = ownRow(v) ? v.day : v.day.slice(0, 7);
+      into.set(key, [...(into.get(key) ?? []), v]);
+    }
   }
   const tag = cik === undefined ? "" : `${Number(cik)}`;
   const events: TimelineEvent[] = [];
@@ -1162,15 +1284,38 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
     const was = movedFrom.get(month);
     if (!was || d < was) movedFrom.set(month, d);
   }
+  // a day a split case left with no row of its own: its stored row moves onto the case's last
+  // settlement's, so the row keeps its history (batch 122; one case of the slice's 268, on no page)
+  const arriving = new Map<string, string>();
+  for (const [left, to] of leaves) if (!own.has(left) && !arriving.has(to)) arriving.set(to, left);
   for (const [d, rows] of own) {
     const month = d.slice(0, 7);
-    const moved = movedFrom.get(month) === d ? { legacyDedupBasis: `epa:${tag}@${month}:no-penalty` } : {};
+    const left = arriving.get(d);
+    const moved = movedFrom.get(month) === d ? { legacyDedupBasis: `epa:${tag}@${month}:no-penalty` } : left ? { legacyDedupBasis: `epa:${tag}@${left}` } : {};
     events.push({ id: `epa-${tag}-${d}`, ...dayRow(d, rows), dedupBasis: `epa:${tag}@${d}`, ...moved });
+  }
+  for (const [d, rows] of suits) {
+    const sorted = [...rows].sort((a, b) => a.c.number.localeCompare(b.c.number));
+    const lead = sorted[0].c;
+    const more = sorted.length > 1 ? `, and ${sorted.length - 1} more case${sorted.length > 2 ? "s" : ""} that day` : "";
+    events.push({
+      id: `epa-${tag}-${d}-filed`,
+      date: d,
+      type: "regulation",
+      title: `${caseTitle({ ...lead, step: "filed" })}${more}`,
+      source: "EPA",
+      url: caseReportUrl(lead.number),
+      description: `${sentence(sorted.map(({ c, settled }) => `${caseLine(c, false, mineOf.get(c))}, its first settlement dated ${settled}`).join("; "))} The day the suit${sorted.length > 1 ? "s were" : " was"} filed in court.`,
+      sourceKey: "epa_cases",
+      externalId: sorted.map(({ c }) => c.number).join(","),
+      dedupBasis: `epa:${tag}@${d}:filed`,
+    });
   }
   for (const [month, rows] of routine) {
     const sorted = [...rows].sort((a, b) => b.day.localeCompare(a.day) || a.number.localeCompare(b.number));
     const first = sorted[sorted.length - 1].day;
-    const moved = own.has(first) ? {} : { legacyDedupBasis: `epa:${tag}@${first}` };
+    // …never a day a split case left, whose stored row is a court case's, not this month's
+    const moved = own.has(first) || leaves.has(first) ? {} : { legacyDedupBasis: `epa:${tag}@${first}` };
     if (rows.length === 1) {
       events.push({ id: `epa-${tag}-${month}-orders`, ...dayRow(rows[0].day, rows), dedupBasis: `epa:${tag}@${month}:no-penalty`, ...moved });
       continue;

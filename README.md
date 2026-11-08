@@ -276,6 +276,26 @@ Financial Group's, listed in 2014, and a company with no prices yet is asked aga
 A bank's notes record is asked nothing. A name under five characters stands in for no
 longer one when the API is asked, since its ask stops at one page when crowded.
 
+The API is asked by its `title` filter (batch 121). It ignores `parameters[title]`, the form it once
+read: on 2026-11-08 every name asked that way (Walmart, BNSF, "Pacific Gas") came back with the same
+488 releases, none naming it, so no company found a release from the API, while `title=Walmart` gave
+68. The rule kept those 488 off every page, so nothing wrong was stored; the releases were simply not
+found. Each company's next Justice Department run reads them.
+
+The operating units EPA files cases under (`UNITS`, batches 104, 114 and 120) are in the release map
+by their own names, on the same days (`OPERATING_UNITS`, batch 121, the owner's approval of
+2026-11-08): 288 names on 74 companies, and Honda's two beside its lender. The Department settles
+with the unit, and the company's own name followed by words that are not legal ones names no
+company: "Pratt & Whitney and PCC Airfoils to Pay More Than $52 Million" (2008) is RTX's,
+"Firstenergy Nuclear Operating Company to Pay $28 Million" (2006) FirstEnergy's, "Commonwealth
+Edison Agrees to Pay $200 Million" (2020) Exelon's, "PacifiCorp Agrees to Pay $575M" (2026)
+Berkshire's. A unit sold to another listed company is that company's from the day: Otis Elevator's
+settlement of 2025 is Otis Worldwide's, not RTX's. Measured from first prices: 14 more releases on 9
+pages from the archive, and 40 on 19 from the API's years, 54 on 23 pages in all, each read by hand, none fewer. Every
+release rule reads the map, so the SEC's 2024 bribery charge against John Deere, SCANA's SEC cases
+of 2020 (on Dominion) and the CFTC's propane charge against BP Products North America (2006) and
+wash-sale penalty on San Diego Gas & Electric (2010) reach their pages too.
+
 The API holds nothing before 2009, so the releases of 2001–2008 come from the Department's own
 archive, one page a month at `www.justice.gov/archive/opa/pr/YYYY/Month/` (`lib/dojArchive.ts`,
 batch 94). The archive is closed: each of its 96 months is read once for every company and kept
@@ -288,9 +308,9 @@ as one (batch 100). 5,712 releases; the 5 rows a slip leaves without a day
 (a "02-30-02") are left unread, not guessed. Each company keeps the kept releases the rule above
 makes it a party to, under the names it had that year (Wal-Mart's of 2001–2004 under its own
 "Wal-Mart", BB&T's under Truist's former name), from its first price on: against every company in
-the index, 111 releases on 73 pages, every year of the eight (AEP's $30 million criminal penalty of
+the index, 125 releases on 78 pages, every year of the eight (AEP's $30 million criminal penalty of
 2005, Weyerhaeuser's Kalamazoo River settlement, Akzo Nobel's antitrust plea, Whirlpool's Maytag and
-Verizon's MCI cases; Walmart 6, Tenet 5, Exxon Mobil 4). A one-word name that is only an industry's
+Verizon's MCI cases; Exxon Mobil 7, Walmart 6, Tenet 5; 111 on 73 before batch 121's units). A one-word name that is only an industry's
 word for a company, The Bancorp's "Bancorp", names it after "the" but not after another capitalised
 word: "Berkshire Hills Bancorp and Legacy Bancorp" are two other banks (batch 100). Same source,
 `doj_press`, under the same terms.

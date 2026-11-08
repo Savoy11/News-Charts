@@ -183,8 +183,12 @@ async function main(): Promise<void> {
   process.exit(fail ? 1 : 0);
 }
 
-/** The replay's counts, measured 2026-11-05 on the saved list. */
-const EXPECTED = { total: 88, companies: 33, before2017: 47, top: "JPM 12, DB 7, MS 7, BCS 6, GS 6" };
+/**
+ * The replay's counts, measured 2026-11-05 on the saved list; batch 121's operating units add two, BP
+ * Products North America's propane charge of 2006 on BP and San Diego Gas & Electric's wash sales of
+ * 2010 on Sempra (88 on 33 and 47 before 2017 before).
+ */
+const EXPECTED = { total: 90, companies: 34, before2017: 49, top: "JPM 12, DB 7, MS 7, BCS 6, GS 6" };
 
 interface FakeDb {
   actions: Map<string, CftcAction>;

@@ -20,7 +20,7 @@ import {
 import { withoutTag } from "../lib/edgarName";
 import { MONTHS_PER_RUN, dojArchiveFor, walkDojArchive, withArchive, type ArchiveWalk } from "../lib/ingest/dojArchiveWalk";
 import { namesForYear } from "../lib/ingest/frBackfill";
-import { RELEASE_NAMES, isNotesRecord, releaseNamesAsked, releaseNamesBefore, releaseNamesOn } from "../lib/releaseNames";
+import { BANK_UNITS, OPERATING_UNITS, RELEASE_NAMES, isNotesRecord, releaseNamesAsked, releaseNamesBefore, releaseNamesOn } from "../lib/releaseNames";
 import { companyNames } from "../lib/frCompany";
 import { newsNamesFor, possessiveNameFor } from "../lib/sec";
 import type { TimelineEvent } from "../lib/types";
@@ -178,8 +178,9 @@ async function main(): Promise<void> {
     const res = await fetchJusticeReleases("BOEING CO", []);
     check("reads page after page until one comes back short", asked.length === 2 && asked.map((u) => u.searchParams.get("page")).join(",") === "0,1",
       asked.map((u) => u.search).join(" "));
-    check("  …asking for the company's name in titles, newest first, 50 a page",
-      asked.every((u) => u.origin + u.pathname === "https://www.justice.gov/api/v1/press_releases.json" && u.searchParams.get("parameters[title]") === "BOEING" &&
+    // batch 121: the API filters by `title` and ignores `parameters[title]` (measured 2026-11-08)
+    check("  …asking for the company's name in titles by the filter the API reads, `title`, newest first, 50 a page",
+      asked.every((u) => u.origin + u.pathname === "https://www.justice.gov/api/v1/press_releases.json" && u.searchParams.get("title") === "BOEING" && !u.searchParams.has("parameters[title]") &&
         u.searchParams.get("sort") === "date" && u.searchParams.get("direction") === "DESC" && u.searchParams.get("pagesize") === "50"));
     check("  …with the contact User-Agent, the build's own", agents.length > 0 && agents.every((a) => a === "News Charts Research builds@example.org"), agents[0]);
     check("  …and keeps only what names Boeing as a party", res.outcome === "ok" && res.events.length === 2 && res.events.every((e) => /Boeing/.test(e.title)),
@@ -240,7 +241,7 @@ async function main(): Promise<void> {
     ];
     // justice.gov as measured: only the curly spelling finds these titles
     globalThis.fetch = (async (input: string | URL) => {
-      const q = new URL(String(input)).searchParams.get("parameters[title]") ?? "";
+      const q = new URL(String(input)).searchParams.get("title") ?? "";
       askedFor.push(q);
       return new Response(JSON.stringify({ results: q.toLowerCase() === "moody’s" ? moodys : [] }), { status: 200 });
     }) as typeof fetch;
@@ -360,7 +361,7 @@ async function main(): Promise<void> {
  */
 const ARCHIVE: { provenance: string; months: Record<string, string> } = JSON.parse(gunzipSync(readFileSync(join(root, "scripts/fixtures/doj-archive-months.json.gz"))).toString("utf8"));
 const pageOf = (key: string) => decodePage(new Uint8Array(Buffer.from(ARCHIVE.months[key], "latin1")));
-const ARCHIVE_FIRST_PRICES: Record<string, string> = { AA: "1962-01-02", AAL: "2005-09-27", ABT: "1980-03-17", ADM: "1980-03-17", AEP: "1962-01-02", AIG: "1973-01-02", AKZOY: "1989-05-09", AMC: "2013-12-18", ASH: "1980-03-17", AXP: "1972-06-01", BA: "1962-01-02", BCC: "2013-02-06", BMY: "1972-06-01", BP: "1962-01-02", BPOP: "1980-03-17", BUSE: "1998-10-06", CM: "1997-11-13", CMCSA: "1980-03-17", COMP: "2021-04-01", COP: "1981-12-31", CVS: "1973-02-21", CVX: "1962-01-02", DAL: "2007-05-03", DD: "1972-06-01", DDD: "1988-03-10", DGX: "1996-12-17", ECHO: "2008-01-02", ELV: "2001-10-30", EXC: "1973-05-02", FITB: "1980-03-17", FLS: "1980-03-17", GE: "1962-01-02", GPK: "1992-12-10", GWW: "1973-02-21", HD: "1981-09-22", HON: "1962-01-02", HXL: "1980-03-17", IFNNY: "2000-03-13", IR: "2017-05-12", ITT: "1995-12-15", KMI: "2011-02-11", LLY: "1972-06-01", LMT: "1962-01-02", LUCN: "2024-09-13", MCK: "1994-11-10", MDT: "1973-05-02", MMM: "1962-01-02", MRK: "1962-01-02", MSFT: "1986-03-13", MTW: "1990-03-26", NBHC: "2012-09-20", NCLH: "2013-01-18", NOC: "1981-12-31", NWSA: "2013-06-19", ORCL: "1986-03-12", PEG: "1980-01-02", PFE: "1972-06-01", PRU: "2001-12-13", PSO: "1996-11-18", QCOM: "1991-12-13", RF: "1980-03-17", RSG: "1998-07-01", RY: "1995-10-16", SAIC: "2013-09-16", SFD: "2025-01-28", SUN: "2012-09-20", T: "1983-11-21", TBBK: "2004-02-03", TFC: "1980-03-18", TGT: "1973-02-21", THC: "1980-03-17", TM: "1980-03-17", TSN: "1980-03-17", TXT: "1973-02-21", UAL: "2006-02-06", UIS: "1972-06-01", UNH: "1984-10-17", USB: "1973-05-03", VLO: "1982-01-04", VZ: "1983-11-21", WAB: "1995-06-16", WELPP: "1994-04-08", WFC: "1972-06-01", WHR: "1973-02-21", WMT: "1972-08-25", WY: "1973-05-03", XOM: "1962-01-02", CX: "1999-09-15" };
+const ARCHIVE_FIRST_PRICES: Record<string, string> = { AA: "1962-01-02", AAL: "2005-09-27", ABT: "1980-03-17", ADM: "1980-03-17", AEP: "1962-01-02", AIG: "1973-01-02", AKZOY: "1989-05-09", AMC: "2013-12-18", ASH: "1980-03-17", AXP: "1972-06-01", BA: "1962-01-02", BCC: "2013-02-06", BMY: "1972-06-01", BP: "1962-01-02", BPOP: "1980-03-17", BUSE: "1998-10-06", CM: "1997-11-13", CMCSA: "1980-03-17", COMP: "2021-04-01", COP: "1981-12-31", CVS: "1973-02-21", CVX: "1962-01-02", DAL: "2007-05-03", DD: "1972-06-01", DDD: "1988-03-10", DGX: "1996-12-17", ECHO: "2008-01-02", ELV: "2001-10-30", EXC: "1973-05-02", FITB: "1980-03-17", FLS: "1980-03-17", GE: "1962-01-02", GPK: "1992-12-10", GWW: "1973-02-21", HD: "1981-09-22", HON: "1962-01-02", HXL: "1980-03-17", IFNNY: "2000-03-13", IR: "2017-05-12", ITT: "1995-12-15", KMI: "2011-02-11", LLY: "1972-06-01", LMT: "1962-01-02", LUCN: "2024-09-13", MCK: "1994-11-10", MDT: "1973-05-02", MMM: "1962-01-02", MRK: "1962-01-02", MSFT: "1986-03-13", MTW: "1990-03-26", NBHC: "2012-09-20", NCLH: "2013-01-18", NOC: "1981-12-31", NWSA: "2013-06-19", ORCL: "1986-03-12", PEG: "1980-01-02", PFE: "1972-06-01", PRU: "2001-12-13", PSO: "1996-11-18", QCOM: "1991-12-13", RF: "1980-03-17", RSG: "1998-07-01", RY: "1995-10-16", SAIC: "2013-09-16", SFD: "2025-01-28", SUN: "2012-09-20", T: "1983-11-21", TBBK: "2004-02-03", TFC: "1980-03-18", TGT: "1973-02-21", THC: "1980-03-17", TM: "1980-03-17", TSN: "1980-03-17", TXT: "1973-02-21", UAL: "2006-02-06", UIS: "1972-06-01", UNH: "1984-10-17", USB: "1973-05-03", VLO: "1982-01-04", VZ: "1983-11-21", WAB: "1995-06-16", WELPP: "1994-04-08", WFC: "1972-06-01", WHR: "1973-02-21", WMT: "1972-08-25", WY: "1973-05-03", XOM: "1962-01-02", CX: "1999-09-15", "BRK-B": "1996-05-09", RTX: "1962-04-02", D: "1980-03-17", WEC: "1980-03-17", FE: "1997-11-10" };
 /** EDGAR's former names for the companies the cases read under one, as data.sec.gov gave them on 2026-11-05. */
 const ARCHIVE_FORMER: Record<string, { name: string; until: string }[]> = {
   WMT: [{ name: "WAL MART STORES INC", until: "2018-01-30" }],
@@ -538,8 +539,10 @@ async function archiveChecks(): Promise<void> {
   console.log("\nEvery listed company against every release");
   const { all, shown } = replayArchive(releases);
   const count = (m: Map<string, TimelineEvent[]>) => [...m.values()].reduce((n, v) => n + v.length, 0);
-  check("131 releases name 87 companies; from each one's first price, 111 reach 73 pages (127, 86, 106 and 71 before batch 100)",
-    count(all) === 131 && all.size === 87 && count(shown) === 111 && shown.size === 73 && [...all.keys()].every((t) => t in ARCHIVE_FIRST_PRICES),
+  // batch 121's operating units add 14 on 9 pages: Pratt & Whitney's $52 million of 2008 on RTX, Warner-Lambert's $430 million
+  // of 2004 on Pfizer, Atlantic Richfield's $187 million of 2008 on BP, Davis-Besse's $28 million of 2006 on FirstEnergy…
+  check("145 releases name 92 companies; from each one's first price, 125 reach 78 pages (131, 87, 111 and 73 before batch 121's operating units; 127, 86, 106 and 71 before batch 100)",
+    count(all) === 145 && all.size === 92 && count(shown) === 125 && shown.size === 78 && [...all.keys()].every((t) => t in ARCHIVE_FIRST_PRICES),
     `${count(all)} on ${all.size}; ${count(shown)} on ${shown.size}; no first price: ${[...all.keys()].filter((t) => !(t in ARCHIVE_FIRST_PRICES)).join(",")}`);
   const off = [...all].flatMap(([t, v]) => v.filter((e) => !(shown.get(t) ?? []).some((x) => x.id === e.id)).map((e) => `${t} ${e.date}`));
   check("  …the 20 kept off are from before the company listed: News Corp's of 2001 and 2003, Kinder Morgan's of 2007, Norwegian Cruise Line's",
@@ -558,14 +561,49 @@ async function archiveChecks(): Promise<void> {
   const shownYears = new Map<string, number>();
   for (const v of shown.values()) for (const e of v) shownYears.set(e.date.slice(0, 4), (shownYears.get(e.date.slice(0, 4)) ?? 0) + 1);
   const yearLine = [...shownYears].sort().map(([y, k]) => `${y} ${k}`).join(", ");
-  check("  …in every year of the eight: 2001 14, 2002 8, 2003 13, 2004 10, 2005 8, 2006 19, 2007 15, 2008 24; Walmart 6, Tenet 5, Exxon Mobil 4",
-    yearLine === "2001 14, 2002 8, 2003 13, 2004 10, 2005 8, 2006 19, 2007 15, 2008 24" &&
-      shown.get("WMT")?.length === 6 && shown.get("THC")?.length === 5 && shown.get("XOM")?.length === 4,
+  check("  …in every year of the eight: 2001 14, 2002 10, 2003 16, 2004 12, 2005 10, 2006 21, 2007 16, 2008 26; Exxon Mobil 7, Walmart 6, Tenet 5 (Exxon Mobil 4 before batch 121 gave it Mobil's and ExxonMobil Oil's)",
+    yearLine === "2001 14, 2002 10, 2003 16, 2004 12, 2005 10, 2006 21, 2007 16, 2008 26" &&
+      shown.get("WMT")?.length === 6 && shown.get("THC")?.length === 5 && shown.get("XOM")?.length === 7,
     yearLine);
   const aepEvent = shown.get("AEP")?.find((e) => e.date === "2005-01-26");
   check("  …as the API's are: source doj_press, the Department credited, the release's link, keyed by its path",
     aepEvent?.sourceKey === "doj_press" && aepEvent.source === "Justice Department" && aepEvent.url === `https://www.justice.gov${aep?.path}` &&
       aepEvent.externalId === aep?.path && aepEvent.dedupBasis === `doj:${aep?.path}` && aepEvent.type === "regulation", JSON.stringify(aepEvent));
+
+  console.log("\nThe operating units EPA files under, by their own names (batch 121, the 2026-11-08 proposal 1(c))");
+  const cikOfT = (t: string) => companies.find(([, x]) => x === t)![0];
+  const rel = (title: string, day: string, n = 0): DojRelease => {
+    const [y, m, d] = day.split("-").map(Number);
+    return { title, date: String(Date.UTC(y, m - 1, d, 12) / 1000), url: `https://www.justice.gov/opa/pr/b121-${day}-${n}`, uuid: `b121-${day}-${n}` };
+  };
+  const unitOn = (t: string, r: DojRelease) => dojEvents([r], namesOf(t), (day) => releaseNamesOn(cikOfT(t), day)).length === 1;
+  const archiveOn = (t: string, d: string) => all.get(t)?.some((e) => e.date === d) ?? false;
+  check("the archive's settlements with a unit reach its owner: Pratt & Whitney's $52 million of 2008 RTX's, Firstenergy Nuclear Operating Company's $28 million of 2006 FirstEnergy's, Atlantic Richfield's $187 million of 2008 BP's, Warner-Lambert's $430 million of 2004 Pfizer's, MidAmerican Energy's of 2007 Berkshire's, Mobil's of 2004 ExxonMobil's",
+    archiveOn("RTX", "2008-08-01") && archiveOn("FE", "2006-01-20") && archiveOn("FE", "2005-03-18") && archiveOn("BP", "2008-02-07") && archiveOn("PFE", "2004-05-13") &&
+      archiveOn("BRK-B", "2007-06-01") && archiveOn("XOM", "2004-08-03") && archiveOn("PEG", "2002-01-24") && archiveOn("WEC", "2003-04-29") && archiveOn("D", "2003-02-07"));
+  // the API's own titles, measured 2026-11-08 through `title=`
+  check("  …and the API's years too: BP Exploration's $4 billion plea of 2013, PacifiCorp's $575 million of 2026 (Berkshire), Commonwealth Edison's $200 million of 2020 (Exelon), Raytheon Company's $950 million of 2024 (RTX), CVS Pharmacy's of 2011",
+    unitOn("BP", rel("BP Exploration and Production Inc. Pleads Guilty, Is Sentencedto Pay Record $4 Billion for Crimes SurroundingDeepwater Horizon Incident", "2013-01-29")) &&
+      unitOn("BRK-B", rel("PacifiCorp Agrees to Pay $575M to Settle Claims for Damage Caused by Six Wildfires in California and Oregon", "2026-02-20")) &&
+      unitOn("EXC", rel("Commonwealth Edison Agrees to Pay $200 Million to Resolve Federal Criminal Investigation Into Bribery Scheme", "2020-07-17")) &&
+      unitOn("RTX", rel("Raytheon Company to Pay Over $950M in Connection with Defective Pricing, Foreign Bribery, and Export Control Schemes", "2024-10-16")) &&
+      unitOn("CVS", rel("CVS Pharmacy Inc. Agrees to Pay $17.5 Million to Resolve False Prescription Billing Case", "2011-04-15")));
+  const sikorsky = (day: string) => rel("Sikorsky Aircraft Corporation To Pay $3.5 Million To Settle Allegations Under The False Claims Act", day);
+  const otis = (day: string) => rel("Otis Elevator Company Agrees to Pay More Than $600,000 to Settle False Claims Act Allegation", day);
+  const gulf = (day: string) => rel("Gulf Power Company Agrees to Pay $1 Million to Settle Clean Water Act Violations", day);
+  check("  …each on its days: Sikorsky RTX's to its sale of 2015-11-05, Otis Elevator Otis Worldwide's from 2020-04-02, Gulf Power Southern's to 2018 and NextEra's from 2019, Raytheon Company RTX's only from the merger",
+    unitOn("RTX", sikorsky("2014-03-31")) && !unitOn("RTX", sikorsky("2016-01-04")) && unitOn("OTIS", otis("2025-06-13")) && !unitOn("RTX", otis("2025-06-13")) && unitOn("RTX", otis("2019-06-13")) &&
+      unitOn("SO", gulf("2018-06-01")) && !unitOn("NEE", gulf("2018-06-01")) && unitOn("NEE", gulf("2019-06-01")) && !unitOn("SO", gulf("2019-06-01")) &&
+      !unitOn("RTX", rel("Raytheon Company to Pay $8 Million to Settle False Claims Act Allegations", "2019-05-01")));
+  const ops = Object.values(OPERATING_UNITS).flatMap((b) => b.names);
+  check("  …the map: 288 names on 74 companies, Honda's two with its lender in the banks' map, each with its reason and well-formed days, no company in both maps, all read by every release rule",
+    ops.length === 288 && Object.keys(OPERATING_UNITS).length === 74 && Object.keys(OPERATING_UNITS).every((c) => !(c in BANK_UNITS) && RELEASE_NAMES[Number(c)] === OPERATING_UNITS[Number(c)]) &&
+      ops.every((n) => n.why.length > 20 && !n.beforeListing && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d))) &&
+      releaseNamesOn(715153, "2020-01-01").join("|") === "American Honda Finance|American Honda|Honda of America" &&
+      Object.entries(OPERATING_UNITS).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)),
+    `${ops.length} on ${Object.keys(OPERATING_UNITS).length}`);
+  check("  …and the API is asked for them: RTX's query names Pratt & Whitney and Sikorsky Aircraft",
+    justiceQueryNames("RTX Corp", [], "", cikOfT("RTX")).includes("Pratt & Whitney") && justiceQueryNames("RTX Corp", [], "", cikOfT("RTX")).includes("Sikorsky Aircraft"));
 
   console.log("\nRead once, and kept");
   const db: ArchiveDb = { months: new Map(), releases: new Map(), listed: "1962-01-02", renames: [] };

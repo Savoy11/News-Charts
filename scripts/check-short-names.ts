@@ -204,7 +204,7 @@ async function main(): Promise<void> {
   try {
     globalThis.fetch = (async (input: RequestInfo | URL) => {
       const u = new URL(String(input));
-      const name = u.searchParams.get("parameters[title]") ?? "";
+      const name = u.searchParams.get("title") ?? "";
       pages.push(`${name}:${u.searchParams.get("page")}`);
       // "AIG" is inside 1,600 titles ("Craig"), "UPS" inside 273
       const count = name === "AIG" ? 1600 : name === "UPS" ? 273 : 3;

@@ -988,6 +988,92 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 120: EPA's cases under 28 more companies' operating units, and "&" read as "and" (2026-11-08)
+
+The owner's calls of 2026-11-08 on the 2026-11-08 proposals: "All three", and on #1's two calls, "Yes,
+both as drafted". This batch files all three into Scope refocus and builds #1's parts (a) and (b). No
+new source: more entries in a list EPA's rule already reads, and one spelling in the caption rule every
+regulator source shares. #1's part (c), the release map for the Justice Department's rule, is next
+(batch 121), then #2 (batch 122) and #3 (batch 123).
+
+- [x] **The units** (`UNITS`, lib/epaCases.ts): 112 more entries on 30 companies, 95 in all. Each is
+      between the days its owner held it, and every day is read from data.sec.gov's filing lists by the
+      batch 114 rule: the earliest report day the deal's filings give (the buyer's 8-K reporting the
+      completed merger, else the bought company's change in control, else its Form 15). Each day and
+      filing is in the `UNITS` header. Among them:
+      - **Berkshire Hathaway:** BNSF Railway from 2010-02-12 (BNSF's 8-K, items 2.01 and 5.01),
+        PacifiCorp, Lubrizol, Shaw, Johns Manville, Precision Castparts, Fruit of the Loom, NV Energy's
+        utilities; MidAmerican Energy and its pipelines from 2006-02-09, the owner's call.
+      - **RTX**, United Technologies' record: Pratt & Whitney, Hamilton Sundstrand and the divisions;
+        Sikorsky to 2015-11-05; Otis and Carrier to 2020-04-01; Goodrich, Rockwell Collins and
+        Raytheon Company from their days.
+      - **Pfizer:** Warner-Lambert, Pharmacia and Upjohn, Wyeth; Pharmacia LLC, the old Monsanto
+        Company's legal entity, from 2003-04-16, the owner's call.
+      - **The pipelines:** El Paso's on Kinder Morgan from 2012-05-24, Transco on Williams from
+        1995-01-18, Spectra's on Enbridge from 2017-02-27, ANR and Columbia on TC Energy.
+      - **Refiners, chemical makers, miners, food and drink companies:** Valero (Ultramar Diamond
+        Shamrock, Premcor), Honeywell (AlliedSignal's own, old Honeywell's from 1999-12-01), Freeport
+        (Phelps Dodge's from 2007-03-19), Mosaic, Westlake, LyondellBasell, Huntsman, TotalEnergies,
+        Rio Tinto (Kennecott, U.S. Borax), Republic Services (Allied Waste, Browning-Ferris), Sysco,
+        Tyson (IBP, Hillshire), PepsiCo, Molson Coors, AB InBev, CVS, Honda, Deere, Textron,
+        Cleveland-Cliffs.
+- [x] **A unit sold to another listed company goes to it on the day.** The scout's draft gave some
+      units to the seller for too long. The filings say otherwise:
+      - Panhandle Eastern and Trunkline were Duke's only to 1999-03-28 (CMS Energy bought them), not
+        to 2007; Trunkline's 2019 order is Energy Transfer's, from Southern Union's merger of
+        2012-03-23;
+      - Keystone Pipeline is South Bow's from the spin-off of 2024-10-01: its 2026 case leaves TC
+        Energy;
+      - Otis Elevator's 2022 Diamond Alkali decree is Otis Worldwide's, not RTX's. Carrier Global's own
+        rule already reads "Carrier Corporation", so it needs no entry;
+      - Williams's production companies end at the WPX spin-off (2011-12-29), and El Paso's
+        exploration companies, sold with the merger, are never Kinder Morgan's.
+- [x] **Namesakes refused by name,** each read by hand among every name a pattern takes on EPA's whole
+      file: Huntsman Springs, Mosaic Life Care (a hospital), Valero Terrestrial (a landfill), El Paso
+      Electric and the City of El Paso, Westlake Hardware, Westlake Energy and Westlake Refining, the
+      old Total Petroleum (Ultramar Diamond Shamrock's from 1997), McMoRan's Freeport-McMoRan Energy,
+      Millennium Inorganic Chemicals (Cristal's from 2007), the Lyondell Environmental Custodial Trust,
+      ANR Production and Freight, IMC Magnetics, Tyson's Dump.
+- [x] **"&" read as "and"** (`andSpellings`, lib/edgarName.ts):
+      - The caption rule (`captionParty`) every regulator source shares reads a name holding "&" in
+        both spellings, as batch 111 reads a legal form. So do the letters EPA's, the CPSC's, the
+        CFPB's and the Board's sources ask by.
+      - The guards were already right: the listed-name count reads "&" as "and" (`phrase`, lib/sec.ts),
+        so a shared name stays shared in both spellings.
+      - T's taken name reads "AT AND T" too, so a 1993 order of AT&T Corp.'s stays off AT&T Inc.'s
+        page.
+- **Measured** on EPA's whole file of 2026-10-31, each page from its first price and under its EDGAR
+  former names, main against this branch, on the 30 companies and the 249 records whose EDGAR names hold
+  "&":
+  - 906 cases and 818 rows more on 41 pages, none fewer. Of the 839 distinct cases, 471 are a court
+    case or a penalty, 345 of them before 2017; 304 carry a penalty, 17 of them $1 million or more.
+  - The largest: Enbridge Energy's $62,000,000 Marshall and Romeoville decree of 2016, American Honda's
+    $10,100,000 of 1998, IMC Phosphates' $4,100,000 and Mosaic Phosphates' $3,900,000 of 2015, Valero
+    Refining's $3,592,308 national decree of 2005, Equistar and Lyondell's $3,400,000 of 2021.
+  - By page: Honeywell 168→246, RTX 45→121, Berkshire 0→57, Air Products 13→66, Pfizer 59→105,
+    Valero 11→53, Rio Tinto 1→38, Westlake 3→38, Williams 6→34, Republic Services 3→33, Goodyear
+    76→103.
+  - Nine pages had no EPA row and now do: Berkshire, TotalEnergies 21, TC Energy 8, AB InBev 5, Honda
+    5, Otis, South Bow, Aimco and Chicago Rivet.
+  - No day is near a case: no case falls within a few days of any of them. Where an 8-K's report day
+    is a day or two before its filing (Kinder Morgan's, Cleveland-Cliffs', RTX's), the report day is
+    used.
+- **Left out:** Benjamin Moore, Marmon, McLane and Clayton Homes on Berkshire (no filing here gives
+  their days; EPA files no case under Clayton), Fina and Atofina on TotalEnergies (likewise), Kern
+  River's years as Williams's (1996–2002), and Cessna's cases as General Dynamics's (1985–1992).
+- **Requests:** 59, logged in the session scratchpad (`b120/requests.log`), each with User-Agent `News
+  Charts Research` and no email address, at least 1.1 s apart: data.sec.gov 55 (the filing lists) and
+  Yahoo's chart 4 (first trading days). No www.sec.gov page was asked.
+- **Checks:** check:epa-cases gains 13 (109). Its committed slice gains every row of the five tables
+  for the 1,119 cases the units name on any day, the "and" spelling puts on a page, or that name "AT
+  AND T". On it, before first prices: 8,889 rows on 690 companies, 7,526 before 2017 (7,899 on 679
+  before). On main's code, 19 of the 109 fail: the 13 new ones and 6 totals. check:cpsc's totals gain
+  the four recalls the spelling adds (2,304 rows on 196 companies): Stanley Black and Decker's DeWALT
+  mowers of 2024, Bath and Body Works' candles of 2004, John Wiley and Sons' book of 2003, and Academy
+  Sports and Outdoors' heaters of 2003, before its listing. check:digest-walk's 1985 count gains 8 SEC
+  orders under the Holding Company Act, all Connecticut Light and Power Company's (CNTHP's issuer), 520
+  rows on 260 companies; none is on its page, which trades from later.
+
 ## NC ledger — batch 119: a new opportunity-scout run, three proposals for the owner (2026-11-08)
 
 Every proposal of 2026-11-07 is approved and built (batches 113–115). Batches 116–118 fixed what the
@@ -996,8 +1082,10 @@ repository again at `5dc9b26` and wrote `docs/proposals/2026-11-08-proposals.md`
 **PENDING**, ranked with securities depth first. The owner's word, 2026-11-07: "Lets continue".
 Nothing is built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ **Marked 2026-11-08: all three approved** ("All three"; on #1's two calls, "Yes, both as
+      drafted"), filed under Scope refocus by batch 120.
       1. `P1` **EPA's cases under 28 more companies' own operating units.** No new source; three
          parts, each approvable alone.
          - **(a) The units list** (`UNITS`, lib/epaCases.ts): about 100 patterns on 28 companies.
@@ -9222,6 +9310,39 @@ already held, but new investment goes to securities coverage first.
         day are asked under the record's own name of then. Linde plc and Six Flags, which had no
         name of their own before, keep the present one.
       - *Raised by batch 117.*
+- [ ] `P1` **EPA's cases under 28 more companies' own operating units.** No new source: approved by
+      the owner 2026-11-08 ("All three"), with both calls inside it as drafted: Pharmacia LLC on
+      Pfizer's page from 2003, MidAmerican Energy Berkshire's from 2006-02-09. Three parts: (a) the
+      units in `UNITS` (BNSF on Berkshire, Pratt & Whitney on RTX, AlliedSignal's on Honeywell), each
+      day read from a filing; (b) a name's "&" read as "and" too, with the taken-names table reading
+      "AT AND T"; (c) the same units' names in the release map, for the Justice Department's rule.
+      - **Measured** by the scout: 847 cases, 481 a court case or a penalty, 350 of those before 2017;
+        (b) 112 cases; (c) 12 releases of 2001–2008 on 8 pages.
+      - ✅ **Parts (a) and (b) done in batch 120** (see its section): 112 unit entries on 30
+        companies, every day read from a filing; 906 cases and 818 rows more on 41 pages from first
+        prices, none fewer, 471 of the cases a court case or a penalty, 345 before 2017; nine pages
+        gain their first EPA rows.
+      - **Next: batch 121, part (c).**
+      - *Derived from [`docs/proposals/2026-11-08-proposals.md`](proposals/2026-11-08-proposals.md)
+        #1, approved 2026-11-08.*
+- [ ] `P2` **EPA's own days on the cases pages already hold.** No new source: approved by the owner
+      2026-11-08. Two tables of the zip the monthly walk already reads: (a) the day the suit was
+      filed, a row of its own beside the decree's; (b) each settlement of a case whose defendants are
+      all the company's, on its own day. It fixes the rows dated by a later amendment with no penalty
+      (Wisconsin Electric's 05-2003-0333).
+      - **Measured** by the scout: (a) 178 cases on 85 pages, 128 before 2001; (b) 26 cases, 46
+        settlements.
+      - **Next: batch 122.**
+      - *Derived from [`docs/proposals/2026-11-08-proposals.md`](proposals/2026-11-08-proposals.md)
+        #2, approved 2026-11-08.*
+- [ ] `P2` **NHTSA recalls under makers listed companies own that the map lacks.** No new source:
+      approved by the owner 2026-11-08. About 20 more makers in `RECALL_MAKERS` (lib/recalls.ts),
+      each day read from a filing: Graco's child seats on Newell, Dana, Lippert on LCI, Hino on Toyota,
+      Kelly-Springfield on Goodyear.
+      - **Measured** by the scout: 84 recalls on 20 pages, 57 before 2017; six days were estimates.
+      - **Next: batch 123.**
+      - *Derived from [`docs/proposals/2026-11-08-proposals.md`](proposals/2026-11-08-proposals.md)
+        #3, approved 2026-11-08.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

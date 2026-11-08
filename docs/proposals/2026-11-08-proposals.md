@@ -64,7 +64,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. EPA's cases under 28 more companies' own operating units: BNSF on Berkshire, Pratt & Whitney and Carrier on RTX, AlliedSignal's on Honeywell, Valero Refining, Enbridge Energy, American Honda, Kennecott on Rio Tinto… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-08: "All three", and on its two calls "Yes, both as drafted": Pharmacia LLC counts on Pfizer's page from 2003, and MidAmerican Energy as Berkshire's from 2006-02-09. Parts (a) and (b) built in batch 120, every ownership day read from a filing: 906 cases and 818 rows more on 41 pages from first prices, none fewer. Part (c), the units' names in the release map for the Justice Department's rule, is next, in batch 121.
 **Owner's reason (if rejected):**
 
 **Raised before:** as lines, never measured.
@@ -223,7 +223,7 @@ medium — about 47 ownership days to read from filings, and two owner calls ins
 
 ## 2. EPA's own days on the cases pages already hold: the day the suit was filed, and each settlement of a case that is all the company's · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-08: "All three". To be built after #1's part (c).
 **Owner's reason (if rejected):**
 
 **Raised before:**
@@ -366,7 +366,7 @@ the saved file; one threshold and the moved rows to watch
 
 ## 3. The NHTSA recalls filed under makers listed companies own and the map lacks: Graco's child seats on Newell, Dana, Lippert on LCI, Hino on Toyota, Kelly-Springfield on Goodyear… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-08: "All three". To be built after #2, each maker's day read from filings.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. Batches 30 and 31 mapped vehicle and RV makers. Tire, equipment and child-seat

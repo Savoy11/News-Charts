@@ -50,15 +50,16 @@ const firstPrices: Record<string, string | null> = { ...fx.firstPrices, "310158"
 /**
  * The 1985 replay's counts, measured 2026-11-06; batch 108 adds old Merck's record (1,455 records,
  * 509 rows on 259, 184 8-K reports, 362 on 188 pages as 358 events before). Batch 87's undated first
- * pass gave 508 rows on 258.
+ * pass gave 508 rows on 258. Batch 120's "and" for "&" adds 8 orders, all Connecticut Light and Power
+ * Company's (CNTHP's issuer), under the Holding Company Act: 512 rows and 53 orders before.
  */
 const EXPECTED = {
   records: 1456,
   issues: 250,
   entries: 23922,
-  rows: 512,
+  rows: 520,
   companies: 260,
-  kinds: { "8-K report": 187, registration: 129, "registration effective": 110, order: 53, stake: 30, enforcement: 2, other: 1 } as Record<string, number>,
+  kinds: { "8-K report": 187, registration: 129, "registration effective": 110, order: 61, stake: 30, enforcement: 2, other: 1 } as Record<string, number>,
   onPage: 365,
   onPageCompanies: 189,
   events: 361,
@@ -193,7 +194,7 @@ async function main(): Promise<void> {
   check(`${EXPECTED.rows} rows on ${EXPECTED.companies} companies`, rows.length === EXPECTED.rows && ciks.length === EXPECTED.companies, { rows: rows.length, companies: ciks.length });
   const kinds: Record<string, number> = {};
   for (const r of rows) kinds[r.kind] = (kinds[r.kind] ?? 0) + 1;
-  check("  …by section: 187 8-K reports, 129 registrations, 110 declared effective, 53 orders, 30 stakes, 2 actions, 1 other", JSON.stringify(Object.entries(kinds).sort()) === JSON.stringify(Object.entries(EXPECTED.kinds).sort()), kinds);
+  check("  …by section: 187 8-K reports, 129 registrations, 110 declared effective, 61 orders, 30 stakes, 2 actions, 1 other", JSON.stringify(Object.entries(kinds).sort()) === JSON.stringify(Object.entries(EXPECTED.kinds).sort()), kinds);
   const crane = rows.filter((r) => r.cik === 25445);
   check(
     "  …the one row batch 87 lost: Crane Co. (25445, now CXT), declared effective 1985-10-11 — today's Crane Co (1944013) is no claimant, its record opened in 2023",

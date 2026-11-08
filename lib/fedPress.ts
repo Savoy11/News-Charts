@@ -1,5 +1,6 @@
 import { DESIGNATOR, START, escapeName, outrankedName, plainText } from "./doj";
 import { fedBanksFor, type FedOrg } from "./fedActions";
+import { andSpellings } from "./edgarName";
 import { longerListedNameIn } from "./frCompany";
 import { eastern } from "./marketTime";
 import { listedCompaniesNamed } from "./sec";
@@ -228,7 +229,7 @@ export function fedPressEvents(
     const held = [...names(Number(r.day.slice(0, 4))), ...(namesOn?.(r.day) ?? [])];
     // a name can only be a party where the title's letters and digits, or an archived order's sentence's, hold its own
     const letters = alnum(`${r.title} ${r.summary ?? ""}`);
-    if (!held.some((n) => alnum(n).length >= 2 && letters.includes(alnum(n))) && !orgs.some((o) => o.match.test(r.title))) continue;
+    if (!held.flatMap(andSpellings).some((n) => alnum(n).length >= 2 && letters.includes(alnum(n))) && !orgs.some((o) => o.match.test(r.title))) continue;
     if (!fedReleaseNames(r, held, orgs)) continue;
     const key = r.url.replace(/^https:\/\/www\.federalreserve\.gov/, "");
     out.push({

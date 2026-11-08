@@ -1,4 +1,5 @@
 import { UA } from "./contact";
+import { andSpellings } from "./edgarName";
 import { LEGAL_WORD, captionParty } from "./secCases";
 import type { TimelineEvent } from "./types";
 import { decodeText, eachCsvRow, readZip } from "./zip";
@@ -484,6 +485,72 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
  * - Each company's own and no more: NextEra's Florida Power & Light, PSEG's PSE&G, Edison
  *   International's Southern California Edison, PG&E, CMS's Consumers, Pinnacle West's Arizona Public
  *   Service, OGE, IDACORP, TXNM's Public Service of New Mexico, Hawaiian Electric and MGE.
+ *
+ * 28 more companies' operating units (batch 120, the 2026-11-08 proposal 1, approved by the owner that
+ * day with its two calls), each day read from data.sec.gov's filing lists on 2026-11-08 by the same
+ * rule, the earliest report day the deal's filings give; where an 8-K's report day is a day or two
+ * before it was filed (Kinder Morgan's, Cleveland-Cliffs', RTX's), no case falls in the days around it:
+ * - Berkshire Hathaway: BNSF Railway from 2010-02-12 (BNSF's 8-K, items 2.01 and 5.01); PacifiCorp from
+ *   2006-03-21 (MidAmerican's 8-K, items 1.01 and 2.01); MidAmerican Energy, Northern Natural Gas and
+ *   Kern River from 2006-02-09 (MidAmerican's 8-K, item 5.01): Berkshire held about 80% of MidAmerican
+ *   from 2000 but under 10% of its vote until then, the owner's call; Nevada Power and Sierra Pacific
+ *   Power from 2013-12-19 (NV Energy's 8-K, items 2.01 and 5.01); Lubrizol from 2011-09-16 and Precision
+ *   Castparts from 2016-01-29 (each one's 8-K, items 2.01 and 5.01); Johns Manville from 2001-02-24 (its
+ *   8-K, item 1); Shaw Industries from 2001-01-10 and Fruit of the Loom from 2002-05-02 (each one's Form
+ *   15). Benjamin Moore, Marmon, McLane and Clayton Homes are left out: no filing here gives their days,
+ *   and EPA files no case under Clayton Homes.
+ * - RTX, United Technologies' record: Pratt & Whitney, Hamilton Sundstrand and its divisions its own;
+ *   Sikorsky to 2015-11-05 (UTC's 8-K reporting 2015-11-06, item 8.01); Otis, Carrier and the
+ *   divisions' names to 2020-04-01 (RTX's 8-K of the separations and the Raytheon merger, items 1.01 and
+ *   2.01, reporting 2020-04-02), Otis Elevator Otis Worldwide's from 2020-04-02 (Carrier Global's own
+ *   rule reads "Carrier Corporation"); United Technologies Automotive to 1999-05-03 (Lear's 8-K
+ *   reporting 1999-05-04, items 5 and 7); Pratt & Whitney Rocketdyne to 2013-06-11 (GenCorp's 8-K of its purchase,
+ *   items 1.01 and 2.01, 2013-06-12); Goodrich from 2012-07-26, Rockwell Collins from 2018-11-26 and
+ *   Raytheon Company from 2020-04-02 (the 8-Ks, item 2.01).
+ * - Kinder Morgan: its companies and SFPP its own; El Paso's pipelines and companies from 2012-05-24
+ *   (Kinder Morgan's 8-K, item 2.01), never El Paso's exploration and production companies, sold to
+ *   others with the merger.
+ * - Williams: Northwest Pipeline and its companies its own, its production companies to 2011-12-29 (WPX
+ *   Energy's 8-K of the spin-off, items 2.01 and 5.01, 2011-12-30); Transco from 1995-01-18 (Williams's
+ *   8-K, item 2).
+ * - Enbridge: its US companies its own, Enbridge Energy's among them; Spectra Energy's pipelines from
+ *   2017-02-27 (Enbridge's 6-K of the merger).
+ * - Duke: PanEnergy's pipelines from 1997-06-18 (Duke Power's 8-K, item 2); Panhandle Eastern and
+ *   Trunkline to 1999-03-28 (CMS Energy's 8-K of their purchase, item 2, 1999-03-29), and Energy
+ *   Transfer's from 2012-03-23 (Southern Union's 8-K, items 2.01 and 5.01); Texas Eastern, Algonquin and
+ *   East Tennessee to 2007-01-01 (Spectra Energy's first 8-K, of the spin-off on 2007-01-02, and Duke's,
+ *   item 2.01), Enbridge's from 2017-02-27.
+ * - TC Energy: its US companies its own, Keystone Pipeline to 2024-09-30 and South Bow's from
+ *   2024-10-01 (South Bow's registration and TC Energy's 6-Ks of that day); ANR Pipeline from 2007-02-27
+ *   (ANR's 8-K, item 5.01); Columbia's pipelines from 2016-07-01 (TC Energy's 6-K).
+ * - Valero: its refining, marketing, logistics and renewable fuels companies its own (not Valero
+ *   Terrestrial, a West Virginia landfill, nor old Valero's gas companies); Ultramar Diamond Shamrock
+ *   from 2001-12-31 and Premcor from 2005-09-01 (Valero's 8-Ks, item 2 and item 2.01).
+ * - Tyson: its companies its own; IBP from 2001-09-28 and Hillshire from 2014-08-28 (Tyson's 8-Ks).
+ * - Honeywell, AlliedSignal's record: AlliedSignal's companies its own, old Honeywell's from 1999-12-01
+ *   (its 8-K of the merger, item 2).
+ * - Freeport-McMoRan: Phelps Dodge's, Cyprus Amax's and Climax Molybdenum's companies from 2007-03-19
+ *   (Freeport's 8-K, item 2.01), and the mines that then took Freeport's name; Freeport-McMoRan Resource
+ *   Partners, Sulphur, Gold and Energy were other companies' (IMC's, McMoRan's), and are not.
+ * - Schlumberger: its companies its own; Smith International from 2010-08-27, Cameron from 2016-04-01.
+ * - Mosaic: Mosaic's, IMC's and Cargill Fertilizer's companies from 2004-10-22 (Mosaic's 8-K, item 2.01).
+ * - Westlake: its vinyls, polymers and petrochemicals companies its own; Axiall's, Georgia Gulf's and
+ *   Eagle's from 2016-08-31 (Westlake's 8-K, item 2.01).
+ * - Republic Services: its companies its own; Allied Waste's and Browning-Ferris's from 2008-12-05.
+ * - Pfizer: Warner-Lambert and Parke-Davis from 2000-06-19; Pharmacia and Upjohn from 2003-04-16, with
+ *   Pharmacia LLC, the old Monsanto Company's legal entity, the owner's call; Wyeth from 2009-10-15.
+ * - PepsiCo: Frito-Lay its own; Quaker Oats from 2001-08-02 (PepsiCo's 8-K of that day; its item 2
+ *   report followed on 2001-08-08); Pepsi Bottling Group from 2010-02-26.
+ * - Molson Coors: Coors Brewing its own; MillerCoors, a joint venture before, from 2016-10-11.
+ * - AB InBev: Anheuser-Busch from 2008-11-18 (Anheuser-Busch's 8-K, item 5.01).
+ * - Textron: Bell Helicopter and E-Z-GO its own; Cessna from 1994-03-30, Textron's 10-K for 1993, its
+ *   first on EDGAR: Textron bought Cessna from General Dynamics in 1992, before EDGAR.
+ * - Cleveland-Cliffs: AK Steel from 2020-03-13 and ArcelorMittal USA's plants from 2020-12-07 (Cliffs'
+ *   8-Ks, item 2.01).
+ * - Each company's own and no more: Huntsman's, LyondellBasell's (Equistar, Lyondell, Houston Refining,
+ *   Millennium Petrochemicals; not the Lyondell Environmental Custodial Trust), TotalEnergies' US
+ *   companies (Fina and Atofina are left out: no filing here gives their days), Rio Tinto's (Kennecott,
+ *   U.S. Borax), Sysco's, CVS's, Honda's US companies (no dealer) and John Deere's works.
  */
 export interface EpaUnit {
   ticker: string;
@@ -503,10 +570,17 @@ export const BRANDED_SITE = /\b(?:SERVICE\s+STATIONS?|STATIONS?|STA\b|SVC|TRUCK\
 
 const unit = (ticker: string, name: string, defendant: RegExp, key: string, days: { from?: string; to?: string; branded?: true } = {}): EpaUnit => ({ ticker, unit: name, defendant, key, ...days });
 const OIL = { branded: true as const };
+/** United Technologies' name before its unit's, as EPA writes it: "UNITED TECHNOLOGIES CORP PRATT & WHITNEY", "UNITED TECHNOLOGIES/PRATT & WHITNEY DIV". */
+const UTC = String.raw`^(?:UNITED TECHNOLOGIES(?: CORP(?:ORATION)?)?\.?,?\s*[-/(]?\s*(?:DIV(?:ISION)?\.?\s*(?:OF\s*)?)?)?`;
 
 export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
   // Energy Transfer (batch 101)
-  1276187: [unit("ET", "Sunoco, Inc.", /^SUNOCO,?\s+(?:INC|INCORPORATED)\b/i, "sunoco", { from: "2012-10-05" })],
+  1276187: [
+    unit("ET", "Sunoco, Inc.", /^SUNOCO,?\s+(?:INC|INCORPORATED)\b/i, "sunoco", { from: "2012-10-05" }),
+    // batch 120: Southern Union's pipelines, from its merger with Energy Transfer Equity
+    unit("ET", "Panhandle Eastern and Trunkline", /^PANHANDLE EASTERN PIPE ?LINE\b/i, "panhandleeastern", { from: "2012-03-23" }),
+    unit("ET", "Panhandle Eastern and Trunkline", /^TRUNKLINE GAS\b/i, "trunklinegas", { from: "2012-03-23" }),
+  ],
   // Chevron
   93410: [
     unit("CVX", "Chevron U.S.A.", /^CHEVRON,?\s+U\.?\s?S\.?\s?A\b/i, "chevron", OIL),
@@ -593,6 +667,12 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("DUK", "Progress Energy's companies", /^CAROLINA POWER\s*(?:&|AND)\s*LIGHT\b/i, "carolinapower", { from: "2012-07-02" }),
     unit("DUK", "Progress Energy's companies", /^PROGRESS ENERGY\b/i, "progressenergy", { from: "2012-07-02" }),
     unit("DUK", "Progress Energy's companies", /^FLORIDA POWER CORP(?:ORATION)?\b/i, "floridapowercorp", { from: "2012-07-02" }),
+    // batch 120: PanEnergy's pipelines, from the merger to their sale or spin-off (above)
+    unit("DUK", "PanEnergy's pipelines", /^TEXAS EASTERN TRANSMISSION\b/i, "texaseastern", { from: "1997-06-18", to: "2007-01-01" }),
+    unit("DUK", "PanEnergy's pipelines", /^ALGONQUIN GAS TRANSMISSION\b/i, "algonquingas", { from: "1997-06-18", to: "2007-01-01" }),
+    unit("DUK", "PanEnergy's pipelines", /^EAST TENNESSEE NATURAL GAS\b/i, "easttennessee", { from: "1997-06-18", to: "2007-01-01" }),
+    unit("DUK", "PanEnergy's pipelines", /^PANHANDLE EASTERN PIPE ?LINE\b/i, "panhandleeastern", { from: "1997-06-18", to: "1999-03-28" }),
+    unit("DUK", "PanEnergy's pipelines", /^TRUNKLINE GAS\b/i, "trunklinegas", { from: "1997-06-18", to: "1999-03-28" }),
   ],
   1094517: [unit("TM", "Toyota Motor's US companies", /^TOYOTA MOTOR\b/i, "toyotamotor")],
   354950: [unit("HD", "Home Depot U.S.A.", /^(?:THE\s+)?HOME DEPOT,?\s+(?:U\.?\s?S\.?\s?A|NORTHEASTERN)/i, "homedepot")],
@@ -792,6 +872,164 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("VST", "Luminant and TXU Energy", /^TXU (?:GENERATION|ENERGY|ELECTRIC(?!\s+DELIVERY))\b/i, "txu"),
     unit("VST", "Dynegy's companies", /^DYNEGY\b/i, "dynegy", { from: "2018-04-09" }),
   ],
+  // batch 120, the 2026-11-08 proposal 1(a): 28 more companies' operating units, each day read from a filing (above)
+  // Berkshire Hathaway
+  1067983: [
+    unit("BRK-B", "BNSF Railway", /^(?:THE\s+)?BNSF\b/i, "bnsf", { from: "2010-02-12" }),
+    unit("BRK-B", "BNSF Railway", /^(?:THE\s+)?BURLINGTON NORTHERN\b/i, "burlingtonnorthern", { from: "2010-02-12" }),
+    unit("BRK-B", "PacifiCorp", /^PACIFICORP\b/i, "pacificorp", { from: "2006-03-21" }),
+    unit("BRK-B", "MidAmerican Energy and its pipelines", /^MIDAMERICAN ENERGY\b/i, "midamericanenergy", { from: "2006-02-09" }),
+    unit("BRK-B", "MidAmerican Energy and its pipelines", /^NORTHERN NATURAL GAS\b/i, "northernnaturalgas", { from: "2006-02-09" }),
+    unit("BRK-B", "MidAmerican Energy and its pipelines", /^KERN RIVER GAS\b/i, "kernrivergas", { from: "2006-02-09" }),
+    unit("BRK-B", "NV Energy's utilities", /^NEVADA POWER\b/i, "nevadapower", { from: "2013-12-19" }),
+    unit("BRK-B", "NV Energy's utilities", /^SIERRA PACIFIC POWER\b/i, "sierrapacificpower", { from: "2013-12-19" }),
+    unit("BRK-B", "Lubrizol", /^(?:THE\s+)?LUBRIZOL\b/i, "lubrizol", { from: "2011-09-16" }),
+    unit("BRK-B", "Shaw Industries", /^SHAW INDUSTRIES\b/i, "shawindustries", { from: "2001-01-10" }),
+    unit("BRK-B", "Johns Manville", /^JOHNS[- ]MANVILLE\b/i, "johnsmanville", { from: "2001-02-24" }),
+    unit("BRK-B", "Precision Castparts", /^PRECISION CASTPARTS\b/i, "precisioncastparts", { from: "2016-01-29" }),
+    unit("BRK-B", "Fruit of the Loom", /^FRUIT OF THE LOOM\b/i, "fruitoftheloom", { from: "2002-05-02" }),
+  ],
+  // RTX, United Technologies' record: its divisions to the separations, the bought companies from their days
+  101829: [
+    unit("RTX", "Pratt & Whitney", new RegExp(UTC + String.raw`PRATT\s*(?:&|AND)\s*WHITNEY\b(?!\s+ROCKETDYNE)`, "i"), "pratt"),
+    unit("RTX", "Pratt & Whitney Rocketdyne", /^PRATT\s*(?:&|AND)\s*WHITNEY\s+ROCKETDYNE\b/i, "pratt", { to: "2013-06-11" }),
+    unit("RTX", "Hamilton Sundstrand", new RegExp(UTC + String.raw`HAMILTON (?:SUNDSTRAND|STANDARD)\b`, "i"), "hamilton"),
+    unit("RTX", "United Technologies' divisions", /^UNITED TECHNOLOGIES\b(?!\s+AUTOMOTIVE)/i, "unitedtechnologies", { to: "2020-04-01" }),
+    unit("RTX", "United Technologies Automotive", /^UNITED TECHNOLOGIES\s+AUTOMOTIVE\b/i, "unitedtechnologies", { to: "1999-05-03" }),
+    unit("RTX", "Sikorsky", new RegExp(UTC + "SIKORSKY AIRCRAFT", "i"), "sikorsky", { to: "2015-11-05" }),
+    unit("RTX", "Otis Elevator", new RegExp(UTC + "OTIS ELEVATOR", "i"), "otiselevator", { to: "2020-04-01" }),
+    unit("RTX", "Carrier", new RegExp(UTC + String.raw`CARRIER (?:CORP|CORPORATION)\b`, "i"), "carriercorp", { to: "2020-04-01" }),
+    unit("RTX", "Goodrich", /^GOODRICH (?:CORP|CORPORATION)\b/i, "goodrich", { from: "2012-07-26" }),
+    unit("RTX", "Rockwell Collins", /^ROCKWELL COLLINS\b/i, "rockwellcollins", { from: "2018-11-26" }),
+    unit("RTX", "Raytheon Company", /^RAYTHEON\b/i, "raytheon", { from: "2020-04-02" }),
+  ],
+  // Otis Worldwide, from its separation from United Technologies (Carrier Global's own rule reads "Carrier Corporation")
+  1781335: [unit("OTIS", "Otis Elevator", new RegExp(UTC + "OTIS ELEVATOR", "i"), "otiselevator", { from: "2020-04-02" })],
+  // the pipelines
+  1506307: [
+    unit("KMI", "Kinder Morgan's companies", /^KINDER MORGAN\b/i, "kindermorgan"),
+    unit("KMI", "SFPP", /^SFPP\b/i, "sfpp"),
+    unit("KMI", "El Paso's companies", /^EL PASO (?:NATURAL GAS|CORP(?:ORATION)?|ENERGY CORP(?:ORATION)?|TENNESSEE PIPELINE|MERCHANT ENERGY|CGP|FIELD SERVICES|PIPELINE PARTNERS)\b/i, "elpaso", { from: "2012-05-24" }),
+    unit("KMI", "El Paso's companies", /^TENNESSEE GAS PIPELINE\b/i, "tennesseegaspipeline", { from: "2012-05-24" }),
+    unit("KMI", "El Paso's companies", /^SOUTHERN NATURAL GAS\b/i, "southernnaturalgas", { from: "2012-05-24" }),
+    unit("KMI", "El Paso's companies", /^COLORADO INTERSTATE GAS\b/i, "coloradointerstategas", { from: "2012-05-24" }),
+  ],
+  107263: [
+    unit("WMB", "Northwest Pipeline", /^NORTHWEST PIPELINE\b/i, "northwestpipeline"),
+    unit("WMB", "Williams' companies", /^(?:THE\s+)?WILLIAMS (?:FIELD SERVICES|GAS PIPELINE|MIDSTREAM|OLEFINS|FOUR CORNERS|PARTNERS|ENERGY (?:SERVICES|MARKETING))\b/i, "williams"),
+    unit("WMB", "Williams' production companies", /^(?:THE\s+)?WILLIAMS (?:PRODUCTION|E&P|EXPLORATION)\b/i, "williams", { to: "2011-12-29" }),
+    unit("WMB", "Transco", /^TRANSCONTINENTAL GAS PIPE ?LINE\b/i, "transcontinentalgas", { from: "1995-01-18" }),
+  ],
+  895728: [
+    unit("ENB", "Enbridge's US companies", /^ENBRIDGE\b/i, "enbridge"),
+    unit("ENB", "Spectra Energy's pipelines", /^TEXAS EASTERN TRANSMISSION\b/i, "texaseastern", { from: "2017-02-27" }),
+    unit("ENB", "Spectra Energy's pipelines", /^ALGONQUIN GAS TRANSMISSION\b/i, "algonquingas", { from: "2017-02-27" }),
+    unit("ENB", "Spectra Energy's pipelines", /^EAST TENNESSEE NATURAL GAS\b/i, "easttennessee", { from: "2017-02-27" }),
+    unit("ENB", "Spectra Energy's pipelines", /^SPECTRA ENERGY\b/i, "spectraenergy", { from: "2017-02-27" }),
+  ],
+  1232384: [
+    unit("TRP", "TransCanada's US companies", /^TRANSCANADA\b(?!\s+KEYSTONE)/i, "transcanada"),
+    unit("TRP", "TransCanada's US companies", /^TC ENERGY\b(?!\s+KEYSTONE)/i, "tcenergy"),
+    unit("TRP", "Keystone Pipeline", /^(?:TRANSCANADA|TC (?:ENERGY|OIL))\s+KEYSTONE\b/i, "keystone", { to: "2024-09-30" }),
+    unit("TRP", "ANR Pipeline", /^ANR PIPE ?LINE\b/i, "anrpipe", { from: "2007-02-27" }),
+    unit("TRP", "Columbia's pipelines", /^COLUMBIA GAS TRANSMISSION\b/i, "columbiagastransmission", { from: "2016-07-01" }),
+    unit("TRP", "Columbia's pipelines", /^COLUMBIA GULF TRANSMISSION\b/i, "columbiagulf", { from: "2016-07-01" }),
+  ],
+  // South Bow, TC Energy's liquids pipelines, from the spin-off
+  2019061: [unit("SOBO", "Keystone Pipeline", /^(?:TRANSCANADA|TC (?:ENERGY|OIL))\s+KEYSTONE\b/i, "keystone", { from: "2024-10-01" })],
+  // the refiners and chemical makers
+  1035002: [
+    unit("VLO", "Valero's companies", /^VALERO\s+(?:ENERGY|REFINING|REFINERY|MARKETING|RENEWABLE|LOGISTICS|LIMA|PAULSBORO)\b/i, "valero", OIL),
+    unit("VLO", "Ultramar Diamond Shamrock", /^ULTRAMAR\b/i, "ultramar", { from: "2001-12-31", ...OIL }),
+    unit("VLO", "Ultramar Diamond Shamrock", /^DIAMOND SHAMROCK (?:REFINING|THREE RIVERS|MCKEE)\b/i, "diamondshamrock", { from: "2001-12-31", ...OIL }),
+    unit("VLO", "Premcor", /^(?:THE\s+)?PREMCOR\b/i, "premcor", { from: "2005-09-01" }),
+  ],
+  773840: [
+    unit("HON", "AlliedSignal's companies", /^ALLIED[- ]?SIGNAL\b/i, "alliedsignal"),
+    unit("HON", "Honeywell's companies", /^HONEYWELL\b/i, "honeywell", { from: "1999-12-01" }),
+  ],
+  1307954: [unit("HUN", "Huntsman's companies", /^HUNTSMAN (?:CORP(?:ORATION)?|INTERNATIONAL|POLYMERS|PETROCHEMICAL|CHEMICAL|ADVANCED|BUILDING|EXPANDABLE|SPECIALTY|ETHYLENEAMINES|ICI)\b/i, "huntsman")],
+  1262823: [
+    unit("WLK", "Westlake's companies", /^WESTLAKE (?:VINYLS?|PETROCHEMICALS|POLYMERS|CHEMICALS?|STYRENE|LONGVIEW|CA&O|PVC|NATRIUM|MONOMERS)\b/i, "westlake"),
+    unit("WLK", "Axiall and Georgia Gulf", /^AXIALL\b/i, "axiall", { from: "2016-08-31" }),
+    unit("WLK", "Axiall and Georgia Gulf", /^GEORGIA GULF\b/i, "georgiagulf", { from: "2016-08-31" }),
+    unit("WLK", "Axiall and Georgia Gulf", /^EAGLE (?:US 2|NATRIUM)\b/i, "eagle", { from: "2016-08-31" }),
+  ],
+  1489393: [
+    unit("LYB", "Equistar, Lyondell and Houston Refining", /^EQUISTAR\b/i, "equistar"),
+    unit("LYB", "Equistar, Lyondell and Houston Refining", /^LYONDELL\b(?!\s+ENVIRONMENTAL CUSTODIAL)/i, "lyondell"),
+    unit("LYB", "Equistar, Lyondell and Houston Refining", /^HOUSTON REFINING\b/i, "houstonrefining"),
+    unit("LYB", "Equistar, Lyondell and Houston Refining", /^MILLENNIUM (?:PETROCHEMICALS|CHEMICALS)\b/i, "millennium"),
+  ],
+  1060391: [
+    unit("RSG", "Republic's companies", /^REPUBLIC (?:SERVICES|WASTE)\b/i, "republic"),
+    unit("RSG", "Allied Waste and Browning-Ferris", /^ALLIED WASTE\b/i, "alliedwaste", { from: "2008-12-05" }),
+    unit("RSG", "Allied Waste and Browning-Ferris", /^BROWNING[- ]?FERRIS\b/i, "browningferris", { from: "2008-12-05" }),
+    unit("RSG", "Allied Waste and Browning-Ferris", /^BFI\b/i, "bfi", { from: "2008-12-05" }),
+  ],
+  879764: [unit("TTE", "Total's US companies", /^TOTAL\s+(?:FINA\s*ELF\s+)?(?:PETROCHEMICALS?|E&P USA|SPECIALTIES USA|HOLDINGS USA)\b/i, "total")],
+  // the miners
+  831259: [
+    unit("FCX", "Freeport-McMoRan's companies", /^FREEPORT[- ]?MCMORAN\b(?![-,.\s]*(?:RESOURCE|SULPHUR|GOLD|ENERGY)\b)/i, "freeport", { from: "2007-03-19" }),
+    unit("FCX", "Phelps Dodge's companies", /^PHELPS DODGE\b/i, "phelpsdodge", { from: "2007-03-19" }),
+    unit("FCX", "Phelps Dodge's companies", /^CYPRUS (?:AMAX|MINES|CLIMAX|MIAMI|BAGDAD|SIERRITA|TOHONO)\b/i, "cyprus", { from: "2007-03-19" }),
+    unit("FCX", "Phelps Dodge's companies", /^CLIMAX MOLYBDENUM\b/i, "climaxmolybdenum", { from: "2007-03-19" }),
+  ],
+  863064: [
+    unit("RIO", "Kennecott, U.S. Borax and Rio Tinto's companies", /^KENNECOTT\b/i, "kennecott"),
+    unit("RIO", "Kennecott, U.S. Borax and Rio Tinto's companies", /^U\.?\s?S\.?\s?BORAX\b/i, "usborax"),
+    unit("RIO", "Kennecott, U.S. Borax and Rio Tinto's companies", /^RIO TINTO\b/i, "riotinto"),
+  ],
+  1285785: [
+    unit("MOS", "Mosaic's companies", /^(?:THE\s+)?MOSAIC (?:FERTILIZER|PHOSPHATES?|CROP|POTASH|COMPANY|CO\b|GLOBAL|USA)/i, "mosaic", { from: "2004-10-22" }),
+    unit("MOS", "IMC and Cargill Fertilizer", /^IMC\s*-?\s*(?:PHOSPHATES?|GLOBAL|AGRICO|FERTILIZER|KALIUM|AGRIBUSINESS|NITROGEN)\b/i, "imc", { from: "2004-10-22" }),
+    unit("MOS", "IMC and Cargill Fertilizer", /^CARGILL FERTILIZER\b/i, "cargillfertilizer", { from: "2004-10-22" }),
+  ],
+  764065: [
+    unit("CLF", "AK Steel", /^AK STEEL\b/i, "aksteel", { from: "2020-03-13" }),
+    unit("CLF", "ArcelorMittal USA", /^ARCELOR\s?MITTAL\s*\(?\s*(?:USA|STEEL USA|BURNS|INDIANA HARBOR|CLEVELAND|RIVERDALE|WEIRTON|COATESVILLE|STEELTON|CONSHOHOCKEN|MONESSEN|WARREN|COLUMBUS|MINORCA|HIBBING|PLATE)\b/i, "arcelormittal", { from: "2020-12-07" }),
+    unit("CLF", "ArcelorMittal USA", /^ISPAT INLAND\b/i, "ispatinland", { from: "2020-12-07" }),
+  ],
+  // the oilfield-services company, the drugmaker, the food and drink companies
+  87347: [
+    unit("SLB", "Schlumberger's companies", /^SCHLUMBERGER\b/i, "schlumberger"),
+    unit("SLB", "Smith International", /^SMITH INTERNATIONAL\b/i, "smithinternational", { from: "2010-08-27" }),
+    unit("SLB", "Cameron", /^CAMERON INTERNATIONAL\b/i, "cameroninternational", { from: "2016-04-01" }),
+  ],
+  78003: [
+    unit("PFE", "Warner-Lambert and Parke-Davis", /^WARNER[- ]LAMBERT\b/i, "warnerlambert", { from: "2000-06-19" }),
+    unit("PFE", "Warner-Lambert and Parke-Davis", /^PARKE[- ]DAVIS\b/i, "parkedavis", { from: "2000-06-19" }),
+    // Pharmacia LLC, the old Monsanto Company's legal entity, from 2003: the owner's call of 2026-11-08
+    unit("PFE", "Pharmacia and Upjohn", /^PHARMACIA\b/i, "pharmacia", { from: "2003-04-16" }),
+    unit("PFE", "Pharmacia and Upjohn", /^(?:THE\s+)?UPJOHN\b/i, "upjohn", { from: "2003-04-16" }),
+    unit("PFE", "Wyeth", /^WYETH\b/i, "wyeth", { from: "2009-10-15" }),
+  ],
+  96021: [unit("SYY", "Sysco's companies", /^SYSCO\b/i, "sysco")],
+  100493: [
+    unit("TSN", "Tyson's companies", /^TYSONS? (?:FRESH MEATS|POULTRY|FARMS|PREPARED|DELI|REFRIGERATED|FOODS?|CHICKEN|PORK)\b/i, "tyson"),
+    unit("TSN", "IBP", /^IBP\b/i, "ibp", { from: "2001-09-28" }),
+    unit("TSN", "Hillshire Brands", /^HILLSHIRE\b/i, "hillshire", { from: "2014-08-28" }),
+  ],
+  77476: [
+    unit("PEP", "Frito-Lay", /^FRITO[- ]?LAY\b/i, "fritolay"),
+    unit("PEP", "Quaker Oats", /^(?:THE\s+)?QUAKER OATS\b/i, "quakeroats", { from: "2001-08-02" }),
+    unit("PEP", "Pepsi Bottling Group", /^(?:PEPSI BOTTLING GROUP|BOTTLING GROUP)\b/i, "bottlinggroup", { from: "2010-02-26" }),
+  ],
+  24545: [
+    unit("TAP", "Coors Brewing and Molson Coors", /^COORS BREWING\b/i, "coorsbrewing"),
+    unit("TAP", "Coors Brewing and Molson Coors", /^MOLSON COORS\b/i, "molsoncoors"),
+    unit("TAP", "MillerCoors", /^MILLERCOORS\b/i, "millercoors", { from: "2016-10-11" }),
+  ],
+  1668717: [unit("BUD", "Anheuser-Busch", /^ANHEUSER[- ]?BUS?CH\b/i, "anheuser", { from: "2008-11-18" })],
+  64803: [unit("CVS", "CVS Pharmacy and CVS's companies", /^CVS\b/i, "cvs")],
+  // the makers
+  715153: [unit("HMC", "Honda's US companies", /^(?:AMERICAN HONDA|HONDA (?:OF AMERICA|MANUFACTURING|TRANSMISSION|ENGINEERING|R&D|NORTH AMERICA|POWER))\b/i, "honda")],
+  315189: [unit("DE", "John Deere's companies", /^JOHN DEERE\b/i, "johndeere")],
+  217346: [
+    unit("TXT", "Bell Helicopter", /^BELL HELICOPTER\b/i, "bellhelicopter"),
+    unit("TXT", "E-Z-GO", /^E-?Z-?GO\b/i, "ezgo"),
+    unit("TXT", "Cessna", /^(?:THE\s+)?CESSNA AIRCRAFT\b/i, "cessna", { from: "1994-03-30" }),
+  ],
 };
 
 /** The letters a company's stored cases are asked by for its units (`UNITS`). */
@@ -871,7 +1109,7 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
     let held = byYear.get(year);
     if (!held) {
       const names = namesIn(year);
-      held = { names, keys: [...new Set(names.map(alnum).filter((k) => k.length >= 2))] };
+      held = { names, keys: [...new Set(names.flatMap(andSpellings).map(alnum).filter((k) => k.length >= 2))] };
       byYear.set(year, held);
     }
     return held;

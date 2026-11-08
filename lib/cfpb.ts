@@ -1,4 +1,5 @@
 import { captionParty, chargedParties } from "./secCases";
+import { andSpellings } from "./edgarName";
 import type { TimelineEvent } from "./types";
 import { UA } from "./contact";
 import { takenBefore } from "./takenNames";
@@ -162,7 +163,7 @@ export function cfpbEvents(
     // a name can only be a respondent where the title's letters and digits hold its own: most
     // actions are read no further
     const letters = alnum(a.title);
-    if (!held.some((n) => alnum(n).length >= 2 && letters.includes(alnum(n)))) continue;
+    if (!held.flatMap(andSpellings).some((n) => alnum(n).length >= 2 && letters.includes(alnum(n)))) continue;
     const party = captionParty(respondents(a.title), held);
     if (!party) continue;
     (byDay.get(a.day) ?? byDay.set(a.day, []).get(a.day)!).push({ a, party });

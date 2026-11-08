@@ -2,7 +2,7 @@ import { listingTotal } from "./listingGaps";
 import { plainText } from "./doj";
 import { longerListedNameIn } from "./frCompany";
 import { listedCompaniesNamed, outrankingNameFor } from "./sec";
-import { legalSpellings } from "./edgarName";
+import { andSpellings, legalSpellings } from "./edgarName";
 import { easternDay, pressName } from "./secPress";
 import type { TimelineEvent } from "./types";
 import { UA } from "./contact";
@@ -174,11 +174,12 @@ export function captionParty(caption: string, names: readonly string[]): string 
   // below reads the name so shortened. Where that shortened name is shared, the legal name as filed
   // is still its own: "Rio Tinto plc" is RIO TINTO PLC's, and "Rio Tinto" two listed companies'.
   // …and the legal name in either spelling of its form, "The Toro Company" for TORO CO, which counts
-  // where the shortened name is shared (batch 111: Toro's recalls were 5 of 28)
-  const variants = names.flatMap((raw) => {
+  // where the shortened name is shared (batch 111: Toro's recalls were 5 of 28); and a name with
+  // "&" with "and" in its place, as EPA writes Goodyear's and Air Products' (batch 120)
+  const variants = [...new Set(names.flatMap(andSpellings).flatMap((raw) => {
     const stem = raw.trim().replace(new RegExp(String.raw`(?:${LEGAL_WORD})+\.?$`, "i"), "");
     return stem && stem !== raw.trim() ? [stem, ...legalSpellings(raw)] : [raw.trim()];
-  });
+  }))];
   for (const name of variants) {
     if (name.length < 2 || listedCompaniesNamed(name) > 1) continue;
     // a short name a bigger listed company's name begins with carries a legal word of its own

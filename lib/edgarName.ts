@@ -125,6 +125,15 @@ export function legalSpellings(name: string): string[] {
   return [n];
 }
 
+/**
+ * A name holding "&" with "and" in its place too (batch 120, the 2026-11-08 proposal 1(b)): EPA
+ * writes "GOODYEAR TIRE AND RUBBER COMPANY" and "AIR PRODUCTS AND CHEMICALS, INC." where EDGAR keeps
+ * "GOODYEAR TIRE & RUBBER CO" and "Air Products & Chemicals, Inc.", and "AT&T" is "AT AND T" in a
+ * 1993 order. The listed-name guards already read "&" as "and" (`phrase` in lib/sec.ts), so a
+ * shared name stays shared in both spellings. A name with no "&" is itself alone.
+ */
+export const andSpellings = (name: string): string[] => (name.includes("&") ? [name, name.replace(/\s*&\s*/g, " and ").trim()] : [name]);
+
 /** A phrase with its legal form words in their short spelling, so two spellings of one form compare equal. */
 export const shortForms = (phrase: string): string =>
   phrase.replace(/\bcorporation\b/g, "corp").replace(/\bcompany\b/g, "co").replace(/\bincorporated\b/g, "inc").replace(/\blimited\b/g, "ltd");

@@ -988,6 +988,65 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 130: the audit of batches 125–129, and what it confirmed fixed (2026-11-09)
+
+The `code-auditor` read batches 125–129 (`6a4e7f9..80f88b3`); its report is
+`docs/audits/2026-11-09-code-audit-b125-129.md`. The owner's word, 2026-11-09: "Continue".
+
+**What it found sound** on the saved real data: the 1996–2000 archive's 56 pages (2,608 releases, 27
+unread, every day in its month, every folder a 200); the "LP" change, which reaches only the
+AstraZeneca plea it was meant for across every rule and committed title; the Microsoft notices'
+grouping, which cannot merge with the Federal Register's; EPA's cost recovery through a real Postgres
+(identical rows on all 690 pages, the ledger's 2,942 and 2,030); the FRA reader's live query (the
+fixture's rows for Union Pacific and CN); 38 unit days, each matching its filing, and no unit on two
+companies on overlapping days.
+
+It found three defects, one `P1`. Each was reproduced here and is fixed, with checks that fail on main.
+
+- [x] **1. The railroad rows gave the wrong death and injury counts** (`P1`). The reader took FRA's Form
+      54 count, `totalkilledform54`, which is each record's part ("Do not use this field to sum
+      fatalities", the dataset's own description), not the accident's.
+      - **What it did:** Goodwell's head-on collision of 2012 read "2 killed", its two records' 2 and 1,
+        where 3 died. The deadliest showed none: Big Bayou Canot of 1993, 47 killed, read
+        "$11,369,400 of damage" on CSX's page; Union Pacific's report of Chatsworth in 2008 counted
+        none of the 25 Metrolink passengers killed. 14 fatal accidents reached no page.
+      - **Fixed** (`lib/railAccidents.ts`): a row gives the accident's count, Form 55a's
+        `totalpersonskilled` and `totalpersonsinjured`, or the report's own Form 54 count where that is
+        larger, and the query asks for a death by either count. The fixture was read again with the two
+        fields (one request, 2,957 records; batch 127's 1,909 are among them unchanged).
+      - **What changes:** 47 rows correct their counts, 13 of them from no death to their dead (Big
+        Bayou Canot 47, Chatsworth 25, Glendale 11, Bourbonnais 11 on CN, Georgetown 11, Joplin 3); 14
+        accidents join the pages, CSX's Lugoff derailment of 1991 (8 killed) the largest; none leaves.
+        490 accidents on six pages from first prices, 404 before 2017, 135 before 1993 (CSX 166, Union
+        Pacific 158, Norfolk Southern 69, CN 36, Berkshire Hathaway 37, CPKC 24). Each stored row updates
+        in place by its report's key at the next ingest; nothing to run.
+- [ ] **Left for the owner:** on 6 of the 2,957 records Form 54 gives a death and Form 55a none. Two are
+      on pages, CSX at La Grange, Georgia (2016) and Illinois Central at Yazoo City, Mississippi (2022),
+      each "1 killed" as built; the other four are crossing collisions, off the pages either way. Keep
+      the larger count, or FRA's official count only (OWNER-ACTIONS).
+- [x] **2. The drug makers' units missed the names their own releases use** (`P3`). "DePuy" followed by
+      "Synthes", and "Teva" by "Pharmaceuticals", are no legal words, so DePuy Synthes's $9.75 million
+      of 2023 and Teva's $425 million of 2024 were on no page.
+      - **Fixed** (`HEALTH_UNITS`, `lib/releaseNames.ts`): "DePuy Synthes" from 2012-06-14, the day J&J
+        bought Synthes, and "Teva Pharmaceuticals" in place of "Teva Pharmaceuticals USA", which it
+        still reads with its legal word. 28 names on 13 companies.
+      - **Left as the rule reads it:** Teva's complaint of 2020, "Complaint Against Drug Maker Teva
+        Pharmaceuticals". The rule reads no descriptor between "Against" and a name, in every source;
+        widening it is a change of its own. "J&J Subsidiary DePuy" is the twin of the DePuy Synthes
+        release, which lands.
+- [x] **3. The coverage map's header still said 2026-11-07** (`P3`); fixed to 2026-11-09.
+- **Set aside by the audit, with its reasons:** the LP replay covering the committed titles only, not
+  the live API; Kansas City Southern on CPKC inside the voting trust (no row turns on it); the proposal's
+  "9" Microsoft notices against the data's 8; the 2020 Novartis Hellas and Alcon release (an owner's
+  call of whose it is); railroad damage, digits throughout.
+- **Requests:** 1 here, to data.transportation.gov (the fixture, logged in the session scratchpad's
+  `b130/requests.log`), with User-Agent `News Charts Research` and no email address; the audit's 5,
+  all to data.transportation.gov, in its report. All answered 200.
+- **Checks:** `check:rail-accidents` 32 (from 29): the accident's count (Goodwell 3, Big Bayou Canot 47,
+  Chatsworth 25, Bourbonnais 11), Lugoff on CSX, the six disagreeing records, the query's floor;
+  `check:doj` 114 (from 113): DePuy Synthes and Teva Pharmaceuticals. On main the first fails, its
+  fixture read with fields the old reader ignores, and so does the second.
+
 ## NC ledger — batch 129: EPA's cost recovery on the rows pages already hold (2026-11-09)
 
 The 2026-11-09 proposal 4, approved by the owner that day ("4. EPA cleanup-cost figures"). The owner's

@@ -113,7 +113,8 @@ importers and distributors by the caption rule, its stores as whole items of the
 store's recalls of other makers' products grouped a row a month. The FRA's railroad accident reports (`lib/railAccidents.ts`, batch 127) reach a
 railroad company's page only through `RAIL_OWNERS`, each reporting railroad between its owner's days, from
 the company's first price, at the owner's floor: a death, an evacuation or $5,000,000 of damage, a crossing
-collision only with the last two. The
+collision only with the last two; its dead and injured are the accident's, Form 55a's count, never one
+record's Form 54 part (batch 130). The
 CFTC's actions (`lib/cftc.ts`) are read by the Justice rule with the release map's units, plus the
 Commission's object form ("CFTC Orders UBS to Pay") and four guards of its own; read its header first.
 

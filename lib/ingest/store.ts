@@ -482,6 +482,23 @@ export const SOURCES: {
     reviewedOn: "2026-11-07",
     notes: "the approved efficacy supplements of the compilation's drugs, kept where the drug never left the company that held it on the day (lib/fdaSupplements.ts); one committed file a month, no key (batch 115)",
   },
+  {
+    id: 37,
+    key: "fra_accidents",
+    name: "FRA railroad accident reports",
+    license: "public domain",
+    attribution: "Federal Railroad Administration, U.S. Department of Transportation",
+    // "Public Domain U.S. Government" in the dataset's own licence field, linked to
+    // usa.gov/government-works (data.transportation.gov, 85tf-25kj, "Rail Equipment Accident/Incident
+    // Data (Form 54)", /api/views/85tf-25kj.json read 2026-11-09), the label NHTSA's recalls carry.
+    // Used: each report's railroad, accident number, day, type, place, the people killed, injured and
+    // evacuated, the cars that released hazardous material, the damage, the railroad's cause code and
+    // a link to FRA's readout of the report. Approved by the owner on 2026-11-09
+    // (docs/proposals/2026-11-09-proposals.md #2).
+    commercialOk: true,
+    reviewedOn: "2026-11-09",
+    notes: "railroad accidents since 1975 with a death, an evacuation or $5,000,000 of damage, for the railroads lib/railAccidents.ts maps, each between its owner's days; no key (batch 127)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

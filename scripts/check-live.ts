@@ -44,6 +44,7 @@ import { fetchRegulations } from "../lib/federalregister";
 import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
 import { fetchRecalls } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
+import { fetchRailAccidents } from "../lib/railAccidents";
 import { fetchFedActions } from "../lib/fedActions";
 import { fetchListingPage, secPressEvents } from "../lib/secPress";
 import { fetchCasePage, secCaseEvents } from "../lib/secCases";
@@ -584,6 +585,22 @@ export const CASES: LiveCase[] = [
       else if (!/January 2024/.test(jan2024.title)) out.push(`2024-02-13 named "${jan2024.title}", not January 2024`);
       const newest = r.events.at(-1)?.date;
       if (newest && daysAgo(newest) > 45) out.push(`newest release ${newest} — expected within the last month or so`);
+      return out;
+    },
+  },
+  {
+    name: "FRA — Norfolk Southern's accident reports from its first price, Graniteville's of 2005 among them (batch 127)",
+    covers: ["fra_accidents"],
+    hosts: ["data.transportation.gov"],
+    async run() {
+      // measured 2026-11-09: 65 on Norfolk Southern's page from 1982-06-02 at the owner's floor
+      const ns = await fetchRailAccidents(702165, { from: "1982-06-02" });
+      const out = [...outcomeProblems(ns.outcome, ns.detail), ...eventProblems(ns.events, 50)];
+      const graniteville = ns.events.find((e) => e.externalId === "NS019414200501");
+      if (!graniteville) out.push("no NS019414200501 (Graniteville, 2005-01-06)");
+      else if (!/^Norfolk Southern: train accident at Graniteville, South Carolina — 9 killed, 292 injured, 5,200 evacuated$/.test(graniteville.title)) out.push(`Graniteville titled "${graniteville.title}"`);
+      const early = ns.events.filter((e) => e.date < "1982-06-02");
+      if (early.length) out.push(`${early.length} reports before Norfolk Southern's first price, e.g. ${early[0].date}`);
       return out;
     },
   },

@@ -75,6 +75,8 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   fda_approvals: 1440,
   // …and so are their later efficacy supplements (lib/fdaSupplements.ts, batch 115)
   fda_supplements: 1440,
+  // the FRA's railroad accident reports, asked once a day for the railroads lib/railAccidents.ts maps (batch 127)
+  fra_accidents: 1440,
   // Digitised newspapers from before 1963. These will never change again.
   loc_chronam: 10080,
   // Halvings and network upgrades are settled history; Phase 0 holds nothing live.

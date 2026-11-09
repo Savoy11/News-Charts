@@ -988,6 +988,71 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 127: railroad accidents from the Federal Railroad Administration, a new source (2026-11-09)
+
+The 2026-11-09 proposal 2, approved by the owner that day with the floor as drafted ("Draft cut-off
+(Recommended)"). The owner's word on starting: "Continue". A new source, the 37th: FRA's Rail
+Equipment Accident/Incident Data (Form 54), on the Transportation Department's open-data host that
+NHTSA's recalls come from. #3 is next (batch 128), then #4 (batch 129).
+
+- [x] **The reader** (`lib/railAccidents.ts`): one keyless request a day for each of the six railroad
+      companies, by railroad code, under the floor, from the company's first price.
+      - **The floor,** the owner's: a collision, derailment, fire or other train accident that killed
+        someone, forced an evacuation or did $5,000,000 of damage; a highway-rail crossing collision
+        only with an evacuation or that damage. Damage is compared as whole numbers of digits, never
+        as a float.
+      - **The row:** "Norfolk Southern: train accident at Graniteville, South Carolina — 9 killed, 292
+        injured, 5,200 evacuated", with the cars that released hazardous material, the damage, the
+        railroad's own cause code and a link to FRA's readout of the report. It says the report is the
+        railroad's own filing to its regulator, not a finding of fault.
+      - **One report, one row:** a report the dataset holds as several records (its `jointcd` 3 lines,
+        55 of the 1,909) is one row with the largest count each gives; one accident two of the
+        company's own railroads reported is one row. Two companies' railroads in one accident keep a
+        row each, on each owner's page.
+- [x] **The map** (`RAIL_OWNERS`), each railroad between its owner's days, every day read from a filing
+      (data.sec.gov's filing lists, else the first filing EDGAR's full-text search finds):
+      - Union Pacific: its own; Southern Pacific, the Cotton Belt, the Rio Grande and Alton & Southern
+        from 1996-09-11 (Union Pacific's 8-K, item 2); Chicago & North Western from 1995-04-25.
+      - CSX: CSX Transportation and the Chessie and Seaboard railroads, from its first price, the day
+        after the 1980 merger that made it. Norfolk Southern: its own, Norfolk & Western's and
+        Southern's, from its first price.
+      - Berkshire Hathaway: BNSF from 2010-02-12 (batch 120's day).
+      - CN: Grand Trunk Western and its own code; Illinois Central from 1998-06-05 (Illinois Central's
+        Form 15 after CN's tender), held in a voting trust until the merger's approval; Wisconsin
+        Central from 2001-10-09 (its Form 15); the Chicago, Central & Pacific from 2002-03-26 (CN's
+        6-K, the first filing that names it).
+      - CPKC: the Soo Line and its own codes; Dakota, Minnesota & Eastern from 2007-10-04 (CP's 6-K);
+        Kansas City Southern from 2021-12-14 (its 8-K, items 2.01 and 5.01).
+      - A predecessor's past is never the buyer's: Burlington Northern's, Santa Fe's, Conrail's, BNSF's
+        before 2010 and Southern Pacific's before 1996 are no page's.
+- [ ] **Waiting for `NEWS_CHARTS_CONTACT`:** Missouri Pacific on Union Pacific (the merger of
+      1982-12-22, before EDGAR; 8 accidents of 1983–1985) and the Delaware & Hudson on CPKC (bought in
+      1991; 2 accidents, of 1993 and 2000), and the Chicago, Central & Pacific's 1998 accident on CN.
+      Their days need a filing's text. It joins the open items of batches 123 and 126.
+- **Measured** on the dataset's answer of 2026-11-09 (1,909 records of 60 railroad codes, committed),
+  each page from its first price (Yahoo's first trading days):
+  - 476 accidents on six pages, 395 before 2017, 192 before 2001, 131 before 1993: CSX 161, Union
+    Pacific 155, Norfolk Southern 65, CN 36, Berkshire Hathaway 35, CPKC 24.
+  - 719 crossing collisions whose only count is a death stay off, as the floor asks.
+  - Among them: Graniteville (Norfolk Southern, 2005-01-06; 9 killed, 292 injured, 5,200 evacuated);
+    East Palestine (Norfolk Southern, 2023-02-03); CSX's Baltimore tunnel (2001-07-18; 50,000
+    evacuated); the Soo Line at Minot (2002-01-18; 1 killed, 1,000 injured), on CPKC's page; Union
+    Pacific at Macdona (2004-06-28; 3 killed).
+  - On no page: Wisconsin Central's Weyauwega (1996-03-04), before CN bought it; Southern Pacific's
+    Macdona (1985-09-14); BNSF's report of the 2004 Macdona collision, before Berkshire bought it.
+- **Licence:** "Public Domain U.S. Government" in the dataset's own licence field, linked to
+  usa.gov/government-works (read 2026-11-09), the label NHTSA's recalls carry. Registered as source
+  37, `commercialOk: true`, credited on every page, in the terms and in the README.
+- **Requests:** 21, logged in the session scratchpad (`b127/requests.log`), each with User-Agent `News
+  Charts Research` and no email address, at least 1.1 s apart: data.transportation.gov 4 (a sample,
+  the codes, the rows, and one live read of Norfolk Southern's answer), data.sec.gov 8 (the filing
+  lists), efts.sec.gov 9 (full-text search and its name lookup). All answered 200. No www.sec.gov
+  page was asked.
+- **Checks:** `check:rail-accidents`, new in the chain, 29 checks on the committed records; on main it
+  cannot run, since lib/railAccidents.ts does not exist. check:live gains a case reading Norfolk
+  Southern's answer, check:wiring the source's window and quota, check:contact the 35th file that sends
+  the build's contact, and the coverage map's header counts 37 sources.
+
 ## NC ledger — batch 126: the CPSC's recalls under the units listed companies own, and the 2026-11-09 approvals filed (2026-11-09)
 
 The owner's calls of 2026-11-09 on the 2026-11-09 proposals: all four approved ("1. Product recalls by
@@ -9722,14 +9787,17 @@ already held, but new investment goes to securities coverage first.
         item in the batch 126 ledger.
       - *Derived from [`docs/proposals/2026-11-09-proposals.md`](proposals/2026-11-09-proposals.md)
         #1, approved 2026-11-09.*
-- [ ] `P1` **Railroad accidents from the Federal Railroad Administration.** A new source, on the host
+- [x] `P1` **Railroad accidents from the Federal Railroad Administration.** A new source, on the host
       NHTSA's recalls come from, "Public Domain U.S. Government", no key: approved by the owner
       2026-11-09 with the floor as drafted. An accident is the page's of the railroad that reported it
       (Union Pacific, CSX, Norfolk Southern, BNSF on Berkshire, CN, CPKC) when it killed someone, forced
       an evacuation or did $5,000,000 of damage; a crossing collision only with an evacuation or that
       damage.
       - **Measured** by the scout: 461 accidents on 6 pages, 388 before 2017, 132 before 1993.
-      - To be built in batch 127.
+      - **Done in batch 127** (see its section): `lib/railAccidents.ts`, source id 37, 476 accidents on
+        six pages from first prices, 395 before 2017, 131 before 1993. Missouri Pacific and the
+        Delaware & Hudson, bought before EDGAR, are an open item in the batch 127 ledger, waiting on
+        `NEWS_CHARTS_CONTACT`.
       - *Derived from [`docs/proposals/2026-11-09-proposals.md`](proposals/2026-11-09-proposals.md)
         #2, approved 2026-11-09.*
 - [ ] `P2` **More of the Justice Department's releases.** No new source: approved by the owner

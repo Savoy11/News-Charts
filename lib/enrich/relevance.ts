@@ -429,6 +429,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "fda_supplements") {
         return { score: 0.95, reason: "an FDA efficacy supplement to a drug the company held" };
       }
+      // …and a railroad accident report filed by a railroad the company owned that day, checked by
+      // hand as NHTSA's makers are (lib/railAccidents.ts, batch 127): about the company by construction
+      if (subject.kind === "company" && row.sourceKey === "fra_accidents") {
+        return { score: 1, reason: "an accident report filed by a railroad the company owned that day" };
+      }
       // …and an SEC News Digest entry whose party is the company under the name its record had
       // that day, and no other company's (lib/secDigest.ts, batch 102)
       if (subject.kind === "company" && row.sourceKey === "sec_digest") {

@@ -514,7 +514,7 @@ async function main(): Promise<void> {
   const settledRows = eachRow(SLICE.tables[SETTLEMENT_TABLE], ["CASE_NUMBER", "FED_PENALTY_ASSESSED_AMT", "STATE_LOCAL_PENALTY_AMT", "COMPLIANCE_ACTION_COST", "SETTLEMENT_LODGED_DATE"]).filter((r) => r[0] === "05-2003-0333");
   check("the case file keeps a court case's filing day and each settlement on its own day, with its own figures: Wisconsin Electric's suit filed 2003-04-29, settled 2003-07-10 ($3,100,000 federal and $100,000 state, $620,000,000 of work) and 2014-07-08",
     wecCase?.suitFiled === "2003-04-29" && wecCase.day === "2014-07-08" && wecCase.penalty === null &&
-      JSON.stringify(wecCase.settlements) === JSON.stringify([{ day: "2003-07-10", lodged: true, penalty: "3200000", work: "620000000" }, { day: "2014-07-08", lodged: true, penalty: null, work: null }]) &&
+      JSON.stringify(wecCase.settlements) === JSON.stringify([{ day: "2003-07-10", lodged: true, penalty: "3200000", work: "620000000", costRecovery: null }, { day: "2014-07-08", lodged: true, penalty: null, work: null, costRecovery: null }]) &&
       settledRows.some((r) => r[1] === "3100000" && r[2] === "100000" && r[3] === "620000000" && r[4] === "07/10/2003"),
     JSON.stringify(wecCase?.settlements));
   check("  …every settlement's figures digits, never a float, and its day a day; an administrative case has no filing day",
@@ -619,6 +619,91 @@ async function main(): Promise<void> {
       /ADD COLUMN IF NOT EXISTS suit_filed date/.test(caseDays) && /settlement_days date\[\]/.test(caseDays) && /settlement_lodged boolean\[\]/.test(caseDays) &&
       /settlement_penalties numeric\(16, 2\)\[\]/.test(caseDays) && /settlement_work numeric\(16, 2\)\[\]/.test(caseDays) && /^DELETE FROM epa_reads;$/m.test(caseDays),
     `${aepPage.events.length} on AEP`);
+
+  // batch 129, the 2026-11-09 proposal 4, approved by the owner that day
+  console.log("\nEPA's cost recovery on the rows (batch 129, the 2026-11-09 proposal 4)");
+  const ford = byNumber.get("05-1991-0214");
+  const kramer = byNumber.get("02-1989-0358");
+  check("the case file keeps EPA's cost recovery, the case's total else its one settlement's, and each settlement's own: Ford's $55,513,499 of 1993, the 225-party decree's $95,000,000",
+    ford?.costRecovery === "55513499" && ford.penalty === null && ford.workOrdered === null && ford.settlements?.[0]?.costRecovery === "55513499" &&
+      kramer?.costRecovery === "95000000" && kramer.defendants.length === 225 &&
+      cases.filter((c) => c.costRecovery).length === 1133 && cases.every((c) => [c.costRecovery, ...(c.settlements ?? []).map((x) => x.costRecovery)].every((m) => m == null || /^\d+(?:\.\d{2})?$/.test(m))),
+    `${ford?.costRecovery} ${kramer?.costRecovery}; ${cases.filter((c) => c.costRecovery).length} cases`);
+  // the slice's two tables as an older copy wrote them, without the columns
+  const csvOf = (head: readonly string[], rows: string[][]) => `${[head, ...rows].map((r) => r.map((x) => `"${x.replace(/"/g, '""')}"`).join(",")).join("\n")}\n`;
+  const without = (table: "CASE_ENFORCEMENTS.csv" | typeof SETTLEMENT_TABLE, column: string) => {
+    const text = SLICE.tables[table];
+    const head = (text.slice(0, text.indexOf("\n")).match(/"[^"]*"/g) ?? []).map((h) => h.slice(1, -1)).filter((h) => h !== column);
+    const rows: string[][] = [];
+    eachCsvRow(text, head, (v) => rows.push(v));
+    return csvOf(head, rows);
+  };
+  const bare = readCases({
+    ...SLICE.tables,
+    "CASE_ENFORCEMENTS.csv": without("CASE_ENFORCEMENTS.csv", "TOTAL_COST_RECOVERY_AMT"),
+    [SETTLEMENT_TABLE]: without(SETTLEMENT_TABLE, "COST_RECOVERY_AWARDED_AMT"),
+  } as Parameters<typeof readCases>[0]);
+  check("  …and a file without the columns gives none and every other figure as before: degraded, not broken",
+    bare.length === cases.length && bare.every((c, k) => !c.costRecovery && !c.settlements?.some((x) => x.costRecovery) && c.penalty === cases[k].penalty && c.workOrdered === cases[k].workOrdered) &&
+      SLICE.tables["CASE_ENFORCEMENTS.csv"].startsWith('"CASE_NUMBER","CASE_NAME","ACTIVITY_TYPE_CODE","TOTAL_PENALTY_ASSESSED_AMT","DOJ_DOCKET_NMBR","TOTAL_COMP_ACTION_AMT","ENF_SUMMARY_TEXT","TOTAL_COST_RECOVERY_AMT"') &&
+      /Batch 129 added the case table's TOTAL_COST_RECOVERY_AMT and the settlements table's COST_RECOVERY_AWARDED_AMT/.test(SLICE.provenance));
+  const costRowOn = (t: string, d: string, number: string) => eventsOn(t).find((e) => e.date === d && e.precision !== "month" && has([e], number));
+  const fordRow = costRowOn("F", "1993-08-25", "05-1991-0214");
+  check("Ford's Superfund decree of 1993-08-25, which showed no figure, gives its $55,513,499: \"EPA's costs recovered\", Ford alone",
+    fordRow?.title === "EPA consent decree (Superfund law (CERCLA))" && /^FORD MOTOR CO\. - WDE \(case 05-1991-0214\): EPA's costs recovered \$55,513,499\. The day/.test(fordRow.description ?? ""),
+    fordRow?.description?.slice(0, 120));
+  const pittsfield = costRowOn("GE", "1999-10-07", "01-2000-0035");
+  const hudson = costRowOn("GE", "2005-10-06", "02-2005-0015");
+  const ge2006 = costRowOn("GE", "2006-09-20", "01-2006-0214");
+  check("  …GE's Pittsfield and Housatonic settlement of 1999-10-07 its $71,000,000 beside its $500,000,000 of work, the Hudson River decree of 2005-10-06 its $26,000,000 beside $150,000,000, its New Hampshire case of 2006 its $13,103,095",
+    /settlement 1 of 6\): work ordered \$500,000,000, EPA's estimate; EPA's costs recovered \$71,000,000\./.test(pittsfield?.description ?? "") &&
+      /settlement 1 of 3, Justice Department docket 90-11-2-529\): work ordered \$150,000,000, EPA's estimate; EPA's costs recovered \$26,000,000\./.test(hudson?.description ?? "") &&
+      /\(case 01-2006-0214\): EPA's costs recovered \$13,103,095\./.test(ge2006?.description ?? ""),
+    `${pittsfield?.description?.slice(0, 140)} | ${hudson?.description?.slice(0, 140)}`);
+  const gmLiq = byNumber.get("03-2009-7032");
+  check("  …a case split by settlement gives each its own: Motors Liquidation's 2012-01-30 settlement $2,448,334, not the case's $12,501,182 the proposal counted",
+    gmLiq?.costRecovery === null && JSON.stringify(gmLiq?.settlements?.map((x) => x.costRecovery)) === JSON.stringify(["10052848", "2448334"]) &&
+      (bySettlement(gmLiq as EpaCase) ?? []).map((v) => v.costRecovery).join() === "10052848,2448334",
+    JSON.stringify(gmLiq?.settlements));
+  const kramerRow = costRowOn("HON", "1998-05-08", "02-1989-0358");
+  check("  …and a settlement of several parties says among how many, as the work ordered does: the Kramer landfill decree of 1998-05-08 \"$95,000,000, among 225 parties\"",
+    /KRAMER, HELEN ET AL \(case 02-1989-0358, Justice Department docket 90-11-2-433A\), against ALLIEDSIGNAL INC and 224 other defendants: EPA's costs recovered \$95,000,000, among 225 parties/.test(kramerRow?.description ?? ""),
+    kramerRow?.description?.slice(0, 200));
+  const suitRows = [...out.values()].flat().filter((e) => e.id.endsWith("-filed"));
+  const suitCases = suitRows.flatMap((e) => (e.externalId ?? "").split(",")).map((n) => byNumber.get(n));
+  check("a suit's filing row keeps no money: none of the replay's 228 says a cost recovery, though 76 of their cases have one",
+    suitRows.length === 228 && suitRows.every((e) => !/costs recovered|civil penalty|work ordered/.test(`${e.title} ${e.description}`)) &&
+      suitCases.filter((c) => c?.costRecovery || c?.settlements?.some((x) => x.costRecovery)).length === 76,
+    `${suitRows.length} filed rows; ${suitCases.filter((c) => c?.costRecovery || c?.settlements?.some((x) => x.costRecovery)).length} with a cost recovery`);
+  // the replay again with the cost recovery taken away: only a row's description may differ
+  let carrying = 0, bareBefore = 0, cost2017 = 0, cost2001 = 0, monthCarrying = 0, sameElse = true;
+  const carryingPages = new Set<string>();
+  for (const [ticker, { held, namesIn, cik }] of inputs) {
+    const without = new Map(epaEvents(held.map((c) => ({ ...c, costRecovery: null, settlements: c.settlements?.map((x) => ({ ...x, costRecovery: null })) })), namesIn, { cik }).map((e) => [e.id, e]));
+    for (const e of out.get(ticker) ?? []) {
+      const b = without.get(e.id);
+      if (!b || b.title !== e.title || b.date !== e.date || b.externalId !== e.externalId || b.dedupBasis !== e.dedupBasis) sameElse = false;
+      if (!/EPA's costs recovered/.test(e.description ?? "")) continue;
+      carrying++;
+      carryingPages.add(ticker);
+      if (e.precision === "month") monthCarrying++;
+      if (b && !/civil penalty|work ordered/.test(`${b.title} ${(b.description ?? "").replace(/EPA's summary[\s\S]*$/, "")}`)) {
+        bareBefore++;
+        if (e.date < "2017") cost2017++;
+        if (e.date < "2001") cost2001++;
+      }
+    }
+  }
+  check("before any first price, 2,942 of the replay's rows on 380 pages name a cost recovery, 114 of them a month's; 2,030 showed no money before, 1,831 of them before 2017 and 1,000 before 2001; no row's day, title or key changes",
+    carrying === 2942 && carryingPages.size === 380 && monthCarrying === 114 && bareBefore === 2030 && cost2017 === 1831 && cost2001 === 1000 && sameElse,
+    `${carrying} on ${carryingPages.size}, ${monthCarrying} month rows; ${bareBefore} bare before, ${cost2017} before 2017, ${cost2001} before 2001; same otherwise ${sameElse}`);
+  const gePage = await epaCasesFor(fakeDb({ ...db, listed: "1962-01-02" }), 1, plan("GE"), noWalk);
+  const recovery = read("db/045_epa_cost_recovery.sql");
+  check("the store keeps them (db/045) and a company's ingest gives the same rows from it, GE's figures among them; the next run reads EPA's file whole",
+    db.cases.get("05-1991-0214")?.costRecovery === "55513499" && JSON.stringify(db.cases.get("01-2000-0035")?.stored?.cost) === JSON.stringify(["71000000", "790400", "619217", null, null, null]) &&
+      sameRows(gePage.events, eventsOn("GE", "1962-01-02")) && gePage.events.some((e) => /EPA's costs recovered \$71,000,000\./.test(e.description ?? "")) &&
+      /ADD COLUMN IF NOT EXISTS cost_recovery numeric\(16, 2\)/.test(recovery) && /ADD COLUMN IF NOT EXISTS settlement_cost_recovery numeric\(16, 2\)\[\]/.test(recovery) && /^DELETE FROM epa_reads;$/m.test(recovery),
+    `${gePage.events.length} on GE`);
 
   // the 2026-11-08 audit of batches 117–123 (batch 124)
   console.log("\nThe 2026-11-08 audit of batches 117–123, fixed (batch 124)");
@@ -777,7 +862,7 @@ async function withFetch<T>(stand: () => Promise<Response>, fn: () => Promise<T>
 const numeric = (x: string | null) => (x === null ? null : x.includes(".") ? x : `${x}.00`);
 
 interface FakeDb {
-  cases: Map<string, EpaCase & { keys: string; stored?: { days: string[]; lodged: boolean[]; penalties: (string | null)[]; work: (string | null)[] } }>;
+  cases: Map<string, EpaCase & { keys: string; stored?: { days: string[]; lodged: boolean[]; penalties: (string | null)[]; work: (string | null)[]; cost: (string | null)[] } }>;
   reads: { modified: string | null; cases: number; ageDays: number } | null;
   listed: string | null;
 }
@@ -797,15 +882,15 @@ function fakeDb(db: FakeDb): PoolClient {
         db.cases.clear();
         return { rows: [] };
       }
-      if (/^INSERT INTO epa_cases \(case_number, name, court, filed_on, step, penalty, laws, defendants, docket, name_keys, penalty_settled, work_ordered, summary,\s+suit_filed, settlement_days, settlement_lodged, settlement_penalties, settlement_work\)/.test(s)) {
-        const [n, nm, ct, d, st, p, l, df, dk, k, ps, w, sm, sf, sd, sl, sp, sw] = params as [string[], string[], boolean[], string[], EpaCase["step"][], (string | null)[], string[], string[], (string | null)[], string[], boolean[], (string | null)[], (string | null)[], (string | null)[], string[], string[], string[], string[]];
+      if (/^INSERT INTO epa_cases \(case_number, name, court, filed_on, step, penalty, laws, defendants, docket, name_keys, penalty_settled, work_ordered, summary,\s+suit_filed, settlement_days, settlement_lodged, settlement_penalties, settlement_work, cost_recovery, settlement_cost_recovery\)/.test(s)) {
+        const [n, nm, ct, d, st, p, l, df, dk, k, ps, w, sm, sf, sd, sl, sp, sw, cr, sc] = params as [string[], string[], boolean[], string[], EpaCase["step"][], (string | null)[], string[], string[], (string | null)[], string[], boolean[], (string | null)[], (string | null)[], (string | null)[], string[], string[], string[], string[], (string | null)[], string[]];
         // as Postgres reads them: string_to_array(x, '|') of "" is no element, and '' a null where asked
         const list = (x: string) => (x === "" ? [] : x.split("|"));
         n.forEach((number, i) =>
           db.cases.set(number, {
             number, name: nm[i], court: ct[i], day: d[i], step: st[i], penalty: p[i], laws: l[i] ? l[i].split("|") : [], defendants: df[i] ? df[i].split("|") : [], docket: dk[i], keys: k[i],
-            settled: ps[i], workOrdered: w[i], summary: sm[i], suitFiled: sf[i],
-            stored: { days: list(sd[i]), lodged: list(sl[i]).map((x) => x === "true"), penalties: list(sp[i]).map((x) => x || null), work: list(sw[i]).map((x) => x || null) },
+            settled: ps[i], workOrdered: w[i], summary: sm[i], suitFiled: sf[i], costRecovery: cr[i],
+            stored: { days: list(sd[i]), lodged: list(sl[i]).map((x) => x === "true"), penalties: list(sp[i]).map((x) => x || null), work: list(sw[i]).map((x) => x || null), cost: list(sc[i]).map((x) => x || null) },
           }),
         );
         return { rows: [] };
@@ -815,7 +900,7 @@ function fakeDb(db: FakeDb): PoolClient {
         db.reads = { modified, cases: count, ageDays: 0 };
         return { rows: [] };
       }
-      if (/^SELECT case_number, name, court, filed_on::text AS day, step, penalty::text AS penalty, laws, defendants, docket, penalty_settled, work_ordered::text AS work_ordered, summary,\s+suit_filed::text AS suit_filed, settlement_days::text\[\] AS settlement_days, settlement_lodged, settlement_penalties::text\[\] AS settlement_penalties, settlement_work::text\[\] AS settlement_work\s+FROM epa_cases WHERE filed_on >= \$1::date AND name_keys LIKE ANY \(\$2::text\[\]\) ORDER BY filed_on, case_number$/.test(s)) {
+      if (/^SELECT case_number, name, court, filed_on::text AS day, step, penalty::text AS penalty, laws, defendants, docket, penalty_settled, work_ordered::text AS work_ordered, summary,\s+suit_filed::text AS suit_filed, settlement_days::text\[\] AS settlement_days, settlement_lodged, settlement_penalties::text\[\] AS settlement_penalties, settlement_work::text\[\] AS settlement_work,\s+cost_recovery::text AS cost_recovery, settlement_cost_recovery::text\[\] AS settlement_cost_recovery\s+FROM epa_cases WHERE filed_on >= \$1::date AND name_keys LIKE ANY \(\$2::text\[\]\) ORDER BY filed_on, case_number$/.test(s)) {
         const [from, patterns] = params as [string, string[]];
         const keys = patterns.map((p) => p.replace(/^%|%$/g, ""));
         const rows = [...db.cases.values()]
@@ -827,6 +912,7 @@ function fakeDb(db: FakeDb): PoolClient {
             // numeric(16, 2)[]::text[] gives each figure with its cents, and a null as null
             suit_filed: c.suitFiled ?? null, settlement_days: c.stored?.days ?? [], settlement_lodged: c.stored?.lodged ?? [],
             settlement_penalties: (c.stored?.penalties ?? []).map(numeric), settlement_work: (c.stored?.work ?? []).map(numeric),
+            cost_recovery: numeric(c.costRecovery ?? null), settlement_cost_recovery: (c.stored?.cost ?? []).map(numeric),
           }));
         return { rows };
       }

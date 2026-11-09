@@ -988,6 +988,47 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 129: EPA's cost recovery on the rows pages already hold (2026-11-09)
+
+The 2026-11-09 proposal 4, approved by the owner that day ("4. EPA cleanup-cost figures"). The owner's
+word on starting: "Continue". No new source and no new event: one more figure on the EPA rows already
+held. With it all four of the 2026-11-09 proposals are built.
+
+- [x] **Read** (`readCases`, `lib/epaCases.ts`): the case table's `TOTAL_COST_RECOVERY_AMT` and the
+      settlements table's `COST_RECOVERY_AWARDED_AMT`, money as digits, never a float, by the rule the
+      work ordered follows: the case's total, else its one settlement's; each dated settlement keeps
+      its own, and a case split by settlement (batch 122) gives each settlement day its own, added in
+      whole cents when two were lodged the same day. A table without the columns, as an older copy's,
+      gives none and every other figure as before.
+- [x] **On the row** (`caseLine`): "EPA's costs recovered $55,513,499" beside the penalty and the work
+      ordered, "among N parties" on a settlement of several, as the work ordered says. The title is
+      unchanged, so no row's day, title or key moves; only its description. A suit's filing row keeps no
+      money.
+- [x] **Stored** (db/045): `cost_recovery numeric(16, 2)` and `settlement_cost_recovery numeric(16,
+      2)[]`, in step with db/044's arrays; the migration forgets the last read, so the next run reads
+      EPA's file whole. Run `npm run db:migrate` after deploying (OWNER-ACTIONS).
+- **Measured** on the committed slice of EPA's file of 2026-10-31, every index company, before first
+  prices: 1,133 of the slice's 8,285 cases carry a case total; 2,942 rows on 380 pages name a cost
+  recovery, 114 of them a month's grouped row; 2,030 of those showed no money before, 1,831 before 2017
+  and 1,000 before 2001. The proposal's examples, each read on its row:
+  - Ford's decree of 1993-08-25 (05-1991-0214): $55,513,499, where the row showed no figure;
+  - GE's of 2006-09-20 (01-2006-0214): $13,103,095;
+  - GE's Pittsfield and Housatonic settlement of 1999-10-07: $71,000,000 beside $500,000,000 of work;
+    the Hudson River decree of 2005-10-06: $26,000,000 beside $150,000,000;
+  - the Kramer landfill decree of 1998-05-08 (02-1989-0358), on Honeywell's page by AlliedSignal:
+    "$95,000,000, among 225 parties".
+  - The proposal counted by case totals; a split case gives each settlement its own, so Motors
+    Liquidation's 2012-01-30 settlement (03-2009-7032) shows $2,448,334, not the case's $12,501,182.
+- **Left as the work ordered leaves it:** 37 of the slice's cases have a settlement's cost recovery but
+  no case total and more than one settlement on a single day, or are administrative (17 and 20). Like
+  their work ordered, they show none: the rule takes one settlement's figure only where there is one.
+- **Requests:** none. The slice gains the two columns from the copy of EPA's file the session kept
+  (`b95/dl/case_downloads.zip`, Last-Modified 2026-10-31), for the same rows.
+- **Checks:** `check:epa-cases` 137 (from 128): the columns read, a file without them, the proposal's
+  examples, a split case, "among 225 parties", the suits' rows with no money, the replay's counts with
+  every other part of each row unchanged, and the store's round trip. On main the run stops at the
+  store, which writes no cost recovery.
+
 ## NC ledger — batch 128: the Justice Department's releases of 1996–2000 and the drug makers' own companies (2026-11-09)
 
 The 2026-11-09 proposal 3, approved by the owner that day, with Microsoft's routine notices grouped a
@@ -1234,7 +1275,7 @@ securities depth first. The owner's word, 2026-11-09: "Continue". Nothing is bui
       Inc.'s Justice releases (the 2003 Clean Air Act settlement; 5 more of 1997–2000 under #3(a)).
       AA's record is Alcoa Corp.'s of 2016, and old Alcoa Inc.'s record is Howmet's; neither the table
       of taken names nor `lib/predecessors.ts` has an entry. Also noted: the Justice rule's
-      `DESIGNATOR_WORD` reads "L.P." but not "LP".
+      `DESIGNATOR_WORD` read "L.P." but not "LP" (fixed in batch 128).
 - **Requests:** 137 by the scout, logged in the session scratchpad (`scout125/requests.log`), each with
   User-Agent `News Charts Research` and no email address: www.justice.gov 99 (archive 72, API 27),
   query1.finance.yahoo.com 33, data.transportation.gov 5. 120 answered 200, 12 answered 404 and 5
@@ -9876,12 +9917,13 @@ already held, but new investment goes to securities coverage first.
         20 before 2017.
       - *Derived from [`docs/proposals/2026-11-09-proposals.md`](proposals/2026-11-09-proposals.md)
         #3, approved 2026-11-09.*
-- [ ] `P2` **EPA's cost-recovery figure on the rows pages already hold.** No new source: approved by
+- [x] `P2` **EPA's cost-recovery figure on the rows pages already hold.** No new source: approved by
       the owner 2026-11-09. Two columns of the zip the monthly walk already reads: what a Superfund
       settlement pays back, on the rows that carry it. It adds no new event.
       - **Measured** by the scout: 3,126 own rows carry it, 2,045 of them showing no money today, 1,810
         before 2017.
-      - To be built in batch 129.
+      - **Done in batch 129** (see its section): 2,942 rows on 380 pages name a cost recovery, 2,030 of
+        which showed no money before, 1,831 before 2017, counted by each settlement's own figure.
       - *Derived from [`docs/proposals/2026-11-09-proposals.md`](proposals/2026-11-09-proposals.md)
         #4, approved 2026-11-09.*
 

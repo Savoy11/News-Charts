@@ -225,6 +225,9 @@ Raised by the November batches, each recorded in the master checklist:
   deploying it: the archive walk reads the 56 new months of 1996–2000 over the next three ingest runs
   (24 a run), and each company's next Justice Department run picks up its own, with the drug makers'
   units. Alcoa's five of 1997–2000 land on AA under your open call below, as its 2003 release does.
+  #4 is built in batch 129. After deploying it, run `npm run db:migrate` (db/045): the next ingest reads
+  EPA's file again whole, keeping each case's cost recovery and each settlement's. All four of the
+  2026-11-09 proposals are now built.
   1. the CPSC's recalls under about 90 units listed companies own (494 recalls on 48 pages, 321 before
      2017; American Honda on Honda, Fisher-Price on Mattel, Kidde on RTX);
   2. railroad accidents from the Federal Railroad Administration, a new source (461 on 6 pages, 388

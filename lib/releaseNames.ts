@@ -887,6 +887,11 @@ export const HEALTH_UNITS: Readonly<Record<number, { ticker: string; names: read
       },
       { name: "LifeScan", to: "2018-10-01", why: healthWhy("its diabetes-care company until the sale to Platinum Equity, which J&J announced complete on 2018-10-02 (its 8-K), as the FDA map reads it") },
       { name: "Synthes", from: "2012-06-14", why: healthWhy("bought 2012-06-14 (J&J's 8-K of that day), as the FDA map reads it; Synthes's cases of 2009–2011 are its own") },
+      {
+        name: "DePuy Synthes",
+        from: "2012-06-14",
+        why: "the name DePuy took with Synthes, bought 2012-06-14 (J&J's 8-K of that day): \"DePuy Synthes, Inc. Agrees to Pay $9.75 Million\" (2023), which neither name alone gives (batch 130, the 2026-11-09 audit's finding 2)",
+      },
     ],
   },
   1613103: {
@@ -929,7 +934,10 @@ export const HEALTH_UNITS: Readonly<Record<number, { ticker: string; names: read
   818686: {
     ticker: "TEVA",
     names: [
-      { name: "Teva Pharmaceuticals USA", why: healthWhy("its U.S. company, named after it") },
+      {
+        name: "Teva Pharmaceuticals",
+        why: "its U.S. company, Teva Pharmaceuticals USA, as the Department names it: \"Teva Pharmaceuticals Agrees to Pay $425 Million\" (2024), and with its legal word \"Teva Pharmaceuticals USA to Pay\" (batch 128; the shorter name, batch 130, the 2026-11-09 audit's finding 2)",
+      },
       { name: "Actavis", from: "2016-08-02", why: healthWhy("Allergan's generics business, bought 2016-08-02 (Teva's 6-K of that day), as the FDA map reads it") },
     ],
   },

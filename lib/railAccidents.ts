@@ -13,8 +13,15 @@ import { UA } from "./contact";
  *
  * A report is the railroad's own filing to its regulator, not a finding of fault, and the row says so.
  * Two railroads in one accident file a report each: each is a row on its own owner's page. A report
- * the dataset holds as several records (its `jointcd` 3 lines) is one row, with the largest count each
- * record gives.
+ * the dataset holds as several records (its `jointcd` 3 lines) is one row.
+ *
+ * The dead and injured are the accident's, not the record's (batch 130, the 2026-11-09 audit's
+ * finding 1). Form 54's own count, `totalkilledform54`, is each record's part ("Do not use this field
+ * to sum fatalities", the dataset says): Goodwell's two records of 2012 give 2 and 1, Union Pacific's
+ * report of Chatsworth in 2008 none of the 25 Metrolink's passengers who died. The accident's count
+ * is Form 55a's, `totalpersonskilled` ("the total fatalities for all reports filled for the single
+ * accident"), the same on each of its records. A row gives the larger of the two, so a death a
+ * railroad's own Form 54 reports is never dropped where Form 55a holds none (6 records of 2,957).
  */
 
 const DATASET = "https://data.transportation.gov/resource/85tf-25kj.json";
@@ -213,6 +220,8 @@ export function roadsWhere(roads: readonly RailRoad[]): string {
 
 export const FIELDS = [
   "reportingrailroadcode", "reportingrailroadname", "accidentnumber", "year", "date", "accidenttype", "totalkilledform54", "totalinjuredform54",
+  // the accident's own counts, Form 55a's (batch 130)
+  "totalpersonskilled", "totalpersonsinjured",
   "personsevacuated", "hazmatreleasedcars", "totaldamagecost", "station", "statename", "url", "reportkey", "incidentkey", "primaryaccidentcause", "jointcd",
 ].join(",");
 
@@ -223,7 +232,7 @@ export const FIELDS = [
 export function accidentQuery(roads: readonly RailRoad[], from = ""): string {
   const params = new URLSearchParams({
     $select: FIELDS,
-    $where: `(${roadsWhere(roads)}) AND (totalkilledform54 > 0 OR personsevacuated > 0 OR totaldamagecost >= ${DAMAGE_FLOOR})${from ? ` AND date >= ${quote(`${from}T00:00:00`)}` : ""}`,
+    $where: `(${roadsWhere(roads)}) AND (totalkilledform54 > 0 OR totalpersonskilled > 0 OR personsevacuated > 0 OR totaldamagecost >= ${DAMAGE_FLOOR})${from ? ` AND date >= ${quote(`${from}T00:00:00`)}` : ""}`,
     $order: "date, reportkey",
     $limit: String(ROW_LIMIT),
   });
@@ -239,6 +248,8 @@ export interface AccidentRow {
   accidenttype?: string;
   totalkilledform54?: string | number;
   totalinjuredform54?: string | number;
+  totalpersonskilled?: string | number;
+  totalpersonsinjured?: string | number;
   personsevacuated?: string | number;
   hazmatreleasedcars?: string | number;
   totaldamagecost?: string | number;
@@ -331,8 +342,9 @@ export function accidentEvents(rows: readonly AccidentRow[], roads: readonly Rai
       row: was && was.row.jointcd === "1" ? was.row : row.jointcd === "1" || !was ? row : was.row,
       road,
       date,
-      killed: larger(was?.killed ?? "0", digits(row.totalkilledform54)),
-      injured: larger(was?.injured ?? "0", digits(row.totalinjuredform54)),
+      // the accident's count, Form 55a's, or the record's own where that is larger (batch 130)
+      killed: larger(was?.killed ?? "0", larger(digits(row.totalpersonskilled), digits(row.totalkilledform54))),
+      injured: larger(was?.injured ?? "0", larger(digits(row.totalpersonsinjured), digits(row.totalinjuredform54))),
       evacuated: larger(was?.evacuated ?? "0", digits(row.personsevacuated)),
       released: larger(was?.released ?? "0", digits(row.hazmatreleasedcars)),
       damage: larger(was?.damage ?? "0", digits(row.totaldamagecost)),

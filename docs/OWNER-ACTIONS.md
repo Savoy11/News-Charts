@@ -217,7 +217,8 @@ Raised by the November batches, each recorded in the master checklist:
   with `NEWS_CHARTS_CONTACT` set (§2): Fisher-Price on Mattel (49 recalls), Hasbro's Playskool, Milton
   Bradley, Kenner and Tonka (25), Carrier on RTX before 2020 (8) and Lawn-Boy on Toro (7), each bought
   before EDGAR. Once the contact is set, a session can read their days and map them, with batch 123's.
-  #2 is built in batch 127, with the floor you chose. Nothing to run after deploying it: the next ingest
+  #2 is built in batch 127, with the floor you chose, and its counts corrected in batch 130 to the
+  accident's own; nothing to run for the correction, since each row updates in place at the next ingest. Nothing to run after deploying it: the next ingest
   registers the source (id 37) and asks the dataset once for each of the six railroad companies. Two
   railroads wait for a filing's text, as #1's brands do: Missouri Pacific on Union Pacific (merged
   1982, 8 accidents of 1983–1985) and the Delaware & Hudson on CPKC (bought 1991, 2 accidents).
@@ -287,6 +288,20 @@ Raised by the November batches, each recorded in the master checklist:
   2. take them off before the merger, as with old Waste Management and AT&T Corp. (one entry in
      batch 117's table of taken names, `lib/takenNames.ts`, would do it for every source);
   3. keep them, labelled as E. I. du Pont's (as Schering-Plough's are on MRK).
+
+  Nothing changes until you choose.
+
+- **A death only a railroad's own report gives** (the 2026-11-09 audit of batches 125–129, batch 130).
+  FRA's dataset gives two counts of the dead: each report's Form 54 count, and the accident's Form 55a
+  count, which it calls the official one. Batch 130 shows the accident's count, or the report's where
+  that is larger, so no death a railroad reported is dropped. On 6 of 2,957 records the two disagree:
+  Form 54 gives a death and Form 55a none. Two are on pages: CSX at La Grange, Georgia (2016-09-06) and
+  Illinois Central at Yazoo City, Mississippi (2022-08-25), each "1 killed" in a collision with an
+  obstruction; the other four are crossing collisions, off the pages under your floor either way. Your
+  choice:
+  1. keep the larger count, as built (the two rows say "1 killed");
+  2. use only FRA's official per-accident count (the two rows leave the pages: their damage is under
+     $5,000,000 and no one was evacuated).
 
   Nothing changes until you choose.
 

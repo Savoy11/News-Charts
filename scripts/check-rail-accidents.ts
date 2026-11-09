@@ -40,14 +40,18 @@ const pages = new Map<string, TimelineEvent[]>(Object.values(RAIL_OWNERS).map((o
 const keyOf = (code: string, number: string) => rows.find((r) => r.reportingrailroadcode === code && r.accidentnumber === number)?.reportkey ?? `none:${code}:${number}`;
 const pagesOf = (code: string, number: string) => [...pages].filter(([, ev]) => ev.some((e) => e.externalId === keyOf(code, number))).map(([t]) => t).join(" ") || "none";
 const eventOf = (code: string, number: string) => [...pages.values()].flat().find((e) => e.externalId === keyOf(code, number));
+/** A record's dead as the reader counts them (batch 130): the accident's Form 55a count, or its own Form 54 count where larger. */
+const killedOf = (r: AccidentRow) => String(Math.max(Number(r.totalpersonskilled ?? 0), Number(r.totalkilledform54 ?? 0)));
 
 async function main(): Promise<void> {
   console.log("\nThe dataset's answer");
-  check("1,909 records read on 2026-11-09, each with its railroad, report key, day and type, the first of 1975-01-12",
-    FIXTURE.read === "2026-11-09" && rows.length === 1909 && rows.every((r) => r.reportingrailroadcode && r.reportkey && /^\d{4}-\d{2}-\d{2}T/.test(r.date ?? "") && r.accidenttype) &&
+  // batch 130 (the 2026-11-09 audit's finding 1): the answer again, with the accident's own counts and
+  // the deaths only they give; batch 127's 1,909 records, every one of them in it unchanged, read neither
+  check("2,957 records read on 2026-11-09 (1,909 before the per-accident counts), each with its railroad, report key, day and type, the first of 1975-01-12",
+    FIXTURE.read === "2026-11-09" && rows.length === 2957 && rows.every((r) => r.reportingrailroadcode && r.reportkey && /^\d{4}-\d{2}-\d{2}T/.test(r.date ?? "") && r.accidenttype) &&
       [...rows].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))[0].date?.slice(0, 10) === "1975-01-12",
     `${rows.length}`);
-  check("  …and every field the reader asks for", FIELDS.split(",").length === 18 && FIELDS.split(",").every((f) => rows.some((r) => f in r)));
+  check("  …and every field the reader asks for, the accident's counts among them", FIELDS.split(",").length === 20 && /totalpersonskilled,totalpersonsinjured/.test(FIELDS) && FIELDS.split(",").every((f) => rows.some((r) => f in r)));
 
   console.log("\nThe floor, the owner's call of 2026-11-09");
   const graniteville = eventOf("NS", "019414");
@@ -65,10 +69,10 @@ async function main(): Promise<void> {
     `${eventOf("NS", "152207")?.title} | ${eventOf("CSX", "070122014")?.title}`);
   check("Minot (Soo Line 170488, 2002-01-18) lands on CPKC's page, 1 killed and 1,000 injured",
     pagesOf("SOO", "170488") === "CP" && /^Soo Line: derailment at Minot, North Dakota — 1 killed, 1,000 injured/.test(eventOf("SOO", "170488")?.title ?? ""), eventOf("SOO", "170488")?.title);
-  const crossingDeaths = rows.filter((r) => r.accidenttype === "Hwy-rail crossing" && r.totalkilledform54 !== "0" && r.personsevacuated === "0" && !clearsFloor({ type: r.accidenttype, killed: "1", evacuated: "0", damage: String(r.totaldamagecost) }));
+  const crossingDeaths = rows.filter((r) => r.accidenttype === "Hwy-rail crossing" && killedOf(r) !== "0" && r.personsevacuated === "0" && !clearsFloor({ type: r.accidenttype, killed: "1", evacuated: "0", damage: String(r.totaldamagecost) }));
   const onPage = crossingDeaths.filter((r) => [...pages.values()].some((ev) => ev.some((e) => e.externalId === r.reportkey)));
-  check("a highway-rail crossing collision with a death and no evacuation, under $5,000,000 of damage, lands on no page: 754 crossing records read, 719 of them only a death",
-    rows.filter((r) => r.accidenttype === "Hwy-rail crossing").length === 754 && crossingDeaths.length === 719 && onPage.length === 0, `${crossingDeaths.length} / ${onPage.length}`);
+  check("a highway-rail crossing collision with a death and no evacuation, under $5,000,000 of damage, lands on no page: 1,601 crossing records read, 1,566 of them only a death (754 and 719 by Form 54's count alone)",
+    rows.filter((r) => r.accidenttype === "Hwy-rail crossing").length === 1601 && crossingDeaths.length === 1566 && onPage.length === 0, `${crossingDeaths.length} / ${onPage.length}`);
   check("  …but one with an evacuation counts: CSX's of 1988-06-20 (068801046), 100 evacuated, on CSX",
     pagesOf("CSX", "068801046") === "CSX" && /^CSX Transportation: highway-rail crossing collision at .* — 100 evacuated$/.test(eventOf("CSX", "068801046")?.title ?? ""), eventOf("CSX", "068801046")?.title);
   check("  …and a derailment with a death counts whatever its damage; the floor's damage is compared as whole numbers, never as a float",
@@ -95,11 +99,12 @@ async function main(): Promise<void> {
     pagesOf("IC", "TS120198") === "CNI" && railRoadsFor(ciks.CNI)?.find((r) => r.code === "IC")?.from === "1998-06-05");
   check("CSX's railroads count from CSX's first price, the day after its 1980 merger made it: Louisville & Nashville's of 1975–1980 are no page's, its of 1981 CSX's",
     rows.some((r) => r.reportingrailroadcode === "LN" && (r.date ?? "") < "1980-11-03" && pagesOf("LN", r.accidentnumber ?? "") === "none") &&
-      rows.filter((r) => r.reportingrailroadcode === "LN" && (r.date ?? "") >= "1980-11-03").every((r) => !clearsFloor({ type: r.accidenttype, killed: String(r.totalkilledform54), evacuated: String(r.personsevacuated), damage: String(r.totaldamagecost) }) || pagesOf("LN", r.accidentnumber ?? "") === "CSX"));
+      rows.filter((r) => r.reportingrailroadcode === "LN" && (r.date ?? "") >= "1980-11-03").every((r) => !clearsFloor({ type: r.accidenttype, killed: killedOf(r), evacuated: String(r.personsevacuated), damage: String(r.totaldamagecost) }) || pagesOf("LN", r.accidentnumber ?? "") === "CSX"));
   const pinned = [...pages].map(([t, ev]) => `${t} ${ev.length}`).join(", ");
   const all = [...pages.values()].flat();
-  check("on the six pages from their first prices: 476 accidents, 395 before 2017, 131 before 1993; CNI 36, CP 24, UNP 155, CSX 161, NSC 65, BRK-B 35",
-    pinned === "CNI 36, CP 24, UNP 155, CSX 161, NSC 65, BRK-B 35" && all.filter((e) => e.date < "2017").length === 395 && all.filter((e) => e.date < "1993").length === 131,
+  // batch 130: the accidents only the per-accident count gives a death, 14 of them, CSX's Lugoff derailment of 1991 (8 killed) the largest
+  check("on the six pages from their first prices: 490 accidents, 404 before 2017, 135 before 1993; CNI 36, CP 24, UNP 158, CSX 166, NSC 69, BRK-B 37 (476, 395 and 131 before batch 130's per-accident counts)",
+    pinned === "CNI 36, CP 24, UNP 158, CSX 166, NSC 69, BRK-B 37" && all.filter((e) => e.date < "2017").length === 404 && all.filter((e) => e.date < "1993").length === 135,
     `${pinned}; ${all.filter((e) => e.date < "2017").length} before 2017, ${all.filter((e) => e.date < "1993").length} before 1993`);
   check("  …every one on its railroad's own row, newest first, keyed by its report, linked over https",
     [...pages.values()].every((ev) => ev.every((e, i) => i === 0 || ev[i - 1].date >= e.date)) && all.every((e) => e.dedupBasis === `fra:${e.externalId}` && e.id === `fra-${e.externalId}` && /^https:\/\//.test(e.url ?? "")) &&
@@ -107,9 +112,30 @@ async function main(): Promise<void> {
 
   console.log("\nOne report, one row");
   const goodwell = eventOf("UP", "0612KC011");
-  check("a report the dataset holds as two records (jointcd 1 and 3) is one row, with the larger count each gives: Union Pacific's of 2012-06-24, 2 killed and 1 injured",
-    (pages.get("UNP") ?? []).filter((e) => e.externalId === keyOf("UP", "0612KC011")).length === 1 && /— 2 killed, 1 injured$/.test(goodwell?.title ?? "") && rows.filter((r) => r.reportkey === keyOf("UP", "0612KC011")).length === 2,
+  const goodwellRecords = rows.filter((r) => r.reportkey === keyOf("UP", "0612KC011"));
+  check("a report the dataset holds as two records (jointcd 1 and 3) is one row, with the accident's count: Union Pacific's of 2012-06-24, 3 killed and 1 injured, though its records' own Form 54 counts are 2 and 1",
+    (pages.get("UNP") ?? []).filter((e) => e.externalId === keyOf("UP", "0612KC011")).length === 1 && /— 3 killed, 1 injured$/.test(goodwell?.title ?? "") && goodwellRecords.length === 2 &&
+      goodwellRecords.map((r) => `${r.jointcd}:${r.totalkilledform54}/${r.totalpersonskilled}`).sort().join() === "1:2/3,3:1/3",
     goodwell?.title);
+
+  console.log("\nThe accident's own count (batch 130, the 2026-11-09 audit's finding 1)");
+  // FRA's dataset: Form 54's count "Do not use this field to sum fatalities"; Form 55a's totalpersonskilled
+  // "the total fatalities for all reports filled for the single accident"
+  const akka = eventOf("CSX", "099308020");
+  const chatsworth = eventOf("UP", "0908LA014");
+  check("the deadliest accidents give their dead: Big Bayou Canot of 1993 (CSX 099308020) 47 killed, which read \"$11,369,400 of damage\"; Chatsworth of 2008 (Union Pacific 0908LA014) 25 killed, Metrolink's passengers its Form 54 left out; Bourbonnais of 1999 on CN 11 killed",
+    akka?.title === "CSX Transportation: derailment at Akka, Alabama — 47 killed, 103 injured" && chatsworth?.title === "Union Pacific: head-on collision at Chatsworth, California — 25 killed, 61 injured" &&
+      /^Illinois Central: highway-rail crossing collision at Bourbonnais, Illinois — 11 killed, 50 injured$/.test((pages.get("CNI") ?? []).find((e) => e.date === "1999-03-15")?.title ?? ""),
+    `${akka?.title} | ${chatsworth?.title}`);
+  check("  …an accident only that count gives a death now clears the floor: CSX's Lugoff derailment of 1991-07-31 (079105051), 8 killed, every Form 54 record 0",
+    pagesOf("CSX", "079105051") === "CSX" && eventOf("CSX", "079105051")?.title === "CSX Transportation: derailment at Lugoff, South Carolina — 8 killed, 32 injured" &&
+      rows.filter((r) => r.reportkey === keyOf("CSX", "079105051")).every((r) => r.totalkilledform54 === "0"),
+    eventOf("CSX", "079105051")?.title);
+  const disagree = rows.filter((r) => r.totalkilledform54 !== "0" && r.totalpersonskilled === "0");
+  check("  …and a death a railroad's own Form 54 reports is kept where Form 55a holds none (6 records): CSX's of 2016-09-06 (000162754), 1 killed",
+    disagree.length === 6 && /— 1 killed$/.test(eventOf("CSX", "000162754")?.title ?? "") &&
+      accidentEvents([{ reportingrailroadcode: "UP", reportkey: "UPZ1", accidentnumber: "Z1", date: "2020-01-02T00:00:00.000", accidenttype: "Derailment", totalkilledform54: "2", totalpersonskilled: "0", totalinjuredform54: "0", totalpersonsinjured: "5", personsevacuated: "0", totaldamagecost: "100" }], railRoadsFor(ciks.UNP) ?? [])[0]?.title === "Union Pacific: derailment — 2 killed, 5 injured",
+    disagree.map((r) => r.reportkey).join(", "));
   const two = accidentEvents(
     [
       { reportingrailroadcode: "SOO", reportkey: "SOOA1", accidentnumber: "A1", incidentkey: "SOOA1201101", date: "2011-01-05T00:00:00.000", accidenttype: "Head on collision", totalkilledform54: "1", personsevacuated: "0", totaldamagecost: "100" },
@@ -121,8 +147,8 @@ async function main(): Promise<void> {
 
   console.log("\nThe request");
   const q = decodeURIComponent(accidentQuery(railRoadsFor(ciks.UNP) ?? [], "1980-01-02").replace(/\+/g, " "));
-  check("one request a company: its undated codes by name, a dated one only between its days, the floor, and its first price",
-    /reportingrailroadcode IN \('UP'\)/.test(q) && /\(reportingrailroadcode = 'SP' AND date >= '1996-09-11T00:00:00'\)/.test(q) && /totaldamagecost >= 5000000/.test(q) &&
+  check("one request a company: its undated codes by name, a dated one only between its days, the floor by either count of the dead (batch 130), and its first price",
+    /\(totalkilledform54 > 0 OR totalpersonskilled > 0 OR personsevacuated > 0 OR totaldamagecost >= 5000000\)/.test(q) && /reportingrailroadcode IN \('UP'\)/.test(q) && /\(reportingrailroadcode = 'SP' AND date >= '1996-09-11T00:00:00'\)/.test(q) && /totaldamagecost >= 5000000/.test(q) &&
       /date >= '1980-01-02T00:00:00'/.test(q) && /^https:\/\/data\.transportation\.gov\/resource\/85tf-25kj\.json\?/.test(q) && /\$limit=5000/.test(q), q.slice(0, 400));
   check("  …a code is quoted, never spliced", roadsWhere([{ code: "O'X", railroad: "x", why: "x" }]) === "reportingrailroadcode IN ('O''X')");
   const real = globalThis.fetch;

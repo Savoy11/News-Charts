@@ -153,7 +153,13 @@ dataset's own licence field). A row gives the railroad, the place, the people ki
 evacuated, the cars that released hazardous material, the damage in whole dollars, the railroad's own
 cause code and a link to FRA's readout of the report: "Norfolk Southern: train accident at
 Graniteville, South Carolina — 9 killed, 292 injured, 5,200 evacuated". The report is the railroad's
-own filing to its regulator, not a finding of fault, and the row says so.
+own filing to its regulator, not a finding of fault, and the row says so. The dead and injured are
+the accident's (batch 130, the 2026-11-09 audit's finding 1): Form 55a's per-accident count,
+`totalpersonskilled`, or the report's own Form 54 count where that is larger. Form 54's count is each
+record's part ("Do not use this field to sum fatalities", the dataset says), so before it the
+deadliest accidents showed none: Big Bayou Canot of 1993 read "$11,369,400 of damage" on CSX's page,
+where 47 died, and Union Pacific's report of Chatsworth in 2008 counted none of the 25 Metrolink
+passengers killed.
 
 The dataset names a railroad, never a listed company, so a report reaches a page only through the
 hand-checked map in `lib/railAccidents.ts` (`RAIL_OWNERS`), by CIK, each railroad between the days
@@ -165,8 +171,8 @@ from its company's first price, so CSX's railroads before CSX existed are no pag
 one accident file a report each, and each is a row on its own owner's page. Missouri Pacific on Union
 Pacific (1982) and the Delaware & Hudson on CPKC (1991), bought before EDGAR, wait for a filing's
 text (`NEWS_CHARTS_CONTACT`). Measured on the dataset's answer of 2026-11-09, each page from its
-first price: 476 accidents on six pages, 395 before 2017, 131 before 1993 (CSX 161, Union Pacific 155,
-Norfolk Southern 65, CN 36, Berkshire Hathaway 35, CPKC 24). Scored without the model.
+first price: 490 accidents on six pages, 404 before 2017, 135 before 1993 (CSX 166, Union Pacific 158,
+Norfolk Southern 69, CN 36, Berkshire Hathaway 37, CPKC 24). Scored without the model.
 
 ### Federal Reserve enforcement actions (`lib/fedActions.ts`)
 
@@ -340,7 +346,7 @@ of 2020 (on Dominion) and the CFTC's propane charge against BP Products North Am
 wash-sale penalty on San Diego Gas & Electric (2010) reach their pages too.
 
 The drug, device and health makers' own companies are in the map too (`HEALTH_UNITS`, batch 128, the
-owner's approval of 2026-11-09): 27 names on 13 companies, each on the days the FDA map reads it or
+owner's approval of 2026-11-09): 28 names on 13 companies (27 before batch 130), each on the days the FDA map reads it or
 its owner's filings give. The Department settles with the company that did the business: "Novartis
 Pharmaceuticals Corp. to Pay More Than $420 Million" (2010) is Novartis's, "U.S. Pharmaceutical
 Company Merck Sharp & Dohme to Pay Nearly One Billion Dollars" (2011) Merck's, "Janssen
@@ -349,7 +355,9 @@ Pharmaceuticals Pleads Guilty" (2013) J&J's. A unit bought counts from the day: 
 (from 2018-11-28), and Caremark's of 2005, before the merger, no page's. "LP" counts as a legal word,
 as "L.P." did, so "ASTRAZENECA PHARMACEUTICALS LP PLEADS GUILTY" (2003) is AstraZeneca's. Measured
 from first prices: 33 more releases on 10 pages, 20 before 2017 (Novartis 7, CVS 6, Sanofi 5,
-Abbott 4, Boston Scientific 3, J&J 2…), each read by hand. Every release rule reads the map, so the
+Abbott 4, Boston Scientific 3, J&J 2…), each read by hand. Batch 130 added the names their own
+releases use, "DePuy Synthes" (from 2012-06-14) and "Teva Pharmaceuticals", for DePuy Synthes's $9.75
+million of 2023 and Teva's $425 million of 2024. Every release rule reads the map, so the
 SEC's 2017 bribery charge against Biomet, a press release and an administrative proceeding, reaches
 Zimmer Biomet's page too.
 

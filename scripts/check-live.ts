@@ -593,7 +593,7 @@ export const CASES: LiveCase[] = [
     covers: ["fra_accidents"],
     hosts: ["data.transportation.gov"],
     async run() {
-      // measured 2026-11-09: 65 on Norfolk Southern's page from 1982-06-02 at the owner's floor
+      // measured 2026-11-09: 69 on Norfolk Southern's page from 1982-06-02 at the owner's floor (65 before batch 130's per-accident counts)
       const ns = await fetchRailAccidents(702165, { from: "1982-06-02" });
       const out = [...outcomeProblems(ns.outcome, ns.detail), ...eventProblems(ns.events, 50)];
       const graniteville = ns.events.find((e) => e.externalId === "NS019414200501");

@@ -639,9 +639,15 @@ async function archiveChecks(): Promise<void> {
   check("  …\"LP\" is a legal word as \"L.P.\" is: \"ASTRAZENECA PHARMACEUTICALS LP PLEADS GUILTY\"",
     releaseNamesParty("ASTRAZENECA PHARMACEUTICALS LP PLEADS GUILTY TO HEALTHCARE CRIME; COMPANY AGREES TO PAY $355 MILLION TO SETTLE CHARGES", ["AstraZeneca Pharmaceuticals"]) &&
       releaseNamesParty("Kinder Morgan Energy Partners LP Agrees to Pay", ["Kinder Morgan Energy Partners"]));
+  // batch 130, the 2026-11-09 audit's finding 2: the names the units' own releases use
+  const depuy = (day: string) => rel("DePuy Synthes, Inc. Agrees to Pay $9.75 Million to Settle Allegations Concerning Kickbacks Paid to Massachusetts Orthopedic Surgeon", day);
+  check("  …and the names their own releases use: DePuy Synthes's $9.75 million of 2023 on J&J (only from Synthes's purchase of 2012-06-14), Teva Pharmaceuticals' $425 million of 2024 on Teva, with its \"Teva Pharmaceuticals USA\" of 2013",
+    unitOn("JNJ", depuy("2023-01-20")) && !unitOn("JNJ", depuy("2012-06-13")) &&
+      unitOn("TEVA", rel("Teva Pharmaceuticals Agrees to Pay $425 Million to Resolve Kickback Allegations", "2024-10-10")) &&
+      unitOn("TEVA", rel("Teva Pharmaceuticals USA to Pay $2.25 Million Civil Penalty for Air, Water and Hazardous Waste Violations at Missouri Facility", "2013-03-14")));
   const health = Object.values(HEALTH_UNITS).flatMap((b) => b.names);
-  check("  …the map: 27 names on 13 companies, each with its reason and well-formed days, none before its owner listed, all read by every release rule and asked of the API (a name holding the company's own, Novartis Pharmaceuticals, asked as Novartis)",
-    health.length === 27 && Object.keys(HEALTH_UNITS).length === 13 &&
+  check("  …the map: 28 names on 13 companies, each with its reason and well-formed days, none before its owner listed, all read by every release rule and asked of the API (a name holding the company's own, Novartis Pharmaceuticals, asked as Novartis)",
+    health.length === 28 && Object.keys(HEALTH_UNITS).length === 13 &&
       health.every((n) => n.why.length > 20 && !n.beforeListing && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d))) &&
       Object.entries(HEALTH_UNITS).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker) && !(cik in BANK_UNITS) &&
         b.names.every((n) => RELEASE_NAMES[Number(cik)]?.names.includes(n) && releaseNamesAsked(Number(cik)).includes(n.name))) &&

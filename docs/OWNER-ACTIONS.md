@@ -221,6 +221,10 @@ Raised by the November batches, each recorded in the master checklist:
   registers the source (id 37) and asks the dataset once for each of the six railroad companies. Two
   railroads wait for a filing's text, as #1's brands do: Missouri Pacific on Union Pacific (merged
   1982, 8 accidents of 1983–1985) and the Delaware & Hudson on CPKC (bought 1991, 2 accidents).
+  #3 is built in batch 128, with Microsoft's notices a row a month as you chose. Nothing to run after
+  deploying it: the archive walk reads the 56 new months of 1996–2000 over the next three ingest runs
+  (24 a run), and each company's next Justice Department run picks up its own, with the drug makers'
+  units. Alcoa's five of 1997–2000 land on AA under your open call below, as its 2003 release does.
   1. the CPSC's recalls under about 90 units listed companies own (494 recalls on 48 pages, 321 before
      2017; American Honda on Honda, Fisher-Price on Mattel, Kidde on RTX);
   2. railroad accidents from the Federal Railroad Administration, a new source (461 on 6 pages, 388
@@ -286,7 +290,8 @@ Raised by the November batches, each recorded in the master checklist:
 - **Alcoa's past on AA's page** (noticed by the 2026-11-09 scout run, batch 125). AA's EDGAR record is
   Alcoa Corp.'s of 2016; old Alcoa Inc.'s record went with Howmet (as Arconic). AA's page takes old
   Alcoa Inc.'s Justice Department release of 2003 (a Clean Air Act settlement), and the 1997–2000
-  archive months of the 2026-11-09 proposal 3(a) would add five more. It is the same call as
+  archive months, read since batch 128, add five more (DuPont's toxic-cloud suit of 1997 is one more on
+  DD under the call above). It is the same call as
   DuPont's above, with the same three choices. Nothing changes until you choose.
 
 - **Drugs whose holder changed** (batch 115): 553 of the FDA's efficacy supplements (374 before

@@ -339,12 +339,26 @@ release rule reads the map, so the SEC's 2024 bribery charge against John Deere,
 of 2020 (on Dominion) and the CFTC's propane charge against BP Products North America (2006) and
 wash-sale penalty on San Diego Gas & Electric (2010) reach their pages too.
 
-The API holds nothing before 2009, so the releases of 2001–2008 come from the Department's own
+The drug, device and health makers' own companies are in the map too (`HEALTH_UNITS`, batch 128, the
+owner's approval of 2026-11-09): 27 names on 13 companies, each on the days the FDA map reads it or
+its owner's filings give. The Department settles with the company that did the business: "Novartis
+Pharmaceuticals Corp. to Pay More Than $420 Million" (2010) is Novartis's, "U.S. Pharmaceutical
+Company Merck Sharp & Dohme to Pay Nearly One Billion Dollars" (2011) Merck's, "Janssen
+Pharmaceuticals Pleads Guilty" (2013) J&J's. A unit bought counts from the day: Guidant's plea of
+2010 is Boston Scientific's (from 2006-04-21), Covidien's of 2019 Medtronic's, Aetna's of 2026 CVS's
+(from 2018-11-28), and Caremark's of 2005, before the merger, no page's. "LP" counts as a legal word,
+as "L.P." did, so "ASTRAZENECA PHARMACEUTICALS LP PLEADS GUILTY" (2003) is AstraZeneca's. Measured
+from first prices: 33 more releases on 10 pages, 20 before 2017 (Novartis 7, CVS 6, Sanofi 5,
+Abbott 4, Boston Scientific 3, J&J 2…), each read by hand. Every release rule reads the map, so the
+SEC's 2017 bribery charge against Biomet, a press release and an administrative proceeding, reaches
+Zimmer Biomet's page too.
+
+The API holds nothing before 2009, so the releases of 1996–2008 come from the Department's own
 archive, one page a month at `www.justice.gov/archive/opa/pr/YYYY/Month/` (`lib/dojArchive.ts`,
-batch 94). The archive is closed: each of its 96 months is read once for every company and kept
+batch 94; 1996–2000 from batch 128). The archive is closed: each of its 152 months is read once for every company and kept
 (`doj_archive_releases` and `doj_archive_months`, `lib/ingest/dojArchiveWalk.ts`), at most 24 months
 a process, a second apart, a month stored only when its page answered with releases it could read.
-Two layouts: 2001–2004 a list, "#807: 12-30-04 HEALTHSOUTH TO PAY…", mostly in capitals; 2005–2008
+Two layouts: 1996–2004 a list, "#807: 12-30-04 HEALTHSOUTH TO PAY…", mostly in capitals from 1998; 2005–2008
 day headings over each title, from mid-2005 with its first lines, kept as the teaser. The old pages
 write Windows-1252's quotes, read as quotes, and the 2005–2008 pages' possessive "VERIZON&#8216;S"
 as one (batch 100). 5,712 releases; the 5 rows a slip leaves without a day
@@ -357,6 +371,19 @@ Verizon's MCI cases; Exxon Mobil 7, Walmart 6, Tenet 5; 111 on 73 before batch 1
 word for a company, The Bancorp's "Bancorp", names it after "the" but not after another capitalised
 word: "Berkshire Hills Bancorp and Legacy Bancorp" are two other banks (batch 100). Same source,
 `doj_press`, under the same terms.
+
+The months of May 1996 to December 2000 (batch 128, the 2026-11-09 proposal 3(a)) are read the same
+way. Their folders are named as the archive names them: `1996/May96/`, `Jun96/`, `Sept96/`,
+`1997/April97/`, then 1998's month alone. The pages of January to April 1996 list their releases with
+no day, and 1994 and 1995 answer 404, so the archive starts in May 1996. 2,608 releases; 27 rows a
+slip leaves without a day or with another year's ("06-22-98" on June 1999's page) are left unread.
+Against every company in the index, from first prices: 67 releases on 40 pages, ADM's record
+antitrust fine of 1996, the Microsoft suit of 1998, American Honda's $267 million of 1998 (Honda's
+unit), GE's Housatonic River settlements, Alcoa's five (old Alcoa Inc.'s, on AA under the owner's
+open call). Three titles naming AT&T Corp. stay off AT&T's page, since SBC's record took that name in
+2005 (`lib/takenNames.ts`), and 14 fall before their company listed. Eight of Microsoft's are the same
+"NOTICE OF UPCOMING DEPOSITIONS IN U.S. v. MICROSOFT", and the page shows them as a row a month
+(the owner's call): "Justice Department: 5 notices, …" for May 1999, linking to the newest.
 
 A one-word name that is an everyday word (`isEverydayWord`, `lib/wordNames.ts`) is read more
 strictly (batch 94). In a title written in capitals, as the Department's were to 2004, it names the
@@ -1022,7 +1049,7 @@ automated clients for a contact and refuses EDGAR requests without one, so inges
 address is never written in the code; `check:contact` fails if one appears.
 
 **A rule change reaches the stored pages.** Every case source (the SEC's cases and press releases,
-the Justice Department's archive of 2001–2008, the CFPB's, EPA's, the CPSC's, the CFTC's actions, the
+the Justice Department's archive of 1996–2008, the CFPB's, EPA's, the CPSC's, the CFTC's actions, the
 Digest, the FDA's approvals) builds a company's rows from data kept whole, so its answer is
 complete: a run takes the company off that source's stored rows its rules no longer give it
 (`unlinkGone`, batch 108). Only the link goes, and only for a row no other source attests; the

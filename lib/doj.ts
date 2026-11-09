@@ -37,7 +37,7 @@ const SHORT_NAME = 5;
  * Centers", "Deutsche Bank AG" (batch 100: the CFTC's "Orders Deutsche Bank AG to Pay" missed it). One of them; a short name a bigger company's name begins with must carry one
  * (`outrankedName`).
  */
-const DESIGNATOR_WORD = String.raw`(?:(?:,?\s+|\s*&\s*)(?:Inc\.?|Incorporated|Corp\.?|Corporation|Company|Co\.?|LLC|L\.L\.C\.|L\.P\.|Ltd\.?|Limited|plc|AG|N\.\s?A\.|USA|U\.S\.A?\.?|America|Holdings?|Group|Bank|Securities|Financial|Advisors|Mortgage|Home|Loans|Dealer|Services|Pipeline|Motor|Motors|Communications|Technologies|Laboratories|Health|Healthcare|Aerospace|Centers))`;
+const DESIGNATOR_WORD = String.raw`(?:(?:,?\s+|\s*&\s*)(?:Inc\.?|Incorporated|Corp\.?|Corporation|Company|Co\.?|LLC|L\.L\.C\.|L\.?P\.?|Ltd\.?|Limited|plc|AG|N\.\s?A\.|USA|U\.S\.A?\.?|America|Holdings?|Group|Bank|Securities|Financial|Advisors|Mortgage|Home|Loans|Dealer|Services|Pipeline|Motor|Motors|Communications|Technologies|Laboratories|Health|Healthcare|Aerospace|Centers))`;
 /** Any number of them. */
 export const DESIGNATOR = String.raw`${DESIGNATOR_WORD}*`;
 

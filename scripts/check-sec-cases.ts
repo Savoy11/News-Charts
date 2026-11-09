@@ -363,8 +363,9 @@ const TODAY = "2026-11-01";
   // Gardner Denver's until 2020, and the old Bristow Group's of 2007 (34-56533) off VTOL, whose record was Era's until 2020
   // batch 118's Meridian Holdings takes two more off MRDN: the other Meridian Holdings, Inc.'s cases of 2007 and 2009 (LR-20318, LR-20898)
   // batch 121's operating units add two: SCANA's cases of 2020 (LR-24751, LR-24976) on Dominion, SCANA's owner from 2019-01-01
-  check("the 30,747 rows of 1995–2026 give 1,148 company days on 369 companies, 555 before 2017, as replayed in full (1,146 on 368 before batch 121's operating units, 1,148 on 369 before batch 118's, 1,150 on 371 before batch 117's taken names, 1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's, 1,148 on 370 before batch 111's spellings)",
-    rows.length === 30747 && companyDays.length === 1148 && replayed.companies.length === 369 && companyDays.filter((e) => e.date < "2017").length === 555,
+  check("the 30,747 rows of 1995–2026 give 1,149 company days on 370 companies, 555 before 2017, as replayed in full (1,148 on 369 before batch 128's drug makers' units, which add Biomet, Inc.'s case of 2017 on Zimmer Biomet; 1,146 on 368 before batch 121's operating units, 1,148 on 369 before batch 118's, 1,150 on 371 before batch 117's taken names, 1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's, 1,148 on 370 before batch 111's spellings)",
+    rows.length === 30747 && companyDays.length === 1149 && replayed.companies.length === 370 && companyDays.filter((e) => e.date < "2017").length === 555 &&
+      !!replayed.companies.find(([t]) => t === "ZBH")?.[1].some((e) => e.date === "2017-01-12"),
     `${rows.length} rows → ${companyDays.length} on ${replayed.companies.length}, ${companyDays.filter((e) => e.date < "2017").length} before 2017, in ${Date.now() - t0} ms`);
   // batch 88, the 2026-11-02 proposal 4: the listed banks', brokers' and managers' own units
   const replayedOn = (t: string, d: string) => !!replayed.companies.find(([x]) => x === t)?.[1].some((e) => e.date === d);

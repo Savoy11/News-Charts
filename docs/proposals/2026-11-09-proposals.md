@@ -311,7 +311,7 @@ EDGAR · *Efficiency:* medium-high — one keyless dataset on a host already rea
 
 ## 3. More of the Justice Department's releases: its archive's months of 1996–2000, and the drug and device makers' own companies in the release map · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-09 ("3. More Justice Dept releases"), with the routine notices in U.S. v. Microsoft grouped a row a month ("Group a row a month (Recommended)"). To be built in batch 128.
+**Status:** APPROVED — by the owner, 2026-11-09 ("3. More Justice Dept releases"), with the routine notices in U.S. v. Microsoft grouped a row a month ("Group a row a month (Recommended)"). Built in batch 128: (a) the archive's months from May 1996 (January to April 1996 list no days), 2,608 releases, 67 on 40 pages from first prices, Microsoft's eight deposition notices shown as two month rows; (b) `HEALTH_UNITS` in `lib/releaseNames.ts`, 27 names on 13 companies, 33 releases on 10 pages, 20 before 2017, with "LP" read as a legal word for AstraZeneca Pharmaceuticals LP's plea of 2003.
 **Owner's reason (if rejected):**
 
 **Raised before:** yes, both parts.

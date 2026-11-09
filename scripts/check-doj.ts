@@ -5,6 +5,7 @@ import type { PoolClient } from "pg";
 import tickerIndex from "../data/edgar-tickers.json";
 import { DOJ_CAP, dojEvents, dojPossessive, dojQueryNames, fetchJusticeReleases, justiceQueryNames, plainText, releaseDate, releaseNamesParty, type DojRelease } from "../lib/doj";
 import {
+  ARCHIVE_FIRST_MONTH,
   ARCHIVE_FIRST_YEAR,
   ARCHIVE_LAST_YEAR,
   archiveMonthUrl,
@@ -20,8 +21,9 @@ import {
 import { withoutTag } from "../lib/edgarName";
 import { MONTHS_PER_RUN, dojArchiveFor, walkDojArchive, withArchive, type ArchiveWalk } from "../lib/ingest/dojArchiveWalk";
 import { namesForYear } from "../lib/ingest/frBackfill";
-import { BANK_UNITS, OPERATING_UNITS, RELEASE_NAMES, isNotesRecord, releaseNamesAsked, releaseNamesBefore, releaseNamesOn } from "../lib/releaseNames";
-import { companyNames } from "../lib/frCompany";
+import { BANK_UNITS, HEALTH_UNITS, OPERATING_UNITS, RELEASE_NAMES, isNotesRecord, releaseNamesAsked, releaseNamesBefore, releaseNamesOn } from "../lib/releaseNames";
+import { companyNames, isRoutineJusticeNotice, pageRegulations } from "../lib/frCompany";
+import { takenBefore } from "../lib/takenNames";
 import { newsNamesFor, possessiveNameFor } from "../lib/sec";
 import type { TimelineEvent } from "../lib/types";
 import { SOURCES } from "../lib/ingest/store";
@@ -339,7 +341,7 @@ async function main(): Promise<void> {
   const ingest = read("scripts/ingest.ts");
   check("company ingest asks for the company's releases under its names, its possessive and its units (batch 82), and a fund's series asks nothing (batch 85)",
     (COMPANY_SOURCES as readonly string[]).includes("doj_press") &&
-      /const fundSeries = fundSeriesId\(company\.ticker\) !== null;\s*await run\("doj_press", `\$\{justiceQueryNames\(company\.name, alsoKnownAs, possessive, company\.cik\)\.join\(" \| "\)\} \+ the 2001–2008 archive`, async \(\) => \{\s*if \(fundSeries\) return FUND_SERIES\(\);/.test(ingest));
+      /const fundSeries = fundSeriesId\(company\.ticker\) !== null;\s*await run\("doj_press", `\$\{justiceQueryNames\(company\.name, alsoKnownAs, possessive, company\.cik\)\.join\(" \| "\)\} \+ the 1996–2008 archive`, async \(\) => \{\s*if \(fundSeries\) return FUND_SERIES\(\);/.test(ingest));
   check("  …from its first price, read after its prices, and asked again next run while it has none (batch 90)",
     /const listed = isNotesRecord\(company\.cik\) \? "" : await firstPriceDay\(client, subjectId\);\s*if \(listed === null\) return NO_PRICES\(\);\s*const api = await fetchJusticeReleases\(company\.name, alsoKnownAs, possessive, company\.cik, \{ from: listed \}\);/.test(ingest) &&
       ingest.indexOf('await run("doj_press"') > ingest.indexOf("await companyPrices("));
@@ -360,19 +362,27 @@ async function main(): Promise<void> {
  * Yahoo gave it that day (`firstTradeDate`), which the stored prices begin with.
  */
 const ARCHIVE: { provenance: string; months: Record<string, string> } = JSON.parse(gunzipSync(readFileSync(join(root, "scripts/fixtures/doj-archive-months.json.gz"))).toString("utf8"));
-const pageOf = (key: string) => decodePage(new Uint8Array(Buffer.from(ARCHIVE.months[key], "latin1")));
-const ARCHIVE_FIRST_PRICES: Record<string, string> = { AA: "1962-01-02", AAL: "2005-09-27", ABT: "1980-03-17", ADM: "1980-03-17", AEP: "1962-01-02", AIG: "1973-01-02", AKZOY: "1989-05-09", AMC: "2013-12-18", ASH: "1980-03-17", AXP: "1972-06-01", BA: "1962-01-02", BCC: "2013-02-06", BMY: "1972-06-01", BP: "1962-01-02", BPOP: "1980-03-17", BUSE: "1998-10-06", CM: "1997-11-13", CMCSA: "1980-03-17", COMP: "2021-04-01", COP: "1981-12-31", CVS: "1973-02-21", CVX: "1962-01-02", DAL: "2007-05-03", DD: "1972-06-01", DDD: "1988-03-10", DGX: "1996-12-17", ECHO: "2008-01-02", ELV: "2001-10-30", EXC: "1973-05-02", FITB: "1980-03-17", FLS: "1980-03-17", GE: "1962-01-02", GPK: "1992-12-10", GWW: "1973-02-21", HD: "1981-09-22", HON: "1962-01-02", HXL: "1980-03-17", IFNNY: "2000-03-13", IR: "2017-05-12", ITT: "1995-12-15", KMI: "2011-02-11", LLY: "1972-06-01", LMT: "1962-01-02", LUCN: "2024-09-13", MCK: "1994-11-10", MDT: "1973-05-02", MMM: "1962-01-02", MRK: "1962-01-02", MSFT: "1986-03-13", MTW: "1990-03-26", NBHC: "2012-09-20", NCLH: "2013-01-18", NOC: "1981-12-31", NWSA: "2013-06-19", ORCL: "1986-03-12", PEG: "1980-01-02", PFE: "1972-06-01", PRU: "2001-12-13", PSO: "1996-11-18", QCOM: "1991-12-13", RF: "1980-03-17", RSG: "1998-07-01", RY: "1995-10-16", SAIC: "2013-09-16", SFD: "2025-01-28", SUN: "2012-09-20", T: "1983-11-21", TBBK: "2004-02-03", TFC: "1980-03-18", TGT: "1973-02-21", THC: "1980-03-17", TM: "1980-03-17", TSN: "1980-03-17", TXT: "1973-02-21", UAL: "2006-02-06", UIS: "1972-06-01", UNH: "1984-10-17", USB: "1973-05-03", VLO: "1982-01-04", VZ: "1983-11-21", WAB: "1995-06-16", WELPP: "1994-04-08", WFC: "1972-06-01", WHR: "1973-02-21", WMT: "1972-08-25", WY: "1973-05-03", XOM: "1962-01-02", CX: "1999-09-15", "BRK-B": "1996-05-09", RTX: "1962-04-02", D: "1980-03-17", WEC: "1980-03-17", FE: "1997-11-10" };
+/** …and the 56 month pages of 1996-05 to 2000-12, byte-exact as served on 2026-11-09 (batch 128). */
+const ARCHIVE_OLD: { provenance: string; months: Record<string, string> } = JSON.parse(gunzipSync(readFileSync(join(root, "scripts/fixtures/doj-archive-1996-2000.json.gz"))).toString("utf8"));
+const pageOf = (key: string) => decodePage(new Uint8Array(Buffer.from(ARCHIVE.months[key] ?? ARCHIVE_OLD.months[key], "latin1")));
+const ARCHIVE_FIRST_PRICES: Record<string, string> = { AA: "1962-01-02", AAL: "2005-09-27", ABT: "1980-03-17", ADM: "1980-03-17", AEP: "1962-01-02", AIG: "1973-01-02", AKZOY: "1989-05-09", AMC: "2013-12-18", ASH: "1980-03-17", AXP: "1972-06-01", BA: "1962-01-02", BCC: "2013-02-06", BMY: "1972-06-01", BP: "1962-01-02", BPOP: "1980-03-17", BUSE: "1998-10-06", CM: "1997-11-13", CMCSA: "1980-03-17", COMP: "2021-04-01", COP: "1981-12-31", CVS: "1973-02-21", CVX: "1962-01-02", DAL: "2007-05-03", DD: "1972-06-01", DDD: "1988-03-10", DGX: "1996-12-17", ECHO: "2008-01-02", ELV: "2001-10-30", EXC: "1973-05-02", FITB: "1980-03-17", FLS: "1980-03-17", GE: "1962-01-02", GPK: "1992-12-10", GWW: "1973-02-21", HD: "1981-09-22", HON: "1962-01-02", HXL: "1980-03-17", IFNNY: "2000-03-13", IR: "2017-05-12", ITT: "1995-12-15", KMI: "2011-02-11", LLY: "1972-06-01", LMT: "1962-01-02", LUCN: "2024-09-13", MCK: "1994-11-10", MDT: "1973-05-02", MMM: "1962-01-02", MRK: "1962-01-02", MSFT: "1986-03-13", MTW: "1990-03-26", NBHC: "2012-09-20", NCLH: "2013-01-18", NOC: "1981-12-31", NWSA: "2013-06-19", ORCL: "1986-03-12", PEG: "1980-01-02", PFE: "1972-06-01", PRU: "2001-12-13", PSO: "1996-11-18", QCOM: "1991-12-13", RF: "1980-03-17", RSG: "1998-07-01", RY: "1995-10-16", SAIC: "2013-09-16", SFD: "2025-01-28", SUN: "2012-09-20", T: "1983-11-21", TBBK: "2004-02-03", TFC: "1980-03-18", TGT: "1973-02-21", THC: "1980-03-17", TM: "1980-03-17", TSN: "1980-03-17", TXT: "1973-02-21", UAL: "2006-02-06", UIS: "1972-06-01", UNH: "1984-10-17", USB: "1973-05-03", VLO: "1982-01-04", VZ: "1983-11-21", WAB: "1995-06-16", WELPP: "1994-04-08", WFC: "1972-06-01", WHR: "1973-02-21", WMT: "1972-08-25", WY: "1973-05-03", XOM: "1962-01-02", CX: "1999-09-15", "BRK-B": "1996-05-09", RTX: "1962-04-02", D: "1980-03-17", WEC: "1980-03-17", FE: "1997-11-10",
+  // batch 128: the companies the months of 1996–2000 and the drug makers' units add, Yahoo's first trading days as read for batch 125
+  AZN: "1993-05-12", CHCO: "1987-06-26", DAN: "2008-01-02", DPZ: "2004-07-13", DUK: "1980-03-17", EMN: "1993-12-14", F: "1972-06-01", FMC: "1980-03-17", HAL: "1972-06-01",
+  HBNC: "2002-01-09", HMC: "1980-03-17", IP: "1962-01-02", JNJ: "1962-01-02", LAMR: "1996-08-02", MA: "2006-05-25", MLM: "1994-02-17", MLR: "1994-08-02", NVS: "1996-11-07",
+  OLN: "1973-02-21", ONB: "1984-06-20", OXY: "1981-12-31", PCG: "1972-06-01", POWW: "2017-02-07", PUK: "2000-06-29", RCL: "1993-04-28", SHW: "1980-03-17", SNA: "1973-02-21",
+  SNY: "2002-07-01", TXN: "1972-06-01", UNP: "1980-01-02", WM: "1988-06-22", ZION: "1980-03-17" };
 /** EDGAR's former names for the companies the cases read under one, as data.sec.gov gave them on 2026-11-05. */
 const ARCHIVE_FORMER: Record<string, { name: string; until: string }[]> = {
   WMT: [{ name: "WAL MART STORES INC", until: "2018-01-30" }],
   TFC: [{ name: "BB&T CORP", until: "2019-12-06" }, { name: "SOUTHERN NATIONAL CORP /NC/", until: "1997-05-14" }],
 };
 
-function parsedArchive(): { releases: ArchiveRelease[]; unread: string[]; perMonth: Map<string, number> } {
+/** The archive's months read, batch 94's 2001–2008 by default, or batch 128's 1996–2000. */
+function parsedArchive(years: "2001-2008" | "1996-2000" = "2001-2008"): { releases: ArchiveRelease[]; unread: string[]; perMonth: Map<string, number> } {
   const releases: ArchiveRelease[] = [];
   const unread: string[] = [];
   const perMonth = new Map<string, number>();
-  for (const { year, month, key } of archiveMonths()) {
+  for (const { year, month, key } of archiveMonths().filter((m) => (years === "2001-2008" ? m.year >= 2001 : m.year <= 2000))) {
     const got = parseArchiveMonth(pageOf(key), year, month);
     releases.push(...got.releases);
     unread.push(...got.unread.map((u) => `${key} ${u}`));
@@ -390,7 +400,7 @@ function archiveNamesOf(cik: number, title: string, ticker: string): (year: numb
 }
 
 /** Every company in the index against every kept release: what each gets with no floor, and from its first price on. */
-function replayArchive(releases: ArchiveRelease[]): { all: Map<string, TimelineEvent[]>; shown: Map<string, TimelineEvent[]> } {
+function replayArchive(releases: ArchiveRelease[], [from, to]: [number, number] = [2001, 2008]): { all: Map<string, TimelineEvent[]>; shown: Map<string, TimelineEvent[]> } {
   const alnum = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
   const letters = releases.map((r) => alnum(r.title));
   const all = new Map<string, TimelineEvent[]>();
@@ -400,7 +410,7 @@ function replayArchive(releases: ArchiveRelease[]): { all: Map<string, TimelineE
     if (seen.has(cik) || isNotesRecord(cik)) continue;
     seen.add(cik);
     const namesIn = archiveNamesOf(cik, title, ticker);
-    const keys = [...new Set([...namesIn(2001), ...namesIn(2008), ...releaseNamesAsked(cik)].map(alnum).filter((k) => k.length >= 2))];
+    const keys = [...new Set([...namesIn(from), ...namesIn(to), ...releaseNamesAsked(cik)].map(alnum).filter((k) => k.length >= 2))];
     const held = releases.filter((_, i) => keys.some((k) => letters[i].includes(k))).map(asDojRelease);
     if (!held.length) continue;
     const on = (day: string) => [...namesIn(Number(day.slice(0, 4))), ...releaseNamesOn(cik, day)];
@@ -457,7 +467,7 @@ async function archiveChecks(): Promise<void> {
   const years = new Map<string, number>();
   for (const r of releases) years.set(r.day.slice(0, 4), (years.get(r.day.slice(0, 4)) ?? 0) + 1);
   check("the 96 saved months give 5,712 releases, each month 29 or more, and every row read but 5",
-    archiveMonths().length === 96 && releases.length === 5712 && Math.min(...perMonth.values()) >= 29 && unread.length === 5 &&
+    archiveMonths().filter((m) => m.year >= 2001).length === 96 && releases.length === 5712 && Math.min(...perMonth.values()) >= 29 && unread.length === 5 &&
       [...years.values()].join() === "621,648,670,771,529,650,802,1021",
     `${releases.length}; ${[...years].map(([y, n]) => `${y} ${n}`).join(", ")}; least ${Math.min(...perMonth.values())}; unread ${unread.length}`);
   check("  …the 5 a slip in the page leaves unread, not guessed: a day that is no day, a day in another month, a row with none",
@@ -540,9 +550,11 @@ async function archiveChecks(): Promise<void> {
   const { all, shown } = replayArchive(releases);
   const count = (m: Map<string, TimelineEvent[]>) => [...m.values()].reduce((n, v) => n + v.length, 0);
   // batch 121's operating units add 14 on 9 pages: Pratt & Whitney's $52 million of 2008 on RTX, Warner-Lambert's $430 million
-  // of 2004 on Pfizer, Atlantic Richfield's $187 million of 2008 on BP, Davis-Besse's $28 million of 2006 on FirstEnergy…
-  check("145 releases name 92 companies; from each one's first price, 125 reach 78 pages (131, 87, 111 and 73 before batch 121's operating units; 127, 86, 106 and 71 before batch 100)",
-    count(all) === 145 && all.size === 92 && count(shown) === 125 && shown.size === 78 && [...all.keys()].every((t) => t in ARCHIVE_FIRST_PRICES),
+  // of 2004 on Pfizer, Atlantic Richfield's $187 million of 2008 on BP, Davis-Besse's $28 million of 2006 on FirstEnergy…;
+  // batch 128's drug makers' units 3: LifeScan's $15 million of 2001 on J&J, Aventis's $190 million of 2007 on Sanofi,
+  // AstraZeneca Pharmaceuticals LP's plea of 2003 on AstraZeneca ("LP" read as a legal word, as "L.P." was)
+  check("148 releases name 95 companies; from each one's first price, 128 reach 81 pages (145, 92, 125 and 78 before batch 128's drug makers' units; 131, 87, 111 and 73 before batch 121's operating units; 127, 86, 106 and 71 before batch 100)",
+    count(all) === 148 && all.size === 95 && count(shown) === 128 && shown.size === 81 && [...all.keys()].every((t) => t in ARCHIVE_FIRST_PRICES),
     `${count(all)} on ${all.size}; ${count(shown)} on ${shown.size}; no first price: ${[...all.keys()].filter((t) => !(t in ARCHIVE_FIRST_PRICES)).join(",")}`);
   const off = [...all].flatMap(([t, v]) => v.filter((e) => !(shown.get(t) ?? []).some((x) => x.id === e.id)).map((e) => `${t} ${e.date}`));
   check("  …the 20 kept off are from before the company listed: News Corp's of 2001 and 2003, Kinder Morgan's of 2007, Norwegian Cruise Line's",
@@ -561,8 +573,8 @@ async function archiveChecks(): Promise<void> {
   const shownYears = new Map<string, number>();
   for (const v of shown.values()) for (const e of v) shownYears.set(e.date.slice(0, 4), (shownYears.get(e.date.slice(0, 4)) ?? 0) + 1);
   const yearLine = [...shownYears].sort().map(([y, k]) => `${y} ${k}`).join(", ");
-  check("  …in every year of the eight: 2001 14, 2002 10, 2003 16, 2004 12, 2005 10, 2006 21, 2007 16, 2008 26; Exxon Mobil 7, Walmart 6, Tenet 5 (Exxon Mobil 4 before batch 121 gave it Mobil's and ExxonMobil Oil's)",
-    yearLine === "2001 14, 2002 10, 2003 16, 2004 12, 2005 10, 2006 21, 2007 16, 2008 26" &&
+  check("  …in every year of the eight: 2001 15, 2002 10, 2003 17, 2004 12, 2005 10, 2006 21, 2007 17, 2008 26 (2001, 2003 and 2007 one fewer before batch 128's drug makers' units); Exxon Mobil 7, Walmart 6, Tenet 5 (Exxon Mobil 4 before batch 121 gave it Mobil's and ExxonMobil Oil's)",
+    yearLine === "2001 15, 2002 10, 2003 17, 2004 12, 2005 10, 2006 21, 2007 17, 2008 26" &&
       shown.get("WMT")?.length === 6 && shown.get("THC")?.length === 5 && shown.get("XOM")?.length === 7,
     yearLine);
   const aepEvent = shown.get("AEP")?.find((e) => e.date === "2005-01-26");
@@ -597,13 +609,48 @@ async function archiveChecks(): Promise<void> {
       !unitOn("RTX", rel("Raytheon Company to Pay $8 Million to Settle False Claims Act Allegations", "2019-05-01")));
   const ops = Object.values(OPERATING_UNITS).flatMap((b) => b.names);
   check("  …the map: 288 names on 74 companies, Honda's two with its lender in the banks' map, each with its reason and well-formed days, no company in both maps, all read by every release rule",
-    ops.length === 288 && Object.keys(OPERATING_UNITS).length === 74 && Object.keys(OPERATING_UNITS).every((c) => !(c in BANK_UNITS) && RELEASE_NAMES[Number(c)] === OPERATING_UNITS[Number(c)]) &&
+    ops.length === 288 && Object.keys(OPERATING_UNITS).length === 74 &&
+      // CVS's and Pfizer's carry the drug makers' units after their own (batch 128)
+      Object.entries(OPERATING_UNITS).every(([c, b]) => !(c in BANK_UNITS) && b.names.every((n, i) => RELEASE_NAMES[Number(c)]?.names[i] === n)) &&
       ops.every((n) => n.why.length > 20 && !n.beforeListing && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d))) &&
       releaseNamesOn(715153, "2020-01-01").join("|") === "American Honda Finance|American Honda|Honda of America" &&
       Object.entries(OPERATING_UNITS).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)),
     `${ops.length} on ${Object.keys(OPERATING_UNITS).length}`);
   check("  …and the API is asked for them: RTX's query names Pratt & Whitney and Sikorsky Aircraft",
     justiceQueryNames("RTX Corp", [], "", cikOfT("RTX")).includes("Pratt & Whitney") && justiceQueryNames("RTX Corp", [], "", cikOfT("RTX")).includes("Sikorsky Aircraft"));
+
+  console.log("\nThe drug, device and health makers' own companies (batch 128, the 2026-11-09 proposal 3(b))");
+  // the API's own titles, read 2026-11-09 through `title=`
+  check("a settlement with the unit reaches its owner: Novartis Pharmaceuticals Corp.'s $420 million of 2010 on Novartis, Merck Sharp & Dohme's of 2011 on Merck, Janssen's plea of 2013 on J&J, Sanofi US's of 2012, Teva Pharmaceuticals USA's of 2013",
+    unitOn("NVS", rel("Novartis Pharmaceuticals Corp. to Pay More Than $420 Million to Resolve Off-label Promotion and Kickback Allegations", "2010-09-30")) &&
+      unitOn("MRK", rel("U.S. Pharmaceutical Company Merck Sharp &amp; Dohme to Pay Nearly One Billion Dollars Over Promotion of Vioxx®", "2011-11-22")) &&
+      unitOn("JNJ", rel("Janssen Pharmaceuticals Pleads Guilty And Is Sentenced For Misbranding", "2013-01-03")) &&
+      unitOn("SNY", rel("Sanofi US Agrees to Pay $109 Million to Resolve False Claims Act Allegations of Free Product Kickbacks to Physicians", "2012-12-19")) &&
+      unitOn("TEVA", rel("Teva Pharmaceuticals USA to Pay $2.25 Million Civil Penalty for Air, Water and Hazardous Waste Violations at Missouri Facility", "2013-03-14")));
+  const guidant = (day: string) => rel("Medical Device Manufacturer Guidant Pleads Guilty<br /> for Not Reporting Defibrillator Safety Problems to FDA", day);
+  const covidien = (day: string) => rel("Covidien to Pay Over $17 Million to The United States for Allegedly Providing Illegal Remuneration in the Form of Practice and Market Development Support", day);
+  const aetna = (day: string) => rel("Aetna Agrees to Pay $117.7 Million to Resolve False Claims Act Allegations", day);
+  const lifescan = (day: string) => rel("LIFESCAN, INC. AGREES TO PAY UNITED STATES $15 MILLION FOR OVERCHARGING VETERANS AFFAIRS DEPARTMENT", day);
+  check("  …a unit bought from the day its owner's filings give: Guidant Boston Scientific's from 2006-04-21, Covidien Medtronic's from 2015-01-26, Aetna CVS's from 2018-11-28; LifeScan J&J's until its sale",
+    unitOn("BSX", guidant("2010-04-05")) && !unitOn("BSX", guidant("2006-04-20")) && unitOn("MDT", covidien("2019-03-11")) && !unitOn("MDT", covidien("2014-03-11")) &&
+      unitOn("CVS", aetna("2026-03-11")) && !unitOn("CVS", aetna("2018-11-27")) && unitOn("JNJ", lifescan("2001-11-14")) && !unitOn("JNJ", lifescan("2018-10-02")));
+  check("  …and the archive's: LifeScan's of 2001 on J&J, Aventis's of 2007 on Sanofi, AstraZeneca Pharmaceuticals LP's plea of 2003, Caremark's of 2005 on no page (CVS's from the merger of 2007)",
+    archiveOn("JNJ", "2001-11-14") && archiveOn("SNY", "2007-09-10") && archiveOn("AZN", "2003-06-20") && !archiveOn("CVS", "2005-05-31") && archiveOn("CVS", "2008-03-18"));
+  check("  …\"LP\" is a legal word as \"L.P.\" is: \"ASTRAZENECA PHARMACEUTICALS LP PLEADS GUILTY\"",
+    releaseNamesParty("ASTRAZENECA PHARMACEUTICALS LP PLEADS GUILTY TO HEALTHCARE CRIME; COMPANY AGREES TO PAY $355 MILLION TO SETTLE CHARGES", ["AstraZeneca Pharmaceuticals"]) &&
+      releaseNamesParty("Kinder Morgan Energy Partners LP Agrees to Pay", ["Kinder Morgan Energy Partners"]));
+  const health = Object.values(HEALTH_UNITS).flatMap((b) => b.names);
+  check("  …the map: 27 names on 13 companies, each with its reason and well-formed days, none before its owner listed, all read by every release rule and asked of the API (a name holding the company's own, Novartis Pharmaceuticals, asked as Novartis)",
+    health.length === 27 && Object.keys(HEALTH_UNITS).length === 13 &&
+      health.every((n) => n.why.length > 20 && !n.beforeListing && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d))) &&
+      Object.entries(HEALTH_UNITS).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker) && !(cik in BANK_UNITS) &&
+        b.names.every((n) => RELEASE_NAMES[Number(cik)]?.names.includes(n) && releaseNamesAsked(Number(cik)).includes(n.name))) &&
+      // the API's title filter matches inside a title, so "Novartis" asks for Novartis Pharmaceuticals too
+      ["Sandoz", "Alcon"].every((n) => justiceQueryNames("NOVARTIS AG", [], "", cikOfT("NVS")).includes(n)) &&
+      ["Ethicon", "LifeScan", "DePuy"].every((n) => justiceQueryNames("JOHNSON & JOHNSON", [], "", cikOfT("JNJ")).includes(n)),
+    `${health.length} on ${Object.keys(HEALTH_UNITS).length}`);
+
+  await oldArchiveChecks();
 
   console.log("\nRead once, and kept");
   const db: ArchiveDb = { months: new Map(), releases: new Map(), listed: "1962-01-02", renames: [] };
@@ -614,19 +661,19 @@ async function archiveChecks(): Promise<void> {
     return { releases: rows, unread: notRead, outcome: "ok", httpStatus: 200 };
   };
   const walks: ArchiveWalk[] = [];
-  for (let run = 0; run < 5; run++) walks.push(await walkDojArchive(fakeArchiveDb(db), { budget: { left: MONTHS_PER_RUN }, gapMs: 0, fetchMonth: serve }));
-  check("a process reads at most 24 months, oldest first, so four read all 96",
-    walks.slice(0, 4).every((w) => w.asked === 24 && w.kept === 24) && walks[3].left === 0 && asked[0] === "2001-01" && asked[95] === "2008-12" && db.releases.size === 5712,
-    walks.map((w) => `${w.asked}/${w.left}`).join(" "));
-  check("  …and a closed month is not asked twice: the fifth process asks nothing", walks[4].asked === 0 && asked.length === 96 && new Set(asked).size === 96);
+  for (let run = 0; run < 8; run++) walks.push(await walkDojArchive(fakeArchiveDb(db), { budget: { left: MONTHS_PER_RUN }, gapMs: 0, fetchMonth: serve }));
+  check("a process reads at most 24 months, oldest first, so seven read all 152, from May 1996 (96 before batch 128's months of 1996–2000)",
+    walks.slice(0, 6).every((w) => w.asked === 24 && w.kept === 24) && walks[6].asked === 8 && walks[6].left === 0 && asked[0] === "1996-05" && asked[151] === "2008-12" && db.releases.size === 5712 + 2608,
+    `${walks.map((w) => `${w.asked}/${w.left}`).join(" ")}; ${db.releases.size}`);
+  check("  …and a closed month is not asked twice: the eighth process asks nothing", walks[7].asked === 0 && asked.length === 152 && new Set(asked).size === 152);
   check("  …each month kept with the rows it could not read", db.months.get("2001-10")?.unread === 1 && db.months.get("2005-01")?.unread === 0 && db.months.get("2005-01")?.releases === perMonth.get("2005-01"));
   const failDb: ArchiveDb = { months: new Map(), releases: new Map(), listed: "1962-01-02", renames: [] };
   let n = 0;
   const flaky = async (year: number, month: number): Promise<MonthAnswer> => (++n === 3 ? { releases: [], outcome: "throttled", httpStatus: 429 } : serve(year, month));
   const stopped = await walkDojArchive(fakeArchiveDb(failDb), { budget: { left: 24 }, gapMs: 0, fetchMonth: flaky });
   check("a refusal stops the walk, keeps nothing for that month, and the next run asks it again",
-    stopped.stopped === "throttled" && stopped.failure?.httpStatus === 429 && /^2001-03/.test(stopped.failure?.detail ?? "") && failDb.months.size === 2 && !failDb.months.has("2001-03") &&
-      (await walkDojArchive(fakeArchiveDb(failDb), { budget: { left: 1 }, gapMs: 0, fetchMonth: serve })).kept === 1 && failDb.months.has("2001-03"), JSON.stringify(stopped));
+    stopped.stopped === "throttled" && stopped.failure?.httpStatus === 429 && /^1996-07/.test(stopped.failure?.detail ?? "") && failDb.months.size === 2 && !failDb.months.has("1996-07") &&
+      (await walkDojArchive(fakeArchiveDb(failDb), { budget: { left: 1 }, gapMs: 0, fetchMonth: serve })).kept === 1 && failDb.months.has("1996-07"), JSON.stringify(stopped));
   const blank = await (async () => {
     const real = globalThis.fetch;
     globalThis.fetch = (async () => new Response("<html><body>Access Denied</body></html>", { status: 200 })) as typeof fetch;
@@ -662,7 +709,7 @@ async function archiveChecks(): Promise<void> {
   const e = withArchive({ events: [], outcome: "empty", httpStatus: 200 }, [], done);
   check("the API's answer and the archive's go under one source: the API's failure is the run's, else the walk's, and each part's releases are kept",
     a.outcome === "ok" && a.events.length === 7 && b.outcome === "throttled" && b.httpStatus === 429 && b.events.length === 6 &&
-      c.outcome === "error" && c.events.length === 7 && /^the 2001–2008 archive, 2001-01/.test(c.detail ?? "") && e.outcome === "empty",
+      c.outcome === "error" && c.events.length === 7 && /^the 1996–2008 archive, 2001-01/.test(c.detail ?? "") && e.outcome === "empty",
     `${a.outcome} ${b.outcome} ${c.outcome}:${c.detail} ${e.outcome}`);
   const ingest = read("scripts/ingest.ts");
   check("company ingest walks the archive after the API's ask and keeps the company's kept rows beside it, none for a notes record",
@@ -670,7 +717,68 @@ async function archiveChecks(): Promise<void> {
   const migration = read("db/036_doj_archive.sql");
   check("  …into tables of its own (db/036)", /CREATE TABLE IF NOT EXISTS doj_archive_releases \(\s*path\s+text PRIMARY KEY/.test(migration) && /CREATE TABLE IF NOT EXISTS doj_archive_months \(\s*month\s+date PRIMARY KEY/.test(migration));
   check("  …asking only www.justice.gov's archive, with the build's User-Agent",
-    archiveMonthUrl(2005, 1) === "https://www.justice.gov/archive/opa/pr/2005/January/" && /headers: \{ \.\.\.UA, Accept: "text\/html" \}/.test(read("lib/dojArchive.ts")) && ARCHIVE_FIRST_YEAR === 2001 && ARCHIVE_LAST_YEAR === 2008);
+    archiveMonthUrl(2005, 1) === "https://www.justice.gov/archive/opa/pr/2005/January/" && /headers: \{ \.\.\.UA, Accept: "text\/html" \}/.test(read("lib/dojArchive.ts")) && ARCHIVE_FIRST_YEAR === 1996 && ARCHIVE_FIRST_MONTH === 5 && ARCHIVE_LAST_YEAR === 2008);
+}
+
+/** The archive's months of 1996–2000 (batch 128, the 2026-11-09 proposal 3(a)), read as the later ones are. */
+async function oldArchiveChecks(): Promise<void> {
+  console.log("\nThe archive of 1996–2000 (batch 128, the 2026-11-09 proposal 3(a)): every month page read");
+  const { releases, unread, perMonth } = parsedArchive("1996-2000");
+  const years = new Map<string, number>();
+  for (const r of releases) years.set(r.day.slice(0, 4), (years.get(r.day.slice(0, 4)) ?? 0) + 1);
+  check("the 56 saved months from May 1996 give 2,608 releases, each month 20 or more, and every row read but 27",
+    archiveMonths().filter((m) => m.year <= 2000).length === 56 && perMonth.size === 56 && releases.length === 2608 && Math.min(...perMonth.values()) === 20 &&
+      unread.length === 27 && [...years.values()].join() === "277,506,577,580,668",
+    `${releases.length}; ${[...years].map(([y, n]) => `${y} ${n}`).join(", ")}; least ${Math.min(...perMonth.values())}; unread ${unread.length}`);
+  check("  …each year's folders as the archive names them: \"May96\", \"Jun96\", \"Sept96\", \"April97\", then the month alone",
+    archiveMonthUrl(1996, 5) === "https://www.justice.gov/archive/opa/pr/1996/May96/" && archiveMonthUrl(1996, 6).endsWith("/1996/Jun96/") &&
+      archiveMonthUrl(1996, 9).endsWith("/1996/Sept96/") && archiveMonthUrl(1997, 4).endsWith("/1997/April97/") && archiveMonthUrl(1998, 1).endsWith("/1998/January/") &&
+      archiveMonthUrl(2001, 1).endsWith("/2001/January/") && archiveMonths()[0].key === "1996-05");
+  check("  …a slip left unread, not guessed: a day typed in another year (\"06-22-98\" on June 1999's page), a row with no day, a link off the archive",
+    unread.some((u) => /^1999-06 a day outside the page's month \(06-22-98\): ALLIEDSIGNAL SUBSIDIARY/.test(u)) &&
+      unread.some((u) => /^1998-07 a row not read: #332: JUSTICE DEPARTMENT AND THIRTEEN STATES CLEAR USA WASTE/.test(u)) &&
+      unread.some((u) => /^1996-07 a link not on the archive \(357\.cr\)/.test(u)) && unread.filter((u) => /Previous Justice Department Press Releases/.test(u)).length === 3,
+    unread.slice(0, 3).join(" | "));
+  const adm = releases.find((r) => r.day === "1996-10-15" && /^Archer Daniels Midland/.test(r.title));
+  const suit = releases.find((r) => r.day === "1998-05-18" && /ANTITRUST SUIT AGAINST MICROSOFT/.test(r.title));
+  check("  …both layouts: 1996–1997's mixed case in its year folder, 1998–2000's capitals",
+    adm?.title === "Archer Daniels Midland to Pay Largest Criminal Antitrust Fine Ever" && /^\/archive\/opa\/pr\/1996\/Oct96\//.test(adm.path) &&
+      suit?.title === "JUSTICE DEPARTMENT FILES ANTITRUST SUIT AGAINST MICROSOFT FOR UNLAWFULLY MONOPOLIZING COMPUTER SOFTWARE MARKETS" && /^\/archive\/opa\/pr\/1998\/May\//.test(suit.path),
+    `${JSON.stringify(adm)} ${JSON.stringify(suit)}`);
+
+  console.log("\nEvery listed company against every release of 1996–2000");
+  const { all, shown } = replayArchive(releases, [1996, 2000]);
+  const count = (m: Map<string, TimelineEvent[]>) => [...m.values()].reduce((n, v) => n + v.length, 0);
+  const cikOf = (t: string) => companies.find(([, x]) => x === t)![0];
+  // a release that names only a name the company took later is not its (lib/takenNames.ts), as ingest drops it
+  const kept = new Map([...shown].map(([t, v]) => [t, v.filter((e) => !takenBefore(cikOf(t), e.date, e.title))] as const).filter(([, v]) => v.length));
+  const on = (t: string, d: string) => kept.get(t)?.some((e) => e.date === d) ?? false;
+  check("84 releases name 53 companies; from each one's first price, 67 reach 40 pages",
+    count(all) === 84 && all.size === 53 && count(kept) === 67 && kept.size === 40 && [...all.keys()].every((t) => t in ARCHIVE_FIRST_PRICES || t === "CMBY"),
+    `${count(all)} on ${all.size}; ${count(kept)} on ${kept.size}; no first price: ${[...all.keys()].filter((t) => !(t in ARCHIVE_FIRST_PRICES)).join(",")}`);
+  check("  …among them ADM's record antitrust fine of 1996, the Microsoft suit of 1998, American Honda's $267 million of 1998 (Honda's unit), Novartis Pharmaceuticals' of 1999, GE's Housatonic River of 1998",
+    on("ADM", "1996-10-15") && on("MSFT", "1998-05-18") && on("HMC", "1998-06-08") && on("NVS", "1999-03-11") && on("GE", "1998-09-24") && on("TFC", "1997-04-29"));
+  const off = [...all].flatMap(([t, v]) => v.filter((e) => !(kept.get(t) ?? []).some((x) => x.id === e.id)).map((e) => `${t} ${e.date}`));
+  check("  …the 17 kept off: 14 from before the company listed (Aetna's purchase of Prudential HealthCare of 1999, the Visa and MasterCard case of 1998), 3 under AT&T Corp.'s name, which SBC's record took in 2005",
+    off.length === 17 && ["PUK 1999-06-21", "MA 1998-10-07", "DPZ 2000-06-05", "CMBY 1996-07-25", "T 1998-12-30", "T 2000-03-09", "T 2000-05-25"].every((x) => off.includes(x)) &&
+      takenBefore(cikOf("T"), "1998-12-30", "JUSTICE DEPARTMENT APPROVES AT&T CORP.'S MERGER WITH TCI") && !kept.has("T") && ![...kept.keys()].some((t) => t === "CVS" || t === "PRU"),
+    off.join(", "));
+
+  console.log("\nThe routine notices of a case, a row a month (batch 128, the owner's call of 2026-11-09)");
+  const msft = kept.get("MSFT") ?? [];
+  const notices = msft.filter(isRoutineJusticeNotice);
+  const page = pageRegulations(msft);
+  const april = page.find((e) => e.id === "doj-routine-1999-04");
+  const may = page.find((e) => e.id === "doj-routine-1999-05");
+  check("Microsoft's 10 releases of 1996–2000 hold 8 \"NOTICE OF UPCOMING DEPOSITIONS\" of April and May 1999; the page shows them as two rows",
+    msft.length === 10 && notices.length === 8 && page.length === 4 && april?.title === 'Justice Department: 3 notices, "NOTICE OF UPCOMING DEPOSITIONS IN U.S. v. MICROSOFT"' &&
+      may?.title === 'Justice Department: 5 notices, "NOTICE OF UPCOMING DEPOSITIONS IN U.S. v. MICROSOFT"' && may.precision === "month" && may.date === "1999-05-01" &&
+      may.url === msft.find((e) => e.date === "1999-05-25")?.url && /on 1999-05-03, 1999-05-17, 1999-05-21, 1999-05-24, 1999-05-25\. The link opens the newest\.$/.test(may.description ?? ""),
+    page.map((e) => `${e.date} ${e.title}`).join(" | "));
+  check("  …while the suit, the appeal and a notice alone in its month stay rows of their own",
+    page.some((e) => e.date === "1998-05-18" && /ANTITRUST SUIT/.test(e.title)) && page.some((e) => e.date === "2000-06-13") &&
+      pageRegulations([msft.find((e) => e.date === "1999-05-25")!, msft.find((e) => e.date === "1998-05-18")!]).every((e) => !e.id.startsWith("doj-routine-")) &&
+      !isRoutineJusticeNotice({ ...msft[0], title: "NOTICE OF UPCOMING DEPOSITIONS IN U.S. v. MICROSOFT", source: "Federal Register · Antitrust Division" }));
 }
 
 main();

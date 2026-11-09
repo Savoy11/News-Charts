@@ -709,7 +709,7 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   // a fund's series is no party to any of these: its page knows only the series name, "GROWTH
   // FUND", which names some other firm's case (batch 85, `FUND_SERIES`)
   const fundSeries = fundSeriesId(company.ticker) !== null;
-  await run("doj_press", `${justiceQueryNames(company.name, alsoKnownAs, possessive, company.cik).join(" | ")} + the 2001–2008 archive`, async () => {
+  await run("doj_press", `${justiceQueryNames(company.name, alsoKnownAs, possessive, company.cik).join(" | ")} + the 1996–2008 archive`, async () => {
     if (fundSeries) return FUND_SERIES();
     // from the company's first price on, as the other release rules read (batch 90); a notes
     // record is asked nothing, and a company with no prices yet is asked again on the next run

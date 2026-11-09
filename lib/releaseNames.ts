@@ -860,6 +860,121 @@ export const OPERATING_UNITS: Readonly<Record<number, { ticker: string; names: r
   217346: { ticker: "TXT", names: [op("Bell Helicopter"), op("Cessna Aircraft", "1994-03-30"), op("E-Z-GO")] },
 };
 
+/**
+ * The drug, device and health makers' own companies, by their own names (batch 128, the 2026-11-09
+ * proposal 3(b), approved by the owner that day). The Justice Department settles with the unit that
+ * did the business: "Novartis Pharmaceuticals Corp. to Pay More Than $420 Million", "AstraZeneca
+ * Pharmaceuticals LP Pleads Guilty", "Merck Sharp & Dohme … Nearly One Billion Dollars". The caption
+ * rule refuses a company's name followed by words that are not legal ones ("Pharmaceuticals" is not),
+ * so those sat on no page. A unit bought counts from the day its filings give and a unit sold to the
+ * day it left, as the FDA map reads the same units (`FDA_FIRMS`, lib/fdaRecalls.ts), whose days these
+ * repeat; the rest were read from data.sec.gov's filing lists on 2026-11-09, or, where none reports
+ * the deal, the first filing EDGAR's full-text search finds naming the unit as the owner's, with no
+ * release naming it between the deal and that day. Read by every release rule, as the other units are.
+ */
+const healthWhy = (what: string) => `${what} (batch 128)`;
+export const HEALTH_UNITS: Readonly<Record<number, { ticker: string; names: readonly ReleaseName[] }>> = {
+  200406: {
+    ticker: "JNJ",
+    names: [
+      { name: "Ethicon", why: healthWhy("its surgical company, as the FDA map reads it") },
+      { name: "Janssen Pharmaceuticals", why: healthWhy("its pharmaceutical company, as the FDA map reads Janssen") },
+      { name: "Ortho-McNeil", why: healthWhy("its pharmaceutical company before it took Janssen's name (Ortho-McNeil-Janssen Pharmaceuticals)") },
+      {
+        name: "DePuy",
+        from: "2001-03-14",
+        why: healthWhy("its orthopaedics company, bought in 1998: J&J's 8-K of 2001-03-14 is the first filing EDGAR's full-text search finds naming it, and no release names DePuy before 2009"),
+      },
+      { name: "LifeScan", to: "2018-10-01", why: healthWhy("its diabetes-care company until the sale to Platinum Equity, which J&J announced complete on 2018-10-02 (its 8-K), as the FDA map reads it") },
+      { name: "Synthes", from: "2012-06-14", why: healthWhy("bought 2012-06-14 (J&J's 8-K of that day), as the FDA map reads it; Synthes's cases of 2009–2011 are its own") },
+    ],
+  },
+  1613103: {
+    ticker: "MDT",
+    names: [{ name: "Covidien", from: "2015-01-26", why: healthWhy("bought 2015-01-26 (Medtronic plc's 8-K filed 2015-01-27), as the FDA map reads it") }],
+  },
+  1800: {
+    ticker: "ABT",
+    names: [
+      { name: "St. Jude Medical", from: "2017-01-04", why: healthWhy("bought 2017-01-04 (Abbott's 8-K filed 2017-01-05), as the FDA map reads it") },
+      { name: "Alere", from: "2017-10-03", why: healthWhy("bought 2017-10-03 (Abbott's 8-K of that day), as the FDA map reads it") },
+    ],
+  },
+  1121404: {
+    ticker: "SNY",
+    names: [
+      { name: "Sanofi US", why: healthWhy("its U.S. company") },
+      { name: "Sanofi Pasteur", why: healthWhy("its vaccines company, named after it") },
+      { name: "Genzyme", from: "2011-04-08", why: healthWhy("Sanofi's from the merger of 2011-04-08 (Genzyme's Form 25 of that day), as the FDA map reads it") },
+      {
+        name: "Aventis",
+        from: "2005-04-11",
+        why: healthWhy("bought by Sanofi-Synthélabo's offer of 2004: its 20-F for 2004, filed 2005-04-11, is the first filing EDGAR's full-text search finds reporting the acquisition done, and no release names Aventis before 2007"),
+      },
+    ],
+  },
+  1114448: {
+    ticker: "NVS",
+    names: [
+      { name: "Novartis Pharmaceuticals", why: healthWhy("its U.S. pharmaceutical company, named after it") },
+      { name: "Sandoz", to: "2023-10-03", why: healthWhy("its generics business until the spin-off on 2023-10-04 (Novartis's 6-K of that day), as the FDA map reads it") },
+      {
+        name: "Alcon",
+        from: "2010-08-26",
+        to: "2019-04-08",
+        why: healthWhy("its eye-care business from Novartis's purchase of Nestlé's majority (Alcon's 6-K of 2010-08-26) until the spin-off on 2019-04-09, as the FDA map reads it"),
+      },
+    ],
+  },
+  818686: {
+    ticker: "TEVA",
+    names: [
+      { name: "Teva Pharmaceuticals USA", why: healthWhy("its U.S. company, named after it") },
+      { name: "Actavis", from: "2016-08-02", why: healthWhy("Allergan's generics business, bought 2016-08-02 (Teva's 6-K of that day), as the FDA map reads it") },
+    ],
+  },
+  1136869: {
+    ticker: "ZBH",
+    names: [{ name: "Biomet", from: "2015-06-24", why: healthWhy("bought 2015-06-24 (Zimmer Biomet's 8-K filed 2015-06-26), as the FDA map reads it") }],
+  },
+  901832: { ticker: "AZN", names: [{ name: "AstraZeneca Pharmaceuticals", why: healthWhy("its U.S. company, named after it") }] },
+  310158: {
+    ticker: "MRK",
+    names: [{ name: "Merck Sharp & Dohme", why: healthWhy("old Merck's own company, whose record is MRK's history (lib/predecessors.ts), Merck & Co.'s since") }],
+  },
+  885725: {
+    ticker: "BSX",
+    names: [{ name: "Guidant", from: "2006-04-21", why: healthWhy("bought 2006-04-21 (Boston Scientific's 8-K reporting that day, item 2.01; Guidant's Form 15 of that day)") }],
+  },
+  64803: {
+    ticker: "CVS",
+    names: [
+      { name: "Caremark", from: "2007-03-22", why: healthWhy("from the merger with Caremark Rx (CVS's 8-K reporting 2007-03-22, item 2.01; Caremark's Forms 25 and 15 of that day); Caremark's case of 2005 is its own") },
+      { name: "Omnicare", from: "2015-08-18", why: healthWhy("bought 2015-08-18 (CVS's 8-K of that day, item 2.01; Omnicare's, items 2.01 and 5.01)") },
+      { name: "Aetna", from: "2018-11-28", why: healthWhy("bought 2018-11-28 (CVS's 8-K of that day, item 2.01; Aetna's, items 2.01 and 5.01); Aetna's cases before are its own") },
+    ],
+  },
+  1739940: {
+    ticker: "CI",
+    names: [{ name: "Express Scripts", from: "2018-12-20", why: healthWhy("bought 2018-12-20 (Express Scripts' 8-K of that day, items 2.01 and 5.01)") }],
+  },
+  78003: {
+    ticker: "PFE",
+    names: [{ name: "Hospira", from: "2015-09-03", why: healthWhy("bought 2015-09-03 (Pfizer's 8-K of that day), as the FDA map reads it") }],
+  },
+};
+
+/** The maps together, by CIK: a company in two of them carries both lists, the earlier map's first. */
+const joined = (...maps: Readonly<Record<number, { ticker: string; names: readonly ReleaseName[] }>>[]) => {
+  const out: Record<number, { ticker: string; names: readonly ReleaseName[] }> = {};
+  for (const m of maps)
+    for (const [cik, entry] of Object.entries(m)) {
+      const was = out[Number(cik)];
+      out[Number(cik)] = was ? { ticker: was.ticker, names: [...was.names, ...entry.names] } : entry;
+    }
+  return out;
+};
+
 export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: readonly ReleaseName[] }>> = {
   70858: {
     ticker: "BAC",
@@ -1034,8 +1149,9 @@ export const RELEASE_NAMES: Readonly<Record<number, { ticker: string; names: rea
   },
   // batch 88's units, each company in one map or the other (check:sec-cases)
   ...BANK_UNITS,
-  // batch 121's operating units, none of whose companies is in either map above (check:sec-press)
-  ...OPERATING_UNITS,
+  // batch 121's operating units, none of whose companies is in either map above (check:sec-press),
+  // and batch 128's health units, CVS's and Pfizer's after their operating units
+  ...joined(OPERATING_UNITS, HEALTH_UNITS),
 };
 
 /**

@@ -207,6 +207,15 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- **The 2026-11-09 proposals** (batch 125, `docs/proposals/2026-11-09-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection.
+  1. the CPSC's recalls under about 90 units listed companies own (494 recalls on 48 pages, 321 before
+     2017; American Honda on Honda, Fisher-Price on Mattel, Kidde on RTX);
+  2. railroad accidents from the Federal Railroad Administration, a new source (461 on 6 pages, 388
+     before 2017), with two calls inside it: the source, and the floor of what counts;
+  3. more of the Justice Department's releases: its archive's 1996–2000 and the drug makers' own
+     companies (97 releases on 49 pages), with one call inside it: the 9 routine Microsoft notices;
+  4. EPA's cost-recovery figure on 3,126 rows pages already hold (no new events).
 - ~~**The 2026-11-08 proposals** (batch 119, `docs/proposals/2026-11-08-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`.~~ **Decided 2026-11-08: "All three"; on #1's two calls, "Yes,
   both as drafted"** (Pharmacia LLC on Pfizer's page from 2003; MidAmerican Energy Berkshire's from
@@ -261,6 +270,12 @@ Raised by the November batches, each recorded in the master checklist:
   3. keep them, labelled as E. I. du Pont's (as Schering-Plough's are on MRK).
 
   Nothing changes until you choose.
+
+- **Alcoa's past on AA's page** (noticed by the 2026-11-09 scout run, batch 125). AA's EDGAR record is
+  Alcoa Corp.'s of 2016; old Alcoa Inc.'s record went with Howmet (as Arconic). AA's page takes old
+  Alcoa Inc.'s Justice Department release of 2003 (a Clean Air Act settlement), and the 1997–2000
+  archive months of the 2026-11-09 proposal 3(a) would add five more. It is the same call as
+  DuPont's above, with the same three choices. Nothing changes until you choose.
 
 - **Drugs whose holder changed** (batch 115): 553 of the FDA's efficacy supplements (374 before
   2017) were filed by a company on its page that day, but the drug has since moved and Drugs@FDA

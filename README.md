@@ -713,6 +713,22 @@ page's company that day), and 39 settlement rows more on 24 pages, with 7 rows t
 and 14 that name the work ordered; every row the rule gave before is still given under its own key.
 db/044 keeps the two days and forgets the last read, so the next run reads EPA's file whole.
 
+**EPA's cost recovery on each row** (batch 129, the owner's approval of 2026-11-09). On many Superfund
+decrees EPA records no penalty and no work ordered, only a cost recovery: what the parties pay back
+for EPA's own cleanup. The same zip holds it, the case table's `TOTAL_COST_RECOVERY_AMT` and each
+settlement's `COST_RECOVERY_AWARDED_AMT`, read by the rule the work ordered follows: the case's total,
+else its one settlement's, and a case split by settlement gives each settlement day its own. The row
+names it beside the penalty and the work: "FORD MOTOR CO. - WDE (case 05-1991-0214): EPA's costs
+recovered $55,513,499" (1993), a row that showed no figure; GE's Pittsfield and Housatonic settlement
+of 1999-10-07, "work ordered $500,000,000, EPA's estimate; EPA's costs recovered $71,000,000"; the
+Hudson River decree of 2005, $26,000,000 beside $150,000,000. On a settlement of several parties the
+figure is the whole settlement's, and the row says among how many ("$95,000,000, among 225
+parties", the Kramer landfill decree of 1998). A suit's filing row keeps no money. Before first prices,
+on the committed slice: 2,942 rows on 380 pages name a cost recovery; 2,030 of them showed no money at
+all before, 1,831 before 2017 and 1,000 before 2001. No row's day, title or key changes, only its
+description. db/045 keeps the figures and forgets the last read, so the next run reads EPA's file
+whole.
+
 **EPA's own figures on each row** (batch 113, the owner's approval of 2026-11-07). The same zip holds
 each case's settlements (`CASE_ENFORCEMENT_CONCLUSIONS.csv`), EPA's estimate of the cost of the work a
 case orders, and EPA's own summary of it. A case EPA gives no penalty total takes its one

@@ -462,7 +462,7 @@ written · *Practicality:* high — measured; one owner call on the Microsoft no
 
 ## 4. EPA's cost-recovery figure on the rows pages already hold: what a Superfund settlement pays back · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-09 ("4. EPA cleanup-cost figures"). To be built in batch 129.
+**Status:** APPROVED — by the owner, 2026-11-09 ("4. EPA cleanup-cost figures"). Built in batch 129: `costRecovery` in `lib/epaCases.ts`, db/045; on the committed slice before first prices, 2,942 rows on 380 pages name a cost recovery, 2,030 of which showed no money before (1,831 before 2017, 1,000 before 2001). The proposal's counts used case totals; a case split by settlement gives each its own, so GM's 2012 settlement (03-2009-7032) shows its $2,448,334, not the case's $12,501,182.
 **Owner's reason (if rejected):**
 
 **Raised before:** as a line. The 2026-11-07 file's #1 counted "cost recovery on 2,460 rows,

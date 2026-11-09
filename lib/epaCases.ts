@@ -56,6 +56,12 @@ export interface EpaCase {
   settled?: boolean;
   /** EPA's estimate of the cost of the work the case orders, by the same rule; null for none */
   workOrdered?: string | null;
+  /**
+   * EPA's cost recovery: what the parties pay back for EPA's own cleanup costs, the case's total or,
+   * where EPA gives none, its one settlement's, by the same rule; null for none (batch 129, the
+   * 2026-11-09 proposal 4). On a case of several parties it is the whole settlement's, not one's share.
+   */
+  costRecovery?: string | null;
   /** EPA's own summary of the case, when it says something (`summaryOf`); null for none */
   summary?: string | null;
   /** the laws, by EPA's code, in its order: "CAA", "CWA", "CERCLA" */
@@ -84,6 +90,8 @@ export interface EpaSettlement {
   lodged: boolean;
   penalty: string | null;
   work: string | null;
+  /** its cost recovery (batch 129); absent or null for none */
+  costRecovery?: string | null;
 }
 
 /** The laws by EPA's code, as a reader knows them. */
@@ -264,6 +272,11 @@ const plain = (x: string) => x.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\
  * ("Complaint Filed With Court"), and every case each settlement the settlements table dates, on its
  * own day, lodged else entered, with its own penalty and work ordered. A table without the two day
  * columns, as an older copy's, gives no settlement a day: the case figures stay as before.
+ *
+ * Since batch 129 (the 2026-11-09 proposal 4) a case and each settlement also keep EPA's cost
+ * recovery, the case table's `TOTAL_COST_RECOVERY_AMT` and the settlements table's
+ * `COST_RECOVERY_AWARDED_AMT`, by the rule the work ordered follows. A table without the column
+ * gives none.
  */
 export function readCases(tables: CaseTables): EpaCase[] {
   const first = new Map<string, Map<string, string>>();
@@ -295,21 +308,36 @@ export function readCases(tables: CaseTables): EpaCase[] {
   });
   // each settlement once, by its id: its federal and state penalty, the work it orders and, since
   // batch 122, its own day, lodged else entered, where the table has those columns
-  const settlements = new Map<string, Map<string, { penalty: string | null; work: string | null; day: string | null; lodged: boolean }>>();
+  type Held = { penalty: string | null; work: string | null; cost: string | null; day: string | null; lodged: boolean };
+  const settlements = new Map<string, Map<string, Held>>();
   const SETTLED = tables[SETTLEMENT_TABLE];
   if (SETTLED !== undefined) {
-    const dated = SETTLED.slice(0, SETTLED.indexOf("\n")).includes("SETTLEMENT_LODGED_DATE");
-    const columns = ["CASE_NUMBER", "ENF_CONCLUSION_ID", "FED_PENALTY_ASSESSED_AMT", "STATE_LOCAL_PENALTY_AMT", "COMPLIANCE_ACTION_COST", ...(dated ? ["SETTLEMENT_LODGED_DATE", "SETTLEMENT_ENTERED_DATE"] : [])];
-    eachCsvRow(SETTLED, columns, ([caseNumber, id, fed, state, work, lodged = "", entered = ""]) => {
-      const held = settlements.get(caseNumber) ?? new Map();
-      held.set(id || `${held.size}`, { penalty: addAmounts(penaltyOf(fed), penaltyOf(state)), work: penaltyOf(work), day: day(lodged) ?? day(entered), lodged: day(lodged) !== null });
+    const head = SETTLED.slice(0, SETTLED.indexOf("\n"));
+    const dated = head.includes("SETTLEMENT_LODGED_DATE");
+    // …and, since batch 129, its cost recovery
+    const recovered = head.includes("COST_RECOVERY_AWARDED_AMT");
+    const columns = [
+      "CASE_NUMBER",
+      "ENF_CONCLUSION_ID",
+      "FED_PENALTY_ASSESSED_AMT",
+      "STATE_LOCAL_PENALTY_AMT",
+      "COMPLIANCE_ACTION_COST",
+      ...(dated ? ["SETTLEMENT_LODGED_DATE", "SETTLEMENT_ENTERED_DATE"] : []),
+      ...(recovered ? ["COST_RECOVERY_AWARDED_AMT"] : []),
+    ];
+    eachCsvRow(SETTLED, columns, (v) => {
+      const [caseNumber, id, fed, state, work] = v;
+      const [lodged, entered] = dated ? [v[5], v[6]] : ["", ""];
+      const cost = recovered ? v[columns.length - 1] : "";
+      const held = settlements.get(caseNumber) ?? new Map<string, Held>();
+      held.set(id || `${held.size}`, { penalty: addAmounts(penaltyOf(fed), penaltyOf(state)), work: penaltyOf(work), cost: penaltyOf(cost), day: day(lodged) ?? day(entered), lodged: day(lodged) !== null });
       settlements.set(caseNumber, held);
     });
   }
   const datedSettlements = (caseNumber: string): EpaSettlement[] =>
     [...(settlements.get(caseNumber)?.values() ?? [])]
-      .filter((s): s is { penalty: string | null; work: string | null; day: string; lodged: boolean } => s.day !== null)
-      .map(({ day: d, lodged, penalty, work }) => ({ day: d, lodged, penalty, work }))
+      .filter((s): s is Held & { day: string } => s.day !== null)
+      .map(({ day: d, lodged, penalty, work, cost }) => ({ day: d, lodged, penalty, work, costRecovery: cost }))
       .sort((a, b) => a.day.localeCompare(b.day));
   // a case of one settlement and no total of its own takes the settlement's figure; a case of
   // several keeps its own total, since a sum would put other parties' settlements of other years on
@@ -319,9 +347,12 @@ export function readCases(tables: CaseTables): EpaCase[] {
     return held && held.size === 1 ? [...held.values()][0] : null;
   };
   const out: EpaCase[] = [];
-  const COLUMNS = ["CASE_NUMBER", "CASE_NAME", "ACTIVITY_TYPE_CODE", "TOTAL_PENALTY_ASSESSED_AMT", "DOJ_DOCKET_NMBR", "TOTAL_COMP_ACTION_AMT", "ENF_SUMMARY_TEXT"] as const;
-  eachCsvRow(tables["CASE_ENFORCEMENTS.csv"], COLUMNS, (values) => {
-    const r = Object.fromEntries(COLUMNS.map((c, k) => [c, values[k]])) as Record<(typeof COLUMNS)[number], string>;
+  const ENFORCEMENTS = tables["CASE_ENFORCEMENTS.csv"];
+  // the case's own cost recovery, where the table has the column (batch 129)
+  const totals = ENFORCEMENTS.slice(0, ENFORCEMENTS.indexOf("\n")).includes("TOTAL_COST_RECOVERY_AMT");
+  const COLUMNS = ["CASE_NUMBER", "CASE_NAME", "ACTIVITY_TYPE_CODE", "TOTAL_PENALTY_ASSESSED_AMT", "DOJ_DOCKET_NMBR", "TOTAL_COMP_ACTION_AMT", "ENF_SUMMARY_TEXT", ...(totals ? ["TOTAL_COST_RECOVERY_AMT"] : [])];
+  eachCsvRow(ENFORCEMENTS, COLUMNS, (values) => {
+    const r = Object.fromEntries(COLUMNS.map((c, k) => [c, values[k]])) as Record<string, string | undefined> & Record<"CASE_NUMBER" | "CASE_NAME" | "ACTIVITY_TYPE_CODE" | "TOTAL_PENALTY_ASSESSED_AMT" | "DOJ_DOCKET_NMBR", string>;
     const number = r.CASE_NUMBER.trim();
     const steps = first.get(number) ?? new Map<string, string>();
     const court = r.ACTIVITY_TYPE_CODE === "JDC";
@@ -341,6 +372,7 @@ export function readCases(tables: CaseTables): EpaCase[] {
       penalty: penaltyOf(r.TOTAL_PENALTY_ASSESSED_AMT) ?? only(number)?.penalty ?? null,
       settled: !penaltyOf(r.TOTAL_PENALTY_ASSESSED_AMT) && !!only(number)?.penalty,
       workOrdered: penaltyOf(r.TOTAL_COMP_ACTION_AMT ?? "") ?? only(number)?.work ?? null,
+      costRecovery: penaltyOf(r.TOTAL_COST_RECOVERY_AMT ?? "") ?? only(number)?.cost ?? null,
       summary: summaryOf(plain(r.ENF_SUMMARY_TEXT ?? "")),
       laws: [...new Set(ranked)],
       defendants: defendants.get(number) ?? (name ? [name] : []),
@@ -1098,7 +1130,9 @@ export function caseTitle(c: EpaCase): string {
  * "AEP (case 03-1999-0388), with 8 other defendants: $6,225,000 civil penalty; work ordered
  * $1,923,940,000, EPA's estimate, among 9 parties". The penalty is said here when the row's title
  * does not: on a day of several cases. The work ordered is the settlement's whole, so a case of
- * several parties says among how many (batch 113).
+ * several parties says among how many (batch 113). So does EPA's cost recovery, what the parties pay
+ * back for EPA's own cleanup: "EPA's costs recovered $95,000,000, among 225 parties", the Kramer
+ * landfill decree of 1998 (batch 129).
  *
  * A case of several defendants named for its site or another party, not the company, names the
  * page's own defendants (`mine`), up to three: "AMERICAN CYANAMID (FIKE CHEMICAL SITE) (case 03-1990-0627), against SCHERING-PLOUGH CORP.
@@ -1120,6 +1154,7 @@ function caseLine(c: EpaCase, withPenalty = false, mine: readonly string[] = [])
   const money = [
     ...(withPenalty && c.penalty ? [`${dollars(c.penalty)} civil penalty`] : []),
     ...(c.workOrdered ? [`work ordered ${dollars(c.workOrdered)}, EPA's estimate${c.defendants.length > 1 ? `, among ${c.defendants.length} parties` : ""}`] : []),
+    ...(c.costRecovery ? [`EPA's costs recovered ${dollars(c.costRecovery)}${c.defendants.length > 1 ? `, among ${c.defendants.length} parties` : ""}`] : []),
   ];
   const of = c.settlementOf;
   const settlement = of ? (of.first === of.last ? `, settlement ${of.first} of ${of.of}` : `, settlements ${of.first} to ${of.last} of ${of.of}`) : "";
@@ -1142,7 +1177,8 @@ export function firstSettled(c: EpaCase): string | null {
 
 /**
  * A court case of settlements on two days or more, as one view a settlement day: that day's
- * settlements' own penalty and work ordered, added in whole cents when two were lodged the same day.
+ * settlements' own penalty, work ordered and, since batch 129, cost recovery, added in whole cents when
+ * two were lodged the same day.
  * Null for any other case (batch 122, the 2026-11-08 proposal 2(b)).
  */
 export function bySettlement(c: EpaCase): EpaCase[] | null {
@@ -1160,6 +1196,7 @@ export function bySettlement(c: EpaCase): EpaCase[] | null {
       penalty,
       settled: penalty !== null,
       workOrdered: held.reduce<string | null>((sum, x) => addAmounts(sum, x.work), null),
+      costRecovery: held.reduce<string | null>((sum, x) => addAmounts(sum, x.costRecovery ?? null), null),
       settlementOf: { first: first + 1, last: first + held.length, of: all.length },
     };
   });
@@ -1235,7 +1272,7 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
     if (c.suitFiled && settled && daysFrom(c.suitFiled, settled) > SUIT_LEAD_DAYS) {
       const then = mineOn(c, c.suitFiled);
       if (then.length && (then.length === c.defendants.length || (c.defendants.length < MANY_PARTIES && then.length * 2 >= c.defendants.length))) {
-        const view = { ...c, penalty: null, settled: false, workOrdered: null };
+        const view = { ...c, penalty: null, settled: false, workOrdered: null, costRecovery: null };
         mineOf.set(view, shownOf(c, c.suitFiled, then));
         suits.set(c.suitFiled, [...(suits.get(c.suitFiled) ?? []), { c: view, settled }]);
       }

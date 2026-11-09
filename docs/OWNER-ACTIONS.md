@@ -217,6 +217,10 @@ Raised by the November batches, each recorded in the master checklist:
   with `NEWS_CHARTS_CONTACT` set (§2): Fisher-Price on Mattel (49 recalls), Hasbro's Playskool, Milton
   Bradley, Kenner and Tonka (25), Carrier on RTX before 2020 (8) and Lawn-Boy on Toro (7), each bought
   before EDGAR. Once the contact is set, a session can read their days and map them, with batch 123's.
+  #2 is built in batch 127, with the floor you chose. Nothing to run after deploying it: the next ingest
+  registers the source (id 37) and asks the dataset once for each of the six railroad companies. Two
+  railroads wait for a filing's text, as #1's brands do: Missouri Pacific on Union Pacific (merged
+  1982, 8 accidents of 1983–1985) and the Delaware & Hudson on CPKC (bought 1991, 2 accidents).
   1. the CPSC's recalls under about 90 units listed companies own (494 recalls on 48 pages, 321 before
      2017; American Honda on Honda, Fisher-Price on Mattel, Kidde on RTX);
   2. railroad accidents from the Federal Railroad Administration, a new source (461 on 6 pages, 388

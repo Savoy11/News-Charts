@@ -61,7 +61,8 @@ export type SourceKey =
   | "cftc"
   | "sec_digest"
   | "fda_approvals"
-  | "fda_supplements";
+  | "fda_supplements"
+  | "fra_accidents";
 
 export interface TimelineEvent {
   id: string;

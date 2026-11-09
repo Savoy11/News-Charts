@@ -110,7 +110,10 @@ the rule's tests run that day (batch 122), and a court case of settlements on se
 day on the page whose own are every defendant that day; a case's own day keeps its row and key. The
 CPSC's recalls (`lib/cpscRecalls.ts`) go on every listed company a recall names: its makers,
 importers and distributors by the caption rule, its stores as whole items of the "Sold at" line, a
-store's recalls of other makers' products grouped a row a month. The
+store's recalls of other makers' products grouped a row a month. The FRA's railroad accident reports (`lib/railAccidents.ts`, batch 127) reach a
+railroad company's page only through `RAIL_OWNERS`, each reporting railroad between its owner's days, from
+the company's first price, at the owner's floor: a death, an evacuation or $5,000,000 of damage, a crossing
+collision only with the last two. The
 CFTC's actions (`lib/cftc.ts`) are read by the Justice rule with the release map's units, plus the
 Commission's object form ("CFTC Orders UBS to Pay") and four guards of its own; read its header first.
 

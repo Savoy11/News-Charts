@@ -140,6 +140,34 @@ NHTSA links to it said in that row. On the chart each is a small dot ranked like
 a recall gets: an investigation opened is no recall. Measured 2026-10-27: 1,766 for 18 companies,
 1,579 of them before 2017 (Ford 684, GM 651, Toyota 114, Honda 113, Stellantis 50 from 2014).
 
+### Railroad accidents (`lib/railAccidents.ts`)
+
+A railroad's page carries the accidents its railroads reported to the Federal Railroad Administration,
+from 1975 (batch 127, the 2026-11-09 proposal 2, approved by the owner that day): a collision,
+derailment, fire or other train accident that killed someone, forced an evacuation or did $5,000,000
+of damage; a highway-rail crossing collision, most often a motorist's death, only with an evacuation
+or that damage (the owner's floor). Read from FRA's Rail Equipment Accident/Incident Data (Form 54,
+data.transportation.gov `85tf-25kj`), the host NHTSA's recalls come from: one keyless request a day
+per railroad company, by railroad code. Public domain ("Public Domain U.S. Government" in the
+dataset's own licence field). A row gives the railroad, the place, the people killed, injured and
+evacuated, the cars that released hazardous material, the damage in whole dollars, the railroad's own
+cause code and a link to FRA's readout of the report: "Norfolk Southern: train accident at
+Graniteville, South Carolina — 9 killed, 292 injured, 5,200 evacuated". The report is the railroad's
+own filing to its regulator, not a finding of fault, and the row says so.
+
+The dataset names a railroad, never a listed company, so a report reaches a page only through the
+hand-checked map in `lib/railAccidents.ts` (`RAIL_OWNERS`), by CIK, each railroad between the days
+its owner held it, read from the filings: Southern Pacific on Union Pacific from 1996-09-11, BNSF on
+Berkshire Hathaway from 2010-02-12, Wisconsin Central on CN from 2001-10-09, Illinois Central from
+1998-06-05, the Soo Line and Kansas City Southern on CPKC. A predecessor's past is never the buyer's:
+Burlington Northern's, Santa Fe's and Conrail's reports are no page's. Every page also counts only
+from its company's first price, so CSX's railroads before CSX existed are no page's. Two railroads in
+one accident file a report each, and each is a row on its own owner's page. Missouri Pacific on Union
+Pacific (1982) and the Delaware & Hudson on CPKC (1991), bought before EDGAR, wait for a filing's
+text (`NEWS_CHARTS_CONTACT`). Measured on the dataset's answer of 2026-11-09, each page from its
+first price: 476 accidents on six pages, 395 before 2017, 131 before 1993 (CSX 161, Union Pacific 155,
+Norfolk Southern 65, CN 36, Berkshire Hathaway 35, CPKC 24). Scored without the model.
+
 ### Federal Reserve enforcement actions (`lib/fedActions.ts`)
 
 A bank's page carries the Federal Reserve Board's enforcement actions against it, back to 1993:
@@ -1433,6 +1461,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
 | U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 95 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
+| Federal Railroad Administration | Railroad accidents since 1975 a company's railroad reported, with a death, an evacuation or $5,000,000 of damage | Form 54 on the Transportation Department's open-data host, one request a day for each of the six railroad companies `lib/railAccidents.ts` maps by hand, each railroad between its owner's days, from the company's first price; a highway-rail crossing collision only with an evacuation or that damage. Public domain; no key |
 | Commodity Futures Trading Commission | The Commission's enforcement actions since 1995 whose title makes the company the party — a bank's benchmark-rigging order, an energy trader's manipulation suit | The enforcement list, read whole once a year and its newest page once a day, for every company (`lib/ingest/cftcWalk.ts`); kept by the Justice Department's title rule with the release map's units (`lib/cftc.ts`). Public domain, acknowledged to the CFTC; no key |
 | SEC News Digest | The SEC's daily summary of 1956–1993: the 8-K reports a company filed, its registration statements, the 13D and 14D-1 filings on its shares, the SEC's orders and actions on it, its listing orders | Every issue's PDF read once for every company, 60 a run (`lib/ingest/secDigestWalk.ts`); kept when an entry's party is the company under the name its EDGAR record had that day and no other company's (`lib/secDigest.ts`), from its first price; a month's 8-K reports one row. Public information the SEC lets anyone copy, cited to the SEC; no key; needs `pdftotext` and `NEWS_CHARTS_CONTACT` |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |

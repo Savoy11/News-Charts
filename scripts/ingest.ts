@@ -55,6 +55,7 @@ import { fdaSupplementsFor } from "../lib/ingest/fdaSupplementsFor";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
+import { DAMAGE_FLOOR, fetchRailAccidents, railRoadsFor } from "../lib/railAccidents";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { FED_BANKS, fedBanksFor, fetchFedActions } from "../lib/fedActions";
 import { dojPossessive, fetchJusticeReleases, justiceQueryNames } from "../lib/doj";
@@ -122,6 +123,8 @@ export const COMPANY_SOURCES = [
   "fda_approvals",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
+  // railroad accidents, asked only for the railroads lib/railAccidents.ts maps (batch 127)
+  "fra_accidents",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -654,6 +657,23 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     await run("nhtsa_recalls", `${makers.map((m) => m.name).join(" | ")} ≥${RECALL_FLOOR} vehicles`, () => fetchRecalls(company.cik));
     // …and the defect investigations NHTSA opened into the same makers, shown with them (batch 66)
     await run("nhtsa_investigations", makers.map((m) => m.name).join(" | "), () => fetchInvestigations(company.cik));
+  }
+
+  /**
+   * Railroad accidents the company's railroads reported to the FRA, from 1975 (batch 127): a
+   * collision, derailment or other train accident with a death, an evacuation or $5,000,000 of
+   * damage, a highway-rail crossing collision only with the last two, from the company's first
+   * price. Only for the railroads lib/railAccidents.ts maps by hand, each between the days its
+   * owner held it: the dataset names a railroad, never a listed company.
+   */
+  const roads = railRoadsFor(company.cik);
+  if (roads) {
+    const floor = Number(DAMAGE_FLOOR).toLocaleString("en-US");
+    await run("fra_accidents", `${roads.map((r) => r.code).join(" | ")}: a death, an evacuation or ${floor} dollars of damage`, async () => {
+      const listed = await firstPriceDay(client, subjectId);
+      if (listed === null) return NO_PRICES();
+      return fetchRailAccidents(company.cik, { from: listed });
+    });
   }
 
   /**

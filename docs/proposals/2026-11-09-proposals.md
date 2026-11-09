@@ -190,7 +190,7 @@ some · *Efficiency:* high — entries in a list a built source already reads ·
 
 ## 2. Railroad accidents from the Federal Railroad Administration, a new source on NHTSA's host: derailments, collisions and hazardous releases since 1975 on Union Pacific, CSX, Norfolk Southern, BNSF on Berkshire, CN and CPKC · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-09 ("2. Railroad accidents (new source)"), with the floor as drafted ("Draft cut-off (Recommended)"): a death, an evacuation or $5,000,000 of damage, and a crossing collision only with an evacuation or that damage. To be built in batch 127.
+**Status:** APPROVED — by the owner, 2026-11-09 ("2. Railroad accidents (new source)"), with the floor as drafted ("Draft cut-off (Recommended)"): a death, an evacuation or $5,000,000 of damage, and a crossing collision only with an evacuation or that damage. Built in batch 127 (`lib/railAccidents.ts`): on the dataset's answer of 2026-11-09, each page from its first price, 476 accidents on six pages, 395 before 2017, 131 before 1993 (CSX 161, Union Pacific 155, Norfolk Southern 65, CN 36, Berkshire Hathaway 35, CPKC 24). Every railroad's day is read from a filing; two read on the way differ from the draft: Illinois Central is CN's from 1998-06-05 (its Form 15), and the Chicago, Central & Pacific from CN's 6-K of 2002, the first filing that names it. Missouri Pacific (1982) and the Delaware & Hudson (1991), bought before EDGAR, wait for `NEWS_CHARTS_CONTACT`.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. No document in the repository names the FRA.

@@ -104,8 +104,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Exchange Commission, with the SEC&apos;s litigation releases and administrative
               proceedings and its News Digest of 1956–1993, enforcement actions from the Consumer Financial Protection Bureau,
               civil enforcement cases from the U.S. Environmental Protection Agency, product recalls
-              from the U.S. Consumer Product Safety Commission, and enforcement actions from the
-              Commodity Futures Trading Commission.
+              from the U.S. Consumer Product Safety Commission, railroad accident reports from the
+              Federal Railroad Administration, and enforcement actions from the Commodity Futures
+              Trading Commission.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

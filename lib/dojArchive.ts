@@ -2,8 +2,8 @@ import { UA } from "./contact";
 import { plainText, type DojRelease } from "./doj";
 
 /**
- * The Justice Department's press releases of 2001–2008, from its own archive (batch 94, the
- * 2026-11-02 proposal 2).
+ * The Justice Department's press releases of 1996–2008, from its own archive (batch 94, the
+ * 2026-11-02 proposal 2; its months of 1996–2000 from batch 128, the 2026-11-09 proposal 3(a)).
  *
  * The API `lib/doj.ts` reads holds releases from 2009 on. The Department keeps the earlier ones on
  * month pages, `www.justice.gov/archive/opa/pr/YYYY/Month/`, linked from its "Index of Pre-January
@@ -13,16 +13,25 @@ import { plainText, type DojRelease } from "./doj";
  * same terms: "Unless otherwise indicated, information on Department of Justice websites is in the
  * public domain and may be copied and distributed without permission" (justice.gov/legalpolicies).
  *
- * Two layouts, measured on all 96 months (2026-11-05):
+ * Two layouts, measured on all 96 months of 2001–2008 (2026-11-05) and the 56 of 1996–2000
+ * (2026-11-09):
  *
- * - 2001–2004, a list: `<li><a href="04_civ_807.htm">#807: 12-30-04 HEALTHSOUTH TO PAY …</a>`,
- *   the link relative to the month page, the day in the title, titles mostly in capitals.
+ * - 1996–2004, a list: `<li><a href="04_civ_807.htm">#807: 12-30-04 HEALTHSOUTH TO PAY …</a>`,
+ *   the link relative to the month page, the day in the title, titles mostly in capitals. The
+ *   years before 2001 write the day more ways: "#309: 06-30-98 - TITLE", "#290: 06 23 98 TITLE",
+ *   "#264: 1996-05-31 - TITLE", each read the same, a two-digit year from 50 on as 19xx.
  * - 2005–2008, day headings: `<h2>Monday, February 28, 2005</h2>` (January 2005's carry no
  *   weekday), then each release's title `<h3>Title&nbsp;<span class="small">(05-082)</span></h3>`
  *   and a paragraph ending in its link, `(Read more)`. From mid-2005 that paragraph opens with the
  *   release's first lines, kept as its teaser.
  */
-export const ARCHIVE_FIRST_YEAR = 2001;
+export const ARCHIVE_FIRST_YEAR = 1996;
+/**
+ * The first month read: the archive's pages of January to April 1996 list their releases with no
+ * day ("#022 DOJ sues New York City…", 152 rows), and the folders of 1994 and 1995 answer 404
+ * (measured 2026-11-02 and 2026-11-09). Those months are left out, not guessed.
+ */
+export const ARCHIVE_FIRST_MONTH = 5;
 export const ARCHIVE_LAST_YEAR = 2008;
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -43,14 +52,22 @@ export interface ArchiveRelease {
 /** "2005-01" for the month page of January 2005. */
 export const monthKey = (year: number, month: number) => `${year}-${String(month).padStart(2, "0")}`;
 
-/** The month page's address. */
-export const archiveMonthUrl = (year: number, month: number) => `https://www.justice.gov/archive/opa/pr/${year}/${MONTHS[month - 1]}/`;
+/**
+ * The folders of 1996, as the year's index lists them (www.justice.gov/archive/opa/pr/1996/, read
+ * 2026-11-09): "Jun96", "Sept96", "Oct96" beside "May96" and "July96". 1997's are the month and
+ * "97" ("July97"), and from 1998 the month alone, as 2001's are.
+ */
+const FOLDERS_1996 = ["January96", "February96", "March96", "April96", "May96", "Jun96", "July96", "August96", "Sept96", "Oct96", "Nov96", "Dec96"];
 
-/** Every month the archive holds, oldest first: 96, from January 2001 to December 2008. */
+/** The month page's address. */
+export const archiveMonthUrl = (year: number, month: number) =>
+  `https://www.justice.gov/archive/opa/pr/${year}/${year === 1996 ? FOLDERS_1996[month - 1] : year === 1997 ? `${MONTHS[month - 1]}97` : MONTHS[month - 1]}/`;
+
+/** Every month the archive holds that lists its days, oldest first: 152, from May 1996 to December 2008. */
 export function archiveMonths(): { year: number; month: number; key: string }[] {
   const out: { year: number; month: number; key: string }[] = [];
   for (let year = ARCHIVE_FIRST_YEAR; year <= ARCHIVE_LAST_YEAR; year++)
-    for (let month = 1; month <= 12; month++) out.push({ year, month, key: monthKey(year, month) });
+    for (let month = year === ARCHIVE_FIRST_YEAR ? ARCHIVE_FIRST_MONTH : 1; month <= 12; month++) out.push({ year, month, key: monthKey(year, month) });
   return out;
 }
 
@@ -148,17 +165,23 @@ export function parseArchiveMonth(html: string, year: number, month: number): Pa
     return { releases, unread };
   }
 
-  // 2001–2004: a list, the day in the title
+  // 1996–2004: a list, the day in the title
   for (const m of html.matchAll(/<li>\s*<a\s+href="([^"]+)"\s*>([\s\S]*?)<\/a>/gi)) {
     const text = plainText(m[2]);
     // "#301: 06-29-01 TITLE", and as typed now and then: "527: 10-12-01", "#389 08-09-01",
-    // "#235A: 05-25-01", "#503: 09-27-01: TITLE"
-    const row = /^(?:#\s*(\d+[A-Z]?)\s*:?\s*|(\d+)\s*:\s*)?(\d{1,2})[-/](\d{1,2})[-/](\d{2}):?\s+(.+)$/.exec(text);
+    // "#235A: 05-25-01", "#503: 09-27-01: TITLE"; before 2001 also "#309: 06-30-98 - TITLE",
+    // "#290: 06 23 98 TITLE" and "#264: 1996-05-31 - TITLE"
+    // ("#083CR:", "#264a:", "10-24-97- TITLE" too)
+    const isoRow = /^(?:#\s*(\d+[A-Za-z]{0,2})\s*:?\s*|(\d+)\s*:\s*)?(\d{4})-(\d{2})-(\d{2}):?(?:\s*-\s*|\s+)(.+)$/.exec(text);
+    const row = isoRow
+      ? [isoRow[0], isoRow[1], isoRow[2], isoRow[4], isoRow[5], isoRow[3], isoRow[6]]
+      : /^(?:#\s*(\d+[A-Za-z]{0,2})\s*:?\s*|(\d+)\s*:\s*)?(\d{1,2})[-/ ](\d{1,2})[-/ ](\d{2}):?(?:\s*-\s*|\s+)(.+)$/.exec(text);
     if (!row) {
       unread.push(`a row not read: ${text.slice(0, 80)}`);
       continue;
     }
-    const [mo, dd, yy] = [Number(row[3]), Number(row[4]), 2000 + Number(row[5])];
+    const year2 = Number(row[5]);
+    const [mo, dd, yy] = [Number(row[3]), Number(row[4]), row[5].length === 4 ? year2 : year2 >= 50 ? 1900 + year2 : 2000 + year2];
     const day = realDay(yy, mo, dd) ? iso(yy, mo, dd) : null;
     const path = pathOf(m[1], year, month);
     // a day that is no day ("02-30-02") or not the page's month ("02-14-01" on August 2001's) is a

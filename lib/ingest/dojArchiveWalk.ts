@@ -7,14 +7,16 @@ import { partyNamesFor } from "./secCasesWalk";
 import type { PressPlan } from "./secPressWalk";
 
 /**
- * The Justice Department's archive of 2001–2008, read once for every company (batch 94), in the
+ * The Justice Department's archive of 1996–2008, read once for every company (batch 94; its months of
+ * 1996–2000 from batch 128, which a store already holding 2001–2008 reads in its next three runs), in the
  * shape of the SEC's and the Bureau's walks (`secCasesWalk.ts`, `cfpbWalk.ts`).
  *
  * The archive is closed, so a month is read once and never again: a month kept in
  * `doj_archive_months` is not asked twice. At most `MONTHS_PER_RUN` months a process, `GAP_MS`
  * apart, oldest first; the first refusal or failure stops the walk, and a month is stored only
  * when its page answered with releases it could read. Measured 2026-11-05: 96 pages, 2.3 MB, 5,712
- * releases read and 5 rows not (four days typed wrong, one row with no day).
+ * releases read and 5 rows not (four days typed wrong, one row with no day); 2026-11-09, the 56 of
+ * 1996-05 to 2000-12, 0.4 MB, 2,608 releases and 27 rows not (no day, another month's day, no link).
  */
 export const MONTHS_PER_RUN = 24;
 export const GAP_MS = 1_000;
@@ -130,6 +132,6 @@ export async function dojArchiveFor(client: PoolClient, subjectId: number, plan:
 export function withArchive(api: FetchResult, archive: readonly TimelineEvent[], walked: ArchiveWalk | null): FetchResult {
   const events = [...api.events, ...archive];
   if (api.outcome !== "ok" && api.outcome !== "empty") return { ...api, events };
-  if (walked?.failure) return { events, outcome: walked.failure.outcome, httpStatus: walked.failure.httpStatus, detail: `the 2001–2008 archive, ${walked.failure.detail ?? walked.stopped}` };
+  if (walked?.failure) return { events, outcome: walked.failure.outcome, httpStatus: walked.failure.httpStatus, detail: `the 1996–2008 archive, ${walked.failure.detail ?? walked.stopped}` };
   return { ...api, events, outcome: events.length ? "ok" : "empty" };
 }

@@ -392,6 +392,16 @@ export function routineNoticeAgency(e: TimelineEvent): string | null {
 }
 
 /**
+ * The Justice Department's routine notices, the owner's call of 2026-11-09 (batch 128, "Group a row
+ * a month"): its archive of 1999 announced each week's depositions in U.S. v. Microsoft ("NOTICE OF
+ * UPCOMING DEPOSITIONS IN U.S. v. MICROSOFT", eight of them), a notice of the case's schedule, not an
+ * act of it. Grouped as the Federal Register's routine notices are; the suit and its rulings keep
+ * their own rows.
+ */
+const ROUTINE_JUSTICE = /^NOTICE OF UPCOMING DEPOSITIONS\b/i;
+export const isRoutineJusticeNotice = (e: TimelineEvent): boolean => e.source.startsWith("Justice Department") && ROUTINE_JUSTICE.test(e.title);
+
+/**
  * A company page's Federal Register rows, as the page should carry them (batch 63). The owner's
  * call, 2026-10-26: routine notices are grouped, one row a month. A month with two or more of one
  * agency's routine notices becomes one month-precision row naming how many, its description
@@ -403,7 +413,8 @@ export function pageRegulations(events: TimelineEvent[]): TimelineEvent[] {
   const months = new Map<string, TimelineEvent[]>();
   const kept: TimelineEvent[] = [];
   for (const e of events) {
-    const agency = routineNoticeAgency(e);
+    // …and the Justice Department's routine notices, by the same rule (batch 128)
+    const agency = isRoutineJusticeNotice(e) ? "Justice Department" : routineNoticeAgency(e);
     if (!agency) {
       kept.push(e);
       continue;
@@ -418,6 +429,23 @@ export function pageRegulations(events: TimelineEvent[]): TimelineEvent[] {
     }
     const [agency, month] = key.split("|");
     const newest = [...rows].sort((a, b) => b.date.localeCompare(a.date))[0];
+    if (agency === "Justice Department") {
+      const one = rows.every((r) => r.title.toLowerCase() === rows[0].title.toLowerCase());
+      kept.push({
+        id: `doj-routine-${month}`,
+        date: `${month}-01`,
+        precision: "month",
+        type: "regulation",
+        title: one ? `Justice Department: ${rows.length} notices, "${rows[0].title}"` : `Justice Department: ${rows.length} routine notices`,
+        source: agency,
+        url: newest.url,
+        description:
+          `${rows.length} routine Justice Department notices this month, grouped into one row: ` +
+          (one ? `"${rows[0].title}", on ${rows.map((r) => r.date).sort().join(", ")}` : rows.slice(0, 3).map((r) => `"${r.title}"`).join("; ")) +
+          ". The link opens the newest.",
+      });
+      continue;
+    }
     const listed = rows.slice(0, 3).map((r) => `"${r.title}"`).join("; ");
     kept.push({
       id: `fr-routine-${agency.toLowerCase().replace(/[^a-z]+/g, "-")}-${month}`,

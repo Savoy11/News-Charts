@@ -988,6 +988,71 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 128: the Justice Department's releases of 1996–2000 and the drug makers' own companies (2026-11-09)
+
+The 2026-11-09 proposal 3, approved by the owner that day, with Microsoft's routine notices grouped a
+row a month ("Group a row a month (Recommended)"). The owner's word on starting: "Continue". No new
+source: both parts feed `doj_press`. #4 is next (batch 129).
+
+- [x] **(a) The archive's months of 1996–2000** (`lib/dojArchive.ts`): 56 more month pages, read once
+      for every company and kept, as batch 94's are.
+      - **The addresses** as the archive names its folders: `1996/May96/`, `Jun96/`, `July96/`,
+        `Sept96/`, `Oct96/`…; `1997/January97/`…`December97/`; from 1998 the month alone, 2001's shape.
+      - **From May 1996:** the pages of January to April 1996 list their releases with no day ("#022 DOJ
+        sues New York City…", 152 rows), and the folders of 1994 and 1995 answer 404 (2026-11-02 and
+        2026-11-09). Those months are left out, not guessed (`ARCHIVE_FIRST_MONTH`).
+      - **The list rows** of 1996–2000, "#249: 05-31-96 - Justice Sues…", "05-31-96 Title" and a
+        four-digit year, are read beside 2001–2004's. 27 rows are left unread: no day ("#332: JUSTICE
+        DEPARTMENT AND THIRTEEN STATES CLEAR USA WASTE…"), a day in another month or year ("06-22-98"
+        on June 1999's page), a link off the archive, and three "Previous … Press Releases" links.
+      - **The walk** reads 152 months now, 24 a process, oldest first: the 56 new ones in the next three
+        runs after deploying, then the archive is closed again.
+      - **Measured** on the 56 pages of 2026-11-09 (committed, 0.4 MB): 2,608 releases (1996 from May
+        277, 1997 506, 1998 577, 1999 580, 2000 668). Against every company in the index: 84 name 53
+        companies; from first prices, 67 reach 40 pages. Among them ADM's $100 million antitrust fine
+        of 1996, the Microsoft suit of 1998-05-18, American Honda's $267 million Clean Air Act
+        settlement of 1998 (Honda's unit, batch 121), GE's Housatonic River settlements of 1998 and
+        1999, Novartis Pharmaceuticals' of 1999 (part b). Kept off: 14 before their company listed
+        (Aetna's purchase of Prudential HealthCare, 1999; the Visa and MasterCard case, 1998), and 3
+        naming only AT&T Corp., whose name SBC's record took in 2005 (`lib/takenNames.ts`).
+      - **Under the owner's open calls:** Alcoa's five of 1997–2000 on AA and DuPont's suit of 1997 on
+        DD, old Alcoa Inc.'s and E. I. du Pont's, as their later rows are (OWNER-ACTIONS).
+- [x] **Microsoft's notices a row a month** (`pageRegulations`, `isRoutineJusticeNotice` in
+      `lib/frCompany.ts`), the owner's call: eight "NOTICE OF UPCOMING DEPOSITIONS IN U.S. v. MICROSOFT"
+      of April and May 1999 show as two rows, "Justice Department: 5 notices, …", dated the month and
+      linking to the newest, as the Federal Register's routine notices are. A notice alone in its
+      month, the suit and the appeal stay rows of their own. Grouped at read time; nothing stored
+      changes.
+- [x] **(b) The drug and device makers' own companies** (`HEALTH_UNITS` in `lib/releaseNames.ts`):
+      27 names on 13 companies, read by every release rule and asked of the API. Each on its days:
+      the FDA map's where it holds the unit (LifeScan J&J's until 2018-10-01, Covidien Medtronic's
+      from 2015-01-26, Alcon Novartis's 2010-08-26 to 2019-04-08…), the rest read from data.sec.gov's
+      filing lists on 2026-11-09 (Guidant Boston Scientific's from 2006-04-21, its Form 15; Caremark
+      CVS's from 2007-03-22, Omnicare from 2015-08-18, Aetna from 2018-11-28, each an 8-K's item 2.01;
+      Express Scripts Cigna's from 2018-12-20), or, where no filing reports the deal, the first
+      filing EDGAR's full-text search finds naming it as the owner's (DePuy J&J's from 2001-03-14,
+      Aventis Sanofi's from 2005-04-11), with no release naming it in between.
+      - **"LP" is a legal word,** as "L.P." was (`DESIGNATOR_WORD` in `lib/doj.ts`), so "ASTRAZENECA
+        PHARMACEUTICALS LP PLEADS GUILTY" (2003) is AstraZeneca's.
+      - **Measured** from first prices, each read by hand: 33 releases on 10 pages, 20 before 2017. From
+        the archive 4 (LifeScan's $15 million of 2001 on J&J, AstraZeneca Pharmaceuticals LP's $355
+        million of 2003, Aventis's $190 million of 2007 on Sanofi, Novartis Pharmaceuticals' of 1999);
+        from the first 50 releases the API gives each of 25 names, 29 company-days (Novartis 6, CVS 6,
+        Sanofi 4, Abbott 4, Boston Scientific 3, Merck 2, Medtronic 2, Teva 1, J&J 1). Caremark's
+        of 2005 stays off CVS, before the merger.
+      - **The other release rules read the map too:** the SEC's 2017 FCPA charge against Biomet, its
+        press release and its administrative proceeding, reaches Zimmer Biomet (check:sec-press 268
+        entries on 131 companies, check:sec-cases 1,149 company days on 370, one more each). The
+        Board's, the CFPB's and the CFTC's replays are unchanged.
+- **Requests:** 106, logged in the session scratchpad (`b128/requests.log`), each with User-Agent `News
+  Charts Research` and no email address, at least 1.1 s apart: www.justice.gov 81 (the 56 month pages
+  and 25 API asks), data.sec.gov 14 (the filing lists), efts.sec.gov 11 (full-text search and its name
+  lookup). All answered 200. No www.sec.gov page was asked.
+- **Checks:** `check:doj` 113 (from 99): the 56 months' parse and addresses, the 1996–2000 replay, the
+  notices grouped, the units' titles and days, the map's integrity; the walk now reads 152 months in
+  seven runs. On main six of them fail and the run stops where `HEALTH_UNITS` does not exist.
+  `check:sec-press` and `check:sec-cases` re-pinned for Biomet's case, each naming it.
+
 ## NC ledger — batch 127: railroad accidents from the Federal Railroad Administration, a new source (2026-11-09)
 
 The 2026-11-09 proposal 2, approved by the owner that day with the floor as drafted ("Draft cut-off
@@ -9800,13 +9865,15 @@ already held, but new investment goes to securities coverage first.
         `NEWS_CHARTS_CONTACT`.
       - *Derived from [`docs/proposals/2026-11-09-proposals.md`](proposals/2026-11-09-proposals.md)
         #2, approved 2026-11-09.*
-- [ ] `P2` **More of the Justice Department's releases.** No new source: approved by the owner
+- [x] `P2` **More of the Justice Department's releases.** No new source: approved by the owner
       2026-11-09. Two parts: (a) the archive's months of 1996–2000, the routine notices in U.S. v.
       Microsoft grouped a row a month, the owner's call; (b) the drug and device makers' own companies
       in the release map (Merck Sharp & Dohme, AstraZeneca Pharmaceuticals LP).
       - **Measured** by the scout: (a) 66 releases on 39 pages, 51 substantive; (b) 31 releases on 10
         pages, 18 before 2017, from 27 names asked.
-      - To be built in batch 128.
+      - **Done in batch 128** (see its section): (a) 67 releases on 40 pages from May 1996, Microsoft's
+        eight notices shown as two month rows; (b) 27 names on 13 companies, 33 releases on 10 pages,
+        20 before 2017.
       - *Derived from [`docs/proposals/2026-11-09-proposals.md`](proposals/2026-11-09-proposals.md)
         #3, approved 2026-11-09.*
 - [ ] `P2` **EPA's cost-recovery figure on the rows pages already hold.** No new source: approved by

@@ -91,6 +91,8 @@ hand and are listed by CIK in `NOT_THE_COMPANY` (one list each in `lib/secCases.
 `lib/cfpb.ts`, `lib/epaCases.ts`, `lib/cftc.ts` and `lib/cpscRecalls.ts`; batch 100 read every CPSC firm by hand). EPA and
 the CPSC hold their own `UNITS` lists instead of the release map: a unit filed under its own name, on its owner's page
 between the days the owner held it, each day read from a filing (Sunoco, Inc. on Energy Transfer, Graco Children's Products on Newell, batch 101;
+the CPSC's 81 more on 47 companies, American Honda on Honda to Kidde on RTX, batch 126, where no 8-K reports a deal the
+two filings EDGAR's full-text search finds around it, with no recall between them;
 EPA's operating units of 34 more companies, Chevron U.S.A. to Union Carbide, batch 104, with a branded station never the brand's unit and a joint venture no one's; the utilities' operating companies, Georgia Power to PSE&G, on 33 companies, batch 114; BNSF on Berkshire to Kennecott on Rio Tinto, 28 more companies' units, batch 120, a unit sold to another listed company on that company's page from the day, each day read from data.sec.gov's filing lists). A name holding "&" is read with "and" too by the caption rule every one of these sources shares (`andSpellings`, batch 120), and the table of taken names reads "AT AND T" as "AT&T". A fund's series is never a party to any of these five rules (`FUND_SERIES`): its page knows only its
 series name, and "Growth Fund, Ltd." is a Ponzi scheme's fund, not American Century's. The
 Justice Department's API is asked by its `title` filter, which it reads; it ignores `parameters[title]` and answered every name asked that way with the same 488 releases (batch 121). Its releases of 2001–2008, which the API does not hold, come from its archive's

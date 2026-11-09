@@ -207,8 +207,16 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
-- **The 2026-11-09 proposals** (batch 125, `docs/proposals/2026-11-09-proposals.md`): mark each
-  `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection.
+- ~~**The 2026-11-09 proposals** (batch 125, `docs/proposals/2026-11-09-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection.~~ **Decided 2026-11-09: all
+  four**, with the rail floor as drafted ("Draft cut-off (Recommended)") and the Microsoft notices
+  grouped a row a month ("Group a row a month (Recommended)"). #1 is built in batch 126; #2, #3 and #4
+  follow in batches 127, 128 and 129.
+  Nothing to run after deploying batch 126: each company's next ingest reads its new units' recalls
+  from the CPSC recalls already kept. Four more wait for a filing's text, which www.sec.gov serves only
+  with `NEWS_CHARTS_CONTACT` set (§2): Fisher-Price on Mattel (49 recalls), Hasbro's Playskool, Milton
+  Bradley, Kenner and Tonka (25), Carrier on RTX before 2020 (8) and Lawn-Boy on Toro (7), each bought
+  before EDGAR. Once the contact is set, a session can read their days and map them, with batch 123's.
   1. the CPSC's recalls under about 90 units listed companies own (494 recalls on 48 pages, 321 before
      2017; American Honda on Honda, Fisher-Price on Mattel, Kidde on RTX);
   2. railroad accidents from the Federal Railroad Administration, a new source (461 on 6 pages, 388

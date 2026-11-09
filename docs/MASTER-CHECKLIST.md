@@ -988,6 +988,78 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 126: the CPSC's recalls under the units listed companies own, and the 2026-11-09 approvals filed (2026-11-09)
+
+The owner's calls of 2026-11-09 on the 2026-11-09 proposals: all four approved ("1. Product recalls by
+owned brands, 2. Railroad accidents (new source), 3. More Justice Dept releases, 4. EPA cleanup-cost
+figures"), the rail floor as drafted ("Draft cut-off (Recommended)") and the Microsoft notices grouped
+("Group a row a month (Recommended)"). The owner's word on starting: "Continue". This batch files all
+four under Scope refocus and builds #1. No new source: entries in a list the CPSC's rule already reads.
+#2 is next (batch 127), then #3 (batch 128) and #4 (batch 129).
+
+- [x] **The units** (`UNITS`, lib/cpscRecalls.ts): 81 units on 47 companies, in 103 entries, one for
+      each key the stored recalls are asked by. Each is between the days its owner held it, and each day
+      and filing is in the `UNITS` header.
+      - **Named after the owner, or its own since before EDGAR,** from the owner's first price: American
+        Honda Motor, Home Depot U.S.A., Macy's Merchandising Group, Sony Electronics and Sony Energy
+        Devices, Textron Specialized Vehicles, Generac Power Systems, Acuity Brands Lighting, Philips'
+        companies, Walt Disney Parks and Resorts, Pottery Barn, Old Navy, E-Z-GO, KitchenAid.
+      - **Bought or sold,** each day read from data.sec.gov's filing lists by the batch 120 rule: Black &
+        Decker (U.S.) and DeWALT on Stanley Black & Decker from 2010-03-12, Arctic Cat on Textron from
+        2017-03-06, Maytag on Whirlpool from 2006-03-31, Viking Range on Middleby from 2012-12-31, Trane
+        U.S. from 2008-06-05, Jarden's Sunbeam, Coleman, Contigo and Yankee Candle on Newell from
+        2016-04-15, Family Dollar on Dollar Tree from 2015-07-06 to its sale (2025-07-04), White-Rodgers
+        on Emerson to the Copeland sale (2023-05-30).
+      - **Where no 8-K reports the deal,** EDGAR's full-text search (efts.sec.gov, which answers without
+        a contact) gives the two filings around it. A unit bought counts from the first filing that
+        names it as the owner's; a unit sold to the last that shows it held. No recall of the unit falls
+        between the two. So Kidde is RTX's from 2005-04-26 (United Technologies' 10-Q, the first to say
+        it "completed the acquisition of Kidde") to 2020-04-01, and Carrier Global's after. GE
+        Appliances is GE's to 2016-05-04: its next 10-Q says it "completed the sale of our Appliances"
+        business. "GE Appliances, a Haier company" and "GE Lighting, a Savant company" are refused.
+- [x] **Three days the filings corrected:**
+      - Viking Range is Middleby's from 2012-12-31, not the draft's 2013-12-31: two recalls of 2013 more
+        on Middleby.
+      - Baby Jogger is no Newell's in 2012 and 2013: Newell's filings name it first in 2015, after its
+        last recall. It has no entry.
+      - Stanley Security Solutions' locksets end at the sale of the mechanical security business to
+        dormakaba (Stanley Black & Decker's 10-K of 2017-02-15 the last that holds it), not at the 2022
+        Securitas sale: dormakaba's recall of 2018-12-12 is no page's.
+- [x] **The Disney Store** is Disney's to 2004-11-21 and again from 2008-11-20, around the years The
+      Children's Place ran it (its 8-K reporting 2004-11-22, item 2.01). Its two recalls of 2008-05-22,
+      imported by The Children's Place's Hoop Retail Stores, are no page's.
+- [ ] **Waiting for `NEWS_CHARTS_CONTACT`:** Fisher-Price on Mattel (49 recalls; Mattel's from 1993-11-30,
+      before Mattel's first EDGAR filing of 1994-02-03), Playskool and Milton Bradley (1984) and Kenner
+      and Tonka (1991) on Hasbro (25), Carrier on RTX before 2020 (8; 1979) and Lawn-Boy on Toro (7;
+      1989). Each day needs a filing's text, which www.sec.gov serves only to a request naming a
+      contact. It joins batch 123's open item, which waits on the same setting.
+- **Measured** on the committed fixture (10,070 recalls), each page from its first price (32 saved by
+  batches 120 and 125, 16 read today from Yahoo's monthly chart, whose first month bounds them; these
+  pages' gains begin in 1998 or later), main's `UNITS` against this branch's:
+  - 402 recalls more on 47 pages, 246 before 2017, 16 before 2001. None comes off any page.
+  - 45 sat in the company's "Sold in its stores" rows (Macy's 10, Home Depot 8, Amazon 7, Best Buy 5) and
+    are now its own, as maker, importer or distributor.
+  - 14 pages gain their first CPSC row: Honda 51 rows, Sony 14, Philips 14, Disney 11, Clarus 10, RTX
+    8, Middleby 6, Edgewell 5, Trane 4, VF 3, RPM 3, Helen of Troy 3, Masco 2, Carrier Global 2.
+  - The most by page: Honda 52, Textron 33, GE 27, Williams-Sonoma 22, Stanley Black & Decker 17,
+    Acuity 17, Home Depot 15.
+  - Among them: Kidde's 37,800,000 fire extinguishers with plastic handles (2017-11-02) on RTX; GE's
+    3,100,000 dishwashers (2000-12-14); Maytag's 2,300,000 dishwashers (2007-02-01) on Whirlpool;
+    Contigo's 5,700,000 children's bottles (2019-08-27) on Newell; Sony Energy Devices' notebook
+    battery cells of 2006; American Honda's ATVs, mowers and generators from 2000.
+  - Read by hand: every gained row of the patterns likeliest to take a namesake (Kidde, E-Z-GO,
+    White-Rodgers, Philips, GE's, Disney's, Stanley Security, Trane, OXO), and the rest by company.
+- **Requests:** 117, logged in the session scratchpad (`b126/requests.log`), each with User-Agent `News
+  Charts Research` and no email address, at least 1.1 s apart: data.sec.gov 57 (the filing lists),
+  efts.sec.gov 44 (full-text search and its name lookup), query1.finance.yahoo.com 16 (first months).
+  All answered 200. No www.sec.gov page was asked.
+- **Checks:** check:cpsc gains 10 (47). They cover Honda, Kidde on two pages, GE's sale, four
+  purchases, three sales, the namesakes, the recalls that wait, and the list's own integrity (each unit
+  under its owner's record, every firm a pattern takes holding one of its keys, no pattern on two
+  companies on one day, every day in the header). Its every-company count now asks by the units' keys
+  too: 2,663 rows on 209 companies (2,304 on 196 before). On main's code, 12 of the 47 fail: the 10 new
+  ones and 2 totals.
+
 ## NC ledger — batch 125: a new opportunity-scout run, four proposals for the owner (2026-11-09)
 
 Every proposal of 2026-11-08 is approved and built (batches 120–123), and batch 124 fixed what the
@@ -995,8 +1067,11 @@ audit of batches 117–123 found. So the `opportunity-scout` read the repository
 wrote `docs/proposals/2026-11-09-proposals.md`: four proposals, all **PENDING**, ranked with
 securities depth first. The owner's word, 2026-11-09: "Continue". Nothing is built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ **Marked 2026-11-09: all four approved**, with the calls inside as drafted (#2's floor, "Draft
+      cut-off (Recommended)"; #3's Microsoft notices, "Group a row a month (Recommended)"), filed
+      under Scope refocus by batch 126.
       1. `P1` **The CPSC's recalls under the units listed companies own.** No new source. About 90
          entries on 48 companies in the CPSC's `UNITS` (lib/cpscRecalls.ts), which holds Graco alone:
          American Honda on Honda, Fisher-Price on Mattel, Kidde on RTX, GE Appliances on GE, Playskool on
@@ -9635,6 +9710,45 @@ already held, but new investment goes to securities coverage first.
         `NEWS_CHARTS_CONTACT`.
       - *Derived from [`docs/proposals/2026-11-08-proposals.md`](proposals/2026-11-08-proposals.md)
         #3, approved 2026-11-08.*
+- [x] `P1` **The CPSC's recalls under the units listed companies own.** No new source: approved by the
+      owner 2026-11-09. Entries in the CPSC's `UNITS` (lib/cpscRecalls.ts), which held Graco alone, each
+      between the days its owner held the unit: American Honda on Honda, Kidde on RTX, GE Appliances on
+      GE, Pottery Barn on Williams-Sonoma.
+      - **Measured** by the scout: 494 recalls on 48 pages from first prices, 321 before 2017; 89 of
+        them wait for a 10-K's text.
+      - **Done in batch 126** (see its section): 81 units on 47 companies; 402 recalls more on 47 pages
+        from first prices, 246 before 2017, none fewer; 14 pages gain their first CPSC row. Fisher-Price,
+        Hasbro's four brands, Carrier before 2020 and Lawn-Boy wait for `NEWS_CHARTS_CONTACT`, an open
+        item in the batch 126 ledger.
+      - *Derived from [`docs/proposals/2026-11-09-proposals.md`](proposals/2026-11-09-proposals.md)
+        #1, approved 2026-11-09.*
+- [ ] `P1` **Railroad accidents from the Federal Railroad Administration.** A new source, on the host
+      NHTSA's recalls come from, "Public Domain U.S. Government", no key: approved by the owner
+      2026-11-09 with the floor as drafted. An accident is the page's of the railroad that reported it
+      (Union Pacific, CSX, Norfolk Southern, BNSF on Berkshire, CN, CPKC) when it killed someone, forced
+      an evacuation or did $5,000,000 of damage; a crossing collision only with an evacuation or that
+      damage.
+      - **Measured** by the scout: 461 accidents on 6 pages, 388 before 2017, 132 before 1993.
+      - To be built in batch 127.
+      - *Derived from [`docs/proposals/2026-11-09-proposals.md`](proposals/2026-11-09-proposals.md)
+        #2, approved 2026-11-09.*
+- [ ] `P2` **More of the Justice Department's releases.** No new source: approved by the owner
+      2026-11-09. Two parts: (a) the archive's months of 1996–2000, the routine notices in U.S. v.
+      Microsoft grouped a row a month, the owner's call; (b) the drug and device makers' own companies
+      in the release map (Merck Sharp & Dohme, AstraZeneca Pharmaceuticals LP).
+      - **Measured** by the scout: (a) 66 releases on 39 pages, 51 substantive; (b) 31 releases on 10
+        pages, 18 before 2017, from 27 names asked.
+      - To be built in batch 128.
+      - *Derived from [`docs/proposals/2026-11-09-proposals.md`](proposals/2026-11-09-proposals.md)
+        #3, approved 2026-11-09.*
+- [ ] `P2` **EPA's cost-recovery figure on the rows pages already hold.** No new source: approved by
+      the owner 2026-11-09. Two columns of the zip the monthly walk already reads: what a Superfund
+      settlement pays back, on the rows that carry it. It adds no new event.
+      - **Measured** by the scout: 3,126 own rows carry it, 2,045 of them showing no money today, 1,810
+        before 2017.
+      - To be built in batch 129.
+      - *Derived from [`docs/proposals/2026-11-09-proposals.md`](proposals/2026-11-09-proposals.md)
+        #4, approved 2026-11-09.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

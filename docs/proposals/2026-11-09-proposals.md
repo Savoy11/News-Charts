@@ -59,7 +59,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. The CPSC's recalls under the units listed companies own: American Honda on Honda, Fisher-Price on Mattel, Kidde on RTX, GE Appliances on GE, Playskool on Hasbro, Pottery Barn on Williams-Sonoma… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-09 ("1. Product recalls by owned brands"). Built in batch 126: 81 units on 47 companies in the CPSC's `UNITS` (103 entries, one for each key), every bought or sold unit between the days data.sec.gov's filing lists give, or, where no 8-K reports the deal, the two filings EDGAR's full-text search finds around it. 402 recalls more on 47 pages from first prices, 246 before 2017, none fewer; 14 pages gain their first CPSC row. Two draft days were wrong and the filings corrected them: Viking Range is Middleby's from 2012-12-31, not 2013-12-31 (two recalls of 2013 more), and Baby Jogger is no Newell's in 2012 and 2013 (its filings name it first in 2015). Stanley Security Solutions' locksets end at the 2017 sale to dormakaba, not 2022. Fisher-Price, Hasbro's four brands, Carrier before 2020 and Lawn-Boy wait for `NEWS_CHARTS_CONTACT`, as drafted.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. Batch 100 found the first unit, Graco Children's Products. Batch 101 built the
@@ -190,7 +190,7 @@ some · *Efficiency:* high — entries in a list a built source already reads ·
 
 ## 2. Railroad accidents from the Federal Railroad Administration, a new source on NHTSA's host: derailments, collisions and hazardous releases since 1975 on Union Pacific, CSX, Norfolk Southern, BNSF on Berkshire, CN and CPKC · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-09 ("2. Railroad accidents (new source)"), with the floor as drafted ("Draft cut-off (Recommended)"): a death, an evacuation or $5,000,000 of damage, and a crossing collision only with an evacuation or that damage. To be built in batch 127.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. No document in the repository names the FRA.
@@ -311,7 +311,7 @@ EDGAR · *Efficiency:* medium-high — one keyless dataset on a host already rea
 
 ## 3. More of the Justice Department's releases: its archive's months of 1996–2000, and the drug and device makers' own companies in the release map · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-09 ("3. More Justice Dept releases"), with the routine notices in U.S. v. Microsoft grouped a row a month ("Group a row a month (Recommended)"). To be built in batch 128.
 **Owner's reason (if rejected):**
 
 **Raised before:** yes, both parts.
@@ -462,7 +462,7 @@ written · *Practicality:* high — measured; one owner call on the Microsoft no
 
 ## 4. EPA's cost-recovery figure on the rows pages already hold: what a Superfund settlement pays back · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-09 ("4. EPA cleanup-cost figures"). To be built in batch 129.
 **Owner's reason (if rejected):**
 
 **Raised before:** as a line. The 2026-11-07 file's #1 counted "cost recovery on 2,460 rows,

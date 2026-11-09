@@ -707,11 +707,21 @@ Holding's; eight companies that are no retailers take no store line ("Barnes and
 Noble's). A unit the company owned counts from the day it owned it (`UNITS`; the owner's call of
 2026-11-06): Graco Children's Products' recalls are Newell's from 1999-03-24, the day Newell merged
 with Rubbermaid, Graco's owner (Newell's EDGAR record and 8-K), 22 of them from 1999 to 2020; those
-before are no listed company's. AT&T Corp.'s phone charger of 1995 is not AT&T Inc.'s, whose record was
-SBC's until it took AT&T's name on 2005-11-18 (batch 116), nor Ingersoll-Rand Company's of 2002
-Ingersoll Rand Inc.'s (batch 117). Against every company in the index, before
-first prices: 2,304 rows on 196 companies, 725 of them as maker, importer or distributor (Mattel's first of 1978, GE's hair dryers of 1979,
-IBM's ThinkPad batteries of 2006). A work of the U.S. Government, public domain; the Commission's
+before are no listed company's. 81 more units on 47 companies are read the same way (batch 126, the
+2026-11-09 proposal 1, approved by the owner that day): a unit named after its owner, or its own since
+before EDGAR, from the owner's first price (American Honda Motor, Home Depot U.S.A., Macy's
+Merchandising Group, Sony Electronics, Pottery Barn), and a unit bought or sold between the days the
+filings give, each in the list's header with its filing (Kidde on RTX from 2005-04-26 to 2020-04-01 and
+on Carrier Global after, Maytag on Whirlpool from 2006-03-31, GE Appliances on GE to its sale to Haier).
+Where no 8-K reports a deal, EDGAR's full-text search gives the filings around it, and no recall of
+the unit falls between them. On the committed fixture, from first prices, 402 recalls more on 47
+pages, 246 before 2017, none fewer; 14 pages gain their first CPSC row (Honda 51 rows, Sony 14,
+Philips 14, Disney 11). Fisher-Price, Hasbro's brands, Carrier before 2020 and Lawn-Boy, bought before
+EDGAR, wait for a filing's text (`NEWS_CHARTS_CONTACT`). AT&T Corp.'s phone charger of 1995 is not AT&T
+Inc.'s, whose record was SBC's until it took AT&T's name on 2005-11-18 (batch 116), nor Ingersoll-Rand
+Company's of 2002 Ingersoll Rand Inc.'s (batch 117). Against every company in the index, before first
+prices: 2,663 rows on 209 companies, 1,121 of them as maker, importer or distributor (Mattel's first of
+1978, GE's hair dryers of 1979, IBM's ThinkPad batteries of 2006). A work of the U.S. Government, public domain; the Commission's
 site refused this session's requests (403), so the basis is the law's and the federal catalog's,
 not a page re-read.
 

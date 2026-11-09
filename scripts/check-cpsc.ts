@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import type { PoolClient } from "pg";
 import tickerIndex from "../data/edgar-tickers.json";
-import { NOT_THE_COMPANY, RECALLS_URL, UNITS, cpscEvents, fetchRecalls, firmIsCompany, firmName, parseRecalls, roleIn, soldAtCompany, unitsOf, type CpscRecall } from "../lib/cpscRecalls";
+import { NOT_THE_COMPANY, RECALLS_URL, UNITS, cpscEvents, fetchRecalls, firmIsCompany, firmName, parseRecalls, roleIn, soldAtCompany, unitKeysOf, unitsOf, type CpscRecall } from "../lib/cpscRecalls";
 import { dojPossessive } from "../lib/doj";
 import { andSpellings, withoutTag } from "../lib/edgarName";
 import { deterministicScore } from "../lib/enrich/relevance";
@@ -166,10 +166,12 @@ async function main(): Promise<void> {
   check("a store line naming a name two listed companies hold is neither's: Toro's riding-mower recall of 2001-07-20 is no store's of TTC's or of Toro Corp.'s",
     !!toroDealers && /Toro and Exmark commercial dealers/.test(JSON.stringify(toroDealers)) && !/sold it|Sold in its stores/.test(`${ttcDealers?.title} ${ttcDealers?.description}`) && !has(on("TORO"), "01526"));
   // batch 111: EDGAR's "TORO CO" is the recalls' "The Toro Company", so the mower maker's own recalls are its page's
-  const ttcMade = on("TTC").filter((e) => /the company made it/.test(e.description ?? ""));
-  check("  …but the firm the recall names by its legal name, \"The Toro Company\" for EDGAR's \"TORO CO\", is TTC: 19 of its recalls, 16 as maker, 14 more than the record's spelling found, and none Toro Corp.'s",
-    on("TTC").length === 19 && ttcMade.length === 16 && /the company made it/.test(ttcDealers?.description ?? "") && ttcMade.some((e) => e.date === "2021-02-17") && !on("TORO").length,
-    `${ttcMade.length}: ${ttcMade.map((e) => e.date).join(" ")}`);
+  // …read here by its names alone: batch 126's unit, Exmark, adds its own rows to the page
+  const ttcOwn = cpscEvents(recalls, namesOf("TTC"), {});
+  const ttcMade = ttcOwn.filter((e) => /the company made it/.test(e.description ?? ""));
+  check("  …but the firm the recall names by its legal name, \"The Toro Company\" for EDGAR's \"TORO CO\", is TTC: 19 of its recalls, 16 as maker, 14 more than the record's spelling found, and none Toro Corp.'s; with Exmark, its unit, 23 rows",
+    ttcOwn.length === 19 && ttcMade.length === 16 && /the company made it/.test(ttcDealers?.description ?? "") && ttcMade.some((e) => e.date === "2021-02-17") && !on("TORO").length && on("TTC").length === 23,
+    `${ttcMade.length}: ${ttcMade.map((e) => e.date).join(" ")}; ${on("TTC").length} with Exmark`);
   const out = new Map<string, TimelineEvent[]>();
   const seen = new Set<number>();
   for (const [cik, ticker, title] of companies) {
@@ -177,16 +179,16 @@ async function main(): Promise<void> {
     seen.add(cik);
     const own = dojPossessive(title, possessiveNameFor(cik));
     const namesIn = (year: number) => [...companyNames(title, namesForYear(year, newsNamesFor(cik), [])), ...(own ? [own] : []), withoutTag(title)];
-    // …a name's "&" as "and" too, as its ingest asks (batch 120)
-    if (!namesIn(2020).flatMap(andSpellings).map(letters).some((k) => k.length >= 2 && all.includes(k))) continue;
+    // …a name's "&" as "and" too, as its ingest asks (batch 120), and its units' keys (batch 126)
+    if (!namesIn(2020).flatMap(andSpellings).map(letters).some((k) => k.length >= 2 && all.includes(k)) && !unitKeysOf(cik).some((k) => all.includes(k))) continue;
     const ev = cpscEvents(recalls, namesIn, { cik });
     if (ev.length) out.set(ticker, ev);
   }
   const flat = [...out.values()].flat();
   const ownRows = flat.filter((e) => e.precision !== "month" && !/^Sold in its stores: /.test(e.title)).length;
-  check("before any first price: 2,304 rows on 196 companies, 1,662 a recall's own day, 725 as maker, importer or distributor; Target 296, Walmart 236, Amazon 206, Home Depot 196 (2,300, 1,658 and 721 on 195 before batch 120 read a name's \"&\" as \"and\" too: Stanley Black and Decker's DeWALT mowers of 2024, Bath and Body Works' candles of 2004, John Wiley and Sons' candle-making book of 2003 and Academy Sports and Outdoors' heaters of 2003, before its listing; 2,301 on 196 before batch 117's table took Ingersoll-Rand Company's 2002 recall off IR, whose record was Gardner Denver's until 2020; 2,302 before batch 116 took AT&T Corp.'s 1995 charger off T; 2,288 before batch 111's legal-form spellings; 2,290 on 197 before batch 109's shared names; 2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
-    flat.length === 2304 && out.size === 196 && flat.filter((e) => e.precision !== "month").length === 1662 && ownRows === 725 &&
-      [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ") === "TGT 296, WMT 236, AMZN 206, HD 196",
+  check("before any first price: 2,663 rows on 209 companies, 2,029 a recall's own day, 1,121 as maker, importer or distributor; Target 295, Walmart 236, Amazon 213, Home Depot 204 (2,304, 1,662 and 725 on 196 before batch 126's units, with Target 296, Amazon 206 and Home Depot 196; 2,300, 1,658 and 721 on 195 before batch 120 read a name's \"&\" as \"and\" too: Stanley Black and Decker's DeWALT mowers of 2024, Bath and Body Works' candles of 2004, John Wiley and Sons' candle-making book of 2003 and Academy Sports and Outdoors' heaters of 2003, before its listing; 2,301 on 196 before batch 117's table took Ingersoll-Rand Company's 2002 recall off IR, whose record was Gardner Denver's until 2020; 2,302 before batch 116 took AT&T Corp.'s 1995 charger off T; 2,288 before batch 111's legal-form spellings; 2,290 on 197 before batch 109's shared names; 2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
+    flat.length === 2663 && out.size === 209 && flat.filter((e) => e.precision !== "month").length === 2029 && ownRows === 1121 &&
+      [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ") === "TGT 295, WMT 236, AMZN 213, HD 204",
     `${flat.length} on ${out.size}; ${flat.filter((e) => e.precision !== "month").length} own; ${ownRows} as maker, importer or distributor; ${[...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ")}`);
 
   console.log("\nRead once a week, and kept");
@@ -231,6 +233,53 @@ async function main(): Promise<void> {
     onNwl.length === 22 && onNwl.every((r) => r.day >= "1999-03-24") && gracos.some((r) => r.day === "1998-11-24" && !has(nwlPage.events, r.number)) &&
       UNITS[rowOf("NWL")[0]]?.[0].from === "1999-03-24" && on("GGG").length === 0 && on("NWL").some((e) => e.date === "2020-12-16" && /the company imported it/.test(e.description ?? "")),
     `${onNwl.length} on NWL: ${onNwl.map((r) => r.day).slice(0, 4).join(",")}…`);
+
+  console.log("\nThe units listed companies own (batch 126, the 2026-11-09 proposal 1)");
+  // the pages a recall is the company's own on, as maker, importer or distributor; a store's rows aside
+  const ownOf = (ev: TimelineEvent[]) => ev.filter((e) => e.precision !== "month" && !/^Sold in its stores: /.test(e.title));
+  const pagesOf = (number: string) => [...out].filter(([, ev]) => has(ownOf(ev), number)).map(([t]) => t).sort().join(" ") || "none";
+  const lands = (cases: [string, string][]) => cases.map(([n, want]) => [n, want, pagesOf(n)]).filter(([, want, got]) => want !== got);
+  const ownRowOf = (ticker: string, number: string) => on(ticker).some((e) => has([e], number) && /the company (?:made|imported|distributed) it/.test(e.description ?? ""));
+  const honda = lands([["02509", "HMC"]]);
+  check("American Honda's ATV recall of 2001-11-30 (02509) lands on Honda, as the company that made it: \"American Honda Motor Co.\" is no caption of Honda Motor Co., Ltd.'s",
+    !honda.length && ownRowOf("HMC", "02509") && !firmIsCompany("American Honda Motor Co., Inc.", namesOf("HMC")(2001)), JSON.stringify(honda));
+  const kidde = lands([["18022", "RTX"], ["21130", "CARR"], ["93026", "none"]]);
+  check("Kidde's 37,800,000 fire extinguishers of 2017-11-02 (18022) land on RTX, its TruSense alarms of 2021-05-06 (21130) on Carrier Global, its 1992 recall on neither: one unit on two pages, never on the same day",
+    !kidde.length && ownRowOf("RTX", "18022") && ownRowOf("CARR", "21130"), JSON.stringify(kidde));
+  const ge = lands([["01054", "GE"], ["22028", "none"], ["16265", "none"], ["05526", "GE"]]);
+  check("GE's dishwashers of 2000-12-14 (01054) land on GE; \"GE Appliances, a Haier company\" (22028) and GE Appliances' washers of 2016-09-15 (16265), after the sale to Haier, on no page; GE Security's smoke detectors of 2004 on GE",
+    !ge.length, JSON.stringify(ge));
+  const bought = lands([["16768", "none"], ["17748", "TXT"], ["07248", "none"], ["10339", "SWK"], ["05280", "none"], ["07094", "WHR"], ["12147", "none"], ["13248", "MIDD"]]);
+  check("a unit bought is its buyer's from the day: Arctic Cat's of 2016-08-23 on no page and of 2017-06-06 on Textron; Black & Decker (U.S.)'s of 2007 on none and of 2010-09-09 on Stanley Black & Decker; Maytag's of 2005 on none and of 2007-02-01 on Whirlpool; Viking Range's of 2012-04-10 on none and of 2013-07-25 on Middleby, which bought it on 2012-12-31, not 2013-12-31",
+    !bought.length, JSON.stringify(bought));
+  const sold = lands([["02011", "NWL"], ["09290", "none"], ["17096", "none"], ["17038", "SWK"], ["19046", "none"], ["18116", "EMR"]]);
+  check("a unit sold is its seller's to the day: Little Tikes' swings of 2001 on Newell, its recalls of 2009 and 2017 (MGA's) on none; Stanley Security Solutions' locksets of 2016 on Stanley Black & Decker, dormakaba's of 2018 on none; InSinkErator's of 2018 on Emerson",
+    !sold.length, JSON.stringify(sold));
+  const namesakes = lands([["88111", "none"], ["13065", "none"], ["08278", "none"], ["08282", "none"], ["01129", "DIS"], ["09128", "DIS"]]);
+  check("namesakes and days read by hand: \"E-Z Go Strollers\" (1988) is no Textron's; Baby Jogger's of 2012 is no Newell's, whose filings name it first in 2015; the Disney Store's two of 2008-05-22, imported by The Children's Place's Hoop Retail Stores, are no page's, its own of 2001 and 2009 Disney's",
+    !namesakes.length, JSON.stringify(namesakes));
+  const waiting = lands([["19105", "none"], ["98074", "none"]]);
+  check("  …and Fisher-Price's recalls wait: its Rock 'n Play of 2019 (19105) is on no page until a filing's text gives Mattel's day of 1993, with NEWS_CHARTS_CONTACT",
+    !waiting.length && /Left out: Fisher-Price/.test(read("lib/cpscRecalls.ts")) && !Object.values(UNITS).flat().some((u) => /Fisher|Playskool|Lawn-Boy/i.test(u.unit)), JSON.stringify(waiting));
+  const unitCiks = Object.entries(UNITS);
+  const wrongCik = unitCiks.filter(([cik, us]) => us.some((u) => rowOf(u.ticker)[0] !== Number(cik))).map(([cik]) => cik);
+  const unkeyed: string[] = [];
+  for (const r of recalls)
+    for (const f of [...r.makers, ...r.importers, ...r.distributors].map(firmName))
+      for (const [, us] of unitCiks)
+        for (const u of us) if (u.firm.test(f) && !us.some((v) => v.unit === u.unit && letters(f).includes(v.key))) unkeyed.push(`${u.ticker} ${u.unit}: ${f}`);
+  check("every unit is filed under its owner's record, 104 entries on 47 records with Graco, and every firm its pattern takes on the whole fixture holds one of its keys, so the stored recalls are asked by them",
+    !wrongCik.length && !unkeyed.length && unitCiks.length === 47 && unitCiks.reduce((n, [, us]) => n + us.length, 0) === 104, `${unitCiks.length} records, ${unitCiks.reduce((n, [, us]) => n + us.length, 0)} entries ${wrongCik.join(" ")} ${unkeyed.slice(0, 3).join(" | ")}`);
+  const shared = unitCiks.flatMap(([cik, us]) => us.map((u) => ({ cik, ...u })));
+  const overlap = shared.filter((a) => shared.some((b) => b.cik !== a.cik && String(b.firm) === String(a.firm) && (a.from ?? "") <= (b.to ?? "9999") && (b.from ?? "") <= (a.to ?? "9999")));
+  const header = read("lib/cpscRecalls.ts").split("export const UNITS")[0];
+  const undated = shared.filter((u) => [u.from, u.to].some((d) => d && !header.includes(d)) && u.key !== "graco");
+  check("  …one pattern on two companies only on days apart (Kidde: RTX to 2020-04-01, Carrier Global from 2020-04-02), and every day in the list's header with the filing that gives it",
+    !overlap.length && !undated.length && shared.filter((u) => u.key === "walterkidde").map((u) => `${u.ticker} ${u.from}–${u.to ?? ""}`).join(", ") === "RTX 2005-04-26–2020-04-01, CARR 2020-04-02–",
+    `${overlap.map((u) => u.ticker + " " + u.unit).join(", ")} ${undated.map((u) => u.ticker + " " + u.unit).join(", ")}`);
+  const hondaPage = await cpscFor(fakeDb({ ...db, listed: "1980-03-17" }), 1, plan("HMC"), noWalk);
+  check("  …and a company's ingest asks the kept recalls by its units' keys: Honda's page holds American Honda's 51 rows from 2000",
+    hondaPage.events.length === 51 && has(hondaPage.events, "02509") && hondaPage.events.every((e) => e.date >= "2000"), `${hondaPage.events.length}`);
 
   console.log("\nRegistered, licensed, wired");
   const src = SOURCES.find((s) => s.key === "cpsc_recalls");

@@ -988,6 +988,53 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 125: a new opportunity-scout run, four proposals for the owner (2026-11-09)
+
+Every proposal of 2026-11-08 is approved and built (batches 120–123), and batch 124 fixed what the
+audit of batches 117–123 found. So the `opportunity-scout` read the repository again at `80bfc3a` and
+wrote `docs/proposals/2026-11-09-proposals.md`: four proposals, all **PENDING**, ranked with
+securities depth first. The owner's word, 2026-11-09: "Continue". Nothing is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      1. `P1` **The CPSC's recalls under the units listed companies own.** No new source. About 90
+         entries on 48 companies in the CPSC's `UNITS` (lib/cpscRecalls.ts), which holds Graco alone:
+         American Honda on Honda, Fisher-Price on Mattel, Kidde on RTX, GE Appliances on GE, Playskool on
+         Hasbro, Pottery Barn on Williams-Sonoma. Measured: 494 recalls on 48 pages from first prices,
+         321 before 2017; 13 pages gain their first CPSC row. About 45 days are to be read at the build;
+         89 recalls need a 10-K's text (`NEWS_CHARTS_CONTACT`), though none falls near a purchase day.
+      2. `P1` **Railroad accidents from the Federal Railroad Administration.** A new source, on the host
+         NHTSA's recalls come from, "Public Domain U.S. Government", no key. Measured under the scout's
+         draft floor (a death, an evacuation or $5,000,000 of damage; a crossing collision only with an
+         evacuation or that damage): 461 accidents on 6 pages, 388 before 2017, 132 before 1993. Union
+         Pacific 161, CSX 156, Norfolk Southern 61, BNSF on Berkshire 35, CN 27, CPKC 21. **Two calls
+         inside:** the source itself, and the floor.
+      3. `P2` **More of the Justice Department's releases.** No new source; two parts.
+         - **(a) The archive's months of 1996–2000,** cut on 2026-11-02 for two 404s: 1996–1997 live
+           under another address. 66 releases on 39 pages from first prices, 51 of them substantive
+           (ADM's antitrust fine, the 1998 Microsoft suit, Honda's $267M Clean Air settlement). **One
+           call inside:** the 9 routine notices in U.S. v. Microsoft, grouped a row a month or left.
+         - **(b) The drug and device makers' own companies in the release map:** 31 releases on 10
+           pages, 18 before 2017 (Merck Sharp & Dohme's Vioxx plea, AstraZeneca Pharmaceuticals LP's
+           $355M plea). A partial count: 27 names were asked.
+      4. `P2` **EPA's cost-recovery figure on the rows pages already hold.** No new source: two columns
+         `readCases` never reads. 3,126 own rows carry it, 2,045 of them showing no money today, 1,810
+         before 2017 (Ford's 1993 decree, $55,513,499). It adds no new event.
+- **Cut, with reasons in the file:** funds' capital-gain distributions (Yahoo's dividends already carry
+  them, only the label understates); FRA's fatal-only crossing collisions and its grade-crossing file;
+  the Justice archive's first months of 1996 (no day) and the years before (not reachable); a fourth
+  round of EPA units, non-US regulators, OSHA and MSHA (not measured); the FTC, OCC, FSIS, FDIC, PHMSA,
+  FERC, NRC and NTSB (not retried).
+- [ ] **Noticed in passing, an owner call like DuPont's** (OWNER-ACTIONS): AA's page takes old Alcoa
+      Inc.'s Justice releases (the 2003 Clean Air Act settlement; 5 more of 1997–2000 under #3(a)).
+      AA's record is Alcoa Corp.'s of 2016, and old Alcoa Inc.'s record is Howmet's; neither the table
+      of taken names nor `lib/predecessors.ts` has an entry. Also noted: the Justice rule's
+      `DESIGNATOR_WORD` reads "L.P." but not "LP".
+- **Requests:** 137 by the scout, logged in the session scratchpad (`scout125/requests.log`), each with
+  User-Agent `News Charts Research` and no email address: www.justice.gov 99 (archive 72, API 27),
+  query1.finance.yahoo.com 33, data.transportation.gov 5. 120 answered 200, 12 answered 404 and 5
+  answered 429. No sec.gov host was asked.
+
 ## NC ledger — batch 124: the audit of batches 117–123, and what it confirmed fixed (2026-11-08)
 
 The `code-auditor` read batches 117–123 (`c1aae35..6a4e7f9`); its report is

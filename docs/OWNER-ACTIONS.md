@@ -231,7 +231,9 @@ Raised by the November batches, each recorded in the master checklist:
      reads MSHA's two files once for all of them. Arcosa's two accidents wait for its Yahoo chart, which
      begins 2026-07-17.
   3. `P2` EPA cases under a fourth round of units (Ashland Chemical, Akzo Nobel Chemicals, Gerdau
-     Ameristeel, Seaboard Farms…): 153 cases on 13 pages, 134 before 2017.
+     Ameristeel, Seaboard Farms…): 153 cases on 13 pages, 134 before 2017. **Built in batch 135:** 144
+     court or penalty cases more on the 13 pages, 123 before 2017, each day read from a filing. Nothing to
+     run after deploying: each page's next ingest reads the cases already kept.
   4. `P2` the regulator's own account on rows already held: (a) the CPSC's injury statement, (b) the
      railroad's narrative and the dead by kind. Each part approvable alone.
 

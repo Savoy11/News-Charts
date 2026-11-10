@@ -490,8 +490,7 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
  *   Southwest to 2016-03-31 and Verizon Northwest, North and West Virginia to 2010-06-30
  *   (Frontier's 8-Ks of their purchase, item 2.01, 2016-04-01 and 2010-06-30). Verizon Hawaii and
  *   Micronesia/Pacifica are left out: no filing here gives their sale.
- * - Akzo Nobel: its coatings companies its own. Its chemicals companies (now Nouryon) are left out:
- *   AkzoNobel files nothing with the SEC, and the day of their 2018 sale was not read here.
+ * - Akzo Nobel: its coatings companies its own; its chemicals companies to 2018-09-30 (batch 135, below).
  * - The rest are each company's own operating companies, under its name: Clean Harbors,
  *   Halliburton, Nucor, Occidental, Lockheed Martin, General Dynamics, Boeing, Entergy, Duke Energy's
  *   utilities, Toyota Motor, Home Depot U.S.A., Lowe's Home Centers, Procter & Gamble,
@@ -620,6 +619,45 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
  *   Millennium Petrochemicals; not the Lyondell Environmental Custodial Trust), TotalEnergies' US
  *   companies (Fina and Atofina are left out: no filing here gives their days), Rio Tinto's (Kennecott,
  *   U.S. Borax), Sysco's, CVS's, Honda's US companies (no dealer) and John Deere's works.
+ *
+ * Batch 135, the fourth round (the 2026-11-09b proposal 3): units the caption rule refuses because a
+ * company's name is followed by words that are not legal ones, every defendant each pattern reads on
+ * EPA's whole file read by hand; the days from data.sec.gov's filing lists, read 2026-11-10:
+ * - Ashland: Ashland Chemical, Ashland Specialty Chemical and Ashland Oil (its own name to 1995) its
+ *   own; Ashland Petroleum to 1997-12-31 (Ashland's 8-K of the Marathon Ashland Petroleum venture,
+ *   item 2, reporting 1998-01-01); Ashland Distribution to 2011-03-30 (its 8-K of the sale, item 2.01,
+ *   reporting 2011-03-31); Ashland Aqualon from 2008-11-13 (its 8-K of the Hercules purchase).
+ * - Akzo Nobel: its chemicals companies, Akzo Chemicals before the Nobel merger of 1994 among them, to
+ *   2018-09-30. AkzoNobel filed nothing with the SEC in 2018; the first filing
+ *   EDGAR's full-text search finds naming "AkzoNobel Specialty Chemicals" is Carlyle's 8-K of
+ *   2018-10-31, its results for the quarter to 2018-09-30, and no case falls between 2017-08-02 and
+ *   2019-09-10, whose case names Nouryon Functional Chemicals itself. Akzo Salt, sold in 1997, holds no
+ *   case and is not read.
+ * - Novartis: Novartis Pharmaceuticals and Novartis Products its own; Crop Protection to 2000-11-12
+ *   (Syngenta's formation: Novartis's 20-F for 2000 and Syngenta's of 2002, which the full-text search
+ *   finds holding "November 13, 2000"); Consumer Health and Ex-Lax to 2015-03-01 (GSK's 6-K "GSK
+ *   completes major three-part transaction" of 2015-03-02); Animal Health to 2014-12-31 (Eli Lilly's
+ *   8-K, item 2.01, reporting 2015-01-01). Novartis Nutrition, sold to Nestlé in 2007, is left out:
+ *   no filing here gives the day.
+ * - GATX: GATX Terminals and GATX Tank Storage to 2001-03-01 (GATX's 8-K, item 2, reporting
+ *   2001-03-02, of the terminals' sale to Kinder Morgan Energy Partners).
+ * - Morgan Stanley: Morgan Stanley Capital Group and Morgan Stanley Services from 1997-05-31, the day
+ *   this record, Dean Witter, Discover & Co.'s, merged with Morgan Stanley Group (its 8-K, items 2, 7
+ *   and 8): the group's two orders of 1997-05-20 are old Morgan Stanley's.
+ * - Lennar's homebuilders and land companies, Gerdau's North American companies (Gerdau Ameristeel, a
+ *   listed company Gerdau controlled, Gerdau Long Steel, Gerdau
+ *   MacSteel), Seaboard Foods, Seaboard Farms and Seaboard Marine, Kroger's partnerships, plants and
+ *   pharmacies, Kirby Inland Marine and Ball's metal packaging companies their own. Seaboard Farms of
+ *   Chattanooga, its poultry company, to 2000-01-02 (Seaboard's 8-K of the sale, item 2, reporting
+ *   2000-01-03); Ball Aerospace to 2024-02-15 (Ball's 8-K of the sale, item 2.01, reporting 2024-02-16).
+ * - The Andersons: its own divisions; its ethanol companies only from 2025-07-31, the day it bought
+ *   Marathon's share of The Andersons Marathon Holdings (its 8-K, items 1.01 and 2.01, with the unit
+ *   purchase agreement): a joint venture before, no one's.
+ * - Waste Management: its disposal companies and Waste Management Holdings, old Waste Management's
+ *   record renamed, from the merger of 1998-07-16.
+ * - Left as namesakes: Seaboard Asphalt, Seaboard Industries and the Seaboard railroads; Kirby Forest
+ *   Industries and Kirby & Sons; Ball Metal & Chemical and Ball Glass Container; Lennar Asphalt (1975);
+ *   Ashland Metal, Ashland Exploration (sold in 1997) and the towns.
  */
 export interface EpaUnit {
   ticker: string;
@@ -683,7 +721,11 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
   277948: [unit("CSX", "CSX Transportation", /^CSX\s+(?:TRANSPORTATION|TRANSPORATION|INTERMODAL|REAL PROPERTY)\b/i, "csx")],
   702165: [unit("NSC", "Norfolk Southern Railway", /^NORFOLK SOUTHERN RAILWAY\b/i, "norfolksouthern")],
   // Waste Management, from its merger with USA Waste Services
-  823768: [unit("WM", "Waste Management's state companies", /^WASTE MANAGEMENT,?\s+(?:INC\.?,?\s+)?OF\b/i, "wastemanagement", { from: "1998-07-16" })],
+  823768: [
+    unit("WM", "Waste Management's state companies", /^WASTE MANAGEMENT,?\s+(?:INC\.?,?\s+)?OF\b/i, "wastemanagement", { from: "1998-07-16" }),
+    // batch 135: its disposal companies, and old Waste Management's record renamed Waste Management Holdings
+    unit("WM", "Waste Management's disposal companies and Waste Management Holdings", /^WASTE MANAGEMENT\s+(?:DISPOSAL|HOLDINGS)\b/i, "wastemanagement", { from: "1998-07-16" }),
+  ],
   // Murphy Oil USA, before and after its spin-off
   717423: [unit("MUR", "Murphy Oil USA", /^MURPHY OIL\s+U\.?\s?S\.?\s?A\b/i, "murphyoil", { to: "2013-08-29" })],
   1573516: [unit("MUSA", "Murphy Oil USA", /^MURPHY OIL\s+U\.?\s?S\.?\s?A\b/i, "murphyoil", { from: "2013-08-30" })],
@@ -712,7 +754,11 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("VZ", "Verizon Northwest, North and West Virginia", /^VERIZON\s+(?:NORTHWEST|NORTH|WEST VIRGINIA)\b/i, "verizon", { to: "2010-06-30" }),
   ],
   // Akzo Nobel's coatings companies
-  3124: [unit("AKZOY", "Akzo Nobel's coatings companies", /^AKZO[- ]?NOBEL\b(?![\s,]+(?:CHEMICALS?|SURFACE|FUNCTIONAL|POLYMER|PULP|INDUSTRIAL|BASE|SALT)\b)/i, "akzonobel")],
+  3124: [
+    unit("AKZOY", "Akzo Nobel's coatings companies", /^AKZO[- ]?NOBEL\b(?![\s,]+(?:CHEMICALS?|SURFACE|FUNCTIONAL|POLYMER|PULP|INDUSTRIAL|BASE|SALT)\b)/i, "akzonobel"),
+    // batch 135: its chemicals companies, Akzo's own before the Nobel merger of 1994, to their sale as Nouryon
+    unit("AKZOY", "Akzo Nobel's chemicals companies", /^AKZO(?:[- ]?NOBEL)?\s+(?:CHEMICALS?|SURFACE|POLYMER|FUNCTIONAL)\b/i, "akzo", { to: "2018-09-30" }),
+  ],
   // each company's own operating companies
   822818: [unit("CLH", "Clean Harbors' companies", /^CLEAN HARBORS\b/i, "cleanharbors")],
   1047862: [
@@ -1100,6 +1146,40 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("TXT", "Bell Helicopter", /^BELL HELICOPTER\b/i, "bellhelicopter"),
     unit("TXT", "E-Z-GO", /^E-?Z-?GO\b/i, "ezgo"),
     unit("TXT", "Cessna", /^(?:THE\s+)?CESSNA AIRCRAFT\b/i, "cessna", { from: "1994-03-30" }),
+  ],
+  // batch 135, the fourth round (the 2026-11-09b proposal 3): each company's units under names the
+  // caption rule refuses, a sold one to its sale and a bought one from its purchase
+  1674862: [
+    unit("ASH", "Ashland Chemical and Ashland's chemical companies", /^ASHLAND\s+(?:CHEMICALS?|SPECIALTY CHEMICAL|OIL)\b/i, "ashland"),
+    unit("ASH", "Ashland Aqualon", /^ASHLAND\s+AQUALON\b/i, "ashland", { from: "2008-11-13" }),
+    unit("ASH", "Ashland Petroleum", /^ASHLAND\s+PETROLEUM\b/i, "ashland", { to: "1997-12-31" }),
+    unit("ASH", "Ashland Distribution", /^ASHLAND\s+DISTRIBUTION\b/i, "ashland", { to: "2011-03-30" }),
+  ],
+  1114448: [
+    unit("NVS", "Novartis Pharmaceuticals and Novartis Products", /^NOVARTIS\s+(?:PHARMACEUTICALS|PRODUCTS)\b/i, "novartis"),
+    unit("NVS", "Novartis Crop Protection", /^NOVARTIS\s+CROP\s+PROTE/i, "novartis", { to: "2000-11-12" }),
+    unit("NVS", "Novartis Consumer Health and Ex-Lax", /^NOVARTIS\s+(?:CONSUMER HEALTH|EX-LAX)\b/i, "novartis", { to: "2015-03-01" }),
+    unit("NVS", "Novartis Animal Health", /^NOVARTIS\s+ANIMAL HEALTH\b/i, "novartis", { to: "2014-12-31" }),
+  ],
+  40211: [unit("GATX", "GATX Terminals", /^GATX\s+(?:TERMINALS|TANK STORAGE)\b/i, "gatx", { to: "2001-03-01" })],
+  895421: [unit("MS", "Morgan Stanley Capital Group and Morgan Stanley Services", /^MORGAN STANLEY\s+(?:CAPITAL GROUP|SERVICES)\b/i, "morganstanley", { from: "1997-05-31" })],
+  920760: [unit("LEN", "Lennar's homebuilders and land companies", /^LENNAR\s+(?:HOMES|AFFORDABLE|COMMUNIT(?:Y|IES)|MULTIFAMILY|COLORADO|NORTHWEST|MARE ISLAND|LAND)\b/i, "lennar")],
+  1073404: [unit("GGB", "Gerdau's North American companies", /^GERDAU\b/i, "gerdau")],
+  88121: [
+    unit("SEB", "Seaboard Foods, Seaboard Farms and Seaboard Marine", /^SEABOARD\s+(?:FARMS|FOODS|MARINE)\b(?!\s+OF\s+CHATTANOOGA)/i, "seaboard"),
+    unit("SEB", "Seaboard Farms of Chattanooga", /^SEABOARD\s+FARMS\s+OF\s+CHATTANOOGA\b/i, "seaboard", { to: "2000-01-02" }),
+  ],
+  56873: [
+    unit("KR", "Kroger's partnerships, plants and pharmacies", /^(?:THE\s+)?KROGER\s+(?:LIMITED PARTNERSHIP|TEXAS|MEMPHIS|SPECIALTY PHARMACY|CO(?:MPANY)?\.?\s*(?:\(|D\/B\/A|BAKERY))/i, "kroger"),
+  ],
+  821026: [
+    unit("ANDE", "The Andersons' own divisions", /^THE ANDERSONS,?\s+(?:INC\b|LAWN|ALACO)/i, "theandersons"),
+    unit("ANDE", "The Andersons' ethanol companies", /^THE ANDERSONS\s+(?:MARATHON|ALBION|CLYMERS|DENISON|ETHANOL)\b/i, "theandersons", { from: "2025-07-31" }),
+  ],
+  56047: [unit("KEX", "Kirby Inland Marine", /^KIRBY\s+INLAND\s+MARINE\b/i, "kirbyinlandmarine")],
+  9389: [
+    unit("BALL", "Ball's metal packaging companies", /^BALL\s+(?:METAL\s+(?:BEVERAGE|CONTAINER|FOOD)|PACKAGING)\b/i, "ball"),
+    unit("BALL", "Ball Aerospace", /^BALL\s+AEROSPACE\b/i, "ballaerospace", { to: "2024-02-15" }),
   ],
 };
 

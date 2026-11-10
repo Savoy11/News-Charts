@@ -114,7 +114,10 @@ store's recalls of other makers' products grouped a row a month. The FRA's railr
 railroad company's page only through `RAIL_OWNERS`, each reporting railroad between its owner's days, from
 the company's first price, at the owner's floor: a death, an evacuation or $5,000,000 of damage, a crossing
 collision only with the last two; its dead and injured are the accident's, Form 55a's count, never one
-record's Form 54 part (batch 130). The
+record's Form 54 part (batch 130). MSHA's mine accidents (`lib/mineAccidents.ts`, batch 134), the deaths of
+its Accidents file kept from a weekly read of two zips (`lib/ingest/mineWalk.ts`, db/046), reach a page only
+through `MINE_CONTROLLERS`, each controller ID between its company's days, from the first price; MSHA gives
+an ID's present name on an old record, so a title names no operator. The
 CFTC's actions (`lib/cftc.ts`) are read by the Justice rule with the release map's units, plus the
 Commission's object form ("CFTC Orders UBS to Pay") and four guards of its own; read its header first.
 

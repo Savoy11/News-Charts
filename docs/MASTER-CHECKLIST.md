@@ -988,6 +988,75 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 134: deaths at mines from the Mine Safety and Health Administration, a new source (2026-11-10)
+
+The 2026-11-09b proposals' #2, approved by the owner on 2026-11-10 ("2. Mine accidents (new source)")
+on the condition the owner set ("Read it first, then build (Recommended)"): the Labor Department's
+licence notice read and quoted before anything is built. The owner's word on starting: "Continue".
+
+- [x] **The licence, read first.** www.dol.gov refuses a plain request (403), so its pages were read
+      through a browser. "Public Domain Copyright Trademark & Patent Information"
+      (www.dol.gov/general/aboutdol/copyright): "Materials created by the federal government are
+      generally part of the public domain and may be used, reproduced and distributed without
+      permission. Therefore, content on this website which is in the public domain may be used without
+      the prior permission of the U.S. Department of Labor (DOL). However, such materials may not be
+      used in a manner that implies any affiliation or endorsement by the DOL of your company, website
+      or publication." Its seals and logos need permission. The general disclaimer
+      (www.dol.gov/general/disclaim) sets no terms of reuse. Free reuse, commercial use included: the
+      build went ahead. Source 38, public domain, credited to the Department, its seals not used.
+- [x] **The source** (`lib/mineAccidents.ts`): MSHA's Accidents file (arlweb.msha.gov, one 52 MB zip
+      of 275,799 Form 7000-1 records since 2000, 229 MB of text) and its Mines file (7 MB, 92,117
+      mines), read once a week for every company and the deaths kept in db/046
+      (`lib/ingest/mineWalk.ts`), asked again with the copy's Last-Modified. The file is cut to its
+      fatal records before it is decoded (`fatalRecordsOf`): decoded whole it took 943 MB to read. A
+      row is the fatal records of one mine on one day: 1,130 accidents, 1,221 dead. Kinross's two dead
+      of 2026-09-03 at Bald Mountain were recorded at 15:45 and 15:50, so the day, not the time, is the
+      key. `eachCsvRow` (lib/zip.ts) takes MSHA's "|" between fields.
+- [x] **What a row says:** the mine's county and state (the Mines file's), the dead, MSHA's
+      classification, the time and where at the mine, the accident type, how many of the dead worked
+      for a contractor, and MSHA's own account, quoted: "Coal mine accident in Marshall County, West
+      Virginia — 3 killed (gas or dust explosion)". The report is the operator's own filing, not a
+      finding of fault, and every row says so.
+- [x] **Names of the day are not in the files:** each record gives the mine's controller and operator
+      by the IDs they had that day (all 1,125 fatal accidents with a controller match MSHA's history for
+      the mine on that day), but under each ID's present name. Minorca's deaths of 2007 and 2019,
+      ArcelorMittal's, carry "Cleveland-Cliffs Minorca Mine Inc."; Trinity's of 2017, "Arcosa
+      Aggregates". A title therefore names no operator, and the text gives MSHA's present names as
+      present names.
+- [x] **The map** (`MINE_CONTROLLERS`, by CIK): 54 controller IDs on 52 companies, each read by hand
+      from the fatal accidents' controllers and MSHA's own history, none matched by name at ingest.
+      Days from data.sec.gov's filing lists (the batch 120 rule, the 8-K's item 2.01 and report date):
+      CONSOL Energy's ID on CNX to 2017-11-27 and on Core Natural Resources from 2017-11-28 (the coal
+      spin-off, CNX's 8-K 0001193125-17-359483), with Core's own ID from 2025; Mosaic's from 2004-10-22
+      (its 8-K 0001193125-04-180752), IMC-Agrico's of 2002 no page's; MDU's to 2023-05-31 (Knife
+      River's spin-off); Trinity's to 2018-10-31 (Arcosa's); ArcelorMittal's to 2020-12-08 (the sale to
+      Cleveland-Cliffs). Legacy Vulcan, Vulcan's predecessor record, is Vulcan's. Three are the company
+      under a former name: The Pittston Company (Brink's), Broken Hill Proprietary (BHP), Newpark
+      Resources (NPK International).
+- [x] **Left off, each read:** an acquisition's past (Massey 25, Arch 21, Alpha Natural Resources 15,
+      Walter 11, Texas Industries 6, Stillwater Mining 6, Phelps Dodge 3, Placer Dome 3, IMC Global, AK
+      Steel, Florida Rock, PotashCorp); the joint ventures (Bridger Coal 4, Nevada Gold Mines 3, Cliffs'
+      with Laiwu Steel and ArcelorMittal, Martin Marietta's with Hunt Midwest, Eagle's with Heidelberg);
+      "Ashland Inc et al" 11, MSHA's controller of Arch Coal's mines to 2004; Ashland's own quarry;
+      Alcoa Inc. 3 (the owner's open Alcoa question); Hycroft of 2015; U.S. Steel 2 (no longer listed);
+      Rogers Group 3 (not Rogers Corporation). The rest are private companies, people and foreign
+      groups with no listed shares here (Murray, Heidelberg Materials, Holcim, Lhoist, Metinvest…).
+- [x] **Measured** on the files of 2026-11-09, each page from its first price as Yahoo's chart gave it
+      on 2026-11-10: **224 accidents, 237 dead, on 51 pages, 144 before 2017.** Alliance Resource 30,
+      CNX 29, Martin Marietta 19, Vulcan 15, Freeport-McMoRan 12, CRH 11, Newmont 10, Barrick 9, Cemex
+      8, Alpha Metallurgical 6. Peabody's 14 before its shares of 2017 are no page's; Arcosa's two wait,
+      its chart on Yahoo beginning 2026-07-17. Nothing to run after deploying but db/046: each mapped
+      company's next ingest reads the files once for all of them.
+- [x] **Checked:** `scripts/check-mine-accidents.ts` (40 checks) on the committed slice
+      (`scripts/fixtures/msha-accidents.json.gz`: the Accidents file's header, 40 records that are no
+      death and all 1,221 that are, byte for byte, and the 910 mines they name); on main it does not
+      run. A `check:live` case reads MSHA's files whole; check:contact counts the 36th file.
+- **Requests:** 79, logged in the session scratchpad (`b134/requests.log`), each with User-Agent
+  `News Charts Research` and no email address: Yahoo's chart 58 for first trading days (14 refused with
+  429 and asked again later), data.sec.gov 10 (filing lists), www.dol.gov 5 (one refused, four read
+  through a browser), www.msha.gov 3, the Labor Department's data portals 2 and catalog.data.gov 1.
+  MSHA's two files are the scout's copies of 2026-11-09, not asked again.
+
 ## NC ledger — batch 133: the rest of the population, from a scan of every listed company's filing list (2026-11-10)
 
 Batch 132 mapped the 17 pages the 2026-11-09b proposals' #1 measured; this batch reads the rest of its
@@ -10234,12 +10303,13 @@ already held, but new investment goes to securities coverage first.
         handovers wait for a filing's text, an open item in its ledger.
       - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
         #1, approved 2026-11-10.*
-- [ ] `P2` **Fatal mine accidents from MSHA,** a new source: approved by the owner 2026-11-10, on the
+- [x] `P2` **Fatal mine accidents from MSHA,** a new source: approved by the owner 2026-11-10, on the
       condition that the Labor Department's licence notice is read and quoted first; if it does not
       allow free reuse, the build stops and the owner is asked. An accident with a death is the page's
       of the company that controlled the mine that day, by a hand map of MSHA's controller IDs.
       - **Measured** by the scout: 221 accidents (233 dead) on 51 pages, 139 before 2017.
-      - **To be built in batch 134.**
+      - **Done in batch 134** (see its section): the notice allows free reuse; 224 accidents, 237 dead,
+        on 51 pages, 144 before 2017, under 54 controller IDs on 52 companies.
       - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
         #2, approved 2026-11-10.*
 - [ ] `P2` **EPA's cases under a fourth round of units.** No new source: approved by the owner

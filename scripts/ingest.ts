@@ -56,6 +56,8 @@ import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
 import { DAMAGE_FLOOR, fetchRailAccidents, railRoadsFor } from "../lib/railAccidents";
+import { mineControllersFor } from "../lib/mineAccidents";
+import { mineAccidentsFor, walkMineAccidents } from "../lib/ingest/mineWalk";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { FED_BANKS, fedBanksFor, fetchFedActions } from "../lib/fedActions";
 import { dojPossessive, fetchJusticeReleases, justiceQueryNames } from "../lib/doj";
@@ -125,6 +127,8 @@ export const COMPANY_SOURCES = [
   "fda_supplements",
   // railroad accidents, asked only for the railroads lib/railAccidents.ts maps (batch 127)
   "fra_accidents",
+  // deaths at mines, kept only for the controllers lib/mineAccidents.ts maps (batch 134)
+  "msha_accidents",
   "gdelt",
   "yahoo_finance",
   "yahoo_prices",
@@ -673,6 +677,21 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
       const listed = await firstPriceDay(client, subjectId);
       if (listed === null) return NO_PRICES();
       return fetchRailAccidents(company.cik, { from: listed });
+    });
+  }
+
+  /**
+   * Deaths at mines the company controlled, from 2000 (batch 134): MSHA's Accidents and Mines files,
+   * read once a week for every company and the deaths kept (`walkMineAccidents`), then every kept
+   * accident under a controller lib/mineAccidents.ts maps to the company by hand, between its days,
+   * from its first price. MSHA names a controller, never a listed company.
+   */
+  const mineControllers = mineControllersFor(company.cik);
+  if (mineControllers) {
+    await run("msha_accidents", `MSHA controllers ${mineControllers.map((c) => c.id).join(" | ")}: deaths at their mines`, async () => {
+      const walked = await walkMineAccidents(client);
+      if (walked.due) line("msha_accidents", `files     ${walked.read ?? "not read"}${walked.read === "stored" ? `, ${walked.accidents} fatal accidents` : ""}${walked.stopped ? ` (${walked.stopped})` : ""}`);
+      return mineAccidentsFor(client, subjectId, company.cik, walked);
     });
   }
 

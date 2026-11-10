@@ -45,6 +45,7 @@ import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
 import { fetchRecalls } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
 import { fetchRailAccidents } from "../lib/railAccidents";
+import { fetchMineFiles, mineAccidentEvents, mineControllersFor } from "../lib/mineAccidents";
 import { fetchFedActions } from "../lib/fedActions";
 import { fetchListingPage, secPressEvents } from "../lib/secPress";
 import { fetchCasePage, secCaseEvents } from "../lib/secCases";
@@ -601,6 +602,24 @@ export const CASES: LiveCase[] = [
       else if (!/^Norfolk Southern: train accident at Graniteville, South Carolina — 9 killed, 292 injured, 5,200 evacuated$/.test(graniteville.title)) out.push(`Graniteville titled "${graniteville.title}"`);
       const early = ns.events.filter((e) => e.date < "1982-06-02");
       if (early.length) out.push(`${early.length} reports before Norfolk Southern's first price, e.g. ${early[0].date}`);
+      return out;
+    },
+  },
+  {
+    name: "MSHA — the Accidents and Mines files read whole, McElroy's explosion of 2003 on CNX's page (batch 134)",
+    covers: ["msha_accidents"],
+    hosts: ["arlweb.msha.gov"],
+    async run() {
+      // measured 2026-11-09: 1,130 fatal accidents since 2000, 1,221 dead; 29 on CNX's page from 1999-04-30
+      const got = await fetchMineFiles(null);
+      const out = [...outcomeProblems(got.outcome, got.detail)];
+      if (got.accidents.length < 1130) out.push(`${got.accidents.length} fatal accidents, fewer than the 1,130 of 2026-11-09`);
+      const mcelroy = got.accidents.find((a) => a.key === "4601437:2003-01-22");
+      if (!mcelroy) out.push("no McElroy accident of 2003-01-22");
+      else if (mcelroy.dead !== 3 || mcelroy.controllerId !== "C00692" || mcelroy.state !== "WV") out.push(`McElroy read as ${JSON.stringify({ dead: mcelroy.dead, controller: mcelroy.controllerId, state: mcelroy.state })}`);
+      const cnx = mineAccidentEvents(got.accidents, mineControllersFor(1070412) ?? [], { from: "1999-04-30" });
+      out.push(...eventProblems(cnx, 29));
+      if (cnx.some((e) => e.date > "2017-11-27")) out.push("a CNX row after the coal spin-off of 2017-11-28");
       return out;
     },
   },

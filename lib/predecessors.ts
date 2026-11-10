@@ -49,8 +49,35 @@
  *    before it; the record Ashland took over from in 2016 was a shell (New EXM Inc.) until 2005-06-30.
  *    The SEC News Digest's names are dated the same way (`digestNamesOn`).
  *  - Not mapped: Amcor (a merger of Amcor Limited and Bemis into a new company, neither one's history,
- *    as Linde's). The scan of every listed company's whole list, and the rest of batch 117's records
- *    read as the company's own, are the next batch's (docs/MASTER-CHECKLIST.md, batch 132).
+ *    as Linde's).
+ *
+ * Batch 133 read the rest, on the same evidence. It scanned every listed company's filing list on
+ * data.sec.gov, every older page included (8,024 records, in place of the full-text search), for a notice
+ * of succession filed within 18 months of the record's first filing: an 8-K12B or 8-K12G3, or before 1997
+ * the older form of it, an 8-B12B or 8-B12G. Of 182 such records, 80 were mapped and 50 were batch 53's;
+ * of the other 52, 16 are one company's history and are mapped (PPL, DTE, PG&E, OGE, United Rentals,
+ * T. Rowe Price, Nabors, Fresenius Medical Care, KB Financial, Transocean, Accenture, Intercontinental
+ * Exchange, Zillow, PennyMac, Mercer, Graphic Packaging). The other 36 are not: 11 banks over a bank whose
+ * filings went to its bank regulator, 6 mergers into a new company (Lockheed Martin, ConocoPhillips,
+ * Evergy, Exterran, USA Mobility, and CoreCivic's of 1999), 3 SPACs, 6 shells or reverse mergers, 6
+ * records that held their own filings from EDGAR's first year, and four kept for a filing's text: RGC
+ * Resources (Roanoke Gas's record not found by name), B2Gold (an acquired company's registration), Sunoco
+ * (Sunoco LP still lists its own units) and Biogen (IDEC's California record not found by name). The
+ * records batch 117 read as the company's own were read again with the scan's first filing of each, and
+ * 14 more pages are mapped by hand: Con Edison, TDS, IDACORP, Spire, Newmont, Host, Valero, Simon,
+ * Enviri, Choice Hotels, Mega Matrix (its notice 19 months after its record began), Lennar, Healthcare
+ * Realty and Iron Mountain. The last three are Merck's kind: the record took the listed company's name
+ * and ticker at a merger, so its own past is labelled (`OWN_RECORD_FROM`). On the evidence:
+ *  - a notice of the older form (PG&E's, OGE's, DTE's and PPL's 8-B12B) is a notice of succession;
+ *  - where neither record filed a notice or an 8-K on the day, the filings that did the handover:
+ *    Newmont's new parent registered its shares (8-A12B) the day the old record deregistered its own, and
+ *    the old Valero deregistered (15-12B) the day after its spin-off and merger;
+ *  - Zillow's `until` is the day after its notice, as ONEOK's is: the old Zillow filed its annual report
+ *    for 2014 on the handover day.
+ * Left out, each read: TXNM (Public Service of New Mexico's record still lists its preferred, PNMXO, a
+ * page of its own), Leidos (the old SAIC had no listed shares to pass on), Digimarc's step of 2008 (the old
+ * record deregistered on 2008-08-14 and the spin-off listed on 2008-10-16, a gap a filing's text must
+ * explain), Community West Bancshares (whose chart it is, Central Valley's or Community West's, to be read).
  *
  * One entry rests on a merger's 8-Ks instead of a notice: Merck's (batch 108, the 2026-11-07 audit's
  * question 1). Schering-Plough bought Merck on 2009-11-03 and took its name and its ticker, so MRK's
@@ -96,7 +123,9 @@ export interface Predecessor {
    * the day the record became this business, where it began as a shell: a blank-check company the
    * business merged into, or a shell a reverse merger used. Its filings before are the shell's. Also
    * where the record was a subsidiary before, under another record that was the listed company
-   * (CenterPoint's Houston Lighting & Power, batch 132): its filings before are the subsidiary's.
+   * (CenterPoint's Houston Lighting & Power, batch 132): its filings before are the subsidiary's. Or
+   * where it was another company until it took the listed one's name (Riverwood Holding's record before
+   * Graphic Packaging's, batch 133): its filings before are that company's, and stay off the page.
    */
   since?: string;
   /** names headlines use for the company that its present name is not */
@@ -332,6 +361,93 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   // is the old ONEOK Inc. Its last annual report, for the year to 1997-08-31, was filed 1997-11-28, two
   // days after the handover, and is the company's, so `until` is the day after it (the parent's 8-K)
   1039684: [{ cik: 74154, name: "ONEOK Inc.", until: "1997-11-29", notice: "0000950130-97-005339" }],
+  // batch 133: the rest of the population, from the scan of every listed company's filing list and
+  // the reading by hand of the records batch 117 had read as the company's own (see the header)
+  // ED — Consolidated Edison, Inc., a new parent of 1998; the predecessor is its utility, Consolidated Edison of New York
+  1047862: [{ cik: 23632, name: "Consolidated Edison Company of New York, Inc.", until: "1998-01-02", notice: "0001047862-98-000001" }],
+  // PCG — PG&E Corporation, a new parent of 1997; the predecessor is its utility (an 8-B12B, the older form of the notice)
+  1004980: [{ cik: 75488, name: "Pacific Gas and Electric Company", until: "1996-12-23", notice: "0000929624-96-000339" }],
+  // OGE — OGE Energy Corp., a new parent of 1997; the predecessor is its utility (an 8-B12B)
+  1021635: [{ cik: 74145, name: "Oklahoma Gas and Electric Company", until: "1996-12-16", notice: "0001021635-96-000006" }],
+  // TDS — Telephone and Data Systems, Inc., reincorporated in Delaware in 1998 (the parent's 8-K)
+  1051512: [{ cik: 96966, name: "Telephone and Data Systems, Inc.", until: "1998-05-22", notice: "0001047469-98-021621" }],
+  // IDA — IDACORP, Inc., a new parent of 1998; the predecessor is its utility, Idaho Power (the parent's 8-K)
+  1057877: [{ cik: 49648, name: "Idaho Power Company", until: "1998-10-01", notice: "0000898080-98-000234" }],
+  // SR — Spire Inc. (The Laclede Group to 2016), a new parent of 2001; the predecessor, Laclede Gas, is now Spire Missouri (the parent's 8-K)
+  1126956: [{ cik: 57183, name: "Laclede Gas Company", until: "2001-10-01", notice: "0001068800-01-500266" }],
+  // NEM — Newmont Corporation, a new parent of 2002 formed for Franco-Nevada and Normandy; the predecessor
+  // is now Newmont USA Limited (no notice or 8-K: the parent registered its shares, 8-A12B, the day the
+  // predecessor deregistered its own, 15-12B)
+  1164727: [{ cik: 71824, name: "Newmont Mining Corporation", until: "2002-02-15", notice: "0000898822-02-000283" }],
+  // HST — Host Hotels & Resorts, Inc., the REIT Host Marriott became at the end of 1998; the predecessor
+  // is the old Host Marriott, Marriott Corporation to 1993 (the parent's 8-K)
+  1070750: [{ cik: 314733, name: "Host Marriott Corporation", until: "1998-12-29", notice: "0000950109-98-005554" }],
+  // GPK — Graphic Packaging Holding Company, a new parent of 2008 formed for Altivity; the record it took
+  // over from was Riverwood Holding's until it took Graphic Packaging's name at their merger of
+  // 2003-08-08, so it is the company's from that day; the company's record before it is Graphic
+  // Packaging International's (ACX Technologies to 2000), whose prices GPK's chart carries
+  1408075: [
+    { cik: 886239, name: "Graphic Packaging Corporation", until: "2008-03-10", notice: "0000950144-08-001785", since: "2003-08-08" },
+    { cik: 892793, name: "Graphic Packaging International Corporation", until: "2003-08-08", notice: "0001104659-03-017270" },
+  ],
+  // VLO — Valero Energy Corporation, the refining company old Valero spun off in 1997 with its name and
+  // ticker before it merged into PG&E; old Valero's record is its history to then (no notice or 8-K: the
+  // old record's deregistration, 15-12B)
+  1035002: [{ cik: 21271, name: "Valero Energy Corporation", until: "1997-08-01", notice: "0000021271-97-000020" }],
+  // SPG — Simon Property Group, Inc., the parent of 1998 over Simon DeBartolo Group, now SPG Properties
+  // (the parent's 8-K of the Corporate Property Investors merger)
+  1063761: [{ cik: 912564, name: "Simon DeBartolo Group, Inc.", until: "1998-10-09", notice: "0000950123-98-008890" }],
+  // MERC — Mercer International Inc., converted from a Washington business trust in 2006
+  1333274: [{ cik: 75659, name: "Mercer International Inc.", until: "2006-03-02", notice: "0000945234-06-000156" }],
+  // NVRI — Enviri Corporation (Enviri II to 2026), spun off with the name and ticker as the old Enviri,
+  // Harsco to 2023, changed hands; the old record is its history to then (the parent's 8-K)
+  2104052: [{ cik: 45876, name: "Enviri Corporation", until: "2026-06-01", notice: "0001193125-26-251752" }],
+  // CHH — Choice Hotels International, Inc., the franchising company the old Choice Hotels spun off in
+  // 1997 with its name and ticker, the old one becoming Sunburst Hospitality (the parent's 8-K)
+  1046311: [{ cik: 1018146, name: "Choice Hotels International, Inc.", until: "1997-10-29", notice: "0000928385-97-001718" }],
+  // MPU — Mega Matrix Inc., redomiciled to the Cayman Islands in 2024; AeroCentury to 2022
+  1953021: [{ cik: 1036848, name: "Mega Matrix Corp.", until: "2024-11-14", notice: "0001213900-24-098539" }],
+  // LEN — Lennar Corporation: Pacific Greystone's record took old Lennar's name and ticker at their merger
+  // of 1997 (see OWN_RECORD_FROM); old Lennar's own 8-K reports the change of control
+  920760: [{ cik: 58696, name: "Lennar Corporation", until: "1997-11-17", notice: "0000950123-97-009726" }],
+  // HR — Healthcare Realty Trust: Healthcare Trust of America's record took old Healthcare Realty's name
+  // and ticker at their merger of 2022 (see OWN_RECORD_FROM); old Healthcare Realty's own 8-K reports it
+  1360604: [{ cik: 899749, name: "Healthcare Realty Trust Incorporated", until: "2022-07-21", notice: "0001193125-22-199274" }],
+  // IRM — Iron Mountain: Pierce Leahy's record took old Iron Mountain's name and ticker at their merger
+  // of 2000 (see OWN_RECORD_FROM; the parent's 8-K)
+  1020569: [{ cik: 1004317, name: "Iron Mountain Incorporated", until: "2000-02-01", notice: "0000912057-00-003377" }],
+  // PPL — PPL Corporation (PP&L Resources to 2000), a new parent of 1995; the predecessor is its utility (an 8-B12B)
+  922224: [{ cik: 317187, name: "Pennsylvania Power & Light Company", until: "1995-04-27", notice: "0000893750-95-000086" }],
+  // DTE — DTE Energy Company, a new parent of 1996; the predecessor is its utility, Detroit Edison (an 8-B12B)
+  936340: [{ cik: 28385, name: "The Detroit Edison Company", until: "1996-01-02", notice: "0000950124-96-000012" }],
+  // URI — United Rentals, Inc., a new parent of 1998; the predecessor is now United Rentals (North America)
+  1067701: [{ cik: 1047166, name: "United Rentals, Inc.", until: "1998-08-07", notice: "0000950130-98-003859" }],
+  // TROW — T. Rowe Price Group, Inc., a new parent of 2000; the predecessor is its adviser, T. Rowe Price
+  // Associates, whose stakes in other companies stay off the page as every filer's do
+  1113169: [{ cik: 80255, name: "T. Rowe Price Associates, Inc.", until: "2000-12-29", notice: "0000950109-00-005100" }],
+  // NBR — Nabors Industries Ltd., redomiciled to Bermuda in 2002
+  1163739: [{ cik: 798943, name: "Nabors Industries, Inc.", until: "2002-06-26", notice: "0000950129-02-003248" }],
+  // FMS — Fresenius Medical Care AG (& Co. KGaA from 2006 to 2023), converted in 2006
+  1333141: [{ cik: 1019600, name: "Fresenius Medical Care AG", until: "2006-02-13", notice: "0000950123-06-001563" }],
+  // KB — KB Financial Group Inc., a new parent of 2008 over Kookmin Bank
+  1445930: [{ cik: 1143680, name: "Kookmin Bank", until: "2008-09-30", notice: "0001193125-08-203634" }],
+  // RIG — Transocean Ltd., redomiciled from the Cayman Islands to Switzerland in 2008; Transocean Inc.
+  // (Transocean Sedco Forex to 2002) before, the Cayman company of 1999, whose record began as a shell;
+  // Transocean Offshore Inc. of Delaware (Sonat Offshore Drilling to 1996) before that (its 8-K)
+  1451505: [
+    { cik: 1083269, name: "Transocean Inc.", until: "2008-12-19", notice: "0001193125-08-257194", since: "1999-05-17" },
+    { cik: 314047, name: "Transocean Offshore Inc.", until: "1999-05-17", notice: "0000950129-99-002306" },
+  ],
+  // ACN — Accenture plc, redomiciled from Bermuda to Ireland in 2009
+  1467373: [{ cik: 1134538, name: "Accenture Ltd", until: "2009-09-01", notice: "0001193125-09-185098" }],
+  // ICE — Intercontinental Exchange, Inc., a new parent of 2013 formed for NYSE Euronext; the predecessor
+  // is now Intercontinental Exchange Holdings
+  1571949: [{ cik: 1174746, name: "IntercontinentalExchange, Inc.", until: "2013-11-13", notice: "0001193125-13-440066" }],
+  // ZG — Zillow Group, Inc., a new parent of 2015 formed for Trulia. The old Zillow filed its annual
+  // report for 2014 on the handover day, 2015-02-17, and it is the company's, so `until` is the day after
+  1617640: [{ cik: 1334814, name: "Zillow, Inc.", until: "2015-02-18", notice: "0001193125-15-050788" }],
+  // PFSI — PennyMac Financial Services, Inc., a new parent of 2018; the predecessor is now PNMAC Holdings
+  1745916: [{ cik: 1568669, name: "PennyMac Financial Services, Inc.", until: "2018-11-01", notice: "0001104659-18-065435" }],
 };
 
 /**
@@ -397,6 +513,44 @@ export const OWN_RECORD_FROM: Readonly<Record<number, OwnRecordPast>> = {
     // its units of then: IESI Corporation in the United States, BFI Canada in Canada
     names: /\b(?:progressive\s+waste|iesi(?:-bfc)?|bfi\s+canada)\b/i,
     unless: /\bwaste\s+connections\b/i,
+  },
+  // batch 133: three more, each read from data.sec.gov's filing lists. The chart is the old company's,
+  // since its first price is before the record's own company listed: Lennar's of 1980 before Pacific
+  // Greystone's offering of 1996, Healthcare Realty's of 1993 before Healthcare Trust of America's listing
+  // of 2012, Iron Mountain's of 1996 before Pierce Leahy's of 1997
+  920760: {
+    ticker: "LEN",
+    from: "1997-11-17",
+    why:
+      "Pacific Greystone Corporation's record (PACIFIC GREYSTONE CORP /DE/ to 1997-09-26) until it took Lennar Corporation's name and ticker at their merger " +
+      "of 1997: old Lennar's 8-K filed 1997-11-17 reports the change of control (items 1 and 2), and its Form 15 followed on 1997-11-21",
+    name: "Pacific Greystone",
+    label: "Pacific Greystone, before its 1997 merger with Lennar",
+    names: /\bpacific\s+greystone\b/i,
+    unless: /\blennar\b/i,
+  },
+  1360604: {
+    ticker: "HR",
+    from: "2022-07-21",
+    why:
+      "Healthcare Trust of America, Inc.'s record (NNN Healthcare/Office REIT to 2007, Grubb & Ellis Healthcare REIT to 2009) until it took Healthcare " +
+      "Realty Trust's name and ticker at their merger of 2022: old Healthcare Realty's 8-K filed 2022-07-21 reports it (items 2.01, 3.01 and 5.01), the day " +
+      "its shares were delisted and its record became HRTI, LLC",
+    name: "Healthcare Trust of America",
+    label: "Healthcare Trust of America, before its 2022 merger with Healthcare Realty",
+    names: /\b(?:healthcare\s+trust\s+of\s+america|grubb\s*(?:&|and)\s*ellis\s+healthcare|nnn\s+healthcare)\b/i,
+    unless: /\bhealthcare\s+realty\b/i,
+  },
+  1020569: {
+    ticker: "IRM",
+    from: "2000-02-01",
+    why:
+      "Pierce Leahy Corp.'s record (PIERCE LEAHY CORP to 1999) until it took Iron Mountain Incorporated's name and ticker at their merger of 2000: its 8-K " +
+      "filed 2000-02-01 reports the merger (items 2 and 7)",
+    name: "Pierce Leahy",
+    label: "Pierce Leahy, before its 2000 merger with Iron Mountain",
+    names: /\bpierce\s+leahy\b/i,
+    unless: /\biron\s+mountain\b/i,
   },
 };
 

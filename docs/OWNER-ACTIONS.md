@@ -211,7 +211,10 @@ Raised by the November batches, each recorded in the master checklist:
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection.~~ **Decided 2026-11-10: all
   four**, #1 on the filing lists' evidence ("Use the filing lists (Recommended)"), #2 with its licence
   read first ("Read it first, then build (Recommended)"), #4 both parts ("Both parts (Recommended)").
-  #1 is built in batch 132 for the 17 pages; its rest of the population follows in batch 133, then #2,
+  #1 is built in batch 132 for the 17 pages, and its rest of the population in batch 133 (30 pages
+  more, from a scan of every listed company's filing list; nothing to run; four handovers wait for a
+  filing's text once `NEWS_CHARTS_CONTACT` is set: RGC Resources, Biogen, Digimarc's of 2008 and
+  Community West Bancshares); then #2,
   #3 and #4 in batches 134, 135 and 136. Nothing to run after deploying batch 132: each of the 17
   pages' next ingest reads its older records (3,277 filings of 1994–2016), and its SEC News Digest
   entries from the issues already stored. The notices' own text can be read once `NEWS_CHARTS_CONTACT`

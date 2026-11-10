@@ -988,6 +988,67 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 135: EPA's cases under a fourth round of units (2026-11-10)
+
+The 2026-11-09b proposals' #3, approved by the owner on 2026-11-10 ("3. More EPA subsidiaries"). The
+owner's word on starting: "Continue". No new source: entries in EPA's `UNITS` (lib/epaCases.ts).
+
+- [x] **The gap:** the caption rule refuses a company's name followed by words that are not legal ones,
+      as it should, so "ASHLAND CHEMICAL COMPANY", "AKZO NOBEL CHEMICALS, INC.", "GERDAU AMERISTEEL" and
+      "SEABOARD FARMS, INC." were no page's. 22 entries on 13 companies now read them. Every defendant
+      each pattern takes on EPA's whole file of 2026-10-31 was read by hand, and for ten of the companies every
+      name that begins with their first word; the namesakes stay off (Seaboard Asphalt and the Seaboard railroads, Kirby Forest Industries and Kirby & Sons,
+      Ball Metal & Chemical, Ball Glass Container, Lennar Asphalt of 1975, Ashland Metal, Ashland
+      Exploration, the towns).
+- [x] **The days,** from data.sec.gov's filing lists (the batch 120 rule: the 8-K's item 2 or 2.01 and
+      its report date):
+      - Ashland Petroleum to 1997-12-31 (Ashland's 8-K of the Marathon Ashland Petroleum venture,
+        reporting 1998-01-01), so its decree of 1998-10-01 ($2,882,963) is no one's; Ashland
+        Distribution to 2011-03-30 (the sale, reporting 2011-03-31); Ashland Aqualon from 2008-11-13
+        (the Hercules purchase).
+      - Novartis Crop Protection to 2000-11-12 (Syngenta's formation: Novartis's 20-F for 2000 and
+        Syngenta's of 2002 hold "November 13, 2000", by EDGAR's full-text search); Consumer Health and
+        Ex-Lax to 2015-03-01 (GSK's 6-K "GSK completes major three-part transaction" of 2015-03-02);
+        Animal Health to 2014-12-31 (Lilly's 8-K, reporting 2015-01-01).
+      - GATX Terminals to 2001-03-01 (GATX's 8-K, item 2, reporting 2001-03-02): its Superfund
+        settlements of 2002–2008 and its orders of 2018 and 2022 are no page's.
+      - Morgan Stanley Capital Group from 1997-05-31, the day this record, Dean Witter, Discover &
+        Co.'s, merged with Morgan Stanley Group (its 8-K, items 2, 7 and 8): the two orders of
+        1997-05-20 are old Morgan Stanley's.
+      - Seaboard Farms of Chattanooga, its poultry company, to 2000-01-02 (Seaboard's 8-K, item 2,
+        reporting 2000-01-03); Ball Aerospace to 2024-02-15 (Ball's 8-K, item 2.01, reporting
+        2024-02-16).
+- [x] **Three calls the draft did not make,** each by a rule already held:
+      - **Akzo Nobel's chemicals companies end on 2018-09-30.** They were sold as Nouryon that autumn.
+        AkzoNobel filed nothing with the SEC in 2018; the first filing EDGAR's full-text search finds
+        naming "AkzoNobel Specialty Chemicals" is Carlyle's 8-K of 2018-10-31, its results for the
+        quarter to 2018-09-30. No case falls between 2017-08-02 and 2019-09-10, and that one names
+        Nouryon Functional Chemicals itself: its $300,000 is no one's.
+      - **The Andersons' ethanol companies are a joint venture until 2025-07-31,** when it bought
+        Marathon's share of The Andersons Marathon Holdings (its 8-K, items 1.01 and 2.01, with the unit
+        purchase agreement): their cases of 2012–2022, $1,522,015 of 2022 among them, are no one's.
+      - **Morgan Stanley's two orders of 1997** are old Morgan Stanley Group's, as above.
+- [x] **Wider than drafted** where the file holds more of a company's own names: Kroger's plants and
+      pharmacy, Lennar's land companies, Seaboard Foods and Seaboard Marine, Gerdau MacSteel and Gerdau
+      Metals Recycling, The Andersons' lawn divisions. **Narrower:** Novartis Nutrition, sold to Nestlé
+      in 2007, waits for a filing that gives its day; Akzo Salt holds no case.
+- [x] **Measured** from first prices on EPA's whole file, each page before and after: **144 court or
+      penalty cases more on 13 pages, 123 before 2017, none fewer** (rows 262 → 487). Ashland 63 (61
+      before 2017), Akzo Nobel 14, Gerdau 11 (its first EPA rows), Lennar 9, GATX 8, Kroger 8, Novartis
+      8, Seaboard 7 (its first), Morgan Stanley 6, Kirby 4, Ball 2, The Andersons 2, Waste Management 2.
+      Gerdau's first price, 1999-03-10, read from Yahoo.
+- [x] **Checked:** the slice gains every row of the five tables for the 171 cases the round's units
+      name on any day (8,456 cases); on it the 13 companies' rows equal the whole file's. 11 new
+      `check:epa-cases` checks (Seaboard Farms' 08-2003-0023 on SEB, Morgan Stanley Capital Group's
+      EF-2017-0003 on MS and its 1997 orders on no page, Novartis Crop Protection after 2000-11-12 on no
+      page, GATX Terminals after its sale on no page, Nouryon's case of 2019 on no page, "CABOT OIL & GAS"
+      not Cabot Corporation's…), fail on main; its totals re-pinned with the old ones kept (9,386 rows on
+      692 companies before first prices, 9,155 on 690 before).
+- **Requests:** 34, logged in the session scratchpad (`b135/requests.log`), each with User-Agent `News
+  Charts Research` and no email address: data.sec.gov 20 (filing lists), efts.sec.gov 8 (full-text
+  searches) and Yahoo's chart 6 (first trading days, 2 refused with 429 and asked again). EPA's file is
+  the copy of 2026-10-31 already saved, not asked again.
+
 ## NC ledger — batch 134: deaths at mines from the Mine Safety and Health Administration, a new source (2026-11-10)
 
 The 2026-11-09b proposals' #2, approved by the owner on 2026-11-10 ("2. Mine accidents (new source)")
@@ -10312,12 +10373,13 @@ already held, but new investment goes to securities coverage first.
         on 51 pages, 144 before 2017, under 54 controller IDs on 52 companies.
       - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
         #2, approved 2026-11-10.*
-- [ ] `P2` **EPA's cases under a fourth round of units.** No new source: approved by the owner
+- [x] `P2` **EPA's cases under a fourth round of units.** No new source: approved by the owner
       2026-11-10. Entries in EPA's `UNITS` (lib/epaCases.ts), each between the days its owner held it:
       Ashland Chemical, Akzo Nobel Chemicals, Gerdau Ameristeel, Morgan Stanley Capital Group, Seaboard
       Farms…
       - **Measured** by the scout: 153 cases on 13 pages, 134 before 2017.
-      - **To be built in batch 135.**
+      - **Done in batch 135** (see its section): 22 entries; 144 court or penalty cases more on the 13
+        pages, 123 before 2017.
       - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
         #3, approved 2026-11-10.*
 - [ ] `P2` **The regulator's own account on rows pages already hold.** No new event: approved by the

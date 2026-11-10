@@ -676,8 +676,8 @@ Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Car
 2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
 (`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
 every company in the index, on EPA's whole file of 2026-10-31 (the committed slice gives the same
-rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 9,155 rows on 690 companies, 7,768 before 2017
-(GE 302, ExxonMobil 295, Chevron 278, BP 255, Honeywell 252; one fewer since batch 124 took a misspelled UT Automotive decree of 2007 off RTX; 8,889 before batch 122's suits filed and settlements on their days; 7,899 on 679 before batch 120; 5,994 on 667 before the units, every one of
+rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 9,386 rows on 692 companies, 7,974 before 2017
+(GE 302, ExxonMobil 295, Chevron 278, BP 255, Honeywell 252; 9,155 on 690 before batch 135's fourth round of units; one fewer since batch 124 took a misspelled UT Automotive decree of 2007 off RTX; 8,889 before batch 122's suits filed and settlements on their days; 7,899 on 679 before batch 120; 5,994 on 667 before the units, every one of
 whose cases is still there; BP 4 and 3M 68 by their own names). A record that took a bought
 company's name does not take that company's past: old Waste Management's cases are not WM's before
 1998-07-16, nor AT&T Corp.'s AT&T Inc.'s before 2005-11-18, when SBC Communications, T's record,
@@ -726,6 +726,21 @@ Inc.'s page: the table of taken names reads that spelling too. From first prices
 before 2017; Enbridge's $62,000,000 Marshall spill decree of 2016 and American Honda's $10,100,000 of 1998
 among them. Nine pages had no EPA row and now do: Berkshire 57, TotalEnergies 21, TC Energy 8, AB InBev
 5, Honda 5, Otis, South Bow, Aimco and Chicago Rivet.
+
+**A fourth round of units** (batch 135, the 2026-11-09b proposal 3, approved by the owner on
+2026-11-10). The caption rule refuses a company's name followed by words that are not legal ones, as it
+should, so "ASHLAND CHEMICAL COMPANY", "AKZO NOBEL CHEMICALS, INC.", "GERDAU AMERISTEEL" and "SEABOARD
+FARMS, INC." were no page's. 22 more `UNITS` entries on 13 companies read them, every defendant each
+pattern takes on EPA's whole file read by hand, each sold or bought unit between the days the filings
+give: Ashland Petroleum to the Marathon Ashland Petroleum venture of 1998-01-01 and Ashland Distribution
+to its sale of 2011-03-31; Novartis Crop Protection to Syngenta's formation of 2000-11-13; GATX Terminals
+to its sale of 2001-03-02; Morgan Stanley Capital Group from the Dean Witter merger of 1997-05-31; Akzo
+Nobel's chemicals companies to 2018-09-30, before their sale as Nouryon; Ball Aerospace to its sale of
+2024-02-16. The Andersons' ethanol plants were a joint venture with Marathon until The Andersons bought
+its share on 2025-07-31, so their earlier cases are no one's. From first prices, on EPA's whole file: 144
+court or penalty cases more on 13 pages, 123 before 2017, none fewer (Ashland 63, Akzo Nobel 14, Gerdau
+11, Lennar 9, GATX, Kroger and Novartis 8, Seaboard 7, Morgan Stanley 6); Gerdau and Seaboard had no EPA
+row and now do. Novartis Nutrition, sold to Nestlé in 2007, waits: no filing here gives the day.
 
 **EPA's own days: the day a suit was filed, and each settlement on its own day** (batch 122, the
 owner's approval of 2026-11-08). EPA's file dates more of a court case than the settlement its row
@@ -1545,7 +1560,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Federal Reserve Board press releases | The Board's orders on a bank's applications since 1996 (1996–2005 from its yearly pages, committed), and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |
 | Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
-| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 95 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
+| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 106 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
 | Mine Safety and Health Administration | Accidents since 2000 that killed someone at a mine the company controlled | MSHA's Accidents and Mines files, one 52 MB zip and one of 7 MB, read once a week for every company and the deaths kept (`lib/ingest/mineWalk.ts`); kept for the 54 controller IDs `lib/mineAccidents.ts` maps by hand to 52 companies, each between its company's days, from the company's first price. Public domain, credited to the U.S. Department of Labor; no key |
 | Federal Railroad Administration | Railroad accidents since 1975 a company's railroad reported, with a death, an evacuation or $5,000,000 of damage | Form 54 on the Transportation Department's open-data host, one request a day for each of the six railroad companies `lib/railAccidents.ts` maps by hand, each railroad between its owner's days, from the company's first price; a highway-rail crossing collision only with an evacuation or that damage. Public domain; no key |

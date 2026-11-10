@@ -1174,11 +1174,20 @@ export async function getFilingsDeep(
     // before the handover goes, unless it was into the name the company still had then ("Exxon
     // Corp" to "Exxon Mobil"). The last one before it, not the record's last: old Merck became Merck
     // Sharp & Dohme Corp. two days before the merger and an LLC thirteen years after (batch 108).
-    const last = theirs.filter((r) => inSpan(r.on, true)).reduce<Rename | null>((a, r) => (!a || r.on > a.on ? r : a), null);
-    const own = (r: Rename) => r !== last || phrase(commonName(r.to)) === phrase(commonName(p.name));
-    renames.push(...theirs.filter((r) => inSpan(r.on, true) && own(r)));
-    const dropped = last && !own(last) ? `sec-rename-${cik}-${last.on}` : null;
-    return events.filter((e) => inSpan(e.date, e.id.startsWith("sec-rename-")) && e.id !== dropped);
+    const spanned = theirs.filter((r) => inSpan(r.on, true)).sort((a, b) => a.on.localeCompare(b.on));
+    const last = spanned.reduce<Rename | null>((a, r) => (!a || r.on > a.on ? r : a), null);
+    // …and a name the record took and gave back within a month is EDGAR's churn around the handover,
+    // not a rename: Lamar's was LAMAR MEDIA CORP from 1999-07-07 to 07-13 and LAMAR ADVERTISING CO /DE/
+    // again until it took the subsidiary's name for good on 07-19, the day before (batch 132)
+    const churn = new Set<Rename>();
+    for (let i = 0; i + 1 < spanned.length; i++) {
+      const [a, b] = [spanned[i], spanned[i + 1]];
+      if (phrase(commonName(a.from)) === phrase(commonName(b.to)) && Date.parse(b.on) - Date.parse(a.on) <= 31 * 86_400_000) churn.add(a).add(b);
+    }
+    const own = (r: Rename) => !churn.has(r) && (r !== last || phrase(commonName(r.to)) === phrase(commonName(p.name)));
+    renames.push(...spanned.filter(own));
+    const dropped = new Set(spanned.filter((r) => !own(r)).map((r) => `sec-rename-${cik}-${r.on}`));
+    return events.filter((e) => inSpan(e.date, e.id.startsWith("sec-rename-")) && !dropped.has(e.id));
   });
   // a record that was another company until it took this one's ticker keeps its own past too, which
   // the page labels as that company's (Schering-Plough's on MRK's record, `ownPastLabelled`, batch 110)

@@ -25,6 +25,33 @@
  * merger into a new company, a bank whose old filings went to its bank regulator, …) are in
  * docs/MASTER-CHECKLIST.md.
  *
+ * That search missed notices inside its own years (batch 132, from the 2026-11-09 proposals' #1):
+ * Comcast's 8-K12G3 of 2002, CenterPoint's and MGE Energy's of 2002, Regions' of 2004, Oracle's and
+ * Duke's of 2006, Vulcan's of 2007 and Trane's of 2009 are on the companies' own filing lists
+ * (data.sec.gov), most on an older page of the list, and in none of its 264 results. Batch 132 maps 17
+ * pages from those lists, 20 records, and its entries rest on the lists' evidence rather than on the
+ * notices' text, which www.sec.gov serves only with `NEWS_CHARTS_CONTACT` set: the owner's call of
+ * 2026-11-10 ("Use the filing lists"). For each, the successor's list holds the filing of the handover,
+ * with its form, day and accession number, and the two records' names hold the change; the slice the
+ * checks read is `scripts/fixtures/predecessor-lists-b132.json`.
+ *  - Ten have a notice of succession (8-K12B or 8-K12G3), and `until` is its day, as above. Devon's and
+ *    Lamar's, of 1999, are before the search's years.
+ *  - Ten have none, and rest on the 8-K that reports the handover, as Merck's does (below): the
+ *    successor's own (Berkshire's of 1999-01-05, Northrop's of 2001-04-17, NiSource's of 2000-11-01,
+ *    Alkermes's, Cracker Barrel's, ONEOK's, Ashland's two, the old Houston Industries' of 1997, filed
+ *    under both records) or, for Ingersoll-Rand Company's move to Bermuda at the end of 2001, the
+ *    predecessor's own of 2002-01-02, the day its shares were deregistered. `until` is that 8-K's day,
+ *    but ONEOK's: the old ONEOK filed its last annual report, for the year to 1997-08-31, on
+ *    1997-11-28, two days after the handover, so its `until` is the day after that report.
+ *  - A record that was the company's only from a later day says so with `since`: the record CenterPoint
+ *    took over from was Houston Lighting & Power, the utility, until the old Houston Industries merged
+ *    into it on 1997-08-06, so it is the company's from that day and the old Houston Industries' record
+ *    before it; the record Ashland took over from in 2016 was a shell (New EXM Inc.) until 2005-06-30.
+ *    The SEC News Digest's names are dated the same way (`digestNamesOn`).
+ *  - Not mapped: Amcor (a merger of Amcor Limited and Bemis into a new company, neither one's history,
+ *    as Linde's). The scan of every listed company's whole list, and the rest of batch 117's records
+ *    read as the company's own, are the next batch's (docs/MASTER-CHECKLIST.md, batch 132).
+ *
  * One entry rests on a merger's 8-Ks instead of a notice: Merck's (batch 108, the 2026-11-07 audit's
  * question 1). Schering-Plough bought Merck on 2009-11-03 and took its name and its ticker, so MRK's
  * EDGAR record is Schering-Plough's, and old Merck's record, 64978, became a subsidiary with no
@@ -58,13 +85,18 @@ export interface Predecessor {
   cik: number;
   /** its name when its ticker passed on */
   name: string;
-  /** the successor's notice-of-succession date: the predecessor's filings before it are the company's */
+  /**
+   * the successor's notice-of-succession date, or, where none was filed, the day of the 8-K that
+   * reports the handover (see the header): the predecessor's filings before it are the company's
+   */
   until: string;
-  /** that notice's accession number */
+  /** that notice's accession number, or that 8-K's */
   notice: string;
   /**
    * the day the record became this business, where it began as a shell: a blank-check company the
-   * business merged into, or a shell a reverse merger used. Its filings before are the shell's.
+   * business merged into, or a shell a reverse merger used. Its filings before are the shell's. Also
+   * where the record was a subsidiary before, under another record that was the listed company
+   * (CenterPoint's Houston Lighting & Power, batch 132): its filings before are the subsidiary's.
    */
   since?: string;
   /** names headlines use for the company that its present name is not */
@@ -193,6 +225,14 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   1692115: [{ cik: 92416, name: "Southwest Gas Corporation", until: "2017-01-03", notice: "0001193125-17-000274" }],
   // BUD — Anheuser-Busch InBev SA/NV, with SABMiller (the ticker carried on)
   1668717: [{ cik: 1140467, name: "Anheuser-Busch InBev SA/NV", until: "2016-10-11", notice: "0001193125-16-734655" }],
+  // ASH — Ashland Inc. (Ashland Global Holdings to 2022), a new parent of 2016; the record it took over
+  // from, now Ashland LLC, began as a shell (New EXM Inc.) and became Ashland at the parent of 2005,
+  // whose own predecessor is the old Ashland Inc. (Ashland Oil to 1995); batch 132, no notice of
+  // succession: the 8-Ks of the two handovers, see the header
+  1674862: [
+    { cik: 1305014, name: "Ashland Inc.", until: "2016-09-20", notice: "0001193125-16-714093", since: "2005-06-30" },
+    { cik: 7694, name: "Ashland Inc.", until: "2005-06-30", notice: "0001305014-05-000007" },
+  ],
   // WCN — Waste Connections, Inc.: Progressive Waste Solutions' record took old Waste Connections's
   // name and ticker at the merger of 2016-06-01 (batch 118); no notice of succession, see the header
   1318220: [{ cik: 1057058, name: "Waste Connections, Inc.", until: "2016-06-07", notice: "0001144204-16-107288" }],
@@ -223,12 +263,32 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   ],
   // PW — Power REIT (a new parent)
   1532619: [{ cik: 78838, name: "Pittsburgh & West Virginia Railroad", until: "2011-12-05", notice: "0001144204-11-068243" }],
+  // ALKS — Alkermes plc, the new parent of 2011 formed for Elan Drug Technologies; the predecessor is
+  // Alkermes, Inc. (batch 132; no notice of succession: the parent's 8-K of the day, see the header)
+  1520262: [{ cik: 874663, name: "Alkermes, Inc.", until: "2011-09-16", notice: "0000903423-11-000460" }],
   // ATLC — Atlanticus Holdings Corp (a new parent, then renamed); CompuCredit before
   1464343: [{ cik: 1068199, name: "CompuCredit Corporation", until: "2009-07-07", notice: "0001193125-09-145053", news: ["CompuCredit"] }],
   // OTTR — Otter Tail Corp (a new parent)
   1466593: [{ cik: 75129, name: "Otter Tail Corporation", until: "2009-07-01", notice: "0000950123-09-019633" }],
+  // TT — Trane Technologies plc (Ingersoll-Rand plc to 2020), redomiciled from Bermuda in 2009; Ingersoll-Rand
+  // Company Limited, the Bermuda parent of 2001, before; Ingersoll-Rand Company of New Jersey before that
+  // (batch 132; the 2001 step has no notice of succession: Ingersoll-Rand Company's own 8-K of the day)
+  1466258: [
+    { cik: 1160497, name: "Ingersoll-Rand Company Limited", until: "2009-07-01", notice: "0001193125-09-142260" },
+    { cik: 50485, name: "Ingersoll-Rand Company", until: "2002-01-02", notice: "0000950134-02-000013" },
+  ],
   // BLDP — Ballard Power Systems Inc. (a new parent)
   1453015: [{ cik: 933777, name: "Ballard Power Systems Inc.", until: "2009-01-02", notice: "0000912282-09-000004" }],
+  // VMC — Vulcan Materials Company, a new parent of 2007 formed for Florida Rock; the predecessor is now Legacy Vulcan Corp. (batch 132)
+  1396009: [{ cik: 103973, name: "Vulcan Materials Company", until: "2007-11-16", notice: "0000950123-07-015677" }],
+  // DUK — Duke Energy Corporation, a new parent of 2006 formed for Cinergy; the predecessor, Duke Power
+  // to 1997, is now Duke Energy Carolinas, LLC (batch 132)
+  1326160: [{ cik: 30371, name: "Duke Energy Corporation", until: "2006-04-04", notice: "0001193125-06-072085" }],
+  // ORCL — Oracle Corporation, a new parent of 2006 formed for PeopleSoft; the predecessor is now Oracle Systems (batch 132)
+  1341439: [{ cik: 777676, name: "Oracle Corporation", until: "2006-02-06", notice: "0001193125-06-020874" }],
+  // RF — Regions Financial Corporation, a new parent of 2004 formed for Union Planters; the predecessor,
+  // First Alabama Bancshares to 1994, kept its name (batch 132)
+  1281761: [{ cik: 36032, name: "Regions Financial Corporation", until: "2004-07-01", notice: "0000950144-04-006742" }],
   // BTE — Baytex Energy Corp. (a trust from 2004 to 2010)
   1279495: [{ cik: 1046182, name: "Baytex Energy Ltd.", until: "2004-02-19", notice: "0000950142-04-000530" }],
   // MRK — Merck & Co., Inc.: Schering-Plough's record took old Merck's name and ticker at the merger
@@ -238,6 +298,40 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   1219601: [
     { cik: 25890, name: "Crown Cork & Seal Company, Inc.", until: "2003-02-26", notice: "0000950168-03-000549", news: ["Crown Cork"] },
   ],
+  // batch 132: the older records of 17 companies the full-text search missed, from their filing lists
+  // (the owner's call of 2026-11-10, see the header)
+  // CMCSA — Comcast Corporation, a new parent of 2002 formed for AT&T Broadband; the predecessor is now Comcast Holdings Corp.
+  1166691: [{ cik: 22301, name: "Comcast Corporation", until: "2002-11-18", notice: "0000950103-02-001194" }],
+  // CNP — CenterPoint Energy, Inc., a new parent of 2002; the predecessor, Reliant Energy (Houston
+  // Industries to 1999), is now CenterPoint Energy Houston Electric. It was Houston Lighting & Power, the
+  // utility, until the old Houston Industries merged into it on 1997-08-06, so it is the company's from
+  // that day, and the old Houston Industries' record before it
+  1130310: [
+    { cik: 48732, name: "Reliant Energy, Incorporated", until: "2002-09-06", notice: "0000950129-02-004524", since: "1997-08-06" },
+    { cik: 202131, name: "Houston Industries Incorporated", until: "1997-08-08", notice: "0000950129-97-003142" },
+  ],
+  // MGEE — MGE Energy, Inc., a new parent of 2002; the predecessor is Madison Gas and Electric Company, its utility
+  1161728: [{ cik: 61339, name: "Madison Gas and Electric Company", until: "2002-08-12", notice: "0000950137-02-004291" }],
+  // NOC — Northrop Grumman Corporation, a new parent of 2001 formed for Litton; the predecessor is now
+  // Northrop Grumman Systems Corp. (no notice of succession: the parent's 8-K, see the header)
+  1133421: [{ cik: 72945, name: "Northrop Grumman Corporation", until: "2001-04-17", notice: "0000898430-01-500160" }],
+  // NI — NiSource Inc., a new parent of 2000 formed for Columbia Energy; the predecessor, NIPSCO
+  // Industries to 1999, is now Old NiSource Inc. (no notice of succession: the parent's 8-K)
+  1111711: [{ cik: 823392, name: "NiSource Inc.", until: "2000-11-01", notice: "0000895813-00-000475" }],
+  // LAMR — Lamar Advertising Company, a new parent of 1999; the predecessor is now Lamar Media Corp.
+  1090425: [{ cik: 899045, name: "Lamar Advertising Company", until: "1999-08-20", notice: "0000950134-99-007733" }],
+  // DVN — Devon Energy Corporation, a new parent of 1999 formed for PennzEnergy; the predecessor is Devon Energy Corporation (Oklahoma)
+  1090012: [{ cik: 837330, name: "Devon Energy Corporation", until: "1999-08-18", notice: "0000899243-99-001820" }],
+  // CBRL — Cracker Barrel Old Country Store, Inc. (CBRL Group to 2008), a new parent of 1998; the
+  // predecessor is its restaurant company (no notice of succession: the parent's 8-K)
+  1067294: [{ cik: 25373, name: "Cracker Barrel Old Country Store, Inc.", until: "1999-01-15", notice: "0000906318-99-000002" }],
+  // BRK-B — Berkshire Hathaway Inc., a new parent of 1998 formed for General Re; the predecessor is now
+  // OBH LLC (no notice of succession: the parent's 8-K)
+  1067983: [{ cik: 109694, name: "Berkshire Hathaway Inc.", until: "1999-01-05", notice: "0000898430-99-000021" }],
+  // OKE — ONEOK Inc., a new parent of 1997 formed for Western Resources' gas business; the predecessor
+  // is the old ONEOK Inc. Its last annual report, for the year to 1997-08-31, was filed 1997-11-28, two
+  // days after the handover, and is the company's, so `until` is the day after it (the parent's 8-K)
+  1039684: [{ cik: 74154, name: "ONEOK Inc.", until: "1997-11-29", notice: "0000950130-97-005339" }],
 };
 
 /**

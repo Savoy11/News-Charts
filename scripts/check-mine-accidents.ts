@@ -295,6 +295,12 @@ async function main(): Promise<void> {
       throttled.outcome === "throttled" && throttled.events.length === 29 && !!throttled.complete && neverRead.outcome === "error" && !neverRead.complete && !neverRead.events.length,
     JSON.stringify({ unpriced: unpriced.outcome, unmapped: unmapped.detail, throttled: throttled.outcome, neverRead: neverRead.complete }));
 
+  // the 2026-11-10 audit of batches 131–136, finding 4 (batch 137): the counts the comments give are the files'
+  console.log("\nThe counts the code and the migration give (the 2026-11-10 audit, batch 137)");
+  check("the code and db/046 give the Accidents file's 275,799 records and its 1,124 fatal accidents with a controller, of 1,130, as the file does",
+    /all 1,124 fatal accidents with a controller, of 1,130/.test(read("lib/mineAccidents.ts")) && /1,221 of its 275,799 records/.test(read("lib/mineAccidents.ts")) &&
+      /\(275,799 records, 2026-11-09\)/.test(read("db/046_mine_accidents.sql")) && !/275,800|1,125 fatal/.test(read("lib/mineAccidents.ts") + read("db/046_mine_accidents.sql")));
+
   console.log("\nRegistered, licensed, wired");
   const src = SOURCES.find((s) => s.key === "msha_accidents");
   check("the source is registered as public domain, cleared for commercial use, with the day the Labor Department's terms were read and their words",

@@ -988,6 +988,66 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 137: the audit of batches 131–136, and its four findings fixed (2026-11-10)
+
+The `code-auditor` read batches 131–136 (`58851b4..d5abef9`); its report is
+`docs/audits/2026-11-10-code-audit-b131-136.md`. The owner's word, 2026-11-10: "Continue".
+
+**What it found sound** on the saved real data: the predecessors' 8,100 filings, page by page, with
+every handover filing in the saved lists, no record on two pages, and the 73 earlier pages unchanged;
+MSHA's 1,130 accidents and 1,221 dead against an independent parse, accident by accident, the 224 rows
+on 51 pages, every controlled accident inside MSHA's controller history on its day, and the walk and
+db/046 through a real Postgres; EPA's fourth round, 262 to 487 rows on the whole file, with no
+defendant on two companies on one day and nine unit days matching their filings; `lib/zip.ts`, the
+old and new code reading EPA's whole file identically; FRA's 490 rows, no id, day, title or key
+changed; the CPSC statements through Postgres with no mismatches.
+
+It found four defects, all `P3`. Each was reproduced here and is fixed, with checks that fail on main.
+
+- [x] **1. Kroger Specialty Pharmacy's order of 2026 was on Kroger's page,** two years after Kroger
+      sold the pharmacy. Its unit had no end day.
+      - **Fixed** (`lib/epaCases.ts`): the pharmacy is a unit of its own, Kroger's to 2024-08-17 and
+        Elevance Health's from 2025-02-20. No 8-K reports the sale, so the days are the two filings
+        EDGAR's full-text search finds around it, as batch 126's rule reads them: Kroger's 10-Q for the
+        quarter to 2024-08-17 books no gain on the sale and its next, for the quarter to 2024-11-09, does;
+        Elevance's 10-K of 2025-02-20 is its first filing to name the pharmacy, among its subsidiaries,
+        as Kroger's of 2024-04-02 had. No case falls between the two days.
+      - **What changes:** EPA's order of 2026-07-28 against "Kroger Specialty Pharmacy 5-60 (Axium
+        Healthcare)" ($1,250, hazardous waste law, 02-2026-7204) moves from Kroger's page to Elevance
+        Health's, a unit sold to another listed company being on that company's page from the day (batch
+        120). 9,386 rows on 693 companies before first prices (692 before); units on 107 companies.
+- [x] **2. The CPSC's injury statement was cut mid-word on 14 rows, with no mark.** It came last in a
+      row cut at 600 characters, and the check counted a row by the statement's label.
+      - **Fixed** (`lib/cpscRecalls.ts`): where a recall's text runs past the row's room, the units text
+        gives way first, cut at a word and marked "…", so the statement is shown whole; a statement too
+        long to fit beside the title is itself cut at a word and marked (`cutAt`); a day's other recalls
+        follow the first by the same rule while room is left.
+      - **What changes:** 943 of the 952 rows show the statement whole (938 before); Polaris's vehicles of
+        2021-03-25 keep "No injuries have been reported". The other 9, Kidde's on RTX among them, end at a
+        word with "…", and every statement shown is whole or so cut. No row's day, title or key changes.
+- [x] **3. PPL's 10-Q for the first quarter of 1995 and IDACORP's for the third of 1998 were on no
+      page.** Each was filed under the utility's record after the handover day, for a quarter before
+      it, and neither new parent filed its own for that quarter.
+      - **Fixed** (`lib/predecessors.ts`, `lib/sec.ts`): an entry may name such reports by accession
+        (`after`), and the reader keeps them; the utilities' own 8-Ks of the handover day stay off.
+        ONEOK's and Zillow's reports, filed the day after theirs, stay kept by their moved days.
+- [x] **4. Counts the docs gave that the code and the files do not.** The coverage map's EPA row still
+      gave the figures from before batch 135; the MSHA comments said 1,125 accidents with a controller
+      (the file gives 1,124 of 1,130) and 275,800 records (it holds 275,799).
+      - **Fixed:** `docs/COVERAGE-MAP.md`, `lib/mineAccidents.ts`, db/046's comment (the migration is
+        tracked by file name, so nothing re-runs) and batch 134's section above; checks hold each.
+- [x] **Set aside by the audit, and left:** a day's second CPSC statement past the cut (the length rule
+      of before, now cut at a word); MSHA's file rewritten daily, so the weekly read seldom gets a 304
+      (52 MB a week, read correctly); CenterPoint's two records overlapping by two days with no filing
+      in them; Knife River, whose quarries have had no fatal accident since MDU's spin-off.
+- [x] **Checked:** `check:epa-cases` 152 (4 new), `check:cpsc` 56 (4 new), `check:predecessors` 70
+      (1 new, the saved lists' slice gaining the two reports), `check:mine-accidents` 41 (1 new). On main
+      the new checks fail: Kroger keeps the order, `cutAt` is not there, the two reports are off, and
+      the counts read as before.
+- **Requests:** 2, logged in the session scratchpad (`b137/requests.log`), with User-Agent `News Charts
+  Research` and no email address: efts.sec.gov's full-text search for "Kroger Specialty Pharmacy" in
+  Elevance Health's filings and in all of EDGAR. The audit's own 4 are in its report.
+
 ## NC ledger — batch 136: the regulators' own words on rows pages already hold (2026-11-10)
 
 The 2026-11-09b proposals' #4, approved by the owner on 2026-11-10 ("4. Regulators' own words"), both
@@ -1119,8 +1179,9 @@ licence notice read and quoted before anything is built. The owner's word on sta
       Virginia — 3 killed (gas or dust explosion)". The report is the operator's own filing, not a
       finding of fault, and every row says so.
 - [x] **Names of the day are not in the files:** each record gives the mine's controller and operator
-      by the IDs they had that day (all 1,125 fatal accidents with a controller match MSHA's history for
-      the mine on that day), but under each ID's present name. Minorca's deaths of 2007 and 2019,
+      by the IDs they had that day (all 1,124 fatal accidents with a controller match MSHA's history for
+      the mine on that day; 1,125 as first written, corrected by the 2026-11-10 audit: six of the 1,130
+      give no controller), but under each ID's present name. Minorca's deaths of 2007 and 2019,
       ArcelorMittal's, carry "Cleveland-Cliffs Minorca Mine Inc."; Trinity's of 2017, "Arcosa
       Aggregates". A title therefore names no operator, and the text gives MSHA's present names as
       present names.

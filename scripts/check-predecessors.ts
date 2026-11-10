@@ -384,6 +384,11 @@ async function main(): Promise<void> {
     globalThis.fetch = realFetch;
   }
   const on = (t: string, a: string) => p133[t].ids.has(`sec-${a.replace(/-/g, "")}`);
+  // the 2026-11-10 audit of batches 131–136, finding 3 (batch 137)
+  check("PPL's page holds its 10-Q for the quarter to 1995-03-31, filed under the utility's record on 1995-05-04, after the handover, and IDACORP's its 10-Q to 1998-09-30, filed 1998-11-06 (the 2026-11-10 audit); each utility's own 8-K of the handover day stays off",
+    on("PPL", "0000317187-95-000022") && on("IDA", "0000049648-98-000024") && !on("PPL", "0000317187-95-000018") && !on("IDA", "0000898080-98-000235") &&
+      predecessorsOf(cikOf("PPL"))[0]?.until === "1995-04-27" && predecessorsOf(cikOf("IDA"))[0]?.until === "1998-10-01" &&
+      Object.values(PREDECESSORS).flat().filter((p) => p.after?.length).map((p) => p.cik).sort((a, b) => a - b).join(" ") === "49648 317187");
   check("Con Edison's page holds Consolidated Edison of New York's annual report of 1997, not the utility's own 8-K after the handover",
     on("ED", "0000023632-97-000005") && !on("ED", "0000023632-98-000007"));
   check("Graphic Packaging reads two steps: Graphic Packaging International's annual report of 2003 and the record from the 2003 merger, not Riverwood's own past",

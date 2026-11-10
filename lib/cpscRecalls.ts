@@ -483,6 +483,13 @@ export const unitsOf = (units: string) =>
  * full stop. "None reported" is said as it is.
  */
 export const injuriesOf = (statement: string) => `Injuries, the Commission's record: ${statement.replace(/\.?\s*$/, ".")}`;
+
+/** A row's description is at most this long. */
+export const DESCRIPTION_LIMIT = 600;
+
+/** A text cut to `room` characters at a word, with no separator left hanging, and closed with "…"; the text whole when it fits (batch 137). */
+export const cutAt = (text: string, room: number) =>
+  text.length <= room ? text : `${text.slice(0, room - 1).replace(/\s+\S*$/, "").replace(/[\s·;,]+$/, "")}…`;
 const noticeOf = (r: CpscRecall) => r.url ?? `https://www.cpsc.gov/Recalls?search_api_fulltext=${encodeURIComponent(r.number)}`;
 
 /**
@@ -519,8 +526,34 @@ export function cpscEvents(recalls: readonly CpscRecall[], namesIn: (year: numbe
     else own.set(r.day, [...(own.get(r.day) ?? []), { r, role }]);
   }
   const events: TimelineEvent[] = [];
-  const what = (x: { r: CpscRecall; role: keyof typeof ROLE }) =>
-    `${x.r.title} — the company ${ROLE[x.role]}${x.r.units ? `; ${unitsOf(x.r.units)}` : ""}${x.r.hazard ? `. ${x.r.hazard}` : ""}${x.r.injuries ? `. ${injuriesOf(x.r.injuries)}` : ""}`;
+  // A recall's text: what was recalled and the company's part, the units, the hazard, and the
+  // Commission's injury statement. Where it runs past the row's room, the units and the hazard give
+  // way, cut at a word and marked, so the statement is shown whole; a statement that cannot fit is
+  // itself cut at a word and marked (the 2026-11-10 audit, batch 137).
+  const what = (x: { r: CpscRecall; role: keyof typeof ROLE }, room = DESCRIPTION_LIMIT) => {
+    const head = `${x.r.title} — the company ${ROLE[x.role]}`;
+    const middle = `${x.r.units ? `; ${unitsOf(x.r.units)}` : ""}${x.r.hazard ? `. ${x.r.hazard}` : ""}`;
+    const hurt = x.r.injuries ? `. ${injuriesOf(x.r.injuries)}` : "";
+    const whole = `${head}${middle}${hurt}`;
+    const spare = room - head.length - hurt.length;
+    if (whole.length <= room) return whole;
+    if (hurt && spare >= 40) return `${head}${cutAt(middle, spare)}${hurt}`;
+    // a cut that leaves the statement's label without its words leaves the label off
+    return cutAt(whole, room).replace(/\. Injuries(?:, the(?: Commission's(?: record:?)?)?)?…$/, ".…");
+  };
+  // the day's first recall has the room; the day's others follow it, each whole or cut by the same rule,
+  // while room is left; the title already counts them
+  const described = (rows: { r: CpscRecall; role: keyof typeof ROLE }[]) => {
+    let text = what(rows[0]);
+    for (const x of rows.slice(1)) {
+      const room = DESCRIPTION_LIMIT - text.length - 3;
+      if (room < 40) break;
+      const next = what(x, room);
+      text = `${text} · ${next}`;
+      if (next.endsWith("…")) break;
+    }
+    return text;
+  };
   for (const [day, rows] of own) {
     const sorted = [...rows].sort((a, b) => a.r.number.localeCompare(b.r.number));
     const lead = sorted[0];
@@ -532,7 +565,7 @@ export function cpscEvents(recalls: readonly CpscRecall[], namesIn: (year: numbe
       title: `${lead.r.title}${more}`,
       source: "CPSC",
       url: noticeOf(lead.r),
-      description: sorted.map(what).join(" · ").slice(0, 600),
+      description: described(sorted),
       sourceKey: "cpsc_recalls",
       externalId: sorted.map((x) => x.r.number).join(","),
       dedupBasis: `cpsc:${tag}@${day}`,
@@ -545,7 +578,7 @@ export function cpscEvents(recalls: readonly CpscRecall[], namesIn: (year: numbe
     const moved = own.has(first) ? {} : { legacyDedupBasis: `cpsc:${tag}@${first}` };
     const kept = { id: `cpsc-${tag}-${month}-sold`, type: "regulation" as const, source: "CPSC", url: noticeOf(sorted[0]), sourceKey: "cpsc_recalls" as const, externalId: sorted.map((r) => r.number).join(","), dedupBasis: `cpsc:${tag}@${month}:sold`, ...moved };
     if (rows.length === 1)
-      events.push({ ...kept, date: rows[0].day, title: `Sold in its stores: ${rows[0].title}`, description: what({ r: rows[0], role: "seller" }).slice(0, 600) });
+      events.push({ ...kept, date: rows[0].day, title: `Sold in its stores: ${rows[0].title}`, description: what({ r: rows[0], role: "seller" }) });
     else
       events.push({
         ...kept,

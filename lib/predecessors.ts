@@ -130,6 +130,14 @@ export interface Predecessor {
   since?: string;
   /** names headlines use for the company that its present name is not */
   news?: string[];
+  /**
+   * the predecessor's filings after `until` that are still the company's, by accession: a quarterly
+   * report for a quarter that ended before the handover, filed under the old record after it, where
+   * the successor filed none of its own for that quarter (PPL's for the quarter to 1995-03-31, filed
+   * 1995-05-04; the 2026-11-10 audit, batch 137). ONEOK's and Zillow's annual reports, filed just
+   * after their days, are kept by moving `until` instead; here the record filed other things in between.
+   */
+  after?: string[];
 }
 
 export const PREDECESSORS: Record<number, Predecessor[]> = {
@@ -371,8 +379,10 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   1021635: [{ cik: 74145, name: "Oklahoma Gas and Electric Company", until: "1996-12-16", notice: "0001021635-96-000006" }],
   // TDS — Telephone and Data Systems, Inc., reincorporated in Delaware in 1998 (the parent's 8-K)
   1051512: [{ cik: 96966, name: "Telephone and Data Systems, Inc.", until: "1998-05-22", notice: "0001047469-98-021621" }],
-  // IDA — IDACORP, Inc., a new parent of 1998; the predecessor is its utility, Idaho Power (the parent's 8-K)
-  1057877: [{ cik: 49648, name: "Idaho Power Company", until: "1998-10-01", notice: "0000898080-98-000234" }],
+  // IDA — IDACORP, Inc., a new parent of 1998; the predecessor is its utility, Idaho Power (the parent's 8-K).
+  // Its 10-Q for the quarter to 1998-09-30 was filed under the utility's record on 1998-11-06, and IDACORP
+  // filed none of its own for that quarter (batch 137)
+  1057877: [{ cik: 49648, name: "Idaho Power Company", until: "1998-10-01", notice: "0000898080-98-000234", after: ["0000049648-98-000024"] }],
   // SR — Spire Inc. (The Laclede Group to 2016), a new parent of 2001; the predecessor, Laclede Gas, is now Spire Missouri (the parent's 8-K)
   1126956: [{ cik: 57183, name: "Laclede Gas Company", until: "2001-10-01", notice: "0001068800-01-500266" }],
   // NEM — Newmont Corporation, a new parent of 2002 formed for Franco-Nevada and Normandy; the predecessor
@@ -416,8 +426,10 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   // IRM — Iron Mountain: Pierce Leahy's record took old Iron Mountain's name and ticker at their merger
   // of 2000 (see OWN_RECORD_FROM; the parent's 8-K)
   1020569: [{ cik: 1004317, name: "Iron Mountain Incorporated", until: "2000-02-01", notice: "0000912057-00-003377" }],
-  // PPL — PPL Corporation (PP&L Resources to 2000), a new parent of 1995; the predecessor is its utility (an 8-B12B)
-  922224: [{ cik: 317187, name: "Pennsylvania Power & Light Company", until: "1995-04-27", notice: "0000893750-95-000086" }],
+  // PPL — PPL Corporation (PP&L Resources to 2000), a new parent of 1995; the predecessor is its utility (an 8-B12B).
+  // Its 10-Q for the quarter to 1995-03-31 was filed under the utility's record on 1995-05-04, and PP&L
+  // Resources filed none of its own for that quarter (batch 137)
+  922224: [{ cik: 317187, name: "Pennsylvania Power & Light Company", until: "1995-04-27", notice: "0000893750-95-000086", after: ["0000317187-95-000022"] }],
   // DTE — DTE Energy Company, a new parent of 1996; the predecessor is its utility, Detroit Edison (an 8-B12B)
   936340: [{ cik: 28385, name: "The Detroit Edison Company", until: "1996-01-02", notice: "0000950124-96-000012" }],
   // URI — United Rentals, Inc., a new parent of 1998; the predecessor is now United Rentals (North America)

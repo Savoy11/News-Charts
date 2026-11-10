@@ -259,8 +259,8 @@ async function main(): Promise<void> {
   // batch 114's utilities' operating companies add 419 rows on 31 companies, 13 of which had none
   // batch 120's 28 companies' units and the "and" spelling of "&" add 990 rows, 11 companies more
   // batch 122's suits filed in court add 228 rows, and the settlements of cases all a company's 39
-  check("before any first price: 9,386 rows on 692 companies, 7,974 before 2017; 9,046 of them a case's own day, which EPA's whole file gives too (9,155, 7,768 and 8,827 on 690 before batch 135's units of 13 more companies, the cases they name added to the slice; 9,156, 7,769 and 8,828 before the 2026-11-08 audit took UT Automotive's misspelled decree of 2007 off RTX; 8,889, 7,526 and 8,561 before batch 122's suits filed and settlements on their own days; 7,899, 6,754 and 7,621 on 679 before batch 120's units of 28 more companies and its \"and\" for \"&\"; 7,954, 6,806 and 7,675 on 683 before batch 117's table of taken names took Ingersoll-Rand's 36 off IR, Linde AG's 9 off LIN, Spectrum Brands' 4 off SPB, Sunoco, Inc.'s 3 off SUN and one each off HOS, VTOL and FUN; 7,969, 6,821 and 7,688 on 684 before batch 116 took old AT&T's 13 off T, Consumers Power, Inc.'s 1 off CMS and Toro Corp.'s 1 off TORO; 7,964, 6,817 and 7,683 on 683 on batch 114's slice, which lacked 5 of the file's page cases; 7,545, 6,463 and 7,268 on 670 before batch 114's utilities; 7,428, 6,368 and 7,026 before batch 113's settlement figures; 7,427, 6,367 and 7,025 before batch 111's legal-form spellings; 7,436, 6,376 and 7,034 before batch 108 took the old Waste Management's nine off WM; 7,035 before batch 107's Star Lake order joined Chevron's September 2016; 5,994 on 667 before batch 104's units, every one of whose cases is still on its page; 5,984 before batch 101's Sunoco, Inc.; 6,001 on 665 before batch 100)",
-    total === 9386 && out.size === 692 && before2017 === 7974 && own === 9046 && (out.get("OLN") ?? []).some((e) => e.date === "1995-10-26"), `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
+  check("before any first price: 9,386 rows on 693 companies, 7,974 before 2017; 9,046 of them a case's own day, which EPA's whole file gives too (on 692 before the 2026-11-10 audit moved Kroger Specialty Pharmacy's order of 2026 to Elevance Health; 9,155, 7,768 and 8,827 on 690 before batch 135's units of 13 more companies, the cases they name added to the slice; 9,156, 7,769 and 8,828 before the 2026-11-08 audit took UT Automotive's misspelled decree of 2007 off RTX; 8,889, 7,526 and 8,561 before batch 122's suits filed and settlements on their own days; 7,899, 6,754 and 7,621 on 679 before batch 120's units of 28 more companies and its \"and\" for \"&\"; 7,954, 6,806 and 7,675 on 683 before batch 117's table of taken names took Ingersoll-Rand's 36 off IR, Linde AG's 9 off LIN, Spectrum Brands' 4 off SPB, Sunoco, Inc.'s 3 off SUN and one each off HOS, VTOL and FUN; 7,969, 6,821 and 7,688 on 684 before batch 116 took old AT&T's 13 off T, Consumers Power, Inc.'s 1 off CMS and Toro Corp.'s 1 off TORO; 7,964, 6,817 and 7,683 on 683 on batch 114's slice, which lacked 5 of the file's page cases; 7,545, 6,463 and 7,268 on 670 before batch 114's utilities; 7,428, 6,368 and 7,026 before batch 113's settlement figures; 7,427, 6,367 and 7,025 before batch 111's legal-form spellings; 7,436, 6,376 and 7,034 before batch 108 took the old Waste Management's nine off WM; 7,035 before batch 107's Star Lake order joined Chevron's September 2016; 5,994 on 667 before batch 104's units, every one of whose cases is still on its page; 5,984 before batch 101's Sunoco, Inc.; 6,001 on 665 before batch 100)",
+    total === 9386 && out.size === 693 && before2017 === 7974 && own === 9046 && (out.get("OLN") ?? []).some((e) => e.date === "1995-10-26"), `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
   const top = [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 5).map(([t, v]) => `${t} ${v.length}`).join(", ");
   check("  …most on GE 302, ExxonMobil 295, Chevron 278, BP 255, Honeywell 252 (XOM 288, GE 284, CVX 269, BP 248, HON 246 before batch 122's suits filed and settlements; GM's 225 fifth before batch 120 gave Honeywell AlliedSignal's and old Honeywell's companies; GE 284, XOM 273, CVX 258, BP 230, GM 222 before batch 113; before the units: GE 284, GM 222, Ford 165, ExxonMobil 163, FMC 135)",
     top === "GE 302, XOM 295, CVX 278, BP 255, HON 252", top);
@@ -740,6 +740,22 @@ async function main(): Promise<void> {
   check("the round's 13 companies are their tickers' records, and every unit of the round names its days in lib/epaCases.ts",
     added135.join(" ") === "ASH AKZOY NVS GATX MS LEN GGB SEB KR ANDE KEX BALL WM" && /Batch 135, the fourth round/.test(read("lib/epaCases.ts")), added135.join(" "));
 
+  console.log("\nThe 2026-11-10 audit of batches 131–136, fixed (batch 137)");
+  // finding 1: Kroger sold Kroger Specialty Pharmacy to Elevance Health in 2024
+  const kspCase = (day: string) => unitCase("Kroger Specialty Pharmacy 5-60 (Axium Healthcare)", day);
+  check("Kroger Specialty Pharmacy's order of 2026-07-28 (02-2026-7204, $1,250) is Elevance Health's, not Kroger's: Kroger's 10-Q to 2024-08-17 books no gain on its sale, the next does, and Elevance's 10-K of 2025-02-20 names it among its subsidiaries",
+    !has(eventsOn("KR"), "02-2026-7204") && has(eventsOn("ELV"), "02-2026-7204") && has(eventsOn("KR"), "04-2023-0209"),
+    eventsOn("ELV").map((e) => e.externalId).join(" "));
+  check("  …the pharmacy is Kroger's to 2024-08-17 and Elevance's from 2025-02-20, no one's between; Kroger's partnerships and plants stay its own on every day",
+    onPage("KR", kspCase("2024-08-17")) && !onPage("KR", kspCase("2024-08-18")) && !onPage("ELV", kspCase("2025-02-19")) && onPage("ELV", kspCase("2025-02-20")) &&
+      !onPage("ELV", kspCase("2024-08-17")) && onPage("KR", unitCase("KROGER LIMITED PARTNERSHIP II", "2026-07-28")) && !onPage("ELV", unitCase("KROGER LIMITED PARTNERSHIP II", "2026-07-28")));
+  // finding 4: the coverage map's EPA row gives the figures the checks above give
+  check("the coverage map's EPA row gives 9,386 rows on 693 companies, 7,974 before 2017, and 237 suit-filed rows on 109 pages, not the figures before batch 135",
+    /9,386 rows on 693 companies, 7,974 before 2017/.test(read("docs/COVERAGE-MAP.md")) && /237 rows on 109 pages/.test(read("docs/COVERAGE-MAP.md")) &&
+      !/9,155 rows on 690 companies|228 rows on 106 pages/.test(read("docs/COVERAGE-MAP.md")));
+  check("  …and the stored case file finds it on Elevance's page by the unit's key",
+    unitKeysOf(1156039).includes("krogerspecialtypharmacy") && "Kroger Specialty Pharmacy 5-60 (Axium Healthcare)".toLowerCase().replace(/[^a-z0-9]/g, "").includes("krogerspecialtypharmacy"));
+
   console.log("\nThe 2026-11-08 audit of batches 117–123, fixed (batch 124)");
   const utAuto = cases.filter((c) => c.defendants.some((d) => /^UNITED TECHNOLOGIES\s+AUTOM/i.test(d)));
   const rtxRows = eventsOn("RTX");
@@ -750,8 +766,8 @@ async function main(): Promise<void> {
       !!unitsOf("RTX").find((u) => u.unit === "United Technologies Automotive")?.defendant.test("UNITED TECHNOLOGIES AUTOMOVTIVE, INC") &&
       !!unitsOf("RTX").find((u) => u.unit === "United Technologies' divisions")?.defendant.test("UNITED TECHNOLOGIES CORPORATION"),
     utAuto.map((c) => `${c.number} ${c.day} ${has(rtxRows, c.number) ? "RTX" : "-"}`).join("; "));
-  check("finding 3: the README's sources table counts the units of 106 companies, as UNITS holds them (95 before batch 135)",
-    Object.keys(UNITS).length === 106 && /one of the operating units 106 companies held/.test(read("README.md")) && !/operating units (?:35|95) companies held/.test(read("README.md")),
+  check("finding 3: the README's sources table counts the units of 107 companies, as UNITS holds them (106 before Elevance Health's pharmacy, batch 137; 95 before batch 135)",
+    Object.keys(UNITS).length === 107 && /one of the operating units 107 companies held/.test(read("README.md")) && !/operating units (?:35|95|106) companies held/.test(read("README.md")),
     `${Object.keys(UNITS).length}`);
 
   console.log("\nThe 2026-11-07 audit of batches 108–115, fixed (batch 116)");

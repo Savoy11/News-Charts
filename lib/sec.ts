@@ -1189,7 +1189,9 @@ export async function getFilingsDeep(
     const own = (r: Rename) => !churn.has(r) && (r !== last || phrase(commonName(r.to)) === phrase(commonName(p.name)));
     renames.push(...spanned.filter(own));
     const dropped = new Set(spanned.filter((r) => !own(r)).map((r) => `sec-rename-${cik}-${r.on}`));
-    return events.filter((e) => inSpan(e.date, e.id.startsWith("sec-rename-")) && !dropped.has(e.id));
+    // …and the reports it filed after the day for a quarter before it, which the successor never filed (batch 137)
+    const after = new Set((p.after ?? []).map((a) => `sec-${a.replace(/-/g, "")}`));
+    return events.filter((e) => (inSpan(e.date, e.id.startsWith("sec-rename-")) || after.has(e.id)) && !dropped.has(e.id));
   });
   // a record that was another company until it took this one's ticker keeps its own past too, which
   // the page labels as that company's (Schering-Plough's on MRK's record, `ownPastLabelled`, batch 110)

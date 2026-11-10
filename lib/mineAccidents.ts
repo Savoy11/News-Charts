@@ -22,8 +22,8 @@ import { decodeText, eachCsvRow, readZip } from "./zip";
  *
  * The report is the operator's own filing to its regulator, not a finding of fault, and the row says
  * so. Each record names the mine's controller and operator by the IDs they had on the accident's day
- * (all 1,125 fatal accidents with a controller match MSHA's controller history for the mine on that
- * day), but by each ID's present name: Minorca's accidents of 2007 and 2019, ArcelorMittal's, carry
+ * (all 1,124 fatal accidents with a controller, of 1,130, match MSHA's controller history for the mine
+ * on that day; six give none), but by each ID's present name: Minorca's accidents of 2007 and 2019, ArcelorMittal's, carry
  * "Cleveland-Cliffs Minorca Mine Inc.", the name of the operator after Cleveland-Cliffs bought it in
  * 2020. A row's title therefore names no operator; its text gives MSHA's present names as present
  * names. The mine's place, county and state, is the Mines file's, which a mine does not leave.
@@ -443,7 +443,7 @@ const FATAL_MARKER = Buffer.from('|"01"|"FATALITY"|', "latin1");
 
 /**
  * The Accidents file cut to its header and the records that hold the fatal marker, before any of it is
- * decoded: the whole file is 229 MB of text and only 1,221 of its 275,800 records are deaths, and
+ * decoded: the whole file is 229 MB of text and only 1,221 of its 275,799 records are deaths, and
  * decoded whole it took 943 MB to read. A record is a line, CRLF-ended, of quoted fields; a record the
  * cut would split (an odd count of quotes: a line break inside a field) or a file without the marker
  * gives null, and the whole file is read instead. `fatalAccidents` reads every kept record again by

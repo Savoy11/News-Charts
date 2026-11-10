@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import type { PoolClient } from "pg";
 import tickerIndex from "../data/edgar-tickers.json";
-import { NOT_THE_COMPANY, RECALLS_URL, UNITS, cpscEvents, fetchRecalls, firmIsCompany, firmName, parseRecalls, roleIn, soldAtCompany, unitKeysOf, unitsOf, type CpscRecall } from "../lib/cpscRecalls";
+import { DESCRIPTION_LIMIT, NOT_THE_COMPANY, RECALLS_URL, UNITS, cpscEvents, cutAt, fetchRecalls, firmIsCompany, firmName, injuriesOf, parseRecalls, roleIn, soldAtCompany, unitKeysOf, unitsOf, type CpscRecall } from "../lib/cpscRecalls";
 import { dojPossessive } from "../lib/doj";
 import { andSpellings, withoutTag } from "../lib/edgarName";
 import { deterministicScore } from "../lib/enrich/relevance";
@@ -304,6 +304,45 @@ async function main(): Promise<void> {
     `${ownWith.length} with one; ${deaths.length} naming a death: ${deaths.map((e) => e.date).join(" ")}; "None reported" ${!!noneRow}`);
   check("  …and the statement is stored with the recall and read back with it at ingest",
     page.events.some((e) => /Injuries, the Commission's record: /.test(e.description ?? "")) && /ADD COLUMN IF NOT EXISTS injuries text/.test(read("db/047_cpsc_injuries.sql")) && /^DELETE FROM cpsc_reads;$/m.test(read("db/047_cpsc_injuries.sql")));
+
+  // the 2026-11-10 audit of batches 131–136, finding 2 (batch 137)
+  console.log("\nThe injury statement shown whole, a cut at a word and marked (the 2026-11-10 audit, batch 137)");
+  check("a text that fits is kept whole; one that does not is cut at a word and closed with \"…\", never past its room",
+    cutAt("No injuries have been reported.", 40) === "No injuries have been reported." && cutAt("No injuries have been reported.", 20) === "No injuries have…" &&
+      cutAt("x".repeat(30), 10).length <= 10 && DESCRIPTION_LIMIT === 600);
+  const polaris = on("PII").find((e) => has([e], "21732"));
+  check("Polaris's vehicles of 2021-03-25 (21732): the units give way, cut at a word and marked, so the Commission's statement is whole, \"No injuries have been reported\" with it",
+    (polaris?.description ?? "").includes(injuriesOf(recall("21732").injuries ?? "-")) && /No injuries have been reported\.$/.test(polaris?.description ?? "") &&
+      /^[^·]*…\. Injuries, the Commission's record: /.test(polaris?.description ?? "") && (polaris?.description ?? "").length <= 600,
+    polaris?.description);
+  const leadOf = (e: TimelineEvent) => recall((e.externalId ?? "").split(",")[0]);
+  const withStatement = ownOf(flat).filter((e) => leadOf(e).injuries);
+  const whole = withStatement.filter((e) => (e.description ?? "").includes(injuriesOf(leadOf(e).injuries ?? "")));
+  const cutRows = withStatement.filter((e) => !whole.includes(e));
+  check("of the 952 rows whose first recall has a statement, 943 show it whole (938 before); the 9 too long to fit beside the title end at a word with \"…\", the shown part the statement's own beginning",
+    withStatement.length === 952 && whole.length === 943 && cutRows.length === 9 &&
+      cutRows.every((e) => {
+        const shown = (e.description ?? "").split("Injuries, the Commission's record: ")[1] ?? "";
+        const full = injuriesOf(leadOf(e).injuries ?? "").replace("Injuries, the Commission's record: ", "");
+        return shown.endsWith("…") && full.startsWith(shown.slice(0, -1)) && /[\s]/.test(full[shown.length - 1] ?? " ");
+      }),
+    `${whole.length} whole of ${withStatement.length}; cut: ${cutRows.map((e) => leadOf(e).number).join(" ")}`);
+  const tails = flat.filter((e) => e.precision !== "month" && /Injuries, the Commission's record: /.test(e.description ?? ""));
+  // each recall's part of a row: its statement is whole, or the row's last part, cut at a word and marked
+  const tailShown = (e: TimelineEvent) => {
+    const statements = (e.externalId ?? "").split(",").map((n) => recall(n).injuries).filter(Boolean).map((t) => injuriesOf(t as string).replace("Injuries, the Commission's record: ", ""));
+    const parts = (e.description ?? "").split(" · ");
+    return parts.every((part, i) => {
+      if (/Injuries(?:, the(?: Commission's(?: record:?)?)?)?…$/.test(part)) return false;
+      const shown = part.split("Injuries, the Commission's record: ")[1];
+      if (shown === undefined) return !part.endsWith("…") || i === parts.length - 1;
+      return statements.some((t) => t === shown || (i === parts.length - 1 && shown.endsWith("…") && t.startsWith(shown.slice(0, -1)) && /\s/.test(t[shown.length - 1] ?? " ")));
+    });
+  };
+  check("  …no recall's row runs past 600 characters, and on every row the last statement shown is whole or ends at a word with \"…\"",
+    flat.filter((e) => e.precision !== "month").every((e) => (e.description ?? "").length <= 600) &&
+      tails.every(tailShown),
+    `${tails.length} rows with a statement; ${tails.filter((e) => !tailShown(e)).map((e) => `${e.date} ${e.externalId}: …${(e.description ?? "").slice(-80)}`).slice(0, 3).join(" | ")}`);
 
   console.log("\nRegistered, licensed, wired");
   const src = SOURCES.find((s) => s.key === "cpsc_recalls");

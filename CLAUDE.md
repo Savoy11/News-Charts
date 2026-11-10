@@ -111,7 +111,8 @@ day on the page whose own are every defendant that day; a case's own day keeps i
 CPSC's recalls (`lib/cpscRecalls.ts`) go on every listed company a recall names: its makers,
 importers and distributors by the caption rule, its stores as whole items of the "Sold at" line, a
 store's recalls of other makers' products grouped a row a month, a recall's row with the Commission's injury
-statement as written (batch 136). The FRA's railroad accident reports (`lib/railAccidents.ts`, batch 127) reach a
+statement as written (batch 136), whole where the units text can give way, else cut at a word and marked (batch
+137). The FRA's railroad accident reports (`lib/railAccidents.ts`, batch 127) reach a
 railroad company's page only through `RAIL_OWNERS`, each reporting railroad between its owner's days, from
 the company's first price, at the owner's floor: a death, an evacuation or $5,000,000 of damage, a crossing
 collision only with the last two; its dead and injured are the accident's, Form 55a's count, never one
@@ -159,7 +160,9 @@ record up to the handover day, through the hand-checked map in `lib/predecessors
 header before adding an entry. Batch 132 added 17 pages the full-text search had missed (Comcast,
 Oracle, Duke…) on their own filing lists' evidence, the owner's call of 2026-11-10, and batch 133 30
 more from a scan of every listed company's list (Con Edison, PG&E, Transocean, Accenture…); a name a
-predecessor took and gave back within half a year is EDGAR's churn, not a rename. Merck's is a merger the other way round (batch 108): MRK's record was
+predecessor took and gave back within half a year is EDGAR's churn, not a rename; a quarterly report it filed
+after the day for a quarter before it, which the successor never filed, is kept by accession (`after`, PPL's
+and IDACORP's, batch 137). Merck's is a merger the other way round (batch 108): MRK's record was
 Schering-Plough's until it took old Merck's name and ticker on 2009-11-03, so old Merck's record is
 MRK's history; the record's own past before it, Schering-Plough's filings, cases, approvals and
 Digest entries, stays on the page labelled as Schering-Plough's (`OWN_RECORD_FROM`,

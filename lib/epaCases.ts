@@ -646,8 +646,8 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
  *   and 8): the group's two orders of 1997-05-20 are old Morgan Stanley's.
  * - Lennar's homebuilders and land companies, Gerdau's North American companies (Gerdau Ameristeel, a
  *   listed company Gerdau controlled, Gerdau Long Steel, Gerdau
- *   MacSteel), Seaboard Foods, Seaboard Farms and Seaboard Marine, Kroger's partnerships, plants and
- *   pharmacies, Kirby Inland Marine and Ball's metal packaging companies their own. Seaboard Farms of
+ *   MacSteel), Seaboard Foods, Seaboard Farms and Seaboard Marine, Kroger's partnerships and plants,
+ *   Kirby Inland Marine and Ball's metal packaging companies their own. Seaboard Farms of
  *   Chattanooga, its poultry company, to 2000-01-02 (Seaboard's 8-K of the sale, item 2, reporting
  *   2000-01-03); Ball Aerospace to 2024-02-15 (Ball's 8-K of the sale, item 2.01, reporting 2024-02-16).
  * - The Andersons: its own divisions; its ethanol companies only from 2025-07-31, the day it bought
@@ -655,6 +655,12 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
  *   purchase agreement): a joint venture before, no one's.
  * - Waste Management: its disposal companies and Waste Management Holdings, old Waste Management's
  *   record renamed, from the merger of 1998-07-16.
+ * - Kroger Specialty Pharmacy (the 2026-11-10 audit, batch 137): Kroger's to 2024-08-17 and Elevance
+ *   Health's from 2025-02-20. No 8-K reports the sale, so the days are the two filings EDGAR's
+ *   full-text search finds around it: Kroger's 10-Q for the quarter to 2024-08-17 books no gain on its
+ *   sale, and its next, for the quarter to 2024-11-09, does; Elevance's 10-K of 2025-02-20 is the first
+ *   filing of Elevance's to name it, among its subsidiaries, as Kroger's 10-K of 2024-04-02 had. No case
+ *   of the pharmacy falls between the two days, so its order of 2026-07-28 is Elevance's.
  * - Left as namesakes: Seaboard Asphalt, Seaboard Industries and the Seaboard railroads; Kirby Forest
  *   Industries and Kirby & Sons; Ball Metal & Chemical and Ball Glass Container; Lennar Asphalt (1975);
  *   Ashland Metal, Ashland Exploration (sold in 1997) and the towns.
@@ -1170,8 +1176,11 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("SEB", "Seaboard Farms of Chattanooga", /^SEABOARD\s+FARMS\s+OF\s+CHATTANOOGA\b/i, "seaboard", { to: "2000-01-02" }),
   ],
   56873: [
-    unit("KR", "Kroger's partnerships, plants and pharmacies", /^(?:THE\s+)?KROGER\s+(?:LIMITED PARTNERSHIP|TEXAS|MEMPHIS|SPECIALTY PHARMACY|CO(?:MPANY)?\.?\s*(?:\(|D\/B\/A|BAKERY))/i, "kroger"),
+    unit("KR", "Kroger's partnerships and plants", /^(?:THE\s+)?KROGER\s+(?:LIMITED PARTNERSHIP|TEXAS|MEMPHIS|CO(?:MPANY)?\.?\s*(?:\(|D\/B\/A|BAKERY))/i, "kroger"),
+    unit("KR", "Kroger Specialty Pharmacy", /^(?:THE\s+)?KROGER\s+SPECIALTY\s+PHARMACY\b/i, "kroger", { to: "2024-08-17" }),
   ],
+  // the pharmacy Elevance Health bought from Kroger in 2024 (batch 137)
+  1156039: [unit("ELV", "Kroger Specialty Pharmacy", /^(?:THE\s+)?KROGER\s+SPECIALTY\s+PHARMACY\b/i, "krogerspecialtypharmacy", { from: "2025-02-20" })],
   821026: [
     unit("ANDE", "The Andersons' own divisions", /^THE ANDERSONS,?\s+(?:INC\b|LAWN|ALACO)/i, "theandersons"),
     unit("ANDE", "The Andersons' ethanol companies", /^THE ANDERSONS\s+(?:MARATHON|ALBION|CLYMERS|DENISON|ETHANOL)\b/i, "theandersons", { from: "2025-07-31" }),

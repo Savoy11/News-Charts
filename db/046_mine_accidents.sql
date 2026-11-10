@@ -2,7 +2,7 @@
 -- lib/mineAccidents.ts, lib/ingest/mineWalk.ts).
 --
 -- MSHA publishes its Accidents file whole, one 52 MB zip of every injury, illness and accident a mine
--- operator or contractor reported on Form 7000-1 since 2000 (275,800 records, 2026-11-09). It is read
+-- operator or contractor reported on Form 7000-1 since 2000 (275,799 records, 2026-11-09). It is read
 -- once a week for every company, and not again while MSHA has not changed it; a new copy replaces the
 -- kept accidents whole. Only the deaths are kept, grouped by mine and day (1,130 accidents, 1,221
 -- dead), whoever controlled the mine, so a change to the controller map needs no new read. Each

@@ -159,7 +159,12 @@ the accident's (batch 130, the 2026-11-09 audit's finding 1): Form 55a's per-acc
 record's part ("Do not use this field to sum fatalities", the dataset says), so before it the
 deadliest accidents showed none: Big Bayou Canot of 1993 read "$11,369,400 of damage" on CSX's page,
 where 47 died, and Union Pacific's report of Chatsworth in 2008 counted none of the 25 Metrolink
-passengers killed.
+passengers killed. Since batch 136 (the 2026-11-09b proposal 4, part b) a row also carries the
+railroad's own account, the report's narrative with the dataset's "NoneNone…" filler for empty parts
+removed, and the dead by kind where the report's records add up to the row's count: "Killed, by kind:
+1 railroad employee and 8 others" at Graniteville. On the six pages, 476 of the 490 rows carry an
+account, 390 before 2017, and 113 of the 136 with a death a split; Chatsworth's and Bourbonnais's do
+not, their dead being on Metrolink's and Amtrak's reports. No title, day or key changes.
 
 The dataset names a railroad, never a listed company, so a report reaches a page only through the
 hand-checked map in `lib/railAccidents.ts` (`RAIL_OWNERS`), by CIK, each railroad between the days
@@ -849,7 +854,13 @@ Company's of 2002 Ingersoll Rand Inc.'s (batch 117). Against every company in th
 prices: 2,663 rows on 209 companies, 1,121 of them as maker, importer or distributor (Mattel's first of
 1978, GE's hair dryers of 1979, IBM's ThinkPad batteries of 2006). A work of the U.S. Government, public domain; the Commission's
 site refused this session's requests (403), so the basis is the law's and the federal catalog's,
-not a page re-read.
+not a page re-read. Since batch 136 (the 2026-11-09b proposal 4, part a) a row also gives the
+Commission's injury statement as written, its record of the harm reported, not a finding: Kidde's
+extinguishers on RTX, "The firm is aware of a 2014 death involving a car fire following a crash";
+GE's dishwashers of 2000, "approximately 90 incidents of fire … No injuries have been reported";
+"None reported" said as it is. 952 of the 1,121 rows where the company made, imported or distributed
+the product carry one, 9 of them naming a death; most of the rest are of 1973–1999, before the
+statements begin. db/047 adds the column and has the next run read the service again.
 
 ### CFTC enforcement actions (`lib/cftc.ts`)
 

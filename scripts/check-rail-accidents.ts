@@ -5,7 +5,7 @@ import { deterministicScore } from "../lib/enrich/relevance";
 import { QUOTAS } from "../lib/ingest/quota";
 import { SOURCE_TTL_MINUTES } from "../lib/ingest/refresh";
 import { SOURCES } from "../lib/ingest/store";
-import { DAMAGE_FLOOR, FIELDS, RAIL_OWNERS, accidentEvents, accidentQuery, clearsFloor, fetchRailAccidents, railRoadsFor, roadsWhere, type AccidentRow } from "../lib/railAccidents";
+import { DAMAGE_FLOOR, FIELDS, RAIL_OWNERS, accidentEvents, accidentQuery, clearsFloor, fetchRailAccidents, narrativeOf, railRoadsFor, roadsWhere, type AccidentRow } from "../lib/railAccidents";
 import type { TimelineEvent } from "../lib/types";
 import { COMPANY_SOURCES } from "./ingest";
 import tickerIndex from "../data/edgar-tickers.json";
@@ -47,11 +47,12 @@ async function main(): Promise<void> {
   console.log("\nThe dataset's answer");
   // batch 130 (the 2026-11-09 audit's finding 1): the answer again, with the accident's own counts and
   // the deaths only they give; batch 127's 1,909 records, every one of them in it unchanged, read neither
-  check("2,957 records read on 2026-11-09 (1,909 before the per-accident counts), each with its railroad, report key, day and type, the first of 1975-01-12",
-    FIXTURE.read === "2026-11-09" && rows.length === 2957 && rows.every((r) => r.reportingrailroadcode && r.reportkey && /^\d{4}-\d{2}-\d{2}T/.test(r.date ?? "") && r.accidenttype) &&
+  // batch 136: read again on 2026-11-10 with the narrative and the dead by kind, every earlier field as it was
+  check("2,957 records read on 2026-11-10 (1,909 before the per-accident counts), each with its railroad, report key, day and type, the first of 1975-01-12",
+    FIXTURE.read === "2026-11-10" && rows.length === 2957 && rows.every((r) => r.reportingrailroadcode && r.reportkey && /^\d{4}-\d{2}-\d{2}T/.test(r.date ?? "") && r.accidenttype) &&
       [...rows].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))[0].date?.slice(0, 10) === "1975-01-12",
     `${rows.length}`);
-  check("  …and every field the reader asks for, the accident's counts among them", FIELDS.split(",").length === 20 && /totalpersonskilled,totalpersonsinjured/.test(FIELDS) && FIELDS.split(",").every((f) => rows.some((r) => f in r)));
+  check("  …and every field the reader asks for, the accident's counts, the narrative and the dead by kind among them", FIELDS.split(",").length === 24 && /totalpersonskilled,totalpersonsinjured/.test(FIELDS) && /narrative,railroademployeeskilled,passengerskilled,otherskilled/.test(FIELDS) && FIELDS.split(",").every((f) => rows.some((r) => f in r)));
 
   console.log("\nThe floor, the owner's call of 2026-11-09");
   const graniteville = eventOf("NS", "019414");
@@ -60,9 +61,10 @@ async function main(): Promise<void> {
       graniteville.title === "Norfolk Southern: train accident at Graniteville, South Carolina — 9 killed, 292 injured, 5,200 evacuated" &&
       /^https:\/\/safetydata\.fra\.dot\.gov\/.*NS01941420050106$/.test(graniteville.url ?? "") && graniteville.type === "regulation" && graniteville.source === "FRA",
     JSON.stringify(graniteville).slice(0, 300));
-  check("  …its description names the railroad, the hazardous car, the damage in whole dollars, its cause, and that a report is no finding of fault",
-    graniteville?.description ===
-      "Reported to the Federal Railroad Administration by Norfolk Southern Railway Company (accident 019414). 1 car released hazardous material. Damage to equipment and track: $2,333,400. Cause the railroad reported: Switch improperly lined. The report is the railroad's own filing to its regulator, not a finding of fault.",
+  check("  …its description names the railroad, the dead by kind, the hazardous car, the damage in whole dollars, its cause, the railroad's own account and that a report is no finding of fault (batch 136)",
+    (graniteville?.description ?? "").startsWith(
+      "Reported to the Federal Railroad Administration by Norfolk Southern Railway Company (accident 019414). Killed, by kind: 1 railroad employee and 8 others. 1 car released hazardous material. Damage to equipment and track: $2,333,400. Cause the railroad reported: Switch improperly lined. The railroad's account: \"TRAIN 192P005 MOVING NORTH ON MAIN TRACK ENTERED OPEN SWITCH INTO AVONDALE MILLS INDUSTRY",
+    ) && /…" The report is the railroad's own filing to its regulator, not a finding of fault\.$/.test(graniteville?.description ?? ""),
     graniteville?.description);
   check("East Palestine (Norfolk Southern 152207, 2023-02-03) lands on NSC; CSX's Baltimore tunnel of 2001-07-18 (070122014) on CSX, 50,000 evacuated",
     pagesOf("NS", "152207") === "NSC" && eventOf("NS", "152207")?.date === "2023-02-03" && pagesOf("CSX", "070122014") === "CSX" && /— 50,000 evacuated$/.test(eventOf("CSX", "070122014")?.title ?? ""),
@@ -144,6 +146,34 @@ async function main(): Promise<void> {
     railRoadsFor(ciks.CP) ?? [],
   );
   check("  …and one accident two of the company's own railroads reported is one row on its page, the first report's by its key", two.length === 1 && two[0].externalId === "CPB2", JSON.stringify(two.map((e) => e.externalId)));
+
+  // batch 136, the 2026-11-09b proposal 4 (b), approved by the owner on 2026-11-10
+  console.log("\nThe railroad's own account, and the dead by kind (batch 136, the 2026-11-09b proposal 4, part b)");
+  check("a narrative loses the dataset's filler for empty parts: one of empty parts is none, a short one keeps its text",
+    narrativeOf("NoneNoneNoneNone") === "" && narrativeOf("TRAIN STRUCK A TRUCK.  NoneNoneNone") === "TRAIN STRUCK A TRUCK." && narrativeOf(undefined) === "" &&
+      rows.filter((r) => /^(?:None)+$/.test(r.narrative ?? "")).length > 0);
+  const bourbonnais = eventOf("IC", "MAR3699");
+  check("Bourbonnais on CN (1999-03-15) carries the railroad's account: \"AMTRAK #59 COLLIDED WITH A TRACTOR TRAILER LOADED WITH STEEL REBAR…\"; its 11 dead are on Amtrak's report, so the count stands alone",
+    /The railroad's account: "AMTRAK #59 COLLIDED WITH A TRACTOR TRAILER LOADED WITH STEEL REBAR AT MCKNIGHT ROAD CROSSING/.test(bourbonnais?.description ?? "") && !/Killed, by kind/.test(bourbonnais?.description ?? "") &&
+      bourbonnais?.title === "Illinois Central: highway-rail crossing collision at Bourbonnais, Illinois — 11 killed, 50 injured",
+    bourbonnais?.description?.slice(0, 300));
+  check("  …Chatsworth's (Union Pacific 0908LA014), whose dead are on Metrolink's report, gives no split; Lonjct's of 1993, whose records give 2 of its 5, none either; Minot's 1 is \"1 other\"",
+    /The railroad's account: "SCAX'S METROLINK TRAIN 111 RAN BY A RED SIGNAL/.test(eventOf("UP", "0908LA014")?.description ?? "") && !/Killed, by kind/.test(eventOf("UP", "0908LA014")?.description ?? "") &&
+      !/Killed, by kind/.test(eventOf("UP", "1193CR009")?.description ?? "") && /Killed, by kind: 1 other\./.test(eventOf("SOO", "170488")?.description ?? ""));
+  const rowsAll = [...pages.values()].flat();
+  const accounts = rowsAll.filter((e) => (/The railroad's account: "([^"]*)"/.exec(e.description ?? "")?.[1] ?? "").length >= 20);
+  const dead = rowsAll.filter((e) => / \d[\d,]* killed/.test(e.title));
+  const split = dead.filter((e) => /Killed, by kind: /.test(e.description ?? ""));
+  check("on the six pages: 476 of the 490 rows carry an account of 20 characters or more, 390 before 2017; 113 of the 136 rows with a death give the dead by kind; no description runs past 600 characters and no title changes",
+    accounts.length === 476 && accounts.filter((e) => e.date < "2017").length === 390 && dead.length === 136 && split.length === 113 && rowsAll.every((e) => (e.description ?? "").length <= 600) &&
+      rowsAll.every((e) => !/account|by kind/.test(e.title)),
+    `${accounts.length}, ${accounts.filter((e) => e.date < "2017").length} before 2017; ${split.length} of ${dead.length}`);
+  check("  …a split is shown only where it adds up to the row's count, the counts added as whole numbers",
+    split.every((e) => {
+      const n = (/ (\d[\d,]*) killed/.exec(e.title)?.[1] ?? "0").replace(/,/g, "");
+      const parts = [...(/Killed, by kind: ([^.]*)\./.exec(e.description ?? "")?.[1] ?? "").matchAll(/(\d[\d,]*) /g)].map((m) => BigInt(m[1].replace(/,/g, "")));
+      return parts.reduce((a, b) => a + b, BigInt(0)) === BigInt(n);
+    }));
 
   console.log("\nThe request");
   const q = decodeURIComponent(accidentQuery(railRoadsFor(ciks.UNP) ?? [], "1980-01-02").replace(/\+/g, " "));

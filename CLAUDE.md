@@ -110,11 +110,13 @@ the rule's tests run that day (batch 122), and a court case of settlements on se
 day on the page whose own are every defendant that day; a case's own day keeps its row and key. The
 CPSC's recalls (`lib/cpscRecalls.ts`) go on every listed company a recall names: its makers,
 importers and distributors by the caption rule, its stores as whole items of the "Sold at" line, a
-store's recalls of other makers' products grouped a row a month. The FRA's railroad accident reports (`lib/railAccidents.ts`, batch 127) reach a
+store's recalls of other makers' products grouped a row a month, a recall's row with the Commission's injury
+statement as written (batch 136). The FRA's railroad accident reports (`lib/railAccidents.ts`, batch 127) reach a
 railroad company's page only through `RAIL_OWNERS`, each reporting railroad between its owner's days, from
 the company's first price, at the owner's floor: a death, an evacuation or $5,000,000 of damage, a crossing
 collision only with the last two; its dead and injured are the accident's, Form 55a's count, never one
-record's Form 54 part (batch 130). MSHA's mine accidents (`lib/mineAccidents.ts`, batch 134), the deaths of
+record's Form 54 part (batch 130), its text the railroad's own narrative and the dead by kind where they add
+up (batch 136). MSHA's mine accidents (`lib/mineAccidents.ts`, batch 134), the deaths of
 its Accidents file kept from a weekly read of two zips (`lib/ingest/mineWalk.ts`, db/046), reach a page only
 through `MINE_CONTROLLERS`, each controller ID between its company's days, from the first price; MSHA gives
 an ID's present name on an old record, so a title names no operator. The

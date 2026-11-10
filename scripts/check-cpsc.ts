@@ -281,6 +281,30 @@ async function main(): Promise<void> {
   check("  …and a company's ingest asks the kept recalls by its units' keys: Honda's page holds American Honda's 51 rows from 2000",
     hondaPage.events.length === 51 && has(hondaPage.events, "02509") && hondaPage.events.every((e) => e.date >= "2000"), `${hondaPage.events.length}`);
 
+  // batch 136, the 2026-11-09b proposal 4 (a), approved by the owner on 2026-11-10
+  console.log("\nThe Commission's injury statement on the row (batch 136, the 2026-11-09b proposal 4, part a)");
+  check("the answer's injury statement is read as written: 8,424 of the 10,070 recalls carry one; a recall with two (01166, Equity Marketing's and Nantucket Distributing's) gives both",
+    recalls.filter((r) => r.injuries).length === 8424 && /^The firm is aware of a 2014 death involving a car fire following a crash\./.test(recall("18022").injuries ?? "") &&
+      /^Equity Marketing Inc\. has received three reports.* CPSC and Nantucket Distributing Co\. Inc\. have received five /.test(recall("01166").injuries ?? "") &&
+      parseRecalls([{ RecallNumber: 1, RecallDate: "2020-01-01", Title: "x", Injuries: [] }])[0]?.injuries === null,
+    `${recalls.filter((r) => r.injuries).length}`);
+  const kiddeRow = on("RTX").find((e) => has([e], "18022"));
+  check("Kidde's extinguishers on RTX (18022) say what the Commission recorded: a 2014 death in a car fire",
+    /Injuries, the Commission's record: The firm is aware of a 2014 death involving a car fire following a crash\./.test(kiddeRow?.description ?? "") && (kiddeRow?.description ?? "").length <= 600,
+    kiddeRow?.description?.slice(0, 300));
+  const geRow = on("GE").find((e) => has([e], "01054"));
+  check("  …GE's dishwashers of 2000-12-14 (01054): about 90 incidents of fire, \"No injuries have been reported\"",
+    /Injuries, the Commission's record: There have been approximately 90 incidents of fire/.test(geRow?.description ?? "") && /No injuries have been reported/.test(geRow?.description ?? ""),
+    geRow?.description?.slice(0, 300));
+  const noneRow = flat.find((e) => /Injuries, the Commission's record: None reported\./.test(e.description ?? ""));
+  const ownWith = ownOf(flat).filter((e) => /Injuries, the Commission's record: /.test(e.description ?? ""));
+  const deaths = ownWith.filter((e) => /\b(?:died|death|deaths|fatal|fatality|fatalities|killed)\b/i.test((e.description ?? "").split("Injuries, the Commission's record: ").slice(1).join(" ")));
+  check("  …\"None reported\" is said as it is; of the 1,121 rows where the company made, imported or distributed the product, 952 carry a statement, 9 naming a death; no recall's row runs past 600 characters",
+    !!noneRow && ownWith.length === 952 && deaths.length === 9 && flat.filter((e) => e.precision !== "month").every((e) => (e.description ?? "").length <= 600),
+    `${ownWith.length} with one; ${deaths.length} naming a death: ${deaths.map((e) => e.date).join(" ")}; "None reported" ${!!noneRow}`);
+  check("  …and the statement is stored with the recall and read back with it at ingest",
+    page.events.some((e) => /Injuries, the Commission's record: /.test(e.description ?? "")) && /ADD COLUMN IF NOT EXISTS injuries text/.test(read("db/047_cpsc_injuries.sql")) && /^DELETE FROM cpsc_reads;$/m.test(read("db/047_cpsc_injuries.sql")));
+
   console.log("\nRegistered, licensed, wired");
   const src = SOURCES.find((s) => s.key === "cpsc_recalls");
   check("the source is registered as public domain, cleared for commercial use, with the day it was read",
@@ -317,11 +341,11 @@ function fakeDb(db: FakeDb): PoolClient {
         db.recalls.clear();
         return { rows: [] };
       }
-      if (/^INSERT INTO cpsc_recalls \(recall_number, recalled_on, title, url, hazard, units, makers, importers, distributors, sold_at, name_keys\)/.test(s)) {
-        const [n, d, t, u, h, un, m, im, di, so, k] = params as string[][];
+      if (/^INSERT INTO cpsc_recalls \(recall_number, recalled_on, title, url, hazard, units, makers, importers, distributors, sold_at, name_keys, injuries\)/.test(s)) {
+        const [n, d, t, u, h, un, m, im, di, so, k, inj] = params as string[][];
         const list = (x: string) => (x ? x.split("|") : []);
         n.forEach((number, i) =>
-          db.recalls.set(number, { number, day: d[i], title: t[i], url: u[i], hazard: h[i], units: un[i], makers: list(m[i]), importers: list(im[i]), distributors: list(di[i]), soldAt: so[i], keys: k[i] }),
+          db.recalls.set(number, { number, day: d[i], title: t[i], url: u[i], hazard: h[i], injuries: inj[i] ?? null, units: un[i], makers: list(m[i]), importers: list(im[i]), distributors: list(di[i]), soldAt: so[i], keys: k[i] }),
         );
         return { rows: [] };
       }
@@ -329,13 +353,13 @@ function fakeDb(db: FakeDb): PoolClient {
         db.read = { ageDays: 0 };
         return { rows: [] };
       }
-      if (/^SELECT recall_number, recalled_on::text AS day, title, url, hazard, units, makers, importers, distributors, sold_at\s+FROM cpsc_recalls WHERE recalled_on >= \$1::date AND name_keys LIKE ANY \(\$2::text\[\]\) ORDER BY recalled_on, recall_number$/.test(s)) {
+      if (/^SELECT recall_number, recalled_on::text AS day, title, url, hazard, injuries, units, makers, importers, distributors, sold_at\s+FROM cpsc_recalls WHERE recalled_on >= \$1::date AND name_keys LIKE ANY \(\$2::text\[\]\) ORDER BY recalled_on, recall_number$/.test(s)) {
         const [from, patterns] = params as [string, string[]];
         const keys = patterns.map((p) => p.replace(/^%|%$/g, ""));
         const rows = [...db.recalls.values()]
           .filter((r) => r.day >= from && keys.some((k) => r.keys.includes(k)))
           .sort((a, b) => a.day.localeCompare(b.day) || a.number.localeCompare(b.number))
-          .map((r) => ({ recall_number: r.number, day: r.day, title: r.title, url: r.url, hazard: r.hazard, units: r.units, makers: r.makers, importers: r.importers, distributors: r.distributors, sold_at: r.soldAt }));
+          .map((r) => ({ recall_number: r.number, day: r.day, title: r.title, url: r.url, hazard: r.hazard, injuries: r.injuries, units: r.units, makers: r.makers, importers: r.importers, distributors: r.distributors, sold_at: r.soldAt }));
         return { rows };
       }
       if (/FROM prices/.test(s)) return { rows: [{ listed: db.listed }] };

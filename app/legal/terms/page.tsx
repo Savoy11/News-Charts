@@ -49,7 +49,8 @@ export default function TermsPage() {
         enforcement actions from the Consumer Financial Protection Bureau, civil enforcement
         cases from the U.S. Environmental Protection Agency, product recalls from the U.S.
         Consumer Product Safety Commission, railroad accident reports from the Federal Railroad
-        Administration, enforcement actions from the Commodity Futures Trading Commission, material
+        Administration, mine accident reports from the Mine Safety and Health Administration of the
+        U.S. Department of Labor, enforcement actions from the Commodity Futures Trading Commission, material
         from the
         Internet Archive, text from Wikipedia under CC BY-SA, and headlines that
         link to their publishers. Those sources&apos; own terms and licences apply to their content.

@@ -174,6 +174,38 @@ text (`NEWS_CHARTS_CONTACT`). Measured on the dataset's answer of 2026-11-09, ea
 first price: 490 accidents on six pages, 404 before 2017, 135 before 1993 (CSX 166, Union Pacific 158,
 Norfolk Southern 69, CN 36, Berkshire Hathaway 37, CPKC 24). Scored without the model.
 
+### Mine accidents (`lib/mineAccidents.ts`)
+
+A mining company's page carries the accidents that killed someone at a mine it controlled, from 2000
+(batch 134, the 2026-11-09b proposal 2, approved by the owner on 2026-11-10 once the Labor
+Department's terms were read): every record of a death in the Mine Safety and Health Administration's
+Accidents file, the Form 7000-1 reports mine operators and contractors file, grouped by mine and day.
+MSHA serves the file whole as one 52 MB zip, with a Mines file for each mine's place; both are read once
+a week for every company and the deaths kept in db/046 (`lib/ingest/mineWalk.ts`), 1,130 accidents and
+1,221 dead on 2026-11-09. Public domain (the Labor Department: "Materials created by the federal
+government are generally part of the public domain and may be used, reproduced and distributed without
+permission"), credited to the Department, implying no endorsement and using none of its seals. A row
+gives the mine's county and state, the dead, MSHA's classification and accident type, the time and
+where at the mine, how many of the dead worked for a contractor, and MSHA's own account: "Coal mine
+accident in Marshall County, West Virginia — 3 killed (gas or dust explosion)". The report is the
+operator's own filing to its regulator, not a finding of fault, and the row says so. MSHA records each
+mine's controller and operator by the IDs they had on the day, but under each ID's present name, so a
+title names no operator, and the text gives MSHA's present names as present names.
+
+MSHA names a controller, never a listed company, so an accident reaches a page only through the
+hand-checked map in `lib/mineAccidents.ts` (`MINE_CONTROLLERS`), 54 controller IDs on 52 companies by
+CIK, each between the days its company held it: CONSOL Energy's ID on CNX Resources to the coal spin-off
+of 2017-11-28 and on the new CONSOL, now Core Natural Resources, after; Mosaic's from the combination of
+2004-10-22; Knife River's quarries on MDU to 2023; Trinity's on Trinity to Arcosa's spin-off;
+ArcelorMittal's Minorca mine on ArcelorMittal to its sale to Cleveland-Cliffs in 2020; Legacy Vulcan,
+Vulcan Materials' predecessor record, on Vulcan. An acquisition's past is never the buyer's (Massey's,
+Alpha Natural Resources', Walter's, Arch's, Phelps Dodge's, Stillwater Mining's), a joint venture is no
+one's (Bridger Coal, Nevada Gold Mines), and every page counts only from its company's first price
+(Peabody's of 2001 are no page's). Measured on the files of 2026-11-09, each page from its first price:
+224 accidents, 237 dead, on 51 pages, 144 before 2017 (Alliance Resource 30, CNX 29, Martin Marietta
+19, Vulcan 15, Freeport-McMoRan 12, CRH 11, Newmont 10, Barrick 9). Arcosa's two wait: Yahoo's chart for
+it begins 2026-07-17. Scored without the model.
+
 ### Federal Reserve enforcement actions (`lib/fedActions.ts`)
 
 A bank's page carries the Federal Reserve Board's enforcement actions against it, back to 1993:
@@ -1515,6 +1547,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
 | U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 95 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
+| Mine Safety and Health Administration | Accidents since 2000 that killed someone at a mine the company controlled | MSHA's Accidents and Mines files, one 52 MB zip and one of 7 MB, read once a week for every company and the deaths kept (`lib/ingest/mineWalk.ts`); kept for the 54 controller IDs `lib/mineAccidents.ts` maps by hand to 52 companies, each between its company's days, from the company's first price. Public domain, credited to the U.S. Department of Labor; no key |
 | Federal Railroad Administration | Railroad accidents since 1975 a company's railroad reported, with a death, an evacuation or $5,000,000 of damage | Form 54 on the Transportation Department's open-data host, one request a day for each of the six railroad companies `lib/railAccidents.ts` maps by hand, each railroad between its owner's days, from the company's first price; a highway-rail crossing collision only with an evacuation or that damage. Public domain; no key |
 | Commodity Futures Trading Commission | The Commission's enforcement actions since 1995 whose title makes the company the party — a bank's benchmark-rigging order, an energy trader's manipulation suit | The enforcement list, read whole once a year and its newest page once a day, for every company (`lib/ingest/cftcWalk.ts`); kept by the Justice Department's title rule with the release map's units (`lib/cftc.ts`). Public domain, acknowledged to the CFTC; no key |
 | SEC News Digest | The SEC's daily summary of 1956–1993: the 8-K reports a company filed, its registration statements, the 13D and 14D-1 filings on its shares, the SEC's orders and actions on it, its listing orders | Every issue's PDF read once for every company, 60 a run (`lib/ingest/secDigestWalk.ts`); kept when an entry's party is the company under the name its EDGAR record had that day and no other company's (`lib/secDigest.ts`), from its first price; a month's 8-K reports one row. Public information the SEC lets anyone copy, cited to the SEC; no key; needs `pdftotext` and `NEWS_CHARTS_CONTACT` |

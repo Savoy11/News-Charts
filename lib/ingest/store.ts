@@ -499,6 +499,24 @@ export const SOURCES: {
     reviewedOn: "2026-11-09",
     notes: "railroad accidents since 1975 with a death, an evacuation or $5,000,000 of damage, for the railroads lib/railAccidents.ts maps, each between its owner's days; no key (batch 127)",
   },
+  {
+    id: 38,
+    key: "msha_accidents",
+    name: "MSHA mine accident reports",
+    license: "public domain",
+    attribution: "Mine Safety and Health Administration, U.S. Department of Labor",
+    // The Labor Department's terms (www.dol.gov/general/aboutdol/copyright, read 2026-11-10):
+    // "Materials created by the federal government are generally part of the public domain and may be
+    // used, reproduced and distributed without permission", but "may not be used in a manner that
+    // implies any affiliation or endorsement by the DOL"; credited "to the U.S. Department of Labor";
+    // its seals and logos are not used. Used: each fatal accident's mine, day, time, dead, the
+    // contractor's share, MSHA's classification, accident type and narrative, and the mine's present
+    // name, place and operator from the Mines file. Approved by the owner on 2026-11-10, after this
+    // licence was read (docs/proposals/2026-11-09b-proposals.md #2).
+    commercialOk: true,
+    reviewedOn: "2026-11-10",
+    notes: "deaths at mines since 2000, for the controllers lib/mineAccidents.ts maps, each between its company's days; MSHA's two open-data zips read once a week for every company, no key (batch 134)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

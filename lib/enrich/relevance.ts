@@ -434,6 +434,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "fra_accidents") {
         return { score: 1, reason: "an accident report filed by a railroad the company owned that day" };
       }
+      // …and a death at a mine the company controlled that day, by MSHA's controller ID, checked by
+      // hand as the railroads are (lib/mineAccidents.ts, batch 134)
+      if (subject.kind === "company" && row.sourceKey === "msha_accidents") {
+        return { score: 1, reason: "a death at a mine the company controlled that day" };
+      }
       // …and an SEC News Digest entry whose party is the company under the name its record had
       // that day, and no other company's (lib/secDigest.ts, batch 102)
       if (subject.kind === "company" && row.sourceKey === "sec_digest") {

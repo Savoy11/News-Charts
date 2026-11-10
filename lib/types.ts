@@ -62,7 +62,8 @@ export type SourceKey =
   | "sec_digest"
   | "fda_approvals"
   | "fda_supplements"
-  | "fra_accidents";
+  | "fra_accidents"
+  | "msha_accidents";
 
 export interface TimelineEvent {
   id: string;

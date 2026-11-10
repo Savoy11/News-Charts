@@ -58,9 +58,10 @@ export function decodeText(bytes: Uint8Array): string {
  * Each row of a CSV file, as the named columns only: `fn` gets one value a column, in the order
  * asked. Fields in double quotes may hold commas, line breaks and doubled quotes ("…""…"). Rows
  * are read one at a time and fields cut from the text, never built a character at a time: EPA's
- * case table is 95 MB.
+ * case table is 95 MB. `separator` is the character between fields: a comma, or the "|" MSHA's
+ * files use (batch 134).
  */
-export function eachCsvRow(text: string, columns: readonly string[], fn: (values: string[]) => void): void {
+export function eachCsvRow(text: string, columns: readonly string[], fn: (values: string[]) => void, separator = ","): void {
   let i = 0;
   const n = text.length;
   const readRow = (): string[] | null => {
@@ -91,13 +92,13 @@ export function eachCsvRow(text: string, columns: readonly string[], fn: (values
         i = j;
       } else {
         let j = i;
-        while (j < n && text[j] !== "," && text[j] !== "\n" && text[j] !== "\r") j++;
+        while (j < n && text[j] !== separator && text[j] !== "\n" && text[j] !== "\r") j++;
         value = text.slice(i, j);
         i = j;
       }
       row.push(value);
       if (i >= n) return row;
-      if (text[i] === ",") {
+      if (text[i] === separator) {
         i++;
         continue;
       }

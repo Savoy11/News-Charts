@@ -225,6 +225,11 @@ Raised by the November batches, each recorded in the master checklist:
      swapping on the day), or wait for `NEWS_CHARTS_CONTACT` to read the notices' text.
   2. `P2` fatal mine accidents from MSHA, a new source: 221 accidents on 51 pages, 139 before 2017. Its
      licence wording (the Labor Department's notice) answered 403 here and is to be read first.
+     **Built in batch 134:** the notice was read through a browser and allows free reuse (public
+     domain, no endorsement implied); 224 accidents, 237 dead, on 51 pages, 144 before 2017. Nothing to
+     run after deploying: apply db/046 (`npm run db:migrate`), and each mapped company's next ingest
+     reads MSHA's two files once for all of them. Arcosa's two accidents wait for its Yahoo chart, which
+     begins 2026-07-17.
   3. `P2` EPA cases under a fourth round of units (Ashland Chemical, Akzo Nobel Chemicals, Gerdau
      Ameristeel, Seaboard Farms…): 153 cases on 13 pages, 134 before 2017.
   4. `P2` the regulator's own account on rows already held: (a) the CPSC's injury statement, (b) the

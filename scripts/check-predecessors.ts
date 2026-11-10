@@ -330,6 +330,98 @@ async function main(): Promise<void> {
       pages.NI.renames.some((r) => r.from === "NIPSCO INDUSTRIES INC") && pages.ORCL.renames.some((r) => r.from === "ORACLE SYSTEMS CORP") &&
       pages.ASH.renames.some((r) => r.from === "ASHLAND OIL INC") && !pages.NOC.renames.some((r) => /SYSTEMS/.test(r.to)) && !pages.ORCL.renames.some((r) => r.to === "Oracle Systems"));
 
+  // ─── batch 133: the rest of the population, from the scan of every listed company's list ─────
+  console.log("\nBatch 133: the scan of every listed company's filing list, and batch 117's records read again");
+  const lists133 = (await import("./fixtures/predecessor-lists-b133.json")).default as unknown as typeof lists;
+  const B133: Record<string, number[]> = {
+    ED: [23632], PCG: [75488], OGE: [74145], TDS: [96966], IDA: [49648], SR: [57183], NEM: [71824], HST: [314733], GPK: [886239, 892793],
+    VLO: [21271], SPG: [912564], MERC: [75659], NVRI: [45876], CHH: [1018146], MPU: [1036848], LEN: [58696], HR: [899749], IRM: [1004317],
+    PPL: [317187], DTE: [28385], URI: [1047166], TROW: [80255], NBR: [798943], FMS: [1019600], KB: [1143680], RIG: [1083269, 314047],
+    ACN: [1134538], ICE: [1174746], ZG: [1334814], PFSI: [1568669],
+  };
+  check("the 30 pages read their predecessors' records, Graphic Packaging and Transocean two each, newest first",
+    Object.entries(B133).every(([t, ciks]) => JSON.stringify(predecessorsOf(cikOf(t)).map((p) => p.cik)) === JSON.stringify(ciks)),
+    Object.entries(B133).filter(([t, ciks]) => JSON.stringify(predecessorsOf(cikOf(t)).map((p) => p.cik)) !== JSON.stringify(ciks)).map(([t]) => t).join(", "));
+  const handovers = Object.entries(B133).flatMap(([t, ciks]) => predecessorsOf(cikOf(t)).map((p) => {
+    const rows = [cikOf(t), ...ciks].flatMap((c) => lists133.records[String(c)]?.filings ?? []);
+    return { t, p, row: rows.find((r) => r[2] === p.notice) };
+  }));
+  const forms133: Record<string, number> = {};
+  for (const h of handovers) forms133[h.row?.[1] ?? "none"] = (forms133[h.row?.[1] ?? "none"] ?? 0) + 1;
+  check("each handover's filing is in the lists on its `until`: 13 notices of succession (8-K12B, 8-K12G3), 4 of the older form (8-B12B), 13 8-Ks, a registration and a deregistration",
+    handovers.length === 32 && handovers.every(({ t, p, row }) => !!row && (row[0] === p.until || (t === "ZG" && row[0] === "2015-02-17"))) &&
+      JSON.stringify(Object.entries(forms133).sort()) === JSON.stringify(Object.entries({ "8-K12B": 6, "8-K12G3": 7, "8-B12B": 4, "8-K": 13, "8-A12B": 1, "15-12B": 1 }).sort()),
+    JSON.stringify(forms133));
+  check("  …Newmont's rests on its new parent's registration (8-A12B) and Valero's on its old record's deregistration (15-12B), each filed on its day",
+    handovers.find((h) => h.t === "NEM")?.row?.[1] === "8-A12B" && handovers.find((h) => h.t === "VLO")?.row?.[1] === "15-12B" &&
+      lists133.records["71824"].filings.some((r) => r[0] === "2002-02-15" && r[1] === "15-12B"));
+  check("  …Zillow's day is the one after the old record's annual report for 2014, filed on the handover day",
+    predecessorsOf(cikOf("ZG"))[0]?.until === "2015-02-18" && lists133.records["1334814"].filings.some((r) => r[0] === "2015-02-17" && r[1] === "10-K"));
+
+  (globalThis as { fetch: unknown }).fetch = async (input: RequestInfo | URL) => {
+    const key = /CIK(\d{10})\.json$/.exec(String(input))?.[1];
+    const r = key ? lists133.records[String(Number(key))] : undefined;
+    let body: unknown;
+    if (r) {
+      const rows = [...r.filings].sort((a, b) => b[0].localeCompare(a[0]));
+      body = {
+        name: r.name,
+        formerNames: r.formerNames.map((f) => ({ name: f.name, from: `${f.from}T00:00:00.000Z`, to: `${f.to}T00:00:00.000Z` })),
+        filings: { recent: { form: rows.map((x) => x[1]), filingDate: rows.map((x) => x[0]), accessionNumber: rows.map((x) => x[2]), primaryDocument: rows.map(() => "doc.htm"), items: rows.map((x) => x[3]) } },
+      };
+    }
+    return { ok: body !== undefined, status: body ? 200 : 404, json: async () => body } as unknown as Response;
+  };
+  type Ev = Awaited<ReturnType<typeof getFilingsDeep>>[number];
+  const p133: Record<string, { ev: Ev[]; ids: Set<string>; titles: string[]; renames: Rename[] }> = {};
+  try {
+    for (const t of Object.keys(B133)) {
+      const renames: Rename[] = [];
+      const ev = await getFilingsDeep({ ticker: t, cik: String(cikOf(t)).padStart(10, "0"), name: lists133.records[String(cikOf(t))].name }, false, renames);
+      p133[t] = { ev, ids: new Set(ev.map((e) => e.id)), titles: ev.filter((e) => e.type === "corporate_action").map((e) => e.title), renames };
+    }
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const on = (t: string, a: string) => p133[t].ids.has(`sec-${a.replace(/-/g, "")}`);
+  check("Con Edison's page holds Consolidated Edison of New York's annual report of 1997, not the utility's own 8-K after the handover",
+    on("ED", "0000023632-97-000005") && !on("ED", "0000023632-98-000007"));
+  check("Graphic Packaging reads two steps: Graphic Packaging International's annual report of 2003 and the record from the 2003 merger, not Riverwood's own past",
+    on("GPK", "0000898430-03-002029") && on("GPK", "0001047469-05-008145") && !on("GPK", "0001005477-97-000874") &&
+      p133.GPK.titles.includes("Renamed from ACX TECHNOLOGIES INC to GRAPHIC PACKAGING INTERNATIONAL CORP") && !p133.GPK.titles.some((x) => /RIVERWOOD/.test(x)),
+    p133.GPK.titles.join(" | "));
+  check("Transocean reads three records back: the Delaware company's quarter of 1999 and the Cayman company's annual report of 2008, not that shell's own name of 1999",
+    on("RIG", "0000899243-99-000985") && on("RIG", "0001140361-08-005230") && p133.RIG.titles.includes("Renamed from SONAT OFFSHORE DRILLING INC to TRANSOCEAN OFFSHORE INC") &&
+      !p133.RIG.titles.some((x) => /TEXAS/.test(x)), p133.RIG.titles.join(" | "));
+  check("the old Host Marriott's 98 days as HOST MARRIOTT SERVICES CORP in 1995 are no renames on Host's page: a name given back within half a year is churn",
+    !p133.HST.titles.some((x) => /HOST MARRIOTT SERVICES/.test(x)) && !p133.HST.renames.some((r) => /SERVICES/.test(`${r.from} ${r.to}`)), p133.HST.titles.join(" | "));
+  const lab = (t: string, a: string) => {
+    const e = p133[t].ev.find((x) => x.id === `sec-${a.replace(/-/g, "")}`);
+    return e ? ownPastLabelled(e, cikOf(t)) : undefined;
+  };
+  check("Healthcare Realty's page: Healthcare Trust of America's own 8-K before the 2022 merger is labelled as its; old Healthcare Realty's of the same week and the record's after the merger are as filed",
+    !!lab("HR", "0001360604-22-000053")?.source.endsWith("Healthcare Trust of America, before its 2022 merger with Healthcare Realty") &&
+      lab("HR", "0001360604-22-000053")!.title.startsWith("Healthcare Trust of America:") &&
+      on("HR", "0000899749-22-000103") && !lab("HR", "0000899749-22-000103")!.source.includes("Healthcare Trust of America") &&
+      !lab("HR", "0001193125-22-198653")!.source.includes("Healthcare Trust of America"),
+    `${lab("HR", "0001360604-22-000053")?.title} | ${lab("HR", "0001360604-22-000053")?.source}`);
+  check("Lennar's page: Pacific Greystone's quarter of 1997 is labelled as its; old Lennar's quarter is the company's",
+    !!lab("LEN", "0001047469-97-002327")?.source.endsWith("Pacific Greystone, before its 1997 merger with Lennar") && on("LEN", "0000950170-97-001235") &&
+      !lab("LEN", "0000950170-97-001235")!.source.includes("Greystone"));
+  check("Zillow's page holds the old Zillow's annual report for 2014, filed on the handover day, and not its amendment of the next day",
+    on("ZG", "0001193125-15-050643") && !on("ZG", "0001193125-15-052711"));
+  check("T. Rowe Price's page holds T. Rowe Price Associates' annual report of 2000", on("TROW", "0000080255-00-000380"));
+  check("Simon's page holds Simon DeBartolo Group's 8-K of 1998-08-24 and its rename of 1996, not SPG Properties' quarter after the merger nor that rename",
+    on("SPG", "0000912564-98-000058") && !on("SPG", "0000912564-98-000059") &&
+      p133.SPG.titles.includes("Renamed from SIMON PROPERTY GROUP INC to SIMON DEBARTOLO GROUP INC") && !p133.SPG.titles.some((x) => /SPG PROPERTIES/.test(x)), p133.SPG.titles.join(" | "));
+  check("Choice Hotels' page holds the old Choice Hotels' quarter of 1997", on("CHH", "0000950109-97-006360"));
+  check("Enviri's page holds Harsco's rename to Enviri of 2023 and not the old record's 8-K of the handover day",
+    p133.NVRI.titles.includes("Renamed from HARSCO CORP to ENVIRI Corp") && !on("NVRI", "0001193125-26-251741"), p133.NVRI.titles.join(" | "));
+  check("PennyMac's page holds the old PennyMac's annual report of 2018, and not its rename into PNMAC Holdings the day before the handover",
+    on("PFSI", "0001558370-18-001782") && !p133.PFSI.titles.some((x) => /PNMAC/.test(x)) && !p133.PFSI.renames.some((r) => /PNMAC/.test(r.to)));
+  check("  …and the three records that took a listed company's name are labelled from their handover, each a mapped successor",
+    ["LEN", "HR", "IRM"].every((t) => ownRecordFrom(cikOf(t)) === predecessorsOf(cikOf(t))[0]?.until));
+
   const read = (await import("node:fs")).readFileSync(`${__dirname}/../lib/store/read.ts`, "utf8");
   check("  …the page's read labels them: each row by its subject's record",
     /sj\.cik AS subject_cik/.test(read) && /const own = ownPastLabelled\(ev, r\.subject_cik\);/.test(read));

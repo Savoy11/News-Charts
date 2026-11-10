@@ -152,14 +152,17 @@ A ticker whose company moved to a new SEC record — a holding-company reorganis
 (XOM in 2026, Alphabet in 2015, Disney in 2019) — reads its earlier filings from the predecessor's
 record up to the handover day, through the hand-checked map in `lib/predecessors.ts`; read its
 header before adding an entry. Batch 132 added 17 pages the full-text search had missed (Comcast,
-Oracle, Duke…) on their own filing lists' evidence, the owner's call of 2026-11-10; a name a
-predecessor took and gave back within a month is EDGAR's churn, not a rename. Merck's is a merger the other way round (batch 108): MRK's record was
+Oracle, Duke…) on their own filing lists' evidence, the owner's call of 2026-11-10, and batch 133 30
+more from a scan of every listed company's list (Con Edison, PG&E, Transocean, Accenture…); a name a
+predecessor took and gave back within half a year is EDGAR's churn, not a rename. Merck's is a merger the other way round (batch 108): MRK's record was
 Schering-Plough's until it took old Merck's name and ticker on 2009-11-03, so old Merck's record is
 MRK's history; the record's own past before it, Schering-Plough's filings, cases, approvals and
 Digest entries, stays on the page labelled as Schering-Plough's (`OWN_RECORD_FROM`,
 `ownPastLabelled` at read time, batch 110, the owner's call); Stratasys's and Waste Connections's are
 the same (batch 118: Objet's and Progressive Waste's records took their names and tickers, and the
-charts are the old companies', as Yahoo's splits show). The reverse, a record that took another
+charts are the old companies', as Yahoo's splits show), and so are Lennar's, Healthcare Realty's and
+Iron Mountain's (batch 133: Pacific Greystone's, Healthcare Trust of America's and Pierce Leahy's
+records, the charts' first prices older than those companies' own listings). The reverse, a record that took another
 company's name, never takes that company's past: one table, `TAKEN_NAMES` in `lib/takenNames.ts`
 (batches 117–118: 32 records; SBC's took AT&T's name, ACE's Chubb's, Norwest's Wells Fargo's, TGC's
 Dawson's…, each day read from a filing), refuses a row before the day that names only the taken name

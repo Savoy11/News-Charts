@@ -56,6 +56,13 @@ const firstPrices: Record<string, string | null> = {
   "1130310": "1962-01-02",
   "1039684": "1980-10-01",
   "1133421": "1981-12-31",
+  // batch 133's six that gain 1985 rows the same way: PG&E, DTE Energy, IDACORP, Newmont, PPL, TDS
+  "1004980": "1972-06-01",
+  "936340": "1962-01-02",
+  "1057877": "1973-02-21",
+  "1164727": "1980-03-17",
+  "922224": "1980-03-17",
+  "1051512": "1981-12-15",
 };
 
 /**
@@ -65,18 +72,21 @@ const firstPrices: Record<string, string | null> = {
  * Company's (CNTHP's issuer), under the Holding Company Act: 512 rows and 53 orders before.
  */
 const EXPECTED = {
-  // batch 132: the 17 records its predecessors added, and Stratasys, Inc.'s of batch 118, which the file had missed
-  records: 1475,
+  // batch 132: the 17 records its predecessors added, and Stratasys, Inc.'s of batch 118, which the file had missed;
+  // batch 133: 24 more, the predecessors it maps that EDGAR had by 1996
+  records: 1499,
   issues: 250,
   entries: 23922,
   // batch 132: 14 more rows on six pages through their predecessors' names (Houston Industries 7 on
   // CenterPoint, ONEOK 2, Duke Power 2, Comcast, First Alabama Bancshares on Regions, Northrop on NOC), none fewer
-  rows: 534,
-  companies: 266,
-  kinds: { "8-K report": 191, registration: 133, "registration effective": 116, order: 61, stake: 30, enforcement: 2, other: 1 } as Record<string, number>,
-  onPage: 379,
-  onPageCompanies: 195,
-  events: 375,
+  // batch 133: 16 more on six more pages (Pacific Gas and Electric 5 on PG&E, Detroit Edison 4 on DTE, Idaho Power 2,
+  // Newmont Mining 2, Pennsylvania Power & Light 2 on PPL, Telephone & Data Systems 1), none fewer
+  rows: 550,
+  companies: 272,
+  kinds: { "8-K report": 201, registration: 136, "registration effective": 119, order: 61, stake: 30, enforcement: 2, other: 1 } as Record<string, number>,
+  onPage: 395,
+  onPageCompanies: 201,
+  events: 391,
 };
 
 // ─── a fake database ───────────────────────────────────────────────────────────────────────────
@@ -208,7 +218,7 @@ async function main(): Promise<void> {
   check(`${EXPECTED.rows} rows on ${EXPECTED.companies} companies`, rows.length === EXPECTED.rows && ciks.length === EXPECTED.companies, { rows: rows.length, companies: ciks.length });
   const kinds: Record<string, number> = {};
   for (const r of rows) kinds[r.kind] = (kinds[r.kind] ?? 0) + 1;
-  check("  …by section: 191 8-K reports, 133 registrations, 116 declared effective, 61 orders, 30 stakes, 2 actions, 1 other", JSON.stringify(Object.entries(kinds).sort()) === JSON.stringify(Object.entries(EXPECTED.kinds).sort()), kinds);
+  check("  …by section: 201 8-K reports, 136 registrations, 119 declared effective, 61 orders, 30 stakes, 2 actions, 1 other", JSON.stringify(Object.entries(kinds).sort()) === JSON.stringify(Object.entries(EXPECTED.kinds).sort()), kinds);
   const crane = rows.filter((r) => r.cik === 25445);
   check(
     "  …the one row batch 87 lost: Crane Co. (25445, now CXT), declared effective 1985-10-11 — today's Crane Co (1944013) is no claimant, its record opened in 2023",
@@ -244,6 +254,13 @@ async function main(): Promise<void> {
       !(book.namesOn("1985-01-18", cnp)?.conformed ?? []).some((n) => /LIGHTING/.test(n)) &&
       fx.issues.flatMap((i) => i.entries).filter((e) => /houston lighting/i.test(e.party)).length === 5,
     { withSince: cnpNames("1997-08-06"), without: cnpNames() });
+  // batch 133: six more pages read by their predecessors' names, the utilities and miners whose new parents opened records after 1996
+  const by133: [string, number, RegExp][] = [
+    ["PCG", 5, /pacific gas/i], ["DTE", 4, /detroit edison/i], ["IDA", 2, /idaho power/i], ["NEM", 2, /new[mn]ont mining/i], ["PPL", 2, /pennsylvania power/i], ["TDS", 1, /telephone & data/i],
+  ];
+  check("  …batch 133: PG&E, DTE, IDACORP, Newmont, PPL and TDS by their utilities' and old companies' names (5, 4, 2, 2, 2 and 1 rows of 1985)",
+    by133.every(([t, n, re]) => rows.filter((r) => r.cik === cikOf(t)).length === n && rows.filter((r) => r.cik === cikOf(t)).every((r) => re.test(r.entries[0].party))),
+    by133.map(([t]) => `${t} ${rows.filter((r) => r.cik === cikOf(t)).map((r) => r.entries[0].party).join("/")}`));
   check("  …the book holds only companies with a record by 1996, their own or a predecessor's", book.has(66740) && book.has(19617) && !book.has(cikOf("PLTR")));
   const shared: string[] = [];
   for (const i of fx.issues) book.rows(i.day, i.entries, (e, c) => shared.push(`${i.day} ${e.party} ${c.join("/")}`));

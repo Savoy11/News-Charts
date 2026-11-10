@@ -1176,13 +1176,15 @@ export async function getFilingsDeep(
     // Sharp & Dohme Corp. two days before the merger and an LLC thirteen years after (batch 108).
     const spanned = theirs.filter((r) => inSpan(r.on, true)).sort((a, b) => a.on.localeCompare(b.on));
     const last = spanned.reduce<Rename | null>((a, r) => (!a || r.on > a.on ? r : a), null);
-    // …and a name the record took and gave back within a month is EDGAR's churn around the handover,
-    // not a rename: Lamar's was LAMAR MEDIA CORP from 1999-07-07 to 07-13 and LAMAR ADVERTISING CO /DE/
-    // again until it took the subsidiary's name for good on 07-19, the day before (batch 132)
+    // …and a name the record took and gave back within half a year is EDGAR's churn, not a rename:
+    // Lamar's was LAMAR MEDIA CORP from 1999-07-07 to 07-13 and LAMAR ADVERTISING CO /DE/ again until it
+    // took the subsidiary's name for good on 07-19, the day before the handover (batch 132); the old Host
+    // Marriott's was HOST MARRIOTT SERVICES CORP for 98 days of 1995, the name of a company it spun off
+    // that December (batch 133). No record mapped has a name given back later than that.
     const churn = new Set<Rename>();
     for (let i = 0; i + 1 < spanned.length; i++) {
       const [a, b] = [spanned[i], spanned[i + 1]];
-      if (phrase(commonName(a.from)) === phrase(commonName(b.to)) && Date.parse(b.on) - Date.parse(a.on) <= 31 * 86_400_000) churn.add(a).add(b);
+      if (phrase(commonName(a.from)) === phrase(commonName(b.to)) && Date.parse(b.on) - Date.parse(a.on) <= 183 * 86_400_000) churn.add(a).add(b);
     }
     const own = (r: Rename) => !churn.has(r) && (r !== last || phrase(commonName(r.to)) === phrase(commonName(p.name)));
     renames.push(...spanned.filter(own));

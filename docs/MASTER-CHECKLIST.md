@@ -988,6 +988,88 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 133: the rest of the population, from a scan of every listed company's filing list (2026-11-10)
+
+Batch 132 mapped the 17 pages the 2026-11-09b proposals' #1 measured; this batch reads the rest of its
+population, as the owner approved it on 2026-11-10 ("1. Older SEC filings", on the filing lists'
+evidence). The owner's word on starting: "Continue". No new source: entries in `PREDECESSORS` and
+`OWN_RECORD_FROM` (lib/predecessors.ts).
+
+- [x] **The scan** (in place of EDGAR's full-text search, which batch 132 found missing notices): every
+      listed company's filing list on data.sec.gov, 8,024 records, and the oldest older page of each of
+      the 2,065 that have one, for a notice of succession filed within 18 months of the record's first
+      filing: an 8-K12B or 8-K12G3, or before 1997 its older form, an 8-B12B or 8-B12G.
+      - 359 records hold such a notice and 182 filed it near their start. 80 are mapped (batches 53, 55
+        and 132), 50 were batch 53's to read; **52 are new**.
+      - **16 are one company's history and are mapped:** PPL (1995), DTE (1996), PG&E and OGE (1997),
+        United Rentals (1998), T. Rowe Price (2000), Nabors (2002), Fresenius Medical Care (2006),
+        Mercer (2006), Graphic Packaging (2008), KB Financial (2008), Transocean (2008), Accenture
+        (2009), Intercontinental Exchange (2013), Zillow (2015), PennyMac (2018).
+      - **36 are not, each read:** 11 bank holding companies over a bank whose filings went to its
+        bank regulator; 6 mergers into a new company (Lockheed Martin, ConocoPhillips, Evergy, Exterran
+        (Archrock), USA Mobility (Spok), and CoreCivic's of 1999); 3 SPACs; 6 shells or reverse mergers;
+        6 records that held their own filings from EDGAR's first year (Wendy's, Autodesk, Occidental,
+        Waste Management, Scotts, Accendra).
+- [x] **Read by hand** (the 2026-11-09 scout's nine, Graphic Packaging, and batch 117's 86 records read
+      as the company's own, read again with each listed record's first filing from the scan): 14 pages
+      more. Con Edison (1998), TDS (1998), IDACORP (1998), Spire (2001), Newmont (2002), Host (1998),
+      Valero (1997), Simon (1998), Enviri (2026; Harsco to 2023), Choice Hotels (1997), Mega Matrix
+      (2024; its notice came 19 months after its record began, past the scan's window), and three of
+      Merck's kind: Lennar, Healthcare Realty and Iron Mountain.
+      - **Of the 86:** 29 are now mapped; 31 opened their record within a year of the first price or
+        before it; 26 opened later, of which 17 began in EDGAR's first two years and hold their own
+        filings, 5 are a bank's, a fund's or a foreign record's whose earlier filings went elsewhere,
+        2 are mergers into a new company (Amcor, Baker Hughes), and 2 are small (Flex, two years;
+        Global Technologies).
+- [x] **Merck's kind, three more** (`OWN_RECORD_FROM`): the record took the listed company's name and
+      ticker at a merger, and the chart is the old company's, its first price before the record's own
+      company listed. Lennar's record was Pacific Greystone's to 1997-11-17 (first price 1980,
+      Greystone's offering 1996); Healthcare Realty's was Healthcare Trust of America's to 2022-07-21
+      (1993 against 2012); Iron Mountain's was Pierce Leahy's to 2000-02-01 (1996 against 1997). Old
+      Lennar's, old Healthcare Realty's and old Iron Mountain's records are their histories, and the
+      record's own past before the day stays on the page labelled: 21, 713 and 51 rows.
+- [x] **On the evidence, the owner's call of 2026-11-10:** 13 notices of succession, 4 of the older
+      form (PG&E's, OGE's, DTE's and PPL's 8-B12B), 13 8-Ks reporting the handover, and two of neither:
+      Newmont's new parent registered its shares (8-A12B) the day the old record deregistered its own
+      (15-12B), and the old Valero deregistered the day after its spin-off and merger. Zillow's `until`
+      is the day after its notice, as ONEOK's is: its last annual report was filed on the handover day.
+      `since` marks two records that were the company's only from a later day: Riverwood Holding's,
+      Graphic Packaging's from their 2003 merger, and Transocean's Cayman shell's, from 1999-05-17.
+- [x] **A name given back within half a year is no rename** (from a month, `getFilingsDeep`): the old
+      Host Marriott's record was HOST MARRIOTT SERVICES CORP for 98 days of 1995, the name of a company
+      it spun off that December. Read on all 129 mapped records' lists, only Host and Lamar have such a
+      pair; Duke's and Oracle's names given back after 9 and 11 years are renames.
+- [x] **The SEC News Digest:** `data/digest-records.json` rebuilt offline from the sixteen saved
+      indexes, 1,499 records (1,475), the 24 new predecessors EDGAR had by 1996; no record changed. On
+      1985: 550 rows on 272 companies (534 on 266), 16 more on six pages (Pacific Gas & Electric 5,
+      Detroit Edison 4, Idaho Power 2, Newmont Mining 2, Pennsylvania Power & Light 2, Telephone & Data
+      Systems 1), none fewer; 395 rows on 201 pages from first prices, as 391 events.
+- [x] **Measured** by the page's own reader on the saved lists: 4,823 filings on the 30 pages, 1,070 of
+      them 8-Ks, 4,176 before 2017. Healthcare Realty 674, Enviri 597, Mega Matrix 484, Transocean 372,
+      KB Financial 357, Mercer 200, Graphic Packaging 195, Accenture 186, PennyMac 180, Intercontinental
+      Exchange 214, Nabors 138, Zillow 133, Host 128, Newmont 122, TDS 109, Fresenius 102, Iron Mountain
+      83, PG&E 80, Spire 79, Simon 68, Valero 62, Con Edison 47, IDACORP 40, T. Rowe Price 36, Lennar
+      35, OGE 34, Choice Hotels 33, United Rentals 15, DTE 14, PPL 6. With batch 132's, 8,100 filings on
+      47 pages; the map holds 129 records on 120 pages. Nothing to run: each page's next ingest reads
+      them.
+- [ ] **Left, each for a filing's text** (`NEWS_CHARTS_CONTACT`): RGC Resources (Roanoke Gas's record
+      not found by name), Biogen (IDEC's California record of 1994–1997, not found by name), Digimarc's
+      step of 2008 (the old record deregistered on 2008-08-14, the spin-off listed on 2008-10-16), and
+      Community West Bancshares (whose chart it is, Central Valley's or Community West's). Left out by
+      the rules: TXNM (Public Service of New Mexico still lists its preferred, PNMXO, a page of its own),
+      Leidos (the old SAIC had no listed shares), Sunoco (Sunoco LP still lists SUN), B2Gold (an
+      acquired company's registration), LendingTree and Costco (an acquisition's and a merger's past).
+- **Requests:** 10,231, logged in the session scratchpad (`b133/requests*.log`), each with User-Agent
+  `News Charts Research` and no email address: data.sec.gov 10,204 (the scan 10,089, its trial 4, by
+  hand 111) and efts.sec.gov 27 (name lookups and two full-text searches). Every one answered 200 but
+  one connection that failed and was asked again. The scan ran six readers at once, each a quarter
+  second apart, under the SEC's ten a second. No www.sec.gov page was asked.
+- **Checks:** `check:predecessors` 69 (from 52): the 30 pages' records; each handover's filing on its
+  day, by form; Con Edison, Graphic Packaging's two steps, Transocean's three records, Host's churn,
+  Healthcare Realty's and Lennar's labelled past, Zillow's annual report, T. Rowe Price, Simon, Choice
+  Hotels, Enviri, PennyMac. `check:digest-walk` 58 (from 57): the six pages' 1985 rows. On main 16 of
+  the first's new checks fail, and six of the second's.
+
 ## NC ledger — batch 132: the older SEC records of 17 companies, and the second 2026-11-09 approvals filed (2026-11-10)
 
 The owner's calls of 2026-11-10 on `docs/proposals/2026-11-09b-proposals.md`: all four approved ("1.
@@ -1055,11 +1137,12 @@ This batch files all four under Scope refocus and builds #1 for the 17 pages the
       Lamar 84, MGE Energy 66, Berkshire 48, ONEOK 44, Cracker Barrel 32. The scout counted 3,093 with
       the old Ashland's and Ingersoll-Rand's steps left out. Nothing to run: each page's next ingest
       reads its older records, and its Digest entries from the issues already stored.
-- [ ] **Left for batch 133** (the Scope refocus item "#1's rest of the population"): Graphic Packaging;
+- [x] **Left for batch 133** (the Scope refocus item "#1's rest of the population"): Graphic Packaging;
       the nine successors the scout read and left out (Consolidated Edison, PG&E, OGE, Telephone &
       Data Systems, IDACORP, Host Hotels, TXNM, Spire, Newmont); batch 117's other records read as the
       company's own; and the scan of every listed company's list. Amcor is read here and is not one: a
       merger of Amcor Limited and Bemis into a new company, neither's history, as Linde's.
+      ✅ Done in batch 133 (see its section): 30 pages more, 32 records.
 - **Requests:** 90 here, all to data.sec.gov and all answered 200, logged in the session scratchpad
   (`b132/requests.log`), each with User-Agent `News Charts Research` and no email address, at least
   1.1 s apart: the lists of the three successors the scout had not saved (ONEOK, Lamar, Alkermes) and
@@ -10137,7 +10220,7 @@ already held, but new investment goes to securities coverage first.
         names for them, 14 rows more in 1985 alone.
       - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
         #1, approved 2026-11-10.*
-- [ ] `P1` **#1's rest of the population.** The same map, for the records the 17 do not cover: Graphic
+- [x] `P1` **#1's rest of the population.** The same map, for the records the 17 do not cover: Graphic
       Packaging (its parent of 2008, over a record that took another company's name in 2003, to be
       read with lib/takenNames.ts); the nine successors whose lists the 2026-11-09 scout read and left
       out (Consolidated Edison, PG&E, OGE, Telephone & Data Systems, IDACORP, Host Hotels, TXNM, Spire,
@@ -10146,7 +10229,9 @@ already held, but new investment goes to securities coverage first.
       whole list for 8-K12B, 8-K12G3 and 8-B12B, every older page included, in place of the full-text
       search (about 6,000 requests to data.sec.gov, a second apart). Each handover found is read by
       hand. Amcor is not one: a merger into a new company.
-      - **To be built in batch 133.**
+      - **Done in batch 133** (see its section): the scan read all 8,024 listed records; 30 pages
+        more, 32 records, 4,823 filings, 4,176 before 2017, and 16 more Digest rows in 1985 alone. Four
+        handovers wait for a filing's text, an open item in its ledger.
       - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
         #1, approved 2026-11-10.*
 - [ ] `P2` **Fatal mine accidents from MSHA,** a new source: approved by the owner 2026-11-10, on the

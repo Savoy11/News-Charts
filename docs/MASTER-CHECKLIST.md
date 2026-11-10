@@ -988,6 +988,93 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 132: the older SEC records of 17 companies, and the second 2026-11-09 approvals filed (2026-11-10)
+
+The owner's calls of 2026-11-10 on `docs/proposals/2026-11-09b-proposals.md`: all four approved ("1.
+Older SEC filings, 2. Mine accidents (new source), 3. More EPA subsidiaries, 4. Regulators' own
+words"); #1 on the filing lists' evidence ("Use the filing lists (Recommended)"); #2 with the Labor
+Department's licence read and quoted before anything is built ("Read it first, then build
+(Recommended)"); #4 both parts ("Both parts (Recommended)"). The owner's word on starting: "Continue".
+This batch files all four under Scope refocus and builds #1 for the 17 pages the proposal measured.
+#1's rest of the population is next (batch 133), then #2 (134), #3 (135) and #4 (136).
+
+- [x] **The map** (`PREDECESSORS`, lib/predecessors.ts): 17 pages, 20 records, read from each
+      company's own filing lists on data.sec.gov, every page of each. The map holds 97 records on 90
+      pages (77 on 73 before). Each entry's evidence, the filing of its handover with its form, day and
+      accession number, is in the header and in `scripts/fixtures/predecessor-lists-b132.json`.
+      - **Ten with a notice of succession**, `until` its day: Comcast (8-K12G3 of 2002-11-18), MGE Energy
+        (Madison Gas and Electric, 2002-08-12), CenterPoint (Reliant Energy's record, 8-K12B of
+        2002-09-06), Regions (2004-07-01), Oracle (2006-02-06), Duke Energy (2006-04-04), Vulcan
+        (2007-11-16), Trane (Ingersoll-Rand Company Limited, 8-K12B of 2009-07-01), Devon (8-K12G3 of
+        1999-08-18) and Lamar (8-K12G3 of 1999-08-20, a month after the handover of 1999-07-20).
+      - **Ten without one**, on the 8-K that reports the handover, as Merck's: Berkshire's of 1999-01-05
+        (General Re), Northrop's of 2001-04-17 (Litton), NiSource's of 2000-11-01 (Columbia Energy),
+        Cracker Barrel's of 1999-01-15, Alkermes's of 2011-09-16, ONEOK's of 1997-11-28, Ashland's of
+        2016-09-20 and 2005-06-30, the old Houston Industries' of 1997-08-08 (filed under both records),
+        and Ingersoll-Rand Company's own of 2002-01-02, the day it deregistered.
+      - **The scout's eight estimated days, read from the lists:** Berkshire 1999-01-05 (drafted
+        1998-12-21), Northrop 2001-04-17 (2001-04-02), NiSource 2000-11-01, ONEOK 1997-11-29
+        (1997-11-26: the old record's last annual report, for the year to 1997-08-31, was filed on
+        1997-11-28 and is the company's), Cracker Barrel 1999-01-15 (1998-12-31), Alkermes 2011-09-16,
+        Lamar 1999-08-20 (1999-07-19), Ashland's two, 2016-09-20 and 2005-06-30; Ingersoll-Rand's day,
+        to be read, is 2002-01-02.
+- [x] **A step the draft did not have: CenterPoint's record before 1997.** The record CenterPoint
+      took over from (48732) was Houston Lighting & Power, the utility, until the old Houston Industries
+      (202131), the listed company, merged into it on 1997-08-06 (its 8-K of 1997-08-08, items 2 and
+      7). So 48732 is CNP's from that day (`since`) and 202131's record before it: the old Houston
+      Industries' proxies and its joint annual reports, not the utility's own debt filings. `since`
+      now marks a record that was a subsidiary before its day, as well as a shell; Ashland's record of
+      2016 was a shell, New EXM Inc., until 2005-06-30, and has its `since` too.
+- [x] **The names the records bring.** A predecessor's own renames before its handover are the page's,
+      and its former names are searched as any are: Duke Power (to 1997), Houston Industries (to 1999)
+      on CenterPoint, First Alabama Bancshares on Regions, Northrop on Northrop Grumman, NIPSCO
+      Industries on NiSource, Oracle Systems (to 1995) on Oracle, Ashland Oil. Its rename into a
+      subsidiary's name at the handover is not, as before: Duke Energy Carolinas, Northrop Grumman
+      Systems, Legacy Vulcan, Oracle Systems of 2006, CenterPoint Energy Houston Electric. The Federal
+      Register's past years are asked again under the new names on their own, since a year is read
+      again when its query changes (`fr_windows`).
+      - **New: a name given back within a month is no rename** (`getFilingsDeep`, lib/sec.ts). Lamar's
+        record was LAMAR MEDIA CORP from 1999-07-07 to 07-13, then LAMAR ADVERTISING CO /DE/ again until
+        07-19, when it took the subsidiary's name for good. Without this the page would show two
+        renames, Lamar Advertising to Lamar Media and back, and search "Lamar Media" as Lamar's former
+        name. It reads only a predecessor's span, and none of the 77 records mapped before has such a
+        pair in its span, read on their own lists (fetched here), so no page mapped before changes.
+- [x] **The SEC News Digest** (`data/digest-records.json`, rebuilt offline from the sixteen saved EDGAR
+      indexes of 1993–1996, as batch 108 did; no record changed). 1,475 records (1,456): the 18 new
+      predecessors EDGAR had by 1996, and Stratasys, Inc.'s (915735), which batch 118 mapped and the
+      file had missed. A predecessor's names date a page's Digest entries between its `since` and
+      `until` (`digestNamesOn`), so Houston Lighting & Power's are not CenterPoint's.
+      - **On 1985** (the committed replay): 534 rows on 266 companies (520 on 260), 14 more on six
+        pages, none fewer anywhere: Houston Industries 7 on CenterPoint, Duke Power 2, ONEOK 2, Comcast,
+        First Alabama Bancshares on Regions and Northrop on Northrop Grumman. Houston Lighting & Power's
+        five entries stay off. 379 rows on 195 pages from first prices, as 375 events (365, 189, 361).
+- [x] **Measured** by the page's own reader (`getFilingsDeep` with the older pages) on the saved lists:
+      3,277 filings on the 17 pages, 631 of them 8-Ks and 788 annual or quarterly reports, all before
+      2017, from 1994 on 16 (Lamar from 1996). Ashland 737, Trane 302, Alkermes 381, Duke 258, Oracle
+      253, Regions 216, Comcast 209, Vulcan 192, CenterPoint 124, NiSource 122, Northrop 122, Devon 87,
+      Lamar 84, MGE Energy 66, Berkshire 48, ONEOK 44, Cracker Barrel 32. The scout counted 3,093 with
+      the old Ashland's and Ingersoll-Rand's steps left out. Nothing to run: each page's next ingest
+      reads its older records, and its Digest entries from the issues already stored.
+- [ ] **Left for batch 133** (the Scope refocus item "#1's rest of the population"): Graphic Packaging;
+      the nine successors the scout read and left out (Consolidated Edison, PG&E, OGE, Telephone &
+      Data Systems, IDACORP, Host Hotels, TXNM, Spire, Newmont); batch 117's other records read as the
+      company's own; and the scan of every listed company's list. Amcor is read here and is not one: a
+      merger of Amcor Limited and Bemis into a new company, neither's history, as Linde's.
+- **Requests:** 90 here, all to data.sec.gov and all answered 200, logged in the session scratchpad
+  (`b132/requests.log`), each with User-Agent `News Charts Research` and no email address, at least
+  1.1 s apart: the lists of the three successors the scout had not saved (ONEOK, Lamar, Alkermes) and
+  their 4 older pages; the old Houston Industries' list; the old Ashland's older page; four
+  successors' older pages, for the measurement; and the lists of the 77 records mapped before, for
+  their former names. No www.sec.gov page was asked: the sixteen EDGAR indexes the names file is built
+  from are batch 87's saved copies.
+- **Checks:** `check:predecessors` 52 (from 36): the 17 pages' records and order; each handover's
+  filing in the lists on its `until`, ten notices and ten 8-Ks; Comcast's 8-K of 2001-12-20, Oracle's
+  PeopleSoft 8-Ks, Duke's of 1997-06-27 and not Duke Energy Carolinas' 10-K of 2007, Vulcan's of
+  2007-02-20, Trane's and Ashland's two steps, CenterPoint's old Houston Industries and not the
+  utility's own filings, ONEOK's last annual report, Lamar's churn. `check:digest-walk` 57 (from 55):
+  the six pages' 1985 rows, Houston Lighting & Power's kept off. On main both fail: none of the 17 is
+  mapped, and the names file holds none of their records.
+
 ## NC ledger — batch 131: a second opportunity-scout run, four proposals for the owner (2026-11-09)
 
 Every proposal of the first 2026-11-09 file is approved and built (batches 126–129), and batch 130 fixed
@@ -995,8 +1082,12 @@ what the audit of batches 125–129 found. So the `opportunity-scout` read the r
 `58851b4` and wrote `docs/proposals/2026-11-09b-proposals.md`: four proposals, all **PENDING**, ranked
 with securities depth first. The owner's word, 2026-11-09: "Continue". Nothing is built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ **Marked 2026-11-10: all four approved**, with the calls inside: #1 on the filing lists'
+      evidence ("Use the filing lists (Recommended)"); #2 with its licence read and quoted first, the
+      build stopping if it does not allow free reuse ("Read it first, then build (Recommended)"); #4
+      both parts ("Both parts (Recommended)"). Filed under Scope refocus by batch 132.
       1. `P1` **The older SEC records of 17 companies that moved to a new parent.** No new source:
          entries in `lib/predecessors.ts`. EDGAR's full-text search, which the map was built from,
          missed eight notices of succession filed since 2001 that the companies' own filing lists hold
@@ -10034,6 +10125,54 @@ already held, but new investment goes to securities coverage first.
         which showed no money before, 1,831 before 2017, counted by each settlement's own figure.
       - *Derived from [`docs/proposals/2026-11-09-proposals.md`](proposals/2026-11-09-proposals.md)
         #4, approved 2026-11-09.*
+
+- [x] `P1` **The older SEC records of 17 companies that moved to a new parent.** No new source:
+      approved by the owner 2026-11-10, on the evidence of the companies' own filing lists. Entries in
+      `PREDECESSORS` (lib/predecessors.ts), each record's filings before its handover the page's:
+      Comcast, Oracle, Duke Energy, Trane, Regions, Vulcan, Ashland, Alkermes, Berkshire Hathaway,
+      Northrop Grumman, NiSource, CenterPoint, MGE Energy, Devon, Lamar, ONEOK, Cracker Barrel.
+      - **Measured** by the scout: 3,093 filings on 17 pages, 1,026 of them 8-Ks, all before 2017.
+      - **Done in batch 132** (see its section): 20 records, 3,277 filings on the 17 pages by the
+        page's own reader, 631 of them 8-Ks, all before 2017, from 1994 on 16; the SEC News Digest's
+        names for them, 14 rows more in 1985 alone.
+      - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
+        #1, approved 2026-11-10.*
+- [ ] `P1` **#1's rest of the population.** The same map, for the records the 17 do not cover: Graphic
+      Packaging (its parent of 2008, over a record that took another company's name in 2003, to be
+      read with lib/takenNames.ts); the nine successors whose lists the 2026-11-09 scout read and left
+      out (Consolidated Edison, PG&E, OGE, Telephone & Data Systems, IDACORP, Host Hotels, TXNM, Spire,
+      Newmont), each a new parent of 1997–2002; batch 117's other records read as the company's own
+      (Valero's spin-off of 1997, Simon's of 1998, McKesson's…); and a scan of every listed company's
+      whole list for 8-K12B, 8-K12G3 and 8-B12B, every older page included, in place of the full-text
+      search (about 6,000 requests to data.sec.gov, a second apart). Each handover found is read by
+      hand. Amcor is not one: a merger into a new company.
+      - **To be built in batch 133.**
+      - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
+        #1, approved 2026-11-10.*
+- [ ] `P2` **Fatal mine accidents from MSHA,** a new source: approved by the owner 2026-11-10, on the
+      condition that the Labor Department's licence notice is read and quoted first; if it does not
+      allow free reuse, the build stops and the owner is asked. An accident with a death is the page's
+      of the company that controlled the mine that day, by a hand map of MSHA's controller IDs.
+      - **Measured** by the scout: 221 accidents (233 dead) on 51 pages, 139 before 2017.
+      - **To be built in batch 134.**
+      - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
+        #2, approved 2026-11-10.*
+- [ ] `P2` **EPA's cases under a fourth round of units.** No new source: approved by the owner
+      2026-11-10. Entries in EPA's `UNITS` (lib/epaCases.ts), each between the days its owner held it:
+      Ashland Chemical, Akzo Nobel Chemicals, Gerdau Ameristeel, Morgan Stanley Capital Group, Seaboard
+      Farms…
+      - **Measured** by the scout: 153 cases on 13 pages, 134 before 2017.
+      - **To be built in batch 135.**
+      - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
+        #3, approved 2026-11-10.*
+- [ ] `P2` **The regulator's own account on rows pages already hold.** No new event: approved by the
+      owner 2026-11-10, both parts. (a) The CPSC's injury statement on its recall rows; (b) the
+      railroad's narrative on FRA's rows, and the dead by kind where the report's split adds up.
+      - **Measured** by the scout: (a) 952 of the 1,121 maker, importer and distributor rows, 9 naming a
+        death; (b) 478 of the 490 FRA rows, the split adding up on 113 of 136.
+      - **To be built in batch 136.**
+      - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
+        #4, approved 2026-11-10.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

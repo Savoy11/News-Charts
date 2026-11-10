@@ -67,7 +67,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. The older SEC records of 17 companies that moved to a new parent: Comcast, Oracle, Duke, Trane, Regions, Vulcan, Ashland, Alkermes, Berkshire Hathaway, Northrop Grumman, NiSource… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-10 ("1. Older SEC filings"), on the filing lists' evidence ("Use the filing lists (Recommended)"): each handover rests on the filing its lists hold, with its form, day and accession number, and not on the notice's text, which waits on `NEWS_CHARTS_CONTACT`. Built in batch 132 for the 17 pages measured here: 20 records in `PREDECESSORS`, ten with a notice of succession and ten on the 8-K that reports the handover, as Merck's. Read by the page's own filings reader on the saved lists, they give 3,277 filings on the 17 pages, 631 of them 8-Ks and 788 annual or quarterly reports, every one before 2017, from 1994 on 16 pages (Lamar from 1996). The eight estimated days were read from the lists: Berkshire 1999-01-05, Northrop 2001-04-17, NiSource 2000-11-01, ONEOK 1997-11-29 (the old record's last annual report was filed 1997-11-28, two days after the handover, and is the company's), Cracker Barrel 1999-01-15, Alkermes 2011-09-16, Lamar 1999-08-20 (its 8-K12G3, a month after the handover), and Ashland's 2005-06-30 and 2016-09-20; Ingersoll-Rand's move to Bermuda is 2002-01-02. One step more than drafted: CenterPoint's record was Houston Lighting & Power, the utility, until the old Houston Industries merged into it on 1997-08-06, so the old Houston Industries' record is CNP's before that day and the utility's own filings are not. The records' names also date the SEC News Digest: on 1985 alone, 14 more rows on six of the pages (Houston Industries 7 on CenterPoint, Duke Power 2, ONEOK 2, Comcast, First Alabama Bancshares on Regions, Northrop), none fewer anywhere. Amcor is a merger into a new company, as Linde, and is not mapped. The rest of the population (Graphic Packaging, the other successor lists this run read, batch 117's other records read as the company's own, and a scan of every listed company's list) is batch 133's.
 **Owner's reason (if rejected):**
 
 **Raised before:** no, not as a proposal.
@@ -219,7 +219,7 @@ the contact setting unless the owner accepts the lists
 
 ## 2. Fatal mine accidents from the Mine Safety and Health Administration, a new source: Alliance Resource, CONSOL (CNX), Martin Marietta, Freeport-McMoRan, CRH, Newmont, Barrick, Vulcan… since 2000 · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-10 ("2. Mine accidents (new source)"), on the condition the owner set ("Read it first, then build (Recommended)"): the Labor Department's licence notice is read and quoted before anything is built, and if it does not allow free reuse the build stops and the owner is asked. To be built in batch 134.
 **Owner's reason (if rejected):**
 
 **Raised before:** as a line. The first 2026-11-09 file's cut list: "Not measured: OSHA and MSHA
@@ -341,7 +341,7 @@ and about 15 days to read
 
 ## 3. EPA's cases under a fourth round of units: Ashland Chemical, Akzo Nobel Chemicals, Gerdau Ameristeel, Morgan Stanley Capital Group, Seaboard Farms, Novartis's companies, GATX Terminals, Lennar Homes… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-10 ("3. More EPA subsidiaries"). To be built in batch 135.
 **Owner's reason (if rejected):**
 
 **Raised before:** as lines.
@@ -434,7 +434,7 @@ read
 
 ## 4. The regulator's own account on rows pages already hold: the CPSC's injury statement and the railroad's narrative · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-10 ("4. Regulators' own words"), both parts ("Both parts (Recommended)"). To be built in batch 136.
 **Owner's reason (if rejected):**
 
 **Raised before:**

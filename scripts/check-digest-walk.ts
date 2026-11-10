@@ -6,7 +6,7 @@ import digestRecords from "../data/digest-records.json";
 import tickerIndex from "../data/edgar-tickers.json";
 import { PREDECESSORS } from "../lib/predecessors";
 import { NOTES_RECORDS } from "../lib/releaseNames";
-import { DigestBook, digestEntries, digestEvents, digestRecordOf, entryKeys, type DigestEntry, type DigestIssue, type DigestPageRow } from "../lib/secDigest";
+import { DigestBook, digestEntries, digestEvents, digestNamesOn, digestRecordOf, entryKeys, type DigestEntry, type DigestIssue, type DigestPageRow } from "../lib/secDigest";
 import { digestFor, storedDigestIssues, walkDigest } from "../lib/ingest/secDigestWalk";
 
 /**
@@ -44,8 +44,19 @@ const ticker = new Map<number, string>();
 for (const [cik, t] of tickerIndex.companies as [number, string, string][]) if (!ticker.has(cik)) ticker.set(cik, t);
 const cikOf = (t: string) => [...ticker].find(([, x]) => x === t)![0];
 // the fixture's first prices are batch 87's, read for the companies the book held then; MRK's is
-// Yahoo's of old Merck, 1962-01-02 (batch 87's cache), since batch 108 makes old Merck's record its history
-const firstPrices: Record<string, string | null> = { ...fx.firstPrices, "310158": "1962-01-02" };
+// Yahoo's of old Merck, 1962-01-02 (batch 87's cache), since batch 108 makes old Merck's record its history.
+// Batch 132's six pages that gain 1985 rows through their predecessors' records are Yahoo's too (the
+// 2026-11-09 scout's saved first trading days): Comcast, Duke Energy, Regions, CenterPoint, ONEOK, Northrop Grumman
+const firstPrices: Record<string, string | null> = {
+  ...fx.firstPrices,
+  "310158": "1962-01-02",
+  "1166691": "1980-03-17",
+  "1326160": "1980-03-17",
+  "1281761": "1980-03-17",
+  "1130310": "1962-01-02",
+  "1039684": "1980-10-01",
+  "1133421": "1981-12-31",
+};
 
 /**
  * The 1985 replay's counts, measured 2026-11-06; batch 108 adds old Merck's record (1,455 records,
@@ -54,15 +65,18 @@ const firstPrices: Record<string, string | null> = { ...fx.firstPrices, "310158"
  * Company's (CNTHP's issuer), under the Holding Company Act: 512 rows and 53 orders before.
  */
 const EXPECTED = {
-  records: 1456,
+  // batch 132: the 17 records its predecessors added, and Stratasys, Inc.'s of batch 118, which the file had missed
+  records: 1475,
   issues: 250,
   entries: 23922,
-  rows: 520,
-  companies: 260,
-  kinds: { "8-K report": 187, registration: 129, "registration effective": 110, order: 61, stake: 30, enforcement: 2, other: 1 } as Record<string, number>,
-  onPage: 365,
-  onPageCompanies: 189,
-  events: 361,
+  // batch 132: 14 more rows on six pages through their predecessors' names (Houston Industries 7 on
+  // CenterPoint, ONEOK 2, Duke Power 2, Comcast, First Alabama Bancshares on Regions, Northrop on NOC), none fewer
+  rows: 534,
+  companies: 266,
+  kinds: { "8-K report": 191, registration: 133, "registration effective": 116, order: 61, stake: 30, enforcement: 2, other: 1 } as Record<string, number>,
+  onPage: 379,
+  onPageCompanies: 195,
+  events: 375,
 };
 
 // ─── a fake database ───────────────────────────────────────────────────────────────────────────
@@ -194,7 +208,7 @@ async function main(): Promise<void> {
   check(`${EXPECTED.rows} rows on ${EXPECTED.companies} companies`, rows.length === EXPECTED.rows && ciks.length === EXPECTED.companies, { rows: rows.length, companies: ciks.length });
   const kinds: Record<string, number> = {};
   for (const r of rows) kinds[r.kind] = (kinds[r.kind] ?? 0) + 1;
-  check("  …by section: 187 8-K reports, 129 registrations, 110 declared effective, 61 orders, 30 stakes, 2 actions, 1 other", JSON.stringify(Object.entries(kinds).sort()) === JSON.stringify(Object.entries(EXPECTED.kinds).sort()), kinds);
+  check("  …by section: 191 8-K reports, 133 registrations, 116 declared effective, 61 orders, 30 stakes, 2 actions, 1 other", JSON.stringify(Object.entries(kinds).sort()) === JSON.stringify(Object.entries(EXPECTED.kinds).sort()), kinds);
   const crane = rows.filter((r) => r.cik === 25445);
   check(
     "  …the one row batch 87 lost: Crane Co. (25445, now CXT), declared effective 1985-10-11 — today's Crane Co (1944013) is no claimant, its record opened in 2023",
@@ -208,6 +222,28 @@ async function main(): Promise<void> {
     mrkRows.length === 3 && mrkRows.every((r) => r.kind === "8-K report" && /^MERCK\b/.test(r.entries[0].party)) &&
       JSON.stringify([...(book.namesOn("1985-06-01", 310158)?.conformed ?? [])].sort()) === JSON.stringify(["MERCK & CO INC", "SCHERING PLOUGH CORP"]),
     mrkRows.map((r) => `${r.day} ${r.entries[0].party}`));
+  // batch 132: the 17 pages whose older records the full-text search missed; their records opened after 1996,
+  // so the book held none of them, and their predecessors' names now date their Digest entries
+  const cnp = cikOf("CNP");
+  const cnpRows = rows.filter((r) => r.cik === cnp);
+  check("  …batch 132: Comcast, Duke, Regions, ONEOK and Northrop are read by their predecessors' names (1, 2, 1, 2 and 1 rows of 1985), CenterPoint by the old Houston Industries' (7)",
+    ["CMCSA", "DUK", "RF", "OKE", "NOC"].map((t) => rows.filter((r) => r.cik === cikOf(t)).length).join() === "1,2,1,2,1" && cnpRows.length === 7 &&
+      cnpRows.every((r) => r.entries.every((e) => /houston industries/i.test(e.party))) &&
+      rows.filter((r) => r.cik === cikOf("DUK")).every((r) => /duke power/i.test(r.entries[0].party)) &&
+      rows.filter((r) => r.cik === cikOf("RF")).every((r) => /first alabama bancshares/i.test(r.entries[0].party)),
+    cnpRows.map((r) => `${r.day} ${r.entries[0].party}`));
+  const hlp = digestRecordOf(48732)!;
+  const hii = digestRecordOf(202131)!;
+  const none = { formerNames: [], firstFiled: null };
+  const cnpNames = (since?: string) => digestNamesOn("1985-01-18", cnp, "CENTERPOINT ENERGY INC", none, [
+    { name: "Reliant Energy, Incorporated", until: "2002-09-06", since, record: hlp },
+    { name: "Houston Industries Incorporated", until: "1997-08-08", record: hii },
+  ]).conformed;
+  check("  …and not by Houston Lighting & Power's, the utility, whose record is CenterPoint's only from 1997-08-06: its five entries of 1985 stay off the page",
+    cnpNames("1997-08-06").includes("HOUSTON INDUSTRIES INC") && !cnpNames("1997-08-06").some((n) => /LIGHTING/.test(n)) && cnpNames().some((n) => /LIGHTING/.test(n)) &&
+      !(book.namesOn("1985-01-18", cnp)?.conformed ?? []).some((n) => /LIGHTING/.test(n)) &&
+      fx.issues.flatMap((i) => i.entries).filter((e) => /houston lighting/i.test(e.party)).length === 5,
+    { withSince: cnpNames("1997-08-06"), without: cnpNames() });
   check("  …the book holds only companies with a record by 1996, their own or a predecessor's", book.has(66740) && book.has(19617) && !book.has(cikOf("PLTR")));
   const shared: string[] = [];
   for (const i of fx.issues) book.rows(i.day, i.entries, (e, c) => shared.push(`${i.day} ${e.party} ${c.join("/")}`));

@@ -207,8 +207,15 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
-- **The second 2026-11-09 proposals** (batch 131, `docs/proposals/2026-11-09b-proposals.md`): mark each
-  `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection.
+- ~~**The second 2026-11-09 proposals** (batch 131, `docs/proposals/2026-11-09b-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection.~~ **Decided 2026-11-10: all
+  four**, #1 on the filing lists' evidence ("Use the filing lists (Recommended)"), #2 with its licence
+  read first ("Read it first, then build (Recommended)"), #4 both parts ("Both parts (Recommended)").
+  #1 is built in batch 132 for the 17 pages; its rest of the population follows in batch 133, then #2,
+  #3 and #4 in batches 134, 135 and 136. Nothing to run after deploying batch 132: each of the 17
+  pages' next ingest reads its older records (3,277 filings of 1994–2016), and its SEC News Digest
+  entries from the issues already stored. The notices' own text can be read once `NEWS_CHARTS_CONTACT`
+  is set (§2); nothing waits on it.
   1. `P1` the older SEC records of 17 companies that moved to a new parent (Comcast, Oracle, Duke,
      Trane, Regions, Vulcan, Ashland, Berkshire, Northrop…): 3,093 filings, all before 2017. **One call
      inside:** accept the filing lists' evidence (each succession notice's form and number, the names

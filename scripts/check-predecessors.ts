@@ -240,6 +240,96 @@ async function main(): Promise<void> {
       !row("2008-02-07", "Merck to Pay More than $650 Million").source.includes(label) && !row("2000-03-22", "EPA consent decree", "Schering Corporation; Merck & Co., Inc.").source.includes(label) &&
       !row("2011-05-13", "FDA approves Victrelis", "on Schering's NDA").source.includes(label) && !ownPastLabelled({ date: "2004-07-30", title: "Schering-Plough to Pay", source: "x" }, 320193).source.includes(label));
 
+  // ─── batch 132: the 17 pages the full-text search missed, from their filing lists ────────────
+  console.log("\nBatch 132: the older records of 17 companies, from their filing lists (the owner's call of 2026-11-10)");
+  type ListRow = [string, string, string, string];
+  const lists = (await import("./fixtures/predecessor-lists-b132.json")).default as unknown as {
+    records: Record<string, { name: string; formerNames: { name: string; from: string; to: string }[]; filings: ListRow[] }>;
+  };
+  const B132: Record<string, number[]> = {
+    CMCSA: [22301], ORCL: [777676], DUK: [30371], TT: [1160497, 50485], RF: [36032], VMC: [103973], MGEE: [61339],
+    CNP: [48732, 202131], DVN: [837330], ASH: [1305014, 7694], "BRK-B": [109694], NOC: [72945], OKE: [74154],
+    NI: [823392], LAMR: [899045], ALKS: [874663], CBRL: [25373],
+  };
+  check("the 17 pages read their predecessors' records, Trane, Ashland and CenterPoint two each, newest first",
+    Object.entries(B132).every(([t, ciks]) => JSON.stringify(predecessorsOf(cikOf(t)).map((p) => p.cik)) === JSON.stringify(ciks)),
+    Object.entries(B132).filter(([t, ciks]) => JSON.stringify(predecessorsOf(cikOf(t)).map((p) => p.cik)) !== JSON.stringify(ciks)).map(([t]) => t).join(", "));
+  const notices = Object.entries(B132).flatMap(([t, ciks]) => predecessorsOf(cikOf(t)).map((p) => {
+    const rows = [cikOf(t), ...ciks].flatMap((c) => lists.records[String(c)]?.filings ?? []);
+    return { t, p, row: rows.find((r) => r[2] === p.notice) };
+  }));
+  const WITH_NOTICE = ["CMCSA", "ORCL", "DUK", "RF", "VMC", "MGEE", "DVN", "LAMR"];
+  check("each handover's filing is in the lists, filed on its `until`: ten notices of succession (8-K12B or 8-K12G3), ten 8-Ks",
+    notices.every(({ t, p, row }) => !!row && (row[0] === p.until || (t === "OKE" && row[0] === "1997-11-28"))) &&
+      notices.filter(({ row }) => /^8-K12[BG]3?$/.test(row?.[1] ?? "")).length === 10 && notices.filter(({ row }) => row?.[1] === "8-K").length === 10 && notices.length === 20 &&
+      WITH_NOTICE.every((t) => notices.some((n) => n.t === t && /^8-K12/.test(n.row?.[1] ?? ""))) &&
+      notices.some((n) => n.t === "TT" && n.p.cik === 1160497 && n.row?.[1] === "8-K12B") && notices.some((n) => n.t === "CNP" && n.p.cik === 48732 && n.row?.[1] === "8-K12B"),
+    notices.filter(({ t, p, row }) => !row || (row[0] !== p.until && t !== "OKE")).map(({ t, p }) => `${t} ${p.cik}`).join(", "));
+  check("  …ONEOK's day is the one after its old record's last annual report, filed two days after the handover",
+    predecessorsOf(cikOf("OKE"))[0]?.until === "1997-11-29" && lists.records["74154"].filings.some((r) => r[0] === "1997-11-28" && r[1] === "10-K"));
+
+  const asList = (c: number) => {
+    const r = lists.records[String(c)];
+    const rows = [...r.filings].sort((a, b) => b[0].localeCompare(a[0]));
+    return {
+      name: r.name,
+      formerNames: r.formerNames.map((f) => ({ name: f.name, from: `${f.from}T00:00:00.000Z`, to: `${f.to}T00:00:00.000Z` })),
+      filings: {
+        recent: {
+          form: rows.map((x) => x[1]), filingDate: rows.map((x) => x[0]), accessionNumber: rows.map((x) => x[2]),
+          primaryDocument: rows.map(() => "doc.htm"), items: rows.map((x) => x[3]),
+        },
+      },
+    };
+  };
+  (globalThis as { fetch: unknown }).fetch = async (input: RequestInfo | URL) => {
+    const key = /CIK(\d{10})\.json$/.exec(String(input))?.[1];
+    const body = key && lists.records[String(Number(key))] ? asList(Number(key)) : undefined;
+    return { ok: body !== undefined, status: body ? 200 : 404, json: async () => body } as unknown as Response;
+  };
+  const pages: Record<string, { ids: Set<string>; titles: string[]; renames: Rename[] }> = {};
+  try {
+    for (const t of Object.keys(B132)) {
+      const renames: Rename[] = [];
+      const ev = await getFilingsDeep({ ticker: t, cik: String(cikOf(t)).padStart(10, "0"), name: lists.records[String(cikOf(t))].name }, false, renames);
+      pages[t] = { ids: new Set(ev.map((e) => e.id)), titles: ev.filter((e) => e.type === "corporate_action").map((e) => e.title), renames };
+    }
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const has = (t: string, a: string) => pages[t].ids.has(`sec-${a.replace(/-/g, "")}`);
+  check("Comcast's page holds old Comcast's 8-K of 2001-12-20, the month of the AT&T Broadband agreement, and not its subsidiary's 8-K of the handover day",
+    has("CMCSA", "0000950103-01-501627") && !has("CMCSA", "0000950103-02-001195"));
+  check("Oracle's holds the two 8-Ks of the PeopleSoft purchase its new parent was formed for (2004-12-14, 2005-01-03)",
+    has("ORCL", "0001193125-04-212307") && has("ORCL", "0001193125-05-000450"));
+  check("Duke's holds Duke Energy's 8-K of 1997-06-27 and not Duke Energy Carolinas' annual report of 2007",
+    has("DUK", "0000950168-97-001683") && !has("DUK", "0001193125-07-055893"));
+  check("  …and the rename from Duke Power in 1997, not the predecessor's into a subsidiary's name at the handover",
+    pages.DUK.titles.includes("Renamed from DUKE POWER CO /NC/ to DUKE ENERGY CORP") && !pages.DUK.titles.some((x) => /Duke Power CO LLC|Carolinas/i.test(x)) &&
+      pages.DUK.renames.some((r) => r.from === "DUKE POWER CO /NC/") && !pages.DUK.renames.some((r) => /LLC|Carolinas/i.test(r.to)), pages.DUK.titles.join(" | "));
+  check("Vulcan's holds the Florida Rock agreement's 8-K of 2007-02-20", has("VMC", "0000950123-07-002471"));
+  check("Trane reads two steps: Ingersoll-Rand Company Limited's annual report of 2002, and Ingersoll-Rand Company's quarterly report of 2001",
+    has("TT", "0001160497-02-000005") && has("TT", "0000050485-01-500028") && !has("TT", "0000950134-02-000013"));
+  check("Ashland reads two steps: the old Ashland's annual report of 2004 and the parent of 2005's 8-K of its first day, not that record's shell filings before it",
+    has("ASH", "0000007694-04-000179") && has("ASH", "0001305014-05-000007") && !has("ASH", "0001193125-04-170209") &&
+      !pages.ASH.titles.some((x) => /New EXM/i.test(x)) && pages.ASH.titles.includes("Renamed from ASHLAND OIL INC to ASHLAND INC"), pages.ASH.titles.join(" | "));
+  check("CenterPoint reads the old Houston Industries' proxy of 1997 and Houston Industries' record from the 1997 merger, not Houston Lighting & Power's own filings before it",
+    has("CNP", "0000899243-97-000566") && has("CNP", "0000950129-97-004776") && has("CNP", "0000899243-97-001516") && !has("CNP", "0000899243-97-000096"));
+  check("  …its rename from Houston Industries to Reliant Energy is on the page; the utility's of 1997 and the record's into CenterPoint Houston are not",
+    pages.CNP.titles.includes("Renamed from HOUSTON INDUSTRIES INC to RELIANT ENERGY INC") && !pages.CNP.titles.some((x) => /HOUSTON LIGHTING|CENTERPOINT ENERGY HOUSTON/i.test(x)) &&
+      !pages.CNP.renames.some((r) => /HOUSTON LIGHTING/i.test(r.from)), pages.CNP.titles.join(" | "));
+  check("ONEOK's holds the old record's last annual report (filed 1997-11-28), not its 8-K of 1997-12-12",
+    has("OKE", "0000950134-97-009044") && !has("OKE", "0000950134-97-009286"));
+  check("Lamar's holds the old record's 8-K of 1999-07-07, not Lamar Media's quarterly report of 1999-11-12",
+    has("LAMR", "0000906280-99-000165") && !has("LAMR", "0000950134-99-009877"));
+  check("  …and no rename: the record was LAMAR MEDIA CORP for six days in July 1999 and back, EDGAR's churn before the handover, and took the name for good the day before it",
+    !pages.LAMR.titles.some((x) => /LAMAR MEDIA/i.test(x)) && !pages.LAMR.renames.some((r) => /LAMAR MEDIA/i.test(`${r.from} ${r.to}`)),
+    `${pages.LAMR.titles.join(" | ")} · ${JSON.stringify(pages.LAMR.renames)}`);
+  check("  …while every other predecessor's own renames before its handover stay: First Alabama Bancshares, Northrop, NIPSCO Industries, Oracle Systems, Ashland Oil",
+    pages.RF.renames.some((r) => r.from === "FIRST ALABAMA BANCSHARES INC") && pages.NOC.renames.some((r) => r.from === "NORTHROP CORP") &&
+      pages.NI.renames.some((r) => r.from === "NIPSCO INDUSTRIES INC") && pages.ORCL.renames.some((r) => r.from === "ORACLE SYSTEMS CORP") &&
+      pages.ASH.renames.some((r) => r.from === "ASHLAND OIL INC") && !pages.NOC.renames.some((r) => /SYSTEMS/.test(r.to)) && !pages.ORCL.renames.some((r) => r.to === "Oracle Systems"));
+
   const read = (await import("node:fs")).readFileSync(`${__dirname}/../lib/store/read.ts`, "utf8");
   check("  …the page's read labels them: each row by its subject's record",
     /sj\.cik AS subject_cik/.test(read) && /const own = ownPastLabelled\(ev, r\.subject_cik\);/.test(read));

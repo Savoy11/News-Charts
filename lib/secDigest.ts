@@ -575,11 +575,13 @@ export function digestNamesOn(
   cik: number,
   title: string,
   record: EdgarRecord,
-  predecessors: readonly { name: string; until: string; record: EdgarRecord }[] = [],
+  predecessors: readonly { name: string; until: string; since?: string; record: EdgarRecord }[] = [],
 ): DigestNames {
   const inUse = [
     ...namesInUse(day, title, record),
-    ...predecessors.filter((p) => day < p.until).flatMap((p) => namesInUse(day, p.name, p.record)),
+    // a predecessor's names between the days its record was the company's: CenterPoint's record was
+    // Houston Lighting & Power, the utility, until the old Houston Industries merged into it (batch 132)
+    ...predecessors.filter((p) => day < p.until && (!p.since || day >= p.since)).flatMap((p) => namesInUse(day, p.name, p.record)),
   ].map(asName);
   const present = inUse.some((n) => conformedKey(n) === conformedKey(title));
   return {
@@ -844,7 +846,7 @@ export class DigestBook {
   readonly index: DigestNameIndex;
   private readonly titles = new Map<number, string>();
   private readonly records = new Map<number, EdgarRecord>();
-  private readonly before = new Map<number, { name: string; until: string; record: EdgarRecord }[]>();
+  private readonly before = new Map<number, { name: string; until: string; since?: string; record: EdgarRecord }[]>();
   private readonly undated = new Map<number, DigestNames>();
 
   constructor(companies: readonly (readonly [number, string])[] = TICKER_INDEX_COMPANIES, recordOf: (cik: number) => EdgarRecord | null = digestRecordOf) {
@@ -855,7 +857,7 @@ export class DigestBook {
       const record = recordOf(cik);
       const preds = predecessorsOf(cik).flatMap((p) => {
         const r = recordOf(p.cik);
-        return r ? [{ name: p.name, until: p.until, record: r }] : [];
+        return r ? [{ name: p.name, until: p.until, since: p.since, record: r }] : [];
       });
       if (!record && !preds.length) continue;
       this.titles.set(cik, title);

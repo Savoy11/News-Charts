@@ -988,6 +988,55 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 131: a second opportunity-scout run, four proposals for the owner (2026-11-09)
+
+Every proposal of the first 2026-11-09 file is approved and built (batches 126–129), and batch 130 fixed
+what the audit of batches 125–129 found. So the `opportunity-scout` read the repository again at
+`58851b4` and wrote `docs/proposals/2026-11-09b-proposals.md`: four proposals, all **PENDING**, ranked
+with securities depth first. The owner's word, 2026-11-09: "Continue". Nothing is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      1. `P1` **The older SEC records of 17 companies that moved to a new parent.** No new source:
+         entries in `lib/predecessors.ts`. EDGAR's full-text search, which the map was built from,
+         missed eight notices of succession filed since 2001 that the companies' own filing lists hold
+         (Comcast's 8-K12G3 of 2002-11-18, Oracle's of 2006-02-06, Duke's 8-K12B of 2006-04-04,
+         Regions', Vulcan's, Trane's, CenterPoint's, MGE's), seven of them on an older page of the list.
+         Measured: 3,093 filings on 17 pages, 1,026 of them 8-Ks, all before 2017, most from 1994.
+         Today those pages' SEC filings start between 1998 and 2016. **One call inside:** take the
+         lists' evidence, or wait for `NEWS_CHARTS_CONTACT` to read the notices; eight days are
+         estimates to be read from a filing.
+      2. `P2` **Fatal mine accidents from MSHA,** a new source. MSHA's files name each mine's controller
+         on the accident's day, so a page is reached by a hand map of about 50 controller IDs, not by a
+         name. Measured: 221 accidents (233 dead) on 51 pages, 139 before 2017; 140 of them on pages
+         whose first price could be read. The Labor Department's licence notice answered 403 here; it is
+         to be read and quoted before an approval.
+      3. `P2` **EPA cases under a fourth round of units:** about 15 patterns on 13 companies (Ashland
+         Chemical, Akzo Nobel Chemicals, Gerdau Ameristeel, Morgan Stanley Capital Group, Seaboard
+         Farms…). Measured on the saved file: 153 more court or penalty cases on 13 pages, 134 before
+         2017; Gerdau and Seaboard gain their first EPA rows.
+      4. `P2` **The regulator's own account on rows pages already hold:** (a) the CPSC's injury
+         statement on 952 of the 1,121 maker, importer and distributor rows, 9 naming a death; (b) the
+         railroad's narrative on 478 of the 490 FRA rows, and the dead by kind where the report's split
+         adds up to the accident's count (113 of 136). No new event.
+- **Cut, with reasons in the file:** a descriptor in the release rule's object position (3 releases
+  across every saved title: Nucor 2000, Wal-Mart 2004, Teva 2020); "J&J Subsidiary DePuy" (the twin of
+  a row already on J&J); FRA's holding-company fields; EPA defendants written as a company and its plant
+  (58 cases, about 35 genuine); MSHA's disabilities and penalties (not measured); the FTC, OCC and FSIS,
+  retried and still unreachable, and the Labor Department (403); the FDIC, PHMSA, FERC, NRC and NTSB
+  (not retried); non-US regulators (not measured).
+- **For the `code-auditor`, noted by the scout:** `lib/predecessors.ts`'s header counts 264 listed
+  companies with a notice of succession since 2001, from the full-text search, which missed at least
+  the eight of proposal 1.
+- **Verified here:** the three notices the proposal quotes for Comcast, Oracle and Duke are in the
+  saved data.sec.gov lists with those forms, days and accession numbers, and none of the 17 records is
+  in `PREDECESSORS`.
+- **Requests:** 119 by the scout, logged in the session scratchpad (`scout131/requests.log`), each with
+  User-Agent `News Charts Research` and no email address: data.sec.gov 70, efts.sec.gov 13 (3 answered
+  500), www.justice.gov 12, Yahoo 12 (7 refused with 429), arlweb.msha.gov 4, data.transportation.gov 2,
+  and one each to www.saferproducts.gov, www.ftc.gov (404), apps.occ.gov (302), www.fsis.usda.gov
+  (403), www.dol.gov (403) and catalog.data.gov (404). 104 answered 200. No www.sec.gov page was asked.
+
 ## NC ledger — batch 130: the audit of batches 125–129, and what it confirmed fixed (2026-11-09)
 
 The `code-auditor` read batches 125–129 (`6a4e7f9..80f88b3`); its report is

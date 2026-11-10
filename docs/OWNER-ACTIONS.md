@@ -207,6 +207,19 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- **The second 2026-11-09 proposals** (batch 131, `docs/proposals/2026-11-09b-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection.
+  1. `P1` the older SEC records of 17 companies that moved to a new parent (Comcast, Oracle, Duke,
+     Trane, Regions, Vulcan, Ashland, Berkshire, Northrop…): 3,093 filings, all before 2017. **One call
+     inside:** accept the filing lists' evidence (each succession notice's form and number, the names
+     swapping on the day), or wait for `NEWS_CHARTS_CONTACT` to read the notices' text.
+  2. `P2` fatal mine accidents from MSHA, a new source: 221 accidents on 51 pages, 139 before 2017. Its
+     licence wording (the Labor Department's notice) answered 403 here and is to be read first.
+  3. `P2` EPA cases under a fourth round of units (Ashland Chemical, Akzo Nobel Chemicals, Gerdau
+     Ameristeel, Seaboard Farms…): 153 cases on 13 pages, 134 before 2017.
+  4. `P2` the regulator's own account on rows already held: (a) the CPSC's injury statement, (b) the
+     railroad's narrative and the dead by kind. Each part approvable alone.
+
 - ~~**The 2026-11-09 proposals** (batch 125, `docs/proposals/2026-11-09-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection.~~ **Decided 2026-11-09: all
   four**, with the rail floor as drafted ("Draft cut-off (Recommended)") and the Microsoft notices

@@ -434,7 +434,7 @@ read
 
 ## 4. The regulator's own account on rows pages already hold: the CPSC's injury statement and the railroad's narrative · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-10 ("4. Regulators' own words"), both parts ("Both parts (Recommended)"). To be built in batch 136.
+**Status:** APPROVED — by the owner, 2026-11-10 ("4. Regulators' own words"), both parts ("Both parts (Recommended)"). Built in batch 136. (a) `parseRecalls` reads each recall's `Injuries` statement, db/047 keeps it and has the next run read the service again, and a recall's row gives it as written after "Injuries, the Commission's record:": 952 of the 1,121 maker, importer and distributor rows carry one, 9 naming a death (Kidde's extinguishers on RTX, Textron's Bad Boy vehicles, Target's weighted blankets…), as measured. (b) FRA's query asks four fields more, the narrative and the dead by kind; a row carries the railroad's account, its "NoneNone…" filler removed, cut to fit the description, and the dead by kind where the report's records add up to the row's count ("Killed, by kind: 1 railroad employee and 8 others" at Graniteville). On the six pages, 476 of the 490 rows carry an account of 20 characters or more, 390 before 2017, and 113 of the 136 with a death a split; Chatsworth, Bourbonnais and Lonjct keep the count alone. The narrative is on every row, not only those with a death or an evacuation: the owner approved both parts as drafted. No row's day, title or key changes.
 **Owner's reason (if rejected):**
 
 **Raised before:**

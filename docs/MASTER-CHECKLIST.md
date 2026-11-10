@@ -988,6 +988,46 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 136: the regulators' own words on rows pages already hold (2026-11-10)
+
+The 2026-11-09b proposals' #4, approved by the owner on 2026-11-10 ("4. Regulators' own words"), both
+parts ("Both parts (Recommended)"). The owner's word on starting: "Continue". No new event, and no
+row's day, title or key changes.
+
+- [x] **(a) The CPSC's injury statement** (`lib/cpscRecalls.ts`): `parseRecalls` reads each recall's
+      `Injuries` (one recall of 10,082 gives two, read together), db/047 keeps it with the recall and
+      forgets the last read so the next run asks the service again, and a recall's row gives it as the
+      Commission wrote it after "Injuries, the Commission's record:". "None reported" is said as it is.
+      Before first prices, 952 of the 1,121 rows where the company made, imported or distributed the
+      product carry one, 9 of them naming a death, as the scout measured: Kidde's extinguishers on RTX
+      (2017-11-02, "The firm is aware of a 2014 death involving a car fire following a crash"),
+      Textron's Bad Boy vehicles, Target's weighted blankets, Black Diamond's transceivers on Clarus.
+      GE's dishwashers of 2000-12-14: "approximately 90 incidents of fire … No injuries have been
+      reported". The committed recalls gain the field from the service's answer of 2026-11-09, by recall
+      number: 8,424 of the 10,070 carry one.
+- [x] **(b) The railroad's account and the dead by kind** (`lib/railAccidents.ts`): `FIELDS` asks four
+      more, `narrative`, `railroademployeeskilled`, `passengerskilled` and `otherskilled`. A row carries
+      the report's narrative, its representative record's, with the dataset's "None" for each empty
+      part of fifteen removed (`narrativeOf`; 778 records of the 2,957 are all filler), cut to fit the
+      600-character description, as the railroad's words. Where the report's records' dead by kind add
+      up to the row's count, the row gives them: "Killed, by kind: 1 railroad employee and 8 others" at
+      Graniteville, "1 other" at Minot; the counts added as whole numbers. On the six pages: 476 of the
+      490 rows carry an account of 20 characters or more, 390 before 2017; 113 of the 136 rows with a
+      death give the split. Bourbonnais's 11 and Chatsworth's 25 are on Amtrak's and Metrolink's
+      reports and keep the count alone, as does Lonjct's of 1993, whose records give 2 of 5. The
+      narrative is on every row, not only on those with a death or an evacuation: the owner approved the
+      part as drafted.
+- [x] **Read again:** FRA's dataset on 2026-11-10 with the four fields, one request: the same 2,957
+      records as batch 130's, every earlier field as it was (the records of a report in another order).
+- [x] **Checked:** `check:cpsc` 52 (5 new: the statement read, Kidde's, GE's, "None reported" and the
+      counts, the column and the re-read); `check:rail-accidents` 37 (5 new: the filler, Bourbonnais,
+      Chatsworth, Lonjct and Minot, the counts and the split adding up), Graniteville's description
+      re-pinned. On main both fail: the CPSC check's stand-in database meets the new column, and the
+      railroad check finds no `narrativeOf`.
+- **Requests:** 1, logged in the session scratchpad (`b136/requests.log`), with User-Agent `News Charts
+  Research` and no email address: data.transportation.gov, FRA's dataset. The CPSC's answer is the
+  scout's copy of 2026-11-09, not asked again.
+
 ## NC ledger — batch 135: EPA's cases under a fourth round of units (2026-11-10)
 
 The 2026-11-09b proposals' #3, approved by the owner on 2026-11-10 ("3. More EPA subsidiaries"). The
@@ -10382,12 +10422,13 @@ already held, but new investment goes to securities coverage first.
         pages, 123 before 2017.
       - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
         #3, approved 2026-11-10.*
-- [ ] `P2` **The regulator's own account on rows pages already hold.** No new event: approved by the
+- [x] `P2` **The regulator's own account on rows pages already hold.** No new event: approved by the
       owner 2026-11-10, both parts. (a) The CPSC's injury statement on its recall rows; (b) the
       railroad's narrative on FRA's rows, and the dead by kind where the report's split adds up.
       - **Measured** by the scout: (a) 952 of the 1,121 maker, importer and distributor rows, 9 naming a
         death; (b) 478 of the 490 FRA rows, the split adding up on 113 of 136.
-      - **To be built in batch 136.**
+      - **Done in batch 136** (see its section): (a) 952 rows, 9 naming a death; (b) 476 rows with an
+        account of 20 characters or more, the split on 113 of 136.
       - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
         #4, approved 2026-11-10.*
 

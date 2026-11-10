@@ -235,7 +235,9 @@ Raised by the November batches, each recorded in the master checklist:
      court or penalty cases more on the 13 pages, 123 before 2017, each day read from a filing. Nothing to
      run after deploying: each page's next ingest reads the cases already kept.
   4. `P2` the regulator's own account on rows already held: (a) the CPSC's injury statement, (b) the
-     railroad's narrative and the dead by kind. Each part approvable alone.
+     railroad's narrative and the dead by kind. Each part approvable alone. **Built in batch 136,
+     both parts:** after deploying, apply db/047 (`npm run db:migrate`); the next run reads the CPSC's
+     service again for the statements, and each railroad page's next ingest rewrites its rows.
 
 - ~~**The 2026-11-09 proposals** (batch 125, `docs/proposals/2026-11-09-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection.~~ **Decided 2026-11-09: all

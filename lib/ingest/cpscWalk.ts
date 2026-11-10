@@ -48,10 +48,10 @@ export async function walkCpsc(
     for (let i = 0; i < recalls.length; i += CHUNK) {
       const part = recalls.slice(i, i + CHUNK);
       await client.query(
-        `INSERT INTO cpsc_recalls (recall_number, recalled_on, title, url, hazard, units, makers, importers, distributors, sold_at, name_keys)
-         SELECT n, d, t, u, h, un, string_to_array(m, '|'), string_to_array(im, '|'), string_to_array(di, '|'), s, k
-           FROM unnest($1::text[], $2::date[], $3::text[], $4::text[], $5::text[], $6::text[], $7::text[], $8::text[], $9::text[], $10::text[], $11::text[])
-             AS x(n, d, t, u, h, un, m, im, di, s, k)`,
+        `INSERT INTO cpsc_recalls (recall_number, recalled_on, title, url, hazard, units, makers, importers, distributors, sold_at, name_keys, injuries)
+         SELECT n, d, t, u, h, un, string_to_array(m, '|'), string_to_array(im, '|'), string_to_array(di, '|'), s, k, inj
+           FROM unnest($1::text[], $2::date[], $3::text[], $4::text[], $5::text[], $6::text[], $7::text[], $8::text[], $9::text[], $10::text[], $11::text[], $12::text[])
+             AS x(n, d, t, u, h, un, m, im, di, s, k, inj)`,
         [
           part.map((r) => r.number),
           part.map((r) => r.day),
@@ -64,6 +64,8 @@ export async function walkCpsc(
           part.map((r) => joined(r.distributors)),
           part.map((r) => r.soldAt),
           part.map((r) => letters([...r.makers, ...r.importers, ...r.distributors, r.soldAt].join(" "))),
+          // the Commission's injury statement (batch 136)
+          part.map((r) => r.injuries),
         ],
       );
     }
@@ -88,13 +90,14 @@ export async function storedRecalls(client: PoolClient, keys: readonly string[],
     title: string;
     url: string | null;
     hazard: string | null;
+    injuries: string | null;
     units: string | null;
     makers: string[];
     importers: string[];
     distributors: string[];
     sold_at: string;
   }>(
-    `SELECT recall_number, recalled_on::text AS day, title, url, hazard, units, makers, importers, distributors, sold_at
+    `SELECT recall_number, recalled_on::text AS day, title, url, hazard, injuries, units, makers, importers, distributors, sold_at
        FROM cpsc_recalls WHERE recalled_on >= $1::date AND name_keys LIKE ANY ($2::text[]) ORDER BY recalled_on, recall_number`,
     [from, keys.map((k) => `%${k}%`)],
   );
@@ -104,6 +107,7 @@ export async function storedRecalls(client: PoolClient, keys: readonly string[],
     title: r.title,
     url: r.url,
     hazard: r.hazard,
+    injuries: r.injuries ?? null,
     units: r.units,
     makers: r.makers ?? [],
     importers: r.importers ?? [],

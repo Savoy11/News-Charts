@@ -26,7 +26,9 @@ import { takenBefore } from "./takenNames";
  * usa.gov public-domain label (the 2026-10-22 shortlist). Not re-read here: from this session
  * cpsc.gov and saferproducts.gov's pages answered 403 and the catalog's search 404 (2026-11-05);
  * the service itself answered. Used: each recall's title, day, hazard, number of units, the firms
- * it names and a link to its notice — never its images.
+ * it names and a link to its notice — never its images — and, since batch 136 (the 2026-11-09b
+ * proposal 4, part a), its injury statement as the Commission wrote it ("The firm is aware of a
+ * 2014 death…", "None reported"), the Commission's record of the harm, not a finding.
  */
 export const RECALLS_URL = "https://www.saferproducts.gov/RestWebServices/Recall?format=json";
 
@@ -38,6 +40,8 @@ export interface CpscRecall {
   /** the recall's notice on cpsc.gov */
   url: string | null;
   hazard: string | null;
+  /** the Commission's injury statement, as written: "None reported", "The firm has received 26 reports…" */
+  injuries: string | null;
   units: string | null;
   makers: string[];
   importers: string[];
@@ -54,6 +58,7 @@ interface RawRecall {
   URL?: string;
   Products?: { NumberOfUnits?: string }[];
   Hazards?: { Name?: string }[];
+  Injuries?: { Name?: string }[];
   Manufacturers?: { Name?: string }[];
   Importers?: { Name?: string }[];
   Distributors?: { Name?: string }[];
@@ -79,6 +84,8 @@ export function parseRecalls(json: unknown): CpscRecall[] {
       title,
       url,
       hazard: clean(r.Hazards?.[0]?.Name) || null,
+      // one statement a recall but for one recall of two (2026-11-09), read together
+      injuries: (r.Injuries ?? []).map((x) => clean(x.Name)).filter(Boolean).join(" ") || null,
       units: clean(r.Products?.[0]?.NumberOfUnits) || null,
       makers: names(r.Manufacturers),
       importers: names(r.Importers),
@@ -471,6 +478,11 @@ const QUALIFIED_COUNT = /^(?:about|approximately|more than|up to|over|nearly|rou
  */
 export const unitsOf = (units: string) =>
   QUALIFIED_COUNT.test(units) ? units.charAt(0).toLowerCase() + units.slice(1) : `about ${units}${/\bunits?\b/i.test(units) ? "" : " units"}`;
+/**
+ * The Commission's injury statement on a row (batch 136): as written, after "Injuries:", ending in a
+ * full stop. "None reported" is said as it is.
+ */
+export const injuriesOf = (statement: string) => `Injuries, the Commission's record: ${statement.replace(/\.?\s*$/, ".")}`;
 const noticeOf = (r: CpscRecall) => r.url ?? `https://www.cpsc.gov/Recalls?search_api_fulltext=${encodeURIComponent(r.number)}`;
 
 /**
@@ -508,7 +520,7 @@ export function cpscEvents(recalls: readonly CpscRecall[], namesIn: (year: numbe
   }
   const events: TimelineEvent[] = [];
   const what = (x: { r: CpscRecall; role: keyof typeof ROLE }) =>
-    `${x.r.title} — the company ${ROLE[x.role]}${x.r.units ? `; ${unitsOf(x.r.units)}` : ""}${x.r.hazard ? `. ${x.r.hazard}` : ""}`;
+    `${x.r.title} — the company ${ROLE[x.role]}${x.r.units ? `; ${unitsOf(x.r.units)}` : ""}${x.r.hazard ? `. ${x.r.hazard}` : ""}${x.r.injuries ? `. ${injuriesOf(x.r.injuries)}` : ""}`;
   for (const [day, rows] of own) {
     const sorted = [...rows].sort((a, b) => a.r.number.localeCompare(b.r.number));
     const lead = sorted[0];

@@ -22,6 +22,13 @@ import { UA } from "./contact";
  * is Form 55a's, `totalpersonskilled` ("the total fatalities for all reports filled for the single
  * accident"), the same on each of its records. A row gives the larger of the two, so a death a
  * railroad's own Form 54 reports is never dropped where Form 55a holds none (6 records of 2,957).
+ *
+ * The railroad's own account and the dead by kind (batch 136, the 2026-11-09b proposal 4, part b): a
+ * row carries the report's narrative (Form 54 block 52), the dataset's filler for an empty part
+ * ("NoneNone…") removed, as the railroad's words; and where its records' dead by kind (railroad
+ * employees, passengers, others) add up to the row's count, the split: Graniteville's 9 are 1
+ * railroad employee and 8 others. Where they do not, Chatsworth's and Bourbonnais's, whose dead are on
+ * the other railroad's report, the count stands alone.
  */
 
 const DATASET = "https://data.transportation.gov/resource/85tf-25kj.json";
@@ -223,6 +230,8 @@ export const FIELDS = [
   // the accident's own counts, Form 55a's (batch 130)
   "totalpersonskilled", "totalpersonsinjured",
   "personsevacuated", "hazmatreleasedcars", "totaldamagecost", "station", "statename", "url", "reportkey", "incidentkey", "primaryaccidentcause", "jointcd",
+  // the railroad's account and its dead by kind (batch 136)
+  "narrative", "railroademployeeskilled", "passengerskilled", "otherskilled",
 ].join(",");
 
 /**
@@ -260,6 +269,10 @@ export interface AccidentRow {
   incidentkey?: string;
   primaryaccidentcause?: string;
   jointcd?: string;
+  narrative?: string;
+  railroademployeeskilled?: string | number;
+  passengerskilled?: string | number;
+  otherskilled?: string | number;
 }
 
 /** A whole count as its digits: "5200" → "5200", "" or junk → "0". Never a float. */
@@ -271,6 +284,27 @@ const digits = (v: unknown): string => {
 const atLeast = (a: string, b: string) => a.length > b.length || (a.length === b.length && a >= b);
 const larger = (a: string, b: string) => (atLeast(a, b) ? a : b);
 const grouped = (d: string) => d.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+/** Two whole counts as digits added, never as floats. */
+const plus = (a: string, b: string) => String(BigInt(a) + BigInt(b));
+
+/**
+ * The railroad's narrative as a row says it (batch 136): the dataset joins the form's fifteen parts
+ * and writes an empty one "None", so a narrative of empty parts is "NoneNone…" and a short one ends in
+ * them. The filler goes; what is left is the railroad's text, its spacing tidied.
+ */
+export function narrativeOf(text: string | undefined): string {
+  return (text ?? "").replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/(?:None)+\s*$/, "").replace(/\s+/g, " ").trim();
+}
+
+/** "1 railroad employee and 8 others" from the counts by kind; "" when none. */
+const deadByKind = (k: { employees: string; passengers: string; others: string }) => {
+  const parts = [
+    k.employees !== "0" ? `${grouped(k.employees)} railroad employee${k.employees === "1" ? "" : "s"}` : "",
+    k.passengers !== "0" ? `${grouped(k.passengers)} passenger${k.passengers === "1" ? "" : "s"}` : "",
+    k.others !== "0" ? `${grouped(k.others)} other${k.others === "1" ? "" : "s"}` : "",
+  ].filter(Boolean);
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0] ?? "";
+};
 
 /** The dataset's type, readable on a page. */
 const TYPE: Record<string, string> = {
@@ -313,6 +347,10 @@ interface Report {
   evacuated: string;
   released: string;
   damage: string;
+  /** the report's records' dead by kind, summed (batch 136) */
+  kinds: { employees: string; passengers: string; others: string };
+  /** each record's narrative, filler removed, with its record's jointcd */
+  narratives: { jointcd: string; text: string }[];
 }
 
 /** Whether a report clears the floor: a death, an evacuation or the damage; a crossing collision only the last two. */
@@ -348,6 +386,12 @@ export function accidentEvents(rows: readonly AccidentRow[], roads: readonly Rai
       evacuated: larger(was?.evacuated ?? "0", digits(row.personsevacuated)),
       released: larger(was?.released ?? "0", digits(row.hazmatreleasedcars)),
       damage: larger(was?.damage ?? "0", digits(row.totaldamagecost)),
+      kinds: {
+        employees: plus(was?.kinds.employees ?? "0", digits(row.railroademployeeskilled)),
+        passengers: plus(was?.kinds.passengers ?? "0", digits(row.passengerskilled)),
+        others: plus(was?.kinds.others ?? "0", digits(row.otherskilled)),
+      },
+      narratives: [...(was?.narratives ?? []), { jointcd: row.jointcd ?? "", text: narrativeOf(row.narrative) }].filter((n) => n.text),
     };
     reports.set(key, next);
   }
@@ -376,16 +420,7 @@ export function accidentEvents(rows: readonly AccidentRow[], roads: readonly Rai
       date: r.date,
       type: "regulation",
       title: counts.length ? `${lead} — ${counts.join(", ")}` : `${lead} — $${grouped(r.damage)} of damage`,
-      description: [
-        `Reported to the Federal Railroad Administration by ${(r.row.reportingrailroadname ?? r.road.railroad).trim()}${number ? ` (accident ${number})` : ""}.`,
-        r.released !== "0" ? `${grouped(r.released)} car${r.released === "1" ? "" : "s"} released hazardous material.` : "",
-        r.damage !== "0" ? `Damage to equipment and track: $${grouped(r.damage)}.` : "",
-        cause ? `Cause the railroad reported: ${cause.replace(/\.$/, "")}.` : "",
-        "The report is the railroad's own filing to its regulator, not a finding of fault.",
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .slice(0, 600),
+      description: describe(r, number, cause),
       source: "FRA",
       url: reportUrl(r.row.url),
       sourceKey: "fra_accidents",
@@ -395,6 +430,31 @@ export function accidentEvents(rows: readonly AccidentRow[], roads: readonly Rai
     });
   }
   return out.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+const LIMIT = 600;
+
+/**
+ * A row's description: who reported it, the dead by kind where the records' split adds up to the row's
+ * count (batch 136), the hazardous cars, the damage and the cause, then the railroad's own account,
+ * cut to fit, and last that a report is no finding of fault.
+ */
+function describe(r: Report, number: string, cause: string): string {
+  const sum = plus(plus(r.kinds.employees, r.kinds.passengers), r.kinds.others);
+  const split = r.killed !== "0" && sum === r.killed ? deadByKind(r.kinds) : "";
+  const head = [
+    `Reported to the Federal Railroad Administration by ${(r.row.reportingrailroadname ?? r.road.railroad).trim()}${number ? ` (accident ${number})` : ""}.`,
+    split ? `Killed, by kind: ${split}.` : "",
+    r.released !== "0" ? `${grouped(r.released)} car${r.released === "1" ? "" : "s"} released hazardous material.` : "",
+    r.damage !== "0" ? `Damage to equipment and track: $${grouped(r.damage)}.` : "",
+    cause ? `Cause the railroad reported: ${cause.replace(/\.$/, "")}.` : "",
+  ].filter(Boolean).join(" ");
+  const tail = "The report is the railroad's own filing to its regulator, not a finding of fault.";
+  // the representative record's account, else the longest
+  const text = (r.narratives.find((n) => n.jointcd === (r.row.jointcd ?? "")) ?? [...r.narratives].sort((a, b) => b.text.length - a.text.length)[0])?.text ?? "";
+  const room = LIMIT - head.length - tail.length - 30;
+  const story = text && room > 40 ? `The railroad's account: "${text.length > room ? `${text.slice(0, room - 1).replace(/\s+\S*$/, "")}…` : text}"` : "";
+  return [head, story, tail].filter(Boolean).join(" ").slice(0, LIMIT);
 }
 
 /** A company's accidents at the floor from `from`, its first price, or why there are none. */

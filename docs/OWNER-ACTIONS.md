@@ -207,6 +207,16 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- **The 2026-11-11 proposals** (batch 138, `docs/proposals/2026-11-11-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a
+  recurring charge.
+  1. `P2` MSHA's own finding on the deaths pages already hold: the violations its investigation cited and
+     the penalty it proposed, on 168 rows on 45 pages, 114 before 2017. **One call inside:** on the
+     accident's row (recommended), or a row of its own on the penalty's day.
+  2. `P2` the FDA's warning letters, 2021 on, a new source (public domain): 78 letters on 56 pages, none
+     before 2017.
+  3. `P2` EPA's supplemental environmental projects on the settlement rows pages already hold: 168 rows
+     on 70 pages, 142 before 2017, $181.8 million.
 - ~~**The second 2026-11-09 proposals** (batch 131, `docs/proposals/2026-11-09b-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection.~~ **Decided 2026-11-10: all
   four**, #1 on the filing lists' evidence ("Use the filing lists (Recommended)"), #2 with its licence

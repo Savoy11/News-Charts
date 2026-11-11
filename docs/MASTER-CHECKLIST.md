@@ -988,6 +988,50 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 140: the FDA's warning letters, 2021 on, a new source (2026-11-11)
+
+The 2026-11-11 proposal 2, approved by the owner on 2026-11-11 ("Approve (Recommended)"); the owner's
+word on starting: "Continue". Source 39, `fda_warning_letters`: public domain by the FDA's website
+policies (quoted in `lib/ingest/store.ts`, read 2026-11-11), no key.
+
+- [x] **The read** (`lib/fdaWarningLetters.ts`): the warning-letter list through the data its own table
+      loads, 1,000 letters a request (5,000 was refused, 503), by issue day. Read one way, the list cut
+      the letters of 2025-09-09 differently at the third page's edge: 12 came twice and 12 others never,
+      Royal Philips's among them. So it is read oldest first and newest first and put together by
+      letter; on 2026-11-11 the two gave all 3,807 in eight requests and 42 seconds. A read is refused
+      whole unless every page answers, each direction's rows come to the list's count, and the two hold
+      every letter it counts.
+- [x] **Kept once a week** (`lib/ingest/fdaWarningWalk.ts`, db/049): one read a process for every
+      company; a read updates the letters it gives and never removes one. A company's step reads the
+      kept list, a complete answer once the list was ever read.
+- [x] **Whose letter** (`letterIsCompany`): the approvals' rule on the issue day (`approvalIsCompany`,
+      now taking any applicant and day), or `LETTER_NAMES`, 12 companies' addressees read by hand on the
+      list of 2026-11-11: Amazon.com, Inc. (10 letters), Hims & Hers doing business as Hims or Hers,
+      iRhythm Technologies, Procter & Gamble Manufactura, Colgate-Palmolive/Tom's of Maine, Labcorp
+      Bedford, Flextronics America, Elanco Animal Health USA, Silgan Dispensing Systems, Owlet Baby Care,
+      CHS Inc./CHS River Plains, and DuPont Nutrition on IFF from 2021-02-01 (IFF's 8-K
+      0001193125-21-027533). The namesakes read with them stay off (Tesla BioHealing, Dell Vapers, Kraft
+      Drug, Cooper Institute…).
+- [x] **The row**: one a company a day, "FDA warning letter: <subject>" or "3 FDA warning letters: …",
+      the addressee as written, the office, the posting and any close-out day, and "The letter is the
+      FDA's own account of what it found"; linked to the day's first letter, keyed `fdawl:<CIK>@<day>`.
+      Its letters' slugs are joined, so the source is one of `GROUPED_ROW_SOURCES` (id 39).
+- [x] **What it gives**, before first prices: 101 letters on 67 companies, 97 rows; 79 by the rule and
+      22 by hand; Amazon 10, Walmart 5, Abbott, Fresenius, Lilly and Medline 3; 42 of the 67 outside the
+      FDA recall map. Bausch & Lomb's letter of 2026-09-04 is on Bausch + Lomb's page and on Bausch
+      Health's, as the recall map gives that firm to both.
+- [x] **Checked:** `check:fda-warning-letters` 59 (new): the row reader, the list read both ways from
+      the committed answers (`scripts/fixtures/fda-warning-letters.json.gz`, the eight of 2026-11-11), its
+      refusals, the proposal's cases (Dexcom, Abiomed on J&J, Lilly's three as one row, Kraft Drug and
+      Cooper Institute off, Amazon by hand, Royal Philips), each hand-read name, every listed company
+      against every letter, the rows, the weekly walk, the company step and the wiring.
+      `check:also-on`, `check:contact`, `check:fda-approvals`, `check:fda-recalls` and `check:fda-supplements` follow the new
+      grouped source, the 37th file to read the build's contact and the credit; `check:live` reads the
+      real list both ways. On main the check fails: the module does not exist.
+- **Requests:** 13 to www.fda.gov (one refused 503 asking 5,000 at once; four newest first for the
+  fixture; eight by the reader itself, every one 200) and 1 to data.sec.gov (IFF's filings), logged in
+  `b140/requests.log`; the scout's four oldest-first pages of 2026-11-11.
+
 ## NC ledger — batch 139: the 2026-11-11 approvals filed, and MSHA's own finding on the deaths pages hold (2026-11-11)
 
 The owner marked the 2026-11-11 proposals on 2026-11-11: all three approved, #1 on the death's row ("On
@@ -10598,12 +10642,14 @@ already held, but new investment goes to securities coverage first.
       - **Done in batch 139** (see its section): the same figures, by the code's own rules.
       - *Derived from [`docs/proposals/2026-11-11-proposals.md`](proposals/2026-11-11-proposals.md) #1,
         approved 2026-11-11.*
-- [ ] `P2` **The FDA's warning letters, 2021 on,** a new source on www.fda.gov (public domain): approved by
+- [x] `P2` **The FDA's warning letters, 2021 on,** a new source on www.fda.gov (public domain): approved by
       the owner 2026-11-11. A letter is the company's by the rule the FDA's approvals use, plus a short
       hand list (Amazon.com, Inc.).
       - **Measured** by the scout: 78 letters on 56 pages, 31 of them outside the FDA recall map; about 12
         more by the hand list, an estimate.
-      - **To be built in batch 140.**
+      - **Done in batch 140** (see its section): 101 letters on 67 pages before first prices, 79 by the
+        rule (the scout's 78 and Royal Philips's, which reading the list one way had lost) and 22 by a
+        hand list of 12 companies; 42 of the 67 outside the recall map.
       - *Derived from [`docs/proposals/2026-11-11-proposals.md`](proposals/2026-11-11-proposals.md) #2,
         approved 2026-11-11.*
 - [ ] `P2` **EPA's supplemental environmental projects on the settlement rows pages already hold.** No new

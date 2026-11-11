@@ -57,6 +57,7 @@ import { fetchCftcPage } from "../lib/cftc";
 import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue } from "../lib/secDigest";
 import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
 import { DRUGSFDA_ENTRY, DRUGSFDA_FILE, readSupplements } from "../lib/fdaSupplements";
+import { fetchLetters } from "../lib/fdaWarningLetters";
 import { readZip } from "../lib/zip";
 import { releaseNamesOn } from "../lib/releaseNames";
 import { fetchFdaRecalls } from "../lib/fdaRecalls";
@@ -921,6 +922,25 @@ export const CASES: LiveCase[] = [
       const keytruda = apps.find((a) => a.application === "BLA125514");
       const s016 = keytruda?.supplements.find((s) => s.number === "16");
       if (keytruda?.sponsor !== "MERCK SHARP DOHME" || s016?.day !== "2017-05-10" || s016.review !== "priority") out.push(`Keytruda reads ${JSON.stringify({ sponsor: keytruda?.sponsor, s016 })}`);
+      return out;
+    },
+  },
+  {
+    name: "FDA warning letters — the whole list read both ways as the walk reads it; Lilly's three of 2025-09-09 and Royal Philips's (batch 140)",
+    covers: ["fda_warning_letters"],
+    hosts: ["www.fda.gov"],
+    async run() {
+      // measured 2026-11-11: 3,807 letters from 2021-01-04, eight requests; oldest first alone lost 12
+      // of 2025-09-09 (Royal Philips's among them) at a page's edge; Eli Lilly and Company had three
+      // that day
+      const got = await fetchLetters();
+      if (got.outcome !== "ok") return [`the list: ${got.outcome} ${got.httpStatus ?? ""} ${got.detail ?? ""}`.trim()];
+      const out: string[] = [];
+      if (got.letters.length < 3_807) out.push(`the list holds ${got.letters.length} letters, fewer than the 3,807 of 2026-11-11`);
+      if (got.letters[0]?.issued !== "2021-01-04") out.push(`its first letter is of ${got.letters[0]?.issued}, not 2021-01-04`);
+      const lilly = got.letters.filter((l) => l.company === "Eli Lilly and Company" && l.issued === "2025-09-09");
+      if (lilly.length !== 3) out.push(`${lilly.length} letters to Eli Lilly and Company of 2025-09-09, not 3`);
+      if (!got.letters.some((l) => l.company.trim() === "Royal Philips" && l.issued === "2025-09-09")) out.push("no letter to Royal Philips of 2025-09-09");
       return out;
     },
   },

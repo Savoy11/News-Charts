@@ -212,7 +212,9 @@ Raised by the November batches, each recorded in the master checklist:
   recurring charge.~~ **Decided 2026-11-11: all three**, #1 on the death's row ("On the death's row
   (Recommended)"). #1 is built in batch 139: after deploying, apply db/048 (`npm run db:migrate`); the
   next ingest of a mapped company reads MSHA's two findings files once, and every page's next ingest
-  gives its rows the finding. #2 and #3 follow in batches 140 and 141.
+  gives its rows the finding. #2 is built in batch 140: after deploying, apply db/049 (`npm run
+  db:migrate`); the next ingest of any company reads the FDA's warning-letter list once (eight requests),
+  and every page's next ingest gives it its letters. #3 follows in batch 141.
   1. `P2` MSHA's own finding on the deaths pages already hold: the violations its investigation cited and
      the penalty it proposed, on 168 rows on 45 pages, 114 before 2017. **One call inside:** on the
      accident's row (recommended), or a row of its own on the penalty's day.

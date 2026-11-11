@@ -255,7 +255,7 @@ function whoseOn(cik: number): readonly FdaFirm[] {
 }
 
 /** Whether an approval's applicant is the company on its day, by one of the three rules. */
-export function approvalIsCompany(a: FdaApproval, cik: number, namesIn: (year: number) => string[]): boolean {
+export function approvalIsCompany(a: Pick<FdaApproval, "applicant" | "day">, cik: number, namesIn: (year: number) => string[]): boolean {
   if (NOT_THE_APPLICANT[cik]?.some((r) => r.applicant.test(a.applicant))) return false;
   // a name the record took from another company is that company's before the day (lib/takenNames.ts, batch 117)
   if (takenBefore(cik, a.day, a.applicant)) return false;

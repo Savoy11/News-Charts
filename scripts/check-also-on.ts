@@ -117,8 +117,8 @@ check("  …and both list layouts render the line", (read("components/EventList.
 
 console.log("\nThe sources a row counts (batch 107, the 2026-11-07 audit's finding 1)");
 const groupedIds = GROUPED_ROW_SOURCES.map((k) => SOURCES.find((s) => s.key === k)?.id);
-check("the sources whose one row carries several cases' numbers are EPA's, the CPSC's, the CFTC's, the SEC's litigation releases, the CFPB's and the Digest's, by their own ids",
-  JSON.stringify(groupedIds) === JSON.stringify(GROUPED_ROW_SOURCE_IDS) && JSON.stringify([...GROUPED_ROW_SOURCES].sort()) === JSON.stringify(["cfpb", "cftc", "cpsc_recalls", "epa_cases", "sec_cases", "sec_digest"]),
+check("the sources whose one row carries several cases' numbers are EPA's, the CPSC's, the CFTC's, the SEC's litigation releases, the CFPB's, the Digest's and the FDA's warning letters of a day (batch 140), by their own ids",
+  JSON.stringify(groupedIds) === JSON.stringify(GROUPED_ROW_SOURCE_IDS) && JSON.stringify([...GROUPED_ROW_SOURCES].sort()) === JSON.stringify(["cfpb", "cftc", "cpsc_recalls", "epa_cases", "fda_warning_letters", "sec_cases", "sec_digest"]),
   { groupedIds, GROUPED_ROW_SOURCE_IDS });
 // every builder that joins numbers into one row's id, and the source it writes
 const joining = readdirSync(join(__dirname, "..", "lib"))

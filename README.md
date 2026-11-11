@@ -355,6 +355,39 @@ pages, 420 before 2017, 131 before 2005; most on Bristol-Myers Squibb 172, Merck
 Lilly 97, Johnson & Johnson 96, AstraZeneca and Gilead 71. Schering's before the 2009 merger are on
 Merck's page with batch 110's label. Public domain under CC0 (openFDA's licence); no key.
 
+### FDA warning letters (`lib/fdaWarningLetters.ts`)
+
+A warning letter is the FDA telling a company, in writing and in public, what it found wrong, most
+often after an inspection: a plant's manufacturing practice, a device maker's quality system, a
+retailer selling an unapproved drug. Since batch 140 (the 2026-11-11 proposal 2, approved by the owner
+on 2026-11-11) a page carries each letter addressed to the company since 2021, on the day the FDA
+issued it: "FDA warning letter: CGMP/QSR/Medical Devices/Adulterated" (Dexcom, 2025-03-04), with the
+addressee as the FDA wrote it, the office that issued it, the day the FDA posted it and the day of any
+close-out letter, linked to the letter's own page on www.fda.gov. A company's letters of one day are
+one row ("3 FDA warning letters: False & Misleading Claims/Misbranded", Lilly, 2025-09-09). The letter
+is the agency's account, not a court's finding, and the row says so.
+
+The list is read whole once a week for every company, through the data the FDA's own table loads
+(`lib/ingest/fdaWarningWalk.ts`, db/049): 1,000 letters a request, as the site allows no more. It is
+read twice, oldest first and newest first, because letters of one day have no order of their own: read
+one way only, the list cut the 24 letters of 2025-09-09 differently at a page's edge, gave 12 twice and
+never gave 12 others, Royal Philips's among them. The two directions' edges fall on different days, and
+together they gave all 3,807 (2026-11-11, eight requests). A read short of the list's own count is
+refused, and a letter once kept is never taken off.
+
+A letter is the company's by the rule the FDA's approvals use (`approvalIsCompany`: the caption rule
+under the names it had that year, the FDA recall map's firms and units on their days, the table of taken
+names), or by a short hand list of addressees that rule cannot read (`LETTER_NAMES`): Amazon.com, Inc.,
+whose ".com" the rule reads as no legal word; Hims & Hers doing business as Hims; iRhythm under its
+name before its record's; and named-after units such as P&G's Mexican company, Labcorp's Bedford
+laboratory and DuPont Nutrition, IFF's only from their merger of 2021-02-01. Namesakes stay off: Kraft
+Drug is not Kraft Heinz, Cooper Institute not the Cooper Companies (whose CooperSurgical is theirs).
+Before first prices, 101 letters on 67 companies, 97 rows: 79 by the rule and 22 by the hand list,
+most on Amazon 10, Walmart 5, then Abbott, Fresenius, Lilly and Medline 3 each; 42 of the 67 are
+outside the FDA recall map. The list begins in 2021; the older letters sit behind the FDA Data
+Dashboard's API, which needs a registered key, and are not read. Public domain by the FDA's website
+policies; no key.
+
 ### Justice Department releases (`lib/doj.ts`)
 
 A company's page carries the Justice Department press releases in which it is a party, back to
@@ -1587,6 +1620,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 63 banks `lib/fedActions.ts` maps by hand to a listed company — 49 US banks and 14 foreign banks with their US arms; an action against a person is left out. Public domain, cited to the Board; two keyless files |
 | FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 73 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
 | FDA (CDER's new-drug approvals) | New molecular entities and new biologics since 1985, on the page of the company that applied | One committed workbook a year (`npm run sync:fda-approvals`); kept when the applicant is the company by the caption rule, a recall-map firm or a unit it then owned (`lib/fdaApprovals.ts`), from its first price; linked to Drugs@FDA. Public domain; no key |
+| FDA (warning letters) | Each warning letter since 2021 addressed to the company, its firm or its unit that day, a day's letters one row (batch 140) | The whole list read both ways once a week for every company and kept (`lib/ingest/fdaWarningWalk.ts`); by the approvals' rule and a hand list (`lib/fdaWarningLetters.ts`), from its first price; linked to the letter. Public domain; no key |
 | FDA (Drugs@FDA, via openFDA) | Each approved efficacy supplement to those drugs, on its day | One committed file a month (`npm run sync:fda-supplements`); kept where the drug never left the company and the applicant was the company that day (`lib/fdaSupplements.ts`), from its first price; linked to the letter. Titles from the data alone. CC0; no key |
 | U.S. Department of Justice | Press releases since 2001 (the API's from 2009, the archive's month pages before) in which a company is a party — a settlement, a plea, a suit against it, a merger case | Kept only when the title makes the company the one acting or acted against (`lib/doj.ts`); one release a day per company. Public domain; no key |
 | SEC newsroom (press releases) | Press releases since 1997 in which a company is the party — the SEC charges, sues or sanctions it, or it settles | The year listing, read once for every company (`lib/ingest/secPressWalk.ts`); kept only when the headline makes the company the party (`lib/secPress.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |

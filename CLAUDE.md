@@ -141,7 +141,11 @@ Their later efficacy supplements (`lib/fdaSupplements.ts`, batch 115) come from 
 openFDA, a committed file read monthly (`npm run sync:fda-supplements`): a supplement is a page's only
 where the drug's holder never left the company (`holderKept`: today's sponsor is the applicant by
 name, a name of the company, or one of `SPONSOR_SPELLINGS`), then by the same rule on its own day;
-its title says only "an efficacy supplement", never "new indication".
+its title says only "an efficacy supplement", never "new indication". The FDA's warning letters since 2021
+(`lib/fdaWarningLetters.ts`, batch 140) come from the list's own table data, read whole both ways once a
+week and kept (`lib/ingest/fdaWarningWalk.ts`, db/049): one way alone loses the letters of a day a page's
+edge cuts. A letter is a page's by `approvalIsCompany` on its issue day or by `LETTER_NAMES`, read by hand
+(Amazon.com, Inc.…); a company's letters of a day are one row.
 
 A row of one of the eight multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
 CFTC) says which other held company pages carry the same case: "Also on Ford Motor, General Motors

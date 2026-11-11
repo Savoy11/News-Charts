@@ -80,6 +80,9 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   // MSHA's mine accidents, kept from a weekly read of its files (lib/ingest/mineWalk.ts, batch 134):
   // a company's ingest only reads the kept copy, once a day
   msha_accidents: 1440,
+  // the FDA's warning letters, kept from a weekly read of the whole list (lib/ingest/fdaWarningWalk.ts,
+  // batch 140): a company's ingest only reads the kept copy, once a day
+  fda_warning_letters: 1440,
   // Digitised newspapers from before 1963. These will never change again.
   loc_chronam: 10080,
   // Halvings and network upgrades are settled history; Phase 0 holds nothing live.

@@ -517,6 +517,24 @@ export const SOURCES: {
     reviewedOn: "2026-11-10",
     notes: "deaths at mines since 2000, for the controllers lib/mineAccidents.ts maps, each between its company's days; MSHA's two open-data zips read once a week for every company, no key (batch 134)",
   },
+  {
+    id: 39,
+    key: "fda_warning_letters",
+    name: "FDA warning letters",
+    license: "public domain",
+    attribution: "U.S. Food and Drug Administration",
+    // "Unless otherwise noted, the contents of the FDA website (www.fda.gov) — both text and
+    // graphics — are not copyrighted. They are in the public domain and may be republished,
+    // reprinted and otherwise used freely by anyone without the need to obtain permission from
+    // FDA. Credit to the U.S. Food and Drug Administration as the source is appreciated but not
+    // required." (www.fda.gov/about-fda/about-website/website-policies, read 2026-11-11.) Used: each
+    // letter's addressee, issue and posting days, issuing office, subject, close-out day and a link to
+    // the letter's page; the letters' text is not kept. Approved by the owner on 2026-11-11
+    // (docs/proposals/2026-11-11-proposals.md #2).
+    commercialOk: true,
+    reviewedOn: "2026-11-11",
+    notes: "the FDA's warning letters since 2021, kept where the addressee is a listed company on the issue day by the approvals' rule or the letters' hand list (lib/fdaWarningLetters.ts); the whole list read once a week for every company, no key (batch 140)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

@@ -988,6 +988,78 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 143: an opportunity-scout run, two proposals for the owner (2026-11-11)
+
+Every proposal of `docs/proposals/2026-11-11-proposals.md` is approved and built (batches 139–141), and
+batch 142 fixed what the audit of batches 138–141 found. So the `opportunity-scout` read the repository
+again at `a89c8e9` and wrote `docs/proposals/2026-11-11b-proposals.md`: two proposals, both
+**PENDING**, ranked with securities depth first. The owner's word, 2026-11-11: "Continue". Nothing is
+built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      1. `P1` **The FDA's device recalls of 2002 to mid-2012.** A new dataset on a host already read:
+         openFDA's device recall file, CC0 as its licence page says (quoted in the file), no key. The FDA
+         recall rows come from the enforcement reports, which begin on 2012-06-20, so no device maker's
+         page holds a recall before then. Read through the recall map the pages already use (`FDA_FIRMS`,
+         `firmFor` on the day the firm began the recall), skipping every recall the reports already hold.
+         Measured: 2,600 recalls on 38 companies, begun 2000-04-11 to 2012-05-07, are in no report; from
+         first prices 2,228 on 20 pages, every one before 2017 (Stryker 281, Abbott 269, GE 254, Philips
+         241, Medtronic 212, J&J 210, Boston Scientific 190, Baxter 133, BD 123, Zimmer Biomet 112), and
+         372 more on 18 companies whose first price is not read. Medtronic's Sprint Fidelis recall of
+         2007-10-15 and DePuy's ASR hip recall of 2010-08-23 among them. **The catches:** the file gives
+         no recall class, which each product's FDA page does ("Class 1 Device Recall Medtronic Sprint
+         Fidelis Lead"), so about 7,865 pages are read once, a few hundred a run, and Class III recalls
+         dropped (about 60, an estimate); and the map needs days before 2012 for units bought between
+         2002 and 2012 (about 14 recalls found, Guidant's of 2005 filed under "Boston Scientific CRM Corp"
+         before Boston Scientific bought it on 2006-04-21 among them).
+      2. `P2` **A fifth round of units named after their owners,** in the three hand lists that exist
+         (EPA's `UNITS`, the CPSC's `UNITS`, `RELEASE_NAMES`); no new rule and no new source. Measured:
+         51 units, 299 cases, recalls and SEC releases on 47 companies (EPA 182, CPSC 69, SEC cases 48),
+         159 before 2017; from first prices 114 on 26 pages, 81 before 2017 (Invesco Funds Group 16, RBC
+         Capital Markets 9, National Fuel Gas 8, Walmart's EPA cases written "WALMART STORES" 7), and up to
+         185 more on 21 companies whose first price is not read. Six units need days from a filing (A. O.
+         Smith Electrical Products to 2011, Coca-Cola Refreshments from 2010-10-02…). Small, and the file
+         says so.
+- **Cut, with reasons in the file:** a general rule for a unit named after its owner (4,107 items on
+  598 companies no list holds, but a sample of 80 read 12 of 33 multi-word and 29 of 38 one-word hits as
+  another company's); the "X/Y" shape (130 items, mixed, the company-and-plant lead cut twice before);
+  ".com" names (only Amazon's, settled in batch 142); Amazon's consignee orders (14 of the 20 EPA cases
+  left off name it only as consignee or "c/o" for another firm, none with a penalty; 5 are namesakes);
+  EPA's complying actions and pollutant reductions (bland text; 666 of 755 weights name no pollutant);
+  the EEOC's press releases (about 450 would reach pages, an estimate, but neither its disclaimer nor its
+  privacy page states a licence, the FDIC list's reason); USAspending's contract actions (errors among
+  the largest, operating units as recipients); NHTSA's investigation columns (nothing beyond the subject
+  line); the FTC (404), GAO's bid protests (403) and the CPSC's civil-penalty page (403), refused again.
+  **An owner ruling would reopen two of them:** that a federal agency's own work may be used on 17 U.S.C.
+  § 105's terms where its site states no licence would reopen the EEOC's releases and the FDIC's list.
+- **For the `code-auditor`, noted by the scout:** EPA's case 04-2021-1234 of 2020-11-17 names
+  "AMAZON.SERVICES, INC.", Amazon's own company, which batch 142's unit pattern misses (it wants a space
+  after "AMAZON"); and J.B. Hunt's EDGAR title is the inverted "HUNT J B TRANSPORT SERVICES INC", so no
+  caption rule reads its legal name as written (#2 covers its two EPA cases; the other sources were not
+  checked).
+- **Verified here,** on the scout's downloads, with my own reads: the device recall file streamed afresh,
+  59,705 product records, and the device enforcement file, 40,481 records from 2012-06-20; replayed on
+  `FDA_FIRMS` with `firmFor`, 9,023 recalls on 54 companies, 6,416 in the reports, 2,600 not on 38
+  companies (7,865 products, 2000-04-11 to 2012-05-07), 2,228 on 20 pages from first prices, all before
+  2017, and 372 on 18 unread, each figure as the file gives it; events 45403 (MDT, 4 products), 57177
+  (JNJ, 68), 36064 (CAH) and 49079 (ZBH, 12) in no report; the two class pages and the CC0 sentence as
+  quoted; the five first days, Yahoo's `firstTradeDate`; "Boston Scientific CRM Corp" on 23 recalls before
+  2012-06-20, two before 2006-04-21. For #2: the drafted file's 299 items on 47 companies, 114 on 26 pages
+  from first prices, 81 before 2017, and the finder's 4,107 on 598; Walmart's seven cases (an eighth,
+  "Walmart Stores - Big Rapids", is a store's name, left out), National Fuel Gas Supply's case
+  02-1993-0149, and case 04-2021-1234. A sample of my own, 24 of the 1,405 hits from first prices, read 9
+  of 12 one-word hits and at least 4 of 12 multi-word ones as another company's or a joint venture's
+  (Southern Grinding Service on Southern Company, Chevron Phillips Chemical on Chevron, Coca-Cola
+  Enterprises on Coca-Cola), as the scout's; the plain names among the hits ("TEXTRON INC") are halves of
+  "X/Y" parties, the shape cut.
+- **Requests:** 27 by the scout, logged in the session scratchpad (`scout143/requests.log`), each with
+  User-Agent `News Charts Research` and no email address: www.eeoc.gov 9 (one 404), query1.finance.yahoo.com
+  6 (one 429), api.fda.gov 2, download.open.fda.gov 2, www.accessdata.fda.gov 2, and one each to
+  open.fda.gov, api.usaspending.gov, data.transportation.gov, www.ftc.gov (404), www.gao.gov (403) and
+  www.cpsc.gov (403). 22 answered 200; one more was never sent (curl refused its brackets). No sec.gov
+  host was asked. None here.
+
 ## NC ledger — batch 142: the 2026-11-11 audit of batches 138–141, its findings fixed (2026-11-11)
 
 The `code-auditor` read `git diff 3f06e91..9bb857e` (batches 138–141) and wrote

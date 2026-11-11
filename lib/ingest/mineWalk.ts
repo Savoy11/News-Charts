@@ -1,5 +1,14 @@
 import type { PoolClient } from "pg";
-import { fetchMineFiles, mineAccidentEvents, mineControllersFor, type MineAccident, type MineFilesAnswer } from "../mineAccidents";
+import {
+  fetchMineFiles,
+  fetchMineFindings,
+  mineAccidentEvents,
+  mineControllersFor,
+  type MineAccident,
+  type MineFilesAnswer,
+  type MineFindingsAnswer,
+  type MineViolation,
+} from "../mineAccidents";
 import type { FetchResult } from "../types";
 import { NO_PRICES, firstPriceDay } from "./secPressWalk";
 
@@ -12,6 +21,10 @@ import { NO_PRICES, firstPriceDay } from "./secPressWalk";
 export const READ_EVERY_DAYS = 7;
 /** What a process may still ask, shared by every company it ingests: one read of the files. */
 export const mineBudget = { left: 1 };
+/** MSHA's findings files (Inspections, Assessed Violations) are read once a month (batch 139): about 184 MB a read. */
+export const FINDINGS_EVERY_DAYS = 30;
+/** …one read a process, apart from the accidents' read. */
+export const findingsBudget = { left: 1 };
 
 export interface MineWalk {
   due: boolean;
@@ -20,13 +33,43 @@ export interface MineWalk {
   accidents: number;
   stopped?: string;
   failure?: { outcome: "throttled" | "error"; httpStatus?: number; detail?: string };
+  /** MSHA's findings, read on their own month (batch 139); a failure here leaves the kept findings and the rows. */
+  findings?: FindingsWalk;
 }
 
-/** Reads the files when the last read is `READ_EVERY_DAYS` old or there is none. `fetchFiles` is replaceable so the check can run it offline. */
+export interface FindingsWalk {
+  due: boolean;
+  read?: "stored";
+  investigations: number;
+  violations: number;
+  stopped?: string;
+  failure?: { outcome: "throttled" | "error"; httpStatus?: number; detail?: string };
+}
+
+/**
+ * Reads the accidents' files when the last read is `READ_EVERY_DAYS` old or there is none, then MSHA's
+ * findings files when theirs is `FINDINGS_EVERY_DAYS` old or none, linked to the accidents kept.
+ * `fetchFiles` and `fetchFindings` are replaceable so the check can run it offline.
+ */
 export async function walkMineAccidents(
   client: PoolClient,
-  { budget = mineBudget, fetchFiles = fetchMineFiles }: { budget?: { left: number }; fetchFiles?: (since: string | null) => Promise<MineFilesAnswer> } = {},
+  {
+    budget = mineBudget,
+    fetchFiles = fetchMineFiles,
+    findingsBudget: findingsLeft = findingsBudget,
+    fetchFindings = fetchMineFindings,
+  }: {
+    budget?: { left: number };
+    fetchFiles?: (since: string | null) => Promise<MineFilesAnswer>;
+    findingsBudget?: { left: number };
+    fetchFindings?: (accidents: readonly { key: string; mine: string; day: string }[]) => Promise<MineFindingsAnswer>;
+  } = {},
 ): Promise<MineWalk> {
+  const walked = await walkAccidents(client, budget, fetchFiles);
+  return { ...walked, findings: await walkFindings(client, findingsLeft, fetchFindings) };
+}
+
+async function walkAccidents(client: PoolClient, budget: { left: number }, fetchFiles: (since: string | null) => Promise<MineFilesAnswer>): Promise<MineWalk> {
   const { rows } = await client.query<{ modified: string | null; stale: boolean }>(
     `SELECT modified, read_at < now() - make_interval(days => ${READ_EVERY_DAYS}) AS stale FROM mine_reads WHERE id = 1`,
   );
@@ -49,6 +92,108 @@ export async function walkMineAccidents(
   }
   await store(client, got.accidents, got.modified);
   return { due: true, read: "stored", accidents: got.accidents.length };
+}
+
+async function walkFindings(
+  client: PoolClient,
+  budget: { left: number },
+  fetchFindings: (accidents: readonly { key: string; mine: string; day: string }[]) => Promise<MineFindingsAnswer>,
+): Promise<FindingsWalk> {
+  const { rows } = await client.query<{ stale: boolean }>(
+    `SELECT findings_read_at IS NULL OR findings_read_at < now() - make_interval(days => ${FINDINGS_EVERY_DAYS}) AS stale FROM mine_reads WHERE id = 1`,
+  );
+  // nothing to link before the accidents are kept, and nothing to ask within the month
+  if (!rows[0]?.stale) return { due: false, investigations: 0, violations: 0 };
+  if (budget.left <= 0) return { due: true, investigations: 0, violations: 0, stopped: "this run's read is spent" };
+  budget.left--;
+  const { rows: kept } = await client.query<{ accident_key: string; mine_id: string; day: string }>("SELECT accident_key, mine_id, day::text AS day FROM mine_accidents");
+  let got: MineFindingsAnswer;
+  try {
+    got = await fetchFindings(kept.map((r) => ({ key: r.accident_key, mine: r.mine_id, day: r.day })));
+  } catch (err) {
+    got = { investigations: [], violations: [], modified: null, outcome: "error", detail: String(err).slice(0, 200) };
+  }
+  if (got.outcome !== "ok") {
+    return { due: true, investigations: 0, violations: 0, stopped: got.outcome, failure: { outcome: got.outcome, httpStatus: got.httpStatus, detail: got.detail } };
+  }
+  const investigations = [...new Map(got.investigations.map((i) => [i.event, i])).values()];
+  const violations = [...new Map(got.violations.map((v) => [`${v.event}|${v.number}`, v])).values()];
+  await client.query("BEGIN");
+  try {
+    await client.query("DELETE FROM mine_violations");
+    await client.query("DELETE FROM mine_investigations");
+    await client.query(
+      `INSERT INTO mine_investigations (event_no, accident_key, mine_id, begin_day, activity_code)
+       SELECT * FROM unnest($1::text[], $2::text[], $3::text[], $4::date[], $5::text[])`,
+      [investigations.map((i) => i.event), investigations.map((i) => i.accident), investigations.map((i) => i.mine), investigations.map((i) => i.begin), investigations.map((i) => i.code)],
+    );
+    await client.query(
+      `INSERT INTO mine_violations (event_no, violation_no, violator_type, violator_name, action, assessment, proposed_amount, current_amount)
+       SELECT * FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[], $7::numeric[], $8::numeric[])`,
+      [
+        violations.map((v) => v.event),
+        violations.map((v) => v.number),
+        violations.map((v) => v.violatorType),
+        violations.map((v) => v.violator),
+        violations.map((v) => v.action),
+        violations.map((v) => v.assessment),
+        violations.map((v) => v.proposed),
+        violations.map((v) => v.current),
+      ],
+    );
+    await client.query("UPDATE mine_reads SET findings_modified = $1, findings_read_at = now() WHERE id = 1", [got.modified]);
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  }
+  return { due: true, read: "stored", investigations: investigations.length, violations: violations.length };
+}
+
+/**
+ * The kept findings of the given accidents, by accident key: the violations assessed under the
+ * investigations linked to each. A missing table (db/048 not yet applied) gives none: an enrichment never
+ * breaks the rows it adds to.
+ */
+export async function storedMineFindings(client: PoolClient, keys: readonly string[]): Promise<Map<string, MineViolation[]>> {
+  const out = new Map<string, MineViolation[]>();
+  if (!keys.length) return out;
+  let rows: {
+    accident_key: string;
+    event_no: string;
+    violation_no: string;
+    violator_type: string;
+    violator_name: string;
+    action: string;
+    assessment: string;
+    proposed: string;
+    current: string;
+  }[];
+  try {
+    ({ rows } = await client.query(
+      `SELECT i.accident_key, v.event_no, v.violation_no, v.violator_type, v.violator_name, v.action, v.assessment,
+              v.proposed_amount::text AS proposed, v.current_amount::text AS current
+         FROM mine_investigations i JOIN mine_violations v ON v.event_no = i.event_no
+        WHERE i.accident_key = ANY ($1::text[]) ORDER BY i.accident_key, v.event_no, v.violation_no`,
+      [[...keys]],
+    ));
+  } catch {
+    return out;
+  }
+  for (const r of rows) {
+    const v: MineViolation = {
+      event: r.event_no,
+      number: r.violation_no,
+      violatorType: r.violator_type,
+      violator: r.violator_name,
+      action: r.action,
+      assessment: r.assessment,
+      proposed: r.proposed,
+      current: r.current,
+    };
+    out.set(r.accident_key, [...(out.get(r.accident_key) ?? []), v]);
+  }
+  return out;
 }
 
 async function store(client: PoolClient, accidents: readonly MineAccident[], modified: string | null): Promise<void> {
@@ -164,7 +309,12 @@ export async function mineAccidentsFor(client: PoolClient, subjectId: number, ci
   if (listed === null) return failed ? { events: [], ...failed } : NO_PRICES();
   const { rows } = await client.query<{ n: number }>("SELECT count(*)::int AS n FROM mine_reads");
   const everRead = rows[0]?.n > 0;
-  const events = mineAccidentEvents(await storedMineAccidents(client, controllers.map((c) => c.id), listed), controllers, { from: listed });
+  const accidents = await storedMineAccidents(client, controllers.map((c) => c.id), listed);
+  // MSHA's own finding on each, from the kept findings (batch 139); none kept, none said
+  const findings = await storedMineFindings(client, accidents.map((a) => a.key));
+  const events = mineAccidentEvents(accidents, controllers, { from: listed, findings });
+  // a findings read that failed leaves the kept findings, and says so in the log line
+  const findingsNote = walked.findings?.failure ? { detail: `MSHA's findings files: ${walked.findings.failure.outcome}${walked.findings.failure.detail ? ` (${walked.findings.failure.detail})` : ""}; the kept findings stand` } : {};
   if (failed) return everRead ? { events, ...failed, complete: {} } : { events, ...failed };
-  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200, ...(everRead ? { complete: {} } : {}) };
+  return { events, outcome: events.length ? "ok" : "empty", httpStatus: 200, ...findingsNote, ...(everRead ? { complete: {} } : {}) };
 }

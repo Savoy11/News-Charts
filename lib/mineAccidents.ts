@@ -1,6 +1,6 @@
 import type { TimelineEvent } from "./types";
 import { UA } from "./contact";
-import { decodeText, eachCsvRow, readZip } from "./zip";
+import { decodeText, eachCsvRow, eachZipLine, readZip } from "./zip";
 
 /**
  * Deaths at mines a listed company controlled, from 2000 (batch 134, the 2026-11-09b proposal 2,
@@ -27,10 +27,27 @@ import { decodeText, eachCsvRow, readZip } from "./zip";
  * "Cleveland-Cliffs Minorca Mine Inc.", the name of the operator after Cleveland-Cliffs bought it in
  * 2020. A row's title therefore names no operator; its text gives MSHA's present names as present
  * names. The mine's place, county and state, is the Mines file's, which a mine does not leave.
+ *
+ * MSHA's own finding (batch 139, the 2026-11-11 proposal 1, approved by the owner on 2026-11-11, on the
+ * death's row): MSHA investigates every death and assesses a penalty for each violation it cites. Two
+ * more files of the same open-data page give it, read once a month: the Inspections file (every
+ * inspection and investigation, by MSHA's event number and activity code) and the Assessed Violations
+ * file (every violation assessed, by the event it was cited under; the violator is named as it was at
+ * the assessment). An investigation of an accident (code E06 since 2005; AFA, and the older 30, before)
+ * is the accident's when MSHA began it at the accident's mine on its day or within 14 days after, the
+ * latest such accident at the mine; its assessed violations are the finding the row gives, after the
+ * operator's report: how many, against the operator or a contractor, how many under section 104(d)
+ * (an unwarrantable failure) and specially assessed, and the penalties proposed and assessed now, in
+ * whole cents, never a float. A proposed penalty is not a final one: a contested case goes to the
+ * Federal Mine Safety and Health Review Commission, and the figure assessed now can rise as well as
+ * fall. Nothing is said where nothing was assessed: an absence is not a finding.
  */
 
 export const ACCIDENTS_URL = "https://arlweb.msha.gov/OpenGovernmentData/DataSets/Accidents.zip";
 export const MINES_URL = "https://arlweb.msha.gov/OpenGovernmentData/DataSets/Mines.zip";
+/** MSHA's own finding on a death (batch 139): its investigations, and the violations it assessed under each. */
+export const INSPECTIONS_URL = "https://arlweb.msha.gov/OpenGovernmentData/DataSets/Inspections.zip";
+export const VIOLATIONS_URL = "https://arlweb.msha.gov/OpenGovernmentData/DataSets/AssessedViolations.zip";
 /** MSHA's open-data page, which lists both files and their definitions: every row links here. */
 export const DATA_PAGE = "https://arlweb.msha.gov/OpenGovernmentData/OGIMSHA.asp";
 const ACCIDENTS_ENTRY = "Accidents.txt";
@@ -317,6 +334,151 @@ export function fatalAccidents(accidentsText: string, minesText = ""): MineAccid
   return [...byKey.values()].sort((a, b) => a.day.localeCompare(b.day) || a.mine.localeCompare(b.mine));
 }
 
+/** MSHA's activity codes for an investigation of an accident: E06 since 2005 (a fatal one), AFA and the older 30 before. */
+export const INVESTIGATION_CODES: readonly string[] = ["E06", "AFA", "30"];
+/** An investigation is an accident's when MSHA began it at the mine on the accident's day or at most this many days after. */
+export const INVESTIGATION_DAYS = 14;
+
+/** One investigation of an accident, from the Inspections file. */
+export interface MineInvestigation {
+  /** MSHA's event number, by which the Assessed Violations file names it. */
+  event: string;
+  mine: string;
+  /** The day MSHA began it. */
+  begin: string;
+  code: string;
+}
+
+/** One violation MSHA assessed, from the Assessed Violations file. */
+export interface MineViolation {
+  /** The event it was cited under. */
+  event: string;
+  number: string;
+  /** "Operator" or "Contractor", as MSHA writes it. */
+  violatorType: string;
+  /** The violator's name as it was at the assessment. */
+  violator: string;
+  /** The citation's or order's section: "104(a)", "104(d)(1)"… */
+  action: string;
+  /** "Regular", "Special" or "Single". */
+  assessment: string;
+  /** Penalties in dollars and cents, as digits ("70000.00"): never a float. */
+  proposed: string;
+  current: string;
+}
+
+const INSPECTION_COLUMNS = ["EVENT_NO", "MINE_ID", "INSPECTION_BEGIN_DT", "ACTIVITY_CODE"] as const;
+const VIOLATION_COLUMNS = ["EVENT_NBR", "VIOLATION_NO", "VIOLATOR_TYPE_CD", "VIOLATOR_NAME", "PRIMARY_ACTION_CD", "ASSESS_TYPE_CD", "PROPOSED_PENALTY_AMT", "CURRENT_ASSESSMENT_AMT"] as const;
+
+/** A figure as MSHA writes it, "70000.00" or "167600", as dollars and two digits of cents; "0.00" for none. */
+export const moneyOf = (s: string): string => {
+  const m = /^(\d+)(?:\.(\d{1,2}))?$/.exec(s.replace(/,/g, "").trim());
+  return m ? `${BigInt(m[1])}.${(m[2] ?? "").padEnd(2, "0")}` : "0.00";
+};
+const centsOf = (s: string) => BigInt(moneyOf(s).replace(".", ""));
+const HUNDRED = BigInt(100);
+/** Whole cents as dollars: "$447,600", "$8,453,138.30". */
+export const dollarsOf = (cents: bigint): string => {
+  const whole = (cents / HUNDRED).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const part = cents % HUNDRED;
+  return `$${whole}${part ? `.${part.toString().padStart(2, "0")}` : ""}`;
+};
+
+/** The Inspections file's investigations of accidents (`INVESTIGATION_CODES`), at the given mines when they are given. */
+export function investigationsOf(text: string, mines?: ReadonlySet<string>): MineInvestigation[] {
+  const out: MineInvestigation[] = [];
+  eachCsvRow(text, INSPECTION_COLUMNS, ([event, mine, begin, code]) => {
+    const id = mine.trim();
+    const day = isoDay(begin);
+    if (!INVESTIGATION_CODES.includes(code.trim()) || !day || (mines && !mines.has(id))) return;
+    out.push({ event: event.trim(), mine: id, begin: day, code: code.trim() });
+  }, "|");
+  return out;
+}
+
+/** The Assessed Violations file's violations, under the given events when they are given. */
+export function violationsOf(text: string, events?: ReadonlySet<string>): MineViolation[] {
+  const out: MineViolation[] = [];
+  eachCsvRow(text, VIOLATION_COLUMNS, ([event, number, type, name, action, assessment, proposed, current]) => {
+    if (events && !events.has(event.trim())) return;
+    out.push({
+      event: event.trim(),
+      number: number.trim(),
+      violatorType: tidy(type),
+      violator: tidy(name),
+      action: tidy(action),
+      assessment: tidy(assessment),
+      proposed: moneyOf(proposed),
+      current: moneyOf(current),
+    });
+  }, "|");
+  return out;
+}
+
+const daysFrom = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
+
+/**
+ * Each investigation's accident, by event number: the latest fatal accident at the investigation's mine
+ * on or before the day MSHA began it, at most `INVESTIGATION_DAYS` before. An investigation is one
+ * accident's at most; an accident may have several (Kinross's two dead at Bald Mountain on 2026-09-03,
+ * one investigation each).
+ */
+export function linkInvestigations(accidents: readonly { key: string; mine: string; day: string }[], investigations: readonly MineInvestigation[]): Map<string, string> {
+  const byMine = new Map<string, { key: string; day: string }[]>();
+  for (const a of accidents) byMine.set(a.mine, [...(byMine.get(a.mine) ?? []), a]);
+  const out = new Map<string, string>();
+  for (const i of investigations) {
+    const at = (byMine.get(i.mine) ?? []).filter((a) => a.day <= i.begin && daysFrom(a.day, i.begin) <= INVESTIGATION_DAYS);
+    const latest = at.reduce<{ key: string; day: string } | null>((x, a) => (!x || a.day > x.day ? a : x), null);
+    if (latest) out.set(i.event, latest.key);
+  }
+  return out;
+}
+
+/** Each accident's assessed violations, by its key: the violations of the investigations linked to it, by number. */
+export function findingsOf(links: ReadonlyMap<string, string>, violations: readonly MineViolation[]): Map<string, MineViolation[]> {
+  const out = new Map<string, MineViolation[]>();
+  for (const v of violations) {
+    const key = links.get(v.event);
+    if (key) out.set(key, [...(out.get(key) ?? []), v]);
+  }
+  for (const vs of out.values()) vs.sort((a, b) => a.event.localeCompare(b.event) || a.number.localeCompare(b.number));
+  return out;
+}
+
+const listOf = (names: readonly string[]) => (names.length <= 1 ? names[0] ?? "" : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`);
+
+/**
+ * The sentence a row gives MSHA's finding in, or "" when nothing was assessed: "MSHA's investigation
+ * cited 5 violations against the operator, 5 of them under section 104(d) (an unwarrantable failure) and
+ * 5 specially assessed, and proposed $447,600 in penalties, the amount assessed now."
+ */
+export function findingSentence(violations: readonly MineViolation[]): string {
+  const n = violations.length;
+  if (!n) return "";
+  const operator = violations.filter((v) => v.violatorType.toLowerCase() === "operator").length;
+  const others = violations.filter((v) => v.violatorType.toLowerCase() !== "operator");
+  const contractors = [...new Set(others.filter((v) => v.violatorType.toLowerCase() === "contractor").map((v) => v.violator).filter(Boolean))];
+  const named = contractors.length > 2 ? [...contractors.slice(0, 2), `${contractors.length - 2} more`] : contractors;
+  const otherKinds = [...new Set(others.filter((v) => v.violatorType.toLowerCase() !== "contractor").map((v) => v.violatorType.toLowerCase() || "another party"))];
+  const against = [
+    contractors.length ? `the contractor${contractors.length > 1 ? "s" : ""}${named.length ? ` ${listOf(named)}` : ""}` : "",
+    ...otherKinds.map((k) => `a${/^[aeiou]/.test(k) ? "n" : ""} ${k}`),
+  ].filter(Boolean).join(" and ");
+  const whom = !others.length ? " against the operator" : !operator ? ` against ${against}` : `, ${operator} against the operator and ${others.length} against ${against}`;
+  const unwarrantable = violations.filter((v) => /^104\(d\)/.test(v.action)).length;
+  const special = violations.filter((v) => v.assessment.toLowerCase() === "special").length;
+  const quals = [
+    unwarrantable ? `${n === 1 ? "" : `${unwarrantable} of them `}under section 104(d) (an unwarrantable failure)` : "",
+    special ? `${n === 1 ? "" : `${special} `}specially assessed` : "",
+  ].filter(Boolean);
+  const proposed = violations.reduce((t, v) => t + centsOf(v.proposed), BigInt(0));
+  const current = violations.reduce((t, v) => t + centsOf(v.current), BigInt(0));
+  return `MSHA's investigation cited ${n === 1 ? "1 violation" : `${n} violations`}${whom}${quals.length ? `, ${quals.join(" and ")}` : ""}, and proposed ${dollarsOf(proposed)} in penalties${
+    current === proposed ? ", the amount assessed now" : `; ${dollarsOf(current)} as assessed now`
+  }.`;
+}
+
 const STATES: Record<string, string> = {
   AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware", DC: "the District of Columbia",
   FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine",
@@ -384,13 +546,19 @@ const clock = (t: string) => {
 
 const heldOn = (c: MineController, day: string) => (!c.from || day >= c.from) && (!c.to || day <= c.to);
 const LIMIT = 600;
+/** A text cut to `room` characters at a word and marked "…", or whole when it fits. */
+const cutWords = (text: string, room: number) => (text.length > room ? `${text.slice(0, room - 1).replace(/\s+\S*$/, "")}…` : text);
 
 /**
  * Accidents → timeline events. Every accident is checked against the controller map again: it reaches
  * a company's page only under a mapped controller ID, between its days, from `from`, the company's
  * first price.
  */
-export function mineAccidentEvents(accidents: readonly MineAccident[], controllers: readonly MineController[], { from = "" }: { from?: string } = {}): TimelineEvent[] {
+export function mineAccidentEvents(
+  accidents: readonly MineAccident[],
+  controllers: readonly MineController[],
+  { from = "", findings }: { from?: string; findings?: ReadonlyMap<string, readonly MineViolation[]> } = {},
+): TimelineEvent[] {
   const byId = new Map(controllers.map((c) => [c.id, c]));
   const out: TimelineEvent[] = [];
   for (const a of accidents) {
@@ -408,16 +576,21 @@ export function mineAccidentEvents(accidents: readonly MineAccident[], controlle
     const type = a.accidentType && !/^(?:NEC|unclassified.*)$/i.test(a.accidentType) ? a.accidentType.replace(/\.$/, "").replace(/^[A-Z](?=[a-z])/, (c) => c.toLowerCase()) : "";
     const head = [`Form 7000-1 report to the Mine Safety and Health Administration${[when, type].filter(Boolean).length ? `: ${[when, type].filter(Boolean).join("; ")}` : ""}.`, contractor].filter(Boolean).join(" ");
     const names = [a.mineName ? `${a.mineName}${a.town ? ` near ${a.town.replace(/,\s*[A-Z]{2}$/, "")}` : ""}` : "", a.operatorName ? `operated by ${a.operatorName}` : ""].filter(Boolean).join(", ");
-    const mine = `Mine ${a.mine}${names ? `; MSHA's present names: ${names.replace(/\.+$/, "")}` : ""}.`;
     const tail = "The report is the operator's own filing, not a finding of fault.";
-    const room = LIMIT - head.length - mine.length - tail.length - 22;
-    const story = a.narrative && room > 40 ? `MSHA's account: "${a.narrative.length > room ? `${a.narrative.slice(0, room - 1).replace(/\s+\S*$/, "")}…` : a.narrative}"` : "";
+    // MSHA's own finding comes after the report (batch 139); the account gives way to it, then the mine's names
+    const finding = findingSentence(findings?.get(a.key) ?? []);
+    const named = `Mine ${a.mine}${names ? `; MSHA's present names: ${names.replace(/\.+$/, "")}` : ""}.`;
+    const fixed = (m: string) => [head, m, tail, finding].filter(Boolean).join(" ").length;
+    const mine = fixed(named) <= LIMIT ? named : `Mine ${a.mine}.`;
+    const kept = finding && fixed(mine) > LIMIT ? cutWords(finding, LIMIT - fixed(mine) + finding.length) : finding;
+    const room = LIMIT - [head, mine, tail, kept].filter(Boolean).join(" ").length - 20;
+    const story = a.narrative && room > 40 ? `MSHA's account: "${cutWords(a.narrative, room)}"` : "";
     out.push({
       id: `msha-${a.mine}-${a.day}`,
       date: a.day,
       type: "regulation",
       title,
-      description: [head, story, mine, tail].filter(Boolean).join(" ").slice(0, LIMIT),
+      description: [head, story, mine, tail, kept].filter(Boolean).join(" ").slice(0, LIMIT),
       source: "MSHA",
       url: DATA_PAGE,
       sourceKey: "msha_accidents",
@@ -497,5 +670,79 @@ export async function fetchMineFiles(since: string | null): Promise<MineFilesAns
     return { accidents, modified: acc.modified, outcome: "ok", httpStatus: acc.status };
   } catch (err) {
     return { accidents: [], modified: null, outcome: "error", detail: String(err).slice(0, 200) };
+  }
+}
+
+const INSPECTIONS_ENTRY = "Inspections.txt";
+const VIOLATIONS_ENTRY = "AssessedViolations.txt";
+
+export interface MineFindingsAnswer {
+  /** The investigations linked to a kept accident, each with that accident's key. */
+  investigations: (MineInvestigation & { accident: string })[];
+  violations: MineViolation[];
+  /** The Assessed Violations file's Last-Modified as MSHA sent it. */
+  modified: string | null;
+  outcome: "ok" | "throttled" | "error";
+  httpStatus?: number;
+  detail?: string;
+}
+
+/** The first `count` fields of a record, from its start alone, quotes taken off: the event number, then the mine. */
+const leadFields = (line: Buffer, count: number) =>
+  line.toString("latin1", 0, Math.min(line.length, 96)).split("|").slice(0, count).map((f) => f.replace(/^"|"$/g, "").trim());
+/** An investigation's activity code as the Inspections file writes it, between separators and quotes. */
+const INVESTIGATION_MARKERS = INVESTIGATION_CODES.map((c) => Buffer.from(`|"${c}"|`, "latin1"));
+const CRLF = Buffer.from("\r\n");
+
+/** A zip entry's header and the lines `keep` takes, as text: the rest is never decoded or held (`eachZipLine`). */
+export async function keptLines(zip: Uint8Array, entry: string, keep: (line: Buffer) => boolean): Promise<string> {
+  const parts: Buffer[] = [];
+  let header = true;
+  await eachZipLine(zip, entry, (line) => {
+    if (header || keep(line)) parts.push(Buffer.from(line), CRLF);
+    header = false;
+  });
+  return decodeText(Buffer.concat(parts));
+}
+
+async function zipBytes(url: string): Promise<{ zip?: Buffer; modified: string | null; status: number }> {
+  const res = await fetch(url, { headers: UA, signal: AbortSignal.timeout(TIMEOUT_MS) });
+  if (!res.ok) return { modified: null, status: res.status };
+  return { zip: Buffer.from(await res.arrayBuffer()), modified: res.headers.get("last-modified"), status: res.status };
+}
+
+/**
+ * MSHA's finding on the given accidents (batch 139): the Inspections file (74 MB zipped, 349 MB of text
+ * on 2026-11-10), streamed and cut to the investigations at their mines, then the Assessed Violations
+ * file (110 MB zipped, 1.34 GB of text), streamed and cut to the violations under the investigations
+ * linked to an accident. Neither is decoded whole. A file that is not a readable zip, lacks a column, or
+ * holds no investigation at these mines is refused whole.
+ */
+export async function fetchMineFindings(accidents: readonly { key: string; mine: string; day: string }[]): Promise<MineFindingsAnswer> {
+  const refused = (status: number, which: string): MineFindingsAnswer =>
+    ({ investigations: [], violations: [], modified: null, outcome: status === 429 || status === 503 ? "throttled" : "error", httpStatus: status, detail: which });
+  try {
+    const mines = new Set(accidents.map((a) => a.mine));
+    const inspections = await zipBytes(INSPECTIONS_URL);
+    if (!inspections.zip) return refused(inspections.status, "the Inspections file");
+    const found = investigationsOf(
+      await keptLines(inspections.zip, INSPECTIONS_ENTRY, (line) => INVESTIGATION_MARKERS.some((m) => line.includes(m)) && mines.has(leadFields(line, 2)[1] ?? "")),
+      mines,
+    );
+    if (!found.length) return { investigations: [], violations: [], modified: null, outcome: "error", httpStatus: inspections.status, detail: "the Inspections file held no accident investigation at these mines" };
+    const links = linkInvestigations(accidents, found);
+    const events = new Set(links.keys());
+    const assessed = await zipBytes(VIOLATIONS_URL);
+    if (!assessed.zip) return refused(assessed.status, "the Assessed Violations file");
+    const violations = violationsOf(await keptLines(assessed.zip, VIOLATIONS_ENTRY, (line) => events.has(leadFields(line, 1)[0] ?? "")), events);
+    return {
+      investigations: found.filter((i) => links.has(i.event)).map((i) => ({ ...i, accident: links.get(i.event) as string })),
+      violations,
+      modified: assessed.modified,
+      outcome: "ok",
+      httpStatus: assessed.status,
+    };
+  } catch (err) {
+    return { investigations: [], violations: [], modified: null, outcome: "error", detail: String(err).slice(0, 200) };
   }
 }

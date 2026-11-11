@@ -45,7 +45,7 @@ import { fetchCpiReleases, fetchFomcStatements } from "../lib/macro";
 import { fetchRecalls } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
 import { fetchRailAccidents } from "../lib/railAccidents";
-import { fetchMineFiles, mineAccidentEvents, mineControllersFor } from "../lib/mineAccidents";
+import { fetchMineFiles, mineAccidentEvents, mineControllersFor, fetchMineFindings } from "../lib/mineAccidents";
 import { fetchFedActions } from "../lib/fedActions";
 import { fetchListingPage, secPressEvents } from "../lib/secPress";
 import { fetchCasePage, secCaseEvents } from "../lib/secCases";
@@ -606,7 +606,7 @@ export const CASES: LiveCase[] = [
     },
   },
   {
-    name: "MSHA — the Accidents and Mines files read whole, McElroy's explosion of 2003 on CNX's page (batch 134)",
+    name: "MSHA — the Accidents and Mines files read whole, McElroy's explosion of 2003 on CNX's page (batch 134), and MSHA's own findings streamed (batch 139)",
     covers: ["msha_accidents"],
     hosts: ["arlweb.msha.gov"],
     async run() {
@@ -620,6 +620,13 @@ export const CASES: LiveCase[] = [
       const cnx = mineAccidentEvents(got.accidents, mineControllersFor(1070412) ?? [], { from: "1999-04-30" });
       out.push(...eventProblems(cnx, 29));
       if (cnx.some((e) => e.date > "2017-11-27")) out.push("a CNX row after the coal spin-off of 2017-11-28");
+      // batch 139: MSHA's own finding, its Inspections and Assessed Violations files streamed; measured
+      // 2026-11-10: 1,102 investigations linked to a fatal accident, 1,966 violations; Goldstrike's five of 2010
+      const findings = await fetchMineFindings(got.accidents.map((a) => ({ key: a.key, mine: a.mine, day: a.day })));
+      out.push(...outcomeProblems(findings.outcome, findings.detail));
+      if (findings.investigations.length < 1102) out.push(`${findings.investigations.length} linked investigations, fewer than the 1,102 of 2026-11-10`);
+      const goldstrike = findings.violations.filter((v) => v.event === "1148152");
+      if (goldstrike.length !== 5 || goldstrike.some((v) => !/^104\(d\)/.test(v.action))) out.push(`Goldstrike's event 1148152 read as ${goldstrike.length} violations`);
       return out;
     },
   },

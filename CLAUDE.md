@@ -120,7 +120,9 @@ record's Form 54 part (batch 130), its text the railroad's own narrative and the
 up (batch 136). MSHA's mine accidents (`lib/mineAccidents.ts`, batch 134), the deaths of
 its Accidents file kept from a weekly read of two zips (`lib/ingest/mineWalk.ts`, db/046), reach a page only
 through `MINE_CONTROLLERS`, each controller ID between its company's days, from the first price; MSHA gives
-an ID's present name on an old record, so a title names no operator. The
+an ID's present name on an old record, so a title names no operator. MSHA's own finding follows the report
+on the row (batch 139): its Inspections and Assessed Violations files, streamed monthly (`eachZipLine`,
+db/048), give the violations an investigation begun within 14 days cited and the penalties, in cents. The
 CFTC's actions (`lib/cftc.ts`) are read by the Justice rule with the release map's units, plus the
 Commission's object form ("CFTC Orders UBS to Pay") and four guards of its own; read its header first.
 

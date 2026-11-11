@@ -988,6 +988,49 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 139: the 2026-11-11 approvals filed, and MSHA's own finding on the deaths pages hold (2026-11-11)
+
+The owner marked the 2026-11-11 proposals on 2026-11-11: all three approved, #1 on the death's row ("On
+the death's row (Recommended)"), #2 and #3 as drafted ("Approve (Recommended)"). The owner's word on
+starting: "Continue". This batch files the three under Scope refocus and builds #1. No new source: two
+more files of MSHA's open-data page, under the terms quoted for source 38.
+
+- [x] **The read** (`lib/zip.ts`, `lib/mineAccidents.ts`): `eachZipLine` inflates a zip entry as a stream
+      and gives it a line at a time, never decoded whole; `keptLines` keeps the header and the lines a
+      reader asks for. `fetchMineFindings` streams the Inspections file (74 MB zipped, 349 MB of text) to
+      its accident investigations (activity codes E06, AFA and 30) at the kept accidents' mines, links
+      each to the latest fatal accident at its mine on or before the day MSHA began it, at most 14 days
+      before (`linkInvestigations`), then streams the Assessed Violations file (110 MB zipped, 1.34 GB of
+      text) to the violations under the linked ones. On the files of 2026-11-10, served offline from
+      the scout's copies: 1,102 investigations and 1,966 violations, the same as the committed slice
+      read whole, in 4.7 seconds and 538 MB.
+- [x] **Kept once a month** (`lib/ingest/mineWalk.ts`, db/048): after the accidents' weekly read, the
+      findings when their read is 30 days old or none, one read a process, replacing both tables whole;
+      a refused read keeps what is kept, and a company's log line says so. The penalties are numeric.
+- [x] **The row** (`findingSentence`): after "The report is the operator's own filing, not a finding of
+      fault.", "MSHA's investigation cited 5 violations against the operator, 5 of them under section
+      104(d) (an unwarrantable failure) and 5 specially assessed, and proposed $447,600 in penalties, the
+      amount assessed now" (Barrick's Goldstrike, 2010-08-12). The contractor cited is named (McElroy's
+      Central Cambria Drilling Co, 2003); a figure that changed says both (Lucky Friday, 2011: "$159,100 in
+      penalties; $180,000 as assessed now"). MSHA's account gives way to it, cut at a word and marked,
+      and nothing is said where nothing was assessed. Money is summed in whole cents.
+- [x] **What changes**, on the files of 2026-11-10 and the 224 rows from first prices: 213 have MSHA's
+      investigation; 168 rows on 45 pages, 114 before 2017, gain its finding: 316 violations, 241 against
+      the operator and 75 against a contractor, 98 rows with a special assessment and 49 with a 104(d)
+      citation or order, $11,586,940 proposed and $8,453,138.30 as assessed now, as the scout measured.
+      No row's id, day, title or key changes; every description stays within 600 characters. MSHA's
+      account gives way to the finding: 136 of the 168 keep it (a median of 92 characters), 32 lose it
+      whole, and 6 the mine's present names, never its number.
+- [x] **Checked:** `check:mine-accidents` 60 (19 new: the streaming read and its refusal of a wrong
+      size, the kept lines, the slice's counts, the link rule's days, the money, Goldstrike's, McElroy's
+      and Lucky Friday's sentences, the controls of another event and an unlinked investigation, the
+      totals, the rows unchanged but for the finding, the account giving way, the read through served zips, its refusals, the
+      monthly walk, the kept findings on Barrick's page and db/048, and the docs); the committed slice
+      `scripts/fixtures/msha-findings.json.gz` (each file's header, the 1,484 investigations at the fatal
+      accidents' mines, the 1,966 violations under the linked ones, and controls, byte for byte).
+      `check:live`'s MSHA case also streams the two files. On main the checks fail: the files are not read.
+- **Requests:** none; the scout's copies of 2026-11-11 (2 files, logged in `scout138/requests.log`).
+
 ## NC ledger — batch 138: an opportunity-scout run, three proposals for the owner (2026-11-11)
 
 Every proposal of `docs/proposals/2026-11-09b-proposals.md` is approved and built (batches 132–136), and
@@ -996,8 +1039,11 @@ again at `3f06e91` and wrote `docs/proposals/2026-11-11-proposals.md`: three pro
 **PENDING**, ranked with securities depth first. The owner's word, 2026-11-11: "Continue". Nothing is
 built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ **Marked 2026-11-11: all three approved**, #1 on the death's row ("On the death's row
+      (Recommended)"), #2 and #3 as drafted ("Approve (Recommended)"). Filed under Scope refocus by
+      batch 139.
       1. `P2` **MSHA's own finding on the deaths pages already hold.** No new source: two more files of
          MSHA's open-data page, Inspections and Assessed Violations, joined to the fatal-accident rows by
          MSHA's event number. A row gains the violations MSHA's investigation cited, whom it cited
@@ -10543,6 +10589,29 @@ already held, but new investment goes to securities coverage first.
         account of 20 characters or more, the split on 113 of 136.
       - *Derived from [`docs/proposals/2026-11-09b-proposals.md`](proposals/2026-11-09b-proposals.md)
         #4, approved 2026-11-10.*
+- [x] `P2` **MSHA's own finding on the deaths pages already hold.** No new source: approved by the owner
+      2026-11-11, on the death's row. MSHA's Inspections and Assessed Violations files, joined to the
+      fatal-accident rows by MSHA's event number: the violations its investigation cited, whom it cited
+      and the penalties proposed and assessed now.
+      - **Measured** by the scout: 168 rows on 45 pages, 114 before 2017; 316 violations; $11,586,940
+        proposed, $8,453,138.30 as assessed now.
+      - **Done in batch 139** (see its section): the same figures, by the code's own rules.
+      - *Derived from [`docs/proposals/2026-11-11-proposals.md`](proposals/2026-11-11-proposals.md) #1,
+        approved 2026-11-11.*
+- [ ] `P2` **The FDA's warning letters, 2021 on,** a new source on www.fda.gov (public domain): approved by
+      the owner 2026-11-11. A letter is the company's by the rule the FDA's approvals use, plus a short
+      hand list (Amazon.com, Inc.).
+      - **Measured** by the scout: 78 letters on 56 pages, 31 of them outside the FDA recall map; about 12
+        more by the hand list, an estimate.
+      - **To be built in batch 140.**
+      - *Derived from [`docs/proposals/2026-11-11-proposals.md`](proposals/2026-11-11-proposals.md) #2,
+        approved 2026-11-11.*
+- [ ] `P2` **EPA's supplemental environmental projects on the settlement rows pages already hold.** No new
+      source: approved by the owner 2026-11-11. A column and a table of the case file the walk reads.
+      - **Measured** by the scout: 168 rows on 70 pages, 142 before 2017, $181,844,220.07.
+      - **To be built in batch 141.**
+      - *Derived from [`docs/proposals/2026-11-11-proposals.md`](proposals/2026-11-11-proposals.md) #3,
+        approved 2026-11-11.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

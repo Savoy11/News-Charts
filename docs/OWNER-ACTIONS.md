@@ -207,6 +207,18 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- **The second 2026-11-11 proposals** (batch 143, `docs/proposals/2026-11-11b-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a
+  recurring charge.
+  1. `P1` the FDA's device recalls of 2002 to mid-2012, a new dataset (openFDA's device recall file, CC0)
+     read through the FDA recall map the pages already use: 2,228 recalls on 20 pages from first prices,
+     all before 2017 (Stryker 281, Abbott 269, GE 254, Philips 241, Medtronic 212, J&J 210), and up to
+     372 more on 18 companies whose first price is not yet read. The file gives no recall class, so each
+     recall's FDA page is read once for it (about 7,900 pages, spread over runs).
+  2. `P2` a fifth round of units named after their owners, in the three hand lists that exist (EPA's, the
+     CPSC's and the release map): 51 units, 299 cases, recalls and SEC releases on 47 companies, 114 on
+     26 pages from first prices, 81 before 2017 (Invesco Funds Group, RBC Capital Markets, National Fuel
+     Gas Supply, Walmart written "WALMART STORES").
 - ~~**The 2026-11-11 proposals** (batch 138, `docs/proposals/2026-11-11-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a
   recurring charge.~~ **Decided 2026-11-11: all three**, #1 on the death's row ("On the death's row

@@ -58,6 +58,7 @@ import { fetchInvestigations } from "../lib/investigations";
 import { DAMAGE_FLOOR, fetchRailAccidents, railRoadsFor } from "../lib/railAccidents";
 import { mineControllersFor } from "../lib/mineAccidents";
 import { mineAccidentsFor, walkMineAccidents } from "../lib/ingest/mineWalk";
+import { walkWarningLetters, warningLettersFor } from "../lib/ingest/fdaWarningWalk";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { FED_BANKS, fedBanksFor, fetchFedActions } from "../lib/fedActions";
 import { dojPossessive, fetchJusticeReleases, justiceQueryNames } from "../lib/doj";
@@ -125,6 +126,8 @@ export const COMPANY_SOURCES = [
   "fda_approvals",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
+  // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
+  "fda_warning_letters",
   // railroad accidents, asked only for the railroads lib/railAccidents.ts maps (batch 127)
   "fra_accidents",
   // deaths at mines, kept only for the controllers lib/mineAccidents.ts maps (batch 134)
@@ -876,6 +879,18 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   await run("fda_supplements", `FDA efficacy supplements to drugs ${company.name} held`, () =>
     fdaSupplementsFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
   );
+
+  /**
+   * The FDA's warning letters addressed to the company, from 2021 (batch 140): the whole list read
+   * once a week for every company and kept (`walkWarningLetters`), then every kept letter whose
+   * addressee is the company on its issue day by the approvals' rule, or by the letters' hand list,
+   * from its first price. One row a day.
+   */
+  await run("fda_warning_letters", `FDA warning letters addressed to ${company.name}`, async () => {
+    const walked = await walkWarningLetters(client);
+    if (walked.due) line("fda_warning_letters", `list      ${walked.read ?? "not read"}${walked.read === "stored" ? `, ${walked.letters} letters in ${walked.pages} pages` : ""}${walked.stopped ? ` (${walked.stopped})` : ""}`);
+    return warningLettersFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
+  });
 
   // GDELT phrase-quotes the query, so the full SEC legal title ("Ford Motor Co") matches no
   // headline that says "Ford" — the common name is the query, exactly as the comment above

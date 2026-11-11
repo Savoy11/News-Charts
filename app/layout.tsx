@@ -98,8 +98,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               enforcement actions from the Federal Reserve Board,
               inflation reports from the U.S. Bureau of Labor Statistics, vehicle recalls and
               defect investigations from the National Highway Traffic Safety Administration,
-              drug, device and food recalls, new-drug approvals and their efficacy supplements
-              from the U.S. Food and Drug Administration, and
+              drug, device and food recalls, new-drug approvals and their efficacy supplements,
+              and warning letters from the U.S. Food and Drug Administration, and
               press releases from the U.S. Department of Justice and the U.S. Securities and
               Exchange Commission, with the SEC&apos;s litigation releases and administrative
               proceedings and its News Digest of 1956–1993, enforcement actions from the Consumer Financial Protection Bureau,

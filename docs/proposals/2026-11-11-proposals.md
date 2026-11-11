@@ -194,7 +194,10 @@ event number · *Practicality:* medium — measured; 1.34 GB of text needs a str
 
 ## 2. The FDA's warning letters, 2021 on, a new source: Lilly, Abbott, Medtronic, Philips, Dexcom, Baxter, Walmart, AstraZeneca… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-11 ("Approve (Recommended)"). To be built in batch 140.
+**Status:** APPROVED — by the owner, 2026-11-11 ("Approve (Recommended)"). Built in batch 140: the list
+read whole once a week, both ways, since oldest first alone lost 12 letters of 2025-09-09 at a page's edge
+(Royal Philips's among them); 101 letters on 67 pages before first prices, 79 by the approvals' rule (the
+78 measured here, and Philips's) and 22 by a hand list of 12 companies, Amazon's ten among them.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. No earlier file names the FDA's warning letters.

@@ -299,8 +299,8 @@ async function main(): Promise<void> {
   check("  …synced by `npm run sync:fda-supplements` from openFDA's file, and credited",
     /"sync:fda-supplements": "tsx scripts\/sync-fda-supplements\.ts"/.test(read("package.json")) && DRUGSFDA_FILE === "https://download.open.fda.gov/drug/drugsfda/drug-drugsfda-0001-of-0001.json.zip" &&
       DRUGSFDA_ENTRY === "drug-drugsfda-0001-of-0001.json" &&
-      /new-drug approvals and their efficacy supplements from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
-      /new-drug approvals and their efficacy supplements from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
+      /new-drug approvals and their efficacy supplements(?:, and warning letters)? from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
+      /new-drug approvals and their efficacy supplements(?:, and warning letters)? from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
   check("  …and the owner's approval is on the proposal", /## 2\. New indications and other efficacy supplements[^#]*\*\*Status:\*\* APPROVED[^\n]*\n?[^#]*Built in batch 115/.test(read("docs/proposals/2026-11-07-proposals.md")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);

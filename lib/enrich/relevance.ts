@@ -424,6 +424,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "fda_approvals") {
         return { score: 0.95, reason: "an FDA new-drug approval whose applicant is the company" };
       }
+      // …and an FDA warning letter whose addressee is the company, its firm or its unit that day
+      // (lib/fdaWarningLetters.ts, batch 140)
+      if (subject.kind === "company" && row.sourceKey === "fda_warning_letters") {
+        return { score: 0.95, reason: "an FDA warning letter addressed to the company" };
+      }
       // …and a later efficacy supplement to one, where the drug never left the company
       // (lib/fdaSupplements.ts, batch 115)
       if (subject.kind === "company" && row.sourceKey === "fda_supplements") {

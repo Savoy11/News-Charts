@@ -244,8 +244,8 @@ async function main(): Promise<void> {
   check("  …the ingest asks it for every company", /await run\("fda_approvals", [^\n]+\n\s*fdaApprovalsFor\(client, subjectId, \{[^}]*cik: company\.cik, fundSeries \}\),/.test(read("scripts/ingest.ts")));
   check("  …synced by `npm run sync:fda-approvals` from the FDA's workbook, and credited",
     /"sync:fda-approvals": "tsx scripts\/sync-fda-approvals\.ts"/.test(read("package.json")) && NME_FILE === "https://www.fda.gov/media/177921/download?attachment" &&
-      /new-drug approvals (?:and their efficacy supplements )?from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
-      /new-drug approvals (?:and their efficacy supplements )?from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
+      /new-drug approvals (?:and their efficacy supplements(?:, and warning letters)? )?from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
+      /new-drug approvals (?:and their efficacy supplements(?:, and warning letters)? )?from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   process.exit(fail ? 1 : 0);

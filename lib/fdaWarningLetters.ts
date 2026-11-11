@@ -16,7 +16,7 @@ import { approvalIsCompany } from "./fdaApprovals";
  * Read from the warning-letter list (`LETTERS_PAGE`) through the data its own table loads, 1,000 letters
  * a request ordered by the letter's issue day, once a week for every company
  * (`lib/ingest/fdaWarningWalk.ts`). Its "Data export" spreadsheet gives no link to a letter, so it is
- * not read; a request for more than 1,000 is refused (503, measured 2026-11-11). The list is read
+ * not read; a request for 5,000 was refused (503, measured 2026-11-11). The list is read
  * twice, oldest first and newest first: letters of one day have no order of their own, so a day that
  * straddles a page's edge is cut differently by two requests, and one direction alone lost 12 of the
  * letters of 2025-09-09, Royal Philips's among them, giving 12 others twice (measured 2026-11-11). The
@@ -58,7 +58,10 @@ export interface WarningLetter {
   posted: string;
   office: string;
   subject: string;
-  /** The days of the company's posted response and of the FDA's close-out letter, where the list gives them. */
+  /**
+   * The days of the company's response and of the FDA's close-out letter, where the list gives them, each
+   * read from its own page's name; null where the list gives none, or a page name with no day.
+   */
   response: string | null;
   closeout: string | null;
 }
@@ -80,6 +83,18 @@ const dayOf = (html: string) => {
   return m ? `${m[3]}-${m[1]}-${m[2]}` : "";
 };
 const hrefOf = (html: string) => /href="([^"]+)"/.exec(html)?.[1] ?? "";
+/**
+ * A follow-up letter's own day, from the end of its page's name ("…-720527-06162026"), as every letter's
+ * page name ends with its issue day; "" for none. The cell's visible day is the day the FDA posted it,
+ * 1 to 1,407 days later (batch 142, the 2026-11-11 audit's finding 2).
+ */
+const letterDayOf = (html: string) => {
+  const m = /-(\d{2})(\d{2})(\d{4})(?:-\d+)?$/.exec(hrefOf(html));
+  if (!m) return "";
+  const iso = `${m[3]}-${m[1]}-${m[2]}`;
+  const t = new Date(`${iso}T00:00:00Z`);
+  return Number.isNaN(t.getTime()) || t.toISOString().slice(0, 10) !== iso ? "" : iso;
+};
 
 /** One answer of the list: its total, its rows and its letters, the rows it cannot read left out. */
 export function parseLetters(json: unknown): { total: number; rows: number; letters: WarningLetter[] } {
@@ -96,8 +111,8 @@ export function parseLetters(json: unknown): { total: number; rows: number; lett
       posted: dayOf(posted),
       office: textOf(office),
       subject: textOf(subject),
-      response: dayOf(response) || null,
-      closeout: dayOf(closeout) || null,
+      response: letterDayOf(response) || null,
+      closeout: letterDayOf(closeout) || null,
     };
     if (LETTER_PATH.test(letter.path) && letter.company && letter.issued) letters.push(letter);
   }
@@ -172,7 +187,6 @@ export async function fetchLetters({ gapMs = GAP_MS }: { gapMs?: number } = {}):
 export const LETTER_NAMES: Readonly<Record<number, { ticker: string; names: readonly { addressee: RegExp; from?: string; to?: string; why: string }[] }>> = {
   1018724: { ticker: "AMZN", names: [{ addressee: /^Amazon\.com,? Inc\.?$/i, why: "the company itself: its legal name holds \".com\", which the caption rule reads as no legal word" }] },
   1773751: { ticker: "HIMS", names: [{ addressee: /^Hims & Hers Health, Inc\.?\s+(?:dba|d\/b\/a)\s/i, why: "the company itself, doing business as Hims or Hers: a trade name after its legal one" }] },
-  1388658: { ticker: "IRTC", names: [{ addressee: /^iRhythm Technologies,? Inc\.?$/i, why: "the company under its name before EDGAR's record became iRhythm Holdings, a former name EDGAR does not list" }] },
   80424: { ticker: "PG", names: [{ addressee: /^Procter & Gamble Manufactura\b/i, why: "P&G's Mexican manufacturing company, named after it" }] },
   21665: { ticker: "CL", names: [{ addressee: /^Colgate-Palmolive\s*\//i, why: "Colgate-Palmolive with Tom's of Maine, its company since 2006, as one addressee" }] },
   920148: { ticker: "LH", names: [{ addressee: /\bLabcorp Bedford\b/i, why: "Labcorp's Bedford laboratory, named after it (the former Toxikon)" }] },
@@ -180,6 +194,29 @@ export const LETTER_NAMES: Readonly<Record<number, { ticker: string; names: read
   1739104: { ticker: "ELAN", names: [{ addressee: /^Elanco Animal Health USA\b/i, why: "Elanco's American company, named after it" }] },
   849869: { ticker: "SLGN", names: [{ addressee: /^Silgan Dispensing Systems\b/i, why: "Silgan's dispensing business, named after it" }] },
   1816708: { ticker: "OWLT", names: [{ addressee: /^Owlet Baby Care\b/i, why: "Owlet's operating company, named after it" }] },
+  // batch 142, the 2026-11-11 audit's finding 3: four more, each read on the list and the filings
+  1420798: { ticker: "RBGLY", names: [{ addressee: /^Reckitt\s*\/\s*Mead Johnson\b/i, why: "Reckitt itself with Mead Johnson Nutrition, its infant-formula company, as one addressee" }] },
+  7084: { ticker: "ADM", names: [{ addressee: /^ADM Animal Nutrition\b/i, why: "ADM's animal-feed business, named after it" }] },
+  884624: {
+    ticker: "OFIX",
+    names: [
+      {
+        addressee: /^IsoTis OrthoBiologics\b/i,
+        from: "2023-01-05",
+        why: "SeaSpine's orthobiologics company, Orthofix's from their merger: Orthofix's 8-K 0001193125-23-001900 of 2023-01-05, and its subsidiaries in every 10-K since",
+      },
+    ],
+  },
+  353278: {
+    ticker: "NVO",
+    names: [
+      {
+        addressee: /^Catalent Indiana\b/i,
+        from: "2024-12-18",
+        why: "the Bloomington plant Novo Nordisk bought with two other Catalent sites: its 6-K 0001171843-24-006991 of 2024-12-18, the day the deal closed, and its 20-F for 2024, whose list of companies holds Catalent Indiana",
+      },
+    ],
+  },
   823277: { ticker: "CHSCP", names: [{ addressee: /^CHS Inc\.?\s*\//i, why: "CHS itself with one of its plants as one addressee (CHS River Plains)" }] },
   51253: {
     ticker: "IFF",

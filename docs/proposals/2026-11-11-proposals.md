@@ -73,7 +73,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. MSHA's own finding on the deaths pages already hold: the violations its investigation cited and the penalties it proposed · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-11 ("On the death's row (Recommended)"): the finding on the accident's row, not a row of its own. Built in batch 139: MSHA's Inspections and Assessed Violations files streamed once a month (`eachZipLine`, `fetchMineFindings`), kept in db/048, and a sentence on each death's row after the operator's report; 168 rows on 45 pages, 114 before 2017, 316 violations, $11,586,940 proposed and $8,453,138.30 as assessed now, as measured.
 **Owner's reason (if rejected):**
 
 **Raised before:** as a line. The 2026-11-09b file's cut list: "MSHA beyond deaths: permanent
@@ -194,7 +194,7 @@ event number · *Practicality:* medium — measured; 1.34 GB of text needs a str
 
 ## 2. The FDA's warning letters, 2021 on, a new source: Lilly, Abbott, Medtronic, Philips, Dexcom, Baxter, Walmart, AstraZeneca… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-11 ("Approve (Recommended)"). To be built in batch 140.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. No earlier file names the FDA's warning letters.
@@ -297,7 +297,7 @@ licence quoted, no key
 
 ## 3. EPA's supplemental environmental projects on the settlement rows pages already hold · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-11 ("Approve (Recommended)"). To be built in batch 141.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. Batch 129 read the settlements table's cost recovery (the 2026-11-09 proposal

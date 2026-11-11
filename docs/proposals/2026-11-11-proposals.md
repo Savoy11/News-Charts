@@ -300,7 +300,11 @@ licence quoted, no key
 
 ## 3. EPA's supplemental environmental projects on the settlement rows pages already hold · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-11 ("Approve (Recommended)"). To be built in batch 141.
+**Status:** APPROVED — by the owner, 2026-11-11 ("Approve (Recommended)"). Built in batch 141: each
+settlement's `SEP_AMT` and the projects table's text, a case's settlements' figures added since EPA's
+case table gives no total of these; the replay gives this proposal's figures exactly, 230 rows on 111
+companies before first prices ($209,133,056.96) and 168 on 70 pages from first prices ($181,844,220.07),
+166 of the 168 with EPA's text.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. Batch 129 read the settlements table's cost recovery (the 2026-11-09 proposal

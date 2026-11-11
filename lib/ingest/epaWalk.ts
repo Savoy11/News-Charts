@@ -66,13 +66,15 @@ async function store(client: PoolClient, cases: readonly EpaCase[], modified: st
       const part = unique.slice(i, i + CHUNK);
       await client.query(
         `INSERT INTO epa_cases (case_number, name, court, filed_on, step, penalty, laws, defendants, docket, name_keys, penalty_settled, work_ordered, summary,
-                                suit_filed, settlement_days, settlement_lodged, settlement_penalties, settlement_work, cost_recovery, settlement_cost_recovery)
+                                suit_filed, settlement_days, settlement_lodged, settlement_penalties, settlement_work, cost_recovery, settlement_cost_recovery,
+                                projects_figure, projects, settlement_projects_figure, settlement_projects)
          SELECT n, nm, ct, d, st, p::numeric, string_to_array(l, '|'), string_to_array(df, '|'), dk, k, ps, w::numeric, sm,
                 sf, string_to_array(sd, '|')::date[], string_to_array(sl, '|')::boolean[], string_to_array(sp, '|', '')::numeric(16, 2)[], string_to_array(sw, '|', '')::numeric(16, 2)[],
-                cr::numeric, string_to_array(sc, '|', '')::numeric(16, 2)[]
+                cr::numeric, string_to_array(sc, '|', '')::numeric(16, 2)[],
+                pf::numeric, string_to_array(pj, chr(10)), string_to_array(spf, '|', '')::numeric(16, 2)[], string_to_array(spj, chr(30))
            FROM unnest($1::text[], $2::text[], $3::boolean[], $4::date[], $5::text[], $6::text[], $7::text[], $8::text[], $9::text[], $10::text[], $11::boolean[], $12::text[], $13::text[],
-                       $14::date[], $15::text[], $16::text[], $17::text[], $18::text[], $19::text[], $20::text[])
-             AS t(n, nm, ct, d, st, p, l, df, dk, k, ps, w, sm, sf, sd, sl, sp, sw, cr, sc)`,
+                       $14::date[], $15::text[], $16::text[], $17::text[], $18::text[], $19::text[], $20::text[], $21::text[], $22::text[], $23::text[], $24::text[])
+             AS t(n, nm, ct, d, st, p, l, df, dk, k, ps, w, sm, sf, sd, sl, sp, sw, cr, sc, pf, pj, spf, spj)`,
         [
           part.map((c) => c.number),
           part.map((c) => c.name),
@@ -97,6 +99,12 @@ async function store(client: PoolClient, cases: readonly EpaCase[], modified: st
           // the cost recovery, the case's and each settlement's (batch 129), by the same rule
           part.map((c) => c.costRecovery ?? null),
           part.map((c) => (c.settlements ?? []).map((x) => x.costRecovery ?? "").join("|")),
+          // the supplemental environmental projects (batch 141): the case's figure and texts, a text a line,
+          // and each settlement's in step, its texts a line each; a text holds no line break (`projectText`)
+          part.map((c) => c.projectsFigure ?? null),
+          part.map((c) => (c.projects ?? []).join("\n")),
+          part.map((c) => (c.settlements ?? []).map((x) => x.projectsFigure ?? "").join("|")),
+          part.map((c) => (c.settlements ?? []).map((x) => (x.projects ?? []).join("\n")).join("\u001e")),
         ],
       );
     }
@@ -135,10 +143,15 @@ export async function storedEpaCases(client: PoolClient, keys: readonly string[]
     settlement_work: (string | null)[];
     cost_recovery: string | null;
     settlement_cost_recovery: (string | null)[];
+    projects_figure: string | null;
+    projects: string[] | null;
+    settlement_projects_figure: (string | null)[] | null;
+    settlement_projects: string[] | null;
   }>(
     `SELECT case_number, name, court, filed_on::text AS day, step, penalty::text AS penalty, laws, defendants, docket, penalty_settled, work_ordered::text AS work_ordered, summary,
             suit_filed::text AS suit_filed, settlement_days::text[] AS settlement_days, settlement_lodged, settlement_penalties::text[] AS settlement_penalties, settlement_work::text[] AS settlement_work,
-            cost_recovery::text AS cost_recovery, settlement_cost_recovery::text[] AS settlement_cost_recovery
+            cost_recovery::text AS cost_recovery, settlement_cost_recovery::text[] AS settlement_cost_recovery,
+            projects_figure::text AS projects_figure, projects, settlement_projects_figure::text[] AS settlement_projects_figure, settlement_projects
        FROM epa_cases WHERE filed_on >= $1::date AND name_keys LIKE ANY ($2::text[]) ORDER BY filed_on, case_number`,
     [from, keys.map((k) => `%${k}%`)],
   );
@@ -154,6 +167,8 @@ export async function storedEpaCases(client: PoolClient, keys: readonly string[]
     settled: r.penalty_settled,
     workOrdered: money(r.work_ordered),
     costRecovery: money(r.cost_recovery),
+    projectsFigure: money(r.projects_figure),
+    projects: r.projects ?? [],
     summary: r.summary,
     laws: r.laws,
     defendants: r.defendants,
@@ -165,6 +180,8 @@ export async function storedEpaCases(client: PoolClient, keys: readonly string[]
       penalty: money(r.settlement_penalties?.[k] ?? null),
       work: money(r.settlement_work?.[k] ?? null),
       costRecovery: money(r.settlement_cost_recovery?.[k] ?? null),
+      projectsFigure: money(r.settlement_projects_figure?.[k] ?? null),
+      projects: (r.settlement_projects?.[k] ?? "").split("\n").filter(Boolean),
     })),
   }));
 }

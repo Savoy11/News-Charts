@@ -104,7 +104,7 @@ civil enforcement cases come from its whole case file, a zip read once a month (
 Power and Light Company" is one name; "RETHERFORD, DANA" is a person), and money stays numeric. A
 case EPA gives no penalty total takes its one settlement's, the row names the work ordered ("among N
 parties" on a settlement of several) and carries EPA's own summary when it says something (batch
-113, `summaryOf`), and EPA's cost recovery by the same rule (batch 129, `costRecovery`); text is stored without control characters, since a NUL made Postgres refuse the
+113, `summaryOf`), and EPA's cost recovery by the same rule (batch 129, `costRecovery`); its supplemental environmental projects are each settlement's `SEP_AMT` and the projects table's text, a case its settlements' added, as EPA gives no total (batch 141, `projectsFigure`, db/050); text is stored without control characters, since a NUL made Postgres refuse the
 whole month's read. A suit filed over 30 days before its first settlement has a row on the filing day,
 the rule's tests run that day (batch 122), and a court case of settlements on several days has a row a
 day on the page whose own are every defendant that day; a case's own day keeps its row and key. The

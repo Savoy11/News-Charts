@@ -37,7 +37,13 @@ export const CASE_TABLES = ["CASE_ENFORCEMENTS.csv", "CASE_DEFENDANTS.csv", "CAS
  * alone, as before.
  */
 export const SETTLEMENT_TABLE = "CASE_ENFORCEMENT_CONCLUSIONS.csv";
-export type CaseTables = Record<(typeof CASE_TABLES)[number], string> & { [SETTLEMENT_TABLE]?: string };
+/**
+ * The supplemental environmental projects table: EPA's text of each project a settlement commits the
+ * defendant to fund beside its penalty, a row a project and a category (batch 141, the 2026-11-11
+ * proposal 3). Read when the file holds it; its figure is the settlements table's `SEP_AMT`.
+ */
+export const PROJECT_TABLE = "CASE_ENFORCEMENT_CONCLUSION_SEP.csv";
+export type CaseTables = Record<(typeof CASE_TABLES)[number], string> & { [SETTLEMENT_TABLE]?: string; [PROJECT_TABLE]?: string };
 
 export interface EpaCase {
   /** EPA's case number, "HQ-1996-0001" */
@@ -62,6 +68,15 @@ export interface EpaCase {
    * 2026-11-09 proposal 4). On a case of several parties it is the whole settlement's, not one's share.
    */
   costRecovery?: string | null;
+  /**
+   * EPA's figure for the supplemental environmental projects the case's settlements commit the parties
+   * to fund, beside the penalty: the sum of its settlements' `SEP_AMT`, as EPA's own totals add its
+   * settlements' penalties, since its case table gives no total of these; null for none (batch 141).
+   * On a case of several parties it is the whole settlement's, not one's share.
+   */
+  projectsFigure?: string | null;
+  /** …and EPA's text of those projects, each once, as `projectText` keeps it, from the settlements that give a figure */
+  projects?: string[];
   /** EPA's own summary of the case, when it says something (`summaryOf`); null for none */
   summary?: string | null;
   /** the laws, by EPA's code, in its order: "CAA", "CWA", "CERCLA" */
@@ -92,6 +107,9 @@ export interface EpaSettlement {
   work: string | null;
   /** its cost recovery (batch 129); absent or null for none */
   costRecovery?: string | null;
+  /** its supplemental environmental projects' figure and EPA's text of them (batch 141); absent, null or empty for none */
+  projectsFigure?: string | null;
+  projects?: string[];
 }
 
 /** The laws by EPA's code, as a reader knows them. */
@@ -247,6 +265,31 @@ export function summaryOf(raw: string): string | null {
   return capped(repaired);
 }
 
+/** EPA's text of its projects is cut at a word after this many characters on a row, all a settlement's together. */
+export const PROJECT_CAP = 300;
+
+/**
+ * EPA's text of one project, as a row quotes it: its spacing tidied, a lost character read
+ * (`repairLost`) and its last full stop off, but its capitals and its typing EPA's own; null for none.
+ */
+export function projectText(raw: string): string | null {
+  const text = repairLost(plain(raw).replace(/\s+/g, " ").trim()).replace(/[\s.]+$/, "");
+  return text.length >= 3 ? text : null;
+}
+
+/** A row's text of a case's projects: each in its own quotes, cut at a word after `PROJECT_CAP` characters in all and marked. */
+export function projectsQuoted(texts: readonly string[]): string {
+  let room = PROJECT_CAP;
+  const out: string[] = [];
+  for (const t of texts) {
+    if (room < 40) break;
+    const cut = t.length > room ? `${t.slice(0, room).replace(/\s+\S*$/, "").replace(/[\s,;:.-]+$/, "")}…` : t;
+    out.push(`"${cut}"`);
+    room -= cut.length;
+  }
+  return out.join(" and ") + (out.length < texts.length ? ` and ${texts.length - out.length} more` : "");
+}
+
 function capped(text: string): string {
   if (text.length <= SUMMARY_CAP) return text;
   const cut = text.slice(0, SUMMARY_CAP);
@@ -277,6 +320,11 @@ const plain = (x: string) => x.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\
  * recovery, the case table's `TOTAL_COST_RECOVERY_AMT` and the settlements table's
  * `COST_RECOVERY_AWARDED_AMT`, by the rule the work ordered follows. A table without the column
  * gives none.
+ *
+ * Since batch 141 (the 2026-11-11 proposal 3) each settlement also keeps EPA's figure for its
+ * supplemental environmental projects, the settlements table's `SEP_AMT`, and the projects table's
+ * text of each (`PROJECT_TABLE`, a row a project and a category, each project once by its id); a case,
+ * its settlements' figures added, since EPA gives no case total. A text with no figure is not kept.
  */
 export function readCases(tables: CaseTables): EpaCase[] {
   const first = new Map<string, Map<string, string>>();
@@ -308,7 +356,20 @@ export function readCases(tables: CaseTables): EpaCase[] {
   });
   // each settlement once, by its id: its federal and state penalty, the work it orders and, since
   // batch 122, its own day, lodged else entered, where the table has those columns
-  type Held = { penalty: string | null; work: string | null; cost: string | null; day: string | null; lodged: boolean };
+  type Held = { penalty: string | null; work: string | null; cost: string | null; sep: string | null; projects: string[]; day: string | null; lodged: boolean };
+  // EPA's text of each settlement's projects, by case and settlement, each project once (batch 141)
+  const texts = new Map<string, Map<string, string>>();
+  const PROJECTS = tables[PROJECT_TABLE];
+  if (PROJECTS !== undefined) {
+    eachCsvRow(PROJECTS, ["CASE_NUMBER", "ENF_CONCLUSION_ID", "SEP_ID", "SEP_TEXT"], ([caseNumber, id, project, raw]) => {
+      const text = projectText(raw);
+      if (!text) return;
+      const key = `${caseNumber.trim()}|${id.trim()}`;
+      const held = texts.get(key) ?? new Map<string, string>();
+      if (!held.has(project) && ![...held.values()].includes(text)) held.set(project, text);
+      texts.set(key, held);
+    });
+  }
   const settlements = new Map<string, Map<string, Held>>();
   const SETTLED = tables[SETTLEMENT_TABLE];
   if (SETTLED !== undefined) {
@@ -316,6 +377,8 @@ export function readCases(tables: CaseTables): EpaCase[] {
     const dated = head.includes("SETTLEMENT_LODGED_DATE");
     // …and, since batch 129, its cost recovery
     const recovered = head.includes("COST_RECOVERY_AWARDED_AMT");
+    // …and, since batch 141, its supplemental environmental projects' figure
+    const projected = head.includes("SEP_AMT");
     const columns = [
       "CASE_NUMBER",
       "ENF_CONCLUSION_ID",
@@ -324,20 +387,31 @@ export function readCases(tables: CaseTables): EpaCase[] {
       "COMPLIANCE_ACTION_COST",
       ...(dated ? ["SETTLEMENT_LODGED_DATE", "SETTLEMENT_ENTERED_DATE"] : []),
       ...(recovered ? ["COST_RECOVERY_AWARDED_AMT"] : []),
+      ...(projected ? ["SEP_AMT"] : []),
     ];
     eachCsvRow(SETTLED, columns, (v) => {
       const [caseNumber, id, fed, state, work] = v;
       const [lodged, entered] = dated ? [v[5], v[6]] : ["", ""];
-      const cost = recovered ? v[columns.length - 1] : "";
+      const cost = recovered ? v[columns.indexOf("COST_RECOVERY_AWARDED_AMT")] : "";
+      const sep = projected ? penaltyOf(v[columns.indexOf("SEP_AMT")]) : null;
+      const projects = sep ? [...(texts.get(`${caseNumber.trim()}|${id.trim()}`)?.values() ?? [])] : [];
       const held = settlements.get(caseNumber) ?? new Map<string, Held>();
-      held.set(id || `${held.size}`, { penalty: addAmounts(penaltyOf(fed), penaltyOf(state)), work: penaltyOf(work), cost: penaltyOf(cost), day: day(lodged) ?? day(entered), lodged: day(lodged) !== null });
+      held.set(id || `${held.size}`, {
+        penalty: addAmounts(penaltyOf(fed), penaltyOf(state)),
+        work: penaltyOf(work),
+        cost: penaltyOf(cost),
+        sep,
+        projects,
+        day: day(lodged) ?? day(entered),
+        lodged: day(lodged) !== null,
+      });
       settlements.set(caseNumber, held);
     });
   }
   const datedSettlements = (caseNumber: string): EpaSettlement[] =>
     [...(settlements.get(caseNumber)?.values() ?? [])]
       .filter((s): s is Held & { day: string } => s.day !== null)
-      .map(({ day: d, lodged, penalty, work, cost }) => ({ day: d, lodged, penalty, work, costRecovery: cost }))
+      .map(({ day: d, lodged, penalty, work, cost, sep, projects }) => ({ day: d, lodged, penalty, work, costRecovery: cost, projectsFigure: sep, projects }))
       .sort((a, b) => a.day.localeCompare(b.day));
   // a case of one settlement and no total of its own takes the settlement's figure; a case of
   // several keeps its own total, since a sum would put other parties' settlements of other years on
@@ -345,6 +419,13 @@ export function readCases(tables: CaseTables): EpaCase[] {
   const only = (caseNumber: string) => {
     const held = settlements.get(caseNumber);
     return held && held.size === 1 ? [...held.values()][0] : null;
+  };
+  // …but the projects, which the case table gives no total of, are its settlements' added, as EPA's
+  // totals add its settlements' penalties, each settlement's text kept (batch 141)
+  const projectsOf = (caseNumber: string) => {
+    const held = [...(settlements.get(caseNumber)?.values() ?? [])];
+    const figure = held.reduce<string | null>((sum, x) => addAmounts(sum, x.sep), null);
+    return { projectsFigure: figure, projects: figure ? [...new Set(held.flatMap((x) => x.projects))] : [] };
   };
   const out: EpaCase[] = [];
   const ENFORCEMENTS = tables["CASE_ENFORCEMENTS.csv"];
@@ -373,6 +454,7 @@ export function readCases(tables: CaseTables): EpaCase[] {
       settled: !penaltyOf(r.TOTAL_PENALTY_ASSESSED_AMT) && !!only(number)?.penalty,
       workOrdered: penaltyOf(r.TOTAL_COMP_ACTION_AMT ?? "") ?? only(number)?.work ?? null,
       costRecovery: penaltyOf(r.TOTAL_COST_RECOVERY_AMT ?? "") ?? only(number)?.cost ?? null,
+      ...projectsOf(number),
       summary: summaryOf(plain(r.ENF_SUMMARY_TEXT ?? "")),
       laws: [...new Set(ranked)],
       defendants: defendants.get(number) ?? (name ? [name] : []),
@@ -386,13 +468,15 @@ export function readCases(tables: CaseTables): EpaCase[] {
 
 /** The cases in EPA's zip. */
 export function readCaseFile(zip: Uint8Array): EpaCase[] {
-  const files = readZip(zip, [...CASE_TABLES, SETTLEMENT_TABLE]);
+  const files = readZip(zip, [...CASE_TABLES, SETTLEMENT_TABLE, PROJECT_TABLE]);
   const missing = CASE_TABLES.filter((t) => !files.has(t));
   if (missing.length) throw new Error(`the case file lacks ${missing.join(", ")}`);
   const settled = files.get(SETTLEMENT_TABLE);
+  const projects = files.get(PROJECT_TABLE);
   return readCases({
     ...(Object.fromEntries(CASE_TABLES.map((t) => [t, decodeText(files.get(t) as Buffer)])) as Record<(typeof CASE_TABLES)[number], string>),
     ...(settled ? { [SETTLEMENT_TABLE]: decodeText(settled) } : {}),
+    ...(projects ? { [PROJECT_TABLE]: decodeText(projects) } : {}),
   });
 }
 
@@ -1221,7 +1305,10 @@ export function caseTitle(c: EpaCase): string {
  * does not: on a day of several cases. The work ordered is the settlement's whole, so a case of
  * several parties says among how many (batch 113). So does EPA's cost recovery, what the parties pay
  * back for EPA's own cleanup: "EPA's costs recovered $95,000,000, among 225 parties", the Kramer
- * landfill decree of 1998 (batch 129).
+ * landfill decree of 1998 (batch 129). So do EPA's supplemental environmental projects, what the
+ * settlement commits the parties to fund beside the penalty, with EPA's text of them as written:
+ * "supplemental environmental projects $20,000,000, EPA's figure: "Toyota will spend $20 million to
+ * retrofit school buses and other heavy duty diesels"" (batch 141).
  *
  * A case of several defendants named for its site or another party, not the company, names the
  * page's own defendants (`mine`), up to three: "AMERICAN CYANAMID (FIKE CHEMICAL SITE) (case 03-1990-0627), against SCHERING-PLOUGH CORP.
@@ -1244,6 +1331,9 @@ function caseLine(c: EpaCase, withPenalty = false, mine: readonly string[] = [])
     ...(withPenalty && c.penalty ? [`${dollars(c.penalty)} civil penalty`] : []),
     ...(c.workOrdered ? [`work ordered ${dollars(c.workOrdered)}, EPA's estimate${c.defendants.length > 1 ? `, among ${c.defendants.length} parties` : ""}`] : []),
     ...(c.costRecovery ? [`EPA's costs recovered ${dollars(c.costRecovery)}${c.defendants.length > 1 ? `, among ${c.defendants.length} parties` : ""}`] : []),
+    ...(c.projectsFigure
+      ? [`supplemental environmental projects ${dollars(c.projectsFigure)}, EPA's figure${c.defendants.length > 1 ? `, among ${c.defendants.length} parties` : ""}${c.projects?.length ? `: ${projectsQuoted(c.projects)}` : ""}`]
+      : []),
   ];
   const of = c.settlementOf;
   const settlement = of ? (of.first === of.last ? `, settlement ${of.first} of ${of.of}` : `, settlements ${of.first} to ${of.last} of ${of.of}`) : "";
@@ -1266,8 +1356,8 @@ export function firstSettled(c: EpaCase): string | null {
 
 /**
  * A court case of settlements on two days or more, as one view a settlement day: that day's
- * settlements' own penalty, work ordered and, since batch 129, cost recovery, added in whole cents when
- * two were lodged the same day.
+ * settlements' own penalty, work ordered and, since batch 129, cost recovery, and since batch 141 its
+ * supplemental environmental projects, added in whole cents when two were lodged the same day.
  * Null for any other case (batch 122, the 2026-11-08 proposal 2(b)).
  */
 export function bySettlement(c: EpaCase): EpaCase[] | null {
@@ -1286,6 +1376,8 @@ export function bySettlement(c: EpaCase): EpaCase[] | null {
       settled: penalty !== null,
       workOrdered: held.reduce<string | null>((sum, x) => addAmounts(sum, x.work), null),
       costRecovery: held.reduce<string | null>((sum, x) => addAmounts(sum, x.costRecovery ?? null), null),
+      projectsFigure: held.reduce<string | null>((sum, x) => addAmounts(sum, x.projectsFigure ?? null), null),
+      projects: [...new Set(held.flatMap((x) => x.projects ?? []))],
       settlementOf: { first: first + 1, last: first + held.length, of: all.length },
     };
   });
@@ -1361,7 +1453,7 @@ export function epaEvents(cases: readonly EpaCase[], namesIn: (year: number) => 
     if (c.suitFiled && settled && daysFrom(c.suitFiled, settled) > SUIT_LEAD_DAYS) {
       const then = mineOn(c, c.suitFiled);
       if (then.length && (then.length === c.defendants.length || (c.defendants.length < MANY_PARTIES && then.length * 2 >= c.defendants.length))) {
-        const view = { ...c, penalty: null, settled: false, workOrdered: null, costRecovery: null };
+        const view = { ...c, penalty: null, settled: false, workOrdered: null, costRecovery: null, projectsFigure: null, projects: [] };
         mineOf.set(view, shownOf(c, c.suitFiled, then));
         suits.set(c.suitFiled, [...(suits.get(c.suitFiled) ?? []), { c: view, settled }]);
       }

@@ -835,10 +835,30 @@ of 1999-10-07, "work ordered $500,000,000, EPA's estimate; EPA's costs recovered
 Hudson River decree of 2005, $26,000,000 beside $150,000,000. On a settlement of several parties the
 figure is the whole settlement's, and the row says among how many ("$95,000,000, among 225
 parties", the Kramer landfill decree of 1998). A suit's filing row keeps no money. Before first prices,
-on the committed slice: 2,942 rows on 380 pages name a cost recovery; 2,030 of them showed no money at
-all before, 1,831 before 2017 and 1,000 before 2001. No row's day, title or key changes, only its
-description. db/045 keeps the figures and forgets the last read, so the next run reads EPA's file
-whole.
+on the committed slice: 3,008 rows on 384 pages name a cost recovery; 2,077 of them showed no money at
+all before, 1,875 before 2017 and 1,032 before 2001 (2,942 on 380 before batch 135's units). No row's
+day, title or key changes, only its description. db/045 keeps the figures and forgets the last read, so
+the next run reads EPA's file whole.
+
+**EPA's supplemental environmental projects on each row** (batch 141, the 2026-11-11 proposal 3,
+approved by the owner that day). A settlement often commits the defendant to fund a project beside its
+penalty: retrofitted buses, emergency equipment for a refinery's neighbours, land given to a state. The
+same zip holds each settlement's figure (`SEP_AMT`) and EPA's text of each project
+(`CASE_ENFORCEMENT_CONCLUSION_SEP.csv`, a row a project and a category, each project kept once). EPA's
+case table gives no total of these, so a case's figure is its settlements' added, as its totals add its
+settlements' penalties, and a case split by settlement gives each settlement day its own. The row says it
+after the other figures, in EPA's words, quoted: "work ordered $14,000,000, EPA's estimate, among 2
+parties; supplemental environmental projects $20,000,000, EPA's figure, among 2 parties: "Toyota will
+spend $20 million to retrofit school buses and other heavy duty diesels"" (Toyota, 2003-03-07); PSEG's
+$6,000,000 of 2002 on that settlement's row only, not its amendment of 2006; Chevron's two cases of
+2018-10-24 each their own, $6,395,744.08 and $3,100,165. EPA's text keeps its capitals and its typing,
+and a case's quote is cut at a word after 300 characters and marked. A text EPA gives no figure for is
+not shown, a suit's filing row keeps none, and a row never says "no project": EPA's record is not
+complete. Before first prices, 230 rows on 111 companies name a project, 187 before 2017,
+$209,133,056.96 in all; from the first prices the scout read, 168 rows on 70 pages, 142 before 2017,
+$181,844,220.07 (BP 13, Chevron 12, ExxonMobil and Valero 8, Eastman Chemical 7). No row's day, title or
+key changes. db/050 keeps the figures and texts and forgets the last read, so the next run reads EPA's
+file whole.
 
 **EPA's own figures on each row** (batch 113, the owner's approval of 2026-11-07). The same zip holds
 each case's settlements (`CASE_ENFORCEMENT_CONCLUSIONS.csv`), EPA's estimate of the cost of the work a

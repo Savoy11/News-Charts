@@ -988,6 +988,44 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 141: EPA's supplemental environmental projects on the settlement rows (2026-11-11)
+
+The 2026-11-11 proposal 3, approved by the owner on 2026-11-11 ("Approve (Recommended)"); the owner's
+word on starting: "Continue". No new source: a column and a table of EPA's case file, read whole once a
+month already, under the terms quoted for source 31.
+
+- [x] **The read** (`lib/epaCases.ts`): `readCases` keeps each settlement's `SEP_AMT` and the projects
+      table's text (`PROJECT_TABLE`, `CASE_ENFORCEMENT_CONCLUSION_SEP.csv`: a row a project and a category,
+      each project kept once by its id and text; its spacing tidied and its last full stop off, its words
+      EPA's, `projectText`). A text EPA gives no figure for is not kept. EPA's case table gives no total of
+      these, so a case's figure is its settlements' added in whole cents, as EPA's totals add its
+      settlements' penalties; a case split by settlement gives each settlement day its own
+      (`bySettlement`), and a suit's filing row none. A file without the column or the table gives none,
+      every other figure as before.
+- [x] **The row** (`caseLine`): after the penalty, the work and the cost recovery, "supplemental
+      environmental projects $20,000,000, EPA's figure, among 2 parties: "Toyota will spend $20 million to
+      retrofit school buses and other heavy duty diesels"", the text quoted and a case's quotes cut at a
+      word after `PROJECT_CAP` (300) characters and marked, with "and N more" for projects left.
+- [x] **Kept monthly** (`lib/ingest/epaWalk.ts`, db/050): the case's figure and texts, and each dated
+      settlement's in step with db/044's arrays; db/050 forgets the last read, so the next run reads the
+      file whole.
+- [x] **What changes**, on the committed slice: before first prices, 230 rows on 111 companies name a
+      project, 187 before 2017, $209,133,056.96, 228 with EPA's text, 6 that showed no money before (BP 13,
+      Chevron 12, Valero and ExxonMobil 8, Eastman Chemical 7); from the first prices the scout read, 168
+      rows on 70 pages, 142 before 2017, $181,844,220.07, 166 with EPA's text, a median row of $131,250, as
+      the proposal measured. No row's day, title or key changes; only descriptions.
+- [x] **A count the README and the coverage map had left behind:** batch 129's cost recovery is on 3,008
+      rows on 384 pages now, 2,077 of which showed no money before (2,942 on 380 before batch 135's units),
+      as `check:epa-cases` already pinned.
+- [x] **Checked:** `check:epa-cases` 165 (13 new: the figure and text of Toyota's, PSEG's, BP's,
+      Chevron's and Motiva's settlements, each project once, a text with no figure left off, an older file
+      degraded, the suit row and a case with no figure saying nothing, the cap, the replay's totals with
+      every row's day, title and key unchanged, and db/050 through a company's ingest). The slice
+      `scripts/fixtures/epa-cases-slice.json.gz` gains the settlements table's `SEP_AMT` for its 8,438 rows
+      and the projects table's 677 rows for its cases, from the same copy of 2026-10-31. On main the check
+      fails: the projects table is not read.
+- **Requests:** none; EPA's file of 2026-10-31 as batch 95 read it.
+
 ## NC ledger — batch 140: the FDA's warning letters, 2021 on, a new source (2026-11-11)
 
 The 2026-11-11 proposal 2, approved by the owner on 2026-11-11 ("Approve (Recommended)"); the owner's
@@ -10652,10 +10690,11 @@ already held, but new investment goes to securities coverage first.
         hand list of 12 companies; 42 of the 67 outside the recall map.
       - *Derived from [`docs/proposals/2026-11-11-proposals.md`](proposals/2026-11-11-proposals.md) #2,
         approved 2026-11-11.*
-- [ ] `P2` **EPA's supplemental environmental projects on the settlement rows pages already hold.** No new
+- [x] `P2` **EPA's supplemental environmental projects on the settlement rows pages already hold.** No new
       source: approved by the owner 2026-11-11. A column and a table of the case file the walk reads.
       - **Measured** by the scout: 168 rows on 70 pages, 142 before 2017, $181,844,220.07.
-      - **To be built in batch 141.**
+      - **Done in batch 141** (see its section): the same figures, by the code's own rules; 166 of the
+        168 rows with EPA's text.
       - *Derived from [`docs/proposals/2026-11-11-proposals.md`](proposals/2026-11-11-proposals.md) #3,
         approved 2026-11-11.*
 

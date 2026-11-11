@@ -120,8 +120,19 @@ async function main(): Promise<void> {
         closeout: null,
       }),
     one);
-  const closed = parseLetters({ recordsTotal: 1, data: [row({ 2: '<a href="/inspections-compliance-enforcement-and-criminal-investigations/warning-letters/x-1">Hims &amp; Hers Health, Inc. dba Hers</a>', 6: '<a href="/x"><time>03/18/2024</time></a>' })] });
-  check("  …a close-out letter's day is read from its cell, and \"&amp;\" is \"&\"", closed.letters[0]?.closeout === "2024-03-18" && closed.letters[0]?.company === "Hims & Hers Health, Inc. dba Hers", closed.letters[0]);
+  const closed = parseLetters({
+    recordsTotal: 2,
+    data: [
+      row({
+        2: '<a href="/inspections-compliance-enforcement-and-criminal-investigations/warning-letters/x-1">Hims &amp; Hers Health, Inc. dba Hers</a>',
+        6: '<a href="/inspections-compliance-enforcement-and-criminal-investigations/warning-letters/4u-health-720527-06162026"><time datetime="2026-06-23T04:00:00Z">06/23/2026</time>\n</a>',
+      }),
+      row({ 6: '<a href="/x"><time>03/18/2024</time></a>' }),
+    ],
+  });
+  // batch 142, the 2026-11-11 audit's finding 2: the cell's visible day is the day the FDA posted the close-out
+  check("  …a close-out letter's day is its own, from the end of its page's name, not the day the FDA posted it; a page name with no day gives none; and \"&amp;\" is \"&\"",
+    closed.letters[0]?.closeout === "2026-06-16" && closed.letters[1]?.closeout === null && closed.letters[0]?.company === "Hims & Hers Health, Inc. dba Hers", closed.letters);
   const odd = parseLetters({ recordsTotal: 3, data: [row({ 2: '<a href="https://example.org/x">Someone</a>' }), row({ 1: "" }), row()] });
   check("  …a row whose link is no warning letter's page, or which has no issue day, is left out, and counted as a row", odd.rows === 3 && odd.letters.length === 1, odd);
   let threw = "";
@@ -204,7 +215,6 @@ async function main(): Promise<void> {
     amazon.length);
   const hand: [string, RegExp, string][] = [
     ["HIMS", /^Hims & Hers Health, Inc\. dba Hims$/, "Hims & Hers, doing business as Hims"],
-    ["IRTC", /^iRhythm Technologies, Inc\.$/, "iRhythm under its name before its record's"],
     ["PG", /^Procter & Gamble Manufactura\b/, "P&G's Mexican company"],
     ["CL", /^Colgate-Palmolive\/Tom's of Maine/, "Colgate-Palmolive with Tom's of Maine"],
     ["LH", /^Toxikon Corporation\/Labcorp Bedford LLC$/, "Labcorp's Bedford laboratory"],
@@ -214,11 +224,20 @@ async function main(): Promise<void> {
     ["OWLT", /^Owlet Baby Care, Inc\.$/, "Owlet's operating company"],
     ["CHSCP", /^CHS Inc\.\/CHS River Plains$/, "CHS with one of its plants"],
     ["IFF", /^DuPont Nutrition USA Inc\.$/, "DuPont's Nutrition & Biosciences, IFF's from 2021-02-01"],
+    // batch 142, the 2026-11-11 audit's finding 3
+    ["RBGLY", /^Reckitt\/Mead Johnson Nutrition$/, "Reckitt with Mead Johnson Nutrition (2023-08-30)"],
+    ["ADM", /^ADM Animal Nutrition$/, "ADM's animal-feed business (2023-10-23)"],
+    ["OFIX", /^IsoTis OrthoBiologics, Inc\.$/, "SeaSpine's IsoTis, Orthofix's from 2023-01-05 (2026-02-24)"],
+    ["NVO", /^Catalent Indiana, LLC$/, "Catalent's Bloomington plant, Novo Nordisk's from 2024-12-18 (2025-11-20)"],
   ];
   for (const [t, re, why] of hand) {
     const got = named(re);
     check(`  ${why}: ${got[0]?.company ?? re} is ${t}'s`, got.length >= 1 && got.every((l) => on(t, l)) && !approvalIsCompany({ applicant: got[0].company, day: got[0].issued }, rowOf(t)[0], namesOfTicker(t)), got.map((l) => l.company));
   }
+  const isotis = named(/^IsoTis OrthoBiologics, Inc\.$/)[0];
+  const catalent = named(/^Catalent Indiana, LLC$/)[0];
+  check("  …IsoTis is Orthofix's only from the SeaSpine merger, Catalent Indiana Novo Nordisk's only from the day it bought the plant, and neither is Integra's or Catalent's buyer's before",
+    !on("OFIX", { ...isotis, issued: "2023-01-04" }) && !on("NVO", { ...catalent, issued: "2024-12-17" }) && !on("IART", isotis));
   const dupont = named(/^DuPont Nutrition USA Inc\.$/)[0];
   check("  …DuPont Nutrition is IFF's only from the merger, and never DuPont de Nemours's, whose past is refused already",
     !on("IFF", { ...dupont, issued: "2021-01-31" }) && !on("DD", dupont) && !!NOT_THE_APPLICANT[rowOf("DD")[0]]);
@@ -260,15 +279,15 @@ async function main(): Promise<void> {
   const lettersOn = all.reduce((n, p) => n + p.letters, 0);
   const handOn = all.reduce((n, p) => n + p.byHand, 0);
   const rows = all.reduce((n, p) => n + p.events.length, 0);
-  check("before any first price: 101 letters on 67 companies, 97 rows a day each; 79 by the approvals' rule (the 78 the 2026-11-11 scout read, and Royal Philips's that oldest first lost) and 22 by the hand list",
-    lettersOn === 101 && pages.size === 67 && rows === 97 && handOn === 22, { lettersOn, handOn, pages: pages.size, rows });
+  check("before any first price, former names aside: 104 letters on 69 companies, 100 rows a day each; 79 by the approvals' rule (the 78 the 2026-11-11 scout read, and Royal Philips's that oldest first lost) and 25 by the hand list (101 on 67 and 22 before the 2026-11-11 audit's four, and iRhythm's moved to the former name EDGAR lists)",
+    lettersOn === 104 && pages.size === 69 && rows === 100 && handOn === 25, { lettersOn, handOn, pages: pages.size, rows });
   const top = [...pages].map(([t, p]) => [t, p.letters] as const).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 6).map(([t, n]) => `${t} ${n}`).join(", ");
   check("  …most on Amazon 10, Walmart 5, then Abbott, Fresenius, Lilly and Medline 3 each", top === "AMZN 10, WMT 5, ABT 3, FSNUY 3, LLY 3, MDLN 3", top);
   const onTwo = [...pages].flatMap(([t, p]) => p.events.flatMap((e) => (e.externalId ?? "").split(",").map((slug) => [slug, t] as const)));
   const twoPages = [...new Set(onTwo.map(([slug]) => slug))].filter((slug) => onTwo.filter(([x]) => x === slug).length > 1);
-  check("  …100 letters in all: one, Bausch & Lomb's of 2026-09-04, is on Bausch + Lomb's page and on Bausch Health's, its owner's, as the recall map gives the firm to both",
+  check("  …103 letters in all: one, Bausch & Lomb's of 2026-09-04, is on Bausch + Lomb's page and on Bausch Health's, its owner's, as the recall map gives the firm to both",
     twoPages.length === 1 && /^bausch-lomb-inc-732398-09042026$/.test(twoPages[0]) && onTwo.filter(([x]) => x === twoPages[0]).map(([, t]) => t).sort().join() === "BHC,BLCO" &&
-      new Set(onTwo.map(([slug]) => slug)).size === 100,
+      new Set(onTwo.map(([slug]) => slug)).size === 103,
     twoPages);
   check("  …and every hand-read name finds its letter",
     Object.entries(LETTER_NAMES).every(([cik, c]) => c.names.every((n) => letters.some((l) => n.addressee.test(l.company) && letterIsCompany(l, Number(cik), namesOfTicker(c.ticker))))));
@@ -289,7 +308,10 @@ async function main(): Promise<void> {
   const dexcomRow = pages.get("DXCM")?.events.find((e) => e.date === "2025-03-04");
   check("  …one letter is \"FDA warning letter: <subject>\"", dexcomRow?.title === "FDA warning letter: CGMP/QSR/Medical Devices/Adulterated", dexcomRow?.title);
   const closedRow = all.flatMap((p) => p.events).find((e) => /close-out letter/.test(e.description ?? ""));
-  check("  …a letter the FDA closed out says the day", !!closedRow && /; close-out letter [A-Z][a-z]+ \d{1,2}, 20\d\d/.test(closedRow.description ?? ""), closedRow?.description);
+  const cooperRow = pages.get("COO")?.events.find((e) => e.date === "2021-02-12");
+  check("  …a letter the FDA closed out says the close-out letter's own day: CooperSurgical's of 2021-02-12, closed out January 19, 2022, which the FDA posted on June 22, 2022",
+    !!closedRow && /; close-out letter [A-Z][a-z]+ \d{1,2}, 20\d\d/.test(closedRow.description ?? "") && /; close-out letter January 19, 2022\./.test(cooperRow?.description ?? ""),
+    cooperRow?.description);
   check("  …every description fits 600 characters, every title 200, and every key is unique",
     all.every((p) => p.events.every((e) => (e.description ?? "").length <= 600 && e.title.length <= 200) && new Set(p.events.map((e) => e.dedupBasis)).size === p.events.length));
   check("  …from the company's first price: a letter before it is not on the page",
@@ -324,6 +346,14 @@ async function main(): Promise<void> {
   check("  …a refused read leaves the kept letters on the page, logged as refused", throttled.outcome === "throttled" && throttled.events.length === step.events.length && !!throttled.complete);
   const neverRead = await warningLettersFor(fakeDb({ reads: null, letters: new Map(), listed: "1972-06-01" }), 1, plan, { due: true, pages: 0, letters: 0, failure: { outcome: "error", detail: "x" } });
   check("  …a list never read is no complete answer: nothing is taken off", neverRead.outcome === "error" && !neverRead.complete);
+  // batch 142, the 2026-11-11 audit's finding 6: EDGAR lists iRhythm Technologies as IRTC's former name to
+  // 2026-01-12, and ingest reads it (`partyNamesFor`), so its letter of 2023 needs no hand-read name
+  const irtcPlan = { edgarName: "iRhythm Holdings, Inc.", alsoKnownAs: newsNamesFor(1388658), cik: 1388658 };
+  const irtcWith = await warningLettersFor(fakeDb({ ...db, former: [["2026-01-12", "iRhythm Technologies, Inc."]] }), 1, irtcPlan, noWalk);
+  const irtcWithout = await warningLettersFor(fakeDb(db), 1, irtcPlan, noWalk);
+  check("  …iRhythm's letter of 2023-05-25 is on its page by the former name EDGAR lists, and on none without it: no hand-read name stands in for a former name",
+    irtcWith.events.some((e) => e.date === "2023-05-25") && !irtcWithout.events.some((e) => e.date === "2023-05-25") && !LETTER_NAMES[1388658],
+    irtcWith.events.map((e) => e.date).join());
   const unpriced = await warningLettersFor(fakeDb({ ...db, listed: null }), 1, plan, noWalk);
   const fund = await warningLettersFor(fakeDb(db), 1, { ...plan, fundSeries: true }, noWalk);
   check("  …asked again while it has no prices, and none for a fund's series", unpriced.outcome === "error" && /no prices/.test(unpriced.detail ?? "") && fund.events.length === 0 && fund.outcome === "empty");
@@ -351,6 +381,8 @@ interface FakeDb {
   reads: { pages: number; letters: number; ageDays: number } | null;
   letters: Map<string, WarningLetter>;
   listed: string | null;
+  /** the company's stored EDGAR former names, as rename events give them: [until, name] */
+  former?: [string, string][];
 }
 
 /** The queries the walk and the company step make. */
@@ -376,7 +408,9 @@ function fakeDb(db: FakeDb): PoolClient {
         return { rows: [...db.letters.values()].sort((a, b) => a.issued.localeCompare(b.issued) || a.path.localeCompare(b.path)) };
       }
       if (/FROM prices/.test(s)) return { rows: [{ listed: db.listed }] };
-      if (/sec:%:rename:%/.test(s)) return { rows: [] };
+      if (/sec:%:rename:%/.test(s)) {
+        return { rows: (db.former ?? []).map(([until, name]) => ({ until, body: `EDGAR's company record lists ${name} as a former name of this filer, in use until this day.` })) };
+      }
       throw new Error(`unexpected query: ${s.slice(0, 80)}`);
     },
   } as unknown as PoolClient;

@@ -363,14 +363,15 @@ retailer selling an unapproved drug. Since batch 140 (the 2026-11-11 proposal 2,
 on 2026-11-11) a page carries each letter addressed to the company since 2021, on the day the FDA
 issued it: "FDA warning letter: CGMP/QSR/Medical Devices/Adulterated" (Dexcom, 2025-03-04), with the
 addressee as the FDA wrote it, the office that issued it, the day the FDA posted it and the day of any
-close-out letter, linked to the letter's own page on www.fda.gov. A company's letters of one day are
+close-out letter, read from the close-out's own page name (the list shows the day the FDA posted it,
+up to 1,407 days later; batch 142), linked to the letter's own page on www.fda.gov. A company's letters of one day are
 one row ("3 FDA warning letters: False & Misleading Claims/Misbranded", Lilly, 2025-09-09). The letter
 is the agency's account, not a court's finding, and the row says so.
 
 The list is read whole once a week for every company, through the data the FDA's own table loads
-(`lib/ingest/fdaWarningWalk.ts`, db/049): 1,000 letters a request, as the site allows no more. It is
+(`lib/ingest/fdaWarningWalk.ts`, db/049): 1,000 letters a request, as the site refused 5,000. It is
 read twice, oldest first and newest first, because letters of one day have no order of their own: read
-one way only, the list cut the 24 letters of 2025-09-09 differently at a page's edge, gave 12 twice and
+one way only, the list cut the 69 letters of 2025-09-09 differently at a page's edge, gave 12 twice and
 never gave 12 others, Royal Philips's among them. The two directions' edges fall on different days, and
 together they gave all 3,807 (2026-11-11, eight requests). A read short of the list's own count is
 refused, and a letter once kept is never taken off.
@@ -378,13 +379,15 @@ refused, and a letter once kept is never taken off.
 A letter is the company's by the rule the FDA's approvals use (`approvalIsCompany`: the caption rule
 under the names it had that year, the FDA recall map's firms and units on their days, the table of taken
 names), or by a short hand list of addressees that rule cannot read (`LETTER_NAMES`): Amazon.com, Inc.,
-whose ".com" the rule reads as no legal word; Hims & Hers doing business as Hims; iRhythm under its
-name before its record's; and named-after units such as P&G's Mexican company, Labcorp's Bedford
-laboratory and DuPont Nutrition, IFF's only from their merger of 2021-02-01. Namesakes stay off: Kraft
-Drug is not Kraft Heinz, Cooper Institute not the Cooper Companies (whose CooperSurgical is theirs).
-Before first prices, 101 letters on 67 companies, 97 rows: 79 by the rule and 22 by the hand list,
-most on Amazon 10, Walmart 5, then Abbott, Fresenius, Lilly and Medline 3 each; 42 of the 67 are
-outside the FDA recall map. The list begins in 2021; the older letters sit behind the FDA Data
+whose ".com" the rule reads as no legal word; Hims & Hers doing business as Hims; Reckitt with Mead
+Johnson; and named-after or bought units such as P&G's Mexican company, Labcorp's Bedford laboratory,
+ADM Animal Nutrition, DuPont Nutrition (IFF's only from their merger of 2021-02-01), IsoTis (Orthofix's
+from 2023-01-05) and Catalent Indiana (Novo Nordisk's from 2024-12-18). iRhythm's letter of 2023, to
+"iRhythm Technologies, Inc.", is its page's by the former name EDGAR lists, which ingest reads. Namesakes
+stay off: Kraft Drug is not Kraft Heinz, Cooper Institute not the Cooper Companies (whose CooperSurgical
+is theirs). Before first prices, and leaving EDGAR's former names aside, 104 letters on 69 companies,
+100 rows: 79 by the rule and 25 by the hand list (iRhythm's adds one at ingest), most on Amazon 10,
+Walmart 5, then Abbott, Fresenius, Lilly and Medline 3 each; 44 of the 69 are outside the FDA recall map. The list begins in 2021; the older letters sit behind the FDA Data
 Dashboard's API, which needs a registered key, and are not read. Public domain by the FDA's website
 policies; no key.
 
@@ -845,8 +848,10 @@ approved by the owner that day). A settlement often commits the defendant to fun
 penalty: retrofitted buses, emergency equipment for a refinery's neighbours, land given to a state. The
 same zip holds each settlement's figure (`SEP_AMT`) and EPA's text of each project
 (`CASE_ENFORCEMENT_CONCLUSION_SEP.csv`, a row a project and a category, each project kept once). EPA's
-case table gives no total of these, so a case's figure is its settlements' added, as its totals add its
-settlements' penalties, and a case split by settlement gives each settlement day its own. The row says it
+case table gives no total of these, so a case's figure is its one settlement's, or its settlements' of its
+own day added, and a case split by settlement gives each settlement day its own; a case of several
+settlements that keeps one row never takes another day's (batch 142: BP's Deepwater Horizon row of
+2015-11-30 had carried MOEX's $10,000,000 of 2012). The row says it
 after the other figures, in EPA's words, quoted: "work ordered $14,000,000, EPA's estimate, among 2
 parties; supplemental environmental projects $20,000,000, EPA's figure, among 2 parties: "Toyota will
 spend $20 million to retrofit school buses and other heavy duty diesels"" (Toyota, 2003-03-07); PSEG's
@@ -854,9 +859,10 @@ $6,000,000 of 2002 on that settlement's row only, not its amendment of 2006; Che
 2018-10-24 each their own, $6,395,744.08 and $3,100,165. EPA's text keeps its capitals and its typing,
 and a case's quote is cut at a word after 300 characters and marked. A text EPA gives no figure for is
 not shown, a suit's filing row keeps none, and a row never says "no project": EPA's record is not
-complete. Before first prices, 230 rows on 111 companies name a project, 187 before 2017,
-$209,133,056.96 in all; from the first prices the scout read, 168 rows on 70 pages, 142 before 2017,
-$181,844,220.07 (BP 13, Chevron 12, ExxonMobil and Valero 8, Eastman Chemical 7). No row's day, title or
+complete. Before first prices, 227 rows on 112 companies name a project, 184 before 2017,
+$186,798,376.96 in all; from the first prices the scout read, 165 rows on 70 pages, 140 before 2017,
+$158,014,586.07 (Chevron 12, BP 11, ExxonMobil and Valero 8, Eastman Chemical 7); batch 141 gave 168
+and $181,844,220.07 before the 2026-11-11 audit kept other days' projects off four rows. No row's day, title or
 key changes. db/050 keeps the figures and texts and forgets the last read, so the next run reads EPA's
 file whole.
 
@@ -1647,7 +1653,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Federal Reserve Board press releases | The Board's orders on a bank's applications since 1996 (1996–2005 from its yearly pages, committed), and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |
 | Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
-| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 107 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
+| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 108 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
 | Mine Safety and Health Administration | Accidents since 2000 that killed someone at a mine the company controlled, with MSHA's own finding on each: the violations its investigation cited and the penalties it proposed (batch 139) | MSHA's Accidents and Mines files, one 52 MB zip and one of 7 MB, read once a week for every company and the deaths kept (`lib/ingest/mineWalk.ts`), and its Inspections and Assessed Violations files (74 MB and 110 MB) streamed once a month; kept for the 54 controller IDs `lib/mineAccidents.ts` maps by hand to 52 companies, each between its company's days, from the company's first price. Public domain, credited to the U.S. Department of Labor; no key |
 | Federal Railroad Administration | Railroad accidents since 1975 a company's railroad reported, with a death, an evacuation or $5,000,000 of damage | Form 54 on the Transportation Department's open-data host, one request a day for each of the six railroad companies `lib/railAccidents.ts` maps by hand, each railroad between its owner's days, from the company's first price; a highway-rail crossing collision only with an evacuation or that damage. Public domain; no key |

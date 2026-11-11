@@ -70,9 +70,11 @@ export interface EpaCase {
   costRecovery?: string | null;
   /**
    * EPA's figure for the supplemental environmental projects the case's settlements commit the parties
-   * to fund, beside the penalty: the sum of its settlements' `SEP_AMT`, as EPA's own totals add its
-   * settlements' penalties, since its case table gives no total of these; null for none (batch 141).
-   * On a case of several parties it is the whole settlement's, not one's share.
+   * to fund, beside the penalty, the settlements table's `SEP_AMT`, since its case table gives no total
+   * of these; null for none (batch 141). A case of one settlement takes that settlement's; a case of
+   * several, the settlements dated the case's own day added, so its row never carries another day's
+   * (batch 142, the 2026-11-11 audit's finding 1: Deepwater Horizon's row of 2015-11-30 had carried
+   * MOEX's settlements of 2012). On a case of several parties it is the whole settlement's, not one's share.
    */
   projectsFigure?: string | null;
   /** …and EPA's text of those projects, each once, as `projectText` keeps it, from the settlements that give a figure */
@@ -298,12 +300,22 @@ function capped(text: string): string {
 }
 
 /**
+ * Windows-1252's characters for the bytes 0x80–0x9F, which EPA's text holds as the control characters
+ * U+0080–U+009F: its curly quotes and apostrophes, dashes and bullets, typed in Windows and read as Latin-1
+ * on the way into EPA's file (U+0092 in 2,936 summaries and 72 project texts, 2026-10-31; the 2026-11-11
+ * audit's finding 5). The five bytes Windows-1252 leaves undefined read as a space.
+ */
+const WINDOWS_1252 = "€ ‚ƒ„…†‡ˆ‰Š‹Œ Ž  ‘’“”•–—˜™š›œ žŸ";
+
+/**
  * A text field as Postgres can hold it: without NUL and the other control characters. EPA's file
  * holds 15 NULs (2026-10-31), one in the case "H.O.D. LANDFILL \u0000", and Postgres refuses any text
  * holding one, so the whole month's read failed and kept nothing (batch 113, found storing the
- * slice in a real database).
+ * slice in a real database). The C1 controls are read as the Windows-1252 punctuation they stood for
+ * (batch 142): "Puerto Rico’s North Karst", not an invisible U+0092.
  */
-const plain = (x: string) => x.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ");
+const plain = (x: string) =>
+  x.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ").replace(/[\u0080-\u009F]/g, (c) => WINDOWS_1252[c.charCodeAt(0) - 0x80]);
 
 /**
  * The cases, from the four tables' text. A case's public day: for a court case the day its
@@ -324,7 +336,8 @@ const plain = (x: string) => x.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\
  * Since batch 141 (the 2026-11-11 proposal 3) each settlement also keeps EPA's figure for its
  * supplemental environmental projects, the settlements table's `SEP_AMT`, and the projects table's
  * text of each (`PROJECT_TABLE`, a row a project and a category, each project once by its id); a case,
- * its settlements' figures added, since EPA gives no case total. A text with no figure is not kept.
+ * since EPA gives no case total, its one settlement's, or those of its own day added (batch 142). A text
+ * with no figure is not kept.
  */
 export function readCases(tables: CaseTables): EpaCase[] {
   const first = new Map<string, Map<string, string>>();
@@ -420,12 +433,15 @@ export function readCases(tables: CaseTables): EpaCase[] {
     const held = settlements.get(caseNumber);
     return held && held.size === 1 ? [...held.values()][0] : null;
   };
-  // …but the projects, which the case table gives no total of, are its settlements' added, as EPA's
-  // totals add its settlements' penalties, each settlement's text kept (batch 141)
-  const projectsOf = (caseNumber: string) => {
-    const held = [...(settlements.get(caseNumber)?.values() ?? [])];
+  // …but the projects, which the case table gives no total of, are the one settlement's, or the
+  // settlements' of the case's own day added, each one's text kept (batch 141): a case of several
+  // settlements keeps one row on its own day, and another day's projects are not that row's (batch
+  // 142, the 2026-11-11 audit's finding 1)
+  const projectsOf = (caseNumber: string, onDay: string) => {
+    const all = [...(settlements.get(caseNumber)?.values() ?? [])];
+    const held = all.length === 1 ? all : all.filter((x) => x.day === onDay);
     const figure = held.reduce<string | null>((sum, x) => addAmounts(sum, x.sep), null);
-    return { projectsFigure: figure, projects: figure ? [...new Set(held.flatMap((x) => x.projects))] : [] };
+    return { projectsFigure: figure, projects: figure ? [...new Set(held.filter((x) => x.sep).flatMap((x) => x.projects))] : [] };
   };
   const out: EpaCase[] = [];
   const ENFORCEMENTS = tables["CASE_ENFORCEMENTS.csv"];
@@ -454,7 +470,7 @@ export function readCases(tables: CaseTables): EpaCase[] {
       settled: !penaltyOf(r.TOTAL_PENALTY_ASSESSED_AMT) && !!only(number)?.penalty,
       workOrdered: penaltyOf(r.TOTAL_COMP_ACTION_AMT ?? "") ?? only(number)?.work ?? null,
       costRecovery: penaltyOf(r.TOTAL_COST_RECOVERY_AMT ?? "") ?? only(number)?.cost ?? null,
-      ...projectsOf(number),
+      ...projectsOf(number, steps.get(pick[0]) as string),
       summary: summaryOf(plain(r.ENF_SUMMARY_TEXT ?? "")),
       laws: [...new Set(ranked)],
       defendants: defendants.get(number) ?? (name ? [name] : []),
@@ -1270,6 +1286,19 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("ANDE", "The Andersons' ethanol companies", /^THE ANDERSONS\s+(?:MARATHON|ALBION|CLYMERS|DENISON|ETHANOL)\b/i, "theandersons", { from: "2025-07-31" }),
   ],
   56047: [unit("KEX", "Kirby Inland Marine", /^KIRBY\s+INLAND\s+MARINE\b/i, "kirbyinlandmarine")],
+  // Amazon (batch 142, the 2026-11-11 audit's finding 4): its own operating companies, Amazon Services
+  // LLC (in its 10-Ks' list of subsidiaries, 2007–2020) and Amazon.com Services LLC/Inc. (2019–2026),
+  // and its own sites, a distribution centre, the fulfillment centers and its returns department,
+  // whose pesticide and waste orders EPA files under those names. A case naming Amazon only as a
+  // consignee or "c/o" for another firm, or its site beside another firm's name, is not Amazon's.
+  1018724: [
+    unit(
+      "AMZN",
+      "Amazon's own companies and sites",
+      /^AMAZON(?:\.COM)?\s+SERVICES\b|^AMAZON\.?\s?COM\s+KYDC$|^(?:[A-Z]{3}\d\s+)?AMAZON\s+FULFILL?MENT\s+CENTERS?$|^AMAZON\s+RETURNS(?:\s+DEPARTMENT)?$/i,
+      "amazon",
+    ),
+  ],
   9389: [
     unit("BALL", "Ball's metal packaging companies", /^BALL\s+(?:METAL\s+(?:BEVERAGE|CONTAINER|FOOD)|PACKAGING)\b/i, "ball"),
     unit("BALL", "Ball Aerospace", /^BALL\s+AEROSPACE\b/i, "ballaerospace", { to: "2024-02-15" }),

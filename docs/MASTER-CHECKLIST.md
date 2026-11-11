@@ -988,6 +988,56 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 142: the 2026-11-11 audit of batches 138–141, its findings fixed (2026-11-11)
+
+The `code-auditor` read `git diff 3f06e91..9bb857e` (batches 138–141) and wrote
+`docs/audits/2026-11-11-code-audit-b138-141.md`. It ran the new SQL against a throwaway PostgreSQL 16
+(db/001–db/050): the FDA list, MSHA's findings and EPA's whole case file stored and read back with no
+difference, and every total the ledgers give reproduced on the real files. Six findings, each verified
+here before it was fixed; the owner's word on starting: "Continue".
+
+- [x] **1 · `P2` · EPA projects from another day's settlement.** A case of several settlements that keeps
+      one row took every settlement's `SEP_AMT`: BP's Deepwater Horizon row of 2015-11-30 carried MOEX's
+      $10,000,000 of 2012-02-17 twice (two cases), its Whiting row of 2021 2012's $2,000,000,
+      ConocoPhillips' of 2012 2005's $1,600,000 and Owens Corning's of 2018 2017's $229,634. A case's
+      figure is now its one settlement's, or its settlements' of its own day added (`projectsOf`); a split
+      case's days keep their own. From first prices: 165 rows on 70 pages, 140 before 2017,
+      $158,014,586.07, the $23,829,634 the audit counted off.
+- [x] **2 · `P3` · FDA close-out day.** The list's close-out cell shows the day the FDA posted it; the
+      letter's own day ends its page name (`letterDayOf`). CooperSurgical's close-out reads January 19,
+      2022, not June 22, 2022; all 18 on pages moved, by 1 to 154 days. The response day likewise.
+- [x] **3 · `P3` · four warning letters on no page.** `LETTER_NAMES` gains Reckitt/Mead Johnson (RBGLY),
+      ADM Animal Nutrition (ADM), IsoTis OrthoBiologics (OFIX, from 2023-01-05, its 8-K
+      0001193125-23-001900 of the SeaSpine merger) and Catalent Indiana (NVO, from 2024-12-18, its 6-K
+      0001171843-24-006991 and its 20-F for 2024).
+- [x] **4 · `P3` · Amazon's own companies on no EPA page.** EPA's `UNITS` gains Amazon: Amazon Services
+      LLC and Amazon.com Services (its 10-Ks' subsidiaries, 2007–2026), its Kentucky distribution centre,
+      fulfillment centers and returns department; a case naming it as a consignee or "c/o" for another firm
+      stays off. Amazon's EPA rows on the slice: 21, not 4, its $1,215,700 pesticide order of 2018 (with a
+      $1,523,654 eLearning project) and two waste penalties among them. The slice gains the 50 cases a
+      defendant of which holds "amazon", as ingest asks the unit's key.
+- [x] **5 · `P3` · invisible control characters.** EPA's text held Windows-1252's curly quotes, dashes and
+      bullets as U+0080–U+009F (3,212 summaries, 106 project texts, 11 names); `plain` reads them as
+      themselves. "Brink’s Inc." is now read, and its case of 2014 is on Brink's page.
+- [x] **6 · `P3` · docs and comments.** iRhythm's hand entry is gone: EDGAR lists "iRhythm Technologies,
+      Inc." as its former name to 2026-01-12 and ingest reads it, so the letter of 2023 stays on its page
+      (checked through a stored rename). README: "the 69 letters of 2025-09-09", "the site refused 5,000";
+      the module's note likewise; db/050's note on one-settlement cases.
+- **Set aside, as the report gives them (7):** MSHA's code-30 links of 2000–2005 (three small); Upper Big
+  Branch's other violations (on no page); MSHA's own "$0 as assessed now"; no CRC check in the zip reader
+  (every damage tried on a deflated entry is refused); `findings_modified` unused (MSHA rewrites its files
+  daily); two shapes of the FDA list that would refuse a week's read, the kept letters standing; and
+  `projectsQuoted` never cuts a word on the data. The "Amazon Fulfillment Center/…" and "consignee is
+  Amazon…" orders stay off pending a reading of each.
+- [x] **Checked:** `check:fda-warning-letters` 64 (5 new: the close-out day, four hand names with their
+      days, iRhythm by its former name), now 104 letters on 69 companies, 100 rows, 25 by hand;
+      `check:epa-cases` 169 (4 new: the four rows, Owens Corning's own day, the control characters, Amazon's
+      unit), its totals re-pinned for the slice's 50 Amazon cases and Brink's (9,404 rows on 693 companies)
+      and the projects (227 rows on 112 pages, $186,798,376.96). On main the new checks fail.
+- **Requests:** 2 here, to efts.sec.gov (Novo Nordisk's 6-Ks naming Catalent, Amazon's 10-Ks naming
+  Amazon.com Services), logged in `b142/requests.log`; the auditor's 5 (www.fda.gov 1, data.sec.gov 1,
+  efts.sec.gov 3) in `audit142/net/requests.log`.
+
 ## NC ledger — batch 141: EPA's supplemental environmental projects on the settlement rows (2026-11-11)
 
 The 2026-11-11 proposal 3, approved by the owner on 2026-11-11 ("Approve (Recommended)"); the owner's

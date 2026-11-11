@@ -988,6 +988,57 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 138: an opportunity-scout run, three proposals for the owner (2026-11-11)
+
+Every proposal of `docs/proposals/2026-11-09b-proposals.md` is approved and built (batches 132–136), and
+batch 137 fixed what the audit of batches 131–136 found. So the `opportunity-scout` read the repository
+again at `3f06e91` and wrote `docs/proposals/2026-11-11-proposals.md`: three proposals, all
+**PENDING**, ranked with securities depth first. The owner's word, 2026-11-11: "Continue". Nothing is
+built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+      rejection). The scout's second pass then files the approved ones into this checklist.
+      1. `P2` **MSHA's own finding on the deaths pages already hold.** No new source: two more files of
+         MSHA's open-data page, Inspections and Assessed Violations, joined to the fatal-accident rows by
+         MSHA's event number. A row gains the violations MSHA's investigation cited, whom it cited
+         (operator or contractor) and the penalty proposed and assessed now. Measured: 213 of the 224
+         deaths have MSHA's investigation within 14 days; 168 rows on 45 pages, 114 before 2017, carry
+         assessed violations (316, 241 against the operator, 75 against a contractor), $11,586,940
+         proposed and $8,453,138.30 as assessed now. **One call inside:** the finding on the accident's
+         row (recommended), or a row of its own on the day MSHA proposed the penalty, a median of 307
+         days after the death. The files hold 1.34 GB of text, so the read must stream.
+      2. `P2` **The FDA's warning letters, 2021 on,** a new source on www.fda.gov, public domain by the
+         FDA's website policies (quoted in the file), no key. Measured: 3,807 rows on the list, 3,795
+         distinct letters of 2021-01-04 to 2026-11-03; by the approvals' rule 78 letters on 56 pages, 31
+         of them outside the FDA recall map (Walmart, Target, Kroger, AstraZeneca, Amgen, Novo Nordisk),
+         and about 12 more by a hand list (Amazon.com, Inc. 9), an estimate. None before 2017: older
+         letters sit behind the FDA Data Dashboard's API, which needs a registration.
+      3. `P2` **EPA's supplemental environmental projects on the settlement rows pages already hold.** No
+         new source: a column and a 2 MB table of the case file the monthly walk already reads.
+         Measured: from first prices, 168 rows on 70 pages, 142 before 2017, $181,844,220.07 in projects,
+         EPA's own text on 161 of them (Toyota 2003: "$500,000 civil penalty" on the page, and EPA's
+         record adds $20 million to retrofit school buses).
+- **Cut, with reasons in the file:** EPA defendants written as a company and its plant (44 cases on 30
+  companies, about 39 genuine, too few for a rule six sources share); MSHA's permanent disabilities (484
+  on 46 pages, below every floor the owner has set), its non-fatal accident kinds (mostly minor) and its
+  penalties outside an accident (a quarter's bill, not an event); links to MSHA's fatality reports (its
+  listing reaches only to 2019); OSHA (its API needs a key); the European Commission's competition cases
+  (not measured: its search is served through an internal service, which was not called); PHMSA (403
+  again); the FTC, OCC, FSIS, FDIC, FERC, NRC and NTSB (not retried).
+- **For the `code-auditor`, noted by the scout:** the caption rule gives "Amazon.com, Inc." to no page
+  (AMZN's names read "AMAZON COM" and "Amazon"); whether the other case sources miss it the same way
+  was not checked.
+- **Verified here,** on the scout's downloads: Goldstrike's five 104(d)(1) violations of event 1148152,
+  $447,600 (4 × $70,000 and $167,600), and McElroy's three against Central Cambria Drilling Co,
+  $110,060, each event an investigation opened on the accident's day; the 168 rows on 45 pages and their
+  totals; 78 FDA letters on 56 pages of 3,807 listed; Toyota's case HQ-1999-1049 in EPA's file, a
+  $500,000 penalty and a $20,000,000 project.
+- **Requests:** 30 by the scout, logged in the session scratchpad (`scout138/requests.log`), each with
+  User-Agent `News Charts Research` and no email address: www.fda.gov 10 (one 302), arlweb.msha.gov 6,
+  competition-cases.ec.europa.eu 5, www.msha.gov 3 (one 404), datadashboard.fda.gov 2 (one 301), and
+  one each to enforcedata.dol.gov (301), data.dol.gov, apiprod.dol.gov (401) and www.phmsa.dot.gov (403).
+  24 answered 200. No sec.gov host was asked.
+
 ## NC ledger — batch 137: the audit of batches 131–136, and its four findings fixed (2026-11-10)
 
 The `code-auditor` read batches 131–136 (`58851b4..d5abef9`); its report is

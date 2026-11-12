@@ -988,6 +988,30 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 147: the ledger review, first pass (2026-11-12)
+
+The owner's instruction of 2026-11-12, once the open calls were applied: "begin reviewing the ledger". Every one
+of the 67 entries not closed was read against the code and docs as they stand (`docs/audits/nc-task-queue-2026-09-28.json`).
+A first pass looked for quoted text no longer in its file: 19 quotes were reworded in the checklist and a few code lines
+moved, none changing an entry's meaning. Three entries were wrong and are corrected:
+
+- [x] **NC-003 reopened** (it was parked): it waited for Prompt search v2, which shipped in batch 19 without it. A
+      question opens a page with `?focus=`, rendered whole on the server and narrowed in the browser; a server-rendered
+      focus, which a shared link and its preview would show, is a cloud session's to build.
+- [x] **NC-041's premise corrected:** `parseSearchPrompt` is on the search path since batch 19, so `check:prompt` tests
+      live search and a production miss list becomes its cases directly. Still blocked on production traffic.
+- [x] **Parked entries dated:** the 11 still parked carry `parked_on` 2026-09-28, the first sweep's day, so the ledger
+      page's check of parked dates passes.
+- **Where the 67 stand:** 39 open, 17 blocked, 11 parked. Of those not parked, about 30 are the owner's decisions on
+  money, law or direction (the price data's licence, NC-130, first among them; the news licences NC-019–021; the host,
+  domain, trademark, ad account, legal review), about 15 need the production host or a real key (the scheduler NC-028–030,
+  the feed checks NC-031–033, COMMERCIAL_MODE NC-022), and the cloud-session work not blocked is NC-003, NC-062 and
+  NC-061 (on-chain, behind the securities refocus) and NC-070 (a search-engine comparison).
+- **Not ledger entries, now unblocked:** the reads that waited on `NEWS_CHARTS_CONTACT` (Fisher-Price, Hasbro's brands,
+  Carrier and Lawn-Boy for the CPSC; Hino, Kelly-Springfield, Buell and Thor for NHTSA; Missouri Pacific and the Delaware
+  & Hudson for FRA; the four predecessor handovers; Southern Natural Gas and Babcock & Wilcox), the next batch's work.
+- **Requests:** none.
+
 ## NC ledger — batch 146: the owner's open calls decided by best judgment, the contact set, the ledger tidied (2026-11-12)
 
 The owner, on 2026-11-12: "For now use my personal email. For the open decisions use your best judgment.

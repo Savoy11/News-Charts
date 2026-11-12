@@ -988,6 +988,71 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 148: the units whose days waited on the contact, read and mapped (2026-11-12)
+
+The owner, on 2026-11-12: "Continue; Im going to get a new Gmail for the purpose of the project today." With
+`NEWS_CHARTS_CONTACT` set (batch 146), www.sec.gov serves a filing's text, and the units the CPSC, NHTSA and FRA maps
+left for it are read and mapped, each day quoted from a filing. When the new address exists it replaces the old one in
+that one setting; nothing in the code or docs names either. 160 requests: 100 to www.sec.gov, 47 to data.sec.gov, 7 to
+efts.sec.gov and 6 to cpsc.gov, each under the project's User-Agent with the contact, at least 1.1 seconds apart; three
+filings of 1996 answered 503, unavailable, and their days were read from others.
+
+- [x] **NHTSA's six makers** (`RECALL_MAKERS` in `lib/recalls.ts`), 16 recalls and 3 investigations more:
+      - Hino on Toyota from 2001-08-31 to 2026-03-31: Hino "became Toyota's subsidiary in August 2001" (Toyota's
+        20-F filed 2003-07-31) and "is no longer a consolidated subsidiary of Toyota" from 2026-04-01 (its 6-K filed
+        2026-05-08). Its six recalls of 2007–2025 are named Hino's.
+      - Kelly-Springfield on Goodyear from 1991-10-01, the first day its filings show it held ("The Kelly-Springfield
+        Tire Company, formerly a wholly-owned subsidiary of Registrant", Goodyear's 10-K filed 1998-03-06): its
+        recalls of 1994 and 1998 and its engineering analysis of 1991-12-31. Its 1976 recall and its investigations of
+        1986–1991 wait for an older record; none of Goodyear's filings here says when it bought the company.
+      - Buell on Harley-Davidson from February 1998, when it "acquired substantially all of the common stock" (its
+        10-K405 filed 1998-03-30); Buell Motorcycle Company, LLC stayed its subsidiary after production ended in 2009
+        (exhibit 21 to its 10-K filed 2016-02-18), so its investigation of 2012 counts too. Three recalls, two
+        investigations.
+      - Fisher-Price on Mattel from the merger of 1993-11-30 (Mattel's 10-K filed 1994-03-25): its child seats of
+        1994 and 1998; its ten recalls and six investigations of 1988–1992, of a listed company of its own, stay off.
+      - Thor California on Thor to 2008-05-31 (begun in fiscal 1996, sold in June 2008, Thor's 10-K filed 2008-09-29)
+        and Thor America, which no filing reports sold: three recalls.
+      - A maker under another name than the company's names its brand in the title ("Recall of 594,853 Kelly tires:
+        Sidewall cracks"), and its own name is taken off an old subject line ("BUELL/", "KELLY SPRINGFIELD/").
+      - On the committed rows: 85 recalls on 20 pages, 58 before 2017 (69 on 16 and 45 before), and 27 investigations
+        (24).
+- [x] **FRA's railroads** (`RAIL_OWNERS` in `lib/railAccidents.ts`), 13 accidents more:
+      - Missouri Pacific on Union Pacific from 1982-12-22, before EDGAR: Missouri Pacific Corp. and Missouri Pacific
+        Railroad each filed an 8-K for that day, item 1, a change in control, in the SEC News Digest's list of
+        1983-01-12. Its ten accidents of 1983–1985, Woodlawn's 4 killed of 1983-11-12 among them; its report of
+        1982-12-21, the day before, stays off.
+      - The Delaware & Hudson on CPKC from 1991-01-18, the day it "became a Participating Employer" in the Canadian
+        Pacific Pension Plan for U.S. Management Employees (exhibit 10.69 to CP's 10-K filed 2022-02-23); CP's own
+        filings here begin in 2001. Its accidents of 1993 and 2000.
+      - The Chicago, Central & Pacific on CN from 1998-06-05 (it was 2002-03-26): Illinois Central bought it on
+        1996-06-13 (its 8-K filed 1996-06-28, item 2), and CN Illinois Central on 1998-06-05. Its accident of 1998.
+      - On the committed rows, each page from its first price: 503 accidents, 417 before 2017, 145 before 1993 (490,
+        404 and 135); Union Pacific 168, CPKC 26, CN 37.
+- [x] **The CPSC's units** (`UNITS` in `lib/cpscRecalls.ts`), 75 rows more, 2,810 on 212 companies before first prices:
+      - Fisher-Price on Mattel from 1993-11-30: 49 of its 56 recalls, in 42 rows, its Rock 'n Play of 2019 among them.
+      - Playskool and Milton Bradley on Hasbro from 1984-12-31 and Kenner, Parker Brothers and Tonka from 1991-12-31
+        ("the 1984 acquisition" and "the 1991 acquisition", Hasbro's 10-K filed 1995-03-24; no recall of theirs falls
+        in either year): 24 rows. Parker Brothers' recall of 1978 stays on General Mills, its owner then.
+      - Carrier on RTX from 1994-03-31, United Technologies' first filing here, to 2020-04-01, and refused on Carrier
+        Global before 2020-04-02 (`NOT_THE_COMPANY` takes a last day now): 8 more on RTX, 6 fewer on Carrier Global.
+        Carrier Guam and Carrier (Puerto Rico) are not taken: no filing read names them United Technologies'.
+      - Lawn-Boy on Toro from 1989-11-07 (Toro's 10-K filed 1994-10-28): its 7 recalls of 1993–2002.
+      - **Six recalls dated in the wrong year** by the service carry the day their own notice on cpsc.gov gives, read
+        today (`DAYS_READ`): Playskool's Weebles of 1997-04-16 (the service: 1994), Tonka's Love Me Tender dolls of
+        1988-11-03 (1998, which would have put them on Hasbro's page), Speed Queen's and Siemens' of 1988, Bernzomatic's
+        of 1977 and Hedstrom's of 1984. They were found by a recall number's year disagreeing with its day. A first
+        guard, a notice address's year, was dropped: the Commission moved notices of every decade under "2012", and
+        it would have taken 23 good recalls off.
+- [x] **Checks:** `check:vehicle-recalls` 92 (5 new), `check:rail-accidents` 40 (2 new), `check:cpsc` 62 (5 new); every
+      new one fails on main.
+- [ ] `P2` **Still waiting, carried from batch 124:** whether Southern Company Gas's purchase of 2016-08-31 made Southern
+      Natural Gas a joint venture, which would end it on Kinder Morgan's page, and which of Babcock & Wilcox Enterprises
+      and BWXT kept The Babcock & Wilcox Company's site liabilities at the 2015 spin-off; and the four predecessor
+      handovers that wait on text (RGC Resources, Biogen, Digimarc 2008, Community West Bancshares). Readable now.
+- **The ledger:** no entry changes (these were not ledger entries); 39 open, 103 closed, 11 parked, 17 blocked.
+- **Requests:** none. When the new Gmail exists, the owner sets it as `NEWS_CHARTS_CONTACT` wherever the code runs.
+
 ## NC ledger — batch 147: the ledger review, first pass (2026-11-12)
 
 The owner's instruction of 2026-11-12, once the open calls were applied: "begin reviewing the ledger". Every one
@@ -2143,10 +2208,12 @@ NHTSA's recalls come from. #3 is next (batch 128), then #4 (batch 129).
         Kansas City Southern from 2021-12-14 (its 8-K, items 2.01 and 5.01).
       - A predecessor's past is never the buyer's: Burlington Northern's, Santa Fe's, Conrail's, BNSF's
         before 2010 and Southern Pacific's before 1996 are no page's.
-- [ ] **Waiting for `NEWS_CHARTS_CONTACT`:** Missouri Pacific on Union Pacific (the merger of
+- [x] **Waiting for `NEWS_CHARTS_CONTACT`:** Missouri Pacific on Union Pacific (the merger of
       1982-12-22, before EDGAR; 8 accidents of 1983–1985) and the Delaware & Hudson on CPKC (bought in
       1991; 2 accidents, of 1993 and 2000), and the Chicago, Central & Pacific's 1998 accident on CN.
       Their days need a filing's text. It joins the open items of batches 123 and 126.
+      **Done in batch 148:** Missouri Pacific from 1982-12-22, the Delaware & Hudson from 1991-01-18, the
+      Chicago, Central & Pacific from 1998-06-05, each read from the text (batch 148's section).
 - **Measured** on the dataset's answer of 2026-11-09 (1,909 records of 60 railroad codes, committed),
   each page from its first price (Yahoo's first trading days):
   - 476 accidents on six pages, 395 before 2017, 192 before 2001, 131 before 1993: CSX 161, Union
@@ -2211,11 +2278,12 @@ four under Scope refocus and builds #1. No new source: entries in a list the CPS
 - [x] **The Disney Store** is Disney's to 2004-11-21 and again from 2008-11-20, around the years The
       Children's Place ran it (its 8-K reporting 2004-11-22, item 2.01). Its two recalls of 2008-05-22,
       imported by The Children's Place's Hoop Retail Stores, are no page's.
-- [ ] **Waiting for `NEWS_CHARTS_CONTACT`:** Fisher-Price on Mattel (49 recalls; Mattel's from 1993-11-30,
+- [x] **Waiting for `NEWS_CHARTS_CONTACT`:** Fisher-Price on Mattel (49 recalls; Mattel's from 1993-11-30,
       before Mattel's first EDGAR filing of 1994-02-03), Playskool and Milton Bradley (1984) and Kenner
       and Tonka (1991) on Hasbro (25), Carrier on RTX before 2020 (8; 1979) and Lawn-Boy on Toro (7;
       1989). Each day needs a filing's text, which www.sec.gov serves only to a request naming a
       contact. It joins batch 123's open item, which waits on the same setting.
+      **Done in batch 148:** all four, each day read from the text (batch 148's section).
 - **Measured** on the committed fixture (10,070 recalls), each page from its first price (32 saved by
   batches 120 and 125, 16 read today from Yahoo's monthly chart, whose first month bounds them; these
   pages' gains begin in 1998 or later), main's `UNITS` against this branch's:
@@ -2377,7 +2445,7 @@ filing's text.
         replaces "no maker belongs to two companies". Old subject lines lose their maker's prefix for
         GE, Graco, Honeywell and Caterpillar ("GE/FMVSS 108/HEADLAMP BULBS" reads "FMVSS 108/headlamp
         bulbs").
-- [ ] `P2` **Six makers wait for a filing's text.** www.sec.gov serves a filing's text only to a request
+- [x] `P2` **Six makers wait for a filing's text.** www.sec.gov serves a filing's text only to a request
       naming a contact, and none is set (`NEWS_CHARTS_CONTACT`, OWNER-ACTIONS §2). The filing lists
       give no day for these:
       - Hino on Toyota: Toyota's control from 2001 and its end in 2026.
@@ -2391,6 +2459,8 @@ filing's text.
         Company Gas's purchase of 2016-08-31 made Southern Natural Gas a joint venture, which would end
         it on Kinder Morgan's page (its 2020 order and 2021 decree); and which of Babcock & Wilcox
         Enterprises and BWXT kept The Babcock & Wilcox Company's site liabilities at the 2015 spin-off.
+      - **Done in batch 148** for the six makers, each day read from the text (batch 148's section); the
+        batch 124 pair above is carried there as its own open item.
 - **Measured** on the rows read from data.transportation.gov on 2026-11-08, committed as
   `scripts/fixtures/nhtsa-owned-makers.json` (100 recalls at the floor and 37 investigations under
   the 22 makers):

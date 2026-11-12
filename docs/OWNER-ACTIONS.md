@@ -292,15 +292,16 @@ Raised by the November batches, each recorded in the master checklist:
   grouped a row a month ("Group a row a month (Recommended)"). #1 is built in batch 126; #2, #3 and #4
   follow in batches 127, 128 and 129.
   Nothing to run after deploying batch 126: each company's next ingest reads its new units' recalls
-  from the CPSC recalls already kept. Four more wait for a filing's text, which www.sec.gov serves only
-  with `NEWS_CHARTS_CONTACT` set (§2): Fisher-Price on Mattel (49 recalls), Hasbro's Playskool, Milton
-  Bradley, Kenner and Tonka (25), Carrier on RTX before 2020 (8) and Lawn-Boy on Toro (7), each bought
-  before EDGAR. Once the contact is set, a session can read their days and map them, with batch 123's.
+  from the CPSC recalls already kept. The four that waited for a filing's text are mapped since batch
+  148, their days read with `NEWS_CHARTS_CONTACT` set (§2): Fisher-Price on Mattel, Hasbro's Playskool,
+  Milton Bradley, Kenner, Parker Brothers and Tonka, Carrier on RTX before 2020 and Lawn-Boy on Toro;
+  nothing to run, each company's next ingest reads them from the recalls already kept.
   #2 is built in batch 127, with the floor you chose, and its counts corrected in batch 130 to the
   accident's own; nothing to run for the correction, since each row updates in place at the next ingest. Nothing to run after deploying it: the next ingest
-  registers the source (id 37) and asks the dataset once for each of the six railroad companies. Two
-  railroads wait for a filing's text, as #1's brands do: Missouri Pacific on Union Pacific (merged
-  1982, 8 accidents of 1983–1985) and the Delaware & Hudson on CPKC (bought 1991, 2 accidents).
+  registers the source (id 37) and asks the dataset once for each of the six railroad companies. The
+  two railroads that waited for a filing's text are mapped since batch 148: Missouri Pacific on Union
+  Pacific from 1982-12-22 (10 accidents of 1983–1985) and the Delaware & Hudson on CPKC from 1991-01-18
+  (2); nothing to run, the next ingest asks for them.
   #3 is built in batch 128, with Microsoft's notices a row a month as you chose. Nothing to run after
   deploying it: the archive walk reads the 56 new months of 1996–2000 over the next three ingest runs
   (24 a run), and each company's next Justice Department run picks up its own, with the drug makers'
@@ -330,10 +331,10 @@ Raised by the November batches, each recorded in the master checklist:
   threshold in it is the owner's to widen: a suit's row is kept only where the page's own are every
   defendant, or at least half of fewer than 10 (`MANY_PARTIES`); counting any of them among fewer than
   10 would give 380 cases on 144 pages instead of 254 on 106 (the committed slice, before first prices).
-  #3 is built in batch 123 for 16 makers; nothing to run after deploying it. Six more wait for a
-  filing's text, which www.sec.gov serves only with `NEWS_CHARTS_CONTACT` set (§2): Hino on Toyota,
-  Kelly-Springfield on Goodyear, Buell on Harley-Davidson, Fisher-Price on Mattel, and Thor California
-  and Thor America on Thor. Once the contact is set, a session can read their days and map them.
+  #3 is built in batch 123 for 16 makers; nothing to run after deploying it. The six that waited for a
+  filing's text are mapped since batch 148, their days read with `NEWS_CHARTS_CONTACT` set (§2): Hino
+  on Toyota, Kelly-Springfield on Goodyear, Buell on Harley-Davidson, Fisher-Price on Mattel, and Thor
+  California and Thor America on Thor; nothing to run.
   The audit of batches 117–123 (batch 124) adds two more for the same text: whether Southern Natural
   Gas became a joint venture in 2016, which would end it on Kinder Morgan's page, and whose Babcock &
   Wilcox's 2015 Superfund row is.

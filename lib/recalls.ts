@@ -41,8 +41,9 @@ export interface RecallMaker {
   /** The last day they are: a brand the company sold stops counting the day it left. */
   to?: string;
   /**
-   * The brand a title names, for a brand the company sold: on Ford's page a Volvo recall says it
-   * is a Volvo's, which today's reader would not otherwise know.
+   * The brand a title names, for a brand the company sold or a maker that is not the company's own
+   * name: on Ford's page a Volvo recall says it is a Volvo's, and on Mattel's a child seat recall
+   * a Fisher-Price's, which today's reader would not otherwise know.
    */
   brand?: string;
   /** Why this maker is the company's, and why from or to that day. */
@@ -73,11 +74,15 @@ export interface RecallMaker {
  * Wabash. Every day is read from an SEC filing list (data.sec.gov): a bought maker counts from the
  * day the buyer's 8-K reports the purchase completed, and a maker one company spun off goes to the
  * other on the day (Carrier Corporation is RTX's to 2020-04-01 and Carrier Global's from
- * 2020-04-02), so one name is on two pages, never on the same day. Six wait for a filing's text,
- * which www.sec.gov serves only to a request that names a contact: Hino on Toyota (Toyota's control
- * from 2001 and its end in 2026), Kelly-Springfield on Goodyear, Buell on Harley-Davidson (the 1998
- * purchase, which no 8-K reports), Fisher-Price on Mattel (the 1993 merger, before Mattel's first
- * filing here, of 1994), and Thor California and Thor America on Thor.
+ * 2020-04-02), so one name is on two pages, never on the same day.
+ *
+ * Batch 148 adds the six that waited for a filing's text, which www.sec.gov serves only to a request
+ * naming a contact (`NEWS_CHARTS_CONTACT`), each day read from the text: Hino on Toyota from August
+ * 2001 to 2026-03-31, Kelly-Springfield on Goodyear from 1991-10-01 (the first day its filings show
+ * it held; its recall of 1976 and its investigations to August 1991 wait for an older record),
+ * Buell on Harley-Davidson from February 1998, Fisher-Price on Mattel from the merger of 1993-11-30,
+ * and Thor California and Thor America on Thor. A day a filing gives only by its month is that
+ * month's last, and no recall or investigation falls in the month.
  */
 export const RECALL_MAKERS: Readonly<Record<number, { ticker: string; makers: readonly RecallMaker[] }>> = {
   37996: {
@@ -147,10 +152,28 @@ export const RECALL_MAKERS: Readonly<Record<number, { ticker: string; makers: re
     makers: [
       { name: "Toyota Motor Corporation", why: "the company itself" },
       { name: "Toyota Motor Engineering & Manufacturing", why: "Toyota's North American subsidiary" },
+      {
+        name: "Hino Motors Sales U.S.A., Inc.",
+        from: "2001-08-31",
+        to: "2026-03-31",
+        brand: "Hino",
+        why: "Hino's U.S. company. Hino \"became Toyota's subsidiary in August 2001\" (Toyota's 20-F filed 2003-07-31) and \"is no longer a consolidated subsidiary of Toyota\" from 2026-04-01 (Toyota's 6-K filed 2026-05-08; batch 148)",
+      },
     ],
   },
   1318605: { ticker: "TSLA", makers: [{ name: "Tesla, Inc.", why: "the company itself" }] },
-  793952: { ticker: "HOG", makers: [{ name: "Harley-Davidson Motor Company", why: "the company itself" }] },
+  793952: {
+    ticker: "HOG",
+    makers: [
+      { name: "Harley-Davidson Motor Company", why: "the company itself" },
+      {
+        name: "BUELL-out of business",
+        from: "1998-02-28",
+        brand: "Buell",
+        why: "Buell Motorcycle Company, Harley-Davidson's from February 1998, when it \"acquired substantially all of the common stock\" of a company it held 49% of since 1993 (its 10-K405 filed 1998-03-30); Buell's production ended in October 2009, but Buell Motorcycle Company, LLC stayed its subsidiary (its 10-K filed 2016-02-18, exhibit 21), so the 2012 investigation under Buell's name is Harley-Davidson's too (batch 148)",
+      },
+    ],
+  },
   1898795: { ticker: "LVWR", makers: [{ name: "LIVEWIRE EV, LLC", why: "LiveWire Group's own subsidiary" }] },
   75362: {
     ticker: "PCAR",
@@ -167,13 +190,35 @@ export const RECALL_MAKERS: Readonly<Record<number, { ticker: string; makers: re
       { name: "Indian Motorcycle Company", from: "2011-05-01", why: "bought by Polaris in April 2011; the earlier Indian companies were others'" },
     ],
   },
-  42582: { ticker: "GT", makers: [{ name: "Goodyear Tire & Rubber Company", why: "the company itself" }] },
+  42582: {
+    ticker: "GT",
+    makers: [
+      { name: "Goodyear Tire & Rubber Company", why: "the company itself" },
+      {
+        name: "KELLY SPRINGFIELD TIRE CO",
+        from: "1991-10-01",
+        brand: "Kelly",
+        why: "The Kelly-Springfield Tire Company, \"a wholly-owned subsidiary of Registrant\" (Goodyear's 10-K filed 1995-03-27) and its division from 1996; the first day its filings show it held is 1991-10-01, when a Goodyear officer became president of \"The Kelly-Springfield Tire Company, formerly a wholly-owned subsidiary of Registrant\" (Goodyear's 10-K filed 1998-03-06). Its recall of 1976 and its investigations of 1986–1991 before that day wait for an older record (batch 148)",
+      },
+    ],
+  },
   107687: {
     ticker: "WGO",
     makers: [
       { name: "Winnebago Industries, Inc.", why: "the company itself" },
       { name: "Grand Design RV, LLC", from: "2016-11-08", why: "bought 2016-11-08 (Winnebago's 8-K filed 2016-11-14)" },
       { name: "Winnebago Towable", why: "Winnebago's own towable division, as its recalls name it (\"Winnebago Towable (Winnebago) is recalling\"; batch 123)" },
+    ],
+  },
+  63276: {
+    ticker: "MAT",
+    makers: [
+      {
+        name: "FISHER-PRICE, INC.",
+        from: "1993-11-30",
+        brand: "Fisher-Price",
+        why: "Fisher-Price's child seats, Mattel's from the merger of 1993-11-30 (\"On November 30, 1993, a merger was consummated between the Company and Fisher-Price, Inc.\", Mattel's 10-K filed 1994-03-25); its recalls and investigations of 1988–1992 are Fisher-Price's own, a listed company then (batch 148)",
+      },
     ],
   },
   1067983: {
@@ -190,6 +235,16 @@ export const RECALL_MAKERS: Readonly<Record<number, { ticker: string; makers: re
     makers: [
       { name: "THOR INDUSTRIES", why: "the company itself, its name on a recall of 2002 (batch 123)" },
       { name: "Thor Motor Coach", why: "Thor's own motorhome company, formed in 2010" },
+      {
+        name: "Thor California, Inc.",
+        to: "2008-05-31",
+        brand: "Thor California",
+        why: "Thor's own travel trailer company, begun in fiscal 1996 (Thor's 10-K405 filed 1996-10-16) and sold in June 2008 to MVP RV, its managers' new company (Thor's 10-K filed 2008-09-29); no recall under the name falls in 2008 (batch 148)",
+      },
+      {
+        name: "THOR AMERICA",
+        why: "Thor America, Inc., Thor's own travel trailer company (formerly Thor Pennsylvania; Thor's 10-K405 filed 1996-10-16 to its 10-K filed 2005-10-14), whose sale no filing reports: Thor sold its property in fiscal 2005 (its 10-K filed 2005-10-14) and the name leaves Thor's list of companies after that report, so the 2007 recall of trailers it built is Thor's (batch 148)",
+      },
       { name: "Airstream, Inc.", why: "Thor's from its founding in 1980, before its first recall here (1995)" },
       { name: "Dutchmen Manufacturing, Inc.", from: "1991-06-01", why: "bought in May 1991 (Thor's 10-K filed 1995-10-27)" },
       { name: "Keystone RV Company", from: "2001-11-09", why: "bought 2001-11-09 (Thor's 8-K filed 2001-11-13)" },
@@ -353,7 +408,7 @@ const sentence = (s: string) => {
  * maker's own page, and a sold brand's title names the brand already (`RecallMaker.brand`).
  */
 const MAKER_PREFIX =
-  /^(?:(?:FORD|GM|GENERAL MOTORS|CHEVROLET|CADILLAC|BUICK|PONTIAC|OLDSMOBILE|GMC|SATURN|LINCOLN|MERCURY|CHRYSLER|DODGE|JEEP|RAM|HONDA|ACURA|TOYOTA|LEXUS|SCION|TESLA|HARLEY-DAVIDSON|HARLEY|PACCAR|PETERBILT|KENWORTH|POLARIS|INDIAN|GOODYEAR|WINNEBAGO|BLUE BIRD|FERRARI|CUMMINS|THOR|AIRSTREAM|WABASH|RIVIAN|LUCID|MASERATI|LIVEWIRE|VOLVO CARS|VOLVO|JAGUAR|LAND ROVER|SAAB|GE|GRACO|HONEYWELL|CATERPILLAR)\s*[/\\]\s*)+/;
+  /^(?:(?:FORD|GM|GENERAL MOTORS|CHEVROLET|CADILLAC|BUICK|PONTIAC|OLDSMOBILE|GMC|SATURN|LINCOLN|MERCURY|CHRYSLER|DODGE|JEEP|RAM|HONDA|ACURA|TOYOTA|LEXUS|SCION|TESLA|HARLEY-DAVIDSON|HARLEY|PACCAR|PETERBILT|KENWORTH|POLARIS|INDIAN|GOODYEAR|WINNEBAGO|BLUE BIRD|FERRARI|CUMMINS|THOR CALIFORNIA|THOR|AIRSTREAM|WABASH|RIVIAN|LUCID|MASERATI|LIVEWIRE|VOLVO CARS|VOLVO|JAGUAR|LAND ROVER|SAAB|GE|GRACO|HONEYWELL|CATERPILLAR|BUELL|KELLY SPRINGFIELD|FISHER-PRICE)\s*[/\\]\s*)+/;
 
 /**
  * The recall's subject line, readable. The dataset's oldest rows carry NHTSA's component code in

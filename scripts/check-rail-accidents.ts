@@ -92,11 +92,21 @@ async function main(): Promise<void> {
     eventOf("UP", "0604SA011")?.title);
   check("BNSF's of 1996-10-27 (NC1096105) lands on no page, its of 2010-02-18 (GC0210105) on Berkshire Hathaway, which bought it on 2010-02-12",
     pagesOf("BNSF", "NC1096105") === "none" && rows.some((r) => r.accidentnumber === "NC1096105") && pagesOf("BNSF", "GC0210105") === "BRK-B" && /^BNSF: /.test(eventOf("BNSF", "GC0210105")?.title ?? ""));
-  const predecessors = ["BN", "ATSF", "CR", "CRSH", "ICG", "SLSF", "MILW", "MKT", "WP", "MP", "DH"];
+  const predecessors = ["BN", "ATSF", "CR", "CRSH", "ICG", "SLSF", "MILW", "MKT", "WP"];
   const theirs = rows.filter((r) => predecessors.includes(r.reportingrailroadcode ?? ""));
-  check("Burlington Northern's, Santa Fe's, Conrail's (CSX's and Norfolk Southern's joint venture) and Illinois Central Gulf's reports are no page's; Missouri Pacific's and the Delaware & Hudson's wait for a filing's text",
-    theirs.length > 400 && theirs.every((r) => ![...pages.values()].some((ev) => ev.some((e) => e.externalId === r.reportkey))) && /Missouri Pacific on Union Pacific/.test(read("lib/railAccidents.ts")),
-    `${theirs.length}`);
+  check("Burlington Northern's, Santa Fe's, Conrail's (CSX's and Norfolk Southern's joint venture) and Illinois Central Gulf's reports are no page's",
+    theirs.length > 400 && theirs.every((r) => ![...pages.values()].some((ev) => ev.some((e) => e.externalId === r.reportkey))), `${theirs.length}`);
+  // batch 148: the days that waited for a filing's text, read from www.sec.gov with the build contact
+  const mp = (pages.get("UNP") ?? []).filter((e) => rows.find((r) => r.reportkey === e.externalId)?.reportingrailroadcode === "MP");
+  check("Missouri Pacific's ten of 1983–1985 land on Union Pacific, from the merger of 1982-12-22 (the 8-Ks for that day the SEC News Digest lists): Woodlawn of 1983-11-12, 4 killed; its report of 1982-12-21, the day before, on no page (none before batch 148)",
+    mp.length === 10 && mp.every((e) => e.date >= "1982-12-22" && e.date < "1986") && /^Missouri Pacific: derailment at Woodlawn, Texas — 4 killed, 38 injured/.test(eventOf("MP", "64403P1532")?.title ?? "") &&
+      pagesOf("MP", "82214") === "none" && rows.some((r) => r.accidentnumber === "82214" && r.reportingrailroadcode === "MP") && railRoadsFor(ciks.UNP)?.find((r) => r.code === "MP")?.from === "1982-12-22",
+    `${mp.length}: ${mp.map((e) => e.date).join(" ")}`);
+  check("  …the Delaware & Hudson's of 1993 and 2000 on CPKC, from 1991-01-18, the day a Canadian Pacific plan names; its of 1984 and 1987 on no page; Chicago, Central & Pacific's of 1998-07-21 on CN, Illinois Central's from 1996 and so CN's from 1998-06-05, its of 1994 on no page",
+    pagesOf("DH", "9341") === "CP" && pagesOf("DH", "159166") === "CP" && pagesOf("DH", "0701284") === "none" && pagesOf("DH", "D87011") === "none" &&
+      pagesOf("CC", "CC3398") === "CNI" && pagesOf("CC", "0794") === "none" && railRoadsFor(ciks.CNI)?.find((r) => r.code === "CC")?.from === "1998-06-05" &&
+      /exhibit 10\.69 to CP's 10-K filed 2022-02-23/.test(railRoadsFor(ciks.CP)?.find((r) => r.code === "DH")?.why ?? ""),
+    `${pagesOf("DH", "9341")} ${pagesOf("DH", "159166")} ${pagesOf("CC", "CC3398")}`);
   check("Illinois Central's of 1998-12-28 (TS120198) lands on CNI: CN owned it from 1998-06-05, in a voting trust until the merger's approval",
     pagesOf("IC", "TS120198") === "CNI" && railRoadsFor(ciks.CNI)?.find((r) => r.code === "IC")?.from === "1998-06-05");
   check("CSX's railroads count from CSX's first price, the day after its 1980 merger made it: Louisville & Nashville's of 1975–1980 are no page's, its of 1981 CSX's",
@@ -105,8 +115,8 @@ async function main(): Promise<void> {
   const pinned = [...pages].map(([t, ev]) => `${t} ${ev.length}`).join(", ");
   const all = [...pages.values()].flat();
   // batch 130: the accidents only the per-accident count gives a death, 14 of them, CSX's Lugoff derailment of 1991 (8 killed) the largest
-  check("on the six pages from their first prices: 490 accidents, 404 before 2017, 135 before 1993; CNI 36, CP 24, UNP 158, CSX 166, NSC 69, BRK-B 37 (476, 395 and 131 before batch 130's per-accident counts)",
-    pinned === "CNI 36, CP 24, UNP 158, CSX 166, NSC 69, BRK-B 37" && all.filter((e) => e.date < "2017").length === 404 && all.filter((e) => e.date < "1993").length === 135,
+  check("on the six pages from their first prices: 503 accidents, 417 before 2017, 145 before 1993; CNI 37, CP 26, UNP 168, CSX 166, NSC 69, BRK-B 37 (490, 404 and 135 before batch 148's Missouri Pacific, D&H and CC days; 476, 395 and 131 before batch 130's per-accident counts)",
+    pinned === "CNI 37, CP 26, UNP 168, CSX 166, NSC 69, BRK-B 37" && all.filter((e) => e.date < "2017").length === 417 && all.filter((e) => e.date < "1993").length === 145,
     `${pinned}; ${all.filter((e) => e.date < "2017").length} before 2017, ${all.filter((e) => e.date < "1993").length} before 1993`);
   check("  …every one on its railroad's own row, newest first, keyed by its report, linked over https",
     [...pages.values()].every((ev) => ev.every((e, i) => i === 0 || ev[i - 1].date >= e.date)) && all.every((e) => e.dedupBasis === `fra:${e.externalId}` && e.id === `fra-${e.externalId}` && /^https:\/\//.test(e.url ?? "")) &&
@@ -172,8 +182,8 @@ async function main(): Promise<void> {
   const accounts = rowsAll.filter((e) => (/The railroad's account: "([^"]*)"/.exec(e.description ?? "")?.[1] ?? "").length >= 20);
   const dead = rowsAll.filter((e) => / \d[\d,]* killed/.test(e.title));
   const split = dead.filter((e) => /Killed, by kind: /.test(e.description ?? ""));
-  check("on the six pages: 476 of the 490 rows carry an account of 20 characters or more, 390 before 2017; 113 of the 136 rows with a death give the dead by kind; no description runs past 600 characters and no title changes",
-    accounts.length === 476 && accounts.filter((e) => e.date < "2017").length === 390 && dead.length === 136 && split.length === 113 && rowsAll.every((e) => (e.description ?? "").length <= 600) &&
+  check("on the six pages: 489 of the 503 rows carry an account of 20 characters or more, 403 before 2017; 116 of the 141 rows with a death give the dead by kind (476 of 490, 390, and 113 of 136 before batch 148); no description runs past 600 characters and no title changes",
+    accounts.length === 489 && accounts.filter((e) => e.date < "2017").length === 403 && dead.length === 141 && split.length === 116 && rowsAll.every((e) => (e.description ?? "").length <= 600) &&
       rowsAll.every((e) => !/account|by kind/.test(e.title)),
     `${accounts.length}, ${accounts.filter((e) => e.date < "2017").length} before 2017; ${split.length} of ${dead.length}`);
   check("  …a split is shown only where it adds up to the row's count, the counts added as whole numbers",

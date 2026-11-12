@@ -290,12 +290,16 @@ async function main(): Promise<void> {
   const ended = entries.flatMap(([, e]) => e.makers.filter((m) => m.to));
   check("Ford's four sold makers and GM's Saab carry an end day",
     makersOf("F").filter((m) => m.to).length === 4 && makersOf("GM").filter((m) => m.to).length === 1);
-  check("  …a maker names its brand exactly when it has one, and a brand ends after it begins",
-    entries.every(([, e]) => e.makers.every((m) => !!m.brand === !!m.to && (!m.to || /^\d{4}-\d{2}-\d{2}$/.test(m.to)) && (!m.from || !m.to || m.from < m.to))));
-  // …and RTX's Carrier since batch 123, whose start is older than the filings here: one day, one filing
-  const cites = (m: { why: string }) => (m.why.match(/\((?:old )?(?:Ford|GM|RTX)'s (?:8-K|10-K|10-Q) filed \d{4}-\d{2}-\d{2}(?:, items? [\d., and]+)?\)/g) ?? []).length;
+  // batch 148: a maker under another name than the company's names its brand too (Buell, Kelly, Fisher-Price)
+  check("  …a maker that ended names its brand, and a brand ends after it begins",
+    entries.every(([, e]) => e.makers.every((m) => (!m.to || !!m.brand) && (!m.to || /^\d{4}-\d{2}-\d{2}$/.test(m.to)) && (!m.from || !m.to || m.from < m.to))) &&
+      ["Buell", "Kelly", "Fisher-Price"].every((b) => entries.some(([, e]) => e.makers.some((m) => m.brand === b && !m.to))));
+  // …and RTX's Carrier since batch 123, whose start is older than the filings here: one day, one filing;
+  // Toyota's Hino and Thor California since batch 148, read from the filings' text
+  const cites = (m: { why: string }) =>
+    (m.why.match(/\((?:old )?(?:Ford|GM|RTX|Toyota|Thor)'s (?:8-K|10-K|10-K405|10-Q|20-F|6-K) filed \d{4}-\d{2}-\d{2}(?:, items? [\d., and]+)?(?:; batch \d+)?\)/g) ?? []).length;
   check("  …and each of its days cites the filing that gives it",
-    ended.length === 6 && ended.every((m) => cites(m) >= (m.from ? 2 : 1)), ended.filter((m) => cites(m) < (m.from ? 2 : 1)).map((m) => m.name).join(", "));
+    ended.length === 8 && ended.every((m) => cites(m) >= (m.from ? 2 : 1)), ended.filter((m) => cites(m) < (m.from ? 2 : 1)).map((m) => m.name).join(", "));
 
   /**
    * The parts, tire, child seat and equipment makers listed companies own (batch 123, the 2026-11-08
@@ -326,20 +330,44 @@ async function main(): Promise<void> {
     carrier?.title === "Recall of 29,180 Carrier units: Starter Housing May Come Apart" && idsOf("CARR").join() === "23E026000" && !idsOf("RTX").includes("23E026000") && !idsOf("CARR").includes("16E087000"),
     carrier?.title);
   const counts = ["NWL", "DAN", "LCII", "ALV", "CAT", "RTX", "CARR", "SKY", "GE", "HON", "DORM", "PSNY", "ETN", "WGO", "THO", "WNC"].map((t) => `${t} ${ownedOf(t).length}`).join(", ");
-  check("Autoliv, Caterpillar, Skyline, GE, Honeywell, Dorman, Polestar, Eaton, Winnebago's towables and Thor's own name each land on their company",
-    counts === "NWL 12, DAN 10, LCII 9, ALV 6, CAT 5, RTX 4, CARR 1, SKY 4, GE 3, HON 3, DORM 3, PSNY 3, ETN 2, WGO 2, THO 1, WNC 1", counts);
+  check("Autoliv, Caterpillar, Skyline, GE, Honeywell, Dorman, Polestar, Eaton, Winnebago's towables and Thor's own name each land on their company (Thor 1 before batch 148's Thor California and Thor America)",
+    counts === "NWL 12, DAN 10, LCII 9, ALV 6, CAT 5, RTX 4, CARR 1, SKY 4, GE 3, HON 3, DORM 3, PSNY 3, ETN 2, WGO 2, THO 4, WNC 1", counts);
   check("  …a maker's name dropped from an old subject line: GE's \"GE/FMVSS 108/HEADLAMP BULBS\", Honeywell's Prestone",
     ownedOf("GE").find((e) => e.externalId === "01E044000")?.title === "Recall of 90,098 units: FMVSS 108/headlamp bulbs" &&
       /^Recall of 13,706 units: Prestone/i.test(ownedOf("HON").find((e) => e.externalId === "03E022000")?.title ?? ""),
     `${ownedOf("GE").find((e) => e.externalId === "01E044000")?.title} | ${ownedOf("HON").find((e) => e.externalId === "03E022000")?.title}`);
   check("  …Eaton's clutch recall of 2018, filed under Eaton Corporation itself, is Eaton's",
     idsOf("ETN").includes("18E102000") && /Eaton Corporation \(Eaton\) is recalling/.test(ownedOf("ETN").find((e) => e.externalId === "18E102000")?.description ?? ""));
-  const left = ["12V555000", "98T002000", "99V105000", "94C035000", "98C019000", "06V208000", "07V127000"];
-  check("the six that wait for a filing's text are on no page yet: Hino's 12V555000, Kelly-Springfield's 98T002000, Buell's 99V105000, Fisher-Price's of 1994 and 1998, Thor California's and Thor America's",
-    left.every(onNoPage) && left.every((id) => owned.recalls.some((r) => r.nhtsa_id === id)), left.filter((id) => !onNoPage(id)).join(" "));
+  // batch 148: the six that waited for a filing's text, each day read from www.sec.gov with the build contact
+  const invIds = (t: string) => ownedInv(t).map((e) => e.externalId).sort().join(" ");
+  const onNoInv = (id: string) => Object.values(RECALL_MAKERS).every((c) => !investigationEvents(owned.investigations, c.makers).some((e) => e.externalId === id));
+  const hino = ownedOf("TM");
+  check("Hino's six recalls of 2007–2025 land on Toyota, named Hino's, between Toyota's control of August 2001 and its end on 2026-04-01 (on no page before batch 148)",
+    hino.map((e) => e.externalId).sort().join(" ") === "07V208000 08V195000 12V555000 20V244000 24V075000 25V057000" &&
+      hino.find((e) => e.externalId === "12V555000")?.title === "Recall of 35,142 Hino vehicles: Battery B+ Short Circuit/Possible Fire" &&
+      recallEvents([{ ...owned.recalls.find((r) => r.nhtsa_id === "25V057000")!, nhtsa_id: "26V999000", report_received_date: "2026-04-02T00:00:00.000" }], makersOf("TM")).length === 0,
+    hino.map((e) => e.externalId).join(" "));
+  check("  …Kelly-Springfield's of 1994 and 1998 on Goodyear, named Kelly's, from 1991-10-01, the first day its filings show it held; its 1976 recall and its investigations to August 1991 on no page, its engineering analysis of 1991-12-31 on Goodyear",
+    idsOf("GT").sort().join(" ") === "94T007000 98T002000" && ownedOf("GT").find((e) => e.externalId === "98T002000")?.title === "Recall of 594,853 Kelly tires: Sidewall cracks" &&
+      onNoPage("76T001000") && invIds("GT") === "EA91059" && ["PE87007", "EA88002", "PE91122"].every(onNoInv),
+    `${idsOf("GT").join(" ")}; ${invIds("GT")}`);
+  check("  …Buell's three of 1999 and its investigations of 2003 and 2012 on Harley-Davidson, from its purchase in February 1998: Buell Motorcycle Company stayed its subsidiary after Buell's production ended in 2009",
+    idsOf("HOG").sort().join(" ") === "99V097000 99V104000 99V105000" && invIds("HOG") === "PE03043 PE12035" &&
+      ownedOf("HOG").find((e) => e.externalId === "99V105000")?.title === "Recall of 12,321 Buell vehicles: Fuel tank vent valve assembly",
+    `${idsOf("HOG").join(" ")}; ${invIds("HOG")}`);
+  check("  …Fisher-Price's child seats of 1994 and 1998 on Mattel, from the merger of 1993-11-30; its ten recalls and six investigations of 1988–1992, a listed company's own then, on no page",
+    idsOf("MAT").sort().join(" ") === "94C035000 98C019000" && ownedOf("MAT").find((e) => e.externalId === "98C019000")?.title === "Recall of 54,500 Fisher-Price child seats: Restraint adjuster" &&
+      owned.recalls.filter((r) => r.manufacturer === "FISHER-PRICE, INC." && (r.report_received_date ?? "") < "1993").every((r) => onNoPage(r.nhtsa_id ?? "")) && invIds("MAT") === "",
+    `${idsOf("MAT").join(" ")}; ${invIds("MAT")}`);
+  check("  …Thor California's of 2003 and 2006 and Thor America's of 2007 on Thor, the prefix off its own name; a Thor California recall after the sale of June 2008 on no page",
+    ["03V448000", "06V208000", "07V127000"].every((id) => idsOf("THO").includes(id)) && ownedOf("THO").find((e) => e.externalId === "03V448000")?.title === "Recall of 14,522 Thor California vehicles: Samsung/microwave" &&
+      recallEvents([{ ...owned.recalls.find((r) => r.nhtsa_id === "06V208000")!, nhtsa_id: "08V999000", report_received_date: "2008-06-02T00:00:00.000" }], makersOf("THO")).length === 0,
+    ownedOf("THO").map((e) => e.title).join(" | "));
   const all = Object.values(RECALL_MAKERS).flatMap((c) => recallEvents(owned.recalls, c.makers));
-  check("69 recalls on 16 pages, 45 of them before 2017; every maker named once a day",
-    all.length === 69 && all.filter((e) => e.date < "2017").length === 45 && new Set(all.map((e) => e.externalId)).size === 69, `${all.length}, ${all.filter((e) => e.date < "2017").length} before 2017`);
+  const allPages = Object.values(RECALL_MAKERS).filter((c) => recallEvents(owned.recalls, c.makers).length).length;
+  check("85 recalls on 20 pages, 58 of them before 2017 (69 on 16, 45 before 2017, before batch 148); every maker named once a day",
+    all.length === 85 && allPages === 20 && all.filter((e) => e.date < "2017").length === 58 && new Set(all.map((e) => e.externalId)).size === 85,
+    `${all.length} on ${allPages}, ${all.filter((e) => e.date < "2017").length} before 2017`);
   const invCounts = ["CAT", "NWL", "DAN", "RTX", "LCII", "ALV", "PSNY"].map((t) => `${t} ${ownedInv(t).length}`).join(", ");
   check("their investigations come with them, on the same days: Caterpillar's ten, Graco's three from 2002, Carrier's three on RTX; Supreme's of 2002 on no page",
     invCounts === "CAT 10, NWL 3, DAN 4, RTX 3, LCII 2, ALV 1, PSNY 1" && Object.values(RECALL_MAKERS).every((c) => !investigationEvents(owned.investigations, c.makers).some((e) => e.externalId === "PE02014")),

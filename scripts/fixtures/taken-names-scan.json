@@ -1,5 +1,5 @@
 {
- "about": "Every listed company (data/edgar-tickers.json) whose present EDGAR name another, older record held before it (EDGAR's cik-lookup-data.txt of every name each record has filed under), the other record older than CIK 1,100,000, not listed itself, not a mapped predecessor (lib/predecessors.ts) and not a depositary: 173 companies, read on 2026-11-07 (batch 117). `since` is the first day of the present name on the record (data.sec.gov formerNames), `first` the first price (Yahoo's firstTradeDate), `reading` why the name is or is not another company's past on the page: taken (lib/takenNames.ts), before (the name began by the first price, so nothing before it is read), own, brand, new, business, history (the ticker's history is the other record's, mapped in lib/predecessors.ts), short, shared, nostart, noprice. Batch 118 read the last three namesakes and Dawson, whose chart is TGC's, as taken.",
+ "about": "Every listed company (data/edgar-tickers.json) whose present EDGAR name another, older record held before it (EDGAR's cik-lookup-data.txt of every name each record has filed under), the other record older than CIK 1,100,000, not listed itself, not a mapped predecessor (lib/predecessors.ts) and not a depositary: 173 companies, read on 2026-11-07 (batch 117). `since` is the first day of the present name on the record (data.sec.gov formerNames), `first` the first price (Yahoo's firstTradeDate), `reading` why the name is or is not another company's past on the page: taken (lib/takenNames.ts), before (the name began by the first price, so nothing before it is read), own, brand, new, business, history (the ticker's history is the other record's, mapped in lib/predecessors.ts), short, shared, nostart, noprice. Batch 118 read the last three namesakes and Dawson, whose chart is TGC's, as taken. Batch 146 added one company read by hand, Johnson Controls International plc (Tyco's record), whose present name the scan did not match to old Johnson Controls' \"JOHNSON CONTROLS INC\": 174 companies.",
  "read": "2026-11-07",
  "companies": [
   {
@@ -2714,6 +2714,21 @@
     ]
    ],
    "reading": "before"
+  },
+  {
+   "cik": 833444,
+   "ticker": "JCI",
+   "name": "Johnson Controls International plc",
+   "since": "2016-09-07",
+   "first": "1987-09-28",
+   "others": [
+    [
+     53669,
+     "JOHNSON CONTROLS INC"
+    ]
+   ],
+   "reading": "taken",
+   "why": "read by hand in batch 146, not by the scan, which matches names as EDGAR writes them: Tyco's record took old Johnson Controls' name at their merger of 2016-09-02, and JCI's prices before are Tyco's"
   }
  ]
 }

@@ -21,7 +21,10 @@ import { UA } from "./contact";
  * report of Chatsworth in 2008 none of the 25 Metrolink's passengers who died. The accident's count
  * is Form 55a's, `totalpersonskilled` ("the total fatalities for all reports filled for the single
  * accident"), the same on each of its records. A row gives the larger of the two, so a death a
- * railroad's own Form 54 reports is never dropped where Form 55a holds none (6 records of 2,957).
+ * railroad's own Form 54 reports is never dropped where Form 55a holds none (6 records of 2,957), and
+ * such a row says whose count it is: "the railroad's own report's; FRA's count for the accident gives
+ * none" (batch 146, the owner's open call, decided on the owner's instruction of 2026-11-12 to use
+ * best judgment: keep the larger count, as built, and say so on the row).
  *
  * The railroad's own account and the dead by kind (batch 136, the 2026-11-09b proposal 4, part b): a
  * row carries the report's narrative (Form 54 block 52), the dataset's filler for an empty part
@@ -347,6 +350,8 @@ interface Report {
   evacuated: string;
   released: string;
   damage: string;
+  /** the accident's own count, Form 55a's, where the row's `killed` is larger (batch 146) */
+  official: string;
   /** the report's records' dead by kind, summed (batch 136) */
   kinds: { employees: string; passengers: string; others: string };
   /** each record's narrative, filler removed, with its record's jointcd */
@@ -386,6 +391,7 @@ export function accidentEvents(rows: readonly AccidentRow[], roads: readonly Rai
       evacuated: larger(was?.evacuated ?? "0", digits(row.personsevacuated)),
       released: larger(was?.released ?? "0", digits(row.hazmatreleasedcars)),
       damage: larger(was?.damage ?? "0", digits(row.totaldamagecost)),
+      official: larger(was?.official ?? "0", digits(row.totalpersonskilled)),
       kinds: {
         employees: plus(was?.kinds.employees ?? "0", digits(row.railroademployeeskilled)),
         passengers: plus(was?.kinds.passengers ?? "0", digits(row.passengerskilled)),
@@ -445,6 +451,10 @@ function describe(r: Report, number: string, cause: string): string {
   const head = [
     `Reported to the Federal Railroad Administration by ${(r.row.reportingrailroadname ?? r.road.railroad).trim()}${number ? ` (accident ${number})` : ""}.`,
     split ? `Killed, by kind: ${split}.` : "",
+    // a death only the railroad's own Form 54 gives (batch 146): the row says whose count it is
+    r.killed !== r.official
+      ? `The ${grouped(r.killed)} killed is the railroad's own report's count; FRA's count for the accident gives ${r.official === "0" ? "none" : grouped(r.official)}.`
+      : "",
     r.released !== "0" ? `${grouped(r.released)} car${r.released === "1" ? "" : "s"} released hazardous material.` : "",
     r.damage !== "0" ? `Damage to equipment and track: $${grouped(r.damage)}.` : "",
     cause ? `Cause the railroad reported: ${cause.replace(/\.$/, "")}.` : "",

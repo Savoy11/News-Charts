@@ -155,7 +155,11 @@ cause code and a link to FRA's readout of the report: "Norfolk Southern: train a
 Graniteville, South Carolina — 9 killed, 292 injured, 5,200 evacuated". The report is the railroad's
 own filing to its regulator, not a finding of fault, and the row says so. The dead and injured are
 the accident's (batch 130, the 2026-11-09 audit's finding 1): Form 55a's per-accident count,
-`totalpersonskilled`, or the report's own Form 54 count where that is larger. Form 54's count is each
+`totalpersonskilled`, or the report's own Form 54 count where that is larger; where only the report
+gives a death (6 records: CSX at La Grange in 2016 and Illinois Central at Yazoo City in 2022 are on
+pages), the row says so, "The 1 killed is the railroad's own report's count; FRA's count for the
+accident gives none" (batch 146, the owner's call, decided on the owner's instruction of 2026-11-12 to
+use best judgment). Form 54's count is each
 record's part ("Do not use this field to sum fatalities", the dataset says), so before it the
 deadliest accidents showed none: Big Bayou Canot of 1993 read "$11,369,400 of damage" on CSX's page,
 where 47 died, and Union Pacific's report of Chatsworth in 2008 counted none of the 25 Metrolink
@@ -500,8 +504,8 @@ no day, and 1994 and 1995 answer 404, so the archive starts in May 1996. 2,608 r
 slip leaves without a day or with another year's ("06-22-98" on June 1999's page) are left unread.
 Against every company in the index, from first prices: 67 releases on 40 pages, ADM's record
 antitrust fine of 1996, the Microsoft suit of 1998, American Honda's $267 million of 1998 (Honda's
-unit), GE's Housatonic River settlements, Alcoa's five (old Alcoa Inc.'s, on AA under the owner's
-open call). Three titles naming AT&T Corp. stay off AT&T's page, since SBC's record took that name in
+unit), GE's Housatonic River settlements, Alcoa's five (old Alcoa Inc.'s, on AA, whose chart before
+2016 is old Alcoa's: the owner's call, decided on 2026-11-12, batch 146). Three titles naming AT&T Corp. stay off AT&T's page, since SBC's record took that name in
 2005 (`lib/takenNames.ts`), and 14 fall before their company listed. Eight of Microsoft's are the same
 "NOTICE OF UPCOMING DEPOSITIONS IN U.S. v. MICROSOFT", and the page shows them as a row a month
 (the owner's call): "Justice Department: 5 notices, …" for May 1999, linking to the newest.
@@ -557,7 +561,8 @@ calls; those two units, and batch 93's Synchrony Bank and PayPal (the owner's ru
 on every company it involves), are the only names read before their company's first price
 (`beforeListing`), so the case of 2004-02-12 reaches Ameriprise, listed 2005-09-15, and Prudential
 Securities' three of 2000–2001 reach Prudential, listed 2001-12-13. Johnson Controls, Inc.'s order of
-2016-07-11 stays on JCI's page: the business merged that September into the record JCI now uses. Lazard Capital Markets was LFCM Holdings', not Lazard's, and Fiserv Securities' case of 2005
+2016-07-11 is not on JCI's page since batch 146: Tyco's record, JCI's, took Johnson Controls' name at
+their merger that September, and JCI's chart before it is Tyco's (`lib/takenNames.ts`). Lazard Capital Markets was LFCM Holdings', not Lazard's, and Fiserv Securities' case of 2005
 came after Fiserv sold it: neither is on a page. Batch 89 added the units the Consumer Financial
 Protection Bureau charges, 22 more companies' and ten names for six banks already mapped: Capital One
 Bank, American Express Centurion Bank, U.S. Bank National Association, Chase Bank USA, CitiMortgage,
@@ -631,8 +636,9 @@ revoked registrations naming a shell called "Telos, Inc." — were read by hand 
 CIK (`NOT_THE_COMPANY`). A company's rows of a day make one event, titled by its own party ("SEC
 litigation release: Transocean Inc."), with the whole caption, each release number and a
 proceeding's file number in its description. Read against every company in the index under its
-current names, the 30,747 rows give 1,196 company days on 374 companies, 589 of them before 2017
-(1,149 on 370 and 555 before batch 145's brokers', banks' and managers' companies) (Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47,
+current names, the 30,747 rows give 1,195 company days on 373 companies, 588 of them before 2017
+(1,196 on 374 and 589 before batch 146 took old Johnson Controls' order of 2016 off JCI; 1,149 on 370
+and 555 before batch 145's brokers', banks' and managers' companies) (Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47,
 Goldman Sachs 20); a company's former names add more, and its first price keeps it off the years
 before it listed. A party ends before its other name ("…, L.P. f/k/a Spear, Leeds & Kellogg") as it
 begins after one. `check:sec-cases` replays every row against every company and every fund series
@@ -764,8 +770,8 @@ Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Car
 2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
 (`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
 every company in the index, on EPA's whole file of 2026-10-31 (the committed slice gives the same
-rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 9,584 rows on 704 companies, 8,089 before 2017
-(GE 309, ExxonMobil 295, Chevron 278, BP 255, Honeywell 252; 9,404 on 693 before batch 145's fifth round of units, 9,386 before batch 142's Amazon unit and Brink's Inc.; on 692 before batch 137 moved Kroger Specialty Pharmacy's
+rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 9,547 rows on 704 companies, 8,050 before 2017
+(GE 309, ExxonMobil 295, Chevron 278, BP 255, Honeywell 252; 9,584 and 8,089 before batch 146 took old Johnson Controls' 39 rows off JCI and put its battery company's 2 of 2017 on; 9,404 on 693 before batch 145's fifth round of units, 9,386 before batch 142's Amazon unit and Brink's Inc.; on 692 before batch 137 moved Kroger Specialty Pharmacy's
 order of 2026 to Elevance Health, which bought it in 2024; 9,155 on 690 before batch 135's fourth round of units; one fewer since batch 124 took a misspelled UT Automotive decree of 2007 off RTX; 8,889 before batch 122's suits filed and settlements on their days; 7,899 on 679 before batch 120; 5,994 on 667 before the units, every one of
 whose cases is still there; BP 4 and 3M 68 by their own names). A record that took a bought
 company's name does not take that company's past: old Waste Management's cases are not WM's before
@@ -847,7 +853,7 @@ bottling business Coca-Cola bought from Coca-Cola Enterprises (whose own cases s
 GENERAL ELECTRIC)" of 2008 as GE's and would read "DENISON MINES (USA) CORP." as Denison's on any day, so
 both are now in `NOT_THE_COMPANY`, which the units, read first, do not touch. Left out: Enterprise
 Products' general partner, owned by its controlling family's company; Chevron Phillips, Duke Energy Field
-Services and Dow Corning, joint ventures; Johnson Controls Battery Group, the owner's open call on JCI. On
+Services and Dow Corning, joint ventures; Johnson Controls Battery Group before the merger of 2016, old Johnson Controls, Inc.'s (batch 146 puts it on JCI from 2016-09-02 to 2019-04-29). On
 EPA's whole file, 181 rows more on 37 pages and one off; from first prices where read, 91 on 20 pages, 61
 before 2017 (Energy Transfer 11, National Fuel Gas 10, GE 7, Walmart and Owens Corning 7, J.B. Hunt and
 Graphic Packaging 6); 89 more on 17 pages whose first price is not read (BAE Systems 23, Enterprise
@@ -1301,7 +1307,10 @@ names of then is the other company's: "AT&T Corp. cuts 7,000 jobs" of 2004 is no
 rules, the news, the Federal Register, whose earlier years are asked under the record's own name of
 then, as are GDELT's months since batch 118), a page and its "Also on" leave stored rows of it off,
 and the record's own filings and prices are never read this way. On the saved sources it takes 15 rows off LIN (Linde AG's), SPB, HOS and FUN
-that nothing took off before. A committed scan of 173 renamed records, each read
+that nothing took off before. Batch 146 added JCI's, the owner's call decided on 2026-11-12: Tyco's
+record took Johnson Controls' name at their merger of 2016-09-02, and JCI's chart before is Tyco's, so
+old Johnson Controls' 39 EPA rows and its SEC order of 2016 left JCI's page. A committed scan of 174
+renamed records (JCI's read by hand, which the scan's name matching missed), each read
 (`scripts/fixtures/taken-names-scan.json`), keeps the table whole (`check:taken-names`).
 
 ```
@@ -1712,7 +1721,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Federal Reserve Board press releases | The Board's orders on a bank's applications since 1996 (1996–2005 from its yearly pages, committed), and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |
 | Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
-| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 139 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
+| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 140 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
 | Mine Safety and Health Administration | Accidents since 2000 that killed someone at a mine the company controlled, with MSHA's own finding on each: the violations its investigation cited and the penalties it proposed (batch 139) | MSHA's Accidents and Mines files, one 52 MB zip and one of 7 MB, read once a week for every company and the deaths kept (`lib/ingest/mineWalk.ts`), and its Inspections and Assessed Violations files (74 MB and 110 MB) streamed once a month; kept for the 54 controller IDs `lib/mineAccidents.ts` maps by hand to 52 companies, each between its company's days, from the company's first price. Public domain, credited to the U.S. Department of Labor; no key |
 | Federal Railroad Administration | Railroad accidents since 1975 a company's railroad reported, with a death, an evacuation or $5,000,000 of damage | Form 54 on the Transportation Department's open-data host, one request a day for each of the six railroad companies `lib/railAccidents.ts` maps by hand, each railroad between its owner's days, from the company's first price; a highway-rail crossing collision only with an evacuation or that damage. Public domain; no key |

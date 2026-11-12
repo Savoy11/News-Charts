@@ -50,7 +50,7 @@ const nameOf = (cik: number) => rows.find(([c]) => c === cik)?.[2];
 
 console.log("The table");
 const entries = Object.entries(TAKEN_NAMES).map(([cik, t]) => ({ cik: Number(cik), ...t }));
-check("32 records, each the ticker the committed index gives its CIK", entries.length === 32 && entries.every((e) => rows.some(([c, t]) => c === e.cik && t === e.ticker)),
+check("33 records, each the ticker the committed index gives its CIK (32 before batch 146's JCI)", entries.length === 33 && entries.every((e) => rows.some(([c, t]) => c === e.cik && t === e.ticker)),
   entries.filter((e) => !rows.some(([c, t]) => c === e.cik && t === e.ticker)).map((e) => `${e.ticker} ${e.cik}`));
 check("  …each with a day, the accession of the filing that gives it, a kind and its reasons",
   entries.every((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.from) && /^\d{10}-\d{2}-\d{6}$/.test(e.filing) && ["bought", "merged", "namesake"].includes(e.kind) && e.why.length > 80 && e.why.includes(e.ticker)));
@@ -60,6 +60,11 @@ check("  …a name that its present name holds and its own names of before do no
     return (e.name.test(commonName(present)) || e.name.test(present)) && !e.then.test(present) && !/[gy]/.test(e.name.flags + e.then.flags);
   }),
   entries.filter((e) => !(e.name.test(commonName(nameOf(e.cik) ?? "")) || e.name.test(nameOf(e.cik) ?? "")) || e.then.test(nameOf(e.cik) ?? "")).map((e) => `${e.ticker}: ${nameOf(e.cik)}`));
+// batch 146: the owner's open JCI call, decided on the owner's instruction of 2026-11-12 to use best judgment
+check("Tyco's record took Johnson Controls' name at their merger of 2016-09-02, and JCI's prices before are Tyco's: old Johnson Controls, Inc.'s order of 2016-07-11 is not JCI's, a row naming Tyco is, and from the day the name is JCI's",
+  TAKEN_NAMES[833444]?.from === "2016-09-02" && TAKEN_NAMES[833444]?.filing === "0001104659-16-143068" && TAKEN_NAMES[833444]?.kind === "merged" &&
+    takenBefore(833444, "2016-07-11", "Johnson Controls, Inc.") && !takenBefore(833444, "2016-01-25", "Johnson Controls and Tyco to combine") &&
+    !takenBefore(833444, "2016-09-02", "Johnson Controls International plc") && !takenBefore(833444, "2019-12-19", "Johnson Controls, Inc."));
 check("the three names refused one source at a time before are here, on their days: Waste Management 1998-07-16, Biogen 2003-11-12, AT&T 2005-11-18",
   TAKEN_NAMES[823768]?.from === "1998-07-16" && TAKEN_NAMES[875045]?.from === "2003-11-12" && TAKEN_NAMES[T]?.from === "2005-11-18");
 
@@ -259,8 +264,8 @@ walk().then(async ({ asked, stored, windows }) => {
   const c = scan.companies;
   const readings = new Map<string, number>();
   for (const x of c) readings.set(x.reading, (readings.get(x.reading) ?? 0) + 1);
-  check("173 companies whose present name an older record carried, each read: 32 took it from another company, 25 had it by their first price, 86 are the same company's other record, 30 for the other reasons",
-    c.length === 173 && readings.get("taken") === 32 && readings.get("before") === 25 && readings.get("own") === 86 && new Set(c.map((x) => x.cik)).size === 173 &&
+  check("174 companies whose present name an older record carried, each read: 33 took it from another company (JCI's read by hand and added, batch 146), 25 had it by their first price, 86 are the same company's other record, 30 for the other reasons",
+    c.length === 174 && readings.get("taken") === 33 && readings.get("before") === 25 && readings.get("own") === 86 && new Set(c.map((x) => x.cik)).size === 174 &&
       [...readings.keys()].every((k) => ["taken", "before", "own", "brand", "new", "business", "history", "short", "shared", "namesake", "nostart", "noprice"].includes(k)),
     Object.fromEntries(readings));
   check("  …every one the table holds is read \"taken\" in the scan, and every \"taken\" in the scan is in the table",

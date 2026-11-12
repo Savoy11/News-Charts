@@ -21,6 +21,8 @@ export const CLASS_READS_PER_RUN = 200;
 export const classBudget = { left: CLASS_READS_PER_RUN };
 /** One page every 1.3 s, as the other FDA reads ask. */
 export const CLASS_GAP_MS = 1300;
+/** A run stops reading after this many pages failed. */
+export const MAX_FAILED_PAGES = 3;
 /** A page that listed no product is asked again after this long. */
 const RETRY_EMPTY_DAYS = 30;
 
@@ -89,19 +91,27 @@ export async function deviceRecallsFor(client: PoolClient, subjectId: number, ci
   let { awaiting } = deviceRecallEvents(recs, firms, plan);
   let read = 0;
   let stopped: string | undefined;
+  let failed = 0;
+  let asked = 0;
   for (const event of awaiting) {
     if (budget.left <= 0) {
       stopped ??= "this run's class reads are spent";
       break;
     }
-    if (read) await sleep(CLASS_GAP_MS);
+    if (asked++) await sleep(CLASS_GAP_MS);
     const got = await fetchClass(event, { gapMs: CLASS_GAP_MS, sleep });
     budget.left -= got.requests;
     if (!got.ok) {
       stopped = `the recall database refused event ${event}: ${got.outcome}${got.httpStatus ? ` ${got.httpStatus}` : ""}`;
-      // a refusal stops every company's reads in this process
-      if (got.outcome === "throttled") budget.left = 0;
-      break;
+      // a refusal (429, 403) stops every company's reads in this process; a page that failed is
+      // skipped, so one that always fails never holds up the recalls after it, and the run stops
+      // after three (the read of 2026-11-12 met six passing 400s in 2,610 requests)
+      if (got.outcome === "throttled") {
+        budget.left = 0;
+        break;
+      }
+      if (++failed >= MAX_FAILED_PAGES) break;
+      continue;
     }
     await keepClass(client, event, got.cls, got.products);
     classes.set(event, got.cls);

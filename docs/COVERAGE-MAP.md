@@ -1,6 +1,6 @@
 # Coverage map — how far back a timeline can actually go
 
-**Last updated:** 2026-11-11 · 39 sources (31 on the ingest path; the 8 keyed ones are held back by their licences)
+**Last updated:** 2026-11-12 · 40 sources (32 on the ingest path; the 8 keyed ones are held back by their licences)
 
 The single question this answers: *given a subject, what is the earliest event News Charts could
 plausibly show, and which source would supply it?*
@@ -44,6 +44,7 @@ because it will be trusted.
 | **1985 – now** | FDA new-drug approvals | 1985-04-09, the compilation's first (Lupron) | Each new molecular entity and new biologic on the page of the company that applied, by the approval letter's applicant on its day (`lib/fdaApprovals.ts`, batch 105): from the first prices of the 26 drugmakers Yahoo gave, 450 approvals, 314 before 2017, 71 before EDGAR (Merck 58, Johnson & Johnson 47, Novartis 44, Pfizer 42, Bristol-Myers Squibb 39, Lilly 34); an acquisition's past is never the buyer's (Lipitor is no page's, nor old Biogen's Avonex since batch 115) |
 | **1986 – now** | FDA efficacy supplements | 1986-09-10, Drugs@FDA's first for a compilation drug | Each approved efficacy supplement to one of those drugs, on its day, where the drug never left the company and the applicant was the company that day (`lib/fdaSupplements.ts`, batch 115): from first prices, 1,191 on 48 pages, 420 before 2017, 131 before 2005 (Bristol-Myers Squibb 172, Merck 171, Novartis 116, Lilly 97, Johnson & Johnson 96); titled from the data alone, never "new indication"; drugs whose holder changed (Humira, Merck's now Organon's) are on no page |
 | **2021 – now** | FDA warning letters | 2021-01-04, the list's first | Each warning letter addressed to the company, its firm or its unit on the issue day, by the approvals' rule, the former names EDGAR lists and a hand list of 15 companies (`lib/fdaWarningLetters.ts`, batches 140 and 142): before first prices and former names, 104 letters on 69 companies, 100 rows a day each (Amazon 10, Walmart 5, Abbott, Fresenius, Lilly and Medline 3), 44 of the 69 outside the FDA recall map, and iRhythm's by its former name at ingest; the older letters need the FDA Data Dashboard's key and are not read |
+| **2000 – 2012** | FDA device recalls before the reports | 2000-04-11, the first a mapped firm began | Class I and II device recalls the map's firms began before the reports, from openFDA's device recall file and each recall's FDA recall-database page (`lib/fdaDeviceRecalls.ts`, batch 144): from first prices, 1,981 rows on 19 pages, all before 2017, 73 Class I (Stryker 262, GE 243, Philips 234, Abbott 216, Medtronic 202, Johnson & Johnson 175), and 345 on 18 companies whose first price is not read; an acquisition's past is never the buyer's (Guidant's 2005 recalls are on no page) |
 | **2012 – now** | FDA enforcement reports | mid-2012, the first weekly report | Class I and II drug, device and food recalls for the 73 companies `lib/fdaRecalls.ts` maps (Medtronic, Philips, Johnson & Johnson, Stryker, Danaher, BD, Medline, Abbott, Pfizer, Novartis, Teva, GSK, PepsiCo, General Mills and others) — tens to hundreds per company |
 | **2012 – now** | CFPB enforcement actions | 2012-07-17, the Bureau's first action | The Bureau's orders and suits whose respondents are the company or a unit it owned — Capital One Bank, American Express Centurion Bank, the mortgage insurers, Toyota's and Honda's lenders, Mastercard International, Conduent's units (`lib/cfpb.ts`, batches 89 and 90): against every company in the index, 95 company days on 52 companies from the 386 actions, 38 before 2017 (Bank of America, Wells Fargo and Citigroup 6, JPMorgan 5, U.S. Bancorp 4); 92 of them on 49 companies reach a page, every company a case names getting it (batch 93) |
 | **1999 – now** | The Guardian Open Platform | 1999 | Articles — only with a visitor's own key, in their browser; never stored |
@@ -127,7 +128,9 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   insurers and debt buyers: 36 of the 92 company days that reach a page fall before 2017, most
   through the units the Bureau charges (batches 89, 90 and 93). FDA recalls add
   mid-2012 to 2016 for 38 drug, device and food companies, many of them: Medtronic has 532
-  recalls, 147 of them before 2017 (Philips 232 of 590, Johnson & Johnson 298 of 485). The
+  recalls, 147 of them before 2017 (Philips 232 of 590, Johnson & Johnson 298 of 485). The device
+  recalls before the reports add 2000 to mid-2012 for 19 of them, 1,981 rows (Stryker 262, GE 243,
+  Philips 234, Medtronic 202; batch 144). The
   Federal Reserve's enforcement actions add a few material events for large banks, 81 of their 113
   before 2017. Before EDGAR (1993) a company's page holds little but Yahoo's dividends and splits;
   the SEC News Digest covers 1956–1993, a source since batch 102. On 1985 it gives 509 rows on 259
@@ -164,7 +167,8 @@ windows — update both together.
 | MSHA mine accidents | No key or published cap | Two zips (52 MB and 7 MB) read once a week for every company, not again while unchanged; two more (74 MB and 110 MB) once a month for MSHA's findings, streamed |
 | Federal Reserve enforcement actions | No published cap | Two files, read once a process whatever the number of banks |
 | FDA warning letters | No key or published cap; a request for 5,000 letters was refused | The whole list, four requests each way, once a week for every company, 1 s apart |
-| FDA (openFDA) | 1,000 requests a day, 240 a minute, without a key | Three to six a day per mapped company: one per product type, a page per 1,000 records |
+| FDA (openFDA) | 1,000 requests a day, 240 a minute, without a key | Three to six a day per mapped company: one per product type, a page per 1,000 records; one or two more for the device recalls before the reports, and one a process for the reports' older events |
+| FDA recall database (class pages) | No key or published cap | Each older device recall's page read once and kept, at most 200 a process, 1.3 s apart (2,608 for the mapped firms) |
 | Justice Department | No published cap | A page or two a day per company, 0.8 s apart; a common word ("Target") stops at ten pages |
 | Federal Reserve, BLS | No published cap | One page each a day; the FOMC history (~27 year pages, 1 s apart) is read once. bls.gov refuses requests without a contact `User-Agent` |
 | Yahoo Finance (RSS and chart) | Undocumented | Unofficial — the licence question is the risk, not the quota |

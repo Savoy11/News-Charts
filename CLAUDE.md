@@ -145,7 +145,13 @@ its title says only "an efficacy supplement", never "new indication". The FDA's 
 (`lib/fdaWarningLetters.ts`, batch 140) come from the list's own table data, read whole both ways once a
 week and kept (`lib/ingest/fdaWarningWalk.ts`, db/049): one way alone loses the letters of a day a page's
 edge cuts. A letter is a page's by `approvalIsCompany` on its issue day or by `LETTER_NAMES`, read by hand
-(Amazon.com, Inc.…); a company's letters of a day are one row.
+(Amazon.com, Inc.…); a company's letters of a day are one row. The FDA's device recalls of 2000 to mid-2012,
+before the enforcement reports (`lib/fdaDeviceRecalls.ts`, batch 144), come from openFDA's device recall file
+under the recall map's own rule (`FDA_FIRMS`, `firmFor` on the day the firm began it), less the reports' own
+events; each recall's class is its FDA recall-database page's, read once and kept (db/051), a few hundred a
+run, and only Class I and II become rows. The map's days for the units bought and sold 2000–2012 were read for
+it: the file gives a bought unit's own past under its later name ("Boston Scientific CRM Corp" for Guidant's
+2005 recalls), so every such unit carries the day its owner took it.
 
 A row of one of the eight multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
 CFTC) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
@@ -247,7 +253,9 @@ deliberately outside the chain because they need more than the code: `check:live
 - **Licensing:** several news sources are on non-commercial free tiers. `COMMERCIAL_MODE=true`
   withholds them (enforced by `check:commercial-mode`); it must be on in any environment
   someone other than the owner can load — a private preview included — before the first such
-  page load (D22, applied 2026-10-19; open `P0` in the checklist).
+  page load (D22, applied 2026-10-19; open `P0` in the checklist). A federal agency's own work is
+  usable where its site states no licence (17 U.S.C. § 105; the owner's ruling of 2026-11-12); terms a
+  site does state are still read and quoted.
 - **Events schema:** `docs/EVENTS-SCHEMA.md` is the spec — subjects, events, documents are
   three separate axes; enrichments degrade pages, never break them.
 - **Money is numeric, never float** — same rule as the schema doc states.

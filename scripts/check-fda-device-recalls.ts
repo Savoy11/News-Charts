@@ -16,7 +16,7 @@ import {
   type DeviceRecord,
 } from "../lib/fdaDeviceRecalls";
 import { FDA_FIRMS, firmFor } from "../lib/fdaRecalls";
-import { CLASS_READS_PER_RUN, deviceRecallsFor, resetReported } from "../lib/ingest/fdaDeviceRecallsFor";
+import { CLASS_READS_PER_RUN, MAX_FAILED_PAGES, deviceRecallsFor, resetReported } from "../lib/ingest/fdaDeviceRecallsFor";
 import { QUOTAS } from "../lib/ingest/quota";
 import { SOURCE_TTL_MINUTES } from "../lib/ingest/refresh";
 import { SOURCES } from "../lib/ingest/store";
@@ -116,8 +116,8 @@ async function main(): Promise<void> {
   check("  …Mentor's recalls of 2003–2008 are not Johnson & Johnson's (Mentor Texas, from 2009-01-26), nor Acclarent's of 2006 (from 2010-01-20)",
     !has(jnj, "29132") && !has(jnj, "38623") && !has(jnj, "34524") && firmFor("Acclarent, Inc.", "2012-01-30", firmsOf("JNJ")) !== null);
   const ge = rowsOf("GE");
-  check("  …Datex-Ohmeda's recalls before GE's results release of 2003-10-10 named Instrumentarium bought are not GE's; its recall of 2003-10-17 is",
-    !has(ge, "25501") && !has(ge, "26765") && !!has(ge, "27599"));
+  check("  …Datex-Ohmeda's recalls before GE's results release of 2003-10-10 named Instrumentarium bought are not GE's; its Giraffe OmniBed recall of 2003-10-17 is (its monitor recall that day is Class III)",
+    !has(ge, "25501") && !has(ge, "26765") && !!has(ge, "27490") && !has(ge, "27599") && classes.get("27599") === 3);
   const dhr = rowsOf("DHR");
   check("  …Sybron's dental companies are Danaher's from 2006-05-16: Sybron's recall of 2003 and Ormco's of 2004 are not; Kerr's of 2008 (\"Kerr Corp\", 42 products) is",
     !has(dhr, "25811") && !has(dhr, "30515") && !has(dhr, "34769") && /\(42 products\)$/.test(has(dhr, "49506")?.title ?? ""));
@@ -129,7 +129,8 @@ async function main(): Promise<void> {
 
   console.log("\nWhat gives no row");
   const held = FX.reported.filter((id) => records.some((x) => x.res_event_number === id));
-  const anyHeld = Object.values(FDA_FIRMS).some((m) => held.some((id) => deviceRecallEvents(records, m.firms, { classes, reported, from: undefined }).events.some((e) => e.externalId === id)));
+  const heldSet = new Set(held);
+  const anyHeld = Object.values(FDA_FIRMS).some((m) => deviceRecallEvents(records, m.firms, { classes, reported, from: undefined }).events.some((e) => heldSet.has(e.externalId ?? "")));
   check(`a recall the reports hold is theirs: none of the ${held.length} held events the file also has is given here`, held.length > 100 && !anyHeld, held.length);
   const noClass = deviceRecallEvents(records, firmsOf("MDT"), { classes: new Map(), reported, from: undefined });
   check("  …a recall whose class is not read yet waits, and is no row", noClass.events.length === 0 && noClass.awaiting.includes("45403"), noClass.awaiting.length);
@@ -204,6 +205,22 @@ async function main(): Promise<void> {
     fetchClass: async () => ({ ok: false, outcome: "throttled", httpStatus: 429, detail: "busy", requests: 1 }),
   });
   check("  …a refused page stops the reads, the answer says so, and the recalls already classed are still given", /the recall database refused event \d+: throttled 429/.test(busy.detail ?? "") && busy.outcome === "empty", busy.detail);
+  const asked2: string[] = [];
+  const stuck = await deviceRecallsFor(fakeDb({ listed: "1980-03-17", classes: new Map() }), 1, entryOf("MDT")[0], {
+    ...deps(10),
+    fetchClass: async (event) => {
+      asked2.push(event);
+      return asked2.length === 1 ? { ok: false, outcome: "error", httpStatus: 400, detail: "bad request", requests: 1 } : { ok: true, cls: 2, products: 1, requests: 1 };
+    },
+  });
+  check("  …a page that fails (a passing 400) is skipped, never holding up the recalls after it, and asked again on the next run",
+    asked2.length === 10 && /^9 recall classes read; \d+ recalls await their class/.test(stuck.detail ?? ""), stuck.detail);
+  let fails = 0;
+  await deviceRecallsFor(fakeDb({ listed: "1980-03-17", classes: new Map() }), 1, entryOf("MDT")[0], {
+    ...deps(50),
+    fetchClass: async () => (fails++, { ok: false, outcome: "error", httpStatus: 500, detail: "down", requests: 1 }),
+  });
+  check(`  …and a run stops after ${MAX_FAILED_PAGES} failed pages`, fails === MAX_FAILED_PAGES, fails);
   const spent = { left: 3 };
   await deviceRecallsFor(fakeDb({ listed: "1980-03-17", classes: new Map() }), 1, entryOf("MDT")[0], { ...deps(0), budget: spent, fetchClass: async () => ({ ok: false, outcome: "throttled", httpStatus: 429, detail: "busy", requests: 1 }) });
   check("  …and every company's reads in the process: a throttle spends the budget", spent.left === 0);
@@ -258,9 +275,11 @@ async function main(): Promise<void> {
 }
 
 // pinned from the fixture's real records and classes (2026-11-12)
-const CLASSES_READ = 0;
-const CLASS_MIX = [0, 0, 0, 0];
-const POPULATION = { rows: 0, pages: 0, classI: 0, top: "", unread: 0, unreadPages: 0 };
+// 2,608 events: the 2,604 read for the map's firms and the four "Kerr Corp" adds; 283 are Class III,
+// against the scout's estimate of about 60 from the reports' mix since 2012
+const CLASSES_READ = 2608;
+const CLASS_MIX = [93, 2232, 283, 0];
+const POPULATION = { rows: 1981, pages: 19, classI: 73, top: "SYK 262, GE 243, PHG 234, ABT 216, MDT 202, JNJ 175", unread: 345, unreadPages: 18 };
 
 interface FakeDb {
   listed: string | null;

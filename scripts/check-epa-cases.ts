@@ -57,7 +57,7 @@ import { TAKEN_NAMES, takenBefore } from "../lib/takenNames";
  *   npm run check:epa-cases
  *
  * Replays a committed slice of EPA's case file of 2026-10-31 (scripts/fixtures/epa-cases-slice.json.gz):
- * every row of the four tables the adapter reads for the 8,506 cases whose defendants hold a
+ * every row of the four tables the adapter reads for the 8,690 cases whose defendants hold a
  * listed company's name, and the cases the guards are measured on; and, since batch 113, the
  * settlements table and the case table's work-ordered and summary columns for the same cases. Offline: the file's fetch and
  * the database are stood in for. On main none of it runs: lib/epaCases.ts does not exist.
@@ -116,7 +116,7 @@ async function main(): Promise<void> {
     broken = String(err);
   }
   check("  …and refuses what is no zip", /no end of central directory/.test(broken), broken);
-  check("the slice holds the cases the replay reads, each with its day: 8,506, the 1,739 batch 104's units name, the 1,133 batch 114's add, the 5 batch 116's add, the 1,119 batch 120's add, the 171 batch 135's add and the 50 Amazon's unit asks, batch 142, among them", cases.length === 8506 && /Batch 142 added every row of the six tables for the 50 cases/.test(SLICE.provenance) && /Batch 135 added every row of the five tables for the 171 cases/.test(SLICE.provenance) && /Batch 114 added every row of the five tables for the 1133 cases/.test(SLICE.provenance) && /Batch 116 added every row of the five tables for the 5 cases/.test(SLICE.provenance) && /Batch 120 added every row of the five tables for the 1119 cases/.test(SLICE.provenance) && cases.every((c) => /^\d{4}-\d{2}-\d{2}$/.test(c.day)) && /Batch 104 added the 1739 cases that name one of the units/.test(SLICE.provenance), `${cases.length}`);
+  check("the slice holds the cases the replay reads, each with its day: 8,690, the 1,739 batch 104's units name, the 1,133 batch 114's add, the 5 batch 116's add, the 1,119 batch 120's add, the 171 batch 135's add, the 50 Amazon's unit asks, batch 142, and the 184 batch 145's add among them", cases.length === 8690 && /Batch 145 added every row of the six tables for the 184 cases/.test(SLICE.provenance) && /Batch 142 added every row of the six tables for the 50 cases/.test(SLICE.provenance) && /Batch 135 added every row of the five tables for the 171 cases/.test(SLICE.provenance) && /Batch 114 added every row of the five tables for the 1133 cases/.test(SLICE.provenance) && /Batch 116 added every row of the five tables for the 5 cases/.test(SLICE.provenance) && /Batch 120 added every row of the five tables for the 1119 cases/.test(SLICE.provenance) && cases.every((c) => /^\d{4}-\d{2}-\d{2}$/.test(c.day)) && /Batch 104 added the 1739 cases that name one of the units/.test(SLICE.provenance), `${cases.length}`);
   const byName = (ticker: string) => epaEvents(cases, namesOf(ticker), {});
   check("  …rebuilt with the two-letter names ingest asks (batch 100, the audit of batches 94–99, finding 7): BP's and 3M's own cases are in it (3M's 68 rows count its suit filed in 1985, batch 122)",
     byName("BP").length === 4 && eventsOn("MMM").length === 68 && /two letters or more as ingest asks/.test(SLICE.provenance),
@@ -263,11 +263,11 @@ async function main(): Promise<void> {
   // batch 114's utilities' operating companies add 419 rows on 31 companies, 13 of which had none
   // batch 120's 28 companies' units and the "and" spelling of "&" add 990 rows, 11 companies more
   // batch 122's suits filed in court add 228 rows, and the settlements of cases all a company's 39
-  check("before any first price: 9,404 rows on 693 companies, 7,977 before 2017; 9,058 of them a case's own day, which EPA's whole file gives too (9,386, 7,974 and 9,046 before the 2026-11-11 audit's Amazon unit, 17 rows, and Brink's Inc., whose apostrophe EPA's file held as a control character, 1; on 692 before the 2026-11-10 audit moved Kroger Specialty Pharmacy's order of 2026 to Elevance Health; 9,155, 7,768 and 8,827 on 690 before batch 135's units of 13 more companies, the cases they name added to the slice; 9,156, 7,769 and 8,828 before the 2026-11-08 audit took UT Automotive's misspelled decree of 2007 off RTX; 8,889, 7,526 and 8,561 before batch 122's suits filed and settlements on their own days; 7,899, 6,754 and 7,621 on 679 before batch 120's units of 28 more companies and its \"and\" for \"&\"; 7,954, 6,806 and 7,675 on 683 before batch 117's table of taken names took Ingersoll-Rand's 36 off IR, Linde AG's 9 off LIN, Spectrum Brands' 4 off SPB, Sunoco, Inc.'s 3 off SUN and one each off HOS, VTOL and FUN; 7,969, 6,821 and 7,688 on 684 before batch 116 took old AT&T's 13 off T, Consumers Power, Inc.'s 1 off CMS and Toro Corp.'s 1 off TORO; 7,964, 6,817 and 7,683 on 683 on batch 114's slice, which lacked 5 of the file's page cases; 7,545, 6,463 and 7,268 on 670 before batch 114's utilities; 7,428, 6,368 and 7,026 before batch 113's settlement figures; 7,427, 6,367 and 7,025 before batch 111's legal-form spellings; 7,436, 6,376 and 7,034 before batch 108 took the old Waste Management's nine off WM; 7,035 before batch 107's Star Lake order joined Chevron's September 2016; 5,994 on 667 before batch 104's units, every one of whose cases is still on its page; 5,984 before batch 101's Sunoco, Inc.; 6,001 on 665 before batch 100)",
-    total === 9404 && out.size === 693 && before2017 === 7977 && own === 9058 && (out.get("OLN") ?? []).some((e) => e.date === "1995-10-26"), `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
+  check("before any first price: 9,584 rows on 704 companies, 8,089 before 2017; 9,223 of them a case's own day, which EPA's whole file gives too (9,404, 7,977 and 9,058 on 693 before batch 145's units of 31 more companies, the cases they name added to the slice; 9,386, 7,974 and 9,046 before the 2026-11-11 audit's Amazon unit, 17 rows, and Brink's Inc., whose apostrophe EPA's file held as a control character, 1; on 692 before the 2026-11-10 audit moved Kroger Specialty Pharmacy's order of 2026 to Elevance Health; 9,155, 7,768 and 8,827 on 690 before batch 135's units of 13 more companies, the cases they name added to the slice; 9,156, 7,769 and 8,828 before the 2026-11-08 audit took UT Automotive's misspelled decree of 2007 off RTX; 8,889, 7,526 and 8,561 before batch 122's suits filed and settlements on their own days; 7,899, 6,754 and 7,621 on 679 before batch 120's units of 28 more companies and its \"and\" for \"&\"; 7,954, 6,806 and 7,675 on 683 before batch 117's table of taken names took Ingersoll-Rand's 36 off IR, Linde AG's 9 off LIN, Spectrum Brands' 4 off SPB, Sunoco, Inc.'s 3 off SUN and one each off HOS, VTOL and FUN; 7,969, 6,821 and 7,688 on 684 before batch 116 took old AT&T's 13 off T, Consumers Power, Inc.'s 1 off CMS and Toro Corp.'s 1 off TORO; 7,964, 6,817 and 7,683 on 683 on batch 114's slice, which lacked 5 of the file's page cases; 7,545, 6,463 and 7,268 on 670 before batch 114's utilities; 7,428, 6,368 and 7,026 before batch 113's settlement figures; 7,427, 6,367 and 7,025 before batch 111's legal-form spellings; 7,436, 6,376 and 7,034 before batch 108 took the old Waste Management's nine off WM; 7,035 before batch 107's Star Lake order joined Chevron's September 2016; 5,994 on 667 before batch 104's units, every one of whose cases is still on its page; 5,984 before batch 101's Sunoco, Inc.; 6,001 on 665 before batch 100)",
+    total === 9584 && out.size === 704 && before2017 === 8089 && own === 9223 && (out.get("OLN") ?? []).some((e) => e.date === "1995-10-26"), `${total} on ${out.size}; ${before2017} before 2017; ${own} own`);
   const top = [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 5).map(([t, v]) => `${t} ${v.length}`).join(", ");
-  check("  …most on GE 302, ExxonMobil 295, Chevron 278, BP 255, Honeywell 252 (XOM 288, GE 284, CVX 269, BP 248, HON 246 before batch 122's suits filed and settlements; GM's 225 fifth before batch 120 gave Honeywell AlliedSignal's and old Honeywell's companies; GE 284, XOM 273, CVX 258, BP 230, GM 222 before batch 113; before the units: GE 284, GM 222, Ford 165, ExxonMobil 163, FMC 135)",
-    top === "GE 302, XOM 295, CVX 278, BP 255, HON 252", top);
+  check("  …most on GE 309, ExxonMobil 295, Chevron 278, BP 255, Honeywell 252 (GE 302 before batch 145's GE Plastics, less SABIC's case of 2008; XOM 288, GE 284, CVX 269, BP 248, HON 246 before batch 122's suits filed and settlements; GM's 225 fifth before batch 120 gave Honeywell AlliedSignal's and old Honeywell's companies; GE 284, XOM 273, CVX 258, BP 230, GM 222 before batch 113; before the units: GE 284, GM 222, Ford 165, ExxonMobil 163, FMC 135)",
+    top === "GE 309, XOM 295, CVX 278, BP 255, HON 252", top);
 
   console.log("\nEPA's own figures: the settlement's penalty, the work ordered, EPA's summary (batch 113, the 2026-11-07 proposal 1)");
   const rows = [...out].flatMap(([t, evs]) => evs.map((e) => ({ t, e })));
@@ -296,14 +296,14 @@ async function main(): Promise<void> {
     omega?.description?.slice(0, 200));
   check("no month of orders \"with no penalty\" holds a case EPA's settlement gives a penalty",
     rows.filter(({ e }) => e.precision === "month").every(({ e }) => (e.externalId ?? "").split(",").every((n) => byNumber.get(n)?.penalty === null)) &&
-      rows.filter(({ e }) => e.precision === "month").length === 346, `${rows.filter(({ e }) => e.precision === "month").length} month rows (340 before the 2026-11-11 audit's Amazon unit, 328 before batch 135, 278 before batch 120)`);
+      rows.filter(({ e }) => e.precision === "month").length === 361, `${rows.filter(({ e }) => e.precision === "month").length} month rows (346 before batch 145's units, 340 before the 2026-11-11 audit's Amazon unit, 328 before batch 135, 278 before batch 120)`);
   const shown = rows.filter(({ e }) => /civil penalty/.test(e.title));
   // on batch 113's slice: 2,125 rows, 1,765 before 2017, 1,250 and 890 more than before it; batch 114's units add the rest
-  check("2,706 rows give a penalty, 2,208 of them before 2017 (2,703 before the 2026-11-11 audit's Amazon unit; 2,616 and 2,137 before batch 135's units; 2,595 and 2,118 before batch 122's settlements on their own days; 2,261 and 1,879 before batch 120's units and spelling; 2,271 and 1,888 before batch 117's taken names; 2,272 and 1,890 before batch 116's AT&T and Consumers Power, Inc.); none from 2017 on gave one before batch 113, since EPA's case totals stop and its settlements go on",
-    shown.length === 2706 && shown.filter(({ e }) => e.date < "2017").length === 2208, `${shown.length}, ${shown.filter(({ e }) => e.date < "2017").length} before 2017`);
-  check("  …3,494 rows name the work ordered, 2,894 before 2017; 7,790 carry EPA's summary, 6,474 before 2017, each case's once on a page (3,485, 2,891, 7,778 and 6,471 before the 2026-11-11 audit's Amazon unit and Brink's Inc.; 3,425, 2,841, 7,598 and 6,316 before batch 135's units; 7,599 and 6,317 before the 2026-11-08 audit's UT Automotive row came off RTX; 3,385, 2,813, 7,598 and 6,316 before batch 122's settlements on their own days; 2,942, 2,469, 6,707 and 5,634 before batch 120's units and spelling; 2,963, 2,489, 6,750 and 5,675 before batch 117's taken names; 2,968, 2,495, 6,785 and 5,703 before batch 116 dropped placeholders and old AT&T's rows; 2,805, 2,363, 6,417 and 5,395 on batch 113's slice)",
-    rows.filter(({ e }) => /work ordered/.test(e.description ?? "")).length === 3494 && rows.filter(({ e }) => /work ordered/.test(e.description ?? "") && e.date < "2017").length === 2894 &&
-      rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "")).length === 7790 && rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "") && e.date < "2017").length === 6474,
+  check("2,776 rows give a penalty, 2,256 of them before 2017 (2,706 and 2,208 before batch 145's units; 2,703 before the 2026-11-11 audit's Amazon unit; 2,616 and 2,137 before batch 135's units; 2,595 and 2,118 before batch 122's settlements on their own days; 2,261 and 1,879 before batch 120's units and spelling; 2,271 and 1,888 before batch 117's taken names; 2,272 and 1,890 before batch 116's AT&T and Consumers Power, Inc.); none from 2017 on gave one before batch 113, since EPA's case totals stop and its settlements go on",
+    shown.length === 2776 && shown.filter(({ e }) => e.date < "2017").length === 2256, `${shown.length}, ${shown.filter(({ e }) => e.date < "2017").length} before 2017`);
+  check("  …3,573 rows name the work ordered, 2,952 before 2017; 7,948 carry EPA's summary, 6,573 before 2017, each case's once on a page (3,494, 2,894, 7,790 and 6,474 before batch 145's units; 3,485, 2,891, 7,778 and 6,471 before the 2026-11-11 audit's Amazon unit and Brink's Inc.; 3,425, 2,841, 7,598 and 6,316 before batch 135's units; 7,599 and 6,317 before the 2026-11-08 audit's UT Automotive row came off RTX; 3,385, 2,813, 7,598 and 6,316 before batch 122's settlements on their own days; 2,942, 2,469, 6,707 and 5,634 before batch 120's units and spelling; 2,963, 2,489, 6,750 and 5,675 before batch 117's taken names; 2,968, 2,495, 6,785 and 5,703 before batch 116 dropped placeholders and old AT&T's rows; 2,805, 2,363, 6,417 and 5,395 on batch 113's slice)",
+    rows.filter(({ e }) => /work ordered/.test(e.description ?? "")).length === 3573 && rows.filter(({ e }) => /work ordered/.test(e.description ?? "") && e.date < "2017").length === 2952 &&
+      rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "")).length === 7948 && rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "") && e.date < "2017").length === 6573,
     `${rows.filter(({ e }) => /work ordered/.test(e.description ?? "")).length} work, ${rows.filter(({ e }) => /work ordered/.test(e.description ?? "") && e.date < "2017").length} before 2017; ${rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "")).length} summaries, ${rows.filter(({ e }) => /EPA's summary/.test(e.description ?? "") && e.date < "2017").length} before 2017`);
   // the rule before batch 113: a penalty was the case total alone
   const before113 = (c: EpaCase): EpaCase => (c.settled ? { ...c, penalty: null, settled: false } : c);
@@ -320,8 +320,8 @@ async function main(): Promise<void> {
       else lost.push(`${t} ${e.dedupBasis}`);
     }
   }
-  check("every row the rule before kept under a month's key and this one does not moves onto the first own row of its cases: 1,232, none lost, so a row keeps its history (1,229 before the 2026-11-11 audit's Amazon unit, 1,195 before batch 135's units, 1,001 before batch 120's units and spelling, 1,008 before batch 117's taken names, 1,007 on batch 114's slice, 950 on batch 113's)",
-    taken === 1232 && lost.length === 0, `${taken} taken; lost ${lost.slice(0, 4).join(" ; ")}`);
+  check("every row the rule before kept under a month's key and this one does not moves onto the first own row of its cases: 1,284, none lost, so a row keeps its history (1,232 before batch 145's units, 1,229 before the 2026-11-11 audit's Amazon unit, 1,195 before batch 135's units, 1,001 before batch 120's units and spelling, 1,008 before batch 117's taken names, 1,007 on batch 114's slice, 950 on batch 113's)",
+    taken === 1284 && lost.length === 0, `${taken} taken; lost ${lost.slice(0, 4).join(" ; ")}`);
   check("money is digits throughout: added in whole cents, never through a float",
     addAmounts("1478000000", "197000000") === "1675000000" && addAmounts("4505902", "900000") === "5405902" && addAmounts("0.10", "0.20") === "0.30" &&
       addAmounts("5100.5", null) === "5100.5" && addAmounts(null, null) === null && cases.every((c) => [c.penalty, c.workOrdered].every((m) => m == null || /^\d+(?:\.\d{2})?$/.test(m))));
@@ -352,19 +352,19 @@ async function main(): Promise<void> {
     return since === modified ? { cases: [], modified, outcome: "unchanged", httpStatus: 304 } : { cases, modified, outcome: "ok", httpStatus: 200 };
   };
   const first = await walkEpaCases(fakeDb(db), { budget: { left: 1 }, fetchFile: serve("Sat, 31 Oct 2026 16:07:24 GMT") });
-  check("the first run reads the file and keeps every case", first.read === "stored" && first.cases === 8506 && db.cases.size === 8506 && db.reads?.modified === "Sat, 31 Oct 2026 16:07:24 GMT", JSON.stringify(first));
+  check("the first run reads the file and keeps every case", first.read === "stored" && first.cases === 8690 && db.cases.size === 8690 && db.reads?.modified === "Sat, 31 Oct 2026 16:07:24 GMT", JSON.stringify(first));
   const again = await walkEpaCases(fakeDb(db), { budget: { left: 1 }, fetchFile: serve("Sat, 31 Oct 2026 16:07:24 GMT") });
   check("  …a run within the month asks nothing", !again.due && asked.length === 1);
   db.reads = { ...(db.reads as NonNullable<FakeDb["reads"]>), ageDays: 31 };
   const same = await walkEpaCases(fakeDb(db), { budget: { left: 1 }, fetchFile: serve("Sat, 31 Oct 2026 16:07:24 GMT") });
   check("  …a month on, a copy EPA has not changed is not read again: it is asked with its Last-Modified",
-    same.read === "unchanged" && asked[1] === "Sat, 31 Oct 2026 16:07:24 GMT" && db.reads?.ageDays === 0 && db.cases.size === 8506);
+    same.read === "unchanged" && asked[1] === "Sat, 31 Oct 2026 16:07:24 GMT" && db.reads?.ageDays === 0 && db.cases.size === 8690);
   db.reads = { ...(db.reads as NonNullable<FakeDb["reads"]>), ageDays: 31 };
   const spent = await walkEpaCases(fakeDb(db), { budget: { left: 0 }, fetchFile: serve("x") });
   const refused = await walkEpaCases(fakeDb(db), { budget: { left: 1 }, fetchFile: async () => ({ cases: [], modified: null, outcome: "throttled", httpStatus: 429 }) });
-  check("  …one read a process, and a refusal keeps the cases kept and is asked again", spent.stopped === "this run's read is spent" && refused.failure?.httpStatus === 429 && db.cases.size === 8506 && db.reads?.ageDays === 31);
+  check("  …one read a process, and a refusal keeps the cases kept and is asked again", spent.stopped === "this run's read is spent" && refused.failure?.httpStatus === 429 && db.cases.size === 8690 && db.reads?.ageDays === 31);
   const fetched = await withFetch(async () => new Response(new Blob([makeZip(CASE_TABLES.map((t) => [t, SLICE.tables[t], true] as [string, string, boolean])) as Uint8Array<ArrayBuffer>]), { status: 200, headers: { "last-modified": "Sun, 01 Nov 2026 00:00:00 GMT" } }), () => fetchCaseFile(null));
-  check("a file that reads as a few thousand cases is refused as broken, not stored: EPA's holds 137,108", fetched.outcome === "error" && /only 8506 cases read/.test(fetched.detail ?? ""), JSON.stringify({ ...fetched, cases: fetched.cases.length }));
+  check("a file that reads as a few thousand cases is refused as broken, not stored: EPA's holds 137,108", fetched.outcome === "error" && /only 8690 cases read/.test(fetched.detail ?? ""), JSON.stringify({ ...fetched, cases: fetched.cases.length }));
   const unchanged = await withFetch(async () => new Response(null, { status: 304, headers: { "last-modified": "Sat, 31 Oct 2026 16:07:24 GMT" } }), () => fetchCaseFile("Sat, 31 Oct 2026 16:07:24 GMT"));
   check("  …and EPA's \"not modified\" is no read", unchanged.outcome === "unchanged");
 
@@ -465,8 +465,8 @@ async function main(): Promise<void> {
     has(eventsOn("SO"), "04-2022-3204") && has(eventsOn("GPJA", "2018-11-28"), "04-2022-3204") && has(eventsOn("SO"), "04-1995-0057") && !has(eventsOn("GPJA", "2018-11-28"), "04-1995-0057"));
   const utilities = ["PEG", "AEP", "SO", "D", "NGG", "EXC", "FE", "NEE", "CMS", "NI", "DTE", "XEL", "WEC", "PNW", "VST", "ES", "PCG", "LNT", "AEE", "EIX", "DUK", "OGE", "HE", "MGEE", "CNP", "IDA", "TXNM", "PPL", "AES", "ED", "EVRG"];
   const counts = utilities.map((t) => `${t} ${out.get(t)?.length ?? 0}`).join(", ");
-  check("the replay's utilities, before first prices: PSEG 47, AEP 44, Southern 39, Dominion 36, FirstEnergy 29, National Grid 27, Exelon 22, NextEra 20 (44, 40, 37, 34, 26, 27, 22 and 19 before batch 122's suits filed and settlements on their own days, which add to ten); thirteen had no EPA row (PSEG, Exelon, NextEra, NiSource, DTE, WEC, Vistra, OGE, Hawaiian Electric, MGE, IDACORP, TXNM, Evergy). FirstEnergy, NiSource and Alliant each have one more than batch 114's slice gave: a case EPA lists with no defendant, read by its name (batch 116)",
-    ["PEG 47", "AEP 44", "SO 39", "D 36", "NGG 27", "FE 29", "EXC 22", "NEE 20", "NI 19", "LNT 12", "CMS 17", "DTE 18", "WEC 16", "VST 11", "OGE 6", "HE 6", "MGEE 4", "IDA 4", "TXNM 5", "EVRG 1"].every((x) => counts.split(", ").includes(x)), counts);
+  check("the replay's utilities, before first prices: PSEG 47, AEP 44, Southern 39, Dominion 36, FirstEnergy 29, National Grid 27, Exelon 22, NextEra 20 (44, 40, 37, 34, 26, 27, 22 and 19 before batch 122's suits filed and settlements on their own days, which add to ten); thirteen had no EPA row (PSEG, Exelon, NextEra, NiSource, DTE, WEC, Vistra, OGE, Hawaiian Electric, MGE, IDACORP, TXNM, Evergy). FirstEnergy, NiSource and Alliant each have one more than batch 114's slice gave: a case EPA lists with no defendant, read by its name (batch 116); DTE one more than before batch 145, DTE Energy Resources' decree of 2012 (03-2006-0316)",
+    ["PEG 47", "AEP 44", "SO 39", "D 36", "NGG 27", "FE 29", "EXC 22", "NEE 20", "NI 19", "LNT 12", "CMS 17", "DTE 19", "WEC 16", "VST 11", "OGE 6", "HE 6", "MGEE 4", "IDA 4", "TXNM 5", "EVRG 1"].every((x) => counts.split(", ").includes(x)), counts);
   // every key a unit is asked by sits inside every name its pattern takes, so ingest's search finds them
   const keyless = cases.flatMap((c) => c.defendants.flatMap((d) => Object.values(UNITS).flat().filter((u) => u.defendant.test(d.trim()) && !alnum(d).includes(u.key)).map((u) => `${u.ticker} ${u.key}: ${d}`)));
   check("  …and every unit's key sits inside every name its pattern takes in the slice, so a company's ingest asks the store for all its cases", keyless.length === 0, keyless.slice(0, 4).join(" | "));
@@ -511,8 +511,8 @@ async function main(): Promise<void> {
   const gains = ["HON", "RTX", "BRK-B", "RSG", "APD", "PFE", "VLO", "RIO", "WLK", "WMB", "GT", "TSN", "KMI", "SYY", "MOS", "LYB", "TTE", "PEP", "DE", "FCX", "SLB", "HUN", "TXT", "ENB", "TAP", "TRP", "BUD", "HMC", "CVS", "CLF", "OTIS", "SOBO"].map((t) => `${t} ${out.get(t)?.length ?? 0}`).join(", ");
   // from first prices and under EDGAR's former names, EPA's whole file gives these 28 companies, Otis, South Bow, Energy
   // Transfer, Duke and the 11 whose names hold "&" 906 cases and 818 rows more, none fewer; 9 of them had no EPA row
-  check("the replay, before first prices: Honeywell 252, RTX 123 (124 before the 2026-11-08 audit's UT Automotive fix), Goodyear 107, Pfizer 106, Air Products 66, Kinder Morgan 59, Berkshire 59, LyondellBasell 56, Valero 53, Rio Tinto 48, Westlake 46, Republic Services 33… (246, 121, 103, 105, 66, 59, 58, 55, 53, 43, 45 and 33 before batch 122's suits filed and settlements on their own days)",
-    gains === "HON 252, RTX 123, BRK-B 59, RSG 33, APD 66, PFE 106, VLO 53, RIO 48, WLK 46, WMB 34, GT 107, TSN 64, KMI 59, SYY 30, MOS 22, LYB 56, TTE 22, PEP 22, DE 33, FCX 21, SLB 21, HUN 28, TXT 71, ENB 12, TAP 9, TRP 8, BUD 5, HMC 5, CVS 10, CLF 2, OTIS 1, SOBO 1", gains);
+  check("the replay, before first prices: Honeywell 252, RTX 123 (124 before the 2026-11-08 audit's UT Automotive fix), Goodyear 107, Pfizer 106, Air Products 66, Kinder Morgan 59, Berkshire 59, LyondellBasell 56, Valero 53, Rio Tinto 48, Westlake 46, Republic Services 33… (246, 121, 103, 105, 66, 59, 58, 55, 53, 43, 45 and 33 before batch 122's suits filed and settlements on their own days; Cleveland-Cliffs 4, 2 before batch 145's Cleveland-Cliffs Iron)",
+    gains === "HON 252, RTX 123, BRK-B 59, RSG 33, APD 66, PFE 106, VLO 53, RIO 48, WLK 46, WMB 34, GT 107, TSN 64, KMI 59, SYY 30, MOS 22, LYB 56, TTE 22, PEP 22, DE 33, FCX 21, SLB 21, HUN 28, TXT 71, ENB 12, TAP 9, TRP 8, BUD 5, HMC 5, CVS 10, CLF 4, OTIS 1, SOBO 1", gains);
 
   // the 2026-11-08 proposal 2, approved by the owner on 2026-11-08 (batch 122)
   console.log("\nEPA's own days: the day a suit was filed in court, and each settlement of a case all the company's on its own day (batch 122, the 2026-11-08 proposal 2)");
@@ -602,9 +602,9 @@ async function main(): Promise<void> {
       views++;
     }
   }
-  check("  …31 cases a page's (28 cases on 27 pages) on 75 settlement rows, 39 of them new; every row the rule before gave is still given under its own key: 9,128, none moved, none lost (9,110 before the 2026-11-11 audit's Amazon unit and Brink's Inc.; 8,888 before batch 135's units; 8,889 before the 2026-11-08 audit's UT Automotive fix)",
+  check("  …31 cases a page's (28 cases on 27 pages) on 75 settlement rows, 39 of them new; every row the rule before gave is still given under its own key: 9,308, none moved, none lost (9,128 before batch 145's units; 9,110 before the 2026-11-11 audit's Amazon unit and Brink's Inc.; 8,888 before batch 135's units; 8,889 before the 2026-11-08 audit's UT Automotive fix)",
     splitPairs.size === 31 && new Set([...splitPairs].map((x) => x.split(" ")[1])).size === 28 && new Set([...splitPairs].map((x) => x.split(" ")[0])).size === 27 && views === 75 &&
-      gainedRows === 39 && kept122 === 9128 && lost122.length === 0 && rows.every(({ e }) => !e.legacyDedupBasis || /:no-penalty$/.test(e.legacyDedupBasis) || /@\d{4}-\d{2}-\d{2}$/.test(e.legacyDedupBasis)),
+      gainedRows === 39 && kept122 === 9308 && lost122.length === 0 && rows.every(({ e }) => !e.legacyDedupBasis || /:no-penalty$/.test(e.legacyDedupBasis) || /@\d{4}-\d{2}-\d{2}$/.test(e.legacyDedupBasis)),
     `${splitPairs.size} pairs, ${views} views, ${gainedRows} new; kept ${kept122}, lost ${lost122.slice(0, 3).join(" ; ")}`);
   // a case whose own day is no settlement's leaves it: its stored row moves onto the last settlement's
   const wecCik = rowOf("WEC")[0];
@@ -630,10 +630,10 @@ async function main(): Promise<void> {
   console.log("\nEPA's cost recovery on the rows (batch 129, the 2026-11-09 proposal 4)");
   const ford = byNumber.get("05-1991-0214");
   const kramer = byNumber.get("02-1989-0358");
-  check("the case file keeps EPA's cost recovery, the case's total else its one settlement's, and each settlement's own: Ford's $55,513,499 of 1993, the 225-party decree's $95,000,000",
+  check("the case file keeps EPA's cost recovery, the case's total else its one settlement's, and each settlement's own: Ford's $55,513,499 of 1993, the 225-party decree's $95,000,000; 1,144 of the slice's cases give one (1,141 before batch 145's)",
     ford?.costRecovery === "55513499" && ford.penalty === null && ford.workOrdered === null && ford.settlements?.[0]?.costRecovery === "55513499" &&
       kramer?.costRecovery === "95000000" && kramer.defendants.length === 225 &&
-      cases.filter((c) => c.costRecovery).length === 1141 && cases.every((c) => [c.costRecovery, ...(c.settlements ?? []).map((x) => x.costRecovery)].every((m) => m == null || /^\d+(?:\.\d{2})?$/.test(m))),
+      cases.filter((c) => c.costRecovery).length === 1144 && cases.every((c) => [c.costRecovery, ...(c.settlements ?? []).map((x) => x.costRecovery)].every((m) => m == null || /^\d+(?:\.\d{2})?$/.test(m))),
     `${ford?.costRecovery} ${kramer?.costRecovery}; ${cases.filter((c) => c.costRecovery).length} cases`);
   // the slice's two tables as an older copy wrote them, without the columns
   const csvOf = (head: readonly string[], rows: string[][]) => `${[head, ...rows].map((r) => r.map((x) => `"${x.replace(/"/g, '""')}"`).join(",")).join("\n")}\n`;
@@ -700,8 +700,8 @@ async function main(): Promise<void> {
       }
     }
   }
-  check("before any first price, 3,008 of the replay's rows on 384 pages name a cost recovery, 117 of them a month's; 2,077 showed no money before, 1,875 of them before 2017 and 1,032 before 2001; no row's day, title or key changes (2,942, 380, 114, 2,030, 1,831 and 1,000 before batch 135's units)",
-    carrying === 3008 && carryingPages.size === 384 && monthCarrying === 117 && bareBefore === 2077 && cost2017 === 1875 && cost2001 === 1032 && sameElse,
+  check("before any first price, 3,037 of the replay's rows on 387 pages name a cost recovery, 119 of them a month's; 2,103 showed no money before, 1,900 of them before 2017 and 1,045 before 2001; no row's day, title or key changes (3,008, 384, 117, 2,077, 1,875 and 1,032 before batch 145's units; 2,942, 380, 114, 2,030, 1,831 and 1,000 before batch 135's units)",
+    carrying === 3037 && carryingPages.size === 387 && monthCarrying === 119 && bareBefore === 2103 && cost2017 === 1900 && cost2001 === 1045 && sameElse,
     `${carrying} on ${carryingPages.size}, ${monthCarrying} month rows; ${bareBefore} bare before, ${cost2017} before 2017, ${cost2001} before 2001; same otherwise ${sameElse}`);
   const gePage = await epaCasesFor(fakeDb({ ...db, listed: "1962-01-02" }), 1, plan("GE"), noWalk);
   const recovery = read("db/045_epa_cost_recovery.sql");
@@ -715,17 +715,17 @@ async function main(): Promise<void> {
   console.log("\nEPA's supplemental environmental projects on the rows (batch 141, the 2026-11-11 proposal 3)");
   const toyota = byNumber.get("HQ-1999-1049");
   const projectSettlements = cases.flatMap((c) => c.settlements ?? []).filter((x) => x.projectsFigure);
-  check("the case file keeps each settlement's projects figure, the settlements table's SEP_AMT, and EPA's text of them; a case its one settlement's, or its own day's: Toyota's $20,000,000 of 2003, 278 of the slice's cases, 291 dated settlements (289 and 290 before the 2026-11-11 audit kept other days' projects off a case's row and added Amazon's cases)",
+  check("the case file keeps each settlement's projects figure, the settlements table's SEP_AMT, and EPA's text of them; a case its one settlement's, or its own day's: Toyota's $20,000,000 of 2003, 286 of the slice's cases, 299 dated settlements (278 and 291 before batch 145's cases; 289 and 290 before the 2026-11-11 audit kept other days' projects off a case's row and added Amazon's cases)",
     toyota?.projectsFigure === "20000000" && JSON.stringify(toyota.projects) === JSON.stringify(["Toyota will spend $20 million to retrofit school buses and other heavy duty diesels"]) &&
       toyota.settlements?.find((x) => x.day === "2003-03-07")?.projectsFigure === "20000000" &&
-      cases.filter((c) => c.projectsFigure).length === 278 && projectSettlements.length === 291 &&
+      cases.filter((c) => c.projectsFigure).length === 286 && projectSettlements.length === 299 &&
       cases.every((c) => [c.projectsFigure, ...(c.settlements ?? []).map((x) => x.projectsFigure)].every((m) => m == null || /^\d+(?:\.\d{2})?$/.test(m))),
     `${toyota?.projectsFigure} ${JSON.stringify(toyota?.projects)}; ${cases.filter((c) => c.projectsFigure).length} cases, ${projectSettlements.length} settlements`);
   const projectRows: string[][] = [];
   eachCsvRow(SLICE.tables[PROJECT_TABLE], ["CASE_NUMBER", "ENF_CONCLUSION_ID", "SEP_ID", "SEP_TEXT"], (v) => projectRows.push(v));
   const textOnly = new Set(projectRows.filter((r) => r[3].trim() && !byNumber.get(r[0])?.projectsFigure).map((r) => r[0]));
-  check("  …a text with no figure is not kept, and a case keeps a text only beside a figure: the slice's projects table names 678 rows, the texts of " + textOnly.size + " cases EPA gives no figure for left off",
-    projectRows.length === 678 && textOnly.size > 0 && [...textOnly].every((n) => !byNumber.get(n)?.projects?.length) && cases.every((c) => !c.projects?.length || c.projectsFigure),
+  check("  …a text with no figure is not kept, and a case keeps a text only beside a figure: the slice's projects table names 687 rows (678 before batch 145's cases), the texts of " + textOnly.size + " cases EPA gives no figure for left off",
+    projectRows.length === 687 && textOnly.size > 0 && [...textOnly].every((n) => !byNumber.get(n)?.projects?.length) && cases.every((c) => !c.projects?.length || c.projectsFigure),
     `${projectRows.length} rows; ${textOnly.size} text-only cases`);
   // a project EPA lists once a category is one project: Toyota's again under a second category, and once more under a new id
   const toyotaRow = projectRows.find((r) => r[0] === "HQ-1999-1049") as string[];
@@ -800,9 +800,9 @@ async function main(): Promise<void> {
   }
   const projectsTotal = `${projectsSum / HUNDRED}.${(projectsSum % HUNDRED).toString().padStart(2, "0")}`;
   const topProjects = [...projectPages].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 5).map(([t, n]) => `${t} ${n}`).join(", ");
-  check("before any first price, 227 of the replay's rows on 112 pages name supplemental environmental projects, 184 of them before 2017, $186,798,376.96 in all, 225 with EPA's text; 2 showed no money before; most on Chevron 12, BP 11, Valero and ExxonMobil 8, Eastman Chemical 7; no row's day, title or key changes (230 rows on 111 pages, 187 before 2017, $209,133,056.96, as the 2026-11-11 proposal measured, before its audit kept four rows' projects of other days off them, $23,858,334, and added Amazon's $1,523,654 of 2018)",
-    carryingProjects === 227 && projectPages.size === 112 && projects2017 === 184 && projectsTotal === "186798376.96" && quoted === 225 && projectsBare === 2 &&
-      topProjects === "CVX 12, BP 11, VLO 8, XOM 8, EMN 7" && sameOtherwise,
+  check("before any first price, 232 of the replay's rows on 115 pages name supplemental environmental projects, 187 of them before 2017, $187,059,414.96 in all, 230 with EPA's text; 2 showed no money before; most on Chevron 12, BP 11, Eastman Chemical, Valero and ExxonMobil 8; no row's day, title or key changes (227 rows on 112 pages, 184 before 2017, $186,798,376.96, 225 with the text and Eastman Chemical 7 before batch 145's units; 230 rows on 111 pages, 187 before 2017, $209,133,056.96, as the 2026-11-11 proposal measured, before its audit kept four rows' projects of other days off them, $23,858,334, and added Amazon's $1,523,654 of 2018)",
+    carryingProjects === 232 && projectPages.size === 115 && projects2017 === 187 && projectsTotal === "187059414.96" && quoted === 230 && projectsBare === 2 &&
+      topProjects === "CVX 12, BP 11, EMN 8, VLO 8, XOM 8" && sameOtherwise,
     JSON.stringify({ carryingProjects, pages: projectPages.size, projects2017, projectsBare, quoted, projectsTotal, topProjects, sameOtherwise }));
   const cvxPage = await epaCasesFor(fakeDb({ ...db, listed: "1962-01-02" }), 1, plan("CVX"), noWalk);
   const projectsSql = read("db/050_epa_projects.sql");
@@ -837,8 +837,8 @@ async function main(): Promise<void> {
     JSON.stringify(brinks?.defendants));
   const amznRows = eventsOn("AMZN");
   const amznOrder = amznRows.find((e) => e.date === "2018-02-14");
-  check("finding 4: Amazon's own companies and sites are Amazon's: 21 EPA rows, not 4, its $1,215,700 pesticide order of 2018 with its $1,523,654 eLearning project and its two waste penalties among them; a case naming it only as a consignee or \"c/o\" for another firm, or its site beside another firm's name, is not",
-    amznRows.length === 21 && amznOrder?.title === "EPA final order: $1,215,700 civil penalty (pesticides law (FIFRA))" &&
+  check("finding 4: Amazon's own companies and sites are Amazon's: 22 EPA rows, not 4 (21 before batch 145 read \"AMAZON.SERVICES, INC.\", 04-2021-1234), its $1,215,700 pesticide order of 2018 with its $1,523,654 eLearning project and its two waste penalties among them; a case naming it only as a consignee or \"c/o\" for another firm, or its site beside another firm's name, is not",
+    amznRows.length === 22 && has(amznRows, "04-2021-1234") && amznOrder?.title === "EPA final order: $1,215,700 civil penalty (pesticides law (FIFRA))" &&
       /supplemental environmental projects \$1,523,654, EPA's figure: "Amazon Services LLC/.test(amznOrder.description ?? "") &&
       has(amznRows, "07-2022-0131") && has(amznRows, "07-2025-0052") && has(amznRows, "06-2018-0369") && has(amznRows, "08-2023-0073") &&
       ["06-2019-0303", "09-2025-0616", "09-2026-7014", "09-2026-4341", "08-2026-0186"].every((n) => !has(amznRows, n)) && unitKeysOf(rowOf("AMZN")[0]).includes("amazon"),
@@ -879,6 +879,36 @@ async function main(): Promise<void> {
   check("the round's 13 companies are their tickers' records, and every unit of the round names its days in lib/epaCases.ts",
     added135.join(" ") === "ASH AKZOY NVS GATX MS LEN GGB SEB KR ANDE KEX BALL WM" && /Batch 135, the fourth round/.test(read("lib/epaCases.ts")), added135.join(" "));
 
+  // batch 145, the 2026-11-11b proposal 2, approved by the owner on 2026-11-12
+  console.log("\nA fifth round of units: companies named after their owners, each on its owner's page on its days (batch 145, the 2026-11-11b proposal 2)");
+  check("National Fuel Gas Supply's decree of 1995 with 107 parties (02-1993-0149) and its $17,762 order of 2015 are National Fuel Gas's; Kaiser Aluminum Fabricated Products' $20,000 of 2007 is Kaiser's",
+    has(eventsOn("NFG"), "02-1993-0149") && has(eventsOn("NFG"), "03-2015-0196") && has(eventsOn("KALU"), "03-2007-0038"));
+  check("Coca-Cola Refreshments is Coca-Cola's from 2010-10-02, the day its 8-K reports the bottlers bought from Coca-Cola Enterprises: the Superfund decree of 2012 naming both (04-2009-9006) is on KO's page, Coca-Cola Enterprises' own cases are not",
+    has(eventsOn("KO"), "04-2009-9006") && !onPage("KO", unitCase("COCA-COLA REFRESHMENTS USA, INC.", "2010-10-01")) && onPage("KO", unitCase("COCA-COLA REFRESHMENTS USA, INC.", "2010-10-02")) &&
+      !has(eventsOn("KO"), "06-1999-0064") && !has(eventsOn("KO"), "01-2007-0507") && !onPage("KO", unitCase("COCA-COLA ENTERPRISES, INC.", "2012-02-09")));
+  check("GE Plastics is GE's to 2007-07-30, before its sale to SABIC: its $50,000 of 1994 (05-1993-0807) and its order of 2003 are GE's; \"GE PLASTICS (FORMERLY GENERAL ELECTRIC)\" of 2008, which the caption rule read as GE's before batch 145, is not; GE Capital its own",
+    has(eventsOn("GE"), "05-1993-0807") && has(eventsOn("GE"), "04-2003-9926") && !has(eventsOn("GE"), "05-2008-6618") &&
+      onPage("GE", unitCase("GE PLASTICS", "2007-07-30")) && !onPage("GE", unitCase("GENERAL ELECTRIC PLASTICS", "2007-07-31")) && onPage("GE", unitCase("GENERAL ELECTRIC CAPITAL CORPORATION", "2015-01-01")));
+  check("FMC Wyoming is FMC's to 2015-03-31, the eve of its sale to Tronox; Denison Mines (USA) Denison's to 2012-06-28, the eve of its sale to Energy Fuels, however EPA writes it (the caption rule read \"DENISON MINES (USA) CORP.\" as Denison's on any day before batch 145), Denison's own name always",
+    has(eventsOn("FMC"), "08-2012-0059") && onPage("FMC", unitCase("FMC WYOMING CORPORATION", "2015-03-31")) && !onPage("FMC", unitCase("FMC WYOMING CORPORATION", "2015-04-01")) &&
+      has(eventsOn("DNN"), "08-2012-0009") && onPage("DNN", unitCase("DENISON MINES (USA) CORP.", "2012-06-28")) && !onPage("DNN", unitCase("DENISON MINES (USA) CORP.", "2012-06-29")) &&
+      !onPage("DNN", unitCase("DENISON MINES USA CORPORATION", "2012-06-29")) && onPage("DNN", unitCase("DENISON MINES CORP.", "2026-01-01")));
+  check("a company's own name as EPA writes it: \"J B HUNT TRANPORT\" (04-1997-0361) on J.B. Hunt, whose EDGAR title is \"HUNT J B TRANSPORT SERVICES INC\"; \"WALMART STORES, INC.\" (06-2018-0307) on Walmart; \"THE PROCTER & GAMBLE PAPER PRODUCTS CO.\" (05-2001-0659) on P&G",
+    has(eventsOn("JBHT"), "04-1997-0361") && has(eventsOn("JBHT"), "10-2015-0028") && has(eventsOn("WMT"), "06-2018-0307") && has(eventsOn("PG"), "05-2001-0659") && has(eventsOn("PG"), "07-2011-0306"));
+  check("Enterprise Products Operating is Enterprise Products' (14 rows, its $378,215 of 2015 among them); its general partner, owned by the controlling family's company, is not",
+    has(eventsOn("EPD"), "06-2015-3315") && has(eventsOn("EPD"), "04-2006-8021") && !onPage("EPD", unitCase("ENTERPRISE PRODUCTS GP, LLC", "2015-01-01")));
+  check("Energy Transfer's named companies, DTE Energy Resources and The Cleveland-Cliffs Iron Company are their owners': Energy Transfer Fuel's order of 2012, DTE's $1,750,000 decree of 2012 (03-2006-0316), Cleveland-Cliffs' order of 1996",
+    has(eventsOn("ET"), "06-2012-3314") && has(eventsOn("ET"), "03-2026-0074") && has(eventsOn("DTE"), "03-2006-0316") && has(eventsOn("CLF"), "08-1996-0126"));
+  check("namesakes stay off: Amazon Construction and Amazon Lights are not Amazon's; BRP US Inc is BRP's, a bare BRP of another trade is not",
+    !has(eventsOn("AMZN"), "09-2000-0438") && !has(eventsOn("AMZN"), "04-2008-3002") && has(eventsOn("DOO"), "05-2026-0065") && !onPage("DOO", unitCase("BRP ENTERPRISES", "2020-01-01")));
+  const added145 = [14693, 20212, 21344, 26324, 37785, 40545, 70145, 79879, 104169, 712034, 728535, 795266, 811596, 812074, 895564, 915389, 1022079, 1048911, 1061219, 1063259, 1090012, 1279495, 1309402, 1370946, 1408075, 1506721, 1534701, 1748797, 1834622, 1957132, 1985406].map((c) => companies.find(([k]) => k === c)?.[1]);
+  const keys145 = Object.values(UNITS).flat().filter((u) => /^(?:geplastics|generalelectricplastics|cocacolarefreshments|fmcwyoming|denisonmines)$/.test(u.key)).map((u) => `${u.key} ${u.from ?? ""}–${u.to ?? ""}`).sort().join(", ");
+  check("the round's 31 companies are their tickers' records, every dated unit gives its day in lib/epaCases.ts, and each GE Plastics key covers the names its pattern takes",
+    added145.join(" ") === "BF-B CHDN KO CW FMC GE NFG PPG WMT ACCO JBHT KBH KALU OI BAESY EMN DGX FDX EPD DNN DVN BTE GPRE OC GPK BLFBY PSX DOO HAYW SN NEXHY" &&
+      keys145 === "cocacolarefreshments 2010-10-02–, denisonmines –2012-06-28, fmcwyoming –2015-03-31, generalelectricplastics –2007-07-30, geplastics –2007-07-30" &&
+      ["2010-10-02", "2007-07-30", "2015-03-31", "2012-06-28"].every((d) => read("lib/epaCases.ts").split("export interface EpaUnit")[0].includes(d)) && /Batch 145, the fifth round/.test(read("lib/epaCases.ts")),
+    `${added145.join(" ")} | ${keys145}`);
+
   console.log("\nThe 2026-11-10 audit of batches 131–136, fixed (batch 137)");
   // finding 1: Kroger sold Kroger Specialty Pharmacy to Elevance Health in 2024
   const kspCase = (day: string) => unitCase("Kroger Specialty Pharmacy 5-60 (Axium Healthcare)", day);
@@ -889,9 +919,9 @@ async function main(): Promise<void> {
     onPage("KR", kspCase("2024-08-17")) && !onPage("KR", kspCase("2024-08-18")) && !onPage("ELV", kspCase("2025-02-19")) && onPage("ELV", kspCase("2025-02-20")) &&
       !onPage("ELV", kspCase("2024-08-17")) && onPage("KR", unitCase("KROGER LIMITED PARTNERSHIP II", "2026-07-28")) && !onPage("ELV", unitCase("KROGER LIMITED PARTNERSHIP II", "2026-07-28")));
   // finding 4: the coverage map's EPA row gives the figures the checks above give
-  check("the coverage map's EPA row gives 9,386 rows on 693 companies, 7,974 before 2017, and 237 suit-filed rows on 109 pages, not the figures before batch 135",
-    /9,386 rows on 693 companies, 7,974 before 2017/.test(read("docs/COVERAGE-MAP.md")) && /237 rows on 109 pages/.test(read("docs/COVERAGE-MAP.md")) &&
-      !/9,155 rows on 690 companies|228 rows on 106 pages/.test(read("docs/COVERAGE-MAP.md")));
+  check("the coverage map's EPA row gives 9,584 rows on 704 companies, 8,089 before 2017, and 237 suit-filed rows on 109 pages, not the figures before batch 135, 142 or 145 (9,386 on 693 stood until batch 145)",
+    /9,584 rows on 704 companies, 8,089 before 2017/.test(read("docs/COVERAGE-MAP.md")) && /237 rows on 109 pages/.test(read("docs/COVERAGE-MAP.md")) &&
+      !/9,155 rows on 690 companies|228 rows on 106 pages|9,386 rows on 693 companies|9,404 rows on 693 companies/.test(read("docs/COVERAGE-MAP.md")));
   check("  …and the stored case file finds it on Elevance's page by the unit's key",
     unitKeysOf(1156039).includes("krogerspecialtypharmacy") && "Kroger Specialty Pharmacy 5-60 (Axium Healthcare)".toLowerCase().replace(/[^a-z0-9]/g, "").includes("krogerspecialtypharmacy"));
 
@@ -905,8 +935,8 @@ async function main(): Promise<void> {
       !!unitsOf("RTX").find((u) => u.unit === "United Technologies Automotive")?.defendant.test("UNITED TECHNOLOGIES AUTOMOVTIVE, INC") &&
       !!unitsOf("RTX").find((u) => u.unit === "United Technologies' divisions")?.defendant.test("UNITED TECHNOLOGIES CORPORATION"),
     utAuto.map((c) => `${c.number} ${c.day} ${has(rtxRows, c.number) ? "RTX" : "-"}`).join("; "));
-  check("finding 3: the README's sources table counts the units of 108 companies, as UNITS holds them (107 before Amazon's, batch 142; 106 before Elevance Health's pharmacy, batch 137; 95 before batch 135)",
-    Object.keys(UNITS).length === 108 && /one of the operating units 108 companies held/.test(read("README.md")) && !/operating units (?:35|95|106|107) companies held/.test(read("README.md")),
+  check("finding 3: the README's sources table counts the units of 139 companies, as UNITS holds them (108 before batch 145's fifth round; 107 before Amazon's, batch 142; 106 before Elevance Health's pharmacy, batch 137; 95 before batch 135)",
+    Object.keys(UNITS).length === 139 && /one of the operating units 139 companies held/.test(read("README.md")) && !/operating units (?:35|95|106|107|108) companies held/.test(read("README.md")),
     `${Object.keys(UNITS).length}`);
 
   console.log("\nThe 2026-11-07 audit of batches 108–115, fixed (batch 116)");

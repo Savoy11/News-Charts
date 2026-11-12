@@ -228,7 +228,7 @@ exist; the class reads are the new work · *Practicality:* medium — measured, 
 
 ## 2. A fifth round of units named after their owners, found across five sources at once: Invesco Funds Group, Raymond James Financial Services, RBC Capital Markets, National Fuel Gas Distribution, A. O. Smith Electrical Products, BRP US, Coca-Cola Refreshments… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-12 ("Approve (Recommended)"). Filed under Scope refocus by batch 144, to be built in batch 145.
+**Status:** APPROVED — by the owner, 2026-11-12 ("Approve (Recommended)"). Built in batch 145: 40 EPA entries (31 new companies, six widened), 9 CPSC entries on 7 companies and 8 release-map names on 7, every name each pattern takes read by hand, each sold or bought unit between the days its filings give. On the saved data 303 items more and one off (GE Plastics' 2008 case, SABIC's, which the caption rule had read as GE's); where the scout's first prices are read, 132 on 26 pages, 91 before 2017, where this file measured 114 and 81.
 **Owner's reason (if rejected):**
 
 **Raised before:** in parts. Each source's units came in rounds of their own:

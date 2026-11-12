@@ -183,6 +183,7 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
         why: "its securities firm until Piper Jaffray's spin-off (\"December 31, 2003, the Company completed the distribution\" and \"distribution of Piper Jaffray\", its 10-K filed 2004-02-27): the captions of 2005 and 2010 that still write the name are Piper Jaffray's",
       },
       { name: "U.S. Bank National Association", why: "its bank, named after it, which the CFPB's actions of 2013, 2014, 2022 and 2023 name in full (batch 89)" },
+      { name: "U.S. Bancorp Investments", why: "its broker-dealer, named after it, which the SEC's captions name (batch 145, the 2026-11-11b proposal 2)" },
     ],
   },
   36966: {
@@ -249,7 +250,13 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
     ],
   },
   1163653: { ticker: "NMR", names: [{ name: "Nomura Securities International", why: "its US securities firm, named after it" }] },
-  914208: { ticker: "IVZ", names: [{ name: "Invesco Advisers", why: "its fund adviser, named after it" }] },
+  914208: {
+    ticker: "IVZ",
+    names: [
+      { name: "Invesco Advisers", why: "its fund adviser, named after it" },
+      { name: "Invesco Funds Group", why: "its US fund adviser, named after it, which the SEC's captions name (batch 145, the 2026-11-11b proposal 2)" },
+    ],
+  },
   1535929: { ticker: "VOYA", names: [{ name: "Voya Financial Advisors", why: "its broker-dealer, named after it" }] },
   750577: { ticker: "HWC", names: [{ name: "Hancock Whitney Investment Services", why: "its broker-dealer, named after it" }] },
   38777: { ticker: "BEN", names: [{ name: "Franklin Advisers", why: "its fund adviser, named after it" }] },
@@ -427,7 +434,18 @@ export const BANK_UNITS: Readonly<Record<number, { ticker: string; names: readon
       },
       { name: "Prudential Equity Group", why: "the same firm from 2003, named after it, which captions write \"f/k/a Prudential Securities Inc.\"" },
     ],
+  },  // batch 145, the fifth round (the 2026-11-11b proposal 2): brokers', banks' and managers' companies named after them
+  1000275: { ticker: "RY", names: [{ name: "RBC Capital Markets", why: "its US broker-dealer, named after it, which the SEC's captions name (batch 145, the 2026-11-11b proposal 2)" }] },
+  720005: {
+    ticker: "RJF",
+    names: [
+      { name: "Raymond James Financial Services", why: "its broker-dealer for independent advisers, named after it, which the SEC's captions name (batch 145, the 2026-11-11b proposal 2)" },
+      { name: "Raymond James Financial Services Advisors", why: "that broker-dealer's advisory company, named after it, which the SEC's captions name (batch 145, the 2026-11-11b proposal 2)" },
+    ],
   },
+  37996: { ticker: "F", names: [{ name: "Ford Motor Credit", why: "its finance company, named after it, which the SEC's captions name (batch 145, the 2026-11-11b proposal 2)" }] },
+  1089113: { ticker: "HSBC", names: [{ name: "HSBC Bank USA", why: "its US bank, named after it, which the SEC's captions name (batch 145, the 2026-11-11b proposal 2)" }] },
+  73124: { ticker: "NTRS", names: [{ name: "Northern Trust Hedge Fund Services", why: "its fund administrator, named after it, which the SEC's captions name (batch 145, the 2026-11-11b proposal 2)" }] },
 };
 
 

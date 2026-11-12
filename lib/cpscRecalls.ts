@@ -302,6 +302,13 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; firm?: R
  *   www.sec.gov serves only with `NEWS_CHARTS_CONTACT` set. Baby Jogger: Newell's filings name it
  *   first in 2015, after its last recall. MTD's Cub Cadet, Rubbermaid, Mega Brands, Timberland, Bryant
  *   and First Alert: no recall falls in their owners' days.
+ *
+ * Batch 145, the fifth round (the 2026-11-11b proposal 2, approved by the owner 2026-11-12): units named
+ * after their owners, every firm each pattern reads in the recalls read by hand. Hayward Industries,
+ * RH US (once "RH, US LLC"), SharkNinja Operating, BRP's US, Mexican and Finnish companies, Johnson Outdoors Diving (Scubapro),
+ * Yamaha Motor Manufacturing and Yamaha Motor Powered Products, and A. O. Smith Water Products their
+ * owners' own; A. O. Smith Electrical Products to 2011-08-21, sold to Regal Beloit (A. O. Smith's 8-K,
+ * item 2.01, reporting 2011-08-22).
  */
 export interface CpscUnit {
   ticker: string;
@@ -443,6 +450,17 @@ export const UNITS: Readonly<Record<number, readonly CpscUnit[]>> = {
     ...unit("DLTR", "Dollar Tree Distribution", /^Dollar Tree Distribution\b/i, ["dollartreedistribution"]),
   ],
   63276: [...unit("MAT", "American Girl", /^American Girl\b/i, ["americangirl"], { from: "2001-03-28" })],
+  // batch 145, the fifth round (the 2026-11-11b proposal 2)
+  1834622: [...unit("HAYW", "Hayward Industries", /^Hayward Industries\b/i, ["haywardindustries"])],
+  1528849: [...unit("RH", "RH US", /^RH,?\s+U\.?\s?S\b/i, ["rhus"])],
+  1957132: [...unit("SN", "SharkNinja Operating", /^SharkNinja Operating\b/i, ["sharkninjaoperating"])],
+  1748797: [...unit("DOO", "BRP's US, Mexican and Finnish companies", /^BRP(?:$|\s+(?:U\.?\s?S|Mexico|Finland)\b)/i, ["brp"])],
+  788329: [...unit("JOUT", "Johnson Outdoors Diving", /^Johnson Outdoors Diving\b/i, ["johnsonoutdoorsdiving"])],
+  1447100: [...unit("YMHAY", "Yamaha Motor Manufacturing and Powered Products", /^Yamaha Motor (?:Manufacturing|Powered Products)\b/i, ["yamahamotormanufacturing", "yamahamotorpoweredproducts"])],
+  91142: [
+    ...unit("AOS", "A. O. Smith Water Products", /^A\.?\s?O\.?\s+Smith Water Products\b/i, ["smithwaterproducts"]),
+    ...unit("AOS", "A. O. Smith Electrical Products", /^A\.?\s?O\.?\s+Smith Electrical Products\b/i, ["smithelectricalproducts"], { to: "2011-08-21" }),
+  ],
 };
 
 /** The letters a company's stored recalls are asked by for its units (`UNITS`). */

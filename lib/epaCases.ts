@@ -543,6 +543,22 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
       why: "EPA's spelling of The Toro Company in its 2001 Chippewa Avenue order (05-2002-0076), not Toro Corp., the shipping company formed in 2022, which files as \"Toro Corp.\"",
     },
   ],
+  // batch 145: a unit sold, whose name the caption rule would still read as its seller's after the
+  // day; the unit (`UNITS`) takes it on its days, which this list does not touch
+  40545: [
+    {
+      ticker: "GE",
+      defendant: /^GE\s+PLASTICS\b/i,
+      why: "GE Plastics after its sale to SABIC (GE's 8-K of 2007-07-30): \"GE PLASTICS (FORMERLY GENERAL ELECTRIC)\" of 2008 (05-2008-6618) is SABIC's, which the caption rule read as General Electric's",
+    },
+  ],
+  1063259: [
+    {
+      ticker: "DNN",
+      defendant: /^DENISON MINES\s*\(?\s*U\.?\s?S\.?\s?A\b/i,
+      why: "Denison Mines (USA) after its sale to Energy Fuels (Denison's 6-K of 2012-07-02): the caption rule reads \"DENISON MINES (USA) CORP.\" as Denison Mines Corp.'s; no case names it after the day",
+    },
+  ],
 };
 
 /**
@@ -764,6 +780,36 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
  * - Left as namesakes: Seaboard Asphalt, Seaboard Industries and the Seaboard railroads; Kirby Forest
  *   Industries and Kirby & Sons; Ball Metal & Chemical and Ball Glass Container; Lennar Asphalt (1975);
  *   Ashland Metal, Ashland Exploration (sold in 1997) and the towns.
+ *
+ * Batch 145, the fifth round (the 2026-11-11b proposal 2, approved by the owner 2026-11-12): units named
+ * after their owners, found where a defendant begins with the company's name and adds words before its
+ * legal ones, and every defendant each pattern reads on EPA's whole file read by hand. A rule for the
+ * shape was measured and refused (a sample read 12 of 33 multi-word and 29 of 38 one-word hits as
+ * another company's), so each is an entry. Held throughout unless a day is given, each from a filing:
+ * - Coca-Cola Refreshments, Coca-Cola's from 2010-10-02, the North American bottling business it bought
+ *   from Coca-Cola Enterprises (its 8-K, items 1.01 and 2.01, reporting that day): Coca-Cola
+ *   Enterprises' own cases, before and after, are another company's.
+ * - GE Plastics, GE's to 2007-07-30, the last filing EDGAR's full-text search finds that names it
+ *   before its sale to SABIC (GE's 8-K of that day; its 10-Q of 2007-11-02 reports the sale): the cases
+ *   of 2008 ("formerly General Electric", which the caption rule read as GE's until this batch's
+ *   `NOT_THE_COMPANY` entry) and two settled in 2012 are SABIC's. GE Capital and GE's railcar repair
+ *   company its own.
+ * - FMC Wyoming to 2015-03-31, the alkali business FMC sold to Tronox (FMC's 8-K, item 2.01, reporting
+ *   2015-04-01); FMC Idaho its own.
+ * - Denison Mines (USA) to 2012-06-28, the US mines Denison sold to Energy Fuels (its 6-K of 2012-07-02,
+ *   reporting 2012-06-29, whose exhibits name the deal completed).
+ * - Procter & Gamble's companies also when EPA writes "THE" before the name; Amazon's also as
+ *   "AMAZON.SERVICES" (the 2026-11-11b proposals' closing note).
+ * - J.B. Hunt's own name as EPA writes it ("J.B. HUNT TRANSPORT", "JB HUNT TRANSPORT", once
+ *   "TRANPORT"): its EDGAR title is the inverted "HUNT J B TRANSPORT SERVICES INC", which no caption
+ *   rule reads. Walmart as "WALMART STORES" in one word, its former name "Wal-Mart Stores" without the
+ *   hyphen. Energy Transfer's named companies, Energy Transfer Partners' among them as the units it
+ *   bought are (Sunoco, above).
+ * - Left out: Enterprise Products GP, the partnership's general partner, which its controlling family's
+ *   company owns, not the listed partnership; Graphic Packaging Corp of 1999, a company of GPK's line
+ *   not placed here; Chevron Phillips, Duke Energy Field Services and Dow Corning, joint ventures;
+ *   Johnson Controls Battery Group, the owner's open call on JCI; and names before a company's EDGAR
+ *   record, which its EDGAR former names give at ingest.
  */
 export interface EpaUnit {
   ticker: string;
@@ -793,6 +839,8 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     // batch 120: Southern Union's pipelines, from its merger with Energy Transfer Equity
     unit("ET", "Panhandle Eastern and Trunkline", /^PANHANDLE EASTERN PIPE ?LINE\b/i, "panhandleeastern", { from: "2012-03-23" }),
     unit("ET", "Panhandle Eastern and Trunkline", /^TRUNKLINE GAS\b/i, "trunklinegas", { from: "2012-03-23" }),
+    // batch 145: its companies named after it, Energy Transfer Partners' among them
+    unit("ET", "Energy Transfer's named companies", /^ENERGY TRANSFER\b/i, "energytransfer"),
   ],
   // Chevron
   93410: [
@@ -831,6 +879,8 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("WM", "Waste Management's state companies", /^WASTE MANAGEMENT,?\s+(?:INC\.?,?\s+)?OF\b/i, "wastemanagement", { from: "1998-07-16" }),
     // batch 135: its disposal companies, and old Waste Management's record renamed Waste Management Holdings
     unit("WM", "Waste Management's disposal companies and Waste Management Holdings", /^WASTE MANAGEMENT\s+(?:DISPOSAL|HOLDINGS)\b/i, "wastemanagement", { from: "1998-07-16" }),
+    // batch 145: its lamp-recycling and LNG companies
+    unit("WM", "Waste Management LampTracker and LNG", /^WASTE MANAGEMENT\s+(?:LAMPTRACKER|LNG)\b/i, "wastemanagement", { from: "1998-07-16" }),
   ],
   // Murphy Oil USA, before and after its spin-off
   717423: [unit("MUR", "Murphy Oil USA", /^MURPHY OIL\s+U\.?\s?S\.?\s?A\b/i, "murphyoil", { to: "2013-08-29" })],
@@ -898,7 +948,8 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
   1094517: [unit("TM", "Toyota Motor's US companies", /^TOYOTA MOTOR\b/i, "toyotamotor")],
   354950: [unit("HD", "Home Depot U.S.A.", /^(?:THE\s+)?HOME DEPOT,?\s+(?:U\.?\s?S\.?\s?A|NORTHEASTERN)/i, "homedepot")],
   60667: [unit("LOW", "Lowe's Home Centers", /^LOWE'?S\s+HOME\s+CENTER/i, "loweshomecenter")],
-  80424: [unit("PG", "Procter & Gamble's companies", /^PROCTER\s+(?:&|AND)\s+GAMBLE\b/i, "procter")],
+  // batch 145: also as EPA writes it with "THE" before it ("THE PROCTER & GAMBLE MANUFACTURING COMPANY")
+  80424: [unit("PG", "Procter & Gamble's companies", /^(?:THE\s+)?PROCTER\s*(?:&|AND)\s*GAMBLE\b/i, "procter")],
   55785: [unit("KMB", "Kimberly-Clark's companies", /^KIMBERLY[- ]?CLARK\b(?!\s+PRINTING)/i, "kimberlyclark")],
   1996862: [unit("BG", "Bunge North America", /^BUNGE\b/i, "bunge")],
   1076378: [unit("CX", "CEMEX's US companies", /^CEMEX\b/i, "cemex")],
@@ -1009,6 +1060,8 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("DTE", "Detroit Edison and DTE's companies", /^DTE ELECTRIC\b/i, "dteelectric"),
     unit("DTE", "Detroit Edison and DTE's companies", /^DTE GAS\b/i, "dtegas"),
     unit("DTE", "Detroit Edison and DTE's companies", /^DTE ENERGY SERVICES\b/i, "dteenergyservices"),
+    // batch 145
+    unit("DTE", "Detroit Edison and DTE's companies", /^DTE ENERGY RESOURCES\b/i, "dteenergyresources"),
     unit("DTE", "Michigan Consolidated Gas", /^MICHIGAN CONSOLIDATED GAS\b/i, "michiganconsolidatedgas", { from: "2001-05-31" }),
     unit("DTE", "Michigan Consolidated Gas", /^MICHCON\b/i, "michcon", { from: "2001-05-31" }),
   ],
@@ -1212,6 +1265,8 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("CLF", "AK Steel", /^AK STEEL\b/i, "aksteel", { from: "2020-03-13" }),
     unit("CLF", "ArcelorMittal USA", /^ARCELOR\s?MITTAL\s*\(?\s*(?:USA|STEEL USA|BURNS|INDIANA HARBOR|CLEVELAND|RIVERDALE|WEIRTON|COATESVILLE|STEELTON|CONSHOHOCKEN|MONESSEN|WARREN|COLUMBUS|MINORCA|HIBBING|PLATE)\b/i, "arcelormittal", { from: "2020-12-07" }),
     unit("CLF", "ArcelorMittal USA", /^ISPAT INLAND\b/i, "ispatinland", { from: "2020-12-07" }),
+    // batch 145: its own iron company
+    unit("CLF", "The Cleveland-Cliffs Iron Company", /^(?:THE\s+)?CLEVELAND[- ]CLIFFS\s+IRON\b/i, "clevelandcliffsiron"),
   ],
   // the oilfield-services company, the drugmaker, the food and drink companies
   87347: [
@@ -1295,7 +1350,7 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit(
       "AMZN",
       "Amazon's own companies and sites",
-      /^AMAZON(?:\.COM)?\s+SERVICES\b|^AMAZON\.?\s?COM\s+KYDC$|^(?:[A-Z]{3}\d\s+)?AMAZON\s+FULFILL?MENT\s+CENTERS?$|^AMAZON\s+RETURNS(?:\s+DEPARTMENT)?$/i,
+      /^AMAZON(?:\.COM)?[\s.]+SERVICES\b|^AMAZON\.?\s?COM\s+KYDC$|^(?:[A-Z]{3}\d\s+)?AMAZON\s+FULFILL?MENT\s+CENTERS?$|^AMAZON\s+RETURNS(?:\s+DEPARTMENT)?$/i,
       "amazon",
     ),
   ],
@@ -1303,6 +1358,45 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("BALL", "Ball's metal packaging companies", /^BALL\s+(?:METAL\s+(?:BEVERAGE|CONTAINER|FOOD)|PACKAGING)\b/i, "ball"),
     unit("BALL", "Ball Aerospace", /^BALL\s+AEROSPACE\b/i, "ballaerospace", { to: "2024-02-15" }),
   ],
+  // batch 145, the fifth round (the 2026-11-11b proposal 2): each company's companies named after it
+  811596: [unit("KALU", "Kaiser Aluminum's companies", /^KAISER ALUMINUM\s+(?:FABRICATED PRODUCTS|ALEXCO|INVESTMENTS)\b/i, "kaiseraluminum")],
+  70145: [unit("NFG", "National Fuel Gas Distribution and Supply", /^NATIONAL FUEL GAS\s+(?:DISTRIBUTION|SUPPLY)\b/i, "nationalfuelgas")],
+  1370946: [unit("OC", "Owens Corning's insulation, roofing and foam companies", /^OWENS[- ]CORNING\s+(?:FOAM INSULATION|INSULATING SYSTEMS|ROOFING)\b/i, "owenscorning")],
+  21344: [unit("KO", "Coca-Cola Refreshments USA", /^COCA[- ]COLA REFRESHMENTS\b/i, "cocacolarefreshments", { from: "2010-10-02" })],
+  1022079: [unit("DGX", "Quest Diagnostics Clinical Laboratories", /^QUEST DIAGNOSTICS CLINICAL\b/i, "questdiagnostics")],
+  40545: [
+    unit("GE", "GE Plastics", /^GE\s+PLASTICS\b/i, "geplastics", { to: "2007-07-30" }),
+    unit("GE", "GE Plastics", /^GENERAL ELECTRIC\s+PLASTICS\b/i, "generalelectricplastics", { to: "2007-07-30" }),
+    unit("GE", "GE Capital and GE's railcar company", /^GENERAL ELECTRIC\s+(?:CAPITAL|RAILCAR)\b/i, "generalelectric"),
+  ],
+  37785: [
+    unit("FMC", "FMC Wyoming", /^FMC\s+WYOMING\b/i, "fmcwyoming", { to: "2015-03-31" }),
+    unit("FMC", "FMC Idaho", /^FMC\s+IDAHO\b/i, "fmcidaho"),
+  ],
+  104169: [unit("WMT", "Walmart Stores, in one word", /^WALMART\s+STORES\b/i, "walmartstores")],
+  1834622: [unit("HAYW", "Hayward Industries", /^HAYWARD INDUSTRIES\b/i, "haywardindustries")],
+  812074: [unit("OI", "Owens-Illinois General and Owens-Illinois de Puerto Rico", /^OWENS[- ]ILLINOIS\s+(?:GENERAL|DE PUERTO RICO)\b/i, "owensillinois")],
+  795266: [unit("KBH", "KB Home's regional companies", /^KB HOME\s+(?:LONE STAR|NEVADA)\b/i, "kbhome")],
+  1534701: [unit("PSX", "Phillips 66 Pipeline", /^PHILLIPS 66 PIPELINE\b/i, "phillips66pipeline")],
+  14693: [unit("BF-B", "Brown-Forman's Early Times Distillery", /^BROWN[- ]FORMAN\s+EARLY TIMES\b/i, "brownforman")],
+  1061219: [unit("EPD", "Enterprise Products Operating", /^ENTERPRISE PRODUCTS OPERATING\b/i, "enterpriseproductsoperating")],
+  26324: [unit("CW", "Curtiss-Wright Controls", /^CURTISS[- ]WRIGHT CONTROLS\b/i, "curtisswrightcontrols")],
+  1506721: [unit("BLFBY", "Balfour Beatty's US companies", /^BALFOUR BEATTY\b/i, "balfourbeatty")],
+  1985406: [unit("NEXHY", "Nippon Express USA", /^NIPPON EXPRESS\s+U\.?\s?S\.?\s?A\b/i, "nipponexpress")],
+  895564: [unit("BAESY", "BAE Systems' US companies", /^BAE SYSTEMS\b/i, "baesystems")],
+  1090012: [unit("DVN", "Devon Energy Production", /^DEVON ENERGY PRODUCTION\b/i, "devonenergyproduction")],
+  728535: [unit("JBHT", "J.B. Hunt Transport, as EPA writes it", /^J\.?\s?B\.?\s*HUNT\s+TRAN/i, "jbhunt")],
+  1408075: [unit("GPK", "Graphic Packaging International", /^GRAPHIC PACKAGING INTERN?T?ATIONAL\b/i, "graphicpackaging")],
+  915389: [unit("EMN", "Eastman Chemical Resins and Eastman Chemical Texas City", /^EASTMAN CHEMICAL\s+(?:RESINS|TEXAS CITY)\b/i, "eastmanchemical")],
+  1309402: [unit("GPRE", "Green Plains' ethanol companies", /^GREEN PLAINS\b/i, "greenplains")],
+  1063259: [unit("DNN", "Denison Mines (USA)", /^DENISON MINES\s*\(?\s*U\.?\s?S\.?\s?A\b/i, "denisonmines", { to: "2012-06-28" })],
+  79879: [unit("PPG", "PPG Industries Ohio", /^PPG INDUSTRIES OHIO\b/i, "ppgindustriesohio")],
+  712034: [unit("ACCO", "ACCO Brands USA", /^ACCO BRANDS\s+USA\b/i, "accobrands")],
+  1279495: [unit("BTE", "Baytex Energy USA", /^BAYTEX ENERGY\s+USA\b/i, "baytexenergy")],
+  20212: [unit("CHDN", "Churchill Downs Louisiana", /^CHURCHILL DOWNS LOUISIANA\b/i, "churchilldowns")],
+  1957132: [unit("SN", "SharkNinja Operating", /^SHARKNINJA OPERATING\b/i, "sharkninja")],
+  1048911: [unit("FDX", "FedEx Logistics", /^FEDEX LOGISTICS\b/i, "fedexlogistics")],
+  1748797: [unit("DOO", "BRP US", /^BRP\s+U\.?\s?S\b/i, "brpus")],
 };
 
 /** The letters a company's stored cases are asked by for its units (`UNITS`). */

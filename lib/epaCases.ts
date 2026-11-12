@@ -808,7 +808,7 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
  * - Left out: Enterprise Products GP, the partnership's general partner, which its controlling family's
  *   company owns, not the listed partnership; Graphic Packaging Corp of 1999, a company of GPK's line
  *   not placed here; Chevron Phillips, Duke Energy Field Services and Dow Corning, joint ventures;
- *   Johnson Controls Battery Group, the owner's open call on JCI; and names before a company's EDGAR
+ *   Johnson Controls Battery Group before 2016-09-02, old Johnson Controls, Inc.'s (batch 146 below); and names before a company's EDGAR
  *   record, which its EDGAR former names give at ingest.
  */
 export interface EpaUnit {
@@ -1397,6 +1397,10 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
   1957132: [unit("SN", "SharkNinja Operating", /^SHARKNINJA OPERATING\b/i, "sharkninja")],
   1048911: [unit("FDX", "FedEx Logistics", /^FEDEX LOGISTICS\b/i, "fedexlogistics")],
   1748797: [unit("DOO", "BRP US", /^BRP\s+U\.?\s?S\b/i, "brpus")],
+  // batch 146: old Johnson Controls' battery company is JCI's from the merger of 2016-09-02 (before it, old
+  // Johnson Controls, Inc.'s past is a taken name's, lib/takenNames.ts) to 2019-04-29, the eve of the sale of
+  // Power Solutions to Brookfield (JCI's 8-K filed 2019-05-01, item 2.01: completed 2019-04-30)
+  833444: [unit("JCI", "Johnson Controls Battery Group", /^JOHNSON\s+CONTROLS\s+BATTERY\s+GROUP\b/i, "johnsoncontrolsbatterygroup", { from: "2016-09-02", to: "2019-04-29" })],
 };
 
 /** The letters a company's stored cases are asked by for its units (`UNITS`). */

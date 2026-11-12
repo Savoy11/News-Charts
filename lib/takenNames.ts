@@ -36,8 +36,11 @@ import type { SourceKey } from "./types";
  * of them to a reading: in this table, or one of the reasons a name is the record's own (a new
  * parent, the company's own unit, a name that was new, a blank-check company's business, the
  * ticker's own history). It is not every case there could be: the scan matches names as EDGAR
- * writes them, so a namesake EDGAR never filed under is not in it, nor a name written another way
- * (DowDuPont's "DuPont de Nemours" took E. I. du Pont's, whose past on DD is the owner's open call).
+ * writes them, so a namesake EDGAR never filed under is not in it, nor a name written another way:
+ * DowDuPont's "DuPont de Nemours" took E. I. du Pont's, whose past stays on DD, as DD's prices before 2017
+ * are old DuPont's (Yahoo's splits of 1973–2000), and Tyco's "Johnson Controls International plc" took
+ * "JOHNSON CONTROLS INC"'s, read by hand and added to the scan's companies (batch 146, the owner's two
+ * calls decided on the owner's instruction of 2026-11-12 to use best judgment).
  */
 export interface TakenName {
   ticker: string;
@@ -424,6 +427,19 @@ export const TAKEN_NAMES: Readonly<Record<number, TakenName>> = {
     why:
       "Golden Matrix Group, MRDN's record (Source Gold before 2016), took the name Meridian Holdings on 2026-02-26 (its 8-K filed 2026-03-03, items 3.03 " +
       "and 5.03); before, Meridian Holdings was other records' names (EDGAR CIK 1071758 and 1093819)",
+  },
+  // batch 146: the owner's open JCI call, decided on the owner's instruction of 2026-11-12 to use best judgment
+  833444: {
+    ticker: "JCI",
+    name: /\bJohnson\s+Controls\b/i,
+    then: /\bTyco\b|\bADT\b/i,
+    from: "2016-09-02",
+    filing: "0001104659-16-143068",
+    kind: "merged",
+    why:
+      "Tyco International plc, JCI's record (ADT Limited to 1997), merged with Johnson Controls, Inc. (EDGAR CIK 53669) at 11:59 p.m. on 2016-09-02 and took " +
+      "its name: its 8-K filed 2016-09-06 reports it (items 2.01, 5.01 and 5.03). JCI's prices before are Tyco's, as Yahoo's splits show (its 1:4 of " +
+      "2007-07-02, the ADT spin-off of 2012-10-01, the 0.955 of 2016-09-06), so old Johnson Controls' past is another company's",
   },
 };
 

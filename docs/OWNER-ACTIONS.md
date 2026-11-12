@@ -60,8 +60,10 @@ Each feed reports one of three things, and the distinction is the point: `✓ N 
 **First, set the build's contact address** (2026-11-05, batch 92): `NEWS_CHARTS_CONTACT=<the address
 made for this build>` in `.env.local` on every host that runs ingest. Every request to a public
 service sends it in its User-Agent (`lib/contact.ts`). The SEC refuses EDGAR requests that carry no
-contact, so without it filings, the SEC's releases and its cases stop arriving. Your personal
-address was removed from the code at your request and is not used anywhere.
+contact, so without it filings, the SEC's releases and its cases stop arriving. On 2026-11-12 you
+asked that your personal address be used for now: it is set as `NEWS_CHARTS_CONTACT` in the build
+session's `.env.local`, which git ignores and nothing commits, and the same line goes in each host's.
+It is still not written in the code; a new address replaces it in that one setting.
 
 **And install poppler's `pdftotext`** on the same host (batch 102): the SEC News Digest's issues are
 scanned PDFs, and the walk reads their text with it. Without it the walk asks nothing and the
@@ -272,7 +274,9 @@ Raised by the November batches, each recorded in the master checklist:
      domain, no endorsement implied); 224 accidents, 237 dead, on 51 pages, 144 before 2017. Nothing to
      run after deploying: apply db/046 (`npm run db:migrate`), and each mapped company's next ingest
      reads MSHA's two files once for all of them. Arcosa's two accidents wait for its Yahoo chart, which
-     begins 2026-07-17.
+     begins 2026-07-17. **Decided 2026-11-12**, on your instruction to use best judgment (batch 146): they wait. Every page counts from its chart's first price,
+     and Yahoo's ACA chart still begins 2026-07-17 (read 2026-11-12); a chart that short for a company
+     listed in 2018 goes to the ledger review.
   3. `P2` EPA cases under a fourth round of units (Ashland Chemical, Akzo Nobel Chemicals, Gerdau
      Ameristeel, Seaboard Farms…): 153 cases on 13 pages, 134 before 2017. **Built in batch 135:** 144
      court or penalty cases more on the 13 pages, 123 before 2017, each day read from a filing. Nothing to
@@ -300,7 +304,7 @@ Raised by the November batches, each recorded in the master checklist:
   #3 is built in batch 128, with Microsoft's notices a row a month as you chose. Nothing to run after
   deploying it: the archive walk reads the 56 new months of 1996–2000 over the next three ingest runs
   (24 a run), and each company's next Justice Department run picks up its own, with the drug makers'
-  units. Alcoa's five of 1997–2000 land on AA under your open call below, as its 2003 release does.
+  units. Alcoa's five of 1997–2000 land on AA, as its 2003 release does (the call below, decided 2026-11-12: keep).
   #4 is built in batch 129. After deploying it, run `npm run db:migrate` (db/045): the next ingest reads
   EPA's file again whole, keeping each case's cost recovery and each settlement's. All four of the
   2026-11-09 proposals are now built.
@@ -353,7 +357,11 @@ Raised by the November batches, each recorded in the master checklist:
   3. EPA's cases against the utilities' operating companies (442 cases on 31 utilities; PSEG 0→44,
      Exelon 0→22), each ownership day to be read from filings at build time.
 
-- **DuPont's past on DD's page** (the 2026-11-07 audit of batches 108–115, its open question). DD's
+- ~~**DuPont's past on DD's page**~~ **Decided 2026-11-12**, on your instruction to use best judgment (batch 146): **1, keep.** Yahoo's DD chart before
+  2017 is old DuPont's (its splits of 1973, 1976, 1989 and 2000), so old DuPont's rows explain it, as
+  old Merck's do MRK's. Its filings are not added: old DuPont's record still lists two preferred
+  stocks (CTA-PA, CTA-PB), and the predecessor map maps no record with a ticker of its own. Nothing
+  changes on the page. The question as it stood (the 2026-11-07 audit of batches 108–115): DD's
   EDGAR record is DowDuPont's of 2015, which took DuPont's name and ticker in 2017. E. I. du Pont's own
   record went with Corteva. Yahoo's DD prices start in 1972, so the chart before 2017 is old DuPont's,
   and 29 of DD's EPA rows before 2017-08-31 are old E. I. du Pont's ("DuPont Mt Clemens EPCRA 313",
@@ -364,7 +372,16 @@ Raised by the November batches, each recorded in the master checklist:
      batch 117's table of taken names, `lib/takenNames.ts`, would do it for every source);
   3. keep them, labelled as E. I. du Pont's (as Schering-Plough's are on MRK).
 
-  Nothing changes until you choose.
+- ~~**Johnson Controls' past on JCI's page**~~ (batch 85's set-aside, the open JCI call since).
+  **Decided 2026-11-12**, on your instruction to use best judgment (batch 146): **off before the merger.** Tyco's record took Johnson Controls' name at their
+  merger of 2016-09-02 (its 8-K filed 2016-09-06), and Yahoo's JCI chart before is Tyco's (its 1:4
+  reverse split of 2007, the ADT spin-off of 2012, the 0.955 of 2016), so old Johnson Controls, Inc.'s
+  rows before the day are another company's, as AT&T Corp.'s are on T: one entry in the table of
+  taken names. JCI's EPA rows go from 46 to 9: 39 of old Johnson Controls' come off, and its battery
+  company's two orders of 2017 come on, JCI's from the merger to the sale of Power Solutions on
+  2019-04-30. Its SEC order of 2016-07-11 comes off, and so do old Johnson Controls' news and Federal
+  Register rows before the day. Nothing to run: each source's next run of JCI drops the old rows, and
+  the page hides any already stored.
 
 - **A death only a railroad's own report gives** (the 2026-11-09 audit of batches 125–129, batch 130).
   FRA's dataset gives two counts of the dead: each report's Form 54 count, and the accident's Form 55a
@@ -378,14 +395,20 @@ Raised by the November batches, each recorded in the master checklist:
   2. use only FRA's official per-accident count (the two rows leave the pages: their damage is under
      $5,000,000 and no one was evacuated).
 
-  Nothing changes until you choose.
+  **Decided 2026-11-12**, on your instruction to use best judgment (batch 146): **1, keep the larger count**, and the row now says whose it is: "The 1 killed is
+  the railroad's own report's count; FRA's count for the accident gives none." A death a railroad
+  reported is not dropped, and the reader sees the official count beside it. Nothing to run: each
+  railroad page's next ingest rewrites its rows.
 
 - **Alcoa's past on AA's page** (noticed by the 2026-11-09 scout run, batch 125). AA's EDGAR record is
   Alcoa Corp.'s of 2016; old Alcoa Inc.'s record went with Howmet (as Arconic). AA's page takes old
   Alcoa Inc.'s Justice Department release of 2003 (a Clean Air Act settlement), and the 1997–2000
   archive months, read since batch 128, add five more (DuPont's toxic-cloud suit of 1997 is one more on
   DD under the call above). It is the same call as
-  DuPont's above, with the same three choices. Nothing changes until you choose.
+  DuPont's above, with the same three choices. **Decided 2026-11-12**, on your instruction to use best judgment (batch 146): **1, keep**, as DuPont's. Yahoo's AA
+  chart before the separation of 2016-11-01 is old Alcoa Inc.'s (its splits of 1981, 1995, 1999 and
+  2000, and its 1:3 reverse split of 2016-10-06), so old Alcoa's rows explain it. Its filings are not
+  added: old Alcoa's record is Howmet's (HWM), which lists its own ticker. Nothing changes on the page.
 
 - **Drugs whose holder changed** (batch 115): 553 of the FDA's efficacy supplements (374 before
   2017) were filed by a company on its page that day, but the drug has since moved and Drugs@FDA

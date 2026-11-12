@@ -138,6 +138,14 @@ async function main(): Promise<void> {
     disagree.length === 6 && /— 1 killed$/.test(eventOf("CSX", "000162754")?.title ?? "") &&
       accidentEvents([{ reportingrailroadcode: "UP", reportkey: "UPZ1", accidentnumber: "Z1", date: "2020-01-02T00:00:00.000", accidenttype: "Derailment", totalkilledform54: "2", totalpersonskilled: "0", totalinjuredform54: "0", totalpersonsinjured: "5", personsevacuated: "0", totaldamagecost: "100" }], railRoadsFor(ciks.UNP) ?? [])[0]?.title === "Union Pacific: derailment — 2 killed, 5 injured",
     disagree.map((r) => r.reportkey).join(", "));
+  // batch 146: the owner's open call, decided on the owner's instruction of 2026-11-12 (best judgment): keep the
+  // larger count, as built, and say on the row whose count it is
+  const laGrange = eventOf("CSX", "000162754"), yazoo = eventOf("IC", "1112131");
+  check("such a row says whose count it is: CSX at La Grange (2016-09-06) and Illinois Central at Yazoo City (2022-08-25), \"The 1 killed is the railroad's own report's count; FRA's count for the accident gives none\"; a row FRA's count gives says nothing of it",
+    [laGrange, yazoo].every((e) => /The 1 killed is the railroad's own report's count; FRA's count for the accident gives none\./.test(e?.description ?? "")) &&
+      pagesOf("IC", "1112131") === "CNI" && !/railroad's own report's count/.test(eventOf("CSX", "079105051")?.description ?? "x") &&
+      !/railroad's own report's count/.test(eventOf("NS", "019414")?.description ?? "x") && [laGrange, yazoo].every((e) => (e?.description ?? "").length <= 600),
+    `${laGrange?.description?.slice(0, 220)} | ${yazoo?.date}`);
   const two = accidentEvents(
     [
       { reportingrailroadcode: "SOO", reportkey: "SOOA1", accidentnumber: "A1", incidentkey: "SOOA1201101", date: "2011-01-05T00:00:00.000", accidenttype: "Head on collision", totalkilledform54: "1", personsevacuated: "0", totaldamagecost: "100" },

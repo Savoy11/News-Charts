@@ -988,6 +988,55 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 146: the owner's open calls decided by best judgment, the contact set, the ledger tidied (2026-11-12)
+
+The owner, on 2026-11-12: "For now use my personal email. For the open decisions use your best judgment.
+Once they have been applied begin reviewing the ledger." Each call below rests on whose company a page's
+chart is, as the project's earlier calls did (Merck's, Stratasys's, Dawson's), read from Yahoo's split history.
+
+- [x] **The build contact:** the owner's personal address is set as `NEWS_CHARTS_CONTACT` in this session's
+      `.env.local`, which git ignores; it is in no committed file, and `lib/contact.ts` reads it into the
+      User-Agent as designed. www.sec.gov now answers this session (200); the reads that waited on it are
+      the next batch's.
+- [x] **DuPont on DD: keep** (option 1). Yahoo's DD chart from 1972 carries old DuPont's splits (1973, 1976,
+      1989, 2000), so its rows before 2017 explain the chart, as old Merck's do MRK's. No code change. Its
+      filings are not mapped: old DuPont's record lists CTA-PA and CTA-PB, and `lib/predecessors.ts` maps no
+      record with a ticker of its own (`check:predecessors`).
+- [x] **Alcoa on AA: keep** (option 1), the same reading: Yahoo's AA chart carries old Alcoa Inc.'s splits
+      (1981, 1995, 1999, 2000) and its 1:3 reverse split of 2016-10-06. Old Alcoa's record is Howmet's (HWM),
+      so its filings are not mapped either.
+- [x] **Johnson Controls on JCI: off before the merger.** Yahoo's JCI chart is Tyco's: the 1:4 reverse split
+      of 2007-07-02, the ADT spin-off of 2012-10-01 and the 0.955 of 2016-09-06, none of old Johnson Controls'.
+      Tyco's record took Johnson Controls' name at 11:59 p.m. on 2016-09-02 (its 8-K filed 2016-09-06, items
+      2.01, 5.01 and 5.03, read on www.sec.gov with the contact), so the name is a taken one, as AT&T Corp.'s
+      is on T: one entry in `TAKEN_NAMES` (33 records), and the scan's companies gain JCI's, read by hand,
+      which its name matching missed (174). On the saved data, JCI's EPA rows go from 46 to 9 (39 of old
+      Johnson Controls' off, among them its decree of 1990 with 216 parties), its SEC order of 2016-07-11 off
+      (1,195 company days on 373 companies), and Johnson Controls Battery Group on JCI from the merger to
+      2019-04-29, the eve of the sale of Power Solutions (JCI's 8-K filed 2019-05-01: completed 2019-04-30),
+      which puts its two orders of 2017 on. EPA's totals before first prices: 9,547 rows on 704 companies,
+      8,050 before 2017.
+- [x] **The rail deaths only a railroad's report gives: keep the larger count** (option 1), and the row says
+      whose it is: "The 1 killed is the railroad's own report's count; FRA's count for the accident gives
+      none" (`lib/railAccidents.ts`, an `official` count kept beside `killed`). On the 2 rows on pages, CSX at
+      La Grange (2016) and Illinois Central at Yazoo City (2022); rows FRA's count gives say nothing of it.
+- [x] **Arcosa: wait.** Its two mine accidents count from its chart's first price, as every page's do, and
+      Yahoo's ACA chart still begins 2026-07-17 (read 2026-11-12) for a company listed in 2018; that short
+      chart is for the ledger review.
+- [x] **The ledger tidy** offered after batch 137: each of the six stale entries gains a dated progress note
+      and a summary and next action that say what is true now. NC-005 (GDELT's month walk, built in batch
+      57) and NC-045 (two live checks passed in September, the third's code deleted in batch 17) close; NC-087
+      (a real-key tuning left), NC-124 (a lawyer's review left), NC-033 (a live check left) and NC-072 (the
+      licence decision left, regulator records now covering much of 1963–2017) stay open. The ledger: 38
+      open, 103 closed, 17 blocked, 12 parked.
+- [x] **Checked:** `check:taken-names` (JCI's day, filing and rule; 33 records, 174 scanned), `check:epa-cases`
+      180 (2 new: JCI's rows and its battery company's days; totals re-pinned with the old ones kept, the
+      slice grown by the 9 cases naming the battery company), `check:sec-cases` 78 (JCI's order now off),
+      `check:rail-accidents` 38 (1 new). On main the new checks fail.
+- **Requests:** Yahoo's chart for six tickers (query1.finance.yahoo.com, User-Agent `News Charts Research`, no
+  address); data.sec.gov 2, the same; www.sec.gov 4, with the project's User-Agent and the owner's contact
+  (`lib/contact.ts`), at least 1.1 s apart. Logged in the session scratchpad (`b146/requests.log`).
+
 ## NC ledger — batch 145: a fifth round of units named after their owners (2026-11-12)
 
 The owner approved the second 2026-11-11 proposals' #2 on 2026-11-12 ("Approve (Recommended)"). No new
@@ -1898,10 +1947,12 @@ It found three defects, one `P1`. Each was reproduced here and is fixed, with ch
         490 accidents on six pages from first prices, 404 before 2017, 135 before 1993 (CSX 166, Union
         Pacific 158, Norfolk Southern 69, CN 36, Berkshire Hathaway 37, CPKC 24). Each stored row updates
         in place by its report's key at the next ingest; nothing to run.
-- [ ] **Left for the owner:** on 6 of the 2,957 records Form 54 gives a death and Form 55a none. Two are
+- [x] **Left for the owner:** on 6 of the 2,957 records Form 54 gives a death and Form 55a none. Two are
       on pages, CSX at La Grange, Georgia (2016) and Illinois Central at Yazoo City, Mississippi (2022),
       each "1 killed" as built; the other four are crossing collisions, off the pages either way. Keep
       the larger count, or FRA's official count only (OWNER-ACTIONS).
+      ✅ **Decided 2026-11-12** on the owner's instruction to use best judgment: keep the larger count,
+      the row saying whose it is (batch 146).
 - [x] **2. The drug makers' units missed the names their own releases use** (`P3`). "DePuy" followed by
       "Synthes", and "Teva" by "Pharmaceuticals", are no legal words, so DePuy Synthes's $9.75 million
       of 2023 and Teva's $425 million of 2024 were on no page.
@@ -2208,7 +2259,8 @@ securities depth first. The owner's word, 2026-11-09: "Continue". Nothing is bui
   the Justice archive's first months of 1996 (no day) and the years before (not reachable); a fourth
   round of EPA units, non-US regulators, OSHA and MSHA (not measured); the FTC, OCC, FSIS, FDIC, PHMSA,
   FERC, NRC and NTSB (not retried).
-- [ ] **Noticed in passing, an owner call like DuPont's** (OWNER-ACTIONS): AA's page takes old Alcoa
+- [x] **Noticed in passing, an owner call like DuPont's** (OWNER-ACTIONS; ✅ **decided 2026-11-12**, batch 146:
+      keep, as AA's chart before 2016 is old Alcoa's): AA's page takes old Alcoa
       Inc.'s Justice releases (the 2003 Clean Air Act settlement; 5 more of 1997–2000 under #3(a)).
       AA's record is Alcoa Corp.'s of 2016, and old Alcoa Inc.'s record is Howmet's; neither the table
       of taken names nor `lib/predecessors.ts` has an entry. Also noted: the Justice rule's

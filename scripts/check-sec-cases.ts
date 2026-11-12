@@ -363,8 +363,8 @@ const TODAY = "2026-11-01";
   // Gardner Denver's until 2020, and the old Bristow Group's of 2007 (34-56533) off VTOL, whose record was Era's until 2020
   // batch 118's Meridian Holdings takes two more off MRDN: the other Meridian Holdings, Inc.'s cases of 2007 and 2009 (LR-20318, LR-20898)
   // batch 121's operating units add two: SCANA's cases of 2020 (LR-24751, LR-24976) on Dominion, SCANA's owner from 2019-01-01
-  check("the 30,747 rows of 1995–2026 give 1,196 company days on 374 companies, 589 before 2017, as replayed in full (1,149 on 370 and 555 before batch 145's brokers', banks' and managers' companies; 1,148 on 369 before batch 128's drug makers' units, which add Biomet, Inc.'s case of 2017 on Zimmer Biomet; 1,146 on 368 before batch 121's operating units, 1,148 on 369 before batch 118's, 1,150 on 371 before batch 117's taken names, 1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's, 1,148 on 370 before batch 111's spellings)",
-    rows.length === 30747 && companyDays.length === 1196 && replayed.companies.length === 374 && companyDays.filter((e) => e.date < "2017").length === 589 &&
+  check("the 30,747 rows of 1995–2026 give 1,195 company days on 373 companies, 588 before 2017, as replayed in full (1,196 on 374 and 589 before the JCI call, batch 146, which took old Johnson Controls' order of 2016 off JCI, its one SEC day; 1,149 on 370 and 555 before batch 145's brokers', banks' and managers' companies; 1,148 on 369 before batch 128's drug makers' units, which add Biomet, Inc.'s case of 2017 on Zimmer Biomet; 1,146 on 368 before batch 121's operating units, 1,148 on 369 before batch 118's, 1,150 on 371 before batch 117's taken names, 1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's, 1,148 on 370 before batch 111's spellings)",
+    rows.length === 30747 && companyDays.length === 1195 && replayed.companies.length === 373 && companyDays.filter((e) => e.date < "2017").length === 588 &&
       !!replayed.companies.find(([t]) => t === "ZBH")?.[1].some((e) => e.date === "2017-01-12"),
     `${rows.length} rows → ${companyDays.length} on ${replayed.companies.length}, ${companyDays.filter((e) => e.date < "2017").length} before 2017, in ${Date.now() - t0} ms`);
   // batch 88, the 2026-11-02 proposal 4: the listed banks', brokers' and managers' own units
@@ -392,10 +392,12 @@ const TODAY = "2026-11-01";
   check("  …Ameriprise Financial Services' of 2009-07-10 on AMP; American Express Financial Advisors' of 2004-02-12 on both AXP and AMP (the owner's call b), its \"(now known as Ameriprise…)\" of 2005-12-01, after the spin-off, on AMP only",
     replayedOn("AMP", "2009-07-10") && replayedOn("AMP", "2004-02-12") && replayedOn("AXP", "2004-02-12") && replayedOn("AMP", "2005-12-01") && !replayedOn("AXP", "2005-12-01"));
   // batch 93, the owner's rule of 2026-11-05 that a case goes on every company it involves: old
-  // Johnson Controls' FCPA order of 2016-07-11, two months before it merged into Tyco's record,
-  // which took its name, stays on JCI's page (the 2026-11-01 audit's set-aside)
-  check("Johnson Controls, Inc.'s order of 2016-07-11 on JCI, the record its business merged into, by the owner's rule",
-    pageTakes(row("34-78287", "2016-07-11"), "JCI") && rowOf("JCI")[0] === 833444);
+  // Johnson Controls' FCPA order of 2016-07-11, two months before it merged into Tyco's record, which
+  // took its name: on JCI's page until batch 146, when the owner's open JCI call was decided on the
+  // owner's instruction of 2026-11-12 (best judgment): JCI's prices before the merger are Tyco's, so old
+  // Johnson Controls' past is a taken name's (lib/takenNames.ts), as AT&T Corp.'s is on T
+  check("Johnson Controls, Inc.'s order of 2016-07-11 is no longer JCI's: Tyco's record took the name at the merger of 2016-09-02, and JCI's prices before are Tyco's",
+    !pageTakes(row("34-78287", "2016-07-11"), "JCI") && rowOf("JCI")[0] === 833444);
   // The replay above sets the first price aside; ingest reads a company's rows from it on
   // (`secCasesFor`). The owner's calls (b) and (c) reach before it, through the units marked
   // `beforeListing` and those alone (batch 90, the 2026-11-05 audit's finding 2). First prices are

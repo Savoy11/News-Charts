@@ -83,7 +83,8 @@ async function main(): Promise<void> {
     n("JNJ", "jnj_consumer") === 1 && n("KVUE", "jnj_consumer") === 0 &&
       firmFor(consumer, "2023-06-01", firmsOf("JNJ")) !== null && firmFor(consumer, "2023-06-01", firmsOf("KVUE")) !== null &&
       firmFor(consumer, "2024-01-15", firmsOf("JNJ")) === null && firmFor(consumer, "2024-01-15", firmsOf("KVUE")) !== null);
-  const filing = /\b(?:8-K|8-K\/A|10-Q|10-K|20-F|6-K|13D\/A)\b/;
+  // the exchange's Form 25 removing a bought company's shares, an SEC filing too (Mentor's, batch 144)
+  const filing = /\b(?:8-K|8-K\/A|10-Q|10-K|20-F|6-K|13D\/A)\b|\bForm 25\b/;
   // the owner's call of 2026-10-29: Siemens Healthineers' listing, which no SEC filing dates, from
   // its own annual report — the one day the map takes from anywhere else (batch 76)
   const ownersException = (ticker: string, f: { from?: string; why: string }) =>
@@ -219,7 +220,8 @@ async function main(): Promise<void> {
   console.log("\nThe request");
   const q = decodeURIComponent(fdaQuery("device", firmsOf("MDT")).replace(/\+/g, " "));
   check("the company's firm names are asked in brackets: unbracketed, openFDA answers for the last name alone",
-    q.includes('search=(recalling_firm:"Medtronic" recalling_firm:"Covidien")') && q.includes("sort=recall_initiation_date:desc") && q.includes("limit=1000"), q.slice(0, 160));
+    // Physio-Control, Medtronic's to its sale in 2012, asked since batch 144
+    q.includes('search=(recalling_firm:"Medtronic" recalling_firm:"Physio-Control" recalling_firm:"Covidien")') && q.includes("sort=recall_initiation_date:desc") && q.includes("limit=1000"), q.slice(0, 160));
 
   const realFetch = globalThis.fetch;
   let asked: string[] = [];

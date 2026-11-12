@@ -60,6 +60,7 @@ import { mineControllersFor } from "../lib/mineAccidents";
 import { mineAccidentsFor, walkMineAccidents } from "../lib/ingest/mineWalk";
 import { walkWarningLetters, warningLettersFor } from "../lib/ingest/fdaWarningWalk";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
+import { deviceRecallsFor } from "../lib/ingest/fdaDeviceRecallsFor";
 import { FED_BANKS, fedBanksFor, fetchFedActions } from "../lib/fedActions";
 import { dojPossessive, fetchJusticeReleases, justiceQueryNames } from "../lib/doj";
 import { isNotesRecord, releaseNamesAsked } from "../lib/releaseNames";
@@ -101,6 +102,8 @@ export const COMPANY_SOURCES = [
   "nhtsa_investigations",
   // drug, device and food recalls, asked only for the firms lib/fdaRecalls.ts maps (batch 40)
   "fda_enforcement",
+  // …and the device recalls before those reports, 2000 to mid-2012, for the same firms (batch 144)
+  "fda_device_recalls",
   // the Federal Reserve's actions, asked only for the banks lib/fedActions.ts maps (batch 69)
   "fed_enforcement",
   // releases whose title makes the company a party: it pays, pleads, is sued (batch 32)
@@ -707,6 +710,14 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   const fdaFirms = fdaFirmsFor(company.cik);
   if (fdaFirms) {
     await run("fda_enforcement", `${fdaFirms.map((f) => f.search).join(" | ")} (Class I and II)`, () => fetchFdaRecalls(company.cik));
+    /**
+     * …and the device recalls before the reports begin, 2000 to mid-2012 (batch 144): openFDA's device
+     * recall file for the same firms, less the reports' own events, each recall's class read once from
+     * the FDA's recall database and kept, a few hundred a run; from the company's first price.
+     */
+    await run("fda_device_recalls", `${fdaFirms.map((f) => f.search).join(" | ")}: device recalls before 2012-06-20 (Class I and II)`, () =>
+      deviceRecallsFor(client, subjectId, company.cik),
+    );
   }
 
   /**

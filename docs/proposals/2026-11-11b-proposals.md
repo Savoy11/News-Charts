@@ -82,7 +82,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. The FDA's device recalls of 2002 to mid-2012, ten years the recall rows do not reach: Medtronic's Sprint Fidelis, DePuy's ASR hip, Alaris pumps, Zimmer's Durom cup… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-12 ("Approve (Recommended)"). Built in batch 144: openFDA's device recall file for the map's firms, less the reports' 470 events of those years, each recall's class read once from the FDA's recall database (db/051), the map's days for the units bought and sold 2000–2012 read from filings. From first prices, 1,981 rows on 19 pages, all before 2017, 73 of them Class I; 255 more are Class III and give none, where this file estimated about 60, and 345 rows wait on 18 companies' first prices.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. The 2026-10-22 shortlist proposed the FDA's enforcement reports and named their
@@ -228,7 +228,7 @@ exist; the class reads are the new work · *Practicality:* medium — measured, 
 
 ## 2. A fifth round of units named after their owners, found across five sources at once: Invesco Funds Group, Raymond James Financial Services, RBC Capital Markets, National Fuel Gas Distribution, A. O. Smith Electrical Products, BRP US, Coca-Cola Refreshments… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-12 ("Approve (Recommended)"). Filed under Scope refocus by batch 144, to be built in batch 145.
 **Owner's reason (if rejected):**
 
 **Raised before:** in parts. Each source's units came in rounds of their own:

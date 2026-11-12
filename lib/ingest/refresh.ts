@@ -44,6 +44,8 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   fed_enforcement: 1440,
   // The enforcement report is published weekly; a daily look finds each recall within a day of it.
   fda_enforcement: 1440,
+  // The recalls before mid-2012 are closed; a daily look reads the classes still owed, a few hundred a run.
+  fda_device_recalls: 1440,
   // A settlement or a suit naming a large company comes a few times a year; a daily look finds
   // each one the day the Department posts it.
   doj_press: 1440,

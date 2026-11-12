@@ -60,7 +60,8 @@ import { DRUGSFDA_ENTRY, DRUGSFDA_FILE, readSupplements } from "../lib/fdaSupple
 import { fetchLetters } from "../lib/fdaWarningLetters";
 import { readZip } from "../lib/zip";
 import { releaseNamesOn } from "../lib/releaseNames";
-import { fetchFdaRecalls } from "../lib/fdaRecalls";
+import { deviceRecallEvents, fetchDeviceRecords, fetchEventClass, fetchReportedEvents } from "../lib/fdaDeviceRecalls";
+import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
 import { fetchJusticeReleases } from "../lib/doj";
 import { FR_COMPANY_CAP, fetchCompanyRegulations, fetchCompanyYear, frDailySince, isAirworthinessDirective, titleNamesCompany } from "../lib/frCompany";
 import { WikipediaUnavailable, getTopicTimeline, wikiOutcome } from "../lib/wiki";
@@ -922,6 +923,35 @@ export const CASES: LiveCase[] = [
       const keytruda = apps.find((a) => a.application === "BLA125514");
       const s016 = keytruda?.supplements.find((s) => s.number === "16");
       if (keytruda?.sponsor !== "MERCK SHARP DOHME" || s016?.day !== "2017-05-10" || s016.review !== "priority") out.push(`Keytruda reads ${JSON.stringify({ sponsor: keytruda?.sponsor, s016 })}`);
+      return out;
+    },
+  },
+  {
+    name: "FDA device recalls before the reports — Medtronic's of 2000 to mid-2012, the Sprint Fidelis leads of 2007 as Class I; Guidant's 2005 recalls on no page (batch 144)",
+    covers: ["fda_device_recalls"],
+    hosts: ["api.fda.gov", "www.accessdata.fda.gov"],
+    async run() {
+      // measured 2026-11-10/12: Medtronic's firms began 212 recalls in no report before 2012-06-20, the
+      // reports themselves 470 events of those years; the Sprint Fidelis leads (event 45403) are Class I
+      const out: string[] = [];
+      const mdt = await fetchDeviceRecords(fdaFirmsFor(1613103)!);
+      if (!mdt.ok) return [`Medtronic's records: ${mdt.failure.outcome} ${mdt.failure.httpStatus ?? ""} ${mdt.failure.detail ?? ""}`.trim()];
+      const reported = await fetchReportedEvents();
+      if (!reported.ok) return [`the reports' older events: ${reported.failure.outcome} ${reported.failure.detail ?? ""}`.trim()];
+      if (reported.value.size < 470) out.push(`the reports hold ${reported.value.size} events begun before 2012-06-20, fewer than the 470 of 2026-11-10`);
+      const fidelis = await fetchEventClass("45403");
+      if (!fidelis.ok) out.push(`event 45403's page: ${fidelis.outcome} ${fidelis.httpStatus ?? ""}`);
+      else if (fidelis.cls !== 1 || fidelis.products !== 4) out.push(`event 45403 reads Class ${fidelis.cls}, ${fidelis.products} products`);
+      const plan = { classes: new Map([["45403", 1 as const]]), reported: reported.value, from: "1980-03-17" };
+      const rows = deviceRecallEvents(mdt.value, fdaFirmsFor(1613103)!, plan);
+      if (!rows.events.some((e) => e.externalId === "45403" && e.date === "2007-10-15")) out.push("no Sprint Fidelis row of 2007-10-15 on Medtronic");
+      if (rows.events.length + rows.awaiting.length < 200) out.push(`${rows.events.length + rows.awaiting.length} Medtronic recalls before the reports, fewer than the 212 of 2026-11-10`);
+      const bsx = await fetchDeviceRecords(fdaFirmsFor(885725)!);
+      if (!bsx.ok) out.push(`Boston Scientific's records: ${bsx.failure.outcome}`);
+      else {
+        const guidant = deviceRecallEvents(bsx.value, fdaFirmsFor(885725)!, { classes: new Map([["32391", 2]]), reported: reported.value });
+        if (guidant.events.some((e) => e.externalId === "32391") || guidant.awaiting.includes("32391")) out.push("Guidant's recall of 2005-06-17 (event 32391) reaches Boston Scientific's page");
+      }
       return out;
     },
   },

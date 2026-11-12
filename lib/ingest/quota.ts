@@ -58,6 +58,7 @@ export const QUOTAS: Record<SourceKey, Quota> = {
   fda_supplements: { perDay: null, note: "Drugs@FDA from openFDA's downloads, one zip of about 9 MB read monthly by npm run sync:fda-supplements and committed; ingest asks nothing" },
   sec_digest: { perDay: null, note: "the SEC News Digest's closed archive of 1956–1993 on www.sec.gov, no published cap past sec.gov's 10 req/s; each year's page and each issue's PDF read once for every company (38 pages and about 9,500 PDFs), at most 60 a run, 1s apart" },
   sec_cases: { perDay: null, perSecond: 10, note: "the SEC's litigation-release and administrative-proceeding year listings, sec.gov's 10 req/s; each past year of each read once for every company (342 pages for 1995–2026, and 86 more for the months that fill a year's repeated rows, 1s apart), then a page or two a day" },
+  fda_device_recalls: { perDay: 1000, note: "openFDA without a key, as fda_enforcement: one or two requests a day per mapped company, and one a process for the reports' older events; each recall's page in the FDA's recall database read once and kept, at most 200 a process, 1.3 s apart (about 2,600 in all)" },
   fda_enforcement: { perDay: 1000, note: "openFDA without a key: 1,000 requests a day, 240 a minute; three to six a day per mapped company" },
   yahoo_finance: { perDay: null, note: "undocumented and unofficial — the licence question, not the quota, is the risk" },
   yahoo_prices: { perDay: null, note: "the same unofficial host as the RSS feed — the licence question, not the quota, is the risk" },

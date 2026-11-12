@@ -988,6 +988,71 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 144: the 2026-11-11b approvals filed, and the FDA's device recalls of 2000 to mid-2012 (2026-11-12)
+
+The owner marked the second 2026-11-11 proposals on 2026-11-12: both approved ("Approve (Recommended)"),
+and ruled that a federal agency's own work may be used where its site states no licence ("Allow federal
+works", recorded in OWNER-ACTIONS §3 and CLAUDE.md's licensing line; it reopens the EEOC's releases and the
+FDIC's failed-bank list for the next scout). This batch files both under Scope refocus and builds #1, a new
+source (40, `fda_device_recalls`) on hosts already read, under the reports' CC0 terms.
+
+- [x] **The read** (`lib/fdaDeviceRecalls.ts`): openFDA's `device/recall.json` for a mapped company's firms,
+      begun 2000-01-01 to 2012-06-19, oldest first, 1,000 a page; the reports' own device records begun before
+      2012-06-20 (`reportedQuery`), read once a process, whose 470 events are the reports' rows and skipped. A
+      record whose year is mistyped in both files (Intuitive Surgical's "1930-12-11" and "0012-11-30") is in
+      neither's range.
+- [x] **The rule** is the map's own, `firmFor` on the day the firm began the recall; a recall's row is its
+      first day, its products under the company's firms that day, the product the FDA entered first (the
+      lowest record number, so the title never depends on openFDA's order), the FDA's reason, and a link to
+      the event's page in the recall database; one event a row, keyed `fda:<event>` as the reports' are. From
+      the company's first price.
+- [x] **The class** (`parseClassPage`, `fetchEventClass`, db/051): the recall database's page for the event
+      lists its products with their class, 500 a page ("1 to 68 of 68 Results", or "1 result found"); the
+      most serious is the recall's, and Class III, or a page listing none, gives no row. Each event's page is
+      read once and kept, at most 200 a process, 1.3 s apart (`deviceRecallsFor`); a refusal (429, 403) stops
+      every company's reads in the process, a failed page is skipped and asked again next run, and a run stops
+      after three. Firm searches were tried first and cut: the database answers at most 500 results a search.
+- [x] **The map's days for 2000–2012** (`lib/fdaRecalls.ts`), each from a filing EDGAR's full-text search
+      finds, since the file gives a bought unit's own past under its later name: Guidant's heart-rhythm
+      business ("Boston Scientific CRM Corp") for Boston Scientific from 2006-04-21; Datex-Ohmeda for GE from
+      2003-10-10 (Instrumentarium, its results release of that day; its 2003 offer pending in April);
+      Mentor Texas for Johnson & Johnson from 2009-01-26 (the NYSE's Form 25) and Acclarent from 2010-01-20
+      (its 8-K's event day); Sybron's dental companies (Sybron Dental, Ormco, Kerr) for Danaher from
+      2006-05-16 and Leica from 2005-07-21 (its 10-Q); Alaris for Cardinal Health from 2004-07-07 and Viasys's
+      units ("Cardinal Health 203", NeuroCare) from 2007-06-21, both to the CareFusion spin-off of 2009-08-31;
+      Chattem for Sanofi from 2010-02-09 (its change in control); Ascent ("Stryker Sustainability Solutions")
+      for Stryker from 2010-02-26. Two gaps found in the reading: Physio-Control, Medtronic's from 1998 until
+      its sale (counted to Medtronic's 10-Q of 2011-12-07, no recall between June 2011 and February 2013), and
+      "Kerr Corp", which only this file writes. They keep 15 recalls off pages and add 24 (Physio-Control 21 on
+      Medtronic, Kerr 3 on Danaher). No row of 2012 on changes; `check:fda-recalls` reads the exchange's Form
+      25 as a filing, and pins Medtronic's query with Physio-Control.
+- [x] **What it gives**, on the files of 2026-11-10 and the 2,608 classes read on 2026-11-12 (Class I 93, II
+      2,232, III 283): from first prices, 2,236 recalls on 19 pages, 255 of them Class III, so 1,981 rows,
+      every one before 2017, 73 Class I: Stryker 262, GE 243, Philips 234, Abbott 216, Medtronic 202, Johnson
+      & Johnson 175, Boston Scientific 154, Baxter 122, Zimmer Biomet 107, BD 95, Danaher 58, Teleflex 48,
+      Cardinal Health 40, 3M 12, Kimberly-Clark 9, and Lilly, Novartis, Pfizer and Teva one each. 345 more on
+      18 companies whose first price is not read (Smith & Nephew 51, CONMED 50, Integra 44, Merit 33, Steris
+      27, Edwards 25…; Medline's 13 and Penumbra's 5 fall before their listings). The scout's 2,228 on 20 pages
+      counted every class; its estimate of about 60 Class III was the reports' mix, and the older recalls run
+      about one in nine.
+- [x] **Registered and wired:** source 40 (`commercialOk`, reviewed 2026-11-12), refreshed daily, in
+      `COMPANY_SOURCES` after the reports, run beside them only for a mapped company; openFDA's 1,000 a day
+      covers one or two more requests a company; db/051; scored as a recall is; `check:live` covers it.
+- [x] **Checked:** `check:fda-device-recalls` 52, new: the class page's reader on three saved pages (ASR's 68
+      products, the Alaris pump's one, the Sprint Fidelis leads' four) and its refusals, the requests, the
+      rows of Sprint Fidelis, ASR and the Alaris pump, Physio-Control on Medtronic and not Stryker, each of the
+      map's new days by the recall it keeps off and the one it keeps, the reports' events, Class III, an
+      unread class, the first price, mistyped years, the classes read and the population, and the ingest's
+      budget, kept classes, refusals, skipped pages and the reports read once a process. The committed slice
+      `scripts/fixtures/fda-device-recalls.json.gz` (816 KB): the file's 11,271 records a mapped phrase finds
+      in those years, the reports' 470 events, the 2,608 classes and three pages. On main the check fails: the
+      source does not exist.
+- **Requests:** www.accessdata.fda.gov 2,619 (2,612 answered 200; six passing 400s and a dropped
+  connection each answered on a second try), logged in the session scratchpad (`b143/requests.log`,
+  `b143/requests-classes.log`); efts.sec.gov 21 (three answered 500), for the map's days; each with
+  User-Agent `News Charts Research` and no email address. openFDA's two files are the scout's copies of
+  2026-11-11 (`scout143/dl`); no www.sec.gov page was asked.
+
 ## NC ledger — batch 143: an opportunity-scout run, two proposals for the owner (2026-11-11)
 
 Every proposal of `docs/proposals/2026-11-11-proposals.md` is approved and built (batches 139–141), and
@@ -996,8 +1061,11 @@ again at `a89c8e9` and wrote `docs/proposals/2026-11-11b-proposals.md`: two prop
 **PENDING**, ranked with securities depth first. The owner's word, 2026-11-11: "Continue". Nothing is
 built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a
       rejection). The scout's second pass then files the approved ones into this checklist.
+      ✅ **Marked 2026-11-12: both approved** ("Approve (Recommended)"), and the owner ruled that a federal
+      agency's own work may be used where its site states no licence ("Allow federal works"). Filed under
+      Scope refocus by batch 144.
       1. `P1` **The FDA's device recalls of 2002 to mid-2012.** A new dataset on a host already read:
          openFDA's device recall file, CC0 as its licence page says (quoted in the file), no key. The FDA
          recall rows come from the enforcement reports, which begin on 2012-06-20, so no device maker's
@@ -10819,6 +10887,24 @@ already held, but new investment goes to securities coverage first.
         168 rows with EPA's text.
       - *Derived from [`docs/proposals/2026-11-11-proposals.md`](proposals/2026-11-11-proposals.md) #3,
         approved 2026-11-11.*
+- [x] `P1` **The FDA's device recalls of 2002 to mid-2012,** before the enforcement reports: approved by the
+      owner 2026-11-12. openFDA's device recall file for the recall map's firms (CC0), each recall's class
+      from the FDA's recall database.
+      - **Measured** by the scout: 2,228 recalls on 20 pages from first prices, all before 2017, about 60
+        of them Class III (an estimate).
+      - **Done in batch 144** (see its section): 1,981 rows on 19 pages from first prices, 73 Class I; the
+        classes read show 255 Class III, not about 60; 345 more rows on 18 companies whose first price is
+        not read.
+      - *Derived from [`docs/proposals/2026-11-11b-proposals.md`](proposals/2026-11-11b-proposals.md) #1,
+        approved 2026-11-12.*
+- [ ] `P2` **A fifth round of units named after their owners,** in EPA's `UNITS`, the CPSC's `UNITS` and
+      `RELEASE_NAMES`: approved by the owner 2026-11-12. No new rule and no new source.
+      - **Measured** by the scout: 51 units, 299 items on 47 companies, 114 on 26 pages from first prices,
+        81 before 2017 (Invesco Funds Group, RBC Capital Markets, National Fuel Gas, Walmart's cases
+        written "WALMART STORES").
+      - **To be built in batch 145.**
+      - *Derived from [`docs/proposals/2026-11-11b-proposals.md`](proposals/2026-11-11b-proposals.md) #2,
+        approved 2026-11-12.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

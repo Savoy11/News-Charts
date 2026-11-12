@@ -291,6 +291,29 @@ Siemens AG's, which has no page here (298 from the listing, 2026-10-30). Freseni
 Kabi's recalls and, while it controlled Fresenius Medical Care through FMC's general partner, FMC's
 too, until FMC's deconsolidation on 2023-11-30 (125).
 
+**Before the reports: the device recalls of 2000 to mid-2012** (`lib/fdaDeviceRecalls.ts`, batch 144,
+approved by the owner 2026-11-12). The reports begin on 2012-06-20, so a device maker's page had no FDA
+recall before then. openFDA's other device file, the FDA's own recall database, goes back to 2002 under the
+same event numbers, and each mapped company's firms are asked for the recalls they began before the reports
+(one or two keyless requests). The rule is the map's, on the day the firm began the recall, and a recall the
+reports hold (470 events begun before 2012-06-20) stays the reports' row. The file gives no class, so each
+recall's page in the FDA's recall database is read once and kept (db/051), at most 200 a process; a recall
+takes its most serious product's class, and Class III gives no row. On the files of 2026-11-10 and the
+classes read on 2026-11-12: from first prices, 1,981 rows on 19 pages, every one before 2017, 73 of them Class
+I (Medtronic's Sprint Fidelis leads of 2007-10-15, the Alaris SE pump of 2006); Stryker 262, GE 243, Philips
+234, Abbott 216, Medtronic 202, Johnson & Johnson 175 (DePuy's ASR hip recall of 2010-08-23), Boston
+Scientific 154, Baxter 122, Zimmer Biomet 107, BD 95. Older recalls are far more often Class III than the
+reports' (283 of the 2,608 read, 255 from first prices). 345 more wait on the first prices of 18 companies not
+yet read (Smith & Nephew 51, CONMED 50, Integra 44…). The map's days for 2000–2012 were read for it, as the
+file gives a bought unit's own past under its later name: Guidant's recalls of 2005, filed as "Boston
+Scientific CRM Corp", count for Boston Scientific only from 2006-04-21; Datex-Ohmeda for GE from 2003-10-10
+(Instrumentarium); Mentor (2009-01-26) and Acclarent (2010-01-20) for Johnson & Johnson; Sybron's dental
+companies (2006-05-16) and Leica (2005-07-21) for Danaher; Alaris (2004-07-07) and Viasys's units
+(2007-06-21) for Cardinal Health until the CareFusion spin-off of 2009-08-31; Chattem for Sanofi from
+2010-02-09; Ascent, filed as "Stryker Sustainability Solutions", for Stryker from 2010-02-26. They keep 15
+recalls off pages; Physio-Control, Medtronic's from 1998 to its sale in 2012, adds 21 to Medtronic's, and Kerr
+written "Kerr Corp" 3 to Danaher's.
+
 ### FDA new-drug approvals (`lib/fdaApprovals.ts`)
 
 A drugmaker's page carries the new drugs and new therapeutic biologics the FDA's drug centre
@@ -1645,6 +1668,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | NHTSA (Transportation Department open data) | Vehicle safety recalls since 1966; defect investigations since 1975 | Recalls of 10,000 vehicles or more, and every investigation NHTSA opened, only for the vehicle, tyre, part and child-seat makers `lib/recalls.ts` maps by hand to a listed company, with the day each became that company's (Chrysler counts for Stellantis from 2014; Graco's child seats for Newell from 1999, batch 123). Public domain; no key |
 | Federal Reserve Board (enforcement actions) | Cease-and-desist orders, written agreements and civil money penalties against a bank, since 1993 | Only for the 63 banks `lib/fedActions.ts` maps by hand to a listed company — 49 US banks and 14 foreign banks with their US arms; an action against a person is left out. Public domain, cited to the Board; two keyless files |
 | FDA (openFDA enforcement reports) | Drug, device and food recalls since 2012 | Class I and II only, for the 73 companies `lib/fdaRecalls.ts` maps by hand, with the days bought firms joined and businesses left. Public domain (CC0); no key, 1,000 requests a day |
+| FDA (openFDA device recall file, batch 144) | Device recalls of 2000 to mid-2012, before the reports | The same map's firms and days, less the reports' own events; each recall's class read once from the FDA's recall database and kept, Class I and II only (`lib/fdaDeviceRecalls.ts`), from the company's first price. Public domain (CC0); no key |
 | FDA (CDER's new-drug approvals) | New molecular entities and new biologics since 1985, on the page of the company that applied | One committed workbook a year (`npm run sync:fda-approvals`); kept when the applicant is the company by the caption rule, a recall-map firm or a unit it then owned (`lib/fdaApprovals.ts`), from its first price; linked to Drugs@FDA. Public domain; no key |
 | FDA (warning letters) | Each warning letter since 2021 addressed to the company, its firm or its unit that day, a day's letters one row (batch 140) | The whole list read both ways once a week for every company and kept (`lib/ingest/fdaWarningWalk.ts`); by the approvals' rule and a hand list (`lib/fdaWarningLetters.ts`), from its first price; linked to the letter. Public domain; no key |
 | FDA (Drugs@FDA, via openFDA) | Each approved efficacy supplement to those drugs, on its day | One committed file a month (`npm run sync:fda-supplements`); kept where the drug never left the company and the applicant was the company that day (`lib/fdaSupplements.ts`), from its first price; linked to the letter. Titles from the data alone. CC0; no key |

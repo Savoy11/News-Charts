@@ -100,6 +100,14 @@ decided (the aggregators, dropped on 2026-10-19); NYT, the Guardian and Yahoo re
 | **Yahoo Finance RSS** | Gray zone. Read the ToS and settle it — it is flagged `commercialOk: true` today, so it keeps fetching on the assumption you have decided |
 | **Yahoo Finance chart** (prices) | The same question for the price chart, which every company page leads with. Its own registry row since October (`yahoo_prices`), also `commercialOk: true` |
 
+**Decided 2026-11-12: a federal agency's own work may be used where its site states no licence.**
+The owner's ruling ("Allow federal works"): work of the United States government has no copyright
+(17 U.S.C. § 105), so an agency's own releases and data are usable on those terms even when its site
+says nothing either way. It reopens the EEOC's press releases (batch 143's cut) and the FDIC's
+failed-bank list (cut 2026-11-02 and 2026-11-05) for the next scout. It does not cover what an
+agency's site marks as another's (a contractor's or a news photo's terms), nor a site that states
+terms of its own; those are still read and quoted.
+
 Two things worth knowing before you spend:
 
 - **`npm run cost-report` prices only what ingest actually calls.** The six aggregators are not
@@ -207,9 +215,13 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
-- **The second 2026-11-11 proposals** (batch 143, `docs/proposals/2026-11-11b-proposals.md`): mark each
+- ~~**The second 2026-11-11 proposals** (batch 143, `docs/proposals/2026-11-11b-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a
-  recurring charge.
+  recurring charge.~~ **Decided 2026-11-12: both** ("Approve (Recommended)"), with the ruling on federal
+  works below (§3). #1 is built in batch 144: after deploying, apply db/051 (`npm run db:migrate`); the
+  next ingest of a mapped company asks openFDA for its older device recalls and reads their classes from
+  the FDA's recall database, at most 200 pages a process, about 2,600 in all, so the big device makers'
+  older rows fill in over a dozen runs. #2 is to be built in batch 145.
   1. `P1` the FDA's device recalls of 2002 to mid-2012, a new dataset (openFDA's device recall file, CC0)
      read through the FDA recall map the pages already use: 2,228 recalls on 20 pages from first prices,
      all before 2017 (Stryker 281, Abbott 269, GE 254, Philips 241, Medtronic 212, J&J 210), and up to

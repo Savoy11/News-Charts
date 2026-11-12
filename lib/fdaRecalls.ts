@@ -54,10 +54,17 @@ const GE_HEALTHCARE_NAMES: readonly FdaFirm[] = [
 ];
 
 /** Danaher's dental companies, which went with Envista (batch 70): the dates are added where each is used. */
+/**
+ * Sybron Dental Specialties (Sybron Dental, Ormco, Kerr), Danaher's from 2006-05-16: Sybron's 8-K of
+ * 2006-05-22 reports the change in control that day (item 5.01) and Danaher's 8-K/A of 2006-07-31 the
+ * completed purchase (item 2.01). Sybron's recalls before it were its own (batch 144, for the device
+ * recall file of 2000 to mid-2012).
+ */
+const SYBRON_FROM = "2006-05-16";
 const DANAHER_DENTAL: readonly FdaFirm[] = [
   { search: "Implant Direct", why: "its implant company (Danaher's 10-K for 2014 names the brand)" },
   { search: "Ormco", why: "its orthodontics and endodontics company (Ormco, SybronEndo)" },
-  { search: "Kerr", match: /\bKerr (?:Corporation|Dental)\b|\bKerr\/Pentron\b/i, why: "Kerr, its dental-materials company; other firms called Kerr are left out" },
+  { search: "Kerr", match: /\bKerr (?:Corp(?:oration)?|Dental)\b|\bKerr\/Pentron\b/i, why: "Kerr, its dental-materials company (\"Kerr Corp\" in the device recall file of 2006–2009); other firms called Kerr are left out" },
   { search: "Sybron Dental", why: "Sybron Dental Specialties, Danaher's since 2006 (Danaher's 10-K for 2014)" },
 ];
 
@@ -84,13 +91,25 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
     ticker: "MDT",
     firms: [
       { search: "Medtronic", why: "the company and its divisions; Medtronic plc carries Medtronic, Inc.'s ticker" },
+      {
+        search: "Physio-Control",
+        match: /\bPhysio[- ]?Control\b/i,
+        to: "2011-12-07",
+        why: "its emergency-care company from 1998 until its sale to Bain Capital, which Medtronic's filings report from November 2011: counted to its 10-Q of 2011-12-07, and no recall of Physio-Control's falls between 2011-06-06 and 2013-02-08, so the day moves no row (batch 144); Stryker's from 2016-04-05",
+      },
       { search: "Covidien", from: "2015-01-26", why: "bought 2015-01-26 (Medtronic plc's 8-K filed 2015-01-27); Covidien's earlier recalls were its own" },
     ],
   },
   310764: {
     ticker: "SYK",
     firms: [
-      { search: "Stryker", why: "the company and its divisions" },
+      { search: "Stryker", not: /\bStryker Sustainability\b/i, why: "the company and its divisions" },
+      {
+        search: "Stryker",
+        match: /\bStryker Sustainability\b/i,
+        from: "2010-02-26",
+        why: "Ascent Healthcare Solutions, its reprocessing company, named in Stryker's 8-Ks of 2009-12-03 and 2010-01-05 and among its subsidiaries in its 10-K for 2009, filed 2010-02-26, counted from that filing: the device recall file gives Ascent's own recall of 2009-06-01 under the later name (batch 144)",
+      },
       { search: "Howmedica", why: "Howmedica Osteonics, its orthopaedic implant company (a subsidiary in Stryker's 10-K for 2002), held before the reports begin" },
       { search: "Mako Surgical", from: "2013-12-17", why: "bought 2013-12-17 (Stryker's 8-K filed 2013-12-17)" },
       { search: "Sage Products", from: "2016-04-01", why: "bought 2016-04-01 (Stryker's 8-K filed 2016-04-01)" },
@@ -101,7 +120,18 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
       { search: "Inari Medical", from: "2025-02-19", why: "bought 2025-02-19 (Stryker's 8-K filed 2025-02-19)" },
     ],
   },
-  885725: { ticker: "BSX", firms: [{ search: "Boston Scientific", why: "the company and its divisions" }] },
+  885725: {
+    ticker: "BSX",
+    firms: [
+      { search: "Boston Scientific", not: /\bBoston Scientific CRM\b/i, why: "the company and its divisions" },
+      {
+        search: "Boston Scientific",
+        match: /\bBoston Scientific CRM\b/i,
+        from: "2006-04-21",
+        why: "Guidant's heart-rhythm business, bought 2006-04-21 (Boston Scientific's 8-K reporting that day, item 2.01; the release map's day): the device recall file gives Guidant's own recalls of 2005 under this later name, and an acquisition's past is never the buyer's (batch 144)",
+      },
+    ],
+  },
   10795: {
     ticker: "BDX",
     firms: [
@@ -192,7 +222,16 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
         not: /Wipro/i,
         why: "GE's healthcare business until it was spun off on 2023-01-03 (GE's 8-K filed 2023-01-04); the joint venture with Wipro is left out",
       },
-      ...GE_HEALTHCARE_NAMES.map((f) => ({ ...f, to: "2023-01-03", why: `${f.why}; GE's until the spin-off on 2023-01-03` })),
+      ...GE_HEALTHCARE_NAMES.map((f) =>
+        f.search === "Datex"
+          ? {
+              ...f,
+              from: "2003-10-10",
+              to: "2023-01-03",
+              why: `${f.why}; Instrumentarium's, GE's from its results release of 2003-10-10 (8-K), the first filing EDGAR's full-text search finds that names Instrumentarium beside a completed deal, the one before (2003-04-10) its pending offer: Datex-Ohmeda's two recalls of June and July 2003 between them stay off (batch 144); GE's until the spin-off on 2023-01-03`,
+            }
+          : { ...f, to: "2023-01-03", why: `${f.why}; GE's until the spin-off on 2023-01-03` },
+      ),
     ],
   },
   1932393: {
@@ -293,8 +332,16 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
       { search: "DePuy", why: "its orthopaedics company since 1998" },
       { search: "Janssen", why: "its pharmaceutical companies" },
       { search: "Biosense Webster", why: "its heart-rhythm company" },
-      { search: "Mentor Texas", why: "its breast-implant maker since 2009" },
-      { search: "Acclarent", why: "its ear, nose and throat company since 2010" },
+      {
+        search: "Mentor Texas",
+        from: "2009-01-26",
+        why: "its breast-implant maker, Mentor's, from J&J's tender offer for Mentor: counted from 2009-01-26, the NYSE's Form 25 removing Mentor's shares, the first filing after the offer's last amendment of 2009-01-23; Mentor's recalls of 2003–2008 were its own (batch 144)",
+      },
+      {
+        search: "Acclarent",
+        from: "2010-01-20",
+        why: "its ear, nose and throat company, bought 2010-01-20, the event day of J&J's 8-K of 2010-02-05 on Acclarent (item 8.01), a day its filings of 2010–2011 name beside Acclarent; Acclarent's recall of 2006 was its own (batch 144)",
+      },
       { search: "Synthes", from: "2012-06-14", why: "bought 2012-06-14 (J&J's 8-K filed 2012-06-14)" },
       { search: "Anspach", from: "2012-06-14", why: "The Anspach Effort, Synthes's power-tool maker since 2010, J&J's with Synthes from 2012-06-14" },
       { search: "Abbott Medical Optics", from: "2017-02-27", why: "bought from Abbott 2017-02-27, now Johnson & Johnson Surgical Vision" },
@@ -345,7 +392,21 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
   721371: {
     ticker: "CAH",
     firms: [
-      { search: "Cardinal Health", why: "the company itself, recalling what it makes or labels" },
+      { search: "Cardinal Health", not: /\bCardinal Health (?:203|303|NeuroCare)\b/i, why: "the company itself, recalling what it makes or labels" },
+      {
+        search: "Cardinal Health",
+        match: /\bCardinal Health 303\b/i,
+        from: "2004-07-07",
+        to: "2009-08-30",
+        why: "Alaris Medical Systems' infusion pumps, bought 2004-07-07 (Cardinal's 8-K of 2004-07-14 reporting that day), until they went with CareFusion, spun off 2009-08-31 (Cardinal's 8-K of 2009-09-04, item 2.01) (batch 144)",
+      },
+      {
+        search: "Cardinal Health",
+        match: /\bCardinal Health (?:203|NeuroCare)\b/i,
+        from: "2007-06-21",
+        to: "2009-08-30",
+        why: "Viasys Healthcare's respiratory and neurocare units, bought 2007-06-21 (Viasys's 8-K of 2007-06-25, item 5.01), until they went with CareFusion on 2009-08-31: the device recall file gives Pulmonetic's own recall of 2004 under the later name (batch 144)",
+      },
       {
         search: "Cordis",
         match: /\bCordis Corporation\b/i,
@@ -381,12 +442,14 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
       {
         search: "Leica",
         match: /\bLeica (?:Microsystems|Biosystems)\b/i,
-        why: "Leica Microsystems and Leica Biosystems, Danaher's since 2005 (Danaher's 10-K for 2013); Leica Camera and Leica Geosystems are other companies",
+        from: "2005-07-21",
+        why: "Leica Microsystems and Leica Biosystems, Danaher's since 2005 (Danaher's 10-K for 2013); Leica Camera and Leica Geosystems are other companies. Counted from Danaher's 10-Q of 2005-07-21, the first filing EDGAR's full-text search finds that names the acquisition; its 10-Q before named none, and Leica's recall of 2005-04-12 was its own (batch 144)",
       },
       { search: "HemoCue", from: "2013-04-09", why: "bought from Quest Diagnostics, which completed the sale on 2013-04-09 (Quest's 10-Q filed 2013-04-24)" },
       { search: "Cepheid", from: "2016-11-04", why: "bought 2016-11-04 (Danaher's 10-K for 2016); Cepheid's earlier recalls were its own" },
       ...DANAHER_DENTAL.map((f) => ({
         ...f,
+        ...(f.search === "Implant Direct" ? {} : { from: SYBRON_FROM }),
         to: "2019-12-17",
         why: `${f.why}; Danaher's dental business until its split-off of Envista completed 2019-12-18 (Danaher's 8-K filed 2019-12-18)`,
       })),
@@ -587,8 +650,9 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
       { search: "Genzyme", from: "2011-04-08", why: "Sanofi's from its merger with Genzyme, 2011-04-08 (Genzyme's Form 25 of that day; Sanofi's 20-F for 2024): batch 105 dates it for the approvals before the recall reports begin" },
       {
         search: "Chattem",
+        from: "2010-02-09",
         to: "2025-04-29",
-        why: "a consumer company of Sanofi's until it sold control of Opella, its consumer business, on 2025-04-30 (Sanofi's 20-F for 2025)",
+        why: "a consumer company of Sanofi's from its tender offer, Chattem's change in control on 2010-02-09 (Chattem's 8-K of 2010-02-12, item 5.01; Sanofi's Form 3 of that day), whose recall of 2008 was its own (batch 144), until it sold control of Opella, its consumer business, on 2025-04-30 (Sanofi's 20-F for 2025)",
       },
     ],
   },

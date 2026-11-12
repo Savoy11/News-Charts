@@ -535,6 +535,24 @@ export const SOURCES: {
     reviewedOn: "2026-11-11",
     notes: "the FDA's warning letters since 2021, kept where the addressee is a listed company on the issue day by the approvals' rule or the letters' hand list (lib/fdaWarningLetters.ts); the whole list read once a week for every company, no key (batch 140)",
   },
+  {
+    id: 40,
+    key: "fda_device_recalls",
+    name: "FDA device recalls before the enforcement reports",
+    license: "public domain (CC0 1.0)",
+    attribution: "U.S. Food and Drug Administration (openFDA)",
+    // open.fda.gov/license, read 2026-11-11: "unless otherwise noted, the content, data,
+    // documentation, code, and related materials on openFDA is public domain and made available with
+    // a Creative Commons CC0 1.0 Universal dedication… You can copy, modify, distribute and perform
+    // the work, even for commercial purposes, all without asking permission." The class comes from the
+    // FDA's recall-database page on www.accessdata.fda.gov, whose contents the FDA's website policies
+    // call "not copyrighted" (as fda_warning_letters quotes). Used: the recall's day, class, product
+    // name, reason and a link to its page. Approved by the owner on 2026-11-12
+    // (docs/proposals/2026-11-11b-proposals.md #1).
+    commercialOk: true,
+    reviewedOn: "2026-11-12",
+    notes: "Class I and II device recalls of 2000 to mid-2012, before the reports, for the firms lib/fdaRecalls.ts maps (lib/fdaDeviceRecalls.ts); openFDA's device recall file and each recall's class read once from the FDA's recall database, no key (batch 144)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

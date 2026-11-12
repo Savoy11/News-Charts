@@ -126,10 +126,14 @@ Eaton, whose clutch recall of 2018 is Eaton Corporation's own, not its transmiss
 Winnebago's towables; Thor's own name; and Supreme on Wabash from 2017-09-27 (Wabash's 8-K, item 2.01).
 Carrier Corporation is RTX's to 2020-04-01, its titles naming the brand RTX no longer owns, and Carrier
 Global's from 2020-04-02 (RTX's 8-K of the separation): one name on two pages, never on the same day.
-On the rows read on 2026-11-08, 69 recalls on 16 pages, 45 before 2017, Graco's 4,176,601 seats of
-2014 the largest, and 24 investigations with them. Six makers wait for a filing's text, which
-www.sec.gov serves only to a request naming a contact: Hino on Toyota, Kelly-Springfield on Goodyear,
-Buell on Harley-Davidson, Fisher-Price on Mattel, and Thor California and Thor America on Thor.
+On the rows read on 2026-11-08, 85 recalls on 20 pages, 58 before 2017, Graco's 4,176,601 seats of
+2014 the largest, and 27 investigations with them. Batch 148 added the six makers that waited for a
+filing's text, which www.sec.gov serves only to a request naming a contact, each day read from it:
+Hino on Toyota (August 2001 to 2026-03-31), Kelly-Springfield on Goodyear (from 1991-10-01, the first
+day its filings show it held; its 1976 recall waits for an older record), Buell on Harley-Davidson
+(from February 1998), Fisher-Price on Mattel (from the merger of 1993-11-30), and Thor California and
+Thor America on Thor. A maker under another name than the company's names its brand in the title:
+"Recall of 594,853 Kelly tires".
 
 The defect investigations NHTSA opened into the same makers come from the same open-data portal,
 through the same map and its dates (`lib/investigations.ts`, batch 66): preliminary evaluations,
@@ -177,11 +181,13 @@ Berkshire Hathaway from 2010-02-12, Wisconsin Central on CN from 2001-10-09, Ill
 1998-06-05, the Soo Line and Kansas City Southern on CPKC. A predecessor's past is never the buyer's:
 Burlington Northern's, Santa Fe's and Conrail's reports are no page's. Every page also counts only
 from its company's first price, so CSX's railroads before CSX existed are no page's. Two railroads in
-one accident file a report each, and each is a row on its own owner's page. Missouri Pacific on Union
-Pacific (1982) and the Delaware & Hudson on CPKC (1991), bought before EDGAR, wait for a filing's
-text (`NEWS_CHARTS_CONTACT`). Measured on the dataset's answer of 2026-11-09, each page from its
-first price: 490 accidents on six pages, 404 before 2017, 135 before 1993 (CSX 166, Union Pacific 158,
-Norfolk Southern 69, CN 36, Berkshire Hathaway 37, CPKC 24). Scored without the model.
+one accident file a report each, and each is a row on its own owner's page. Missouri Pacific is
+Union Pacific's from the merger of 1982-12-22 (the 8-Ks for that day in the SEC News Digest's list),
+the Delaware & Hudson CPKC's from 1991-01-18 (a Canadian Pacific plan's own day for it) and the
+Chicago, Central & Pacific CN's from 1998-06-05, with Illinois Central, its buyer of 1996: batch 148
+read the days from the filings' text (`NEWS_CHARTS_CONTACT`). Measured on the dataset's answer of
+2026-11-10, each page from its first price: 503 accidents on six pages, 417 before 2017, 145 before
+1993 (CSX 166, Union Pacific 168, Norfolk Southern 69, CN 37, Berkshire Hathaway 37, CPKC 26). Scored without the model.
 
 ### Mine accidents (`lib/mineAccidents.ts`)
 
@@ -982,8 +988,12 @@ on Carrier Global after, Maytag on Whirlpool from 2006-03-31, GE Appliances on G
 Where no 8-K reports a deal, EDGAR's full-text search gives the filings around it, and no recall of
 the unit falls between them. On the committed fixture, from first prices, 402 recalls more on 47
 pages, 246 before 2017, none fewer; 14 pages gain their first CPSC row (Honda 51 rows, Sony 14,
-Philips 14, Disney 11). Fisher-Price, Hasbro's brands, Carrier before 2020 and Lawn-Boy, bought before
-EDGAR, wait for a filing's text (`NEWS_CHARTS_CONTACT`). Batch 145's fifth round (the 2026-11-11b
+Philips 14, Disney 11). Fisher-Price on Mattel from 1993-11-30, Hasbro's Playskool and Milton Bradley
+from 1984 and Kenner, Parker Brothers and Tonka from 1991, Carrier on RTX from 1994-03-31 to
+2020-04-01 (refused on Carrier Global before its separation) and Lawn-Boy on Toro from 1989-11-07,
+bought before EDGAR, have their days from the filings' text since batch 148: 75 rows more, 2,810 on
+212 companies before first prices. The six recalls the service dates in the wrong year (Tonka's dolls
+of 1988 as 1998) carry the day their own notice on cpsc.gov gives (`DAYS_READ`). Batch 145's fifth round (the 2026-11-11b
 proposal 2) adds 9 entries on 7 more companies, every firm each pattern takes read by hand: BRP's US,
 Mexican and Finnish companies on BRP (37 recalls), RH US on RH (once written "RH, US LLC"; "RH Macy" of
 1993 is Macy's), SharkNinja Operating, Hayward Industries, Johnson Outdoors Diving (Scubapro) and Yamaha

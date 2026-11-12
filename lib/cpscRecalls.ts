@@ -68,16 +68,34 @@ interface RawRecall {
 const clean = (s: string | undefined) => (s ?? "").replace(/\s+/g, " ").trim();
 const names = (list: { Name?: string }[] | undefined) => [...new Set((list ?? []).map((x) => clean(x.Name)).filter(Boolean))];
 
-/** The recalls in the service's answer, each with a day; a row without one is left out. */
+/**
+ * The recalls whose day the service gives in the wrong year, each read from its own notice on
+ * cpsc.gov (2026-11-12, batch 148): the notice's "Recall Date", which its number agrees with. They
+ * were found by a recall number's year disagreeing with its day; a notice's address is no guide, as
+ * the Commission moved some notices of every decade under "/Recalls/2012/". A correction holds only
+ * while the service still gives the wrong day.
+ */
+export const DAYS_READ: Readonly<Record<string, { service: string; day: string }>> = {
+  "97103": { service: "1994-04-16", day: "1997-04-16" }, // Playskool's Weebles tractors, "Recall Date: April 16, 1997"
+  "88093": { service: "1998-11-03", day: "1988-11-03" }, // Tonka's Love Me Tender dolls, "November 03, 1988"
+  "88090": { service: "1998-11-01", day: "1988-11-01" }, // Speed Queen's stack washer-dryers
+  "88091": { service: "1998-11-01", day: "1988-11-01" }, // Siemens' I-T-E circuit breaker boxes
+  "77001": { service: "1997-01-03", day: "1977-01-03" }, // Bernzomatic's fire extinguishers
+  "84063": { service: "1987-11-01", day: "1984-11-01" }, // Hedstrom's Twin Totliner strollers
+};
+
+/** The recalls in the service's answer, each with a day (`DAYS_READ`'s where read); a row without one is left out. */
 export function parseRecalls(json: unknown): CpscRecall[] {
   if (!Array.isArray(json)) return [];
   const out: CpscRecall[] = [];
   for (const r of json as RawRecall[]) {
-    const day = /^(\d{4}-\d{2}-\d{2})/.exec(r.RecallDate ?? "")?.[1];
+    const given = /^(\d{4}-\d{2}-\d{2})/.exec(r.RecallDate ?? "")?.[1];
     const number = clean(String(r.RecallNumber ?? r.RecallID ?? ""));
     const title = clean(r.Title);
-    if (!day || !number || !title) continue;
+    if (!given || !number || !title) continue;
     const url = /^https:\/\/(?:www\.)?cpsc\.gov\//.test(r.URL ?? "") ? (r.URL as string) : null;
+    const read = DAYS_READ[number];
+    const day = read && read.service === given ? read.day : given;
     out.push({
       number,
       day,
@@ -182,7 +200,7 @@ export function soldAtCompany(soldAt: string, names: readonly string[]): boolean
  * "Fox" (Fox Corp, 2019). Ingersoll-Rand Company's are refused on Ingersoll Rand Inc. by its taken
  * name's day, 2020-02-28 (lib/takenNames.ts, batch 117).
  */
-export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; firm?: RegExp; from?: string; store?: RegExp | "never"; why: string }[]>> = {
+export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; firm?: RegExp; from?: string; to?: string; store?: RegExp | "never"; why: string }[]>> = {
   42888: [{ ticker: "GGG", firm: /^Graco(?:\s+Children['’]s\s+Products\b.*)?$/i, why: "Graco Children's Products of Elverson, Pennsylvania (strollers, swings, playards), not Graco Inc., the Minneapolis pump and sprayer maker" }],
   1032033: [{ ticker: "SLM", firm: /^SLM\b/i, why: "SLM International, Buddy L's toy-making parent, not SLM Corporation (Sallie Mae)" }],
   1126956: [{ ticker: "SR", firm: /^Spire LLC\b/i, why: "Spire LLC d/b/a StoreYourBoard.com of Troy, Virginia, not Spire Inc., the gas utility" }],
@@ -202,6 +220,8 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; firm?: R
   1166691: [{ ticker: "CMCSA", store: /\btelevision networks? airing on\b/i, why: "Shop LC's television network airing on Comcast's channels: Shop LC sold it" }],
   1428439: [{ ticker: "ROKU", store: /\btelevision networks? airing on\b/i, why: "Shop LC's television network airing on Roku: Shop LC sold it" }],
   // batch 116's T entry, AT&T Corp.'s 1995 charger, is lib/takenNames.ts's (batch 117)
+  // batch 148: Carrier Corporation is RTX's to 2020-04-01 (UNITS), as EPA's rule and the vehicle map split it
+  1783180: [{ ticker: "CARR", firm: /^Carrier(?:\s+Corp(?:oration|\.)?)?$/i, to: "2020-04-01", why: "Carrier Corporation before its separation from United Technologies, reported for 2020-04-02, was United Technologies' (RTX's record)" }],
 };
 
 /**
@@ -296,12 +316,25 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; firm?: R
  *   it (its 8-K reporting 2004-11-22, item 2.01), and Disney's 10-K of 2008-11-20 is its first annual
  *   report after taking the stores back. The Disney Store's two recalls of 2008-05-22, imported by
  *   The Children's Place's Hoop Retail Stores, are no page's.
- * - Left out: Fisher-Price (Mattel's from 1993-11-30, before Mattel's first EDGAR filing of
- *   1994-02-03), Hasbro's Playskool and Milton Bradley (1984) and Kenner and Tonka (1991), Carrier on
- *   RTX before 2020 (1979) and Lawn-Boy on Toro (1989): their days need a filing's text, which
- *   www.sec.gov serves only with `NEWS_CHARTS_CONTACT` set. Baby Jogger: Newell's filings name it
- *   first in 2015, after its last recall. MTD's Cub Cadet, Rubbermaid, Mega Brands, Timberland, Bryant
- *   and First Alert: no recall falls in their owners' days.
+ * - Left out: Baby Jogger: Newell's filings name it first in 2015, after its last recall. MTD's Cub
+ *   Cadet, Rubbermaid, Mega Brands, Timberland, Bryant and First Alert: no recall falls in their
+ *   owners' days.
+ *
+ * Batch 148, the days that waited for a filing's text, which www.sec.gov serves only with
+ * `NEWS_CHARTS_CONTACT` set, read 2026-11-12: Fisher-Price on Mattel from 1993-11-30 ("On November
+ * 30, 1993, a merger was consummated between the Company and Fisher-Price, Inc.", Mattel's 10-K
+ * filed 1994-03-25); Playskool and Milton Bradley on Hasbro from 1984-12-31 and Kenner, Parker
+ * Brothers and Tonka from 1991-12-31 ("the 1984 acquisition" of Milton Bradley, Playskool's owner,
+ * and "the 1991 acquisition" of Tonka, Kenner's and Parker Brothers' owner, Hasbro's 10-K filed
+ * 1995-03-24: no recall of theirs falls in either year); Carrier on RTX from 1994-03-31, United Technologies' first filing
+ * here, which names Carrier its segment (its 10-K of that day), to 2020-04-01 (no Carrier recall falls
+ * between 1979-04-16, before United Technologies bought it, and that filing), and refused on Carrier
+ * Global before 2020-04-02; Lawn-Boy on Toro from 1989-11-07 ("results of operations of Lawn-Boy
+ * Inc. from November 7, 1989, the date of acquisition", Toro's 10-K filed 1994-10-28). Carrier Guam
+ * and Carrier (Puerto Rico) are not taken: no filing read names them United Technologies'. The rule
+ * stays literal: a recall goes on every company it names, so Kolcraft's Playskool cribs, Isaac
+ * Morris's Tonka trucks and the Ducane furnaces sold under Carrier's name among 16 others are each
+ * their brand owner's too.
  *
  * Batch 145, the fifth round (the 2026-11-11b proposal 2, approved by the owner 2026-11-12): units named
  * after their owners, every firm each pattern reads in the recalls read by hand. Hayward Industries,
@@ -382,7 +415,10 @@ export const UNITS: Readonly<Record<number, readonly CpscUnit[]>> = {
   ],
   29534: [...unit("DG", "Dollar General Merchandising and Stores", /^Dollar General (?:Merchandising|Stores)\b/i, ["dollargeneralmerchandising", "dollargeneralstores"])],
   1466258: [...unit("TT", "Trane U.S.", /^(?:The )?Trane(?: U\.?S\.?)?(?: Inc\.?| Co\.?| Company)?$/i, ["trane"], { from: "2008-06-05" })],
-  101829: [...unit("RTX", "Kidde", /^Walter Kidde Portable Equipment\b/i, ["walterkidde"], { from: "2005-04-26", to: "2020-04-01" })],
+  101829: [
+    ...unit("RTX", "Kidde", /^Walter Kidde Portable Equipment\b/i, ["walterkidde"], { from: "2005-04-26", to: "2020-04-01" }),
+    ...unit("RTX", "Carrier", /^Carrier(?:\s+Corp(?:oration|\.)?)?$/i, ["carrier"], { from: "1994-03-31", to: "2020-04-01" }),
+  ],
   1783180: [
     ...unit("CARR", "Kidde", /^Walter Kidde Portable Equipment\b/i, ["walterkidde"], { from: "2020-04-02" }),
     ...unit("CARR", "Edwards Fire Safety", /^Edwards Fire Safety\b/i, ["edwardsfire"], { from: "2020-04-02" }),
@@ -423,7 +459,10 @@ export const UNITS: Readonly<Record<number, readonly CpscUnit[]>> = {
     ...unit("HELE", "OXO", /^OXO$/i, ["oxo"], { from: "2004-06-01" }),
   ],
   315189: [...unit("DE", "John Deere", /^John Deere\b/i, ["johndeere"])],
-  737758: [...unit("TTC", "Exmark", /^Exmark\b/i, ["exmark"], { from: "2001-01-29" })],
+  737758: [
+    ...unit("TTC", "Exmark", /^Exmark\b/i, ["exmark"], { from: "2001-01-29" }),
+    ...unit("TTC", "Lawn-Boy", /^Lawn-?Boy\b/i, ["lawnboy"], { from: "1989-11-07" }),
+  ],
   62996: [
     ...unit("MAS", "Delta Faucet", /^Delta Faucet\b/i, ["deltafaucet"]),
     ...unit("MAS", "Masco Canada", /^Masco Canada\b/i, ["mascocanada"]),
@@ -449,7 +488,16 @@ export const UNITS: Readonly<Record<number, readonly CpscUnit[]>> = {
     ...unit("DLTR", "Family Dollar", /^(?:Family Dollar|Midwood Brands)\b/i, ["familydollar", "midwoodbrands"], { from: "2015-07-06", to: "2025-07-04" }),
     ...unit("DLTR", "Dollar Tree Distribution", /^Dollar Tree Distribution\b/i, ["dollartreedistribution"]),
   ],
-  63276: [...unit("MAT", "American Girl", /^American Girl\b/i, ["americangirl"], { from: "2001-03-28" })],
+  63276: [
+    ...unit("MAT", "American Girl", /^American Girl\b/i, ["americangirl"], { from: "2001-03-28" }),
+    ...unit("MAT", "Fisher-Price", /^Fisher[- ]?Price\b/i, ["fisherprice"], { from: "1993-11-30" }),
+  ],
+  // batch 148: Hasbro's Milton Bradley and Playskool (the 1984 acquisition), and Tonka's Kenner, Parker
+  // Brothers and Tonka itself (the 1991 acquisition), each from its year's last day
+  46080: [
+    ...unit("HAS", "Playskool and Milton Bradley", /^(?:Playskool|Milton Bradley)\b/i, ["playskool", "miltonbradley"], { from: "1984-12-31" }),
+    ...unit("HAS", "Kenner, Parker Brothers and Tonka", /^(?:Kenner|Parker Brothers|Tonka)\b/i, ["kenner", "parkerbrothers", "tonka"], { from: "1991-12-31" }),
+  ],
   // batch 145, the fifth round (the 2026-11-11b proposal 2)
   1834622: [...unit("HAYW", "Hayward Industries", /^Hayward Industries\b/i, ["haywardindustries"])],
   1528849: [...unit("RH", "RH US", /^RH,?\s+U\.?\s?S\b/i, ["rhus"])],
@@ -474,7 +522,7 @@ export function roleIn(r: CpscRecall, names: readonly string[], cik?: number | s
   const firm = (entry: string) =>
     owned(entry) ||
     (firmIsCompany(entry, names) &&
-      !refused.some((n) => n.firm && (!n.from || r.day >= n.from) && n.firm.test(firmName(entry))) &&
+      !refused.some((n) => n.firm && (!n.from || r.day >= n.from) && (!n.to || r.day <= n.to) && n.firm.test(firmName(entry))) &&
       // …and not a name the record took from another company, before the day (lib/takenNames.ts, batch 117)
       !takenBefore(cik, r.day, firmName(entry)));
   if (r.makers.some(firm)) return "maker";

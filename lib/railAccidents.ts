@@ -76,9 +76,12 @@ export interface RailRoad {
  * Every page also counts only from its company's first price, as the other regulators' records do:
  * CSX's and Norfolk Southern's railroads before their holding companies existed are no page's.
  *
- * Two railroads wait for a filing's text, which www.sec.gov serves only to a request naming a contact
- * (`NEWS_CHARTS_CONTACT`): Missouri Pacific on Union Pacific (the merger of 1982-12-22, before EDGAR; 8
- * reports of 1983–1985) and the Delaware & Hudson on CPKC (bought in 1991; 2 reports, of 1993 and 2000).
+ * Batch 148 read the days that waited for a filing's text, which www.sec.gov serves only to a request
+ * naming a contact (`NEWS_CHARTS_CONTACT`): Missouri Pacific on Union Pacific from the merger of
+ * 1982-12-22, before EDGAR, by the SEC News Digest's list of the 8-K reports filed for that day; the
+ * Delaware & Hudson on CPKC from 1991-01-18, before CP's first filing here (2001), by a plan exhibit;
+ * and the Chicago, Central & Pacific on CN from CN's purchase of Illinois Central, which had bought it
+ * in 1996.
  */
 export const RAIL_OWNERS: Readonly<Record<number, { ticker: string; roads: readonly RailRoad[] }>> = {
   100885: {
@@ -104,6 +107,12 @@ export const RAIL_OWNERS: Readonly<Record<number, { ticker: string; roads: reado
         railroad: "Chicago & North Western",
         from: "1995-04-25",
         why: "Union Pacific's from its purchase of the rest of Chicago and North Western Transportation (Union Pacific's 8-K reporting 1995-04-25, item 2)",
+      },
+      {
+        code: "MP",
+        railroad: "Missouri Pacific",
+        from: "1982-12-22",
+        why: "Union Pacific's from the merger of 1982-12-22, before EDGAR: Missouri Pacific Corp. and Missouri Pacific Railroad each filed an 8-K for that day, item 1, a change in control (the SEC News Digest of 1983-01-12, its list of recent 8-K filings). It merged into Union Pacific Railroad on 1997-01-01 (Union Pacific's 10-K filed 1997-03-28; batch 148)",
       },
     ],
   },
@@ -175,8 +184,8 @@ export const RAIL_OWNERS: Readonly<Record<number, { ticker: string; roads: reado
       {
         code: "CC",
         railroad: "Chicago, Central & Pacific",
-        from: "2002-03-26",
-        why: "Illinois Central's, and so CN's: CN's 6-K of 2002-03-26 is the first filing EDGAR's full-text search finds naming it; its report of 1998 waits for an older filing's text",
+        from: "1998-06-05",
+        why: "Illinois Central's from its purchase of CCP Holdings, completed 1996-06-13 (Illinois Central's 8-K filed 1996-06-28, item 2), and so CN's with Illinois Central from 1998-06-05; its reports before are no page's (batch 148)",
       },
       {
         code: "WC",
@@ -197,6 +206,12 @@ export const RAIL_OWNERS: Readonly<Record<number, { ticker: string; roads: reado
         railroad: "Dakota, Minnesota & Eastern",
         from: "2007-10-04",
         why: "Canadian Pacific's from its purchase (its 6-K of 2007-10-04, the first after the agreement to name \"the acquisition of DM&E\", by EDGAR's full-text search), held in a voting trust until regulators approved it",
+      },
+      {
+        code: "DH",
+        railroad: "Delaware & Hudson",
+        from: "1991-01-18",
+        why: "Canadian Pacific's from 1991-01-18, the day \"The Delaware and Hudson Railway Company became a Participating Employer\" in the Canadian Pacific Pension Plan for U.S. Management Employees (exhibit 10.69 to CP's 10-K filed 2022-02-23); CP's own filings begin in 2001, and its first annual report names it a wholly owned subsidiary of its Soo Line Corporation (40-F filed 2003-03-18; batch 148)",
       },
       {
         code: "KCS",

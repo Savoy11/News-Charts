@@ -186,8 +186,8 @@ async function main(): Promise<void> {
   }
   const flat = [...out.values()].flat();
   const ownRows = flat.filter((e) => e.precision !== "month" && !/^Sold in its stores: /.test(e.title)).length;
-  check("before any first price: 2,663 rows on 209 companies, 2,029 a recall's own day, 1,121 as maker, importer or distributor; Target 295, Walmart 236, Amazon 213, Home Depot 204 (2,304, 1,662 and 725 on 196 before batch 126's units, with Target 296, Amazon 206 and Home Depot 196; 2,300, 1,658 and 721 on 195 before batch 120 read a name's \"&\" as \"and\" too: Stanley Black and Decker's DeWALT mowers of 2024, Bath and Body Works' candles of 2004, John Wiley and Sons' candle-making book of 2003 and Academy Sports and Outdoors' heaters of 2003, before its listing; 2,301 on 196 before batch 117's table took Ingersoll-Rand Company's 2002 recall off IR, whose record was Gardner Denver's until 2020; 2,302 before batch 116 took AT&T Corp.'s 1995 charger off T; 2,288 before batch 111's legal-form spellings; 2,290 on 197 before batch 109's shared names; 2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
-    flat.length === 2663 && out.size === 209 && flat.filter((e) => e.precision !== "month").length === 2029 && ownRows === 1121 &&
+  check("before any first price: 2,735 rows on 212 companies, 2,101 a recall's own day, 1,193 as maker, importer or distributor; Target 295, Walmart 236, Amazon 213, Home Depot 204 (2,663, 2,029 and 1,121 on 209 before batch 145's units of 7 more companies, BRP's 37 among them; 2,304, 1,662 and 725 on 196 before batch 126's units, with Target 296, Amazon 206 and Home Depot 196; 2,300, 1,658 and 721 on 195 before batch 120 read a name's \"&\" as \"and\" too: Stanley Black and Decker's DeWALT mowers of 2024, Bath and Body Works' candles of 2004, John Wiley and Sons' candle-making book of 2003 and Academy Sports and Outdoors' heaters of 2003, before its listing; 2,301 on 196 before batch 117's table took Ingersoll-Rand Company's 2002 recall off IR, whose record was Gardner Denver's until 2020; 2,302 before batch 116 took AT&T Corp.'s 1995 charger off T; 2,288 before batch 111's legal-form spellings; 2,290 on 197 before batch 109's shared names; 2,268 before batch 101's Graco on Newell; 2,331 on 218 before batch 100)",
+    flat.length === 2735 && out.size === 212 && flat.filter((e) => e.precision !== "month").length === 2101 && ownRows === 1193 &&
       [...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ") === "TGT 295, WMT 236, AMZN 213, HD 204",
     `${flat.length} on ${out.size}; ${flat.filter((e) => e.precision !== "month").length} own; ${ownRows} as maker, importer or distributor; ${[...out].sort((a, b) => b[1].length - a[1].length).slice(0, 4).map(([t, v]) => `${t} ${v.length}`).join(", ")}`);
 
@@ -261,6 +261,13 @@ async function main(): Promise<void> {
   const waiting = lands([["19105", "none"], ["98074", "none"]]);
   check("  …and Fisher-Price's recalls wait: its Rock 'n Play of 2019 (19105) is on no page until a filing's text gives Mattel's day of 1993, with NEWS_CHARTS_CONTACT",
     !waiting.length && /Left out: Fisher-Price/.test(read("lib/cpscRecalls.ts")) && !Object.values(UNITS).flat().some((u) => /Fisher|Playskool|Lawn-Boy/i.test(u.unit)), JSON.stringify(waiting));
+  // batch 145, the 2026-11-11b proposal 2, approved by the owner on 2026-11-12
+  const fifth = lands([["05558", "DOO"], ["13103", "DOO"], ["10732", "DOO"], ["19196", "RH"], ["19197", "RH"], ["93064", "M"], ["16034", "SN"], ["19136", "HAYW"], ["14249", "JOUT"], ["08552", "YMHAY"], ["08241", "AOS"], ["08309", "AOS"], ["04553", "AOS"]]);
+  check("batch 145's units named after their owners: BRP US, BRP Mexico and BRP Finland on BRP (05558, 13103, 10732); RH US, once \"RH, US LLC\" (19197), on RH, \"RH Macy\" of 1993 on Macy's, not RH; SharkNinja Operating, Hayward Industries, Johnson Outdoors Diving and Yamaha Motor Manufacturing on their owners; A. O. Smith's Water Products and Electrical Products on A. O. Smith",
+    !fifth.length, JSON.stringify(fifth));
+  const aos = (UNITS[91142] ?? []).map((u) => `${u.unit} ${u.from ?? ""}–${u.to ?? ""}`).join(", ");
+  check("  …A. O. Smith Electrical Products to 2011-08-21, the eve of its sale to Regal Beloit (A. O. Smith's 8-K, item 2.01, reporting 2011-08-22); its recalls of 2003–2008 are before the day",
+    aos === "A. O. Smith Water Products –, A. O. Smith Electrical Products –2011-08-21" && ["04047", "04553", "08161", "08309"].every((n) => pagesOf(n) === "AOS"), aos);
   const unitCiks = Object.entries(UNITS);
   const wrongCik = unitCiks.filter(([cik, us]) => us.some((u) => rowOf(u.ticker)[0] !== Number(cik))).map(([cik]) => cik);
   const unkeyed: string[] = [];
@@ -268,8 +275,8 @@ async function main(): Promise<void> {
     for (const f of [...r.makers, ...r.importers, ...r.distributors].map(firmName))
       for (const [, us] of unitCiks)
         for (const u of us) if (u.firm.test(f) && !us.some((v) => v.unit === u.unit && letters(f).includes(v.key))) unkeyed.push(`${u.ticker} ${u.unit}: ${f}`);
-  check("every unit is filed under its owner's record, 104 entries on 47 records with Graco, and every firm its pattern takes on the whole fixture holds one of its keys, so the stored recalls are asked by them",
-    !wrongCik.length && !unkeyed.length && unitCiks.length === 47 && unitCiks.reduce((n, [, us]) => n + us.length, 0) === 104, `${unitCiks.length} records, ${unitCiks.reduce((n, [, us]) => n + us.length, 0)} entries ${wrongCik.join(" ")} ${unkeyed.slice(0, 3).join(" | ")}`);
+  check("every unit is filed under its owner's record, 113 entries on 54 records with Graco (104 on 47 before batch 145), and every firm its pattern takes on the whole fixture holds one of its keys, so the stored recalls are asked by them",
+    !wrongCik.length && !unkeyed.length && unitCiks.length === 54 && unitCiks.reduce((n, [, us]) => n + us.length, 0) === 113, `${unitCiks.length} records, ${unitCiks.reduce((n, [, us]) => n + us.length, 0)} entries ${wrongCik.join(" ")} ${unkeyed.slice(0, 3).join(" | ")}`);
   const shared = unitCiks.flatMap(([cik, us]) => us.map((u) => ({ cik, ...u })));
   const overlap = shared.filter((a) => shared.some((b) => b.cik !== a.cik && String(b.firm) === String(a.firm) && (a.from ?? "") <= (b.to ?? "9999") && (b.from ?? "") <= (a.to ?? "9999")));
   const header = read("lib/cpscRecalls.ts").split("export const UNITS")[0];
@@ -299,8 +306,8 @@ async function main(): Promise<void> {
   const noneRow = flat.find((e) => /Injuries, the Commission's record: None reported\./.test(e.description ?? ""));
   const ownWith = ownOf(flat).filter((e) => /Injuries, the Commission's record: /.test(e.description ?? ""));
   const deaths = ownWith.filter((e) => /\b(?:died|death|deaths|fatal|fatality|fatalities|killed)\b/i.test((e.description ?? "").split("Injuries, the Commission's record: ").slice(1).join(" ")));
-  check("  …\"None reported\" is said as it is; of the 1,121 rows where the company made, imported or distributed the product, 952 carry a statement, 9 naming a death; no recall's row runs past 600 characters",
-    !!noneRow && ownWith.length === 952 && deaths.length === 9 && flat.filter((e) => e.precision !== "month").every((e) => (e.description ?? "").length <= 600),
+  check("  …\"None reported\" is said as it is; of the 1,193 rows where the company made, imported or distributed the product, 1,024 carry a statement (1,121 and 952 before batch 145's units), 9 naming a death; no recall's row runs past 600 characters",
+    !!noneRow && ownWith.length === 1024 && deaths.length === 9 && flat.filter((e) => e.precision !== "month").every((e) => (e.description ?? "").length <= 600),
     `${ownWith.length} with one; ${deaths.length} naming a death: ${deaths.map((e) => e.date).join(" ")}; "None reported" ${!!noneRow}`);
   check("  …and the statement is stored with the recall and read back with it at ingest",
     page.events.some((e) => /Injuries, the Commission's record: /.test(e.description ?? "")) && /ADD COLUMN IF NOT EXISTS injuries text/.test(read("db/047_cpsc_injuries.sql")) && /^DELETE FROM cpsc_reads;$/m.test(read("db/047_cpsc_injuries.sql")));
@@ -319,8 +326,8 @@ async function main(): Promise<void> {
   const withStatement = ownOf(flat).filter((e) => leadOf(e).injuries);
   const whole = withStatement.filter((e) => (e.description ?? "").includes(injuriesOf(leadOf(e).injuries ?? "")));
   const cutRows = withStatement.filter((e) => !whole.includes(e));
-  check("of the 952 rows whose first recall has a statement, 943 show it whole (938 before); the 9 too long to fit beside the title end at a word with \"…\", the shown part the statement's own beginning",
-    withStatement.length === 952 && whole.length === 943 && cutRows.length === 9 &&
+  check("of the 1,024 rows whose first recall has a statement, 1,015 show it whole (952 and 943 before batch 145's units; 938 before batch 137); the 9 too long to fit beside the title end at a word with \"…\", the shown part the statement's own beginning",
+    withStatement.length === 1024 && whole.length === 1015 && cutRows.length === 9 &&
       cutRows.every((e) => {
         const shown = (e.description ?? "").split("Injuries, the Commission's record: ")[1] ?? "";
         const full = injuriesOf(leadOf(e).injuries ?? "").replace("Injuries, the Commission's record: ", "");

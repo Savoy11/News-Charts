@@ -363,12 +363,16 @@ const TODAY = "2026-11-01";
   // Gardner Denver's until 2020, and the old Bristow Group's of 2007 (34-56533) off VTOL, whose record was Era's until 2020
   // batch 118's Meridian Holdings takes two more off MRDN: the other Meridian Holdings, Inc.'s cases of 2007 and 2009 (LR-20318, LR-20898)
   // batch 121's operating units add two: SCANA's cases of 2020 (LR-24751, LR-24976) on Dominion, SCANA's owner from 2019-01-01
-  check("the 30,747 rows of 1995–2026 give 1,149 company days on 370 companies, 555 before 2017, as replayed in full (1,148 on 369 before batch 128's drug makers' units, which add Biomet, Inc.'s case of 2017 on Zimmer Biomet; 1,146 on 368 before batch 121's operating units, 1,148 on 369 before batch 118's, 1,150 on 371 before batch 117's taken names, 1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's, 1,148 on 370 before batch 111's spellings)",
-    rows.length === 30747 && companyDays.length === 1149 && replayed.companies.length === 370 && companyDays.filter((e) => e.date < "2017").length === 555 &&
+  check("the 30,747 rows of 1995–2026 give 1,196 company days on 374 companies, 589 before 2017, as replayed in full (1,149 on 370 and 555 before batch 145's brokers', banks' and managers' companies; 1,148 on 369 before batch 128's drug makers' units, which add Biomet, Inc.'s case of 2017 on Zimmer Biomet; 1,146 on 368 before batch 121's operating units, 1,148 on 369 before batch 118's, 1,150 on 371 before batch 117's taken names, 1,047 on 353 before batch 88's units, 1,146 on 369 before batch 89's, 1,148 on 370 before batch 111's spellings)",
+    rows.length === 30747 && companyDays.length === 1196 && replayed.companies.length === 374 && companyDays.filter((e) => e.date < "2017").length === 589 &&
       !!replayed.companies.find(([t]) => t === "ZBH")?.[1].some((e) => e.date === "2017-01-12"),
     `${rows.length} rows → ${companyDays.length} on ${replayed.companies.length}, ${companyDays.filter((e) => e.date < "2017").length} before 2017, in ${Date.now() - t0} ms`);
   // batch 88, the 2026-11-02 proposal 4: the listed banks', brokers' and managers' own units
   const replayedOn = (t: string, d: string) => !!replayed.companies.find(([x]) => x === t)?.[1].some((e) => e.date === d);
+  // batch 145, the 2026-11-11b proposal 2: the companies named after their owners that the captions name
+  check("batch 145's names, on the saved rows: Invesco Funds Group's litigation release of 2003-12-02 (LR-18482) on IVZ, RBC Capital Markets' of 2016-08-31 on RY, Raymond James Financial Services' of 2004-02-12 on RJF, Ford Motor Credit's of 2005-06-14 on F, HSBC Bank USA's of 2007-09-19 on HSBC, Northern Trust Hedge Fund Services' of 2020-09-18 on NTRS, U.S. Bancorp Investments' of 2020-06-01 on USB",
+    replayedOn("IVZ", "2003-12-02") && replayedOn("RY", "2016-08-31") && replayedOn("RJF", "2004-02-12") && replayedOn("F", "2005-06-14") && replayedOn("HSBC", "2007-09-19") &&
+      replayedOn("NTRS", "2020-09-18") && replayedOn("USB", "2020-06-01") && rows.some((r) => r.day === "2003-12-02" && /LR-18482/.test(r.number) && /Invesco Funds Group/.test(r.caption)));
   check("batch 88's units, on the saved rows: Regions Bank's case of 2009-09-21 on RF, Fifth Third Securities' of 2002-06-18 on FITB, Hilltop Securities' of 2016-02-02 on HTH, Nasdaq's exchange and routing broker of 2013-05-29 on NDAQ",
     replayedOn("RF", "2009-09-21") && replayedOn("FITB", "2002-06-18") && replayedOn("HTH", "2016-02-02") && replayedOn("NDAQ", "2013-05-29"));
   // USB's day of 2005-09-02 is U.S. Bank's own order since batch 89; the Piper caption of that day is not in it
@@ -424,8 +428,8 @@ const TODAY = "2026-11-01";
   check("  …and the namesakes and the units not theirs on no page: Reliance Financial Advisors not RS, Southern Financial Services not SO, Lazard Capital Markets (LFCM's) not LAZ, Fiserv Securities after its sale not FISV",
     !replayedOn("RS", "2014-12-10") && !replayedOn("SO", "2005-01-31") && !replayedOn("LAZ", "2008-10-30") && !replayedOn("FISV", "2005-04-21") &&
       rows.some((r) => r.day === "2008-10-30" && /Lazard Capital Markets/.test(r.caption)) && rows.some((r) => r.day === "2005-04-21" && /Fiserv Securities/.test(r.caption)));
-  check("  …each company in one map or the other, each unit with its reason, each day well formed, each ticker the index's (34 companies in batch 88, 56 with batch 89's, 60 with batch 90's, 63 with batch 93's)",
-    Object.keys(BANK_UNITS).length === 63 && Object.keys(BANK_UNITS).every((c) => RELEASE_NAMES[Number(c)] === BANK_UNITS[Number(c)]) &&
+  check("  …each company in one map or the other, each unit with its reason, each day well formed, each ticker the index's (34 companies in batch 88, 56 with batch 89's, 60 with batch 90's, 63 with batch 93's, 68 with batch 145's)",
+    Object.keys(BANK_UNITS).length === 68 && Object.keys(BANK_UNITS).every((c) => RELEASE_NAMES[Number(c)] === BANK_UNITS[Number(c)]) &&
       Object.values(BANK_UNITS).every((b) => b.names.every((n) => n.why.length > 20 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.entries(BANK_UNITS).every(([cik, b]) => companies.some(([c, t]) => c === Number(cik) && t === b.ticker)));
   const most = Object.fromEntries(replayed.companies.filter(([t]) => ["BAC", "MS", "WFC", "UBS", "JPM", "C", "GS"].includes(t)).map(([t, e]) => [t, e.length]));

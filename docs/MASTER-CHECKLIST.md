@@ -988,6 +988,61 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 145: a fifth round of units named after their owners (2026-11-12)
+
+The owner approved the second 2026-11-11 proposals' #2 on 2026-11-12 ("Approve (Recommended)"). No new
+rule, table or source: entries in EPA's `UNITS`, the CPSC's `UNITS` and the release map (`BANK_UNITS`),
+each name every pattern takes on the whole saved data read by hand, each sold or bought unit's day read
+from a filing through EDGAR's full-text search.
+
+- [x] **EPA** (`lib/epaCases.ts`): 40 entries, 31 for companies with none before (National Fuel Gas
+      Distribution and Supply, Kaiser Aluminum's companies, Owens Corning's, Quest Diagnostics Clinical,
+      Coca-Cola Refreshments from 2010-10-02, GE Plastics to 2007-07-30 and GE Capital, FMC Wyoming to
+      2015-03-31 and FMC Idaho, "WALMART STORES", Owens-Illinois', KB Home's, Phillips 66 Pipeline, Early
+      Times, Enterprise Products Operating, Curtiss-Wright Controls, Balfour Beatty's, Nippon Express USA,
+      BAE Systems', Devon Energy Production, J.B. Hunt as EPA writes it, Graphic Packaging International,
+      Eastman's resins and Texas City companies, Green Plains', Denison Mines (USA) to 2012-06-28, PPG
+      Industries Ohio, ACCO Brands USA, Baytex Energy USA, Churchill Downs Louisiana, SharkNinja
+      Operating, FedEx Logistics, BRP US, Hayward Industries) and six widened (Procter & Gamble with
+      "THE", Cleveland-Cliffs Iron, Waste Management's LampTracker and LNG, DTE Energy Resources, Energy
+      Transfer's named companies, Amazon's "AMAZON.SERVICES"). Each day from a filing: Coca-Cola's 8-K of
+      2010-10-02 (items 1.01 and 2.01); GE's 8-K of 2007-07-30, its 10-Q of 2007-11-02 reporting the sale;
+      FMC's 8-K reporting 2015-04-01; Denison's 6-K of 2012-07-02.
+- [x] **Two names the caption rule misread,** found by this batch's checks and already so on main: "GE
+      PLASTICS (FORMERLY GENERAL ELECTRIC)" of 2008 (05-2008-6618), SABIC's, was on GE's page, and
+      "DENISON MINES (USA) CORP." reads as Denison Mines Corp.'s on any day. Both are now in EPA's
+      `NOT_THE_COMPANY`, which the units, read first, do not touch, so each name is its owner's only on
+      the unit's days. GE Plastics' second key ("generalelectricplastics") was split from the first,
+      as check:epa-cases found it did not sit in "GE PLASTICS".
+- [x] **CPSC** (`lib/cpscRecalls.ts`): 9 entries on 7 companies: BRP's US, Mexican and Finnish
+      companies; RH US, with "RH, US LLC" (recall 19197, found by reading; "RH Macy" of 1993 is Macy's);
+      SharkNinja Operating; Hayward Industries; Johnson Outdoors Diving; Yamaha Motor Manufacturing and
+      Powered Products; A. O. Smith Water Products, and Electrical Products to 2011-08-21 (A. O. Smith's
+      8-K, item 2.01, reporting the sale to Regal Beloit on 2011-08-22).
+- [x] **The release map** (`lib/releaseNames.ts`): 8 names on 7 companies, 5 of them new to the map:
+      Invesco Funds Group, U.S. Bancorp Investments, RBC Capital Markets, Raymond James Financial
+      Services and its Advisors company, Ford Motor Credit, HSBC Bank USA, Northern Trust Hedge Fund
+      Services. Every case and release rule reads them; the CFPB's actions, the Justice Department's
+      saved releases and the Board's releases and orders name none of them as a new party.
+- [x] **What it gives,** on the saved data: EPA 181 rows more on 37 pages, one off; the CPSC 72 on 7; the
+      SEC's cases 47 company days on 7 (1,196 on 374 in all); its press releases 2 (Invesco Funds Group's
+      fraud charge of 2003, RBC Capital Markets' CDO charge of 2011); the CFTC 1 (RBC Capital Markets'
+      $5,000,000 order of 2019). Where the scout's first prices are read: 132 on 26 pages, 91 before 2017
+      (EPA 91 on 20, A. O. Smith's 6 recalls, the SEC's 32 on 5, the press releases' 2, the CFTC's 1),
+      where the proposal measured 114 on 26 and 81. Before first prices: EPA 9,584 rows on 704 companies,
+      8,089 before 2017; the CPSC 2,735 on 212. The coverage map's EPA figures had stood at batch 135's
+      9,386; they now give these.
+- [x] **Checked:** `check:epa-cases` 178 (9 new: each unit by a case it keeps and one it keeps off,
+      the sale days by a case a day either side, the namesakes, the round's 31 records and their days),
+      its totals re-pinned with the old ones kept, its slice grown by the 184 cases the round's patterns
+      name (`scripts/fixtures/epa-cases-slice.json.gz`, 2.8 MB); `check:cpsc` 58 (2 new); `check:sec-cases`
+      78 (1 new); `check:sec-press` 76 and `check:cftc` 30 (1 new), re-pinned. On main every new check
+      fails.
+- **Requests:** efts.sec.gov for the sale and purchase days (two answered 500 and were asked again),
+  logged in the session scratchpad (`b145/requests.log`), each with User-Agent `News Charts Research` and
+  no email address. EPA's file is the copy of 2026-10-31 already read; the CPSC's, the SEC's, the CFTC's
+  and the Board's are the committed fixtures. No www.sec.gov page was asked.
+
 ## NC ledger — batch 144: the 2026-11-11b approvals filed, and the FDA's device recalls of 2000 to mid-2012 (2026-11-12)
 
 The owner marked the second 2026-11-11 proposals on 2026-11-12: both approved ("Approve (Recommended)"),
@@ -10897,12 +10952,14 @@ already held, but new investment goes to securities coverage first.
         not read.
       - *Derived from [`docs/proposals/2026-11-11b-proposals.md`](proposals/2026-11-11b-proposals.md) #1,
         approved 2026-11-12.*
-- [ ] `P2` **A fifth round of units named after their owners,** in EPA's `UNITS`, the CPSC's `UNITS` and
+- [x] `P2` **A fifth round of units named after their owners,** in EPA's `UNITS`, the CPSC's `UNITS` and
       `RELEASE_NAMES`: approved by the owner 2026-11-12. No new rule and no new source.
       - **Measured** by the scout: 51 units, 299 items on 47 companies, 114 on 26 pages from first prices,
         81 before 2017 (Invesco Funds Group, RBC Capital Markets, National Fuel Gas, Walmart's cases
         written "WALMART STORES").
-      - **To be built in batch 145.**
+      - **Done in batch 145** (see its section): 40 EPA entries, 9 CPSC and 8 release-map names; on the
+        saved data 303 items more and one off; where first prices are read, 132 on 26 pages, 91 before
+        2017.
       - *Derived from [`docs/proposals/2026-11-11b-proposals.md`](proposals/2026-11-11b-proposals.md) #2,
         approved 2026-11-12.*
 

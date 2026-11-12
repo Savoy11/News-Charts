@@ -118,6 +118,8 @@ async function main(): Promise<void> {
   check(`before any first price: ${EXPECTED.total} company days on ${EXPECTED.companies} companies, ${EXPECTED.before2017} before 2017; ${EXPECTED.top}`,
     flat.length === EXPECTED.total && out.size === EXPECTED.companies && flat.filter((e) => e.date < "2017").length === EXPECTED.before2017 && top === EXPECTED.top,
     `${flat.length} on ${out.size}; ${flat.filter((e) => e.date < "2017").length} before 2017; ${top}`);
+  check("  …RBC Capital Markets, named after Royal Bank of Canada, is its: \"CFTC Orders RBC Capital Markets, LLC to Pay $5 Million for Supervisory Failures\" of 2019-10-01 (batch 145, the 2026-11-11b proposal 2)",
+    lands("RY", "2019-10-01", /RBC Capital Markets/) && (out.get("RY") ?? []).some((e) => e.date === "2019-10-01"));
 
   console.log("\nRead whole once a year, its newest page once a day");
   const db: FakeDb = { actions: new Map(), reads: new Map(), listed: "1962-01-02" };
@@ -188,7 +190,8 @@ async function main(): Promise<void> {
  * Products North America's propane charge of 2006 on BP and San Diego Gas & Electric's wash sales of
  * 2010 on Sempra (88 on 33 and 47 before 2017 before).
  */
-const EXPECTED = { total: 90, companies: 34, before2017: 49, top: "JPM 12, DB 7, MS 7, BCS 6, GS 6" };
+// 90 before batch 145's RBC Capital Markets, whose supervisory order of 2019-10-01 is on Royal Bank of Canada's page
+const EXPECTED = { total: 91, companies: 34, before2017: 49, top: "JPM 12, DB 7, MS 7, BCS 6, GS 6" };
 
 interface FakeDb {
   actions: Map<string, CftcAction>;

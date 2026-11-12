@@ -221,7 +221,9 @@ Raised by the November batches, each recorded in the master checklist:
   works below (§3). #1 is built in batch 144: after deploying, apply db/051 (`npm run db:migrate`); the
   next ingest of a mapped company asks openFDA for its older device recalls and reads their classes from
   the FDA's recall database, at most 200 pages a process, about 2,600 in all, so the big device makers'
-  older rows fill in over a dozen runs. #2 is to be built in batch 145.
+  older rows fill in over a dozen runs. #2 is built in batch 145, with no new table and no new source:
+  each company's next ingest asks the stored EPA cases and CPSC recalls by its new units' keys, and the
+  SEC, CFTC and Justice rules read the new names.
   1. `P1` the FDA's device recalls of 2002 to mid-2012, a new dataset (openFDA's device recall file, CC0)
      read through the FDA recall map the pages already use: 2,228 recalls on 20 pages from first prices,
      all before 2017 (Stryker 281, Abbott 269, GE 254, Philips 241, Medtronic 212, J&J 210), and up to

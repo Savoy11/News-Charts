@@ -568,9 +568,16 @@ Wireless, National City Bank on PNC's page from its purchase on 2008-12-31, and 
 2005. Batch 90 added four more companies', which the Bureau's titles name and their own filings
 list: Mastercard International, Conduent Business Services and Conduent Education Services,
 Sterling Jewelers (from Signet's first filing that names it, 2003-04-24) and Acima (Upbound's from
-2021-02-17). Read against every company
-in the index under its current names, 266 of the 6,897 stored releases land on 129 companies, 161 of
-them before 2017 (Daimler's and Novartis's bribery charges since batch 100 reads "AG" as a legal word) (Bank of America 28, Morgan Stanley 18, Citigroup 14, JPMorgan 13, UBS Group 12,
+2021-02-17). Batch 145 (the 2026-11-11b proposal 2, approved by the owner 2026-11-12) added the
+companies named after their brokers, banks and managers that the SEC's captions name: Invesco Funds
+Group on Invesco, RBC Capital Markets on Royal Bank of Canada, Raymond James Financial Services and its
+advisory company on Raymond James, Ford Motor Credit on Ford, HSBC Bank USA on HSBC, Northern Trust
+Hedge Fund Services on Northern Trust and U.S. Bancorp Investments on U.S. Bancorp; they add 47 SEC
+case days (Invesco Funds Group's market-timing fraud of 2003-12-02 and its 14 proceedings), two press
+releases and the CFTC's $5,000,000 supervision order against RBC Capital Markets of 2019. Read against every company
+in the index under its current names, 270 of the 6,897 stored releases land on 131 companies, 163 of
+them before 2017 (266 on 129 and 161 when first counted; Invesco Funds Group's charge of 2003 and RBC
+Capital Markets' of 2011 since batch 145) (Daimler's and Novartis's bribery charges since batch 100 reads "AG" as a legal word) (Bank of America 28, Morgan Stanley 18, Citigroup 14, JPMorgan 13, UBS Group 12,
 Wells Fargo 10, Goldman Sachs 9, Deutsche Bank 7), each read by hand (batch 78, after the 2026-10-30
 audit; Deutsche Bank's since batch 81, when its everyday name lost its "AKTIENGESELLSCHAFT"; the
 banks' units since batches 82 and 85). `check:sec-press` replays the whole stored listing against
@@ -624,8 +631,8 @@ revoked registrations naming a shell called "Telos, Inc." — were read by hand 
 CIK (`NOT_THE_COMPANY`). A company's rows of a day make one event, titled by its own party ("SEC
 litigation release: Transocean Inc."), with the whole caption, each release number and a
 proceeding's file number in its description. Read against every company in the index under its
-current names, the 30,747 rows give 1,146 company days on 368 companies, 555 of them before 2017
-(Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47,
+current names, the 30,747 rows give 1,196 company days on 374 companies, 589 of them before 2017
+(1,149 on 370 and 555 before batch 145's brokers', banks' and managers' companies) (Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47,
 Goldman Sachs 20); a company's former names add more, and its first price keeps it off the years
 before it listed. A party ends before its other name ("…, L.P. f/k/a Spear, Leeds & Kellogg") as it
 begins after one. `check:sec-cases` replays every row against every company and every fund series
@@ -757,8 +764,8 @@ Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Car
 2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
 (`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
 every company in the index, on EPA's whole file of 2026-10-31 (the committed slice gives the same
-rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 9,386 rows on 693 companies, 7,974 before 2017
-(GE 302, ExxonMobil 295, Chevron 278, BP 255, Honeywell 252; on 692 before batch 137 moved Kroger Specialty Pharmacy's
+rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 9,584 rows on 704 companies, 8,089 before 2017
+(GE 309, ExxonMobil 295, Chevron 278, BP 255, Honeywell 252; 9,404 on 693 before batch 145's fifth round of units, 9,386 before batch 142's Amazon unit and Brink's Inc.; on 692 before batch 137 moved Kroger Specialty Pharmacy's
 order of 2026 to Elevance Health, which bought it in 2024; 9,155 on 690 before batch 135's fourth round of units; one fewer since batch 124 took a misspelled UT Automotive decree of 2007 off RTX; 8,889 before batch 122's suits filed and settlements on their days; 7,899 on 679 before batch 120; 5,994 on 667 before the units, every one of
 whose cases is still there; BP 4 and 3M 68 by their own names). A record that took a bought
 company's name does not take that company's past: old Waste Management's cases are not WM's before
@@ -824,6 +831,28 @@ court or penalty cases more on 13 pages, 123 before 2017, none fewer (Ashland 63
 11, Lennar 9, GATX, Kroger and Novartis 8, Seaboard 7, Morgan Stanley 6); Gerdau and Seaboard had no EPA
 row and now do. Novartis Nutrition, sold to Nestlé in 2007, waits: no filing here gives the day.
 
+**A fifth round: the companies named after their owners** (batch 145, the 2026-11-11b proposal 2,
+approved by the owner on 2026-11-12). "NATIONAL FUEL GAS SUPPLY CORPORATION", "KAISER ALUMINUM
+FABRICATED PRODUCTS", "COCA-COLA REFRESHMENTS USA, INC." and "GE PLASTICS" are their owners' own
+companies, which the caption rule refuses as it should. 40 `UNITS` entries read them, 31 for companies
+with none before and six widened (Procter & Gamble's with EPA's "THE", Cleveland-Cliffs Iron, Waste
+Management's LampTracker and LNG companies, DTE Energy Resources, Energy Transfer's named companies,
+Amazon's "AMAZON.SERVICES"), every defendant each pattern takes on EPA's whole file read by hand. A
+company's own name as EPA writes it counts too: "J B HUNT TRANPORT", which J.B. Hunt's inverted EDGAR
+title "HUNT J B TRANSPORT SERVICES INC" never matched, and "WALMART STORES" in one word. A unit sold or
+bought is its owner's between the days the filings give: Coca-Cola Refreshments from 2010-10-02, the
+bottling business Coca-Cola bought from Coca-Cola Enterprises (whose own cases stay off); GE Plastics to
+2007-07-30, before its sale to SABIC; FMC Wyoming to 2015-03-31, before its sale to Tronox; Denison Mines
+(USA) to 2012-06-28, before its sale to Energy Fuels. The caption rule had read "GE PLASTICS (FORMERLY
+GENERAL ELECTRIC)" of 2008 as GE's and would read "DENISON MINES (USA) CORP." as Denison's on any day, so
+both are now in `NOT_THE_COMPANY`, which the units, read first, do not touch. Left out: Enterprise
+Products' general partner, owned by its controlling family's company; Chevron Phillips, Duke Energy Field
+Services and Dow Corning, joint ventures; Johnson Controls Battery Group, the owner's open call on JCI. On
+EPA's whole file, 181 rows more on 37 pages and one off; from first prices where read, 91 on 20 pages, 61
+before 2017 (Energy Transfer 11, National Fuel Gas 10, GE 7, Walmart and Owens Corning 7, J.B. Hunt and
+Graphic Packaging 6); 89 more on 17 pages whose first price is not read (BAE Systems 23, Enterprise
+Products 14).
+
 **EPA's own days: the day a suit was filed, and each settlement on its own day** (batch 122, the
 owner's approval of 2026-11-08). EPA's file dates more of a court case than the settlement its row
 was dated by: the day the suit was filed ("Complaint Filed With Court"), and each settlement's own
@@ -861,8 +890,8 @@ of 1999-10-07, "work ordered $500,000,000, EPA's estimate; EPA's costs recovered
 Hudson River decree of 2005, $26,000,000 beside $150,000,000. On a settlement of several parties the
 figure is the whole settlement's, and the row says among how many ("$95,000,000, among 225
 parties", the Kramer landfill decree of 1998). A suit's filing row keeps no money. Before first prices,
-on the committed slice: 3,008 rows on 384 pages name a cost recovery; 2,077 of them showed no money at
-all before, 1,875 before 2017 and 1,032 before 2001 (2,942 on 380 before batch 135's units). No row's
+on the committed slice: 3,037 rows on 387 pages name a cost recovery; 2,103 of them showed no money at
+all before, 1,900 before 2017 and 1,045 before 2001 (3,008 on 384 before batch 145's units, 2,942 on 380 before batch 135's). No row's
 day, title or key changes, only its description. db/045 keeps the figures and forgets the last read, so
 the next run reads EPA's file whole.
 
@@ -882,8 +911,8 @@ $6,000,000 of 2002 on that settlement's row only, not its amendment of 2006; Che
 2018-10-24 each their own, $6,395,744.08 and $3,100,165. EPA's text keeps its capitals and its typing,
 and a case's quote is cut at a word after 300 characters and marked. A text EPA gives no figure for is
 not shown, a suit's filing row keeps none, and a row never says "no project": EPA's record is not
-complete. Before first prices, 227 rows on 112 companies name a project, 184 before 2017,
-$186,798,376.96 in all; from the first prices the scout read, 165 rows on 70 pages, 140 before 2017,
+complete. Before first prices, 232 rows on 115 companies name a project, 187 before 2017,
+$187,059,414.96 in all (227 on 112, 184 and $186,798,376.96 before batch 145's units); from the first prices the scout read, 165 rows on 70 pages, 140 before 2017,
 $158,014,586.07 (Chevron 12, BP 11, ExxonMobil and Valero 8, Eastman Chemical 7); batch 141 gave 168
 and $181,844,220.07 before the 2026-11-11 audit kept other days' projects off four rows. No row's day, title or
 key changes. db/050 keeps the figures and texts and forgets the last read, so the next run reads EPA's
@@ -948,10 +977,16 @@ Where no 8-K reports a deal, EDGAR's full-text search gives the filings around i
 the unit falls between them. On the committed fixture, from first prices, 402 recalls more on 47
 pages, 246 before 2017, none fewer; 14 pages gain their first CPSC row (Honda 51 rows, Sony 14,
 Philips 14, Disney 11). Fisher-Price, Hasbro's brands, Carrier before 2020 and Lawn-Boy, bought before
-EDGAR, wait for a filing's text (`NEWS_CHARTS_CONTACT`). AT&T Corp.'s phone charger of 1995 is not AT&T
+EDGAR, wait for a filing's text (`NEWS_CHARTS_CONTACT`). Batch 145's fifth round (the 2026-11-11b
+proposal 2) adds 9 entries on 7 more companies, every firm each pattern takes read by hand: BRP's US,
+Mexican and Finnish companies on BRP (37 recalls), RH US on RH (once written "RH, US LLC"; "RH Macy" of
+1993 is Macy's), SharkNinja Operating, Hayward Industries, Johnson Outdoors Diving (Scubapro) and Yamaha
+Motor Manufacturing on their owners, and A. O. Smith's Water Products and Electrical Products, the
+second to 2011-08-21, before its sale to Regal Beloit: 72 rows more, 6 of them from first prices
+where read (A. O. Smith's of 2003–2008), the rest on pages whose first price is not read. AT&T Corp.'s phone charger of 1995 is not AT&T
 Inc.'s, whose record was SBC's until it took AT&T's name on 2005-11-18 (batch 116), nor Ingersoll-Rand
 Company's of 2002 Ingersoll Rand Inc.'s (batch 117). Against every company in the index, before first
-prices: 2,663 rows on 209 companies, 1,121 of them as maker, importer or distributor (Mattel's first of
+prices: 2,735 rows on 212 companies, 1,193 of them as maker, importer or distributor (2,663 on 209 and 1,121 before batch 145's units) (Mattel's first of
 1978, GE's hair dryers of 1979, IBM's ThinkPad batteries of 2006). A work of the U.S. Government, public domain; the Commission's
 site refused this session's requests (403), so the basis is the law's and the federal catalog's,
 not a page re-read. Since batch 136 (the 2026-11-09b proposal 4, part a) a row also gives the
@@ -981,8 +1016,8 @@ Co."). Four guards measured on the list: a count before a name ("Six Financial I
 only ever after "Former", another company's unit ("Prudential Securities" is Prudential Financial's,
 not Prudential plc's), and an everyday word with a possessive ("People’s Alternative"). The company
 may carry "AG" or follow where it is based ("Deutsche Bank AG", "London-Based Barclays Bank PLC",
-batch 100). Against every company in the index, before first prices: 88 company days on 33
-companies, 47 before 2017 (JPMorgan 12, Deutsche Bank 7, Morgan Stanley 7, Barclays 6, Goldman Sachs
+batch 100). Against every company in the index, before first prices: 91 company days on 34
+companies, 49 before 2017 (88 on 33 and 47 when first counted; RBC Capital Markets' order of 2019 since batch 145) (JPMorgan 12, Deutsche Bank 7, Morgan Stanley 7, Barclays 6, Goldman Sachs
 6; AEP's suit of 2003, NRG's of 2004, Duke Energy's and Xcel's trading units of 2003–2004). Public domain, acknowledged to the CFTC.
 
 ### The SEC News Digest (`lib/secDigest.ts`, `lib/ingest/secDigestWalk.ts`)
@@ -1677,7 +1712,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Federal Reserve Board press releases | The Board's orders on a bank's applications since 1996 (1996–2005 from its yearly pages, committed), and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |
 | Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
-| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 108 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
+| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 139 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
 | Mine Safety and Health Administration | Accidents since 2000 that killed someone at a mine the company controlled, with MSHA's own finding on each: the violations its investigation cited and the penalties it proposed (batch 139) | MSHA's Accidents and Mines files, one 52 MB zip and one of 7 MB, read once a week for every company and the deaths kept (`lib/ingest/mineWalk.ts`), and its Inspections and Assessed Violations files (74 MB and 110 MB) streamed once a month; kept for the 54 controller IDs `lib/mineAccidents.ts` maps by hand to 52 companies, each between its company's days, from the company's first price. Public domain, credited to the U.S. Department of Labor; no key |
 | Federal Railroad Administration | Railroad accidents since 1975 a company's railroad reported, with a death, an evacuation or $5,000,000 of damage | Form 54 on the Transportation Department's open-data host, one request a day for each of the six railroad companies `lib/railAccidents.ts` maps by hand, each railroad between its owner's days, from the company's first price; a highway-rail crossing collision only with an evacuation or that damage. Public domain; no key |

@@ -383,6 +383,10 @@ async function main(): Promise<void> {
       /product recalls from the U\.S\. Consumer Product Safety Commission/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
       /product recalls from the U\.S\. Consumer Product Safety Commission/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")) &&
       /\| U\.S\. Consumer Product Safety Commission \|/.test(read("README.md")));
+  // the audit of batches 143–149, finding 3: the README's totals are batch 148's, as the replay above gives them
+  check("  …and the README gives the replay's totals, 2,810 rows on 212 companies and 1,268 as maker, importer or distributor, not batch 145's 2,735 and 1,193",
+    /prices: 2,810 rows on 212 companies, 1,268 of them as maker, importer or distributor/.test(read("README.md")) &&
+      !/2,735 rows on 212 companies, 1,193 of them as maker/.test(read("README.md")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   process.exit(fail ? 1 : 0);

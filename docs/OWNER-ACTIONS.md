@@ -61,9 +61,10 @@ Each feed reports one of three things, and the distinction is the point: `✓ N 
 made for this build>` in `.env.local` on every host that runs ingest. Every request to a public
 service sends it in its User-Agent (`lib/contact.ts`). The SEC refuses EDGAR requests that carry no
 contact, so without it filings, the SEC's releases and its cases stop arriving. On 2026-11-12 you
-asked that your personal address be used for now: it is set as `NEWS_CHARTS_CONTACT` in the build
-session's `.env.local`, which git ignores and nothing commits, and the same line goes in each host's.
-It is still not written in the code; a new address replaces it in that one setting.
+asked that your personal address be used for now; on 2026-11-13 you made an address for the project,
+and since then that one is set as `NEWS_CHARTS_CONTACT` in the build session's `.env.local`, which git
+ignores and nothing commits, in place of the personal one. The same line, with the project's address,
+goes in each host's. Neither address is written in the code.
 
 **And install poppler's `pdftotext`** on the same host (batch 102): the SEC News Digest's issues are
 scanned PDFs, and the walk reads their text with it. Without it the walk asks nothing and the
@@ -259,7 +260,9 @@ Raised by the November batches, each recorded in the master checklist:
   #1 is built in batch 132 for the 17 pages, and its rest of the population in batch 133 (30 pages
   more, from a scan of every listed company's filing list; nothing to run; the four handovers that waited
   for a filing's text were read in batch 149: RGC Resources and Digimarc's of 2008 are mapped, Biogen needs
-  nothing, and Community West Bancshares' old past is another company's; nothing to run); then #2,
+  nothing, and Community West Bancshares' old past is another company's; nothing to run; batch 150, the
+  audit of batches 143–149, leaves RGC's two empty 1999 reports off its page, a stored copy too, nothing
+  to run); then #2,
   #3 and #4 in batches 134, 135 and 136. Nothing to run after deploying batch 132: each of the 17
   pages' next ingest reads its older records (3,277 filings of 1994–2016), and its SEC News Digest
   entries from the issues already stored. The notices' own text can be read once `NEWS_CHARTS_CONTACT`

@@ -74,6 +74,11 @@ check("no email address is written in the code, the stand-ins on example.org asi
 const prose = tracked("README.md", "CLAUDE.md", "docs", ".env.example").filter((p) => /\.(?:md|json|example)$/.test(p) || p === ".env.example");
 const personal = prose.filter((p) => PERSONAL.test(read(p)));
 check("no personal mailbox's address in the docs, the work log or the reports", personal.length === 0, personal.join(", "));
+// the audit of batches 143–149, finding 5: the project's own address replaced the personal one on 2026-11-13
+check("the owner's guide and lib/contact.ts say the project's own address is the one set since 2026-11-13, not the personal one",
+  /on 2026-11-13 you made an address for the project,\s+and since then that one is set as `NEWS_CHARTS_CONTACT`/.test(read("docs/OWNER-ACTIONS.md")) &&
+    !/asked that your personal address be used for now: it is set as/.test(read("docs/OWNER-ACTIONS.md")) &&
+    /on 2026-11-13 gave the project its own address, which took its place/.test(read("lib/contact.ts")));
 check("the setting is documented where the owner sets things: .env.example, README and OWNER-ACTIONS",
   /^# NEWS_CHARTS_CONTACT=builds@example\.org$/m.test(read(".env.example")) && /NEWS_CHARTS_CONTACT/.test(read("README.md")) && /NEWS_CHARTS_CONTACT/.test(read("docs/OWNER-ACTIONS.md")));
 

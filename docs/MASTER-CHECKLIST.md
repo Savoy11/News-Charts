@@ -988,6 +988,68 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 150: the 2026-11-15 audit of batches 143–149, its findings fixed (2026-11-15)
+
+The `code-auditor` read `git diff a89c8e9..30ba57f` (batches 143–149) and wrote
+`docs/audits/2026-11-15-code-audit-b143-149.md`. It ran db/001–db/051 on a throwaway PostgreSQL 16, read the device
+recalls through it with no difference from the replay in memory, and reproduced every total the ledgers give. Six
+findings, each verified here before it was fixed; the owner's word on starting: "Continue".
+
+- [x] **1 · `P2` · EPA lacked batch 148's units.** The vehicle, rail and product maps gave Hino, Kelly-Springfield,
+      Missouri Pacific, the Delaware and Hudson, Fisher-Price, Playskool and Milton Bradley to their owners, and EPA's
+      `UNITS` did not, so 16 rows were on no page. They are EPA's units now, on the same days (`lib/epaCases.ts`):
+      Hino Motors on Toyota from 2001-08-31 to 2026-03-31, Missouri Pacific Railroad and Corp. on Union Pacific from
+      1982-12-22, Kelly-Springfield on Goodyear from 1991-10-01, the Delaware and Hudson on CP from 1991-01-18,
+      Fisher-Price on Mattel from 1993-11-30, Playskool and Milton Bradley on Hasbro from 1984-12-31. Toyota's page gains
+      Hino's Clean Air Act decree of 2025-01-15 (HQ-2025-0005), a $532,213,113.70 civil penalty; Goodyear's
+      Kelly-Springfield's four Superfund cases of 1995–1998; Union Pacific's Missouri Pacific's five of 1988–2002; CP its
+      first two EPA rows (1997 and 2008); Mattel one, Hasbro three. The committed slice gains the 10 cases it lacked
+      (8,709). EPA's replay before first prices: 9,561 rows on 705 companies, 8,065 before 2017 (9,545 on 704 and 8,050).
+      Missouri Pacific Employees' Health Ass'n, a namesake, is no unit.
+- [x] **2 · `P3` · RGC's page showed an empty parent's reports.** RGC Resources' own 10-Qs of 1999-03-18 and
+      1999-05-13 were for the quarters Roanoke Gas reported on 1999-02-10 and 1999-05-14, and each says its only
+      transactions "relate to the costs incurred to organize the Company". A predecessor entry now lists such reports by
+      accession (`shellReports`, `lib/predecessors.ts`); `getFilingsDeep` leaves them off, and so does the page's read
+      (`isShellReport` in `lib/store/read.ts`), since no run takes a stored SEC row off. RGC's is the only entry.
+- [x] **3 · `P3` · Stale EPA totals.** README and the coverage map gave 9,547 rows after batch 149 had made it 9,545, and
+      `check:epa-cases` pinned the coverage map's stale figure. Both now give 9,561 on 705, 8,065 before 2017, and the
+      check refuses 9,547 and 9,545; README's units count is 144 companies. README's CPSC sentence gave batch 145's 2,735
+      rows and 1,193 as maker, importer or distributor; it gives batch 148's 2,810 and 1,268 now, as `check:cpsc` does,
+      and `check:cpsc` holds it.
+- [x] **4 · `P3` · The Mentor check passed without Mentor's day.** Its two recall numbers were Class III, which give no
+      row on any day. It now asserts Mentor's two Class II recalls of 2008 off J&J (47873, Psi-Tec Tubing, 2008-04-21;
+      49522, the Aseptic Transfer Set, 2008-08-22) and that both would be J&J's without the day.
+- [x] **5 · `P3` · The owner's guide and `lib/contact.ts` still said the personal address was the one set.** Both now say
+      the project's own address has been the setting since 2026-11-13; neither names an address.
+- [x] **6 · `P3` · Small drift.** The device recall file goes back to 2000 (from 2000-04-11), not 2002, in README and
+      `lib/fdaDeviceRecalls.ts`; the header's sample row is the one built, "Sprint Fidelis 6930 Steroid eluting (4
+      products)"; of the 345 recalls held for companies not yet read, Medline's 13 and Penumbra's 5 fall before those
+      companies' listings, so at most 327 can show. The taken-names scan's Digimarc entry stays, with a note: 27 of its
+      companies, not one, have another record mapped as a predecessor since the scan was read (batches 132, 133 and
+      149), each read "own" (25) or "history" (2), the company's own past either way; dropping Digimarc's alone would
+      leave the other 26 as they are. `check:taken-names` now holds that none of them is "taken".
+- [ ] **Kelly-Springfield before 1991-10-01 (`P3`, the audit's question 1).** Its recall of 1976, its four NHTSA
+      investigations of 1986–1991 and its EPA cases of 1976, 1985 (two) and 1989 stay off Goodyear's page: no filing
+      read gives the day Goodyear bought it. They wait on a filing, not on the contact. The full-text search's three
+      Goodyear exhibits of 2004–2005 naming both "Kelly-Springfield" and "1935"; the one read here (exhibit 4.3 of
+      0000950152-05-003940) cites the Public Utility Holding Company Act of 1935, not the purchase.
+- **The audit's question 2, no change:** Eastman Chemical Resins after Eastman's sale of its adhesives resins to
+  Synthomer (2022) has no end day, but its one later case (03-2019-7004, 2023-05-24) names Eastman Chemical Company itself,
+  so the row is Eastman's either way.
+- **Set aside, as the audit did (5):** "Walmart Stores - Big Rapids" is a Walmart store, so Walmart's; the rail sentence
+  "The N killed is…" carries only counts of 1 today; Radiometer and KaVo have no `from`, though no row is wrong (their
+  first records are of 2005 and 2006, after Danaher held them); the CPSC's Carrier from 1994-03-31 against EPA's and
+  NHTSA's no start, with no Carrier record in any of them between 1979 and 1994 but EPA's of 1985; Zimmer Biomet's ROSA
+  event 77667 is the reports' row.
+- [x] **Checks:** `check:epa-cases` 185 (4 new, 28 figures re-pinned with their history), `check:predecessors` 78 (2 new),
+      `check:fda-device-recalls` 53 (1 new, the Mentor check rewritten), `check:contact` 12 (1 new), `check:taken-names`
+      (1 new), `check:cpsc` 63 (1 new). On main: 15 of the first's fail, both of the second's (one throws, as
+      `isShellReport` is not there), the third's new one, the fourth's, the fifth's on main's scan, which has no such note,
+      and the sixth's on main's README. The rewritten Mentor check passes on main, whose day was right; it now fails if
+      the day goes.
+- **The ledger:** no entry changes; 39 open, 103 closed, 11 parked, 17 blocked. The open item above is this section's.
+- **Requests:** one, www.sec.gov, with the project's User-Agent and contact: Goodyear's exhibit 4.3 of 2005.
+
 ## NC ledger — batch 149: the last reads that waited on the contact (2026-11-15)
 
 The owner, on 2026-11-13: "Continue", with the project's own address now set as `NEWS_CHARTS_CONTACT` in place of the

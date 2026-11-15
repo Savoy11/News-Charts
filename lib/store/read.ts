@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { getPool } from "../db";
 import { corroborations } from "../corroboration";
-import { ownPastLabelled } from "../predecessors";
+import { isShellReport, ownPastLabelled } from "../predecessors";
 import { hiddenAsTaken } from "../takenNames";
 import { ALSO_ON_SOURCE_IDS, alsoOnSql, groupAlsoOn, type AlsoOn } from "../alsoOn";
 import { RELEVANCE_THRESHOLD } from "../enrich/relevance";
@@ -269,6 +269,9 @@ export async function loadEvents(subjectId: number): Promise<TimelineEvent[]> {
     // another company's row from before the record took its name, stored before batch 117 or by a
     // source no run takes off, is not this page's (lib/takenNames.ts)
     if (hiddenAsTaken(r.subject_cik, date, `${r.title} ${r.body ?? ""}`, r.attestation_sources)) return [];
+    // …nor an empty new parent's own report of a quarter its predecessor reported, stored before batch 150
+    // (RGC Resources' two 10-Qs of 1999, `shellReports`), which no run takes off: SEC answers are never complete
+    if (isShellReport(r.subject_cik, r.external_id)) return [];
     // a grouped row's versions are one document, not corroboration (lib/corroboration.ts, batch 107)
     const attestations = corroborations(r.attestation_sources);
     const ev = {

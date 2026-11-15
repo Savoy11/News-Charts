@@ -810,6 +810,13 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; defendan
  *   not placed here; Chevron Phillips, Duke Energy Field Services and Dow Corning, joint ventures;
  *   Johnson Controls Battery Group before 2016-09-02, old Johnson Controls, Inc.'s (batch 146 below); and names before a company's EDGAR
  *   record, which its EDGAR former names give at ingest.
+ * - Batch 150 (the 2026-11-15 audit's finding 1): a unit read for one map is read for EPA's too, on the same
+ *   days. Batch 148's units, each day read from a filing's text and cited in lib/recalls.ts,
+ *   lib/railAccidents.ts and lib/cpscRecalls.ts: Hino on Toyota from 2001-08-31 to 2026-03-31 (its decree of
+ *   2025, $532,213,113.70), Kelly-Springfield on Goodyear from 1991-10-01, Missouri Pacific on Union Pacific
+ *   from 1982-12-22 (not the Missouri Pacific Employees' Health Association, a namesake), the Delaware and
+ *   Hudson on CPKC from 1991-01-18, Fisher-Price on Mattel from 1993-11-30, and Playskool and Milton Bradley on
+ *   Hasbro from 1984-12-31. Kelly-Springfield's cases of 1976–1989 stay off, as its recall of 1976 does.
  */
 export interface EpaUnit {
   ticker: string;
@@ -871,6 +878,7 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
   100885: [
     unit("UNP", "Union Pacific Railroad", /^UNION PACIFIC RAIL ?ROAD\b/i, "unionpacific"),
     unit("UNP", "Union Pacific Resources", /^UNION PACIFIC RESOURCES\b/i, "unionpacific", { to: "1996-10-14" }),
+    unit("UNP", "Missouri Pacific", /^MISSOURI\s+PACIFIC\s+(?:RAIL\s?ROAD|CORP)/i, "missouripacific", { from: "1982-12-22" }),
   ],
   277948: [unit("CSX", "CSX Transportation", /^CSX\s+(?:TRANSPORTATION|TRANSPORATION|INTERMODAL|REAL PROPERTY)\b/i, "csx")],
   702165: [unit("NSC", "Norfolk Southern Railway", /^NORFOLK SOUTHERN RAILWAY\b/i, "norfolksouthern")],
@@ -945,7 +953,10 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("DUK", "PanEnergy's pipelines", /^PANHANDLE EASTERN PIPE ?LINE\b/i, "panhandleeastern", { from: "1997-06-18", to: "1999-03-28" }),
     unit("DUK", "PanEnergy's pipelines", /^TRUNKLINE GAS\b/i, "trunklinegas", { from: "1997-06-18", to: "1999-03-28" }),
   ],
-  1094517: [unit("TM", "Toyota Motor's US companies", /^TOYOTA MOTOR\b/i, "toyotamotor")],
+  1094517: [
+    unit("TM", "Toyota Motor's US companies", /^TOYOTA MOTOR\b/i, "toyotamotor"),
+    unit("TM", "Hino Motors", /^HINO\s+MOTORS\b/i, "hinomotors", { from: "2001-08-31", to: "2026-03-31" }),
+  ],
   354950: [unit("HD", "Home Depot U.S.A.", /^(?:THE\s+)?HOME DEPOT,?\s+(?:U\.?\s?S\.?\s?A|NORTHEASTERN)/i, "homedepot")],
   60667: [unit("LOW", "Lowe's Home Centers", /^LOWE'?S\s+HOME\s+CENTER/i, "loweshomecenter")],
   // batch 145: also as EPA writes it with "THE" before it ("THE PROCTER & GAMBLE MANUFACTURING COMPANY")
@@ -1403,6 +1414,14 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
   // Johnson Controls, Inc.'s past is a taken name's, lib/takenNames.ts) to 2019-04-29, the eve of the sale of
   // Power Solutions to Brookfield (JCI's 8-K filed 2019-05-01, item 2.01: completed 2019-04-30)
   833444: [unit("JCI", "Johnson Controls Battery Group", /^JOHNSON\s+CONTROLS\s+BATTERY\s+GROUP\b/i, "johnsoncontrolsbatterygroup", { from: "2016-09-02", to: "2019-04-29" })],
+  // batch 150: batch 148's units, on the days the vehicle, rail and product maps give them
+  42582: [unit("GT", "Kelly-Springfield", /^KELLY[- ]?SPRINGFIELD\b/i, "kellyspringfield", { from: "1991-10-01" })],
+  16875: [unit("CP", "Delaware and Hudson", /^DELAWARE\s+(?:&|AND)\s+HUDSON\b/i, "delawareandhudson", { from: "1991-01-18" })],
+  63276: [unit("MAT", "Fisher-Price", /^FISHER[- ]?PRICE\b/i, "fisherprice", { from: "1993-11-30" })],
+  46080: [
+    unit("HAS", "Playskool", /^PLAYSKOOL\b/i, "playskool", { from: "1984-12-31" }),
+    unit("HAS", "Milton Bradley", /^MILTON\s+BRADLEY\b/i, "miltonbradley", { from: "1984-12-31" }),
+  ],
 };
 
 /** The letters a company's stored cases are asked by for its units (`UNITS`). */

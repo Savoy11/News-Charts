@@ -33,7 +33,7 @@ import rawTickerIndex from "../data/edgar-tickers.json";
 import rawCompanyAliases from "../data/company-aliases.json";
 import { nameKey, type AliasIndexFile } from "./companyAliases";
 import { foldAccents } from "./fold";
-import { predecessorsOf } from "./predecessors";
+import { isShellReport, predecessorsOf } from "./predecessors";
 import { commonName, shortForms, withoutTag } from "./edgarName";
 import { eastern } from "./marketTime";
 import { UA } from "./contact";
@@ -1195,7 +1195,10 @@ export async function getFilingsDeep(
   });
   // a record that was another company until it took this one's ticker keeps its own past too, which
   // the page labels as that company's (Schering-Plough's on MRK's record, `ownPastLabelled`, batch 110)
-  const [own, ...before] = await Promise.all([recordFilings(company, includeOlder, renames, othersStakes), ...earlier]);
+  const [mine, ...before] = await Promise.all([recordFilings(company, includeOlder, renames, othersStakes), ...earlier]);
+  // …less an empty new parent's own reports for quarters its predecessor reported (RGC's of 1999, finding 2
+  // of the audit of batches 143–149)
+  const own = mine.filter((e) => !isShellReport(company.cik, e.externalId));
   // one row a filing: one the two records share is the successor's
   const seen = new Set(own.map((e) => e.id));
   return [...own, ...before.flat().filter((e) => !seen.has(e.id) && seen.add(e.id))];

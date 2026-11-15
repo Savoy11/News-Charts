@@ -303,8 +303,8 @@ too, until FMC's deconsolidation on 2023-11-30 (125).
 
 **Before the reports: the device recalls of 2000 to mid-2012** (`lib/fdaDeviceRecalls.ts`, batch 144,
 approved by the owner 2026-11-12). The reports begin on 2012-06-20, so a device maker's page had no FDA
-recall before then. openFDA's other device file, the FDA's own recall database, goes back to 2002 under the
-same event numbers, and each mapped company's firms are asked for the recalls they began before the reports
+recall before then. openFDA's other device file, the FDA's own recall database, goes back to 2000 (a mapped
+firm's first recall in it began on 2000-04-11) under the same event numbers, and each mapped company's firms are asked for the recalls they began before the reports
 (one or two keyless requests). The rule is the map's, on the day the firm began the recall, and a recall the
 reports hold (470 events begun before 2012-06-20) stays the reports' row. The file gives no class, so each
 recall's page in the FDA's recall database is read once and kept (db/051), at most 200 a process; a recall
@@ -313,8 +313,9 @@ classes read on 2026-11-12: from first prices, 1,981 rows on 19 pages, every one
 I (Medtronic's Sprint Fidelis leads of 2007-10-15, the Alaris SE pump of 2006); Stryker 262, GE 243, Philips
 234, Abbott 216, Medtronic 202, Johnson & Johnson 175 (DePuy's ASR hip recall of 2010-08-23), Boston
 Scientific 154, Baxter 122, Zimmer Biomet 107, BD 95. Older recalls are far more often Class III than the
-reports' (283 of the 2,608 read, 255 from first prices). 345 more wait on the first prices of 18 companies not
-yet read (Smith & Nephew 51, CONMED 50, Integra 44…). The map's days for 2000–2012 were read for it, as the
+reports' (283 of the 2,608 read, 255 from first prices). 345 more are held for 18 companies whose first prices
+are not yet read (Smith & Nephew 51, CONMED 50, Integra 44…); Medline's 13 and Penumbra's 5 fall before those
+companies' listings, so at most 327 of them can ever show (the audit of batches 143–149, finding 6). The map's days for 2000–2012 were read for it, as the
 file gives a bought unit's own past under its later name: Guidant's recalls of 2005, filed as "Boston
 Scientific CRM Corp", count for Boston Scientific only from 2006-04-21; Datex-Ohmeda for GE from 2003-10-10
 (Instrumentarium); Mentor (2009-01-26) and Acclarent (2010-01-20) for Johnson & Johnson; Sybron's dental
@@ -774,10 +775,18 @@ Company from 2005-07-20 on Shell (the owner's call); Union Pacific Railroad, CSX
 Norfolk Southern Railway, Occidental Chemical, Waste Management's state companies from 1998-07-16,
 Northrop Grumman's shipbuilders on Huntington Ingalls from 2011-03-31, Union Carbide on Dow Inc. from
 2019-04-01. A station, store or numbered site under an oil brand is not the brand's unit
-(`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. Against
+(`BRANDED_SITE`), and joint ventures (Chevron Phillips Chemical, Nucor-Yamato) are no one's. A unit
+read for the vehicle, rail or product maps is read for EPA's too, on the same days (batch 150, the
+audit of batches 143–149, finding 1): Hino Motors on Toyota from 2001-08-31 to 2026-03-31 (its
+$532,213,113.70 decree of 2025), Missouri Pacific on Union Pacific from 1982-12-22,
+Kelly-Springfield on Goodyear from 1991-10-01, the Delaware and Hudson on Canadian Pacific from
+1991-01-18, Fisher-Price on Mattel from 1993-11-30, and Playskool and Milton Bradley on Hasbro from
+1984-12-31. Against
 every company in the index, on EPA's whole file of 2026-10-31 (the committed slice gives the same
-rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 9,547 rows on 704 companies, 8,050 before 2017
-(GE 309, ExxonMobil 295, Chevron 278, BP 255, Honeywell 252; 9,584 and 8,089 before batch 146 took old Johnson Controls' 39 rows off JCI and put its battery company's 2 of 2017 on; 9,404 on 693 before batch 145's fifth round of units, 9,386 before batch 142's Amazon unit and Brink's Inc.; on 692 before batch 137 moved Kroger Specialty Pharmacy's
+rows since batch 116; 55 more since batch 117's table of taken names), before first prices: 9,561 rows on 705 companies, 8,065 before 2017
+(GE 309, ExxonMobil 295, Chevron 278, BP 255, Honeywell 252; 9,545 on 704 and 8,050 before batch 150 read batch 148's units
+for EPA too, 16 rows on six pages, Hino Motors' decree of 2025 on Toyota's among them; 9,547 before batch 149 ended Southern
+Natural Gas on Kinder Morgan at its joint venture of 2016; 9,584 and 8,089 before batch 146 took old Johnson Controls' 39 rows off JCI and put its battery company's 2 of 2017 on; 9,404 on 693 before batch 145's fifth round of units, 9,386 before batch 142's Amazon unit and Brink's Inc.; on 692 before batch 137 moved Kroger Specialty Pharmacy's
 order of 2026 to Elevance Health, which bought it in 2024; 9,155 on 690 before batch 135's fourth round of units; one fewer since batch 124 took a misspelled UT Automotive decree of 2007 off RTX; 8,889 before batch 122's suits filed and settlements on their days; 7,899 on 679 before batch 120; 5,994 on 667 before the units, every one of
 whose cases is still there; BP 4 and 3M 68 by their own names). A record that took a bought
 company's name does not take that company's past: old Waste Management's cases are not WM's before
@@ -1002,7 +1011,8 @@ second to 2011-08-21, before its sale to Regal Beloit: 72 rows more, 6 of them f
 where read (A. O. Smith's of 2003–2008), the rest on pages whose first price is not read. AT&T Corp.'s phone charger of 1995 is not AT&T
 Inc.'s, whose record was SBC's until it took AT&T's name on 2005-11-18 (batch 116), nor Ingersoll-Rand
 Company's of 2002 Ingersoll Rand Inc.'s (batch 117). Against every company in the index, before first
-prices: 2,735 rows on 212 companies, 1,193 of them as maker, importer or distributor (2,663 on 209 and 1,121 before batch 145's units) (Mattel's first of
+prices: 2,810 rows on 212 companies, 1,268 of them as maker, importer or distributor (2,735 and 1,193 before batch 148's
+units' days; 2,663 on 209 and 1,121 before batch 145's units) (Mattel's first of
 1978, GE's hair dryers of 1979, IBM's ThinkPad batteries of 2006). A work of the U.S. Government, public domain; the Commission's
 site refused this session's requests (403), so the basis is the law's and the federal catalog's,
 not a page re-read. Since batch 136 (the 2026-11-09b proposal 4, part a) a row also gives the
@@ -1731,7 +1741,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | SEC litigation releases and administrative proceedings | The SEC's record of each case since 1995 whose caption names the company as a defendant or respondent | Both year listings, read once for every company (`lib/ingest/secCasesWalk.ts`); kept only when a caption entry is the company's name with its legal form (`lib/secCases.ts`). Public information the SEC lets anyone copy, cited to the SEC; no key |
 | Federal Reserve Board press releases | The Board's orders on a bank's applications since 1996 (1996–2005 from its yearly pages, committed), and its policy releases that act on a named bank — a rescue, a capital plan | One file of every release, read once for every company (`lib/fedPress.ts`); an order kept when the company is the applicant or what it buys, a policy release when the Board's own phrase names it. Public domain, cited to the Board; no key |
 | Consumer Financial Protection Bureau | The Bureau's enforcement actions since 2012 against a bank, card issuer, lender or debt buyer whose respondents are the company or a unit it owned | The action list, read whole once a month and its newest page once a day, for every company (`lib/ingest/cfpbWalk.ts`); kept when a respondent is the company's name with its legal form, or its unit (`lib/cfpb.ts`). Public domain, cited to the Bureau; no key |
-| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 140 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
+| U.S. Environmental Protection Agency | EPA's civil enforcement cases from the 1970s, in court and before its own judges, one of whose defendants is the company | EPA's whole case file, one zip read once a month for every company (`lib/ingest/epaWalk.ts`); kept when a defendant is the company's name with its legal form, or one of the operating units 144 companies held, on the days they held them (`UNITS` in `lib/epaCases.ts`); the orders with no penalty grouped a row a month; a suit's filing day and each settlement of a case all the company's on their own days (batch 122). Public domain under EPA's open data licence; no key |
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
 | Mine Safety and Health Administration | Accidents since 2000 that killed someone at a mine the company controlled, with MSHA's own finding on each: the violations its investigation cited and the penalties it proposed (batch 139) | MSHA's Accidents and Mines files, one 52 MB zip and one of 7 MB, read once a week for every company and the deaths kept (`lib/ingest/mineWalk.ts`), and its Inspections and Assessed Violations files (74 MB and 110 MB) streamed once a month; kept for the 54 controller IDs `lib/mineAccidents.ts` maps by hand to 52 companies, each between its company's days, from the company's first price. Public domain, credited to the U.S. Department of Labor; no key |
 | Federal Railroad Administration | Railroad accidents since 1975 a company's railroad reported, with a death, an evacuation or $5,000,000 of damage | Form 54 on the Transportation Department's open-data host, one request a day for each of the six railroad companies `lib/railAccidents.ts` maps by hand, each railroad between its owner's days, from the company's first price; a highway-rail crossing collision only with an evacuation or that damage. Public domain; no key |

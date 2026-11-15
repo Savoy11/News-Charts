@@ -14,7 +14,7 @@
  */
 import type { PoolClient } from "pg";
 import tickerIndex from "../data/edgar-tickers.json";
-import { OWN_RECORD_FROM, PREDECESSORS, ownPastLabelled, ownRecordFrom, predecessorsOf } from "../lib/predecessors";
+import { OWN_RECORD_FROM, PREDECESSORS, isShellReport, ownPastLabelled, ownRecordFrom, predecessorsOf } from "../lib/predecessors";
 import { getFilingsDeep, newsNamesFor, type Rename } from "../lib/sec";
 import { withSecHeadlines } from "../lib/ingest/headlines";
 import { aliasesFor, mentions } from "../lib/enrich/relevance";
@@ -467,6 +467,18 @@ async function main(): Promise<void> {
   const on149 = (t: string, a: string) => p149[t].has(`sec-${a.replace(/-/g, "")}`);
   check("RGC's page holds Roanoke Gas's annual report of 1998-12-09 and its quarter of 1999-05-14, and its own 10-Q of 1999-08-13 after the handover",
     on149("RGCO", "0000906504-98-000090") && on149("RGCO", "0000906504-99-000056") && on149("RGCO", "0000906504-99-000075"));
+  // the audit of batches 143–149, finding 2: the new parent's own 10-Qs before the handover were an empty shell's
+  const shellRows = lists149.records["1069533"].filings.filter((r) => r[1] === "10-Q" && r[0] < "1999-07-02");
+  check("  …but not RGC Resources' own 10-Qs of 1999-03-18 and 1999-05-13, an empty new parent's reports for the quarters Roanoke Gas reported on 1999-02-10 and 1999-05-14 (the audit of batches 143–149, finding 2): one quarterly report a quarter",
+    shellRows.map((r) => `${r[0]} ${r[2]}`).join(", ") === "1999-03-18 0000906504-99-000046, 1999-05-13 0000906504-99-000053" &&
+      !on149("RGCO", "0000906504-99-000046") && !on149("RGCO", "0000906504-99-000053") && on149("RGCO", "0000906504-99-000034") && on149("RGCO", "0000906504-99-000056"),
+    shellRows.map((r) => `${r[0]} ${r[2]} ${on149("RGCO", r[2]) ? "on" : "off"}`).join(", "));
+  const readSrc = (await import("node:fs")).readFileSync(`${__dirname}/../lib/store/read.ts`, "utf8");
+  check("  …and a page's read leaves them off where a run before batch 150 stored them, as no run takes an SEC row off; no other company's filing is so marked",
+    isShellReport(cikOf("RGCO"), "0000906504-99-000046") && isShellReport(String(cikOf("RGCO")), "0000906504-99-000053") && isShellReport(cikOf("RGCO"), "000090650499000046") && !isShellReport(cikOf("RGCO"), "0000906504-99-000075") &&
+      !isShellReport(84279, "0000906504-99-000046") && !isShellReport(null, "0000906504-99-000046") &&
+      Object.entries(PREDECESSORS).filter(([, ps]) => ps.some((p) => p.shellReports?.length)).map(([c]) => c).join() === String(cikOf("RGCO")) &&
+      /if \(isShellReport\(r\.subject_cik, r\.external_id\)\) return \[\];/.test(readSrc));
   check("Digimarc's page holds the old Digimarc's annual report of 2008-02-29 and its 10-Q filed on the spin-off day, not its 8-Ks of 2008-08-07 and 2008-08-14, L-1's subsidiary's",
     on149("DMRC", "0001047469-08-002068") && on149("DMRC", "0001047469-08-008648") && !on149("DMRC", "0001104659-08-050891") && !on149("DMRC", "0001104659-08-052930"));
   check("  …and the spin-off's own record from its Form 10 on: its 8-K of 2008-10-16, the day it listed, and its annual report for 2008",

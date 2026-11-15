@@ -148,6 +148,14 @@ export interface Predecessor {
    * after their days, are kept by moving `until` instead; here the record filed other things in between.
    */
   after?: string[];
+  /**
+   * the successor's own reports, by accession, filed before the handover while it was an empty new
+   * parent, for quarters the predecessor reported itself: RGC Resources' 10-Qs of 1999-03-18 and
+   * 1999-05-13, each of which says its only transactions "relate to the costs incurred to organize the
+   * Company", beside Roanoke Gas's for the same two quarters (the audit of batches 143–149, finding 2).
+   * They stay off the page, as read and as stored (`isShellReport`, lib/store/read.ts).
+   */
+  shellReports?: string[];
 }
 
 export const PREDECESSORS: Record<number, Predecessor[]> = {
@@ -442,8 +450,9 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   // of 2000 (see OWN_RECORD_FROM; the parent's 8-K)
   1020569: [{ cik: 1004317, name: "Iron Mountain Incorporated", until: "2000-02-01", notice: "0000912057-00-003377" }],
   // RGCO — RGC Resources, Inc., a new parent of 1999; the predecessor is its utility, Roanoke Gas (an 8-K12G3 of
-  // the reorganization effective after the close of 1999-07-01; batch 149)
-  1069533: [{ cik: 84279, name: "Roanoke Gas Company", until: "1999-07-02", notice: "0000906504-99-000067" }],
+  // the reorganization effective after the close of 1999-07-01; batch 149); its own 10-Qs before it are the empty
+  // parent's, for the quarters Roanoke Gas reported (the audit of batches 143–149, finding 2)
+  1069533: [{ cik: 84279, name: "Roanoke Gas Company", until: "1999-07-02", notice: "0000906504-99-000067", shellReports: ["0000906504-99-000046", "0000906504-99-000053"] }],
   // PPL — PPL Corporation (PP&L Resources to 2000), a new parent of 1995; the predecessor is its utility (an 8-B12B).
   // Its 10-Q for the quarter to 1995-03-31 was filed under the utility's record on 1995-05-04, and PP&L
   // Resources filed none of its own for that quarter (batch 137)
@@ -614,4 +623,14 @@ export function ownPastLabelled<T extends { date: string; title: string; source:
 /** The records a company's history continues under, newest first; none for most companies. */
 export function predecessorsOf(cik: number | string): Predecessor[] {
   return PREDECESSORS[Number(cik)] ?? [];
+}
+
+/**
+ * Whether a filing of the company's own record is an empty new parent's report (`shellReports`), by its
+ * accession with or without dashes: a row's `externalId` has none.
+ */
+export function isShellReport(cik: number | string | null | undefined, accession: string | null | undefined): boolean {
+  if (cik == null || !accession) return false;
+  const bare = accession.replace(/-/g, "");
+  return predecessorsOf(cik).some((p) => (p.shellReports ?? []).some((a) => a.replace(/-/g, "") === bare));
 }

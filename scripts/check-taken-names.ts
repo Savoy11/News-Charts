@@ -265,6 +265,7 @@ walk().then(async ({ asked, stored, windows }) => {
 
   console.log("\nThe scan that keeps the table whole");
   const scan = JSON.parse(read("scripts/fixtures/taken-names-scan.json")) as {
+    about: string;
     companies: { cik: number; ticker: string; since: string | null; first: string | null; reading: string; why?: string; others: [number, string][] }[];
   };
   const c = scan.companies;
@@ -274,6 +275,12 @@ walk().then(async ({ asked, stored, windows }) => {
     c.length === 174 && readings.get("taken") === 34 && readings.get("before") === 25 && readings.get("own") === 85 && new Set(c.map((x) => x.cik)).size === 174 &&
       [...readings.keys()].every((k) => ["taken", "before", "own", "brand", "new", "business", "history", "short", "shared", "namesake", "nostart", "noprice"].includes(k)),
     Object.fromEntries(readings));
+  // the audit of batches 143–149, finding 6: records mapped as predecessors after the scan was read keep their readings
+  const mappedLater = c.filter((x) => x.others.some(([o]) => predecessorsOf(x.cik).some((p) => p.cik === o)));
+  check("  …27 of them have another record mapped since as a predecessor (batches 132, 133 and 149, Digimarc's old record among them): each is read \"own\" (25) or \"history\" (2), the company's own past either way, never \"taken\", and the scan's notes say so",
+    mappedLater.length === 27 && mappedLater.filter((x) => x.reading === "own").length === 25 && mappedLater.filter((x) => x.reading === "history").length === 2 &&
+      mappedLater.some((x) => x.ticker === "DMRC" && x.others.some(([o]) => o === 1089443)) && /"Not a mapped predecessor" holds of the day it was read/.test(scan.about),
+    mappedLater.map((x) => `${x.ticker} ${x.reading}`).join(", "));
   check("  …every one the table holds is read \"taken\" in the scan, and every \"taken\" in the scan is in the table",
     c.filter((x) => x.reading === "taken").every((x) => TAKEN_NAMES[x.cik]?.ticker === x.ticker) && entries.every((e) => c.some((x) => x.cik === e.cik && x.reading === "taken")));
   check("  …\"before\" is a name that began by the first price; every reading by hand says why",

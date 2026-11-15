@@ -8,9 +8,10 @@ import { type FdaFirm, firmFor, productName } from "./fdaRecalls";
  *
  * The owner approved the source on 2026-11-12 (`docs/proposals/2026-11-11b-proposals.md` #1). The
  * reports openFDA holds begin on 2012-06-20, so before it no device maker's page had an FDA recall;
- * openFDA's other device file, the FDA's own recall database, goes back to 2002 under the same event
- * numbers. Read from openFDA's keyless API (`device/recall.json`), asked for the firms the recall map
- * gives a company (`FDA_FIRMS`) and the recalls the firm began before the reports' first day. Public
+ * openFDA's other device file, the FDA's own recall database, goes back to 2000 (a mapped firm's first
+ * recall in it began on 2000-04-11) under the same event numbers. Read from openFDA's keyless API
+ * (`device/recall.json`), asked for the firms the recall map gives a company (`FDA_FIRMS`) and the
+ * recalls the firm began before the reports' first day. Public
  * domain: "made available with a Creative Commons CC0 1.0 Universal dedication… even for commercial
  * purposes" (open.fda.gov/license, read 2026-11-11), the reports' terms.
  *
@@ -27,9 +28,10 @@ import { type FdaFirm, firmFor, productName } from "./fdaRecalls";
  *   product's, and only Class I and II become rows, the floor the reports' rows keep. The page is on
  *   www.accessdata.fda.gov, whose contents the FDA's website policies call "not copyrighted"; what is
  *   kept is the class, a fact. Each event's page is read once and kept (db/051), a few hundred a run.
- * - **The row** reads as the reports' do, "Class I device recall: Medtronic Sprint Fidelis 6949 … (4
- *   products)", with the FDA's reason, on the day the firm began it, and links to the event's page in
- *   the recall database, since the reports' own page exists only from 2012.
+ * - **The row** reads as the reports' do, "Class I device recall: Medtronic Sprint Fidelis 6930 Steroid
+ *   eluting (4 products)", named by the product the FDA entered first, with the FDA's reason, on the
+ *   day the firm began it, and links to the event's page in the recall database, since the reports'
+ *   own page exists only from 2012.
  */
 
 const API = "https://api.fda.gov";

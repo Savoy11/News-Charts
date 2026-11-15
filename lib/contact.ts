@@ -8,8 +8,9 @@
  *
  * The address is the build's own contact, which the owner sets in `NEWS_CHARTS_CONTACT`
  * (.env.local). It is never written in the code: the owner asked, on 2026-11-05, that their
- * personal address not be used, and on 2026-11-12 that it be used for now, set in `.env.local` alone
- * (batch 146). Without it the name goes alone, and sec.gov may refuse a request
+ * personal address not be used, on 2026-11-12 that it be used for now, set in `.env.local` alone
+ * (batch 146), and on 2026-11-13 gave the project its own address, which took its place in that one
+ * setting (batch 150). Without it the name goes alone, and sec.gov may refuse a request
  * (403). That refusal is the adapter's ordinary refusal, reported as such, and nothing is stored
  * from it.
  */

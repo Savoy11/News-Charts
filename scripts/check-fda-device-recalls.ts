@@ -113,8 +113,22 @@ async function main(): Promise<void> {
   check("Guidant's VENTAK PRIZM recalls of 2005-06-17 and 2005-07-25, filed under \"Boston Scientific CRM Corp\", are on no page; its CRM recall of 2006-05-15 is Boston Scientific's",
     !has(bsx, "32391") && !has(bsx, "32738") && !!has(bsx, "35525") && firmFor("Boston Scientific CRM Corp", "2006-04-20", firmsOf("BSX")) === null && firmFor("Boston Scientific Corporation", "2005-01-01", firmsOf("BSX")) !== null);
   const jnj = rowsOf("JNJ");
-  check("  …Mentor's recalls of 2003–2008 are not Johnson & Johnson's (Mentor Texas, from 2009-01-26), nor Acclarent's of 2006 (from 2010-01-20)",
-    !has(jnj, "29132") && !has(jnj, "38623") && !has(jnj, "34524") && firmFor("Acclarent, Inc.", "2012-01-30", firmsOf("JNJ")) !== null);
+  // Mentor's Class II recalls of 2008 test its day; its 29132 and 38623 are Class III, which give no row on any day
+  // (the audit of batches 143–149, finding 4)
+  const mentorUndated = deviceRecallEvents(records, firmsOf("JNJ").map((f) => (f.search === "Mentor Texas" ? { ...f, from: undefined } : f)), { classes, reported, from: FX.first.JNJ });
+  check("  …Mentor's recalls of 2003–2008 are not Johnson & Johnson's (Mentor Texas, from 2009-01-26): its two Class II of 2008, Psi-Tec Tubing of 2008-04-21 and the Aseptic Transfer Set of 2008-08-22, which J&J's page would show without the day; nor Acclarent's of 2006 (from 2010-01-20)",
+    !has(jnj, "47873") && !has(jnj, "49522") && classes.get("47873") === 2 && classes.get("49522") === 2 &&
+      has(mentorUndated, "47873")?.date === "2008-04-21" && has(mentorUndated, "49522")?.date === "2008-08-22" && classes.get("29132") === 3 && classes.get("38623") === 3 &&
+      !has(jnj, "34524") && firmFor("Acclarent, Inc.", "2012-01-30", firmsOf("JNJ")) !== null,
+    `${has(mentorUndated, "47873")?.title}; ${has(mentorUndated, "49522")?.title}`);
+  // the audit of batches 143–149, finding 6: what the docs say of the file is what it holds
+  const firstBegun = records.map((r) => r.event_date_initiated ?? "").filter(Boolean).sort()[0];
+  const readme = (await import("node:fs")).readFileSync(`${__dirname}/../README.md`, "utf8");
+  const header = (await import("node:fs")).readFileSync(`${__dirname}/../lib/fdaDeviceRecalls.ts`, "utf8");
+  check("  …the README and the source's header say the file goes back to 2000, from 2000-04-11, not 2002; the header's sample row is the one built, Sprint Fidelis 6930; and of the 345 held for companies not yet read, at most 327 can show",
+    !/goes back to 2002/.test(readme + header) && /goes back to 2000 \(a mapped\s+firm's first recall in it began on 2000-04-11\)/.test(readme) && /Sprint Fidelis 6930 Steroid\n \*   eluting \(4 products\)/.test(header) && !/Fidelis 6949/.test(header) &&
+      /at most 327 of them can ever show/.test(readme) && firstBegun === "2000-04-11",
+    firstBegun);
   const ge = rowsOf("GE");
   check("  …Datex-Ohmeda's recalls before GE's results release of 2003-10-10 named Instrumentarium bought are not GE's; its Giraffe OmniBed recall of 2003-10-17 is (its monitor recall that day is Class III)",
     !has(ge, "25501") && !has(ge, "26765") && !!has(ge, "27490") && !has(ge, "27599") && classes.get("27599") === 3);

@@ -218,6 +218,18 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- **The 2026-11-15 proposals** (batch 151, `docs/proposals/2026-11-15-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a
+  recurring charge; both read federal sites that state no licence, under your ruling of 2026-11-12.
+  1. `P1` the EEOC's press releases since 1996, its suits and settlements against the company: about 500
+     releases on pages, up to about 770 with its own title shapes and a list of units, an estimate from a
+     sample of 326 titles (Morgan Stanley 2001, Dillard's 2008, AT&T and AutoZone 2012). Your call inside
+     it: read each undated release of 1996–2006 for its day (recommended), or leave those off.
+  2. `P1` the OCC's enforcement actions against the company's national bank, 1989–2026, all 2,655 in one
+     keyless answer: 103 company-days on 21 pages measured (JPMorgan Chase Bank's $300,000,000 penalty of
+     2013, HSBC Bank USA's $500,000,000 of 2012), about 150 on 39 with about 20 bank names added by hand;
+     part (b), the thrift regulator's spreadsheet of 1989–2011, approvable alone. Your call inside it: an
+     order's termination as a line on its row (recommended), or a row of its own.
 - ~~**The second 2026-11-11 proposals** (batch 143, `docs/proposals/2026-11-11b-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a
   recurring charge.~~ **Decided 2026-11-12: both** ("Approve (Recommended)"), with the ruling on federal

@@ -988,6 +988,57 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 151: an opportunity-scout run, two proposals for the owner (2026-11-15)
+
+Both proposals of `docs/proposals/2026-11-11b-proposals.md` are approved and built (batches 144–145), the owner's open
+calls are decided (batch 146), every read that waited on the contact is done (batches 148–149), and batch 150 fixed what
+the audit of batches 143–149 found. So the `opportunity-scout` read the repository again at `30ba57f` and wrote
+`docs/proposals/2026-11-15-proposals.md`: two proposals, both **PENDING**, ranked with securities depth first. The
+owner's word, 2026-11-15: "Continue". Nothing is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a rejection). The scout's
+      second pass then files the approved ones into this checklist.
+      1. `P1` **The EEOC's press releases since 1996,** its suits and settlements against the company, reopened by the
+         owner's ruling of 2026-11-12 on federal works (the site states no licence; no key). The newsroom lists 7,622
+         suits and settlements. The Justice Department's title rule, run over 326 of them from 14 listing pages, gave 24
+         hits, 20 of them sound (Morgan Stanley 2001, Salomon Smith Barney on Citigroup 2001, Dillard's 2008, Allstate
+         and Whirlpool 2009, AT&T and AutoZone 2012), 15 before 2017. **Estimated gain:** about 500 releases on pages, up
+         to about 770 with the EEOC's own title shapes and a list of units, about three quarters before 2017; a sample's
+         figure, so off by a third either way. **The catches:** about 900–1,400 releases of 1996–2006 carry no date in
+         the listing, though their text gives one ("PRESS RELEASE 2-21-02"); about 1,144 addresses are second copies
+         under the same title; franchisees and bottlers need guards. **The owner's call inside it:** read each undated
+         release's own page for its day (recommended), or leave undated releases off.
+      2. `P1` **The OCC's enforcement actions against the company's national bank, 1989–2026.** Its search, unreachable
+         from here on 2026-10-28, 2026-11-05 and 2026-11-09b, answered today: one keyless request gives all 2,655 actions
+         against banks (no licence stated; the same ruling). **Measured** with today's rules: 103 company-days on 21
+         pages, 77 before 2017 (JPMorgan Chase Bank's $300,000,000 penalty of 2013-09-18 and $350,000,000 of 2014-01-07,
+         HSBC Bank USA's $500,000,000 of 2012-12-11, Bank of America's $1,127,453,261 restitution of 2013-02-28).
+         **Estimated** with about 20 bank names added by hand (Citibank, N.A.'s $350,000,000 and $400,000,000 penalties;
+         PNC Bank; Wachovia from 2008-12-31…): about 150 company-days on about 39 pages, about 110 before 2017. Part (b),
+         approvable alone: the thrift regulator's spreadsheet of 1989–2011. **The owner's call inside it:** an order's
+         termination as a line on its row (recommended), or a row of its own.
+- **Cut, with reasons in the file:** the FDIC's failed-bank list (in all four deals sampled the acquirer's own 8-K names
+  the failed bank 4–6 days after the closing, so pages hold those deals already; the pre-EDGAR part, about 130
+  resolutions of 1984–1993, would need a hand map of names cut at 27 characters); NTSB's aviation accidents (Access
+  databases only, with no reader here; its page says the data moves to an API on 2027-04-05); the EEOC's litigation
+  pages and EEO-1 reports (briefs in others' suits; no company named). The FTC, FSIS, PHMSA, FERC, the NRC, GAO and the
+  CPSC's civil-penalty page were not retried, nothing having changed.
+- **For the `code-auditor`, noted by the scout:** the shared caption rule reads "Metropolitan Bank and Trust Company" as
+  Metropolitan Bank Holding's "Metropolitan Bank", "F&M Bank and Trust Company" as F&M Bank Corp's and "The National Bank
+  and Trust Company" as National Bank Holdings', taking "and Trust Company" for legal words after the name. In the OCC's
+  list these are other banks; whether the Board's orders, the CFPB's actions or the SEC's captions hold such a party was
+  not checked.
+- **Verified here,** on the scout's downloads, with my own reads: the OCC's answer holds 2,655 actions, as its count
+  request says, and each penalty cited is in it on its day, under the bank's name (JPMorgan Chase Bank, National
+  Association's $300,000,000 of 2013-09-18 and $350,000,000 of 2014-01-07, another of 2014-11-11; HSBC Bank USA's of
+  2012-12-11; Bank of America's restitution of 2013-02-28; Citibank's of 2014-11-11 and 2020-10-07). Its amounts come as
+  JSON numbers, so a build reads them as text, money being numeric. The EEOC sample holds 326 titles and the rule's 24
+  hits, Walmart's 2001 contempt release among them twice, on two days, a second copy as the file warns.
+- **Requests:** 28 by the scout, logged in the session scratchpad (`scout151/requests.log`), each with User-Agent `News
+  Charts Research` and no email address, every one answered 200: www.eeoc.gov 13, apps.occ.gov 4, occ.gov 3,
+  api.fdic.gov 2, www.fdic.gov 1, efts.sec.gov 4 and data.ntsb.gov 1. No www.sec.gov or data.sec.gov page was asked.
+  None here.
+
 ## NC ledger — batch 150: the 2026-11-15 audit of batches 143–149, its findings fixed (2026-11-15)
 
 The `code-auditor` read `git diff a89c8e9..30ba57f` (batches 143–149) and wrote

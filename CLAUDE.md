@@ -130,6 +130,13 @@ db/048), give the violations an investigation begun within 14 days cited and the
 CFTC's actions (`lib/cftc.ts`) are read by the Justice rule with the release map's units, plus the
 Commission's object form ("CFTC Orders UBS to Pay") and four guards of its own; read its header first.
 
+The EEOC's press releases since 1994 (`lib/eeoc.ts`, batch 152) are its newsroom listing, read whole
+once a year and its newest page daily (`lib/ingest/eeocWalk.ts`, db/052), kept by the Justice rule and
+the Commission's own title shapes under the company's names, the release map's units and its own
+`EEOC_UNITS`; a franchisee's, bottler's or licensee's release is the brand's by neither its title nor its
+first lines, one release posted twice is one row, and an undated release a rule keeps has its page read
+once for the day its text gives, else makes no row.
+
 The SEC News Digest of 1956–1993 (`lib/secDigest.ts`, batch 102) is read once, issue by issue, into
 db/040's tables (`lib/ingest/secDigestWalk.ts`), and each company's own entries are found there at
 its ingest. Its names are dated by the committed `data/digest-records.json` (`npm run

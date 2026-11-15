@@ -106,8 +106,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               civil enforcement cases from the U.S. Environmental Protection Agency, product recalls
               from the U.S. Consumer Product Safety Commission, railroad accident reports from the
               Federal Railroad Administration, mine accident reports from the Mine Safety and Health
-              Administration of the U.S. Department of Labor, and enforcement actions from the
-              Commodity Futures Trading Commission.
+              Administration of the U.S. Department of Labor, enforcement actions from the
+              Commodity Futures Trading Commission, and press releases from the U.S. Equal Employment
+              Opportunity Commission.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

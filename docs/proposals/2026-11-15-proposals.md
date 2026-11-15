@@ -66,7 +66,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. The EEOC's press releases since 1996, its suits and settlements against the company: Walmart, Dollar General, UPS, AT&T, Morgan Stanley, Dillard's, AutoZone, Lockheed Martin… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-15 ("Approve both (Recommended)"), with the recommended call (a): an undated release the rule keeps has its own page read once for its day. Built in batch 152: the whole listing, 7,625 releases from 1994-06-22, read once a year and its newest page daily (db/052); the Justice rule, the Commission's own shapes and an `EEOC_UNITS` list of 18 companies, franchisees, bottlers, mediation pacts and nine namesakes left off. Before first prices 550 rows on 179 companies, 276 before 2017; from first prices where read, 324 on 81 pages, 165 before 2017, where this file estimated about 500, up to about 770. Only 70 releases are undated once the listing's excerpts are read, and the rule keeps 3.
 **Owner's reason (if rejected):**
 
 **Raised before:** yes. The 2026-11-11b file measured it and cut it on its licence alone: "neither its
@@ -212,7 +212,7 @@ sampled, not counted whole; the undated block needs a page read each
 
 ## 2. The OCC's enforcement actions against the company's national bank since 1989: JPMorgan Chase Bank's $300,000,000 and $350,000,000 penalties, HSBC Bank USA's $500,000,000, Bank of America's $1.13 billion restitution, Citibank's $400,000,000… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — by the owner, 2026-11-15 ("Approve both (Recommended)"), with the recommended call: an order's termination as a line on its row. To be built in batch 153.
 **Owner's reason (if rejected):**
 
 **Raised before:** as unreachable, never measured:

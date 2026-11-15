@@ -553,6 +553,24 @@ export const SOURCES: {
     reviewedOn: "2026-11-12",
     notes: "Class I and II device recalls of 2000 to mid-2012, before the reports, for the firms lib/fdaRecalls.ts maps (lib/fdaDeviceRecalls.ts); openFDA's device recall file and each recall's class read once from the FDA's recall database, no key (batch 144)",
   },
+  {
+    id: 41,
+    key: "eeoc_press",
+    name: "EEOC press releases",
+    license: "public domain (17 U.S.C. § 105)",
+    attribution: "U.S. Equal Employment Opportunity Commission",
+    // The site states no licence. Its disclaimer (www.eeoc.gov, read 2026-11-11 and 2026-11-15):
+    // "Reference herein to any specific commercial products, process, or service by trade name,
+    // trademark, manufacturer, or otherwise, does not constitute or imply its endorsement,
+    // recommendation, or favoring by the United States Government… and shall not be used for
+    // advertising or product endorsement purposes." The releases are the Commission's own work, 17
+    // U.S.C. § 105, usable under the owner's ruling of 2026-11-12 where a federal site states no
+    // licence. Used: each release's title, day, first lines and a link; credited to the EEOC, implying
+    // no endorsement. Approved by the owner on 2026-11-15 (docs/proposals/2026-11-15-proposals.md #1).
+    commercialOk: true,
+    reviewedOn: "2026-11-15",
+    notes: "the Commission's suits and settlements since 1994, kept where the title makes a listed company the party by the Justice rule or the Commission's own shapes (lib/eeoc.ts); the newsroom listing read whole once a year and its newest page daily for every company, no key (batch 152)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

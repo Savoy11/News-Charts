@@ -54,6 +54,7 @@ import { cfpbEvents, fetchCfpbPage, type CfpbAction } from "../lib/cfpb";
 import { epaEvents, fetchCaseFile } from "../lib/epaCases";
 import { cpscEvents, fetchRecalls as fetchCpscRecalls } from "../lib/cpscRecalls";
 import { fetchCftcPage } from "../lib/cftc";
+import { fetchEeocPage } from "../lib/eeoc";
 import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue } from "../lib/secDigest";
 import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
 import { DRUGSFDA_ENTRY, DRUGSFDA_FILE, readSupplements } from "../lib/fdaSupplements";
@@ -883,6 +884,21 @@ export const CASES: LiveCase[] = [
       const out: string[] = [];
       if (first.actions.length !== 10) out.push(`page 0 holds ${first.actions.length} actions, not 10`);
       if ((first.lastPage ?? 0) < 260) out.push(`the pager's last page is ${first.lastPage}, before the 260 of 2026-11-05`);
+      return out;
+    },
+  },
+  {
+    name: "EEOC press releases — the newsroom listing as the walk reads it, 24 a page with its count (batch 152)",
+    covers: ["eeoc_press"],
+    hosts: ["www.eeoc.gov"],
+    async run() {
+      // measured 2026-11-15: 318 pages of 24, 7,625 releases, the newest of 2026-11-13
+      const first = await fetchEeocPage(0);
+      if (first.outcome !== "ok") return [`page 0: ${first.outcome} ${first.httpStatus ?? ""} ${first.detail ?? ""}`.trim()];
+      const out: string[] = [];
+      if (first.releases.length !== 24) out.push(`page 0 holds ${first.releases.length} releases, not 24`);
+      if ((first.total ?? 0) < 7625) out.push(`the listing counts ${first.total}, fewer than the 7,625 of 2026-11-15`);
+      if (!first.releases.every((r) => r.day)) out.push("a release on the newest page has no day");
       return out;
     },
   },

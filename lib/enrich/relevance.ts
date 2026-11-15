@@ -419,6 +419,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "cftc") {
         return { score: 0.95, reason: "a CFTC enforcement action naming the company as the party" };
       }
+      // …and an EEOC release whose title makes the company the party, by the same rule and the
+      // Commission's own shapes (lib/eeoc.ts, batch 152)
+      if (subject.kind === "company" && row.sourceKey === "eeoc_press") {
+        return { score: 0.95, reason: "an EEOC suit or settlement naming the company as the party" };
+      }
       // …and a new-drug approval whose applicant is the company, its firm or its unit that day
       // (lib/fdaApprovals.ts, batch 105)
       if (subject.kind === "company" && row.sourceKey === "fda_approvals") {

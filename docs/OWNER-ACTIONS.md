@@ -218,9 +218,13 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
-- **The 2026-11-15 proposals** (batch 151, `docs/proposals/2026-11-15-proposals.md`): mark each
+- ~~**The 2026-11-15 proposals** (batch 151, `docs/proposals/2026-11-15-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a
-  recurring charge; both read federal sites that state no licence, under your ruling of 2026-11-12.
+  recurring charge; both read federal sites that state no licence, under your ruling of 2026-11-12.~~
+  **Decided 2026-11-15: both** ("Approve both (Recommended)"), each with its recommended call. #1 is built
+  in batch 152: after deploying, apply db/052 (`npm run db:migrate`); the next ingest reads the EEOC's whole
+  newsroom listing once (318 pages, about 15 minutes on 2026-11-15, the site answering slowly), then
+  its newest page once a day, and each company's own releases come from what is kept. #2 is batch 153's.
   1. `P1` the EEOC's press releases since 1996, its suits and settlements against the company: about 500
      releases on pages, up to about 770 with its own title shapes and a list of units, an estimate from a
      sample of 326 titles (Morgan Stanley 2001, Dillard's 2008, AT&T and AutoZone 2012). Your call inside

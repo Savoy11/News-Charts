@@ -1187,7 +1187,9 @@ export const UNITS: Readonly<Record<number, readonly EpaUnit[]>> = {
     unit("KMI", "SFPP", /^SFPP\b/i, "sfpp"),
     unit("KMI", "El Paso's companies", /^EL PASO (?:NATURAL GAS|CORP(?:ORATION)?|ENERGY CORP(?:ORATION)?|TENNESSEE PIPELINE|MERCHANT ENERGY|CGP|FIELD SERVICES|PIPELINE PARTNERS)\b/i, "elpaso", { from: "2012-05-24" }),
     unit("KMI", "El Paso's companies", /^TENNESSEE GAS PIPELINE\b/i, "tennesseegaspipeline", { from: "2012-05-24" }),
-    unit("KMI", "El Paso's companies", /^SOUTHERN NATURAL GAS\b/i, "southernnaturalgas", { from: "2012-05-24" }),
+    // a joint venture no one's from 2016-09-01, when Kinder Morgan sold half of it to Southern Company and "formed a joint
+    // venture" with its remaining half (KMI's 10-K filed 2017-02-10; batch 149, the 2026-11-08 audit's question)
+    unit("KMI", "El Paso's companies", /^SOUTHERN NATURAL GAS\b/i, "southernnaturalgas", { from: "2012-05-24", to: "2016-08-31" }),
     unit("KMI", "El Paso's companies", /^COLORADO INTERSTATE GAS\b/i, "coloradointerstategas", { from: "2012-05-24" }),
   ],
   107263: [

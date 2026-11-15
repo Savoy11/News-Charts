@@ -427,6 +427,53 @@ async function main(): Promise<void> {
   check("  …and the three records that took a listed company's name are labelled from their handover, each a mapped successor",
     ["LEN", "HR", "IRM"].every((t) => ownRecordFrom(cikOf(t)) === predecessorsOf(cikOf(t))[0]?.until));
 
+  // ─── batch 149: the two handovers that waited for a filing's text, read with the build contact ──────
+  console.log("\nBatch 149: RGC Resources and Digimarc, read from the filings' text");
+  const lists149 = (await import("./fixtures/predecessor-lists-b149.json")).default as unknown as typeof lists;
+  check("RGC Resources reads Roanoke Gas's record, and Digimarc two records back, the 2008 spin-off and the old Digimarc, newest first",
+    JSON.stringify(predecessorsOf(cikOf("RGCO")).map((p) => p.cik)) === "[84279]" && JSON.stringify(predecessorsOf(cikOf("DMRC")).map((p) => p.cik)) === "[1438231,1089443]",
+    `${predecessorsOf(cikOf("RGCO")).map((p) => p.cik)} | ${predecessorsOf(cikOf("DMRC")).map((p) => p.cik)}`);
+  const rgcNotice = lists149.records["1069533"].filings.find((r) => r[2] === predecessorsOf(cikOf("RGCO"))[0]?.notice);
+  const dmrcOld = predecessorsOf(cikOf("DMRC"))[1];
+  const dmrcNotice = lists149.records["1089443"].filings.find((r) => r[2] === dmrcOld?.notice);
+  check("  …RGC's handover is its notice of succession (8-K12G3) on its day, Roanoke Gas deregistering that day; Digimarc's is the old record's 8-K reporting the spin-off of 2008-08-01, its day the one after",
+    rgcNotice?.[1] === "8-K12G3" && rgcNotice[0] === "1999-07-02" && predecessorsOf(cikOf("RGCO"))[0]?.until === "1999-07-02" &&
+      lists149.records["84279"].filings.some((r) => r[0] === "1999-07-02" && r[1] === "15-12G") &&
+      dmrcNotice?.[1] === "8-K" && dmrcNotice[0] === "2008-08-07" && /2\.01/.test(dmrcNotice[3]) && dmrcOld?.until === "2008-08-02",
+    `${JSON.stringify(rgcNotice)} ${JSON.stringify(dmrcNotice)}`);
+  (globalThis as { fetch: unknown }).fetch = async (input: RequestInfo | URL) => {
+    const key = /CIK(\d{10})\.json$/.exec(String(input))?.[1];
+    const r = key ? lists149.records[String(Number(key))] : undefined;
+    let body: unknown;
+    if (r) {
+      const rows = [...r.filings].sort((a, b) => b[0].localeCompare(a[0]));
+      body = {
+        name: r.name,
+        formerNames: r.formerNames.map((f) => ({ name: f.name, from: `${f.from}T00:00:00.000Z`, to: `${f.to}T00:00:00.000Z` })),
+        filings: { recent: { form: rows.map((x) => x[1]), filingDate: rows.map((x) => x[0]), accessionNumber: rows.map((x) => x[2]), primaryDocument: rows.map(() => "doc.htm"), items: rows.map((x) => x[3]) } },
+      };
+    }
+    return { ok: body !== undefined, status: body ? 200 : 404, json: async () => body } as unknown as Response;
+  };
+  const p149: Record<string, Set<string>> = {};
+  try {
+    for (const t of ["RGCO", "DMRC"]) {
+      const ev = await getFilingsDeep({ ticker: t, cik: String(cikOf(t)).padStart(10, "0"), name: lists149.records[String(cikOf(t))].name }, false, []);
+      p149[t] = new Set(ev.map((e) => e.id));
+    }
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const on149 = (t: string, a: string) => p149[t].has(`sec-${a.replace(/-/g, "")}`);
+  check("RGC's page holds Roanoke Gas's annual report of 1998-12-09 and its quarter of 1999-05-14, and its own 10-Q of 1999-08-13 after the handover",
+    on149("RGCO", "0000906504-98-000090") && on149("RGCO", "0000906504-99-000056") && on149("RGCO", "0000906504-99-000075"));
+  check("Digimarc's page holds the old Digimarc's annual report of 2008-02-29 and its 10-Q filed on the spin-off day, not its 8-Ks of 2008-08-07 and 2008-08-14, L-1's subsidiary's",
+    on149("DMRC", "0001047469-08-002068") && on149("DMRC", "0001047469-08-008648") && !on149("DMRC", "0001104659-08-050891") && !on149("DMRC", "0001104659-08-052930"));
+  check("  …and the spin-off's own record from its Form 10 on: its 8-K of 2008-10-16, the day it listed, and its annual report for 2008",
+    on149("DMRC", "0001047469-08-011003") && on149("DMRC", "0001047469-09-001962"));
+  check("Biogen needs no predecessor: IDEC's California filings are on BIIB's own record, under its former name, moved to Delaware by its 8-B12G of 1997",
+    predecessorsOf(cikOf("BIIB")).length === 0 && /IDEC's California filings of 1996–1997 are on BIIB's own record/.test((await import("node:fs")).readFileSync(`${__dirname}/../lib/predecessors.ts`, "utf8")));
+
   const read = (await import("node:fs")).readFileSync(`${__dirname}/../lib/store/read.ts`, "utf8");
   check("  …the page's read labels them: each row by its subject's record",
     /sj\.cik AS subject_cik/.test(read) && /const own = ownPastLabelled\(ev, r\.subject_cik\);/.test(read));

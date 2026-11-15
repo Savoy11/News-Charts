@@ -61,8 +61,11 @@
  * filings went to its bank regulator, 6 mergers into a new company (Lockheed Martin, ConocoPhillips,
  * Evergy, Exterran, USA Mobility, and CoreCivic's of 1999), 3 SPACs, 6 shells or reverse mergers, 6
  * records that held their own filings from EDGAR's first year, and four kept for a filing's text: RGC
- * Resources (Roanoke Gas's record not found by name), B2Gold (an acquired company's registration), Sunoco
- * (Sunoco LP still lists its own units) and Biogen (IDEC's California record not found by name). The
+ * Resources, B2Gold (an acquired company's registration), Sunoco (Sunoco LP still lists its own units) and
+ * Biogen. Batch 149 read the two that were the company's: Roanoke Gas's record is RGC's (below), and
+ * Biogen needs none, as IDEC's California filings of 1996–1997 are on BIIB's own record, under its former
+ * name "IDEC PHARMACEUTICALS CORP / CA": its 8-B12G of 1997-06-02 moved the same record to Delaware, and
+ * EDGAR's indexes of 1993–1996 hold no other record of IDEC's. The
  * records batch 117 read as the company's own were read again with the scan's first filing of each, and
  * 14 more pages are mapped by hand: Con Edison, TDS, IDACORP, Spire, Newmont, Host, Valero, Simon,
  * Enviri, Choice Hotels, Mega Matrix (its notice 19 months after its record began), Lennar, Healthcare
@@ -75,9 +78,16 @@
  *  - Zillow's `until` is the day after its notice, as ONEOK's is: the old Zillow filed its annual report
  *    for 2014 on the handover day.
  * Left out, each read: TXNM (Public Service of New Mexico's record still lists its preferred, PNMXO, a
- * page of its own), Leidos (the old SAIC had no listed shares to pass on), Digimarc's step of 2008 (the old
- * record deregistered on 2008-08-14 and the spin-off listed on 2008-10-16, a gap a filing's text must
- * explain), Community West Bancshares (whose chart it is, Central Valley's or Community West's, to be read).
+ * page of its own), Leidos (the old SAIC had no listed shares to pass on). Two more were read in batch 149:
+ *  - Digimarc's step of 2008 is mapped: the old Digimarc spun off its watermarking business, today's
+ *    company, on 2008-08-01 and merged into L-1 Identity Solutions on 2008-08-13 (its 8-K filed 2008-08-07,
+ *    items 1.01, 2.01 and 5.01); the spin-off's shares, held in a trust, listed on 2008-10-16 under the old
+ *    ticker, DMRC, and Yahoo's chart runs on through the gap. The old record holds both businesses to that
+ *    day, as a predecessor whose ticker the company carries does; its later filings are L-1's subsidiary's.
+ *  - Community West Bancshares is not: its record is Central Valley Community Bancorp's, which merged with
+ *    the old Community West on 2024-04-01 and took its name and ticker, and the chart before is Central
+ *    Valley's (its two-for-one split of 2005-10-31). The old Community West's past is a taken name's
+ *    (lib/takenNames.ts).
  *
  * One entry rests on a merger's 8-Ks instead of a notice: Merck's (batch 108, the 2026-11-07 audit's
  * question 1). Schering-Plough bought Merck on 2009-11-03 and took its name and its ticker, so MRK's
@@ -153,8 +163,13 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   2086841: [
     { cik: 1117171, name: "CBAK Energy Technology, Inc.", until: "2026-06-23", notice: "0001213900-26-071131", since: "2005-02-14" },
   ],
-  // DMRC — Digimarc Corp (a new parent)
-  2119322: [{ cik: 1438231, name: "Digimarc Corporation", until: "2026-05-18", notice: "0001437749-26-017527" }],
+  // DMRC — Digimarc Corp (a new parent); before it, the old Digimarc, which spun the company off on 2008-08-01
+  // (its 8-K of 2008-08-07). `until` is the day after the spin-off: the old record's 10-Q for the quarter to
+  // 2008-06-30, filed that day, is the company's, as ONEOK's last annual report is (batch 149)
+  2119322: [
+    { cik: 1438231, name: "Digimarc Corporation", until: "2026-05-18", notice: "0001437749-26-017527" },
+    { cik: 1089443, name: "Digimarc Corporation", until: "2008-08-02", notice: "0001104659-08-050891" },
+  ],
   // KHOBF — KHEOBA Ltd (redomiciled from Nevada)
   2084698: [{ cik: 1909770, name: "KHEOBA Corp.", until: "2026-01-15", notice: "0001683168-26-000352" }],
   // PNFP — Pinnacle Financial Partners, Inc., with Synovus (the ticker carried on)
@@ -426,6 +441,9 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   // IRM — Iron Mountain: Pierce Leahy's record took old Iron Mountain's name and ticker at their merger
   // of 2000 (see OWN_RECORD_FROM; the parent's 8-K)
   1020569: [{ cik: 1004317, name: "Iron Mountain Incorporated", until: "2000-02-01", notice: "0000912057-00-003377" }],
+  // RGCO — RGC Resources, Inc., a new parent of 1999; the predecessor is its utility, Roanoke Gas (an 8-K12G3 of
+  // the reorganization effective after the close of 1999-07-01; batch 149)
+  1069533: [{ cik: 84279, name: "Roanoke Gas Company", until: "1999-07-02", notice: "0000906504-99-000067" }],
   // PPL — PPL Corporation (PP&L Resources to 2000), a new parent of 1995; the predecessor is its utility (an 8-B12B).
   // Its 10-Q for the quarter to 1995-03-31 was filed under the utility's record on 1995-05-04, and PP&L
   // Resources filed none of its own for that quarter (batch 137)

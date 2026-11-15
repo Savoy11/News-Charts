@@ -177,7 +177,8 @@ Oracle, Duke…) on their own filing lists' evidence, the owner's call of 2026-1
 more from a scan of every listed company's list (Con Edison, PG&E, Transocean, Accenture…); a name a
 predecessor took and gave back within half a year is EDGAR's churn, not a rename; a quarterly report it filed
 after the day for a quarter before it, which the successor never filed, is kept by accession (`after`, PPL's
-and IDACORP's, batch 137). Merck's is a merger the other way round (batch 108): MRK's record was
+and IDACORP's, batch 137). Batch 149 read the handovers that waited on the contact: Roanoke Gas's record is
+RGC's, and the old Digimarc's is Digimarc's to its spin-off of 2008-08-01, the ticker and the chart carrying on. Merck's is a merger the other way round (batch 108): MRK's record was
 Schering-Plough's until it took old Merck's name and ticker on 2009-11-03, so old Merck's record is
 MRK's history; the record's own past before it, Schering-Plough's filings, cases, approvals and
 Digest entries, stays on the page labelled as Schering-Plough's (`OWN_RECORD_FROM`,
@@ -187,7 +188,7 @@ charts are the old companies', as Yahoo's splits show), and so are Lennar's, Hea
 Iron Mountain's (batch 133: Pacific Greystone's, Healthcare Trust of America's and Pierce Leahy's
 records, the charts' first prices older than those companies' own listings). The reverse, a record that took another
 company's name, never takes that company's past: one table, `TAKEN_NAMES` in `lib/takenNames.ts`
-(batches 117–118: 32 records, and Tyco's took Johnson Controls' in batch 146; SBC's took AT&T's name, ACE's Chubb's, Norwest's Wells Fargo's, TGC's
+(batches 117–118: 32 records, Tyco's took Johnson Controls' in batch 146 and Central Valley's Community West's in batch 149; SBC's took AT&T's name, ACE's Chubb's, Norwest's Wells Fargo's, TGC's
 Dawson's…, each day read from a filing), refuses a row before the day that names only the taken name
 and none of the record's own names of then. Every caption rule reads it (`takenBefore`), ingest
 drops such rows from every source found by name, news and the Federal Register included

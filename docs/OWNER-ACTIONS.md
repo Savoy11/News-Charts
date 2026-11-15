@@ -257,9 +257,9 @@ Raised by the November batches, each recorded in the master checklist:
   four**, #1 on the filing lists' evidence ("Use the filing lists (Recommended)"), #2 with its licence
   read first ("Read it first, then build (Recommended)"), #4 both parts ("Both parts (Recommended)").
   #1 is built in batch 132 for the 17 pages, and its rest of the population in batch 133 (30 pages
-  more, from a scan of every listed company's filing list; nothing to run; four handovers wait for a
-  filing's text once `NEWS_CHARTS_CONTACT` is set: RGC Resources, Biogen, Digimarc's of 2008 and
-  Community West Bancshares); then #2,
+  more, from a scan of every listed company's filing list; nothing to run; the four handovers that waited
+  for a filing's text were read in batch 149: RGC Resources and Digimarc's of 2008 are mapped, Biogen needs
+  nothing, and Community West Bancshares' old past is another company's; nothing to run); then #2,
   #3 and #4 in batches 134, 135 and 136. Nothing to run after deploying batch 132: each of the 17
   pages' next ingest reads its older records (3,277 filings of 1994–2016), and its SEC News Digest
   entries from the issues already stored. The notices' own text can be read once `NEWS_CHARTS_CONTACT`
@@ -335,9 +335,9 @@ Raised by the November batches, each recorded in the master checklist:
   filing's text are mapped since batch 148, their days read with `NEWS_CHARTS_CONTACT` set (§2): Hino
   on Toyota, Kelly-Springfield on Goodyear, Buell on Harley-Davidson, Fisher-Price on Mattel, and Thor
   California and Thor America on Thor; nothing to run.
-  The audit of batches 117–123 (batch 124) adds two more for the same text: whether Southern Natural
-  Gas became a joint venture in 2016, which would end it on Kinder Morgan's page, and whose Babcock &
-  Wilcox's 2015 Superfund row is.
+  The audit of batches 117–123 (batch 124) added two more for the same text, read in batch 149: Southern
+  Natural Gas became a joint venture on 2016-09-01, so it ends on Kinder Morgan's page that day, and
+  Babcock & Wilcox's 2015 Superfund row stays on Babcock & Wilcox Enterprises; nothing to run.
   1. EPA's cases under 28 more companies' operating units (BNSF on Berkshire, Pratt & Whitney on RTX);
      three parts, each approvable alone, and two calls inside it: Pharmacia LLC on Pfizer, and the
      day MidAmerican Energy becomes Berkshire's;

@@ -781,7 +781,8 @@ export const OPERATING_UNITS: Readonly<Record<number, { ticker: string; names: r
       op("El Paso Natural Gas", "2012-05-24"),
       op("El Paso Corporation", "2012-05-24"),
       op("Tennessee Gas Pipeline", "2012-05-24"),
-      op("Southern Natural Gas", "2012-05-24"),
+      // half sold to Southern Company on 2016-09-01, a joint venture no one's from that day (batch 149)
+      op("Southern Natural Gas", "2012-05-24", "2016-08-31"),
       op("Colorado Interstate Gas", "2012-05-24"),
       op("SFPP"),
       op("Kinder Morgan Energy Partners"),

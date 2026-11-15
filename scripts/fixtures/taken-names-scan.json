@@ -1,5 +1,5 @@
 {
- "about": "Every listed company (data/edgar-tickers.json) whose present EDGAR name another, older record held before it (EDGAR's cik-lookup-data.txt of every name each record has filed under), the other record older than CIK 1,100,000, not listed itself, not a mapped predecessor (lib/predecessors.ts) and not a depositary: 173 companies, read on 2026-11-07 (batch 117). `since` is the first day of the present name on the record (data.sec.gov formerNames), `first` the first price (Yahoo's firstTradeDate), `reading` why the name is or is not another company's past on the page: taken (lib/takenNames.ts), before (the name began by the first price, so nothing before it is read), own, brand, new, business, history (the ticker's history is the other record's, mapped in lib/predecessors.ts), short, shared, nostart, noprice. Batch 118 read the last three namesakes and Dawson, whose chart is TGC's, as taken. Batch 146 added one company read by hand, Johnson Controls International plc (Tyco's record), whose present name the scan did not match to old Johnson Controls' \"JOHNSON CONTROLS INC\": 174 companies.",
+ "about": "Every listed company (data/edgar-tickers.json) whose present EDGAR name another, older record held before it (EDGAR's cik-lookup-data.txt of every name each record has filed under), the other record older than CIK 1,100,000, not listed itself, not a mapped predecessor (lib/predecessors.ts) and not a depositary: 173 companies, read on 2026-11-07 (batch 117). `since` is the first day of the present name on the record (data.sec.gov formerNames), `first` the first price (Yahoo's firstTradeDate), `reading` why the name is or is not another company's past on the page: taken (lib/takenNames.ts), before (the name began by the first price, so nothing before it is read), own, brand, new, business, history (the ticker's history is the other record's, mapped in lib/predecessors.ts), short, shared, nostart, noprice. Batch 118 read the last three namesakes and Dawson, whose chart is TGC's, as taken. Batch 146 added one company read by hand, Johnson Controls International plc (Tyco's record), whose present name the scan did not match to old Johnson Controls' \"JOHNSON CONTROLS INC\": 174 companies. Batch 149 read CWBC's \"own\" again: the record is Central Valley's, which took Community West's name at their merger of 2024-04-01, and the chart before is Central Valley's, so it is \"taken\".",
  "read": "2026-11-07",
  "companies": [
   {
@@ -1908,8 +1908,8 @@
      "COMMUNITY WEST BANCSHARES /"
     ]
    ],
-   "reading": "own",
-   "why": "its own"
+   "reading": "taken",
+   "why": "read again in batch 149: Central Valley's record took the old Community West's name and ticker at their merger of 2024-04-01, and CWBC's prices before are Central Valley's (its split of 2005-10-31)"
   },
   {
    "cik": 912147,

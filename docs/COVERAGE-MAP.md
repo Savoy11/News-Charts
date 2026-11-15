@@ -101,7 +101,7 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
 
 - **A name a record took from another company is read from the day it took it** (batch 117,
   `lib/takenNames.ts`): before it, every source that finds a company by name leaves the other
-  company's rows off, the news and the Federal Register included. 33 records are in the table (JCI's since batch 146), and
+  company's rows off, the news and the Federal Register included. 34 records are in the table (JCI's since batch 146, Community West Bancshares' since batch 149), and
   the Federal Register's years and GDELT's months before the day are asked under the record's own
   name of then (batch 118). Two had no name of their own before (Linde plc, Six Flags) and keep the
   present one; a one-word then-name not yet measured (CenturyLink) keeps today's names for GDELT.

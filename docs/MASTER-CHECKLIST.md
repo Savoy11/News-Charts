@@ -988,6 +988,51 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 149: the last reads that waited on the contact (2026-11-15)
+
+The owner, on 2026-11-13: "Continue", with the project's own address now set as `NEWS_CHARTS_CONTACT` in place of the
+personal one (in the git-ignored `.env.local` only; no committed file names either). The six reads left for a filing's
+text are done, each from the text. 76 requests: www.sec.gov 21, data.sec.gov 47 and efts.sec.gov 4 under the project's
+User-Agent with the contact, at least 1.1 seconds apart, and Yahoo's chart 4 under `News Charts Research`; EDGAR's
+company search by name and one old filing answered 503, unavailable, and EDGAR's saved quarterly indexes of 1993–1996
+were read instead.
+
+- [x] **RGC Resources is mapped** (`lib/predecessors.ts`): Roanoke Gas Company's record (CIK 84279, found in the
+      1993–1996 indexes, not by EDGAR's name search) is RGC's to 1999-07-02, its notice of succession (8-K12G3): the
+      reorganization into a holding company "became effective after the close of business on July 1, 1999", and Roanoke
+      Gas filed its Form 15 that day. RGCO's chart, from 1994, is Roanoke Gas's (its 2:1 of 1994).
+- [x] **Digimarc's step of 2008 is mapped:** the old Digimarc (CIK 1089443) "spun off" its watermarking business,
+      today's company, on 2008-08-01 and merged into L-1 Identity Solutions on 2008-08-13 (its 8-K filed 2008-08-07,
+      items 1.01, 2.01 and 5.01; the new company's 10-K filed 2009-02-27). The spin-off's shares, held in a trust until
+      its Form 10 took effect, listed on 2008-10-16 under the old ticker, and Yahoo's DMRC chart runs on through the gap
+      from 1999. The old record is Digimarc's to 2008-08-02, so its 10-Q filed on the spin-off day is the company's, as
+      ONEOK's last annual report is; its later filings are L-1's subsidiary's.
+- [x] **Biogen needs nothing:** IDEC's California filings of 1996–1997 are on BIIB's own record, under its former name
+      "IDEC PHARMACEUTICALS CORP / CA" (its 8-B12G of 1997-06-02 moved the same record to Delaware), and EDGAR's indexes
+      of 1993–1996 hold no other record of IDEC's. The scan had taken the notice for a second record.
+- [x] **Community West Bancshares' name is a taken one** (`lib/takenNames.ts`, 34 records): CWBC's record is Central
+      Valley Community Bancorp's, which merged with the old Community West at 12:01 a.m. on 2024-04-01, the survivor, and
+      took its name and ticker (its 8-K filed 2024-04-03, items 2.01 and 5.03). CWBC's prices before are Central
+      Valley's: Yahoo's two-for-one of 2005-11 is Central Valley's split of 2005-10-31 (its 10-K filed 2006-03-24), and
+      the old Community West's reports of 2003–2007 give none. So the old Community West's past (CIK 1051343) is another
+      company's on CWBC's page; the scan's "own" reading of CWBC becomes "taken" (34 taken, 85 own).
+- [x] **Southern Natural Gas ends on Kinder Morgan's page on 2016-08-31:** "On September 1, 2016, we completed the sale
+      of a 50% interest in our SNG natural gas pipeline system to Southern Company" and "formed a joint venture" (KMI's
+      10-K filed 2017-02-10). A joint venture is no one's, by the rule EPA's units and the release map share: SNG's order
+      of 2020 and decree of 2021 leave Kinder Morgan's page, and no other page takes them. EPA's replay before first
+      prices: 9,545 rows (9,547), Kinder Morgan 57 (59).
+- [x] **Babcock & Wilcox's 2015 Superfund row stays on Babcock & Wilcox Enterprises:** the 585-party decree at the BASF
+      Wyandotte site (05-1982-0017) names "BABCOCK AND WILCOX" and is dated 2015-08-11, after the spin-off of 2015-06-30,
+      when the name was BW's and the old company had become BWX Technologies. Neither company's annual reports name the
+      site; the spin-off's information statement gives BWXT the liabilities of its historical nuclear operations, which
+      a chemical site's decree is not. No change.
+- [x] **Checks:** `check:predecessors` 76 (6 new, on `scripts/fixtures/predecessor-lists-b149.json`), `check:taken-names`
+      (CWBC's day, filing and reading), `check:epa-cases` 181 (SNG and the decree, totals re-pinned). On main 5 of the
+      first's 6 fail (the sixth holds the 2008 spin-off's own record, mapped already), 3 of the second's and 5 of the
+      third's.
+- **The ledger:** no entry changes; 39 open, 103 closed, 11 parked, 17 blocked. Nothing now waits on the contact.
+- **Requests:** none. Where the site runs, the owner sets the same `NEWS_CHARTS_CONTACT`.
+
 ## NC ledger — batch 148: the units whose days waited on the contact, read and mapped (2026-11-12)
 
 The owner, on 2026-11-12: "Continue; Im going to get a new Gmail for the purpose of the project today." With
@@ -1046,10 +1091,11 @@ filings of 1996 answered 503, unavailable, and their days were read from others.
         it would have taken 23 good recalls off.
 - [x] **Checks:** `check:vehicle-recalls` 92 (5 new), `check:rail-accidents` 40 (2 new), `check:cpsc` 62 (5 new); every
       new one fails on main.
-- [ ] `P2` **Still waiting, carried from batch 124:** whether Southern Company Gas's purchase of 2016-08-31 made Southern
+- [x] `P2` **Still waiting, carried from batch 124:** whether Southern Company Gas's purchase of 2016-08-31 made Southern
       Natural Gas a joint venture, which would end it on Kinder Morgan's page, and which of Babcock & Wilcox Enterprises
       and BWXT kept The Babcock & Wilcox Company's site liabilities at the 2015 spin-off; and the four predecessor
       handovers that wait on text (RGC Resources, Biogen, Digimarc 2008, Community West Bancshares). Readable now.
+      **Done in batch 149** (its section).
 - **The ledger:** no entry changes (these were not ledger entries); 39 open, 103 closed, 11 parked, 17 blocked.
 - **Requests:** none. When the new Gmail exists, the owner sets it as `NEWS_CHARTS_CONTACT` wherever the code runs.
 
@@ -1845,13 +1891,14 @@ evidence). The owner's word on starting: "Continue". No new source: entries in `
       35, OGE 34, Choice Hotels 33, United Rentals 15, DTE 14, PPL 6. With batch 132's, 8,100 filings on
       47 pages; the map holds 129 records on 120 pages. Nothing to run: each page's next ingest reads
       them.
-- [ ] **Left, each for a filing's text** (`NEWS_CHARTS_CONTACT`): RGC Resources (Roanoke Gas's record
+- [x] **Left, each for a filing's text** (`NEWS_CHARTS_CONTACT`): RGC Resources (Roanoke Gas's record
       not found by name), Biogen (IDEC's California record of 1994–1997, not found by name), Digimarc's
       step of 2008 (the old record deregistered on 2008-08-14, the spin-off listed on 2008-10-16), and
       Community West Bancshares (whose chart it is, Central Valley's or Community West's). Left out by
       the rules: TXNM (Public Service of New Mexico still lists its preferred, PNMXO, a page of its own),
       Leidos (the old SAIC had no listed shares), Sunoco (Sunoco LP still lists SUN), B2Gold (an
       acquired company's registration), LendingTree and Costco (an acquisition's and a merger's past).
+      **Done in batch 149:** RGC and Digimarc mapped, Biogen needing none, Community West a taken name.
 - **Requests:** 10,231, logged in the session scratchpad (`b133/requests*.log`), each with User-Agent
   `News Charts Research` and no email address: data.sec.gov 10,204 (the scan 10,089, its trial 4, by
   hand 111) and efts.sec.gov 27 (name lookups and two full-text searches). Every one answered 200 but
@@ -2390,11 +2437,12 @@ main, and one waits for a filing's text.
         before 2017, one fewer.
 - [x] **3. The README's sources table counted the EPA units of "35 companies"** (`P3`); `UNITS` holds 95.
       Fixed, with a check that holds the line to `UNITS`.
-- [ ] **1. Southern Natural Gas stays Kinder Morgan's after 2016-08-31** (`P3`). Southern Company Gas's
+- [x] **1. Southern Natural Gas stays Kinder Morgan's after 2016-08-31** (`P3`). Southern Company Gas's
       8-K reports an interest in it bought that day (items 1.01 and 2.01). Whether that made SNG a joint
       venture, which the rule gives no one, is in the filing's text, which needs `NEWS_CHARTS_CONTACT`.
       EPA's own summaries do not say who owns it. Moved to the batch 123 item of what waits for a
       filing's text, with the audit's question on Babcock & Wilcox's 2015 row.
+      **Done in batch 149:** a joint venture from 2016-09-01, so SNG ends on Kinder Morgan's page on 2016-08-31.
 - **The set-asides:**
   - **Fixed:** the SEC cases' first pass now reads a name's "&" as "and", as every other source's
     prefilter does (lib/secCases.ts). No committed caption was lost to it; a check holds it.

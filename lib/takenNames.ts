@@ -441,6 +441,19 @@ export const TAKEN_NAMES: Readonly<Record<number, TakenName>> = {
       "its name: its 8-K filed 2016-09-06 reports it (items 2.01, 5.01 and 5.03). JCI's prices before are Tyco's, as Yahoo's splits show (its 1:4 of " +
       "2007-07-02, the ADT spin-off of 2012-10-01, the 0.955 of 2016-09-06), so old Johnson Controls' past is another company's",
   },
+  // batch 149: the scan's "own" reading of CWBC read again, with the filing's text and the chart's splits
+  1127371: {
+    ticker: "CWBC",
+    name: /\bCommunity\s+West\b/i,
+    then: /\bCentral\s+Valley\b/i,
+    from: "2024-04-01",
+    filing: "0001193125-24-085373",
+    kind: "merged",
+    why:
+      "Central Valley Community Bancorp, CWBC's record, merged with Community West Bancshares (EDGAR CIK 1051343) at 12:01 a.m. on 2024-04-01, the " +
+      "survivor, and took its name and its ticker: its 8-K filed 2024-04-03 reports it (items 2.01 and 5.03). CWBC's prices before are Central " +
+      "Valley's, as Yahoo's splits show (the two-for-one of 2005-10-31 in Central Valley's 10-K filed 2006-03-24), so old Community West's past is another company's",
+  },
 };
 
 /**

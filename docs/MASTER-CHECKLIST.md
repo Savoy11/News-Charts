@@ -988,6 +988,66 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 152: the 2026-11-15 approvals filed, and the EEOC's suits and settlements (2026-11-15)
+
+The owner, 2026-11-15, on both proposals of `docs/proposals/2026-11-15-proposals.md`: "Approve both (Recommended)",
+each with its recommended call. Both are filed under Scope refocus; #1 is built here, #2 (the OCC's actions) is
+batch 153's.
+
+- [x] **The EEOC's press releases, a new source** (41, `eeoc_press`; `lib/eeoc.ts`, `lib/ingest/eeocWalk.ts`,
+      db/052). The newsroom's whole listing, 318 pages and 7,625 releases from 1994-06-22, read once a year for every
+      company, and its newest page once a day. 1,136 releases carry no day in the listing; their excerpts' date lines
+      ("PRESS RELEASE 2-21-02") give all but 70, and an undated one a company's rule keeps has its own page read once
+      (the owner's call (a)): three on the saved listing, Lockheed Martin's giving 2008-01-02 and two giving none.
+- [x] **The rule:** the Justice Department's title rule under the company's names of the year and the release map's
+      units, and the Commission's own shapes: a decree, judgment or verdict entered with or against it ("Verdict For
+      EEOC Against Autozone Affirmed"), a suit "… Against" it with words between ("Bias Suit For $1 Million Against
+      Optical Cable Corp."), money obtained from it, a court's order, and the company first with the charge last
+      ("Walmart Refused to Provide Qualified Interpreters…, EEOC Charges in Suit"); an everyday word as a name is the
+      Justice rule's alone ("City of Boone" is no City Holding's).
+- [x] **What it leaves off, read on the whole listing:** a franchisee's, bottler's or licensee's release, by its title
+      ("McDonald's Franchise", "Coca-Cola Bottling Company United") or its first lines ("Jack in the Box franchisee
+      Kobra Associates"); a mediation pact or an agreement to work together (Tyson's, Cracker Barrel's, CenterPoint's);
+      nine namesakes by CIK (`NOT_THE_COMPANY`: Blackstone Consulting, the Blood Bank of Hawaii, Banner Health, Dave's
+      Supermarket, Connections CSP, StoneRidge Health, Tiny's Organic, Compass Group USA, and Murphy Oil USA, Murphy
+      USA's since the spin-off of 2013, off Murphy Oil Corporation).
+- [x] **Copies and repeats:** the site numbers every repeated title's address ("-0" to "-10"), so one title over two
+      texts is two releases ("EEOC Sues Walmart for Disability Discrimination" is twelve suits) and one title and text
+      twice, or one title twice on one day, is one (Wal-Mart's TV-ad release of 2001, the Caterpillar suits of 2003).
+      The oldest addresses, "/index%2ephp/newsroom/…", are read as "/newsroom/…"; some titles encoded twice on the site
+      ("Dillard&#39;s") are read once more.
+- [x] **The units, read by hand (`EEOC_UNITS`, 18 companies):** Fred Meyer on Kroger, Sam's Club and Walmart Stores East
+      on Walmart, Red Lobster on Darden to 2014-07-27 (Darden "completed its previously announced sale of its Red
+      Lobster restaurant business" on 2014-07-28, its 8-K of that day, 0000940944-14-000075: the suit of 2013 is
+      Darden's, the settlement of 2015 not), Bahama Breeze, Olive Garden and GMRI on Darden, UPS Freight, Federal
+      Express, Chipotle, Hertz, Outback Steakhouse, Patterson-UTI Drilling, Xerox State Healthcare, Mesaba Airlines
+      on Delta, Lockheed Martin Global Telecommunications, Smithfield Fresh Meats, Verizon Maryland and Pennsylvania,
+      Silgan Containers, Supercuts, Albertsons and Safeway, Sinclair Broadcast Group. Every other unit's releases fall
+      inside its owner's years and after its first price, so no other day changes a row. Left out: Oncor (Sempra
+      holds it by the equity method), Philips Lighting (no filing read gives the day it stopped being Philips's) and
+      U.S. Steel (no page here).
+- [x] **The rows:** the Commission's title, its first lines after any old header, "The EEOC's charges are allegations
+      until a court or a settlement resolves them.", the release's link; one row a company a day, a grouped row
+      (`GROUPED_ROW_SOURCES`). Against every company in the index, before first prices: 550 rows on 179 companies, 276
+      before 2017; from first prices where read, 324 on 81 pages, 165 before 2017 (Walmart 73, Dollar General 21,
+      Kroger 14, AT&T 13, Dillard's 10, United Airlines 9), where the proposal estimated about 500, up to about 770.
+      Former names (Aaron Rents, Woodward Governor) come at ingest from EDGAR and not in the offline replay.
+- [x] **Licence:** the site states none; its disclaimer, quoted in `lib/ingest/store.ts`, asks that no reference
+      imply endorsement. The releases are the Commission's own work (17 U.S.C. § 105), used under the owner's ruling
+      of 2026-11-12, credited to the EEOC on the site and in the terms.
+- [x] **Checks:** `check:eeoc`, new, 41 on `scripts/fixtures/eeoc-listing.json.gz` (every release parsed, six pages as
+      served, the three undated pages, the pages' first prices); on main none runs, as lib/eeoc.ts does not exist.
+      `check:also-on` and `check:contact` count the new source and its User-Agent; `check:live` gains its case.
+- **For the next audit:** the scout's note that the shared caption rule reads "Metropolitan Bank and Trust Company" as
+  Metropolitan Bank Holding's (batch 151's section) stands; the EEOC rule does not use the caption rule.
+- **The ledger:** no entry changes; 39 open, 103 closed, 11 parked, 17 blocked. The OCC's item is open under Scope
+  refocus.
+- **Requests:** www.eeoc.gov 322 (318 listing pages, one of which timed out and was read again, and the three undated
+  releases' pages), all with the User-Agent `News Charts Research` and no address;
+  query1.finance.yahoo.com 1 (CWK's first trading day, 2018-08-02); data.sec.gov 4 and www.sec.gov 4 with the
+  project's User-Agent and contact, for Darden's 8-Ks of July 2014 (one answered 503, "temporarily unavailable", and
+  was read again).
+
 ## NC ledger — batch 151: an opportunity-scout run, two proposals for the owner (2026-11-15)
 
 Both proposals of `docs/proposals/2026-11-11b-proposals.md` are approved and built (batches 144–145), the owner's open
@@ -996,8 +1056,10 @@ the audit of batches 143–149 found. So the `opportunity-scout` read the reposi
 `docs/proposals/2026-11-15-proposals.md`: two proposals, both **PENDING**, ranked with securities depth first. The
 owner's word, 2026-11-15: "Continue". Nothing is built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a rejection). The scout's
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a rejection). The scout's
       second pass then files the approved ones into this checklist.
+      ✅ **Marked 2026-11-15: both approved** ("Approve both (Recommended)"), each with its recommended call. Filed under
+      Scope refocus by batch 152, which builds #1; #2 is batch 153's.
       1. `P1` **The EEOC's press releases since 1996,** its suits and settlements against the company, reopened by the
          owner's ruling of 2026-11-12 on federal works (the site states no licence; no key). The newsroom lists 7,622
          suits and settlements. The Justice Department's title rule, run over 326 of them from 14 listing pages, gave 24
@@ -11269,6 +11331,21 @@ already held, but new investment goes to securities coverage first.
         2017.
       - *Derived from [`docs/proposals/2026-11-11b-proposals.md`](proposals/2026-11-11b-proposals.md) #2,
         approved 2026-11-12.*
+- [x] `P1` **The EEOC's press releases since 1994,** its suits and settlements against the company: approved by the
+      owner 2026-11-15, with call (a), an undated release's own page read once for its day. A new source (41,
+      `eeoc_press`), the Commission's own work under the ruling of 2026-11-12.
+      - **Estimated** by the scout: about 500 releases on pages, up to about 770 with the Commission's shapes and a
+        units list.
+      - **Done in batch 152** (see its section): 550 rows on 179 companies before first prices, 276 before 2017;
+        from first prices where read, 324 on 81 pages, 165 before 2017.
+      - *Derived from [`docs/proposals/2026-11-15-proposals.md`](proposals/2026-11-15-proposals.md) #1,
+        approved 2026-11-15.*
+- [ ] `P1` **The OCC's enforcement actions against the company's national bank, 1989–2026:** approved by the owner
+      2026-11-15, with an order's termination as a line on its row. All 2,655 actions in one keyless answer; 103
+      company-days on 21 pages measured, about 150 on 39 with about 20 bank names added by hand; the thrift
+      regulator's spreadsheet of 1989–2011 as part (b).
+      - *Derived from [`docs/proposals/2026-11-15-proposals.md`](proposals/2026-11-15-proposals.md) #2,
+        approved 2026-11-15. Batch 153's.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

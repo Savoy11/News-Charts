@@ -12,10 +12,10 @@ import type { SourceKey } from "./types";
  * one row from one agency, never two documents, and count once. Every other source's attestations
  * each count: a story twelve papers carried is twelve.
  */
-export const GROUPED_ROW_SOURCES: readonly SourceKey[] = ["sec_cases", "cfpb", "epa_cases", "cpsc_recalls", "cftc", "sec_digest", "fda_warning_letters"];
+export const GROUPED_ROW_SOURCES: readonly SourceKey[] = ["sec_cases", "cfpb", "epa_cases", "cpsc_recalls", "cftc", "sec_digest", "fda_warning_letters", "eeoc_press"];
 
 /** Their ids in `sources`, written out so the read path needs no ingest code; check:also-on holds the two together. */
-export const GROUPED_ROW_SOURCE_IDS: readonly number[] = [28, 30, 31, 32, 33, 34, 39];
+export const GROUPED_ROW_SOURCE_IDS: readonly number[] = [28, 30, 31, 32, 33, 34, 39, 41];
 
 /** The documents a row's attestations come to: each once, but a grouped source's versions once. */
 export function corroborations(sourceIds: readonly (number | string)[] | null | undefined): number {

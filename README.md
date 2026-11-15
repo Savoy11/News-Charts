@@ -1046,6 +1046,34 @@ batch 100). Against every company in the index, before first prices: 91 company 
 companies, 49 before 2017 (88 on 33 and 47 when first counted; RBC Capital Markets' order of 2019 since batch 145) (JPMorgan 12, Deutsche Bank 7, Morgan Stanley 7, Barclays 6, Goldman Sachs
 6; AEP's suit of 2003, NRG's of 2004, Duke Energy's and Xcel's trading units of 2003–2004). Public domain, acknowledged to the CFTC.
 
+### EEOC suits and settlements (`lib/eeoc.ts`, batch 152)
+
+The Equal Employment Opportunity Commission's press releases, from 1994-06-22, the listing's oldest dated
+one, most from 1996: the suits it files and the
+settlements, decrees and verdicts it wins against employers, approved by the owner on 2026-11-15 (the
+2026-11-15 proposal 1). Read from the newsroom's listing (`www.eeoc.gov/newsroom/search`, 24 a page,
+318 pages and 7,625 releases on 2026-11-15) for every company at once (`lib/ingest/eeocWalk.ts`,
+db/052): the whole listing once a year, and its newest page once a day. A release's day is the
+listing's; 1,136, nearly all of 1996–2006, carry none there, and the listing's own excerpt gives the date
+line for all but 70 ("PRESS RELEASE 2-21-02"); a release with neither has its own page read once, when a company's rule
+keeps it (the owner's call (a)). Three such on 2026-11-15: Lockheed Martin's page gives 2008-01-02, and
+two give no day, so they make no row. A company keeps a release whose title makes it the party by the
+Justice Department's rule and the Commission's own shapes ("Final Decree Entered With", "Verdict For EEOC
+Against Autozone Affirmed", "… Suit For $1 Million Against Optical Cable", "Walmart Refused …, EEOC
+Charges in Suit"), under its names of the year, the release map's units and the Commission's own list
+(`EEOC_UNITS`: Fred Meyer on Kroger, Sam's Club and Walmart Stores East on Walmart, Red Lobster on
+Darden to its sale of 2014-07-28, UPS Freight, Mesaba, Xerox State Healthcare… 18 companies). Not a
+franchisee's, a bottler's or a licensee's, by its title or its first lines ("McDonald's Franchise", "Jack
+in the Box franchisee Kobra Associates"), nor a mediation pact, nor a namesake read by hand
+(`NOT_THE_COMPANY`: the Blood Bank of Hawaii, Banner Health, Murphy Oil USA after 2013…). One release
+posted twice is one row; one title over several suits ("EEOC Sues Walmart for Disability
+Discrimination", twelve times) is several. Each row carries the Commission's title, its first lines and
+"The EEOC's charges are allegations until a court or a settlement resolves them." Against every company
+in the index, before first prices: 550 rows on 179 companies, 276 before 2017; from first prices where
+read, 324 on 81 pages, 165 before 2017 (Walmart 73, Dollar General 21, Kroger 14, AT&T 13, Dillard's 10,
+United Airlines 9). The site states no licence; the releases are the Commission's own work (17 U.S.C.
+§ 105), used under the owner's ruling of 2026-11-12, credited to the EEOC and implying no endorsement.
+
 ### The SEC News Digest (`lib/secDigest.ts`, `lib/ingest/secDigestWalk.ts`)
 
 A source since batch 102 (`sec_digest`, the 2026-11-02 proposal 1: the owner asked for a count
@@ -1745,6 +1773,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
 | Mine Safety and Health Administration | Accidents since 2000 that killed someone at a mine the company controlled, with MSHA's own finding on each: the violations its investigation cited and the penalties it proposed (batch 139) | MSHA's Accidents and Mines files, one 52 MB zip and one of 7 MB, read once a week for every company and the deaths kept (`lib/ingest/mineWalk.ts`), and its Inspections and Assessed Violations files (74 MB and 110 MB) streamed once a month; kept for the 54 controller IDs `lib/mineAccidents.ts` maps by hand to 52 companies, each between its company's days, from the company's first price. Public domain, credited to the U.S. Department of Labor; no key |
 | Federal Railroad Administration | Railroad accidents since 1975 a company's railroad reported, with a death, an evacuation or $5,000,000 of damage | Form 54 on the Transportation Department's open-data host, one request a day for each of the six railroad companies `lib/railAccidents.ts` maps by hand, each railroad between its owner's days, from the company's first price; a highway-rail crossing collision only with an evacuation or that damage. Public domain; no key |
+| U.S. Equal Employment Opportunity Commission | The Commission's suits and settlements since 1994 whose title makes the company the party — a retailer's disability suit, a bank's class settlement | The newsroom listing, read whole once a year and its newest page once a day, for every company (`lib/ingest/eeocWalk.ts`); kept by the Justice Department's title rule, the Commission's own shapes and its units list (`lib/eeoc.ts`); an undated release's page read once for its day. The Commission's own work (17 U.S.C. § 105), credited to the EEOC; no key |
 | Commodity Futures Trading Commission | The Commission's enforcement actions since 1995 whose title makes the company the party — a bank's benchmark-rigging order, an energy trader's manipulation suit | The enforcement list, read whole once a year and its newest page once a day, for every company (`lib/ingest/cftcWalk.ts`); kept by the Justice Department's title rule with the release map's units (`lib/cftc.ts`). Public domain, acknowledged to the CFTC; no key |
 | SEC News Digest | The SEC's daily summary of 1956–1993: the 8-K reports a company filed, its registration statements, the 13D and 14D-1 filings on its shares, the SEC's orders and actions on it, its listing orders | Every issue's PDF read once for every company, 60 a run (`lib/ingest/secDigestWalk.ts`); kept when an entry's party is the company under the name its EDGAR record had that day and no other company's (`lib/secDigest.ts`), from its first price; a month's 8-K reports one row. Public information the SEC lets anyone copy, cited to the SEC; no key; needs `pdftotext` and `NEWS_CHARTS_CONTACT` |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |

@@ -49,6 +49,7 @@ import { dojArchiveFor, walkDojArchive, withArchive } from "../lib/ingest/dojArc
 import { epaCasesFor, walkEpaCases } from "../lib/ingest/epaWalk";
 import { cpscFor, walkCpsc } from "../lib/ingest/cpscWalk";
 import { cftcFor, walkCftc } from "../lib/ingest/cftcWalk";
+import { eeocFor, walkEeoc } from "../lib/ingest/eeocWalk";
 import { digestFor, walkDigest } from "../lib/ingest/secDigestWalk";
 import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
 import { fdaSupplementsFor } from "../lib/ingest/fdaSupplementsFor";
@@ -122,6 +123,8 @@ export const COMPANY_SOURCES = [
   "cpsc_recalls",
   // …and the CFTC's enforcement actions, where the title makes the company the party (batch 97)
   "cftc",
+  // …and the EEOC's suits and settlements, where the title makes the company the party (batch 152)
+  "eeoc_press",
   // …and the SEC News Digest of 1956–1993, where an entry's party is the company under the name its
   // record had that day (batch 102)
   "sec_digest",
@@ -855,6 +858,19 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     const walked = await walkCftc(client);
     if (walked.due) line("cftc", `list      ${walked.due === "list" ? "read whole" : "newest read"}, ${walked.pages} pages, ${walked.actions} actions stored${walked.stopped ? ` (${walked.stopped})` : ""}`);
     return cftcFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
+  });
+
+  /**
+   * The EEOC's suits and settlements (batch 152, the 2026-11-15 proposal 1): the Commission's newsroom
+   * listing, read whole once a year and its newest page once a day for every company (`walkEeoc`), then
+   * every kept release whose title makes the company the party by the Justice Department's rule or the
+   * Commission's own title shapes, under its names that year and the units it then owned, from its
+   * first price. An undated release its names keep has its own page read once for its day.
+   */
+  await run("eeoc_press", `EEOC releases naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")} as the party`, async () => {
+    const walked = await walkEeoc(client);
+    if (walked.due) line("eeoc_press", `list      ${walked.due === "list" ? "read whole" : "newest read"}, ${walked.pages} pages, ${walked.releases} releases stored${walked.stopped ? ` (${walked.stopped})` : ""}`);
+    return eeocFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
   });
 
   /**

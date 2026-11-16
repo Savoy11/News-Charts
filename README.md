@@ -1062,14 +1062,15 @@ Justice Department's rule and the Commission's own shapes ("Final Decree Entered
 Against Autozone Affirmed", "… Suit For $1 Million Against Optical Cable", "Walmart Refused …, EEOC
 Charges in Suit"), under its names of the year, the release map's units and the Commission's own list
 (`EEOC_UNITS`: Fred Meyer on Kroger, Sam's Club and Walmart Stores East on Walmart, Red Lobster on
-Darden to its sale of 2014-07-28, UPS Freight, Mesaba, Xerox State Healthcare… 18 companies). Not a
-franchisee's, a bottler's or a licensee's, by its title or its first lines ("McDonald's Franchise", "Jack
-in the Box franchisee Kobra Associates"), nor a mediation pact, nor a namesake read by hand
-(`NOT_THE_COMPANY`: the Blood Bank of Hawaii, Banner Health, Murphy Oil USA after 2013…). One release
-posted twice is one row; one title over several suits ("EEOC Sues Walmart for Disability
+Darden to its sale of 2014-07-28, UPS Freight, Mesaba, Xerox State Healthcare, ManpowerGroup US… 19
+companies). Not a franchisee's, a bottler's or a licensee's, by its title or its first lines ("McDonald's
+Franchise", "Jack in the Box franchisee Kobra Associates"), nor a mediation pact, nor a namesake read by
+hand (`NOT_THE_COMPANY`: the Blood Bank of Hawaii, Banner Health, Murphy Oil USA after 2013…). A release
+no rule can place is read by hand (`RELEASES_OF`, batch 155): "Murphy Oil Sued By EEOC" of 2016-05-05 is
+Murphy USA's, a suit over the stations it runs, though the release names Murphy Oil. One release posted twice is one row; one title over several suits ("EEOC Sues Walmart for Disability
 Discrimination", twelve times) is several. Each row carries the Commission's title, its first lines and
 "The EEOC's charges are allegations until a court or a settlement resolves them." Against every company
-in the index, before first prices: 550 rows on 179 companies, 276 before 2017; from first prices where
+in the index, before first prices: 552 rows on 179 companies, 277 before 2017; from first prices where
 read, 324 on 81 pages, 165 before 2017 (Walmart 73, Dollar General 21, Kroger 14, AT&T 13, Dillard's 10,
 United Airlines 9). The site states no licence; the releases are the Commission's own work (17 U.S.C.
 § 105), used under the owner's ruling of 2026-11-12, credited to the EEOC and implying no endorsement.
@@ -1085,8 +1086,9 @@ its row. Read from the API the OCC's search page calls (`apps.occ.gov/EASearch/a
 count, read once a process for every company (`lib/ingest/occFor.ts`); an action against a person is
 never read. The answer is complete when it holds every action the count gives. A company keeps an
 action whose bank is it by the caption rule under its names of the year, a bank the release map gives it
-that day, or one the OCC names its own way, by the OCC's charter number and name (`OCC_BANKS`, 45
-companies: Citibank, National Association on Citigroup from 1998-10-08, Wachovia Bank on Wells Fargo from
+that day, or one the OCC names its own way, by the OCC's charter number and name (`OCC_BANKS`, 51
+companies: Citibank, National Association on Citigroup from 1998-10-08, First Niagara Bank on KeyCorp from
+2016-07-29, FIA Card Services on Bank of America, MetLife Bank, Dillard National Bank, MetaBank on Pathward, Wachovia Bank on Wells Fargo from
 2008-12-31, MUFG Union Bank on MUFG from 2008-11-05 and on U.S. Bancorp from 2022-12-01, City National
 Bank on Royal Bank of Canada from 2015-11-02, Sovereign Bank on Santander from 2009-01-30, PNC Bank,
 KeyBank, The Huntington National Bank, Zions First National Bank, UBS AG's federal branches…), each day
@@ -1110,9 +1112,11 @@ are the OCC's rows, found by number within a month or by day and kind; the archi
 each a line on the order it ended ("It ended 2010-08-06 (order WN 10-023)"). Such a row is titled "OTS:", or
 "OCC and OTS:" on a day of both, and links the order's file in the archive.
 
-Against every company in the index, before first prices: 199 company days on 58 companies; from first
-prices, 194 on 57 pages, 139 before 2017 (Wells Fargo 17, JPMorgan 15, Citigroup 14, Bank of America 13,
-U.S. Bancorp 12, Capital One 8), 12 of them the archive's alone on 11 pages (the OCC's list alone: 180 on 49).
+Against every company in the index, before first prices: 207 company days on 63 companies; from first
+prices, 202 on 62 pages, 147 before 2017 (Wells Fargo 17, JPMorgan 15, Citigroup 14, Bank of America 13,
+U.S. Bancorp 12, Capital One 8), 10 of them the archive's alone on 9 pages (the OCC's list alone: 192 on 56).
+An order's own note ends it in two wordings, "Terminated November 12, 2002" and "terminated by NE 01-04 dtd
+02/07/01"; 83 notes give an end in other words, none of them on a page today.
 The OCC's pages state no licence; the orders are a federal agency's own work (17 U.S.C. § 105), used under
 the owner's ruling of 2026-11-12 and credited to the OCC.
 

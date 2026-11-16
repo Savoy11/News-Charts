@@ -239,7 +239,28 @@ export const EEOC_UNITS: Readonly<Record<number, readonly { ticker: string; name
   716643: [{ ticker: "RGS", names: ["Supercuts"], why: "Regis's chain since the merger of 1996; every release is of 2003 on" }],
   1646972: [{ ticker: "ACI", names: ["Albertsons", "Safeway"], why: "the company's own short name and Safeway, its since 2015, both from the page's first price of 2020" }],
   1971213: [{ ticker: "SBGI", names: ["Sinclair Broadcast Group"], why: "Sinclair's operating company, the listed company itself before the new parent of 2023" }],
+  // batch 155, the 2026-11-16 audit's finding 4
+  871763: [{ ticker: "MAN", names: ["ManpowerGroup US", "Manpowergroup US"], why: "ManpowerGroup's own US staffing company, sued with Johnson Controls in 2019 and settling with it in 2020" }],
 };
+
+/**
+ * Releases read by hand as the company's though no name in their title is its own, by CIK, from the day
+ * given: the title names another company the release's own first lines say is not the employer. Batch
+ * 155, the 2026-11-16 audit's finding 4: the suit `NOT_THE_COMPANY` keeps off Murphy Oil is Murphy USA's.
+ */
+export const RELEASES_OF: Readonly<Record<number, readonly { ticker: string; title: RegExp; from: string; why: string }[]>> = {
+  1573516: [
+    {
+      ticker: "MUSA",
+      title: /^Murphy Oil Sued By EEOC for Disability Discrimination and Retaliation$/i,
+      from: "2013-08-30",
+      why: "the suit of 2016-05-05 against the chain of stations its first lines say Murphy USA operates (\"Murphy Oil Corporation, which operates Murphy USA retail gasoline stores…\"), Murphy USA's since the spin-off of 2013-08-30; its settlement of 2018 is already the page's",
+    },
+  ],
+};
+
+const releaseOf = (cik: number | string | undefined, r: Pick<EeocRelease, "title" | "day">) =>
+  cik !== undefined && !!r.day && (RELEASES_OF[Number(cik)] ?? []).some((x) => r.day! >= x.from && x.title.test(r.title));
 
 /** The EEOC units the company held on `day`. */
 export function eeocUnitNamesOn(cik: number | string | undefined, day: string): string[] {
@@ -284,10 +305,12 @@ export function eeocEvents(
     if (!r.day) continue;
     const asked = r.day < from ? (namesBefore?.(r.day) ?? []) : [...names, ...(namesOn?.(r.day) ?? []), ...eeocUnitNamesOn(cik, r.day)];
     const t = lettersOf(r);
-    if (!asked.length || !asked.some((n) => { const k = letters(n); return k.length >= 2 && t.includes(k); }) || !eeocNamesParty(r.title, asked, cik)) continue;
+    // a release read by hand as the company's (`RELEASES_OF`) needs no name of its own in the title
+    const byHand = r.day >= from && releaseOf(cik, r);
+    if (!byHand && (!asked.length || !asked.some((n) => { const k = letters(n); return k.length >= 2 && t.includes(k); }) || !eeocNamesParty(r.title, asked, cik))) continue;
     // …nor a release whose first lines say the employer is the brand's franchisee or bottler: "Jack In
     // The Box Sued For Sexual Harassment" is "Jack in the Box franchisee Kobra Associates, Inc."
-    if (franchiseeInLead(r.summary, asked)) continue;
+    if (!byHand && franchiseeInLead(r.summary, asked)) continue;
     if (takenBefore(cik, r.day, r.title)) continue;
     // one release posted twice: the same title and the same first lines; kept once, on the day its text
     // gives, else the earlier. One title over two texts is two releases: the site numbers every repeated

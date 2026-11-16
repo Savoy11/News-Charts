@@ -424,6 +424,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "eeoc_press") {
         return { score: 0.95, reason: "an EEOC suit or settlement naming the company as the party" };
       }
+      // …and an OCC action against a bank that is the company's, by the caption rule and the release
+      // map (lib/occActions.ts, batch 153)
+      if (subject.kind === "company" && row.sourceKey === "occ_actions") {
+        return { score: 0.95, reason: "an OCC enforcement action against the company's bank" };
+      }
       // …and a new-drug approval whose applicant is the company, its firm or its unit that day
       // (lib/fdaApprovals.ts, batch 105)
       if (subject.kind === "company" && row.sourceKey === "fda_approvals") {

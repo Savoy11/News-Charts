@@ -224,7 +224,10 @@ Raised by the November batches, each recorded in the master checklist:
   **Decided 2026-11-15: both** ("Approve both (Recommended)"), each with its recommended call. #1 is built
   in batch 152: after deploying, apply db/052 (`npm run db:migrate`); the next ingest reads the EEOC's whole
   newsroom listing once (318 pages, about 15 minutes on 2026-11-15, the site answering slowly), then
-  its newest page once a day, and each company's own releases come from what is kept. #2 is batch 153's.
+  its newest page once a day, and each company's own releases come from what is kept. #2 is built in
+  batch 153 and needs nothing applied: no table, no key; the next ingest asks the OCC's count and its whole
+  list once a process (two requests, about 2 MB), and each company's orders come from it. Its part (b), the
+  thrift regulator's archive of 1989–2011, is batch 154's.
   1. `P1` the EEOC's press releases since 1996, its suits and settlements against the company: about 500
      releases on pages, up to about 770 with its own title shapes and a list of units, an estimate from a
      sample of 326 titles (Morgan Stanley 2001, Dillard's 2008, AT&T and AutoZone 2012). Your call inside

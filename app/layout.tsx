@@ -107,8 +107,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               from the U.S. Consumer Product Safety Commission, railroad accident reports from the
               Federal Railroad Administration, mine accident reports from the Mine Safety and Health
               Administration of the U.S. Department of Labor, enforcement actions from the
-              Commodity Futures Trading Commission, and press releases from the U.S. Equal Employment
-              Opportunity Commission.
+              Commodity Futures Trading Commission, press releases from the U.S. Equal Employment
+              Opportunity Commission, and enforcement actions from the Office of the Comptroller of
+              the Currency.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

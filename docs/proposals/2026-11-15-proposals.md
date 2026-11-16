@@ -212,7 +212,7 @@ sampled, not counted whole; the undated block needs a page read each
 
 ## 2. The OCC's enforcement actions against the company's national bank since 1989: JPMorgan Chase Bank's $300,000,000 and $350,000,000 penalties, HSBC Bank USA's $500,000,000, Bank of America's $1.13 billion restitution, Citibank's $400,000,000… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — by the owner, 2026-11-15 ("Approve both (Recommended)"), with the recommended call: an order's termination as a line on its row. To be built in batch 153.
+**Status:** APPROVED — by the owner, 2026-11-15 ("Approve both (Recommended)"), with the recommended call: an order's termination as a line on its row. Part (a) built in batch 153: the API's 2,655 institution actions read once a process, the caption rule, the release map and `OCC_BANKS`, 39 companies' banks by charter, four namesakes refused by charter. Before first prices 185 company days on 50 companies; from first prices 180 on 49 pages, 126 before 2017, where this file estimated about 150 on 39. No "Valley National Bank" of the list is Valley National Bancorp's, so its 4 are not. Part (b), the OTS archive, is batch 154's.
 **Owner's reason (if rejected):**
 
 **Raised before:** as unreachable, never measured:

@@ -51,7 +51,8 @@ export default function TermsPage() {
         Consumer Product Safety Commission, railroad accident reports from the Federal Railroad
         Administration, mine accident reports from the Mine Safety and Health Administration of the
         U.S. Department of Labor, enforcement actions from the Commodity Futures Trading Commission, press
-        releases from the U.S. Equal Employment Opportunity Commission, material
+        releases from the U.S. Equal Employment Opportunity Commission, enforcement actions
+        from the Office of the Comptroller of the Currency, material
         from the
         Internet Archive, text from Wikipedia under CC BY-SA, and headlines that
         link to their publishers. Those sources&apos; own terms and licences apply to their content.

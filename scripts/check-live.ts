@@ -55,6 +55,7 @@ import { epaEvents, fetchCaseFile } from "../lib/epaCases";
 import { cpscEvents, fetchRecalls as fetchCpscRecalls } from "../lib/cpscRecalls";
 import { fetchCftcPage } from "../lib/cftc";
 import { fetchEeocPage } from "../lib/eeoc";
+import { readOccList } from "../lib/occActions";
 import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue } from "../lib/secDigest";
 import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
 import { DRUGSFDA_ENTRY, DRUGSFDA_FILE, readSupplements } from "../lib/fdaSupplements";
@@ -899,6 +900,28 @@ export const CASES: LiveCase[] = [
       if (first.releases.length !== 24) out.push(`page 0 holds ${first.releases.length} releases, not 24`);
       if ((first.total ?? 0) < 7625) out.push(`the listing counts ${first.total}, fewer than the 7,625 of 2026-11-15`);
       if (!first.releases.every((r) => r.day)) out.push("a release on the newest page has no day");
+      return out;
+    },
+  },
+  {
+    name: "OCC enforcement actions — the search page's own API: its count and every institution action in one answer (batch 153)",
+    covers: ["occ_actions"],
+    hosts: ["apps.occ.gov"],
+    async run() {
+      // measured 2026-11-16: 2,655 institution actions, 1987-02-11 to 2026-10-13, in 2,202,663 bytes
+      let list;
+      try {
+        list = await readOccList();
+      } catch (err) {
+        return [`the read: ${String((err as Error).message ?? err)}`];
+      }
+      const out: string[] = [];
+      if (list.total < 2655) out.push(`the count is ${list.total}, fewer than the 2,655 of 2026-11-16`);
+      if (list.records < list.total) out.push(`the answer held ${list.records} of the ${list.total} the count gives`);
+      if (list.actions.length < list.records) out.push(`${list.records - list.actions.length} records left out or found twice`);
+      const days = list.actions.map((a) => a.day).sort();
+      if (days[0] !== "1987-02-11") out.push(`the oldest action is of ${days[0]}, not 1987-02-11`);
+      if (!list.actions.some((a) => a.document === "2013-140" && a.amount === "300000000")) out.push("JPMorgan Chase Bank's $300,000,000 of 2013-09-18 (order 2013-140) is not in the list");
       return out;
     },
   },

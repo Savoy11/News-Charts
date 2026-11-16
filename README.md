@@ -1074,6 +1074,34 @@ read, 324 on 81 pages, 165 before 2017 (Walmart 73, Dollar General 21, Kroger 14
 United Airlines 9). The site states no licence; the releases are the Commission's own work (17 U.S.C.
 § 105), used under the owner's ruling of 2026-11-12, credited to the EEOC and implying no endorsement.
 
+### OCC enforcement actions (`lib/occActions.ts`, batch 153)
+
+The Office of the Comptroller of the Currency's orders against the national banks themselves, from
+1987: the civil money penalties, cease-and-desist orders, restitution, formal agreements and directives
+of the banks' own regulator, where the Federal Reserve Board's actions are the holding company's.
+Approved by the owner on 2026-11-15 (the 2026-11-15 proposal 2), with an order's termination as a line on
+its row. Read from the API the OCC's search page calls (`apps.occ.gov/EASearch/api/WebSearch/Actions`,
+`instOnly=true`): every action against an institution in one keyless answer, 2,655 on 2026-11-16, and its
+count, read once a process for every company (`lib/ingest/occFor.ts`); an action against a person is
+never read. The answer is complete when it holds every action the count gives. A company keeps an
+action whose bank is it by the caption rule under its names of the year, a bank the release map gives it
+that day, or one the OCC names its own way, by the OCC's charter number and name (`OCC_BANKS`, 39
+companies: Citibank, National Association on Citigroup from 1998-10-08, Wachovia Bank on Wells Fargo from
+2008-12-31, MUFG Union Bank on MUFG from 2008-11-05 and on U.S. Bancorp from 2022-12-01, City National
+Bank on Royal Bank of Canada from 2015-11-02, Sovereign Bank on Santander from 2009-01-30, PNC Bank,
+KeyBank, The Huntington National Bank, Zions First National Bank, UBS AG's federal branches…), each day
+from the owner's filing; namesakes are refused by charter (`NOT_THE_COMPANY`: "National Bank" of Hillsboro,
+Illinois, not National Bank Holdings; "Metropolitan Bank and Trust Company", a federal branch, not
+Metropolitan Bank Holding). No "Valley National Bank" of the list is Valley National Bancorp's. The table
+of taken names applies: "Bank Of America, Nt & Sa", 1992, stays off BAC. One row a company a day,
+JPMorgan's four orders of 2013-09-18 among them: each order's kind and amount (numeric, never a float's),
+its subject matters as the OCC gives them, its number and the day it ended; it links the order's PDF
+where the OCC holds one, else the OCC's search. Against every company in the index, before first prices:
+185 company days on 50 companies; from first prices, 180 on 49 pages, 126 before 2017 (Wells Fargo 17,
+JPMorgan 15, Citigroup 14, Bank of America 13, U.S. Bancorp 12, Capital One 8). The OCC's pages state no
+licence; the orders are a federal agency's own work (17 U.S.C. § 105), used under the owner's ruling of
+2026-11-12 and credited to the OCC.
+
 ### The SEC News Digest (`lib/secDigest.ts`, `lib/ingest/secDigestWalk.ts`)
 
 A source since batch 102 (`sec_digest`, the 2026-11-02 proposal 1: the owner asked for a count
@@ -1773,6 +1801,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | U.S. Consumer Product Safety Commission | Consumer-product recalls since 1973 naming the company as the maker, importer or distributor, or as a store that sold the product | The Commission's recall service, every recall in one answer, read once a week for every company (`lib/ingest/cpscWalk.ts`); kept when a named firm is the company by the caption rule or a store in the "Sold at" line is its name (`lib/cpscRecalls.ts`); a store's recalls of other makers' products grouped a row a month. Public domain, a work of the U.S. Government; no key |
 | Mine Safety and Health Administration | Accidents since 2000 that killed someone at a mine the company controlled, with MSHA's own finding on each: the violations its investigation cited and the penalties it proposed (batch 139) | MSHA's Accidents and Mines files, one 52 MB zip and one of 7 MB, read once a week for every company and the deaths kept (`lib/ingest/mineWalk.ts`), and its Inspections and Assessed Violations files (74 MB and 110 MB) streamed once a month; kept for the 54 controller IDs `lib/mineAccidents.ts` maps by hand to 52 companies, each between its company's days, from the company's first price. Public domain, credited to the U.S. Department of Labor; no key |
 | Federal Railroad Administration | Railroad accidents since 1975 a company's railroad reported, with a death, an evacuation or $5,000,000 of damage | Form 54 on the Transportation Department's open-data host, one request a day for each of the six railroad companies `lib/railAccidents.ts` maps by hand, each railroad between its owner's days, from the company's first price; a highway-rail crossing collision only with an evacuation or that damage. Public domain; no key |
+| Office of the Comptroller of the Currency | The national banks' own regulator's orders since 1987 against the company's bank — civil money penalties, cease-and-desist orders, restitution, formal agreements — each with its amount, subject matters and the day it ended | The search page's own API, every institution action in one keyless answer, read once a process for every company (`lib/ingest/occFor.ts`); kept by the caption rule, the release map and the OCC's own spellings of the banks by charter (`OCC_BANKS`, `lib/occActions.ts`). The OCC's own work (17 U.S.C. § 105), credited to the OCC; no key |
 | U.S. Equal Employment Opportunity Commission | The Commission's suits and settlements since 1994 whose title makes the company the party — a retailer's disability suit, a bank's class settlement | The newsroom listing, read whole once a year and its newest page once a day, for every company (`lib/ingest/eeocWalk.ts`); kept by the Justice Department's title rule, the Commission's own shapes and its units list (`lib/eeoc.ts`); an undated release's page read once for its day. The Commission's own work (17 U.S.C. § 105), credited to the EEOC; no key |
 | Commodity Futures Trading Commission | The Commission's enforcement actions since 1995 whose title makes the company the party — a bank's benchmark-rigging order, an energy trader's manipulation suit | The enforcement list, read whole once a year and its newest page once a day, for every company (`lib/ingest/cftcWalk.ts`); kept by the Justice Department's title rule with the release map's units (`lib/cftc.ts`). Public domain, acknowledged to the CFTC; no key |
 | SEC News Digest | The SEC's daily summary of 1956–1993: the 8-K reports a company filed, its registration statements, the 13D and 14D-1 filings on its shares, the SEC's orders and actions on it, its listing orders | Every issue's PDF read once for every company, 60 a run (`lib/ingest/secDigestWalk.ts`); kept when an entry's party is the company under the name its EDGAR record had that day and no other company's (`lib/secDigest.ts`), from its first price; a month's 8-K reports one row. Public information the SEC lets anyone copy, cited to the SEC; no key; needs `pdftotext` and `NEWS_CHARTS_CONTACT` |

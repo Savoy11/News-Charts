@@ -40,6 +40,7 @@ import { fetchListingPage, secPressEvents } from "../lib/secPress";
 import { fetchCasePage, secCaseEvents } from "../lib/secCases";
 import { fetchFedPress } from "../lib/fedPress";
 import { cfpbEvents, fetchCfpbPage } from "../lib/cfpb";
+import { cachedOccList, occEvents } from "../lib/occActions";
 import { withoutTag } from "../lib/edgarName";
 import { mayCarryRelease, readFilingHeadline } from "../lib/secHeadlines";
 import {
@@ -103,6 +104,7 @@ const SOURCE_OF: Record<string, SourceKey> = {
   "SEC cases": "sec_cases",
   "Fed Board releases": "fed_press",
   "CFPB actions": "cfpb",
+  "OCC actions": "occ_actions",
 };
 
 const INGESTED: ReadonlySet<SourceKey> = new Set([...TOPIC_SOURCES, ...COMPANY_SOURCES]);
@@ -243,6 +245,21 @@ async function main() {
       httpStatus: cfpbNewest.httpStatus,
       detail: cfpbNewest.detail,
     }, `(the ${cfpbNewest.actions.length} newest of ${cfpbNewest.total ?? "?"}; the walk reads every page once a month)`);
+    // …and the OCC's whole list, read once a process as ingest reads it (batch 153); its API is the
+    // search page's own and undocumented, so this is where a change of its shape shows. Former names
+    // and the first-price bound are ingest's and not applied here
+    const occ = await cachedOccList().then(
+      (list) => ({ list, err: null }),
+      (err: Error & { outcome?: "throttled" | "error"; httpStatus?: number }) => ({ list: null, err }),
+    );
+    reportFetch("OCC actions", occ.list ? {
+      events: isNotesRecord(company.cik) ? [] : occEvents(occ.list.actions,
+        () => [...companyNames(company.name, alsoKnownAs), ...(own ? [own] : []), withoutTag(company.name)],
+        { cik: company.cik, namesOn: (day) => releaseNamesOn(company.cik, day) }),
+      outcome: "ok",
+      httpStatus: 200,
+    } : { events: [], outcome: occ.err?.outcome ?? "error", httpStatus: occ.err?.httpStatus, detail: occ.err?.message },
+    occ.list ? `(${occ.list.records} of the ${occ.list.total} institution actions the count gives, since 1987)` : "");
   } else {
     reportFetch("GDELT", await tried(fetchNews(name)), "(throttles ~1 req/5s; rerun if 0)");
   }

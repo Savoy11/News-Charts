@@ -571,6 +571,22 @@ export const SOURCES: {
     reviewedOn: "2026-11-15",
     notes: "the Commission's suits and settlements since 1994, kept where the title makes a listed company the party by the Justice rule or the Commission's own shapes (lib/eeoc.ts); the newsroom listing read whole once a year and its newest page daily for every company, no key (batch 152)",
   },
+  {
+    id: 42,
+    key: "occ_actions",
+    name: "OCC enforcement actions",
+    license: "public domain (17 U.S.C. § 105)",
+    attribution: "Office of the Comptroller of the Currency",
+    // The OCC's enforcement pages and its web privacy policy (occ.gov/about/policies/
+    // web-privacy-policy.html, read 2026-11-15) state no licence and no copyright terms. The orders
+    // are a federal agency's own work, 17 U.S.C. § 105, usable under the owner's ruling of 2026-11-12
+    // where a federal site states no licence. Used: each action's day, kind, amount, subject matters,
+    // order number, the day it ended, the bank's name and a link to its document. Approved by the
+    // owner on 2026-11-15 (docs/proposals/2026-11-15-proposals.md #2).
+    commercialOk: true,
+    reviewedOn: "2026-11-15",
+    notes: "the OCC's orders against national banks since 1987, kept where the bank is a listed company's by the caption rule and the release map (lib/occActions.ts); the search page's own API, every institution action in one keyless answer, read once a process (batch 153)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

@@ -54,6 +54,7 @@ import { digestFor, walkDigest } from "../lib/ingest/secDigestWalk";
 import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
 import { fdaSupplementsFor } from "../lib/ingest/fdaSupplementsFor";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
+import { occFor } from "../lib/ingest/occFor";
 import { RECALL_FLOOR, fetchRecalls, recallMakersFor } from "../lib/recalls";
 import { fetchInvestigations } from "../lib/investigations";
 import { DAMAGE_FLOOR, fetchRailAccidents, railRoadsFor } from "../lib/railAccidents";
@@ -125,6 +126,8 @@ export const COMPANY_SOURCES = [
   "cftc",
   // …and the EEOC's suits and settlements, where the title makes the company the party (batch 152)
   "eeoc_press",
+  // …and the OCC's orders against the company's national banks (batch 153)
+  "occ_actions",
   // …and the SEC News Digest of 1956–1993, where an entry's party is the company under the name its
   // record had that day (batch 102)
   "sec_digest",
@@ -804,6 +807,17 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("fed_press", `Federal Reserve Board releases naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")} as a party`, () =>
     fedPressFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }));
+
+  /**
+   * The OCC's enforcement actions against the company's banks since 1987 (batch 153, the 2026-11-15
+   * proposal 2): the national banks' own regulator's orders, penalties and agreements, where the
+   * Board's actions are the holding company's. The OCC's whole list, read once a process for every
+   * company; the company keeps the actions against a bank that is it by the caption rule, a bank the
+   * release map gives it, or one the OCC names its own way (`OCC_BANKS`, by charter), from its first
+   * price, one event a day. Scored without the model.
+   */
+  await run("occ_actions", `OCC actions against ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")} and the banks it owned`, () =>
+    occFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }));
 
   /**
    * The Consumer Financial Protection Bureau's enforcement actions since 2012 (batch 89): its

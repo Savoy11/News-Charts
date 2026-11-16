@@ -72,6 +72,9 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   cftc: 1440,
   // the Commission's newsroom listing: its newest page once a day for every company (lib/ingest/eeocWalk.ts)
   eeoc_press: 1440,
+  // the OCC's list is read whole once a process for every company (lib/occActions.ts); it adds a few
+  // orders a month, so a company's are asked again a week after the last ask
+  occ_actions: 10080,
   // the Digest's archive is closed: what is left of it is read a run at a time for every company
   // (lib/ingest/secDigestWalk.ts), so a company's rows can only grow while the walk is unfinished
   sec_digest: 1440,

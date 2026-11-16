@@ -137,6 +137,14 @@ the Commission's own title shapes under the company's names, the release map's u
 first lines, one release posted twice is one row, and an undated release a rule keeps has its page read
 once for the day its text gives, else makes no row.
 
+The OCC's enforcement actions since 1987 (`lib/occActions.ts`, batch 153) are the search page's own API,
+every institution action in one keyless answer read once a process (`lib/ingest/occFor.ts`), complete when
+it holds the count's number: an action is a page's by the caption rule on the bank's name, the release
+map's banks, or `OCC_BANKS`, the OCC's own spellings of 39 companies' banks by charter number and name, each
+bought or sold bank between its owner's filing days (MUFG Union Bank is MUFG's to 2022-11-30, U.S. Bancorp's
+from 2022-12-01); a namesake is refused by charter (`NOT_THE_COMPANY`). One row a company a day, each order's
+kind, numeric amount, subject matters, number and the day it ended on it.
+
 The SEC News Digest of 1956–1993 (`lib/secDigest.ts`, batch 102) is read once, issue by issue, into
 db/040's tables (`lib/ingest/secDigestWalk.ts`), and each company's own entries are found there at
 its ingest. Its names are dated by the committed `data/digest-records.json` (`npm run

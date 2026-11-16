@@ -988,6 +988,86 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 153: the OCC's enforcement actions against the company's banks (2026-11-16)
+
+The 2026-11-15 proposal 2, approved by the owner that day with the recommended call: an order's termination is a line
+on its row. Part (a) is built here; part (b), the thrift regulator's archive, is filed under Scope refocus as batch
+154's.
+
+- [x] **The OCC's enforcement actions, a new source** (42, `occ_actions`; `lib/occActions.ts`, `lib/ingest/occFor.ts`).
+      The search page's own API (`apps.occ.gov/EASearch/api/WebSearch/Actions`, `instOnly=true`) gives every action
+      against an institution in one keyless answer: 2,655 on 2026-11-16, 1987-02-11 to 2026-10-13, 2,202,663 bytes;
+      its `/Count` gives the number. Read once a process for every company, as the Board's files are; a company's are
+      asked again a week after the last ask. No table: the list is read whole each process. The answer is complete
+      when it holds the count's number, so a run takes off a row the rules no longer give (`complete`); a count over
+      one answer's 3,000 is refused, not cut. An action against a person is never asked for, and one naming a person
+      is never read. The answer carries no byte-order mark, as the Board's files do; the reader passes one over.
+- [x] **The rule:** the CFPB's, the caption rule on the bank's name under the company's names of the year and the
+      release map's banks, from its first price, the table of taken names applying ("Bank Of America, Nt & Sa", 1992,
+      stays off BAC). Measured on the whole list with today's rules alone: 116 company days on 25 companies.
+- [x] **The OCC's own spellings, by charter (`OCC_BANKS`, 39 companies):** the OCC's charter number names one bank
+      whatever it is called, so each entry is a charter and the name the OCC gives it, between the days the company
+      held it. The proposal's hand list: Citibank, National Association on Citigroup from 1998-10-08 (the map's
+      day); Wachovia Bank on Wells Fargo from 2008-12-31 (the map's day: its $50,000,000 of 2010-03-12 lands, its
+      agreement of 2008-04-24 does not); JPMorgan Bank and Trust Company; First Tennessee Bank on First Horizon;
+      Sovereign Bank on Santander from 2009-01-30 ("The acquisition of Sovereign has been completed today", its 6-K
+      filed that day, 0001362310-09-000902); KeyBank; MUFG Union Bank on MUFG from 2008-11-05 ("MUFG and BTMU has
+      successfully acquired all of the outstanding shares of UnionBanCal Corporation", its 6-K filed that day,
+      0001193125-08-224956) to 2022-11-30, and on U.S. Bancorp from 2022-12-01 (its 8-K of that day,
+      0001193125-22-296642: the penalty of 2023-05-10 is U.S. Bancorp's); MUFG Bank's federal branches; BMO Harris;
+      Morgan Stanley Bank and Morgan Stanley Private Bank; PNC Bank (charter 1316, Midlantic National Bank's before,
+      which the name keeps off); The Huntington National Bank; Fulton Bank; UMB Bank; Associated Bank of Green Bay.
+      A scan of every listed bank's name against the OCC's banks, read by hand, added: Park National, Old Second
+      National, TrustCo, Southern First, Blue Ridge, Lake Shore Savings, Patriot National, Ballston Spa National,
+      American Express National Bank, TD Bank USA, RBS Citizens, Zions First National, First National Bank of
+      Pennsylvania (FNB), City National Bank on Royal Bank of Canada from 2015-11-02 ("today announced it has
+      completed the acquisition of City National Corporation", its 6-K filed that day, 0001193125-15-361823), City
+      National Bank of West Virginia (City Holding), Commerce Bank of Kansas City (Commerce Bancshares, its 10-K filed
+      1997-03-13), Frost and Cullen/Frost Bank of Dallas (Cullen/Frost, its 10-K filed 1994-03-30), First Financial
+      Bank of Hamilton, Seacoast National, WSFS, Banco de Galicia's New York branch (Grupo Galicia, its 20-F filed
+      2003-07-14: "On March 22, 2002, the 'New York Branch Restructuring Plan' was submitted to … the OCC"), Banco
+      Bradesco's New York branch, UBS AG's federal branches and Credit Suisse's from 2023-06-12 (the map's day), and
+      Washington Federal's order of 2018-02-28, which the company's present name does not read.
+- [x] **Namesakes, read by hand and refused by charter (`NOT_THE_COMPANY`, 4 companies):** "National Bank" of
+      Hillsboro, Illinois, "National Bank And Trust" of La Grange, Texas and "THE National Bank" of Moline, Illinois
+      (not National Bank Holdings, whose bank is NBH Bank of Colorado); "Metropolitan Bank and Trust Company", a
+      federal branch in New York, and "Metropolitan Bank, N.A." of Washington (not Metropolitan Bank Holding); "F&M Bank
+      and Trust Company" of Hannibal, Missouri (not F&M Bank Corp); "Citizens Bank, National Association" of Fort
+      Scott, Kansas (not Citizens Financial). The scout's note that the caption rule reads "and Trust Company" after a
+      name as legal words holds; for the OCC the charter settles it.
+- [x] **Read and left off:** no "Valley National Bank" of the list is Valley National Bancorp's (they are banks of
+      Espanola, Tulsa, Phoenix, Cortez and Hamburg, Iowa), so the proposal's 4 are none; Flagstar Bank, FSB's orders of
+      2010–2021, before Flagstar's record bought the bank; Whitney National Bank's of 2010, before Hancock bought it;
+      Wachovia Bank of North Carolina's of 1992, Union Bank of California's of 2007 (UnionBanCal then listed on its
+      own), City National Bank's of 1992–2010, LaSalle's, Riggs', FirstMerit's and Integra's, each before its buyer's
+      day or of a company not listed; Community West Bank's of 2012, the taken name's; Santander Holdings USA's
+      preferred shares, first priced 2026-10-14, after every Santander Bank order; and a dozen first-word namesakes
+      the scan found (Eagle, Heritage, Enterprise, Frontier, Meridian, Unity…).
+- [x] **The rows:** one a company a day: each order's kind in the row's words ("civil money penalty", "cease-and-desist
+      order requiring restitution", "formal agreement"), its amount as the answer's own digits, never a float's (the
+      reader takes `JSON.parse`'s source text), its subject matters as the OCC gives them, the most particular of each
+      branch, its number and docket, and "It ended …" with the order that ended it, the approved call. It links the
+      largest order's PDF where the OCC holds one (`occ.gov/static/enforcement-actions/ea{number}.pdf`, three
+      checked), else the OCC's search for its docket or its bank. Against every company in the index, before first
+      prices: 185 company days on 50 companies; from first prices, 180 on 49 pages, 126 before 2017 (Wells Fargo 17,
+      JPMorgan 15, Citigroup 14, Bank of America 13, U.S. Bancorp 12, Capital One 8), where the proposal estimated
+      about 150 on 39, about 110 before 2017. Former names come at ingest from EDGAR and not in the offline replay.
+- [x] **Licence:** the OCC's enforcement pages and its web privacy policy, read 2026-11-15, state none; the orders are a
+      federal agency's own work (17 U.S.C. § 105), used under the owner's ruling of 2026-11-12 and credited to the OCC
+      on the site and in the terms.
+- [x] **Checks:** `check:occ`, new, 43 on `scripts/fixtures/occ-actions.json.gz` (the answer as served, its count, the
+      pages' first prices); on main none runs, as lib/occActions.ts does not exist. `check:contact` counts the 40th
+      User-Agent reader; `check:live` gains the API's case, and `check:feeds` reads the list for the company asked,
+      where a change of the undocumented API's shape shows.
+- **For the next audit:** `OCC_BANKS` matches by charter alone where the OCC's name for a bank changes; a charter that
+  passes to another company is guarded only by its name pattern and days (PNC's 1316, MUFG's and U.S. Bancorp's 21541).
+- **The ledger:** no entry changes; 39 open, 103 closed, 11 parked, 17 blocked.
+- **Requests:** apps.occ.gov 3 (the count, the list, and one search page for the document link's form) and occ.gov 3
+  (HEAD for three documents' PDFs), with the User-Agent `News Charts Research` and no address;
+  query1.finance.yahoo.com 36 (first trading days); data.sec.gov 13 and www.sec.gov 10 with the project's User-Agent
+  and contact, for U.S. Bancorp's, MUFG's, Royal Bank of Canada's, Santander's, Commerce Bancshares', Cullen/Frost's
+  and Grupo Galicia's filings (one, U.S. Bancorp's 8-K of 2022-12-06, answered 503 and was not needed).
+
 ## NC ledger — batch 152: the 2026-11-15 approvals filed, and the EEOC's suits and settlements (2026-11-15)
 
 The owner, 2026-11-15, on both proposals of `docs/proposals/2026-11-15-proposals.md`: "Approve both (Recommended)",
@@ -11340,12 +11420,22 @@ already held, but new investment goes to securities coverage first.
         from first prices where read, 324 on 81 pages, 165 before 2017.
       - *Derived from [`docs/proposals/2026-11-15-proposals.md`](proposals/2026-11-15-proposals.md) #1,
         approved 2026-11-15.*
-- [ ] `P1` **The OCC's enforcement actions against the company's national bank, 1989–2026:** approved by the owner
-      2026-11-15, with an order's termination as a line on its row. All 2,655 actions in one keyless answer; 103
-      company-days on 21 pages measured, about 150 on 39 with about 20 bank names added by hand; the thrift
-      regulator's spreadsheet of 1989–2011 as part (b).
+- [x] `P1` **The OCC's enforcement actions against the company's national bank, 1987–2026:** approved by the owner
+      2026-11-15, with an order's termination as a line on its row. A new source (42, `occ_actions`), the OCC's own
+      work under the ruling of 2026-11-12.
+      - **Estimated** by the scout: 103 company days on 21 pages measured, about 150 on 39 with about 20 bank names
+        added by hand.
+      - **Done in batch 153** (see its section), part (a): 185 company days on 50 companies before first prices;
+        from first prices, 180 on 49 pages, 126 before 2017, with 39 companies' banks read by charter.
       - *Derived from [`docs/proposals/2026-11-15-proposals.md`](proposals/2026-11-15-proposals.md) #2,
-        approved 2026-11-15. Batch 153's.*
+        approved 2026-11-15.*
+- [ ] `P2` **The thrift regulator's orders of 1989–2011, part (b) of the OCC's approval:** the OTS Enforcement Order
+      Archive, one spreadsheet the OCC keeps (3,547 rows, 1,497 against institutions), read once under the same rule
+      and committed. The scout's count: 14 by today's rule, 9 of them the companies' own (American Express Bank, FSB
+      4, Broadway Federal 2, Carver, Waterstone, AmBase), and AIG Federal Savings Bank, GE Money Bank, Sovereign Bank
+      and Third Federal by name. Small, and the scout said so.
+      - *Derived from [`docs/proposals/2026-11-15-proposals.md`](proposals/2026-11-15-proposals.md) #2 (b),
+        approved 2026-11-15. Batch 154's.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

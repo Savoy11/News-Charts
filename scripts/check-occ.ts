@@ -77,12 +77,13 @@ const EXPECTED = {
   firstDay: "1987-02-11",
   lastDay: "2026-10-13",
   withAmount: 378,
-  // with the OTS archive (batch 154); the OCC's list alone gave 185 on 50, and 180 on 49 pages, 126 before 2017
-  total: 199,
-  companies: 58,
-  fromFirst: 194,
-  fromFirstPages: 57,
-  fromFirst2017: 139,
+  // with the OTS archive (batch 154) and the banks of the 2026-11-16 audit (batch 155); the OCC's list alone gave
+  // 185 on 50, and 180 on 49 pages, 126 before 2017, in batch 153; batch 154 199 on 58, and 194 on 57, 139 before 2017
+  total: 207,
+  companies: 63,
+  fromFirst: 202,
+  fromFirstPages: 62,
+  fromFirst2017: 147,
   top: "WFC 17, JPM 15, C 14, BAC 13, USB 12, COF 8",
 };
 
@@ -207,8 +208,8 @@ async function main() {
   check("every bank the hand list gives by charter is in the list under a name its pattern reads, on a day it holds",
     Object.entries(OCC_BANKS).every(([, { banks }]) => banks.every((b) => all.some((a) => a.charter === b.charter && b.bank.test(a.bank) && (!b.from || a.day >= b.from) && (!b.to || a.day <= b.to))))
   );
-  check("  …45 companies' banks, as the README counts them, and six companies' namesakes refused by charter or OTS docket",
-    Object.keys(OCC_BANKS).length === 45 && /\(`OCC_BANKS`, 45\s+companies/.test(read("README.md")) && Object.keys(NOT_THE_COMPANY).length === 6, `${Object.keys(OCC_BANKS).length}`);
+  check("  …51 companies' banks, as the README counts them, and six companies' namesakes refused by charter or OTS docket",
+    Object.keys(OCC_BANKS).length === 51 && /\(`OCC_BANKS`, 51\s+companies/.test(read("README.md")) && Object.keys(NOT_THE_COMPANY).length === 6, `${Object.keys(OCC_BANKS).length}`);
   check("  …and every company it names is in the ticker index under that CIK and ticker",
     Object.entries(OCC_BANKS).every(([cik, { ticker }]) => companies.some(([c, t]) => c === Number(cik) && t === ticker)) &&
       Object.entries(NOT_THE_COMPANY).every(([cik, { ticker }]) => companies.some(([c, t]) => c === Number(cik) && t === ticker)));
@@ -233,6 +234,17 @@ async function main() {
       /It ended 2008-10-21 \(order WE 08-016\)/.test(day("WAFD", "2007-12-21")?.description ?? "") && /First Home Savings Bank/.test(day("FBSI", "2009-08-17")?.description ?? ""));
   check("  …and the archive's namesakes stay off: United Bancorp of Bridgeview off UBCP, Liberty Capital of Ohio off GLIBA, Metropolitan Bank and Trust of Ohio off MCB",
     !day("UBCP", "2008-09-30") && !on("GLIBA").length && !day("MCB", "2001-07-26"));
+
+  check("the banks the 2026-11-16 audit found (batch 155): MetLife Bank's $30,206,329 restitution of 2013-02-28 on MetLife, First Niagara's $2,000,000 of 2016-09-06 on KeyCorp but not its orders of 2011 and 2016-07-25, before the purchase",
+    /restitution of \$30,206,329/.test(day("MET", "2013-02-28")?.title ?? "") && !!day("MET", "2011-04-13") && /\$2,000,000 civil money penalty/.test(day("KEY", "2016-09-06")?.title ?? "") &&
+      !day("KEY", "2016-07-25") && !day("KEY", "2011-10-26"));
+  check("  …Dillard National Bank's agreements of 2003, Riverview Community Bank's of 2012, Citizens Community Federal's of 2014, and MetaBank's two orders of 2011-07-15, the OCC's and the OTS's, one bank however each spells it",
+    !!day("DDS", "2003-11-13") && !!day("DDS", "2003-12-15") && !!day("RVSB", "2012-01-25") && !!day("CZWI", "2014-07-09") &&
+      /^Against Metabank, as the OCC and the OTS name it\./i.test(day("CASH", "2011-07-15")?.description ?? "") && /order CN 11-24/.test(day("CASH", "2011-07-15")?.description ?? "") &&
+      /order CN 11-27/.test(day("CASH", "2011-07-15")?.description ?? ""),
+    day("CASH", "2011-07-15")?.description);
+  check("  …and FIA Card Services, Bank of America's card bank, in its row of 2014-04-07, the one $25,000,000 penalty counted once",
+    /Fia Card Services/i.test(day("BAC", "2014-04-07")?.description ?? "") && /^OCC: \$25,000,000 civil money penalty/.test(day("BAC", "2014-04-07")?.title ?? ""), day("BAC", "2014-04-07")?.title);
 
   const total = [...at.values()].flat();
   const first = [...fromFirst.values()].flat();
@@ -282,10 +294,14 @@ async function main() {
       reads++;
       throw Object.assign(new Error("the OCC's list: HTTP 503"), { outcome: "throttled", httpStatus: 503 });
     };
-    await cachedOccList(bad).catch(() => null);
-    await new Promise((r) => setTimeout(r, 0));
-    await cachedOccList(good);
-    check("  …read once a process for every company, and a failure not kept: the next company asks again", reads === 3, `${reads} reads`);
+    const first = await cachedOccList(bad).catch((e: Error & { outcome?: string }) => e);
+    const next = await cachedOccList(good).catch((e: Error & { outcome?: string }) => e);
+    check("  …read once a process for every company, a failure too: the next company is told the same without asking (batch 155, the 2026-11-16 audit's finding 2)",
+      reads === 2 && first instanceof Error && next === first && (next as { outcome?: string }).outcome === "throttled", `${reads} reads`);
+    serve({ count: () => Object.defineProperties(new Response("<html>Security Redirect</html>"), { redirected: { value: true }, url: { value: "https://www.occ.treas.gov/" } }) });
+    const redirected = await readOccList().catch((e: Error & { outcome?: string }) => e);
+    check("  …and an answer that sent us to the OCC's home page is a refusal, so the source-wide back-off holds every company back",
+      redirected instanceof Error && (redirected as { outcome?: string }).outcome === "throttled" && /redirected to https:\/\/www\.occ\.treas\.gov/.test(redirected.message), String(redirected));
     forgetOccList();
 
     const plan = (t: string) => {
@@ -298,6 +314,12 @@ async function main() {
       jpmFor.outcome === "ok" && jpmFor.events.length === 15 && !!jpmFor.complete && jpmFor.events.every((e) => e.date >= "1980-03-17"), `${jpmFor.events.length}, complete ${!!jpmFor.complete}`);
     const short = await occFor(fakeDb("1980-03-17"), 1, plan("JPM"), async () => ({ ...parseOccList(FX.body), total: FX.count + 5 }));
     check("  …an answer short of the count is not complete, so no kept row comes off", short.outcome === "ok" && !short.complete && /held 2655 of the 2660/.test(short.detail ?? ""), short.detail);
+    const misread = await occFor(fakeDb("1980-03-17"), 1, plan("JPM"), async () => {
+      const list = parseOccList(FX.body);
+      return { ...list, actions: list.actions.slice(0, Math.floor(list.records * 0.9)), total: FX.count };
+    });
+    check("  …nor one whose records the reader mostly skipped, as a renamed field would make it (batch 155, the audit's set-aside 5)",
+      !misread.complete && /2655 of the 2655 actions the OCC counts, 2389 of them read/.test(misread.detail ?? ""), misread.detail);
     const cfg = await occFor(fakeDb("2014-09-24"), 1, plan("CFG"), whole);
     check("  …Citizens' orders of 2010 and 2013, before its first price of 2014, stay off; its own of 2015 land",
       cfg.events.every((e) => e.date >= "2014-09-24") && cfg.events.some((e) => e.date === "2015-11-10") && cfg.events.some((e) => e.date === "2015-08-10"), cfg.events.map((e) => e.date).join(", "));

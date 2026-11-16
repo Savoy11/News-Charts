@@ -30,13 +30,16 @@ const read = (file: string) => readFileSync(join(__dirname, "..", file), "utf8")
 
 console.log("\nThe sources and the index");
 const ids = ALSO_ON_SOURCES.map((k) => SOURCES.find((s) => s.key === k)?.id);
-check("the multi-party sources are the Justice Department's, the SEC's two, the Board's, the CFPB's, EPA's, the CPSC's and the CFTC's",
-  JSON.stringify([...ALSO_ON_SOURCES].sort()) === JSON.stringify(["cfpb", "cftc", "cpsc_recalls", "doj_press", "epa_cases", "fed_press", "sec_cases", "sec_press"]));
+check("the multi-party sources are the Justice Department's, the SEC's two, the Board's, the CFPB's, EPA's, the CPSC's, the CFTC's and the EEOC's (batch 155)",
+  JSON.stringify([...ALSO_ON_SOURCES].sort()) === JSON.stringify(["cfpb", "cftc", "cpsc_recalls", "doj_press", "eeoc_press", "epa_cases", "fed_press", "sec_cases", "sec_press"]));
 check("  …their ids are the sources' own, as `SOURCES` registers them", JSON.stringify(ids) === JSON.stringify(ALSO_ON_SOURCE_IDS), { ids, ALSO_ON_SOURCE_IDS });
-const migration = read("db/041_also_on.sql");
+// the index is built by db/041 and built again, with a source added, by a later migration: the last one is the index
+const builds = readdirSync(join(__dirname, "..", "db")).filter((f) => /\.sql$/.test(f) && /CREATE INDEX IF NOT EXISTS event_attestations_case_numbers\b/.test(read(`db/${f}`))).sort();
+const migration = read(`db/${builds.at(-1)}`);
 const indexed = /WHERE source_id IN \(([\d, ]+)\)/.exec(migration)?.[1].split(",").map((n) => Number(n.trim()));
-check("db/041's partial index covers exactly those sources, on the case numbers as a set",
-  JSON.stringify(indexed) === JSON.stringify(ALSO_ON_SOURCE_IDS) && /USING gin \(string_to_array\(external_id, ','\)\)/.test(migration), indexed);
+check("the partial index, as db/053 builds it again with the EEOC's id, covers exactly those sources, on the case numbers as a set",
+  JSON.stringify(builds) === JSON.stringify(["041_also_on.sql", "053_also_on_eeoc.sql"]) && /DROP INDEX IF EXISTS event_attestations_case_numbers;/.test(migration) &&
+    JSON.stringify(indexed) === JSON.stringify(ALSO_ON_SOURCE_IDS) && /USING gin \(string_to_array\(external_id, ','\)\)/.test(migration) && /WITH \(fastupdate = off\)/.test(migration), { builds, indexed });
 
 console.log("\nThe indexes a page reads by (batch 111, the 2026-11-07 audit's set-aside)");
 const pageIndex = read("db/042_event_subjects_subject.sql");

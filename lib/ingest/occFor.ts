@@ -40,11 +40,13 @@ export async function occFor(
     namesOn: (day) => releaseNamesOn(plan.cik, day),
     namesBefore: (day) => releaseNamesBefore(plan.cik, day),
   });
-  const whole = list.records >= list.total;
+  // …and only when the reader kept the records it was given: an answer whose shape changed, every record
+  // skipped, is not a list with nothing in it (the 2026-11-16 audit's set-aside 5)
+  const whole = list.records >= list.total && list.actions.length >= list.records * 0.95;
   return {
     events,
     outcome: events.length ? "ok" : "empty",
     httpStatus: 200,
-    ...(whole ? { complete: {} } : { detail: `the list held ${list.records} of the ${list.total} actions the OCC counts: rows kept before stay` }),
+    ...(whole ? { complete: {} } : { detail: `the list held ${list.records} of the ${list.total} actions the OCC counts, ${list.actions.length} of them read: rows kept before stay` }),
   };
 }

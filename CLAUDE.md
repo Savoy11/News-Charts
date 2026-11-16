@@ -135,12 +135,13 @@ once a year and its newest page daily (`lib/ingest/eeocWalk.ts`, db/052), kept b
 the Commission's own title shapes under the company's names, the release map's units and its own
 `EEOC_UNITS`; a franchisee's, bottler's or licensee's release is the brand's by neither its title nor its
 first lines, one release posted twice is one row, and an undated release a rule keeps has its page read
-once for the day its text gives, else makes no row.
+once for the day its text gives, else makes no row. A release no rule can place is read by hand into
+`RELEASES_OF`, by title and company, from a day (batch 155: Murphy USA's suit of 2016).
 
 The OCC's enforcement actions since 1987 (`lib/occActions.ts`, batch 153) are the search page's own API,
 every institution action in one keyless answer read once a process (`lib/ingest/occFor.ts`), complete when
 it holds the count's number: an action is a page's by the caption rule on the bank's name, the release
-map's banks, or `OCC_BANKS`, the OCC's own spellings of 39 companies' banks by charter number and name, each
+map's banks, or `OCC_BANKS`, the OCC's own spellings of 51 companies' banks by charter number and name, each
 bought or sold bank between its owner's filing days (MUFG Union Bank is MUFG's to 2022-11-30, U.S. Bancorp's
 from 2022-12-01); a namesake is refused by charter (`NOT_THE_COMPANY`). One row a company a day, each order's
 kind, numeric amount, subject matters, number and the day it ended on it. The OTS's orders of 1989–2011
@@ -176,14 +177,15 @@ run, and only Class I and II become rows. The map's days for the units bought an
 it: the file gives a bought unit's own past under its later name ("Boston Scientific CRM Corp" for Guidant's
 2005 recalls), so every such unit carries the day its owner took it.
 
-A row of one of the eight multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
-CFTC) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
+A row of one of the nine multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
+CFTC, the EEOC, batch 155) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
 and 25 more" (`lib/alsoOn.ts`, batch 106). A case is the same source's same number, compared as a set
 for a grouped row (db/041's index, with no pending list since db/042, batch 111: a GIN index's queue made
 every lookup read it); a release held once on several pages counts too. A page's links are found by
 db/042's `event_subjects (subject_id)` index; the key begins with the event. It is read
 beside `loadEvents` and never breaks a page; adding a multi-party source means adding it to
-`ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and db/041's list, which check:also-on holds together. A row
+`ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and the index's list, in a new migration that builds it again (db/053
+added the EEOC's), which check:also-on holds together. A row
 whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months) is stored again
 when its list grows, so its versions count once in "· N sources" (`GROUPED_ROW_SOURCES` in
 `lib/corroboration.ts`, batch 107); a new source that joins numbers goes there too, and check:also-on

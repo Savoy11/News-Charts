@@ -988,6 +988,77 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 155: the 2026-11-16 audit of batches 150–154, its findings fixed (2026-11-16)
+
+The `code-auditor` read `git diff 30ba57f..1bdecc3` (batches 150–154) and wrote
+`docs/audits/2026-11-16-code-audit-b150-154.md`. It ran db/001–db/052 on a throwaway PostgreSQL 16 and replayed the
+OCC's, the archive's and the EEOC's rows over every company in the index. Five findings, each verified here before it
+was fixed; the owner's word on starting: "Continue". The report was written into a build container that was replaced
+before it could be committed: it is restored from the agent's own text, its header rebuilt from the agent's closing
+report and marked so.
+
+- [x] **1 · `P2` · `OCC_BANKS` missed seven companies' banks** (`lib/occActions.ts`, now 51 companies), each named after
+      a company that is not itself a bank, or after its former name, which the scans of batches 153 and 154 did not
+      read: MetLife Bank on MetLife (its cease-and-desist orders of 2011-04-13 and 2013-02-28, the second with
+      $30,206,329 of restitution for foreclosures; Exhibit 21.1 of the 10-Ks filed 2011–2013); First Niagara Bank on
+      KeyCorp from "the closing on July 29, 2016" (the 8-K filed 2016-08-01: the $2,000,000 penalty and overdraft
+      restitution of 2016-09-06 are KeyCorp's, the penalties of 2011-10-26 and 2016-07-25 First Niagara's); FIA Card
+      Services on Bank of America, one of its "two national bank charters" (the 10-Q filed 2014-05-01), so the row of
+      2014-04-07 names both banks, its $25,000,000 still kept once; Dillard National Bank on Dillard's (two formal
+      agreements of 2003, each ended 2004-11-01); Riverview Community Bank on Riverview Bancorp (a formal agreement of
+      2012-01-25); MetaBank on Pathward, named after its former name, Meta Financial Group (the OCC's cease-and-desist
+      order CN 11-24 and the OTS's penalty CN 11-27 of 2011-07-15, on one row with the holding company's CN 11-26); and,
+      from a scan here of the banks named after a listed company, Citizens Community Federal on Citizens Community
+      Bancorp (a penalty of 2014-07-09). None has an end day: each entry reads only the bank's own name, and the OCC
+      lists no order of Dillard's or MetLife's bank after their sales. A bank its two regulators spell differently
+      ("Metabank", "MetaBank") is named once on a row. Against every company in the index, before first prices: 207
+      company days on 63 companies (199 on 58); from first prices, 202 on 62 pages, 147 before 2017 (194 on 57, 139).
+- [x] **2 · `P3` · A refused OCC read was asked again by every company of a run.** A failed read is now the process's
+      answer (`cachedOccList`): the companies after it are told the same without asking, and the next run asks anew.
+      A redirected answer, the OCC's way of refusing (its "Security Redirect" of 2026-10-28; a 302 to its home page
+      today), is `throttled`, so the source-wide back-off holds every company back; it was an `error`, and each of a
+      run's 200 companies asked again. And, the audit's set-aside 5: an answer is complete only if at least 95% of its
+      records parse, so a renamed field can no longer make a run take every stored OCC row off every page.
+- [x] **3 · `P3` · The EEOC is an "Also on" source** (`ALSO_ON_SOURCES` and `ALSO_ON_SOURCE_IDS` in `lib/alsoOn.ts`;
+      db/053 builds db/041's index again with source 41 in its list). Johnson Controls' and ManpowerGroup's row of
+      2020-11-06, the one settlement both are named in, says "Also on" the other. `check:also-on` reads the index from
+      the last migration that builds it.
+- [x] **4 · `P3` · Two EEOC releases reached no page.** "ManpowerGroup US" is ManpowerGroup's unit (`EEOC_UNITS`, now 19
+      companies), so the suit of 2019-10-01 against it and Johnson Controls is on both pages. Murphy USA's suit of
+      2016-05-05, titled "Murphy Oil Sued By EEOC for Disability Discrimination and Retaliation" over the stations Murphy
+      USA runs, is read by hand (`RELEASES_OF`, a new list: a title and a company from a day, for a release no rule can
+      place) on Murphy USA from the spin-off of 2013-08-30; `NOT_THE_COMPANY` keeps it off Murphy Oil, as before.
+      Against every company in the index, before first prices: 552 rows on 179 companies, 277 before 2017 (550 and
+      276); from first prices where the check reads them, 324 on 81 pages, as neither company's first price is among
+      them.
+- [x] **5 · `P3` · Numbers in the docs.** Batch 154's "12 of them on 11 pages the archive's alone" is 10 on 9:
+      Broadway's and Carver's archive orders join the OCC's own rows of their days. Corrected where it stood, in
+      README, the coverage map and this checklist (batch 154's section and its item under the 2026-11-15 approvals),
+      with the new totals above. CLAUDE.md's "39 companies' banks" is 51. Batch 154's "an order's own note gives the
+      day where it says so" reads two wordings; 83 more notes give an end day in other words, and none of those 83
+      is on a page today, so they are left as they are and the text now says "in two wordings".
+- **Set aside, as the audit did (8):** four of the six namesake entries guard only rows before first prices, and
+  check:occ tests them; Union Bank of California's orders of 1992 and 2007 stay off MUFG, which held it whole from
+  2008-11-05; three thrift copies the twin rule misses (First Place Bank's CN 11-020, 34 days apart; Atlantic Coast
+  Bank's and Reliance Bank's) are of no company in the index; two terminations put on another order (Wilshire Credit's
+  SF 01-002, American Bank's SE-11-022) are on no page; amounts are numeric and a penalty recorded on two banks is kept
+  once; whether the twelve docket-style PDF links reach their orders is not settled from here (the OCC answers a
+  missing name with a 302 to its home page); Associated Bank, N.A. of Neenah (1991) and Fifth Third Trust Company,
+  N.A. (1991) may be ASB's and FITB's, but both predate EDGAR's full-text search and no filing was read. The
+  completeness guard, set-aside 5, is done above.
+- [x] **Checks:** `check:occ` 61 (a redirect is a refusal; a failure is kept for the process; a mostly unread answer is
+      not complete; the seven companies' banks, KeyCorp's day, Pathward's two regulators' orders and Bank of America's
+      two banks pinned; the totals and README's count re-pinned), `check:eeoc` 42 (ManpowerGroup's and Murphy USA's
+      suits pinned, the totals re-pinned), `check:also-on` 23 (the nine sources; the index as db/053 builds it). On main
+      nine of check:occ's fail, check:eeoc throws (`RELEASES_OF` is not there), and both of check:also-on's fail.
+- **The ledger:** no entry changes; 39 open, 103 closed, 11 parked, 17 blocked.
+- **Requests:** query1.finance.yahoo.com 10 under `News Charts Research` (first trading days for MetLife, Dillard's,
+  Riverview, Pathward, Citizens Community, Murphy USA, ManpowerGroup and Murphy Oil; Citizens Community's twice
+  refused with a 429, then read); www.sec.gov 3 and data.sec.gov for the two companies' filing lists, under the
+  project's User-Agent with the contact (KeyCorp's 8-K filed 2016-08-01, read twice as the first answer was EDGAR's
+  busy page, and Bank of America's 10-Q filed 2014-05-01). The auditor's 16, at least 1.6 seconds apart, are listed in
+  its report.
+
 ## NC ledger — batch 154: the thrift regulator's orders of 1989–2011 (2026-11-16)
 
 Part (b) of the 2026-11-15 proposal 2, approved by the owner that day with part (a), built in batch 153.
@@ -1009,8 +1080,9 @@ Part (b) of the 2026-11-15 proposal 2, approved by the owner that day with part 
 - [x] **Terminations, the owner's call:** the archive files 119 as orders of their own; each is a line on the latest
       earlier order of its kind against the same institution ("It ended 2010-08-06 (order WN 10-023)" on American
       Express Bank's order of 2009), one filed under the kind it ended (Cargill Bank's "Termination oF Civil Money
-      Penalty") among them, and an order's own note gives the day where it says so ("Terminated November 12, 2002",
-      "terminated by NE 01-04 dtd 02/07/01"). 10 orders have no day and make no row; 27 links name no file and link
+      Penalty") among them, and an order's own note gives the day in two wordings ("Terminated November 12, 2002",
+      "terminated by NE 01-04 dtd 02/07/01"; batch 155 corrected "where it says so": 83 more notes give one in other
+      words, none of them on a page). 10 orders have no day and make no row; 27 links name no file and link
       none.
 - [x] **The banks read by hand** (`OCC_BANKS`, now 45 companies): AIG Federal Savings Bank (its agreement of 2007,
       the OCC's row), GE Money Bank on GE (2010; renamed GE Capital Retail Bank and Synchrony Bank, names the entry does
@@ -1035,9 +1107,10 @@ Part (b) of the 2026-11-15 proposal 2, approved by the owner that day with part 
       its source; a day of both, "OCC and OTS:" (Carver's and Broadway's of 2010–2011). Each order gives its number and
       OTS docket and links its file in the archive. Against every company in the index, before first prices: 199
       company days on 58 companies; from first prices, 194 on 57 pages, 139 before 2017 (Wells Fargo 17, JPMorgan
-      15, Citigroup 14, Bank of America 13, U.S. Bancorp 12, Capital One 8), 12 of them on 11 pages the archive's
-      alone, all after first prices (Onity 2, GE, American Express, TFS Financial, WaFd, TrustCo, Waterstone,
-      Broadway, First Bancshares, AmBase, Carver).
+      15, Citigroup 14, Bank of America 13, U.S. Bancorp 12, Capital One 8), 10 of them on 9 pages the archive's
+      alone, all after first prices (Onity 2, GE, American Express, TFS Financial, WaFd, TrustCo, Waterstone, First
+      Bancshares, AmBase); Broadway's and Carver's archive orders are on the OCC's rows of their days (batch 155
+      corrected "12 on 11").
 - [x] **Checks:** `check:occ` grows to 56 (the committed archive, its readers, copies, terminations, the archive's
       rows and namesakes, and the new totals); on main it does not run, as lib/otsOrders.ts does not exist.
       `check:contact` counts the 41st User-Agent reader, the sync script; `check:live` gains the workbook's case.
@@ -11494,8 +11567,9 @@ already held, but new investment goes to securities coverage first.
       and committed. The scout's count: 14 by today's rule, 9 of them the companies' own (American Express Bank, FSB
       4, Broadway Federal 2, Carver, Waterstone, AmBase), and AIG Federal Savings Bank, GE Money Bank, Sovereign Bank
       and Third Federal by name. Small, and the scout said so.
-      - **Done in batch 154** (see its section): 12 company days on 11 pages the archive's alone, all after first
-        prices; with the OCC's list, 194 on 57 pages from first prices, 139 before 2017.
+      - **Done in batch 154** (see its section): 10 company days on 9 pages the archive's alone, all after first
+        prices (batch 155 corrected "12 on 11"); with the OCC's list, 194 on 57 pages from first prices, 139 before
+        2017, and 202 on 62, 147 before 2017, after batch 155 added seven companies' banks.
       - *Derived from [`docs/proposals/2026-11-15-proposals.md`](proposals/2026-11-15-proposals.md) #2 (b),
         approved 2026-11-15.*
 

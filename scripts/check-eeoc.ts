@@ -8,6 +8,7 @@ import {
   EEOC_LIST,
   EEOC_UNITS,
   NOT_THE_COMPANY,
+  RELEASES_OF,
   dayInText,
   dayOnPage,
   eeocEvents,
@@ -80,7 +81,8 @@ function on(ticker: string, from = ""): TimelineEvent[] {
   const memo = new Map<number, string[]>();
   const yearNames = (y: number) => memo.get(y) ?? (memo.set(y, namesIn(y)), memo.get(y)!);
   const keys = [...new Set([...namesIn(1996), ...namesIn(2005), ...namesIn(2015), ...namesIn(2026), ...releaseNamesAsked(cik), ...eeocUnitNamesAsked(cik)].map(letters).filter((k) => k.length >= 2))];
-  const held = releases.filter((r) => keys.some((k) => titleLetters.get(r)!.includes(k)));
+  const byHand = RELEASES_OF[cik] ?? [];
+  const held = releases.filter((r) => keys.some((k) => titleLetters.get(r)!.includes(k)) || byHand.some((x) => x.title.test(r.title)));
   return eeocEvents(held, companyNames(title, newsNamesFor(cik)), {
     cik,
     from: from === "first" ? (FX.first[ticker] ?? "") : from,
@@ -159,6 +161,9 @@ async function main(): Promise<void> {
     at("BX").length === 0 && at("BOH").length === 0 && at("BANR").length === 0 && at("DAVE").length === 0 && at("CSPI").length === 0 && at("SRI").length === 0 &&
       at("TNYZF").length === 0 && at("COMP").length === 0 && Object.keys(NOT_THE_COMPANY).length === 9,
     `${Object.keys(NOT_THE_COMPANY).length} records`);
+  check("the suit the rule keeps off Murphy Oil is Murphy USA's, read by hand (`RELEASES_OF`), and ManpowerGroup US's of 2019 is ManpowerGroup's, with Johnson Controls' (batch 155, the 2026-11-16 audit's finding 4)",
+    lands("MUSA", "2016-05-05", /^Murphy Oil Sued By EEOC/) && !lands("MUR", "2016-05-05", /Murphy/) && lands("MAN", "2019-10-01", /Manpowergroup US/i) && lands("JCI", "2019-10-01", /Johnson Controls/) &&
+      !releases.filter((r) => /^Murphy Oil Sued By EEOC/.test(r.title)).some((r) => (RELEASES_OF[1573516] ?? []).some((x) => (r.day ?? "") < x.from)));
   check("  …nor Murphy Oil USA, Murphy USA's since 2013, on Murphy Oil Corporation's page; nor three cities on City Holding's",
     at("MUR").length === 0 && lands("MUSA", "2018-08-13", /Murphy Oil USA/) && at("CHCO").length === 0 && releases.some((r) => /Against City of Boone/i.test(r.title)));
   check("  …and a suit of 2016-08-08 against Cushman & Wakefield stays off its page, before its first price of 2018",
@@ -200,7 +205,7 @@ async function main(): Promise<void> {
     seen.add(cik);
     const namesIn = namesOf(ticker);
     const keys = [...new Set([...namesIn(1996), ...namesIn(2010), ...namesIn(2026), ...releaseNamesAsked(cik), ...eeocUnitNamesAsked(cik)].map(letters).filter((k) => k.length >= 2))];
-    if (!keys.some((k) => every.includes(k))) continue;
+    if (!keys.some((k) => every.includes(k)) && !RELEASES_OF[cik]) continue;
     const ev = on(ticker);
     if (!ev.length) continue;
     out.set(ticker, ev);
@@ -291,10 +296,10 @@ async function main(): Promise<void> {
 const EXPECTED = {
   undated: 70,
   firstDay: "1994-06-22",
-  unitCompanies: 18,
-  total: 550,
+  unitCompanies: 19,
+  total: 552,
   companies: 179,
-  before2017: 276,
+  before2017: 277,
   fromFirst: 324,
   fromFirstPages: 81,
   fromFirst2017: 165,

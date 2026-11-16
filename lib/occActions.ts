@@ -416,7 +416,18 @@ export const OCC_BANKS: Readonly<Record<number, { ticker: string; banks: readonl
       why: "Sovereign Bancorp's bank, the company's from 2009-01-30 (\"The acquisition of Sovereign has been completed today and, therefore, Sovereign is now a 100% subsidiary of Grupo Santander\", its 6-K filed that day), renamed Santander Bank in 2013",
     })),
   },
-  91576: { ticker: "KEY", banks: [own(14761, /^KeyBank\b/i, "its bank in Cleveland, named after it")] },
+  91576: {
+    ticker: "KEY",
+    banks: [
+      own(14761, /^KeyBank\b/i, "its bank in Cleveland, named after it"),
+      {
+        charter: 24968,
+        bank: /^First Niagara Bank\b/i,
+        from: "2016-07-29",
+        why: "First Niagara Financial's bank, the company's from \"the closing on July 29, 2016\" of the merger (its 8-K filed 2016-08-01, 0001193125-16-665717): its penalty of 2016-09-06 is KeyCorp's, its orders of 2011 and 2016-07-25 First Niagara's (batch 155, the 2026-11-16 audit's finding 1)",
+      },
+    ],
+  },
   67088: {
     ticker: "MUFG",
     banks: [
@@ -524,6 +535,20 @@ export const OCC_BANKS: Readonly<Record<number, { ticker: string; banks: readonl
     banks: [own(705273, /^Carver Federal Savings Bank\b/i, "its savings bank in New York, named after it, in the orders of 2011, 2016 and 2025 and the OTS's of 2011")],
   },
   912967: { ticker: "FBSI", banks: [own(705233, /^First Home Savings Bank\b/i, "its savings bank in Mountain Grove, Missouri, where the company is (not First Home Savings Bank, S.L.A. of Pennsville, New Jersey, 1991)")] },
+  // batch 155, the 2026-11-16 audit's finding 1: banks named after a company that is not itself a bank, or
+  // after its former name, which the scans of batches 153 and 154 left out
+  70858: {
+    ticker: "BAC",
+    banks: [own(22381, /^FIA Card Services\b/i, "its card bank, one of the \"two national bank charters\" it operated under (its 10-Q filed 2014-05-01, 0000070858-14-000056), in the orders of 2014-04-07 with Bank of America, N.A.")],
+  },
+  1099219: { ticker: "MET", banks: [own(23743, /^MetLife Bank\b/i, "its bank in Convent Station and Morristown, New Jersey, named after it, which its 10-Ks' Exhibit 21.1 name (filed 2011-02-25, 2012-02-28 and 2013-02-27)")] },
+  28917: { ticker: "DDS", banks: [own(18777, /^Dillard National Bank\b/i, "its card bank in Gilbert, Arizona, named after it, which its 10-Ks' Exhibit 21 name (filed 2003-04-10 and 2004-04-13)")] },
+  1041368: { ticker: "RVSB", banks: [own(704347, /^Riverview Community Bank\b/i, "its savings bank in Camas, Washington, OTS docket 4347, which its 10-Ks name (filed 2011-06-08 and 2012-06-15)")] },
+  907471: {
+    ticker: "CASH",
+    banks: [own(705902, /^MetaBank\b/i, "its savings bank in Storm Lake, Iowa, named after the company's former name, Meta Financial Group, whose 10-K and Exhibit 21 filed 2011-12-20 name it")],
+  },
+  1367859: { ticker: "CZWI", banks: [own(25088, /^Citizens Community Federal\b/i, "its bank in Altoona, Wisconsin, named after it")] },
   873860: { ticker: "ONIT", banks: [own(704592, /^Ocwen Federal Bank\b/i, "its savings bank in Fort Lee, New Jersey, named after the company's own former name, Ocwen Financial Corporation")] },
 };
 
@@ -586,7 +611,8 @@ export function occEvents(
     .sort(([x], [y]) => y.localeCompare(x))
     .map(([day, rows]) => {
       const orders = ranked(ordersOf(rows.map((r) => r.a).sort((x, y) => x.key.localeCompare(y.key))));
-      const banks = [...new Set(orders.flatMap((o) => o.banks))];
+      // one bank however its two regulators spell it: the OCC's "Metabank" is the archive's "MetaBank"
+      const banks = [...new Map(orders.flatMap((o) => o.banks).map((b) => [alnum(b), b] as const)).values()];
       const by = regulators(orders);
       const basis = `occ:${Number(cik)}@${day}`;
       return {
@@ -617,6 +643,9 @@ async function getText(url: string): Promise<{ body?: string; outcome: FetchResu
   try {
     const res = await fetch(url, { headers: { ...UA, Accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (res.status === 403 || res.status === 429 || res.status === 503) return { outcome: "throttled", httpStatus: res.status };
+    // the OCC refuses by sending us to its home page ("Security Redirect", 2026-10-28; a 302 to
+    // www.occ.treas.gov, 2026-11-16): a refusal, so the source-wide back-off holds every company back
+    if (res.redirected) return { outcome: "throttled", httpStatus: res.status, detail: `redirected to ${res.url.slice(0, 120)}` };
     if (!res.ok) return { outcome: "error", httpStatus: res.status, detail: `HTTP ${res.status}` };
     return { body: await res.text(), outcome: "ok", httpStatus: res.status };
   } catch (err) {
@@ -638,13 +667,16 @@ export async function readOccList(): Promise<OccList> {
 
 let cached: Promise<OccList> | null = null;
 
-/** The list, read once a process for every company; a failure is not kept, so the next company asks again. */
+/**
+ * The list, read once a process for every company. A failed read is the process's answer too, so the
+ * companies after it are told the same without asking again, and the next run asks anew (batch 155,
+ * the 2026-11-16 audit's finding 2: a refusal had cost one request a company, about 200 a run).
+ */
 export function cachedOccList(read: () => Promise<OccList> = readOccList): Promise<OccList> {
   if (!cached) {
     cached = read();
-    cached.catch(() => {
-      cached = null;
-    });
+    // the rejection is handled by each caller; this keeps an unawaited copy from being reported
+    cached.catch(() => undefined);
   }
   return cached;
 }

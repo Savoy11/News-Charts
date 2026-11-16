@@ -79,6 +79,10 @@ export interface OccAction {
   /** the day the order ended, where it has */
   ended: string | null;
   endedBy: string;
+  /** the order's own document where it is not the OCC's numbered PDF: the OTS archive's (lib/otsOrders.ts) */
+  link?: string;
+  /** "OTS" for an order of the Office of Thrift Supervision, from the archive the OCC keeps (batch 154) */
+  regulator?: "OTS";
 }
 
 const isDay = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -177,6 +181,12 @@ const KIND: Record<string, string> = {
   CD: "capital directive",
   Notice: "notice of charges",
   SASO: "safety and soundness order",
+  // the Office of Thrift Supervision's kinds, from its archive (lib/otsOrders.ts)
+  "OTS-SA": "supervisory agreement",
+  "OTS-SA-AM": "amended supervisory agreement",
+  "OTS-C&D-AM": "amended cease-and-desist order",
+  "OTS-DO": "decision and order",
+  "OTS-PROH": "removal or prohibition order",
 };
 
 /** "$300,000,000" from "300000000". */
@@ -208,6 +218,8 @@ interface Order {
   ended: string | null;
   endedBy: string;
   banks: string[];
+  link: string;
+  regulator: "OCC" | "OTS";
 }
 
 const numbered = (document: string) => /\d/.test(document);
@@ -218,7 +230,7 @@ function ordersOf(actions: readonly OccAction[]): Order[] {
     const k = numbered(a.document) ? a.document : `${a.document}@${a.charter ?? a.bank}`;
     let o = byKey.get(k);
     if (!o) {
-      o = { document: a.document, docket: a.docket, codes: [], kinds: new Map(), amounts: new Map(), subjects: [], hasDocument: false, ended: null, endedBy: "", banks: [] };
+      o = { document: a.document, docket: a.docket, codes: [], kinds: new Map(), amounts: new Map(), subjects: [], hasDocument: false, ended: null, endedBy: "", banks: [], link: a.link ?? "", regulator: a.regulator ?? "OCC" };
       byKey.set(k, o);
     }
     if (!o.codes.includes(a.code)) o.codes.push(a.code);
@@ -273,6 +285,15 @@ const NUMBER: Record<number, string> = { 2: "two", 3: "three", 4: "four", 5: "fi
 /** A phrase's kinds in the plural: "formal agreements", "cease-and-desist orders requiring restitution". */
 const plural = (p: string) => p.replace(/\bpenalty\b/g, "penalties").replace(/\b(agreement|order|directive|action|notice)\b/g, "$1s");
 
+/** Who made a day's orders: the OCC, the OTS, or both, as a title and a source say them. */
+function regulators(orders: readonly Order[]): { title: string; source: string; names: string } {
+  const has = new Set(orders.map((o) => o.regulator));
+  if (has.size > 1) return { title: "OCC and OTS", source: "Office of the Comptroller of the Currency, with the Office of Thrift Supervision's archive", names: "the OCC and the OTS name" };
+  return has.has("OTS")
+    ? { title: "OTS", source: "Office of Thrift Supervision, in the OCC's archive", names: "the OTS names" }
+    : { title: "OCC", source: "Office of the Comptroller of the Currency", names: "the OCC names" };
+}
+
 /** "Civil money penalty", "Two formal agreements", from a day's orders. */
 function dayTitle(orders: readonly Order[]): string {
   const counts = new Map<string, number>();
@@ -282,15 +303,15 @@ function dayTitle(orders: readonly Order[]): string {
   }
   const parts = [...counts].map(([p, n]) => (n > 1 ? `${NUMBER[n] ?? n} ${plural(p)}` : p));
   const what = parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}` : parts[0];
-  return `OCC: ${what.charAt(0).toUpperCase()}${what.slice(1)}`;
+  return `${regulators(orders).title}: ${what.charAt(0).toUpperCase()}${what.slice(1)}`;
 }
 
 /** An order's line: its kind, its number, what it is about, and the day it ended. */
 function orderLine(o: Order): string {
   const phrase = orderPhrase(o);
   // the OCC's newer orders are numbered by their docket: "AA-EC-2023-49" is both
-  const docket = o.docket && o.docket !== o.document ? o.docket : "";
-  const number = numbered(o.document) ? ` (order ${o.document}${docket ? `, docket ${docket}` : ""})` : docket ? ` (docket ${docket})` : "";
+  const docket = o.docket && o.docket !== o.document ? `${o.regulator === "OTS" ? "OTS docket" : "docket"} ${o.docket}` : "";
+  const number = numbered(o.document) ? ` (order ${o.document}${docket ? `, ${docket}` : ""})` : docket ? ` (${docket})` : "";
   const about = o.subjects.length ? `: ${o.subjects.join("; ")}` : "";
   const ended = o.ended ? ` It ended ${o.ended}${o.endedBy ? ` (order ${o.endedBy})` : ""}.` : "";
   return `${phrase.charAt(0).toUpperCase()}${phrase.slice(1)}${number}${about}.${ended}`;
@@ -307,7 +328,7 @@ const within = (text: string) => (text.length <= LIMIT ? text : `${text.slice(0,
  * whatever it is called: the caption rule reads "and Trust Company" or "N.A." after a name as legal
  * words (the scout's closing note of 2026-11-15), and a whole name like "National Bank" is many banks'.
  */
-export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; charters: readonly number[]; why: string }>> = {
+export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; charters: readonly number[]; dockets?: readonly string[]; why: string }>> = {
   1475841: {
     ticker: "NBHC",
     charters: [14510, 3906, 24555],
@@ -315,8 +336,20 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; charters
   },
   1476034: {
     ticker: "MCB",
-    charters: [80066, 16220],
-    why: "\"Metropolitan Bank and Trust Company\", a federal branch in New York (2004, 2006), and \"Metropolitan Bank, N.A.\" of Washington, D.C. (1991): Metropolitan Bank Holding's bank is Metropolitan Commercial Bank, a New York state bank",
+    charters: [80066, 16220, 706381],
+    why: "\"Metropolitan Bank and Trust Company\", a federal branch in New York (2004, 2006), \"Metropolitan Bank, N.A.\" of Washington, D.C. (1991), and the OTS's \"Metropolitan Bank and Trust Company\" of Highland Hills, Ohio (2001, docket 6381): Metropolitan Bank Holding's bank is Metropolitan Commercial Bank, a New York state bank",
+  },
+  731653: {
+    ticker: "UBCP",
+    charters: [],
+    dockets: ["H3475"],
+    why: "the OTS's \"United Bancorp, Inc.\" of Bridgeview, Illinois, a thrift holding company (2008): United Bancorp of Martins Ferry, Ohio holds a state bank (batch 154)",
+  },
+  2057463: {
+    ticker: "GLIBA",
+    charters: [],
+    dockets: ["H0876"],
+    why: "the OTS's \"Liberty Capital, Inc.\" of Wilmington, Ohio, a thrift holding company (2009): not Liberty Capital Corp of Nevada (batch 154)",
   },
   740806: {
     ticker: "FMBM",
@@ -472,7 +505,26 @@ export const OCC_BANKS: Readonly<Record<number, { ticker: string; banks: readonl
       { charter: 80146, bank: /^Credit Suisse\b/i, from: "2023-06-12", why: "Credit Suisse's federal branch in New York, the company's from the day the release map gives (2023-06-12)" },
     ],
   },
-  936528: { ticker: "WAFD", banks: [own(25073, /^Washington Federal\b/i, "its bank in Seattle, named after it, whose order of 2018-02-28 the company's present name does not read")] },
+  936528: {
+    ticker: "WAFD",
+    banks: [
+      own(25073, /^Washington Federal\b/i, "its bank in Seattle, named after it, whose order of 2018-02-28 the company's present name does not read"),
+      own(700880, /^Washington Federal Savings and Loan Association\b/i, "the same bank as a savings association in Seattle, OTS docket 880, in the OTS's order of 2007-12-21 (not Washington Federal Savings Bank of Washington, Iowa, docket 2715)"),
+    ],
+  },
+  // the OTS archive's thrifts (batch 154): a thrift's OTS docket is its OCC charter less 700000
+  5272: { ticker: "AIG", banks: [own(714939, /^AIG Federal Savings Bank\b/i, "its savings bank in Wilmington, Delaware, named after it, in the supervisory agreement of 2007-06-07")] },
+  40545: {
+    ticker: "GE",
+    banks: [own(715044, /^GE Money Bank\b/i, "its savings bank in Draper, Utah, named after it, in the penalty of 2010-10-19; renamed GE Capital Retail Bank in 2011 and Synchrony Bank in 2014, names this does not read")],
+  },
+  1381668: { ticker: "TFSL", banks: [own(704544, /^Third Federal Savings\b/i, "its savings association in Cleveland, the company's own (not Third Federal Bank of Newtown, Pennsylvania, docket 2966)")] },
+  1016178: {
+    ticker: "CARV",
+    banks: [own(705273, /^Carver Federal Savings Bank\b/i, "its savings bank in New York, named after it, in the orders of 2011, 2016 and 2025 and the OTS's of 2011")],
+  },
+  912967: { ticker: "FBSI", banks: [own(705233, /^First Home Savings Bank\b/i, "its savings bank in Mountain Grove, Missouri, where the company is (not First Home Savings Bank, S.L.A. of Pennsville, New Jersey, 1991)")] },
+  873860: { ticker: "ONIT", banks: [own(704592, /^Ocwen Federal Bank\b/i, "its savings bank in Fort Lee, New Jersey, named after the company's own former name, Ocwen Financial Corporation")] },
 };
 
 const heldOn = (b: OccBank, day: string) => (!b.from || day >= b.from) && (!b.to || day <= b.to);
@@ -488,8 +540,11 @@ const alnum = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
  * its docket, or for the bank where an old order has none ("362" alone finds other banks' orders too).
  */
 function linkFor(orders: readonly Order[]): string {
-  const withDocument = orders.find((o) => o.hasDocument && numbered(o.document));
+  const withDocument = orders.find((o) => o.regulator === "OCC" && o.hasDocument && numbered(o.document));
   if (withDocument) return `${DOCUMENTS}/ea${withDocument.document}.pdf`;
+  // …else an OTS order's own file in the OCC's archive
+  const filed = orders.find((o) => o.link);
+  if (filed) return filed.link;
   const o = orders[0];
   return `${SEARCH}?q=${encodeURIComponent(o.docket || o.banks[0])}`;
 }
@@ -509,7 +564,9 @@ export function occEvents(
   const names = (year: number) => byYear.get(year) ?? byYear.set(year, namesIn(year)).get(year)!;
   const byDay = new Map<string, { a: OccAction; party: string }[]>();
   for (const a of actions) {
-    if (a.charter !== null && NOT_THE_COMPANY[Number(cik)]?.charters.includes(a.charter)) continue;
+    const refused = NOT_THE_COMPANY[Number(cik)];
+    // …by charter, or for an OTS holding company, which has none, by its OTS docket
+    if (refused && ((a.charter !== null && refused.charters.includes(a.charter)) || (a.regulator === "OTS" && !!a.docket && !!refused.dockets?.includes(a.docket)))) continue;
     // a name the record took from another company is that company's before the day (lib/takenNames.ts)
     if (takenBefore(cik, a.day, a.bank)) continue;
     // a bank of the company's the OCC names its own way, by its charter (`OCC_BANKS`), from its first price
@@ -530,14 +587,15 @@ export function occEvents(
     .map(([day, rows]) => {
       const orders = ranked(ordersOf(rows.map((r) => r.a).sort((x, y) => x.key.localeCompare(y.key))));
       const banks = [...new Set(orders.flatMap((o) => o.banks))];
+      const by = regulators(orders);
       const basis = `occ:${Number(cik)}@${day}`;
       return {
         id: `occ-${Number(cik)}-${day}`,
         date: day,
         type: "regulation" as const,
         title: dayTitle(orders),
-        description: within([`Against ${banks.join("; ")}, as the OCC names ${banks.length > 1 ? "them" : "it"}.`, ...orders.map(orderLine)].join(" ")),
-        source: "Office of the Comptroller of the Currency",
+        description: within([`Against ${banks.join("; ")}, as ${by.names} ${banks.length > 1 ? "them" : "it"}.`, ...orders.map(orderLine)].join(" ")),
+        source: by.source,
         url: linkFor(orders),
         sourceKey: "occ_actions" as const,
         externalId: basis,

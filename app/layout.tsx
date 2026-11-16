@@ -109,7 +109,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Administration of the U.S. Department of Labor, enforcement actions from the
               Commodity Futures Trading Commission, press releases from the U.S. Equal Employment
               Opportunity Commission, and enforcement actions from the Office of the Comptroller of
-              the Currency.
+              the Currency, with the Office of Thrift Supervision&apos;s of 1989–2011 from its archive.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

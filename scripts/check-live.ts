@@ -56,6 +56,7 @@ import { cpscEvents, fetchRecalls as fetchCpscRecalls } from "../lib/cpscRecalls
 import { fetchCftcPage } from "../lib/cftc";
 import { fetchEeocPage } from "../lib/eeoc";
 import { readOccList } from "../lib/occActions";
+import { OTS_FILE, readOtsOrders } from "../lib/otsOrders";
 import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue } from "../lib/secDigest";
 import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
 import { DRUGSFDA_ENTRY, DRUGSFDA_FILE, readSupplements } from "../lib/fdaSupplements";
@@ -922,6 +923,20 @@ export const CASES: LiveCase[] = [
       const days = list.actions.map((a) => a.day).sort();
       if (days[0] !== "1987-02-11") out.push(`the oldest action is of ${days[0]}, not 1987-02-11`);
       if (!list.actions.some((a) => a.document === "2013-140" && a.amount === "300000000")) out.push("JPMorgan Chase Bank's $300,000,000 of 2013-09-18 (order 2013-140) is not in the list");
+      return out;
+    },
+  },
+  {
+    name: "OTS enforcement archive — the workbook the OCC keeps, read once into data/ots-orders.json (batch 154)",
+    covers: ["occ_actions"],
+    hosts: ["occ.gov"],
+    async run() {
+      // measured 2026-11-15: 3,547 records, 1,497 against institutions, the file last changed 2014-01-16
+      const res = await fetch(OTS_FILE, { headers: { ...UA }, signal: AbortSignal.timeout(60_000) });
+      if (!res.ok) return [`the workbook: HTTP ${res.status}`];
+      const { orders, records } = readOtsOrders(new Uint8Array(await res.arrayBuffer()));
+      const out: string[] = [];
+      if (records !== 3547 || orders.length !== 1497) out.push(`the workbook holds ${records} records and ${orders.length} institution orders, not the 3,547 and 1,497 committed: run npm run sync:ots-orders`);
       return out;
     },
   },

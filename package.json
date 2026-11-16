@@ -110,6 +110,7 @@
     "sync:fed-orders": "tsx scripts/sync-fed-orders.ts",
     "sync:digest-records": "tsx scripts/sync-digest-records.ts",
     "sync:fda-approvals": "tsx scripts/sync-fda-approvals.ts",
+    "sync:ots-orders": "tsx scripts/sync-ots-orders.ts",
     "sync:fda-supplements": "tsx scripts/sync-fda-supplements.ts",
     "sync:aliases": "tsx scripts/sync-aliases.ts",
     "sync:word-names": "tsx scripts/sync-word-names.ts",

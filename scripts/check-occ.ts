@@ -27,6 +27,7 @@ import {
   readOccList,
   type OccList,
 } from "../lib/occActions";
+import { OTS_ORDERS, endedInNotes, isOccTwin, orderNumber, otsActions, readOtsOrders } from "../lib/otsOrders";
 import { isNotesRecord, releaseNamesBefore, releaseNamesOn } from "../lib/releaseNames";
 import { newsNamesFor, possessiveNameFor } from "../lib/sec";
 import type { TimelineEvent } from "../lib/types";
@@ -76,11 +77,12 @@ const EXPECTED = {
   firstDay: "1987-02-11",
   lastDay: "2026-10-13",
   withAmount: 378,
-  total: 185,
-  companies: 50,
-  fromFirst: 180,
-  fromFirstPages: 49,
-  fromFirst2017: 126,
+  // with the OTS archive (batch 154); the OCC's list alone gave 185 on 50, and 180 on 49 pages, 126 before 2017
+  total: 199,
+  companies: 58,
+  fromFirst: 194,
+  fromFirstPages: 57,
+  fromFirst2017: 139,
   top: "WFC 17, JPM 15, C 14, BAC 13, USB 12, COF 8",
 };
 
@@ -110,10 +112,41 @@ async function main() {
   check("  …the most particular subject matter of each branch, not its parent too: \"Internal Audit\", not \"Audit\"",
     actions.some((a) => a.document === "2013-138" && a.subjects.includes("Internal Audit") && !a.subjects.includes("Audit")));
 
+  console.log("\nThe OTS archive of 1989–2011 (batch 154)");
+  const archive = JSON.parse(read("data/ots-orders.json")) as { records: number; persons: number; orders: typeof OTS_ORDERS };
+  const otsDays = OTS_ORDERS.map((o) => o.day).filter(Boolean).sort();
+  check("the committed archive holds its 1,497 orders against institutions of 3,547 records, 1989-01-13 to 2011-07-18, the 2,050 against persons left out",
+    archive.records === 3547 && archive.persons === 2050 && OTS_ORDERS.length === 1497 && otsDays[0] === "1989-01-13" && otsDays.at(-1) === "2011-07-18",
+    `${archive.records} ${archive.persons} ${OTS_ORDERS.length} ${otsDays[0]}..${otsDays.at(-1)}`);
+  check("  …each linked to its order's file on occ.gov, by https, but the 27 with no file named",
+    OTS_ORDERS.every((o) => !o.link || /^https:\/\/occ\.gov\/static\/ots\/enforcement\/\d+a?\.pdf$/.test(o.link)) && OTS_ORDERS.filter((o) => !o.link).length === 27,
+    `${OTS_ORDERS.filter((o) => !o.link).length}`);
+  check("  …and the workbook's reader refuses a sheet that is not the archive", (() => {
+    try {
+      readOtsOrders(new Uint8Array([80, 75, 5, 6, ...new Array(18).fill(0)]));
+      return false;
+    } catch {
+      return true;
+    }
+  })());
+  check("one order number however it is written: \"WN-09-0007\" is \"WN 09-007\", \"S.A.\" is \"SA\", \"NE-11-17\" is \"NE 11-17\"",
+    orderNumber("WN-09-0007") === orderNumber("WN 09-007") && orderNumber("S.A.") === orderNumber("SA") && orderNumber("NE-11-17") === orderNumber("NE 11-17") && orderNumber("CN 09-15") !== orderNumber("MW 08-14"));
+  check("  …and the day an order's note says it ended: \"Terminated November 12, 2002\", \"terminated by NE 01-04 dtd 02/07/01\"",
+    endedInNotes("Terminated November 12, 2002")?.day === "2002-11-12" && endedInNotes("terminated by NE 01-04 dtd 02/07/01")?.day === "2001-02-07" && endedInNotes("terminated by NE 01-04 dtd 02/07/01")?.by === "NE 01-04" && endedInNotes("SF 99-001 dtd 01/07/99") === null);
+  const ots = otsActions(OTS_ORDERS, actions);
+  check("the archive's 1,497 give 1,263 orders: its 119 terminations are lines on their orders (Cargill Bank's of a penalty, filed under the penalty's kind, among them), 10 orders have no day, and 105 the OCC's list carries on",
+    ots.length === 1263 && OTS_ORDERS.filter((o) => /^Termination/i.test(o.type)).length === 119 && OTS_ORDERS.filter((o) => !o.day).length === 10 && otsActions(OTS_ORDERS, []).length === 1368,
+    `${ots.length} ${OTS_ORDERS.filter((o) => /^Termination/i.test(o.type)).length} ${otsActions(OTS_ORDERS, []).length}`);
+  const sovereign = otsActions(OTS_ORDERS, []).find((a) => a.document === "NE 11-17")!;
+  check("  …a copy is the OCC's by its number within a month (Sovereign Bank's NE-11-17, 2011-04-11 there, 2011-04-13 here) or by its day and kind (AIG Federal Savings Bank's agreement of 2007-06-07)",
+    isOccTwin(sovereign, actions) && sovereign.day === "2011-04-13" && isOccTwin(otsActions(OTS_ORDERS, []).find((a) => a.bank === "AIG Federal Savings Bank")!, actions) &&
+      !isOccTwin(otsActions(OTS_ORDERS, []).find((a) => a.document === "CN 09-01")!, actions));
+  const all = [...actions, ...ots];
+
   console.log("\nThe rule, company by company");
   const at = new Map<string, TimelineEvent[]>();
   const fromFirst = new Map<string, TimelineEvent[]>();
-  const keys = actions.map((a) => letters(a.bank)).join("#");
+  const keys = all.map((a) => letters(a.bank)).join("#");
   const seen = new Set<number>();
   for (const [cik, ticker, title] of companies) {
     // a record once, under its first ticker: a bank's preferred shares are its common's page's records too
@@ -121,10 +154,10 @@ async function main() {
     seen.add(cik);
     const namesIn = namesOf(cik, title);
     const units = [...new Set(["1990-01-01", "2000-01-01", "2010-01-01", "2020-01-01", "2026-01-01"].flatMap((d) => [...releaseNamesOn(cik, d), ...releaseNamesBefore(cik, d)]))];
-    const all = [...new Set([...namesIn(2020), ...namesIn(2010), ...namesIn(2000), ...namesIn(1990), ...units])].flatMap((n) => [n, n.replace(/&/g, " and ")]).map(letters).filter((k) => k.length >= 2);
+    const names = [...new Set([...namesIn(2020), ...namesIn(2010), ...namesIn(2000), ...namesIn(1990), ...units])].flatMap((n) => [n, n.replace(/&/g, " and ")]).map(letters).filter((k) => k.length >= 2);
     const charters = new Set((OCC_BANKS[cik]?.banks ?? []).map((b) => b.charter));
-    if (!all.some((k) => keys.includes(k)) && !charters.size) continue;
-    const cand = actions.filter((a) => charters.has(a.charter ?? -1) || all.some((k) => letters(a.bank).includes(k)));
+    if (!names.some((k) => keys.includes(k)) && !charters.size) continue;
+    const cand = all.filter((a) => charters.has(a.charter ?? -1) || names.some((k) => letters(a.bank).includes(k)));
     const opts = { cik, namesOn: (day: string) => releaseNamesOn(cik, day), namesBefore: (day: string) => releaseNamesBefore(cik, day) };
     const ev = occEvents(cand, namesIn, opts);
     if (!ev.length) continue;
@@ -153,7 +186,7 @@ async function main() {
     !day("NBHC", "2004-04-22") && !day("NBHC", "2011-01-26") && !day("NBHC", "2000-03-06") && !on("MCB").length && !on("FMBM").length,
     `${on("NBHC").length} ${on("MCB").length} ${on("FMBM").length}`);
   check("  …each one of them read by charter in the list, its bank another town's",
-    Object.values(NOT_THE_COMPANY).every((n) => n.charters.every((c) => actions.some((a) => a.charter === c))));
+    Object.values(NOT_THE_COMPANY).every((n) => n.charters.every((c) => all.some((a) => a.charter === c)) && (n.dockets ?? []).every((d) => ots.some((a) => a.docket === d))));
   check("  …and without the list the rule would give them: the namesakes are the caption rule's, not the data's",
     (() => {
       const [cik, , title] = rowOf("MCB");
@@ -172,10 +205,10 @@ async function main() {
   check("a bank's federal branches are its group's: UBS AG's three branch orders of 2018-05-31 are one row on UBS Group, Credit Suisse's of 2024-05-29 too",
     /UBS AG NY 787 7th Ave WMA Branch; UBS AG Miami Branch; UBS AG Stamford Branch/.test(day("UBS", "2018-05-31")?.description ?? "") && !!day("UBS", "2024-05-29"));
   check("every bank the hand list gives by charter is in the list under a name its pattern reads, on a day it holds",
-    Object.entries(OCC_BANKS).every(([, { banks }]) => banks.every((b) => actions.some((a) => a.charter === b.charter && b.bank.test(a.bank) && (!b.from || a.day >= b.from) && (!b.to || a.day <= b.to))))
+    Object.entries(OCC_BANKS).every(([, { banks }]) => banks.every((b) => all.some((a) => a.charter === b.charter && b.bank.test(a.bank) && (!b.from || a.day >= b.from) && (!b.to || a.day <= b.to))))
   );
-  check("  …39 companies' banks, as the README counts them, four of them refused by charter",
-    Object.keys(OCC_BANKS).length === 39 && /\(`OCC_BANKS`, 39\s+companies/.test(read("README.md")) && Object.keys(NOT_THE_COMPANY).length === 4, `${Object.keys(OCC_BANKS).length}`);
+  check("  …45 companies' banks, as the README counts them, and six companies' namesakes refused by charter or OTS docket",
+    Object.keys(OCC_BANKS).length === 45 && /\(`OCC_BANKS`, 45\s+companies/.test(read("README.md")) && Object.keys(NOT_THE_COMPANY).length === 6, `${Object.keys(OCC_BANKS).length}`);
   check("  …and every company it names is in the ticker index under that CIK and ticker",
     Object.entries(OCC_BANKS).every(([cik, { ticker }]) => companies.some(([c, t]) => c === Number(cik) && t === ticker)) &&
       Object.entries(NOT_THE_COMPANY).every(([cik, { ticker }]) => companies.some(([c, t]) => c === Number(cik) && t === ticker)));
@@ -183,6 +216,23 @@ async function main() {
     day("TRMK", "1991-08-20")?.url === "https://apps.occ.gov/EASearch/Search/Table?q=Trustmark%20National%20Bank", day("TRMK", "1991-08-20")?.url);
   check("a docket that is the order's number is not said twice",
     /\(order AA-EC-2023-49\):/.test(day("JPM", "2024-03-14")?.description ?? "") && !/docket AA-EC-2023-49/.test(day("JPM", "2024-03-14")?.description ?? ""), day("JPM", "2024-03-14")?.description?.slice(0, 160));
+
+  const axp = day("AXP", "2009-06-29");
+  check("the OTS's orders land as the OCC's do: American Express Bank, FSB's two of 2009-06-29 are one row, its cease-and-desist order \"ended 2010-08-06 (order WN 10-023)\", the termination a line, not a row",
+    /^OTS: Cease-and-desist order and civil money penalty$/.test(axp?.title ?? "") && /It ended 2010-08-06 \(order WN 10-023\)\./.test(axp?.description ?? "") && axp?.url === "https://occ.gov/static/ots/enforcement/97146.pdf" &&
+      axp?.source === "Office of Thrift Supervision, in the OCC's archive" && /OTS docket 15648/.test(axp?.description ?? ""),
+    axp?.description);
+  check("  …its supervisory agreement of 2010-08-06 is the OCC's row, which the OCC carried on, not a second copy",
+    on("AXP").filter((e) => e.date === "2010-08-06").length === 1 && /^OCC: Formal agreement$/.test(day("AXP", "2010-08-06")?.title ?? ""));
+  check("  …Sovereign Bank's NE-11-17 is one row on Santander, the OCC's of 2011-04-11, and not the archive's of 2011-04-13 again", !!day("SAN", "2011-04-11") && !day("SAN", "2011-04-13"));
+  check("  …a holding company's order is its own: Carver Bancorp's and Carver Federal Savings Bank's of 2011-02-07 are one row, \"OCC and OTS\"; AmBase's of 1991, Waterstone's of 2009",
+    /^OCC and OTS: Two cease-and-desist orders$/.test(day("CARV", "2011-02-07")?.title ?? "") && /Carver Bancorp, Inc\./.test(day("CARV", "2011-02-07")?.description ?? "") && /Carver Federal Savings Bank/.test(day("CARV", "2011-02-07")?.description ?? "") &&
+      !!day("ABCP", "1991-02-15") && !!day("WSBF", "2009-12-01") && on("CARV").length === 3);
+  check("  …the hand list's thrifts by charter: AIG Federal Savings Bank's agreement of 2007, GE Money Bank's penalty of 2010, Third Federal's of 2011, Ocwen Federal Bank's agreements of 2004 and 2005, Washington Federal's order of 2007 and its end, First Home Savings Bank's of 2009 on First Bancshares",
+    !!day("AIG", "2007-06-07") && !!day("GE", "2010-10-19") && !!day("TFSL", "2011-02-07") && !!day("ONIT", "2004-04-19") && !!day("ONIT", "2005-06-28") &&
+      /It ended 2008-10-21 \(order WE 08-016\)/.test(day("WAFD", "2007-12-21")?.description ?? "") && /First Home Savings Bank/.test(day("FBSI", "2009-08-17")?.description ?? ""));
+  check("  …and the archive's namesakes stay off: United Bancorp of Bridgeview off UBCP, Liberty Capital of Ohio off GLIBA, Metropolitan Bank and Trust of Ohio off MCB",
+    !day("UBCP", "2008-09-30") && !on("GLIBA").length && !day("MCB", "2001-07-26"));
 
   const total = [...at.values()].flat();
   const first = [...fromFirst.values()].flat();
@@ -192,7 +242,7 @@ async function main() {
     first.length === EXPECTED.fromFirst && [...fromFirst.values()].filter((e) => e.length).length === EXPECTED.fromFirstPages && first.filter((e) => e.date < "2017").length === EXPECTED.fromFirst2017 && top === EXPECTED.top,
     `${first.length} on ${[...fromFirst.values()].filter((e) => e.length).length}, ${first.filter((e) => e.date < "2017").length} before 2017; ${top}`);
   check("  …each row the OCC's kind and amount, its banks as the OCC names them, its own id, one a company a day",
-    total.every((e) => /^OCC: [A-Z$]/.test(e.title) && /^Against .+, as the OCC names (?:it|them)\./.test(e.description ?? "") && e.sourceKey === "occ_actions" && e.type === "regulation" && e.dedupBasis === e.externalId && /^https:\/\/(?:occ\.gov\/static\/enforcement-actions\/ea[\w-]+\.pdf|apps\.occ\.gov\/EASearch\/Search\/Table\?q=)/.test(e.url ?? "")) &&
+    total.every((e) => /^(?:OCC|OTS|OCC and OTS): [A-Z$]/.test(e.title) && /^Against .+, as (?:the OCC|the OTS|the OCC and the OTS) names? (?:it|them)\./.test(e.description ?? "") && e.sourceKey === "occ_actions" && e.type === "regulation" && e.dedupBasis === e.externalId && /^https:\/\/(?:occ\.gov\/static\/enforcement-actions\/ea[\w-]+\.pdf|occ\.gov\/static\/ots\/enforcement\/\d+\.pdf|apps\.occ\.gov\/EASearch\/Search\/Table\?q=)/.test(e.url ?? "")) &&
       [...at.values()].every((e) => new Set(e.map((x) => x.date)).size === e.length));
 
   console.log("\nThe read and the company's ingest");

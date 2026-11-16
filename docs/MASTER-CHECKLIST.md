@@ -988,6 +988,66 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 154: the thrift regulator's orders of 1989–2011 (2026-11-16)
+
+Part (b) of the 2026-11-15 proposal 2, approved by the owner that day with part (a), built in batch 153.
+
+- [x] **The OTS archive** (`lib/otsOrders.ts`, `scripts/sync-ots-orders.ts`, `data/ots-orders.json`): the Office of
+      Thrift Supervision's enforcement orders, one workbook the OCC keeps since it took the thrifts over on
+      2011-07-21 (`occ.gov/static/ots/enforcement/ots-enforcement-order-listing.xlsx`, 557,298 bytes, last changed
+      2014-01-16). 3,547 records, 1989-01-13 to 2011-07-18; the 2,050 against persons are left out and the 1,497
+      against institutions committed, each with its docket, number, day, kind, town, file and note. The archive is
+      closed, so it is read once (`npm run sync:ots-orders`, from the saved copy here, read 2026-11-15); ingest asks
+      nothing, and `check:live` says when the OCC's file no longer matches it.
+- [x] **The rule is the OCC's** (`occFor` reads both): a thrift's OTS docket is its OCC charter less 700000 (American
+      Express Bank, FSB is docket 15648 and charter 715648, Sovereign Bank 4410 and 704410), so `OCC_BANKS` reads both
+      lists; a thrift holding company's docket ("H2589") has no charter, and the caption rule reads its name.
+- [x] **Copies:** the OCC's list carries 109 thrift orders of before 2011-07-21, and 105 of the archive's orders are
+      among them, found by the same thrift and the same number within a month (the OCC dates Sovereign Bank's
+      NE-11-17 2011-04-11, the archive 2011-04-13) or the same day and kind ("SA" is no number; the OCC wrote Inter
+      Savings Bank's CN 09-15 as MW 08-14). Those are the OCC's rows, which carry subject matters and ends.
+- [x] **Terminations, the owner's call:** the archive files 119 as orders of their own; each is a line on the latest
+      earlier order of its kind against the same institution ("It ended 2010-08-06 (order WN 10-023)" on American
+      Express Bank's order of 2009), one filed under the kind it ended (Cargill Bank's "Termination oF Civil Money
+      Penalty") among them, and an order's own note gives the day where it says so ("Terminated November 12, 2002",
+      "terminated by NE 01-04 dtd 02/07/01"). 10 orders have no day and make no row; 27 links name no file and link
+      none.
+- [x] **The banks read by hand** (`OCC_BANKS`, now 45 companies): AIG Federal Savings Bank (its agreement of 2007,
+      the OCC's row), GE Money Bank on GE (2010; renamed GE Capital Retail Bank and Synchrony Bank, names the entry does
+      not read, so Synchrony's page is not given GE's past), Third Federal Savings & Loan of Cleveland on TFS
+      Financial, Ocwen Federal Bank on Onity Group (2004, 2005), Washington Federal Savings and Loan of Seattle on WaFd
+      (2007, ended 2008-10-21), Carver Federal Savings Bank on Carver (the OCC's orders of 2011, 2016 and 2025, which
+      batch 153 missed, with the OTS's of 2011 on the holding company), and First Home Savings Bank of Mountain Grove
+      on First Bancshares (2009, with the holding company's; the scout had read First Bancshares as a namesake).
+- [x] **Namesakes, by charter or docket** (`NOT_THE_COMPANY`, now 6 companies; an OTS holding company by its docket):
+      "United Bancorp, Inc." of Bridgeview, Illinois (H3475), not United Bancorp of Martins Ferry, Ohio, whose page
+      the rule gave it; "Liberty Capital, Inc." of Wilmington, Ohio (H0876), not Liberty Capital Corp of Nevada; the
+      OTS's "Metropolitan Bank and Trust Company" of Highland Hills, Ohio (docket 6381), not Metropolitan Bank Holding.
+- [x] **Read and left off:** BankUnited FSB's orders of 2008–2009, the failed bank's, not BankUnited, Inc.'s, which
+      bought its assets in 2009; Flagstar Bank, FSB's of 2010–2011, before Flagstar's record bought it; Hudson City,
+      EverBank, Downey, TierOne, Guaranty, Lehman Brothers Bank and Washington Mutual Bank, of no listed company or
+      before their buyers' days; World Savings Bank's of 2007, Wachovia's then; Republic Savings Bank of Louisville
+      (1992–1993), before Republic Bancorp's first price of 1998-07-22; Mercer Savings Bank's of 2008, whose company
+      Yahoo gives no prices, and Monroe Federal's of 1991, before its first price of 2025-01-06; Pathfinder MHC's agreement of 2009, the company's parent, not the
+      company; and three dozen first-word namesakes the scan of every listed company's name found (Huntington
+      Federal of West Virginia, Park Federal of Chicago, Commerce Bank of Atlanta, City Savings Bank of Michigan City…).
+- [x] **The rows:** an archive day alone is titled "OTS:", with "Office of Thrift Supervision, in the OCC's archive" as
+      its source; a day of both, "OCC and OTS:" (Carver's and Broadway's of 2010–2011). Each order gives its number and
+      OTS docket and links its file in the archive. Against every company in the index, before first prices: 199
+      company days on 58 companies; from first prices, 194 on 57 pages, 139 before 2017 (Wells Fargo 17, JPMorgan
+      15, Citigroup 14, Bank of America 13, U.S. Bancorp 12, Capital One 8), 12 of them on 11 pages the archive's
+      alone, all after first prices (Onity 2, GE, American Express, TFS Financial, WaFd, TrustCo, Waterstone,
+      Broadway, First Bancshares, AmBase, Carver).
+- [x] **Checks:** `check:occ` grows to 56 (the committed archive, its readers, copies, terminations, the archive's
+      rows and namesakes, and the new totals); on main it does not run, as lib/otsOrders.ts does not exist.
+      `check:contact` counts the 41st User-Agent reader, the sync script; `check:live` gains the workbook's case.
+- **For the next audit:** an OTS holding company is refused only by its docket; the archive gives 365 orders no docket,
+  read by name alone.
+- **The ledger:** no entry changes; 39 open, 103 closed, 11 parked, 17 blocked.
+- **Requests:** occ.gov 2 (HEAD for two archive PDFs), the workbook itself read from the scout's saved copy of
+  2026-11-15; query1.finance.yahoo.com 12 (first trading days, one, Mercer Bancorp's, with none); none to www.sec.gov or
+  data.sec.gov.
+
 ## NC ledger — batch 153: the OCC's enforcement actions against the company's banks (2026-11-16)
 
 The 2026-11-15 proposal 2, approved by the owner that day with the recommended call: an order's termination is a line
@@ -11429,13 +11489,15 @@ already held, but new investment goes to securities coverage first.
         from first prices, 180 on 49 pages, 126 before 2017, with 39 companies' banks read by charter.
       - *Derived from [`docs/proposals/2026-11-15-proposals.md`](proposals/2026-11-15-proposals.md) #2,
         approved 2026-11-15.*
-- [ ] `P2` **The thrift regulator's orders of 1989–2011, part (b) of the OCC's approval:** the OTS Enforcement Order
+- [x] `P2` **The thrift regulator's orders of 1989–2011, part (b) of the OCC's approval:** the OTS Enforcement Order
       Archive, one spreadsheet the OCC keeps (3,547 rows, 1,497 against institutions), read once under the same rule
       and committed. The scout's count: 14 by today's rule, 9 of them the companies' own (American Express Bank, FSB
       4, Broadway Federal 2, Carver, Waterstone, AmBase), and AIG Federal Savings Bank, GE Money Bank, Sovereign Bank
       and Third Federal by name. Small, and the scout said so.
+      - **Done in batch 154** (see its section): 12 company days on 11 pages the archive's alone, all after first
+        prices; with the OCC's list, 194 on 57 pages from first prices, 139 before 2017.
       - *Derived from [`docs/proposals/2026-11-15-proposals.md`](proposals/2026-11-15-proposals.md) #2 (b),
-        approved 2026-11-15. Batch 154's.*
+        approved 2026-11-15.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

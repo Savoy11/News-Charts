@@ -143,7 +143,11 @@ it holds the count's number: an action is a page's by the caption rule on the ba
 map's banks, or `OCC_BANKS`, the OCC's own spellings of 39 companies' banks by charter number and name, each
 bought or sold bank between its owner's filing days (MUFG Union Bank is MUFG's to 2022-11-30, U.S. Bancorp's
 from 2022-12-01); a namesake is refused by charter (`NOT_THE_COMPANY`). One row a company a day, each order's
-kind, numeric amount, subject matters, number and the day it ended on it.
+kind, numeric amount, subject matters, number and the day it ended on it. The OTS's orders of 1989–2011
+join them from the archive the OCC keeps (`lib/otsOrders.ts`, batch 154), read once into the committed
+`data/ots-orders.json` (`npm run sync:ots-orders`): a thrift's OTS docket is its OCC charter less 700000, a
+holding company is read by the caption rule or refused by docket, an order the OCC's list carries on is the
+OCC's row, and a termination is a line on the order it ended.
 
 The SEC News Digest of 1956–1993 (`lib/secDigest.ts`, batch 102) is read once, issue by issue, into
 db/040's tables (`lib/ingest/secDigestWalk.ts`), and each company's own entries are found there at
@@ -262,6 +266,7 @@ npm run sync:word-names  # rebuild data/english-word-names.json and data/shared-
 npm run sync:digest-records # rebuild data/digest-records.json from EDGAR's 1993–1996 indexes (after sync:tickers)
 npm run sync:fda-approvals  # rebuild data/fda-nme-approvals.json from the FDA's workbook (once a year, in the spring)
 npm run sync:fda-supplements # rebuild data/fda-supplements.json from openFDA's Drugs@FDA file (monthly, and after sync:fda-approvals)
+npm run sync:ots-orders     # rebuild data/ots-orders.json from the OTS archive the OCC keeps (closed: once, or if the OCC changes it)
 ```
 
 The `check-*.ts` scripts in the `check` chain are offline by construction (network/fetch is

@@ -585,7 +585,7 @@ export const SOURCES: {
     // owner on 2026-11-15 (docs/proposals/2026-11-15-proposals.md #2).
     commercialOk: true,
     reviewedOn: "2026-11-15",
-    notes: "the OCC's orders against national banks since 1987, kept where the bank is a listed company's by the caption rule and the release map (lib/occActions.ts); the search page's own API, every institution action in one keyless answer, read once a process (batch 153)",
+    notes: "the OCC's orders against national banks since 1987, kept where the bank is a listed company's by the caption rule and the release map (lib/occActions.ts); the search page's own API, every institution action in one keyless answer, read once a process (batch 153); with the OTS's orders of 1989–2011 from the archive the OCC keeps, one workbook read once and committed (lib/otsOrders.ts, batch 154)",
   },
 ];
 

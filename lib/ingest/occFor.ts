@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import { cachedOccList, occEvents, type OccList } from "../occActions";
+import { OTS_ORDERS, otsActions } from "../otsOrders";
 import { isNotesRecord, releaseNamesBefore, releaseNamesOn } from "../releaseNames";
 import type { FetchResult } from "../types";
 import { partyNamesFor } from "./secCasesWalk";
@@ -10,7 +11,8 @@ import { FUND_SERIES, NO_PRICES, type PressPlan } from "./secPressWalk";
  * OCC's whole list, read once a process for every company (`cachedOccList`), and the actions whose
  * bank is the company under the names it had that year, its legal names among them
  * (`partyNamesFor`), a bank the release map gives it that day, or one `OCC_BANKS` gives it by charter,
- * from its first price on. A bank's notes record takes none, nor a fund's series. The answer is
+ * from its first price on, and the OTS archive's orders of 1989–2011 by the same rule
+ * (lib/otsOrders.ts). A bank's notes record takes none, nor a fund's series. The answer is
  * complete when the list held every action the OCC's count gives, so a row the rules no longer give
  * comes off (`FetchResult.complete`, batch 108).
  */
@@ -31,7 +33,8 @@ export async function occFor(
     const e = err as Error & { outcome?: "throttled" | "error"; httpStatus?: number };
     return { events: [], outcome: e.outcome ?? "error", ...(e.httpStatus ? { httpStatus: e.httpStatus } : {}), detail: String(e.message ?? err).slice(0, 200) };
   }
-  const events = occEvents(list.actions, namesIn, {
+  // …with the OTS archive's orders of 1989–2011, the committed file, less those the OCC's list carries on (batch 154)
+  const events = occEvents([...list.actions, ...otsActions(OTS_ORDERS, list.actions)], namesIn, {
     cik: plan.cik,
     from: listed,
     namesOn: (day) => releaseNamesOn(plan.cik, day),

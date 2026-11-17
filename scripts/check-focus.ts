@@ -12,11 +12,16 @@ config({ path: ".env.local" });
  * that matters most: an empty page reads as "no data on IBM", not "no overlap".
  */
 import { readFileSync } from "node:fs";
+import Module from "node:module";
+import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import FocusBar from "../components/FocusBar";
 import BestMatches from "../components/BestMatches";
-import { applyFocus, composableFocus, focusScore, focusTerms, focusWindow, isFormTerm, matchesFocus, relatedWords } from "../lib/focus";
+import { applyFocus, composableFocus, focusFromParam, FOCUS_MAX, focusPreview, focusScore, focusTerms, focusWindow, isFormTerm, matchesFocus, relatedWords } from "../lib/focus";
+import { companyFocusPool, focusedMetadata } from "../lib/focusMeta";
+import { MAX_QUERY } from "../lib/searchLog";
+import { absolute } from "../lib/seo";
 import { CONCEPTS } from "../lib/concepts";
 import type { EventType, TimelineEvent } from "../lib/types";
 
@@ -308,6 +313,102 @@ check("\"S-3\" finds an automatic shelf too, the S-3ASR a large company files", 
 const listing = applyFocus(more, "F-1");
 check("\"F-1\" finds ARM's listing, which is now kept, and not a Canadian F-10", listing.matched === 1 && /\(F-1\)$/.test(listing.events[0].title),
   listing.events.map((e) => e.title).join(" | "));
+
+/*
+ * The focus on the server (NC-003). "How did covid affect Best Buy" opens /company/BBY?focus=covid, and
+ * the page used to arrive whole and narrow once its script ran: a shared link's preview, a crawler and
+ * a reader without scripts saw the unfocused page. The server reads the focus now, the explorer starts
+ * from it, and the link's preview says what the focused page shows, in words the page's records hold.
+ */
+console.log("\nThe focus on the server (NC-003)");
+check("the address's focus is its first value, its spaces collapsed",
+  focusFromParam("  covid \t relief ") === "covid relief" && focusFromParam(["tariffs", "covid"]) === "tariffs" && focusFromParam(" ") === null && focusFromParam(undefined) === null && focusFromParam([]) === null);
+check(`  …cut at ${FOCUS_MAX} characters, a search's own cap (MAX_QUERY), since every focus came out of a query that long`,
+  FOCUS_MAX === MAX_QUERY && focusFromParam("x".repeat(250))?.length === FOCUS_MAX, `${FOCUS_MAX} vs ${MAX_QUERY}`);
+
+const bby = (id: string, date: string, title: string, type: EventType = "news", source = "Test"): TimelineEvent => ({ id, date, type, title, source });
+const page = [
+  bby("p1", "2020-03-20", "Best Buy closes stores as the pandemic spreads"),
+  bby("p2", "2019-05-13", "Tariffs on Chinese goods lift Best Buy's costs"),
+  bby("p3", "2019-05-01", "Best Buy beats estimates"),
+  bby("p4", "2021-03-19", "Best Buy Co., Inc.: Annual report (10-K)", "filing", "SEC EDGAR"),
+  bby("p5", "2022-08-02", "Best Buy shares slide", "news", "Scandal Weekly"),
+];
+const prev = (focus: string) => focusPreview(page, focus);
+const covidPrev = prev("covid");
+check("a focused link's preview counts the events the focus keeps and names the best match: \"covid\", a concern, by its other word",
+  covidPrev?.matched === 1 && covidPrev.total === 5 && covidPrev.phrase === "on “covid”" && covidPrev.best.id === "p1", JSON.stringify(covidPrev && { ...covidPrev, best: covidPrev.best.id }));
+check("  …a word as the visitor wrote it, \"tariffs\", not its stem", prev("tariffs")?.phrase === "on “tariffs”", prev("tariffs")?.phrase);
+check("  …and only a word the page's records hold: \"tariffs scandal\" names \"tariffs\", and the address's other word nowhere",
+  prev("tariffs scandal")?.phrase === "on “tariffs”", prev("tariffs scandal")?.phrase);
+check("  …counting the rows the words it names keep: the page shows \"Scandal Weekly\"'s row too, and the preview does not call it one on tariffs",
+  applyFocus(page, "tariffs scandal").matched === 2 && prev("tariffs scandal")?.matched === 1 && prev("tariffs scandal")?.best.id === "p2");
+check("  …nor a word only a source's name holds, which then makes no preview: \"scandal\" is in \"Scandal Weekly\" alone",
+  applyFocus(page, "scandal").active && prev("scandal") === null);
+check("  …a year is named as its window, with the words or alone",
+  prev("tariffs in 2019")?.phrase === "on “tariffs” in 2019" && prev("in 2020")?.phrase === "in 2020" && prev("in 2020")?.matched === 1,
+  `${prev("tariffs in 2019")?.phrase} · ${prev("in 2020")?.phrase}`);
+check("  …a form by its name", prev("10-K")?.phrase === "on “10-K”" && prev("10-K")?.best.id === "p4", prev("10-K")?.phrase);
+check("  …and a focus that narrows nothing, or says nothing searchable, makes none", prev("zorblax") === null && prev("the") === null && focusPreview(page, null) === null);
+
+const meta = (focus: string | null) =>
+  focusedMetadata({ label: "Best Buy (BBY)", path: "/company/BBY", events: page, focus, priced: true, ogType: "website" });
+const mTariffs = meta("tariffs scandal");
+const og = (mTariffs?.openGraph ?? {}) as { title?: string; description?: string; url?: string };
+check("a focused page's title and description say what it shows",
+  mTariffs?.title === "Best Buy (BBY) timeline: 1 event on “tariffs”" &&
+    mTariffs.description === "1 event of 5 on the Best Buy (BBY) timeline on “tariffs”, against the price. Best match, 2019-05-13: “Tariffs on Chinese goods lift Best Buy's costs”",
+  `${mTariffs?.title} · ${mTariffs?.description}`);
+check("  …the address's word no record holds is in none of them",
+  ![mTariffs?.title, mTariffs?.description, og.title, og.description, (mTariffs?.twitter as { title?: string } | undefined)?.title].some((t) => /scandal/i.test(String(t))));
+check("  …its canonical address is the page's own, and its shared address the focused one",
+  (mTariffs?.alternates as { canonical?: string } | undefined)?.canonical === absolute("/company/BBY") && og.url === absolute("/company/BBY?focus=tariffs%20scandal"), og.url);
+check("  …and a focus that narrows nothing leaves the page's plain metadata", meta("zorblax") === null && meta(null) === null);
+
+// The explorers render on the server here as Next renders them: their chart library ships only an ES
+// module this loader cannot require, and every call to it is in an effect, which a server render never
+// runs, so a stand-in is resolved in its place (scripts/fixtures/lightweight-charts-stub.cjs).
+const loader = Module as unknown as { _resolveFilename: (request: string, ...rest: unknown[]) => string };
+const resolveFilename = loader._resolveFilename;
+loader._resolveFilename = function (this: unknown, request: string, ...rest: unknown[]) {
+  return request === "lightweight-charts" ? join(__dirname, "fixtures", "lightweight-charts-stub.cjs") : resolveFilename.call(this, request, ...rest);
+};
+/* eslint-disable @typescript-eslint/no-require-imports -- required after the loader learns the stand-in */
+const CompanyExplorer = require("../components/CompanyExplorer").default;
+const TopicExplorer = require("../components/TopicExplorer").default;
+/* eslint-enable @typescript-eslint/no-require-imports */
+const prices = [{ time: "2019-01-02", value: 50 }, { time: "2022-12-30", value: 70 }];
+const focusedHtml = renderToStaticMarkup(createElement(CompanyExplorer, { prices, events: page, subject: "Best Buy", initialFocus: "covid" }));
+const plainHtml = renderToStaticMarkup(createElement(CompanyExplorer, { prices, events: page, subject: "Best Buy" }));
+check("a company page arrives focused: the server's render has the focus bar and the best matches, and leaves the other rows out",
+  /data-focus-bar/.test(focusedHtml) && /data-best-matches/.test(focusedHtml) && /Showing the <strong>1<\/strong> of 5 events/.test(focusedHtml) &&
+    /pandemic spreads/.test(focusedHtml) && !/beats estimates/.test(focusedHtml));
+check("  …and without a focus, as before, it arrives whole", !/data-focus-bar/.test(plainHtml) && /beats estimates/.test(plainHtml) && /pandemic spreads/.test(plainHtml));
+const topicHtml = renderToStaticMarkup(createElement(TopicExplorer, { events: page, subject: "Retail", initialFocus: "tariffs" }));
+check("  …a topic page too", /data-focus-bar/.test(topicHtml) && /data-best-matches/.test(topicHtml) && !/beats estimates/.test(topicHtml));
+
+// the preview's count is the page's: a focus about the economy turns the Economy chip on, and both count its rows
+const macro = [
+  { id: "m1", date: "2020-03-15", type: "macro" as EventType, title: "Fed cuts interest rates to near zero", source: "Federal Reserve" },
+  { id: "m2", date: "2021-06-10", type: "macro" as EventType, title: "CPI rises 5.0% over the year", source: "BLS" },
+];
+const ratesPage = [...page, bby("p6", "2022-06-16", "Best Buy says interest rates weigh on demand")];
+const ratesHtml = renderToStaticMarkup(createElement(CompanyExplorer, { prices, events: ratesPage, macro, subject: "Best Buy", initialFocus: "interest rates" }));
+const ratesMeta = focusedMetadata({ label: "Best Buy (BBY)", path: "/company/BBY", events: companyFocusPool(ratesPage, macro, "interest rates"), focus: "interest rates", priced: true, ogType: "website" });
+const ratesShown = /Showing the <strong>(\d+)<\/strong> of (\d+) events/.exec(ratesHtml);
+check("the preview counts what the focused page shows, the economy's rows included when the focus is the economy's",
+  !!ratesShown && ratesMeta?.title === `Best Buy (BBY) timeline: ${ratesShown[1]} events on “interest rates”` && ratesShown[1] === "2" && ratesShown[2] === "8" && /near zero/.test(ratesHtml),
+  `${ratesShown?.[0]} · ${ratesMeta?.title}`);
+
+const src = (path: string) => readFileSync(join(__dirname, "..", path), "utf8");
+const companyPage = src("app/company/[ticker]/page.tsx");
+const topicPage = src("app/topic/[slug]/page.tsx");
+check("both pages read the focus from the address and hand it to the explorer",
+  [companyPage, topicPage].every((p) => /focusFromParam\(\(await searchParams\)\.focus\)/.test(p) && /initialFocus=\{focus\}/.test(p) && /focusedMetadata\(/.test(p)));
+check("  …and keep it on the redirects to the page's one address: /company/Ford?focus=covid is F's page focused, not F's whole page",
+  /redirect\(focusHref\(`\/company\/\$\{data\.ticker\}`, focus\)\)/.test(companyPage) && (topicPage.match(/redirect\(focusHref\(subjectPath\(/g) ?? []).length === 2);
+check("  …and the explorers start from it, reading the address after mount as the server did, so the two renders agree",
+  ["components/CompanyExplorer.tsx", "components/TopicExplorer.tsx"].map(src).every((c) => /useState<string \| null>\(initialFocus\)/.test(c) && /focusFromParam\(sp\.get\("focus"\)\)/.test(c) && !/sp\.get\("focus"\);/.test(c)));
 
 console.log(`\n${pass}/${pass + fail} checks passed\n`);
 if (fail) process.exit(1);

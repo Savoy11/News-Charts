@@ -1712,6 +1712,25 @@ agent, no session or cookie, no join key to any other table. Queries are capped 
 nothing reads the table but the operator's report, and the scheduled refresh deletes rows after 90
 days — retention that depends on someone remembering is not retention.
 
+### A focused page (`?focus=`)
+
+A question that names a security and a concern opens its page with `?focus=`: "how did covid affect
+Best Buy" is `/company/BBY?focus=covid`. Since batch 156 (NC-003) the server reads it
+(`focusFromParam` in `lib/focus.ts`) and the page arrives narrowed, with the focus bar, the best
+matches and the chronology of the events the focus keeps, so a shared link, a crawler and a reader
+without scripts see what the question asked. Before, the page arrived whole and narrowed once its
+script ran. "Show everything" brings the rest back without a request, and a redirect to the page's
+one address keeps the focus: `/company/General Motors?focus=tariffs` is GM's page, focused.
+
+The link's preview says what the page shows, "General Motors Company (GM) timeline: 1 event on
+“tariffs”", with the best match in its description (`lib/focusMeta.ts`). It names only words the
+page's own records hold: a kept event's headline or description, a concern of `lib/concepts.ts`, a
+form's name, or a year as its window. It counts the events those words keep, so
+`?focus=tariffs%20scandal` previews as one event on “tariffs”, and a focus that narrows nothing keeps
+the page's plain preview. A preview carries the site's name, and one built from the address would
+repeat whatever anyone typed under it (NC-157). The canonical address stays the page's own, and the
+preview image stays the ticker's card.
+
 ### How pages read
 
 `lib/page-data.ts` **reads the database and nothing else**. It used to be a read-through cache

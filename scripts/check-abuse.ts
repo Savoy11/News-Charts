@@ -155,7 +155,8 @@ console.log("\nA typed URL does not become a topic under its own words (NC-157)"
   check("the scheduler mints on the strict test, refreshes on the loose one", /\(existing \? articleAnswersSlug : articleCoversSlug\)\(topic, wiki\.title\)/.test(ingest));
   check("  …and names what it mints for the article", /canonicalSlug: topicSlugFromTitle\(wiki\.title\)/.test(ingest));
   check("a canonical slug another subject holds is not taken", /SELECT 1 FROM subjects WHERE slug = \$1`, \[s\.canonicalSlug\]/.test(read("lib/ingest/store.ts")));
-  check("another phrasing redirects to the stored slug", /if \(data\.slug !== topic\.trim\(\)\.toLowerCase\(\)\) redirect\(subjectPath\("topic", data\.slug\)\)/.test(read("app/topic/[slug]/page.tsx")));
+  // batch 156: the redirect keeps the link's ?focus= (focusHref), and still goes to the stored slug
+  check("another phrasing redirects to the stored slug", /if \(data\.slug !== topic\.trim\(\)\.toLowerCase\(\)\) redirect\(focusHref\(subjectPath\("topic", data\.slug\), focus\)\)/.test(read("app/topic/[slug]/page.tsx")));
   for (const [route, param] of [["app/topic/[slug]/opengraph-image.tsx", "slug"], ["app/company/[ticker]/opengraph-image.tsx", "ticker"]] as const) {
     const src = read(route);
     check(`${route.split("/")[1]} card reads the stored name, not the URL`, /loadSubject\(/.test(src) && /OG_UNKNOWN/.test(src) && !new RegExp(`ogCard\\([^)]*params\\.${param}`).test(src) && !/titleFromSlug/.test(src));

@@ -1,5 +1,7 @@
 "use client";
 
+import { DEFAULT_MAX_HISTORY } from "./historyCap";
+
 /**
  * Visitor preferences. Held in this browser, never on a News Charts server — the same
  * rule as the BYO-model key. The server stays stateless: pages send these values as
@@ -50,7 +52,7 @@ export const DEFAULT_PREFS: Prefs = {
   signals: { floor: 5, sigma: 2, sinceMonths: 30, divergencePct: 15 },
   sources: { federalRegisterTerms: [] },
   groups: [],
-  timeline: { stack: true, expand: "hover", defaultZoom: 1, maxHistory: 60 },
+  timeline: { stack: true, expand: "hover", defaultZoom: 1, maxHistory: DEFAULT_MAX_HISTORY },
 };
 
 const STORAGE_KEY = "news-charts:prefs:v1";

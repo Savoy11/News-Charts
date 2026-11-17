@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { applyFocus } from "@/lib/focus";
+import { applyFocus, focusFromParam } from "@/lib/focus";
 import FocusBar from "./FocusBar";
 import BestMatches from "./BestMatches";
 import { useVisitorFeeds } from "@/lib/useVisitorFeeds";
@@ -58,9 +58,14 @@ interface Props {
   siteDomain?: string | null;
   /** what the visitor's own feed keys should be asked about — the company's common name */
   subject: string;
+  /**
+   * The address's `?focus=`, as the server read it (`focusFromParam`), so the page arrives narrowed:
+   * a shared link, a crawler and a reader without scripts see the focused timeline (NC-003).
+   */
+  initialFocus?: string | null;
 }
 
-export default function CompanyExplorer({ prices, events, macro = NO_EVENTS, siteDomain, subject }: Props) {
+export default function CompanyExplorer({ prices, events, macro = NO_EVENTS, siteDomain, subject, initialFocus = null }: Props) {
   // Derived from FILTERS, never a second hand-written list: this defaulted to a literal of the
   // seven kinds that existed when it was written, so adding an eighth left it filtered out by
   // default — its chip rendered, inactive, and its rows never appeared. `Set<EventType>` cannot
@@ -74,8 +79,9 @@ export default function CompanyExplorer({ prices, events, macro = NO_EVENTS, sit
   const [copied, setCopied] = useState(false);
   // the date the chart last jumped to, so the list can open whatever contains it
   const [reveal, setReveal] = useState<{ date: string; n: number } | null>(null);
-  // the angle a natural-language search prompt carried in ("in the united states")
-  const [focusHint, setFocusHint] = useState<string | null>(null);
+  // the angle a natural-language search prompt carried in ("in the united states"), from the server's
+  // read of the address, so the first render is the focused one (NC-003)
+  const [focusHint, setFocusHint] = useState<string | null>(initialFocus);
 
   const filterKey = `news-charts:filters:${pathname}`;
 
@@ -84,7 +90,8 @@ export default function CompanyExplorer({ prices, events, macro = NO_EVENTS, sit
   useEffect(() => {
     try {
       const sp = new URLSearchParams(window.location.search);
-      const f = sp.get("focus");
+      // read as the server read it, so it is the same focus and changes nothing
+      const f = focusFromParam(sp.get("focus"));
       // eslint-disable-next-line react-hooks/set-state-in-effect -- restored from the URL and storage after mount, so server and first render agree
       if (f) setFocusHint(f);
       const t = sp.get("types");

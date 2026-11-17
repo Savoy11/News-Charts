@@ -988,6 +988,54 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 156: a focused page arrives focused, and its link's preview says so (NC-003) (2026-11-17)
+
+The owner's word: "Continue". The ledger's one entry a cloud session could build unblocked, NC-003: a question
+that names a security and a concern opens its page with `?focus=` ("how did covid affect Best Buy" is
+`/company/BBY?focus=covid`), and the server sent the whole page, which narrowed once its script ran. A shared link's
+preview, a crawler and a reader without scripts saw the unfocused page.
+
+- [x] **The server reads the focus** (`focusFromParam`, `lib/focus.ts`: `?focus=`'s first value, its spaces collapsed,
+      cut at a search's own 200 characters). The company and topic pages read it and hand it to their explorers, which
+      start from it (`initialFocus`), so the first render is the focused one: the focus bar, the best matches and the
+      chronology of the kept events. The browser reads the address after mount as the server did, so the two renders
+      agree. "Show everything" brings the rest back without a request: the rows travel with the page, as before.
+- [x] **A redirect keeps it.** `/company/General Motors?focus=tariffs` went to `/company/GM` and lost the question; it
+      goes to `/company/GM?focus=tariffs` now, and the topic page's two redirects (to a company, to the stored slug) the
+      same.
+- [x] **The link's preview says what the page shows** (`lib/focusMeta.ts`): "General Motors Company (GM) timeline: 1
+      event on “tariffs”", its description the count of the page's events and the best match, its Open Graph address
+      the focused one, its canonical address the page's own, its image the ticker's card. It names only words the page's
+      records hold (`focusPreview`): a kept event's headline or description, a concern of `lib/concepts.ts`, a form's
+      name, a year as its window. A preview carries the site's name, and one built from the address would repeat
+      whatever anyone typed after `?focus=` under it, the trouble NC-157 found in the topic cards. It counts the events
+      those words keep, so it says nothing untrue of a row: `?focus=tariffs%20scandal` previews as "1 event on
+      “tariffs”" while the page also shows a row only a source called "Scandal Weekly" matched. A focus that narrows
+      nothing, or none of whose words are held, keeps the page's plain preview. A company page counts the economy's rows
+      when the focus turns that chip on, as its explorer does (`companyFocusPool`).
+- [x] **The topic page's history cap moved to `lib/historyCap.ts`** (`capHistory`, `DEFAULT_MAX_HISTORY` 60), so the
+      server counts a topic's rows as a new reader's explorer does; `lib/prefs.ts` reads its default from there.
+- [x] **Checks:** `check:focus` 99 (78 on main, 21 new): the address's reading and its cap, held at a search's; the preview's
+      words, count, best match and the cases it declines; the metadata; the explorers rendered on the server, company
+      and topic, focused and plain (`scripts/fixtures/lightweight-charts-stub.cjs` stands in for the chart library,
+      which the checks' loader cannot require and a server render never calls); the preview's count against the
+      rendered bar's with the economy's rows; the pages, redirects and explorers in their source. On main the check
+      cannot start: `lib/focusMeta.ts` does not exist. `check:abuse`'s source test of the topic redirect to the stored
+      slug now reads the focus that redirect keeps (80).
+- [x] **Run for real:** a production build (`next build`) and the built site on a throwaway PostgreSQL 16 (socket
+      only, deleted after), seeded by `npm run db:seed-demo`. `/company/GM?focus=tariffs` arrived with the focus bar
+      ("Showing the 1 of 11 events that mention “tariffs”…") and the unrelated rows out of the visible page; its title
+      and Open Graph text as above; `?focus=zorblax` kept the plain preview; the topic `electric cars?focus=battery`
+      gave "6 events on “battery”"; Chromium showed no console or hydration error on any of four pages, "Show
+      everything" brought the rest back, and `/company/General%20Motors?focus=tariffs` landed on GM's page focused.
+- [ ] **Next.js 16.4.2 has a moderate advisory** (`P2`, found here): GHSA-mfr8-8qww-v76h, "Information disclosure across
+      root params when a 'use cache' function is called through unstable_cache()", 16.3.0–16.4.4, fixed in 16.4.6
+      (`npm audit`, 2026-11-17; `next build` stopped to recommend the upgrade after building). The pages use
+      `unstable_cache` (`lib/page-data.ts`) and no `'use cache'` function, so the case it names does not arise here
+      today. Upgrading is a minor version: the next batch's, with the full checks and a build.
+- **The ledger:** NC-003 closed; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** registry.npmjs.org once (`npm audit`, the advisories); none to any source.
+
 ## NC ledger — batch 155: the 2026-11-16 audit of batches 150–154, its findings fixed (2026-11-16)
 
 The `code-auditor` read `git diff 30ba57f..1bdecc3` (batches 150–154) and wrote
@@ -9953,8 +10001,8 @@ is 187/187 — every check green for the first time since the seven went stale, 
       fired, and check-relevance's own ALL list was missing two kinds.
 - [ ] `P2` Remaining from the recall/relevance design (judge-approved). **Corrected 2026-08-12:
       EDGAR older-history shards are now BUILT** (Ford 209 → 937 filings, back to 1994); this
-      entry listed them as unbuilt for a few hours after they shipped. Still open: SSR focus via a
-      dynamic sub-route; GDELT year-window backfill (⚠ answers but throttles hard, 429/503);
+      entry listed them as unbuilt for a few hours after they shipped. Still open: ~~SSR focus via a
+      dynamic sub-route~~ (built in batch 156, NC-003: the pages read `?focus=` on the server); GDELT year-window backfill (⚠ answers but throttles hard, 429/503);
       richer paid-tier evidence with an aggregate spend cap (needs a paid key). *(Corrected
       2026-10-21: graded focus scoring and the "Best matches" strip shipped in batch 19, and alias
       harvesting from Wikidata in batch 24, once `query.wikidata.org` answered.)*

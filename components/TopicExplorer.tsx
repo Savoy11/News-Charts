@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { applyFocus } from "@/lib/focus";
+import { applyFocus, focusFromParam } from "@/lib/focus";
 import FocusBar from "./FocusBar";
 import BestMatches from "./BestMatches";
 import { useVisitorFeeds } from "@/lib/useVisitorFeeds";
@@ -16,6 +16,7 @@ import Annotations from "./Annotations";
 import { EventType, PricePoint, TimelineEvent } from "@/lib/types";
 import { ANNOTATIONS_EVENT, annotationsAsEvents, loadAnnotations } from "@/lib/annotations";
 import { DEFAULT_PREFS, loadPrefs, PREFS_EVENT } from "@/lib/prefs";
+import { capHistory } from "@/lib/historyCap";
 
 
 /**
@@ -43,30 +44,6 @@ const FILTERS: { key: EventType; label: string }[] = [
 const ALL_TYPES = FILTERS.map((f) => f.key);
 
 /**
- * Cap Wikipedia "history" entries to `max`, sampling evenly across time so the timeline keeps its
- * full range (oldest and newest survive) instead of collapsing to one era. Non-history events and
- * everything else are untouched. `max <= 0` means no cap.
- */
-function capHistory(events: TimelineEvent[], max: number): TimelineEvent[] {
-  if (max <= 0) return events;
-  const history = events.filter((e) => e.type === "history");
-  if (history.length <= max) return events;
-  const others = events.filter((e) => e.type !== "history");
-  const sorted = [...history].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-  const denom = Math.max(1, max - 1);
-  const seen = new Set<string>();
-  const kept: TimelineEvent[] = [];
-  for (let i = 0; i < max; i++) {
-    const ev = sorted[Math.round((i * (sorted.length - 1)) / denom)];
-    if (!seen.has(ev.id)) {
-      seen.add(ev.id);
-      kept.push(ev);
-    }
-  }
-  return [...others, ...kept];
-}
-
-/**
  * Serialise the shareable part of the view (mode + which types are on) into a query string.
  * Defaults are omitted so a fresh page keeps a clean, canonical URL; only a deviation shows up.
  */
@@ -88,12 +65,15 @@ export default function TopicExplorer({
   events,
   prices = [],
   subject,
+  initialFocus = null,
 }: {
   events: TimelineEvent[];
   /** Present only for subjects that have a price series — crypto assets today. */
   prices?: PricePoint[];
   /** what the visitor's own feed keys should be asked about — the topic's title */
   subject: string;
+  /** the address's `?focus=` as the server read it, so the page arrives narrowed (NC-003) */
+  initialFocus?: string | null;
 }) {
   // Derived from FILTERS rather than repeated — the same duplication in CompanyExplorer left a
   // newly added event kind filtered out by default. A topic's filter list is deliberately
@@ -105,8 +85,9 @@ export default function TopicExplorer({
   const [copied, setCopied] = useState(false);
   // the date the chart last jumped to, so the list can open whatever contains it
   const [reveal, setReveal] = useState<{ date: string; n: number } | null>(null);
-  // the angle a natural-language search prompt carried in ("in the united states")
-  const [focusHint, setFocusHint] = useState<string | null>(null);
+  // the angle a natural-language search prompt carried in ("in the united states"), from the server's
+  // read of the address, so the first render is the focused one (NC-003)
+  const [focusHint, setFocusHint] = useState<string | null>(initialFocus);
   // saving must wait for the restore pass, or the default state overwrites what was stored
   const hydrated = useRef(false);
 
@@ -116,7 +97,8 @@ export default function TopicExplorer({
     let fromUrl = false;
     try {
       const sp = new URLSearchParams(window.location.search);
-      const f = sp.get("focus");
+      // read as the server read it, so it is the same focus and changes nothing
+      const f = focusFromParam(sp.get("focus"));
       // eslint-disable-next-line react-hooks/set-state-in-effect -- restored from the URL after mount, so server and first render agree
       if (f) setFocusHint(f);
       const v = sp.get("view");

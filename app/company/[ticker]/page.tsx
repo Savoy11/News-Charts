@@ -17,6 +17,9 @@ import NewsLeftOut from "@/components/NewsLeftOut";
 import { getCompanyPageData } from "@/lib/page-data";
 import { formatPrice } from "@/lib/priceFormat";
 import { absolute, breadcrumbLd, securityLd, SITE_NAME } from "@/lib/seo";
+import { focusFromParam } from "@/lib/focus";
+import { companyFocusPool, focusedMetadata } from "@/lib/focusMeta";
+import { focusHref } from "@/lib/searchChoice";
 
 // No route-level revalidate: it never applied (the route is dynamic — a miss runs a first-visit
 // gather and must never be cached), and it read as if pages were cached. The held-page reads in
@@ -24,13 +27,28 @@ import { absolute, breadcrumbLd, securityLd, SITE_NAME } from "@/lib/seo";
 
 const latestDate = (events: { date: string }[]) => events.reduce((m, e) => (e.date > m ? e.date : m), "");
 
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ ticker: string }>;
+  searchParams: SearchParams;
 }): Promise<Metadata> {
   const data = await getCompanyPageData(decodeURIComponent((await params).ticker));
   if (!data) return { title: "Company not found", robots: { index: false } };
+  // a focused link's preview says what the focused page shows (NC-003)
+  const focus = focusFromParam((await searchParams).focus);
+  const focused = focusedMetadata({
+    label: `${data.name} (${data.ticker})`,
+    path: `/company/${data.ticker}`,
+    events: companyFocusPool(data.events, data.macro, focus),
+    focus,
+    priced: data.prices.length > 1,
+    ogType: "website",
+  });
+  if (focused) return focused;
   const title = `${data.name} (${data.ticker}) timeline`;
   const description = `${data.name} (${data.ticker}) news, SEC filings, and earnings on one timeline, pegged to ${data.fund ? "its share price" : "the stock price"} — see what was happening around each move.`;
   const url = absolute(`/company/${data.ticker}`);
@@ -43,8 +61,10 @@ export async function generateMetadata({
   };
 }
 
-export default async function CompanyPage({ params }: { params: Promise<{ ticker: string }> }) {
+export default async function CompanyPage({ params, searchParams }: { params: Promise<{ ticker: string }>; searchParams: SearchParams }) {
   const requested = decodeURIComponent((await params).ticker);
+  // read here, so the page arrives narrowed rather than narrowing once its script runs (NC-003)
+  const focus = focusFromParam((await searchParams).focus);
   const data = await getCompanyPageData(requested);
   /**
    * A miss must never be cached: a first-visit gather that failed transiently (a throttled Yahoo,
@@ -56,9 +76,10 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
     noStore();
     notFound();
   }
-  // /company/Ford is served from F's rows; send the visitor to the page's one address (NC-161).
+  // /company/Ford is served from F's rows; send the visitor to the page's one address (NC-161),
+  // keeping the question the link asked
   if (data.ticker.toLowerCase() !== requested.toLowerCase()) {
-    redirect(`/company/${data.ticker}`);
+    redirect(focusHref(`/company/${data.ticker}`, focus));
   }
 
   const last = data.prices.at(-1);
@@ -149,6 +170,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
             macro={data.macro}
             siteDomain={data.siteDomain}
             subject={data.name}
+            initialFocus={focus}
           />
           {/* The company's own news-volume spikes — the sector page's panel, scoped to one ticker. */}
           <div className="mt-6">

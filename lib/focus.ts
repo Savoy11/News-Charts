@@ -339,3 +339,75 @@ export function composableFocus(focus: string): string | null {
   const terms = focusTerms(first);
   return terms.length > 0 && !terms.every(isFormTerm) ? first : null;
 }
+
+/**
+ * The most a page reads of `?focus=`: a search's own cap (`MAX_QUERY` in lib/searchLog.ts, which
+ * check:focus holds equal), since every focus a search makes came out of a query that long.
+ */
+export const FOCUS_MAX = 200;
+
+/**
+ * The focus a page's address asks for (NC-003): `?focus=`'s first value, its spaces collapsed and cut
+ * at `FOCUS_MAX`, or null. The server and the browser read it alike, so the page the server sends is
+ * the one the browser goes on showing.
+ */
+export function focusFromParam(value: string | readonly string[] | null | undefined): string | null {
+  const first = typeof value === "string" ? value : value?.[0];
+  const focus = (first ?? "").replace(/\s+/g, " ").trim().slice(0, FOCUS_MAX).trim();
+  return focus || null;
+}
+
+/** What a shared focused link's preview says: its count, the words it may name, and the best match. */
+export interface FocusPreview {
+  matched: number;
+  total: number;
+  /** `on “covid”`, `on “tariffs” in 2025`, `in 2020`: the words, quoted, then the window */
+  phrase: string;
+  /** the first of the best matches, a headline we hold */
+  best: TimelineEvent;
+}
+
+/**
+ * The preview of a focused page (NC-003): its title and description say how many events the focus
+ * keeps and what it was, as the focus bar does, but only in words the page's own records hold. A
+ * link's preview carries the site's name, and a preview built from the address would repeat whatever
+ * anyone typed after `?focus=` under it, the trouble NC-157 found in the topic cards. So a word of the
+ * focus is named only when a kept event's headline or description holds it, or when it is a concern
+ * of lib/concepts.ts or a form's name; a year is named as the window it makes. The count is of the
+ * events the named words keep, so the preview says nothing untrue of a row: the page's own count
+ * unless a word of the focus is held by a source's name alone ("scandal" in "Scandal Weekly"), whose
+ * rows the page shows and the preview does not count. A focus that narrows nothing, or whose words
+ * are none of them held, makes no preview, and the page keeps its plain one.
+ */
+export function focusPreview(events: TimelineEvent[], focus: string | null): FocusPreview | null {
+  const result = applyFocus(events, focus);
+  if (!focus || !result.active) return null;
+  const kept = result.events.map((e) => ({
+    title: normalise(e.title).split(" ").map(stem),
+    rest: normalise(e.description ?? "").split(" ").map(stem),
+  }));
+  const held = (term: string) => {
+    const toks = term.split(" ");
+    return isFormTerm(term) || CONCEPT_OF.has(term) || kept.some((k) => hasPhrase(k.title, toks) || hasPhrase(k.rest, toks));
+  };
+  // each term as the visitor wrote it, "tariffs" rather than the stem "tariff"
+  const typed = normalise(focus.replace(FORM_CODE, " ")).split(" ").filter(Boolean);
+  const stems = typed.map(stem);
+  const shown = (term: string): string => {
+    if (isFormTerm(term)) return termLabel(term);
+    const toks = term.split(" ");
+    for (let j = 0; j + toks.length <= stems.length; j++) {
+      if (toks.every((t, k) => stems[j + k] === t)) return typed.slice(j, j + toks.length).join(" ");
+    }
+    return term;
+  };
+  const named = result.terms.filter(held);
+  if (result.terms.length && !named.length) return null;
+  // the rows the named words keep (every row the window keeps, when the focus is a year alone)
+  const counted = new Set(result.events.filter((e) => matchesFocus(e, named)).map((e) => e.id));
+  const best = result.ranked.find((e) => counted.has(e.id));
+  if (!best) return null;
+  const quoted = named.length ? `on “${named.map(shown).join(" ")}”` : "";
+  const phrase = [quoted, result.window?.label ?? ""].filter(Boolean).join(" ");
+  return { matched: counted.size, total: result.total, phrase, best };
+}

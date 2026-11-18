@@ -988,6 +988,55 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 158: an opportunity-scout run, two proposals for the owner (2026-11-18)
+
+Every ledger entry a cloud session could build is done (NC-003 in batch 156), and Next.js is current (batch 157). So
+the `opportunity-scout` read the repository again at `69569a5` and wrote `docs/proposals/2026-11-18-proposals.md`: two
+proposals, both **PENDING**, ranked with securities depth first. The owner's word, 2026-11-18: "Continue". Nothing is
+built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a rejection). The scout's
+      second pass then files the approved ones into this checklist.
+      1. `P1` **The Labor Department's trade adjustment (TAA) certifications, 1975–2022.** One keyless zip on the
+         Department's open-data portal (`ETA_otaa_petition.zip`, 47,935,779 bytes) holds all 86,334 petitions; none
+         is decided after 2022-06-30, so it is read once and committed, as the OTS archive was. Each certification
+         names the plant or office, its town and product, and rules its job losses tied to imports or a shift abroad,
+         a record the Federal Register prints under titles that name no company. **Measured** on the whole file with
+         the caption rule: 4,274 certifications of listed companies; from first prices, 2,121 on 179 pages, or 1,292
+         company-days, 1,063 before 2017 (Ford 210, IBM 180, GE 112, Boeing 85). **Estimated:** about 1,950
+         company-days with the companies whose first price is not read here. A hand read of 60 found one namesake.
+         **The catches:** the determination codes are read from their dates (the codebook sits behind a key and
+         www.dol.gov, which answered 403), so the build confirms them; the Department's terms are the ones read for
+         MSHA on 2026-11-10 (public domain, credited, no implied endorsement). **The owner's call inside it:** denials
+         make no row (recommended), or a row each (about 1,330 more).
+      2. `P1` **The NLRB's Board decisions in the company's own cases, from 1962.** The listing holds 66,645 decisions
+         back to 1936, about 40,000 since 1962, 100 a page. **Sampled, not counted:** 24 pages (2,345 decisions) gave 36
+         after first prices on 23 companies (Starbucks 7, GE 4), which scales to about 650 decisions, about 540 before
+         2017 and most before EDGAR; about 1,000 with a units list read by hand. Both are estimates, off by a third
+         either way. The site states no licence (the ruling of 2026-11-12 applies) but does state a bulk-data policy:
+         bulk reads between 11pm and 6am Eastern, at most 5 concurrent requests. **The owner's call inside it:** a row
+         from the listing alone (recommended), or each kept decision's PDF read for its outcome as well (Tesla's of
+         2026 dismissed the complaint).
+- **Cut, with reasons in the file:** the Wage and Hour Division's cases (keyless, 370,964, but no day a case ended or
+  was announced, only the findings period; trade names pull in franchisees, 15 of 184 "McDonald's" matches); OSHA's
+  inspections (keyless zips of 1.46 and 2.28 GB, tens of thousands of routine store-level inspections; a deaths-only
+  floor was not measured); the Labor Department's newsroom and the FCC (www.dol.gov and www.fcc.gov answered 403; the
+  FCC's open-data catalog holds only its pirate-radio database); BIS export enforcement (436 items, only from 2017, about
+  16 on about 15 companies, all 2021–2026); the FAA's civil-penalty releases (from 2019-02-15, about 73, mostly small
+  operators). Nothing stored goes unshown: `event_enrichments` is read and written by no code.
+- **For the `code-auditor`, noted by the scout and checked here:** `captionParty` (`lib/secCases.ts`) reads "Wisconsin
+  Power and Light Co." as the party "Light Co.", so a company named Light (Light S.A.) would take it; EPA's rule has a
+  guard for "… Power and Light Company", the shared rule none. The same class as the 2026-11-15 note on "and Trust
+  Company". Whether any source's stored rows hold such a party today was not checked.
+- **Verified here,** on the scout's downloads, with my own reads: the TAA zip holds 86,334 petitions, 86,306 decided,
+  from 1975-05-15 to 2022-06-30, and its code counts are as the file gives them; Ford Motor's petitions number 442, 212
+  of them coded C, C1 or C2. The request log holds 71 lines, by host and status as the file gives them.
+- **Requests:** 71 by the scout, each with User-Agent `News Charts Research` and no email address, at least 1.3 s apart,
+  logged in the session scratchpad (`scout158/requests.log`): www.nlrb.gov 27, apps.nlrb.gov 3, data.dol.gov 10,
+  apiprod.dol.gov 5, www.federalregister.gov 8, query1.finance.yahoo.com 8 (four 429s, not retried), www.faa.gov 4,
+  www.bis.gov 2, efoia.bis.doc.gov 1, www.fcc.gov 1 (403), www.dol.gov 1 (403), api.us.socrata.com 1. None to
+  www.sec.gov, data.sec.gov or efts.sec.gov. None here.
+
 ## NC ledger — batch 157: Next.js 16.4.6, its moderate advisory closed (2026-11-18)
 
 The owner's word: "Continue", after batch 156's report proposed this update as the next batch.

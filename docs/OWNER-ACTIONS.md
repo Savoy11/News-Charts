@@ -218,6 +218,18 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- **The 2026-11-18 proposals** (batch 158, `docs/proposals/2026-11-18-proposals.md`): mark each `APPROVED`,
+  `REJECTED` or `DEFERRED`, with a reason for a rejection. Neither needs a key, a paid tier or a recurring charge;
+  both read federal sites, the Labor Department's under its stated public-domain terms and the NLRB's under your
+  ruling of 2026-11-12.
+  1. `P1` the Labor Department's trade adjustment certifications, 1975–2022: job losses at the company's named
+     plant or office ruled tied to imports or a shift abroad. Measured on the whole file: 2,121 certifications,
+     1,292 company-days on 179 pages from first prices, 1,063 before 2017 (Ford 210, IBM 180, GE 112, Boeing 85).
+     Your call inside it: denials get no row (recommended), or a row each (about 1,330 more).
+  2. `P1` the NLRB's Board decisions in the company's own cases, from 1962: a sample of 2,345 decisions gave 36 on
+     23 pages, about 650 in all (an estimate), most before EDGAR. Your call inside it: a row from the listing alone
+     (recommended), or each kept decision's PDF read for its outcome too.
+
 - ~~**The 2026-11-15 proposals** (batch 151, `docs/proposals/2026-11-15-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a
   recurring charge; both read federal sites that state no licence, under your ruling of 2026-11-12.~~

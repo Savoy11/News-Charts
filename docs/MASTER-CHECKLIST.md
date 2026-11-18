@@ -988,6 +988,31 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 157: Next.js 16.4.6, its moderate advisory closed (2026-11-18)
+
+The owner's word: "Continue", after batch 156's report proposed this update as the next batch.
+
+- [x] **Next.js 16.4.2 → 16.4.6, and `eslint-config-next` with it** (both still pinned exactly). It closes
+      GHSA-mfr8-8qww-v76h, "Information disclosure across root params when a 'use cache' function is called through
+      unstable_cache()" (16.3.0–16.4.4), which batch 156 found; this project has no `'use cache'` function, so the case it
+      names never arose. 16.4.6 came out on 2026-11-09. The lockfile changes only Next's own packages, the lint config's
+      plugin, `fast-glob` 3.3.1 moved up a folder unchanged, and `fastq` 1.20.1 → 1.20.3 (of 2026-08-29). `npm audit
+      --omit=dev`: no known vulnerability (one before). `next build` no longer stops to recommend an upgrade.
+- [ ] **A moderate advisory in the lint tooling** (`P3`, found here, on main before this batch): GHSA-g3hv-75wg-m249,
+      "minimatch has potential denial of service via globparts amplification", in minimatch 10.2.6 under
+      `typescript-eslint` 8.71.2, a development dependency that reads only this repository's own code and config. `npm
+      audit fix` takes it to `typescript-eslint` 8.73.0 and minimatch 11.0.9, both published 2026-11-16, two days before
+      this batch; that was tried and backed out, as a package that new is where a supply-chain attack lands, and the
+      risk here is a slow lint run on a pattern we write ourselves. Apply it from 2026-11-30, two weeks after both
+      releases, with `npm audit fix` and the full checks.
+- [x] **Run for real:** lint and `tsc` clean; `next build` exit 0; the built site on a throwaway PostgreSQL 16 (socket
+      only, deleted after) seeded by `npm run db:seed-demo`, and eleven pages loaded in Chromium, the home page, Explore,
+      a company, a focused company and its name redirect, a focused topic, a topic, a sector, Compare, a search that lands
+      on a focused page and a social card, each 200 with no console error. The full `npm run check` passes.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** registry.npmjs.org only (the packages, `npm audit`, `npm view` for the release dates); none to any
+  source.
+
 ## NC ledger — batch 156: a focused page arrives focused, and its link's preview says so (NC-003) (2026-11-17)
 
 The owner's word: "Continue". The ledger's one entry a cloud session could build unblocked, NC-003: a question
@@ -1028,7 +1053,7 @@ preview, a crawler and a reader without scripts saw the unfocused page.
       and Open Graph text as above; `?focus=zorblax` kept the plain preview; the topic `electric cars?focus=battery`
       gave "6 events on “battery”"; Chromium showed no console or hydration error on any of four pages, "Show
       everything" brought the rest back, and `/company/General%20Motors?focus=tariffs` landed on GM's page focused.
-- [ ] **Next.js 16.4.2 has a moderate advisory** (`P2`, found here): GHSA-mfr8-8qww-v76h, "Information disclosure across
+- [x] **Next.js 16.4.2 has a moderate advisory** (`P2`, found here; fixed in batch 157, 16.4.6): GHSA-mfr8-8qww-v76h, "Information disclosure across
       root params when a 'use cache' function is called through unstable_cache()", 16.3.0–16.4.4, fixed in 16.4.6
       (`npm audit`, 2026-11-17; `next build` stopped to recommend the upgrade after building). The pages use
       `unstable_cache` (`lib/page-data.ts`) and no `'use cache'` function, so the case it names does not arise here

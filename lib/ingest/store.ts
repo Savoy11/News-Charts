@@ -587,6 +587,24 @@ export const SOURCES: {
     reviewedOn: "2026-11-15",
     notes: "the OCC's orders against national banks since 1987, kept where the bank is a listed company's by the caption rule and the release map (lib/occActions.ts); the search page's own API, every institution action in one keyless answer, read once a process (batch 153); with the OTS's orders of 1989–2011 from the archive the OCC keeps, one workbook read once and committed (lib/otsOrders.ts, batch 154)",
   },
+  {
+    id: 43,
+    key: "dol_taa",
+    name: "Labor Department trade adjustment certifications",
+    license: "public domain",
+    attribution: "U.S. Department of Labor",
+    // The Labor Department's terms (www.dol.gov/general/aboutdol/copyright, read 2026-11-10 for MSHA,
+    // source 38; www.dol.gov refused this container on 2026-11-18): "Materials created by the federal
+    // government are generally part of the public domain and may be used, reproduced and distributed
+    // without permission", credited "to the U.S. Department of Labor", never "in a manner that implies
+    // any affiliation or endorsement by the DOL". The open-data portal's catalog and its download state
+    // none of their own, and the zip asks no key. Used: each certification's petition number, firm,
+    // division, town, product or service, day, the day separations are covered from and the
+    // Department's worker estimate. Approved by the owner on 2026-11-18 (docs/proposals/2026-11-18-proposals.md #1).
+    commercialOk: true,
+    reviewedOn: "2026-11-18",
+    notes: "the Department's certifications of 1975–2022 that a named plant's or office's job losses came from foreign trade, kept where the firm is a listed company's by the caption rule, the release map and its units (lib/taaPetitions.ts); one keyless zip read once and committed, no petition being decided after 2022-06-30 (batch 159)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

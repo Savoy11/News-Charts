@@ -64,7 +64,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. The Labor Department's trade adjustment certifications, 1975–2022: job losses at the company's plant tied to imports or a shift abroad — Ford's assembly plants of 1980, Boeing's Commercial Airplane Group of 2002, IBM, GE, Honeywell, Weyerhaeuser… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED (2026-11-18: "Approve both (Recommended)", denials making no row; built in batch 159)
 **Owner's reason (if rejected):**
 
 **Raised before:** no. The Labor Department's hosts were met for OSHA (2026-11-09, 2026-11-09b,
@@ -220,7 +220,7 @@ be read
 
 ## 2. The NLRB's Board decisions in the company's own cases, from 1962: GE's, Goodyear's, General Dynamics', Exxon's and AEP's of the 1960s–80s, Caterpillar's, Starbucks', Apple's and Tesla's of today… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED (2026-11-18: "Approve both (Recommended)", a row from the listing alone; to be built next)
 **Owner's reason (if rejected):**
 
 **Raised before:** no. No earlier file mentions the NLRB.

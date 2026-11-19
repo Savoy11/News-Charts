@@ -988,6 +988,72 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 159: the Labor Department's trade adjustment certifications, 1975–2022 (2026-11-19)
+
+The owner's word on the 2026-11-18 proposals, 2026-11-18: "Approve both (Recommended)". Both are filed under Scope
+refocus; this batch builds #1, with call (a): a denial makes no row.
+
+- [x] **The codes, read in the Federal Register's own notices** before anything was built (the codebook sits behind a
+      key and www.dol.gov, which refuses this container). Two petitions a code, each found by number through the
+      Register's search and read on govinfo.gov (the Register's own text answers bots with its block page): C, C1, C2
+      and CU are listed under "The following certifications have been issued" (CU: "The requirement of supplier to a
+      trade certified firm has been met"); D under "Negative Determinations" or "the criteria for eligibility have
+      not been met"; T is a "Notice of Termination of Investigation"; P was listed once under the certifications
+      with part of the workers and once under the denials ("All workers engaged in the production of bearing caps are
+      denied eligibility"), and CD under the certifications for some sites. Only the four whole certifications make
+      rows (`CERTIFIED`), as the scout counted; P and CD (694) stay off as part-denials.
+- [x] **The source** (`lib/taaPetitions.ts`, `scripts/sync-taa.ts`, `lib/ingest/taaFor.ts`; source 43, `dol_taa`): the
+      Employment and Training Administration's petition file, one keyless zip on data.dol.gov (47,935,779 bytes,
+      `Last-Modified` 2026-11-18): 86,334 petitions, 86,306 decided, 1975-05-15 to 2022-06-30, by code as the scout
+      gave them. The program lapsed on 2022-07-01, so the file is read once (`npm run sync:taa`, here from the scout's
+      saved copy of 2026-11-18) into the committed `data/taa-certifications.json.gz`: its 47,628 certifications, each
+      an array of eleven fields, compressed to 1.7 MB (6.4 MB as JSON, more than twice the largest committed file;
+      a slimmer file kept only for today's listed companies would lose the former names ingest reads from EDGAR, so
+      all are kept). The zip's one CSV is found whatever its day's name (`zipEntryNames`, `lib/zip.ts`), and the web
+      codes 547 of its fields carry ("&amp;") are read as what they write. `check:live` reads the zip again and says
+      when a determination after 2022-06-30 appears.
+- [x] **The rule:** the caption rule on the firm, under the company's names of the year and the release map's units
+      of the day (RTX's Hamilton Sundstrand, Carrier and Pratt & Whitney; Berkshire's Johns Manville; PepsiCo's
+      Frito-Lay); the units named after it that the rule does not read (`TAA_UNITS`: VF Jeanswear, VF Knitwear and VF
+      Imagewear on VF, 77 certifications of 1998–2014, before VF Jeanswear left with Kontoor; Oracle America, Sun
+      Microsystems as Oracle renamed it, nine of 2011–2022); a namesake refused (`NOT_THE_COMPANY`: Coupled Products,
+      a business Dana sold, written "Formerly known as Dana Corporation"); the table of taken names (Johnson Controls,
+      Inc.'s certifications before 2016-09-02 stay off JCI); from the first price (350 of General Motors' 371 fall
+      before GM's of 2010-11-18). Oracle Lens Manufacturing, Intelicoat and Intelius, Coca-Cola's bottlers and ADM's
+      namesakes stay off.
+- [x] **The rows:** one a company a day, `regulation`, scored without the model: "Labor Department certified workers
+      at 13 sites of FORD MOTOR CO for trade adjustment assistance", four sites listed with their divisions, towns,
+      products, worker estimates, the days separations are covered from and their petition numbers, the rest named
+      ("And 9 more: TA-W-6,951 …"), the estimates never added up. A long division, listing the staffing agencies, is cut
+      at a comma in the title. From 1994 the row links the Federal Register's search for its petition number, where
+      the notice is; an earlier one gives the number alone. Credited in the footer and the terms.
+- [x] **Measured,** the rule over every company in the index (its names as ingest builds them, less the former names
+      only the database holds): 2,684 company days on 470 companies before first prices; where the fixtures read a
+      first price (954 companies), 1,276 on 178 pages, 1,052 before 2017, 1,887 certifications (GE 101, IBM 86,
+      Honeywell 45, Ford 40, Weyerhaeuser 36, International Paper 34, Goodyear 31, Xerox 26, RTX 25, Boeing 24). The
+      scout's 1,292 on 179 counted a company's share classes as pages (Ford's F-PD, Xerox's warrants, Citigroup's
+      preferred); company by company the two replays agree but for the units and the namesake above. Read by hand: 30
+      company days drawn at random, every one the company's own plant, office or unit.
+- [ ] **Units named after their owners the rule does not read (`P2`, found here):** about 260 certifications on large
+      pages, each unit needing the days its owner held it read from a filing, which this container cannot reach
+      (`NEWS_CHARTS_CONTACT` is not set here): Verizon Data Services and Verizon Business Network Services (about 80),
+      AT&T Services and AT&T Operations (about 55, after SBC's record took AT&T's name), General Electric's divisions
+      written as firms ("General Electric Lighting", "… Medical", "… Dothan Motor Plant", 41), Weyerhaeuser NR Company
+      (23), General Motors' plants and units of 2010–2022 ("General Motors Lordstown Complex", "… Powertrain", 21), Dell
+      Products and Dell USA (about 14, mostly before DELL's first price), Xerox's (13, "Xerox Business Services"),
+      Caterpillar's (13), ADM Milling and ADM Cocoa (2). The next batch's first part, with the NLRB's decisions.
+- [x] **Checks:** `check:taa`, new, 31 (the file's reading on a committed slice of the zip, its first petition and its
+      codes; the committed file's counts; Ford's thirteen plants of 1980-04-17 as one row, Boeing's seven sites of
+      2002-03-18, JCI's taken name, GM's first price, Dana's namesake, VF's and Oracle's units, HP under its former name,
+      a denial, the links; the totals over every company; the ingest step; the wiring), on main it cannot start;
+      `check:contact` counts the 42nd reader of the User-Agent, the sync script; `check:wiring` the coverage map's 43
+      sources, 35 on the ingest path; `check:live` and its harness a case for the zip.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked. The open item above is this section's.
+- **Requests:** 40, each with User-Agent `News Charts Research` and no address, at least 1.5 s apart, logged in the
+  session scratchpad (`b159/requests.log`): www.federalregister.gov 24 (16 searches by petition number and 8 of its
+  notice texts, each answered with its block page), www.govinfo.gov 16 (the notices' text). The zip itself is the
+  scout's copy of 2026-11-18; no new request to data.dol.gov.
+
 ## NC ledger — batch 158: an opportunity-scout run, two proposals for the owner (2026-11-18)
 
 Every ledger entry a cloud session could build is done (NC-003 in batch 156), and Next.js is current (batch 157). So
@@ -995,8 +1061,10 @@ the `opportunity-scout` read the repository again at `69569a5` and wrote `docs/p
 proposals, both **PENDING**, ranked with securities depth first. The owner's word, 2026-11-18: "Continue". Nothing is
 built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a rejection). The scout's
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a rejection). The scout's
       second pass then files the approved ones into this checklist.
+      ✅ **Marked 2026-11-18: both approved** ("Approve both (Recommended)"), each with its recommended call. Filed under
+      Scope refocus by batch 159, which builds #1; #2 is the next batch's.
       1. `P1` **The Labor Department's trade adjustment (TAA) certifications, 1975–2022.** One keyless zip on the
          Department's open-data portal (`ETA_otaa_petition.zip`, 47,935,779 bytes) holds all 86,334 petitions; none
          is decided after 2022-06-30, so it is read once and committed, as the OTS archive was. Each certification
@@ -11694,6 +11762,22 @@ already held, but new investment goes to securities coverage first.
         2017, and 202 on 62, 147 before 2017, after batch 155 added seven companies' banks.
       - *Derived from [`docs/proposals/2026-11-15-proposals.md`](proposals/2026-11-15-proposals.md) #2 (b),
         approved 2026-11-15.*
+- [x] `P1` **The Labor Department's trade adjustment certifications, 1975–2022:** approved by the owner 2026-11-18, with
+      call (a), a denial making no row. A new source (43, `dol_taa`), one keyless zip read once and committed, the
+      Department's terms public domain.
+      - **Measured** by the scout: 1,292 company days on 179 pages from first prices, 1,063 before 2017 (counting a
+        company's share classes as pages of their own; batch 159 counts each company once).
+      - **Done in batch 159** (see its section): 2,684 company days on 470 companies before first prices; from first
+        prices, 1,276 on 178 pages, 1,052 before 2017, 1,887 certifications.
+      - *Derived from [`docs/proposals/2026-11-18-proposals.md`](proposals/2026-11-18-proposals.md) #1, approved
+        2026-11-18.*
+- [ ] `P1` **The NLRB's Board decisions in the company's own cases, from 1962:** approved by the owner 2026-11-18, with
+      call (a), a row from the listing alone. A new source (44, `nlrb_decisions`), its listing read once at night by
+      the NLRB's bulk-data policy, then its newest page daily.
+      - **Estimated** by the scout: about 650 decisions on pages, about 540 before 2017, about 1,000 with a units
+        list read by hand; a sample's figure, off by a third either way.
+      - *Derived from [`docs/proposals/2026-11-18-proposals.md`](proposals/2026-11-18-proposals.md) #2, approved
+        2026-11-18.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

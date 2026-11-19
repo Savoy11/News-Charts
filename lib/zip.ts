@@ -16,8 +16,16 @@ export function readZip(buf: Uint8Array, wanted: readonly string[]): Map<string,
   return out;
 }
 
-/** The wanted entries of a zip, packed as they are, from its central directory (the walk `readZip` and `eachZipLine` share). */
-function entriesOf(buf: Uint8Array, want: ReadonlySet<string>): { name: string; method: number; data: Buffer; size: number }[] {
+/**
+ * The names of a zip's entries, from its central directory (batch 159): the Labor Department's petition
+ * zip names its one CSV by the day it was written ("2026-11-18_chunk_1.csv").
+ */
+export function zipEntryNames(buf: Uint8Array): string[] {
+  return entriesOf(buf, null).map((e) => e.name);
+}
+
+/** The wanted entries of a zip, packed as they are, from its central directory (the walk `readZip` and `eachZipLine` share); every entry when `want` is null. */
+function entriesOf(buf: Uint8Array, want: ReadonlySet<string> | null): { name: string; method: number; data: Buffer; size: number }[] {
   const b = Buffer.from(buf.buffer, buf.byteOffset, buf.byteLength);
   // the end-of-central-directory record: within the last 64 KB, after any comment
   let end = -1;
@@ -44,7 +52,7 @@ function entriesOf(buf: Uint8Array, want: ReadonlySet<string>): { name: string; 
     const local = b.readUInt32LE(at + 42);
     const name = b.toString("utf8", at + 46, at + 46 + nameLength);
     at += 46 + nameLength + extraLength + commentLength;
-    if (!want.has(name)) continue;
+    if (want && !want.has(name)) continue;
     if (b.readUInt32LE(local) !== 0x04034b50) throw new Error(`no local header for ${name}`);
     const start = local + 30 + b.readUInt16LE(local + 26) + b.readUInt16LE(local + 28);
     out.push({ name, method, data: b.subarray(start, start + packed), size });

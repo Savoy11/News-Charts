@@ -429,6 +429,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "occ_actions") {
         return { score: 0.95, reason: "an OCC enforcement action against the company's bank" };
       }
+      // …and a Labor Department trade adjustment certification of the company's own plant, office or unit
+      // (lib/taaPetitions.ts, batch 159)
+      if (subject.kind === "company" && row.sourceKey === "dol_taa") {
+        return { score: 0.95, reason: "a Labor Department trade adjustment certification of the company's workers" };
+      }
       // …and a new-drug approval whose applicant is the company, its firm or its unit that day
       // (lib/fdaApprovals.ts, batch 105)
       if (subject.kind === "company" && row.sourceKey === "fda_approvals") {

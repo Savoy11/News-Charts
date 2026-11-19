@@ -1120,6 +1120,49 @@ An order's own note ends it in two wordings, "Terminated November 12, 2002" and 
 The OCC's pages state no licence; the orders are a federal agency's own work (17 U.S.C. § 105), used under
 the owner's ruling of 2026-11-12 and credited to the OCC.
 
+### Labor Department trade adjustment certifications (`lib/taaPetitions.ts`, batch 159)
+
+The Labor Department's rulings, under the Trade Act of 1974, that a named plant's or office's job losses
+came from foreign trade, which made its workers eligible to apply for trade adjustment assistance. Approved
+by the owner on 2026-11-18 (the 2026-11-18 proposal 1), with a denial making no row. Each certification
+names the firm, the division, the town, the product or service, the Department's estimate of the workers
+and the day separations were covered from. The Federal Register prints them weekly under titles that name no
+company, so no other source reaches them.
+
+Read from one keyless zip on the Department's open-data portal
+(`data.dol.gov/data-catalog/ETA/otaa_petition/ETA_otaa_petition.zip`, 47,935,779 bytes on 2026-11-18): the
+Employment and Training Administration's petition file, 86,334 petitions, 86,306 decided, 1975-05-15 to
+2022-06-30. The program's authority lapsed on 2022-07-01 and no petition is decided after 2022-06-30, so the
+file is read once (`npm run sync:taa`) into the committed `data/taa-certifications.json.gz`, its 47,628
+certifications only, compressed (about 1.7 MB; 6.4 MB as JSON); ingest asks nothing, and `check:live` says
+when a later determination appears. The codes were read in the Federal Register's own notices, two petitions
+a code, each found by number and read on govinfo.gov: C, C1, C2 and CU are listed under "The following
+certifications have been issued", and only those make rows; D is a denial, T a terminated investigation, and
+P and CD partial determinations (one P petition was listed under the certifications, another under the
+denials: "All workers engaged in the production of bearing caps are denied eligibility").
+
+A certification is a company's by the caption rule on its firm, under the company's names of the year and
+the release map's units of the day (RTX's Hamilton Sundstrand, Carrier and Pratt & Whitney; Berkshire's
+Johns Manville; PepsiCo's Frito-Lay), by the units named after it that the rule does not read (`TAA_UNITS`:
+VF Jeanswear, VF Knitwear and VF Imagewear on VF; Oracle America, the name Oracle gave Sun Microsystems, on
+Oracle), never by a namesake (`NOT_THE_COMPANY`: Coupled Products, a business Dana sold, written "Formerly
+known as Dana Corporation"), nor by a name its record took from another company before the day (Johnson
+Controls, Inc.'s certifications before 2016-09-02 stay off JCI, Tyco's record), and from its first price
+(343 of General Motors Corp.'s 350 fall before GM's first price of 2010-11-18). Hewlett-Packard's reach HP
+Inc.'s record under the former name ingest reads from EDGAR, for the years it bore it. A company's
+certifications of a day are one row: "Labor Department certified workers at 13 sites of FORD MOTOR CO for
+trade adjustment assistance", four sites listed with their towns, products, worker estimates and petition
+numbers and the rest named, the estimates never added up. From 1994 the row links the Federal Register's
+search for the petition's number, where its notice is; an earlier one gives the number alone. Read by hand:
+30 company days drawn at random, every one the company's own plant, office or unit.
+
+Against every company in the index, before first prices: 2,684 company days on 470 companies; from first
+prices, 1,276 on 178 pages, 1,052 before 2017, 1,887 certifications (GE 101, IBM 86, Honeywell 45, Ford 40,
+Weyerhaeuser 36, International Paper 34, Goodyear 31, Xerox 26, RTX 25, Boeing 24). The Department's terms
+(read 2026-11-10 for MSHA): "Materials created by the federal government are generally part of the public
+domain and may be used, reproduced and distributed without permission"; credited to the U.S. Department of
+Labor, implying no affiliation or endorsement.
+
 ### The SEC News Digest (`lib/secDigest.ts`, `lib/ingest/secDigestWalk.ts`)
 
 A source since batch 102 (`sec_digest`, the 2026-11-02 proposal 1: the owner asked for a count
@@ -1839,6 +1882,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Mine Safety and Health Administration | Accidents since 2000 that killed someone at a mine the company controlled, with MSHA's own finding on each: the violations its investigation cited and the penalties it proposed (batch 139) | MSHA's Accidents and Mines files, one 52 MB zip and one of 7 MB, read once a week for every company and the deaths kept (`lib/ingest/mineWalk.ts`), and its Inspections and Assessed Violations files (74 MB and 110 MB) streamed once a month; kept for the 54 controller IDs `lib/mineAccidents.ts` maps by hand to 52 companies, each between its company's days, from the company's first price. Public domain, credited to the U.S. Department of Labor; no key |
 | Federal Railroad Administration | Railroad accidents since 1975 a company's railroad reported, with a death, an evacuation or $5,000,000 of damage | Form 54 on the Transportation Department's open-data host, one request a day for each of the six railroad companies `lib/railAccidents.ts` maps by hand, each railroad between its owner's days, from the company's first price; a highway-rail crossing collision only with an evacuation or that damage. Public domain; no key |
 | Office of the Comptroller of the Currency | The national banks' own regulator's orders since 1987 against the company's bank — civil money penalties, cease-and-desist orders, restitution, formal agreements — each with its amount, subject matters and the day it ended; and the Office of Thrift Supervision's orders of 1989–2011 against its thrift or thrift holding company, from the archive the OCC keeps | The search page's own API, every institution action in one keyless answer, read once a process for every company (`lib/ingest/occFor.ts`), and the OTS archive's workbook, read once and committed (`npm run sync:ots-orders`, `lib/otsOrders.ts`); kept by the caption rule, the release map and the OCC's own spellings of the banks by charter (`OCC_BANKS`, `lib/occActions.ts`). The OCC's and the OTS's own work (17 U.S.C. § 105), credited to the OCC; no key |
+| U.S. Department of Labor (trade adjustment assistance) | The Department's certifications of 1975–2022 that a named plant's or office's job losses came from foreign trade — Ford's assembly plants of 1980, Boeing's Commercial Airplane Group of 2002, IBM's services moved offshore after 2009 — each site with its town, product and worker estimate, a day's one row | One keyless zip on data.dol.gov, read once and committed (`npm run sync:taa`, `lib/taaPetitions.ts`), no petition being decided after the program lapsed in 2022; kept by the caption rule, the release map and the units named after the company (`TAA_UNITS`), certifications only. The Department's terms: public domain, credited to the U.S. Department of Labor; no key |
 | U.S. Equal Employment Opportunity Commission | The Commission's suits and settlements since 1994 whose title makes the company the party — a retailer's disability suit, a bank's class settlement | The newsroom listing, read whole once a year and its newest page once a day, for every company (`lib/ingest/eeocWalk.ts`); kept by the Justice Department's title rule, the Commission's own shapes and its units list (`lib/eeoc.ts`); an undated release's page read once for its day. The Commission's own work (17 U.S.C. § 105), credited to the EEOC; no key |
 | Commodity Futures Trading Commission | The Commission's enforcement actions since 1995 whose title makes the company the party — a bank's benchmark-rigging order, an energy trader's manipulation suit | The enforcement list, read whole once a year and its newest page once a day, for every company (`lib/ingest/cftcWalk.ts`); kept by the Justice Department's title rule with the release map's units (`lib/cftc.ts`). Public domain, acknowledged to the CFTC; no key |
 | SEC News Digest | The SEC's daily summary of 1956–1993: the 8-K reports a company filed, its registration statements, the 13D and 14D-1 filings on its shares, the SEC's orders and actions on it, its listing orders | Every issue's PDF read once for every company, 60 a run (`lib/ingest/secDigestWalk.ts`); kept when an entry's party is the company under the name its EDGAR record had that day and no other company's (`lib/secDigest.ts`), from its first price; a month's 8-K reports one row. Public information the SEC lets anyone copy, cited to the SEC; no key; needs `pdftotext` and `NEWS_CHARTS_CONTACT` |

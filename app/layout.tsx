@@ -108,8 +108,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Federal Railroad Administration, mine accident reports from the Mine Safety and Health
               Administration of the U.S. Department of Labor, enforcement actions from the
               Commodity Futures Trading Commission, press releases from the U.S. Equal Employment
-              Opportunity Commission, and enforcement actions from the Office of the Comptroller of
-              the Currency, with the Office of Thrift Supervision&apos;s of 1989–2011 from its archive.
+              Opportunity Commission, enforcement actions from the Office of the Comptroller of
+              the Currency, with the Office of Thrift Supervision&apos;s of 1989–2011 from its archive,
+              and trade adjustment certifications from the U.S. Department of Labor.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

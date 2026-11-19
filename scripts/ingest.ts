@@ -52,6 +52,7 @@ import { cftcFor, walkCftc } from "../lib/ingest/cftcWalk";
 import { eeocFor, walkEeoc } from "../lib/ingest/eeocWalk";
 import { digestFor, walkDigest } from "../lib/ingest/secDigestWalk";
 import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
+import { taaFor } from "../lib/ingest/taaFor";
 import { fdaSupplementsFor } from "../lib/ingest/fdaSupplementsFor";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { occFor } from "../lib/ingest/occFor";
@@ -133,6 +134,8 @@ export const COMPANY_SOURCES = [
   "sec_digest",
   // …and the FDA's new-drug approvals since 1985, where the applicant is the company (batch 105)
   "fda_approvals",
+  // …and the Labor Department's trade adjustment certifications of 1975–2022, where the firm is the company (batch 159)
+  "dol_taa",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
   // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
@@ -910,6 +913,17 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("fda_approvals", `FDA new-drug approvals whose applicant is ${company.name}`, () =>
     fdaApprovalsFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
+
+  /**
+   * The Labor Department's trade adjustment certifications, 1975–2022 (batch 159, the 2026-11-18
+   * proposal 1): its rulings that a named plant's or office's job losses came from foreign trade. The
+   * committed file, closed since 2022, matched by the caption rule under the names the company had that
+   * year, the release map's units of the day and its own units (`TAA_UNITS`), from its first price, one
+   * event a day. No request.
+   */
+  await run("dol_taa", `Labor Department trade adjustment certifications of ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
+    taaFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
   );
 
   /**

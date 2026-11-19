@@ -59,6 +59,7 @@ import { readOccList } from "../lib/occActions";
 import { OTS_FILE, readOtsOrders } from "../lib/otsOrders";
 import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue } from "../lib/secDigest";
 import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
+import { TAA_FILE, readTaaPetitions } from "../lib/taaPetitions";
 import { DRUGSFDA_ENTRY, DRUGSFDA_FILE, readSupplements } from "../lib/fdaSupplements";
 import { fetchLetters } from "../lib/fdaWarningLetters";
 import { readZip } from "../lib/zip";
@@ -937,6 +938,24 @@ export const CASES: LiveCase[] = [
       const { orders, records } = readOtsOrders(new Uint8Array(await res.arrayBuffer()));
       const out: string[] = [];
       if (records !== 3547 || orders.length !== 1497) out.push(`the workbook holds ${records} records and ${orders.length} institution orders, not the 3,547 and 1,497 committed: run npm run sync:ots-orders`);
+      return out;
+    },
+  },
+  {
+    name: "Labor Department trade adjustment certifications — the petition zip as `npm run sync:taa` reads it, still closed since 2022 (batch 159)",
+    covers: ["dol_taa"],
+    hosts: ["data.dol.gov"],
+    async run() {
+      // measured 2026-11-18: 86,334 petitions, 47,628 certifications, the last decided 2022-06-30; Boeing's
+      // TA-W-40,525 of 2002-03-18 certifies the Commercial Airplane Group at Seattle, 6,000 workers
+      const res = await fetch(TAA_FILE, { headers: { ...UA }, signal: AbortSignal.timeout(300_000) });
+      if (!res.ok) return [`the zip: HTTP ${res.status}`];
+      const { certifications, petitions, lastDecided } = readTaaPetitions(new Uint8Array(await res.arrayBuffer()));
+      const out: string[] = [];
+      if (petitions < 86_334 || certifications.length < 47_628) out.push(`the file holds ${petitions} petitions and ${certifications.length} certifications, fewer than the 86,334 and 47,628 of 2026-11-18`);
+      if (lastDecided > "2022-06-30") out.push(`a petition was decided on ${lastDecided}, after the program's lapse: run npm run sync:taa`);
+      const boeing = certifications.find((c) => c.petition === 40525 && c.suffix === "");
+      if (boeing?.day !== "2002-03-18" || boeing.city !== "Seattle" || boeing.workers !== 6000) out.push(`TA-W-40,525 reads ${JSON.stringify(boeing)}`);
       return out;
     },
   },

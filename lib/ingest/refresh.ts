@@ -82,6 +82,8 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   fda_approvals: 1440,
   // …and so are their later efficacy supplements (lib/fdaSupplements.ts, batch 115)
   fda_supplements: 1440,
+  // …and the Labor Department's trade adjustment certifications, closed since 2022 (lib/taaPetitions.ts, batch 159)
+  dol_taa: 1440,
   // the FRA's railroad accident reports, asked once a day for the railroads lib/railAccidents.ts maps (batch 127)
   fra_accidents: 1440,
   // MSHA's mine accidents, kept from a weekly read of its files (lib/ingest/mineWalk.ts, batch 134):

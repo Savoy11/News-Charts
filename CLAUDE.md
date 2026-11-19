@@ -152,6 +152,14 @@ join them from the archive the OCC keeps (`lib/otsOrders.ts`, batch 154), read o
 holding company is read by the caption rule or refused by docket, an order the OCC's list carries on is the
 OCC's row, and a termination is a line on the order it ended.
 
+The Labor Department's trade adjustment certifications of 1975–2022 (`lib/taaPetitions.ts`, batch 159) are one
+keyless zip read once into the committed `data/taa-certifications.json.gz` (`npm run sync:taa`; no petition is
+decided after 2022-06-30, when the program lapsed): only the codes the Federal Register lists as issued
+certifications (C, C1, C2, CU) are kept, a denial making no row. A certification is a page's by the caption rule
+on its firm under the company's names of the year, the release map's units of the day, or `TAA_UNITS`, the units
+named after it the rule does not read; a namesake is refused in `NOT_THE_COMPANY`. One row a company a day, each
+site's town, product and the Department's worker estimate given, never added up.
+
 The SEC News Digest of 1956–1993 (`lib/secDigest.ts`, batch 102) is read once, issue by issue, into
 db/040's tables (`lib/ingest/secDigestWalk.ts`), and each company's own entries are found there at
 its ingest. Its names are dated by the committed `data/digest-records.json` (`npm run
@@ -271,6 +279,7 @@ npm run sync:digest-records # rebuild data/digest-records.json from EDGAR's 1993
 npm run sync:fda-approvals  # rebuild data/fda-nme-approvals.json from the FDA's workbook (once a year, in the spring)
 npm run sync:fda-supplements # rebuild data/fda-supplements.json from openFDA's Drugs@FDA file (monthly, and after sync:fda-approvals)
 npm run sync:ots-orders     # rebuild data/ots-orders.json from the OTS archive the OCC keeps (closed: once, or if the OCC changes it)
+npm run sync:taa            # rebuild data/taa-certifications.json.gz from the Labor Department's petition zip (closed: once, or if check:live finds a later determination)
 ```
 
 The `check-*.ts` scripts in the `check` chain are offline by construction (network/fetch is

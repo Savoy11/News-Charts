@@ -60,6 +60,7 @@ import { OTS_FILE, readOtsOrders } from "../lib/otsOrders";
 import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue } from "../lib/secDigest";
 import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
 import { TAA_FILE, readTaaPetitions } from "../lib/taaPetitions";
+import { fetchNlrbPage } from "../lib/nlrbDecisions";
 import { DRUGSFDA_ENTRY, DRUGSFDA_FILE, readSupplements } from "../lib/fdaSupplements";
 import { fetchLetters } from "../lib/fdaWarningLetters";
 import { readZip } from "../lib/zip";
@@ -938,6 +939,22 @@ export const CASES: LiveCase[] = [
       const { orders, records } = readOtsOrders(new Uint8Array(await res.arrayBuffer()));
       const out: string[] = [];
       if (records !== 3547 || orders.length !== 1497) out.push(`the workbook holds ${records} records and ${orders.length} institution orders, not the 3,547 and 1,497 committed: run npm run sync:ots-orders`);
+      return out;
+    },
+  },
+  {
+    name: "NLRB Board decisions — the listing's newest page as the walk reads it, the pager naming its last (batch 161)",
+    covers: ["nlrb_decisions"],
+    hosts: ["www.nlrb.gov"],
+    async run() {
+      // measured 2026-11-18: 100 decisions a page, 667 pages (the pager's last, page 666); the newest of 2026-11-12
+      const got = await fetchNlrbPage(0);
+      if (got.outcome !== "ok") return [`page 0: ${got.outcome}${got.httpStatus ? ` (HTTP ${got.httpStatus})` : ""}${got.detail ? `: ${got.detail}` : ""}`];
+      const out: string[] = [];
+      if (got.decisions.length !== 100) out.push(`page 0 holds ${got.decisions.length} decisions, not 100`);
+      if ((got.lastPage ?? 0) < 666) out.push(`the pager's last page is ${got.lastPage}, before the 666 of 2026-11-18`);
+      if (!got.decisions.every((d) => /^\d{4}-\d{2}-\d{2}$/.test(d.day) && /\bNLRB\b/.test(d.citation) && d.caseNumber && /^[0-9a-f]{16}$/.test(d.document))) out.push(`a row did not read whole: ${JSON.stringify(got.decisions.find((d) => !/\bNLRB\b/.test(d.citation)))}`);
+      if ((got.decisions[0]?.day ?? "") < "2026-11-12") out.push(`the newest decision is of ${got.decisions[0]?.day}, older than the 2026-11-12 one`);
       return out;
     },
   },

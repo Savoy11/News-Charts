@@ -161,6 +161,16 @@ on its firm under the company's names of the year, the release map's units of th
 with its `to` and its buyer's `from` read from a filing; a namesake is refused in `NOT_THE_COMPANY`. One row a company a day, each
 site's town, product and the Department's worker estimate given, never added up.
 
+The NLRB's Board decisions since 1935 (`lib/nlrbDecisions.ts`, batch 161) are its decision listing, read whole
+once a year and its newest page daily (`lib/ingest/nlrbWalk.ts`, db/054), the whole read begun only in the NLRB's
+night window for bulk reads, 11 pm to 6 am Eastern, by its policy (`inNightWindow`); until that read an answer is
+never complete. The case number gives the kind: a case against the employer (CA, C) or an election or unit question
+at it (RC, RD, RM, R, RE, UA, UC, UD, AC); a case against a union makes no row. A decision is a page's by EPA's form of
+the caption rule (`epaParty`, its "d/b/a" read by `respondents`) under the company's names of the year, the release
+map's and the EEOC's units, EPA's and the CPSC's `UNITS` on their days, or `NLRB_UNITS`; a namesake is refused in
+`NOT_THE_COMPANY`. One row a company a day, its id the decisions' documents; the listing gives no ruling, and the row
+says so.
+
 The SEC News Digest of 1956–1993 (`lib/secDigest.ts`, batch 102) is read once, issue by issue, into
 db/040's tables (`lib/ingest/secDigestWalk.ts`), and each company's own entries are found there at
 its ingest. Its names are dated by the committed `data/digest-records.json` (`npm run
@@ -188,16 +198,16 @@ run, and only Class I and II become rows. The map's days for the units bought an
 it: the file gives a bought unit's own past under its later name ("Boston Scientific CRM Corp" for Guidant's
 2005 recalls), so every such unit carries the day its owner took it.
 
-A row of one of the nine multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
-CFTC, the EEOC, batch 155) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
+A row of one of the ten multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
+CFTC, the EEOC, batch 155, the NLRB, batch 161) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
 and 25 more" (`lib/alsoOn.ts`, batch 106). A case is the same source's same number, compared as a set
 for a grouped row (db/041's index, with no pending list since db/042, batch 111: a GIN index's queue made
 every lookup read it); a release held once on several pages counts too. A page's links are found by
 db/042's `event_subjects (subject_id)` index; the key begins with the event. It is read
 beside `loadEvents` and never breaks a page; adding a multi-party source means adding it to
 `ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and the index's list, in a new migration that builds it again (db/053
-added the EEOC's), which check:also-on holds together. A row
-whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months) is stored again
+added the EEOC's, db/054 the NLRB's), which check:also-on holds together. A row
+whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the NLRB's days) is stored again
 when its list grows, so its versions count once in "· N sources" (`GROUPED_ROW_SOURCES` in
 `lib/corroboration.ts`, batch 107); a new source that joins numbers goes there too, and check:also-on
 finds one that does not.

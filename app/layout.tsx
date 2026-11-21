@@ -110,7 +110,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Commodity Futures Trading Commission, press releases from the U.S. Equal Employment
               Opportunity Commission, enforcement actions from the Office of the Comptroller of
               the Currency, with the Office of Thrift Supervision&apos;s of 1989–2011 from its archive,
-              and trade adjustment certifications from the U.S. Department of Labor.
+              trade adjustment certifications from the U.S. Department of Labor, and decisions from the
+              National Labor Relations Board.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

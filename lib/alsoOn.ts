@@ -19,14 +19,15 @@ import type { SourceKey, TimelineEvent } from "./types";
  */
 
 /** The sources whose one case names several companies, each attesting it by the case's own number. */
-export const ALSO_ON_SOURCES: readonly SourceKey[] = ["doj_press", "sec_press", "sec_cases", "fed_press", "cfpb", "epa_cases", "cpsc_recalls", "cftc", "eeoc_press"];
+export const ALSO_ON_SOURCES: readonly SourceKey[] = ["doj_press", "sec_press", "sec_cases", "fed_press", "cfpb", "epa_cases", "cpsc_recalls", "cftc", "eeoc_press", "nlrb_decisions"];
 
 /**
  * Their ids in `sources` (lib/ingest/store.ts `SOURCES`), written out so the read path needs no
- * ingest code; db/041's partial index lists the same (db/053 adds the EEOC's, batch 155), and check:also-on
+ * ingest code; db/041's partial index lists the same (db/053 adds the EEOC's, batch 155; db/054 the NLRB's,
+ * batch 161), and check:also-on
  * holds the three together.
  */
-export const ALSO_ON_SOURCE_IDS: readonly number[] = [23, 27, 28, 29, 30, 31, 32, 33, 41];
+export const ALSO_ON_SOURCE_IDS: readonly number[] = [23, 27, 28, 29, 30, 31, 32, 33, 41, 44];
 
 /** How many other companies a row names before "and N more". */
 export const ALSO_ON_SHOWN = 3;

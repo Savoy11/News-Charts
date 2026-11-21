@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import { respondents } from "./cfpb";
+import { UNITS as CPSC_UNITS } from "./cpscRecalls";
+import { BRANDED_SITE, UNITS as EPA_UNITS } from "./epaCases";
 import { andSpellings } from "./edgarName";
 import { captionParty } from "./secCases";
 import { takenBefore } from "./takenNames";
@@ -33,7 +35,8 @@ import { decodeText, eachCsvRow, readZip, zipEntryNames } from "./zip";
  *
  * A certification is the company's by the caption rule on its firm (`captionParty`, as EPA's and the
  * CPSC's parties are read), under the company's names of the year and the release map's units of the
- * day, by the units named after it that the rule does not read (`TAA_UNITS`), never by a name a
+ * day, by EPA's and the CPSC's units on their days (batch 160), by the units named after it that the rule
+ * does not read (`TAA_UNITS`), never by a name a
  * namesake shares (`NOT_THE_COMPANY`) or one its record took from another company before the day
  * (lib/takenNames.ts), and from its first price. A company's certifications of a day are one row.
  *
@@ -151,8 +154,11 @@ export function taaCertifications(path = TAA_DATA): readonly TaaCertification[] 
 
 /**
  * Worker groups of a company the caption rule does not read, by CIK: its units named after it, read
- * by hand from the file (batch 159). Each is the company's from `from` to `to`, its days; a unit with
- * neither was the company's for every certification the file gives it.
+ * by hand from the file (batches 159 and 160). The Department names the workers' employer as it was on
+ * the day it ruled, so a unit named after its owner is the owner's on its certifications' days, unless the
+ * owner had sold it with its name kept: such a unit carries `to`, and its buyer's entry `from`, each day
+ * read from a filing. A unit with neither was the company's for every certification the file gives it; the
+ * file is closed, so none can come later. EPA's and the CPSC's units are read as well (`taaIsCompany`).
  */
 export const TAA_UNITS: Readonly<Record<number, { ticker: string; firm: RegExp; from?: string; to?: string; why: string }[]>> = {
   103379: [
@@ -160,6 +166,113 @@ export const TAA_UNITS: Readonly<Record<number, { ticker: string; firm: RegExp; 
       ticker: "VFC",
       firm: /^VF (?:Jeanswear|Knitwear|Imagewear)\b/i,
       why: "VF's own apparel companies, named after it: 77 certifications of 1998-02-06 to 2014-11-18, all before VF Jeanswear left with Kontoor Brands in 2019",
+    },
+  ],
+  // batch 160: the units named after their owners the rule does not read, found by a scan of every
+  // company's certifications whose firm begins with its name
+  1467858: [
+    {
+      ticker: "GM",
+      firm: /^General Motors\b/i,
+      why: "new GM's own plants and companies (\"General Motors Lordstown Complex\", \"General Motors Components Holdings, LLC\"): 21 refused by the caption rule, 2008–2021; those before GM's first price of 2010-11-18, old GM's, stay off by it",
+    },
+  ],
+  40545: [
+    {
+      ticker: "GE",
+      firm: /^General Electric\b/i,
+      why: "GE's own divisions and plants written as firms (\"General Electric Lighting\", \"General Electric Dothan Motor Plant\"): 40 refused by the caption rule, 1987-06-03 to 2018-06-15; the file's last GE-named certification is of 2018-09-28 (GE Transportation, Erie), and none is of a GE business sold with its name",
+    },
+  ],
+  106535: [
+    {
+      ticker: "WY",
+      firm: /^Weyerhaeuser\b/i,
+      why: "Weyerhaeuser's own mills and its operating company, Weyerhaeuser NR Company: 36 refused by the caption rule, 1992–2019",
+    },
+  ],
+  1770450: [
+    {
+      ticker: "XRX",
+      firm: /^Xerox\b/i,
+      to: "2016-12-30",
+      why: "Xerox's units, the business-process companies it bought as ACS among them (\"Xerox Commercial Solutions, LLC\", \"Xerox Business Services\"), to the separation of Conduent: \"On December 31, 2016, Xerox Corporation … completed the complete legal and structural separation of its wholly owned subsidiary, Conduent Incorporated\" (Xerox's 8-K filed 2017-01-06, 0001193125-17-003219); \"Xerox Business Services\" of 2018-09-18 is no longer Xerox's by name",
+    },
+  ],
+  1243429: [
+    {
+      ticker: "MT",
+      firm: /^Arcelor ?Mittal\b/i,
+      to: "2020-12-08",
+      why: "ArcelorMittal's US mills and companies (\"ArcelorMittal Plate LLC\", \"ArcelorMittal USA Inc.\"), to Cleveland-Cliffs' purchase of ArcelorMittal USA: \"On December 9, 2020, pursuant to the terms of the Transaction Agreement\" (Cleveland-Cliffs' 8-K filed 2020-12-09, 0000764065-20-000235)",
+    },
+  ],
+  764065: [
+    {
+      ticker: "CLF",
+      firm: /^ArcelorMittal USA\b/i,
+      from: "2020-12-09",
+      why: "ArcelorMittal USA, Cleveland-Cliffs' from the closing of 2020-12-09 (its 8-K filed that day, 0000764065-20-000235): Indiana Harbor's certification of 2020-12-15",
+    },
+  ],
+  91142: [
+    {
+      ticker: "AOS",
+      firm: /^A\.?\s?O\.?\s*Smith\s+Electrical\b/i,
+      to: "2011-08-21",
+      why: "A. O. Smith's electrical products business, written \"A.O. Smith Electrical\" (1987–2002), to its sale to Regal Beloit, the day the CPSC's units read from A. O. Smith's 8-K (lib/cpscRecalls.ts, batch 145)",
+    },
+    { ticker: "AOS", firm: /^A\.?\s?O\.?\s*Smith\s+Water\b/i, why: "A. O. Smith's water heater business, its own (1988)" },
+  ],
+  1571996: [
+    {
+      ticker: "DELL",
+      firm: /^Dell (?:Products|USA|Marketing|Financial Services)\b/i,
+      why: "Dell's operating companies, named after it; those before DELL's first price, old Dell Inc.'s, stay off by it",
+    },
+  ],
+  72971: [
+    {
+      ticker: "WFC",
+      firm: /^Wells Fargo\b/i,
+      why: "Wells Fargo's bank and its divisions (\"Wells Fargo Bank NA\", \"Wells Fargo Home Lending\"): 19 of 2017–2020; a Wells Fargo name before Norwest's record took it on 1998-11-02 stays off by the table of taken names",
+    },
+  ],
+  93751: [{ ticker: "STT", firm: /^State Street (?:Bank|Cororation)\b/i, why: "State Street Bank & Trust Co., its bank, and one certification of 2012 writing \"State Street Cororation\"" }],
+  820313: [{ ticker: "APH", firm: /^Amphenol\b/i, why: "Amphenol's own companies (\"Amphenol TCS\", \"Amphenol Backplane Systems\"), 2003–2022" }],
+  1037868: [{ ticker: "AME", firm: /^Ametek\b/i, why: "Ametek's own divisions (\"Ametek, U.S. Gauge Division\", \"AMETEK Instrumentation Systems\"), 1993–2020" }],
+  18230: [{ ticker: "CAT", firm: /^Caterpillar\b/i, why: "Caterpillar's own companies (\"Caterpillar Precision Seals\", \"Caterpillar Work Tools Inc.\"), 1988–2018" }],
+  46080: [{ ticker: "HAS", firm: /^Hasbro\b/i, why: "Hasbro's own groups (\"Hasbro Toy Group\", \"Hasbro Games Group\"), 1995–1999" }],
+  93410: [
+    {
+      ticker: "CVX",
+      firm: /^Chevron (?:E(?:xploration)?\s*(?:And|&)\s*P|Exploration|Geosciences|Oil Field|Info\.? Technology)\b/i,
+      why: "Chevron's own exploration, oil-field and information-technology companies, 1989–2000, which EPA's units do not name",
+    },
+  ],
+  37996: [{ ticker: "F", firm: /^Ford Motors Company\b|^FORD MOTOR COMPANY C$/i, why: "Ford Motor Company as two certifications misspell it (1987, 2006)" }],
+  48898: [{ ticker: "HUBB", firm: /^Hubbell\b/i, why: "Hubbell's own companies (\"Hubbell Power Systems, Inc.\", \"Hubbell Lighting, Inc.\"), 1994–2021" }],
+  908255: [
+    {
+      ticker: "BWA",
+      firm: /^Borg ?Warner (?:Morse|Diversified)\b/i,
+      why: "BorgWarner's own Morse TEC and Diversified Transmission Products companies; Borg-Warner Automotive, the company's own former name, is read from EDGAR at ingest",
+    },
+  ],
+  1111335: [{ ticker: "VC", firm: /^Visteon\b/i, why: "Visteon's own operating companies (\"Visteon Systems LLC\"), 2001–2009; those before VC's first price stay off by it" }],
+  1467373: [{ ticker: "ACN", firm: /^Accenture,? LLP\b/i, why: "Accenture LLP, Accenture's own US firm, 2006–2020" }],
+  1320461: [
+    {
+      ticker: "CPS",
+      firm: /^Cooper[- ]Standard Automotive\b/i,
+      why: "Cooper-Standard Automotive, the company's operating company; those before CPS's first price, Cooper Tire's until its sale of 2004, stay off by it",
+    },
+  ],
+  2115436: [
+    {
+      ticker: "XOM",
+      firm: /^Exxon,? (?:Co\.?|Company)\b|^Exxon Upstream\b/i,
+      why: "Exxon's own Exxon Company, U.S.A. and Exxon Company, International as the file spells them, 1987–1995, which EPA's units do not read",
     },
   ],
   1341439: [
@@ -194,6 +307,13 @@ export function taaIsCompany(
   // a name the record took from another company is that company's before the day (lib/takenNames.ts)
   if (takenBefore(cik, c.day, c.firm)) return false;
   if (TAA_UNITS[cik]?.some((u) => u.firm.test(c.firm) && (!u.from || c.day >= u.from) && (!u.to || c.day <= u.to))) return true;
+  // …and the units EPA's and the CPSC's rules read under their own names, on the days their filings give
+  // (lib/epaCases.ts and lib/cpscRecalls.ts `UNITS`; batch 160), as a unit read for one map is read for
+  // another (batch 150): Chevron U.S.A., Shell Oil, Exxon Company USA. A branded site is no brand's unit.
+  const firm = c.firm.trim();
+  const within = (u: { from?: string; to?: string }) => c.day >= (u.from ?? "") && (!u.to || c.day <= u.to);
+  if (EPA_UNITS[cik]?.some((u) => within(u) && u.defendant.test(firm) && !(u.branded && BRANDED_SITE.test(firm)))) return true;
+  if (CPSC_UNITS[cik]?.some((u) => within(u) && u.firm.test(firm))) return true;
   const held = names();
   const letters = alnum(c.firm);
   if (!held.flatMap(andSpellings).some((n) => alnum(n).length >= 2 && letters.includes(alnum(n)))) return false;

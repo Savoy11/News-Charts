@@ -1143,9 +1143,16 @@ denials: "All workers engaged in the production of bearing caps are denied eligi
 
 A certification is a company's by the caption rule on its firm, under the company's names of the year and
 the release map's units of the day (RTX's Hamilton Sundstrand, Carrier and Pratt & Whitney; Berkshire's
-Johns Manville; PepsiCo's Frito-Lay), by the units named after it that the rule does not read (`TAA_UNITS`:
-VF Jeanswear, VF Knitwear and VF Imagewear on VF; Oracle America, the name Oracle gave Sun Microsystems, on
-Oracle), never by a namesake (`NOT_THE_COMPANY`: Coupled Products, a business Dana sold, written "Formerly
+Johns Manville; PepsiCo's Frito-Lay); by the units EPA's and the CPSC's rules read under their own names, on
+the days their filings give (batch 160: Halliburton's services and logging companies, Chevron U.S.A., Verizon
+Data Services, Exxon Company USA, AlliedSignal on Honeywell, Sunoco, Inc. on Energy Transfer from 2012); by
+the units named after it that the rule does not read (`TAA_UNITS`: VF's apparel companies; Oracle America,
+the name Oracle gave Sun Microsystems; and batch 160's scan of every company's certifications whose firm
+begins with its name: GE's divisions written as firms, GM's plants, Weyerhaeuser NR Company, Dell's
+operating companies, Wells Fargo's bank, State Street's, Amphenol's, Ametek's, Caterpillar's, Hasbro's,
+Hubbell's, Visteon's, Accenture LLP; Xerox's units to the separation of Conduent, 2016-12-31 by Xerox's 8-K;
+ArcelorMittal's US mills to Cleveland-Cliffs' purchase, 2020-12-09 by its 8-K, and Cleveland-Cliffs' from
+then); never by a namesake (`NOT_THE_COMPANY`: Coupled Products, a business Dana sold, written "Formerly
 known as Dana Corporation"), nor by a name its record took from another company before the day (Johnson
 Controls, Inc.'s certifications before 2016-09-02 stay off JCI, Tyco's record), and from its first price
 (343 of General Motors Corp.'s 350 fall before GM's first price of 2010-11-18). Hewlett-Packard's reach HP
@@ -1154,11 +1161,12 @@ certifications of a day are one row: "Labor Department certified workers at 13 s
 trade adjustment assistance", four sites listed with their towns, products, worker estimates and petition
 numbers and the rest named, the estimates never added up. From 1994 the row links the Federal Register's
 search for the petition's number, where its notice is; an earlier one gives the number alone. Read by hand:
-30 company days drawn at random, every one the company's own plant, office or unit.
+30 company days drawn at random in batch 159 and 30 of those batch 160 added, every one the company's own
+plant, office or unit.
 
-Against every company in the index, before first prices: 2,684 company days on 470 companies; from first
-prices, 1,276 on 178 pages, 1,052 before 2017, 1,887 certifications (GE 101, IBM 86, Honeywell 45, Ford 40,
-Weyerhaeuser 36, International Paper 34, Goodyear 31, Xerox 26, RTX 25, Boeing 24). The Department's terms
+Against every company in the index, before first prices: 3,307 company days on 492 companies; from first
+prices, 1,729 on 193 pages, 1,441 before 2017, 2,824 certifications (GE 146, Honeywell 95, IBM 86,
+Weyerhaeuser 66, RTX 51, Ford 42, Goodyear 34, International Paper 34, Halliburton 33, Xerox 33). The Department's terms
 (read 2026-11-10 for MSHA): "Materials created by the federal government are generally part of the public
 domain and may be used, reproduced and distributed without permission"; credited to the U.S. Department of
 Labor, implying no affiliation or endorsement.

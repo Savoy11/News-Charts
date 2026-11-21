@@ -36,6 +36,8 @@ import {
   taaEvents,
   type TaaCertification,
 } from "../lib/taaPetitions";
+import { UNITS as CPSC_UNITS } from "../lib/cpscRecalls";
+import { UNITS as EPA_UNITS } from "../lib/epaCases";
 import { COMPANY_SOURCES } from "./ingest";
 
 let pass = 0;
@@ -54,15 +56,17 @@ const EXPECTED = {
   certifications: 47_628,
   byCode: { C: 23_767, C1: 8_539, C2: 13_338, CU: 1_984, D: 31_130, T: 6_854, P: 515, CD: 179 },
   lastDecided: "2022-06-30",
-  // every listed company in the index, under the rule, its names as the replay below builds them
-  total: 2_684,
-  companies: 470,
+  // every listed company in the index, under the rule, its names as the replay below builds them; batch
+  // 159 gave 2,684 on 470, and 1,276 on 178 pages, 1,052 before 2017, 1,887 certifications, from first prices,
+  // before batch 160 read EPA's and the CPSC's units and the units named after their owners
+  total: 3_307,
+  companies: 492,
   // from first prices, for the 954 companies the fixtures read
-  fromFirst: 1_276,
-  fromFirstPages: 178,
-  fromFirst2017: 1_052,
-  fromFirstCertifications: 1_887,
-  top: "GE 101, IBM 86, HON 45, F 40, WY 36, IP 34, GT 31, XRX 26, RTX 25, BA 24",
+  fromFirst: 1_729,
+  fromFirstPages: 193,
+  fromFirst2017: 1_441,
+  fromFirstCertifications: 2_824,
+  top: "GE 146, HON 95, IBM 86, WY 66, RTX 51, F 42, GT 34, IP 34, HAL 33, XRX 33",
 };
 
 const companies = (tickerIndex as unknown as { companies: [number, string, string][] }).companies;
@@ -128,7 +132,7 @@ async function main(): Promise<void> {
     !jci.some((e) => e.date === "2007-01-25") && /2 sites of Johnson Controls, Inc\./.test(jci.find((e) => e.date === "2016-09-14")?.title ?? ""), jci.map((e) => e.date).slice(-3));
   const gm = on(1467858, "2010-11-18");
   check("General Motors Corp.'s certifications before GM's first price of 2010-11-18 stay off GM; General Motors Company's of 2014-10-08 (TA-W-85,510, Marion Metal Center) lands",
-    gm.every((e) => e.date >= "2010-11-18") && gm.length === 7 && /Marion Metal Center/.test(gm.find((e) => e.date === "2014-10-08")?.title ?? "") && on(1467858).length === 97,
+    gm.every((e) => e.date >= "2010-11-18") && gm.length === 18 && /Marion Metal Center/.test(gm.find((e) => e.date === "2014-10-08")?.title ?? "") && on(1467858).filter((e) => e.date < "2010-11-18").length > 80,
     gm.map((e) => e.date));
   const dana = on(26780);
   const danaUnguarded = taaEvents(certs.filter((c) => c.petition === 64187), namesOf(26780), { cik: 26780 });
@@ -144,6 +148,28 @@ async function main(): Promise<void> {
   check("Oracle America, the name Oracle gave Sun Microsystems, is Oracle's: eight days of 2010–2022; Oracle Lens Manufacturing of Warwick, R.I., a namesake, is not",
     oracle.length === 8 && !oracle.some((e) => e.date === "2009-08-24") && oracle.every((e) => /Oracle America/.test(e.title)) && TAA_UNITS[1341439][0].firm.test("Oracle Lens Manufacturing") === false,
     oracle.map((e) => e.date));
+  console.log("\nUnits named after their owners, and EPA's and the CPSC's (batch 160)");
+  check("GM's own plants after its first price, which the caption rule refuses (\"General Motors Lordstown Complex\", 2019-03-22), are GM's (`TAA_UNITS`)",
+    /General Motors Lordstown Complex/.test(gm.find((e) => e.date === "2019-03-22")?.title ?? "") && /General Motors Components Holdings/.test(gm.find((e) => e.date === "2011-02-22")?.title ?? ""));
+  const ge = on(40545, "1970-01-02");
+  check("  …GE's divisions written as firms (\"GENERAL ELECTRIC CO. O\", 1987; \"General Electric Transportation\", 2018-06-15), Weyerhaeuser NR Company (2009-05-08), State Street's bank (2020-09-13)",
+    ge.some((e) => e.date === "1987-06-03") && /General Electric Transportation/.test(ge.find((e) => e.date === "2018-06-15")?.title ?? "") &&
+      /Weyerhaeuser NR Company/.test(on(106535).find((e) => e.date === "2009-05-08")?.title ?? "") && /19 sites of State Street Bank & Trust Co\./.test(on(93751).find((e) => e.date === "2020-09-13")?.title ?? ""),
+    ge.length);
+  const xrx = on(1770450, "1962-01-02");
+  check("  …Xerox's units to the separation of Conduent, \"On December 31, 2016\" by its 8-K: six sites of Xerox Business Services on 2016-12-09 land, the one of 2018-09-18 does not",
+    /6 sites of Xerox Business Services/.test(xrx.find((e) => e.date === "2016-12-09")?.title ?? "") && !xrx.some((e) => e.date === "2018-09-18") && TAA_UNITS[1770450][0].to === "2016-12-30");
+  const mt = on(1243429);
+  const clf = on(764065);
+  check("  …ArcelorMittal's US mills are ArcelorMittal's to 2020-12-08, and Indiana Harbor's certification of 2020-12-15, after Cleveland-Cliffs' closing of 2020-12-09, is Cleveland-Cliffs'",
+    mt.some((e) => e.date === "2018-11-01") && !mt.some((e) => e.date === "2020-12-15") && /ArcelorMittal USA Indiana Harbor/.test(clf.find((e) => e.date === "2020-12-15")?.title ?? ""),
+    { mt: mt.length, clf: clf.map((e) => e.date) });
+  check("  …A. O. Smith Electrical, as the file writes it (1987–2002), to its sale of 2011, the CPSC's day",
+    ["1987-09-01", "1988-10-03", "1989-08-15", "1990-01-09", "1992-03-24", "1997-02-21", "2000-09-19", "2000-11-22", "2001-02-05", "2002-01-28", "2002-08-29"].every((d) => on(91142).some((e) => e.date === d)) &&
+      TAA_UNITS[91142][0].to === "2011-08-21");
+  check("  …and EPA's units on their days: Chevron Chemical on CVX in 1992 (to 2000-06-30), Sunoco, Inc. on Energy Transfer from 2012-10-05, not before",
+    /CHEVRON CHEMICAL CO/.test(on(93410).find((e) => e.date === "1992-02-07")?.title ?? "") &&
+      /3 sites of Sunoco, Inc\./.test(on(1276187).find((e) => e.date === "2013-03-28")?.title ?? "") && !on(1276187).some((e) => e.date < "2012-10-05" && /Sunoco/.test(e.title)));
   const hpFormer = (year: number) => (year <= 2015 ? ["HEWLETT PACKARD CO"] : []);
   const hp = on(47217, "1962-01-02", hpFormer);
   check("Hewlett-Packard's certifications reach HP Inc.'s record under its former name, read by ingest from EDGAR, while it bore it: TA-W-85,726 of 2015-03-02 lands, Hewlett Packard Company's of 2016 do not",
@@ -171,8 +197,9 @@ async function main(): Promise<void> {
     seen.add(cik);
     // a cheap first pass over the company's names in any year and its units on any day; the rule itself decides
     const pre = [...new Set([...namesOf(cik)(2026), ...unitYears.flatMap((d) => releaseNamesOn(cik, d))].flatMap(andSpellings).map(alnum).filter((n) => n.length >= 3))];
-    const units = TAA_UNITS[cik] ?? [];
-    const mine = certs.filter((c, j) => pre.some((p) => letters[j].includes(p)) || units.some((u) => u.firm.test(c.firm)));
+    // …and the units the rule reads by pattern: its own, and EPA's and the CPSC's (batch 160)
+    const units = [...(TAA_UNITS[cik] ?? []).map((u) => u.firm), ...(EPA_UNITS[cik] ?? []).map((u) => u.defendant), ...(CPSC_UNITS[cik] ?? []).map((u) => u.firm)];
+    const mine = certs.filter((c, j) => pre.some((p) => letters[j].includes(p)) || units.some((u) => u.test(c.firm.trim())));
     if (!mine.length) continue;
     for (const e of taaEvents(mine, namesOf(cik), { cik, namesOn: (d) => releaseNamesOn(cik, d) })) {
       rows.push({ ticker, date: e.date, first: first[ticker] ?? null, sites: (e.description?.match(/TA-W-/g) ?? []).length });

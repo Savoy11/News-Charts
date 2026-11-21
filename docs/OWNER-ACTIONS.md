@@ -226,9 +226,11 @@ Raised by the November batches, each recorded in the master checklist:
   (`data/taa-certifications.json.gz`) is read at ingest, and `npm run sync:taa` rebuilds it only if `check:live`
   finds a determination after 2022-06-30. #2 is built in batch 161: after deploying, apply db/054 (`npm run
   db:migrate`), which adds its two tables and builds the "Also on" index again with its rows. Nothing else: no key.
-  The first ingest run between 11 pm and 6 am Eastern reads the Board's whole listing once (667 pages, about 15
-  minutes, the NLRB's bulk-data policy asking for those hours), then each run its newest page; until that night
-  read a company's decisions are the newest pages' alone.
+  The first ingest run between 11 pm and 6 am Eastern reads the Board's whole listing once (667 pages, the NLRB's
+  bulk-data policy asking for those hours), then each run its newest page; until that night read a company's
+  decisions are the newest pages' alone. **Batch 162:** apply db/055 too (`npm run db:migrate`), which lets that
+  read go across runs and nights: on 2026-11-21 the site's firewall refused the first night read at page 340 of 667,
+  so the whole listing takes two nights or more, at most 300 pages a run, 3 s apart.
   1. `P1` the Labor Department's trade adjustment certifications, 1975–2022: job losses at the company's named
      plant or office ruled tied to imports or a shift abroad. Measured on the whole file: 2,121 certifications,
      1,292 company-days on 179 pages from first prices, 1,063 before 2017 (Ford 210, IBM 180, GE 112, Boeing 85).

@@ -1185,10 +1185,19 @@ citation ("375 NLRB No. 68", a slip opinion; "1 NLRB 519", a bound volume), its 
 decision on apps.nlrb.gov, and its case number. Its whole is read once a year and its newest page once a day,
 for every company at once, into db/054's tables. The NLRB's site policies ask that "bulk data extractions be
 scheduled for non-peak hours (between 11pm EST – 6am EST)" and no more than 5 concurrent requests or 20 per 200
-ms: the whole read is begun only in that window with 45 minutes left in it (`inNightWindow`), one page at a
-time 1.3 s apart, about 15 minutes; outside it a run reads the newest page instead, or nothing before the
-first whole read, and until that read a company's answer is the newest pages' alone and never complete. A
-read is kept only when every page it asked answered, every page but the last holding 100.
+ms: the whole read is asked only in that window with 45 minutes left in it (`inNightWindow`), one page at a
+time 3 s apart; outside it a run reads the newest page instead, or nothing before the first whole read, and
+until that read a company's answer is the newest pages' alone and never complete.
+
+The whole read goes across runs and nights (batch 162, db/055). The first night read, 2026-11-21, was refused by
+the site's firewall at page 340, after 21 minutes at one page every 3.7 s: it answered "Request Rejected" with
+HTTP 200, so a read that had to finish in one go would have been refused at the same page every night. Each
+page is now kept as it comes, the progress row holds the next page, and a run reads at most 300; the firewall's
+page is read as a refusal (`REJECTED`), which ends the whole reading until the next night; the next run resumes
+a page before where the last stopped, as the listing, newest first, only grows at its head, so a page read
+again overlaps and none is skipped; a read begun over 14 days ago begins again. Every page but the last holds 100
+rows, dated or not (page 336 held 11 the listing gives no day, which make no row), or the listing is cut. The
+listing is complete, and a company's answer with it, only when the last page has been read.
 
 The kind is the case number's: CA, and C before 1948, is a case against the employer; RC, RD, RM, R and RE
 before 1948, UA (the union-shop polls of 1947–1951), UC, UD and AC are an election or a unit question at it. A
@@ -1198,21 +1207,37 @@ its caption names ("UFCW, Local 700 (Kroger)"). A decision is the company's by E
 no "Light Co."), its "d/b/a" read as a party, under the company's names of the year, the release map's and the
 EEOC's units of the day, EPA's and the CPSC's units on their days (Appalachian Power on AEP, Exxon Pipeline on
 Exxon Mobil, Fred Meyer on Kroger, Frito-Lay on PepsiCo) and its own units (`NLRB_UNITS`: Amazon.com
-Services, Home Depot U.S.A., Walt Disney Parks and Resorts, FedEx's operating companies, Lockheed Martin's and
-PPG's companies, CHS Community Health Systems, GE's divisions); never a namesake (`NOT_THE_COMPANY`: National
+Services, Home Depot U.S.A., Walt Disney Parks and Resorts and Walt Disney World, FedEx's operating companies,
+Lockheed Martin's and PPG's companies, CHS Community Health Systems, GE's divisions; batch 162 read 35 more companies' from
+the night read's captions that begin with a company's name: T-Mobile USA from the MetroPCS combination of
+2013-04-30, McDonald's USA, the joint employer of 2015–2019 and never a franchisee, Fluor Daniel, Exxon's
+companies, Caterpillar Tractor, La-Z-Boy's plants, McKesson Drug, Aramark's companies and Aramark Uniform to the
+Vestis spin-off of 2023-09-30, Comcast Cablevision, Harley-Davidson, Allstate Insurance, Pepsi-Cola Co., Crown
+Cork & Seal, Matson Terminals, RadNet Management, Starbucks Coffee, Macy's East and West, MasTec, Jones Lang
+LaSalle Americas, Lamar Advertising, Brink's, Manitowoc Ice to the Welbilt spin-off of 2016-03-04, Waste
+Management de Puerto Rico, Cognizant's US company, Snap-on, Brinker's payroll company, Nexstar, Constellium,
+Curaleaf, Portillo's, Loomis, U-Haul, Ball's plastics division, Dover's Blackmer pumps, and FedEx Freight on FedEx to its spin-off of 2026-06-01 and on FedEx
+Freight Holding from then, each day read from the company's 8-K); never a namesake (`NOT_THE_COMPANY`: National
 Steel Corp., the American steelmaker, is not Companhia Siderúrgica Nacional; "Shell Co." of 1994, the Puerto
-Rico company, is not Shell plc, whose companies are its own only from 2005-07-20), nor a name its record took
+Rico company, is not Shell plc, whose companies are its own only from 2005-07-20; batch 162's Florida Power &
+Light Credit Union, "Team Company d/b/a StaffQuick", a Memphis "Value Line Co.", The Reece Corp., a Papa John's
+franchisee and a Nebraska "Commonwealth Electric Company of the Midwest"), nor a name its record took
 from another company before the day; from its first price. A day the listing gives before the Act's
 (1935-07-05, "02/14/1919") is misdated and makes no row. A company's decisions of a day are one row, each with
 its citation, caption, case number and kind ("2 NLRB decisions: Starbucks Corporation"), its id the decisions'
 documents, so a joint employers' decision is "Also on" the other's page. The listing writes some older
 captions' "&" twice over ("Santa Fe Hotel &amp;amp; Casino"), read as one.
 
-**Measured on a sample,** the scout's 24 pages of 2026-11-18 (2,345 decisions, every 33rd page): 1,332 cases
-against employers, 811 representation cases, 202 that make no row; against every company in the index, 87
-company days on 54 companies before first prices, and from first prices, for the companies whose first price
-the fixtures carry, 39 on 23 (Kroger 7, GE 4, Entergy 3). The whole listing's counts come from its first whole
-read, in the night window. The NLRB's site policies state no licence or copyright terms; the decisions are a
+**Measured on the night read,** pages 0 to 339 of 2026-11-21, every decision of 1969-09-16 to 2026-11-19 (33,989
+dated, 34,000 rows; 24,602 cases against employers, 4,563 representation cases, 4,824 that make no row):
+against every company in the index, with the EDGAR former names ingest reads (Wal-Mart Stores, Inc., Walmart's
+to 2018), 1,159 company days on 283 companies before first prices; from the first prices the fixtures carry,
+568 on 123 pages, 496 before 2017 (Kroger 33, GE 28, RTX 25, Walmart 22, Exxon 19, Boeing 17, AEP 14, Caterpillar
+14). Read by hand: those 568, and the rows since 1985 of the companies whose first price is not read here; six
+namesakes found and refused. Pages 340 to 666, the decisions of 1935 to 1969, are read the next night. The scout's
+24-page sample of 2026-11-18 gives 96 company days on 60 companies, 41 on 25 from first prices.
+
+The NLRB's site policies state no licence or copyright terms; the decisions are a
 federal agency's own work (17 U.S.C. § 105), used under the owner's ruling of 2026-11-12 and credited to the
 National Labor Relations Board. The site's own disclaimer, "the information available on this web site may not
 reflect official positions of the NLRB", is quoted where the source is registered.
@@ -1937,7 +1962,7 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | Federal Railroad Administration | Railroad accidents since 1975 a company's railroad reported, with a death, an evacuation or $5,000,000 of damage | Form 54 on the Transportation Department's open-data host, one request a day for each of the six railroad companies `lib/railAccidents.ts` maps by hand, each railroad between its owner's days, from the company's first price; a highway-rail crossing collision only with an evacuation or that damage. Public domain; no key |
 | Office of the Comptroller of the Currency | The national banks' own regulator's orders since 1987 against the company's bank — civil money penalties, cease-and-desist orders, restitution, formal agreements — each with its amount, subject matters and the day it ended; and the Office of Thrift Supervision's orders of 1989–2011 against its thrift or thrift holding company, from the archive the OCC keeps | The search page's own API, every institution action in one keyless answer, read once a process for every company (`lib/ingest/occFor.ts`), and the OTS archive's workbook, read once and committed (`npm run sync:ots-orders`, `lib/otsOrders.ts`); kept by the caption rule, the release map and the OCC's own spellings of the banks by charter (`OCC_BANKS`, `lib/occActions.ts`). The OCC's and the OTS's own work (17 U.S.C. § 105), credited to the OCC; no key |
 | U.S. Department of Labor (trade adjustment assistance) | The Department's certifications of 1975–2022 that a named plant's or office's job losses came from foreign trade — Ford's assembly plants of 1980, Boeing's Commercial Airplane Group of 2002, IBM's services moved offshore after 2009 — each site with its town, product and worker estimate, a day's one row | One keyless zip on data.dol.gov, read once and committed (`npm run sync:taa`, `lib/taaPetitions.ts`), no petition being decided after the program lapsed in 2022; kept by the caption rule, the release map and the units named after the company (`TAA_UNITS`), certifications only. The Department's terms: public domain, credited to the U.S. Department of Labor; no key |
-| National Labor Relations Board | The Board's decisions since 1935 in the company's own unfair labor practice cases and in elections or unit questions at it — Tesla's of 2026, Kroger's Fred Meyer and Ralphs, Starbucks' elections — a day's one row, saying the listing gives no ruling and linking the decision | The Board's decision listing, 667 pages, read whole once a year in the NLRB's night window for bulk reads (11 pm to 6 am Eastern, its policy) and its newest page once a day, for every company at once (`lib/ingest/nlrbWalk.ts`, db/054); kept by EPA's caption rule, the release map, EPA's and the CPSC's units and `NLRB_UNITS`, cases against unions left off. No licence stated: a federal agency's work, credited to the NLRB; no key |
+| National Labor Relations Board | The Board's decisions since 1935 in the company's own unfair labor practice cases and in elections or unit questions at it — Tesla's of 2026, Kroger's Fred Meyer and Ralphs, Starbucks' elections, McDonald's USA as joint employer — a day's one row, saying the listing gives no ruling and linking the decision | The Board's decision listing, 667 pages, read whole once a year in the NLRB's night window for bulk reads (11 pm to 6 am Eastern, its policy), across runs and nights as the site's firewall allows, and its newest page once a day, for every company at once (`lib/ingest/nlrbWalk.ts`, db/054, db/055); kept by EPA's caption rule, the release map, EPA's and the CPSC's units and `NLRB_UNITS`, cases against unions left off. No licence stated: a federal agency's work, credited to the NLRB; no key |
 | U.S. Equal Employment Opportunity Commission | The Commission's suits and settlements since 1994 whose title makes the company the party — a retailer's disability suit, a bank's class settlement | The newsroom listing, read whole once a year and its newest page once a day, for every company (`lib/ingest/eeocWalk.ts`); kept by the Justice Department's title rule, the Commission's own shapes and its units list (`lib/eeoc.ts`); an undated release's page read once for its day. The Commission's own work (17 U.S.C. § 105), credited to the EEOC; no key |
 | Commodity Futures Trading Commission | The Commission's enforcement actions since 1995 whose title makes the company the party — a bank's benchmark-rigging order, an energy trader's manipulation suit | The enforcement list, read whole once a year and its newest page once a day, for every company (`lib/ingest/cftcWalk.ts`); kept by the Justice Department's title rule with the release map's units (`lib/cftc.ts`). Public domain, acknowledged to the CFTC; no key |
 | SEC News Digest | The SEC's daily summary of 1956–1993: the 8-K reports a company filed, its registration statements, the 13D and 14D-1 filings on its shares, the SEC's orders and actions on it, its listing orders | Every issue's PDF read once for every company, 60 a run (`lib/ingest/secDigestWalk.ts`); kept when an entry's party is the company under the name its EDGAR record had that day and no other company's (`lib/secDigest.ts`), from its first price; a month's 8-K reports one row. Public information the SEC lets anyone copy, cited to the SEC; no key; needs `pdftotext` and `NEWS_CHARTS_CONTACT` |

@@ -110,6 +110,25 @@
  * before are TGC's (its 5% stock dividends, its reverse split), so old Dawson's past is a taken
  * name's (lib/takenNames.ts).
  *
+ * Two map a record that still lists tickers of its own, the owner's call of 2026-11-21 (batch 163), each
+ * with `listedAs`: the rule above leaves such a record out (TXNM's), but AA's and DD's charts are the old
+ * companies', and their cases were already on the pages (batch 146's call, "keep"); their filings now are too.
+ *  - Alcoa Corporation was spun off from Alcoa Inc. on 2016-11-01 and took its name and ticker: "On November
+ *    1, 2016, Alcoa Corporation, formerly known as Alcoa Upstream Corporation … announcing the completion of
+ *    the separation of Alcoa Inc." (its 8-K filed that day, item 8.01). Yahoo's AA chart runs back to 1962
+ *    with Alcoa Inc.'s splits (1981, 1995, 1999, 2000) and its 1:3 reverse split of 2016-10-06. The old record
+ *    became Arconic's that day and is Howmet Aerospace's now (HWM), whose chart begins 2016-11-01. Its rename
+ *    of 2016-10-27 into Arconic is the subsidiary's (the last before the handover, as above), and its 10-Q of
+ *    2016-11-09 for the quarter to 2016-09-30 is not kept: Alcoa Corporation filed its own on 2016-12-01.
+ *  - DowDuPont, DD's record, was formed for the merger of Dow and DuPont, a merger into a new company, which
+ *    the rule above maps to neither: "Effective August 31, 2017, DowDuPont Inc. … completed the previously
+ *    announced merger … each of Dow and DuPont became subsidiaries of the Company" (its 8-K12B filed
+ *    2017-09-01). But Yahoo's DD chart runs back to 1972 with old du Pont's splits (1973, 1976, 1989, 2000),
+ *    and the record took the DuPont name and the DD ticker in 2019, so old du Pont's record is DD's to the
+ *    merger. It is EIDP's now, Corteva's subsidiary, whose preferred shares are pages of their own (CTA-PA,
+ *    CTA-PB). Old Dow's record is not mapped: DD's chart is not Dow's.
+ * On both, the old record's filings before `until` are on the old record's own pages too, where they belong.
+ *
  * `news` is the predecessor's own name as headlines write it, where the successor's name is not
  * it: "Exxon Mobil" for ExxonMobil Holdings, "Cigna" for The Cigna Group. A name that is also an
  * everyday word or a common surname ("Apache", "Ferguson") is left out, as batch 34 left them out.
@@ -156,6 +175,11 @@ export interface Predecessor {
    * They stay off the page, as read and as stored (`isShellReport`, lib/store/read.ts).
    */
   shellReports?: string[];
+  /**
+   * the predecessor's record's own tickers, where it still lists any: a record with a page of its own is
+   * mapped only by the owner's call, with why (AA's and DD's, the owner's call of 2026-11-21, batch 163)
+   */
+  listedAs?: { tickers: readonly string[]; why: string };
 }
 
 export const PREDECESSORS: Record<number, Predecessor[]> = {
@@ -279,10 +303,32 @@ export const PREDECESSORS: Record<number, Predecessor[]> = {
   ],
   // CEF — Sprott Physical Gold and Silver Trust (converted from Central Fund of Canada)
   1726122: [{ cik: 784959, name: "Central Fund of Canada Limited", until: "2018-01-16", notice: "0001104659-18-002263" }],
+  // DD — DuPont de Nemours, Inc. (DowDuPont to 2019-05-31): old du Pont's record to the merger, its chart DD's
+  // (batch 163, the owner's call of 2026-11-21; the header)
+  1666700: [
+    {
+      cik: 30554,
+      name: "E. I. du Pont de Nemours and Company",
+      until: "2017-09-01",
+      notice: "0001193125-17-274834",
+      listedAs: { tickers: ["CTA-PA", "CTA-PB"], why: "EIDP, Inc., Corteva's subsidiary since 2019, whose preferred shares are pages of their own" },
+    },
+  ],
   // DK — Delek US Holdings, Inc., with Alon USA (the ticker carried on)
   1694426: [{ cik: 1351541, name: "Delek US Holdings, Inc.", until: "2017-07-03", notice: "0001694426-17-000036" }],
   // SWX — Southwest Gas Holdings, Inc. (a new parent)
   1692115: [{ cik: 92416, name: "Southwest Gas Corporation", until: "2017-01-03", notice: "0001193125-17-000274" }],
+  // AA — Alcoa Corporation, spun off from Alcoa Inc. on 2016-11-01 with its name and ticker (batch 163, the
+  // owner's call of 2026-11-21; the header)
+  1675149: [
+    {
+      cik: 4281,
+      name: "Alcoa Inc.",
+      until: "2016-11-01",
+      notice: "0001193125-16-755437",
+      listedAs: { tickers: ["HWM"], why: "Howmet Aerospace Inc. (Arconic Inc. from 2016-11-01), whose chart begins that day" },
+    },
+  ],
   // BUD — Anheuser-Busch InBev SA/NV, with SABMiller (the ticker carried on)
   1668717: [{ cik: 1140467, name: "Anheuser-Busch InBev SA/NV", until: "2016-10-11", notice: "0001193125-16-734655" }],
   // ASH — Ashland Inc. (Ashland Global Holdings to 2022), a new parent of 2016; the record it took over

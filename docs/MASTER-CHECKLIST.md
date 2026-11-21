@@ -988,6 +988,58 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 161: the NLRB's Board decisions, 1935 on (2026-11-21)
+
+The owner's word: "Continue", after batch 160; the second of the 2026-11-18 proposals, approved that day with call
+(a): a row from the listing alone.
+
+- [x] **The source** (`lib/nlrbDecisions.ts`, `lib/ingest/nlrbWalk.ts`, db/054; source 44, `nlrb_decisions`): the
+      Board's decision listing, every volume, 100 a page, 66,645 decisions on 667 pages on 2026-11-18, back to
+      1935-12-07 (1 NLRB 1). Each row's issue day, citation (a bound volume's without its leading zeros), case name
+      with the decision's document on apps.nlrb.gov, and case number; some older captions' "&" written twice over
+      ("&amp;amp;") read as one. Read whole once a year and its newest page once a day, for every company at once,
+      into `nlrb_decisions` and `nlrb_reads`; a read kept only when every page answered and every page but the last
+      held 100.
+- [x] **The NLRB's bulk-data policy kept:** "bulk data extractions be scheduled for non-peak hours (between 11pm EST –
+      6am EST)", at most 5 concurrent requests or 20 per 200 ms. The whole read is begun only in that window with 45
+      minutes left (`inNightWindow`, America/New_York, so it follows daylight time), one page at a time 1.3 s apart,
+      about 15 minutes; by day a run reads the newest page instead, or nothing before the first whole read, and until
+      that read a company's answer is never complete.
+- [x] **The kind, by the case number:** CA and C (before 1948) a case against the employer; RC, RD, RM, R and RE (the
+      1940s' employer petitions), UA (the union-shop polls of 1947–1951), UC, UD and AC an election or a unit
+      question at it. Cases against unions (CB, CC, CD, CE, CG, CP), advisory opinions (AO) and fee applications (ED)
+      make no row: "UFCW, LOCAL 700 (KROGER)" of 2014 is the union's case. In the sample: 1,332, 811 and 202.
+- [x] **The rule:** EPA's form of the caption rule (`epaParty`: "Wisconsin Power and Light Co." of 1938 is Alliant's
+      operating company, never Light S.A.'s "Light"), "d/b/a" read as a party (`respondents`), the company's names of
+      the year, the release map's and the EEOC's units of the day, EPA's and the CPSC's units on their days (Fred Meyer
+      on Kroger, Appalachian Power on AEP, Exxon Pipeline on Exxon Mobil, Occidental Chemical, Frito-Lay), and
+      `NLRB_UNITS`, read by hand from the sample: Amazon.com Services, Home Depot U.S.A., Walt Disney Parks and Resorts,
+      FedEx's operating companies, Lockheed Martin's and PPG's companies, CHS Community Health Systems, GE's divisions.
+      `NOT_THE_COMPANY`: National Steel Corp. (1973) is not Companhia Siderúrgica Nacional; "Shell Co." of 1994, the
+      Puerto Rico company, is not Shell plc, whose companies are its own only from 2005-07-20 (the owner's call EPA's
+      unit carries). The table of taken names holds (a "Johnson Controls, Inc." decision before 2016-09-02 stays off
+      JCI). A day before the Act's, 1935-07-05 (four in the sample: "02/14/1919", 1924, 1930), is misdated and makes
+      no row. From the company's first price.
+- [x] **The row:** one a company a day ("2 NLRB decisions: Starbucks Corporation"), each decision's citation, caption,
+      case number and kind, "How the Board ruled is in the decision; the Board's listing does not say.", linked to the
+      first decision's document; its id the decisions' documents, so a joint employers' decision is "Also on" the
+      other page (`ALSO_ON_SOURCES`, db/054 building the index again with source 44) and a grown day counts once
+      (`GROUPED_ROW_SOURCES`). Scored 0.95 without the model.
+- [x] **Measured on the scout's sample,** 24 pages of 2026-11-18, every 33rd (2,345 decisions): 87 company days on 54
+      companies before first prices; 39 on 23 from the first prices the fixtures carry (Kroger 7, GE 4, Entergy 3,
+      Anheuser-Busch, Caterpillar, Goodyear, Lockheed Martin and Exxon 2). Every one of the 87 read by hand: each the
+      company's own case or its own unit's, but for two businesses bought later whose decisions fall before the
+      buyer's first price and stay off the page: Kennecott Copper's election of 1942 on Rio Tinto, which bought it in
+      1989, and General Motors Corp.'s seven days on GM, whose first price is 2010-11-18.
+- [ ] **The whole listing's counts:** they wait for its first read in the night window (11 pm Eastern is 04:00 UTC);
+      the next batch's first part.
+- [x] **Checks:** `check:nlrb` 45 (the listing and its pager, the kinds, the night window, the rule, every listed
+      company over the sample, the walk by night and by day, ingest's answer, the wiring), against the committed
+      fixture `scripts/fixtures/nlrb-listing.json.gz`; `check:also-on` and `check:contact` take the new source and
+      importer. On main `check:nlrb` cannot run: none of its code exists there.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** none; the sample is the scout's of 2026-11-18, under the User-Agent "News Charts Research".
+
 ## NC ledger — batch 160: the trade adjustment certifications' units, EPA's and the CPSC's read too (2026-11-21)
 
 The owner's word: "Continue", after batch 159 logged about 260 certifications under units named after their owners.
@@ -11827,11 +11879,14 @@ already held, but new investment goes to securities coverage first.
         certifications.
       - *Derived from [`docs/proposals/2026-11-18-proposals.md`](proposals/2026-11-18-proposals.md) #1, approved
         2026-11-18.*
-- [ ] `P1` **The NLRB's Board decisions in the company's own cases, from 1962:** approved by the owner 2026-11-18, with
+- [x] `P1` **The NLRB's Board decisions in the company's own cases, from 1962:** approved by the owner 2026-11-18, with
       call (a), a row from the listing alone. A new source (44, `nlrb_decisions`), its listing read once at night by
       the NLRB's bulk-data policy, then its newest page daily.
       - **Estimated** by the scout: about 650 decisions on pages, about 540 before 2017, about 1,000 with a units
         list read by hand; a sample's figure, off by a third either way.
+      - **Done in batch 161** (see its section): on the scout's 24 pages, 87 company days on 54 companies before first
+        prices, 39 on 23 from the first prices the fixtures carry. The whole listing's counts wait for its first read
+        in the night window (batch 162).
       - *Derived from [`docs/proposals/2026-11-18-proposals.md`](proposals/2026-11-18-proposals.md) #2, approved
         2026-11-18.*
 

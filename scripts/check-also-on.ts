@@ -30,15 +30,15 @@ const read = (file: string) => readFileSync(join(__dirname, "..", file), "utf8")
 
 console.log("\nThe sources and the index");
 const ids = ALSO_ON_SOURCES.map((k) => SOURCES.find((s) => s.key === k)?.id);
-check("the multi-party sources are the Justice Department's, the SEC's two, the Board's, the CFPB's, EPA's, the CPSC's, the CFTC's and the EEOC's (batch 155)",
-  JSON.stringify([...ALSO_ON_SOURCES].sort()) === JSON.stringify(["cfpb", "cftc", "cpsc_recalls", "doj_press", "eeoc_press", "epa_cases", "fed_press", "sec_cases", "sec_press"]));
+check("the multi-party sources are the Justice Department's, the SEC's two, the Board's, the CFPB's, EPA's, the CPSC's, the CFTC's, the EEOC's (batch 155) and the NLRB's (batch 161)",
+  JSON.stringify([...ALSO_ON_SOURCES].sort()) === JSON.stringify(["cfpb", "cftc", "cpsc_recalls", "doj_press", "eeoc_press", "epa_cases", "fed_press", "nlrb_decisions", "sec_cases", "sec_press"]));
 check("  …their ids are the sources' own, as `SOURCES` registers them", JSON.stringify(ids) === JSON.stringify(ALSO_ON_SOURCE_IDS), { ids, ALSO_ON_SOURCE_IDS });
 // the index is built by db/041 and built again, with a source added, by a later migration: the last one is the index
 const builds = readdirSync(join(__dirname, "..", "db")).filter((f) => /\.sql$/.test(f) && /CREATE INDEX IF NOT EXISTS event_attestations_case_numbers\b/.test(read(`db/${f}`))).sort();
 const migration = read(`db/${builds.at(-1)}`);
 const indexed = /WHERE source_id IN \(([\d, ]+)\)/.exec(migration)?.[1].split(",").map((n) => Number(n.trim()));
-check("the partial index, as db/053 builds it again with the EEOC's id, covers exactly those sources, on the case numbers as a set",
-  JSON.stringify(builds) === JSON.stringify(["041_also_on.sql", "053_also_on_eeoc.sql"]) && /DROP INDEX IF EXISTS event_attestations_case_numbers;/.test(migration) &&
+check("the partial index, as db/054 builds it again with the NLRB's id after db/053's with the EEOC's, covers exactly those sources, on the case numbers as a set",
+  JSON.stringify(builds) === JSON.stringify(["041_also_on.sql", "053_also_on_eeoc.sql", "054_nlrb_decisions.sql"]) && /DROP INDEX IF EXISTS event_attestations_case_numbers;/.test(migration) &&
     JSON.stringify(indexed) === JSON.stringify(ALSO_ON_SOURCE_IDS) && /USING gin \(string_to_array\(external_id, ','\)\)/.test(migration) && /WITH \(fastupdate = off\)/.test(migration), { builds, indexed });
 
 console.log("\nThe indexes a page reads by (batch 111, the 2026-11-07 audit's set-aside)");
@@ -121,7 +121,7 @@ check("  …and both list layouts render the line", (read("components/EventList.
 console.log("\nThe sources a row counts (batch 107, the 2026-11-07 audit's finding 1)");
 const groupedIds = GROUPED_ROW_SOURCES.map((k) => SOURCES.find((s) => s.key === k)?.id);
 check("the sources whose one row carries several cases' numbers are EPA's, the CPSC's, the CFTC's, the SEC's litigation releases, the CFPB's, the Digest's, the FDA's warning letters of a day (batch 140) and the EEOC's releases of a day (batch 152), by their own ids",
-  JSON.stringify(groupedIds) === JSON.stringify(GROUPED_ROW_SOURCE_IDS) && JSON.stringify([...GROUPED_ROW_SOURCES].sort()) === JSON.stringify(["cfpb", "cftc", "cpsc_recalls", "eeoc_press", "epa_cases", "fda_warning_letters", "sec_cases", "sec_digest"]),
+  JSON.stringify(groupedIds) === JSON.stringify(GROUPED_ROW_SOURCE_IDS) && JSON.stringify([...GROUPED_ROW_SOURCES].sort()) === JSON.stringify(["cfpb", "cftc", "cpsc_recalls", "eeoc_press", "epa_cases", "fda_warning_letters", "nlrb_decisions", "sec_cases", "sec_digest"]),
   { groupedIds, GROUPED_ROW_SOURCE_IDS });
 // every builder that joins numbers into one row's id, and the source it writes
 const joining = readdirSync(join(__dirname, "..", "lib"))

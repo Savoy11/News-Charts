@@ -53,6 +53,7 @@ import { eeocFor, walkEeoc } from "../lib/ingest/eeocWalk";
 import { digestFor, walkDigest } from "../lib/ingest/secDigestWalk";
 import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
 import { taaFor } from "../lib/ingest/taaFor";
+import { nlrbFor, walkNlrb } from "../lib/ingest/nlrbWalk";
 import { fdaSupplementsFor } from "../lib/ingest/fdaSupplementsFor";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { occFor } from "../lib/ingest/occFor";
@@ -129,6 +130,8 @@ export const COMPANY_SOURCES = [
   "eeoc_press",
   // …and the OCC's orders against the company's national banks (batch 153)
   "occ_actions",
+  // …and the NLRB's decisions in the company's own cases (batch 161)
+  "nlrb_decisions",
   // …and the SEC News Digest of 1956–1993, where an entry's party is the company under the name its
   // record had that day (batch 102)
   "sec_digest",
@@ -888,6 +891,18 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     const walked = await walkEeoc(client);
     if (walked.due) line("eeoc_press", `list      ${walked.due === "list" ? "read whole" : "newest read"}, ${walked.pages} pages, ${walked.releases} releases stored${walked.stopped ? ` (${walked.stopped})` : ""}`);
     return eeocFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
+  });
+
+  /**
+   * The NLRB's Board decisions in the company's own cases (batch 161, the 2026-11-18 proposal 2): the
+   * Board's decision listing, read whole once a year in the NLRB's night window and its newest page once a
+   * day for every company (`walkNlrb`), then every kept decision whose caption names the company, under its
+   * names that year and the units it then owned, from its first price; a case against a union makes no row.
+   */
+  await run("nlrb_decisions", `NLRB decisions in cases of ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, async () => {
+    const walked = await walkNlrb(client);
+    if (walked.due || walked.stopped) line("nlrb_decisions", `list      ${walked.due === "list" ? "read whole" : walked.due === "newest" ? "newest read" : "not read"}, ${walked.pages} pages, ${walked.decisions} decisions stored${walked.stopped ? ` (${walked.stopped})` : ""}`);
+    return nlrbFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
   });
 
   /**

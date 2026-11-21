@@ -429,6 +429,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "occ_actions") {
         return { score: 0.95, reason: "an OCC enforcement action against the company's bank" };
       }
+      // …and an NLRB decision in the company's own case, an unfair labor practice or a representation case
+      // (lib/nlrbDecisions.ts, batch 161)
+      if (subject.kind === "company" && row.sourceKey === "nlrb_decisions") {
+        return { score: 0.95, reason: "an NLRB decision in a case against the company or an election at it" };
+      }
       // …and a Labor Department trade adjustment certification of the company's own plant, office or unit
       // (lib/taaPetitions.ts, batch 159)
       if (subject.kind === "company" && row.sourceKey === "dol_taa") {

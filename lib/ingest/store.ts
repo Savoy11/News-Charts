@@ -605,6 +605,23 @@ export const SOURCES: {
     reviewedOn: "2026-11-18",
     notes: "the Department's certifications of 1975–2022 that a named plant's or office's job losses came from foreign trade, kept where the firm is a listed company's by the caption rule, the release map and its units (lib/taaPetitions.ts); one keyless zip read once and committed, no petition being decided after 2022-06-30 (batch 159)",
   },
+  {
+    id: 44,
+    key: "nlrb_decisions",
+    name: "NLRB Board decisions",
+    license: "public domain (17 U.S.C. § 105)",
+    attribution: "National Labor Relations Board",
+    // The NLRB's site policies (www.nlrb.gov/site-policies, read 2026-11-18) state no licence or copyright
+    // terms. The decisions are a federal agency's own work, 17 U.S.C. § 105, usable under the owner's ruling of
+    // 2026-11-12 where a federal site states no licence. The page states a disclaimer ("the information
+    // available on this web site may not reflect official positions of the NLRB") and a bulk-data policy:
+    // bulk extractions "between 11pm EST – 6am EST", no more than 5 concurrent requests or 20 per 200 ms,
+    // which the walk keeps (lib/ingest/nlrbWalk.ts). Used: each decision's day, citation, case name, case
+    // number and a link to the decision. Approved by the owner on 2026-11-18 (docs/proposals/2026-11-18-proposals.md #2).
+    commercialOk: true,
+    reviewedOn: "2026-11-18",
+    notes: "the Board's decisions in the company's own cases, unfair labor practice and representation cases, kept where the caption names a listed company by EPA's form of the caption rule, the release map and the units lists (lib/nlrbDecisions.ts); the decision listing, read whole once a year at night and its newest page daily for every company, no key (batch 161)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

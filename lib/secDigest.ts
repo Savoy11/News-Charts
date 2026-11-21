@@ -777,12 +777,18 @@ export interface DigestRow {
   entries: DigestEntry[];
 }
 
+/** A company and an old record mapped to it that still lists tickers of its own (`listedAs`, lib/predecessors.ts). */
+const oneClaimant = (a: number, b: number): boolean =>
+  predecessorsOf(a).some((p) => p.cik === b && !!p.listedAs) || predecessorsOf(b).some((p) => p.cik === a && !!p.listedAs);
+
 /**
  * An issue's rows, under each company's names on the issue's day where `namesOn` gives them. An
  * issue's entries on one company in one section are one row — Hasbro's five 13D filings in the
  * 1990-06-15 issue, the Hassenfeld family's, are one row on HAS — as a page shows one event for
  * them. An entry two companies' names both claim on the day is neither's (`onShared` hears of it):
- * an entry is about one name.
+ * an entry is about one name. A company and the old record it is mapped to though that record keeps a
+ * page of its own (`listedAs`: old Alcoa's on AA and on Howmet's page, old du Pont's on DD and on EIDP's,
+ * batch 163) are one claimant, whose entry is on both pages.
  */
 export function digestIssueRows(
   day: string,
@@ -794,7 +800,7 @@ export function digestIssueRows(
   const rows = new Map<string, DigestRow>();
   for (const e of entries) {
     const matched = index.match(e, namesOn);
-    if (matched.length > 1) {
+    if (matched.length > 1 && !matched.every((m, i) => matched.every((n, j) => i === j || oneClaimant(m.cik, n.cik)))) {
       onShared?.(e, matched.map((m) => m.cik));
       continue;
     }

@@ -988,6 +988,47 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 163: old Alcoa's and old du Pont's filings on AA and DD (2026-11-21)
+
+The owner's word, on batch 162's report: "Lets consider those as well", then, asked whether AA and DD should show the old
+companies' filings up to the handover, "Yes, add the filings (Recommended)".
+
+- [x] **The call found decided once already:** batch 146 (the owner's instruction of 2026-11-12) kept old Alcoa's and old
+      du Pont's cases on AA and DD, as Yahoo's charts are theirs, and left their filings unmapped, as `lib/predecessors.ts`
+      maps no record with a ticker of its own (TXNM's rule). Batch 162 raised it as open; it is corrected there.
+- [x] **Read again on 2026-11-21:** Yahoo's AA chart from 1962 carries Alcoa Inc.'s splits (1981, 1995, 1999, 2000) and its
+      1:3 reverse split of 2016-10-06, and HWM's begins 2016-11-01; Yahoo's DD chart from 1972 carries old du Pont's
+      (1973, 1976, 1989, 2000), CTVA's begins 2019-05-24 and the preferred CTA-PA's runs from 1972 on its own prices.
+- [x] **Mapped, by the owner's call** (`lib/predecessors.ts`, each with `listedAs` naming the old record's own tickers):
+      - AA ← Alcoa Inc. (CIK 4281, Howmet's now), `until` 2016-11-01: "On November 1, 2016, Alcoa Corporation, formerly
+        known as Alcoa Upstream Corporation … announcing the completion of the separation of Alcoa Inc." (Alcoa
+        Corporation's 8-K, 0001193125-16-755437, item 8.01). The old record's rename into Arconic of 2016-10-27 stays
+        off (the last rename before a handover into another name, as BlackRock's); its 10-Q of 2016-11-09 for the quarter
+        to 2016-09-30 is not kept, as Alcoa Corporation filed its own on 2016-12-01. 2,297 filings of every form on the
+        old record's list before the day.
+      - DD ← E. I. du Pont de Nemours and Company (CIK 30554, EIDP's now), `until` 2017-09-01: "Effective August 31, 2017,
+        DowDuPont Inc. … completed the previously announced merger … each of Dow and DuPont became subsidiaries of the
+        Company" (DowDuPont's 8-K12B, 0001193125-17-274834). A merger into a new company, which the map otherwise
+        leaves to neither, taken here because the chart is old du Pont's; old Dow's record is not mapped. 3,819 filings
+        on the old record's list before the day.
+      Both old records keep their own pages (HWM; CTA-PA and CTA-PB), where the same filings stay.
+- [x] **The SEC News Digest's one-claimant rule** (`lib/secDigest.ts`): an entry two companies' names claim on its day is
+      neither's, so the mapping made old Alcoa's 1985 entries neither AA's nor Howmet's, as both records held its names.
+      A company and the old record it maps with `listedAs` are now one claimant, whose entry is on both pages (Howmet's
+      before its first price, so off it). On the 1985 replay: 552 rows on 273 companies (550 on 272), the two on AA;
+      `check:digest-walk` re-pinned, AA's first trading day (Yahoo's, 1962-01-02) added to its first prices, and one new
+      check that the two entries are AA's and Howmet's record's both.
+- [x] **Checks:** `check:digest-walk` 59 (1 new, its totals re-pinned; on main 5 fail: the new one and four totals);
+      `check:predecessors` 83, 5 new: the rule that a record with tickers of its own is mapped only with
+      `listedAs` naming them exactly, and only AA's and DD's; AA's reader (old Alcoa's 10-K of 1994 and earnings of
+      2016-10-11 titled as Alcoa's, not Arconic's 8-K of the day nor its 10-Q of 2016-11-09; its 1999 rename kept and its
+      rename into Arconic not); DD's (old du Pont's 10-K of 1994 and 10-Q of 2017-07-25, not its filings from
+      2017-09-01). On main 4 of the 5 fail (the reader's "not Arconic's" passes there, as nothing of old Alcoa's is read).
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** Yahoo's chart answer for AA, HWM, DD, CTVA and CTA-PA (5, under "News Charts Research", `b163/requests.log`);
+  data.sec.gov 9 (the four records' filing lists and their older pages) and www.sec.gov 2 (the two handover filings),
+  under the project's User-Agent with the contact, at least 1.3 s apart (`b163/requests-sec.log`).
+
 ## NC ledger — batch 162: the NLRB's night read, refused at page 340, and the read made to resume (2026-11-21)
 
 The owner's word: "Continue", then "What's next?" once the night read had ended. The read was batch 161's open item:
@@ -1051,12 +1092,11 @@ the whole listing's counts, in the NLRB's night window.
       which `epaParty` would wrongly refuse two ("Corning,Inc.", 1998; "RGP and Kelly Services", 2018) and rightly refuse
       three that fall before the company's first price ("Crompton and Knowles" on Knowles; "Allied Tube and Conduit"
       on Conduit, 1993 and 2008), which the closed file can never move onto a page. No change.
-- [ ] **Raised, for the owner:** Alcoa's and DuPont's records. AA's record is the Alcoa Corporation of 2016 and DD's
-      the DowDuPont of 2015, but both charts begin in 1962 and the 1972 under the old companies' tickers, and every
-      caption rule reads old Alcoa's and old du Pont's cases by name onto them ("Alcoa, Inc.", 2008 and 2015;
-      "DuPont de Nemours, E. I.", 1981–1982), while neither old record is in `lib/predecessors.ts` or
-      `lib/takenNames.ts`. Whether those pages carry the old companies' past (as Merck's does) or refuse it (as a
-      taken name) is a call for every source at once, not this one.
+- [x] **Raised for the owner, and found decided:** Alcoa's and DuPont's records. AA's record is the Alcoa Corporation of
+      2016 and DD's the DowDuPont of 2015, both charts the old companies', and every caption rule reads old Alcoa's and
+      old du Pont's cases by name onto them. Batch 146 had already decided it on the owner's instruction of 2026-11-12
+      ("DuPont on DD: keep", "Alcoa on AA: keep"), which this item missed; the owner then chose, on 2026-11-21, to add the
+      old records' filings too (batch 163).
 - [ ] **Pages 340 to 666,** the decisions of 1935 to 1969: the second night's read (scheduled 2026-11-22 at 04:03 UTC,
       from page 339, 5 s apart), then the whole listing's counts; the next batch.
 - [x] **Checks:** `check:nlrb` 62, 17 new: 10 on the night read (its pages and kinds, Walmart's former name, T-Mobile

@@ -177,7 +177,8 @@ The SEC News Digest of 1956–1993 (`lib/secDigest.ts`, batch 102) is read once,
 db/040's tables (`lib/ingest/secDigestWalk.ts`), and each company's own entries are found there at
 its ingest. Its names are dated by the committed `data/digest-records.json` (`npm run
 sync:digest-records`): a company is in the Digest only under the names its EDGAR record, or a
-mapped predecessor's, had by 1996, and an entry two companies' names claim on its day is neither's.
+mapped predecessor's, had by 1996, and an entry two companies' names claim on its day is neither's (a company and
+the old record it maps with `listedAs` are one claimant, batch 163).
 The walk needs `NEWS_CHARTS_CONTACT` and poppler's `pdftotext` on the host.
 
 The FDA's new-drug approvals since 1985 (`lib/fdaApprovals.ts`, batch 105) come from a committed
@@ -223,7 +224,10 @@ more from a scan of every listed company's list (Con Edison, PG&E, Transocean, A
 predecessor took and gave back within half a year is EDGAR's churn, not a rename; a quarterly report it filed
 after the day for a quarter before it, which the successor never filed, is kept by accession (`after`, PPL's
 and IDACORP's, batch 137). Batch 149 read the handovers that waited on the contact: Roanoke Gas's record is
-RGC's, and the old Digimarc's is Digimarc's to its spin-off of 2008-08-01, the ticker and the chart carrying on. RGC's own
+RGC's, and the old Digimarc's is Digimarc's to its spin-off of 2008-08-01, the ticker and the chart carrying on. Batch 163
+maps two old records that still list tickers of their own, by the owner's call of 2026-11-21 (`listedAs`, and only those
+two): old Alcoa's on AA to the separation of 2016-11-01 (Howmet's record now) and old du Pont's on DD to the merger of
+2017-08-31 (EIDP's), as Yahoo's splits show both charts are the old companies'. RGC's own
 10-Qs of 1999, an empty new parent's for quarters Roanoke Gas reported, stay off as read and as stored (`shellReports`,
 batch 150). Merck's is a merger the other way round (batch 108): MRK's record was
 Schering-Plough's until it took old Merck's name and ticker on 2009-11-03, so old Merck's record is

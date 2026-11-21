@@ -63,6 +63,8 @@ const firstPrices: Record<string, string | null> = {
   "1164727": "1980-03-17",
   "922224": "1980-03-17",
   "1051512": "1981-12-15",
+  // batch 163: AA, which gains old Alcoa's 1985 rows through its record (`listedAs`), Yahoo's firstTradeDate read 2026-11-21
+  "1675149": "1962-01-02",
 };
 
 /**
@@ -81,12 +83,13 @@ const EXPECTED = {
   // CenterPoint, ONEOK 2, Duke Power 2, Comcast, First Alabama Bancshares on Regions, Northrop on NOC), none fewer
   // batch 133: 16 more on six more pages (Pacific Gas and Electric 5 on PG&E, Detroit Edison 4 on DTE, Idaho Power 2,
   // Newmont Mining 2, Pennsylvania Power & Light 2 on PPL, Telephone & Data Systems 1), none fewer
-  rows: 550,
-  companies: 272,
-  kinds: { "8-K report": 201, registration: 136, "registration effective": 119, order: 61, stake: 30, enforcement: 2, other: 1 } as Record<string, number>,
-  onPage: 395,
-  onPageCompanies: 201,
-  events: 391,
+  // batch 163: old Alcoa's two (an 8-K report and a registration) on AA as well as on Howmet's record, one claimant
+  rows: 552,
+  companies: 273,
+  kinds: { "8-K report": 202, registration: 137, "registration effective": 119, order: 61, stake: 30, enforcement: 2, other: 1 } as Record<string, number>,
+  onPage: 397,
+  onPageCompanies: 202,
+  events: 393,
 };
 
 // ─── a fake database ───────────────────────────────────────────────────────────────────────────
@@ -218,7 +221,7 @@ async function main(): Promise<void> {
   check(`${EXPECTED.rows} rows on ${EXPECTED.companies} companies`, rows.length === EXPECTED.rows && ciks.length === EXPECTED.companies, { rows: rows.length, companies: ciks.length });
   const kinds: Record<string, number> = {};
   for (const r of rows) kinds[r.kind] = (kinds[r.kind] ?? 0) + 1;
-  check("  …by section: 201 8-K reports, 136 registrations, 119 declared effective, 61 orders, 30 stakes, 2 actions, 1 other", JSON.stringify(Object.entries(kinds).sort()) === JSON.stringify(Object.entries(EXPECTED.kinds).sort()), kinds);
+  check("  …by section: 202 8-K reports, 137 registrations, 119 declared effective, 61 orders, 30 stakes, 2 actions, 1 other", JSON.stringify(Object.entries(kinds).sort()) === JSON.stringify(Object.entries(EXPECTED.kinds).sort()), kinds);
   const crane = rows.filter((r) => r.cik === 25445);
   check(
     "  …the one row batch 87 lost: Crane Co. (25445, now CXT), declared effective 1985-10-11 — today's Crane Co (1944013) is no claimant, its record opened in 2023",
@@ -261,6 +264,13 @@ async function main(): Promise<void> {
   check("  …batch 133: PG&E, DTE, IDACORP, Newmont, PPL and TDS by their utilities' and old companies' names (5, 4, 2, 2, 2 and 1 rows of 1985)",
     by133.every(([t, n, re]) => rows.filter((r) => r.cik === cikOf(t)).length === n && rows.filter((r) => r.cik === cikOf(t)).every((r) => re.test(r.entries[0].party))),
     by133.map(([t]) => `${t} ${rows.filter((r) => r.cik === cikOf(t)).map((r) => r.entries[0].party).join("/")}`));
+  const aaRows = rows.filter((r) => r.cik === cikOf("AA"));
+  const hwmRows = rows.filter((r) => r.cik === cikOf("HWM"));
+  check("  …batch 163: old Alcoa's two entries of 1985 are AA's, its record mapped by the owner's call, and still Howmet's record's own: one claimant, not two",
+    aaRows.length === 2 && hwmRows.length === 2 && aaRows.every((r) => /ALUMINUM CO/i.test(r.entries[0].party)) &&
+      JSON.stringify(aaRows.map((r) => [r.day, r.kind])) === JSON.stringify(hwmRows.map((r) => [r.day, r.kind])) &&
+      digestEvents(hwmRows, { cik: cikOf("HWM"), from: firstPrices[cikOf("HWM")]! }).length === 0,
+    aaRows.map((r) => `${r.day} ${r.kind} ${r.entries[0].party}`));
   check("  …the book holds only companies with a record by 1996, their own or a predecessor's", book.has(66740) && book.has(19617) && !book.has(cikOf("PLTR")));
   const shared: string[] = [];
   for (const i of fx.issues) book.rows(i.day, i.entries, (e, c) => shared.push(`${i.day} ${e.party} ${c.join("/")}`));

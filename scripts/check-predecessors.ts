@@ -34,9 +34,13 @@ async function main(): Promise<void> {
   const entries = Object.entries(PREDECESSORS).map(([s, ps]) => [Number(s), ps] as const);
   check("every successor is a listed company in the index", entries.every(([s]) => tickersOf(s).length > 0),
     entries.filter(([s]) => !tickersOf(s).length).map(([s]) => s).join(", "));
-  check("no predecessor still lists a ticker of its own: its ticker passed on",
-    entries.every(([, ps]) => ps.every((p) => tickersOf(p.cik).length === 0)),
-    entries.flatMap(([, ps]) => ps.filter((p) => tickersOf(p.cik).length).map((p) => `${p.cik} ${tickersOf(p.cik)}`)).join(", "));
+  const sameTickers = (a: readonly string[], b: readonly string[]) => [...a].sort().join(",") === [...b].sort().join(",");
+  check("no predecessor still lists a ticker of its own, its ticker passed on, but by the owner's call, which names them (`listedAs`)",
+    entries.every(([, ps]) => ps.every((p) => (p.listedAs ? sameTickers(p.listedAs.tickers, tickersOf(p.cik)) && p.listedAs.why.length > 20 : tickersOf(p.cik).length === 0))),
+    entries.flatMap(([, ps]) => ps.filter((p) => (p.listedAs ? !sameTickers(p.listedAs.tickers, tickersOf(p.cik)) : tickersOf(p.cik).length)).map((p) => `${p.cik} ${tickersOf(p.cik)}`)).join(", "));
+  const listed = entries.flatMap(([s, ps]) => ps.filter((p) => p.listedAs).map((p) => `${tickersOf(s).join("/")}←${p.cik} ${p.listedAs!.tickers.join("/")}`));
+  check("  …two, the owner's call of 2026-11-21 (batch 163): AA's old Alcoa (HWM) and DD's old du Pont (CTA-PA, CTA-PB)",
+    listed.length === 2 && listed.includes("AA←4281 HWM") && listed.includes("DD←30554 CTA-PA/CTA-PB"), listed.join(", "));
   check("every entry names its notice of succession and the day of it, newest first",
     entries.every(([s, ps]) =>
       ps.every((p, i) => p.cik !== s && /^\d{4}-\d{2}-\d{2}$/.test(p.until) && /^\d{10}-\d{2}-\d{6}$/.test(p.notice) && (i === 0 || p.until < ps[i - 1].until))
@@ -115,6 +119,76 @@ async function main(): Promise<void> {
     byAccession("0001193125-26-291990").length === 1 && /\/data\/2115436\//.test(byAccession("0001193125-26-291990")[0]?.url ?? ""));
   check("the predecessor's own rename before the handover is the company's: Exxon to Exxon Mobil, 1999",
     renames.some((r) => r.on === "1999-11-30" && r.from === "EXXON CORP") && events.some((e) => e.title === "Renamed from EXXON CORP to EXXON MOBIL CORP"));
+
+  // batch 163, the owner's call of 2026-11-21: old Alcoa's record to the separation of 2016-11-01, old du Pont's to
+  // the merger of 2017-08-31, each record a page of its own; the accessions and days are the records' own lists'
+  records["0001675149"] = {
+    name: "Alcoa Corp",
+    formerNames: [{ name: "Alcoa Upstream Corp", from: "2016-06-29T04:00:00.000Z", to: "2016-10-31T04:00:00.000Z" }],
+    filings: { recent: block([["2016-12-01", "10-Q", "0001193125-16-782709"], ["2016-11-01", "8-K", "0001193125-16-755437"], ["2016-06-29", "10-12B", "0001193125-16-635424"]]) },
+  };
+  records["0000004281"] = {
+    name: "Howmet Aerospace Inc.",
+    formerNames: [
+      { name: "Arconic Inc.", from: "2016-11-01T04:00:00.000Z", to: "2020-03-26T04:00:00.000Z" },
+      { name: "ALCOA INC.", from: "2014-10-09T04:00:00.000Z", to: "2016-10-27T04:00:00.000Z" },
+      { name: "ALCOA INC", from: "1999-02-10T05:00:00.000Z", to: "2014-10-03T04:00:00.000Z" },
+      { name: "ALUMINUM CO OF AMERICA", from: "1994-02-08T05:00:00.000Z", to: "1999-01-04T05:00:00.000Z" },
+    ],
+    filings: {
+      recent: block([
+        ["2016-11-09", "10-Q", "0001193125-16-763784"], // Arconic's, for the quarter Alcoa Corporation reported itself
+        ["2016-11-01", "8-K", "0001193125-16-755445"], // Arconic's, its name and the separation
+        ["2016-10-11", "8-K", "0001157523-16-006851"], // Alcoa Inc.'s third-quarter earnings
+        ["1994-03-11", "10-K", "0000004281-94-000005"],
+      ]),
+    },
+  };
+  records["0001666700"] = {
+    name: "DuPont de Nemours, Inc.",
+    formerNames: [{ name: "DowDuPont Inc.", from: "2016-03-01T05:00:00.000Z", to: "2019-05-31T04:00:00.000Z" }],
+    filings: { recent: block([["2017-11-06", "10-Q", "0001666700-17-000026"], ["2017-09-01", "8-K12B", "0001193125-17-274834"]]) },
+  };
+  records["0000030554"] = {
+    name: "EIDP, Inc.",
+    formerNames: [{ name: "DUPONT E I DE NEMOURS & CO", from: "1994-01-06T05:00:00.000Z", to: "2022-11-04T04:00:00.000Z" }],
+    filings: {
+      recent: block([
+        ["2017-11-06", "10-Q", "0000030554-17-000056"], // the subsidiary's, after the merger
+        ["2017-09-01", "8-K", "0001193125-17-274840"], // the merger, as the subsidiary reports it
+        ["2017-07-25", "10-Q", "0000030554-17-000035"],
+        ["1994-03-21", "10-K", "0000950109-94-000508"],
+      ]),
+    },
+  };
+  (globalThis as { fetch: unknown }).fetch = async (input: RequestInfo | URL) => {
+    const key = /CIK(\d{10})\.json$/.exec(String(input))?.[1] ?? "";
+    const body = records[key];
+    return { ok: body !== undefined, status: body ? 200 : 404, json: async () => body } as unknown as Response;
+  };
+  const aaRenames: Rename[] = [];
+  let aa: Awaited<ReturnType<typeof getFilingsDeep>> = [];
+  let dd: Awaited<ReturnType<typeof getFilingsDeep>> = [];
+  try {
+    aa = await getFilingsDeep({ ticker: "AA", cik: "0001675149", name: "Alcoa Corp" }, false, aaRenames);
+    dd = await getFilingsDeep({ ticker: "DD", cik: "0001666700", name: "DuPont de Nemours, Inc." }, false, []);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const aaIds = new Set(aa.map((e) => e.id));
+  const ddIds = new Set(dd.map((e) => e.id));
+  check("AA reads old Alcoa's record to the separation: its annual report of 1994 and its earnings of 2016-10-11, titled as Alcoa's",
+    aaIds.has("sec-000000428194000005") && aaIds.has("sec-000115752316006851") && aa.find((e) => e.id === "sec-000115752316006851")?.title.startsWith("Alcoa Corp:") === true,
+    aa.map((e) => `${e.date} ${e.title}`).join(" | "));
+  check("  …not Arconic's 8-K of the day, nor its 10-Q of 2016-11-09, for the quarter Alcoa Corporation reported itself",
+    !aaIds.has("sec-000119312516755445") && !aaIds.has("sec-000119312516763784") && aaIds.has("sec-000119312516782709"));
+  check("  …and the old record's rename of 1999 is the company's, not its rename into Arconic on 2016-10-27",
+    aa.some((e) => e.title === "Renamed from ALUMINUM CO OF AMERICA to ALCOA INC") && !aa.some((e) => /Arconic/.test(e.title)),
+    aa.filter((e) => e.type === "corporate_action").map((e) => e.title).join(" | "));
+  check("DD reads old du Pont's record to the merger: its annual report of 1994 and its 10-Q of 2017-07-25; not its filings from 2017-09-01, a subsidiary's",
+    ddIds.has("sec-000095010994000508") && ddIds.has("sec-000003055417000035") && !ddIds.has("sec-000119312517274840") && !ddIds.has("sec-000003055417000056") &&
+      ddIds.has("sec-000166670017000026"),
+    dd.map((e) => `${e.date} ${e.title}`).join(" | "));
 
   // BlackRock's predecessor took a subsidiary's name five days before its ticker passed on
   records["0002012383"] = { name: "BlackRock, Inc.", formerNames: [], filings: { recent: block([["2025-11-05", "10-Q", "0001193125-25-267043"]]) } };

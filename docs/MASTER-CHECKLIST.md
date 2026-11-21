@@ -988,6 +988,90 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 162: the NLRB's night read, refused at page 340, and the read made to resume (2026-11-21)
+
+The owner's word: "Continue", then "What's next?" once the night read had ended. The read was batch 161's open item:
+the whole listing's counts, in the NLRB's night window.
+
+- [x] **The night read,** 2026-11-21 from 04:00 UTC (11 pm Eastern), one page at a time 1.3 s apart under the
+      User-Agent "News Charts Research" with no address: pages 0 to 339 in 21 minutes (3.7 s a page with the answer's
+      time), then page 340 answered with the site's firewall page, "Request Rejected … Your support ID is …", as HTTP
+      200, and the read stopped, as its rule says. Nothing was asked again that night.
+- [x] **Two defects the read found in batch 161's walk, fixed** (`lib/ingest/nlrbWalk.ts`, db/055):
+      - A whole read that had to finish in one go would have been refused at the same page every night and never
+        finished. It now goes across runs and nights: each page kept as it comes, the 'partial' row holding the next
+        page and the day the read began, at most 300 pages a run (`PAGES_PER_RUN`), 3 s apart (`GAP_MS`); the
+        firewall's page read as a refusal whatever its status (`REJECTED`), which ends the whole reading until the
+        next night (`refused_at`, 12 hours); the next run resumes a page before where the last stopped, as the
+        listing only grows at its head, so a page read again overlaps and none is skipped; a read begun over 14 days
+        ago begins again; the 'list' row, and a complete answer, only when the last page is read.
+      - Page 336 held 100 rows of which 11 have no day ("Capital Bakery", 321 NLRB 10): the walk counted dated
+        decisions, so it would have called the listing cut there. A page is now full by its rows (`rows`); an undated
+        row still makes no row on a page.
+- [x] **The case numbers read whole:** the listing's two misspellings, "0 5-CA-31828" (CNN America, 352 NLRB 265) and
+      "090CA-010829", read as cases against the employer; WH, US, RR, RA and AD (one or a few each) left as no
+      employer's case.
+- [x] **The units named after their owners,** from the 1,550 captions of pages 0–339 that begin with a company's name
+      and which the rule refused, each group read by hand, with EDGAR's former names first read for the 487 companies
+      the rule or such a caption reaches (data.sec.gov's submissions, as ingest stores them: Wal-Mart Stores, Inc. was
+      Walmart's EDGAR name to 2018, so its 22 days land under it and needed no unit). `NLRB_UNITS` takes 35 more
+      companies': T-Mobile USA from the MetroPCS combination ("the consummation on April 30, 2013", 8-K
+      0001193125-13-193449), McDonald's USA (the joint employer of 2015–2019; never a franchisee), Fluor Daniel,
+      Exxon's companies, Caterpillar Tractor, La-Z-Boy's plants, McKesson, Aramark's companies and Aramark Uniform to
+      the Vestis spin-off ("effective at 12:01 a.m., Eastern Time, on September 30, 2023", 8-K 0001628280-23-033364),
+      Comcast Cablevision, Harley-Davidson, Allstate Insurance, Pepsi-Cola Co. (never a bottler), Ball's plastics
+      division, Crown Cork & Seal, Matson Terminals, RadNet Management, Dover's Blackmer pumps, Starbucks Coffee,
+      Macy's East and West (Federated's from the 1994 merger; R.H. Macy's "Macy's California" before it is not),
+      MasTec, Jones Lang LaSalle Americas, Lamar Advertising, Brink's, Manitowoc Ice to the Welbilt spin-off ("before
+      the opening of business on March 4, 2016", 8-K 0000061986-16-000077), Waste Management de Puerto Rico from
+      1998-07-16, Cognizant's US company, Snap-on, Brinker's payroll company, Nexstar ("for their Station", which the
+      rule refuses), Constellium, Curaleaf, Portillo's, Loomis, U-Haul; Walt Disney World on Disney; and FedEx Freight
+      on FedEx to its spin-off ("On June 1, 2026, FedEx Corporation … completed its spin-off of FedEx Freight Holding
+      Company, Inc.", 8-K 0001104659-26-068519) and on FedEx Freight Holding from that day.
+- [x] **Left as they are, read and not the page's:** Coca-Cola and Pepsi-Cola bottlers named by town, franchised
+      restaurants ("McDonald's of Palolo") and car dealers ("Toyota of Walnut Creek"), Wells Fargo Armored and Guard
+      Services (never the bank's), Lear Siegler (not Lear), Southern California Gas on Southern Co. (it is Sempra's,
+      which the release map gives it), Coca-Cola Enterprises, the "Inter…", "Star…", "Metro…" and "Universal…"
+      namesakes; and the units whose decisions all fall before the company's first price (Owens-Corning Fiberglas,
+      Krispy Kreme Doughnut Corp., Kaiser Aluminum & Chemical, Cal-Maine Farms).
+- [x] **Namesakes refused** (`NOT_THE_COMPANY`), from a hand read of the 568 company days from the fixtures' first
+      prices and the rows since 1985 of the companies whose first price is not read here: Florida Power & Light Credit
+      Union (1978, on NextEra), "TEAM COMPANY d/b/a STAFFQUICK" (2016, on Team, Inc.), a Memphis "Value Line Co."
+      (1986), The Reece Corp. (1989, on Reece Limited), "Papa's Penn Inc. d/b/a Papa John's" (2017, a franchisee) and
+      "Commonwealth Electric Company of the Midwest" (2024, a Nebraska contractor, on Eversource). Every other "d/b/a"
+      the rule reads as a party names the company's own firm (Cellco Partnership d/b/a Verizon Wireless, Siren Retail
+      d/b/a Starbucks, Ozark Automotive Distributors dba O'Reilly Auto Parts).
+- [x] **Measured,** pages 0–339 (1969-09-16 to 2026-11-19: 34,000 rows, 33,989 dated decisions; 24,602 cases against
+      employers, 4,563 representation cases, 4,824 that make no row), against every company in the index with EDGAR's
+      former names: 1,159 company days on 283 companies before first prices; from the first prices the fixtures carry,
+      568 on 123 pages, 496 before 2017 (Kroger 33, GE 28, RTX 25, Walmart 22, Exxon 19, Boeing 17, AEP 14, Caterpillar
+      14, Goodyear 13, PPG 13, Verizon 13, PepsiCo 12). The scout's 24-page sample now gives 96 on 60, 41 on 25.
+- [x] **Checked and left, batch 159's note for the code auditor:** the Labor Department's rule reads `captionParty`, not
+      EPA's form with its "Power and Light" and surname guards. Over every certification the two differ on five, of
+      which `epaParty` would wrongly refuse two ("Corning,Inc.", 1998; "RGP and Kelly Services", 2018) and rightly refuse
+      three that fall before the company's first price ("Crompton and Knowles" on Knowles; "Allied Tube and Conduit"
+      on Conduit, 1993 and 2008), which the closed file can never move onto a page. No change.
+- [ ] **Raised, for the owner:** Alcoa's and DuPont's records. AA's record is the Alcoa Corporation of 2016 and DD's
+      the DowDuPont of 2015, but both charts begin in 1962 and the 1972 under the old companies' tickers, and every
+      caption rule reads old Alcoa's and old du Pont's cases by name onto them ("Alcoa, Inc.", 2008 and 2015;
+      "DuPont de Nemours, E. I.", 1981–1982), while neither old record is in `lib/predecessors.ts` or
+      `lib/takenNames.ts`. Whether those pages carry the old companies' past (as Merck's does) or refuse it (as a
+      taken name) is a call for every source at once, not this one.
+- [ ] **Pages 340 to 666,** the decisions of 1935 to 1969: the second night's read (scheduled 2026-11-22 at 04:03 UTC,
+      from page 339, 5 s apart), then the whole listing's counts; the next batch.
+- [x] **Checks:** `check:nlrb` 62, 17 new: 10 on the night read (its pages and kinds, Walmart's former name, T-Mobile
+      USA's day, Aramark Uniform's and Manitowoc Ice's, FedEx Freight's, McDonald's USA and Nexstar, the six namesakes,
+      the two totals) and 7 on the walk across runs and nights (a run's pages spent and resumed, the firewall's refusal
+      and the next night, a lapsed read, a page of 100 rows with 11 undated, page 336 as parsed, the firewall's page as
+      fetched), against the committed `scripts/fixtures/nlrb-decisions-2026-11-21.json.gz` (849 KB: the 33,989
+      decisions, each page's rows, the 487 companies' EDGAR names) and page 336 and the firewall's page added to
+      `nlrb-listing.json.gz` (its support ID zeroed). On main 11 fail, and the walk's section cannot run there (its
+      queries are db/055's).
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** www.nlrb.gov 341 (pages 0–340, logged in the session scratchpad, `b162/requests.log`); data.sec.gov
+  487, efts.sec.gov 4 and www.sec.gov 12, under the project's User-Agent with the contact, at least 1.25 s apart
+  (`b162/requests-sec.log`).
+
 ## NC ledger — batch 161: the NLRB's Board decisions, 1935 on (2026-11-21)
 
 The owner's word: "Continue", after batch 160; the second of the 2026-11-18 proposals, approved that day with call
@@ -11887,6 +11971,9 @@ already held, but new investment goes to securities coverage first.
       - **Done in batch 161** (see its section): on the scout's 24 pages, 87 company days on 54 companies before first
         prices, 39 on 23 from the first prices the fixtures carry. The whole listing's counts wait for its first read
         in the night window (batch 162).
+      - **Batch 162** (see its section): the night read was refused at page 340, so the walk now reads across runs and
+        nights. Pages 0–339 (1969–2026): 1,159 company days on 283 companies before first prices, 568 on 123 pages from
+        the fixtures' first prices. Pages 340–666 wait for the next night.
       - *Derived from [`docs/proposals/2026-11-18-proposals.md`](proposals/2026-11-18-proposals.md) #2, approved
         2026-11-18.*
 

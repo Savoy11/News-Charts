@@ -8,16 +8,26 @@ import { FUND_SERIES, NO_PRICES, type PressPlan } from "./secPressWalk";
 /**
  * The NLRB's decision listing, read for every company at once (batch 161), in the EEOC's walk's shape
  * (`eeocWalk.ts`): the whole listing once a year, else its newest page once a day, with further pages only
- * while each holds no decision already kept. The whole read is begun only in the NLRB's night window for
- * bulk reads, 11 pm to 6 am Eastern with room to finish (`inNightWindow`); outside it, a run whose whole
- * read is due reads the newest page instead, or nothing before the first whole read. One page at a time,
- * `GAP_MS` apart, well inside the NLRB's limit of 5 at once and 20 per 200 ms. A read is stored only when
- * every page it asked answered. Measured 2026-11-18: 667 pages, 66,645 decisions.
+ * while each holds no decision already kept. The whole read is asked only in the NLRB's night window for
+ * bulk reads, 11 pm to 6 am Eastern with room in it (`inNightWindow`); by day a run whose whole read is due
+ * reads the newest page instead, or nothing before the first whole read. One page at a time, `GAP_MS` apart,
+ * well inside the NLRB's limit of 5 at once and 20 per 200 ms.
+ *
+ * The whole read goes across runs and nights (batch 162, db/055): the first night read, 2026-11-21, was
+ * refused by the site's firewall at page 340 of 667 ("Request Rejected", as HTTP 200), so each page is kept
+ * as it comes and the 'partial' row holds the next page to read. A run reads at most `PAGES_PER_RUN` pages;
+ * a refusal ends the whole reading until the next night (`refused_at`, `REST_HOURS`); the next run resumes a
+ * page before where the last stopped, as the listing, newest first, only grows at its head, so a page read
+ * again overlaps and none is skipped; a read begun over `RESUME_DAYS` ago begins again. Every page but the
+ * last holds 100 rows, dated or not, or the listing is cut. The 'list' row is written when the last page is
+ * read, and only then is a company's answer complete.
  */
-export const PAGES_PER_RUN = 720;
-export const GAP_MS = 1_300;
+export const PAGES_PER_RUN = 300;
+export const GAP_MS = 3_000;
 export const LIST_PAGES = 700;
 export const LIST_EVERY_DAYS = 365;
+export const RESUME_DAYS = 14;
+export const REST_HOURS = 12;
 
 export const nlrbBudget = { left: PAGES_PER_RUN };
 
@@ -27,6 +37,8 @@ export interface NlrbWalk {
   decisions: number;
   /** whether the whole listing has been read and kept, so a company's answer is complete */
   whole: boolean;
+  /** the whole read in progress: the next page to read */
+  nextPage?: number;
   stopped?: string;
   failure?: { outcome: "throttled" | "error"; httpStatus?: number; detail?: string };
 }
@@ -37,18 +49,23 @@ export async function walkNlrb(
   client: PoolClient,
   { budget = nlrbBudget, gapMs = GAP_MS, fetchPage = fetchNlrbPage, now = new Date() }: { budget?: { left: number }; gapMs?: number; fetchPage?: (page: number) => Promise<NlrbAnswer>; now?: Date } = {},
 ): Promise<NlrbWalk> {
-  const { rows } = await client.query<{ kind: "list" | "newest"; old: boolean; stale: boolean }>(
-    `SELECT kind, read_at < now() - make_interval(days => ${LIST_EVERY_DAYS}) AS old, read_at < now() - interval '1 day' AS stale FROM nlrb_reads`,
+  const { rows } = await client.query<{ kind: "list" | "newest" | "partial"; next_page: number | null; old: boolean; stale: boolean; lapsed: boolean; resting: boolean }>(
+    `SELECT kind, next_page, read_at < now() - make_interval(days => ${LIST_EVERY_DAYS}) AS old, read_at < now() - interval '1 day' AS stale, read_at < now() - make_interval(days => ${RESUME_DAYS}) AS lapsed, coalesce(refused_at > now() - make_interval(hours => ${REST_HOURS}), false) AS resting FROM nlrb_reads`,
   );
   const list = rows.find((r) => r.kind === "list");
   const newest = rows.find((r) => r.kind === "newest");
+  const partial = rows.find((r) => r.kind === "partial");
   const night = inNightWindow(now);
   const listDue = !list || list.old;
   const newestDue = (!list || list.stale) && (!newest || newest.stale);
-  // the whole read only at night, by the NLRB's policy; by day a run whose whole read is due reads the newest page
-  const due = listDue && night ? "list" : list && newestDue ? "newest" : null;
-  const walk: NlrbWalk = { due, pages: 0, decisions: 0, whole: !!list };
-  if (!due) return listDue && !list ? { ...walk, stopped: "the whole listing waits for the NLRB's night window, 11 pm to 6 am Eastern" } : walk;
+  // the whole read only at night, by the NLRB's policy, and not again the night the firewall refused it
+  const due = listDue && night && !partial?.resting ? "list" : list && newestDue ? "newest" : null;
+  const walk: NlrbWalk = { due, pages: 0, decisions: 0, whole: !!list, ...(partial?.next_page != null ? { nextPage: partial.next_page } : {}) };
+  if (!due) {
+    if (!listDue) return walk;
+    if (partial?.resting && night) return { ...walk, stopped: "the whole listing rests until the next night: the site's firewall refused its last page" };
+    return list ? walk : { ...walk, stopped: "the whole listing waits for the NLRB's night window, 11 pm to 6 am Eastern" };
+  }
   const ask = async (page: number): Promise<NlrbAnswer> => {
     budget.left--;
     if (gapMs && walk.pages) await sleep(gapMs);
@@ -56,7 +73,7 @@ export async function walkNlrb(
     try {
       return await fetchPage(page);
     } catch (err) {
-      return { decisions: [], lastPage: null, outcome: "error", detail: String(err).slice(0, 200) };
+      return { decisions: [], rows: 0, lastPage: null, outcome: "error", detail: String(err).slice(0, 200) };
     }
   };
   const failed = (got: NlrbAnswer, where: string): NlrbWalk => ({
@@ -65,55 +82,85 @@ export async function walkNlrb(
     failure: { outcome: got.outcome as "throttled" | "error", httpStatus: got.httpStatus, detail: `${where}${got.detail ? `: ${got.detail}` : ""}` },
   });
 
-  const read: NlrbDecision[] = [];
   if (due === "list") {
-    if (budget.left < LIST_PAGES) return { ...walk, stopped: "this run's pages are spent" };
-    const first = await ask(0);
-    if (first.outcome !== "ok") return failed(first, "page 0");
-    const last = first.lastPage ?? 0;
-    if (last + 1 > LIST_PAGES) return { ...walk, stopped: "error", failure: { outcome: "error", httpStatus: first.httpStatus, detail: `the listing has more than ${LIST_PAGES} pages` } };
-    read.push(...first.decisions);
-    for (let p = 1; p <= last; p++) {
+    // resume a page before where the last run stopped, unless that read began too long ago
+    const resume = partial && !partial.lapsed && partial.next_page != null ? Math.max(0, partial.next_page - 1) : null;
+    if (resume === null) await client.query(PARTIAL_BEGIN);
+    let p = resume ?? 0;
+    for (; ; p++) {
+      if (budget.left <= 0) return { ...walk, nextPage: p, stopped: "this run's pages are spent" };
       const got = await ask(p);
-      if (got.outcome !== "ok") return failed(got, `page ${p}`);
+      if (got.outcome !== "ok") {
+        if (got.outcome === "throttled") await client.query("UPDATE nlrb_reads SET refused_at = now() WHERE kind = 'partial'");
+        return { ...failed(got, `page ${p}`), nextPage: p };
+      }
+      // the pager names the last page on every page but the last
+      const last = got.lastPage ?? p;
+      if (last + 1 > LIST_PAGES) return { ...failed({ ...got, outcome: "error", detail: `the listing has more than ${LIST_PAGES} pages` }, `page ${p}`), nextPage: p };
       // every page but the last is full: a short one is a listing cut, not the end
-      if (p < last && got.decisions.length < NLRB_PAGE_SIZE) return failed({ ...got, outcome: "error", detail: `${got.decisions.length} decisions, not ${NLRB_PAGE_SIZE}` }, `page ${p}`);
-      read.push(...got.decisions);
+      if (p < last && got.rows < NLRB_PAGE_SIZE) return { ...failed({ ...got, outcome: "error", detail: `${got.rows} rows, not ${NLRB_PAGE_SIZE}` }, `page ${p}`), nextPage: p };
+      walk.decisions += await keep(client, got.decisions);
+      await client.query("UPDATE nlrb_reads SET next_page = $1, decisions = decisions + $2, pages = pages + 1 WHERE kind = 'partial'", [p + 1, got.decisions.length]);
+      if (p >= last) break;
     }
-    walk.decisions = await store(client, "list", walk.pages, read);
-    return { ...walk, whole: true };
+    await finish(client, p + 1);
+    return { ...walk, whole: true, nextPage: undefined };
   }
   const known = new Set((await client.query<{ document: string }>("SELECT document FROM nlrb_decisions")).rows.map((r) => r.document));
+  const read: NlrbDecision[] = [];
   for (let p = 0; ; p++) {
     if (budget.left <= 0) return { ...walk, stopped: "this run's pages are spent" };
     const got = await ask(p);
     if (got.outcome !== "ok") return failed(got, `page ${p}`);
     read.push(...got.decisions);
-    if (got.decisions.length < NLRB_PAGE_SIZE || got.decisions.some((d) => known.has(d.document))) break;
+    if (got.rows < NLRB_PAGE_SIZE || got.decisions.some((d) => known.has(d.document))) break;
     if (p + 1 >= LIST_PAGES) return { ...walk, stopped: "error", failure: { outcome: "error", httpStatus: got.httpStatus, detail: `no kept decision in ${LIST_PAGES} pages` } };
   }
-  walk.decisions = await store(client, "newest", walk.pages, read);
+  await client.query("BEGIN");
+  try {
+    walk.decisions = await keep(client, read);
+    await client.query(
+      `INSERT INTO nlrb_reads (kind, pages, decisions) VALUES ('newest', $1, $2)
+       ON CONFLICT (kind) DO UPDATE SET pages = EXCLUDED.pages, decisions = EXCLUDED.decisions, read_at = now()`,
+      [walk.pages, read.length],
+    );
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  }
   return walk;
 }
 
-async function store(client: PoolClient, kind: "list" | "newest", pages: number, read: NlrbDecision[]): Promise<number> {
+/** A whole read begun afresh: its progress row, the day it began. */
+const PARTIAL_BEGIN = `INSERT INTO nlrb_reads (kind, pages, decisions, next_page, refused_at) VALUES ('partial', 0, 0, 0, NULL)
+  ON CONFLICT (kind) DO UPDATE SET pages = 0, decisions = 0, next_page = 0, refused_at = NULL, read_at = now()`;
+
+/** A page's decisions, kept; the number new or changed. */
+async function keep(client: PoolClient, read: NlrbDecision[]): Promise<number> {
   const decisions = [...new Map(read.map((d) => [d.document, d])).values()];
+  if (!decisions.length) return 0;
+  const { rowCount } = await client.query(
+    `INSERT INTO nlrb_decisions (document, day, citation, case_name, case_number)
+     SELECT * FROM unnest($1::text[], $2::date[], $3::text[], $4::text[], $5::text[])
+     ON CONFLICT (document) DO UPDATE SET day = EXCLUDED.day, citation = EXCLUDED.citation, case_name = EXCLUDED.case_name, case_number = EXCLUDED.case_number, read_at = now()
+      WHERE (nlrb_decisions.day, nlrb_decisions.citation, nlrb_decisions.case_name, nlrb_decisions.case_number) IS DISTINCT FROM (EXCLUDED.day, EXCLUDED.citation, EXCLUDED.case_name, EXCLUDED.case_number)`,
+    [decisions.map((d) => d.document), decisions.map((d) => d.day), decisions.map((d) => d.citation), decisions.map((d) => d.name), decisions.map((d) => d.caseNumber)],
+  );
+  return rowCount ?? 0;
+}
+
+/** The whole read done: the 'list' row written, its progress row gone. */
+async function finish(client: PoolClient, pages: number): Promise<void> {
   await client.query("BEGIN");
   try {
-    const { rowCount } = await client.query(
-      `INSERT INTO nlrb_decisions (document, day, citation, case_name, case_number)
-       SELECT * FROM unnest($1::text[], $2::date[], $3::text[], $4::text[], $5::text[])
-       ON CONFLICT (document) DO UPDATE SET day = EXCLUDED.day, citation = EXCLUDED.citation, case_name = EXCLUDED.case_name, case_number = EXCLUDED.case_number, read_at = now()
-        WHERE (nlrb_decisions.day, nlrb_decisions.citation, nlrb_decisions.case_name, nlrb_decisions.case_number) IS DISTINCT FROM (EXCLUDED.day, EXCLUDED.citation, EXCLUDED.case_name, EXCLUDED.case_number)`,
-      [decisions.map((d) => d.document), decisions.map((d) => d.day), decisions.map((d) => d.citation), decisions.map((d) => d.name), decisions.map((d) => d.caseNumber)],
-    );
     await client.query(
-      `INSERT INTO nlrb_reads (kind, pages, decisions) VALUES ($1, $2, $3)
+      `INSERT INTO nlrb_reads (kind, pages, decisions) SELECT 'list', $1, count(*) FROM nlrb_decisions
        ON CONFLICT (kind) DO UPDATE SET pages = EXCLUDED.pages, decisions = EXCLUDED.decisions, read_at = now()`,
-      [kind, pages, decisions.length],
+      [pages],
     );
+    await client.query("DELETE FROM nlrb_reads WHERE kind = 'partial'");
     await client.query("COMMIT");
-    return rowCount ?? 0;
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;

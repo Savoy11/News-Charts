@@ -23,7 +23,7 @@ import { deterministicScore } from "../lib/enrich/relevance";
 import { UNITS as EPA_UNITS, epaParty } from "../lib/epaCases";
 import { companyNames } from "../lib/frCompany";
 import { namesForYear } from "../lib/ingest/frBackfill";
-import { nlrbFor, walkNlrb, type NlrbWalk } from "../lib/ingest/nlrbWalk";
+import { NEWEST_PAGES, forgetNlrbWalk, nlrbFor, walkNlrb, walkNlrbOnce, type NlrbWalk } from "../lib/ingest/nlrbWalk";
 import { QUOTAS } from "../lib/ingest/quota";
 import { SOURCE_TTL_MINUTES } from "../lib/ingest/refresh";
 import { SOURCES } from "../lib/ingest/store";
@@ -403,6 +403,56 @@ async function main(): Promise<void> {
   const p336 = parseNlrbListing(fixture.pages["336"]);
   check("  …as the parser counts it: 100 rows, 89 decisions, \"Capital Bakery\" (321 NLRB 10) among the undated",
     p336.table && p336.rows === 100 && p336.decisions.length === 89 && !p336.decisions.some((d) => d.name === "Capital Bakery") && /Capital Bakery/.test(fixture.pages["336"]), { rows: p336.rows, decisions: p336.decisions.length });
+  console.log("\nOnce a process, and resting after any failure (batch 164, the 2026-11-21 audit's finding 1)");
+  const heldDb = (): FakeDb => ({ decisions: new Map(listing.map((d) => [d.document, d])), reads: new Map([["list", { ageDays: 2 }]]), listed: null });
+  const erring = heldDb();
+  served.length = 0;
+  const err = await walk(erring, day, 720, async () => ({ decisions: [], rows: 0, lastPage: null, outcome: "error", httpStatus: 502 }));
+  const afterErr = await walk(erring, day);
+  check("a failed newest read (an HTTP 502) rests: its row is made, refused, and the next run that day asks nothing",
+    err.failure?.httpStatus === 502 && erring.reads.get("newest")?.refusedHoursAgo === 0 && afterErr.due === null && served.length === 0 && /newest page rests/.test(afterErr.stopped ?? ""),
+    { err, afterErr });
+  erring.reads.get("newest")!.refusedHoursAgo = 13;
+  const rested = await walk(erring, day);
+  check("  …and after 12 hours the newest page is read again", rested.due === "newest" && rested.pages === 1 && served.length === 1, JSON.stringify(rested));
+  const nightErr = fresh();
+  await walk(nightErr, night, 720, async (p) => (p === 3 ? { decisions: [], rows: 0, lastPage: null, outcome: "error", httpStatus: 504 } : serve(p)));
+  check("  …an error in the whole read rests it until the next night, as a refusal does", nightErr.reads.get("partial")?.refusedHoursAgo === 0 && (await walk(nightErr, night)).due === null);
+  const blankRows = heldDb();
+  const unreadable = await walk(blankRows, day, 720, async () => ({ decisions: [], rows: 100, lastPage: 666, outcome: "ok", httpStatus: 200 }));
+  check("  …a page of 100 rows that gives no decision is an error, the listing's form having changed, and rests",
+    unreadable.failure?.outcome === "error" && /no decision read/.test(unreadable.failure.detail ?? "") && blankRows.reads.get("newest")?.refusedHoursAgo === 0, JSON.stringify(unreadable));
+  const unknown = heldDb();
+  unknown.decisions.clear();
+  served.length = 0;
+  const capped = await walk(unknown, day);
+  check(`  …the newest read takes at most ${NEWEST_PAGES} pages, a year's decisions and more, and rests when none holds a kept decision`,
+    NEWEST_PAGES === 5 && capped.pages === 5 && served.join(",") === "0,1,2,3,4" && /no kept decision in the newest 5 pages/.test(capped.failure?.detail ?? "") && unknown.reads.get("newest")?.refusedHoursAgo === 0,
+    JSON.stringify(capped));
+  const realFetch = globalThis.fetch;
+  let onceAsked = 0;
+  const onceDb = heldDb();
+  let firstWalk: NlrbWalk;
+  let second: NlrbWalk;
+  let third: NlrbWalk;
+  try {
+    globalThis.fetch = (async () => {
+      onceAsked++;
+      return new Response("", { status: 502 });
+    }) as typeof fetch;
+    forgetNlrbWalk();
+    firstWalk = await walkNlrbOnce(fakeDb(onceDb));
+    second = await walkNlrbOnce(fakeDb(onceDb));
+    forgetNlrbWalk();
+    third = await walkNlrbOnce(fakeDb(onceDb));
+  } finally {
+    globalThis.fetch = realFetch;
+    forgetNlrbWalk();
+  }
+  check("the ingest's walk is asked once a process: a second company takes the first's failure and asks nothing; the next run finds the rest",
+    onceAsked === 1 && firstWalk.failure?.httpStatus === 502 && second.failure?.httpStatus === 502 && second.pages === 0 && second.due === null && third.due === null && /rests/.test(third.stopped ?? ""),
+    { onceAsked, first: firstWalk.failure, second: second.failure, third: third.stopped });
+
   const real = globalThis.fetch;
   const asked: { url: string; ua: string }[] = [];
   let denied: NlrbAnswer;
@@ -455,8 +505,8 @@ async function main(): Promise<void> {
   check("  …a company source, quota and refresh noted, scored without the model",
     (COMPANY_SOURCES as readonly string[]).includes("nlrb_decisions") && QUOTAS.nlrb_decisions.perDay === null && SOURCE_TTL_MINUTES.nlrb_decisions === 1440 &&
       deterministicScore({ eventId: 0, kind: "regulation", title: "NLRB decision: Tesla, Inc.", sourceKey: "nlrb_decisions" }, { kind: "company", displayName: "Tesla", ticker: "TSLA" }, ["tesla"])?.score === 0.95);
-  check("  …company ingest walks the listing, then keeps the company's decisions",
-    /await run\("nlrb_decisions", [^\n]+\n\s*const walked = await walkNlrb\(client\);[\s\S]{0,400}return nlrbFor\(client, subjectId, \{[^}]*cik: company\.cik, fundSeries \}, walked\);/.test(read("scripts/ingest.ts")));
+  check("  …company ingest walks the listing once a process, then keeps the company's decisions",
+    /await run\("nlrb_decisions", [^\n]+\n\s*const walked = await walkNlrbOnce\(client\);[\s\S]{0,400}return nlrbFor\(client, subjectId, \{[^}]*cik: company\.cik, fundSeries \}, walked\);/.test(read("scripts/ingest.ts")));
   check("  …into tables of its own (db/054), and credited",
     /CREATE TABLE IF NOT EXISTS nlrb_decisions \(\s*document\s+text PRIMARY KEY/.test(read("db/054_nlrb_decisions.sql")) && /CREATE TABLE IF NOT EXISTS nlrb_reads/.test(read("db/054_nlrb_decisions.sql")) &&
       /decisions from the National Labor Relations Board/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
@@ -512,6 +562,12 @@ function fakeDb(db: FakeDb): PoolClient {
       }
       if (s.startsWith("INSERT INTO nlrb_reads (kind, pages, decisions) SELECT 'list', $1, count(*) FROM nlrb_decisions ON CONFLICT (kind) DO UPDATE")) {
         db.reads.set("list", { ageDays: 0, pages: params[0] as number, decisions: db.decisions.size });
+        return { rows: [] };
+      }
+      if (s === "INSERT INTO nlrb_reads (kind, pages, decisions, read_at, refused_at) VALUES ('newest', 0, 0, now() - interval '2 days', now()) ON CONFLICT (kind) DO UPDATE SET refused_at = now()") {
+        const r = db.reads.get("newest");
+        if (r) r.refusedHoursAgo = 0;
+        else db.reads.set("newest", { ageDays: 2, pages: 0, decisions: 0, refusedHoursAgo: 0 });
         return { rows: [] };
       }
       if (s === "DELETE FROM nlrb_reads WHERE kind = 'partial'") {

@@ -177,8 +177,9 @@ async function main(): Promise<void> {
   }
   const aaIds = new Set(aa.map((e) => e.id));
   const ddIds = new Set(dd.map((e) => e.id));
-  check("AA reads old Alcoa's record to the separation: its annual report of 1994 and its earnings of 2016-10-11, titled as Alcoa's",
-    aaIds.has("sec-000000428194000005") && aaIds.has("sec-000115752316006851") && aa.find((e) => e.id === "sec-000115752316006851")?.title.startsWith("Alcoa Corp:") === true,
+  check("AA reads old Alcoa's record to the separation: its annual report of 1994 and its earnings of 2016-10-11, titled as Alcoa Inc.'s, the record's name then",
+    aaIds.has("sec-000000428194000005") && aaIds.has("sec-000115752316006851") && aa.find((e) => e.id === "sec-000115752316006851")?.title.startsWith("Alcoa Inc.:") === true &&
+      aa.find((e) => e.id === "sec-000119312516782709")?.title.startsWith("Alcoa Corp:") === true,
     aa.map((e) => `${e.date} ${e.title}`).join(" | "));
   check("  …not Arconic's 8-K of the day, nor its 10-Q of 2016-11-09, for the quarter Alcoa Corporation reported itself",
     !aaIds.has("sec-000119312516755445") && !aaIds.has("sec-000119312516763784") && aaIds.has("sec-000119312516782709"));
@@ -189,6 +190,27 @@ async function main(): Promise<void> {
     ddIds.has("sec-000095010994000508") && ddIds.has("sec-000003055417000035") && !ddIds.has("sec-000119312517274840") && !ddIds.has("sec-000003055417000056") &&
       ddIds.has("sec-000166670017000026"),
     dd.map((e) => `${e.date} ${e.title}`).join(" | "));
+  let hwm: Awaited<ReturnType<typeof getFilingsDeep>> = [];
+  let eidp: Awaited<ReturnType<typeof getFilingsDeep>> = [];
+  (globalThis as { fetch: unknown }).fetch = async (input: RequestInfo | URL) => {
+    const key = /CIK(\d{10})\.json$/.exec(String(input))?.[1] ?? "";
+    const body = records[key];
+    return { ok: body !== undefined, status: body ? 200 : 404, json: async () => body } as unknown as Response;
+  };
+  try {
+    hwm = await getFilingsDeep({ ticker: "HWM", cik: "0000004281", name: "Howmet Aerospace Inc." }, false, []);
+    eidp = await getFilingsDeep({ ticker: "CTA-PA", cik: "0000030554", name: "EIDP, Inc." }, false, []);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const titleOf = (es: typeof aa, id: string) => es.find((e) => e.id === id)?.title;
+  check("batch 164, the 2026-11-21 audit's finding 2: a filing the two pages share is titled alike on both, with the old record's name then, so neither ingest retitles the other's row",
+    titleOf(aa, "sec-000000428194000005") === "Alcoa Inc.: Annual report (10-K)" && titleOf(hwm, "sec-000000428194000005") === titleOf(aa, "sec-000000428194000005") &&
+      titleOf(dd, "sec-000095010994000508") === "E. I. du Pont de Nemours and Company: Annual report (10-K)" && titleOf(eidp, "sec-000095010994000508") === titleOf(dd, "sec-000095010994000508"),
+    [titleOf(aa, "sec-000000428194000005"), titleOf(hwm, "sec-000000428194000005"), titleOf(dd, "sec-000095010994000508"), titleOf(eidp, "sec-000095010994000508")].join(" | "));
+  check("  …while the old record's own filings from the handover keep its page's present name: Howmet's 10-Q of 2016-11-09, EIDP's of 2017-11-06",
+    titleOf(hwm, "sec-000119312516763784") === "Howmet Aerospace Inc.: Quarterly report (10-Q)" && titleOf(eidp, "sec-000003055417000056") === "EIDP, Inc.: Quarterly report (10-Q)",
+    [titleOf(hwm, "sec-000119312516763784"), titleOf(eidp, "sec-000003055417000056")].join(" | "));
 
   // BlackRock's predecessor took a subsidiary's name five days before its ticker passed on
   records["0002012383"] = { name: "BlackRock, Inc.", formerNames: [], filings: { recent: block([["2025-11-05", "10-Q", "0001193125-25-267043"]]) } };

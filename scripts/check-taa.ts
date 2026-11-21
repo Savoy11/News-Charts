@@ -57,16 +57,19 @@ const EXPECTED = {
   byCode: { C: 23_767, C1: 8_539, C2: 13_338, CU: 1_984, D: 31_130, T: 6_854, P: 515, CD: 179 },
   lastDecided: "2022-06-30",
   // every listed company in the index, under the rule, its names as the replay below builds them; batch
-  // 159 gave 2,684 on 470, and 1,276 on 178 pages, 1,052 before 2017, 1,887 certifications, from first prices,
-  // before batch 160 read EPA's and the CPSC's units and the units named after their owners
-  total: 3_307,
-  companies: 492,
+  // 159 gave 2,684 on 470, and 1,276 on 178 pages, 1,052 before 2017, from first prices; batch 160, with EPA's and the
+  // CPSC's units and the units named after their owners, 3,307 on 492, and 1,729 on 193, 1,441 before 2017, from first
+  // prices, whose certifications it gave as 2,824, counting the petition numbers in the rows' text, which the
+  // 900-character cap cuts: 3,298 by the rows' titles. Batch 164 reads GE's "GE …" businesses, AT&T's companies and
+  // ADM's two (the 2026-11-21 audit's finding 3): 98 more certifications, 58 more company days, T a page more.
+  total: 3_365,
+  companies: 493,
   // from first prices, for the 954 companies the fixtures read
-  fromFirst: 1_729,
-  fromFirstPages: 193,
-  fromFirst2017: 1_441,
-  fromFirstCertifications: 2_824,
-  top: "GE 146, HON 95, IBM 86, WY 66, RTX 51, F 42, GT 34, IP 34, HAL 33, XRX 33",
+  fromFirst: 1_787,
+  fromFirstPages: 194,
+  fromFirst2017: 1_481,
+  fromFirstCertifications: 3_396,
+  top: "GE 182, HON 95, IBM 86, WY 66, RTX 51, F 42, GT 34, IP 34, HAL 33, XRX 33",
 };
 
 const companies = (tickerIndex as unknown as { companies: [number, string, string][] }).companies;
@@ -182,6 +185,25 @@ async function main(): Promise<void> {
   check("  …and a notice's search link from 1994, none before",
     noticeSearch({ petition: 40525, day: "2002-03-18" })?.endsWith("%22TA-W-40%2C525%22") === true && noticeSearch({ petition: 6955, day: "1980-04-17" }) === undefined);
 
+  console.log("\nGE's, AT&T's and ADM's units (batch 164, the 2026-11-21 audit's finding 3)");
+  const t = on(732717, "1984-07-19");
+  const tDay = t.find((e) => e.date === "2012-12-05");
+  check("AT&T's own companies are T's from the day SBC's record took the name: 58 certifications on 20 days, 2009–2021, TA-W-82,064's 20 sites of 2012-12-05 one row",
+    t.length === 20 && t.every((e) => e.date >= "2009-10-02" && e.date <= "2021-07-21") && / at 20 sites of AT&T Services, Inc\. /.test(tDay?.title ?? "") &&
+      t.reduce((n, e) => n + Number(/ at (\d+) sites of /.exec(e.title)?.[1] ?? 1), 0) === 58 && TAA_UNITS[732717][0].from === "2005-11-18",
+    t.map((e) => e.date).join(", "));
+  const adm = on(7084, "1962-01-02");
+  check("  …ADM's two, ADM Cocoa (2015-04-28) to the cocoa business's sale in October 2015 and ADM Milling Co. (2018-04-03)",
+    ["2015-04-28", "2018-04-03"].every((d) => adm.some((e) => e.date === d)) && TAA_UNITS[7084][1].to === "2015-09-30",
+    adm.map((e) => e.date).join(", "));
+  const ge164 = on(40545, "1962-01-02");
+  check("  …GE's businesses written \"GE …\": GE Aviation (2007-11-16), GE Healthcare (2008-11-12), GE Drives and Controls (2020-08-29), GE Transportation Systems (2003-07-09)",
+    ["2007-11-16", "2008-11-12", "2020-08-29", "2003-07-09"].every((d) => ge164.some((e) => e.date === d && / GE /.test(e.title))) && ge164.length === EXPECTED.top.match(/^GE (\d+)/)!.slice(1).map(Number)[0],
+    ge164.length);
+  check("  …but not \"GE Transportation | A WABTEC Company\" (2021-02-07), Wabtec's from 2019-02-25 (its 8-K), nor GE-RIC Inc. (1976) or Ge-Ray Fabrics (2003)",
+    !ge164.some((e) => e.date === "2021-02-07") && !on(40545).some((e) => /GE-RIC|Ge-Ray/i.test(e.title)) && TAA_UNITS[40545][2].to === "2019-02-24",
+    ge164.filter((e) => /Transportation|GE-RIC|Ge-Ray/i.test(e.title)).map((e) => `${e.date} ${e.title.slice(0, 60)}`).join(" | "));
+
   console.log("\nEvery listed company");
   const alnum = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
   const first: Record<string, string> = {};
@@ -202,7 +224,9 @@ async function main(): Promise<void> {
     const mine = certs.filter((c, j) => pre.some((p) => letters[j].includes(p)) || units.some((u) => u.test(c.firm.trim())));
     if (!mine.length) continue;
     for (const e of taaEvents(mine, namesOf(cik), { cik, namesOn: (d) => releaseNamesOn(cik, d) })) {
-      rows.push({ ticker, date: e.date, first: first[ticker] ?? null, sites: (e.description?.match(/TA-W-/g) ?? []).length });
+      // the sites a row names, by its title ("at 13 sites of"), not by the numbers in its text, which the 900-character cap
+      // can cut (the 2026-11-21 audit; batch 164)
+      rows.push({ ticker, date: e.date, first: first[ticker] ?? null, sites: Number(/ at (\d+) sites of /.exec(e.title)?.[1] ?? 1) });
     }
   }
   const after = rows.filter((r) => r.first && r.date >= r.first);

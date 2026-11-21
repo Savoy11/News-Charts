@@ -127,7 +127,9 @@
  *    and the record took the DuPont name and the DD ticker in 2019, so old du Pont's record is DD's to the
  *    merger. It is EIDP's now, Corteva's subsidiary, whose preferred shares are pages of their own (CTA-PA,
  *    CTA-PB). Old Dow's record is not mapped: DD's chart is not Dow's.
- * On both, the old record's filings before `until` are on the old record's own pages too, where they belong.
+ * On both, the old record's filings before `until` are on the old record's own pages too, where they belong, as one
+ * stored row each, titled on both pages with the old record's name then ("Alcoa Inc.: Annual report (10-K)"), so
+ * neither page's ingest retitles the other's (`sharedRecordOf`, batch 164, the 2026-11-21 audit's finding 2).
  *
  * `news` is the predecessor's own name as headlines write it, where the successor's name is not
  * it: "Exxon Mobil" for ExxonMobil Holdings, "Cigna" for The Cigna Group. A name that is also an
@@ -669,6 +671,16 @@ export function ownPastLabelled<T extends { date: string; title: string; source:
 /** The records a company's history continues under, newest first; none for most companies. */
 export function predecessorsOf(cik: number | string): Predecessor[] {
   return PREDECESSORS[Number(cik)] ?? [];
+}
+
+/**
+ * Where the record is an old record another company maps with `listedAs` (old Alcoa's on AA, old du Pont's on
+ * DD): its name then and the handover day. The two pages store one row of each filing before the day, so both
+ * title it with that name, never either page's (batch 164, the 2026-11-21 audit's finding 2).
+ */
+export function sharedRecordOf(cik: number | string): { name: string; until: string } | null {
+  for (const ps of Object.values(PREDECESSORS)) for (const p of ps) if (p.listedAs && p.cik === Number(cik)) return { name: p.name, until: p.until };
+  return null;
 }
 
 /**

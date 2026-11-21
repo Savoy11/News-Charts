@@ -988,6 +988,56 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 164: the 2026-11-21 audit of batches 155–163, its findings fixed (2026-11-21)
+
+The owner's word: "Merge when green and continue". The `code-auditor` read batches 155–163 (`1bdecc3..768e7e0`) and
+reported four findings, three `P2` and one `P3` (docs/audits/2026-11-21-code-audit-b155-163.md); each was read again
+here before it was fixed.
+
+- [x] **Finding 1, the NLRB walk after a failure (`P2`):** the walk ran once a company and kept no failure, so every
+      company of a run asked again, and a by-day newest read could page on to 300. Now (`lib/ingest/nlrbWalk.ts`):
+      - asked once a process (`walkNlrbOnce`, as `cachedOccList`): the companies after the first take its answer, its
+        failure included, and ask nothing; `scripts/ingest.ts` calls it;
+      - any failure, a refusal or an error (an HTTP 502, a timeout, a page without the listing), rests the read that
+        failed for 12 hours: the whole read's 'partial' row as before, and now the newest read's row, made if it had
+        none and left stale so a good read is due after the rest;
+      - the newest read takes at most 5 pages (`NEWEST_PAGES`, 500 decisions, more than the Board issues in a year),
+        and rests when none holds a kept decision;
+      - a page whose rows give no decision is an error, the listing's form having changed (`unread`).
+      Run on a throwaway PostgreSQL 16 with db/001–055 applied: a by-day 502 made one request and rested, a second walk
+      asked nothing; the cap read pages 0–4 and rested; two companies' `walkNlrbOnce` made one request.
+- [x] **Finding 2, shared filings retitled by each page (`P2`):** batch 163 made AA and Howmet's page, and DD and EIDP's,
+      store one row of each old filing, titled with whichever page ingested last. A filing of a record mapped with
+      `listedAs` is now titled on both pages with the old record's name then (`sharedRecordOf`, lib/predecessors.ts;
+      lib/sec.ts): "Alcoa Inc.: Annual report (10-K)" on AA and on HWM, "E. I. du Pont de Nemours and Company: …" on DD
+      and on CTA-PA and CTA-PB; the old record's own filings from the handover keep its page's present name. On the
+      throwaway database the one row kept that title through AA's, HWM's and AA's upserts again, unchanged.
+- [x] **Finding 3, the trade certifications' units batch 160 left (`P2`):** `TAA_UNITS` takes AT&T's own companies from
+      2005-11-18, the day SBC's record took the name (AT&T Services, Operations, Mobility Services, Business-Global
+      Operations, Digital Retail and Care: 58 certifications on 20 days, 2009–2021); ADM Milling Co. (2018) and ADM Cocoa
+      (2015-04-28) to the cocoa business's sale, held "at September 30, 2015" (ADM's 10-Q 0000007084-15-000037) and sold
+      "in October 2015" (its 10-K 0000007084-16-000046); and GE's businesses written "GE …", read by hand: of the 55
+      certifications whose firm begins "GE", 52 are of businesses GE held that day, GE Transportation's to its merger
+      into Wabtec, "consummated" on 2019-02-25 (Wabtec's 8-K 0001140361-19-003790), so "GE Transportation | A WABTEC
+      Company" of 2021 stays off, and "GE-RIC Inc." (1976) and "Ge-Ray Fabrics" (2003) are no "GE " at all. 14 of the 52
+      already reached GE through the CPSC's units, so GE gains 38. Batch 159's checklist item, which said done in batch
+      160, is corrected.
+      - **Measured:** 3,365 company days on 493 companies before first prices (3,307 on 492); from first prices 1,787 on
+        194 pages, 1,481 before 2017 (GE 182). Certifications are now counted by the rows' titles ("at 13 sites of"),
+        not by the petition numbers in their text, which the 900-character cap cuts: 3,396 (3,298 before this batch,
+        given as 2,824 by the old count), 98 more, as the audit estimated.
+- [x] **Finding 4, docs (`P3`):** the 2026-11-18 proposals' numbered list moved back under its bullet in OWNER-ACTIONS;
+      README's "350 of General Motors' 371" (it said 343 of 350; 371 on 115 days, 350 before GM's first price, read
+      again); `inNightWindow`'s comment says a run of 300 pages is about 27 minutes and the whole listing about an hour.
+- [x] **Checks:** `check:nlrb` 68 (6 new: the newest read's rest and its end, the whole read's rest on an error, a page
+      of rows with no decision, the 5-page cap, once a process); `check:predecessors` 85 (2 new: a shared filing titled
+      alike on both pages, the old record's own later filings under its present name; AA's title expectation changed);
+      `check:taa` 41 (4 new: AT&T's, ADM's, GE's units and those that stay off; its totals re-pinned and its
+      certifications counted by title). On main 10 of the 12 new fail and two suites stop before their last.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** efts.sec.gov 3 and www.sec.gov 6 (Wabtec's and ADM's filings), under the project's User-Agent with the
+  contact, at least 1.3 s apart (`b164/requests-sec.log`).
+
 ## NC ledger — batch 163: old Alcoa's and old du Pont's filings on AA and DD (2026-11-21)
 
 The owner's word, on batch 162's report: "Lets consider those as well", then, asked whether AA and DD should show the old
@@ -1263,7 +1313,8 @@ refocus; this batch builds #1, with call (a): a denial makes no row.
       scout's 1,292 on 179 counted a company's share classes as pages (Ford's F-PD, Xerox's warrants, Citigroup's
       preferred); company by company the two replays agree but for the units and the namesake above. Read by hand: 30
       company days drawn at random, every one the company's own plant, office or unit.
-- [x] **Units named after their owners the rule does not read (`P2`, found here; done in batch 160):** about 260 certifications on large
+- [x] **Units named after their owners the rule does not read (`P2`, found here; done in batches 160 and 164: batch 160 left
+      AT&T's, ADM's and GE's "GE …" businesses unread, which the 2026-11-21 audit's finding 3 found, and batch 164 read):** about 260 certifications on large
       pages, each unit needing the days its owner held it read from a filing, which this container cannot reach
       (`NEWS_CHARTS_CONTACT` is not set here): Verizon Data Services and Verizon Business Network Services (about 80),
       AT&T Services and AT&T Operations (about 55, after SBC's record took AT&T's name), General Electric's divisions

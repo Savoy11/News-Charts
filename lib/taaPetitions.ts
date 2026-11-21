@@ -181,7 +181,42 @@ export const TAA_UNITS: Readonly<Record<number, { ticker: string; firm: RegExp; 
     {
       ticker: "GE",
       firm: /^General Electric\b/i,
-      why: "GE's own divisions and plants written as firms (\"General Electric Lighting\", \"General Electric Dothan Motor Plant\"): 40 refused by the caption rule, 1987-06-03 to 2018-06-15; the file's last GE-named certification is of 2018-09-28 (GE Transportation, Erie), and none is of a GE business sold with its name",
+      why: "GE's own divisions and plants written as firms (\"General Electric Lighting\", \"General Electric Dothan Motor Plant\"): 40 refused by the caption rule, 1987-06-03 to 2018-06-15",
+    },
+    // batch 164, the 2026-11-21 audit's finding 3: the 55 certifications whose firm begins "GE", each read by hand. 52 are of
+    // businesses GE held on the day (GE Industrial Systems, GE Lighting, GE Security, GE Healthcare, GE Oil & Gas, GE Power,
+    // GE Drives and Controls…: 49 here, GE Transportation's 3 below); 14 of them already reached GE through the CPSC's
+    // units (GE Lighting, GE Security, GE Consumer and Industrial). GE Transportation's of 2021 is Wabtec's; "GE-RIC Inc." (1976, a shrimper) and "Ge-Ray Fabrics" (2003)
+    // are not "GE " at all
+    {
+      ticker: "GE",
+      firm: /^GE (?!Transportation\b|Fairchild\b)/,
+      why: "GE's businesses written \"GE …\": 49 certifications, 1995-05-18 to 2020-08-29, each of a business GE held that day (the closed file holds none of a GE business after its sale but GE Transportation's)",
+    },
+    {
+      ticker: "GE",
+      firm: /^GE (?:Transportation|Fairchild)\b/,
+      to: "2019-02-24",
+      why: "GE Transportation and its mining unit, GE Fairchild, to their merger into Wabtec: \"On February 25, 2019, … Wabtec … and General Electric Company … announced that they had consummated the previously announced combination of Wabtec with GE's transportation business\" (Wabtec's 8-K 0001140361-19-003790); \"GE Transportation | A WABTEC Company\" of 2021 is Wabtec's",
+    },
+  ],
+  // batch 164, the 2026-11-21 audit's finding 3: AT&T's own companies, which the caption rule refuses without legal words
+  // after "AT&T", from the day SBC's record took the name (lib/takenNames.ts); 58 certifications, 2009-10-02 to 2021-07-21
+  732717: [
+    {
+      ticker: "T",
+      firm: /^AT\s?&\s?T\b/i,
+      from: "2005-11-18",
+      why: "AT&T Services, AT&T Operations, AT&T Mobility Services, AT&T Business-Global Operations, AT&T Digital Retail and Care, AT&T Communications (Southwestern Bell): AT&T Inc.'s companies, from the day its record took AT&T's name",
+    },
+  ],
+  7084: [
+    { ticker: "ADM", firm: /^ADM Milling\b/i, why: "ADM Milling Co., its flour mills (2018-04-03)" },
+    {
+      ticker: "ADM",
+      firm: /^ADM Cocoa\b/i,
+      to: "2015-09-30",
+      why: "ADM Cocoa (2015-04-28), to the sale of the cocoa business to Olam, held for sale \"at September 30, 2015\" (ADM's 10-Q 0000007084-15-000037) and sold \"in October 2015\" (its 10-K 0000007084-16-000046)",
     },
   ],
   106535: [

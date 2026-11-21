@@ -304,8 +304,9 @@ export function nlrbEvents(
 
 /**
  * Whether `now` is in the NLRB's night window for bulk reads, 11 pm to 6 am Eastern ("between 11pm EST – 6am
- * EST", its policy), with `room` minutes left in it for the read to finish: the whole listing is about 15
- * minutes at `GAP_MS`.
+ * EST", its policy), with `room` minutes left in it for the run to finish: a run reads at most `PAGES_PER_RUN`
+ * pages (lib/ingest/nlrbWalk.ts), about 27 minutes at the 5.4 s a page measured with `GAP_MS` of 3 s, and the whole
+ * listing of 667 pages about an hour, over two runs or more.
  */
 export function inNightWindow(now: Date, room = 45): boolean {
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(now);

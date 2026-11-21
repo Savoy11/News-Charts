@@ -988,6 +988,59 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 160: the trade adjustment certifications' units, EPA's and the CPSC's read too (2026-11-21)
+
+The owner's word: "Continue", after batch 159 logged about 260 certifications under units named after their owners.
+`NEWS_CHARTS_CONTACT` is set again in this container's git-ignored `.env.local`, the project's address the owner gave
+on 2026-11-13; no committed file names it.
+
+- [x] **EPA's and the CPSC's units are read** (`taaIsCompany`, lib/taaPetitions.ts): a certification whose firm is one
+      of the units their rules read under their own names is that company's on the days their filings give, as a unit
+      read for one map is read for another (batch 150), a branded site no brand's. Halliburton's services and logging
+      companies (330 certifications), Chevron U.S.A. (82), Verizon Data Services and Verizon Business (81), Exxon
+      Company USA (30), Union Pacific Resources, AlliedSignal and old Honeywell on Honeywell, Sunoco, Inc. on Energy
+      Transfer from 2012-10-05, Maytag on Whirlpool from 2006, Sony Electronics, John Deere's works, Philips
+      Electronics North America and more. Shell Oil's certifications, all before 2005-07-20, when Shell plc's record
+      became the group's parent (the owner's call EPA's unit carries), stay off Shell plc; the one Shell-named firm
+      after that day is Shell Sands, Inc., a namesake.
+- [x] **The units named after their owners** (`TAA_UNITS`), from a scan of every company's certifications whose firm
+      begins with its name and which the rule refuses (3,952 at first, most of them namesakes: "Inter…", "Mara…",
+      OshKosh B'Gosh, Deluxe Media, Stride Rite), each read by hand. The Department names the workers' employer as it
+      was on the day it ruled, so a unit named after its owner is the owner's on its certifications' days unless it had
+      been sold with its name: GE's divisions written as firms (40, 1987–2018; the file's last GE-named certification,
+      GE Transportation's of 2018-09-28, is before any GE business it names was sold), GM's plants after its first
+      price (21), Weyerhaeuser NR Company and its mills (36), Dell's operating companies, Wells Fargo's bank and
+      divisions (19, the table of taken names holding the name before 1998-11-02), State Street's bank (25),
+      Amphenol's, Ametek's, Caterpillar's, Hasbro's, Hubbell's and Visteon's companies, Accenture LLP, Cooper-Standard
+      Automotive, Chevron's exploration companies, Exxon Company USA as the file spells it, A. O. Smith Electrical to
+      its sale of 2011 (the day the CPSC's units read), and two misspellings of Ford.
+- [x] **Two sold units, each day read from a filing:** Xerox's units, the business-process companies it bought as ACS
+      among them, to the separation of Conduent: "On December 31, 2016, Xerox Corporation … completed the complete legal
+      and structural separation of its wholly owned subsidiary, Conduent Incorporated" (Xerox's 8-K filed 2017-01-06,
+      0001193125-17-003219), so six sites of Xerox Business Services certified on 2016-12-09 land on XRX and the one of
+      2018-09-18 does not; ArcelorMittal's US mills to Cleveland-Cliffs' purchase of ArcelorMittal USA, "On December 9,
+      2020, pursuant to the terms of the Transaction Agreement" (Cleveland-Cliffs' 8-K filed that day,
+      0000764065-20-000235), so Indiana Harbor's certification of 2020-12-15 is Cleveland-Cliffs'.
+- [x] **Left as they are, read and not units of the page:** Corning's (joint ventures and businesses it sold, Corning
+      Asahi Video, Corning Consumer Products), Alcoa Fujikura (a joint venture), Baker Hughes' and Noble Drilling's
+      (before those records' first prices), Crane's (its record of 2023); and those the replay refuses only because it
+      lacks the former names ingest reads from EDGAR (Sanmina-SCI, Flextronics, Jabil Circuit, Dana Holding,
+      Borg-Warner Automotive).
+- [x] **Measured,** the rule over every company in the index, its first pass now taking the units' patterns too:
+      3,307 company days on 492 companies before first prices (2,684 on 470); from first prices, 1,729 on 193 pages,
+      1,441 before 2017, 2,824 certifications (GE 146, Honeywell 95, IBM 86, Weyerhaeuser 66, RTX 51, Ford 42, Goodyear
+      34, International Paper 34, Halliburton 33, Xerox 33). Read by hand: 30 of the 623 company days added, drawn at
+      random, every one the company's own unit (Chevron Chemical in 1992, Sunoco, Inc. in 2013, AlliedSignal in 1996,
+      Maytag International "Subsid. of Whirlpool" in 2006, Black Diamond Equipment on Clarus).
+- [x] **Checks:** `check:taa` 37 (6 new: GM's plants; GE's divisions, Weyerhaeuser NR and State Street's bank; Xerox's
+      day; ArcelorMittal's and Cleveland-Cliffs' day; A. O. Smith Electrical; EPA's units on their days), its totals
+      re-pinned with batch 159's kept in a comment. On main nine fail: the six new ones, GM's count re-pinned and the
+      two totals.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** 7, data.sec.gov 3 and www.sec.gov 4, under the project's User-Agent with the contact, at least 1.2 s
+  apart, logged in the session scratchpad (`b160/requests.log`): Xerox's 8-Ks of 2017-01-03 and 2017-01-06 and
+  Cleveland-Cliffs' of 2020-12-09.
+
 ## NC ledger — batch 159: the Labor Department's trade adjustment certifications, 1975–2022 (2026-11-19)
 
 The owner's word on the 2026-11-18 proposals, 2026-11-18: "Approve both (Recommended)". Both are filed under Scope
@@ -1034,7 +1087,7 @@ refocus; this batch builds #1, with call (a): a denial makes no row.
       scout's 1,292 on 179 counted a company's share classes as pages (Ford's F-PD, Xerox's warrants, Citigroup's
       preferred); company by company the two replays agree but for the units and the namesake above. Read by hand: 30
       company days drawn at random, every one the company's own plant, office or unit.
-- [ ] **Units named after their owners the rule does not read (`P2`, found here):** about 260 certifications on large
+- [x] **Units named after their owners the rule does not read (`P2`, found here; done in batch 160):** about 260 certifications on large
       pages, each unit needing the days its owner held it read from a filing, which this container cannot reach
       (`NEWS_CHARTS_CONTACT` is not set here): Verizon Data Services and Verizon Business Network Services (about 80),
       AT&T Services and AT&T Operations (about 55, after SBC's record took AT&T's name), General Electric's divisions
@@ -11769,6 +11822,9 @@ already held, but new investment goes to securities coverage first.
         company's share classes as pages of their own; batch 159 counts each company once).
       - **Done in batch 159** (see its section): 2,684 company days on 470 companies before first prices; from first
         prices, 1,276 on 178 pages, 1,052 before 2017, 1,887 certifications.
+      - **Widened in batch 160** (see its section), EPA's and the CPSC's units and the units named after their owners
+        read: 3,307 on 492 before first prices; from first prices 1,729 on 193 pages, 1,441 before 2017, 2,824
+        certifications.
       - *Derived from [`docs/proposals/2026-11-18-proposals.md`](proposals/2026-11-18-proposals.md) #1, approved
         2026-11-18.*
 - [ ] `P1` **The NLRB's Board decisions in the company's own cases, from 1962:** approved by the owner 2026-11-18, with

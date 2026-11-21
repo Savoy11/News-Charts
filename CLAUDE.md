@@ -156,8 +156,9 @@ The Labor Department's trade adjustment certifications of 1975–2022 (`lib/taaP
 keyless zip read once into the committed `data/taa-certifications.json.gz` (`npm run sync:taa`; no petition is
 decided after 2022-06-30, when the program lapsed): only the codes the Federal Register lists as issued
 certifications (C, C1, C2, CU) are kept, a denial making no row. A certification is a page's by the caption rule
-on its firm under the company's names of the year, the release map's units of the day, or `TAA_UNITS`, the units
-named after it the rule does not read; a namesake is refused in `NOT_THE_COMPANY`. One row a company a day, each
+on its firm under the company's names of the year, the release map's units of the day, EPA's and the CPSC's
+`UNITS` on their days (batch 160), or `TAA_UNITS`, the units named after it the rule does not read, a sold one
+with its `to` and its buyer's `from` read from a filing; a namesake is refused in `NOT_THE_COMPANY`. One row a company a day, each
 site's town, product and the Department's worker estimate given, never added up.
 
 The SEC News Digest of 1956–1993 (`lib/secDigest.ts`, batch 102) is read once, issue by issue, into

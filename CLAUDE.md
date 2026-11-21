@@ -166,7 +166,8 @@ once a year and its newest page daily (`lib/ingest/nlrbWalk.ts`, db/054), the wh
 night window for bulk reads, 11 pm to 6 am Eastern, by its policy (`inNightWindow`), across runs and nights
 (db/055, batch 162: the site's firewall refused the first night read at page 340 with a "Request Rejected" page
 served as HTTP 200, `REJECTED`, which ends the night's reading); a page is full by its rows, dated or not; until the
-last page is read an answer is never complete. The case number gives the kind: a case against the employer (CA, C) or an election or unit question
+last page is read an answer is never complete. It is asked once a process (`walkNlrbOnce`), any failure rests the read
+that failed 12 hours, the daily read takes at most 5 pages, and a page whose rows give no decision is an error (batch 164). The case number gives the kind: a case against the employer (CA, C) or an election or unit question
 at it (RC, RD, RM, R, RE, UA, UC, UD, AC); a case against a union makes no row. A decision is a page's by EPA's form of
 the caption rule (`epaParty`, its "d/b/a" read by `respondents`) under the company's names of the year, the release
 map's and the EEOC's units, EPA's and the CPSC's `UNITS` on their days, or `NLRB_UNITS`; a namesake is refused in
@@ -227,7 +228,8 @@ and IDACORP's, batch 137). Batch 149 read the handovers that waited on the conta
 RGC's, and the old Digimarc's is Digimarc's to its spin-off of 2008-08-01, the ticker and the chart carrying on. Batch 163
 maps two old records that still list tickers of their own, by the owner's call of 2026-11-21 (`listedAs`, and only those
 two): old Alcoa's on AA to the separation of 2016-11-01 (Howmet's record now) and old du Pont's on DD to the merger of
-2017-08-31 (EIDP's), as Yahoo's splits show both charts are the old companies'. RGC's own
+2017-08-31 (EIDP's), as Yahoo's splits show both charts are the old companies'; the one stored row of such a filing
+is titled on both pages with the old record's name then (`sharedRecordOf`, batch 164). RGC's own
 10-Qs of 1999, an empty new parent's for quarters Roanoke Gas reported, stay off as read and as stored (`shellReports`,
 batch 150). Merck's is a merger the other way round (batch 108): MRK's record was
 Schering-Plough's until it took old Merck's name and ticker on 2009-11-03, so old Merck's record is

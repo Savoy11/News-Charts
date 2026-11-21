@@ -53,7 +53,7 @@ import { eeocFor, walkEeoc } from "../lib/ingest/eeocWalk";
 import { digestFor, walkDigest } from "../lib/ingest/secDigestWalk";
 import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
 import { taaFor } from "../lib/ingest/taaFor";
-import { nlrbFor, walkNlrb } from "../lib/ingest/nlrbWalk";
+import { nlrbFor, walkNlrbOnce } from "../lib/ingest/nlrbWalk";
 import { fdaSupplementsFor } from "../lib/ingest/fdaSupplementsFor";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
 import { occFor } from "../lib/ingest/occFor";
@@ -896,11 +896,11 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
   /**
    * The NLRB's Board decisions in the company's own cases (batch 161, the 2026-11-18 proposal 2): the
    * Board's decision listing, read whole once a year in the NLRB's night window and its newest page once a
-   * day for every company (`walkNlrb`), then every kept decision whose caption names the company, under its
+   * day for every company, asked once a process (`walkNlrbOnce`, batch 164), then every kept decision whose caption names the company, under its
    * names that year and the units it then owned, from its first price; a case against a union makes no row.
    */
   await run("nlrb_decisions", `NLRB decisions in cases of ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, async () => {
-    const walked = await walkNlrb(client);
+    const walked = await walkNlrbOnce(client);
     if (walked.due || walked.stopped) line("nlrb_decisions", `list      ${walked.due === "list" ? "read whole" : walked.due === "newest" ? "newest read" : "not read"}, ${walked.pages} pages, ${walked.decisions} decisions stored${walked.stopped ? ` (${walked.stopped})` : ""}`);
     return nlrbFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }, walked);
   });

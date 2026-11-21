@@ -33,7 +33,7 @@ import rawTickerIndex from "../data/edgar-tickers.json";
 import rawCompanyAliases from "../data/company-aliases.json";
 import { nameKey, type AliasIndexFile } from "./companyAliases";
 import { foldAccents } from "./fold";
-import { isShellReport, predecessorsOf } from "./predecessors";
+import { isShellReport, predecessorsOf, sharedRecordOf } from "./predecessors";
 import { commonName, shortForms, withoutTag } from "./edgarName";
 import { eastern } from "./marketTime";
 import { UA } from "./contact";
@@ -1165,7 +1165,9 @@ export async function getFilingsDeep(
   const earlier = predecessorsOf(company.cik).map(async (p) => {
     const cik = String(p.cik).padStart(10, "0");
     const theirs: Rename[] = [];
-    const events = await recordFilings({ ...company, cik }, includeOlder, theirs, othersStakes);
+    // a record that keeps a page of its own (`listedAs`) is read under its own name then, as its own page titles
+    // the same rows, so the two store one title (the 2026-11-21 audit's finding 2)
+    const events = await recordFilings({ ...company, cik, ...(p.listedAs ? { name: p.name } : {}) }, includeOlder, theirs, othersStakes);
     // the record's span as the company's: before the handover, and from the day the shell it began
     // as became the business, not the shell's rename that day (DraftKings' SPAC, batch 55)
     const inSpan = (date: string, rename = false) => date < p.until && (!p.since || (rename ? date > p.since : date >= p.since));
@@ -1198,7 +1200,12 @@ export async function getFilingsDeep(
   const [mine, ...before] = await Promise.all([recordFilings(company, includeOlder, renames, othersStakes), ...earlier]);
   // …less an empty new parent's own reports for quarters its predecessor reported (RGC's of 1999, finding 2
   // of the audit of batches 143–149)
-  const own = mine.filter((e) => !isShellReport(company.cik, e.externalId));
+  // …and where the company's record is one another company maps with `listedAs` (Howmet's, old Alcoa's; EIDP's,
+  // old du Pont's), its filings before the handover carry the record's name then, as the other page reads them
+  const shared = sharedRecordOf(company.cik);
+  const asShared = (e: TimelineEvent): TimelineEvent =>
+    shared && e.date < shared.until && e.title.startsWith(`${company.name}: `) ? { ...e, title: `${shared.name}: ${e.title.slice(company.name.length + 2)}` } : e;
+  const own = mine.filter((e) => !isShellReport(company.cik, e.externalId)).map(asShared);
   // one row a filing: one the two records share is the successor's
   const seen = new Set(own.map((e) => e.id));
   return [...own, ...before.flat().filter((e) => !seen.has(e.id) && seen.add(e.id))];

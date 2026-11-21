@@ -231,9 +231,6 @@ Raised by the November batches, each recorded in the master checklist:
   decisions are the newest pages' alone. **Batch 162:** apply db/055 too (`npm run db:migrate`), which lets that
   read go across runs and nights: on 2026-11-21 the site's firewall refused the first night read at page 340 of 667,
   so the whole listing takes two nights or more, at most 300 pages a run, 3 s apart.
-- **Alcoa and DuPont's old filings (batch 163, your call of 2026-11-21):** nothing to apply. The next ingest of AA and
-  of DD reads the old companies' SEC records up to the handover (old Alcoa's to 2016-11-01, its list holding about 2,300 filings of every
-  form back to 1994; old du Pont's to 2017-08-31, about 3,800; each page shows the forms it shows for every company), as it reads every mapped predecessor's.
   1. `P1` the Labor Department's trade adjustment certifications, 1975–2022: job losses at the company's named
      plant or office ruled tied to imports or a shift abroad. Measured on the whole file: 2,121 certifications,
      1,292 company-days on 179 pages from first prices, 1,063 before 2017 (Ford 210, IBM 180, GE 112, Boeing 85).
@@ -241,6 +238,9 @@ Raised by the November batches, each recorded in the master checklist:
   2. `P1` the NLRB's Board decisions in the company's own cases, from 1962: a sample of 2,345 decisions gave 36 on
      23 pages, about 650 in all (an estimate), most before EDGAR. Your call inside it: a row from the listing alone
      (recommended), or each kept decision's PDF read for its outcome too.
+- **Alcoa and DuPont's old filings (batch 163, your call of 2026-11-21):** nothing to apply. The next ingest of AA and
+  of DD reads the old companies' SEC records up to the handover (old Alcoa's to 2016-11-01, its list holding about 2,300 filings of every
+  form back to 1994; old du Pont's to 2017-08-31, about 3,800; each page shows the forms it shows for every company), as it reads every mapped predecessor's.
 
 - ~~**The 2026-11-15 proposals** (batch 151, `docs/proposals/2026-11-15-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a

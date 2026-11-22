@@ -57,6 +57,8 @@ export default function TermsPage() {
         from its archive, trade adjustment certifications from the U.S. Department of Labor, decisions from
         the National Labor Relations Board, early terminations of the merger waiting period from the
         Federal Trade Commission, Section 337 investigations from the U.S. International Trade Commission,
+        merger notifications from the European Commission&apos;s Official Journal (© European Union,
+        https://eur-lex.europa.eu),
         material
         from the
         Internet Archive, text from Wikipedia under CC BY-SA, and headlines that

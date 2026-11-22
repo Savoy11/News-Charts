@@ -218,6 +218,17 @@ Physio-Control, Linvatec, Radiometer, KaVo), and J&J's "Ortho" names are its own
 a month naming each device and its number, a De Novo grant its own (the owner's call); the row never says the device
 was launched.
 
+The European Commission's merger notifications since 1990 (`lib/euMergers.ts`, batch 174) are the Official Journal's,
+listed by the EU Publications Office's SPARQL endpoint year by year (`noticeQuery`) and read from its document store, CELLAR
+(XHTML since 2004, the PDF with pdftotext before), into the committed `data/eu-mergers.json.gz` (`npm run sync:eu-mergers`,
+monthly, and after sync:tickers): a title's short names ("Merck/Sigma-Aldrich") only pick the candidates, and a text's first
+paragraph decides (`firstParagraph`, `noticeParties`: each "Merck KGaA ('Merck', Germany)" with its part, a controller taking
+its unit's, a notice with no brackets read by its words), the day the Commission received it its row's day (`notifiedOn`). A
+party is a page's by the merger notices' rule (`partyIsCompany`) on its full name, its namesakes in `NOT_THE_COMPANY`. One row
+a company a day, its id the day's case numbers ("Also on", db/059); the first-phase clearance, a notice of non-opposition, a
+line on it (`clearanceOf`, the owner's call); the row never says the deal closed. "© European Union,
+https://eur-lex.europa.eu".
+
 The Federal Reserve's actions on applications since 1996 (`lib/fedH2.ts`, batch 173) are the Board's weekly H.2 release,
 each week's PDF read once with `pdftotext -layout` into the committed `data/fed-h2.json.gz` (`npm run sync:fed-h2`, weekly; a
 week the file holds is never asked again, a transfer cut short is not held): three layouts (`readH2`), each action under the
@@ -258,16 +269,16 @@ run, and only Class I and II become rows. The map's days for the units bought an
 it: the file gives a bought unit's own past under its later name ("Boston Scientific CRM Corp" for Guidant's
 2005 recalls), so every such unit carries the day its owner took it.
 
-A row of one of the thirteen multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
-CFTC, the EEOC, batch 155, the NLRB, batch 161, the merger waiting period's grants, batch 166, the ITC's, batch 167, the Fed's H.2 actions, batch 173) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
+A row of one of the fourteen multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
+CFTC, the EEOC, batch 155, the NLRB, batch 161, the merger waiting period's grants, batch 166, the ITC's, batch 167, the Fed's H.2 actions, batch 173, the EU's merger notifications, batch 174) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
 and 25 more" (`lib/alsoOn.ts`, batch 106). A case is the same source's same number, compared as a set
 for a grouped row (db/041's index, with no pending list since db/042, batch 111: a GIN index's queue made
 every lookup read it); a release held once on several pages counts too. A page's links are found by
 db/042's `event_subjects (subject_id)` index; the key begins with the event. It is read
 beside `loadEvents` and never breaks a page; adding a multi-party source means adding it to
 `ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and the index's list, in a new migration that builds it again (db/053
-added the EEOC's, db/054 the NLRB's, db/056 the merger grants', db/057 the ITC's, db/058 the Fed's H.2 actions), which check:also-on holds together. A row
-whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the FDA's warning letters' days, the EEOC's days, the NLRB's days, the merger grants' days, the ITC's days, the FDA's own releases' days, the FDA's clearances' months, the Fed's H.2 days) is stored again
+added the EEOC's, db/054 the NLRB's, db/056 the merger grants', db/057 the ITC's, db/058 the Fed's H.2 actions, db/059 the EU's merger notifications), which check:also-on holds together. A row
+whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the FDA's warning letters' days, the EEOC's days, the NLRB's days, the merger grants' days, the ITC's days, the FDA's own releases' days, the FDA's clearances' months, the Fed's H.2 days, the EU's notification days) is stored again
 when its list grows, so its versions count once in "· N sources" (`GROUPED_ROW_SOURCES` in
 `lib/corroboration.ts`, batch 107); a new source that joins numbers goes there too, and check:also-on
 finds one that does not.
@@ -360,6 +371,7 @@ npm run sync:itc            # add the ITC's new Section 337 notices to data/itc-
 npm run sync:fda-history    # rebuild data/fda-history.json.gz from openFDA's historical documents (closed: once, and after sync:tickers)
 npm run sync:fda-clearances # rebuild data/fda-clearances.json.gz from openFDA's 510(k) file, streamed (monthly, and after sync:tickers)
 npm run sync:fed-h2         # add the Board's new weekly H.2 releases to data/fed-h2.json.gz (weekly; needs pdftotext; a week the file holds is never asked again)
+npm run sync:eu-mergers     # add the Official Journal's new EU merger notices to data/eu-mergers.json.gz from the Publications Office (monthly, and after sync:tickers; needs pdftotext)
 ```
 
 The `check-*.ts` scripts in the `check` chain are offline by construction (network/fetch is

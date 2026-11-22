@@ -60,6 +60,7 @@ export const QUOTAS: Record<SourceKey, Quota> = {
   fda_approvals: { perDay: null, note: "the FDA's compilation of new-drug approvals, one workbook of about 300 KB read once a year by npm run sync:fda-approvals and committed; ingest asks nothing" },
   fda_clearances: { perDay: null, note: "openFDA's 510(k) file, one keyless zip of about 250 MB, streamed monthly by npm run sync:fda-clearances and committed; ingest asks nothing" },
   fed_h2: { perDay: null, note: "the Board's weekly H.2 release, one PDF a week read once by npm run sync:fed-h2 and committed; ingest asks nothing" },
+  eu_mergers: { perDay: null, note: "the Publications Office's SPARQL list and CELLAR's notice texts, read monthly by npm run sync:eu-mergers and committed; ingest asks nothing" },
   fda_history: { perDay: null, note: "openFDA's historical documents, one keyless zip of about 14 MB, read once by npm run sync:fda-history and committed (the file ends in 2014); ingest asks nothing" },
   fra_accidents: { perDay: null, note: "the same open-data API as NHTSA's recalls, no published cap without an app token; one request a day per railroad company" },
   msha_accidents: { perDay: null, note: "MSHA's open-data files, no key or published cap; the Accidents zip (52 MB) and the Mines zip (7 MB) read once a week for every company, and not again while MSHA has not changed them; the Inspections and Assessed Violations zips (74 MB and 110 MB) once a month, for MSHA's own finding on each death (batch 139)" },

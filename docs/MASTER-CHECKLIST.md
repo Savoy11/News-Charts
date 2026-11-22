@@ -988,6 +988,61 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 174: the European Commission's merger notifications, 1990 on (2026-11-22)
+
+The owner's word: "Merge when green and continue", and the 2026-11-22b proposal 3, approved that day with call (a): a
+row on the notification's day, the Commission's clearance a line on that row. The three proposals of 2026-11-22b are
+now built (batches 172–174).
+
+- [x] **A new source, 50, `eu_mergers`** (`lib/euMergers.ts`, `lib/ingest/euMergersFor.ts`, `scripts/sync-eu-mergers.ts`):
+      the Official Journal's English notices, listed by the EU Publications Office's SPARQL endpoint year by year
+      (`noticeQuery`, two queries a year): 10,264 notifications from 1990-10-09, corrigenda aside, and 8,507 notices of
+      non-opposition (8,465 with a case number). Each candidate's text read once from the Publications Office's document
+      store, CELLAR (its robots file, op.europa.eu's, allows it and sets no delay, where EUR-Lex's asks 10 s): its XHTML
+      since 2004, its PDF before with pdftotext; a choice of documents (300) followed to its first, a cut transfer not
+      held. The committed `data/eu-mergers.json.gz` (1.1 MB) holds the lists and the 2,479 texts' readings; monthly, and
+      again after `npm run sync:tickers`; ingest asks nothing. The sync's candidates are by present names and aliases; a
+      name only EDGAR's former names give is not one there.
+- [x] **The reading** (`firstParagraph`, `notifiedOn`, `noticeParties`): the day the Commission received the
+      notification, and each party its first paragraph names in full with its part: "Merck KGaA ('Merck', Germany)",
+      the 1990s' "The Boeing Company (Boeing)", the list form since 2016 ("This notification concerns the following
+      undertakings: — Apple Inc. (United States), — Shazam … Apple Inc. acquires"), a controller taking its unit's part
+      ("belonging to Alphabet Inc."), the seller of a business ("control of parts of BP plc"), a notice that writes no
+      bracket read by its words (Walmart/ASDA of 1999, Chase/Chemical of 1995). An older PDF printing two notices on a
+      page is read from the notice's own case number (Exxon/Mobil below Telia/Telenor); the 1998–2000 PDFs' "@" read as
+      "&". 2,456 of the 2,479 name their parties.
+- [x] **The rule:** the merger notices' (`partyIsCompany`) on each party's full name, under the company's names of the
+      year, the release map's units, the taken names and the first price. Every company's matched names were read by
+      hand, 433 companies, and 14 namesakes refused (`NOT_THE_COMPANY`, each with why): EQT AB, NOVA Corporation, Wella
+      AG, Compass Group, Fortis of Belgium and the Netherlands, Idex SA, TPG N.V. (TNT Post), APA Group, Agora SpA,
+      Celsius AB, SFL (Société Foncière Lyonnaise), VSE AG, Metro AG and Orange plc. Merck KGaA's four deals stay off
+      Merck & Co. by its full name, and Aéroports de Paris off ADP, with no list.
+- [x] **The rows (the owner's call):** one a company a day, the day the Commission received the notification
+      ("European Commission received notification of Oracle Corporation's acquisition of Sun Microsystems, Inc.
+      (M.5529)"), the company's part, the case number and the publication day, linked to EUR-Lex; the first-phase
+      clearance a line where a notice of non-opposition is published ("The Commission's decision not to oppose it was
+      published on August 9, 2014"), never the deal's closing. Its id is the day's case numbers, so "Also on" names the
+      other listed party (db/059) and a row whose list grows counts once (`GROUPED_ROW_SOURCES`).
+- [x] **Measured** against every company in the index under its present names: 1,853 company days on 422 companies;
+      from the first prices the fixtures carry, 733 rows on 158 pages, 450 before 2017 (Goldman Sachs 100, Deutsche Bank
+      31, GE 23, Brookfield 18, BP 15, IBM 15). With EDGAR's former names for the bank-like companies: 1,910 company days
+      on 428, 779 rows on 160 pages, 474 before 2017, 663 of them with a clearance line; by decade 60 in the 1990s, 225 in
+      the 2000s, 295 in the 2010s, 199 since. The scout's title-only estimate was 888 on 171 pages; reading the texts
+      takes the namesakes and the short names it counted off.
+- [x] **Wired:** `SOURCES` id 50 (EUR-Lex's legal notice, read 2026-11-22: reuse "for commercial or non-commercial
+      purposes" under Decision 2011/833/EU), its quota and refresh, relevance 0.95, `COMPANY_SOURCES` and the ingest's run,
+      `ALSO_ON_SOURCES` and db/059's index, `GROUPED_ROW_SOURCES`, the footer's and the terms page's credit ("© European
+      Union, https://eur-lex.europa.eu"), `sync:eu-mergers`, a `check:live` case. The coverage map's gap line now names it.
+- [x] **Checks:** `check:eu-mergers` 23 (new, in the chain; fixture `scripts/fixtures/eu-mergers-texts.json.gz`, eight
+      notices' texts, four XHTML and four PDFs' pdftotext); `check:also-on` (the sources and db/059) and `check:contact`
+      (49 files read the User-Agent). On main the new check cannot run, and check:also-on and check:contact fail.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked. NC-074 (no non-US regulation) stays
+  open: this is one source, and whether international coverage is in scope is still the owner's call; its quoted line
+  is kept.
+- **Requests:** publications.europa.eu about 2,630, under "News Charts Research" with no contact, 1.6 s apart: 75 to the
+  SPARQL endpoint (one 503, asked again), 2,538 to CELLAR for the 2,537 texts (one a choice of documents, its first asked
+  directly), and 16 probes. No other host.
+
 ## NC ledger — batch 173: the Federal Reserve's weekly H.2 actions on the company's deals, 1996 on (2026-11-22)
 
 The owner's word: "Merge when green and continue", and the 2026-11-22b proposal 2, approved that day with call (a): the
@@ -12637,10 +12692,13 @@ already held, but new investment goes to securities coverage first.
         2,124 company days on 381 companies, 810 on 94 pages from the fixtures' first prices; 89 home places read by hand.
       - *Derived from [`docs/proposals/2026-11-22b-proposals.md`](proposals/2026-11-22b-proposals.md) #2, approved
         2026-11-22.*
-- [ ] `P2` **The European Commission's merger reviews, 1990–2026:** approved by the owner 2026-11-22, with call (a), a
+- [x] `P2` **The European Commission's merger reviews, 1990–2026:** approved by the owner 2026-11-22, with call (a), a
       row on the notification's day, the clearance a line on it. A new source, the EU Publications Office's SPARQL list
       and each notice's text from EUR-Lex at its crawl delay, credited "© European Union".
       - **Measured** by the scout on 10,000 titles: 888 company days on 171 pages from first prices, 598 before 2017.
+      - **Done in batch 174** (see its section): 10,264 notifications, 2,479 candidates' texts read from CELLAR rather
+        than EUR-Lex (the same notices, no crawl delay); 1,853 company days on 422 companies, 733 on 158 pages from the
+        fixtures' first prices; 14 namesakes refused by hand.
       - *Derived from [`docs/proposals/2026-11-22b-proposals.md`](proposals/2026-11-22b-proposals.md) #3, approved
         2026-11-22.*
 

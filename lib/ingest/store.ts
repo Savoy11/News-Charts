@@ -677,6 +677,24 @@ export const SOURCES: {
     reviewedOn: "2026-11-22",
     notes: "the FDA's own press releases and talk papers of 1962–2014, kept where one names a listed company and at most one other by the prose rule, each kept row read by hand once (lib/fdaHistory.ts); a release of an approval's day joins that approval's row; openFDA's historical documents file read once and committed, no key (batch 169)",
   },
+  {
+    id: 48,
+    key: "fda_clearances",
+    name: "FDA 510(k) clearances and De Novo grants",
+    license: "public domain (CC0 1.0)",
+    attribution: "U.S. Food and Drug Administration (openFDA)",
+    // open.fda.gov/license, as recorded for sources 40 and 47 (read 2026-11-22): "unless otherwise noted, the
+    // content, data, documentation, code, and related materials on openFDA is public domain and made available
+    // with a Creative Commons CC0 1.0 Universal dedication… You can copy, modify, distribute and perform the work,
+    // even for commercial purposes, all without asking permission." The device/510k file is openFDA's own keyless
+    // download; its header points to those terms and warns "Do not rely on openFDA to make decisions regarding
+    // medical care… you should assume all results are unvalidated." Used: each decision's number, day, applicant,
+    // device name, product code and decision code, and a link to the FDA's own page of it. Approved by the owner on
+    // 2026-11-22 (docs/proposals/2026-11-22b-proposals.md #1).
+    commercialOk: true,
+    reviewedOn: "2026-11-22",
+    notes: "the FDA's 510(k) clearances and De Novo grants of 1976 on, kept where the applicant is a listed company on the decision's day by the approvals' rule, the namesakes and the units' names before their purchase read by hand (lib/fdaClearances.ts); one row a company a month, a De Novo grant its own; openFDA's device/510k file streamed monthly and committed, no key (batch 172)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

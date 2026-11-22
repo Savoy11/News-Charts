@@ -208,6 +208,16 @@ about one of its approvals that day, naming the drug, is a line on that approval
 call; by drug since batch 170), never a row. The day beside the release line or the talk paper's number is read first
 (`headDate`), a revision's day never.
 
+The FDA's 510(k) clearances and De Novo grants since 1976 (`lib/fdaClearances.ts`, batch 172) are openFDA's
+`device/510k` file, streamed a record at a time (`clearanceReader` through `eachZipLine`) into the committed
+`data/fda-clearances.json.gz` (`npm run sync:fda-clearances`, monthly): a clearance is a page's by `approvalIsCompany` on
+its day, among the company's candidates by the file's word index (`candidatesFor`), less the names read by hand
+(`NOT_THE_COMPANY`: namesakes, and a unit's own records under its owner's later name before the day, `before`). The
+recall map's units carry their purchase days back to 1976 for it, each from a filing (Howmedica, DePuy, Cordis, LifeScan,
+Physio-Control, Linvatec, Radiometer, KaVo), and J&J's "Ortho" names are its own Ortho companies only. One row a company
+a month naming each device and its number, a De Novo grant its own (the owner's call); the row never says the device
+was launched.
+
 The SEC News Digest of 1956–1993 (`lib/secDigest.ts`, batch 102) is read once, issue by issue, into
 db/040's tables (`lib/ingest/secDigestWalk.ts`), and each company's own entries are found there at
 its ingest. Its names are dated by the committed `data/digest-records.json` (`npm run
@@ -245,7 +255,7 @@ db/042's `event_subjects (subject_id)` index; the key begins with the event. It 
 beside `loadEvents` and never breaks a page; adding a multi-party source means adding it to
 `ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and the index's list, in a new migration that builds it again (db/053
 added the EEOC's, db/054 the NLRB's, db/056 the merger grants', db/057 the ITC's), which check:also-on holds together. A row
-whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the FDA's warning letters' days, the EEOC's days, the NLRB's days, the merger grants' days, the ITC's days, the FDA's own releases' days) is stored again
+whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the FDA's warning letters' days, the EEOC's days, the NLRB's days, the merger grants' days, the ITC's days, the FDA's own releases' days, the FDA's clearances' months) is stored again
 when its list grows, so its versions count once in "· N sources" (`GROUPED_ROW_SOURCES` in
 `lib/corroboration.ts`, batch 107); a new source that joins numbers goes there too, and check:also-on
 finds one that does not.
@@ -336,6 +346,7 @@ npm run sync:taa            # rebuild data/taa-certifications.json.gz from the L
 npm run sync:hsr            # add the FTC's new grant notices to data/hsr-early-terminations.json.gz from govinfo (monthly; a notice the file holds is never asked again)
 npm run sync:itc            # add the ITC's new Section 337 notices to data/itc-337.json.gz from the Federal Register API and govinfo (monthly)
 npm run sync:fda-history    # rebuild data/fda-history.json.gz from openFDA's historical documents (closed: once, and after sync:tickers)
+npm run sync:fda-clearances # rebuild data/fda-clearances.json.gz from openFDA's 510(k) file, streamed (monthly, and after sync:tickers)
 ```
 
 The `check-*.ts` scripts in the `check` chain are offline by construction (network/fetch is

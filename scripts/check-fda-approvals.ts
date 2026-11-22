@@ -194,9 +194,11 @@ async function main(): Promise<void> {
       TAKEN_NAMES[rowOf("BIIB")[0]]?.from === "2003-11-12" && !NOT_THE_APPLICANT[rowOf("BIIB")[0]]);
   // batch 171, the scout's note of 2026-11-22: the "Ortho" names let "Ortho-Clinical Diagnostics" through with its hyphen
   const jnj = (applicant: string, day: string) => approvalIsCompany({ applicant, day }, rowOf("JNJ")[0], namesOf("JNJ"));
-  check("  Ortho Pharmaceutical, Ortho Biotech and Ortho-McNeil are J&J's; Ortho-Clinical Diagnostics, hyphened or not, only to its sale of 2014-06-30",
+  check("  Ortho Pharmaceutical, Ortho Biotech, Ortho-McNeil and Ortho Diagnostic Systems are J&J's; Ortho-Clinical Diagnostics, hyphened or not, only to its sale of 2014-06-30; the orthodontic and orthopaedic firms named Ortho never (batch 172)",
     jnj("Ortho Pharmaceutical Corp", "1990-01-01") && jnj("Ortho Biotech Products", "2005-01-01") && jnj("Ortho-McNeil Pharmaceutical", "2001-01-01") &&
-      jnj("Ortho-Clinical Diagnostics, Inc.", "2010-01-01") && !jnj("Ortho-Clinical Diagnostics, Inc.", "2022-01-01") && !jnj("Ortho Clinical Diagnostics", "2022-01-01"));
+      jnj("Ortho-Clinical Diagnostics, Inc.", "2010-01-01") && !jnj("Ortho-Clinical Diagnostics, Inc.", "2022-01-01") && !jnj("Ortho Clinical Diagnostics", "2022-01-01") &&
+      jnj("Ortho", "1985-01-01") && jnj("Ortho Pharms", "1986-01-01") && jnj("Ortho Diagnostic Systems, Inc.", "1990-01-01") &&
+      !jnj("Ortho Development Corp.", "2000-01-01") && !jnj("Ortho Organizers, Inc.", "2000-01-01") && !jnj("Ortho Kinetics Corp.", "1995-01-01"));
   check("every hand-read name says why, and every day is a day",
     Object.values(APPLICANT_NAMES).every((c) => c.names.every((n) => n.why.length > 15 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.entries(APPLICANT_NAMES).every(([cik, c]) => companies.some(([x, t]) => x === Number(cik) && t === c.ticker)));
@@ -249,8 +251,8 @@ async function main(): Promise<void> {
   check("  …the ingest asks it for every company", /await run\("fda_approvals", [^\n]+\n\s*fdaApprovalsFor\(client, subjectId, \{[^}]*cik: company\.cik, fundSeries \}\),/.test(read("scripts/ingest.ts")));
   check("  …synced by `npm run sync:fda-approvals` from the FDA's workbook, and credited",
     /"sync:fda-approvals": "tsx scripts\/sync-fda-approvals\.ts"/.test(read("package.json")) && NME_FILE === "https://www.fda.gov/media/177921/download?attachment" &&
-      /new-drug approvals (?:and their efficacy supplements(?:, press releases and talk papers of 1962–2014)?(?:, and warning letters)? )?from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
-      /new-drug approvals (?:and their efficacy supplements(?:, press releases and talk papers of 1962–2014)?(?:, and warning letters)? )?from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
+      /new-drug approvals (?:and their efficacy supplements(?:, device clearances)?(?:, press releases and talk papers of 1962–2014)?(?:, and warning letters)? )?from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
+      /new-drug approvals (?:and their efficacy supplements(?:, device clearances)?(?:, press releases and talk papers of 1962–2014)?(?:, and warning letters)? )?from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   process.exit(fail ? 1 : 0);

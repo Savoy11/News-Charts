@@ -439,6 +439,10 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "itc_337") {
         return { score: 0.95, reason: "an ITC import-ban investigation the company brought or faces" };
       }
+      // …and an FDA 510(k) clearance or De Novo grant of the company's device (lib/fdaClearances.ts, batch 172)
+      if (subject.kind === "company" && row.sourceKey === "fda_clearances") {
+        return { score: 0.95, reason: "an FDA clearance of the company's medical device" };
+      }
       // …and an FDA press release or talk paper of 1962–2014 naming the company, each kept row read by hand
       // (lib/fdaHistory.ts, batch 169)
       if (subject.kind === "company" && row.sourceKey === "fda_history") {

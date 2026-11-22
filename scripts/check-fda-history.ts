@@ -272,8 +272,8 @@ async function main(): Promise<void> {
   check("  …the ingest asks it for every company", /await run\("fda_history", [^\n]+\n\s*fdaHistoryFor\(client, subjectId, \{[^}]*cik: company\.cik, fundSeries \}\),/.test(read("scripts/ingest.ts")));
   check("  …synced by `npm run sync:fda-history`, and credited",
     /"sync:fda-history": "tsx scripts\/sync-fda-history\.ts"/.test(read("package.json")) &&
-      /press releases and talk papers of 1962–2014, and warning letters from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
-      /press releases and talk papers of 1962–2014, and warning letters from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
+      /device clearances, press releases and talk papers of 1962–2014, and warning letters from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
+      /device clearances, press releases and talk papers of 1962–2014, and warning letters from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);

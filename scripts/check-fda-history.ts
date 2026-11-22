@@ -17,7 +17,7 @@ import { GROUPED_ROW_SOURCES } from "../lib/corroboration";
 import { dojPossessive } from "../lib/doj";
 import { withoutTag } from "../lib/edgarName";
 import { deterministicScore } from "../lib/enrich/relevance";
-import { APPROVALS, approvalEvents } from "../lib/fdaApprovals";
+import { APPROVALS, approvalEvents, approvalIsCompany } from "../lib/fdaApprovals";
 import {
   FDA_HISTORY_PAGE,
   MOST_COMPANIES,
@@ -27,10 +27,13 @@ import {
   documentDay,
   fdaHistory,
   fdaHistoryEvents,
+  joinedReleases,
   leadOf,
   namedBy,
   proseParty,
   readHistoricalDocuments,
+  releaseFor,
+  releaseWords,
   releasesByDay,
   sentenceAt,
 } from "../lib/fdaHistory";
@@ -56,18 +59,18 @@ const read = (p: string) => readFileSync(join(__dirname, "..", p), "utf8");
 
 const EXPECTED = {
   total: 8_858,
-  dated: 6_179,
-  kept: 530,
-  refused: 63,
+  dated: 6_374,
+  kept: 536,
+  refused: 65,
   // the companies' rows, the two-company limit and the refusals applied, before and from first prices
-  rows: 476,
-  companies: 79,
+  rows: 481,
+  companies: 80,
   // from first prices, for the 954 companies the fixtures read
-  fromFirst: 332,
+  fromFirst: 335,
   fromFirstPages: 32,
-  fromFirst1993: 88,
-  joined: 39,
-  top: "LLY 53, ABT 42, PFE 35, JNJ 32, TEVA 25, NVS 24, MRK 18, PG 17, SNY 11, GILD 9",
+  fromFirst1993: 90,
+  joined: 38,
+  top: "LLY 54, ABT 42, PFE 35, JNJ 32, TEVA 25, NVS 24, MRK 19, PG 17, SNY 11, GE 9",
 };
 
 const companies = (tickerIndex as unknown as { companies: [number, string, string][] }).companies;
@@ -100,6 +103,14 @@ async function main(): Promise<void> {
       documentDay(1964, "FOR IMMEDIATE RELEASE 1/15/64 The Food and Drug Administration") === "1964-01-15" && documentDay(1964, "Wednesday, January 15, 1964 ") === "1964-01-15");
   check("  …none where the head's day is of another year or the OCR spoils it (\"N0vember\" in a release of 1977)",
     documentDay(1965, "December 11, 1964, Washington") === null && doc("23987d96fb8289c4").day === null);
+  check("  …the day beside the release line or the talk paper's number first, its OCR letters read as figures (\"Sept. l8, 1989\"); a revision's day, a note's and a later paper's never (the audit's finding 4)",
+    documentDay(1989, "FDA Talk Papers are prepared …\n\nT89-55 Donald C McLearn\nSept. l8, 1989 - (301) 443-3285\n\nLilly Recalls Drugs Following FDA Inspections\nAn inspection of August 25, 1989 found …") === "1989-09-18" &&
+      documentDay(2007, "FDA NEWS RELEASE\n\nThis press release was revised on March 21, 2007 to include changes. It was\nrevised again on March 24, 2007.\n\nFOR IMMEDIATE RELEASE\n\nMarch 17, 2007\n\nRecall of Pet Foods") === "2007-03-17" &&
+      documentDay(1976, "T76-63 Emil Corwin\n(Updates press release 76—l4 issued (202)-~245—ll44\nMay ll, 1976)\n\nOctober 4, l976\n\nCYCLAMATE\n\nThe formal notice appears in the FEDERAL REGISTER October 4, 1976.") === "1976-10-04" &&
+      documentDay(1977, "177-44 Nancy Glick\nAugust 15, 1977 (301)--443-3285\n\nAs the Agency's talk paper T77-28, dated June 17, 1977, on the status of hearings …") === "1977-08-15");
+  check("  …in the committed file, Lilly's recall paper of 1989-09-18, the Menu Foods recall of 2007-03-17 on WMT and KR, the cyclamate paper of 1976-10-04",
+    fdaHistory().find((d) => d.id === "5b46d9daeba961a7")?.day === "1989-09-18" && fdaHistory().find((d) => d.id === "f78a459d1ea537b8")?.day === "2007-03-17" &&
+      fdaHistory().find((d) => d.id === "fdb92f7ee847d297")?.day === "1976-10-04");
   check("  …the lead begins after the head's day, the talk paper's note, the letterhead and the telephone numbers left off",
     /^ILOSONE FDA's Bureau of Drugs on Wednesday asked Dista Products Company/.test(leadOf(doc("59118a837a5c235c").text, 1979)) &&
       /^G\.E\. SUNLAMP KIT RECALL The Food and Drug Administration today announced/.test(leadOf(doc("8c7b1ea16b2fb066").text, 1977)),
@@ -179,15 +190,34 @@ async function main(): Promise<void> {
     Object.assign(first, JSON.parse(gunzipSync(readFileSync(join(__dirname, "fixtures", f))).toString())[k]);
   }
   const amgnFrom = first.AMGN;
-  const releases = releasesByDay(docs, AMGN);
-  const epogen = approvalEvents(APPROVALS, namesOf(AMGN), { cik: AMGN, from: amgnFrom, releases }).find((e) => e.date === "1989-06-01");
-  const approvalDays = new Set(approvalEvents(APPROVALS, namesOf(AMGN), { cik: AMGN, from: amgnFrom }).map((e) => e.date));
-  check("the release of an approval's day joins the approval's row and makes no row of its own (the owner's call): Epogen, 1989-06-01, on AMGN",
+  /** A company's approval rows with their releases, and its own rows less the releases they carry, as the two ingest steps build them. */
+  const pages = (cik: number, from: string) => {
+    const releases = releasesByDay(docs, cik);
+    const approvals = APPROVALS.filter((a) => a.day >= from && approvalIsCompany(a, cik, namesOf(cik)));
+    const joinedIds = joinedReleases(approvals, releases);
+    return {
+      approvalRows: approvalEvents(APPROVALS, namesOf(cik), { cik, from, release: (a) => { const r = releaseFor(a, releases); return r ? releaseWords(r) : undefined; } }),
+      ownRows: fdaHistoryEvents(docs, { cik, from, joined: joinedIds }),
+      joined: joinedIds,
+    };
+  };
+  const amgnPage = pages(AMGN, amgnFrom);
+  const epogen = amgnPage.approvalRows.find((e) => e.date === "1989-06-01");
+  check("a release about an approval of its day joins the approval's row and makes no row of its own (the owner's call): Epogen, 1989-06-01, on AMGN",
     !!epogen && /^FDA approves Epogen/.test(epogen.title) && /The FDA's press release that day: "The product was developed in 1983 by Dr\. Fu—Keun Lin of Amgen Inc\./.test(epogen.description ?? "") &&
-      !fdaHistoryEvents(docs, { cik: AMGN, from: amgnFrom, approvalDays }).some((e) => e.date === "1989-06-01") &&
-      fdaHistoryEvents(docs, { cik: AMGN, from: amgnFrom }).some((e) => e.date === "1989-06-01"),
+      !amgnPage.ownRows.some((e) => e.date === "1989-06-01") && fdaHistoryEvents(docs, { cik: AMGN, from: amgnFrom }).some((e) => e.date === "1989-06-01"),
     epogen?.description);
   check("  …an approval with no release that day reads as before", approvalEvents(APPROVALS, namesOf(AMGN), { cik: AMGN, from: amgnFrom }).every((e) => !/The FDA's press release that day/.test(e.description ?? "")));
+  const llyPage = pages(LLY, first.LLY);
+  const strattera = llyPage.approvalRows.find((e) => e.date === "2002-11-26" && /Strattera/.test(e.title));
+  const merck = pages(310158, first.MRK);
+  const primaxin = merck.approvalRows.find((e) => e.date === "1985-11-26" && /Primaxin/.test(e.title));
+  check("  …only a release that names the approval's drug: Strattera's row carries the Strattera paper, the Forteo paper of that day is a row of its own; Primaxin's carries none of Merck's trientine release, which is a row (the audit's finding 5)",
+    !!strattera && releaseFor({ day: "2002-11-26", name: "Strattera", ingredient: "atomoxetine hydrochloride" }, releasesByDay(docs, LLY))?.id === "e66edbcb6cfb7945" &&
+      /The FDA's talk paper that day: "The drug will be marketed by Eli Lilly and Company/.test(strattera.description ?? "") && !/Forteo|Teriparatide/.test(strattera.description ?? "") &&
+      llyPage.ownRows.some((e) => e.date === "2002-11-26" && /Forteo|Teriparatide|teriparatide/i.test(`${e.title} ${e.description}`)) &&
+      !!primaxin && !/that day:/.test(primaxin.description ?? "") && merck.ownRows.some((e) => e.date === "1985-11-26"),
+    [strattera?.description?.slice(-200), primaxin?.description?.slice(-120)]);
   const multi = companies.map(([cik]) => cik).find((cik) => {
     const days = companyDocuments(docs, cik).map((x) => x.doc.day);
     return days.length !== new Set(days).size;
@@ -205,10 +235,9 @@ async function main(): Promise<void> {
     for (const e of fdaHistoryEvents(docs, { cik })) rows.push({ ticker, date: e.date });
     const from = first[ticker];
     if (!from) continue;
-    const days = new Set(approvalEvents(APPROVALS, namesOf(cik), { cik, from }).map((e) => e.date));
-    for (const e of fdaHistoryEvents(docs, { cik, from, approvalDays: days })) after.push({ ticker, date: e.date });
-    const rel = releasesByDay(docs, cik);
-    joined += approvalEvents(APPROVALS, namesOf(cik), { cik, from, releases: rel }).filter((e) => rel.has(e.date)).length;
+    const page = pages(cik, from);
+    for (const e of page.ownRows) after.push({ ticker, date: e.date });
+    joined += page.approvalRows.filter((e) => /The FDA's (?:press release|talk paper) that day/.test(e.description ?? "")).length;
   }
   const top = Object.entries(after.reduce<Record<string, number>>((m, r) => ((m[r.ticker] = (m[r.ticker] ?? 0) + 1), m), {}))
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))

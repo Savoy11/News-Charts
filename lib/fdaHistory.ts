@@ -11,7 +11,8 @@ import { decodeText, readZip, zipEntryNames } from "./zip";
 /**
  * The FDA's own press releases and talk papers, 1962–2014 (batch 169, the 2026-11-22 proposal 3, approved by the
  * owner that day with its recommended call: a release on the day of an approval the page holds adds its words to
- * that approval's row and makes no row of its own).
+ * that approval's row and makes no row of its own; since batch 170 only a release naming the approval's drug,
+ * `releaseFor`).
  *
  * openFDA publishes the agency's historical documents, press releases and talk papers of 1913–2014, as one keyless
  * file of OCR text (`FDA_HISTORY_FILE`, 13,869,827 bytes on 2026-11-22, "last_updated" 2026-11-18): 8,858
@@ -24,7 +25,7 @@ import { decodeText, readZip, zipEntryNames } from "./zip";
  * name of two words or more printed capitalised ("Procter & Gamble"), then the caption rule's guards (a name two
  * listed companies share, a longer listed name), the table of taken names, and the company's first price. A
  * document naming more than two listed companies (a list of drug makers, the pharmacies of a campaign) names none.
- * Every kept row was read by hand once: 63 refused (`REFUSED`), and three the rule refuses kept (`NAMED_BY_HAND`).
+ * Every kept row was read by hand once: 65 refused (`REFUSED`), and three the rule refuses kept (`NAMED_BY_HAND`).
  *
  * `npm run sync:fda-history` reads the file into the committed `data/fda-history.json.gz`, keeping the dated
  * documents of 1962 on that name a listed company in the index, with the companies each names, its kind, its day,
@@ -55,22 +56,51 @@ export interface FdaHistoricalDocument {
 
 const MONTHS: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, sept: 9, oct: 10, nov: 11, dec: 12 };
 const SPELLED = /\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept|Sep|Oct|Nov|Dec)\.?\s+(\d{1,2})\s*[,.]?\s*((?:19|20)\d\d)\b/gi;
+/** The same with the OCR's letters for figures ("Sept. l8, 1989", "October 4, l976"), read only beside a release line. */
+const SPELLED_OCR = /\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept|Sep|Oct|Nov|Dec)\.?\s+([\dlIO]{1,2})\s*[,.]?\s*((?:19|20|[lI]9)[\dlO]{2})\b/gi;
+/** A release line or a talk paper's or release's number, the day printed beside it the document's own. */
+const RELEASE_LINE = /\bFOR\s+(?:IMMEDIATE\s+)?RELEASE\b:?|\bT\s?\d\d\s?[-—–]\s?\d{1,3}\b/g;
+/** A day's figures as the OCR may print them: "l8" and "I8" are 18, "O" a 0 (batch 170, the audit's finding 4). */
+const figures = (x: string) => Number(x.replace(/[lI]/g, "1").replace(/O/g, "0"));
+/** The words before a day that make it a revision's, not the document's: "This press release was revised on March 21, 2007". */
+const REVISED = /\b(?:(?:revised|updated|corrected|amended|issued)(?:\s+again)?\s+(?:on\s+)?|update:?\s+(?:on\s+)?)$/i;
+
 const FIGURES = /\b(\d{1,2})\/(\d{1,2})\/((?:19|20)?\d\d)\b/g;
 
 /**
  * The day a document's head gives and where it ends: the first in its first 1,500 characters that falls in its own
- * year, spelled ("Wednesday, January 15, 1964") before figures ("1/15/64"); null where none does, as when the OCR's
- * year differs.
+ * year, spelled ("Wednesday, January 15, 1964", the OCR's "Sept. l8, 1989" read as the 18th) before figures
+ * ("1/15/64"), the day beside a release line or a talk paper's number first, where the OCR's letters for figures are
+ * read too ("T89-55 … Sept. l8, 1989" the 18th), a revision's day ("revised on March 21, 2007") or one closing a note of
+ * what it updates ("(Updates press release 76—l4 issued … May ll, 1976)") never; null where none does, as when the
+ * OCR's year differs (batch 170, the audit's finding 4).
  */
 export function headDate(year: number, text: string): { day: string; end: number } | null {
   const head = text.slice(0, 1500);
   const iso = (yy: number, mm: number, dd: number) => `${yy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
-  for (const m of head.matchAll(SPELLED)) {
+  const spelled = (m: RegExpMatchArray, at: number) => {
     const word = m[1].toLowerCase();
     const month = MONTHS[word.startsWith("sept") ? "sept" : word.slice(0, 3)];
-    const yy = Number(m[3]);
-    const dd = Number(m[2]);
-    if (month && yy === year && dd >= 1 && dd <= 31) return { day: iso(yy, month, dd), end: m.index! + m[0].length };
+    const yy = figures(m[3]);
+    const dd = figures(m[2]);
+    const before = head.slice(Math.max(0, at - 30), at).replace(/\s+/g, " ");
+    // a revision's day, or one closing a note of what the document updates ("… May ll, 1976)"), is not its own
+    if (REVISED.test(before) || /^\s?\)/.test(head.slice(at + m[0].length, at + m[0].length + 2))) return null;
+    return month && yy === year && dd >= 1 && dd <= 31 ? { day: iso(yy, month, dd), end: at + m[0].length } : null;
+  };
+  // the day beside the release line or the talk paper's number first, the OCR's letters for figures read there
+  for (const r of head.matchAll(RELEASE_LINE)) {
+    const from = r.index! + r[0].length;
+    for (const m of head.slice(from, from + 80).matchAll(SPELLED_OCR)) {
+      // only a writer's name between, never prose ("T77-28, dated June 17, 1977, on the status of …")
+      if (/(?:^|[\s,(])[a-z]{2,}/.test(head.slice(from, from + m.index!))) break;
+      const hit = spelled(m, from + m.index!);
+      if (hit) return hit;
+    }
+  }
+  for (const m of head.matchAll(SPELLED)) {
+    const hit = spelled(m, m.index!);
+    if (hit) return hit;
   }
   for (const m of head.matchAll(FIGURES)) {
     const month = Number(m[1]);
@@ -165,6 +195,12 @@ export function sentenceAt(text: string, at: number): string {
   const cut = at - start > 250;
   if (cut) start = flat.indexOf(" ", at - 250) + 1;
   const out = flat.slice(start, Math.min(end, start + (cut ? 399 : 400))).replace(PHONE, " ").replace(/\s+/g, " ").trim().replace(HEAD_LEFTOVER, "");
+  // a sentence that begins in a talk paper's heading begins after its day, where the heading holds no prose word
+  // ("Rockville, Maryland 20852 T75-75 Michael Shaffer November 5, l975 GENERAL ELECTRIC MICROWAVE OVENS …", batch 170)
+  const day = new RegExp(SPELLED_OCR.source, "i").exec(out);
+  const rest = day ? out.slice(day.index + day[0].length).replace(/^[\s(~.,;:—–-]*(?:[\dlO][\dlO'\-—–)~]*\s+)?/, "") : "";
+  // …and its title in capitals after the day, as every talk paper prints one
+  if (day && day.index < 200 && !/(?:^|[\s,(])[a-z]{2,}/.test(out.slice(0, day.index)) && /^[A-Z][A-Z'.&-]{2,}\b/.test(rest) && at - start > day.index + day[0].length) return `…${rest}`;
   return cut ? `…${out}` : out;
 }
 
@@ -229,6 +265,9 @@ export const MOST_COMPANIES = 2;
  * for each maker it names; the rule's two-company limit and the guard against another firm's name take the rest.
  */
 export const REFUSED: Readonly<Record<string, { ticker: string; why: string }>> = {
+  // batch 170: dated since the head's day is read beside its talk paper's number
+  "1b1aa23ca032f829:78003": { ticker: "PFE", why: "1988-02-12: a table of AIDS drugs in development, one of many sponsors" },
+  "1b1aa23ca032f829:1666700": { ticker: "DD", why: "1988-02-12: a table of AIDS drugs in development, one of many sponsors" },
   "bce193e7be05c042:1800": { ticker: "ABT", why: "1969-11-14: the company's lawyer named among a hearing's participants; no FDA action on its products" },
   "f5bc51544474a041:1800": { ticker: "ABT", why: "1973-01-19: a court case citation in a rule's text; no FDA action on its products" },
   "32bbf8efcda484d0:1800": { ticker: "ABT", why: "1989-12-01: a staff appointment naming the official's former employer" },
@@ -344,14 +383,14 @@ const kind = (t: string) => (/talk/i.test(t) ? "talk paper" : "press release");
 
 /**
  * The company's documents as timeline events, newest first, from `from`, its first price: one row a day, its
- * title the document's own sentence naming the company, never on a day the page holds one of its approvals, whose
- * row carries the release's words instead (`approvalDays`, the owner's call).
+ * title the document's own sentence naming the company, a document about one of its approvals that day left to that
+ * approval's row, which carries its words instead (`joined`, from `releaseFor`, the owner's call).
  */
-export function fdaHistoryEvents(docs: readonly FdaKept[], { cik, from = "", approvalDays = new Set<string>() }: { cik: number | string; from?: string; approvalDays?: ReadonlySet<string> }): TimelineEvent[] {
+export function fdaHistoryEvents(docs: readonly FdaKept[], { cik, from = "", joined = new Set<string>() }: { cik: number | string; from?: string; joined?: ReadonlySet<string> }): TimelineEvent[] {
   const tag = Number(cik);
   const byDay = new Map<string, { doc: FdaKept; sentence: string }[]>();
   for (const x of companyDocuments(docs, tag)) {
-    if (x.doc.day < from || approvalDays.has(x.doc.day)) continue;
+    if (x.doc.day < from || joined.has(x.doc.id)) continue;
     (byDay.get(x.doc.day) ?? byDay.set(x.doc.day, []).get(x.doc.day)!).push(x);
   }
   return [...byDay.entries()]
@@ -378,9 +417,44 @@ export function fdaHistoryEvents(docs: readonly FdaKept[], { cik, from = "", app
     });
 }
 
-/** The words a release of an approval's day adds to that approval's row (the owner's call): the sentence naming the company. */
-export function releasesByDay(docs: readonly FdaKept[], cik: number | string): Map<string, string> {
-  const out = new Map<string, string>();
-  for (const x of companyDocuments(docs, cik)) if (!out.has(x.doc.day)) out.set(x.doc.day, `The FDA's ${kind(x.doc.type)} that day: "${x.sentence}"`);
+/** A release of the company's on a day, for the approvals' rows (`releaseFor`). */
+export interface DayRelease {
+  id: string;
+  kind: string;
+  sentence: string;
+  lead: string;
+}
+
+/** The company's releases by day, every one of a day kept, in the file's order. */
+export function releasesByDay(docs: readonly FdaKept[], cik: number | string): Map<string, DayRelease[]> {
+  const out = new Map<string, DayRelease[]>();
+  for (const x of companyDocuments(docs, cik)) {
+    (out.get(x.doc.day) ?? out.set(x.doc.day, []).get(x.doc.day)!).push({ id: x.doc.id, kind: kind(x.doc.type), sentence: x.sentence, lead: x.doc.lead });
+  }
   return out;
+}
+
+/** The words of a drug a release must hold to be about it: its trade name, and each word of five letters or more of its ingredient. */
+const drugWords = (a: { name: string; ingredient: string }) =>
+  [a.name, ...a.ingredient.split(/[^A-Za-z]+/)].map((w) => w.trim().toLowerCase()).filter((w) => w.replace(/[^a-z]/g, "").length >= 5);
+
+/**
+ * The release of an approval's day that is about it: one whose sentence or lead names its drug, by trade name or
+ * ingredient (batch 170, the audit's finding 5: Lilly's Forteo paper of 2002-11-26 is not Strattera's, nor Merck's
+ * trientine release of 1985-11-26 Primaxin's). None where no release that day names it.
+ */
+export function releaseFor(a: { day: string; name: string; ingredient: string }, releases: ReadonlyMap<string, readonly DayRelease[]>): DayRelease | undefined {
+  const words = drugWords(a);
+  return (releases.get(a.day) ?? []).find((r) => {
+    const text = `${r.sentence} ${r.lead}`.toLowerCase();
+    return words.some((w) => text.includes(w));
+  });
+}
+
+/** The words a release about an approval adds to that approval's row (the owner's call): the sentence naming the company. */
+export const releaseWords = (r: DayRelease) => `The FDA's ${r.kind} that day: "${r.sentence}"`;
+
+/** The documents that are about one of the company's approvals that day, left to the approval's row (`releaseFor`). */
+export function joinedReleases(approvals: readonly { day: string; name: string; ingredient: string }[], releases: ReadonlyMap<string, readonly DayRelease[]>): Set<string> {
+  return new Set(approvals.flatMap((a) => releaseFor(a, releases)?.id ?? []));
 }

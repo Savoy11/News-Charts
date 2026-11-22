@@ -35,7 +35,10 @@ import {
   noticePage,
   noticeText,
   numbersIn,
+  grantDayValid,
   readGrantNotice,
+  sameDeal,
+  sharedNumbers,
   splitParties,
   type HsrGrant,
 } from "../lib/hsrEarly";
@@ -61,16 +64,18 @@ const read = (p: string) => readFileSync(join(__dirname, "..", p), "utf8");
 /** The whole file as read on 2026-11-22, and every listed company in the index replayed against it. */
 const EXPECTED = {
   notices: 441,
-  grants: 36_931,
-  dayless: 36,
+  grants: 36_892,
+  dayless: 47,
+  // transaction numbers the agencies gave two deals
+  shared: 24,
   // every listed company in the index, under the rule, its names as the replay below builds them
-  total: 9_194,
+  total: 9_185,
   companies: 1_523,
   // from first prices, for the 954 companies the fixtures read
-  fromFirst: 4_675,
+  fromFirst: 4_670,
   fromFirstPages: 400,
-  fromFirst2017: 4_017,
-  top: "GE 303, IBM 86, JNJ 77, WFC 77, C 74, JPM 73, BRK-B 72, F 68, VZ 63, WMB 57",
+  fromFirst2017: 4_012,
+  top: "GE 303, IBM 86, WFC 77, JNJ 75, C 74, JPM 73, BRK-B 72, F 68, VZ 63, WMB 57",
 };
 
 const companies = (tickerIndex as unknown as { companies: [number, string, string][] }).companies;
@@ -111,9 +116,20 @@ async function main(): Promise<void> {
   const ge = find("95-10885", "95-1448");
   check("1995, a run of lines ending in the PMN number and the day: GE's railcar wheel business to ABC Rail Products (95-1448, 1995-04-21), its parties split at commas",
     ge?.day === "1995-04-21" && ge.acquiring === "ABC Rail Products Corporation" && ge.acquired === "General Electric Corp." && JSON.stringify(ge.entities) === JSON.stringify(["GE Railcar Wheel."]), ge);
-  check("  …a comma before a legal word keeps a name whole (\"Warburg, Pincus Capital Company, L.P.\" is two parties, \"Kreher Steel Co., Inc.\" one)",
+  check("  …a comma before a legal word keeps a name whole (\"Kreher Steel Co., Inc.\"), and so does a firm named with commas: \"Warburg, Pincus Capital Company, L.P.\" is one party (batch 170, the audit's finding 1)",
     JSON.stringify(splitParties("A. M. Castle & Co., Thomas W. Kreher, Kreher Steel Co., Inc...")) === JSON.stringify(["A. M. Castle & Co.", "Thomas W. Kreher", "Kreher Steel Co., Inc."]) &&
-      splitParties("Mr. Keith Rupert Murdoch, Warburg, Pincus Capital Company, L.P., Renaissance Communications Corp.").includes("Pincus Capital Company, L.P."));
+      JSON.stringify(splitParties("Mr. Keith Rupert Murdoch, Warburg, Pincus Capital Company, L.P., Renaissance Communications Corp.")) === JSON.stringify(["Mr. Keith Rupert Murdoch", "Warburg, Pincus Capital Company, L.P.", "Renaissance Communications Corp."]));
+  check("  …Clayton, Dubilier & Rice, Golder, Thoma, Cressey, Rauner and Becton, Dickinson whole; a one-word party alone (\"Newco\", \"Finaxa\" before \"The\"); a tail on its name (\"L.C.\", \"Trustee\", a day's year)",
+    JSON.stringify(splitParties("Clayton, Dubilier & Rice Fund V Limited Partnership, Norfolk Southern Corporation, North American Van Lines, Inc.")) === JSON.stringify(["Clayton, Dubilier & Rice Fund V Limited Partnership", "Norfolk Southern Corporation", "North American Van Lines, Inc."]) &&
+      splitParties("Golder, Thoma, Cressey, Rauner Fund V, L.P., The Modern Group, Inc.")[0] === "Golder, Thoma, Cressey, Rauner Fund V, L.P." &&
+      JSON.stringify(splitParties("Maxxim Medical, Inc., Becton, Dickinson and Company, Becton, Dickinson and Company")) === JSON.stringify(["Maxxim Medical, Inc.", "Becton, Dickinson and Company", "Becton, Dickinson and Company"]) &&
+      splitParties("Newco, Cable TV Fund 11-B, Ltd, Cable TV Fund 11-B, Ltd.")[0] === "Newco" && splitParties("Finaxa, The Long-Term Credit Bank of Japan, Ltd., Aventine Partners.")[0] === "Finaxa" &&
+      splitParties("Columbia/HCA Healthcare Corporation, University Healthcare System, L.C., University Hospital")[1] === "University Healthcare System, L.C." &&
+      splitParties("K-III Communications Corporation, Cristina C. Yee, Trustee, Some Company, Inc.")[1] === "Cristina C. Yee, Trustee" &&
+      splitParties("John T. Kim Trust of December 31, 1987, Amkor Technology, Inc., Amkor Technology, Inc.")[0] === "John T. Kim Trust of December 31, 1987");
+  const accuri = find("2011-8331", "20110575");
+  check("  …2011's line after a \";\" joined: Becton, Dickinson and Company's purchase of Accuri Cytometers (20110575), not \"Becton\"'s of \"Dickinson and Company\"",
+    accuri?.acquiring === "Becton, Dickinson and Company" && accuri.acquired === "Accuri Cytometers, Inc." && accuri.acquiringEntities.length === 0, accuri);
   const cigna = find("97-26388", "97-3195");
   check("  …from late 1996 at semicolons, and a run with commas before its first semicolon split at both (Lincoln National's purchase from CIGNA, 1997)",
     find("96-32024", "96-2621")?.acquired === "WMX Technologies, Inc." && cigna?.acquiring === "Lincoln National Corporation" && cigna.acquired === "CIGNA Corporation" &&
@@ -166,9 +182,28 @@ async function main(): Promise<void> {
   check("  …five printed as images (four of 2005, one of 2026) and 02-2114 hold none; no other notice leaves a number unread",
     JSON.stringify(empty) === JSON.stringify(["02-2114", "05-11027", "05-11747", "05-4595", "05-594", "2026-09704"]) &&
       file.notices.filter((n) => n.unread > 0).map((n) => n.doc).join() === "02-2114", { empty, unread: file.notices.filter((n) => n.unread > 0) });
-  check(`  …${EXPECTED.grants.toLocaleString("en-US")} grants, a transaction two notices print once, ${EXPECTED.dayless} with no day`,
-    grants.length === EXPECTED.grants && grants.filter((g) => !g.day).length === EXPECTED.dayless && new Set(grants.map((g) => `${g.number}@${g.day}`)).size === grants.length,
-    { grants: grants.length, dayless: grants.filter((g) => !g.day).length });
+  const twice = [...sharedNumbers(grants)].map((n) => grants.filter((g) => g.number === n));
+  check(`  …${EXPECTED.grants.toLocaleString("en-US")} grants, a transaction two notices print once, ${EXPECTED.dayless} with no day; a number held twice is two deals, ${EXPECTED.shared} of them (batch 170)`,
+    grants.length === EXPECTED.grants && grants.filter((g) => !g.day).length === EXPECTED.dayless && twice.length === EXPECTED.shared &&
+      twice.every((gs) => gs.length === 2 && !sameDeal(gs[0], gs[1])) && grants.filter((g) => g.number === "95-1065").length === 1,
+    { grants: grants.length, dayless: grants.filter((g) => !g.day).length, shared: twice.length });
+  check("  …every day a calendar day on or before its notice's: 1998-01-00 and 2007's misprinted years of 1997 and 1998 kept dayless (the audit's finding 2)",
+    grants.every((g) => !g.day || grantDayValid(g.day, g.published)) && !grantDayValid("1998-01-00", "1998-02-03") && !grantDayValid("2007-12-11", "1998-01-21") && grantDayValid("1998-01-30", "1998-02-03") &&
+      ["98-0918", "98-0612", "97-2402"].every((n) => grants.some((g) => g.number === n && !g.day)));
+
+  console.log("\nThe rows the audit of 2026-11-22 read (batch 170)");
+  const nsc = day(702165, "1998-01-30");
+  check("NSC's row of 1998-01-30 says what happened: Clayton, Dubilier & Rice bought North American Van Lines from Norfolk Southern",
+    /Clayton, Dubilier & Rice Fund V Limited Partnership's acquisition of North American Van Lines, Inc\. from Norfolk Southern Corporation/.test(nsc?.title ?? "") && /the company as the acquired person/.test(nsc?.description ?? ""),
+    nsc?.title);
+  const bdx = new Set(on(10795).map((e) => e.date));
+  check("  …Becton, Dickinson's own four deals are on BDX: Difco (1997-04-18), PharMingen, MedPlus and Accuri (2011-03-16)",
+    ["97-1602", "97-1817", "98-1015", "20110575"].every((n) => { const g = grants.find((x) => x.number === n); return !!g && bdx.has(g.day); }) && bdx.has("1997-04-18") && bdx.has("2011-03-16"));
+  check("  …MRK's rows are every one on a calendar day, so Postgres stores the answer; CENT's 1997 deal is not on 2007-12-11",
+    on(310158).length > 30 && on(310158).every((e) => grantDayValid(e.date, "2026-12-31")) && !day(887733, "2007-12-11"));
+  const itron = on(780571).find((e) => (e.externalId ?? "").split(",").some((x) => x.startsWith("20040837")));
+  check("  …a number two deals were given is the row's with its day, so \"Also on\" never joins Itron's purchase from Schlumberger to MacDonald Dettwiler's of Marshall & Swift",
+    itron?.externalId?.split(",").includes("20040837@2004-06-04") === true && on(1770450).filter((e) => (e.externalId ?? "").split(",").includes("95-1065")).length === 1, itron?.externalId);
 
   console.log("\nThe rule");
   const jnjRow = day(200406, "2005-05-02");

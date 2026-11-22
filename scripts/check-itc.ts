@@ -32,6 +32,7 @@ import {
   entries,
   investigationNumbers,
   isInstitution,
+  isAddressScrap,
   issuedOn,
   itcCases,
   itcEvents,
@@ -67,13 +68,13 @@ const EXPECTED = {
   noViolation: 137,
   terminated: 503,
   // every listed company in the index, under the rule, its names as the replay below builds them
-  total: 996,
-  companies: 269,
+  total: 1_040,
+  companies: 275,
   // from first prices, for the 954 companies the fixtures read
-  fromFirst: 363,
-  fromFirstPages: 81,
-  fromFirst2017: 183,
-  top: "AAPL 68, QCOM 19, MSFT 18, HON 14, AMD 11, INTC 10, HPQ 9, TM 9, GE 8, PHG 8",
+  fromFirst: 375,
+  fromFirstPages: 82,
+  fromFirst2017: 184,
+  top: "AAPL 69, MSFT 19, QCOM 19, HON 14, AMD 11, HPQ 10, INTC 10, PHG 10, TM 9, GE 8",
 };
 
 const companies = (tickerIndex as unknown as { companies: [number, string, string][] }).companies;
@@ -170,6 +171,16 @@ async function main(): Promise<void> {
     cisco?.date === "2017-05-30" && arista?.date === "2017-05-30" && /^ITC found a violation of section 337 and issued a limited exclusion order and cease and desist orders in 337-TA-945/.test(cisco.title) &&
       /one that settled or was dismissed before it is not among them/.test(cisco.description ?? "") && cisco.url === "https://www.federalregister.gov/d/2017-11487",
     [cisco?.date, cisco?.title]);
+  check("a country the notice wraps ends its entry whole (\"Seoul, Republic / of Korea\"), a party read with a comma and no space, a postal code off a name's head (the audit's finding 6)",
+    JSON.stringify(entries("Samsung Electronics Co., Ltd., 129 Samsung-ro, Suwon, Republic\nof Korea\nApple Inc., One Apple Park Way, Cupertino, CA 95014")) ===
+      JSON.stringify(["Samsung Electronics Co., Ltd., 129 Samsung-ro, Suwon, Republic of Korea", "Apple Inc., One Apple Park Way, Cupertino, CA 95014"]) &&
+      partyName(entries("Cypress Semiconductor Corp.,3901 North First Street,San Jose, CA 95134")[0]) === "Cypress Semiconductor Corp." &&
+      partyName("518100 AutoZone, Inc., 123 Front Street, Memphis") === "AutoZone, Inc." && partyName("612-8501 Xiaomi Corporation, Beijing") === "Xiaomi Corporation");
+  check("  …a scrap of an address is no party (\"of Korea\", \"No\", \"338 Nanjing Road (West)\", \"E. Pratt Street\", \"L6T 5P6\", \"Inc.\"), a name printed in lower case or with figures is (\"lululemon athletica inc.\", \"nVidia Corporation\", \"3M Company\", \"232 Technologies Inc.\")",
+    ["of Korea", "No", "and/or", "338 Nanjing Road (West)", "E. Pratt Street", "L6T 5P6", "Inc.", "(SAR)"].every(isAddressScrap) &&
+      !["lululemon athletica inc.", "nVidia Corporation", "3M Company", "232 Technologies Inc.", "10X Genomics, Inc."].some(isAddressScrap) &&
+      cases.every((c) => [...c.complainants, ...c.respondents].every((p) => !isAddressScrap(p))) &&
+      cases.find((c) => c.number === "337-TA-753")!.respondents.includes("nVidia Corporation") && cases.find((c) => c.number === "337-TA-1265")!.respondents.includes("lululemon athletica inc."));
   check("the namesakes read by hand stay off: Amtech Systems LLC off ASYS, Australia's Globaltech off GLTK; a piece of an address (\"P.O. Box\") is no party",
     !isCompany("Amtech Systems LLC", "2020-12-29", 720500) && isCompany("Amtech Systems, Inc.", "2020-12-29", 720500) && !isCompany("Globaltech Pty Ltd.", "2022-04-05", 1938338) &&
       partyName("P.O. Box 3453") === "" && Object.values(NOT_THE_COMPANY).flat().every((n) => n.why.length > 40));

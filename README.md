@@ -433,13 +433,19 @@ Bureau of Drugs asked Lilly's Dista Products to take off the market in 1979; GE'
 generic makers of a drug and the season's flu vaccines. Approved by the owner on 2026-11-22 (the 2026-11-22
 proposal 3), with call (a): a release of the day of an approval the page holds adds its sentence to that approval's
 row ("The FDA's press release that day: …", Amgen's Epogen of 1989, Pfizer's Diflucan of 1990, Abbott's Humira of
-2002) and makes no row of its own.
+2002) and makes no row of its own. Since batch 170 (the 2026-11-22 audit's finding 5) only a release that names the
+approval's drug, by trade name or ingredient, joins it (`releaseFor`): Strattera's row of 2002-11-26 carries the
+Strattera paper and the Forteo paper of that day is a row of its own, and Merck's trientine release of 1985-11-26 is
+no part of Primaxin's row.
 
 openFDA publishes the agency's historical documents, press releases and talk papers of 1913–2014, as one keyless zip
 of OCR text (8,858 documents, last updated 2026-11-18). `npm run sync:fda-history` reads it once into the committed
 `data/fda-history.json.gz`; the file ends in 2014, so it is run again only after `npm run sync:tickers`, and ingest
-asks nothing. A document's day is the first its head gives in its own year (6,179 of those of 1962 on); one whose
-OCR spoils the day ("N0vember") makes no row. A company is named by the prose rule: its name of the year with a
+asks nothing. A document's day is the one its head gives in its own year (6,374 of those of 1962 on): the day beside
+its release line or its talk paper's number first, the OCR's letters for figures read there ("T89-55 Donald C McLearn
+Sept. l8, 1989"), then the first other; never a revision's day ("revised on March 21, 2007") or one closing a note of
+what it updates (batch 170, finding 4: Lilly's recall paper of 1989 was 24 days early, the Menu Foods recall four days
+late). One whose OCR spoils the day ("N0vember") makes no row. A company is named by the prose rule: its name of the year with a
 legal word after it ("Eli Lilly and Company", "Pfizer Inc."), or its whole name of two words or more printed
 capitalised ("Procter & Gamble"), never after another capitalised word, which makes it the end of another firm's
 name (Marion Merrell Dow Inc. is not Dow, Hoechst Celanese not Celanese, Dow Corning not Corning), unless that word
@@ -447,17 +453,18 @@ is one a name follows ("by", "The", a town's "-based", a headline's last word in
 guards, the table of taken names and the first price. A document naming more than two listed companies (a list of
 drug makers, a campaign's pharmacies) names none. Three rows the guard refuses the hand read keeps (`NAMED_BY_HAND`),
 each titled by the document's sentence saying what the FDA did: Mylotarg's withdrawal of 2010 on Pfizer, the skin
-tests of 1977 whose licences it moved to revoke on Lilly, the toys it banned in 1970 on Hasbro. Each row's title is the document's own sentence naming the
-company, its description the document's lead, as the OCR text gives them, the talk paper's note, the letterhead and
+tests of 1977 whose licences it moved to revoke on Lilly, the toys it banned in 1970 on Hasbro. Each row's title is the
+document's own sentence naming the company, a talk paper's heading through its day left off ("…GENERAL ELECTRIC
+MICROWAVE OVENS There have been reports …"), its description the document's lead, as the OCR text gives them, the talk paper's note, the letterhead and
 the telephone numbers left off; a talk paper is said to be one, written for FDA staff answering questions.
 
-Every kept row was read by hand once, and 63 are refused by document and company (`REFUSED`): a namesake ("First
+Every kept row was read by hand once, and 65 are refused by document and company (`REFUSED`): a namesake ("First
 National Stores", "Innovative Food Defense", Akzo's Organon of the 1970s to the 1990s), a person's employer, a
 newspaper quoted, a table or list of firms with no FDA action on the company's own product. A list that reports such
 an action is kept for each maker it names: Teva's and Sandoz's generic approvals, Sanofi Pasteur's flu vaccines each
-season. In the file: 530 documents naming a listed company, 476 company days on 79 companies before first prices;
-from the first prices the fixtures carry, 332 on 32 pages, 88 before 1993 (Lilly 53, Abbott 42, Pfizer 35, Johnson
-& Johnson 32, Teva 25, Novartis 24, Merck 18, Procter & Gamble 17, Sanofi 11, Gilead 9), and 39 approval rows that
+season. In the file: 536 documents naming a listed company, 481 company days on 80 companies before first prices;
+from the first prices the fixtures carry, 335 on 32 pages, 90 before 1993 (Lilly 54, Abbott 42, Pfizer 35, Johnson
+& Johnson 32, Teva 25, Novartis 24, Merck 19, Procter & Gamble 17, Sanofi 11, GE 9), and 38 approval rows that
 carry their day's release. openFDA's content is public domain under CC0 1.0; its header warns that results are
 unvalidated, and a row quotes the document, never rewrites it.
 
@@ -1320,13 +1327,20 @@ text pages answered 302 to an unblock page from this container), only the notice
 
 The notices print their tables in a dozen variants of four layouts, each read whole and checked against every
 transaction number the notice's text holds: 1994–1998, runs of lines ending in a PMN number and the day, the parties
-joined by commas, then semicolons, a comma before a legal word keeping a name whole ("Pincus Capital Company,
-L.P."); 1999–2003 in part, a party a line under "Party name", and in 2003 the party first with its number after;
+joined by commas, then semicolons, a comma before a legal word keeping a name whole ("Kreher Steel Co., Inc.") and so
+a firm named with commas, its lone first words joined to the piece its name ends in ("Clayton, Dubilier & Rice Fund V
+Limited Partnership", "Warburg, Pincus Capital Company, L.P.", "Becton, Dickinson and Company", since batch 170, the
+2026-11-22 audit's finding 1); 1999–2003 in part, a party a line under "Party name", and in 2003 the party first with its number after;
 2000–2009, three wrapped columns (Acquiring, Acquired, Entities) under each day's header; 2009–2026, the parties joined
 by semicolons. From 2011 a notice's third name is the acquiring person again in 99% of its transactions, so no
-acquired entity is read from it (`thirdIsAcquiring`). 36,931 grants: five notices printed as images (four of 2005,
-one of 2026) and one printing its numbers with no parties (02-2114) give none, and 36 grants whose day's header the
-notice lost keep no day and make no row, never a day guessed.
+acquired entity is read from it (`thirdIsAcquiring`). 36,892 grants: five notices printed as images (four of 2005,
+one of 2026) and one printing its numbers with no parties (02-2114) give none, and 47 grants keep no day and make no
+row, never a day guessed: 36 whose day's header the notice lost, and since batch 170 (finding 2) 11 whose day is no
+calendar day ("01/00/98", eight of 98-2575, Merck's among them) or falls after the notice's own (a year misprinted,
+"12/11/07" in a notice of 1998; `grantDayValid`). A grant two notices print is kept once, the first notice's; a number
+the agencies gave two deals (24 of them, "19984717" both Morgan Stanley's Toy Biz and Cogeneration Corporation of
+America's purchase from Northern States Power) is two grants, each row's id the number with its day, so "Also on"
+never joins the two (`sameDeal`, `sharedNumbers`, finding 3).
 
 A grant is the company's by the caption rule on each party, under the company's names of the year and the release
 map's units of the day, EPA's and the CPSC's units on their days, the table of taken names (Broadcom Corporation's
@@ -1340,9 +1354,9 @@ DSS, Metro Corporation not Metro Inc. A company's grants of a day are one row, e
 its parties as the notice writes them, linked to the notice; a deal of two listed companies (HCA's purchase from
 Tenet of 2017, AEP's from Sempra of 2019) is on both pages, each saying "Also on" the other (db/056).
 
-Against every company in the index under its present names: 9,194 company days on 1,523 companies before first
-prices; from the first prices the fixtures carry, 4,675 on 400 pages, 4,017 before 2017 (GE 303, IBM 86, Johnson &
-Johnson 77, Wells Fargo 77, Citigroup 74, JPMorgan 73, Berkshire Hathaway 72, Ford 68, Verizon 63, Williams 57);
+Against every company in the index under its present names: 9,185 company days on 1,523 companies before first
+prices; from the first prices the fixtures carry, 4,670 on 400 pages, 4,012 before 2017 (GE 303, IBM 86, Wells Fargo
+77, Johnson & Johnson 75, Citigroup 74, JPMorgan 73, Berkshire Hathaway 72, Ford 68, Verizon 63, Williams 57);
 a company's EDGAR former names, which ingest reads, add more ("Sempra Energy" for SRE). Read by hand: 100 drawn at
 random, every one the company's own deal or stake. The notices are the agencies' own work in the Federal Register,
 public domain; govinfo's notice asks that "customary credit should be given to the Government department or
@@ -1375,11 +1389,16 @@ where the list is missing), a party's name its text before its address. A party 
 notices' rule (`partyIsCompany`): the caption rule under its names of the year, the release map's units, EPA's and
 the CPSC's units, the table of taken names (old Broadcom Corporation's complaints before 2016-02-01 are not AVGO's),
 the ".com" reading ("Amazon.com, Inc."), and its first price. Namesakes read by hand (`NOT_THE_COMPANY`): Amtech
-Systems LLC of Albuquerque is not Amtech Systems, Inc., nor Australia's Globaltech GlobalTech Corp.
+Systems LLC of Albuquerque is not Amtech Systems, Inc., nor Australia's Globaltech GlobalTech Corp. Since batch 170
+(the 2026-11-22 audit's finding 6) a country the notice wraps ends its entry whole ("Seoul, Republic / of Korea"), a
+postal code left at a name's head comes off ("518100 AutoZone, Inc."), and a scrap of an address is no party
+(`isAddressScrap`: "of Korea", "No", "338 Nanjing Road (West)"), a name printed in lower case still one
+("lululemon athletica inc."); 45 company days more, Ulta's and Walmart's Lashify case, NOCO's against AutoZone,
+DISH's against Peloton among them.
 
-Against every company in the index under its present names: 996 company days on 269 companies before first prices;
-from the first prices the fixtures carry, 363 on 81 pages, 183 before 2017 (Apple 68, Qualcomm 19, Microsoft 18,
-Honeywell 14, AMD 11, Intel 10); a company's EDGAR former names, which ingest reads, add more (Research In Motion for
+Against every company in the index under its present names: 1,040 company days on 275 companies before first prices;
+from the first prices the fixtures carry, 375 on 82 pages, 184 before 2017 (Apple 69, Microsoft 19, Qualcomm 19,
+Honeywell 14, AMD 11, HP 10, Intel 10, Philips 10); a company's EDGAR former names, which ingest reads, add more (Research In Motion for
 BlackBerry, Sony Corporation for Sony Group). Read by hand: 30 drawn at random, every one the company's own case.
 The notices are the Commission's own work in the Federal Register, public domain, credited to the U.S.
 International Trade Commission.

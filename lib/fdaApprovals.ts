@@ -278,13 +278,14 @@ export function approvalTitle(a: FdaApproval): string {
 
 /**
  * The company's approvals as timeline events, newest first, from `from`, its first price. One row an
- * application, on its approval day, linked to Drugs@FDA. A release of the FDA's own naming the company on that
- * day (`releases`, lib/fdaHistory.ts's `releasesByDay`) adds its sentence to the row (batch 169, the owner's call).
+ * application, on its approval day, linked to Drugs@FDA. A release of the FDA's own about the approval that day adds
+ * its sentence to the row (`release`, lib/fdaHistory.ts's `releaseFor`; batch 169, the owner's call; by drug since
+ * batch 170).
  */
 export function approvalEvents(
   approvals: readonly FdaApproval[],
   namesIn: (year: number) => string[],
-  { cik, from = "", releases }: { cik: number | string; from?: string; releases?: ReadonlyMap<string, string> }
+  { cik, from = "", release }: { cik: number | string; from?: string; release?: (a: FdaApproval) => string | undefined }
 ): TimelineEvent[] {
   const tag = Number(cik);
   return approvals
@@ -292,9 +293,9 @@ export function approvalEvents(
     .map((a) => {
       const how = [a.priority ? "priority review" : "standard review", ...(a.orphan ? ["an orphan drug"] : [])].join("; ");
       // the FDA's own release of the approval's day joins its row and makes none of its own (batch 169, the owner's call)
-      const release = releases?.get(a.day);
+      const words = release?.(a);
       const base = `${a.indication ? `${a.indication.replace(/\.$/, "")}. ` : ""}Approved ${longDay(a.day)} on ${a.applicant}'s ${a.kind} ${a.application} (${how}).`.slice(0, 600);
-      const joined = release ? `${base} ${release}` : base;
+      const joined = words ? `${base} ${words}` : base;
       return {
         id: `fda-approval-${tag}-${a.kind}${a.application}`,
         date: a.day,

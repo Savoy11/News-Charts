@@ -988,6 +988,62 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 170: the 2026-11-22 audit of batches 164–169, its findings fixed (2026-11-22)
+
+The owner's word: "Merge when green and continue". The `code-auditor` read batches 164–169 (`768e7e0..00c6c68`) and
+reported seven findings, five `P2` and two `P3` (docs/audits/2026-11-22-code-audit-b164-169.md); each was read again
+here before it was fixed. The three committed files were rebuilt offline from the copies the batches read
+(`$SP/b166/dl`, `$SP/b167/dl`, `$SP/b169/dl`), each rebuild first shown to reproduce its committed file byte for byte.
+
+- [x] **Finding 1, comma-named firms in the merger notices (`P2`):** `byCommas` split "Clayton, Dubilier & Rice Fund V
+      Limited Partnership" into "Clayton" and "Dubilier & Rice …", so NSC's row had "Clayton" buying Norfolk Southern
+      and BDX's four deals were "Becton"'s of "Dickinson and Company". Now a run of lone capitalised words joins the
+      piece its firm's name ends in (one with "&", "and", a legal or a fund's word), never a placeholder ("Newco") or
+      before "The"; a tail joins its name ("L.C.", "M.D.", "Trustee", "Sociedad Anonima", a day's year, an open
+      bracket); and 2011's line after a ";" is joined ("Becton, Dickinson and Company; Accuri Cytometers, Inc.;"). 386
+      grants read again: NSC's row is CD&R's purchase of North American Van Lines from Norfolk Southern, BDX has its four.
+      check:hsr's old assertion that "Pincus Capital Company, L.P." is a party of its own is turned the right way round.
+- [x] **Finding 2, impossible days (`P2`):** a day that is no calendar day ("01/00/98", eight grants of 98-2575, Merck's
+      among them, which made Postgres refuse MRK's whole answer) or falls after its notice's (97-2402 and 98-0612,
+      "2007" in notices of 1997 and 1998, Central Garden's on CENT) is no day: 11 more grants dayless, 47 in all
+      (`grantDayValid`), and a dayless grant makes no row even with no first price given.
+- [x] **Finding 3, a grant twice (`P2`):** the sync kept one grant a number and day, so 63 numbers printed twice were two
+      rows. Now a reprint (`sameDeal`: the acquiring or the acquired persons agree) is kept once, the first notice's (39
+      dropped, 36,892 grants), and the 24 numbers the agencies gave two deals stay two, each row's id the number with
+      its day (`sharedNumbers`), so "Also on" never joins Itron's purchase from Schlumberger to MacDonald Dettwiler's.
+- [x] **Finding 4, FDA days from the body (`P2`):** `headDate` reads the day beside a release line or a talk paper's
+      number first, the OCR's letters for figures read there ("T89-55 Donald C McLearn Sept. l8, 1989"), with only a
+      writer's name between; it never takes a revision's day ("revised on March 21, 2007", "Update: On …") or one
+      closing a note of what the paper updates ("… May ll, 1976)"). Three kept rows move: Lilly's recall paper to
+      1989-09-18, the Menu Foods recall on WMT and KR to 2007-03-17, a contact-lens paper of 1982 to 04-01. 195 more
+      documents of 1962 on are dated (6,374); six of them name listed companies and were read by hand: five kept
+      (Hasbro's lawn darts of 1971 and 1972, GE's microwave ovens of 1975, Abbott's cyclamate petition of 1976,
+      McDonald's glasses of 1977), one refused for PFE and DD (a 1988 table of AIDS drugs in development). A sentence
+      that begins in a talk paper's heading begins after its day where a title in capitals follows.
+- [x] **Finding 5, the same-day join (`P2`):** a release joins an approval's row only where its sentence or lead names
+      the approval's drug, by trade name or ingredient (`releaseFor`), and a release of that day about something else is
+      a row of its own: Strattera's row of 2002-11-26 carries the Strattera paper, the Forteo paper is its own row; Merck's
+      trientine release of 1985-11-26 is no part of Primaxin's row. 38 approval rows carry their release (39 before).
+- [x] **Finding 6, ITC address scraps (`P3`):** an entry's ending is tested on the entry so far, so a wrapped country
+      ("Seoul, Republic / of Korea") ends it whole and a bare "Republic" or "Province" ends none; a comma with no space is
+      read as one; a postal code at a name's head comes off ("518100 AutoZone, Inc.", "612-8501 Xiaomi Corporation"); and
+      a scrap is no party (`isAddressScrap`: "of Korea", "No", "338 Nanjing Road (West)", "L6T 5P6", "Inc."), a name
+      printed in lower case or with figures still one ("lululemon athletica inc.", "nVidia Corporation", "3M Company").
+      259 investigations read again; 45 company days more, every one a party the notice names (Ulta and Walmart in
+      Lashify's 337-TA-1226, AutoZone in NOCO's 337-TA-1256, Peloton in DISH's 337-TA-1265, Target and Tractor Supply in
+      Walbro's 337-TA-1123, Altria in JUUL's 337-TA-1368, Kyocera and Xiaomi in AGIS's 337-TA-1347), none lost.
+- [x] **Finding 7, docs (`P3`):** CLAUDE.md's commands list `sync:fda-history`, its list of grouped sources names the
+      warning letters, the EEOC and the FDA's releases, and check:live's ITC comment says 1,122.
+- [x] **Measured:** the merger grants, 9,185 company days on 1,523 companies before first prices, 4,670 on 400 pages from
+      first prices, 4,012 before 2017 (JNJ 75, one grant twice before); the ITC's, 1,040 on 275 and 375 on 82, 184 before
+      2017 (Apple 69); the FDA's releases, 536 documents, 481 company days on 80 companies and 335 on 32 pages, 90 before
+      1993 (Lilly 54, Merck 19, GE 9), 65 refused and 3 kept by hand.
+- [x] **Checks:** check:hsr 50 (seven new: comma-named firms, 2011's join, calendar days, reprints and shared numbers,
+      NSC's, BDX's, MRK's and CENT's rows, Itron's id), check:itc 32 (two new), check:fda-history 35 (three new: the
+      release-line day, the committed days, the join by drug). On main the new checks fail.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** none; every file rebuilt from the copies saved when its batch read the sources.
+
 ## NC ledger — batch 169: the FDA's own press releases and talk papers, 1962–2014 (2026-11-22)
 
 The owner's call of 2026-11-22 on the batch 165 proposals ("Approve all three (Recommended)"), its #3, after "Merge

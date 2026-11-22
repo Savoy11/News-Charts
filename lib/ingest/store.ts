@@ -622,6 +622,25 @@ export const SOURCES: {
     reviewedOn: "2026-11-18",
     notes: "the Board's decisions in the company's own cases, unfair labor practice and representation cases, kept where the caption names a listed company by EPA's form of the caption rule, the release map and the units lists (lib/nlrbDecisions.ts); the decision listing, read whole once a year at night and its newest page daily for every company, no key (batch 161)",
   },
+  {
+    id: 45,
+    key: "hsr_early",
+    name: "FTC early terminations of the merger waiting period",
+    license: "public domain",
+    attribution: "Federal Trade Commission",
+    // The notices are the FTC's and the Justice Department's own work, printed in the Federal Register,
+    // which this registry records as public domain (source 5). They are read from the Government Publishing
+    // Office's copy on govinfo, whose policies page (www.govinfo.gov/about/policies, read 2026-11-22)
+    // states: "Copyright protection under this title is not available for any work of the United States
+    // Government … public documents can generally be reprinted without legal restriction", and asks that
+    // "customary credit should be given to the Government department or agency which prepared the
+    // material". Its robots.txt leaves /content/ open; no key is asked. Used: each grant's transaction
+    // number, the day the waiting period was ended, the parties as the notice names them, and the notice's
+    // number, day and link. Approved by the owner on 2026-11-22 (docs/proposals/2026-11-22-proposals.md #1).
+    commercialOk: true,
+    reviewedOn: "2026-11-22",
+    notes: "the antitrust agencies' grants of early termination of the Hart-Scott-Rodino waiting period, 1994 on, kept where the acquiring person, the acquired person or an acquired entity is a listed company by the caption rule and the release map (lib/hsrEarly.ts); the Federal Register's notices read monthly from govinfo and committed, no key (batch 166)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

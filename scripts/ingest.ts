@@ -53,6 +53,7 @@ import { eeocFor, walkEeoc } from "../lib/ingest/eeocWalk";
 import { digestFor, walkDigest } from "../lib/ingest/secDigestWalk";
 import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
 import { taaFor } from "../lib/ingest/taaFor";
+import { hsrFor } from "../lib/ingest/hsrFor";
 import { nlrbFor, walkNlrbOnce } from "../lib/ingest/nlrbWalk";
 import { fdaSupplementsFor } from "../lib/ingest/fdaSupplementsFor";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
@@ -139,6 +140,8 @@ export const COMPANY_SOURCES = [
   "fda_approvals",
   // …and the Labor Department's trade adjustment certifications of 1975–2022, where the firm is the company (batch 159)
   "dol_taa",
+  // …and the antitrust agencies' early terminations of the merger waiting period, 1994 on, where a party is the company (batch 166)
+  "hsr_early",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
   // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
@@ -939,6 +942,17 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("dol_taa", `Labor Department trade adjustment certifications of ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
     taaFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
+
+  /**
+   * The antitrust agencies' early terminations of the merger waiting period, 1994 on (batch 166, the
+   * 2026-11-22 proposal 1): every grant naming the company as the acquiring person, the acquired person or
+   * an acquired entity, from the committed file read monthly, matched by the caption rule under the names
+   * the company had that year and the release map's units of the day, from its first price, one event a
+   * day. No request.
+   */
+  await run("hsr_early", `early terminations of the merger waiting period naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
+    hsrFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
   );
 
   /**

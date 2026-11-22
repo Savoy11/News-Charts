@@ -988,6 +988,77 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 166: the merger waiting period's early terminations, 1994 on, and the 2026-11-22 approvals filed (2026-11-22)
+
+The owner's word, 2026-11-22: "Approve all three (Recommended)" to the batch 165 proposals, each with its recommended
+call, after "Merge when green and continue". The three are marked `APPROVED` in `docs/proposals/2026-11-22-proposals.md`
+and filed under Scope refocus; this batch builds #1. #2 (the ITC's Section 337 investigations) and #3 (the FDA's own
+press releases and talk papers) are the next batches'.
+
+- [x] **A new source, 45, `hsr_early`** (`lib/hsrEarly.ts`, `lib/ingest/hsrFor.ts`, `scripts/sync-hsr.ts`): the FTC's and
+      the Justice Department's grants of early termination of the Hart-Scott-Rodino waiting period, from the Federal
+      Register's notices, whose titles name no company. The Federal Register API lists 469 notices holding "early
+      termination" and "waiting period", 441 of them titled as grants (`isGrantTitle`: "Granting of Request(s)", once
+      "Grant of Request", once "Terminiation"), 1994-11-02 to 2026-11-20. Each notice's text was read once from govinfo
+      (441 requests, at least 1.5 s apart, every one answered 200), the Federal Register's own text pages answering 302
+      from this container. `npm run sync:hsr` writes the committed `data/hsr-early-terminations.json.gz` (1.1 MB), and
+      asks only for notices the file does not hold, so it runs monthly; ingest asks nothing.
+- [x] **Every layout read whole** (`readGrantNotice`), each against every transaction number the notice's text holds
+      (`numbersIn`): the runs of lines of 1994–1998 ending in a PMN number and the day, joined by commas, then by
+      semicolons, or by both (1997's CIGNA sale); a party a line under "Party name" (1998–2003, and 2009 after a column
+      of dots), or the party first with its number after (2003); three wrapped columns under each day's header
+      (2000–2009), a line begun at a cell's start a new entity only after one that ended; the parties joined by
+      semicolons (2009–2026), the compact notices of 2011 included. Misprints read as printed: seven- and nine-digit
+      numbers, "Terimination", a day printed without its year (2008). 36,931 grants. Five notices are printed as images
+      (four of 2005; April 2026's) and 02-2114 prints its numbers with no parties: they give none. The agencies granted
+      none from February 2021 to May 2025 but three of November 2021. 36 grants whose day's
+      header the notice lost keep no day and make no row, never a day guessed.
+      - **From 2011 the third name is the acquiring person again** ("Amazon.com, Inc.; Aurora Innovation, Inc.;
+        Amazon.com, Inc."), in 736 of 931 transactions of 2011 and 99% after, where before it was the entity acquired:
+        such a notice gives no acquired entity, and a third name that is neither party is kept as the acquiring side's
+        (`thirdIsAcquiring`). Read otherwise, every buyer of 2011–2026 would have been its own acquired entity.
+- [x] **The rule** (`hsrPartyIsCompany`): the caption rule on each party under the company's names of the year, the
+      release map's units of the day and EPA's and the CPSC's `UNITS` on their days, the table of taken names (old
+      Broadcom's grants before 2016-02-01 are not AVGO's) and the company's first price. Two guards of its own: a legal
+      name with ".com" in it is read as EDGAR writes it, so "Amazon.com, Inc." is AMAZON COM INC's and "Pets.com, Inc."
+      no company's named Pets; a credit union is no company's ("Boeing Employees' Credit Union", 2026; "Detroit Edison
+      Credit Union", 2010). `NOT_THE_COMPANY`, read by hand among the 535 matched names that are not the company's own
+      EDGAR name: Britain's General Electric Company, p.l.c. (eight grants of 1996–1999) off GE; Pacific and Southern
+      Company (Gannett's stations, 1996–1997) off SO; JCI Limited (Johannesburg Consolidated Investment, 1998) off JCI;
+      "… Power and Light Company" off Light S.A.; EQT AB off EQT; Fortis AG and its Fortis, Inc. off Fortis Inc.;
+      Progressive Incorporated (2004) off Progressive; DSS Company off DSS; Metro Corporation off Metro Inc.
+- [x] **The row**, one a company a day on the grant's day: "FTC and Justice Department ended the merger waiting period
+      early on Johnson & Johnson's acquisition involving Closure Medical Corporation", or "of [entities] from [acquired
+      person]" where the notice names entities; each transaction with its number and its parties as the notice writes
+      them, the company's role, and the notice's number, day and link. It says the notice does not say the deal closed,
+      its terms or its value. An individual's filing is labelled, the owner's call: "Timothy D. Cook's acquisition
+      involving Apple Inc., an individual's filing", "usually a purchase of the company's own voting securities above
+      the filing threshold". Its id is the day's transaction numbers, so a deal of two listed companies is on both
+      pages, each saying "Also on" the other (HCA's purchase from Tenet of 2017-06-29): a multi-party source
+      (`ALSO_ON_SOURCES`, db/056 builds the index again with id 45) whose rows join their numbers
+      (`GROUPED_ROW_SOURCES`).
+- [x] **Measured** against every company in the index under its present names: 9,194 company days on 1,523 companies
+      before first prices; from the first prices the fixtures carry, 4,675 on 400 pages, 4,017 before 2017 (GE 303, IBM
+      86, Johnson & Johnson 77, Wells Fargo 77, Citigroup 74, JPMorgan 73, Berkshire Hathaway 72, Ford 68, Verizon 63,
+      Williams 57). The scout estimated about 11,000 from first prices at 31 transactions a page; the notices hold
+      36,895 dated grants, about 23 a page. A company's EDGAR former names, which ingest reads and the replay does not,
+      add more ("Sempra Energy" for SRE, AEP's seller of 2019). **Read by hand:** 100 matches drawn at random, every one
+      the company's own deal or stake; the scout's open case, "Republic Bancorp, Inc." with "Republic Bank & Trust
+      Company" in MBNA's grant of 1997-06-16, is RBCAA's, its bank being Republic Bank & Trust Company.
+- [x] **Wired**: the source registered (public domain, the Federal Trade Commission credited, govinfo's notice quoted),
+      quota, refresh and relevance (0.95); a company source run by `scripts/ingest.ts`; the footer and the terms credit
+      the FTC; `check:contact` counts `scripts/sync-hsr.ts` among the files that read lib/contact.ts's User-Agent; a
+      `check:live` case reads the API's list and govinfo's copy of 05-10027, saying when a sync is due.
+- [x] **Checks:** a new `check:hsr` (43), in the chain: every layout on a committed slice of 22 notices
+      (`scripts/fixtures/hsr-notices.json.gz`, 109 KB), the committed file, the rule and its namesakes, the rows, the
+      whole index pinned, ingest and the wiring; `check:also-on` (the sources, db/056, the grouped rows). On main the new
+      check cannot run: the source does not exist. Run on a throwaway PostgreSQL 16 with db/001–056 applied: HCA's and
+      Tenet's rows of 2017-06-29 stored as ingest stores them, each page's row says "Also on" the other. Community Health
+      Systems' grant of that day stays off CYH: the notice spells it "Community Health System, Inc.".
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** www.govinfo.gov 441 (every grant notice, once), under "News Charts Research" with no address
+  (`b166/requests.log`); the list is the scout's of the same day. None to www.nlrb.gov or the SEC.
+
 ## NC ledger — batch 165: an opportunity-scout run, three proposals for the owner, and old Broadcom's name (2026-11-22)
 
 The owner's word: "Merge when green and continue". Both proposals of 2026-11-18 are built (batches 159–162) and batch 164
@@ -995,8 +1066,10 @@ fixed the audit's findings, so the `opportunity-scout` read the repository again
 `docs/proposals/2026-11-22-proposals.md`: three proposals, all **PENDING**, ranked with securities depth first. No new
 source is built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a rejection). The scout's
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a rejection). The scout's
       second pass then files the approved ones into this checklist.
+      ✅ **Marked 2026-11-22: all three approved** ("Approve all three (Recommended)"), each with its recommended call.
+      Filed under Scope refocus by batch 166, which builds #1; #2 and #3 are the next batches'.
       1. `P1` **The antitrust agencies' early terminations of the merger waiting period, 1995–2026.** The FTC and the
          Justice Department may end a Hart-Scott-Rodino wait early, and must then publish the grant in the Federal
          Register, naming the acquiring person, the acquired person and the entities bought, on the day granted. The
@@ -12132,6 +12205,30 @@ already held, but new investment goes to securities coverage first.
         the fixtures' first prices. Pages 340–666 wait for the next night.
       - *Derived from [`docs/proposals/2026-11-18-proposals.md`](proposals/2026-11-18-proposals.md) #2, approved
         2026-11-18.*
+- [x] `P1` **The antitrust agencies' early terminations of the merger waiting period, 1994–2026:** approved by the
+      owner 2026-11-22, with call (a), a row for every grant naming the company as the acquiring person, the acquired
+      person or an acquired entity, an individual's purchase labelled. A new source (45, `hsr_early`), the Federal
+      Register's grant notices read from govinfo and committed, public domain.
+      - **Estimated** by the scout: about 11,000 company days from first prices, about 9,500 before 2017, from 10 of 440
+        notices; off by a third either way.
+      - **Done in batch 166** (see its section): 36,931 grants from 441 notices; 9,194 company days on 1,523
+        companies before first prices, 4,675 on 400 pages from the first prices the fixtures carry, 4,017 before
+        2017. The scout's estimate counted 31 transactions a page; the notices hold 36,895 dated grants in all.
+      - *Derived from [`docs/proposals/2026-11-22-proposals.md`](proposals/2026-11-22-proposals.md) #1, approved
+        2026-11-22.*
+- [ ] `P1` **The ITC's Section 337 investigations, 1995–2026:** approved by the owner 2026-11-22, with call (a), a second
+      row on the day of the Commission's final determination, with any exclusion order; a settlement or withdrawal a
+      line on the institution row. A new source, the Commission's Federal Register notices read from govinfo.
+      - **Measured** by the scout: 228 complainant company days on 128 companies, 131 before 2017; **estimated** about
+        500 with the respondents, off by half.
+      - *Derived from [`docs/proposals/2026-11-22-proposals.md`](proposals/2026-11-22-proposals.md) #2, approved
+        2026-11-22.*
+- [ ] `P2` **The FDA's own press releases and talk papers, 1962–2014:** approved by the owner 2026-11-22, with call (a), a
+      release on the day of an approval the page holds joining that row. A new source, openFDA's historical documents,
+      one CC0 file read once and committed, every kept row read by hand once.
+      - **Measured** by the scout: 368 company days on 40 pages, 112 before 1993.
+      - *Derived from [`docs/proposals/2026-11-22-proposals.md`](proposals/2026-11-22-proposals.md) #3, approved
+        2026-11-22.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

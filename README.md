@@ -1250,6 +1250,55 @@ federal agency's own work (17 U.S.C. § 105), used under the owner's ruling of 2
 National Labor Relations Board. The site's own disclaimer, "the information available on this web site may not
 reflect official positions of the NLRB", is quoted where the source is registered.
 
+### Early terminations of the merger waiting period (`lib/hsrEarly.ts`, batch 166)
+
+The day the Federal Trade Commission and the Justice Department's Antitrust Division ended the Hart-Scott-Rodino
+waiting period early on a deal the company is party to, as the acquiring person, the acquired person or an
+acquired entity. Approved by the owner on 2026-11-22 (the 2026-11-22 proposal 1), with call (a): every grant naming
+the company makes a row, and an individual's filing ("Timothy D. Cook's acquisition involving Apple Inc.", 2014) is
+labelled as one, usually a purchase of the company's own shares above the filing threshold. Pages held a deal only
+where an 8-K or a tender form announced it, and never the day the antitrust wait ended. The row says the agencies
+ended the wait early; it does not say the deal closed, its terms or its value.
+
+Section 7A(b)(2) of the Clayton Act requires that each early termination "be published in the Federal Register".
+The notices list a few weeks' grants each, under titles that name no company ("Granting of Request for Early
+Termination of the Waiting Period Under the Premerger Notification Rules"), so the company feed never kept one: 441
+notices from 1994-11-02 to 2026-11-20; the agencies suspended grants in February 2021, with three in November 2021, and
+granted again from June 2025 (April 2026's notice is printed as images). `npm run sync:hsr`
+asks the Federal Register API for the list once and govinfo.gov for each notice's text (the Federal Register's own
+text pages answered 302 to an unblock page from this container), only the notices the committed
+`data/hsr-early-terminations.json.gz` does not hold, so it runs monthly; ingest asks nothing.
+
+The notices print their tables in a dozen variants of four layouts, each read whole and checked against every
+transaction number the notice's text holds: 1994–1998, runs of lines ending in a PMN number and the day, the parties
+joined by commas, then semicolons, a comma before a legal word keeping a name whole ("Pincus Capital Company,
+L.P."); 1999–2003 in part, a party a line under "Party name", and in 2003 the party first with its number after;
+2000–2009, three wrapped columns (Acquiring, Acquired, Entities) under each day's header; 2009–2026, the parties joined
+by semicolons. From 2011 a notice's third name is the acquiring person again in 99% of its transactions, so no
+acquired entity is read from it (`thirdIsAcquiring`). 36,931 grants: five notices printed as images (four of 2005,
+one of 2026) and one printing its numbers with no parties (02-2114) give none, and 36 grants whose day's header the
+notice lost keep no day and make no row, never a day guessed.
+
+A grant is the company's by the caption rule on each party, under the company's names of the year and the release
+map's units of the day, EPA's and the CPSC's units on their days, the table of taken names (Broadcom Corporation's
+grants before 2016-02-01 are not AVGO's) and its first price; a legal name with ".com" in it is read as EDGAR writes
+it ("Amazon.com, Inc." as AMAZON COM's), and a credit union is no company's ("Boeing Employees' Credit Union"). The
+namesakes read by hand among the 535 names matched that are not the company's own are refused (`NOT_THE_COMPANY`):
+Britain's General Electric Company, p.l.c. (eight grants of 1996–1999) is not GE, Pacific and Southern Company
+(Gannett's stations) not Southern Company, JCI Limited not Johnson Controls, "… Power and Light Company" not
+Light S.A., EQT AB not EQT, Fortis AG not Fortis Inc., Progressive Incorporated not Progressive, DSS Company not
+DSS, Metro Corporation not Metro Inc. A company's grants of a day are one row, each transaction with its number and
+its parties as the notice writes them, linked to the notice; a deal of two listed companies (HCA's purchase from
+Tenet of 2017, AEP's from Sempra of 2019) is on both pages, each saying "Also on" the other (db/056).
+
+Against every company in the index under its present names: 9,194 company days on 1,523 companies before first
+prices; from the first prices the fixtures carry, 4,675 on 400 pages, 4,017 before 2017 (GE 303, IBM 86, Johnson &
+Johnson 77, Wells Fargo 77, Citigroup 74, JPMorgan 73, Berkshire Hathaway 72, Ford 68, Verizon 63, Williams 57);
+a company's EDGAR former names, which ingest reads, add more ("Sempra Energy" for SRE). Read by hand: 100 drawn at
+random, every one the company's own deal or stake. The notices are the agencies' own work in the Federal Register,
+public domain; govinfo's notice asks that "customary credit should be given to the Government department or
+agency which prepared the material", the Federal Trade Commission.
+
 ### The SEC News Digest (`lib/secDigest.ts`, `lib/ingest/secDigestWalk.ts`)
 
 A source since batch 102 (`sec_digest`, the 2026-11-02 proposal 1: the owner asked for a count

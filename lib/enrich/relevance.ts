@@ -434,6 +434,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "nlrb_decisions") {
         return { score: 0.95, reason: "an NLRB decision in a case against the company or an election at it" };
       }
+      // …and a grant of early termination of the merger waiting period naming the company as a party
+      // (lib/hsrEarly.ts, batch 166)
+      if (subject.kind === "company" && row.sourceKey === "hsr_early") {
+        return { score: 0.95, reason: "an early end to the merger waiting period on a deal the company is party to" };
+      }
       // …and a Labor Department trade adjustment certification of the company's own plant, office or unit
       // (lib/taaPetitions.ts, batch 159)
       if (subject.kind === "company" && row.sourceKey === "dol_taa") {

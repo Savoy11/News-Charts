@@ -218,9 +218,14 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
-- **The 2026-11-22 proposals** (batch 165, `docs/proposals/2026-11-22-proposals.md`): mark each `APPROVED`,
+- ~~**The 2026-11-22 proposals** (batch 165, `docs/proposals/2026-11-22-proposals.md`): mark each `APPROVED`,
   `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a recurring charge: #1 and
-  #2 read the Federal Register's notices from govinfo, public domain by its stated notice; #3 is openFDA's, CC0.
+  #2 read the Federal Register's notices from govinfo, public domain by its stated notice; #3 is openFDA's, CC0.~~
+  **Decided 2026-11-22: all three** ("Approve all three (Recommended)"), each with its recommended call. #1 is built
+  in batch 166: after deploying, apply db/056 (`npm run db:migrate`), which builds the "Also on" index again with the
+  new source's id. Nothing else: no key, no table; its committed file (`data/hsr-early-terminations.json.gz`) is read
+  at ingest, and `npm run sync:hsr` adds the FTC's new grant notices to it, monthly (about one a month since 2025).
+  #2 and #3 are the next batches'.
   1. `P1` the antitrust agencies' early terminations of the merger waiting period, 1995–2026: the day the FTC and the
      Justice Department cleared each of the company's acquisitions, sales and stakes early. About 11,000 company days
      from first prices, about 9,500 before 2017 (an estimate from 10 of 440 notices). Your call inside it: a row for

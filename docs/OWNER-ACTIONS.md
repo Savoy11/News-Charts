@@ -218,11 +218,14 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
-- **The 2026-11-22 second run's proposals** (batch 171, `docs/proposals/2026-11-22b-proposals.md`): mark each
+- ~~**The 2026-11-22 second run's proposals** (batch 171, `docs/proposals/2026-11-22b-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a recurring
   charge: #1 is openFDA's, CC0, like sources 40 and 47; #2 is the Federal Reserve Board's own work, public domain by
   its stated notice; #3 is EUR-Lex's, reusable "for commercial or non-commercial purposes" with the credit
-  "© European Union".
+  "© European Union".~~ **Decided 2026-11-22: all three** ("Approve all three (Recommended)", "Use the defaults
+  (Recommended)"), each with its recommended call. #1 is built in batch 172 and needs nothing applied: no table, no
+  index, no key; its committed file (`data/fda-clearances.json.gz`) is read at ingest, and `npm run sync:fda-clearances`
+  streams openFDA's 510(k) file monthly (about 250 MB, one request). #2 and #3 are the next batches'.
   1. `P1` the FDA's 510(k) device clearances, 1976–2026: each device the company was cleared to sell, about 12,000
      company days from first prices, 3,296 before 1994 measured. Your call inside it: one row a company a month,
      naming each device (recommended), or one a day.

@@ -66,7 +66,7 @@ reason for anything rejected. Then run the scout in FILE mode.
 
 ## 1. The FDA's 510(k) clearances, 1976–2026: each device the FDA cleared the company to sell — Abbott's cardiac monitor of 1976, GE's x-ray tables, DePuy's hip liners under J&J, Intuitive Surgical's first instruments, Align's aligners, Insulet's pump, Apple's ECG app… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)" and "Use the defaults (Recommended)", with call (a): one row a company a month, naming each device and its number, a De Novo grant a row of its own. Filed under Scope refocus; built in batch 172.
 **Owner's reason (if rejected):**
 
 **Raised before:** as unmeasured only. The 2026-11-06 file listed "device approvals (PMA, 510(k))" as not
@@ -229,7 +229,7 @@ companies' names read by hand
 
 ## 2. The Federal Reserve's weekly actions on the company's applications, 1996–2026: each bank or business it was approved to buy, and each stake approved in it — Norwest's and Wells Fargo's acquisitions, State Street's Askari, Citigroup's commodity trading, FBOP's stake in Banner, BNP Paribas's in Shinhan, PNC's RBC Bank (USA)… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)" and "Use the defaults (Recommended)", with call (a): the Fed's actions on the company's deals, on the action's day, the applications' Federal Register notices not read. Filed under Scope refocus; to be built after #1.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. Pages hold the Board's own orders of 1996–2005 (`lib/fedOrders.ts`, batch 99, 469
@@ -391,7 +391,7 @@ weeks in 1996–1997
 
 ## 3. The European Commission's merger reviews, 1990–2026: the company's deals notified in Brussels — Boeing/McDonnell Douglas, Exxon/Mobil, AlliedSignal/Honeywell, GE/Honeywell, P&G/Gillette, Oracle/Sun, Microsoft/Skype, Apple/Beats, Medtronic/Covidien… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)" and "Use the defaults (Recommended)", with call (a): a row on the notification's day, the Commission's clearance a line on that row. Filed under Scope refocus; to be built after #2.
 **Owner's reason (if rejected):**
 
 **Raised before:** yes, as unmeasured, on 2026-11-11. The Commission's case search needed a key from its

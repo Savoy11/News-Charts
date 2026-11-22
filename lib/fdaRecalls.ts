@@ -94,8 +94,9 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
       {
         search: "Physio-Control",
         match: /\bPhysio[- ]?Control\b/i,
+        from: "1998-09-30",
         to: "2011-12-07",
-        why: "its emergency-care company from 1998 until its sale to Bain Capital, which Medtronic's filings report from November 2011: counted to its 10-Q of 2011-12-07, and no recall of Physio-Control's falls between 2011-06-06 and 2013-02-08, so the day moves no row (batch 144); Stryker's from 2016-04-05",
+        why: "its emergency-care company from 1998-09-30 (Medtronic's 8-K filed 1998-10-01, batch 172) until its sale to Bain Capital, which Medtronic's filings report from November 2011: counted to its 10-Q of 2011-12-07, and no recall of Physio-Control's falls between 2011-06-06 and 2013-02-08, so the day moves no row (batch 144); Stryker's from 2016-04-05",
       },
       { search: "Covidien", from: "2015-01-26", why: "bought 2015-01-26 (Medtronic plc's 8-K filed 2015-01-27); Covidien's earlier recalls were its own" },
     ],
@@ -110,7 +111,11 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
         from: "2010-02-26",
         why: "Ascent Healthcare Solutions, its reprocessing company, named in Stryker's 8-Ks of 2009-12-03 and 2010-01-05 and among its subsidiaries in its 10-K for 2009, filed 2010-02-26, counted from that filing: the device recall file gives Ascent's own recall of 2009-06-01 under the later name (batch 144)",
       },
-      { search: "Howmedica", why: "Howmedica Osteonics, its orthopaedic implant company (a subsidiary in Stryker's 10-K for 2002), held before the reports begin" },
+      {
+        search: "Howmedica",
+        from: "1998-12-04",
+        why: "Howmedica Osteonics, its orthopaedic implant company (a subsidiary in Stryker's 10-K for 2002): bought from Pfizer 1998-12-04 (Stryker's 8-K filed 1998-12-21); Howmedica's earlier clearances were Pfizer's (batch 172)",
+      },
       { search: "Mako Surgical", from: "2013-12-17", why: "bought 2013-12-17 (Stryker's 8-K filed 2013-12-17)" },
       { search: "Sage Products", from: "2016-04-01", why: "bought 2016-04-01 (Stryker's 8-K filed 2016-04-01)" },
       { search: "Physio-Control", match: /\bPhysio[- ]?Control\b/i, from: "2016-04-05", why: "bought 2016-04-05 (Stryker's 8-K filed 2016-04-05); Physio-Control's earlier recalls were its own" },
@@ -329,7 +334,7 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
     firms: [
       { search: "Johnson & Johnson", not: /Consumer/i, why: "the company and the units named for it" },
       { search: "Ethicon", why: "its surgical company" },
-      { search: "DePuy", why: "its orthopaedics company since 1998" },
+      { search: "DePuy", from: "1998-11-04", why: "its orthopaedics company since 1998: from DePuy, Inc.'s Form 15 of 1998-11-04, which ends its own record (batch 172)" },
       { search: "Janssen", why: "its pharmaceutical companies" },
       { search: "Biosense Webster", why: "its heart-rhythm company" },
       {
@@ -354,9 +359,19 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
         to: "2014-06-29",
         why: "its diagnostics company until the sale to Carlyle on 2014-06-30 (J&J's 8-K filed 2014-06-30)",
       },
-      { search: "Cordis", to: "2015-10-01", why: "its until Cardinal Health bought it 2015-10-02 (Cardinal's 10-Q filed 2015-11-03)" },
+      {
+        search: "Cordis",
+        from: "1996-02-23",
+        to: "2015-10-01",
+        why: "bought 1996-02-23 (J&J's 8-K filed 1996-03-08, batch 172); its until Cardinal Health bought it 2015-10-02 (Cardinal's 10-Q filed 2015-11-03)",
+      },
       { search: "Codman", to: "2017-10-01", why: "Codman Neurosurgery, its until Integra bought it 2017-10-02 (Integra's 8-K filed 2017-10-02)" },
-      { search: "LifeScan", to: "2018-10-01", why: "sold to Platinum Equity; J&J announced the sale complete on 2018-10-02 (its 8-K filed that day)" },
+      {
+        search: "LifeScan",
+        from: "1987-01-01",
+        to: "2018-10-01",
+        why: "bought in 1986, before EDGAR: from 1987, the first year surely after (batch 172); sold to Platinum Equity, J&J announcing the sale complete on 2018-10-02 (its 8-K filed that day)",
+      },
       { search: "Advanced Sterilization Products", to: "2019-03-31", why: "sold to Fortive 2019-04-01 (Fortive's 8-K filed 2019-04-01)" },
       {
         search: "Johnson & Johnson Consumer",
@@ -438,7 +453,7 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
     ticker: "DHR",
     firms: [
       { search: "Beckman Coulter", from: "2011-06-30", why: "bought 2011-06-30 (Danaher's 8-K filed 2011-06-30); Beckman Coulter's earlier recalls were its own" },
-      { search: "Radiometer", why: "Danaher's since 2004 (Danaher's 10-K for 2013), before the reports begin" },
+      { search: "Radiometer", from: "2004-01-27", why: "Danaher's from 2004-01-27, the day its tender offer took 95.4% of Radiometer A/S (Danaher's 10-K filed 2004-03-10, batch 172)" },
       {
         search: "Leica",
         match: /\bLeica (?:Microsystems|Biosystems)\b/i,
@@ -459,7 +474,12 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
         to: "2019-12-17",
         why: "bought 2014-12-11 (Danaher's 10-K for 2014), then Envista's: Danaher's until the split-off completed 2019-12-18",
       },
-      { search: "KaVo", to: "2019-12-17", why: "a Danaher dental company since 2004 (Danaher's 10-K for 2014), until the Envista split-off" },
+      {
+        search: "KaVo",
+        from: "2004-06-01",
+        to: "2019-12-17",
+        why: "a Danaher dental company bought \"in May 2004\" (Danaher's 10-Q filed 2004-10-21): from 2004-06-01, the first day surely after (batch 172); until the Envista split-off",
+      },
     ],
   },
   1757073: {
@@ -558,7 +578,11 @@ export const FDA_FIRMS: Readonly<Record<number, { ticker: string; firms: readonl
     ticker: "CNMD",
     firms: [
       { search: "ConMed", why: "the company itself" },
-      { search: "Linvatec", why: "ConMed Linvatec, its sports-medicine company, held before the reports begin" },
+      {
+        search: "Linvatec",
+        from: "1997-12-31",
+        why: "ConMed Linvatec, its sports-medicine company, bought from Bristol-Myers Squibb 1997-12-31 (ConMed's 8-K filed 1998-01-08, batch 172)",
+      },
     ],
   },
   711404: {

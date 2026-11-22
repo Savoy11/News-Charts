@@ -425,6 +425,41 @@ Walmart 5, then Abbott, Fresenius, Lilly and Medline 3 each; 44 of the 69 are ou
 Dashboard's API, which needs a registered key, and are not read. Public domain by the FDA's website
 policies; no key.
 
+### FDA 510(k) clearances and De Novo grants, 1976–2026 (`lib/fdaClearances.ts`, batch 172)
+
+Each device the FDA cleared the company to sell, from the Medical Device Amendments of 1976: Abbott Laboratories'
+portable cardiac monitor of 1976-09-16, Stryker's bone cement of 1976, Intuitive Surgical's Monarch laparoscopic
+manipulator of 1997, Apple's ECG app, granted as a De Novo request on 2018-09-11. Approved by the owner on 2026-11-22
+(the 2026-11-22b proposal 1) with call (a): one row a company a month, on the month's first decision day, naming each
+device and its 510(k) number ("FDA cleared 2 of the company's devices in May 2017: da Vinci X Surgical System
+(K171294) and …"), and a De Novo grant, a new kind of device, a row of its own. A clearance finds a device
+"substantially equivalent" to one already marketed; the row never says the device was launched or sold.
+
+openFDA's `device/510k` file holds all 176,683 decisions (one keyless zip of 250 MB, 1.6 GB of JSON, last updated
+2026-11-18). `npm run sync:fda-clearances` streams it a record at a time and commits the 20,368 a company in the index
+holds by the rule, 59 of them De Novo grants (`data/fda-clearances.json.gz`, 579 KB); it runs monthly, and ingest asks
+nothing. Unlike the PMA file, cut on 2026-11-07, this one keeps the applicant that filed.
+
+A clearance is the company's by the approvals' rule on its day (`approvalIsCompany`): the caption rule under its
+names of the year, the recall map's firms and the approvals' names on their days, the table of taken names, its first
+price. The recall map's units were dated back to their purchases for it, each day from a filing: Howmedica Stryker's
+from 1998-12-04, DePuy J&J's from 1998-11-04 (its Form 15) and Cordis from 1996-02-23, LifeScan from 1987 (bought in
+1986, before EDGAR), Physio-Control Medtronic's from 1998-09-30, Linvatec ConMed's from 1997-12-31, Radiometer
+Danaher's from 2004-01-27 and KaVo from 2004-06-01 ("in May 2004"); Howmedica's earlier clearances, and Linvatec's,
+reach no page, their earlier owners' days unread. J&J's "Ortho" names are its own Ortho companies only, never Ortho
+Development, Ortho Organizers and the 32 other names of firms called Ortho, nor Ortho-Clinical Diagnostics after its sale (for the
+approvals and the warning letters too). Every company's distinct applicant names were read by hand, 1,316 of them on
+276 companies, and 42 refused (`NOT_THE_COMPANY`): namesakes ("Blackstone", the spinal-implant maker, not Blackstone
+Inc.; "Boston Scientific, Target", Target Therapeutics, not Target Corporation; Merck KGaA's biomaterials companies
+on Merck), and the names the file gives a unit's own records before its owner took it ("Medtronic Minimed" before
+2001-08-28, "3M Health Care, Sarns" before 1982, "Meadox Medicals, Div. Boston Scientific" before 1995-11-16).
+
+Against every company in the index under its present names: 18,305 company days on 246 companies before first prices;
+from the first prices the fixtures carry, 12,056 on 63 pages, 9,285 before 2017 and 2,734 before 1994, as 5,467 rows
+(4,129 before 2017, 25 De Novo grants): Johnson & Johnson 561, Medtronic 522, BD 489, GE 464, Philips 452, Abbott 438,
+Stryker 389, Boston Scientific 339, 3M 321, Baxter 257. openFDA's content is public domain under CC0 1.0; its header
+warns that results are unvalidated.
+
 ### FDA press releases and talk papers, 1962–2014 (`lib/fdaHistory.ts`, batch 169)
 
 The FDA's own announcements in its own words, decades before the held FDA sources begin: Lilly's Ilosone, which the

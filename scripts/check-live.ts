@@ -59,6 +59,7 @@ import { readOccList } from "../lib/occActions";
 import { OTS_FILE, readOtsOrders } from "../lib/otsOrders";
 import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue } from "../lib/secDigest";
 import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
+import { FDA_510K_ENTRY, FDA_510K_FILE, type FdaClearance, clearanceReader } from "../lib/fdaClearances";
 import { FDA_HISTORY_FILE, readHistoricalDocuments } from "../lib/fdaHistory";
 import { TAA_FILE, readTaaPetitions } from "../lib/taaPetitions";
 import { fetchNlrbPage } from "../lib/nlrbDecisions";
@@ -68,7 +69,7 @@ import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { DRUGSFDA_ENTRY, DRUGSFDA_FILE, readSupplements } from "../lib/fdaSupplements";
 import { fetchLetters } from "../lib/fdaWarningLetters";
-import { readZip } from "../lib/zip";
+import { eachZipLine, readZip } from "../lib/zip";
 import { releaseNamesOn } from "../lib/releaseNames";
 import { deviceRecallEvents, fetchDeviceRecords, fetchEventClass, fetchReportedEvents } from "../lib/fdaDeviceRecalls";
 import { fdaFirmsFor, fetchFdaRecalls } from "../lib/fdaRecalls";
@@ -1040,6 +1041,31 @@ export const CASES: LiveCase[] = [
       if (approvals.length < 1_387) out.push(`the workbook holds ${approvals.length} approvals, fewer than the 1,387 of 2026-11-06`);
       const prozac = approvals.find((a) => a.application === "18936");
       if (prozac?.day !== "1987-12-29" || prozac.applicant !== "Eli Lilly") out.push(`Prozac reads ${JSON.stringify(prozac)}`);
+      return out;
+    },
+  },
+  {
+    name: "FDA 510(k) clearances — openFDA's device/510k file as `npm run sync:fda-clearances` streams it; Abbott's K760593 and Apple's DEN180044 (batch 172)",
+    covers: ["fda_clearances"],
+    hosts: ["download.open.fda.gov"],
+    async run() {
+      // measured 2026-11-22: 176,683 decisions, last updated 2026-11-18; K760593, Abbott Laboratories' cardiac
+      // monitor of 1976-09-16; DEN180044, Apple's ECG app, granted 2018-09-11
+      const res = await fetch(FDA_510K_FILE, { headers: { ...UA }, signal: AbortSignal.timeout(900_000) });
+      if (!res.ok) return [`the file: HTTP ${res.status}`];
+      const found: FdaClearance[] = [];
+      const reader = clearanceReader((c) => (c.k === "K760593" || c.k === "DEN180044") && found.push(c));
+      let n = 0;
+      await eachZipLine(new Uint8Array(await res.arrayBuffer()), FDA_510K_ENTRY, (l) => {
+        if (l.toString() === "    {") n++;
+        reader.line(l);
+      });
+      const out: string[] = [];
+      if (n < 176_683) out.push(`the file holds ${n} decisions, fewer than the 176,683 of 2026-11-22`);
+      const abbott = found.find((c) => c.k === "K760593");
+      const apple = found.find((c) => c.k === "DEN180044");
+      if (abbott?.day !== "1976-09-16" || !/^Abbott Laboratories/i.test(abbott.applicant)) out.push(`K760593 reads ${JSON.stringify(abbott)}`);
+      if (apple?.day !== "2018-09-11" || apple.code !== "DENG" || !/^Apple/i.test(apple.applicant)) out.push(`DEN180044 reads ${JSON.stringify(apple)}`);
       return out;
     },
   },

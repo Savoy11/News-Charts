@@ -988,6 +988,64 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 172: the 2026-11-22b approvals filed, and the FDA's 510(k) clearances, 1976 on (2026-11-22)
+
+The owner's word, 2026-11-22: "Approve all three (Recommended)" and "Use the defaults (Recommended)" to the batch 171
+proposals, each with its recommended call. The three are marked `APPROVED` in `docs/proposals/2026-11-22b-proposals.md`
+and filed under Scope refocus; this batch builds #1. #2 (the Federal Reserve's H.2 actions) and #3 (the European
+Commission's merger reviews) are the next batches'.
+
+- [x] **A new source, 48, `fda_clearances`** (`lib/fdaClearances.ts`, `lib/ingest/fdaClearancesFor.ts`,
+      `scripts/sync-fda-clearances.ts`): openFDA's `device/510k` file, 176,683 decisions from 1976-07-15, one keyless
+      CC0 zip of 249,823,383 bytes and 1.6 GB of JSON, streamed a line at a time (`clearanceReader` through
+      `eachZipLine`, each record parsed alone). The sync keeps the 20,368 decisions a company in the index holds by the
+      rule, 59 of them De Novo grants, in the committed `data/fda-clearances.json.gz` (579 KB); it runs monthly and
+      again after `npm run sync:tickers`, a name only EDGAR's former names give not read; ingest asks nothing.
+- [x] **The rule:** `approvalIsCompany` on the applicant that filed, on the decision's day, among a company's candidates
+      by the file's word index (`candidatesFor`, shared by the sync, ingest and the check), then the names read by hand.
+      - **The units' days back to 1976**, each from a filing, in the recall map (`FDA_FIRMS`), so the recalls read them
+        too: Howmedica Stryker's from 1998-12-04 (Stryker's 8-K filed 1998-12-21), DePuy J&J's from 1998-11-04 (DePuy,
+        Inc.'s Form 15) and Cordis from 1996-02-23 (J&J's 8-K filed 1996-03-08), LifeScan from 1987 (bought in 1986,
+        before EDGAR), Physio-Control Medtronic's from 1998-09-30 (its 8-K filed 1998-10-01), Linvatec ConMed's from
+        1997-12-31 (its 8-K filed 1998-01-08), Radiometer Danaher's from 2004-01-27 (its 10-K filed 2004-03-10) and KaVo
+        from 2004-06-01 ("in May 2004", its 10-Q filed 2004-10-21). check:fda-recalls counts a Form 15 as a cited filing.
+        Howmedica's clearances before 1998, Pfizer's, and Linvatec's before 1998, Bristol-Myers Squibb's, reach no
+        page: the earlier owners' days were not read.
+      - **J&J's "Ortho" names** (`APPLICANT_NAMES`) are its own Ortho companies only (Ortho, Ortho Pharmaceutical, Ortho
+        Biotech, Ortho-McNeil, Ortho Diagnostic Systems and its instruments), never the 34 names of orthodontic and
+        orthopaedic firms called Ortho the clearances hold (Ortho Development, Ortho Organizers, Ortho Kinetics…), nor Ortho-Clinical
+        Diagnostics after its sale: for the approvals, the supplements and the warning letters too.
+      - **Read by hand:** every company's distinct applicant names, 1,316 of them on 276 companies, and 42 refused
+        (`NOT_THE_COMPANY`): 37 namesakes ("Blackstone", the spinal-implant maker; "Boston Scientific, Target", Target
+        Therapeutics; Merck KGaA's biomaterials companies and Schering AG's on Merck; "Gentex Corporation" of
+        Pennsylvania; "Quantum Co., Ltd."'s gloves; "Spire Health"…), and five names the file gives a unit's own records
+        under its owner's later name before the day ("Medtronic Minimed" before 2001-08-28 and "Medtronic Xomed"
+        before 1999-11-12, each from its Form 15; "3M Health Care, Sarns" before 1982, 3M's from 1981 by the National
+        Library of Medicine's guide; "Meadox Medicals, Div. Boston Scientific" before 1995-11-16 and "Boston Scientific
+        Scimed" before 1995-02-24, from Boston Scientific's 10-K filed 1997-03-31). The 1970s "Medtronic Vascular"
+        records are Medtronic's own pacing leads and pulse generators and stay.
+- [x] **The rows (the owner's call):** one a company a month, on the month's first decision day, naming each device and
+      its 510(k) number, five and a count, its id the month's numbers (`GROUPED_ROW_SOURCES`); a De Novo grant a row of
+      its own ("FDA granted Apple, Inc.'s De Novo request for ECG App (DEN180044), a new kind of device"); linked to the
+      FDA's own page of the clearance or grant; never saying the device was launched.
+- [x] **Measured** against every company in the index under its present names: 18,305 company days on 246 companies
+      before first prices; from the first prices the fixtures carry, 12,056 on 63 pages, 9,285 before 2017, 2,734
+      before 1994, as 5,467 rows (4,129 before 2017, 25 De Novo grants): Johnson & Johnson 561, Medtronic 522, BD 489,
+      GE 464, Philips 452, Abbott 438, Stryker 389, Boston Scientific 339, 3M 321, Baxter 257. The scout's estimate was
+      about 12,000 company days once the units' days were read.
+- [x] **Wired:** `SOURCES` id 48 (CC0 1.0 by open.fda.gov/license, as for sources 40 and 47), its quota and refresh,
+      relevance 0.95, `COMPANY_SOURCES` and the ingest's run, `GROUPED_ROW_SOURCES`, the footer's and the terms page's
+      credit, `sync:fda-clearances`, a `check:live` case. No migration: the source is no "Also on" source.
+- [x] **Checks:** `check:fda-clearances` 28 (new, in the chain; fixture `scripts/fixtures/fda-clearances-510k.zip`, 29 of
+      the file's records in its own layout); `check:fda-approvals` (the Ortho names), `check:fda-recalls` (a Form 15
+      cited), `check:also-on` (the grouped sources), `check:contact` (47 files read the User-Agent) and the four FDA
+      checks' reading of the credit extended. On main the new check cannot run, and check:fda-approvals' Ortho test,
+      check:also-on and check:contact fail; the recall check's and the credit patterns' extensions only accept more.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** none to download.open.fda.gov: the zip is the copy the scout read on 2026-11-22 (batch 171). The units'
+  days: data.sec.gov 25 and www.sec.gov 27, every one answered 200, under the project's User-Agent with its contact,
+  loaded from `.env.local` by a tsx script; and five web searches (the purchases before EDGAR), with no contact.
+
 ## NC ledger — batch 171: a second opportunity-scout run, three proposals for the owner, and Ortho-Clinical's hyphen (2026-11-22)
 
 The owner's word: "Merge when green and continue". The three proposals of 2026-11-22 are built (batches 166, 167,
@@ -995,8 +1053,11 @@ The owner's word: "Merge when green and continue". The three proposals of 2026-1
 `docs/proposals/2026-11-22b-proposals.md`: three proposals, all **PENDING**, ranked with securities depth first. No new
 source is built in this batch.
 
-- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a rejection). The scout's
+- [x] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a rejection). The scout's
       second pass then files the approved ones into this checklist.
+      ✅ **Marked 2026-11-22: all three approved** ("Approve all three (Recommended)", "Use the defaults
+      (Recommended)"), each with its recommended call. Filed under Scope refocus by batch 172, which builds #1; #2 and
+      #3 are the next batches'.
       1. `P1` **The FDA's 510(k) device clearances, 1976–2026.** openFDA's file, one CC0 zip of 250 MB, 176,683
          decisions, 64,228 before 1994; unlike the PMA file cut on 2026-11-07, it keeps the applicant that filed.
          **Measured** on the whole file with `approvalIsCompany`: 13,063 company days on 67 pages from first prices,
@@ -12492,6 +12553,29 @@ already held, but new investment goes to securities coverage first.
         hand; 476 company days on 79 companies before first prices, 332 on 32 pages from the first prices the fixtures
         carry, 88 before 1993, and 39 approval rows carrying their day's release.
       - *Derived from [`docs/proposals/2026-11-22-proposals.md`](proposals/2026-11-22-proposals.md) #3, approved
+        2026-11-22.*
+- [x] `P1` **The FDA's 510(k) device clearances, 1976–2026:** approved by the owner 2026-11-22, with call (a), one row a
+      company a month naming each device and its number, a De Novo grant a row of its own. A new source, openFDA's
+      `device/510k` file, one CC0 zip streamed and committed, the rule `approvalIsCompany` on the applicant on the
+      decision's day, the units' purchase days read back to 1976 and the small companies' applicant names read by hand.
+      - **Measured** by the scout: 13,063 company days on 67 pages from first prices, 10,250 before 2017, 3,296 before
+        1994; about 12,000 once the units' days are read (an estimate).
+      - **Done in batch 172** (see its section): 20,368 clearances in the committed file; 12,056 company days on 63 pages
+        from the first prices the fixtures carry, 2,734 before 1994, as 5,467 monthly rows; 42 names refused by hand.
+      - *Derived from [`docs/proposals/2026-11-22b-proposals.md`](proposals/2026-11-22b-proposals.md) #1, approved
+        2026-11-22.*
+- [ ] `P1` **The Federal Reserve's weekly H.2 actions on applications, 1996–2026:** approved by the owner 2026-11-22,
+      with call (a), the Fed's actions on the company's deals on the action's day, not the applications' Federal
+      Register notices. A new source, the Board's weekly PDFs, read once and then weekly.
+      - **Measured** by the scout on 40 weeks: 88 company days, every one read by hand; **estimated** about 2,100, about
+        1,500 before 2017, a floor.
+      - *Derived from [`docs/proposals/2026-11-22b-proposals.md`](proposals/2026-11-22b-proposals.md) #2, approved
+        2026-11-22.*
+- [ ] `P2` **The European Commission's merger reviews, 1990–2026:** approved by the owner 2026-11-22, with call (a), a
+      row on the notification's day, the clearance a line on it. A new source, the EU Publications Office's SPARQL list
+      and each notice's text from EUR-Lex at its crawl delay, credited "© European Union".
+      - **Measured** by the scout on 10,000 titles: 888 company days on 171 pages from first prices, 598 before 2017.
+      - *Derived from [`docs/proposals/2026-11-22b-proposals.md`](proposals/2026-11-22b-proposals.md) #3, approved
         2026-11-22.*
 
 ## Planned initiatives — free planner & referral board (2026-08-12)

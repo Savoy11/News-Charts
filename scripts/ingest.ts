@@ -54,6 +54,7 @@ import { digestFor, walkDigest } from "../lib/ingest/secDigestWalk";
 import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
 import { taaFor } from "../lib/ingest/taaFor";
 import { hsrFor } from "../lib/ingest/hsrFor";
+import { fdaClearancesFor } from "../lib/ingest/fdaClearancesFor";
 import { fdaHistoryFor } from "../lib/ingest/fdaHistoryFor";
 import { itcFor } from "../lib/ingest/itcFor";
 import { nlrbFor, walkNlrbOnce } from "../lib/ingest/nlrbWalk";
@@ -148,6 +149,8 @@ export const COMPANY_SOURCES = [
   "itc_337",
   // …and the FDA's own press releases and talk papers of 1962–2014, where one names the company (batch 169)
   "fda_history",
+  // …and the FDA's 510(k) clearances and De Novo grants, 1976 on, where the applicant is the company (batch 172)
+  "fda_clearances",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
   // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
@@ -979,6 +982,15 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("fda_history", `FDA press releases and talk papers naming ${company.name}`, () =>
     fdaHistoryFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
+
+  /**
+   * The FDA's 510(k) clearances and De Novo grants, 1976 on (batch 172, the 2026-11-22b proposal 1): every decision
+   * in the committed file whose applicant is the company on its day by the approvals' rule, less the names read by
+   * hand, from its first price; one row a company a month, a De Novo grant its own (the owner's call). No request.
+   */
+  await run("fda_clearances", `FDA 510(k) clearances whose applicant is ${company.name}`, () =>
+    fdaClearancesFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
   );
 
   /**

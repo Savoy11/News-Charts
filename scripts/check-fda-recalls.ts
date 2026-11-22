@@ -83,8 +83,9 @@ async function main(): Promise<void> {
     n("JNJ", "jnj_consumer") === 1 && n("KVUE", "jnj_consumer") === 0 &&
       firmFor(consumer, "2023-06-01", firmsOf("JNJ")) !== null && firmFor(consumer, "2023-06-01", firmsOf("KVUE")) !== null &&
       firmFor(consumer, "2024-01-15", firmsOf("JNJ")) === null && firmFor(consumer, "2024-01-15", firmsOf("KVUE")) !== null);
-  // the exchange's Form 25 removing a bought company's shares, an SEC filing too (Mentor's, batch 144)
-  const filing = /\b(?:8-K|8-K\/A|10-Q|10-K|20-F|6-K|13D\/A)\b|\bForm 25\b/;
+  // the exchange's Form 25 removing a bought company's shares, an SEC filing too (Mentor's, batch 144), and a bought
+  // company's Form 15 ending its own record (DePuy's, batch 172)
+  const filing = /\b(?:8-K|8-K\/A|10-Q|10-K|20-F|6-K|13D\/A)\b|\bForm (?:25|15)\b/;
   // the owner's call of 2026-10-29: Siemens Healthineers' listing, which no SEC filing dates, from
   // its own annual report — the one day the map takes from anywhere else (batch 76)
   const ownersException = (ticker: string, f: { from?: string; why: string }) =>
@@ -281,8 +282,8 @@ async function main(): Promise<void> {
       /const fdaFirms = fdaFirmsFor\(company\.cik\);\s*if \(fdaFirms\) \{\s*await run\("fda_enforcement"/.test(ingest) && /fetchFdaRecalls\(company\.cik\)/.test(ingest));
   check("the FDA is credited where the other sources are",
     // the recalls, and since batch 105 the new-drug approvals (since batch 115 with their efficacy supplements, since batch 169 the press releases), in one credit
-    /drug, device and food recalls(?: and new-drug approvals|, new-drug approvals and their efficacy supplements(?:, press releases and talk papers of 1962–2014)?(?:, and warning letters)?)? from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
-      /drug, device and food recalls(?: and new-drug approvals|, new-drug approvals and their efficacy supplements(?:, press releases and talk papers of 1962–2014)?(?:, and warning letters)?)? from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
+    /drug, device and food recalls(?: and new-drug approvals|, new-drug approvals and their efficacy supplements(?:, device clearances)?(?:, press releases and talk papers of 1962–2014)?(?:, and warning letters)?)? from the U\.S\. Food and Drug Administration/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
+      /drug, device and food recalls(?: and new-drug approvals|, new-drug approvals and their efficacy supplements(?:, device clearances)?(?:, press releases and talk papers of 1962–2014)?(?:, and warning letters)?)? from the U\.S\. Food and Drug Administration/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
   check("the sources plan records the owner's approval", /## 3\. FDA enforcement reports[^#]*\*\*Status:\*\* APPROVED/.test(read("docs/proposals/2026-10-22-news-sources.md")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);

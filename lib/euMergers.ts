@@ -82,15 +82,18 @@ export function listedNotices(answer: unknown): EuListed[] {
   }));
 }
 
-/** A notice's case number, "M.877" from "Case No IV/M.877", "IV/M 004", "COMP/M.3083" or "M.12513". */
+/**
+ * A notice's case number, "M.877" from "Case No IV/M.877", "IV/M 004", "COMP/M.3083" or "M.12513"; a bracket that opens on
+ * the number writes no "Case" ("(M.6968 — Lufthansa/CAE/JV)"), and a notice of two cases says "Cases" (batch 175).
+ */
 export function caseOf(title: string): string | null {
-  const m = /\bCase\b[^)]*?\bM\s*[./]?\s*0*(\d{1,6})\b/i.exec(title);
+  const m = /(?:\bCases?\b[^)]*?|\(\s*)\bM\s*[./]?\s*0*(\d{1,6})\b/i.exec(title);
   return m ? `M.${Number(m[1])}` : null;
 }
 
 /** The parties a title names after its case number, by their short names: "Boeing/McDonnell Douglas". */
 export function titleParties(title: string): string[] {
-  const m = /\bCase\b[^—–-]*?\bM\s*[./]?\s*\d{1,6}\s*(?:[—–-]+|\s)\s*(.+)$/i.exec(title);
+  const m = /(?:\bCases?\b[^—–-]*?|\(\s*)\bM\s*[./]?\s*\d{1,6}\s*(?:[—–-]+|\s)\s*(.+)$/i.exec(title);
   if (!m) return [];
   // the parties run to the bracket closing the case; a party's own brackets ("BSA (LACTALIS)") are kept
   let depth = 1;
@@ -198,6 +201,19 @@ function nameBefore(text: string): string {
   return out.join(" ").replace(/^The\s+(?=undertaking)/i, "");
 }
 
+/**
+ * The names a list after "undertakings" gives, "A, B and C", where every item ends in a legal word ("Bayer AG", "Infraserv
+ * GmbH & Co. Höchst KG"); none where any item does not, so a name holding a comma or "and" is read whole by `nameBefore`.
+ */
+function legalList(before: string): string[] {
+  const m = /\bundertakings\s+([^()]+?)\s*$/i.exec(before);
+  if (!m || !/\sand\s/.test(m[1])) return [];
+  const items = m[1].replace(/[,;:]$/, "").split(/\s*,\s+|\s+and\s+/).map((x) => x.trim());
+  const legal = (x: string) => LEGAL_TAIL.test(x.split(/\s+/).at(-1)!) || /\s(?:KG|OHG|KK)$/.test(x);
+  if (items.length < 2 || !items.every((x) => /^\p{Lu}/u.test(x) && x.split(/\s+/).length >= 2 && legal(x))) return [];
+  return items;
+}
+
 /** The words before a party that make it the seller of what is acquired: "… the worldwide business of", "parts of", "assets of". */
 const SELLER = /\b(?:business(?:es)?|activit(?:y|ies)|assets?|division|divisions|parts?|units?|operations?|interests?|subsidiar(?:y|ies)|portfolio|segment|brands?|plants?|sites?|stations?|refinery|branch(?:es)?)\b[^()]{0,60}?\b(?:of|from|owned by|belonging to)\s+(?:the\s+)?(?:undertakings?\s+)?$/i;
 
@@ -240,13 +256,18 @@ export function noticeParties(para: string): EuParty[] {
     if (NOT_A_PARTY.test(inner) || /^\d/.test(inner) || /^\(?[a-z]\)?$/.test(inner)) continue;
     // "belonging to the ExxonMobil group ('ExxonMobil', USA)": a group named in lower case is its name's
     const grouped = /([\p{Lu}][\p{L}\d&.\-]*(?:\s+[\p{Lu}][\p{L}\d&.\-]*){0,3})\s+group\s*$/u.exec(before);
-    const name = grouped ? `${grouped[1]} Group` : nameBefore(before.replace(/.*\bundertakings?\s+/i, ""));
+    // "the undertakings Bayer AG, Deutsche Telekom AG and Infraserv GmbH & Co. Höchst KG (Infraserv)": each of a list whose every
+    // item ends in a legal word is a party, the bracket the last one's (batch 175)
+    const listed = grouped ? [] : legalList(before);
+    const name = grouped ? `${grouped[1]} Group` : listed.length ? listed.at(-1)! : nameBefore(before.replace(/.*\bundertakings?\s+/i, ""));
     // a regulation's number before a footnote's star is no party: "(EEC) No 4064/89 (*)"
     if (!name || NOT_A_NAME.test(name) || OFFICE.test(name) || !/\p{Lu}/u.test(name) || /^(?:Article|Regulation)\b|^Nos?\s+\d|\b\d{3,4}\s?\/\s?(?:\d{2}|\d{4})\b/i.test(name) || /^\*+$/.test(inner)) continue;
     const q = /^[‘'"“]([^’'"”]{1,60})[’'"”]\s*,?\s*(.*)$/.exec(inner);
     const short = q ? q[1].trim() : /^[\p{Lu}\d][\p{L}\d&.\- ]{0,30}$/u.test(inner) && !/\b(?:States|Kingdom|Republic|Germany|France|Italy|Spain|Netherlands|Japan|China|USA|UK)\b/.test(inner) ? inner : undefined;
     const country = q ? q[2].replace(/^the\s+/i, "").trim() || undefined : short ? undefined : inner.replace(/^the\s+/i, "");
     const lead = before.slice(0, Math.max(0, before.lastIndexOf(grouped ? grouped[1] : name.split(" ")[0])));
+    // the list's other items, each a party of its own before the one the bracket follows
+    for (const other of listed.slice(0, -1)) groups.push({ name: other, at: m.index! - before.length + Math.max(0, before.lastIndexOf(other)), end: prevEnd, controller: false });
     groups.push({
       name,
       short,
@@ -378,9 +399,10 @@ export function clearanceOf(n: Pick<EuNotification, "case" | "published">, clear
 
 /**
  * Parties the rule would give a company that are not its, by CIK, read by hand (batch 174) among every party a replay
- * of every notification read against every listed company matched.
+ * of every notification read against every listed company matched; one with `from` only on and after that day, a name
+ * another company took up after the record's own company had given it up (batch 175).
  */
-export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; party: RegExp; country?: RegExp; why: string }[]>> = {
+export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; party: RegExp; country?: RegExp; from?: string; why: string }[]>> = {
   33213: [{ ticker: "EQT", party: /^EQT\s+(?:AB|Partners|Fund|Infrastructure|Mid\s+Market|Holdings|Management|[IVX]+\b|\d)/i, why: "EQT AB, the Swedish investment firm, and its funds, not EQT Corporation, the American gas producer" }],
   1109345: [{ ticker: "NVMI", party: /^NOVA(?:\s+(?:Corporation|Chemicals?)\b.*)?$/i, why: "NOVA Corporation of Calgary, NOVA Chemicals' parent of the 1990s, and NOVA Chemicals, not Nova Ltd., the Israeli metrology maker" }],
   1563190: [{ ticker: "COMP", party: /^Compass\s+(?:plc|Group)\b/i, why: "Compass Group plc, the British caterer, not Compass, Inc., the American real-estate broker" }],
@@ -395,11 +417,21 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; party: R
   2073643: [{ ticker: "METRY", party: /^Metro\s+(?:AG|Group|Cash)\b/i, why: "Metro AG, the German wholesaler, not Metro Inc., the Canadian grocer" }],
   1038143: [{ ticker: "FNCTF", party: /^Orange\s+plc\b/i, why: "Orange plc, the British mobile operator France Télécom bought in 2000 and whose brand it took as its name in 2013, not Orange S.A.'s own past" }],
   2125056: [{ ticker: "WELA", party: /^Wella\s+(?:AG|Aktiengesellschaft)\b/i, why: "Wella AG of Darmstadt, which Procter & Gamble bought in 2003, not The Wella Company spun off from Coty" }],
+  // the record's own filings: its depositary's amendment filed 2017-09-01 (0001193805-17-001614) is the first to name the issuer
+  // Standard Life Aberdeen plc, the name the merger with Aberdeen Asset Management gave it; EDGAR's record never took the new name
+  1370418: [
+    {
+      ticker: "SLFPY",
+      party: /^Standard\s+Life(?:\s+(?:plc|PLC|p\.l\.c\.))?$/,
+      from: "2017-09-01",
+      why: "Standard Life plc of 2026, a different company that took up the name (M.12645: Standard Life Assurance Limited its subsidiary), not the Standard Life of this record, Standard Life Aberdeen since 2017, abrdn and then Aberdeen Group",
+    },
+  ],
 };
 
 /** Whether a party a notification names is the company on its day. */
 export function euPartyIsCompany(party: EuParty, day: string, cik: number, names: () => string[]): boolean {
-  return partyIsCompany(party.name, day, cik, names, (p) => !!NOT_THE_COMPANY[cik]?.some((r) => r.party.test(p) && (!r.country || r.country.test(party.country ?? ""))));
+  return partyIsCompany(party.name, day, cik, names, (p) => !!NOT_THE_COMPANY[cik]?.some((r) => r.party.test(p) && (!r.country || r.country.test(party.country ?? "")) && (!r.from || day >= r.from)));
 }
 
 /** The notification's parties that are the company on its day. */

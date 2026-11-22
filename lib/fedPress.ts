@@ -200,6 +200,9 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; title?: 
   1471265: [{ ticker: "NWBI", summary: /\bNorthwest Bancshares, Inc\., and its wholly owned subsidiary bank, Northwest National Bank, both of Vancouver, Washington\b/, why: "Northwest Bancshares of Vancouver, Washington, bought by U.S. Bancorp in 1998, not the Pennsylvania company" }],
 };
 
+/** A row's description at most: an order's sentence (400) and the H.2 line of the Board's deals it names, three of them whole (batch 175). */
+const LIMIT = 1_500;
+
 /** An archived order's sentence as the page shows it: whole up to 400 characters, else cut at a word. */
 export function shortened(sentence: string): string {
   return sentence.length > 400 ? `${sentence.slice(0, 397).replace(/\s\S*$/, "")}…` : sentence;
@@ -215,7 +218,7 @@ export function shortened(sentence: string): string {
 export function fedPressEvents(
   releases: readonly FedRelease[],
   namesIn: (year: number) => string[],
-  { cik, from = "", namesOn, h2 }: { cik: number | string; from?: string; namesOn?: (day: string) => string[]; h2?: (day: string) => string | undefined },
+  { cik, from = "", namesOn, h2 }: { cik: number | string; from?: string; namesOn?: (day: string) => string[]; h2?: (r: { day: string; title: string; text: string }) => string | undefined },
 ): TimelineEvent[] {
   const orgs = fedBanksFor(cik) ?? [];
   const byYear = new Map<number, string[]>();
@@ -233,8 +236,9 @@ export function fedPressEvents(
     if (!fedReleaseNames(r, held, orgs)) continue;
     const key = r.url.replace(/^https:\/\/www\.federalreserve\.gov/, "");
     const base = r.summary ? shortened(r.summary) : r.type === "Orders on Banking Applications" ? "The Board's order on a banking application." : `A Board release: ${r.type}.`;
-    // the Board's own actions of the day in its weekly H.2 release join its release's row (lib/fedH2.ts, batch 173)
-    const line = h2?.(r.day);
+    // the Board's own actions of the day the release names, from its weekly H.2 release, join its row (lib/fedH2.ts, batches
+    // 173, 175): named in the title and the words the row shows before the line, which `fed_h2` reads back from the stored row
+    const line = h2?.({ day: r.day, title: r.title, text: base });
     const description = line ? `${base} ${line}` : base;
     out.push({
       id: `fed-press-${key.replace(/[^\w]+/g, "-")}`,
@@ -242,7 +246,7 @@ export function fedPressEvents(
       ...(r.at ? { occurredAt: r.at } : {}),
       type: "regulation",
       title: r.title,
-      description: description.length <= 900 ? description : `${description.slice(0, 899).replace(/\s+\S*$/, "")}…`,
+      description: description.length <= LIMIT ? description : `${description.slice(0, LIMIT - 1).replace(/\s+\S*$/, "")}…`,
       source: "Federal Reserve Board press release",
       url: r.url,
       sourceKey: "fed_press",
@@ -277,7 +281,7 @@ export function cachedFedFeed(): Promise<FedRelease[]> {
 /** A company's Board releases from the feed, or why there are none. */
 export async function fetchFedPress(
   namesIn: (year: number) => string[],
-  opts: { cik: number | string; from?: string; namesOn?: (day: string) => string[]; h2?: (day: string) => string | undefined },
+  opts: { cik: number | string; from?: string; namesOn?: (day: string) => string[]; h2?: (r: { day: string; title: string; text: string }) => string | undefined },
 ): Promise<FetchResult> {
   try {
     // the feed begins in 2006; the orders of 1996–2005 are the archive's (batch 99)

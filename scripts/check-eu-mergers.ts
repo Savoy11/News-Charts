@@ -23,6 +23,7 @@ import {
   caseOf,
   clearanceOf,
   euEvents,
+  euPartyIsCompany,
   euMergers,
   firstParagraph,
   isCorrigendum,
@@ -59,9 +60,9 @@ const EXPECTED = {
   clearances: 8_465,
   texts: 2_479,
   withParties: 2_456,
-  // every listed company in the index, under the rule, its names as the replay below builds them
-  total: 1_853,
-  companies: 422,
+  // every listed company in the index, under the rule, its names as the replay below builds them; SLFPY's M.12645 off since batch 175
+  total: 1_852,
+  companies: 421,
   // from first prices, for the companies the fixtures read
   fromFirst: 733,
   fromFirstPages: 158,
@@ -91,6 +92,14 @@ async function main(): Promise<void> {
       caseOf("Prior notification of a concentration (Case No IV/M 004-Renault/Volvo) — Council Regulation (EEC) No 4064/89") === "M.4" &&
       caseOf("Prior notification of a concentration (Case COMP/M.3083 — GE/Instrumentarium) (Text with EEA relevance)") === "M.3083" &&
       caseOf("Prior notification of a concentration (Case M.12513 – AEQUITA / SABIC EUROPE) – Candidate case for simplified procedure") === "M.12513");
+  const m8440 = caseOn(37785, "M.8440");
+  check("  …a bracket that opens on the number, with no \"Case\" (\"(M.6968 — Lufthansa/CAE/JV)\"), and a notice of two cases (\"Cases COMP/ECSC.1340 and COMP/M.2071\"); FMC's M.8440 of 2017-06-07 then carries its number and its clearance (batch 175)",
+    caseOf("Prior notification of a concentration (M.6968 — Lufthansa/CAE/JV) — Candidate case for simplified procedure") === "M.6968" &&
+      caseOf("Prior notification of a concentration (Cases COMP/ECSC.1340 and COMP/M.2071 — Riva/Acciaio) (Text with EEA relevance)") === "M.2071" &&
+      JSON.stringify(titleParties("Prior notification of a concentration (M.8440 — DuPont/FMC (Health and Nutrition business)) (Text with EEA relevance. )")) === JSON.stringify(["DuPont", "FMC (Health and Nutrition business)"]) &&
+      m8440?.date === "2017-06-07" && /\(M\.8440\)$/.test(m8440.title) && /The Commission's decision not to oppose it was published on November 17, 2017\./.test(m8440.description ?? "") &&
+      notifications.filter((n) => /\bM\s*[./]\s*\d/.test(n.title) && !n.case).length === 0,
+    [m8440?.title, m8440?.description?.slice(-120)]);
   check("  …its parties by their short names, a party's own bracket kept, a joint venture's placeholder off; a corrigendum no notification",
     JSON.stringify(titleParties("Prior notification of a concentration (Case M.10876 – BSA (LACTALIS) / AMBROSI) (Text with EEA relevance)")) === JSON.stringify(["BSA (LACTALIS)", "AMBROSI"]) &&
       JSON.stringify(titleParties("Prior notification of a concentration (Case COMP/M.6474 — GE/Microsoft/JV) Candidate case for simplified procedure")) === JSON.stringify(["GE", "Microsoft"]) &&
@@ -116,6 +125,13 @@ async function main(): Promise<void> {
     { verily, fitbit });
   const walmart = noticeParties(para("M.1612"));
   const chase = noticeParties(para("M.642"));
+  const m2096 = notifications.find((n) => n.case === "M.2096");
+  check("  …a list after \"undertakings\" whose every item ends in a legal word is a party each (M.2096: Bayer AG, Deutsche Telekom AG and Infraserv GmbH & Co. Höchst KG), a name holding \"and\" is not split (batch 175)",
+    JSON.stringify(m2096?.parties.map((p) => p.name)) === JSON.stringify(["Bayer AG", "Deutsche Telekom AG", "Infraserv GmbH & Co. Höchst KG"]) &&
+      JSON.stringify(noticeParties("On 1 June 2017 the Commission received notification of a proposed concentration by which the undertakings Bayer AG, Deutsche Telekom AG and Infraserv GmbH & Co. Höchst KG (Infraserv) acquire joint control of the undertaking X GmbH (Germany).").map((p) => [p.name, p.role])) ===
+        JSON.stringify([["Bayer AG", "acquiring"], ["Deutsche Telekom AG", "acquiring"], ["Infraserv GmbH & Co. Höchst KG", "acquiring"], ["X GmbH", "acquired"]]) &&
+      !noticeParties("On 1 June 2017 the Commission received notification of a proposed concentration by which the undertakings The Dow Chemical Company and E.I. du Pont de Nemours and Company (‘DuPont’, USA) merge.").some((p) => p.name === "Company" || p.name === "E.I. du Pont de Nemours"),
+    m2096?.parties);
   check("a notice that writes no bracket after its parties: Walmart Stores Inc. acquires ASDA (1999), Chase Manhattan and Chemical Banking merge (1995); the 1998 PDFs' \"@\" read as \"&\" (Johnson & Johnson's DePuy)",
     walmart.some((p) => p.name === "Walmart Stores Inc." && p.role === "acquiring") && walmart.some((p) => /^ASDA Group/.test(p.name) && p.role === "acquired") &&
       chase.filter((p) => p.role === "merging").length === 2 && noticeParties(para("M.1286")).some((p) => p.name === "Johnson & Johnson" && p.role === "acquiring"),
@@ -151,6 +167,10 @@ async function main(): Promise<void> {
       clearanceOf({ case: "M.7290", published: "2014-07-02" }, clearances)?.published === "2014-08-09" && !clearanceOf({ case: "M.8124", published: "2016-10-21" }, clearances) &&
       !/not to oppose/.test(caseOn(789019, "M.8124")?.description ?? "not to oppose"),
     cleared?.description);
+  const slfpy = () => namesOf(1370418)(2026);
+  check("  …Standard Life plc of 2026 (M.12645), a different company that took up the name, stays off SLFPY, the record of the Standard Life that became Standard Life Aberdeen in 2017; the name before 2017-09-01 is still its own (batch 175)",
+    !caseOn(1370418, "M.12645") && !!notifications.find((n) => n.case === "M.12645")?.parties.some((p) => p.name === "Standard Life plc") &&
+      !euPartyIsCompany({ name: "Standard Life plc", role: "acquiring" }, "2026-11-09", 1370418, slfpy) && euPartyIsCompany({ name: "Standard Life plc", role: "acquiring" }, "2016-06-01", 1370418, slfpy));
   check("every namesake read by hand says why", Object.values(NOT_THE_COMPANY).flat().every((n) => n.why.length > 30));
 
   console.log("\nEvery listed company");

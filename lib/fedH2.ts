@@ -491,7 +491,7 @@ export function actionParties(a: Pick<H2Action, "category" | "head" | "what">): 
 
 /** What a deal asks for: an acquisition, a merger, a change in control, a new holding company, an activity, an election. */
 const DEAL =
-  /\b(?:acquire|acquiring|acquisition|acqurie|merge|merger|merging|purchase|purchasing|retain|retention|become (?:a |the )?(?:bank|financial|savings and loan|thrift) holding compan|change in (?:bank )?control|control of|engage|engaging|elections?|shares of|interest in|invest(?:ment)? in)\b/i;
+  /\b(?:acquire|acquiring|acquisition|acqurie|merge|merger|merging|purchase|purchasing|retain|retention|become (?:a |the )?(?:bank|financial|savings and loan|thrift) holding compan(?:y|ies)|change in (?:bank )?control|control of|engage|engaging|elections?|shares of|interest in|invest(?:ment)? in)\b/i;
 
 /** The routine actions filed under the same headings as the deals, which make no row. */
 const ROUTINE =
@@ -730,7 +730,61 @@ export function actionLine(a: H2Action): string {
  * the H.2 of the week lists it, and the deal makes no row of its own.
  */
 export function h2Line(actions: readonly H2Action[]): string {
-  return `The Board's weekly H.2 release of the week ending ${DAY(actions[0].week)} lists it: ${actions.map(actionLine).join(" ")}`;
+  return `${H2_LINE_MARK} ${DAY(actions[0].week)} lists it: ${actions.map(actionLine).join(" ")}`;
+}
+
+/** Where a release's row's own words end and its H.2 line begins. */
+export const H2_LINE_MARK = "The Board's weekly H.2 release of the week ending";
+
+const keyOf = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
+const LEGAL_END = /,?\s+(?:Inc|Incorporated|Corp|Corporation|Company|Co|Ltd|Limited|plc|LLC|L\.L\.C|N\.\s?A|S\.\s?A|S\.p\.A|AG|N\.\s?V|B\.\s?V|SE|GmbH|KGaA|Group|Holdings?|Companies)\.?$/i;
+
+/**
+ * The keys a release is searched for a party by: its whole name's letters and digits ("UBS AG"), and its name less "The"
+ * and the legal words at its end ("Goldman Sachs", "Banco Santander Central Hispano"), a short one never.
+ */
+function releaseKeys(name: string): string[] {
+  let core = clean(name).replace(/^The\s+/i, "");
+  for (let i = 0; i < 3 && LEGAL_END.test(core); i++) core = core.replace(LEGAL_END, "");
+  return [...new Set([keyOf(clean(name)), ...(keyOf(core).length >= 6 ? [keyOf(core)] : [])])].filter((k) => k.length >= 5);
+}
+
+/** Whether a release's own words name one of an action's parties, an applicant or what it acquires ("Goldman Sachs" for The Goldman Sachs Group, Inc.). */
+export function releaseNamesAction(text: string, a: H2Action): boolean {
+  const letters = keyOf(text);
+  const { applicants, acquired } = partiesOf(a);
+  return [...applicants, ...acquired].some((p) => releaseKeys(p.name).some((k) => letters.includes(k)));
+}
+
+const BOARD_DAYS = new WeakMap<readonly H2Action[], Map<string, H2Action[]>>();
+
+/** The Board's own deals of a day, once each: an action listed again in a later week, as an addition or a correction, is one. */
+export function boardDealsOn(actions: readonly H2Action[], day: string): H2Action[] {
+  let byDay = BOARD_DAYS.get(actions);
+  if (!byDay) {
+    byDay = new Map();
+    const seen = new Set<string>();
+    for (const a of actions) {
+      if (!a.board || !dealOf(a)) continue;
+      const same = `${a.day}|${a.outcome}|${clean(a.head).toLowerCase()}|${clean(a.what).toLowerCase()}`;
+      if (seen.has(same)) continue;
+      seen.add(same);
+      (byDay.get(a.day) ?? byDay.set(a.day, []).get(a.day)!).push(a);
+    }
+    BOARD_DAYS.set(actions, byDay);
+  }
+  return byDay.get(day) ?? [];
+}
+
+/**
+ * The H.2 line of one of the Board's own releases or orders (batch 175): the Board's deals of its day that its title or
+ * its row's own words name (`text`, what the row shows before the line), whichever company's page reads it, so the one
+ * row every such page shares says the same on each. A Board action of the day the release does not name is no line on
+ * it, and keeps its own row (`fed_h2`, which reads the same words back from the stored row).
+ */
+export function releaseH2Line(r: { day: string; title: string; text?: string }, actions: readonly H2Action[] = fedH2Actions()): string | undefined {
+  const named = boardDealsOn(actions, r.day).filter((a) => releaseNamesAction(`${r.title} ${r.text ?? ""}`, a));
+  return named.length ? h2Line([...named].sort((x, y) => x.week.localeCompare(y.week) || x.n - y.n)) : undefined;
 }
 
 const LIMIT = 900;
@@ -762,18 +816,18 @@ export function companyActions(
 
 /**
  * The company's actions as timeline events, newest first, from `from`, its first price: one row a day. A Board
- * action on a day in `joined`, one the page holds the Board's own release or order of, is a line on that row
- * (`h2Line`) and is left out here.
+ * action `joined` gives, one a Board release or order on the page lists (`releaseH2Line`), is a line on that row and is
+ * left out here.
  */
 export function fedH2Events(
   actions: readonly H2Action[],
   namesIn: (year: number) => string[],
-  { cik, from = "", namesOn, joined }: { cik: number | string; from?: string; namesOn?: (day: string) => string[]; joined?: ReadonlySet<string> },
+  { cik, from = "", namesOn, joined }: { cik: number | string; from?: string; namesOn?: (day: string) => string[]; joined?: (a: H2Action) => boolean },
 ): TimelineEvent[] {
   const tag = Number(cik);
   const byDay = new Map<string, { a: H2Action; roles: H2Role[] }[]>();
   for (const x of companyActions(actions, namesIn, { cik, from, namesOn })) {
-    if (x.a.board && joined?.has(x.a.day)) continue;
+    if (x.a.board && joined?.(x.a)) continue;
     (byDay.get(x.a.day) ?? byDay.set(x.a.day, []).get(x.a.day)!).push(x);
   }
   const rows: TimelineEvent[] = [];

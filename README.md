@@ -444,18 +444,27 @@ its XHTML since 2004, its PDF before, read with pdftotext (an older PDF can prin
 starts at the notice's own case number). `npm run sync:eu-mergers` commits the lists and what each text gives
 (`data/eu-mergers.json.gz`, 1.1 MB): the day the Commission received it and the parties its first paragraph names in
 full, each with its part in the deal (an acquirer, the undertaking acquired, the seller of a business, a party to a
-merger; a controller, "belonging to Alphabet Inc.", takes its unit's). It runs monthly; ingest asks nothing.
+merger; a controller, "belonging to Alphabet Inc.", takes its unit's; "the undertakings Bayer AG, Deutsche Telekom AG and
+Infraserv GmbH & Co. Höchst KG" a party each, since batch 175). It runs monthly; ingest asks nothing. A year the endpoint
+lists shorter than the file holds, or answers 404 for, fails the run with the file as it was (batch 175), and
+`npm run sync:eu-mergers -- --reparse` reads each held paragraph's parties again with no request. A case number is read
+with or without "Case" before it ("(M.6968 — Lufthansa/CAE/JV)", "Cases COMP/ECSC.1340 and COMP/M.2071"), so the eleven
+notices written so carry their number and their clearance line (batch 175: FMC's M.8440 of 2017 among them).
 
 A party is the company's by the merger notices' rule on its full name, under its names of the year, the release map's
 units, the taken names and its first price. Every company's matched names were read by hand, and 14 namesakes refused
 (`NOT_THE_COMPANY`): EQT AB on EQT, NOVA Corporation on Nova, Fortis of Belgium on Fortis Inc., Compass Group on
-Compass, Inc., Metro AG on Metro Inc., Orange plc on Orange S.A., Wella AG on the Wella Company, and others. Merck KGaA's
-deals stay off Merck & Co. by its full name, with no list. A deal of two listed companies says "Also on" (db/059).
+Compass, Inc., Metro AG on Metro Inc., Orange plc on Orange S.A., Wella AG on the Wella Company, and others; and since batch
+175 one with a day, "Standard Life plc" on SLFPY from 2017-09-01: EDGAR's record never took the name Standard Life Aberdeen,
+which its depositary's amendment of that day first gives, and the Standard Life plc of M.12645 (2026) is a different company
+that took up the name. Merck KGaA's deals stay off Merck & Co. by its full name, with no list. A deal of two listed
+companies says "Also on" (db/059).
 
-Against every company in the index under its present names: 1,853 company days on 422 companies; from the first prices
-the fixtures carry, 733 rows on 158 pages, 450 before 2017 (Goldman Sachs 100, Deutsche Bank 31, GE 23, Brookfield 18,
-BP 15, IBM 15, Boeing 13, Shell 13, TPG 13, Berkshire Hathaway 12). With EDGAR's former names for the bank-like companies:
-1,910 company days on 428, 779 rows on 160 pages, 663 of them with a clearance line. "© European Union,
+Against every company in the index under its present names: 1,852 company days on 421 companies (1,853 on 422 before
+batch 175 took SLFPY's 2026 row off); from the first prices the fixtures carry, 733 rows on 158 pages, 450 before 2017
+(Goldman Sachs 100, Deutsche Bank 31, GE 23, Brookfield 18, BP 15, IBM 15, Boeing 13, Shell 13, TPG 13, Berkshire
+Hathaway 12). With EDGAR's former names for the bank-like companies: 1,909 company days on 427, 779 rows on 160 pages, 667
+of them with a clearance line (663 before batch 175 read the case numbers written without "Case"). "© European Union,
 https://eur-lex.europa.eu"; the Commission's reuse policy (Decision 2011/833/EU) allows commercial reuse. No key.
 
 ### Federal Reserve H.2 actions on applications, 1996–2026 (`lib/fedH2.ts`, batch 173)
@@ -475,9 +484,12 @@ Received" has one PDF a week from 1996-11-02: 1,567 weeks to 2026-11-14, 493 MB,
 dash and "Approved: September 7, 2023" since). The weeks of 1996-11-09 to 1997-10-04 but one are scans with no text, and
 the Board serves the file of 2018-05-26 damaged; those 48 weeks are listed as unread. `npm run sync:fed-h2` commits the
 20,903 actions filed under the headings a deal is filed under (`data/fed-h2.json.gz`, 1.0 MB) and reads one new week a
-week; ingest asks nothing. 17,858 of them are deals (`isDeal`): an acquisition, a merger, a change in control, a new
+week; ingest asks nothing. 18,019 of them are deals (`isDeal`): an acquisition, a merger, a change in control, a new
 holding company, a nonbank activity, a financial holding company election; the public welfare investments, interlock
-exemptions, notice-period waivers, comment periods and other routine actions under the same headings make no row.
+exemptions, notice-period waivers, comment periods and other routine actions under the same headings make no row. (The
+161 new holding companies with no other deal word, Goldman Sachs's of 2008-09-21 and Bank of Montreal's of 2000 among
+them, made none until batch 175: the pattern's word boundary fell inside "company".) A week whose text gives no action
+under any heading is a layout `readH2` does not know, and fails the sync rather than being held (batch 175).
 
 A party is the company's by the merger notices' rule (`partyIsCompany`) on each applicant and each company acquired,
 under its names of the year, its EDGAR former names among them (Norwest Corporation is Wells Fargo's record to 1998).
@@ -486,14 +498,18 @@ of them with a party outside the home city, and 89 companies with namesakes are 
 (`HOMES`): Commerce Bancshares of Kansas City, not those of White Castle, Louisiana or Franklin, Tennessee; Citizens
 Financial of Providence, not the Citizens Banks of dozens of other towns; United Community Banks at Blairsville and Greenville,
 its head office's move. One row a company a day, linked to the week's PDF, its id the day's actions, so a deal of two
-listed companies says "Also on" (db/058). A Board action on a day the page holds the Board's own release is a line on that
-release's row (`h2Line`), never a row of its own.
+listed companies says "Also on" (db/058). A Board action the Board's own release or order of its day names, in its title or
+its order's sentence, is a line on that release's row, never a row of its own; since batch 175 the line lists every Board
+deal of the day the release names (`releaseH2Line`), whichever company's page reads it, so a release two pages share, the
+Board's approval of Goldman Sachs and Morgan Stanley as bank holding companies on 2008-09-21, says the same on both. A Board
+action of the day the release does not name keeps its own row.
 
-Against every company in the index under its present names: 2,124 company days on 381 companies; from the first prices
-the fixtures carry, 810 on 94 pages, 631 before 2017 (Wells Fargo 63, Fifth Third 36, Regions 34, Bank of America 29,
-M&T 26, Zions 24, BMO 22, Popular 20, Old National 19, First Busey 16). With EDGAR's former names, which ingest reads, for
-the 857 bank-like companies: 2,467 company days on 400 companies, 964 rows on 101 pages from those first prices, about
-three quarters of their actions the Reserve Banks' or the staff's. Public domain by the Board's website notice ("Please
+Against every company in the index under its present names: 2,145 company days on 383 companies; from the first prices
+the fixtures carry, 815 on 94 pages, 635 before 2017 (Wells Fargo 63, Fifth Third 36, Regions 34, Bank of America 29,
+M&T 26, Zions 24, BMO 23, Popular 20, Old National 19, First Busey 16). With EDGAR's former names, which ingest reads, for
+the 857 bank-like companies: 2,489 company days on 402 companies, 969 rows on 101 pages from those first prices, about
+three quarters of their actions the Reserve Banks' or the staff's (2,124 on 381, 810, and 2,467 on 400 with 964 rows,
+before batch 175's new holding companies). Public domain by the Board's website notice ("Please
 cite to the Board as the source of the information"); no key.
 
 ### FDA 510(k) clearances and De Novo grants, 1976–2026 (`lib/fdaClearances.ts`, batch 172)

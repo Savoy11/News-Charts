@@ -988,6 +988,63 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 175: the 2026-11-22 audit of batches 170–174, its findings fixed (2026-11-22)
+
+The owner's word: "Merge when green and continue". The `code-auditor` read batches 170–174 (`00c6c68..304d782`) and
+reported seven findings, two `P2` and five `P3` (docs/audits/2026-11-22-code-audit-b170-174.md); each was read again
+here before it was fixed, and one set-aside item (a compressed answer's length) was fixed with them.
+
+- [x] **Finding 1, new holding companies (`P2`):** the deal pattern's branch "become … holding compan" ended in the
+      pattern's word boundary, which never holds inside "company", so an action asking only to become a holding company
+      was no deal. It ends `compan(?:y|ies)` now: 161 actions more are deals (18,019 of the 20,903), Goldman Sachs's
+      and its bank's of 2008-09-21 (the Board's), Bank of Montreal's of 2000-04-10, Patriot National's, First Bancshares'
+      and UBS's among them. check:fed-h2 asserts the branch alone, with no other deal word.
+- [x] **Finding 2, SLFPY (`P2`):** EDGAR's record 1370418 still reads STANDARD LIFE PLC, but its company has been
+      Standard Life Aberdeen since 2017, then abrdn and Aberdeen Group; the depositary's amendment filed 2017-09-01
+      (0001193805-17-001614), the record's first filing under the new name, gives the day (its filings of 2017-09-07 and
+      2017-09-29 give none earlier). The Standard Life plc of M.12645 (2026), whose subsidiary is Standard Life
+      Assurance Limited, is a different company that took up the name. `NOT_THE_COMPANY` takes a `from` day, and
+      "Standard Life plc" is refused on 1370418 from 2017-09-01; the name before that day is still the record's own.
+      No other committed file names a Standard Life plc after 2017 (the merger grants, ITC, H.2, TAA and clearance files
+      were searched).
+- [x] **Finding 3, a release two pages share (`P3`):** the H.2 line was built from the reading company's own Board
+      actions, so the release Goldman Sachs and Morgan Stanley share (bcreg20080921a) flipped at each ingest and left one
+      page with neither line nor row. The line is now every Board deal of the release's day that its title or the words
+      its row shows before the line name (`releaseH2Line`, `releaseNamesAction`: a party's whole name, or its name less
+      "The" and its legal words, "Goldman Sachs", "UBS AG", "Banco Santander Central Hispano"), the same on every page;
+      `fed_h2` reads the same words back from the stored row (`boardReleaseTexts`, `listedBy`) and leaves out only the
+      actions the release names, so an action of the day the release does not name keeps its own row. A row's
+      description holds up to 1,500 characters, so no line is cut. Replayed over the 61 companies with Board actions
+      from first prices: all 118 joins of batch 173 hold, 120 releases carry a line, and none of the 115 releases reads
+      differently on two pages.
+- [x] **Finding 4, the EU sync's lists (`P3`):** the endpoint answering 404 for a year's list now fails the run (CELLAR's 404
+      for a missing format is still no text), and so does a year listed shorter than the file holds, the file left as
+      it was. `npm run sync:eu-mergers -- --reparse` reads each held paragraph's parties again with no request.
+- [x] **Finding 5, the H.2 sync's unknown layout (`P3`):** a week whose text gives no action under any heading is never
+      held: the sync fails on it. Every week the file holds gives one, or is listed unread.
+- [x] **Finding 6, EU case numbers and lists (`P3`):** `caseOf` and `titleParties` read a number in a bracket that opens on
+      it with no "Case" ("(M.6968 — Lufthansa/CAE/JV)") and after "Cases" (M.2071): the eleven notices written so carry
+      their number, and their clearance lines (667 rows with one under former names, 663 before), FMC's and DuPont's
+      M.8440 of 2017-06-07 among them. A list after "undertakings" whose every item ends in a legal word is a party each
+      (`legalList`: M.2096's Bayer AG, Deutsche Telekom AG and Infraserv GmbH & Co. Höchst KG); a name holding "and"
+      stays whole. The file's held paragraphs were read again offline (`--reparse`): 7 of 2,479 changed, each a list split
+      (Arcos and Quester, the Carlyle funds, E.ON and Allianz Capital Partners, AOR's two, Bilfinger's two, Pokrovsky
+      Hills' three); no row changes.
+- [x] **Finding 7, docs (`P3`):** CLAUDE.md says LifeScan's day is the first year after its purchase before EDGAR, not a
+      filing's.
+- [x] **Set aside 6, a compressed answer's length:** both syncs compare a body with its Content-Length only when the
+      answer is not compressed, as fetch decodes a gzip body and keeps the compressed length.
+- [x] **Measured:** the H.2 actions, 2,145 company days on 383 companies under present names, 815 on 94 pages from first
+      prices, 635 before 2017 (BMO 23); with EDGAR's former names, 2,489 on 402 and 969 rows on 101 pages, 772 before
+      2017. The EU notifications, 1,852 on 421 under present names, 733 on 158 from first prices; with former names
+      1,909 on 427, 779 rows on 160 pages, 474 before 2017.
+- [x] **Checks:** check:fed-h2 35 (three new: a new holding company alone and GS's row, the shared release's one line,
+      an unnamed action's own row), check:eu-mergers 26 (three new: case numbers without "Case", `legalList`, SLFPY's day).
+      On main the new checks fail.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** data.sec.gov once (record 1370418's filing list) and www.sec.gov three times (its 2017 amendments), with
+  the project's contact; nothing else.
+
 ## NC ledger — batch 174: the European Commission's merger notifications, 1990 on (2026-11-22)
 
 The owner's word: "Merge when green and continue", and the 2026-11-22b proposal 3, approved that day with call (a): a

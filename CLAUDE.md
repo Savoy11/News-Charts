@@ -164,7 +164,7 @@ site's town, product and the Department's worker estimate given, never added up.
 The NLRB's Board decisions since 1935 (`lib/nlrbDecisions.ts`, batch 161) are its decision listing, read whole
 once a year and its newest page daily (`lib/ingest/nlrbWalk.ts`, db/054), the whole read begun only in the NLRB's
 night window for bulk reads, 11 pm to 6 am Eastern, by its policy (`inNightWindow`), across runs and nights
-(db/055, batch 162: the site's firewall refused the first night read at page 340 with a "Request Rejected" page
+(db/055, batch 162, the whole listing read on the nights of 2026-11-21 and 2026-11-22, batch 168: the site's firewall refused the first night read at page 340 with a "Request Rejected" page
 served as HTTP 200, `REJECTED`, which ends the night's reading); a page is full by its rows, dated or not; until the
 last page is read an answer is never complete. It is asked once a process (`walkNlrbOnce`), any failure rests the read
 that failed 12 hours, the daily read takes at most 5 pages, and a page whose rows give no decision is an error (batch 164). The case number gives the kind: a case against the employer (CA, C) or an election or unit question

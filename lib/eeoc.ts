@@ -219,7 +219,9 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; title: R
  */
 export const EEOC_UNITS: Readonly<Record<number, readonly { ticker: string; names: readonly string[]; from?: string; to?: string; why: string }[]>> = {
   104169: [{ ticker: "WMT", names: ["Wal-Mart Stores East", "Walmart Stores East", "Sam's Club", "Sam’s Club"], why: "Walmart's own operating partnership in the East and its warehouse clubs" }],
-  56873: [{ ticker: "KR", names: ["Fred Meyer", "Fred Meyer Stores"], why: "Kroger's since the merger of 1999; every release is of 2008 on" }],
+  // the day the CPSC's map reads from Kroger's 8-K (lib/cpscRecalls.ts), given here since batch 168: the NLRB's rule
+  // reads these units too, and its listing holds Fred Meyer, Inc.'s cases of 1963 and 1986, long before the merger
+  56873: [{ ticker: "KR", names: ["Fred Meyer", "Fred Meyer Stores"], from: "1999-05-28", why: "Kroger's since the merger of 1999-05-28 (Kroger's 8-K, item 2); every release is of 2008 on" }],
   1090727: [{ ticker: "UPS", names: ["UPS Freight"], why: "UPS's freight unit (Overnite, bought 2005), sold to TFI in 2021; every release is of 2009–2020" }],
   1048911: [{ ticker: "FDX", names: ["Federal Express"], why: "FedEx's own operating company" }],
   1058090: [{ ticker: "CMG", names: ["Chipotle"], why: "the company's own short name" }],

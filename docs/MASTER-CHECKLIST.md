@@ -988,6 +988,42 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 168: the NLRB's whole listing, read on its second night, and Fred Meyer's day (2026-11-22)
+
+The owner's word: "Merge when green and continue". The second night read, scheduled for 2026-11-22 at 04:03 UTC, began
+in the NLRB's night window at 04:00 and read pages 339 to 666 by 04:39, one page every 7 s, every page answered under
+"News Charts Research" with no address. With pages 0 to 339 of the night before (batch 162), the whole listing is read.
+
+- [x] **The whole listing:** 667 pages, 66,646 rows, 66,635 dated decisions from 1935-12-07 to 2026-11-19 (four the
+      listing dates before the Act, "Earl McMillian Co." of "02/14/1919" among them, make no row; page 336's 11 undated
+      rows none): 35,129 cases against employers, 24,474 representation cases, 7,032 that make no row. The committed
+      `scripts/fixtures/nlrb-decisions-2026-11-22.json.gz` (1.5 MB: the decisions, each page's rows, 510 companies'
+      EDGAR names, 23 of them read here from data.sec.gov) replaces batch 162's `nlrb-decisions-2026-11-21.json.gz`,
+      which held pages 0 to 339 only.
+- [x] **Measured** against every company in the index, with the EDGAR former names ingest reads: 2,169 company days on
+      319 companies before first prices; from the first prices the fixtures carry, 596 on 123 pages, 524 before 2017
+      (Kroger 41, GE 28, RTX 27, Walmart 22, Boeing 21, Goodyear 20, Exxon 19, AEP 14, Caterpillar 14). Pages 0 to 339
+      alone gave 1,159 on 283 and 568 on 123. The decisions of 1935 to 1969 add about 1,000 company days, most before
+      the first prices the fixtures carry (GM's 219, General Motors Corporation's before the new company of 2010, among
+      them); 30 reach a page.
+- [x] **Read by hand:** the 30 of 1935–1969 that reach a page (Kroger's, Goodyear's, International Paper's, Boeing's,
+      Otis's and Carrier's on RTX, Chevron Chemical's, Procter & Gamble Manufacturing's), every one the company's own
+      but Fred Meyer, Inc.'s of 1963; and the ten captions of 1962–1969 that begin with a company's name and the rule
+      refuses: eight Coca-Cola bottlers, no unit of the brand's; "Walt Disney Productions" (1966), Disney's name older
+      than its EDGAR record, which the owner's default for names older than EDGAR's leaves out; "Chevron Oil Co."
+      (1967), which no filing read here dates as Chevron's. No unit or namesake is added.
+- [x] **Fred Meyer's day:** the NLRB's rule reads the EEOC's units (lib/eeoc.ts `EEOC_UNITS`), and Kroger's Fred
+      Meyer had none, its releases being of 2008 on, so Fred Meyer, Inc.'s cases of 1963 and of 1986 (the second from
+      batch 162's pages, since batch 161) landed on KR. The unit is now Kroger's from 1999-05-28, the day the CPSC's
+      map reads from Kroger's 8-K: two company days off KR.
+- [x] **Checks:** `check:nlrb` 69 (one new: Fred Meyer's cases before the merger off KR, Fred Meyer Alaska's of 2001
+      on it; the night section reads the whole listing, its pages full but the last, its counts re-pinned). On main the
+      new check and the two re-pinned totals fail (2,171 and 598 there): Fred Meyer has no day.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** www.nlrb.gov 328 (pages 339 to 666, once, in its night window, 5 s apart and more), under "News Charts
+  Research" with no address (`b162/requests2.log`); data.sec.gov 23 (the newly reached companies' former names), under
+  the project's User-Agent with the contact (`b168/requests-sec.log`).
+
 ## NC ledger — batch 167: the ITC's Section 337 investigations, 1995 on (2026-11-22)
 
 The owner's call of 2026-11-22 on the batch 165 proposals ("Approve all three (Recommended)"), its #2, after "Merge
@@ -1343,8 +1379,9 @@ the whole listing's counts, in the NLRB's night window.
       old du Pont's cases by name onto them. Batch 146 had already decided it on the owner's instruction of 2026-11-12
       ("DuPont on DD: keep", "Alcoa on AA: keep"), which this item missed; the owner then chose, on 2026-11-21, to add the
       old records' filings too (batch 163).
-- [ ] **Pages 340 to 666,** the decisions of 1935 to 1969: the second night's read (scheduled 2026-11-22 at 04:03 UTC,
-      from page 339, 5 s apart), then the whole listing's counts; the next batch.
+- [x] **Pages 340 to 666,** the decisions of 1935 to 1969: the second night's read (scheduled 2026-11-22 at 04:03 UTC,
+      from page 339, 5 s apart), then the whole listing's counts; the next batch. ✅ **Done in batch 168:** read
+      2026-11-22, 04:00 to 04:39 UTC, every page answered; the whole listing's counts in its section.
 - [x] **Checks:** `check:nlrb` 62, 17 new: 10 on the night read (its pages and kinds, Walmart's former name, T-Mobile
       USA's day, Aramark Uniform's and Manitowoc Ice's, FedEx Freight's, McDonald's USA and Nexstar, the six namesakes,
       the two totals) and 7 on the walk across runs and nights (a run's pages spent and resumed, the firewall's refusal
@@ -1401,8 +1438,9 @@ The owner's word: "Continue", after batch 160; the second of the 2026-11-18 prop
       company's own case or its own unit's, but for two businesses bought later whose decisions fall before the
       buyer's first price and stay off the page: Kennecott Copper's election of 1942 on Rio Tinto, which bought it in
       1989, and General Motors Corp.'s seven days on GM, whose first price is 2010-11-18.
-- [ ] **The whole listing's counts:** they wait for its first read in the night window (11 pm Eastern is 04:00 UTC);
-      the next batch's first part.
+- [x] **The whole listing's counts:** they wait for its first read in the night window (11 pm Eastern is 04:00 UTC);
+      the next batch's first part. ✅ **Done in batch 168** (the first night's read was refused at page 340, batch 162;
+      the second read the rest): 2,169 company days on 319 companies, 596 on 123 pages from first prices.
 - [x] **Checks:** `check:nlrb` 45 (the listing and its pager, the kinds, the night window, the rule, every listed
       company over the sample, the walk by night and by day, ingest's answer, the wiring), against the committed
       fixture `scripts/fixtures/nlrb-listing.json.gz`; `check:also-on` and `check:contact` take the new source and
@@ -12261,6 +12299,9 @@ already held, but new investment goes to securities coverage first.
       - **Batch 162** (see its section): the night read was refused at page 340, so the walk now reads across runs and
         nights. Pages 0–339 (1969–2026): 1,159 company days on 283 companies before first prices, 568 on 123 pages from
         the fixtures' first prices. Pages 340–666 wait for the next night.
+      - **Batch 168** (see its section): pages 339–666 read the next night, every page answered. The whole listing,
+        667 pages, 66,635 decisions: 2,169 company days on 319 companies before first prices, 596 on 123 pages from
+        the fixtures' first prices, 524 before 2017.
       - *Derived from [`docs/proposals/2026-11-18-proposals.md`](proposals/2026-11-18-proposals.md) #2, approved
         2026-11-18.*
 - [x] `P1` **The antitrust agencies' early terminations of the merger waiting period, 1994–2026:** approved by the

@@ -1242,8 +1242,21 @@ against every company in the index, with the EDGAR former names ingest reads (Wa
 to 2018), 1,159 company days on 283 companies before first prices; from the first prices the fixtures carry,
 568 on 123 pages, 496 before 2017 (Kroger 33, GE 28, RTX 25, Walmart 22, Exxon 19, Boeing 17, AEP 14, Caterpillar
 14). Read by hand: those 568, and the rows since 1985 of the companies whose first price is not read here; six
-namesakes found and refused. Pages 340 to 666, the decisions of 1935 to 1969, are read the next night. The scout's
-24-page sample of 2026-11-18 gives 96 company days on 60 companies, 41 on 25 from first prices.
+namesakes found and refused. The scout's 24-page sample of 2026-11-18 gives 96 company days on 60 companies, 41 on
+25 from first prices.
+
+**Measured on the whole listing** (batch 168), read on two nights: pages 339 to 666 on 2026-11-22, 04:00 to 04:39 UTC,
+one page every 7 s, every page answered, with pages 0 to 339 of the night before. 667 pages, 66,646 rows, 66,635 dated
+decisions from 1935-12-07 (four the listing dates before the Act make no row) to 2026-11-19: 35,129 cases against
+employers, 24,474 representation cases, 7,032 that make no row. Against every company in the index: 2,169 company
+days on 319 companies before first prices; from the first prices the fixtures carry, 596 on 123 pages, 524 before
+2017 (Kroger 41, GE 28, RTX 27, Walmart 22, Boeing 21, Goodyear 20, Exxon 19). The decisions of 1935 to 1969 add
+about 1,000 company days, most before the first prices the fixtures carry (GM's 219, General Motors Corporation's
+before the new company of 2010, among them); the 30 that reach a page were read by hand, and so were the captions of
+1962–1969 that begin with a company's name and the rule refuses: the Coca-Cola bottlers, no unit of the brand's;
+"Walt Disney Productions", a name older than Disney's EDGAR record, which the owner's default leaves out; Chevron Oil
+Co., which no filing read here dates as Chevron's. Two of Kroger's were Fred Meyer, Inc.'s of 1963 and 1986, before the
+merger of 1999-05-28: the EEOC's units, which this rule reads, now give Fred Meyer its day.
 
 The NLRB's site policies state no licence or copyright terms; the decisions are a
 federal agency's own work (17 U.S.C. § 105), used under the owner's ruling of 2026-11-12 and credited to the

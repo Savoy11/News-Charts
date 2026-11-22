@@ -50,7 +50,7 @@ const nameOf = (cik: number) => rows.find(([c]) => c === cik)?.[2];
 
 console.log("The table");
 const entries = Object.entries(TAKEN_NAMES).map(([cik, t]) => ({ cik: Number(cik), ...t }));
-check("34 records, each the ticker the committed index gives its CIK (32 before batch 146's JCI, 33 before batch 149's Community West)", entries.length === 34 && entries.every((e) => rows.some(([c, t]) => c === e.cik && t === e.ticker)),
+check("35 records, each the ticker the committed index gives its CIK (32 before batch 146's JCI, 33 before batch 149's Community West, 34 before batch 165's Broadcom)", entries.length === 35 && entries.every((e) => rows.some(([c, t]) => c === e.cik && t === e.ticker)),
   entries.filter((e) => !rows.some(([c, t]) => c === e.cik && t === e.ticker)).map((e) => `${e.ticker} ${e.cik}`));
 check("  …each with a day, the accession of the filing that gives it, a kind and its reasons",
   entries.every((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.from) && /^\d{10}-\d{2}-\d{6}$/.test(e.filing) && ["bought", "merged", "namesake"].includes(e.kind) && e.why.length > 80 && e.why.includes(e.ticker)));
@@ -65,6 +65,12 @@ check("Tyco's record took Johnson Controls' name at their merger of 2016-09-02, 
   TAKEN_NAMES[833444]?.from === "2016-09-02" && TAKEN_NAMES[833444]?.filing === "0001104659-16-143068" && TAKEN_NAMES[833444]?.kind === "merged" &&
     takenBefore(833444, "2016-07-11", "Johnson Controls, Inc.") && !takenBefore(833444, "2016-01-25", "Johnson Controls and Tyco to combine") &&
     !takenBefore(833444, "2016-09-02", "Johnson Controls International plc") && !takenBefore(833444, "2019-12-19", "Johnson Controls, Inc."));
+// batch 165: found by the opportunity scout of 2026-11-22, read by hand from the filing and the prospectus
+check("Avago bought Broadcom Corporation on 2016-02-01 and its new parent took Broadcom's name, and AVGO's prices from 2009 are Avago's: old Broadcom's trade certification of 2013-09-09 and its SEC case of 2008 are not AVGO's, a row naming Avago is, and from the day the name is AVGO's",
+  TAKEN_NAMES[1730168]?.ticker === "AVGO" && TAKEN_NAMES[1730168]?.from === "2016-02-01" && TAKEN_NAMES[1730168]?.filing === "0001193125-16-446865" && TAKEN_NAMES[1730168]?.kind === "bought" &&
+    takenBefore(1730168, "2013-09-09", "Broadcom Corporation, Irvine, California") && takenBefore(1730168, "2008-12-22", "SEC v. Broadcom Corporation") &&
+    !takenBefore(1730168, "2015-05-28", "Avago Technologies to acquire Broadcom for $37 billion") && !takenBefore(1730168, "2012-03-01", "Avago Technologies Limited") &&
+    !takenBefore(1730168, "2016-02-01", "Broadcom Limited completes its acquisition") && !takenBefore(1730168, "2017-11-06", "Broadcom Corporation"));
 // batch 149: the scan's "own" reading of CWBC read again with the merger 8-K's text and the chart's splits
 check("Central Valley's record took Community West Bancshares' name at their merger of 2024-04-01, and CWBC's prices before are Central Valley's: old Community West's 2012 agreement with its regulator is not CWBC's, a row naming Central Valley is, and from the day the name is CWBC's",
   TAKEN_NAMES[1127371]?.ticker === "CWBC" && TAKEN_NAMES[1127371]?.from === "2024-04-01" && TAKEN_NAMES[1127371]?.filing === "0001193125-24-085373" && TAKEN_NAMES[1127371]?.kind === "merged" &&
@@ -271,8 +277,8 @@ walk().then(async ({ asked, stored, windows }) => {
   const c = scan.companies;
   const readings = new Map<string, number>();
   for (const x of c) readings.set(x.reading, (readings.get(x.reading) ?? 0) + 1);
-  check("174 companies whose present name an older record carried, each read: 34 took it from another company (JCI's read by hand and added, batch 146; CWBC's read again, batch 149), 25 had it by their first price, 85 are the same company's other record, 30 for the other reasons",
-    c.length === 174 && readings.get("taken") === 34 && readings.get("before") === 25 && readings.get("own") === 85 && new Set(c.map((x) => x.cik)).size === 174 &&
+  check("175 companies whose present name an older record carried, each read: 35 took it from another company (JCI's read by hand and added, batch 146; CWBC's read again, batch 149; AVGO's read by hand and added, batch 165), 25 had it by their first price, 85 are the same company's other record, 30 for the other reasons",
+    c.length === 175 && readings.get("taken") === 35 && readings.get("before") === 25 && readings.get("own") === 85 && new Set(c.map((x) => x.cik)).size === 175 &&
       [...readings.keys()].every((k) => ["taken", "before", "own", "brand", "new", "business", "history", "short", "shared", "namesake", "nostart", "noprice"].includes(k)),
     Object.fromEntries(readings));
   // the audit of batches 143–149, finding 6: records mapped as predecessors after the scan was read keep their readings

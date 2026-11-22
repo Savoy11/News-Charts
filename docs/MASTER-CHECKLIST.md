@@ -988,6 +988,71 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 165: an opportunity-scout run, three proposals for the owner, and old Broadcom's name (2026-11-22)
+
+The owner's word: "Merge when green and continue". Both proposals of 2026-11-18 are built (batches 159–162) and batch 164
+fixed the audit's findings, so the `opportunity-scout` read the repository again at `c11bc9b` and wrote
+`docs/proposals/2026-11-22-proposals.md`: three proposals, all **PENDING**, ranked with securities depth first. No new
+source is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a rejection). The scout's
+      second pass then files the approved ones into this checklist.
+      1. `P1` **The antitrust agencies' early terminations of the merger waiting period, 1995–2026.** The FTC and the
+         Justice Department may end a Hart-Scott-Rodino wait early, and must then publish the grant in the Federal
+         Register, naming the acquiring person, the acquired person and the entities bought, on the day granted. The
+         notices' titles name no company, so the company feed never kept one. 440 grant notices on 1,571 pages, each
+         read once from govinfo. **Measured** on 10 notices (777 transactions): 197 name a listed company, 193 company
+         days on 159 companies; a hand read of 30 found 29 the company's own deal or stake, one unsettled. **Estimated:**
+         about 11,000 company days from first prices, about 9,500 before 2017, off by a third either way. **The owner's
+         call inside it:** (a) a row for every grant naming the company, as acquirer, acquired person or entity
+         (recommended; a person's purchase of its shares, Timothy D. Cook's Apple shares of 2014, labelled), or (b) only
+         where it is the acquired person or entity, about 40%.
+      2. `P1` **The ITC's Section 337 investigations, 1995–2026.** Import-ban cases on patents and trademarks: 1,136
+         institution notices, each naming its complainant and respondents a line each. **Measured** on all 1,136
+         complainants: 228 company days on 128 companies, 131 before 2017; a hand read of all 233 matches found 3 not
+         the company. **Sampled:** the respondents of 38 notices gave 14 (Apple 3, BlackBerry 2, Ford, ResMed,
+         Regeneron, Sonos…). **Estimated:** about 500 company days, a little over half before 2017, off by half. Before
+         1995 is out of reach (the Commission's own database refused this container). **The owner's call inside it:**
+         (a) a second row on the day of the final determination, with any exclusion order (recommended), or (b) the
+         institution row alone.
+      3. `P2` **The FDA's own press releases and talk papers, 1962–2014.** openFDA's historical documents, one CC0 zip
+         of 13.9 MB of OCR text, read once and committed; the day read from each document's head (87% since 1962).
+         **Measured** on the whole file, with a prose name rule and a document naming at most two listed companies:
+         368 company days on 40 pages, 112 before 1993 (Lilly, Pfizer, Abbott, Merck, J&J, P&G…); a hand read found
+         22 of 30 about the company itself, so the build reads every kept row by hand once. **The owner's call inside
+         it:** a release on the day of an approval the page holds adds its words to that row (recommended), or takes a
+         row of its own. It touches a default of the owner's: "Bristol-Myers", BMY's name before 1989, is older than
+         EDGAR's and left out.
+- **Cut, with reasons in the file:** the FDA's complete response letters (466, 100 on 59 companies, only 12 before
+  2017: a cheap follow-on); Commerce's anti-dumping and countervailing-duty petitions (100 matches on 33 companies,
+  coalitions that name no company, "National Steel Corporation" on SID); the ITC's 337Info (502 and 403); the FDA's
+  advisory committee meetings (the sponsor in the body, the vote not in the notice); the Supreme Court's decisions (a
+  Cloudflare 429, a robots.txt that disallows every agent); the FDIC's orders (certificate verification failed, and
+  was not turned off); NTSB accidents (the big airlines' first prices begin 2005–2007); BOEM's lease data (no bids
+  file); the Federal Register's own text pages (302 to its unblock page: #1 and #2 read govinfo's copy).
+- [x] **Old Broadcom's name, noted by the scout in passing and read here:** Avago Technologies bought Broadcom
+      Corporation (CIK 1054374) on 2016-02-01, and its new parent, AVGO's predecessor record, took Broadcom's name that
+      day ("changed its name from Pavonia Limited to Broadcom Limited", its 8-K12B 0001193125-16-446865, items 2.01 and
+      5.03). AVGO's prices from 2009-08-06 are Avago's (its prospectus 0001193125-09-166258; Yahoo answered 429 to the
+      one request for its first trading day). The scan of batch 117 matched "BROADCOM INC." to no older record, as EDGAR
+      writes old Broadcom's "BROADCOM CORP", so `TAKEN_NAMES` lacked it. It now holds it, read by hand as JCI's was
+      (batch 146), and the scan holds AVGO as "taken" (175 companies, 35 taken). Before the day, a row naming Broadcom
+      and not Avago is old Broadcom's: on the saved sources the page loses the trade certification TA-W-82,946 of
+      2013-09-09 (Broadcom Corporation, Irvine), and the SEC replay, which reads no first prices, the litigation
+      release LR-20532 of 2008-04-22 (old Broadcom's options-backdating case), which AVGO's first price kept off the
+      page already; "Avago Technologies to acquire Broadcom" of 2015 stays, and from the day "Broadcom" is AVGO's. The news and the Federal Register before 2016 are read the same way, as every taken name is.
+- [x] **Checks:** `check:taken-names` (one new: AVGO's day, filing and kind, old Broadcom's case and certification off,
+      Avago's rows kept, the name AVGO's from the day; the table's 35 records and the scan's 175 re-pinned);
+      `check:sec-cases` re-pinned, 1,194 company days on 372 companies, 587 before 2017 (1,195 on 373 and 588 before);
+      `check:taa` re-pinned, before first prices 3,364 company days on 492 companies (3,365 on 493), the fixtures
+      reading no first price for AVGO; from first prices unchanged. On main `check:taken-names` fails three (the new
+      check and the two re-pinned counts): the table holds no AVGO.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** the scout's 98, none to www.nlrb.gov, www.sec.gov or data.sec.gov, under "News Charts Research" with
+  no address (its log, `/var/tmp/scout165/requests.log`); here, data.sec.gov 5 and www.sec.gov 2 (the four Broadcom
+  and Avago records' filing lists, one with an older page, and the two 8-Ks of 2016-02-02) under the project's User-Agent with the contact, at
+  least 1.3 s apart, and query1.finance.yahoo.com 1 under "News Charts Research", answered 429 (`b165/requests.log`).
+
 ## NC ledger — batch 164: the 2026-11-21 audit of batches 155–163, its findings fixed (2026-11-21)
 
 The owner's word: "Merge when green and continue". The `code-auditor` read batches 155–163 (`1bdecc3..768e7e0`) and

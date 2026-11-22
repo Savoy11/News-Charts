@@ -57,6 +57,7 @@ import { hsrFor } from "../lib/ingest/hsrFor";
 import { fdaClearancesFor } from "../lib/ingest/fdaClearancesFor";
 import { fedH2For } from "../lib/ingest/fedH2For";
 import { euMergersFor } from "../lib/ingest/euMergersFor";
+import { supremeCourtFor } from "../lib/ingest/supremeCourtFor";
 import { fdaHistoryFor } from "../lib/ingest/fdaHistoryFor";
 import { itcFor } from "../lib/ingest/itcFor";
 import { nlrbFor, walkNlrbOnce } from "../lib/ingest/nlrbWalk";
@@ -157,6 +158,8 @@ export const COMPANY_SOURCES = [
   "fed_h2",
   // …and the European Commission's merger notifications, 1990 on, where the notice names the company in full (batch 174)
   "eu_mergers",
+  // …and the Supreme Court's decisions, 1962 on, in the cases naming the company as a party (batch 176)
+  "supreme_court",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
   // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
@@ -1019,6 +1022,16 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("eu_mergers", `EU merger notifications naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
     euMergersFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
+
+  /**
+   * The Supreme Court's decisions, 1962 on (batch 176, the 2026-11-22c proposal 1): every case of the U.S. Reports and the
+   * Court's slip lists in the committed file whose name gives the company as a party, by the merger notices' rule with a
+   * legal word or a name of two words or more, from its first price; one row a day, the Court's disposition and the
+   * company's side on it. No request.
+   */
+  await run("supreme_court", `Supreme Court decisions naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
+    supremeCourtFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
   );
 
   /**

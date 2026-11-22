@@ -730,6 +730,27 @@ export const SOURCES: {
     reviewedOn: "2026-11-22",
     notes: "the European Commission's merger notifications under the EU Merger Regulation, 1990 on, from the Official Journal, kept where a party the notice's first paragraph names in full is a listed company by the merger notices' rule (lib/euMergers.ts); one row a company a day on the day the Commission received it, the first-phase clearance a line on it; the Publications Office's SPARQL list and CELLAR's texts read monthly and committed, no key (batch 174)",
   },
+  {
+    id: 51,
+    key: "supreme_court",
+    name: "Supreme Court decisions",
+    license: "public domain",
+    attribution: "Supreme Court of the United States",
+    // The decisions are the Court's own, a work of the United States Government, read from the Government Publishing
+    // Office's U.S. Reports on govinfo, whose policies page (www.govinfo.gov/about/policies, as recorded for sources 45
+    // and 46) states that "Copyright protection under this title is not available for any work of the United States
+    // Government … public documents can generally be reprinted without legal restriction" and asks that "customary credit
+    // should be given to the Government department or agency which prepared the material"; its robots.txt leaves
+    // /metadata/ and /content/ open. After the bound volumes, the Court's own slip-opinion lists, whose site
+    // (www.supremecourt.gov/policies/web_policies_and_notices.aspx, read 2026-11-22) states no licence for its own pages,
+    // speaking only of the copyrighted materials of the sites it links to; its robots.txt allows /opinions/ with a 1 s
+    // crawl delay. No key. Used: each case's name, citation, day, disposition, kind, how it came to the Court and its
+    // docket number, as the volume's record, the list or the case's PDF give them, and links to the case. Approved by the
+    // owner on 2026-11-22 (docs/proposals/2026-11-22c-proposals.md #1).
+    commercialOk: true,
+    reviewedOn: "2026-11-22",
+    notes: "the Supreme Court of the United States's decisions, 1962 on: the U.S. Reports volumes 368 on from govinfo and the Court's slip-opinion lists from the 2018 term, kept where a party the case's name gives is a listed company by the merger notices' rule with a legal word or a name of two words or more (lib/supremeCourt.ts); one row a company a day, its disposition and side; read monthly and committed, no key (batch 176)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

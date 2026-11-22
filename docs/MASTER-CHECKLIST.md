@@ -988,6 +988,70 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 176: the 2026-11-22c approvals filed, and the Supreme Court's decisions, 1962 on (2026-11-22)
+
+The owner's word, 2026-11-22: "#1 Supreme Court (Recommended), #2 EU antitrust and State aid, #3 EU court rulings" and
+"Use the defaults (Recommended)" to the third run of the scout that day (`docs/proposals/2026-11-22c-proposals.md`), each
+with its recommended call. The three are marked `APPROVED` and filed under Scope refocus; this batch builds #1, and
+#2 (the Commission's antitrust and State aid decisions) and #3 (the EU courts' judgments) are the next batches'. The
+approval of #2 and #3 settles NC-074 for regulation: international coverage is in scope.
+
+- [x] **A new source, 51, `supreme_court`** (`lib/supremeCourt.ts`, `lib/ingest/supremeCourtFor.ts`,
+      `scripts/sync-supreme-court.ts`): govinfo's records of the U.S. Reports volumes 368 to 586, 219 of them, every one
+      held (587 on answer 302, not held yet), 8,940 cases; the Court's slip-opinion lists of the 2018 to 2026 terms,
+      530 opinions; the first pages of 1,112 PDFs (893 on govinfo, 3 s apart, and 219 of the Court's, 2 s apart, nine of them
+      the 2018 and 2019 terms' preliminary prints), each read once, the cases the records give no day and every slip
+      opinion where a side can be a company (`wanted`). The committed `data/supreme-court.json.gz` (280 KB) holds every
+      case, 8,432 dated (the 1,038 left undated name no side that can be a company); ingest asks nothing, and `npm run sync:supreme-court` runs monthly, a PDF the file holds read
+      never asked again, a volume record that lists no case or a past term's list with no opinion an error.
+- [x] **The day and the disposition:** the Supreme Court Database's fields where the record gives them; else the PDF's
+      "Decided October 23, 1967." and the disposition on the lines after it (`caseHead`), or a per curiam's first
+      sentence ("The appeal is dismissed."), or the syllabus's line citing the decision below ("855 F. 3d 1356,
+      affirmed."), through the scans' letters for figures ("June IO, 1963"), stray spaces ("Judgme nt") and footnote
+      stars, and the "fi" pdftotext drops from the newer PDFs, each read from the case's own caption on (`captionAt`: 206
+      of govinfo's PDFs begin with the end of another case). Of govinfo's 893, 869 give a day and 758 a disposition; of the
+      Court's 219, 201 a disposition (its emergency-application orders print none, and their rows leave it out).
+- [x] **The rule:** the merger notices' (`partyIsCompany`) on each side of the caption, in the spellings the Reports use
+      (`partySpellings`: their abbreviations read as words, "Elec.", "R. Co.", "Labs.", "Int'l", "Ins."; initials closed
+      up and "N. A." read as "National Association"; "USA" before a legal word dropped), only with a legal word or a name
+      of two words or more (`corporateParty`), the taken names read first (the old Wells Fargo's cases of 1988 and 1990
+      stay off Norwest's record). The other maps' units on their days: the railroads' owners (`RAIL_OWNERS`), the Labor
+      Department's and the NLRB's (`TAA_UNITS`, `NLRB_UNITS`), the EEOC's; and ten of this source's own, each day read from
+      a filing (`SC_UNITS`): Travelers' insurers on TRV from 2004-04-01 (St. Paul's 8-K that day), Slack on CRM from
+      2021-07-21, Supervalu on UNFI from 2018-10-22, Ameritech's Bell companies on T from 1999-10-08, Converteam on GE from
+      2011-10-01 (its 10-Q's "third quarter of 2011"), WesternGeco on SLB from 2006-04-28, Kraft Foods Group on KHC from
+      2015-07-02, Lorillard on L to 2008-06-09, Sony Music Entertainment on SONY from 2008-10-01, Philip Morris USA on MO.
+- [x] **Read by hand:** every company's matched captions, and every caption naming a listed company's whole name by one
+      word: seven namesakes refused (`NOT_THE_COMPANY`: the old General Motors on GM's record of 2009, Southland Corp. of
+      7-Eleven on SLND, the Western Union Telegraph Company of 1961, Lear, Inc. of 1969, the old Gardner-Denver on IR,
+      Loew's of 1962 on L, The Citizens Bank of Alabama on CFG), and five cases given by hand (`NAMED_BY_HAND`: FCC v. AT&T
+      of 2011 and 2026, NVIDIA's of 2024, Amgen v. Sanofi on SNY, Bruesewitz v. Wyeth on PFE). The one-word captions
+      refused are people (Brady, Cohen, Rogers, Box, Mckesson, Shell, Kroger) and the Federal Maritime Commission ("FMC").
+      Not read: a predecessor record's names (old Alcoa's cases, Howmet's record's, whose chart begins in 2016), a name
+      before EDGAR (Standard Oil Co. of California), and the old Freeport-McMoRan of 1991, which FCX's first price keeps off.
+- [x] **The row:** one a company a day, "The Supreme Court decided Comcast Corp. v. Behrend, 569 U.S. 27 (2013):
+      Reversed", the company's side by how the case came to the Court (petitioner, respondent, appellant…), linked to
+      govinfo's page of the case or the Court's PDF; never a summary of the holding. Its id the day's citations, "Also on"
+      by db/060, a grouped row in "· N sources".
+- [x] **Measured** against every company in the index under its present names: 328 company days on 158 companies; from
+      the first prices the fixtures carry, 203 rows on 95 pages, 162 before 2017 (XOM 12, F 9, CSX 7, T 7, GE 6, NSC 6, BAC
+      5, CVX 5, AMGN 4, BA 4). With EDGAR's former names for the bank-like companies: 336 on 163, 205 rows on 96 pages, 164
+      before 2017 and 58 before 1994; by decade 2 in the 1960s, 13 in the 1970s, 31 in the 1980s, 29 in the 1990s, 53 in
+      the 2000s, 55 in the 2010s and 22 since. The scout's estimate of about 500 counted the names before EDGAR and the
+      predecessors' the rule does not read.
+- [x] **Wired:** `SOURCES` 51 (public domain, govinfo's policies page and the Court's site, read 2026-11-22), quota,
+      refresh, relevance 0.95, `COMPANY_SOURCES` and ingest's run, `ALSO_ON_SOURCES` and db/060, `GROUPED_ROW_SOURCES`, the
+      footer's and the terms page's credit, check:contact (50 files read the User-Agent), check:also-on.
+- [x] **Checks:** check:supreme-court 28 (new): the records' and the lists' readers, the PDFs' days and dispositions on
+      a committed slice (`scripts/fixtures/supreme-court-slice.json.gz`), the parties, the namesakes, the railroads, the
+      taken names, the units, the rows, every company and the wiring. On main it fails: the source does not exist.
+- **The ledger:** NC-074 closes (owner-decided); 37 open, 105 closed, 11 parked, 17 blocked.
+- **Requests:** www.govinfo.gov 1,116 (219 volume records and 893 PDFs, all 200; four volumes past 586 answered 302, not
+  held), www.supremecourt.gov 169 (its home page and policies, nine term lists, 158 PDFs, all 200), with the User-Agent
+  "News Charts Research" and no address; data.sec.gov 12 filing lists, with their older pages where a deal's day lay
+  beyond the newest thousand filings, and www.sec.gov five filings (Kraft Heinz's and Loews's 8-Ks, GE's and
+  Schlumberger's 10-Qs, Sony's 20-F), with the project's contact.
+
 ## NC ledger — batch 175: the 2026-11-22 audit of batches 170–174, its findings fixed (2026-11-22)
 
 The owner's word: "Merge when green and continue". The `code-auditor` read batches 170–174 (`00c6c68..304d782`) and
@@ -12758,6 +12822,35 @@ already held, but new investment goes to securities coverage first.
         fixtures' first prices; 14 namesakes refused by hand.
       - *Derived from [`docs/proposals/2026-11-22b-proposals.md`](proposals/2026-11-22b-proposals.md) #3, approved
         2026-11-22.*
+- [x] `P1` **The Supreme Court's decisions in the company's own cases, 1962–2026:** approved by the owner 2026-11-22, with
+      call (a), the U.S. Reports to volume 586 and the Court's slip lists from the 2018 term, every decision in which the
+      company is a named party, per curiam dispositions and in-chambers opinions included, each on its decided day. A new
+      source, govinfo's U.S. Reports and the Court's own lists, the rule the merger notices' with a legal word or a name
+      of two words or more.
+      - **Measured** by the scout on 21 volumes and eight terms: 42 and 59 company cases; **estimated** about 500 company
+        days, four in five before 2017.
+      - **Done in batch 176** (see its section): 9,470 cases of 219 volumes and nine terms, 8,432 dated, 1,112 PDFs read;
+        328 company days on 158 companies, 203 on 95 pages from the fixtures' first prices, 162 before 2017; seven
+        namesakes refused, five cases and ten units read by hand.
+      - *Derived from [`docs/proposals/2026-11-22c-proposals.md`](proposals/2026-11-22c-proposals.md) #1, approved
+        2026-11-22.*
+- [ ] `P2` **The European Commission's antitrust and cartel decisions, 1973–2026, and its State aid decisions:**
+      approved by the owner 2026-11-22, with call (a), State aid included where the company is the beneficiary. A new
+      source, the decisions the Publications Office's SPARQL endpoint lists, each text read once from CELLAR as batch 174
+      reads the merger notices, a row for each decision addressed to the company, with the fine it states. The approval
+      settles NC-074 for regulation: international coverage is in scope.
+      - **Measured** by the scout: 662 decisions listed, 77 texts read at random giving 31 company days; **estimated**
+        about 280, three in four before 2017, and 20 more from State aid titles.
+      - *Derived from [`docs/proposals/2026-11-22c-proposals.md`](proposals/2026-11-22c-proposals.md) #2, approved
+        2026-11-22.* Next: batch 177.
+- [ ] `P2` **The EU courts' judgments in the company's own cases, 1954–2026:** approved by the owner 2026-11-22, with call
+      (a), every subject but trade-mark and staff cases. A new source, the judgments the same endpoint lists by their
+      titles' parties, each ruling's outcome from its Official Journal notice, mostly the appeals of the Commission's
+      decisions.
+      - **Measured** by the scout: 17 company days in four sampled years of 5,151 titles; **estimated** about 260 over
+        77,843 titles, which could be off by half.
+      - *Derived from [`docs/proposals/2026-11-22c-proposals.md`](proposals/2026-11-22c-proposals.md) #3, approved
+        2026-11-22.* Next: batch 178.
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

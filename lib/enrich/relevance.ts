@@ -451,6 +451,10 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "eu_mergers") {
         return { score: 0.95, reason: "a merger naming the company, notified to the European Commission" };
       }
+      // …and a decision of the Supreme Court in a case naming the company as a party (lib/supremeCourt.ts, batch 176)
+      if (subject.kind === "company" && row.sourceKey === "supreme_court") {
+        return { score: 0.95, reason: "a Supreme Court decision in a case naming the company as a party" };
+      }
       // …and an FDA press release or talk paper of 1962–2014 naming the company, each kept row read by hand
       // (lib/fdaHistory.ts, batch 169)
       if (subject.kind === "company" && row.sourceKey === "fda_history") {

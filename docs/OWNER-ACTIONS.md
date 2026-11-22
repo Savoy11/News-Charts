@@ -218,6 +218,17 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- ~~**The 2026-11-22 third run's proposals** (`docs/proposals/2026-11-22c-proposals.md`): mark each `APPROVED`,
+  `REJECTED` or `DEFERRED`. None needs a key, a paid tier or a recurring charge: #1 is the Supreme Court's own work from
+  govinfo, public domain by its stated notice, with the Court's own lists; #2 and #3 are the EU's, reusable with the
+  credit "© European Union".~~ **Decided 2026-11-22: all three** ("#1 Supreme Court (Recommended), #2 EU antitrust and
+  State aid, #3 EU court rulings", "Use the defaults (Recommended)"), each with its recommended call; the approval of #2
+  and #3 also settles NC-074 for regulation: international coverage is in scope. #1 is built in batch 176: after
+  deploying, apply db/060 (`npm run db:migrate`), which builds the "Also on" index again with the Supreme Court's
+  decisions; its committed file (`data/supreme-court.json.gz`) is read at ingest, and `npm run sync:supreme-court` reads
+  govinfo's volume records and the Court's term lists monthly, and each new candidate case's PDF once (needs poppler's
+  `pdftotext` on the host). No key. #2 (the Commission's antitrust and State aid decisions) and #3 (the EU courts'
+  judgments) are the next batches'.
 - ~~**The 2026-11-22 second run's proposals** (batch 171, `docs/proposals/2026-11-22b-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a recurring
   charge: #1 is openFDA's, CC0, like sources 40 and 47; #2 is the Federal Reserve Board's own work, public domain by

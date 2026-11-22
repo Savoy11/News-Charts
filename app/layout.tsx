@@ -115,8 +115,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               trade adjustment certifications from the U.S. Department of Labor, decisions from the
               National Labor Relations Board, early terminations of the merger waiting period from the
               Federal Trade Commission, Section 337 investigations from the U.S. International Trade
-              Commission, and merger notifications from the European Commission&apos;s Official Journal
-              (© European Union, https://eur-lex.europa.eu).
+              Commission, merger notifications from the European Commission&apos;s Official Journal
+              (© European Union, https://eur-lex.europa.eu), and decisions of the Supreme Court of the United
+              States from the U.S. Reports on govinfo and the Court&apos;s own opinion lists.
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

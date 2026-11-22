@@ -425,6 +425,39 @@ Walmart 5, then Abbott, Fresenius, Lilly and Medline 3 each; 44 of the 69 are ou
 Dashboard's API, which needs a registered key, and are not read. Public domain by the FDA's website
 policies; no key.
 
+### European Commission merger notifications, 1990–2026 (`lib/euMergers.ts`, batch 174)
+
+The company's deals notified to the European Commission under the EU Merger Regulation, the first regulator outside the
+United States on the site: Boeing/McDonnell Douglas of 1997, Walmart/ASDA of 1999, Procter & Gamble/Gillette of 2005,
+Oracle/Sun Microsystems of 2009, Apple/Beats of 2014, IBM/Red Hat of 2019, and the foreign issuers' own (Deutsche Bank,
+BP, Shell, Toyota, Santander). Approved by the owner on 2026-11-22 (the 2026-11-22b proposal 3) with call (a): one row on
+the day the Commission received the notification ("European Commission received notification of Oracle Corporation's
+acquisition of Sun Microsystems, Inc. (M.5529)"), and its first-phase clearance, where the Official Journal prints a
+notice of non-opposition, a line on that row. A notification is not a clearance or a closing; the row says so.
+
+The EU Publications Office's SPARQL endpoint lists the Official Journal's English notices year by year: 10,264
+notifications from 1990-10-09 (corrigenda aside) and 8,507 notices of non-opposition, nearly all from 2000. The titles name
+the parties by short names ("Merck/Sigma-Aldrich" is Merck KGaA's, not Merck & Co.'s), so they only pick the candidates: a
+title whose party is exactly one of a listed company's names or aliases, or that names none, 2,479 notifications. Each
+candidate's text is read once from the Publications Office's document store, CELLAR, whose robots file sets no delay:
+its XHTML since 2004, its PDF before, read with pdftotext (an older PDF can print two notices on a page, so the reading
+starts at the notice's own case number). `npm run sync:eu-mergers` commits the lists and what each text gives
+(`data/eu-mergers.json.gz`, 1.1 MB): the day the Commission received it and the parties its first paragraph names in
+full, each with its part in the deal (an acquirer, the undertaking acquired, the seller of a business, a party to a
+merger; a controller, "belonging to Alphabet Inc.", takes its unit's). It runs monthly; ingest asks nothing.
+
+A party is the company's by the merger notices' rule on its full name, under its names of the year, the release map's
+units, the taken names and its first price. Every company's matched names were read by hand, and 14 namesakes refused
+(`NOT_THE_COMPANY`): EQT AB on EQT, NOVA Corporation on Nova, Fortis of Belgium on Fortis Inc., Compass Group on
+Compass, Inc., Metro AG on Metro Inc., Orange plc on Orange S.A., Wella AG on the Wella Company, and others. Merck KGaA's
+deals stay off Merck & Co. by its full name, with no list. A deal of two listed companies says "Also on" (db/059).
+
+Against every company in the index under its present names: 1,853 company days on 422 companies; from the first prices
+the fixtures carry, 733 rows on 158 pages, 450 before 2017 (Goldman Sachs 100, Deutsche Bank 31, GE 23, Brookfield 18,
+BP 15, IBM 15, Boeing 13, Shell 13, TPG 13, Berkshire Hathaway 12). With EDGAR's former names for the bank-like companies:
+1,910 company days on 428, 779 rows on 160 pages, 663 of them with a clearance line. "© European Union,
+https://eur-lex.europa.eu"; the Commission's reuse policy (Decision 2011/833/EU) allows commercial reuse. No key.
+
 ### Federal Reserve H.2 actions on applications, 1996–2026 (`lib/fedH2.ts`, batch 173)
 
 What the Fed did on each of a bank's deals, week by week, including the decisions its staff and the twelve Reserve Banks

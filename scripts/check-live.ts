@@ -88,6 +88,7 @@ import { fetchUsdtSupplyMoves } from "../lib/onchain/usdt";
 import type { PricePoint, SourceKey, TimelineEvent } from "../lib/types";
 import { UA } from "../lib/contact";
 import { FED_H2_DATA, H2_INDEX, h2Pdf, indexWeeks, readH2 } from "../lib/fedH2";
+import { caseOf, cellarWork, firstParagraph, listedNotices, noticeParties, noticeQueryUrl, noticeText as euNoticeText, notifiedOn } from "../lib/euMergers";
 
 export type Verdict = "PASS" | "FAIL" | "UNREACHABLE" | "SKIPPED";
 
@@ -1048,6 +1049,27 @@ export const CASES: LiveCase[] = [
       if (!(await havePdfText())) return [...out, "pdftotext is not installed, so the week's PDF is not read"];
       const wfc = readH2(await digestPdfText(Buffer.from(await pdf.arrayBuffer())), "19991211").actions.find((a) => /^Wells Fargo & Company/.test(a.head) && /Prime Bancshares/.test(a.what));
       if (wfc?.day !== "1999-12-10" || wfc.outcome !== "Approved" || wfc.by !== "San Francisco") out.push(`Wells Fargo's Prime Bancshares reads ${JSON.stringify(wfc)}`);
+      return out;
+    },
+  },
+  {
+    name: "European Commission merger notifications — the Publications Office's SPARQL list of a year as `npm run sync:eu-mergers` reads it, and CELLAR's text of M.7435 (batch 174)",
+    covers: ["eu_mergers"],
+    hosts: ["publications.europa.eu"],
+    async run() {
+      // measured 2026-11-22: 336 notifications listed for 2015; M.7435 Merck/Sigma-Aldrich, received 2015-04-21, names "Merck KGaA"
+      const res = await fetch(noticeQueryUrl("notification", 2015), { headers: { ...UA, Accept: "application/sparql-results+json" }, signal: AbortSignal.timeout(120_000) });
+      if (!res.ok) return [`the list of 2015: HTTP ${res.status}`];
+      const listed = listedNotices(await res.json());
+      const out: string[] = [];
+      if (listed.length < 336) out.push(`the list of 2015 holds ${listed.length} notifications, fewer than the 336 of 2026-11-22`);
+      const m7435 = listed.find((n) => caseOf(n.title) === "M.7435");
+      if (!m7435) return [...out, "M.7435 is not listed for 2015"];
+      const page = await fetch(cellarWork(m7435.work), { headers: { ...UA, Accept: "application/xhtml+xml", "Accept-Language": "eng" }, signal: AbortSignal.timeout(60_000) });
+      if (!page.ok) return [...out, `CELLAR's M.7435: HTTP ${page.status}`];
+      const para = firstParagraph(euNoticeText(await page.text(), "xhtml")) ?? "";
+      const merck = noticeParties(para).find((p) => p.role === "acquiring");
+      if (notifiedOn(para) !== "2015-04-21" || merck?.name !== "Merck KGaA") out.push(`M.7435 reads ${JSON.stringify({ day: notifiedOn(para), merck })}`);
       return out;
     },
   },

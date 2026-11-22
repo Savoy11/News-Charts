@@ -228,7 +228,11 @@ Raised by the November batches, each recorded in the master checklist:
   streams openFDA's 510(k) file monthly (about 250 MB, one request). #2 is built in batch 173: after deploying, apply
   db/058 (`npm run db:migrate`), which builds the "Also on" index again with the Fed's H.2 actions; its committed file
   (`data/fed-h2.json.gz`) is read at ingest, and `npm run sync:fed-h2` reads the week's new release (one PDF, needs
-  poppler's `pdftotext` on the host), weekly. No key. #3 is the next batch's.
+  poppler's `pdftotext` on the host), weekly. No key. #3 is built in batch 174: apply db/059 too (`npm run db:migrate`),
+  which builds the "Also on" index again with the EU's merger notifications; its committed file (`data/eu-mergers.json.gz`)
+  is read at ingest, and `npm run sync:eu-mergers` reads the month's new notices from the EU Publications Office (two
+  queries a year listed, a text a new candidate; needs pdftotext), monthly and after `npm run sync:tickers`. No key; the
+  credit "© European Union, https://eur-lex.europa.eu" is on the footer and the terms page.
   1. `P1` the FDA's 510(k) device clearances, 1976–2026: each device the company was cleared to sell, about 12,000
      company days from first prices, 3,296 before 1994 measured. Your call inside it: one row a company a month,
      naming each device (recommended), or one a day.

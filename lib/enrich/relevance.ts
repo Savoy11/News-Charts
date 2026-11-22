@@ -447,6 +447,10 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "fed_h2") {
         return { score: 0.95, reason: "a Federal Reserve action on the company's acquisition, merger or change in control" };
       }
+      // …and a merger the company was a party to, notified to the European Commission (lib/euMergers.ts, batch 174)
+      if (subject.kind === "company" && row.sourceKey === "eu_mergers") {
+        return { score: 0.95, reason: "a merger naming the company, notified to the European Commission" };
+      }
       // …and an FDA press release or talk paper of 1962–2014 naming the company, each kept row read by hand
       // (lib/fdaHistory.ts, batch 169)
       if (subject.kind === "company" && row.sourceKey === "fda_history") {

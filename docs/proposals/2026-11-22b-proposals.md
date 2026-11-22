@@ -391,7 +391,7 @@ weeks in 1996–1997
 
 ## 3. The European Commission's merger reviews, 1990–2026: the company's deals notified in Brussels — Boeing/McDonnell Douglas, Exxon/Mobil, AlliedSignal/Honeywell, GE/Honeywell, P&G/Gillette, Oracle/Sun, Microsoft/Skype, Apple/Beats, Medtronic/Covidien… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)" and "Use the defaults (Recommended)", with call (a): a row on the notification's day, the Commission's clearance a line on that row. Filed under Scope refocus; to be built after #2.
+**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)" and "Use the defaults (Recommended)", with call (a): a row on the notification's day, the Commission's clearance a line on that row. Filed under Scope refocus; built in batch 174.
 **Owner's reason (if rejected):**
 
 **Raised before:** yes, as unmeasured, on 2026-11-11. The Commission's case search needed a key from its

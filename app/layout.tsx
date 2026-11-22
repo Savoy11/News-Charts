@@ -114,8 +114,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               the Currency, with the Office of Thrift Supervision&apos;s of 1989–2011 from its archive,
               trade adjustment certifications from the U.S. Department of Labor, decisions from the
               National Labor Relations Board, early terminations of the merger waiting period from the
-              Federal Trade Commission, and Section 337 investigations from the U.S. International Trade
-              Commission.
+              Federal Trade Commission, Section 337 investigations from the U.S. International Trade
+              Commission, and merger notifications from the European Commission&apos;s Official Journal
+              (© European Union, https://eur-lex.europa.eu).
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

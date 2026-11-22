@@ -712,6 +712,24 @@ export const SOURCES: {
     reviewedOn: "2026-11-22",
     notes: "the Federal Reserve's actions on bank holding company, merger, change-in-control and financial holding company applications, 1996 on, from the Board's weekly H.2 release, kept where an applicant or a company acquired is a listed company by the merger notices' rule, the namesakes read by hand by city (lib/fedH2.ts); routine actions make no row; a Board action joins the Board's own release of its day; the week's PDF read once and committed, no key (batch 173)",
   },
+  {
+    id: 50,
+    key: "eu_mergers",
+    name: "European Commission merger notifications",
+    license: "© European Union, reuse permitted (Decision 2011/833/EU)",
+    attribution: "© European Union, https://eur-lex.europa.eu",
+    // EUR-Lex's legal notice, read 2026-11-22 (eur-lex.europa.eu/content/legal-notice/legal-notice.html): "Copyright
+    // notice © European Union, 1998-2026 The Commission's document reuse policy is based on Decision 2011/833/EU. Unless
+    // otherwise specified, you can re-use the legal documents published in EUR-Lex for commercial or non-commercial
+    // purposes." The notices are the Official Journal's, listed by the Publications Office's SPARQL endpoint and read
+    // from its document store, CELLAR, whose robots.txt (op.europa.eu) allows them; no key. Used: each notification's
+    // case number, title, publication day, the day the Commission received it, its first paragraph's parties as the
+    // notice names them, the publication day of its notice of non-opposition, and a link to the notice at EUR-Lex.
+    // Approved by the owner on 2026-11-22 (docs/proposals/2026-11-22b-proposals.md #3).
+    commercialOk: true,
+    reviewedOn: "2026-11-22",
+    notes: "the European Commission's merger notifications under the EU Merger Regulation, 1990 on, from the Official Journal, kept where a party the notice's first paragraph names in full is a listed company by the merger notices' rule (lib/euMergers.ts); one row a company a day on the day the Commission received it, the first-phase clearance a line on it; the Publications Office's SPARQL list and CELLAR's texts read monthly and committed, no key (batch 174)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

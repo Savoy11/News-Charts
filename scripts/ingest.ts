@@ -56,6 +56,7 @@ import { taaFor } from "../lib/ingest/taaFor";
 import { hsrFor } from "../lib/ingest/hsrFor";
 import { fdaClearancesFor } from "../lib/ingest/fdaClearancesFor";
 import { fedH2For } from "../lib/ingest/fedH2For";
+import { euMergersFor } from "../lib/ingest/euMergersFor";
 import { fdaHistoryFor } from "../lib/ingest/fdaHistoryFor";
 import { itcFor } from "../lib/ingest/itcFor";
 import { nlrbFor, walkNlrbOnce } from "../lib/ingest/nlrbWalk";
@@ -154,6 +155,8 @@ export const COMPANY_SOURCES = [
   "fda_clearances",
   // …and the Federal Reserve's actions on the company's deals, 1996 on, from its weekly H.2 release (batch 173)
   "fed_h2",
+  // …and the European Commission's merger notifications, 1990 on, where the notice names the company in full (batch 174)
+  "eu_mergers",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
   // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
@@ -1006,6 +1009,16 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("fed_h2", `Federal Reserve actions on applications naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
     fedH2For(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
+
+  /**
+   * The European Commission's merger notifications, 1990 on (batch 174, the 2026-11-22b proposal 3): every notification
+   * in the committed file whose first paragraph names the company in full, by the merger notices' rule, from its first
+   * price; one row a day, the day the Commission received it, its first-phase clearance a line on that row (the owner's
+   * call). No request.
+   */
+  await run("eu_mergers", `EU merger notifications naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
+    euMergersFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
   );
 
   /**

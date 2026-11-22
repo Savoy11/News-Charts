@@ -20,27 +20,30 @@ import { dojPossessive } from "../lib/doj";
 import { andSpellings, withoutTag } from "../lib/edgarName";
 import { deterministicScore } from "../lib/enrich/relevance";
 import {
+  H2_LINE_MARK,
   HOMES,
   NOT_THE_COMPANY,
+  type H2Action,
   actionParties,
   actionTitle,
-  companyActions,
+  boardDealsOn,
   fedH2Actions,
   fedH2Events,
   fedH2Unread,
-  h2Line,
   h2PartyIsCompany,
   indexWeeks,
   isDeal,
   listParties,
   readH2,
+  releaseH2Line,
+  releaseNamesAction,
   splitAction,
   takenParties,
 } from "../lib/fedH2";
 import { fedPressEvents } from "../lib/fedPress";
 import { companyNames } from "../lib/frCompany";
 import { namesForYear } from "../lib/ingest/frBackfill";
-import { fedH2For } from "../lib/ingest/fedH2For";
+import { fedH2For, listedBy } from "../lib/ingest/fedH2For";
 import { QUOTAS } from "../lib/ingest/quota";
 import { SOURCE_TTL_MINUTES } from "../lib/ingest/refresh";
 import { SOURCES } from "../lib/ingest/store";
@@ -63,15 +66,16 @@ const EXPECTED = {
   weeks: 1_567,
   unread: 48,
   actions: 20_903,
-  deals: 17_858,
+  // 161 more since batch 175, the new holding companies the deal pattern's word boundary had refused
+  deals: 18_019,
   // every listed company in the index, under the rule, its names as the replay below builds them
-  total: 2_124,
-  companies: 381,
+  total: 2_145,
+  companies: 383,
   // from first prices, for the companies the fixtures read
-  fromFirst: 810,
+  fromFirst: 815,
   fromFirstPages: 94,
-  fromFirst2017: 631,
-  top: "WFC 63, FITB 36, RF 34, BAC 29, MTB 26, ZION 24, BMO 22, BPOP 20, ONB 19, BUSE 16",
+  fromFirst2017: 635,
+  top: "WFC 63, FITB 36, RF 34, BAC 29, MTB 26, ZION 24, BMO 23, BPOP 20, ONB 19, BUSE 16",
 };
 
 const companies = (tickerIndex as unknown as { companies: [number, string, string][] }).companies;
@@ -83,7 +87,7 @@ const namesOf = (cik: number, extra: (year: number) => string[] = () => []) => (
   return [...companyNames(title, namesForYear(year, newsNamesFor(cik), [])), ...(own ? [own] : []), withoutTag(title), ...extra(year)];
 };
 const actions = fedH2Actions();
-const on = (cik: number, from = "", extra?: (year: number) => string[], joined?: Set<string>) =>
+const on = (cik: number, from = "", extra?: (year: number) => string[], joined?: (a: H2Action) => boolean) =>
   fedH2Events(actions, namesOf(cik, extra), { cik, from, namesOn: (d) => releaseNamesOn(cik, d), joined });
 const dayOf = (cik: number, day: string, extra?: (year: number) => string[]) => on(cik, "", extra).find((e) => e.date === day);
 const isCompany = (name: string, place: string, d: string, cik: number) => h2PartyIsCompany({ name, place }, d, cik, () => [...namesOf(cik)(Number(d.slice(0, 4))), ...releaseNamesOn(cik, d)]);
@@ -146,6 +150,11 @@ async function main(): Promise<void> {
       deal("waiver of application to acquire Advantage Community Bancshares, Inc., Wausau", "Bank Holding Companies", "Granted") &&
       deal("election to become a financial holding company.", "Financial Holding Companies", "Effective") && deal("change in bank control.", "Change in Bank Control", "Permitted") &&
       deal("(1) to become a bank holding company by merging with Synovus Financial Corp.", "Bank Holding Companies", "Announced", true));
+  check("  …a new holding company alone, with no other deal word (batch 175: the branch's word boundary made it none): Goldman Sachs's of 2008-09-21, the Board's",
+    deal("to become a bank holding company.") && deal("to become bank holding companies.", "Bank Holding Companies", "Approved", true) && deal("to become financial holding companies.", "Financial Holding Companies") &&
+      deal("to become a savings and loan holding company.", "Savings and Loan Holding Companies") &&
+      /^The Federal Reserve Board approved The Goldman Sachs Group, Inc\. and Goldman Sachs Bank USA Holdings LLC's application to become bank holding companies$/.test(dayOf(886982, "2008-09-21")?.title ?? ""),
+    dayOf(886982, "2008-09-21")?.title);
   check("  …routine actions under the same headings make none: a public welfare investment (M&T's of 2015-12-29), an interlock exemption, a notice period's waiver, a comment period, Regulation K, section 23A, relief from commitments",
     !deal("to make a public welfare investment.", "Banks, State Member") && !deal("request for an exemption under the Depository Institution Management Interlocks Act and Regulation L.", "Bank Holding Companies", "Granted") &&
       !deal("waiver of the remainder of the prior-notice period to make an investment in Huntington Commercial Finance Canada, Inc.", "Banks, State Member", "Granted") &&
@@ -188,17 +197,41 @@ async function main(): Promise<void> {
       isCompany("United Community Banks, Inc.", "Greenville, South Carolina", "2024-08-23", 857855) && !!dayOf(857855, "2022-12-19"));
   check("  …every home place and namesake read by hand says why", Object.values(HOMES).every((h) => h.why.length > 30) && Object.values(NOT_THE_COMPANY).flat().every((n) => n.why.length > 30) && Object.keys(HOMES).length === 89);
   const abn = dayOf(BAC, "2007-09-12");
-  const joinedAway = on(BAC, "", undefined, new Set(["2007-09-12"])).find((e) => e.date === "2007-09-12");
-  const board = companyActions(actions, namesOf(BAC), { cik: BAC, namesOn: (d) => releaseNamesOn(BAC, d) }).filter((x) => x.a.board && x.a.day === "2007-09-12").map((x) => x.a);
+  // a stored row read back as fed_h2 reads it: its title and the words before its H.2 line
+  const stored = (rows: { date: string; title: string; description?: string }[]) => {
+    const m = new Map<string, string[]>();
+    for (const r of rows) (m.get(r.date) ?? m.set(r.date, []).get(r.date)!).push(`${r.title} ${(r.description ?? "").split(` ${H2_LINE_MARK} `)[0]}`);
+    return listedBy(m);
+  };
   const press = fedPressEvents(
     [{ day: "2007-09-12", title: "Board approves proposal by Bank of America Corporation to acquire ABN AMRO North America Holding Company", type: "Orders on Banking Applications", url: "https://www.federalreserve.gov/newsevents/press/orders/20070912a.htm" }],
     namesOf(BAC),
-    { cik: BAC, h2: (d) => (d === "2007-09-12" && board.length ? h2Line(board) : undefined) },
+    { cik: BAC, h2: (r) => releaseH2Line(r, actions) },
   )[0];
+  const joinedAway = on(BAC, "", undefined, stored([press])).find((e) => e.date === "2007-09-12");
   check("Bank of America's Board action of 2007-09-12 (ABN AMRO North America) is a row of its own where the page holds no Board release that day, and joins the Board's release where it does",
     /^The Federal Reserve Board approved Bank of America Corporation's application to acquire ABN AMRO North America Holding Company/.test(abn?.title ?? "") && !joinedAway &&
       /The Board's weekly H\.2 release of the week ending September 15, 2007 lists it: Bank Holding Companies, the Board: Bank of America Corporation, Charlotte, North Carolina — to acquire ABN AMRO North America Holding Company/.test(press?.description ?? ""),
     [abn?.title, press?.description]);
+  // the release Goldman Sachs and Morgan Stanley share (batch 175: each page wrote its own line, and the row flipped at each ingest)
+  const both = { day: "2008-09-21", title: "Board approves, pending a statutory five-day antitrust waiting period, the applications of Goldman Sachs and Morgan Stanley to become bank holding companies", type: "Banking and Consumer Regulatory Policy" as const, url: "https://www.federalreserve.gov/newsevents/pressreleases/bcreg20080921a.htm" };
+  const [gs, ms] = [886982, 895421].map((cik) => fedPressEvents([both], namesOf(cik), { cik, h2: (r) => releaseH2Line(r, actions) })[0]);
+  check("  …a release two pages share gives each the same line, the Board's deals of its day it names (Goldman Sachs's and Morgan Stanley's of 2008-09-21), and neither page keeps a row of its own for them",
+    !!gs && gs.description === ms?.description && gs.dedupBasis === ms.dedupBasis && boardDealsOn(actions, "2008-09-21").length === 2 &&
+      /lists it: Bank Holding Companies, the Board: The Goldman Sachs Group, Inc\.[^]* Approved, September 21, 2008\. Bank Holding Companies, the Board: Morgan Stanley, New York, New York[^]* Approved, September 21, 2008\.$/.test(gs.description ?? "") &&
+      !!dayOf(895421, "2008-09-21") && !on(886982, "", undefined, stored([gs])).some((e) => e.date === "2008-09-21") && !on(895421, "", undefined, stored([ms])).some((e) => e.date === "2008-09-21"),
+    gs?.description);
+  const other = fedPressEvents(
+    [{ day: "2007-09-12", title: "Board approves proposal by Bank of America Corporation to acquire a bank", type: "Orders on Banking Applications", url: "https://www.federalreserve.gov/newsevents/press/orders/20070912b.htm" }],
+    namesOf(BAC),
+    { cik: BAC, h2: (r) => releaseH2Line({ ...r, title: "Board approves proposal by Wachovia Corporation to acquire a bank" }, actions) },
+  )[0];
+  check("  …a Board action of the day a release does not name is no line on it, and keeps its own row; the release's own words are read by the leading name and its legal words both (\"UBS AG\", \"Banco Santander Central Hispano\")",
+    !!other && !/weekly H\.2/.test(other.description ?? "") && !!on(BAC, "", undefined, stored([{ ...other, title: "Board approves proposal by Wachovia Corporation to acquire a bank" }])).find((e) => e.date === "2007-09-12") &&
+      releaseNamesAction("Approval of proposal by UBS AG", { category: "Bank Holding Companies", head: "UBS AG, Zurich, Switzerland", what: "to engage in limited physical commodity trading activities." } as H2Action) &&
+      releaseNamesAction("Approval of proposal by Banco Santander Central Hispano", { category: "Bank Holding Companies", head: "Banco Santander Central Hispano, S.A., Madrid, Spain", what: "to acquire up to 24.99 percent of the shares of Sovereign Bancorp, Inc." } as H2Action) &&
+      !releaseNamesAction("Approval of proposal by UBS AG", { category: "Bank Holding Companies", head: "Wachovia Corporation, Charlotte, North Carolina", what: "to acquire a bank." } as H2Action),
+    other?.description);
   check("  …a withdrawal and an election say so: First Business Financial's Aslin Group (2014-07-02), Renasant's election (2025)",
     /^First Business Financial Services, Inc\.'s application to acquire Aslin Group, Inc\.[^]* was withdrawn \(the Federal Reserve Bank of Chicago under delegated authority\)$/.test(dayOf(1521951, "2014-07-02")?.title ?? "") &&
       on(715072).some((e) => /^Renasant Corporation's election to become a financial holding company took effect \(the Board's Secretary under delegated authority\)$/.test(e.title)),
@@ -242,7 +275,7 @@ async function main(): Promise<void> {
     `${after.length} on ${new Set(after.map((r) => r.ticker)).size}, ${after.filter((r) => r.date < "2017-01-01").length} before 2017; ${top}`);
 
   console.log("\nAt ingest");
-  const step = await fedH2For(fakeDb("1973-02-21", ["2007-09-12"]), 1, { edgarName: "BANK OF AMERICA CORP /DE/", alsoKnownAs: newsNamesFor(BAC), cik: BAC });
+  const step = await fedH2For(fakeDb("1973-02-21", [{ day: "2007-09-12", title: press.title, body: press.description ?? "" }]), 1, { edgarName: "BANK OF AMERICA CORP /DE/", alsoKnownAs: newsNamesFor(BAC), cik: BAC });
   check("the company's actions from its first price, with no request, as a complete answer; a Board action of a day the page holds the Board's release joins it",
     step.outcome === "ok" && !!step.complete && step.events.length > 0 && !step.events.some((e) => e.date === "2007-09-12") && step.events.every((e) => e.date >= "1973-02-21" && e.sourceKey === "fed_h2"),
     `${step.outcome} ${step.events.length}`);
@@ -271,12 +304,12 @@ async function main(): Promise<void> {
   if (fail) process.exit(1);
 }
 
-function fakeDb(listed: string | null, boardDays: string[]): PoolClient {
+function fakeDb(listed: string | null, board: { day: string; title: string; body: string }[]): PoolClient {
   return {
     query: async (sql: string) => {
       if (/FROM prices/.test(sql)) return { rows: [{ listed }] };
       if (/sec:%:rename:%/.test(sql)) return { rows: [] };
-      if (/s\.key = 'fed_press'/.test(sql)) return { rows: boardDays.map((day) => ({ day })) };
+      if (/s\.key = 'fed_press'/.test(sql)) return { rows: board };
       throw new Error(`unexpected query: ${sql.slice(0, 80)}`);
     },
   } as unknown as PoolClient;

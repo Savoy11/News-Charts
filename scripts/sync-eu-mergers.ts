@@ -36,9 +36,13 @@ import { digestPdfText, havePdfText } from "../lib/secDigest";
  * title names none: about 2,540 the first time, a few a month since, so it is run monthly and again after
  * `npm run sync:tickers`. A name only EDGAR's former names give is not a candidate here.
  *
+ * A year's list is never shorter than the file's: a list the endpoint answers short, or not at all, ends the run with the file
+ * as it was (batch 175), as the texts it held would otherwise be left with no notice.
+ *
  *   npm run sync:eu-mergers                                  # asks publications.europa.eu
  *   npm run sync:eu-mergers -- --lists <dir> --dir <dir> --read <day>
  *                                                            # reads saved year lists (<kind>-<year>.json) and texts (<work>.xhtml|.pdf)
+ *   npm run sync:eu-mergers -- --reparse                     # no request: each held paragraph's parties read again by `noticeParties`
  */
 const arg = (k: string) => (process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : null);
 const lists = arg("--lists");
@@ -60,8 +64,10 @@ async function get(url: string, accept: string): Promise<Buffer | null> {
   }
   if (!res.ok) throw new Error(`${new URL(url).host} answered ${res.status} for ${new URL(url).pathname}`);
   const body = Buffer.from(await res.arrayBuffer());
+  // a transfer cut short keeps the file's head; a compressed answer's length is the compressed body's, which fetch has decoded
   const length = Number(res.headers.get("content-length") ?? NaN);
-  if (Number.isFinite(length) && body.length !== length) throw new Error(`${new URL(url).pathname}: ${body.length} of ${length} bytes`);
+  const encoded = !/^(?:identity)?$/i.test(res.headers.get("content-encoding") ?? "");
+  if (!encoded && Number.isFinite(length) && body.length !== length) throw new Error(`${new URL(url).pathname}: ${body.length} of ${length} bytes`);
   return body;
 }
 
@@ -71,7 +77,10 @@ async function year(kind: NoticeKind, y: number): Promise<EuListed[]> {
     if (!existsSync(f)) throw new Error(`no saved list ${kind}-${y}`);
     return listedNotices(JSON.parse(readFileSync(f, "utf8")));
   }
-  return listedNotices(JSON.parse(((await get(noticeQueryUrl(kind, y), "application/sparql-results+json")) ?? Buffer.from("{}")).toString("utf8")));
+  const body = await get(noticeQueryUrl(kind, y), "application/sparql-results+json");
+  // a 404 is CELLAR's answer for a format it does not hold; the endpoint giving one is a broken answer, not an empty year
+  if (!body) throw new Error(`the endpoint answered 404 for the ${kind} list of ${y}`);
+  return listedNotices(JSON.parse(body.toString("utf8")));
 }
 
 /** A notice's text: its XHTML where CELLAR holds one, else its PDF read with pdftotext. */
@@ -110,14 +119,38 @@ function candidates(notes: EuListed[]): Set<string> {
   return out;
 }
 
+interface Held {
+  read?: string;
+  notifications: unknown[][];
+  nonopposition: unknown[][];
+  texts: unknown[][];
+}
+
+/** The file again with each held paragraph's parties read by today's `noticeParties`: no request. */
+function reparse(held: Held): void {
+  let changed = 0;
+  const texts = held.texts.map((r) => {
+    const parties = r[2] ? noticeParties(String(r[2])) : [];
+    if (JSON.stringify(parties) !== JSON.stringify(r[3])) changed++;
+    return [r[0], r[1], r[2], parties];
+  });
+  writeFileSync(EU_MERGERS_DATA, gzipSync(Buffer.from(`${JSON.stringify({ ...held, texts })}\n`), { level: 9 }));
+  console.log(`${texts.length} paragraphs read again, ${changed} with other parties → ${EU_MERGERS_DATA}`);
+}
+
 async function main(): Promise<void> {
+  const held: Held = existsSync(EU_MERGERS_DATA) ? JSON.parse(gunzipSync(readFileSync(EU_MERGERS_DATA)).toString("utf8")) : { notifications: [], nonopposition: [], texts: [] };
+  if (process.argv.includes("--reparse")) return reparse(held);
   if (!(await havePdfText())) throw new Error("pdftotext is not installed (poppler-utils), so no older notice can be read");
-  const held = existsSync(EU_MERGERS_DATA) ? (JSON.parse(gunzipSync(readFileSync(EU_MERGERS_DATA)).toString("utf8")) as { texts: unknown[][] }) : { texts: [] };
+  const heldIn = (rows: unknown[][], y: number) => rows.filter((r) => String(r[1]).startsWith(`${y}-`)).length;
   const notifications: EuListed[] = [];
   const nonopposition: EuListed[] = [];
   for (let y = 1990; y <= Number(readOn.slice(0, 4)); y++) {
-    notifications.push(...(await year("notification", y)).filter((n) => !isCorrigendum(n.title)));
-    nonopposition.push(...(await year("nonopposition", y)).filter((n) => !isCorrigendum(n.title)));
+    const listed = { notification: (await year("notification", y)).filter((n) => !isCorrigendum(n.title)), nonopposition: (await year("nonopposition", y)).filter((n) => !isCorrigendum(n.title)) };
+    for (const [kind, rows] of [["notification", held.notifications], ["nonopposition", held.nonopposition]] as const)
+      if (listed[kind].length < heldIn(rows, y)) throw new Error(`the ${kind} list of ${y} holds ${listed[kind].length}, the file ${heldIn(rows, y)}: the file is left as it was`);
+    notifications.push(...listed.notification);
+    nonopposition.push(...listed.nonopposition);
   }
   // the lists of 2026-11-22 hold 10,290 notifications and 8,523 notices of non-opposition; far fewer is a broken answer
   if (notifications.length < 10_000 || nonopposition.length < 8_000) throw new Error(`${notifications.length} notifications and ${nonopposition.length} clearances listed`);

@@ -11,7 +11,8 @@ import { digestPdfText, havePdfText } from "../lib/secDigest";
  * the archive's index once (`H2_INDEX`), then each week's release the file does not hold, one at a time, 1.6 s
  * apart: 1,567 PDFs the first time, about 540 MB, one a week since, so it is run weekly. A week the file holds,
  * one that gives no text among them (a scan, or the damaged file of 2018-05-26), is never asked again; a transfer
- * cut short is not held. Needs `pdftotext` on the host.
+ * cut short is not held, nor a week whose text gives no action, a layout `readH2` does not know (batch 175). Needs
+ * `pdftotext` on the host.
  *
  *   npm run sync:fed-h2                                 # asks www.federalreserve.gov
  *   npm run sync:fed-h2 -- --index <file> --dir <dir> --read <day>
@@ -29,9 +30,11 @@ async function get(url: string): Promise<Buffer> {
   const res = await fetch(url, { headers: { ...UA }, signal: AbortSignal.timeout(120_000) });
   if (!res.ok) throw new Error(`${new URL(url).host} answered ${res.status} for ${new URL(url).pathname}`);
   const body = Buffer.from(await res.arrayBuffer());
-  // a transfer cut short keeps the file's head and loses its end: such a week is not held, and is asked next run
+  // a transfer cut short keeps the file's head and loses its end: such a week is not held, and is asked next run; a
+  // compressed answer's length is the compressed body's, which fetch has decoded
   const length = Number(res.headers.get("content-length") ?? NaN);
-  if (Number.isFinite(length) && body.length !== length) throw new Error(`${new URL(url).pathname}: ${body.length} of ${length} bytes`);
+  const encoded = !/^(?:identity)?$/i.test(res.headers.get("content-encoding") ?? "");
+  if (!encoded && Number.isFinite(length) && body.length !== length) throw new Error(`${new URL(url).pathname}: ${body.length} of ${length} bytes`);
   return body;
 }
 
@@ -58,6 +61,8 @@ async function main(): Promise<void> {
     if (!pdf) throw new Error(`no copy of the week ending ${week}`);
     if (pdf.subarray(0, 5).toString("latin1") !== "%PDF-") throw new Error(`the week ending ${week}: not a PDF`);
     const { actions, scanned: scan, unsplit: lost } = readH2(await digestPdfText(pdf), week);
+    // a week that gives text and no action under any heading is a layout readH2 does not know: never held, so the run fails (batch 175)
+    if (!scan && !actions.length) throw new Error(`the week ending ${week} gives text but no action: a layout readH2 does not read`);
     if (scan) unread.add(week);
     unsplit += lost.length;
     for (const a of actions) if ((KEPT as readonly string[]).includes(a.category)) rows.push(DATA_COLUMNS.map((k) => (k === "board" ? (a.board ? 1 : 0) : a[k as keyof H2Action])));

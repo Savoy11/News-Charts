@@ -213,8 +213,9 @@ The FDA's 510(k) clearances and De Novo grants since 1976 (`lib/fdaClearances.ts
 `data/fda-clearances.json.gz` (`npm run sync:fda-clearances`, monthly): a clearance is a page's by `approvalIsCompany` on
 its day, among the company's candidates by the file's word index (`candidatesFor`), less the names read by hand
 (`NOT_THE_COMPANY`: namesakes, and a unit's own records under its owner's later name before the day, `before`). The
-recall map's units carry their purchase days back to 1976 for it, each from a filing (Howmedica, DePuy, Cordis, LifeScan,
-Physio-Control, Linvatec, Radiometer, KaVo), and J&J's "Ortho" names are its own Ortho companies only. One row a company
+recall map's units carry their purchase days back to 1976 for it, each from a filing (Howmedica, DePuy, Cordis,
+Physio-Control, Linvatec, Radiometer, KaVo) but LifeScan's, bought in 1986 before EDGAR and dated from 1987, and J&J's
+"Ortho" names are its own Ortho companies only. One row a company
 a month naming each device and its number, a De Novo grant its own (the owner's call); the row never says the device
 was launched.
 
@@ -223,23 +224,30 @@ listed by the EU Publications Office's SPARQL endpoint year by year (`noticeQuer
 (XHTML since 2004, the PDF with pdftotext before), into the committed `data/eu-mergers.json.gz` (`npm run sync:eu-mergers`,
 monthly, and after sync:tickers): a title's short names ("Merck/Sigma-Aldrich") only pick the candidates, and a text's first
 paragraph decides (`firstParagraph`, `noticeParties`: each "Merck KGaA ('Merck', Germany)" with its part, a controller taking
-its unit's, a notice with no brackets read by its words), the day the Commission received it its row's day (`notifiedOn`). A
-party is a page's by the merger notices' rule (`partyIsCompany`) on its full name, its namesakes in `NOT_THE_COMPANY`. One row
+its unit's, a notice with no brackets read by its words, "the undertakings A, B and C" a party each where every item ends in
+a legal word, batch 175), the day the Commission received it its row's day (`notifiedOn`); a case number is read with or
+without "Case" before it (`caseOf`, batch 175). A year's list never shorter than the file's, or the sync fails. A
+party is a page's by the merger notices' rule (`partyIsCompany`) on its full name, its namesakes in `NOT_THE_COMPANY`, a name
+another company took up after the record's own company gave it up refused from a day read from a filing (`from`: "Standard
+Life plc" off SLFPY from 2017-09-01, batch 175). One row
 a company a day, its id the day's case numbers ("Also on", db/059); the first-phase clearance, a notice of non-opposition, a
 line on it (`clearanceOf`, the owner's call); the row never says the deal closed. "© European Union,
 https://eur-lex.europa.eu".
 
 The Federal Reserve's actions on applications since 1996 (`lib/fedH2.ts`, batch 173) are the Board's weekly H.2 release,
 each week's PDF read once with `pdftotext -layout` into the committed `data/fed-h2.json.gz` (`npm run sync:fed-h2`, weekly; a
-week the file holds is never asked again, a transfer cut short is not held): three layouts (`readH2`), each action under the
+week the file holds is never asked again, a transfer cut short is not held, nor a week whose text gives no action, which fails
+the sync, batch 175): three layouts (`readH2`), each action under the
 Board's or the delegated section, its heading and its Reserve Bank or office, the scans of 1996–1997 and the Board's damaged
 file of 2018-05-26 listed as unread. Only a deal makes a row (`isDeal`: an acquisition, a merger, a change in control, a new
 holding company, an activity, an election), never the routine actions filed beside it. A party is a page's by the merger
 notices' rule (`partyIsCompany`) on each applicant and each company acquired, with the place the release gives it
 (`listParties`, `takenParties`; a party with none takes the last one written before it); a company with namesakes is a party
 only at its own places (`HOMES`, 89 read by hand, a move of its head office its own). One row a company a day, its id the
-day's actions ("Also on", db/058); a Board action of a day the page holds the Board's own release is a line on that row
-(`h2Line`, `fed_press` read first), never its own. The row says what the Fed did on the day, not the deal's closing.
+day's actions ("Also on", db/058). A Board action the Board's own release or order of its day names, in its title or the words
+its row shows (`releaseNamesAction`), is a line on that row, the same on every page that holds it (`releaseH2Line`, batch 175;
+`fed_press` read first, and `fed_h2` reads the same words back from the stored row), never its own. The row says what the Fed
+did on the day, not the deal's closing.
 
 The SEC News Digest of 1956–1993 (`lib/secDigest.ts`, batch 102) is read once, issue by issue, into
 db/040's tables (`lib/ingest/secDigestWalk.ts`), and each company's own entries are found there at

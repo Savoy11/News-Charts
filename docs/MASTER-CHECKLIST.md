@@ -988,6 +988,70 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 173: the Federal Reserve's weekly H.2 actions on the company's deals, 1996 on (2026-11-22)
+
+The owner's word: "Merge when green and continue", and the 2026-11-22b proposal 2, approved that day with call (a): the
+Fed's actions on the company's deals, on the action's day; the applications' Federal Register notices are not read.
+#3 (the European Commission's merger reviews) is the next batch's.
+
+- [x] **A new source, 49, `fed_h2`** (`lib/fedH2.ts`, `lib/ingest/fedH2For.ts`, `scripts/sync-fed-h2.ts`): the Board's
+      weekly release "H.2, Actions of the Board, Its Staff, and the Federal Reserve Banks", one PDF a week, 1,567 weeks
+      from 1996-11-02 to 2026-11-14 (493 MB), each read once with `pdftotext -layout` (`readH2`, three layouts). The 48
+      weeks that give no text are listed as unread: the scans of 1996-11-09 to 1997-10-04 but 1996-12-28, and the file
+      of 2018-05-26, which the Board serves damaged (its second half blank; two downloads, one length). The sync keeps
+      the 20,903 actions filed under a deal's headings in the committed `data/fed-h2.json.gz` (1.0 MB), asks only for a
+      week the file does not hold and holds no transfer cut short (its length against the header); weekly; ingest asks
+      nothing. 11 entries of 39,774 read are not split, none under a deal's heading but the two scanned-text weeks of 1996.
+- [x] **The reader's own bugs found on the whole archive and fixed before commit:** an outcome is capitalized as the
+      release prints it ("modified September 12, 2023, …" in a notifier's text is none), the abbreviations' legend is
+      read by its words ("IF Bancorp" is a bank, not "IF International Finance"), a sentence saying "under delegated
+      authority by the Federal Reserve Bank of New York" changes no section, and an action splits at the dash what was
+      asked begins after ("Lone Star National Bancshares--Texas, Inc. -- to retain"). Seven headings the 2006–2026
+      Board sections use were added, so no action is read under the heading before it.
+- [x] **Which actions make a row** (`isDeal`): 17,858 of the 20,903, an acquisition, a merger, a change in control, a new
+      holding company, a nonbank activity, a financial holding company election, a waiver of application to acquire,
+      withdrawn, denied or returned ones included, and the Board's orders "Announced" since 2023. Public welfare and
+      community development investments, Regulation K, notice-period waivers, interlock exemptions, comment periods and
+      extensions, internal reorganizations, section 23A, relief from commitments make none; M&T's of 2015-12-29 is one.
+- [x] **The rule:** the merger notices' (`partyIsCompany`) on each applicant and each company acquired, each with the
+      place the release gives (`listParties`, `takenParties`: "both of", "New York, New York", "Toronto, Ontario,
+      Canada"; a party with no place takes the last one written before it). A change in control's party is the bank
+      whose control changes, its notifiers after the dash since 2023.
+      - **Read by hand:** every company's matched places against its EDGAR address, 417 companies, 220 with a party
+        outside the home city; 89 companies with namesakes are parties only at their own places (`HOMES`, each with
+        why): Commerce Bancshares of Kansas City (seven namesakes, White Castle among them), Citizens Financial of
+        Providence (the Citizens Banks of dozens of towns), Peoples Bancorp of Marietta (13 namesakes, Prairie du Chien
+        among them), Timberland of Hoquiam, not Baxter; United Community Banks at Blairsville and Greenville, its head
+        office's move; SouthState at Orangeburg, Columbia and Winter Haven, not First Financial Holdings of Charleston
+        before it bought it. One namesake by name (`NOT_THE_COMPANY`): Mechanics Bancorp, MHC of Massachusetts, not
+        HomeStreet's record. A party whose place the release never gives is no home place.
+- [x] **The rows (the owner's call):** one a company a day ("The Federal Reserve Bank of San Francisco approved, under
+      delegated authority, Wells Fargo & Company's application to acquire Prime Bancshares, Inc., Houston, Texas, and
+      Prime Bank"), each action as the release prints it and the company's part in it, linked to the week's PDF; it says
+      what the Fed did on the day, never the deal's announcement or closing. Its id is the day's actions (week and
+      place), so "Also on" names the other listed party (db/058) and a row whose list grows counts once
+      (`GROUPED_ROW_SOURCES`). A Board action on a day the page holds the Board's own release joins that row as a line
+      (`h2Line` in `fedPressEvents`, read first) and makes none of its own: Bank of America's ABN AMRO of 2007-09-12.
+- [x] **Measured** against every company in the index under its present names: 2,124 company days on 381 companies;
+      from the first prices the fixtures carry, 810 on 94 pages, 631 before 2017 (Wells Fargo 63, Fifth Third 36, Regions
+      34, Bank of America 29, M&T 26). With EDGAR's former names for the 857 bank-like companies, which ingest reads from
+      the database: 2,467 company days on 400 companies, 964 rows on 101 pages from those first prices, 768 before 2017;
+      of their actions 778 the Reserve Banks' or the staff's and 227 the Board's, 47 withdrawn, 64 changes in control.
+      The scout's estimate was about 2,100 on pages; the fixtures' first prices are a floor of the pages.
+- [x] **Wired:** `SOURCES` id 49 (the Board's public-domain notice, read again 2026-11-22, as for sources 26 and 29), its
+      quota and refresh, relevance 0.95, `COMPANY_SOURCES` and the ingest's run after `fed_press`, `ALSO_ON_SOURCES` and
+      db/058's index, `GROUPED_ROW_SOURCES`, the footer's and the terms page's credit ("with its weekly actions on bank
+      applications (H.2)"), `sync:fed-h2`, a `check:live` case.
+- [x] **Checks:** `check:fed-h2` 32 (new, in the chain; fixture `scripts/fixtures/fed-h2-weeks.json.gz`, pdftotext's text
+      of 1997-04-19, 1997-11-22, 2011-03-26 and 2023-09-09); `check:also-on` (the sources and db/058) and
+      `check:contact` (48 files read the User-Agent). On main the new check cannot run, and check:also-on and
+      check:contact fail; check:fed-press passes with the H.2 line joined.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** www.federalreserve.gov 1,529, every one answered 200, under "News Charts Research" with no contact, 1.6 s
+  apart (the 40 weeks and the index the scout read on 2026-11-22 reused); one cut short by a reset and asked again, and
+  the damaged week asked twice. data.sec.gov 857 (the bank-like companies' records, for their addresses and former
+  names in the hand read), every one 200, under the project's User-Agent with its contact, loaded from `.env.local`.
+
 ## NC ledger — batch 172: the 2026-11-22b approvals filed, and the FDA's 510(k) clearances, 1976 on (2026-11-22)
 
 The owner's word, 2026-11-22: "Approve all three (Recommended)" and "Use the defaults (Recommended)" to the batch 171
@@ -12564,11 +12628,13 @@ already held, but new investment goes to securities coverage first.
         from the first prices the fixtures carry, 2,734 before 1994, as 5,467 monthly rows; 42 names refused by hand.
       - *Derived from [`docs/proposals/2026-11-22b-proposals.md`](proposals/2026-11-22b-proposals.md) #1, approved
         2026-11-22.*
-- [ ] `P1` **The Federal Reserve's weekly H.2 actions on applications, 1996–2026:** approved by the owner 2026-11-22,
+- [x] `P1` **The Federal Reserve's weekly H.2 actions on applications, 1996–2026:** approved by the owner 2026-11-22,
       with call (a), the Fed's actions on the company's deals on the action's day, not the applications' Federal
       Register notices. A new source, the Board's weekly PDFs, read once and then weekly.
       - **Measured** by the scout on 40 weeks: 88 company days, every one read by hand; **estimated** about 2,100, about
         1,500 before 2017, a floor.
+      - **Done in batch 173** (see its section): 20,903 actions of 1,567 weeks in the committed file, 48 weeks unread;
+        2,124 company days on 381 companies, 810 on 94 pages from the fixtures' first prices; 89 home places read by hand.
       - *Derived from [`docs/proposals/2026-11-22b-proposals.md`](proposals/2026-11-22b-proposals.md) #2, approved
         2026-11-22.*
 - [ ] `P2` **The European Commission's merger reviews, 1990–2026:** approved by the owner 2026-11-22, with call (a), a

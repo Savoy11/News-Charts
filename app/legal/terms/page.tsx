@@ -39,8 +39,8 @@ export default function TermsPage() {
       <p>
         Much of what the site shows belongs to others or is public record: filings from the SEC,
         historical newspapers from the Library of Congress, rules from the Federal Register, policy
-        decisions, press releases and enforcement actions from the Federal Reserve Board, inflation
-        reports from the Bureau of Labor Statistics,
+        decisions, press releases and enforcement actions from the Federal Reserve Board, with its weekly
+        actions on bank applications (H.2), inflation reports from the Bureau of Labor Statistics,
         vehicle recalls and defect investigations from the National Highway Traffic Safety
         Administration, drug, device and food recalls, new-drug approvals and their efficacy supplements, device
         clearances, press releases and talk papers of 1962–2014, and warning letters from the U.S. Food and Drug

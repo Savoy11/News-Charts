@@ -92,6 +92,8 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   fda_history: 1440,
   // …and its 510(k) clearances and De Novo grants, synced monthly (lib/fdaClearances.ts, batch 172)
   fda_clearances: 1440,
+  // …and the Federal Reserve's actions on applications from its weekly H.2 release, synced weekly (lib/fedH2.ts, batch 173)
+  fed_h2: 1440,
   // the NLRB's decision listing: its newest page once a day for every company, the whole once a year at night (lib/ingest/nlrbWalk.ts, batch 161)
   nlrb_decisions: 1440,
   // the FRA's railroad accident reports, asked once a day for the railroads lib/railAccidents.ts maps (batch 127)

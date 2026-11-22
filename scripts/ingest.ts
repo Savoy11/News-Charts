@@ -55,6 +55,7 @@ import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
 import { taaFor } from "../lib/ingest/taaFor";
 import { hsrFor } from "../lib/ingest/hsrFor";
 import { fdaClearancesFor } from "../lib/ingest/fdaClearancesFor";
+import { fedH2For } from "../lib/ingest/fedH2For";
 import { fdaHistoryFor } from "../lib/ingest/fdaHistoryFor";
 import { itcFor } from "../lib/ingest/itcFor";
 import { nlrbFor, walkNlrbOnce } from "../lib/ingest/nlrbWalk";
@@ -151,6 +152,8 @@ export const COMPANY_SOURCES = [
   "fda_history",
   // …and the FDA's 510(k) clearances and De Novo grants, 1976 on, where the applicant is the company (batch 172)
   "fda_clearances",
+  // …and the Federal Reserve's actions on the company's deals, 1996 on, from its weekly H.2 release (batch 173)
+  "fed_h2",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
   // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
@@ -991,6 +994,18 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("fda_clearances", `FDA 510(k) clearances whose applicant is ${company.name}`, () =>
     fdaClearancesFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
+
+  /**
+   * The Federal Reserve's actions on the company's deals, 1996 on (batch 173, the 2026-11-22b proposal 2): every
+   * action of the Board's weekly H.2 release in the committed file on an acquisition, a merger, a change in control, a
+   * new holding company, an activity or a financial holding company election naming the company as the applicant or
+   * the company acquired, by the merger notices' rule, its namesakes refused by city, from its first price; one row a
+   * day, a Board action of a day the page holds the Board's own release a line on that row (`fed_press` above). No
+   * request.
+   */
+  await run("fed_h2", `Federal Reserve actions on applications naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
+    fedH2For(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
   );
 
   /**

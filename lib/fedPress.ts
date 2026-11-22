@@ -215,7 +215,7 @@ export function shortened(sentence: string): string {
 export function fedPressEvents(
   releases: readonly FedRelease[],
   namesIn: (year: number) => string[],
-  { cik, from = "", namesOn }: { cik: number | string; from?: string; namesOn?: (day: string) => string[] },
+  { cik, from = "", namesOn, h2 }: { cik: number | string; from?: string; namesOn?: (day: string) => string[]; h2?: (day: string) => string | undefined },
 ): TimelineEvent[] {
   const orgs = fedBanksFor(cik) ?? [];
   const byYear = new Map<number, string[]>();
@@ -232,13 +232,17 @@ export function fedPressEvents(
     if (!held.flatMap(andSpellings).some((n) => alnum(n).length >= 2 && letters.includes(alnum(n))) && !orgs.some((o) => o.match.test(r.title))) continue;
     if (!fedReleaseNames(r, held, orgs)) continue;
     const key = r.url.replace(/^https:\/\/www\.federalreserve\.gov/, "");
+    const base = r.summary ? shortened(r.summary) : r.type === "Orders on Banking Applications" ? "The Board's order on a banking application." : `A Board release: ${r.type}.`;
+    // the Board's own actions of the day in its weekly H.2 release join its release's row (lib/fedH2.ts, batch 173)
+    const line = h2?.(r.day);
+    const description = line ? `${base} ${line}` : base;
     out.push({
       id: `fed-press-${key.replace(/[^\w]+/g, "-")}`,
       date: r.day,
       ...(r.at ? { occurredAt: r.at } : {}),
       type: "regulation",
       title: r.title,
-      description: r.summary ? shortened(r.summary) : r.type === "Orders on Banking Applications" ? "The Board's order on a banking application." : `A Board release: ${r.type}.`,
+      description: description.length <= 900 ? description : `${description.slice(0, 899).replace(/\s+\S*$/, "")}…`,
       source: "Federal Reserve Board press release",
       url: r.url,
       sourceKey: "fed_press",
@@ -273,7 +277,7 @@ export function cachedFedFeed(): Promise<FedRelease[]> {
 /** A company's Board releases from the feed, or why there are none. */
 export async function fetchFedPress(
   namesIn: (year: number) => string[],
-  opts: { cik: number | string; from?: string; namesOn?: (day: string) => string[] },
+  opts: { cik: number | string; from?: string; namesOn?: (day: string) => string[]; h2?: (day: string) => string | undefined },
 ): Promise<FetchResult> {
   try {
     // the feed begins in 2006; the orders of 1996–2005 are the archive's (batch 99)

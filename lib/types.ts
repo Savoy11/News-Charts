@@ -73,7 +73,8 @@ export type SourceKey =
   | "hsr_early"
   | "itc_337"
   | "fda_history"
-  | "fda_clearances";
+  | "fda_clearances"
+  | "fed_h2";
 
 export interface TimelineEvent {
   id: string;

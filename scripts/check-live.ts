@@ -57,7 +57,7 @@ import { fetchCftcPage } from "../lib/cftc";
 import { fetchEeocPage } from "../lib/eeoc";
 import { readOccList } from "../lib/occActions";
 import { OTS_FILE, readOtsOrders } from "../lib/otsOrders";
-import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue } from "../lib/secDigest";
+import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue, havePdfText } from "../lib/secDigest";
 import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
 import { FDA_510K_ENTRY, FDA_510K_FILE, type FdaClearance, clearanceReader } from "../lib/fdaClearances";
 import { FDA_HISTORY_FILE, readHistoricalDocuments } from "../lib/fdaHistory";
@@ -87,6 +87,7 @@ import { ETH_MILESTONES, getEthereumMilestones } from "../lib/onchain/ethereum";
 import { fetchUsdtSupplyMoves } from "../lib/onchain/usdt";
 import type { PricePoint, SourceKey, TimelineEvent } from "../lib/types";
 import { UA } from "../lib/contact";
+import { FED_H2_DATA, H2_INDEX, h2Pdf, indexWeeks, readH2 } from "../lib/fedH2";
 
 export type Verdict = "PASS" | "FAIL" | "UNREACHABLE" | "SKIPPED";
 
@@ -1024,6 +1025,29 @@ export const CASES: LiveCase[] = [
       if (!page.ok) return [...out, `govinfo's 2018-00105: HTTP ${page.status}`];
       const parties = readInstitution(await page.text());
       if (!parties.complainants.some((c) => /^Qualcomm/.test(c)) || !parties.respondents.some((r) => /^Apple Inc/.test(r))) out.push(`2018-00105 reads ${JSON.stringify(parties)}`);
+      return out;
+    },
+  },
+  {
+    name: "Federal Reserve H.2 — the release index as `npm run sync:fed-h2` reads it, and the week of 1999-12-11's PDF; Wells Fargo's Prime Bancshares (batch 173)",
+    covers: ["fed_h2"],
+    hosts: ["www.federalreserve.gov"],
+    async run() {
+      // measured 2026-11-22: the index lists 1,567 weeks, 1996-11-02 to 2026-11-14; the week ending 1999-12-11 holds the
+      // Federal Reserve Bank of San Francisco's approval of Wells Fargo & Company's application to acquire Prime Bancshares
+      const res = await fetch(H2_INDEX, { headers: { ...UA }, signal: AbortSignal.timeout(60_000) });
+      if (!res.ok) return [`the index: HTTP ${res.status}`];
+      const weeks = indexWeeks(await res.text());
+      const out: string[] = [];
+      if (weeks.length < 1_567 || weeks[0] !== "19961102") out.push(`the index lists ${weeks.length} weeks from ${weeks[0]}, not the 1,567 from 19961102 of 2026-11-22`);
+      const held = new Set((JSON.parse(gunzipSync(readFileSync(FED_H2_DATA)).toString()) as { weeks: string[] }).weeks);
+      const newer = weeks.filter((w) => !held.has(w));
+      if (newer.length > 2) out.push(`${newer.length} weeks the committed file does not hold (${newer.slice(-3).join(", ")}): run npm run sync:fed-h2`);
+      const pdf = await fetch(h2Pdf("19991211"), { headers: { ...UA }, signal: AbortSignal.timeout(60_000) });
+      if (!pdf.ok) return [...out, `the week ending 1999-12-11: HTTP ${pdf.status}`];
+      if (!(await havePdfText())) return [...out, "pdftotext is not installed, so the week's PDF is not read"];
+      const wfc = readH2(await digestPdfText(Buffer.from(await pdf.arrayBuffer())), "19991211").actions.find((a) => /^Wells Fargo & Company/.test(a.head) && /Prime Bancshares/.test(a.what));
+      if (wfc?.day !== "1999-12-10" || wfc.outcome !== "Approved" || wfc.by !== "San Francisco") out.push(`Wells Fargo's Prime Bancshares reads ${JSON.stringify(wfc)}`);
       return out;
     },
   },

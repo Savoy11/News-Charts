@@ -95,7 +95,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Library of Congress (Chronicling America), historical context from Wikipedia
               (CC BY-SA), federal rules and notices from the Federal Register, archived material
               from the Internet Archive, Fed policy decisions, press releases and
-              enforcement actions from the Federal Reserve Board,
+              enforcement actions from the Federal Reserve Board, with its weekly actions on bank
+              applications (H.2),
               inflation reports from the U.S. Bureau of Labor Statistics, vehicle recalls and
               defect investigations from the National Highway Traffic Safety Administration,
               drug, device and food recalls, new-drug approvals and their efficacy supplements, device

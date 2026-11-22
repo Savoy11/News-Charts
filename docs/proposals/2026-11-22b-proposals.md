@@ -229,7 +229,7 @@ companies' names read by hand
 
 ## 2. The Federal Reserve's weekly actions on the company's applications, 1996–2026: each bank or business it was approved to buy, and each stake approved in it — Norwest's and Wells Fargo's acquisitions, State Street's Askari, Citigroup's commodity trading, FBOP's stake in Banner, BNP Paribas's in Shinhan, PNC's RBC Bank (USA)… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)" and "Use the defaults (Recommended)", with call (a): the Fed's actions on the company's deals, on the action's day, the applications' Federal Register notices not read. Filed under Scope refocus; to be built after #1.
+**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)" and "Use the defaults (Recommended)", with call (a): the Fed's actions on the company's deals, on the action's day, the applications' Federal Register notices not read. Filed under Scope refocus; built in batch 173.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. Pages hold the Board's own orders of 1996–2005 (`lib/fedOrders.ts`, batch 99, 469

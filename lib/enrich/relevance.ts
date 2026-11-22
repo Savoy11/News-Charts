@@ -443,6 +443,10 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "fda_clearances") {
         return { score: 0.95, reason: "an FDA clearance of the company's medical device" };
       }
+      // …and a Federal Reserve action on the company's deal, from the Board's weekly H.2 release (lib/fedH2.ts, batch 173)
+      if (subject.kind === "company" && row.sourceKey === "fed_h2") {
+        return { score: 0.95, reason: "a Federal Reserve action on the company's acquisition, merger or change in control" };
+      }
       // …and an FDA press release or talk paper of 1962–2014 naming the company, each kept row read by hand
       // (lib/fdaHistory.ts, batch 169)
       if (subject.kind === "company" && row.sourceKey === "fda_history") {

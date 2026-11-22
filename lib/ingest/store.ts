@@ -695,6 +695,23 @@ export const SOURCES: {
     reviewedOn: "2026-11-22",
     notes: "the FDA's 510(k) clearances and De Novo grants of 1976 on, kept where the applicant is a listed company on the decision's day by the approvals' rule, the namesakes and the units' names before their purchase read by hand (lib/fdaClearances.ts); one row a company a month, a De Novo grant its own; openFDA's device/510k file streamed monthly and committed, no key (batch 172)",
   },
+  {
+    id: 49,
+    key: "fed_h2",
+    name: "Federal Reserve H.2 actions on applications",
+    license: "public domain",
+    attribution: "Board of Governors of the Federal Reserve System",
+    // The Board's own release, on the host whose notice this registry records for sources 26 and 29, read again
+    // on 2026-11-22 (federalreserve.gov/disclaimer.htm): "Unless otherwise indicated, information on Board's
+    // website is in the public domain and may be copied and distributed without permission. Please cite to the
+    // Board as the source of the information." The site serves no robots.txt (404) and asks no key. Used: each
+    // action's day, outcome, category, the Reserve Bank or Board office that took it, its text as the weekly
+    // release prints it, and a link to the week's release. Approved by the owner on 2026-11-22
+    // (docs/proposals/2026-11-22b-proposals.md #2).
+    commercialOk: true,
+    reviewedOn: "2026-11-22",
+    notes: "the Federal Reserve's actions on bank holding company, merger, change-in-control and financial holding company applications, 1996 on, from the Board's weekly H.2 release, kept where an applicant or a company acquired is a listed company by the merger notices' rule, the namesakes read by hand by city (lib/fedH2.ts); routine actions make no row; a Board action joins the Board's own release of its day; the week's PDF read once and committed, no key (batch 173)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

@@ -425,6 +425,44 @@ Walmart 5, then Abbott, Fresenius, Lilly and Medline 3 each; 44 of the 69 are ou
 Dashboard's API, which needs a registered key, and are not read. Public domain by the FDA's website
 policies; no key.
 
+### Federal Reserve H.2 actions on applications, 1996–2026 (`lib/fedH2.ts`, batch 173)
+
+What the Fed did on each of a bank's deals, week by week, including the decisions its staff and the twelve Reserve Banks
+take under delegated authority, which the Board's own orders and press releases never carry: Norwest's residential
+mortgage lending of 1997, Wells Fargo's Prime Bancshares of 1999, FBOP's stake in Banner of 2007, BNP Paribas's shares of
+Shinhan of 2008, the Vanguard Group's change-in-control notice on Northern Trust of 2021, United Community Banks' deals
+from Blairsville, Georgia and then Greenville, South Carolina. Approved by the owner on 2026-11-22 (the 2026-11-22b
+proposal 2) with call (a): the Fed's actions on the company's deals, on the action's day; the applications' Federal
+Register notices are not read. A row says what the Fed did that day ("approved, under delegated authority", "permitted",
+"was withdrawn", "took effect"), never when the deal was announced or closed.
+
+The Board's release "H.2, Actions of the Board, Its Staff, and the Federal Reserve Banks; Applications and Reports
+Received" has one PDF a week from 1996-11-02: 1,567 weeks to 2026-11-14, 493 MB, each read once with poppler's
+`pdftotext -layout` in one of three layouts (`readH2`: the categories in capitals to 1998, in title case to 2022, an em
+dash and "Approved: September 7, 2023" since). The weeks of 1996-11-09 to 1997-10-04 but one are scans with no text, and
+the Board serves the file of 2018-05-26 damaged; those 48 weeks are listed as unread. `npm run sync:fed-h2` commits the
+20,903 actions filed under the headings a deal is filed under (`data/fed-h2.json.gz`, 1.0 MB) and reads one new week a
+week; ingest asks nothing. 17,858 of them are deals (`isDeal`): an acquisition, a merger, a change in control, a new
+holding company, a nonbank activity, a financial holding company election; the public welfare investments, interlock
+exemptions, notice-period waivers, comment periods and other routine actions under the same headings make no row.
+
+A party is the company's by the merger notices' rule (`partyIsCompany`) on each applicant and each company acquired,
+under its names of the year, its EDGAR former names among them (Norwest Corporation is Wells Fargo's record to 1998).
+The release gives every party's city, so a namesake is refused by it: the matches of 417 companies were read by hand, 220
+of them with a party outside the home city, and 89 companies with namesakes are parties only at their own places
+(`HOMES`): Commerce Bancshares of Kansas City, not those of White Castle, Louisiana or Franklin, Tennessee; Citizens
+Financial of Providence, not the Citizens Banks of dozens of other towns; United Community Banks at Blairsville and Greenville,
+its head office's move. One row a company a day, linked to the week's PDF, its id the day's actions, so a deal of two
+listed companies says "Also on" (db/058). A Board action on a day the page holds the Board's own release is a line on that
+release's row (`h2Line`), never a row of its own.
+
+Against every company in the index under its present names: 2,124 company days on 381 companies; from the first prices
+the fixtures carry, 810 on 94 pages, 631 before 2017 (Wells Fargo 63, Fifth Third 36, Regions 34, Bank of America 29,
+M&T 26, Zions 24, BMO 22, Popular 20, Old National 19, First Busey 16). With EDGAR's former names, which ingest reads, for
+the 857 bank-like companies: 2,467 company days on 400 companies, 964 rows on 101 pages from those first prices, about
+three quarters of their actions the Reserve Banks' or the staff's. Public domain by the Board's website notice ("Please
+cite to the Board as the source of the information"); no key.
+
 ### FDA 510(k) clearances and De Novo grants, 1976–2026 (`lib/fdaClearances.ts`, batch 172)
 
 Each device the FDA cleared the company to sell, from the Medical Device Amendments of 1976: Abbott Laboratories'

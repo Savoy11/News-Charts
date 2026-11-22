@@ -69,7 +69,8 @@ export type SourceKey =
   | "eeoc_press"
   | "occ_actions"
   | "dol_taa"
-  | "nlrb_decisions";
+  | "nlrb_decisions"
+  | "hsr_early";
 
 export interface TimelineEvent {
   id: string;

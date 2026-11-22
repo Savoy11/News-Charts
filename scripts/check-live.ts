@@ -61,6 +61,9 @@ import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDige
 import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
 import { TAA_FILE, readTaaPetitions } from "../lib/taaPetitions";
 import { fetchNlrbPage } from "../lib/nlrbDecisions";
+import { HSR_DATA, HSR_LIST, isGrantTitle, noticeText, readGrantNotice } from "../lib/hsrEarly";
+import { readFileSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
 import { DRUGSFDA_ENTRY, DRUGSFDA_FILE, readSupplements } from "../lib/fdaSupplements";
 import { fetchLetters } from "../lib/fdaWarningLetters";
 import { readZip } from "../lib/zip";
@@ -973,6 +976,29 @@ export const CASES: LiveCase[] = [
       if (lastDecided > "2022-06-30") out.push(`a petition was decided on ${lastDecided}, after the program's lapse: run npm run sync:taa`);
       const boeing = certifications.find((c) => c.petition === 40525 && c.suffix === "");
       if (boeing?.day !== "2002-03-18" || boeing.city !== "Seattle" || boeing.workers !== 6000) out.push(`TA-W-40,525 reads ${JSON.stringify(boeing)}`);
+      return out;
+    },
+  },
+  {
+    name: "FTC early terminations of the merger waiting period — the Federal Register API's list as `npm run sync:hsr` reads it, and govinfo's copy of a notice (batch 166)",
+    covers: ["hsr_early"],
+    hosts: ["www.federalregister.gov", "www.govinfo.gov"],
+    async run() {
+      // measured 2026-11-22: 469 notices hold the two phrases, 441 titled as grants, the newest of 2026-11-20;
+      // 05-10027 of 2005-05-19 lists Johnson & Johnson's grant of 2005-05-02 (20050796, Closure Medical)
+      const res = await fetch(HSR_LIST, { headers: { ...UA, Accept: "application/json" }, signal: AbortSignal.timeout(60_000) });
+      if (!res.ok) return [`the list: HTTP ${res.status}`];
+      const list = (await res.json()) as { results: { title: string; publication_date: string; document_number: string }[] };
+      const grants = list.results.filter((r) => isGrantTitle(r.title));
+      const out: string[] = [];
+      if (grants.length < 441) out.push(`the list holds ${grants.length} grant notices, fewer than the 441 of 2026-11-22`);
+      const held = new Set((JSON.parse(gunzipSync(readFileSync(HSR_DATA)).toString()) as { notices: { doc: string }[] }).notices.map((n) => n.doc));
+      const newer = grants.filter((g) => !held.has(g.document_number));
+      if (newer.length) out.push(`${newer.length} grant notices the committed file does not hold (${newer.map((g) => g.document_number).slice(0, 3).join(", ")}): run npm run sync:hsr`);
+      const page = await fetch(noticeText("2005-05-19", "05-10027"), { headers: { ...UA }, signal: AbortSignal.timeout(60_000) });
+      if (!page.ok) return [...out, `govinfo's 05-10027: HTTP ${page.status}`];
+      const jnj = readGrantNotice(await page.text(), { doc: "05-10027", published: "2005-05-19" }).find((g) => g.number === "20050796");
+      if (jnj?.day !== "2005-05-02" || !/^Johnson & Johnson/.test(jnj.acquiring) || !/^Closure Medical/.test(jnj.acquired)) out.push(`20050796 reads ${JSON.stringify(jnj)}`);
       return out;
     },
   },

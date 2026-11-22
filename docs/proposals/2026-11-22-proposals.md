@@ -62,11 +62,14 @@
 Mark each proposal below: `APPROVED`, `REJECTED`, or `DEFERRED`, and add a
 reason for anything rejected. Then run the scout in FILE mode.
 
+**Marked 2026-11-22: all three approved** ("Approve all three (Recommended)"), each with its recommended call, and filed
+into the checklist under Scope refocus by batch 166, which builds #1.
+
 ---
 
 ## 1. The antitrust agencies' early terminations of the merger waiting period, 1995–2026: the company's acquisitions, sales and stakes cleared early — J&J's Closure Medical, Microsoft's Ensemble Studios, Google's Dropcam, Kroger's Vitacost, HCA's purchase from Tenet, Trian's stake in BNY Mellon… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)", with call (a): every grant naming the company, as acquirer, acquired person or acquired entity, one row a company a day, an individual's purchase labelled. Filed under Scope refocus; built in batch 166.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. The FTC's own case list was tried on 2026-11-05, 2026-11-09b and 2026-11-11b and
@@ -228,7 +231,7 @@ serial acquirers that the call shapes
 
 ## 2. The ITC's Section 337 investigations, 1995–2026: import-ban cases the company brought or faces — Kodak v. Apple and RIM, Qualcomm v. Apple, Cisco v. Arista, Paice v. Ford, Fisher & Paykel v. ResMed, Novartis v. Regeneron… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)", with call (a): a second row on the day of the Commission's final determination, with the exclusion order where it issued one; a settlement or withdrawal a line on the institution row. Filed under Scope refocus; to be built after #1.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. No earlier file mentions the International Trade Commission.
@@ -356,7 +359,7 @@ of reach; the outcomes need a second read
 
 ## 3. The FDA's own press releases and talk papers, 1962–2014: recalls, withdrawals, seizures and approvals in the FDA's words — Lilly's Ilosone (1979) and Oraflex (1982), GE's sunlamps (1977), P&G's "fresh" orange juice (1991), Abbott's Omniflox (1992), Pfizer's Bextra (2005)… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** PENDING
+**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)", with call (a): a release on a day the page holds the company's approval adds its words to that row and makes none of its own. Filed under Scope refocus; to be built after #2.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. No earlier file mentions openFDA's historical documents.

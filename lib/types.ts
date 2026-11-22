@@ -75,7 +75,8 @@ export type SourceKey =
   | "fda_history"
   | "fda_clearances"
   | "fed_h2"
-  | "eu_mergers";
+  | "eu_mergers"
+  | "supreme_court";
 
 export interface TimelineEvent {
   id: string;

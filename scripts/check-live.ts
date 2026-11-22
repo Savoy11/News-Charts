@@ -89,6 +89,7 @@ import type { PricePoint, SourceKey, TimelineEvent } from "../lib/types";
 import { UA } from "../lib/contact";
 import { FED_H2_DATA, H2_INDEX, h2Pdf, indexWeeks, readH2 } from "../lib/fedH2";
 import { caseOf, cellarWork, firstParagraph, listedNotices, noticeParties, noticeQueryUrl, noticeText as euNoticeText, notifiedOn } from "../lib/euMergers";
+import { slipCases, slipList, volumeCases, volumeRecord } from "../lib/supremeCourt";
 
 export type Verdict = "PASS" | "FAIL" | "UNREACHABLE" | "SKIPPED";
 
@@ -1070,6 +1071,27 @@ export const CASES: LiveCase[] = [
       const para = firstParagraph(euNoticeText(await page.text(), "xhtml")) ?? "";
       const merck = noticeParties(para).find((p) => p.role === "acquiring");
       if (notifiedOn(para) !== "2015-04-21" || merck?.name !== "Merck KGaA") out.push(`M.7435 reads ${JSON.stringify({ day: notifiedOn(para), merck })}`);
+      return out;
+    },
+  },
+  {
+    name: "Supreme Court decisions — govinfo's record of U.S. Reports volume 569 and the Court's 2020 term list as `npm run sync:supreme-court` reads them (batch 176)",
+    covers: ["supreme_court"],
+    hosts: ["www.govinfo.gov", "www.supremecourt.gov"],
+    async run() {
+      // measured 2026-11-22: volume 569 lists 30 cases, Comcast Corp. v. Behrend (569 U.S. 27) decided 2013-03-27, reversed;
+      // the 2020 term's list 68 opinions, Google LLC v. Oracle America, Inc. (No. 18-956) 2021-04-05
+      const out: string[] = [];
+      const res = await fetch(volumeRecord(569), { headers: { ...UA }, redirect: "manual", signal: AbortSignal.timeout(120_000) });
+      if (!res.ok) return [`govinfo's volume 569: HTTP ${res.status}`];
+      const comcast = volumeCases(await res.text(), 569).find((c) => c.cite === "569 U.S. 27");
+      if (comcast?.day !== "2013-03-27" || comcast.disposition !== "Reversed") out.push(`569 U.S. 27 reads ${JSON.stringify(comcast)}`);
+      const list = await fetch(slipList(20), { headers: { ...UA }, signal: AbortSignal.timeout(120_000) });
+      if (!list.ok) return [...out, `the Court's 2020 term list: HTTP ${list.status}`];
+      const found = slipCases(await list.text(), 20);
+      if (found.length < 68) out.push(`the 2020 term's list gives ${found.length} opinions, fewer than the 68 of 2026-11-22`);
+      const oracle = found.find((c) => c.docket === "18-956");
+      if (oracle?.day !== "2021-04-05" || oracle.title !== "Google LLC v. Oracle America, Inc.") out.push(`No. 18-956 reads ${JSON.stringify(oracle)}`);
       return out;
     },
   },

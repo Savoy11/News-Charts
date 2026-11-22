@@ -425,6 +425,57 @@ Walmart 5, then Abbott, Fresenius, Lilly and Medline 3 each; 44 of the 69 are ou
 Dashboard's API, which needs a registered key, and are not read. Public domain by the FDA's website
 policies; no key.
 
+### Supreme Court decisions, 1962–2026 (`lib/supremeCourt.ts`, batch 176)
+
+The Supreme Court's decisions in the cases naming the company as a party: General Electric Co. v. Gilbert of 1976, Ford
+Motor Co. v. EEOC of 1982, Carnival Cruise Lines v. Shute of 1991, Wal-Mart Stores v. Dukes of 2011, Comcast Corp. v.
+Behrend of 2013, Google LLC v. Oracle America of 2021, each on the day the Court decided it. Approved by the owner on
+2026-11-22 (the 2026-11-22c proposal 1) with call (a): the U.S. Reports to volume 586 and the Court's own slip-opinion
+lists from the 2018 term, every decision naming the company, per curiam dispositions and in-chambers opinions included.
+A row says what the Court did ("The Supreme Court decided Comcast Corp. v. Behrend, 569 U.S. 27 (2013): Reversed") and
+the company's side (the petitioner, the respondent, the appellant…); it never summarises a holding.
+
+The Government Publishing Office's govinfo holds the U.S. Reports as a collection: each volume's record lists its cases,
+each with its name, citation and PDF, and for most argued cases the Supreme Court Database's day, kind and disposition.
+`npm run sync:supreme-court` reads the records of volumes 368 to 586 (1961 to the 2018 term), 8,940 cases,
+and the Court's lists of the 2018 to 2026 terms, 530 opinions. A case the record gives no day (most of the older
+volumes' per curiam dispositions, and every case of volumes 585 and 586) and every slip opinion, where a side can be a
+company, has its PDF's first pages read once with pdftotext: "Decided October 23, 1967." and the disposition after it, or
+the syllabus's line citing the decision below ("855 F. 3d 1356, affirmed."), the "fi" pdftotext drops from the newer
+PDFs read again. 1,112 PDFs were read (893 on govinfo, 869 of them giving a day; 219 of the Court's, nine of
+them the 2018 and 2019 terms' preliminary prints), 3 s apart on govinfo (it answered 503 at 1.6 s) and 2 s on the Court's site; the
+committed file (`data/supreme-court.json.gz`, 280 KB) holds every case, 8,432 of them dated; the 1,038 left undated name
+no side that can be a company. It runs monthly; ingest
+asks nothing.
+
+A side is the company's by the merger notices' rule on its names of the year, the release map's and EPA's and the CPSC's
+units and the taken names, from its first price, in the Reports' own spellings read as words ("Pacific Gas & Elec. Co.",
+"Union Pacific R. Co.", "Abbott Labs.", "U. S. Bank N. A.", "Teva Pharmaceuticals USA, Inc."), and only with a legal word
+or a name of two words or more: a caption names a person by the surname, so "Parker Seal Co. v. Cummins", "Pearson v.
+Dodd" and "Vale v. Louisiana" stay off Cummins, Pearson and Vale, and "FMC" in four captions is the Federal Maritime
+Commission. The other maps' units are read on their days: the railroads' owners (Norfolk & Western on Norfolk Southern,
+Wisconsin Central on CN from 2001-10-09, BNSF on Berkshire from 2010-02-12), the Labor Department's and the NLRB's
+(Oracle America on Oracle, Allstate Insurance on Allstate), and ten of this source's own, each day read from a filing
+(`SC_UNITS`: Travelers' insurers from 2004-04-01, Slack on Salesforce, Supervalu on UNFI, Ameritech's Bell companies on
+AT&T from 1999-10-08, Converteam on GE, WesternGeco on Schlumberger, Kraft Foods Group on Kraft Heinz, Lorillard on Loews
+to 2008-06-09, Sony Music Entertainment on Sony, Philip Morris USA on Altria). Every company's matched captions were read by
+hand: seven namesakes refused (`NOT_THE_COMPANY`: the old General Motors on GM's record of 2009, Southland Corp. of
+7-Eleven, the Western Union Telegraph Company, Lear, Inc. of 1969, the old Gardner-Denver, Loew's of 1962, The Citizens
+Bank of Alabama), and five cases a caption names by one word given to the company (`NAMED_BY_HAND`: FCC v. AT&T of 2011
+and 2026, NVIDIA's of 2024, Amgen v. Sanofi on Sanofi, Bruesewitz v. Wyeth on Pfizer). A case of two listed companies
+says "Also on" (db/060). Not read: a record's predecessor's names (old Alcoa's cases are Howmet's record's, whose chart
+begins in 2016) and a name before EDGAR (Standard Oil Co. of California's on Chevron).
+
+Against every company in the index under its present names: 328 company days on 158 companies; from the first prices
+the fixtures carry, 203 rows on 95 pages, 162 before 2017 (Exxon Mobil 12, Ford 9, CSX 7, AT&T 7, GE 6, Norfolk Southern
+6, Bank of America 5, Chevron 5, Amgen 4, Boeing 4). With EDGAR's former names for the bank-like companies: 336 on 163,
+205 rows on 96 pages, 164 before 2017 and 58 before 1994. The scout's estimate of about 500 counted the names before
+EDGAR and the predecessors' that the rule does not read.
+
+govinfo's policies page: "public documents can generally be reprinted without legal restriction", with customary
+credit to the agency that prepared them; the Court's site states no licence for its own pages, speaking only of the
+copyrighted materials of the sites it links to. No key.
+
 ### European Commission merger notifications, 1990–2026 (`lib/euMergers.ts`, batch 174)
 
 The company's deals notified to the European Commission under the EU Merger Regulation, the first regulator outside the

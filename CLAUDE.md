@@ -219,6 +219,22 @@ Physio-Control, Linvatec, Radiometer, KaVo) but LifeScan's, bought in 1986 befor
 a month naming each device and its number, a De Novo grant its own (the owner's call); the row never says the device
 was launched.
 
+The Supreme Court's decisions since 1962 (`lib/supremeCourt.ts`, batch 176) are the U.S. Reports on govinfo, each volume's
+record (368 to 586) read once, and the Court's own slip-opinion lists from the 2018 term, into the committed
+`data/supreme-court.json.gz` (`npm run sync:supreme-court`, monthly; govinfo 3 s apart): a case the record gives no day, and
+every slip opinion, where a side can be a company, has its PDF's first pages read once for its day and disposition
+(`caseHead`: "Decided October 23, 1967." and the line after, or the syllabus's line citing the decision below). A side is a
+page's by the merger notices' rule (`partyIsCompany`) in the Reports' spellings read as words (`partySpellings`,
+`expandAbbreviations`: "Pacific Gas & Elec. Co.", "U. S. Bank N. A.", "Teva Pharmaceuticals USA, Inc."), only with a legal
+word or a name of two words or more (`corporateParty`: a caption names a person by the surname, "Cummins", "Pearson"), the
+taken names read first; and by the other maps' units on their days: the railroads' owners (`RAIL_OWNERS`), the Labor
+Department's and the NLRB's units (`TAA_UNITS`, `NLRB_UNITS`), the EEOC's, and this source's own (`SC_UNITS`, ten read from
+filings: Travelers' insurers on TRV from 2004-04-01, WesternGeco on SLB from 2006-04-28…). Namesakes are refused in
+`NOT_THE_COMPANY` (the old General Motors, Southland Corp. of 7-Eleven), a company a caption names by one word is given its case
+in `NAMED_BY_HAND` (FCC v. AT&T). One row a company a day, the Court's disposition and the company's side, its id the day's
+citations ("Also on", db/060); the row never summarises a holding. A record's predecessor's names are not read (old Alcoa's
+cases are Howmet's record's, whose chart begins in 2016), nor a name before EDGAR (Standard Oil Co. of California).
+
 The European Commission's merger notifications since 1990 (`lib/euMergers.ts`, batch 174) are the Official Journal's,
 listed by the EU Publications Office's SPARQL endpoint year by year (`noticeQuery`) and read from its document store, CELLAR
 (XHTML since 2004, the PDF with pdftotext before), into the committed `data/eu-mergers.json.gz` (`npm run sync:eu-mergers`,
@@ -277,16 +293,16 @@ run, and only Class I and II become rows. The map's days for the units bought an
 it: the file gives a bought unit's own past under its later name ("Boston Scientific CRM Corp" for Guidant's
 2005 recalls), so every such unit carries the day its owner took it.
 
-A row of one of the fourteen multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
-CFTC, the EEOC, batch 155, the NLRB, batch 161, the merger waiting period's grants, batch 166, the ITC's, batch 167, the Fed's H.2 actions, batch 173, the EU's merger notifications, batch 174) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
+A row of one of the fifteen multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
+CFTC, the EEOC, batch 155, the NLRB, batch 161, the merger waiting period's grants, batch 166, the ITC's, batch 167, the Fed's H.2 actions, batch 173, the EU's merger notifications, batch 174, the Supreme Court's decisions, batch 176) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
 and 25 more" (`lib/alsoOn.ts`, batch 106). A case is the same source's same number, compared as a set
 for a grouped row (db/041's index, with no pending list since db/042, batch 111: a GIN index's queue made
 every lookup read it); a release held once on several pages counts too. A page's links are found by
 db/042's `event_subjects (subject_id)` index; the key begins with the event. It is read
 beside `loadEvents` and never breaks a page; adding a multi-party source means adding it to
 `ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and the index's list, in a new migration that builds it again (db/053
-added the EEOC's, db/054 the NLRB's, db/056 the merger grants', db/057 the ITC's, db/058 the Fed's H.2 actions, db/059 the EU's merger notifications), which check:also-on holds together. A row
-whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the FDA's warning letters' days, the EEOC's days, the NLRB's days, the merger grants' days, the ITC's days, the FDA's own releases' days, the FDA's clearances' months, the Fed's H.2 days, the EU's notification days) is stored again
+added the EEOC's, db/054 the NLRB's, db/056 the merger grants', db/057 the ITC's, db/058 the Fed's H.2 actions, db/059 the EU's merger notifications, db/060 the Supreme Court's decisions), which check:also-on holds together. A row
+whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the FDA's warning letters' days, the EEOC's days, the NLRB's days, the merger grants' days, the ITC's days, the FDA's own releases' days, the FDA's clearances' months, the Fed's H.2 days, the EU's notification days, the Supreme Court's days) is stored again
 when its list grows, so its versions count once in "· N sources" (`GROUPED_ROW_SOURCES` in
 `lib/corroboration.ts`, batch 107); a new source that joins numbers goes there too, and check:also-on
 finds one that does not.
@@ -380,6 +396,7 @@ npm run sync:fda-history    # rebuild data/fda-history.json.gz from openFDA's hi
 npm run sync:fda-clearances # rebuild data/fda-clearances.json.gz from openFDA's 510(k) file, streamed (monthly, and after sync:tickers)
 npm run sync:fed-h2         # add the Board's new weekly H.2 releases to data/fed-h2.json.gz (weekly; needs pdftotext; a week the file holds is never asked again)
 npm run sync:eu-mergers     # add the Official Journal's new EU merger notices to data/eu-mergers.json.gz from the Publications Office (monthly, and after sync:tickers; needs pdftotext)
+npm run sync:supreme-court  # rebuild data/supreme-court.json.gz from govinfo's U.S. Reports and the Court's slip lists (monthly; needs pdftotext; a case's PDF the file holds read is never asked again)
 ```
 
 The `check-*.ts` scripts in the `check` chain are offline by construction (network/fetch is

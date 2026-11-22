@@ -88,6 +88,8 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   hsr_early: 1440,
   // …and the ITC's Section 337 investigations, synced monthly (lib/itc337.ts, batch 167)
   itc_337: 1440,
+  // …and the FDA's own press releases and talk papers of 1962–2014, a closed file (lib/fdaHistory.ts, batch 169)
+  fda_history: 1440,
   // the NLRB's decision listing: its newest page once a day for every company, the whole once a year at night (lib/ingest/nlrbWalk.ts, batch 161)
   nlrb_decisions: 1440,
   // the FRA's railroad accident reports, asked once a day for the railroads lib/railAccidents.ts maps (batch 127)

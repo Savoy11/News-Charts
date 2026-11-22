@@ -120,8 +120,8 @@ check("  …and both list layouts render the line", (read("components/EventList.
 
 console.log("\nThe sources a row counts (batch 107, the 2026-11-07 audit's finding 1)");
 const groupedIds = GROUPED_ROW_SOURCES.map((k) => SOURCES.find((s) => s.key === k)?.id);
-check("the sources whose one row carries several cases' numbers are EPA's, the CPSC's, the CFTC's, the SEC's litigation releases, the CFPB's, the Digest's, the FDA's warning letters of a day (batch 140), the EEOC's releases of a day (batch 152), the NLRB's decisions of a day (batch 161), the merger grants of a day (batch 166) and the ITC's investigations of a day (batch 167), by their own ids",
-  JSON.stringify(groupedIds) === JSON.stringify(GROUPED_ROW_SOURCE_IDS) && JSON.stringify([...GROUPED_ROW_SOURCES].sort()) === JSON.stringify(["cfpb", "cftc", "cpsc_recalls", "eeoc_press", "epa_cases", "fda_warning_letters", "hsr_early", "itc_337", "nlrb_decisions", "sec_cases", "sec_digest"]),
+check("the sources whose one row carries several cases' numbers are EPA's, the CPSC's, the CFTC's, the SEC's litigation releases, the CFPB's, the Digest's, the FDA's warning letters of a day (batch 140), the EEOC's releases of a day (batch 152), the NLRB's decisions of a day (batch 161), the merger grants of a day (batch 166), the ITC's investigations of a day (batch 167) and the FDA's own releases of a day (batch 169), by their own ids",
+  JSON.stringify(groupedIds) === JSON.stringify(GROUPED_ROW_SOURCE_IDS) && JSON.stringify([...GROUPED_ROW_SOURCES].sort()) === JSON.stringify(["cfpb", "cftc", "cpsc_recalls", "eeoc_press", "epa_cases", "fda_history", "fda_warning_letters", "hsr_early", "itc_337", "nlrb_decisions", "sec_cases", "sec_digest"]),
   { groupedIds, GROUPED_ROW_SOURCE_IDS });
 // every builder that joins numbers into one row's id, and the source it writes
 const joining = readdirSync(join(__dirname, "..", "lib"))

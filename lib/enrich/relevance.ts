@@ -439,6 +439,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "itc_337") {
         return { score: 0.95, reason: "an ITC import-ban investigation the company brought or faces" };
       }
+      // …and an FDA press release or talk paper of 1962–2014 naming the company, each kept row read by hand
+      // (lib/fdaHistory.ts, batch 169)
+      if (subject.kind === "company" && row.sourceKey === "fda_history") {
+        return { score: 0.95, reason: "an FDA press release or talk paper naming the company" };
+      }
       // …and a grant of early termination of the merger waiting period naming the company as a party
       // (lib/hsrEarly.ts, batch 166)
       if (subject.kind === "company" && row.sourceKey === "hsr_early") {

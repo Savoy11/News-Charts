@@ -359,7 +359,7 @@ of reach; the outcomes need a second read
 
 ## 3. The FDA's own press releases and talk papers, 1962–2014: recalls, withdrawals, seizures and approvals in the FDA's words — Lilly's Ilosone (1979) and Oraflex (1982), GE's sunlamps (1977), P&G's "fresh" orange juice (1991), Abbott's Omniflox (1992), Pfizer's Bextra (2005)… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)", with call (a): a release on a day the page holds the company's approval adds its words to that row and makes none of its own. Filed under Scope refocus; to be built after #2.
+**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)", with call (a): a release on a day the page holds the company's approval adds its words to that row and makes none of its own. Filed under Scope refocus; built in batch 169.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. No earlier file mentions openFDA's historical documents.

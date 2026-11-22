@@ -54,6 +54,7 @@ import { digestFor, walkDigest } from "../lib/ingest/secDigestWalk";
 import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
 import { taaFor } from "../lib/ingest/taaFor";
 import { hsrFor } from "../lib/ingest/hsrFor";
+import { fdaHistoryFor } from "../lib/ingest/fdaHistoryFor";
 import { itcFor } from "../lib/ingest/itcFor";
 import { nlrbFor, walkNlrbOnce } from "../lib/ingest/nlrbWalk";
 import { fdaSupplementsFor } from "../lib/ingest/fdaSupplementsFor";
@@ -145,6 +146,8 @@ export const COMPANY_SOURCES = [
   "hsr_early",
   // …and the ITC's Section 337 investigations, 1995 on, where the company is a complainant or a respondent (batch 167)
   "itc_337",
+  // …and the FDA's own press releases and talk papers of 1962–2014, where one names the company (batch 169)
+  "fda_history",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
   // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
@@ -966,6 +969,16 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("itc_337", `ITC Section 337 investigations naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
     itcFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
+
+  /**
+   * The FDA's own press releases and talk papers, 1962–2014 (batch 169, the 2026-11-22 proposal 3): every
+   * document in the committed file naming the company and at most one other listed company, each read by hand
+   * once, from its first price, one event a day; a release of a day the page holds one of its approvals joins
+   * that approval's row instead (`fda_approvals` above). No request.
+   */
+  await run("fda_history", `FDA press releases and talk papers naming ${company.name}`, () =>
+    fdaHistoryFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
   );
 
   /**

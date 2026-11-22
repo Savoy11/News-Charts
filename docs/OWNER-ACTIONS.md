@@ -227,7 +227,9 @@ Raised by the November batches, each recorded in the master checklist:
   at ingest, and `npm run sync:hsr` adds the FTC's new grant notices to it, monthly (about one a month since 2025).
   #2 is built in batch 167: apply db/057 too (`npm run db:migrate`), which builds the "Also on" index again with the
   ITC's id; its committed file (`data/itc-337.json.gz`) is read at ingest, and `npm run sync:itc` adds new notices,
-  monthly. Nothing else: no key, no table. #3 is the next batch's.
+  monthly. Nothing else: no key, no table. #3 is built in batch 169 and needs nothing applied: no table, no index,
+  no key; its committed file (`data/fda-history.json.gz`) is read at ingest, and `npm run sync:fda-history` rebuilds it
+  only after `npm run sync:tickers` (openFDA's file ends in 2014; `check:live` says if it changes).
   1. `P1` the antitrust agencies' early terminations of the merger waiting period, 1995–2026: the day the FTC and the
      Justice Department cleared each of the company's acquisitions, sales and stakes early. About 11,000 company days
      from first prices, about 9,500 before 2017 (an estimate from 10 of 440 notices). Your call inside it: a row for

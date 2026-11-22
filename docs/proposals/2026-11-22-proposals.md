@@ -231,7 +231,7 @@ serial acquirers that the call shapes
 
 ## 2. The ITC's Section 337 investigations, 1995–2026: import-ban cases the company brought or faces — Kodak v. Apple and RIM, Qualcomm v. Apple, Cisco v. Arista, Paice v. Ford, Fisher & Paykel v. ResMed, Novartis v. Regeneron… · proposed `P1` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)", with call (a): a second row on the day of the Commission's final determination, with the exclusion order where it issued one; a settlement or withdrawal a line on the institution row. Filed under Scope refocus; to be built after #1.
+**Status:** APPROVED — 2026-11-22, "Approve all three (Recommended)", with call (a): a second row on the day of the Commission's final determination, with the exclusion order where it issued one; a settlement or withdrawal a line on the institution row. Filed under Scope refocus; built in batch 167.
 **Owner's reason (if rejected):**
 
 **Raised before:** no. No earlier file mentions the International Trade Commission.

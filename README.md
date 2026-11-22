@@ -1299,6 +1299,42 @@ random, every one the company's own deal or stake. The notices are the agencies'
 public domain; govinfo's notice asks that "customary credit should be given to the Government department or
 agency which prepared the material", the Federal Trade Commission.
 
+### ITC Section 337 investigations (`lib/itc337.ts`, batch 167)
+
+The International Trade Commission's investigations of imports said to infringe a patent or a trademark, from either
+side: the company as a complainant or as a respondent. Approved by the owner on 2026-11-22 (the 2026-11-22 proposal
+2), with call (a): a second row on the day of the Commission's final determination, violation or not, with the
+exclusion order where it issued one, and a settlement or a withdrawal a line on the institution's row. Qualcomm's
+complaint against Apple of 2018 (337-TA-1093) is on both pages, each saying "Also on" the other; Cisco's against
+Arista (337-TA-945) has its second row on 2017-05-30, a violation found and a limited exclusion order issued. A
+complaint is an allegation: the institution's row says the notice decides nothing.
+
+The notices are the Commission's in the Federal Register, whose titles name no company ("Certain Mobile Electronic
+Devices; Institution of Investigation"). `npm run sync:itc` asks the Federal Register API for the Commission's
+notices year by year (11,592 since 1994), keeps the 1,140 whose abstract says a complaint was filed under section 337
+"on behalf of" its complainant, reads each one's text from govinfo for its parties (seven reissued or corrected
+notices merged into their investigations: 1,122), and follows each investigation's number through its later notices
+to the last that decides it on the merits (256 with a violation, 137 with none, each dated by the day the Commission
+issued it, read from the notice's last lines) or that ends it on a settlement, a consent order or a withdrawal
+(503). 226 are open or end in a way no notice title states. A notice the committed `data/itc-337.json.gz` holds is
+never asked again, so it runs monthly; ingest asks nothing. The Commission's own database, which reaches 1972,
+refused this container, so the record begins in 1995.
+
+Each notice lists its parties a line or a block each ("(a) The complainant is …", "(b) The respondents are …"),
+read in their variants (no verb, a misnumbered "(4)", a block with its address beneath, a summary's "on behalf of"
+where the list is missing), a party's name its text before its address. A party is the company's by the merger
+notices' rule (`partyIsCompany`): the caption rule under its names of the year, the release map's units, EPA's and
+the CPSC's units, the table of taken names (old Broadcom Corporation's complaints before 2016-02-01 are not AVGO's),
+the ".com" reading ("Amazon.com, Inc."), and its first price. Namesakes read by hand (`NOT_THE_COMPANY`): Amtech
+Systems LLC of Albuquerque is not Amtech Systems, Inc., nor Australia's Globaltech GlobalTech Corp.
+
+Against every company in the index under its present names: 996 company days on 269 companies before first prices;
+from the first prices the fixtures carry, 363 on 81 pages, 183 before 2017 (Apple 68, Qualcomm 19, Microsoft 18,
+Honeywell 14, AMD 11, Intel 10); a company's EDGAR former names, which ingest reads, add more (Research In Motion for
+BlackBerry, Sony Corporation for Sony Group). Read by hand: 30 drawn at random, every one the company's own case.
+The notices are the Commission's own work in the Federal Register, public domain, credited to the U.S.
+International Trade Commission.
+
 ### The SEC News Digest (`lib/secDigest.ts`, `lib/ingest/secDigestWalk.ts`)
 
 A source since batch 102 (`sec_digest`, the 2026-11-02 proposal 1: the owner asked for a count

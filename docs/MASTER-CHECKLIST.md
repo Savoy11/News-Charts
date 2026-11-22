@@ -988,6 +988,64 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 167: the ITC's Section 337 investigations, 1995 on (2026-11-22)
+
+The owner's call of 2026-11-22 on the batch 165 proposals ("Approve all three (Recommended)"), its #2, after "Merge
+when green and continue": a second row on the day of the Commission's final determination, violation or not, with the
+exclusion order where it issued one; a settlement or a withdrawal a line on the institution's row.
+
+- [x] **A new source, 46, `itc_337`** (`lib/itc337.ts`, `lib/ingest/itcFor.ts`, `scripts/sync-itc.ts`): the
+      International Trade Commission's investigations of imports said to infringe a patent or a trademark, from the
+      Commission's Federal Register notices, whose titles name no company. The API lists 11,592 of its notices since 1994,
+      read year by year (33 requests); 1,140 are notices of institution by their abstract ("a complaint was filed …
+      under section 337 … on behalf of"), from 1995-01-19, each one's text read once from govinfo (1,140 requests, every
+      one answered 200). Seven reissued or corrected notices are merged into their investigations: 1,122.
+      `npm run sync:itc` writes the committed `data/itc-337.json.gz` (124 KB), asking only for notices it does not hold;
+      ingest asks nothing. The Commission's own database (337Info, from 1972) refused this container, as the scout found.
+- [x] **The parties**, a line or a block each (`readInstitution`): "(a) The complainant is …" to "(b) The respondents
+      are …" to "(c)", in the notices' variants (no verb in 2011 and 2012, a "(b)" glued to the line before in 2009, a
+      misnumbered "(4)" in 2020, a block with the address beneath its name in 2001, the list cut by the order's next
+      paragraph where no investigative attorney takes part, the summary's "on behalf of" where the list names none); an
+      entry ends at a state's ZIP code, a country or a full stop, and its name is its text before its address
+      (`partyName`), a piece of an address never a party ("P.O. Box" had named Box, Inc.). 1,640 complainants and 7,168
+      respondents.
+- [x] **The outcomes** (`noticeOutcome`): each investigation followed by its number through its later notices to the
+      last deciding it on the merits, a violation (with its exclusion order, limited or general, and cease and desist
+      orders) or none, including the Commission's decision not to review an initial determination finding none; else the
+      last ending it on a settlement, a consent order or the complaint's withdrawal. A review, a schedule, an extension
+      or a request for submissions decides nothing. 256 with a violation, 137 with none, 503 ended otherwise, 226 open or
+      ended in a way no notice title states. A decision on the merits is dated by the day the Commission issued it, read
+      from the notice's last lines (`issuedOn`, 390 notices, a median of six days before publication); a termination by
+      its notice's day.
+- [x] **The rule**: the merger notices' (`partyIsCompany`, shared now with lib/hsrEarly.ts), with this source's
+      `NOT_THE_COMPANY`, read by hand among the 428 matched names: Amtech Systems LLC of Albuquerque (337-TA-1234) off
+      ASYS, Australia's Globaltech (337-TA-1309) off GLTK. Old Broadcom Corporation's complaints before 2016-02-01 stay
+      off AVGO by the table of taken names (batch 165).
+- [x] **The rows**: one a company a day for the investigations instituted, "ITC instituted an investigation
+      (337-TA-1093) on Qualcomm Incorporated's complaint against Apple Inc.: certain mobile electronic devices …", with
+      the company's role, every party and, where it ended otherwise, the line saying how and when; it says a complaint is
+      an allegation and the notice decides nothing. One a company a day for the decisions on the merits, "ITC found a
+      violation of section 337 and issued a limited exclusion order and cease and desist orders in 337-TA-945 (Cisco
+      Systems, Inc.'s complaint against Arista Networks, Inc.)", 2017-05-30, saying a finding reaches the respondents
+      its notice names. Their ids are the investigations' numbers ("337-TA-945:final" for a decision), so a case of two
+      listed companies is on both pages, each saying "Also on" the other (db/057).
+- [x] **Measured** against every company in the index under its present names: 996 company days on 269 companies before
+      first prices; from the first prices the fixtures carry, 363 on 81 pages, 183 before 2017 (Apple 68, Qualcomm 19,
+      Microsoft 18, Honeywell 14, AMD 11, Intel 10, HP 9, Toyota 9). The scout estimated about 500 on pages. EDGAR's former
+      names, which ingest reads, add more (Research In Motion's on BB, Sony Corporation's on SONY). **Read by hand:** 30
+      drawn at random, every one the company's own case.
+- [x] **Wired** as source 45 was: registered (public domain, the Commission credited), quota, refresh, relevance (0.95),
+      `scripts/ingest.ts`, the footer and the terms, `check:contact` (45 files), a `check:live` case reading the API's
+      list for the year and govinfo's copy of 337-TA-1093's notice, the coverage map's header (46 sources).
+- [x] **Checks:** a new `check:itc` (30), in the chain: the list, the parties in each variant on a committed slice of
+      eleven notices (`scripts/fixtures/itc-notices.json.gz`, 16 KB), the outcomes, the committed file, the example cases
+      the proposal named (Qualcomm and Apple, Kodak and Apple and BlackBerry, Paice and Ford, Novartis and Regeneron,
+      Sony, Cisco and Arista's decision), the namesakes, the whole index pinned, ingest and the wiring; `check:also-on`
+      (db/057). On main the new check cannot run.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** www.federalregister.gov 33 (the year lists) and www.govinfo.gov 1,530 (every notice of institution and
+  each decision's notice, once), under "News Charts Research" with no address (`b167/requests.log`).
+
 ## NC ledger — batch 166: the merger waiting period's early terminations, 1994 on, and the 2026-11-22 approvals filed (2026-11-22)
 
 The owner's word, 2026-11-22: "Approve all three (Recommended)" to the batch 165 proposals, each with its recommended
@@ -12216,11 +12274,13 @@ already held, but new investment goes to securities coverage first.
         2017. The scout's estimate counted 31 transactions a page; the notices hold 36,895 dated grants in all.
       - *Derived from [`docs/proposals/2026-11-22-proposals.md`](proposals/2026-11-22-proposals.md) #1, approved
         2026-11-22.*
-- [ ] `P1` **The ITC's Section 337 investigations, 1995–2026:** approved by the owner 2026-11-22, with call (a), a second
+- [x] `P1` **The ITC's Section 337 investigations, 1995–2026:** approved by the owner 2026-11-22, with call (a), a second
       row on the day of the Commission's final determination, with any exclusion order; a settlement or withdrawal a
       line on the institution row. A new source, the Commission's Federal Register notices read from govinfo.
       - **Measured** by the scout: 228 complainant company days on 128 companies, 131 before 2017; **estimated** about
         500 with the respondents, off by half.
+      - **Done in batch 167** (see its section): 1,122 investigations; 996 company days on 269 companies before first
+        prices, 363 on 81 pages from the first prices the fixtures carry, 183 before 2017.
       - *Derived from [`docs/proposals/2026-11-22-proposals.md`](proposals/2026-11-22-proposals.md) #2, approved
         2026-11-22.*
 - [ ] `P2` **The FDA's own press releases and talk papers, 1962–2014:** approved by the owner 2026-11-22, with call (a), a

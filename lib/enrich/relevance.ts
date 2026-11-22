@@ -434,6 +434,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "nlrb_decisions") {
         return { score: 0.95, reason: "an NLRB decision in a case against the company or an election at it" };
       }
+      // …and an ITC Section 337 investigation naming the company as a complainant or a respondent
+      // (lib/itc337.ts, batch 167)
+      if (subject.kind === "company" && row.sourceKey === "itc_337") {
+        return { score: 0.95, reason: "an ITC import-ban investigation the company brought or faces" };
+      }
       // …and a grant of early termination of the merger waiting period naming the company as a party
       // (lib/hsrEarly.ts, batch 166)
       if (subject.kind === "company" && row.sourceKey === "hsr_early") {

@@ -54,6 +54,7 @@ import { digestFor, walkDigest } from "../lib/ingest/secDigestWalk";
 import { fdaApprovalsFor } from "../lib/ingest/fdaApprovalsFor";
 import { taaFor } from "../lib/ingest/taaFor";
 import { hsrFor } from "../lib/ingest/hsrFor";
+import { itcFor } from "../lib/ingest/itcFor";
 import { nlrbFor, walkNlrbOnce } from "../lib/ingest/nlrbWalk";
 import { fdaSupplementsFor } from "../lib/ingest/fdaSupplementsFor";
 import { fedPressFor } from "../lib/ingest/fedPressFor";
@@ -142,6 +143,8 @@ export const COMPANY_SOURCES = [
   "dol_taa",
   // …and the antitrust agencies' early terminations of the merger waiting period, 1994 on, where a party is the company (batch 166)
   "hsr_early",
+  // …and the ITC's Section 337 investigations, 1995 on, where the company is a complainant or a respondent (batch 167)
+  "itc_337",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
   // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
@@ -953,6 +956,16 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("hsr_early", `early terminations of the merger waiting period naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
     hsrFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
+
+  /**
+   * The ITC's Section 337 investigations, 1995 on (batch 167, the 2026-11-22 proposal 2): every
+   * investigation naming the company as a complainant or a respondent, from the committed file read
+   * monthly, by the merger notices' rule, from its first price; a row a day for those instituted and one for
+   * those decided on the merits, a settlement or a withdrawal a line on the institution's row. No request.
+   */
+  await run("itc_337", `ITC Section 337 investigations naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
+    itcFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
   );
 
   /**

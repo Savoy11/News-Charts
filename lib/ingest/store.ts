@@ -641,6 +641,24 @@ export const SOURCES: {
     reviewedOn: "2026-11-22",
     notes: "the antitrust agencies' grants of early termination of the Hart-Scott-Rodino waiting period, 1994 on, kept where the acquiring person, the acquired person or an acquired entity is a listed company by the caption rule and the release map (lib/hsrEarly.ts); the Federal Register's notices read monthly from govinfo and committed, no key (batch 166)",
   },
+  {
+    id: 46,
+    key: "itc_337",
+    name: "ITC Section 337 investigations",
+    license: "public domain",
+    attribution: "U.S. International Trade Commission",
+    // The notices are the Commission's own work, printed in the Federal Register, which this registry
+    // records as public domain (source 5), and read from govinfo, whose policies page (read 2026-11-22, as
+    // for source 45) states that "Copyright protection under this title is not available for any work of the
+    // United States Government" and asks that "customary credit should be given to the Government department
+    // or agency which prepared the material". No key is asked. Used: each investigation's number, products,
+    // complainants and respondents as the notice of institution names them, its outcome as the Commission's
+    // later notices state it, and the notices' numbers, days and links. Approved by the owner on 2026-11-22
+    // (docs/proposals/2026-11-22-proposals.md #2).
+    commercialOk: true,
+    reviewedOn: "2026-11-22",
+    notes: "the ITC's Section 337 investigations of imports said to infringe a patent or trademark, 1995 on, kept where a complainant or a respondent is a listed company by the merger notices' rule (lib/itc337.ts); instituted and decided on the merits, each on its day; the Federal Register's notices read monthly from govinfo and committed, no key (batch 167)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

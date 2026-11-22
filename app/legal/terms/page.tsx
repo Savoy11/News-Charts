@@ -55,7 +55,8 @@ export default function TermsPage() {
         from the Office of the Comptroller of the Currency, with the Office of Thrift Supervision&apos;s
         from its archive, trade adjustment certifications from the U.S. Department of Labor, decisions from
         the National Labor Relations Board, early terminations of the merger waiting period from the
-        Federal Trade Commission, material
+        Federal Trade Commission, Section 337 investigations from the U.S. International Trade Commission,
+        material
         from the
         Internet Archive, text from Wikipedia under CC BY-SA, and headlines that
         link to their publishers. Those sources&apos; own terms and licences apply to their content.

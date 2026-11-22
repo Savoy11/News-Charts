@@ -454,6 +454,20 @@ export const TAKEN_NAMES: Readonly<Record<number, TakenName>> = {
       "survivor, and took its name and its ticker: its 8-K filed 2024-04-03 reports it (items 2.01 and 5.03). CWBC's prices before are Central " +
       "Valley's, as Yahoo's splits show (the two-for-one of 2005-10-31 in Central Valley's 10-K filed 2006-03-24), so old Community West's past is another company's",
   },
+  // batch 165: found by the opportunity scout of 2026-11-22 in passing, read by hand as JCI's was; the scan
+  // matched "BROADCOM INC." to no older record, as EDGAR writes old Broadcom's "BROADCOM CORP"
+  1730168: {
+    ticker: "AVGO",
+    name: /\bBroadcom\b/i,
+    then: /\bAvago\b|\bPavonia\b/i,
+    from: "2016-02-01",
+    filing: "0001193125-16-446865",
+    kind: "bought",
+    why:
+      "Avago Technologies bought Broadcom Corporation (EDGAR CIK 1054374) on 2016-02-01, and its new parent, AVGO's predecessor record (CIK 1649338), took " +
+      "Broadcom's name that day: its 8-K12B filed 2016-02-02 reports it (items 2.01 and 5.03: it changed its name from Pavonia Limited to Broadcom " +
+      "Limited). AVGO's prices from 2009-08-06 are Avago's (its prospectus of that day, 0001193125-09-166258), so old Broadcom's past is another company's",
+  },
 };
 
 /**

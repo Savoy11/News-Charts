@@ -218,6 +218,22 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- **The 2026-11-22 proposals** (batch 165, `docs/proposals/2026-11-22-proposals.md`): mark each `APPROVED`,
+  `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a recurring charge: #1 and
+  #2 read the Federal Register's notices from govinfo, public domain by its stated notice; #3 is openFDA's, CC0.
+  1. `P1` the antitrust agencies' early terminations of the merger waiting period, 1995–2026: the day the FTC and the
+     Justice Department cleared each of the company's acquisitions, sales and stakes early. About 11,000 company days
+     from first prices, about 9,500 before 2017 (an estimate from 10 of 440 notices). Your call inside it: a row for
+     every grant naming the company (recommended), or only where it is the one bought or selling, about 40%.
+  2. `P1` the ITC's Section 337 investigations, 1995–2026: import-ban cases the company brought or faces. 228 company
+     days measured from the complainants, about 500 with the respondents (an estimate). Your call inside it: a
+     second row on the day of the final determination (recommended), or the institution row alone.
+  3. `P2` the FDA's own press releases and talk papers, 1962–2014: about 370 company days on 40 pages, 112 before 1993,
+     every kept row read by hand once. Your call inside it: a release on the day of an approval the page holds joins
+     that row (recommended), or takes its own.
+- **Nothing to apply for batch 165's Broadcom entry:** old Broadcom's past before 2016-02-01 leaves AVGO's page at
+  read time, and the next ingest of AVGO stores none of it.
+
 - ~~**The 2026-11-18 proposals** (batch 158, `docs/proposals/2026-11-18-proposals.md`): mark each `APPROVED`,
   `REJECTED` or `DEFERRED`, with a reason for a rejection. Neither needs a key, a paid tier or a recurring charge;
   both read federal sites, the Labor Department's under its stated public-domain terms and the NLRB's under your

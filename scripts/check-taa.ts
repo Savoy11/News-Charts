@@ -61,9 +61,10 @@ const EXPECTED = {
   // CPSC's units and the units named after their owners, 3,307 on 492, and 1,729 on 193, 1,441 before 2017, from first
   // prices, whose certifications it gave as 2,824, counting the petition numbers in the rows' text, which the
   // 900-character cap cuts: 3,298 by the rows' titles. Batch 164 reads GE's "GE …" businesses, AT&T's companies and
-  // ADM's two (the 2026-11-21 audit's finding 3): 98 more certifications, 58 more company days, T a page more.
-  total: 3_365,
-  companies: 493,
+  // ADM's two (the 2026-11-21 audit's finding 3): 98 more certifications, 58 more company days, T a page more. Batch
+  // 165's taken name takes old Broadcom's certification of 2013 off AVGO, whose first price the fixtures do not read.
+  total: 3_364,
+  companies: 492,
   // from first prices, for the 954 companies the fixtures read
   fromFirst: 1_787,
   fromFirstPages: 194,

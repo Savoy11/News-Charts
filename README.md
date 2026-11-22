@@ -643,8 +643,8 @@ revoked registrations naming a shell called "Telos, Inc." — were read by hand 
 CIK (`NOT_THE_COMPANY`). A company's rows of a day make one event, titled by its own party ("SEC
 litigation release: Transocean Inc."), with the whole caption, each release number and a
 proceeding's file number in its description. Read against every company in the index under its
-current names, the 30,747 rows give 1,195 company days on 373 companies, 588 of them before 2017
-(1,196 on 374 and 589 before batch 146 took old Johnson Controls' order of 2016 off JCI; 1,149 on 370
+current names, the 30,747 rows give 1,194 company days on 372 companies, 587 of them before 2017
+(1,195 on 373 and 588 before batch 165 took old Broadcom's case of 2008 off AVGO; 1,196 on 374 and 589 before batch 146 took old Johnson Controls' order of 2016 off JCI; 1,149 on 370
 and 555 before batch 145's brokers', banks' and managers' companies) (Bank of America 73, Morgan Stanley 73, JPMorgan 52, Citigroup 49, Wells Fargo 47, UBS Group 47,
 Goldman Sachs 20); a company's former names add more, and its first price keeps it off the years
 before it listed. A party ends before its other name ("…, L.P. f/k/a Spear, Leeds & Kellogg") as it
@@ -1166,7 +1166,7 @@ search for the petition's number, where its notice is; an earlier one gives the 
 30 company days drawn at random in batch 159 and 30 of those batch 160 added, every one the company's own
 plant, office or unit.
 
-Against every company in the index, before first prices: 3,365 company days on 493 companies; from first
+Against every company in the index, before first prices: 3,364 company days on 492 companies; from first
 prices, 1,787 on 194 pages, 1,481 before 2017, 3,396 certifications (GE 182, Honeywell 95, IBM 86,
 Weyerhaeuser 66, RTX 51, Ford 42, Goodyear 34, International Paper 34, Halliburton 33, Xerox 33). The Department's terms
 (read 2026-11-10 for MSHA): "Materials created by the federal government are generally part of the public
@@ -1524,7 +1524,7 @@ Schering-Plough or its Organon and not Merck. One naming both is old Merck's his
 
 **A record that took another company's name never takes that company's past** (batch 117). SBC's
 record took AT&T's name in 2005, ACE's Chubb's in 2016, Norwest's Wells Fargo's in 1998, TGC's
-Dawson's in 2015: 32 such records are in one table (`lib/takenNames.ts`), each with the day the name
+Dawson's in 2015: 35 such records are in one table (`lib/takenNames.ts`), each with the day the name
 became the record's, read from a filing. Before that day, a row that names the taken name and none of the record's own
 names of then is the other company's: "AT&T Corp. cuts 7,000 jobs" of 2004 is not on T's page, while
 "SBC to acquire AT&T" is. Every source that finds a company by name reads the table (the caption
@@ -1533,8 +1533,10 @@ then, as are GDELT's months since batch 118), a page and its "Also on" leave sto
 and the record's own filings and prices are never read this way. On the saved sources it takes 15 rows off LIN (Linde AG's), SPB, HOS and FUN
 that nothing took off before. Batch 146 added JCI's, the owner's call decided on 2026-11-12: Tyco's
 record took Johnson Controls' name at their merger of 2016-09-02, and JCI's chart before is Tyco's, so
-old Johnson Controls' 39 EPA rows and its SEC order of 2016 left JCI's page. A committed scan of 174
-renamed records (JCI's read by hand, which the scan's name matching missed), each read
+old Johnson Controls' 39 EPA rows and its SEC order of 2016 left JCI's page. Batch 165 added AVGO's:
+Avago bought Broadcom Corporation on 2016-02-01 and its new parent took Broadcom's name that day, and
+AVGO's chart from 2009 is Avago's, so old Broadcom's trade certification of 2013 left AVGO's page. A committed scan of 175
+renamed records (JCI's and AVGO's read by hand, which the scan's name matching missed), each read
 (`scripts/fixtures/taken-names-scan.json`), keeps the table whole (`check:taken-names`).
 
 ```

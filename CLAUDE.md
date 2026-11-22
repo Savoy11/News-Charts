@@ -241,7 +241,7 @@ charts are the old companies', as Yahoo's splits show), and so are Lennar's, Hea
 Iron Mountain's (batch 133: Pacific Greystone's, Healthcare Trust of America's and Pierce Leahy's
 records, the charts' first prices older than those companies' own listings). The reverse, a record that took another
 company's name, never takes that company's past: one table, `TAKEN_NAMES` in `lib/takenNames.ts`
-(batches 117–118: 32 records, Tyco's took Johnson Controls' in batch 146 and Central Valley's Community West's in batch 149; SBC's took AT&T's name, ACE's Chubb's, Norwest's Wells Fargo's, TGC's
+(batches 117–118: 32 records, Tyco's took Johnson Controls' in batch 146, Central Valley's Community West's in batch 149 and Avago's parent Broadcom's in batch 165; SBC's took AT&T's name, ACE's Chubb's, Norwest's Wells Fargo's, TGC's
 Dawson's…, each day read from a filing), refuses a row before the day that names only the taken name
 and none of the record's own names of then. Every caption rule reads it (`takenBefore`), ingest
 drops such rows from every source found by name, news and the Federal Register included
@@ -250,7 +250,7 @@ Federal Register's years and GDELT's months before the day are asked under the r
 of then (`thenNameIn`; a record with none of its own, Linde plc's, keeps the present name,
 `noOwnNameBefore`); the record's own filings and prices are never read this way
 (`OWN_RECORD_SOURCES`). Add a takeover there, never as one source's entry; check:taken-names holds it
-to the committed scan of 174 renamed records (`scripts/fixtures/taken-names-scan.json`). A case
+to the committed scan of 175 renamed records (`scripts/fixtures/taken-names-scan.json`). A case
 source's answer is complete when it is built from data kept whole (`FetchResult.complete`), and a
 run then takes the company off that source's stored rows its rules no longer give it (`unlinkGone`,
 check:unlink); an answer from a capped API or a live feed is not.

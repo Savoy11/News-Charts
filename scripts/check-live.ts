@@ -62,6 +62,7 @@ import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
 import { TAA_FILE, readTaaPetitions } from "../lib/taaPetitions";
 import { fetchNlrbPage } from "../lib/nlrbDecisions";
 import { HSR_DATA, HSR_LIST, isGrantTitle, noticeText, readGrantNotice } from "../lib/hsrEarly";
+import { ITC_DATA, investigationNumbers, isInstitution, itcList, readInstitution, type ItcListed } from "../lib/itc337";
 import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { DRUGSFDA_ENTRY, DRUGSFDA_FILE, readSupplements } from "../lib/fdaSupplements";
@@ -999,6 +1000,28 @@ export const CASES: LiveCase[] = [
       if (!page.ok) return [...out, `govinfo's 05-10027: HTTP ${page.status}`];
       const jnj = readGrantNotice(await page.text(), { doc: "05-10027", published: "2005-05-19" }).find((g) => g.number === "20050796");
       if (jnj?.day !== "2005-05-02" || !/^Johnson & Johnson/.test(jnj.acquiring) || !/^Closure Medical/.test(jnj.acquired)) out.push(`20050796 reads ${JSON.stringify(jnj)}`);
+      return out;
+    },
+  },
+  {
+    name: "ITC Section 337 investigations — the Federal Register API's list of the Commission's notices as `npm run sync:itc` reads it, and govinfo's copy of a notice of institution (batch 167)",
+    covers: ["itc_337"],
+    hosts: ["www.federalregister.gov", "www.govinfo.gov"],
+    async run() {
+      // measured 2026-11-22: the Commission's notices of 2018 hold 337-TA-1093's institution, Qualcomm's complaint
+      // against Apple (2018-00105 of 2018-01-08 at govinfo); the committed file holds 1,129 investigations
+      const year = new Date().getUTCFullYear();
+      const res = await fetch(itcList(year), { headers: { ...UA, Accept: "application/json" }, signal: AbortSignal.timeout(60_000) });
+      if (!res.ok) return [`the list of ${year}: HTTP ${res.status}`];
+      const listed = ((await res.json()) as { results: ItcListed[] }).results;
+      const out: string[] = [];
+      const held = new Set((JSON.parse(gunzipSync(readFileSync(ITC_DATA)).toString()) as { cases: { notice: string }[] }).cases.map((c) => c.notice));
+      const newer = listed.filter((r) => isInstitution(r) && investigationNumbers(r).length && !held.has(r.document_number));
+      if (newer.length) out.push(`${newer.length} notices of institution the committed file does not hold (${newer.map((r) => r.document_number).slice(0, 3).join(", ")}): run npm run sync:itc`);
+      const page = await fetch(noticeText("2018-01-08", "2018-00105"), { headers: { ...UA }, signal: AbortSignal.timeout(60_000) });
+      if (!page.ok) return [...out, `govinfo's 2018-00105: HTTP ${page.status}`];
+      const parties = readInstitution(await page.text());
+      if (!parties.complainants.some((c) => /^Qualcomm/.test(c)) || !parties.respondents.some((r) => /^Apple Inc/.test(r))) out.push(`2018-00105 reads ${JSON.stringify(parties)}`);
       return out;
     },
   },

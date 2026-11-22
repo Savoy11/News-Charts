@@ -446,10 +446,18 @@ const CREDIT_UNION = /\bCredit\s+Union\b/i;
 const alnum = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 /** Whether one of a grant's parties is the company on the grant's day, by the units, the namesakes and the caption rule. */
-export function hsrPartyIsCompany(party: string, day: string, cik: number, names: () => string[]): boolean {
+export const hsrPartyIsCompany = (party: string, day: string, cik: number, names: () => string[]) =>
+  partyIsCompany(party, day, cik, names, (p) => !!NOT_THE_COMPANY[cik]?.some((r) => r.party.test(p)));
+
+/**
+ * Whether a party a notice names is the company on its day: a source's own namesakes refused (`refused`),
+ * then the units, the taken names and the caption rule, as the merger notices read their parties and the
+ * ITC's investigations theirs (lib/itc337.ts).
+ */
+export function partyIsCompany(party: string, day: string, cik: number, names: () => string[], refused: (party: string) => boolean): boolean {
   const p = party.trim();
   if (!p) return false;
-  if (CREDIT_UNION.test(p) || NOT_THE_COMPANY[cik]?.some((r) => r.party.test(p))) return false;
+  if (CREDIT_UNION.test(p) || refused(p)) return false;
   // a name the record took from another company is that company's before the day (lib/takenNames.ts)
   if (takenBefore(cik, day, p)) return false;
   const within = (u: { from?: string; to?: string }) => day >= (u.from ?? "") && (!u.to || day <= u.to);

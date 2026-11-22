@@ -184,6 +184,14 @@ year, the release map's units and EPA's and the CPSC's `UNITS` on their days, a 
 it, never a credit union or a namesake in `NOT_THE_COMPANY`; one row a company a day, an individual's filing labelled,
 its id the day's transaction numbers ("Also on", db/056). The row never says the deal closed.
 
+The ITC's Section 337 investigations since 1995 (`lib/itc337.ts`, batch 167) are the Commission's Federal Register
+notices, read from govinfo into the committed `data/itc-337.json.gz` (`npm run sync:itc`, monthly): a notice of
+institution by its abstract (`isInstitution`), its parties a line or a block each (`readInstitution`), the
+investigation followed by its number to the last notice deciding it on the merits, dated by the day the Commission
+issued it (`issuedOn`), or ending it otherwise (`noticeOutcome`). A party is a page's by the merger notices' rule
+(`partyIsCompany`), its namesakes in this source's `NOT_THE_COMPANY`; a row a company a day instituted and one
+decided, a settlement a line on the first, its id the investigations' numbers ("Also on", db/057).
+
 The SEC News Digest of 1956–1993 (`lib/secDigest.ts`, batch 102) is read once, issue by issue, into
 db/040's tables (`lib/ingest/secDigestWalk.ts`), and each company's own entries are found there at
 its ingest. Its names are dated by the committed `data/digest-records.json` (`npm run
@@ -212,16 +220,16 @@ run, and only Class I and II become rows. The map's days for the units bought an
 it: the file gives a bought unit's own past under its later name ("Boston Scientific CRM Corp" for Guidant's
 2005 recalls), so every such unit carries the day its owner took it.
 
-A row of one of the eleven multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
-CFTC, the EEOC, batch 155, the NLRB, batch 161, the merger waiting period's grants, batch 166) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
+A row of one of the twelve multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
+CFTC, the EEOC, batch 155, the NLRB, batch 161, the merger waiting period's grants, batch 166, the ITC's, batch 167) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
 and 25 more" (`lib/alsoOn.ts`, batch 106). A case is the same source's same number, compared as a set
 for a grouped row (db/041's index, with no pending list since db/042, batch 111: a GIN index's queue made
 every lookup read it); a release held once on several pages counts too. A page's links are found by
 db/042's `event_subjects (subject_id)` index; the key begins with the event. It is read
 beside `loadEvents` and never breaks a page; adding a multi-party source means adding it to
 `ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and the index's list, in a new migration that builds it again (db/053
-added the EEOC's, db/054 the NLRB's, db/056 the merger grants'), which check:also-on holds together. A row
-whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the NLRB's days, the merger grants' days) is stored again
+added the EEOC's, db/054 the NLRB's, db/056 the merger grants', db/057 the ITC's), which check:also-on holds together. A row
+whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the NLRB's days, the merger grants' days, the ITC's days) is stored again
 when its list grows, so its versions count once in "· N sources" (`GROUPED_ROW_SOURCES` in
 `lib/corroboration.ts`, batch 107); a new source that joins numbers goes there too, and check:also-on
 finds one that does not.
@@ -310,6 +318,7 @@ npm run sync:fda-supplements # rebuild data/fda-supplements.json from openFDA's 
 npm run sync:ots-orders     # rebuild data/ots-orders.json from the OTS archive the OCC keeps (closed: once, or if the OCC changes it)
 npm run sync:taa            # rebuild data/taa-certifications.json.gz from the Labor Department's petition zip (closed: once, or if check:live finds a later determination)
 npm run sync:hsr            # add the FTC's new grant notices to data/hsr-early-terminations.json.gz from govinfo (monthly; a notice the file holds is never asked again)
+npm run sync:itc            # add the ITC's new Section 337 notices to data/itc-337.json.gz from the Federal Register API and govinfo (monthly)
 ```
 
 The `check-*.ts` scripts in the `check` chain are offline by construction (network/fetch is

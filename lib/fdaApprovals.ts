@@ -122,7 +122,8 @@ export const APPLICANT_NAMES: Readonly<Record<number, { ticker: string; names: r
   200406: {
     ticker: "JNJ",
     names: [
-      { search: "Ortho", match: /^Ortho\b(?!\s+Clinical)/i, why: "Ortho Pharmaceutical, the company's since 1931, and Ortho Biotech" },
+      // never Ortho-Clinical Diagnostics, hyphened or not, which the recall map dates as J&J's to its sale of 2014-06-30 (batch 171)
+      { search: "Ortho", match: /^Ortho\b(?![\s-]+Clinical)/i, why: "Ortho Pharmaceutical, the company's since 1931, and Ortho Biotech" },
       { search: "RW Johnson", match: /^R\.?\s?W\.?\s+Johnson\b/i, why: "the R.W. Johnson Pharmaceutical Research Institute, the company's" },
       { search: "McNeil", match: /^McNeil\b/i, why: "McNeil Laboratories and McNeil Pharmaceutical, the company's" },
       { search: "Centocor", from: "1999-10-13", why: "bought in October 1999: from Centocor's Form 15 of 1999-10-13, which ends its own record" },

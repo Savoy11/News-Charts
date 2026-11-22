@@ -218,6 +218,21 @@ Not blocking launch, but they shape what gets built next:
 
 Raised by the November batches, each recorded in the master checklist:
 
+- **The 2026-11-22 second run's proposals** (batch 171, `docs/proposals/2026-11-22b-proposals.md`): mark each
+  `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a recurring
+  charge: #1 is openFDA's, CC0, like sources 40 and 47; #2 is the Federal Reserve Board's own work, public domain by
+  its stated notice; #3 is EUR-Lex's, reusable "for commercial or non-commercial purposes" with the credit
+  "© European Union".
+  1. `P1` the FDA's 510(k) device clearances, 1976–2026: each device the company was cleared to sell, about 12,000
+     company days from first prices, 3,296 before 1994 measured. Your call inside it: one row a company a month,
+     naming each device (recommended), or one a day.
+  2. `P1` the Federal Reserve's weekly actions on applications (H.2), 1996–2026: the banks' deals, which the merger
+     waiting period's grants hold few of, about 2,100 company days (an estimate, a floor). Your call inside it: the
+     Fed's actions alone (recommended), or each application on its Federal Register day too.
+  3. `P2` the European Commission's merger reviews, 1990–2026: the company's deals notified in Brussels, 888 company
+     days measured on 171 pages, 560 not near a held waiting-period row. Your call inside it: the clearance a line on
+     the notification's row (recommended), or a row of its own.
+
 - ~~**The 2026-11-22 proposals** (batch 165, `docs/proposals/2026-11-22-proposals.md`): mark each `APPROVED`,
   `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a recurring charge: #1 and
   #2 read the Federal Register's notices from govinfo, public domain by its stated notice; #3 is openFDA's, CC0.~~

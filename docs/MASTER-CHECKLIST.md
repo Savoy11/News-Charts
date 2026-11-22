@@ -988,6 +988,50 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 171: a second opportunity-scout run, three proposals for the owner, and Ortho-Clinical's hyphen (2026-11-22)
+
+The owner's word: "Merge when green and continue". The three proposals of 2026-11-22 are built (batches 166, 167,
+169) and batch 170 fixed their audit, so the `opportunity-scout` read the repository again at `89fce0c` and wrote
+`docs/proposals/2026-11-22b-proposals.md`: three proposals, all **PENDING**, ranked with securities depth first. No new
+source is built in this batch.
+
+- [ ] **Owner: mark each proposal `APPROVED`, `REJECTED` or `DEFERRED`** (with a reason for a rejection). The scout's
+      second pass then files the approved ones into this checklist.
+      1. `P1` **The FDA's 510(k) device clearances, 1976–2026.** openFDA's file, one CC0 zip of 250 MB, 176,683
+         decisions, 64,228 before 1994; unlike the PMA file cut on 2026-11-07, it keeps the applicant that filed.
+         **Measured** on the whole file with `approvalIsCompany`: 13,063 company days on 67 pages from first prices,
+         10,250 before 2017, 3,296 before 1994 (J&J 2,357, Medtronic 1,561, Stryker 1,383, BD 1,102, GE 1,066); a hand
+         read of 45 found 36 the company's own, 6 a unit's before it was bought, 2 a spun-off business's and one
+         namesake, so the build reads the units' days back to 1976. **Estimated:** about 12,000 once those are out.
+         **The owner's call inside it:** (a) one row a company a month, naming each device, a De Novo grant a row of
+         its own (recommended; 5,675 rows), or (b) one a day.
+      2. `P1` **The Federal Reserve's weekly H.2 actions on applications, 1996–2026.** 1,567 weekly PDFs, 1,052 before
+         2017: the banks' deals, largely exempt from the merger waiting period, 47 of 57 sampled decided by a Reserve
+         Bank or the Board's staff, which no held source carries. **Measured** on 40 weeks: 88 company days, every one
+         read by hand (57 deals or stakes, 23 routine actions, 8 namesakes by city). **Estimated:** about 2,100
+         company days, about 1,500 before 2017, a floor. **The owner's call inside it:** (a) the Fed's actions alone
+         (recommended), or (b) each application on its Federal Register day too.
+      3. `P2` **The European Commission's merger reviews, 1990–2026.** The EU Publications Office's keyless SPARQL list
+         of 10,290 notified mergers and 8,523 clearances, each notice's text read from EUR-Lex at its 10 s crawl
+         delay, its licence quoted ("re-use … for commercial or non-commercial purposes", credit "© European Union").
+         **Measured** on 10,000 titles by short name: 888 company days on 171 pages from first prices, 598 before 2017,
+         560 not within 90 days of a held waiting-period row; a hand read of 40 found 33 the company's own, 5
+         namesakes, so the build applies the caption rule to each notice's full names. **The owner's call inside
+         it:** (a) the clearance a line on the notification's row (recommended), or (b) a row of its own.
+- **Cut, with reasons in the file:** the National Response Center's spill reports (9–16 a year reach pages, the data
+  "INITIAL… not validated"); the Federal Register before 1994 (whole-issue scans, about 5 GB a year); the NRC's
+  reactor event reports (they name the plant, not the owner); defense.gov's contract announcements (403), DOE's
+  OE-417 outage reports (the proxy's 502) and BLS's work stoppages (403 without a contact); FRASER not tried.
+- [x] **Ortho-Clinical's hyphen**, the scout's closing note, read again here: `APPLICANT_NAMES`' "Ortho" names
+      (`lib/fdaApprovals.ts`) refused "Ortho Clinical" with a space only, so "Ortho-Clinical Diagnostics, Inc." was
+      J&J's on any day, after its sale to Carlyle on 2014-06-30 too, for the approvals, the efficacy supplements and
+      the warning letters that read the rule (no approval or held letter of it was found on JNJ). Now
+      `/^Ortho\b(?![\s-]+Clinical)/`: the recall map's Ortho Clinical, dated to 2014-06-29, is the only way it is J&J's.
+      `check:fda-approvals` 51 (one new); on main it fails.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** the scout's 93, every one logged (`/var/tmp/scout171/requests.log`), under "News Charts Research" with
+  no address, one at a time and at least 1.6 s apart; none to the SEC's hosts or the NLRB's. This batch made none.
+
 ## NC ledger — batch 170: the 2026-11-22 audit of batches 164–169, its findings fixed (2026-11-22)
 
 The owner's word: "Merge when green and continue". The `code-auditor` read batches 164–169 (`768e7e0..00c6c68`) and

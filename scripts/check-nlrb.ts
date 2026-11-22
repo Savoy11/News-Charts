@@ -70,21 +70,24 @@ const EXPECTED = {
   fromFirst: 41,
   fromFirstPages: 25,
   top: "KR 7, GE 4, ETR 3, BUD 2, CAT 2, GT 2, LMT 2, XOM 2",
-  // the night read of 2026-11-21, pages 0 to 339 (batch 162)
+  // the whole listing, its two night reads: pages 0 to 339 of 2026-11-21 (batch 162) and 339 to 666 of
+  // 2026-11-22 (batch 168); the night read of pages 0 to 339 gave 33,989 decisions, 1,159 company days on 283
+  // companies, and 568 on 123 pages from first prices, 496 before 2017
   night: {
-    pages: 340,
-    rows: 34_000,
-    decisions: 33_989,
-    first: "1969-09-16",
+    pages: 667,
+    rows: 66_646,
+    decisions: 66_635,
+    first: "1935-12-07",
     last: "2026-11-19",
     // the two misspelt numbers read as cases against the employer ("0 5-CA-31828", "090CA-010829")
-    kinds: { ulp: 24_602, representation: 4_563, none: 4_824 },
-    total: 1_159,
-    companies: 283,
-    fromFirst: 568,
+    kinds: { ulp: 35_129, representation: 24_474, none: 7_032 },
+    // batch 168 dates Fred Meyer as Kroger's from 1999-05-28, which takes its cases of 1963 and 1986 off KR
+    total: 2_169,
+    companies: 319,
+    fromFirst: 596,
     fromFirstPages: 123,
-    fromFirst2017: 496,
-    top: "KR 33, GE 28, RTX 25, WMT 22, XOM 19, BA 17, AEP 14, CAT 14, GT 13, PPG 13, VZ 13, PEP 12",
+    fromFirst2017: 524,
+    top: "KR 41, GE 28, RTX 27, WMT 22, BA 21, GT 20, XOM 19, AEP 14, CAT 14, PPG 13, VZ 13, IP 12",
   },
 };
 
@@ -238,8 +241,8 @@ async function main(): Promise<void> {
     after.length === EXPECTED.fromFirst && new Set(after.map((r) => r.ticker)).size === EXPECTED.fromFirstPages && top === EXPECTED.top,
     `${after.length} on ${new Set(after.map((r) => r.ticker)).size}; ${top}`);
 
-  console.log("\nThe night read of 2026-11-21: pages 0 to 339, refused at 340 (batch 162)");
-  const nightRead = JSON.parse(gunzipSync(readFileSync(join(__dirname, "fixtures", "nlrb-decisions-2026-11-21.json.gz"))).toString()) as {
+  console.log("\nThe whole listing, read on two nights: pages 0 to 339 of 2026-11-21, refused at 340, and 339 to 666 of 2026-11-22 (batches 162 and 168)");
+  const nightRead = JSON.parse(gunzipSync(readFileSync(join(__dirname, "fixtures", "nlrb-decisions-2026-11-22.json.gz"))).toString()) as {
     read: string;
     pages: number;
     rowsByPage: number[];
@@ -248,10 +251,12 @@ async function main(): Promise<void> {
   };
   const held: NlrbDecision[] = nightRead.decisions.map(([document, day, citation, name, caseNumber]) => ({ document, day, citation, name, caseNumber }));
   const heldKinds = held.reduce<Record<string, number>>((m, d) => ((m[nlrbKind(d.caseNumber) ?? "none"] = (m[nlrbKind(d.caseNumber) ?? "none"] ?? 0) + 1), m), {});
-  check(`${EXPECTED.night.pages} pages, every one full: ${EXPECTED.night.rows.toLocaleString("en-US")} rows, ${EXPECTED.night.decisions.toLocaleString("en-US")} dated decisions, ${EXPECTED.night.first} to ${EXPECTED.night.last}`,
-    nightRead.pages === EXPECTED.night.pages && nightRead.rowsByPage.every((n) => n === NLRB_PAGE_SIZE) && nightRead.rowsByPage.reduce((a, b) => a + b, 0) === EXPECTED.night.rows &&
-      held.length === EXPECTED.night.decisions && new Set(held.map((d) => d.document)).size === held.length && held[0].day === EXPECTED.night.first && held.at(-1)!.day === EXPECTED.night.last,
-    { pages: nightRead.pages, rows: nightRead.rowsByPage.reduce((a, b) => a + b, 0), decisions: held.length, first: held[0]?.day, last: held.at(-1)?.day });
+  const firstDay = held.find((d) => d.day >= ACT_DAY)?.day;
+  check(`${EXPECTED.night.pages} pages, every one full but the last: ${EXPECTED.night.rows.toLocaleString("en-US")} rows, ${EXPECTED.night.decisions.toLocaleString("en-US")} dated decisions, ${EXPECTED.night.first} to ${EXPECTED.night.last}, four the listing dates before the Act`,
+    nightRead.pages === EXPECTED.night.pages && nightRead.rowsByPage.slice(0, -1).every((n) => n === NLRB_PAGE_SIZE) && nightRead.rowsByPage.at(-1)! < NLRB_PAGE_SIZE &&
+      nightRead.rowsByPage.reduce((a, b) => a + b, 0) === EXPECTED.night.rows && held.length === EXPECTED.night.decisions && new Set(held.map((d) => d.document)).size === held.length &&
+      firstDay === EXPECTED.night.first && held.at(-1)!.day === EXPECTED.night.last && held.filter((d) => d.day < ACT_DAY).length === 4,
+    { pages: nightRead.pages, rows: nightRead.rowsByPage.reduce((a, b) => a + b, 0), decisions: held.length, first: firstDay, last: held.at(-1)?.day, beforeAct: held.filter((d) => d.day < ACT_DAY).length });
   check(`  …${EXPECTED.night.kinds.ulp.toLocaleString("en-US")} cases against employers, ${EXPECTED.night.kinds.representation.toLocaleString("en-US")} representation cases, ${EXPECTED.night.kinds.none.toLocaleString("en-US")} that are no employer's case`,
     heldKinds.ulp === EXPECTED.night.kinds.ulp && heldKinds.representation === EXPECTED.night.kinds.representation && heldKinds.none === EXPECTED.night.kinds.none, heldKinds);
   const formerOf = (cik: number) => {
@@ -266,6 +271,10 @@ async function main(): Promise<void> {
     return (year: number) => [...companyNames(title, namesForYear(year, newsNamesFor(cik), former)), ...(own ? [own] : []), ...[title, ...former.filter((f) => f.until >= `${year}-01-01`).map((f) => f.name)].map(withoutTag)];
   };
   const onHeld = (cik: number, from = "") => nlrbEvents(held, namesThen(cik), { cik, from, namesOn: (d) => releaseNamesOn(cik, d) });
+  // batch 168: the EEOC's units are read by this rule too, and Fred Meyer is Kroger's only from the merger of 1999-05-28
+  check("Fred Meyer, Inc.'s cases of 1963 and 1986 stay off KR, the merger with Kroger being of 1999-05-28; Fred Meyer Alaska's of 2001 lands",
+    !onHeld(56873).some((e) => e.date === "1963-02-07" || e.date === "1986-10-22") && onHeld(56873).some((e) => e.date === "2001-07-19") && EEOC_UNITS[56873][0].from === "1999-05-28",
+    onHeld(56873).filter((e) => /Fred Meyer/.test(e.title)).map((e) => e.date).slice(-3));
   const wmt = onHeld(104169, "1972-08-25");
   check("Walmart's decisions as Wal-Mart Stores, Inc., its EDGAR name to 2018-02-01, reach WMT under that former name, as ingest reads it: 22 days, 1973 to 2016",
     wmt.length === 22 && wmt.some((e) => e.date === "1973-01-12") && wmt.some((e) => e.date === "2016-08-27") && nlrbEvents(held, namesOf(104169), { cik: 104169, from: "1972-08-25" }).length < 22,

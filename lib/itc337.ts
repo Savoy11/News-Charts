@@ -137,10 +137,11 @@ export function readInstitution(page: string, abstract?: string | null): { compl
   const c = rest.search(/\n\s*\((?:c|3|4)\)\s|\n\s*(?:The Office of Unfair Import Investigations|For the investigation so instituted|Responses to the complaint|By order of the Commission)/);
   const complainantsBlock = a >= 0 && a < b ? text.slice(a, b).replace(/\(b\)\.?\s*$/, "").replace(/^\s*(?:\(a\)\s+)?The\s+complainants?(?:\s+(?:is|are))?\b\s*(?:--|:|-)?\s*/i, "") : "";
   const respondentsBlock = (c > 0 ? rest.slice(0, c) : rest.slice(0, 6000)).replace(/^\s*(?:\((?:b|\d)\)\.?\s+)?The\s+respondents?\b[^:\n]*?(?:\n[^:\n]*?){0,7}?(?::|--)\s*/i, "");
-  const complainants = entries(complainantsBlock).map(partyName).filter(Boolean);
+  const named = (block: string) => entries(block).map(partyName).filter((x) => !!x && !isAddressScrap(x));
+  const complainants = named(complainantsBlock);
   // a notice that names no complainant in its list has it in its summary: "on behalf of Akzo N.V. of Arnhem, The Netherlands"
   const byAbstract = flat(abstract).match(/on behalf of\s+(.+?)(?:,?\s+of\s+[A-Z][\w.' -]*,|,\s+\d|\s+\d{2,}|\.\s)/);
-  return { complainants: complainants.length || !byAbstract ? complainants : [partyName(byAbstract[1])], respondents: entries(respondentsBlock).map(partyName).filter(Boolean) };
+  return { complainants: complainants.length || !byAbstract ? complainants : [partyName(byAbstract[1])], respondents: named(respondentsBlock) };
 }
 
 const STATES =
@@ -156,7 +157,7 @@ const STATES =
  */
 const ENDS_ENTRY = new RegExp(
   String.raw`(?:\b(?:${STATES})\.?,?\s+\d{5}(?:-\d{4})?|\b[A-Z]\d[A-Z] ?\d[A-Z]\d|` +
-    String.raw`\b(?:Japan|China|Taiwan|Korea|Germany|France|Hong Kong|Canada|Netherlands|Israel|Sweden|Finland|Switzerland|United Kingdom|U\.K|UK|England|India|Italy|Spain|Mexico|Brazil|Singapore|Malaysia|Thailand|Vietnam|Australia|Belgium|Austria|Denmark|Norway|Ireland|P\.?R\.?C|Philippines|Indonesia|Turkey|Poland|Macau|Luxembourg|Liechtenstein|Czech Republic|Hungary|New Zealand|South Africa|Argentina|Chile|Colombia|Pakistan|Bangladesh|Sri Lanka|Cambodia|Scotland|Wales|Bermuda|Cayman Islands|British Virgin Islands|Republic|Kingdom|Province|ROC|R\.O\.C))\.?;?\s*(?:and)?\s*$|\.\s*$|;\s*(?:and)?\s*$`,
+    String.raw`\b(?:Japan|China|Taiwan|Korea|Germany|France|Hong Kong|Canada|Netherlands|Israel|Sweden|Finland|Switzerland|United Kingdom|U\.K|UK|England|India|Italy|Spain|Mexico|Brazil|Singapore|Malaysia|Thailand|Vietnam|Australia|Belgium|Austria|Denmark|Norway|Ireland|P\.?R\.?C|Philippines|Indonesia|Turkey|Poland|Macau|Luxembourg|Liechtenstein|Czech Republic|Hungary|New Zealand|South Africa|Argentina|Chile|Colombia|Pakistan|Bangladesh|Sri Lanka|Cambodia|Scotland|Wales|Bermuda|Cayman Islands|British Virgin Islands|Dominican Republic|Slovak Republic|ROC|R\.O\.C))\.?;?\s*(?:and)?\s*$|\.\s*$|;\s*(?:and)?\s*$`,
   "i",
 );
 
@@ -177,7 +178,25 @@ export function entries(block: string): string[] {
     }
     out.push(...byLines(chunk));
   }
-  return out.map((e) => e.replace(/\s+/g, " ").trim()).filter((e) => /[A-Za-z]/.test(e));
+  return out.map((e) => e.replace(/\s+/g, " ").replace(/(?<=[.A-Za-z]),(?=\d{3,}|[A-Z])/g, ", ").trim()).filter((e) => /[A-Za-z]/.test(e));
+}
+
+/** Words of a street address: an entry that begins with a number or an initial and holds one, and no legal word, is an address. */
+const STREET = /\b(?:Road|Rd|Street|Str|St|Avenue|Ave|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Highway|Parkway|Pkwy|Floor|Fl|Suite|Building|Bldg|District|Park|Plaza|Square|Section|Sec|Lu|Jie)\b\.?/;
+
+/**
+ * Whether a party read from an entry is a scrap of an address, not a party: a word the notice's line ran on with
+ * ("of Korea", "and/or"), fewer than three letters ("No"), or a street address ("338 Nanjing Road (West)", "E. Pratt
+ * Street") that holds no legal word (batch 170, the audit's finding 6).
+ */
+export function isAddressScrap(party: string): boolean {
+  // a fragment's first word; a name the company prints in lower case is a name ("lululemon athletica inc.", "nVidia Corporation")
+  if (/^(?:of|and\/or|or|the)\b/.test(party)) return true;
+  // a legal word, a suite or a postal code alone ("Inc.", "Ste", "L6T 5P6", "EC2V"), a note in brackets ("(SAR)")
+  if (/^(?:Inc|Ltd|Ste|Ind|Co|Corp|LLC)\.?$/.test(party) || /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$|^[A-Z]{1,2}\d[A-Z\d]?(?:\s?\d[A-Z]{2})?$/.test(party) || /^\(.*\)$/.test(party)) return true;
+  if (party.replace(/[^A-Za-z]/g, "").length < 3) return true;
+  const legal = /\b(?:Inc|Incorporated|Ltd|Limited|LLC|L\.L\.C|Co|Corp|Corporation|Company|GmbH|AG|S\.A|N\.V|B\.V|plc|PLC|Pte|Bhd|K\.K|Technologies|Electronics|Industries|Group|Holdings)\b/;
+  return (/^(?:\d|[A-Z]\.\s)/.test(party) || /^No\.?\s?\d/.test(party)) && STREET.test(party) && !legal.test(party);
 }
 
 function byLines(block: string): string[] {
@@ -191,7 +210,9 @@ function byLines(block: string): string[] {
       continue;
     }
     cur = cur ? `${cur} ${l}` : l;
-    if (ENDS_ENTRY.test(l)) {
+    // the entry so far, so a country the notice wraps ("Seoul, Republic / of Korea", "United / Kingdom") ends it
+    // whole, and a "Republic" or "Province" a line ends on ends none (batch 170, the audit's finding 6)
+    if (ENDS_ENTRY.test(cur)) {
       out.push(cur);
       cur = "";
     }
@@ -210,7 +231,8 @@ const LEGAL =
  * "d/b/a" kept for the caption rule.
  */
 export function partyName(entry: string): string {
-  const e = entry.replace(/^(?:and|&)\s+/i, "").replace(/^\(\d+\)\s*/, "").trim();
+  // …and a postal code the entry before left at its head ("516006 TTE Corporation", batch 170)
+  const e = entry.replace(/^(?:and|&)\s+/i, "").replace(/^\(\d+\)\s*/, "").replace(/^(?:\d{5,6}|\d{3}-\d{4})\s+(?=[A-Z][A-Za-z])/, "").trim();
   const pieces = e.split(/,\s+/);
   let name = pieces[0] ?? "";
   for (const p of pieces.slice(1)) {

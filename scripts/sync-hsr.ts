@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
 import { UA } from "../lib/contact";
-import { DATA_COLUMNS, HSR_DATA, HSR_LIST, type HsrGrant, isGrantTitle, noticeLines, noticeText, numbersIn, readGrantNotice } from "../lib/hsrEarly";
+import { DATA_COLUMNS, HSR_DATA, HSR_LIST, type HsrGrant, isGrantTitle, noticeLines, noticeText, numbersIn, readGrantNotice, sameDeal } from "../lib/hsrEarly";
 
 /**
  * Writes `data/hsr-early-terminations.json.gz` (batch 166): every grant of early termination of the
@@ -75,11 +75,17 @@ async function main(): Promise<void> {
     grants.push(...found);
   }
   read.sort((a, b) => a.published.localeCompare(b.published) || a.doc.localeCompare(b.doc));
-  // a transaction two notices both print is one grant, the first notice's
-  const seen = new Set<string>();
+  // a transaction two notices both print is one grant, the first notice's; a number two deals were given is two
+  // (`sameDeal`, batch 170)
+  const byNumber = new Map<string, HsrGrant[]>();
   const rows = grants
     .sort((a, b) => a.published.localeCompare(b.published) || a.notice.localeCompare(b.notice))
-    .filter((g) => !seen.has(`${g.number}@${g.day}`) && !!seen.add(`${g.number}@${g.day}`));
+    .filter((g) => {
+      const had = byNumber.get(g.number) ?? [];
+      if (had.some((h) => sameDeal(h, g))) return false;
+      byNumber.set(g.number, [...had, g]);
+      return true;
+    });
   const about =
     "The FTC's and the Justice Department's grants of early termination of the Hart-Scott-Rodino waiting period, as the Federal Register's notices list them " +
     `(${HSR_LIST.split("?")[0]}, the grant notices; each notice's text from govinfo.gov): each transaction's number, the day the waiting period was ended, ` +

@@ -1010,7 +1010,7 @@ export const CASES: LiveCase[] = [
     hosts: ["www.federalregister.gov", "www.govinfo.gov"],
     async run() {
       // measured 2026-11-22: the Commission's notices of 2018 hold 337-TA-1093's institution, Qualcomm's complaint
-      // against Apple (2018-00105 of 2018-01-08 at govinfo); the committed file holds 1,129 investigations
+      // against Apple (2018-00105 of 2018-01-08 at govinfo); the committed file holds 1,122 investigations
       const year = new Date().getUTCFullYear();
       const res = await fetch(itcList(year), { headers: { ...UA, Accept: "application/json" }, signal: AbortSignal.timeout(60_000) });
       if (!res.ok) return [`the list of ${year}: HTTP ${res.status}`];

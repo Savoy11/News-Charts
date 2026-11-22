@@ -145,13 +145,35 @@ export function splitParties(text: string): string[] {
   return [...byCommas(chunks[0] ?? ""), ...chunks.slice(1)];
 }
 
+/** What follows a comma in a party's own name, beyond its legal word: a partnership's or a person's tail, a trustee, a day's year. */
+const TAIL = /^(?:P\.?\s?A|M\.?\s?D|L\.?\s?C|S\.?\s?C|G\.?\s?P|C\.?\s?V|L\.?\s?L\.?\s?L\.?\s?P|Trustees?|[Dd]ebtor-in-[Pp]ossession|Sociedad\s+An[oó]nima(?:\s+de\s+C\.?\s?V)?|The|(?:19|20)\d\d)\b\.?\)?$/;
+/** A firm's first word printed before a comma ("Clayton, Dubilier & Rice", "Becton, Dickinson and Company"): one capitalised word. */
+const LONE = /^[A-Z][A-Za-z'-]+$/;
+/** A placeholder a notice names as a party of its own, never a firm's first word. */
+const PLACEHOLDER = /^(?:newco|newco-u\.s)$/i;
+/** The piece a comma-named firm's name ends in: one holding "&", "and", a legal word or a fund's word. */
+const FIRM_END = /&|\band\b|\bet al\b|\b(?:Inc|Incorporated|Co|Corp|Corporation|Company|Ltd|Limited|L\.?\s?P|L\.?\s?L\.?\s?C|Fund|Funds|Partners|Partnership|Investors|Equity|Capital|Holding|Holdings|Associates|Group)\b/;
+
 function byCommas(t: string): string[] {
   const out: string[] = [];
+  const open = (x: string) => (x.match(/\(/g) ?? []).length > (x.match(/\)/g) ?? []).length;
   for (const piece of t.split(/,\s+/)) {
-    if (out.length && (SUFFIX.test(piece) || /^\(/.test(piece) || /^(?:a|an)\s+\S+\s+(?:company|corporation|limited|partnership)\b/i.test(piece))) out[out.length - 1] += `, ${piece}`;
+    if (out.length && (SUFFIX.test(piece) || TAIL.test(piece) || open(out[out.length - 1]) || /^\(/.test(piece) || /^(?:a|an)\s+\S+\s+(?:company|corporation|limited|partnership)\b/i.test(piece))) out[out.length - 1] += `, ${piece}`;
     else out.push(piece);
   }
-  return out.map(tidy).filter(Boolean);
+  // a firm named with commas is one party: its lone first words joined to the piece its name ends in, as the
+  // notices of 1994–1998 print "Clayton, Dubilier & Rice Fund V Limited Partnership" or "Golder, Thoma, Cressey,
+  // Rauner Fund V, L.P." among the other parties (batch 170, the 2026-11-22 audit's finding 1)
+  const joined: string[] = [];
+  for (let i = 0; i < out.length; i++) {
+    let j = i;
+    while (j + 1 < out.length && LONE.test(out[j]) && !PLACEHOLDER.test(out[j]) && /^(?:[A-Z]|&|et al\b)/.test(out[j + 1]) && !/^(?:The|A|An)\s/.test(out[j + 1])) j++;
+    if (j > i && FIRM_END.test(out[j])) {
+      joined.push(out.slice(i, j + 1).join(", "));
+      i = j;
+    } else joined.push(out[i]);
+  }
+  return joined.map(tidy).filter(Boolean);
 }
 
 /** The parties of a run read in order: acquiring, acquired, the entities after. */
@@ -184,7 +206,29 @@ export function numbersIn(lines: readonly string[]): string[] {
 export function readGrantNotice(page: string, notice: { doc: string; published: string }): HsrGrant[] {
   // a transaction a notice prints twice is one grant
   const seen = new Set<string>();
-  return thirdIsAcquiring(readLayouts(page, notice).filter((g) => !seen.has(g.number) && !!seen.add(g.number)));
+  const grants = readLayouts(page, notice).filter((g) => !seen.has(g.number) && !!seen.add(g.number));
+  // a day that is no calendar day ("01/00/98") or that falls after the notice's own (a year misprinted, "06/16/07" in
+  // a notice of 1997) is no day: the grant is kept dayless and makes no row (batch 170, the audit's finding 2)
+  return thirdIsAcquiring(grants.map((g) => (g.day && !grantDayValid(g.day, notice.published) ? { ...g, day: "" } : g)));
+}
+
+/**
+ * Whether two grants under one transaction number are one deal two notices print (the later a reprint, kept once,
+ * the first notice's) or two deals the agencies gave one number (23 of the 63 printed twice, "19984717" both Morgan
+ * Stanley's Toy Biz and Cogeneration Corporation of America's purchase from Northern States Power): one when their
+ * acquiring or their acquired persons agree, letters and digits compared (batch 170, the audit's finding 3).
+ */
+export function sameDeal(a: Pick<HsrGrant, "acquiring" | "acquired">, b: Pick<HsrGrant, "acquiring" | "acquired">): boolean {
+  const key = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12);
+  return (!!key(a.acquiring) && key(a.acquiring) === key(b.acquiring)) || (!!key(a.acquired) && key(a.acquired) === key(b.acquired));
+}
+
+/** Whether a grant's day is a calendar day on or before its notice's publication. */
+export function grantDayValid(day: string, published: string): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  if (!m) return false;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return d.getUTCMonth() === Number(m[2]) - 1 && d.getUTCDate() === Number(m[3]) && day <= published;
 }
 
 const same = (a: string, b: string) => a.toLowerCase().replace(/[^a-z0-9]/g, "") === b.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -386,7 +430,8 @@ function readLayouts(page: string, notice: { doc: string; published: string }): 
     }
     // a wrapped line is indented, or, in the compact notices of 2011, begins its line after a text that has not ended
     const heading = /Party\s+name|ET\s+date|Trans\.?\s+No|FOR FURTHER INFORMATION|By direction|BILLING CODE|\[FR Doc/i.test(l);
-    if (cur && !heading && (/^\s{6,}\S/.test(l) || !/[.;]\s*$/.test(cur.text))) cur.text += ` ${l.trim()}`;
+    // a text ending in ";" goes on: "Becton, Dickinson and Company; Accuri Cytometers, Inc.;" and its third name (batch 170)
+    if (cur && !heading && (/^\s{6,}\S/.test(l) || !/\.\s*$/.test(cur.text))) cur.text += ` ${l.trim()}`;
     else if (cur && !/^\s/.test(l)) flush();
   }
   flush();
@@ -397,6 +442,18 @@ function readLayouts(page: string, notice: { doc: string; published: string }): 
 export const DATA_COLUMNS = ["number", "day", "acquiring", "acquired", "entities", "acquiringEntities", "notice", "published"] as const;
 
 let cached: { path: string; grants: HsrGrant[] } | null = null;
+
+const sharedCache = new WeakMap<readonly HsrGrant[], Set<string>>();
+/** The transaction numbers more than one grant of the file holds: two deals given one number. */
+export function sharedNumbers(grants: readonly HsrGrant[]): Set<string> {
+  const had = sharedCache.get(grants);
+  if (had) return had;
+  const seen = new Set<string>();
+  const out = new Set<string>();
+  for (const g of grants) (seen.has(g.number) ? out : seen).add(g.number);
+  sharedCache.set(grants, out);
+  return out;
+}
 
 /** Every grant in the committed file, read once a process. */
 export function hsrGrants(path = HSR_DATA): readonly HsrGrant[] {
@@ -537,8 +594,9 @@ export function hsrEvents(
   const byYear = new Map<number, string[]>();
   const yearNames = (year: number) => byYear.get(year) ?? byYear.set(year, namesIn(year)).get(year)!;
   const byDay = new Map<string, { g: HsrGrant; roles: HsrRole[] }[]>();
+  const shared = sharedNumbers(grants);
   for (const g of grants) {
-    if (g.day < from) continue;
+    if (!g.day || g.day < from) continue;
     const roles = hsrRoles(g, tag, () => [...yearNames(Number(g.day.slice(0, 4))), ...(namesOn?.(g.day) ?? [])]);
     if (!roles.length) continue;
     (byDay.get(g.day) ?? byDay.set(g.day, []).get(g.day)!).push({ g, roles });
@@ -573,7 +631,8 @@ export function hsrEvents(
         url: noticePage(one.g.notice),
         sourceKey: "hsr_early" as const,
         // the day's transaction numbers, compared as a set by "Also on" (lib/alsoOn.ts)
-        externalId: sorted.map((x) => x.g.number).join(","),
+        // a number two deals were given is the deal's with its day, so "Also on" never joins the two (batch 170)
+        externalId: sorted.map((x) => (shared.has(x.g.number) ? `${x.g.number}@${x.g.day}` : x.g.number)).join(","),
         dedupBasis: basis,
       };
     });

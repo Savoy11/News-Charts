@@ -192,6 +192,11 @@ async function main(): Promise<void> {
   check("  old Biogen's approvals before IDEC bought it and took its name on 2003-11-12 are no page's: Avonex (1996) and Amevive (2003-01-30); Tysabri (2004, Biogen Idec) and Spinraza (2016, Biogen) are BIIB's",
     pagesOf(named("Avonex")).length === 0 && pagesOf(named("Amevive")).length === 0 && on("BIIB", named("Tysabri")) && on("BIIB", named("Spinraza")) &&
       TAKEN_NAMES[rowOf("BIIB")[0]]?.from === "2003-11-12" && !NOT_THE_APPLICANT[rowOf("BIIB")[0]]);
+  // batch 171, the scout's note of 2026-11-22: the "Ortho" names let "Ortho-Clinical Diagnostics" through with its hyphen
+  const jnj = (applicant: string, day: string) => approvalIsCompany({ applicant, day }, rowOf("JNJ")[0], namesOf("JNJ"));
+  check("  Ortho Pharmaceutical, Ortho Biotech and Ortho-McNeil are J&J's; Ortho-Clinical Diagnostics, hyphened or not, only to its sale of 2014-06-30",
+    jnj("Ortho Pharmaceutical Corp", "1990-01-01") && jnj("Ortho Biotech Products", "2005-01-01") && jnj("Ortho-McNeil Pharmaceutical", "2001-01-01") &&
+      jnj("Ortho-Clinical Diagnostics, Inc.", "2010-01-01") && !jnj("Ortho-Clinical Diagnostics, Inc.", "2022-01-01") && !jnj("Ortho Clinical Diagnostics", "2022-01-01"));
   check("every hand-read name says why, and every day is a day",
     Object.values(APPLICANT_NAMES).every((c) => c.names.every((n) => n.why.length > 15 && [n.from, n.to].every((d) => d === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d)))) &&
       Object.entries(APPLICANT_NAMES).every(([cik, c]) => companies.some(([x, t]) => x === Number(cik) && t === c.ticker)));

@@ -59,6 +59,7 @@ import { readOccList } from "../lib/occActions";
 import { OTS_FILE, readOtsOrders } from "../lib/otsOrders";
 import { DigestBook, digestEntries, digestPdfText, fetchDigestArchive, fetchDigestIssue } from "../lib/secDigest";
 import { NME_FILE, readApprovals } from "../lib/fdaApprovals";
+import { FDA_HISTORY_FILE, readHistoricalDocuments } from "../lib/fdaHistory";
 import { TAA_FILE, readTaaPetitions } from "../lib/taaPetitions";
 import { fetchNlrbPage } from "../lib/nlrbDecisions";
 import { HSR_DATA, HSR_LIST, isGrantTitle, noticeText, readGrantNotice } from "../lib/hsrEarly";
@@ -1039,6 +1040,26 @@ export const CASES: LiveCase[] = [
       if (approvals.length < 1_387) out.push(`the workbook holds ${approvals.length} approvals, fewer than the 1,387 of 2026-11-06`);
       const prozac = approvals.find((a) => a.application === "18936");
       if (prozac?.day !== "1987-12-29" || prozac.applicant !== "Eli Lilly") out.push(`Prozac reads ${JSON.stringify(prozac)}`);
+      return out;
+    },
+  },
+  {
+    name: "FDA press releases and talk papers — openFDA's historical documents file as `npm run sync:fda-history` reads it (batch 169)",
+    covers: ["fda_history"],
+    hosts: ["download.open.fda.gov"],
+    async run() {
+      // measured 2026-11-22: 8,858 documents, last updated 2026-11-18, 6,179 of them of 1962 on with a day their
+      // head gives; the file ends in 2014, so a later document or a change of count means the sync is run again
+      const res = await fetch(FDA_HISTORY_FILE, { headers: { ...UA }, signal: AbortSignal.timeout(300_000) });
+      if (!res.ok) return [`the file: HTTP ${res.status}`];
+      const { documents, lastUpdated } = readHistoricalDocuments(new Uint8Array(await res.arrayBuffer()));
+      const out: string[] = [];
+      if (documents.length !== 8_858) out.push(`the file holds ${documents.length} documents, not the 8,858 of 2026-11-22: run npm run sync:fda-history`);
+      const dated = documents.filter((d) => d.day && d.year >= 1962).length;
+      if (dated < 6_179) out.push(`${dated} documents of 1962 on are dated, fewer than the 6,179 of 2026-11-22`);
+      const later = documents.filter((d) => d.year > 2014).length;
+      if (later) out.push(`${later} documents after 2014: run npm run sync:fda-history`);
+      if (lastUpdated && lastUpdated !== "2026-11-18") out.push(`last updated ${lastUpdated}, not 2026-11-18: run npm run sync:fda-history`);
       return out;
     },
   },

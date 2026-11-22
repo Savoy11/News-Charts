@@ -425,6 +425,42 @@ Walmart 5, then Abbott, Fresenius, Lilly and Medline 3 each; 44 of the 69 are ou
 Dashboard's API, which needs a registered key, and are not read. Public domain by the FDA's website
 policies; no key.
 
+### FDA press releases and talk papers, 1962–2014 (`lib/fdaHistory.ts`, batch 169)
+
+The FDA's own announcements in its own words, decades before the held FDA sources begin: Lilly's Ilosone, which the
+Bureau of Drugs asked Lilly's Dista Products to take off the market in 1979; GE's 14,000 defective sunlamp kits of
+1977; the seizure of Procter & Gamble's Citrus Hill "fresh" orange juice in 1991; and, from the 2000s, the first
+generic makers of a drug and the season's flu vaccines. Approved by the owner on 2026-11-22 (the 2026-11-22
+proposal 3), with call (a): a release of the day of an approval the page holds adds its sentence to that approval's
+row ("The FDA's press release that day: …", Amgen's Epogen of 1989, Pfizer's Diflucan of 1990, Abbott's Humira of
+2002) and makes no row of its own.
+
+openFDA publishes the agency's historical documents, press releases and talk papers of 1913–2014, as one keyless zip
+of OCR text (8,858 documents, last updated 2026-11-18). `npm run sync:fda-history` reads it once into the committed
+`data/fda-history.json.gz`; the file ends in 2014, so it is run again only after `npm run sync:tickers`, and ingest
+asks nothing. A document's day is the first its head gives in its own year (6,179 of those of 1962 on); one whose
+OCR spoils the day ("N0vember") makes no row. A company is named by the prose rule: its name of the year with a
+legal word after it ("Eli Lilly and Company", "Pfizer Inc."), or its whole name of two words or more printed
+capitalised ("Procter & Gamble"), never after another capitalised word, which makes it the end of another firm's
+name (Marion Merrell Dow Inc. is not Dow, Hoechst Celanese not Celanese, Dow Corning not Corning), unless that word
+is one a name follows ("by", "The", a town's "-based", a headline's last word in capitals); then the caption rule's
+guards, the table of taken names and the first price. A document naming more than two listed companies (a list of
+drug makers, a campaign's pharmacies) names none. Three rows the guard refuses the hand read keeps (`NAMED_BY_HAND`),
+each titled by the document's sentence saying what the FDA did: Mylotarg's withdrawal of 2010 on Pfizer, the skin
+tests of 1977 whose licences it moved to revoke on Lilly, the toys it banned in 1970 on Hasbro. Each row's title is the document's own sentence naming the
+company, its description the document's lead, as the OCR text gives them, the talk paper's note, the letterhead and
+the telephone numbers left off; a talk paper is said to be one, written for FDA staff answering questions.
+
+Every kept row was read by hand once, and 63 are refused by document and company (`REFUSED`): a namesake ("First
+National Stores", "Innovative Food Defense", Akzo's Organon of the 1970s to the 1990s), a person's employer, a
+newspaper quoted, a table or list of firms with no FDA action on the company's own product. A list that reports such
+an action is kept for each maker it names: Teva's and Sandoz's generic approvals, Sanofi Pasteur's flu vaccines each
+season. In the file: 530 documents naming a listed company, 476 company days on 79 companies before first prices;
+from the first prices the fixtures carry, 332 on 32 pages, 88 before 1993 (Lilly 53, Abbott 42, Pfizer 35, Johnson
+& Johnson 32, Teva 25, Novartis 24, Merck 18, Procter & Gamble 17, Sanofi 11, Gilead 9), and 39 approval rows that
+carry their day's release. openFDA's content is public domain under CC0 1.0; its header warns that results are
+unvalidated, and a row quotes the document, never rewrites it.
+
 ### Justice Department releases (`lib/doj.ts`)
 
 A company's page carries the Justice Department press releases in which it is a party, back to

@@ -71,7 +71,8 @@ export type SourceKey =
   | "dol_taa"
   | "nlrb_decisions"
   | "hsr_early"
-  | "itc_337";
+  | "itc_337"
+  | "fda_history";
 
 export interface TimelineEvent {
   id: string;

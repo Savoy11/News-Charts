@@ -988,6 +988,66 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 169: the FDA's own press releases and talk papers, 1962–2014 (2026-11-22)
+
+The owner's call of 2026-11-22 on the batch 165 proposals ("Approve all three (Recommended)"), its #3, after "Merge
+when green and continue": a release on the day of an approval the page holds adds its words to that approval's row and
+makes no row of its own; every kept row read by hand once.
+
+- [x] **A new source, 47, `fda_history`** (`lib/fdaHistory.ts`, `lib/ingest/fdaHistoryFor.ts`,
+      `scripts/sync-fda-history.ts`): openFDA's historical documents, the FDA's press releases and talk papers of
+      1913–2014 as OCR text, one keyless CC0 zip (13,869,827 bytes, 8,858 documents, last updated 2026-11-18).
+      `npm run sync:fda-history` reads it into the committed `data/fda-history.json.gz` (153 KB): the 6,179 documents of
+      1962 on whose head gives a day of their own year, of which 530 name a listed company in the index under its names
+      of the year, the aliases and the release map's units, each with its kind, day, lead and the sentence naming each
+      company. The file ends in 2014; the sync is run again only after `npm run sync:tickers`, and ingest asks nothing.
+- [x] **The prose rule** (`proseParty`): the company's name with a legal word after it, or its whole name of two words
+      or more printed capitalised ("Procter & Gamble"), a one-word name only with a legal word; never after another
+      capitalised word, which makes it the end of another firm's name (Marion Merrell Dow Inc., Hoechst Celanese,
+      Dow Corning, Blue Light, Alcon Universal; 28 rows off), unless that word is one a name follows (`LEADS`: "by",
+      "The", "Regarding"…; `BASED`: "Indianapolis-based"; a headline's last word in capitals before a name that is not,
+      "HUMAN INSULIN Eli Lilly and Company"); then the caption rule's guards, `takenBefore` and the first price. A
+      document naming more than two listed companies names none (`MOST_COMPANIES`). Of the 28 the guard takes off, the
+      hand read keeps three (`NAMED_BY_HAND`, each with the document's sentence saying what the FDA did, quoted for the
+      title): Mylotarg's withdrawal of 2010 on Pfizer, whose heading runs into "Pfizer Inc." with no stop; the skin
+      tests of 1977 whose licences the FDA moved to revoke, Lilly's after "Lederle Laboratories" in a table; and the
+      toys it banned in 1970, Hasbro's Kooky Eyes among them, before Hasbro's first price.
+- [x] **Read by hand:** every one of the 542 company rows the rule gives and the 28 its guard takes off, and 63 refused by document and CIK
+      (`REFUSED`, each with its day and reason): namesakes ("First National Stores", "Innovative Food Defense",
+      "Public Policy", "Career Education", "Value Line" canned goods, Akzo Nobel's Organon of 1977–1997, Global
+      Technologies, LLC), a person's employer (Abbott's and Coca-Cola's at a 1969 hearing, Lilly's in a biography), a
+      newspaper quoted (the New York Times, USA Today), and tables or lists of firms with no FDA action on the company's
+      own product (detergents' phosphates of 1971 and 1972, drugs in development of 1989–1994, a consortium's members).
+      A list that reports an action on each maker's product is kept for each: Teva's and Sandoz's generic approvals of
+      2006–2013, Sanofi Pasteur's flu vaccines approved each season of 2006–2012; Sanofi's 2005 supply update, a list of
+      distributors, is refused.
+- [x] **The rows:** one a company a day, its title the document's own sentence naming the company ("FDA talk paper:
+      ILOSONE FDA's Bureau of Drugs on Wednesday asked Dista Products Company, a division of Eli Lilly and Company, to
+      remove from the market voluntarily the antibiotic Ilosone"), its description the document's lead from after the
+      head's day, the talk paper's note, the letterhead and the telephone numbers left off, a talk paper said to be one;
+      linked to the dataset's page, the documents having none. A sentence is not cut at a title, an initial or a legal
+      word before a lower-case one ("Dr. Fu—Keun Lin of Amgen Inc."), and loses a talk paper's number, writer and day.
+- [x] **The owner's call:** a release of a day the page holds one of the company's new-drug approvals adds "The FDA's
+      press release that day: …" to the approval's row (`releasesByDay`, `approvalEvents`' `releases`) and makes no row:
+      39 approval rows, Epogen (1989) on Amgen, Diflucan (1990) on Pfizer, Humira (2002) on Abbott, Trulicity (2014) on
+      Lilly among them.
+- [x] **Measured** against every company in the index under its present names: 476 company days on 79 companies before
+      first prices; from the first prices the fixtures carry, 332 on 32 pages, 88 before 1993 (Lilly 53, Abbott 42,
+      Pfizer 35, Johnson & Johnson 32, Teva 25, Novartis 24, Merck 18, Procter & Gamble 17, Sanofi 11, Gilead 9). The
+      scout's estimate was 368 on 40 pages, 112 before 1993.
+- [x] **Wired:** `SOURCES` id 47 (CC0 1.0 by open.fda.gov/license, read 2026-11-22, as for source 40), its quota and
+      refresh, relevance 0.95, `COMPANY_SOURCES` and the ingest's run, `GROUPED_ROW_SOURCES` (a day's row joins its
+      documents' ids), the footer's and the terms page's credit, `sync:fda-history`, a `check:live` case
+      (download.open.fda.gov's count, update day and last year). No migration: the source is no "Also on" source.
+- [x] **Checks:** `check:fda-history` 32 (new, in the chain; fixture `scripts/fixtures/fda-history-documents.zip`,
+      twelve of openFDA's documents in its own zip); `check:also-on` (the grouped sources) and `check:contact` (46
+      files read the User-Agent) extended, and `check:fda-recalls`', `check:fda-approvals`' and `check:fda-supplements`' readings of the FDA's credit allow its
+      new words.
+      On main the new check cannot run and the two extended checks fail.
+- **The ledger:** no entry changes; 38 open, 104 closed, 11 parked, 17 blocked.
+- **Requests:** none. The zip is the copy the scout read from download.open.fda.gov on 2026-11-22 (batch 165), under
+  "News Charts Research" with no address.
+
 ## NC ledger — batch 168: the NLRB's whole listing, read on its second night, and Fred Meyer's day (2026-11-22)
 
 The owner's word: "Merge when green and continue". The second night read, scheduled for 2026-11-22 at 04:03 UTC, began
@@ -12324,10 +12384,13 @@ already held, but new investment goes to securities coverage first.
         prices, 363 on 81 pages from the first prices the fixtures carry, 183 before 2017.
       - *Derived from [`docs/proposals/2026-11-22-proposals.md`](proposals/2026-11-22-proposals.md) #2, approved
         2026-11-22.*
-- [ ] `P2` **The FDA's own press releases and talk papers, 1962–2014:** approved by the owner 2026-11-22, with call (a), a
+- [x] `P2` **The FDA's own press releases and talk papers, 1962–2014:** approved by the owner 2026-11-22, with call (a), a
       release on the day of an approval the page holds joining that row. A new source, openFDA's historical documents,
       one CC0 file read once and committed, every kept row read by hand once.
       - **Measured** by the scout: 368 company days on 40 pages, 112 before 1993.
+      - **Done in batch 169** (see its section): 530 documents naming a listed company, 63 rows refused and 3 kept by
+        hand; 476 company days on 79 companies before first prices, 332 on 32 pages from the first prices the fixtures
+        carry, 88 before 1993, and 39 approval rows carrying their day's release.
       - *Derived from [`docs/proposals/2026-11-22-proposals.md`](proposals/2026-11-22-proposals.md) #3, approved
         2026-11-22.*
 

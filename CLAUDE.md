@@ -192,6 +192,17 @@ issued it (`issuedOn`), or ending it otherwise (`noticeOutcome`). A party is a p
 (`partyIsCompany`), its namesakes in this source's `NOT_THE_COMPANY`; a row a company a day instituted and one
 decided, a settlement a line on the first, its id the investigations' numbers ("Also on", db/057).
 
+The FDA's own press releases and talk papers of 1962–2014 (`lib/fdaHistory.ts`, batch 169) are openFDA's historical
+documents, one CC0 zip of OCR text read once into the committed `data/fda-history.json.gz` (`npm run
+sync:fda-history`, again only after sync:tickers; the file ends in 2014): a document dated by its head in its own year
+(`headDate`), a company named by the prose rule (`proseParty`: its name with a legal word, or its whole name of two
+words or more printed capitalised, never after another capitalised word but the words a name follows, `LEADS`,
+`BASED` and a headline's capitals), then the caption rule and `takenBefore`. A document naming more than two listed
+companies names none; every kept row was read by hand once, and the refused are listed by document and CIK
+(`REFUSED`), the three the guard refuses and the hand read keeps with their quoted sentences (`NAMED_BY_HAND`). One row a company a day, its title the document's sentence naming the company (`sentenceAt`); a release
+of a day the page holds one of its approvals is a line on that approval's row instead (`releasesByDay`, the owner's
+call), never a row.
+
 The SEC News Digest of 1956–1993 (`lib/secDigest.ts`, batch 102) is read once, issue by issue, into
 db/040's tables (`lib/ingest/secDigestWalk.ts`), and each company's own entries are found there at
 its ingest. Its names are dated by the committed `data/digest-records.json` (`npm run

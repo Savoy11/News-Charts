@@ -659,6 +659,24 @@ export const SOURCES: {
     reviewedOn: "2026-11-22",
     notes: "the ITC's Section 337 investigations of imports said to infringe a patent or trademark, 1995 on, kept where a complainant or a respondent is a listed company by the merger notices' rule (lib/itc337.ts); instituted and decided on the merits, each on its day; the Federal Register's notices read monthly from govinfo and committed, no key (batch 167)",
   },
+  {
+    id: 47,
+    key: "fda_history",
+    name: "FDA press releases and talk papers, 1962–2014",
+    license: "public domain (CC0 1.0)",
+    attribution: "U.S. Food and Drug Administration (openFDA)",
+    // open.fda.gov/license, read 2026-11-11 for source 40 and again 2026-11-22: "unless otherwise noted, the
+    // content, data, documentation, code, and related materials on openFDA is public domain and made available
+    // with a Creative Commons CC0 1.0 Universal dedication… You can copy, modify, distribute and perform the
+    // work, even for commercial purposes, all without asking permission." The historical documents file is
+    // openFDA's own download, keyless, and its header points to those terms and warns "Do not rely on openFDA to
+    // make decisions regarding medical care… you should assume all results are unvalidated." Used: each
+    // document's kind, day, lead and the sentence naming the company, as the OCR text gives them. Approved by
+    // the owner on 2026-11-22 (docs/proposals/2026-11-22-proposals.md #3).
+    commercialOk: true,
+    reviewedOn: "2026-11-22",
+    notes: "the FDA's own press releases and talk papers of 1962–2014, kept where one names a listed company and at most one other by the prose rule, each kept row read by hand once (lib/fdaHistory.ts); a release of an approval's day joins that approval's row; openFDA's historical documents file read once and committed, no key (batch 169)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

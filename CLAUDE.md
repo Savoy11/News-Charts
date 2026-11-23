@@ -250,6 +250,21 @@ a company a day, its id the day's case numbers ("Also on", db/059); the first-ph
 line on it (`clearanceOf`, the owner's call); the row never says the deal closed. "© European Union,
 https://eur-lex.europa.eu".
 
+The European Commission's antitrust and cartel decisions since 1973 and its State aid notices and decisions
+(`lib/euAntitrust.ts`, batch 177) are the Official Journal's English titles the same endpoint lists year by year, two
+queries a year, each decision's text read once from CELLAR into the committed `data/eu-antitrust.json.gz` (`npm run
+sync:eu-antitrust`, monthly; needs pdftotext), which keeps only each text's addressee and fine passages, read at load. A
+draft, an agenda or a Euratom decision is none, and a decision held twice is one by its case and day (an archive scan's
+"2. VII. 1987" read, `decidedOn`). Its addressees are its own passages' (`decisionAddressees`): the article with their
+addresses (an item after a bare comma a name only with a legal word, a postcode or a street never), a summary's groups
+("— MAGNA: …", "for Dow: … from 1 July 1996"), the fines and the commitments; "made binding the commitments offered by"
+recalls an earlier decision and names one only where nothing else does. A fine (`decisionFines`) is whole euros with
+every name jointly liable, a parent liable for a part none, EUR 0 none. An addressee is a page's by the merger notices'
+rule on its full or short name ("Google"), its namesakes in `NOT_THE_COMPANY` ("Dow" off Dow Inc. before 2019-04-01),
+its units in `EU_UNITS`; a State aid title's beneficiary by the same rule, the row saying the company is the
+beneficiary. A bank's notes record takes none. One row a company a day, its id the day's case numbers ("Also on",
+db/061); the row says what the Commission did on its day, which can be appealed.
+
 The Federal Reserve's actions on applications since 1996 (`lib/fedH2.ts`, batch 173) are the Board's weekly H.2 release,
 each week's PDF read once with `pdftotext -layout` into the committed `data/fed-h2.json.gz` (`npm run sync:fed-h2`, weekly; a
 week the file holds is never asked again, a transfer cut short is not held, nor a week whose text gives no action, which fails
@@ -293,16 +308,16 @@ run, and only Class I and II become rows. The map's days for the units bought an
 it: the file gives a bought unit's own past under its later name ("Boston Scientific CRM Corp" for Guidant's
 2005 recalls), so every such unit carries the day its owner took it.
 
-A row of one of the fifteen multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
-CFTC, the EEOC, batch 155, the NLRB, batch 161, the merger waiting period's grants, batch 166, the ITC's, batch 167, the Fed's H.2 actions, batch 173, the EU's merger notifications, batch 174, the Supreme Court's decisions, batch 176) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
+A row of one of the sixteen multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
+CFTC, the EEOC, batch 155, the NLRB, batch 161, the merger waiting period's grants, batch 166, the ITC's, batch 167, the Fed's H.2 actions, batch 173, the EU's merger notifications, batch 174, the Supreme Court's decisions, batch 176, the EU's competition decisions, batch 177) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
 and 25 more" (`lib/alsoOn.ts`, batch 106). A case is the same source's same number, compared as a set
 for a grouped row (db/041's index, with no pending list since db/042, batch 111: a GIN index's queue made
 every lookup read it); a release held once on several pages counts too. A page's links are found by
 db/042's `event_subjects (subject_id)` index; the key begins with the event. It is read
 beside `loadEvents` and never breaks a page; adding a multi-party source means adding it to
 `ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and the index's list, in a new migration that builds it again (db/053
-added the EEOC's, db/054 the NLRB's, db/056 the merger grants', db/057 the ITC's, db/058 the Fed's H.2 actions, db/059 the EU's merger notifications, db/060 the Supreme Court's decisions), which check:also-on holds together. A row
-whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the FDA's warning letters' days, the EEOC's days, the NLRB's days, the merger grants' days, the ITC's days, the FDA's own releases' days, the FDA's clearances' months, the Fed's H.2 days, the EU's notification days, the Supreme Court's days) is stored again
+added the EEOC's, db/054 the NLRB's, db/056 the merger grants', db/057 the ITC's, db/058 the Fed's H.2 actions, db/059 the EU's merger notifications, db/060 the Supreme Court's decisions, db/061 the EU's competition decisions), which check:also-on holds together. A row
+whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the FDA's warning letters' days, the EEOC's days, the NLRB's days, the merger grants' days, the ITC's days, the FDA's own releases' days, the FDA's clearances' months, the Fed's H.2 days, the EU's notification days, the Supreme Court's days, the EU's competition days) is stored again
 when its list grows, so its versions count once in "· N sources" (`GROUPED_ROW_SOURCES` in
 `lib/corroboration.ts`, batch 107); a new source that joins numbers goes there too, and check:also-on
 finds one that does not.
@@ -396,6 +411,7 @@ npm run sync:fda-history    # rebuild data/fda-history.json.gz from openFDA's hi
 npm run sync:fda-clearances # rebuild data/fda-clearances.json.gz from openFDA's 510(k) file, streamed (monthly, and after sync:tickers)
 npm run sync:fed-h2         # add the Board's new weekly H.2 releases to data/fed-h2.json.gz (weekly; needs pdftotext; a week the file holds is never asked again)
 npm run sync:eu-mergers     # add the Official Journal's new EU merger notices to data/eu-mergers.json.gz from the Publications Office (monthly, and after sync:tickers; needs pdftotext)
+npm run sync:eu-antitrust   # add the Official Journal's new EU antitrust decisions and State aid titles to data/eu-antitrust.json.gz from the Publications Office (monthly; needs pdftotext; a decision's text the file holds is never asked again)
 npm run sync:supreme-court  # rebuild data/supreme-court.json.gz from govinfo's U.S. Reports and the Court's slip lists (monthly; needs pdftotext; a case's PDF the file holds read is never asked again)
 ```
 

@@ -223,8 +223,8 @@ async function main(): Promise<void> {
   check("  …the ingest asks it for every company", /await run\("eu_mergers", [^\n]+\n\s*euMergersFor\(client, subjectId, \{[^}]*cik: company\.cik, fundSeries \}\),/.test(read("scripts/ingest.ts")));
   check("  …synced monthly by `npm run sync:eu-mergers`, and credited with the European Union's notice",
     /"sync:eu-mergers": "tsx scripts\/sync-eu-mergers\.ts"/.test(read("package.json")) &&
-      /merger notifications from the European Commission&apos;s Official Journal \(© European Union, https:\/\/eur-lex\.europa\.eu\)/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
-      /merger notifications from the European Commission&apos;s Official Journal \(© European Union, https:\/\/eur-lex\.europa\.eu\)/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
+      /merger notifications (?:and competition decisions )?from the European Commission&apos;s Official Journal \(© European Union, https:\/\/eur-lex\.europa\.eu\)/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
+      /merger notifications (?:and competition decisions )?from the European Commission&apos;s Official Journal \(© European Union, https:\/\/eur-lex\.europa\.eu\)/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);

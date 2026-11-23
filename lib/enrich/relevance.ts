@@ -455,6 +455,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "supreme_court") {
         return { score: 0.95, reason: "a Supreme Court decision in a case naming the company as a party" };
       }
+      // …and a European Commission antitrust decision addressed to the company, or its State aid decision naming the
+      // company as the beneficiary (lib/euAntitrust.ts, batch 177)
+      if (subject.kind === "company" && row.sourceKey === "eu_antitrust") {
+        return { score: 0.95, reason: "a European Commission competition decision addressed to the company, or State aid it received" };
+      }
       // …and an FDA press release or talk paper of 1962–2014 naming the company, each kept row read by hand
       // (lib/fdaHistory.ts, batch 169)
       if (subject.kind === "company" && row.sourceKey === "fda_history") {

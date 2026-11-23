@@ -58,6 +58,7 @@ import { fdaClearancesFor } from "../lib/ingest/fdaClearancesFor";
 import { fedH2For } from "../lib/ingest/fedH2For";
 import { euMergersFor } from "../lib/ingest/euMergersFor";
 import { supremeCourtFor } from "../lib/ingest/supremeCourtFor";
+import { euAntitrustFor } from "../lib/ingest/euAntitrustFor";
 import { fdaHistoryFor } from "../lib/ingest/fdaHistoryFor";
 import { itcFor } from "../lib/ingest/itcFor";
 import { nlrbFor, walkNlrbOnce } from "../lib/ingest/nlrbWalk";
@@ -160,6 +161,8 @@ export const COMPANY_SOURCES = [
   "eu_mergers",
   // …and the Supreme Court's decisions, 1962 on, in the cases naming the company as a party (batch 176)
   "supreme_court",
+  // …and the European Commission's antitrust decisions addressed to the company, and its State aid naming it (batch 177)
+  "eu_antitrust",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
   // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
@@ -1032,6 +1035,16 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("supreme_court", `Supreme Court decisions naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
     supremeCourtFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
+
+  /**
+   * The European Commission's competition decisions, 1973 on (batch 177, the 2026-11-22c proposal 2): every antitrust and
+   * cartel decision in the committed file addressed to the company by name, with the fines its text states, and every
+   * State aid notice and decision naming it as the beneficiary, by the merger notices' rule, from its first price; one
+   * row a day. No request.
+   */
+  await run("eu_antitrust", `EU competition decisions naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
+    euAntitrustFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
   );
 
   /**

@@ -230,8 +230,9 @@ Raised by the November batches, each recorded in the master checklist:
   `pdftotext` on the host). No key. #2 is built in batch 177: after deploying, apply db/061 (`npm run db:migrate`), which
   builds the "Also on" index again with the Commission's competition decisions; its committed file
   (`data/eu-antitrust.json.gz`) is read at ingest, and `npm run sync:eu-antitrust` reads the Publications Office's year
-  lists monthly and each new decision's text once from CELLAR (needs `pdftotext`). No key. #3 (the EU courts' judgments)
-  is the next batch's.
+  lists monthly and each new decision's text once from CELLAR (needs `pdftotext`). No key. Batch 178 reads the examples batch 177
+  missed (Google Shopping, AstraZeneca, switchgear, Servier) from the same file; nothing more to apply. #3 (the EU
+  courts' judgments) is batch 179's.
 - ~~**The 2026-11-22 second run's proposals** (batch 171, `docs/proposals/2026-11-22b-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a recurring
   charge: #1 is openFDA's, CC0, like sources 40 and 47; #2 is the Federal Reserve Board's own work, public domain by

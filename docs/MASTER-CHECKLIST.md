@@ -988,6 +988,43 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 178: the proposal's own examples batch 177 missed, read (2026-11-23)
+
+The owner's word: "Merge when green and continue". Read against the proposal's own examples
+(`docs/proposals/2026-11-22c-proposals.md` #2), batch 177 left four of them off their pages: Google Shopping (2017), whose
+title writes "Commission decision" small; and AstraZeneca's of 2005, the switchgear cartel of 2007 and Servier's of 2014,
+whose texts name their addressees in wordings the reader did not know. Each was read again here.
+
+- [x] **The titles:** `isDecisionTitle` reads "decision" in either case: ten titles more, 869 listed, 689 decisions once
+      each. Nine of their texts were already held; Google Shopping's, which had answered 504 on 2026-11-22, was asked
+      again and answered (733 texts).
+- [x] **The wordings:** "The decision is addressed to the Swedish company AstraZeneca AB and the UK company AstraZeneca
+      Plc" (the nationality off, the two split), "This Decision was addressed to ABB Ltd, Alstom (Société Anonyme), …"
+      (a legal word in brackets counts), "The following companies were addressees of the Commission's decision: — Servier
+      S.A.S. — …", and "The specific fines imposed … were as follows:" (its "of Article 101" no next article); "Comcast
+      Corporation and its subsidiaries NBCUniversal LLC" two names, "Generics (UK) Limited" whole. 572 decisions name
+      their addressees (536 before).
+- [x] **One name once:** "Honda Motor Co." and "Honda Motor Co., Ltd.", "GrafTech International Ltd" and "…, Ltd" are one
+      (`nameKey`, the longer kept); "Les Laboratoires Servier and Servier Laboratories Limited" two, as the "and" rule no
+      longer joins two of one group's names. A fine whose names a list writes apart with semicolons is all of theirs.
+      130 decisions state their fines so (121 before).
+- [x] **Read by hand,** the 17 new matches: Google Shopping on GOOGL, AstraZeneca on AZN, the switchgear cartel on ABBNY,
+      HTHIY and AOMFF, Teva on TEVA, the smart card chips on IFNNY, PHG and HTHIY, Comcast's NBCUniversal decision of 2020,
+      Deutsche Telekom's of 2003, copper fittings on MLI, paraffin wax on SSL, Sanrio's, Itochu's of 2002, FMC's of 2010,
+      and Zoetis's in Lundbeck's case, by its own Zoetis Products LLC (`EU_UNITS`). Two refused (`NOT_THE_COMPANY`):
+      "IBP Limited", the British copper fittings maker of 2006, off Tyson, whose IBP is the meatpacker; "Merck", Merck
+      KGaA's short name in Lundbeck's decision of 2013, off Merck & Co.
+- [x] **Measured** under present names: 180 company days on 97 companies (163 on 93); from the fixtures' first prices, 89
+      rows on 48 pages, 55 before 2017 (83, 47 and 50). With EDGAR's former names for the bank-like companies: 187 on 100,
+      92 rows on 50 pages, 57 before 2017; 161 of the 189 matches antitrust, 28 State aid; by decade 9 in the 1980s, 9 in
+      the 1990s, 21 in the 2000s, 32 in the 2010s and 21 since. GlaxoSmithKline's decision of 2001 reaches GSK's page by
+      its EDGAR former name, which ingest reads and these counts do not.
+- [x] **Checks:** check:eu-antitrust 35 (32): the four texts added to the fixture, the small title, the wordings, the
+      semicolon list, the new namesakes and unit, the cases on their pages; every count again.
+- **The ledger:** no item opens or closes; 37 open, 105 closed, 11 parked, 17 blocked.
+- **Requests:** publications.europa.eu one, CELLAR's Google Shopping text (200), with the User-Agent "News Charts
+  Research" and no address.
+
 ## NC ledger — batch 177: the European Commission's antitrust and cartel decisions, 1973 on, and its State aid (2026-11-23)
 
 The owner's word: "Merge when green and continue", and the approval of the 2026-11-22c proposal 2 that day with call
@@ -12911,6 +12948,9 @@ already held, but new investment goes to securities coverage first.
       - **Done in batch 177** (see its section): 859 decisions and 1,909 State aid titles listed, 723 texts read, 680
         decisions once each, 536 naming their addressees; 163 company days on 93 companies, 83 on 47 pages from the
         fixtures' first prices, 50 before 2017; two namesakes refused, two units added.
+      - **Batch 178** read the examples batch 177 missed (Google Shopping, AstraZeneca, switchgear, Servier): 869 decisions,
+        733 texts, 572 naming their addressees; 180 company days on 97, 89 on 48 pages, 55 before 2017; four namesakes,
+        three units.
       - *Derived from [`docs/proposals/2026-11-22c-proposals.md`](proposals/2026-11-22c-proposals.md) #2, approved
         2026-11-22.*
 - [ ] `P2` **The EU courts' judgments in the company's own cases, 1954–2026:** approved by the owner 2026-11-22, with call
@@ -12920,7 +12960,7 @@ already held, but new investment goes to securities coverage first.
       - **Measured** by the scout: 17 company days in four sampled years of 5,151 titles; **estimated** about 260 over
         77,843 titles, which could be off by half.
       - *Derived from [`docs/proposals/2026-11-22c-proposals.md`](proposals/2026-11-22c-proposals.md) #3, approved
-        2026-11-22.* Next: batch 178.
+        2026-11-22.* Next: batch 179.
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

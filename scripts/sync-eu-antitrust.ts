@@ -104,7 +104,7 @@ async function main(): Promise<void> {
     antitrust.push(...listed.antitrust);
     stateaid.push(...listed.stateaid);
   }
-  // the lists of 2026-11-22 hold 859 decisions and 1,909 State aid titles; far fewer is a broken answer
+  // the lists of 2026-11-22 hold 869 decisions and 1,909 State aid titles; far fewer is a broken answer
   if (antitrust.length < 800 || stateaid.length < 1_800) throw new Error(`${antitrust.length} decisions and ${stateaid.length} State aid titles listed`);
   const read = new Map(held.texts.map((r) => [String(r[0]), r]));
   let fresh = 0;

@@ -61,21 +61,22 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
 /** The whole file as read on 2026-11-22, and every listed company in the index replayed against it. */
 const EXPECTED = {
-  listed: 859,
+  // 869 since batch 178 read the titles that write "decision" small (Google Shopping's among them)
+  listed: 869,
   stateAid: 1_909,
-  texts: 723,
+  texts: 733,
   // a decision printed whole and summarised, or held as the archive's copy and the Official Journal's, is one
-  decisions: 680,
-  withAddressees: 536,
+  decisions: 689,
+  withAddressees: 572,
   aidWithBeneficiary: 512,
   // every listed company in the index, under the rule, its names as the replay below builds them; the banks' notes records none
-  total: 163,
-  companies: 93,
+  total: 180,
+  companies: 97,
   // from first prices, for the companies the fixtures read
-  fromFirst: 83,
-  fromFirstPages: 47,
-  fromFirst2017: 50,
-  top: "AKZOY 6, BP 6, F 4, AAPL 3, DB 3, MA 3, MSFT 3, UBS 3, ADM 2, BAC 2",
+  fromFirst: 89,
+  fromFirstPages: 48,
+  fromFirst2017: 55,
+  top: "AKZOY 6, BP 6, F 4, AAPL 3, DB 3, FMC 3, MA 3, MSFT 3, PHG 3, UBS 3",
 };
 
 const companies = (tickerIndex as unknown as { companies: [number, string, string][] }).companies;
@@ -108,6 +109,10 @@ async function main(): Promise<void> {
     engines: "e24c5d59-314d-43fd-ab10-fcef39d8fda1",
     recycling: "55841383-465c-11f0-b9f2-01aa75ed71a1",
     canon: "3399ec62-4966-11ec-91ac-01aa75ed71a1",
+    astrazeneca: "bfa43878-6ff7-4657-92aa-ba4e8d5aca4d",
+    switchgear: "3f1fedd8-19f4-420b-860e-c162229e285a",
+    servier: "b3dc5ab7-9a76-11e6-9bca-01aa75ed71a1",
+    shopping: "26270830-f761-11e7-b8f5-01aa75ed71a1",
   };
 
   console.log("The titles");
@@ -117,7 +122,9 @@ async function main(): Promise<void> {
       !isDecisionTitle("1) AG 824 - 23.4.86 2) Special Chefs de Cabinet meeting - 18.4.86 Draft Commission Decision relating to a proceeding") &&
       !isDecisionTitle("94/285/Euratom: Commission Decision of 21 February 1994 relating to a procedure in application of the second paragraph of Article 83 of the Euratom Treaty") &&
       !isDecisionTitle("Commission communication on the implementation of Decision 90/413/Euratom of 1 August 1990 relating to a procedure") &&
-      isStateAidTitle("State aid — Ireland — State aid SA.38373 (2014/C) (ex 2014/NN) — Alleged aid to Apple — Invitation to submit comments pursuant to Article 108(2) TFEU"));
+      isStateAidTitle("State aid — Ireland — State aid SA.38373 (2014/C) (ex 2014/NN) — Alleged aid to Apple — Invitation to submit comments pursuant to Article 108(2) TFEU") &&
+      // batch 178: a title that writes "decision" small, Google Shopping's
+      isDecisionTitle("Summary of Commission decision of 27 June 2017 relating to a proceeding under Article 102 of the Treaty on the Functioning of the European Union and Article 54 of the EEA Agreement (Case AT.39740 — Google Search (Shopping))"));
   check("its day in every form a title writes it: \"of 27 June 2017\", \"(EU) 2017/1283 of 30 August 2016\", and the archive's scans' \"2. VII. 1987\", \"09.11.1987\", \"20. Vll. 1988\", \"26. 7. 88\", \"30 ApriI 1984\"",
     decidedOn("Commission Decision (EU) 2017/1283 of 30 August 2016 on State aid SA.38373") === "2016-08-30" &&
       decidedOn("COMMISSION DECISION of 2. VII. 1987 relating to a proceeding") === "1987-07-02" &&
@@ -173,7 +180,18 @@ async function main(): Promise<void> {
     autoliv.some((f) => f.amount === "121211000" && same(f.names, ["Autoliv, Inc.", "Autoliv B.V. & Co KG"])) && !autoliv.some((f) => /^0+$/.test(f.amount)) && decisionAddressees(text(W.autoliv)).includes("TKJP Corporation"), autoliv);
   const recycling = decisionAddressees(text(W.recycling));
   check("the end-of-life vehicles cartel (2025): all 34 addressees, Ford-Werke GmbH to the carmakers' association",
-    recycling.length === 34 && ["Ford-Werke GmbH", "Ford Motor Company", "General Motors Company", "Toyota Motor Corporation", "Stellantis N.V.", "Honda Motor Co."].every((n) => recycling.includes(n)), recycling.length);
+    recycling.length === 34 && ["Ford-Werke GmbH", "Ford Motor Company", "General Motors Company", "Toyota Motor Corporation", "Stellantis N.V.", "Honda Motor Co., Ltd."].every((n) => recycling.includes(n)), recycling);
+  const servierFines = decisionFines(text(W.servier));
+  check("batch 178's wordings: \"The decision is addressed to the Swedish company AstraZeneca AB and the UK company AstraZeneca Plc\" (2005), \"This Decision was addressed to ABB Ltd, Alstom (Société Anonyme), …\" (2007), \"The following companies were addressees of the Commission's decision: — Servier S.A.S. — …\" (2014)",
+    same(decisionAddressees(text(W.astrazeneca)), ["AstraZeneca AB", "AstraZeneca Plc"]) &&
+      ["ABB Ltd", "Alstom", "Hitachi Ltd", "Siemens AG", "Toshiba Corporation"].every((n) => decisionAddressees(text(W.switchgear)).includes(n)) &&
+      ["Servier S.A.S.", "Les Laboratoires Servier", "Teva Pharmaceutical Industries Ltd", "Mylan Inc."].every((n) => decisionAddressees(text(W.servier)).includes(n)),
+    [decisionAddressees(text(W.astrazeneca)), decisionAddressees(text(W.switchgear)).length, decisionAddressees(text(W.servier))]);
+  check("  …a fine whose names a list writes apart (\"(b) Servier S.A.S.; Les Laboratoires Servier; Servier Laboratories Limited, and Biogaran, jointly and severally liable: EUR 131 532 600\"), one name each; Google Shopping's EUR 2,424,495,000 on Alphabet Inc. and Google Inc.",
+    servierFines.some((f) => f.amount === "131532600" && same(f.names, ["Servier S.A.S.", "Les Laboratoires Servier", "Servier Laboratories Limited", "Biogaran"])) &&
+      servierFines.some((f) => f.amount === "15569395" && f.names.includes("Teva Pharmaceutical Industries Ltd")) && !servierFines.some((f) => f.names.some((n) => / and Servier/.test(n))) &&
+      decisionFines(text(W.shopping)).some((f) => f.amount === "2424495000" && same(f.names, ["Alphabet Inc.", "Google Inc."])),
+    servierFines.map((f) => `${f.names.join(" + ")}: ${f.amount}`));
   check("a scan read with pdftotext: Olivetti/Canon (1987), Canon Inc. among its addressees", decisionAddressees(text(W.canon)).includes("Canon Inc."), decisionAddressees(text(W.canon)));
   check("the file keeps of each text its passages alone, and reads the same addressees and fines from them as from the whole",
     Object.keys(slice.texts).every((w) => same(decisionAddressees(addresseeExcerpt(text(w))), decisionAddressees(text(w))) && same(decisionFines(addresseeExcerpt(text(w))), decisionFines(text(w)))),
@@ -201,14 +219,19 @@ async function main(): Promise<void> {
     !!apple.find((e) => e.date === "2012-12-12") && /invited comments on State aid SA\.38373/.test(apple.find((e) => e.date === "2014-10-17")?.title ?? "") &&
       /the company the aid's beneficiary \(Apple\), the member state the addressee/.test(apple.find((e) => e.date === "2016-08-30")?.description ?? "") && !apple.some((e) => e.date === "2013-07-25"),
     apple.map((e) => `${e.date} ${e.title.slice(0, 60)}`));
+  check("batch 178's cases on their pages: Google Shopping (2017-06-27) on Alphabet's, AstraZeneca's of 2005, Teva in Servier's case (2014-07-09), the switchgear cartel (2007-01-24) on ABB's; the copper fittings maker IBP Limited (2006) off Tyson's",
+    !!caseOn(1652044, "AT.39740", "2017-06-27") && on(901832).some((e) => e.date === "2005-06-15") && on(818686).some((e) => e.date === "2014-07-09") && on(1091587).some((e) => e.date === "2007-01-24") &&
+      !on(100493).some((e) => e.date === "2006-09-20") && !competitionPartyIsCompany("IBP Limited", "2006-09-20", 100493, () => ["Tyson Foods", "IBP"]),
+    [caseOn(1652044, "AT.39740")?.title, on(901832).map((e) => e.date), on(818686).map((e) => e.date), on(1091587).map((e) => e.date)]);
   check("Microsoft's 2004, 2009 and 2013 decisions; Intel's of 2009 and 2023; Ryanair's State aid on 14 days from 2007 (two decisions of 2014-07-23 one row)",
     ["2004-05-24", "2009-12-16", "2013-03-06"].every((d) => on(789019).some((e) => e.date === d)) && ["2009-05-13", "2023-09-22"].every((d) => on(50863).some((e) => e.date === d)) &&
       on(1038683).filter((e) => e.date >= "2007-01-01").length === 14 && /2 competition decisions/.test(on(1038683).find((e) => e.date === "2014-07-23")?.title ?? ""));
-  check("the namesakes refused: \"Dow\" of 2007 off Dow Inc. before 2019-04-01, \"Post\" of the postal operators off Post Holdings; every one says why",
+  check("the namesakes refused: \"Dow\" of 2007 off Dow Inc. before 2019-04-01, \"Post\" of the postal operators off Post Holdings, and since batch 178 \"Merck\", Merck KGaA's short name, off Merck & Co.; every one says why",
     !competitionPartyIsCompany("Dow", "2007-12-05", 1751788, () => ["Dow Inc", "Dow"]) && !competitionPartyIsCompany("Post", "1999-09-15", 1530950, () => ["Post Holdings", "Post"]) &&
+      !competitionPartyIsCompany("Merck", "2013-06-19", 310158, () => ["Merck & Co.", "Merck"]) && !on(310158).some((e) => e.date === "2013-06-19") &&
       !on(1751788).some((e) => e.date < "2019-04-01") && !on(1530950).length && Object.values(NOT_THE_COMPANY).flat().every((n) => n.why.length > 30));
-  check("the units: Ford-Werke on Ford's page in the vehicle recycling cartel (2025), BP Chemicals on BP's (1984, 1988); every unit says why",
-    /Ford-Werke GmbH/.test(caseOn(37996, "AT.40669")?.title ?? "") && ["1984-07-19", "1988-05-05"].every((d) => on(313807).some((e) => e.date === d)) && Object.values(EU_UNITS).flat().every((u) => u.why.length > 30),
+  check("the units: Ford-Werke on Ford's page in the vehicle recycling cartel (2025), BP Chemicals on BP's (1984, 1988), Zoetis Products LLC on Zoetis's in Lundbeck's case (2013, batch 178); every unit says why",
+    /Ford-Werke GmbH/.test(caseOn(37996, "AT.40669")?.title ?? "") && /Zoetis Products LLC/.test(caseOn(1555280, "AT.39226")?.title ?? "") && ["1984-07-19", "1988-05-05"].every((d) => on(313807).some((e) => e.date === d)) && Object.values(EU_UNITS).flat().every((u) => u.why.length > 30),
     caseOn(37996, "AT.40669")?.title);
   check("a row's id is the day's case numbers, compared as a set by \"Also on\"; its key the company and the day",
     adsense?.externalId === "AT.40411" && adsense.id === "eu-antitrust-1652044-2019-03-20" && adsense.dedupBasis === "eu-antitrust:1652044@2019-03-20");

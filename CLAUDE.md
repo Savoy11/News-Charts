@@ -254,13 +254,16 @@ The European Commission's antitrust and cartel decisions since 1973 and its Stat
 (`lib/euAntitrust.ts`, batch 177) are the Official Journal's English titles the same endpoint lists year by year, two
 queries a year, each decision's text read once from CELLAR into the committed `data/eu-antitrust.json.gz` (`npm run
 sync:eu-antitrust`, monthly; needs pdftotext), which keeps only each text's addressee and fine passages, read at load. A
-draft, an agenda or a Euratom decision is none, and a decision held twice is one by its case and day (an archive scan's
-"2. VII. 1987" read, `decidedOn`). Its addressees are its own passages' (`decisionAddressees`): the article with their
-addresses (an item after a bare comma a name only with a legal word, a postcode or a street never), a summary's groups
-("— MAGNA: …", "for Dow: … from 1 July 1996"), the fines and the commitments; "made binding the commitments offered by"
+draft, an agenda or a Euratom decision is none, a title's "decision" read in either case (Google Shopping's, batch 178),
+and a decision held twice is one by its case and day (an archive scan's "2. VII. 1987" read, `decidedOn`). Its addressees
+are its own passages' (`decisionAddressees`): the article with their addresses, "was addressed" or "The following
+companies were addressees" too (an item after a bare comma a name only with a legal word, a postcode or a street never),
+a summary's groups ("— MAGNA: …", "for Dow: … from 1 July 1996"), the fines (a list's "as follows" too) and the
+commitments, one name in its spellings once (`nameKey`: "Co." and "Co., Ltd."); "made binding the commitments offered by"
 recalls an earlier decision and names one only where nothing else does. A fine (`decisionFines`) is whole euros with
 every name jointly liable, a parent liable for a part none, EUR 0 none. An addressee is a page's by the merger notices'
-rule on its full or short name ("Google"), its namesakes in `NOT_THE_COMPANY` ("Dow" off Dow Inc. before 2019-04-01),
+rule on its full or short name ("Google"), its namesakes in `NOT_THE_COMPANY` ("Dow" off Dow Inc. before 2019-04-01,
+"Merck", Merck KGaA's, off Merck & Co.),
 its units in `EU_UNITS`; a State aid title's beneficiary by the same rule, the row saying the company is the
 beneficiary. A bank's notes record takes none. One row a company a day, its id the day's case numbers ("Also on",
 db/061); the row says what the Commission did on its day, which can be appealed.

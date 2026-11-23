@@ -522,7 +522,8 @@ https://eur-lex.europa.eu"; the Commission's reuse policy (Decision 2011/833/EU)
 
 The Commission's antitrust and cartel decisions addressed to the company, with the fines their texts state, and its State
 aid notices and decisions naming the company as the aid's beneficiary: Microsoft's of 2004, 2009 and 2013, Intel's of
-2009 and 2023, Google's Android (2018) and AdSense (2019) decisions on Alphabet's page, the forex and bond cartels on the
+2009 and 2023, Google's Shopping (2017), Android (2018) and AdSense (2019) decisions on Alphabet's page, AstraZeneca's of
+2005, the switchgear cartel on ABB, Alstom and Hitachi (2007), Teva in Servier's case (2014), the forex and bond cartels on the
 banks (JPMorgan, Citigroup, Barclays, UBS, Deutsche Bank, HSBC, Bank of America), the trucks, car-recycling and occupant
 safety cartels on PACCAR, Ford, GM, Toyota, Honda, Stellantis and Autoliv, Apple's, Amazon's, Starbucks's, McDonald's and
 Nike's tax rulings and Ryanair's airport aid. Approved by the owner on 2026-11-22 (the 2026-11-22c proposal 2) with call
@@ -532,39 +533,49 @@ addressees and "Fines: EUR 4,342,865,000 on Google"; a State aid row says the co
 state the addressee. A decision can be appealed to the EU courts, and the row says what the Commission did on its day.
 
 The Publications Office's SPARQL endpoint lists the Official Journal's English titles year by year, two queries a year:
-859 decisions "relating to a proceeding" from 1973-01-02, the first year of the English edition (an archive copy, a
-summary and the decision printed whole of one case and day are one, 680), and 1,909 State aid titles from 1976. The
+869 decisions "relating to a proceeding" from 1973-01-02, the first year of the English edition (an archive copy, a
+summary and the decision printed whole of one case and day are one, 689), and 1,909 State aid titles from 1976; a title
+that writes "Commission decision" small, Google Shopping's, is one since batch 178. The
 archive's drafts and meeting agendas, the Euratom safeguards decisions and the communications are not decisions and are
 not listed; the archive scans' days are read as they write them ("2. VII. 1987", "24.11.1987", "26. 7. 88"). Each
 decision's text is read once from CELLAR (its XHTML, else its HTML, else its PDF with pdftotext, a scan left unread where
-the same case and day is held as markup), 723 texts, 1.6 s apart; `npm run sync:eu-antitrust` commits the lists and each
-text's addressee and fine passages (`data/eu-antitrust.json.gz`, 250 KB), which the module reads at load, so a rule's
+the same case and day is held as markup), 733 texts, 1.6 s apart; `npm run sync:eu-antitrust` commits the lists and each
+text's addressee and fine passages (`data/eu-antitrust.json.gz`, 270 KB), which the module reads at load, so a rule's
 change needs no request. It runs monthly; ingest asks nothing. A year the endpoint lists shorter than the file holds fails
 the run with the file as it was.
 
-A decision's addressees are its own passages': its article "This Decision is addressed to: …" with their addresses (an
-item after a bare comma is a name only with a legal word; a postcode, a street, a building never), a summary's groups
+A decision's addressees are its own passages': its article "This Decision is addressed to: …" (or "was addressed", "The
+decision is addressed to the Swedish company AstraZeneca AB and the UK company AstraZeneca Plc", "The following companies
+were addressees of the Commission's decision: — Servier S.A.S. — …") with their addresses (an item after a bare comma is a
+name only with a legal word, "Alstom (Société Anonyme)" one; a postcode, a street, a building never), a summary's groups
 ("— MAGNA: Magna International Inc., …", "(b) for Dow: The Dow Chemical Company from 1 July 1996 to …"), its fines' list,
 the fines imposed and on whom, a finding of who infringed, and the commitments made binding; "made binding the
 commitments offered by the four publishers and Apple", which Penguin's decision of 2013 recalls of the 2012 one, names an
-addressee only where nothing else does. "The Shell Transport and Trading Company Ltd" is one name; the footnotes after a
-list are not read. 536 decisions name their addressees. A fine is whole euros (or ecus before 1999), never a float: "EUR
+addressee only where nothing else does. "The Shell Transport and Trading Company Ltd" is one name, "Les Laboratoires
+Servier and Servier Laboratories Limited" two, "Honda Motor Co." and "Honda Motor Co., Ltd." one; the footnotes after a
+list are not read. 572 decisions name their addressees. A fine is whole euros (or ecus before 1999), never a float: "EUR
 4,65 million" is 4,650,000, a fine owed jointly is one fine with every name liable for it, a parent liable for a part
-only ("of which EUR 1 921 666 000 jointly and severally with Alphabet") is given none, and an immunity's EUR 0 is no fine.
+only ("of which EUR 1 921 666 000 jointly and severally with Alphabet") is given none, an immunity's EUR 0 is no fine, and
+a list that writes one fine's names apart ("Servier S.A.S.; Les Laboratoires Servier; … jointly and severally liable: EUR
+131 532 600") gives it to them all. 130 decisions state their fines so.
 
 An addressee is the company's by the merger notices' rule on its full name or the short name the decision uses ("Google",
 "Intel", "Shell"), under its names of the year and the release map's units; the State aid beneficiary by the same rule on
 its title's phrase ("implemented by Ireland to Apple", "Excess profit exemption granted to St. Jude Medical", Abbott's
-since 2017). Every company's matched names were read by hand: two namesakes refused (`NOT_THE_COMPANY`: "Dow", The Dow
+since 2017). Every company's matched names were read by hand: four namesakes refused (`NOT_THE_COMPANY`: "Dow", The Dow
 Chemical Company's short name, off Dow Inc.'s record before 2019-04-01; "Post", the REIMS II decision's postal operators,
-off Post Holdings) and two units added (`EU_UNITS`: Ford-Werke on Ford, BP Chemicals on BP). The banks' notes records
+off Post Holdings; and since batch 178 "Merck", Merck KGaA's in Lundbeck's case, off Merck & Co., and "IBP Limited", the
+British copper fittings maker, off Tyson's) and three units added (`EU_UNITS`: Ford-Werke on Ford, BP Chemicals on BP,
+Zoetis Products LLC on Zoetis). The banks' notes records
 (UBS AG's, Barclays Bank PLC's) take none: their decisions are their groups' pages'. A decision of several listed
 companies says "Also on" (db/061).
 
-Against every company in the index under its present names: 163 company days on 93 companies; from the first prices the
-fixtures carry, 83 rows on 47 pages, 50 before 2017 (Akzo Nobel 6, BP 6, Ford 4, Apple 3, Deutsche Bank 3, Mastercard 3,
-Microsoft 3, UBS 3, ADM 2, Bank of America 2). With EDGAR's former names for the bank-like companies: 170 on 96, 86 rows
-on 49 pages, 52 before 2017; 144 of the 172 matches antitrust, 28 State aid. "© European Union,
+Against every company in the index under its present names: 180 company days on 97 companies; from the first prices the
+fixtures carry, 89 rows on 48 pages, 55 before 2017 (Akzo Nobel 6, BP 6, Ford 4, Apple 3, Deutsche Bank 3, FMC 3,
+Mastercard 3, Microsoft 3, Philips 3, UBS 3). With EDGAR's former names for the bank-like companies: 187 on 100, 92 rows
+on 50 pages, 57 before 2017; 161 of the 189 matches antitrust, 28 State aid (batch 177 measured 163, 83 and 172 before
+batch 178 read the wordings and titles it had missed). A company's EDGAR former names, which ingest reads and these
+counts do not, add more: GlaxoSmithKline's decision of 2001 is GSK's by its former name. "© European Union,
 https://eur-lex.europa.eu"; reuse under Decision 2011/833/EU, commercial use allowed. No key.
 
 ### Federal Reserve H.2 actions on applications, 1996–2026 (`lib/fedH2.ts`, batch 173)

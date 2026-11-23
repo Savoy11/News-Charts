@@ -16,11 +16,13 @@ import type { TimelineEvent } from "./types";
  * wordings, "relating to proceedings", "relating to a procedure"), its full text, its summary or the Commission's archive
  * copy, each read once from the Publications Office's document store, CELLAR, as batch 174 reads the merger notices; a
  * draft, a meeting's agenda and a Euratom safeguards decision are not listed (`isDecisionTitle`), and a decision held
- * twice is one by its case and day, the archive scans' days read ("2. VII. 1987", `decidedOn`). A decision's addressees
- * are its own passages' (`decisionAddressees`): "This Decision is addressed to: 1. … 2. …" with their addresses (an item
- * after a bare comma a name only with a legal word, a postcode or a street never), a summary's groups ("— MAGNA: Magna
- * International Inc., …", "(b) for Dow: The Dow Chemical Company from 1 July 1996 to …"), the fines' list, the fines
- * imposed and on whom, a finding of who infringed, and the commitments made binding; "made binding the commitments
+ * twice is one by its case and day, the archive scans' days read ("2. VII. 1987", `decidedOn`); a title's "decision" is
+ * read in either case (Google Shopping's "Commission decision", batch 178). A decision's addressees are its own passages'
+ * (`decisionAddressees`): "This Decision is addressed to: 1. … 2. …" with their addresses ("was addressed", "The
+ * following companies were addressees of the Commission's decision: — …" too; an item after a bare comma a name only with
+ * a legal word, a postcode or a street never), a summary's groups ("— MAGNA: Magna International Inc., …", "(b) for Dow:
+ * The Dow Chemical Company from 1 July 1996 to …"), the fines' lists, the fines imposed and on whom, a finding of who
+ * infringed, and the commitments made binding, one name in its spellings once (`nameKey`); "made binding the commitments
  * offered by" recalls an earlier decision's parties and is read only where nothing else names one. Its fines
  * (`decisionFines`) are whole euros or ecus, never a float, each with the names liable for it jointly, a parent liable
  * for a part only given none and an immunity's nothing no fine. An addressee is the company's by the merger notices' rule
@@ -68,8 +70,8 @@ export const FIRST_YEAR = 1960;
 const NOT_A_DECISION =
   /^(?:Case [CT]-|Cases [CT]-|Joined Cases|Judgment|Order|Action brought|Appeal brought|Reference for a preliminary|Opinion|Written question|Question|Corrigendum|Communication|Commission communication)|\bconcentration\b|EFTA Surveillance Authority|\bEuratom\b|\bDraft\b|Chefs de Cabinet|^(?:\d\)\s*)?(?:AG|OJ)\s+\d{3,4}\b/i;
 
-/** Whether a listed title is one of the Commission's antitrust decisions or their summaries. */
-export const isDecisionTitle = (title: string) => !NOT_A_DECISION.test(title) && /\b(?:Decision|DECISION)\b/.test(title);
+/** Whether a listed title is one of the Commission's antitrust decisions or their summaries ("Commission decision of 27 June 2017", Google Shopping's, written small). */
+export const isDecisionTitle = (title: string) => !NOT_A_DECISION.test(title) && /\bdecision\b/i.test(title);
 
 /** Whether a listed title is a State aid notice or decision (an invitation to comment opens a formal investigation). */
 export const isStateAidTitle = (title: string) =>
@@ -140,9 +142,12 @@ export function addresseeName(entry: string): string | null {
     .replace(/^(?:\(?[0-9]{1,2}[.)]|\(?[a-z]{1,3}\)|\(?[ivx]{1,5}\)|[—–•-])\s*/i, "")
     .replace(/^(?:and|the|to|on|each|for)\s+/i, "")
     .replace(/^(?:the\s+)?(?:undertakings?|companies|company|entities|legal entities|following)\s+/i, "")
+    // "the Swedish company AstraZeneca AB and the UK company AstraZeneca Plc"
+    .replace(/^(?:the\s+)?(?:\p{Lu}[\p{L}-]*\s+){1,2}(?:company|undertaking|parent company|holding company)\s+(?=\p{Lu})/u, "")
     .trim();
   // a short name in brackets and what follows it, closed or not: "Delivery Hero SE (‘Delivery Hero’)", "Glovoapp23 SA (‘Glovo’"
-  e = e.replace(/\s*\([\s\S]*$/, "");
+  // (a country's code in brackets inside the name stays: "Generics (UK) Limited", "Ranbaxy (U.K) Limited")
+  e = e.replace(/\s*\((?!\s*(?:U\.?K\.?|USA|U\.S\.A?\.?|US)\s*\)\s+\p{Lu})[\s\S]*$/u, "");
   // the period it is liable for: "Dow Deutschland Inc. from 1 July 1996 to 27 November 2001"
   e = e.replace(/\s+(?:from|between|until|for the period)(?:\s+(?:\d|the\b)[\s\S]*)?$/i, "");
   // the address after a comma, but a legal word written after its comma stays ("Ziegler, Inc.")
@@ -193,7 +198,9 @@ function addresseePassages(t: string): { whole: string; names: string; list: boo
   };
   const prose = (source: string) => new RegExp(source.replaceAll("STOP", STOP), "gu");
   // "This Decision is addressed to: 1. … 2. …", up to the signature or the next article
-  take(/\b(?:This|The) Decision (?:is|shall be) addressed to(?: the following (?:undertakings|companies|legal entities|entities|associations of undertakings))?(?: the undertakings listed (?:below|in the Annex(?: hereto)?))?\s*(?:\([^)]*\)\s*)?:?\s*([\s\S]{0,3000}?)(?=\s*(?:Done at|This Decision shall be enforceable|Article \d+\b|\(\d+\)\s|\(\s\d+\s\)\s+(?:OJ\b|[A-Z][a-z])|\d\.\s+[A-Z]{3,}|$))/g, true);
+  take(/\b(?:This|The) [Dd]ecision (?:is|was|shall be) addressed to(?: the following (?:undertakings|companies|legal entities|entities|associations of undertakings))?(?: the undertakings listed (?:below|in the Annex(?: hereto)?))?\s*(?:\([^)]*\)\s*)?:?\s*([\s\S]{0,3000}?)(?=\s*(?:Done at|This Decision shall be enforceable|Article \d+\b|\(\d+\)\s|\(\s\d+\s\)\s+(?:OJ\b|[A-Z][a-z])|\d\.\s+[A-Z]{3,}|$))/g, true);
+  // a summary's list: "5. ADDRESSEES (31) The following companies were addressees of the Commission's decision: — Servier S.A.S. — …"
+  take(/\bThe following (?:companies|undertakings|legal entities|entities) (?:were|are) (?:the )?addressees of (?:the Commission's |this |the )?[Dd]ecision:?\s*([\s\S]{0,3000}?)(?=\s*(?:Done at|Article \d+\b|\(\d+\)\s|\(\s\d+\s\)\s+(?:OJ\b|[A-Z][a-z])|\d\.\s+[A-Z]{3,}|$))/g, true);
   // "a fine of EUR 553 000 000 is imposed on each E.ON Ruhrgas, jointly and severally with E.ON, and GDF Suez"
   take(prose(String.raw`\bfines? of (?:EUR|ECU|ecu|units of account)\s?[\d  .,]+(?:\s*\([^)]*\))?(?:\s+each)?\s+(?:is|are|was|were|shall be|has been|have been) (?:hereby )?imposed (?:on|upon)\s+(?:each\s+)?([\s\S]{0,500}?)(?=STOP|\s+in respect\b|\s+for (?:the|its|their)\b|$)`));
   // "The Decision therefore only imposes fines on the undertakings NatWest, Nomura, Portigon, UBS and UniCredit.";
@@ -201,6 +208,9 @@ function addresseePassages(t: string): { whole: string; names: string; list: boo
   take(prose(String.raw`\bimposes? (?:a )?fines? (?:[^.]{0,80}? )?(?:on|upon) (?:the undertakings |the companies |each of )?([\s\S]{0,400}?)(?=STOP|\s+(?:for|in respect|with respect|totall?ing|amounting)\b|$)`));
   // "the final amount of the fine imposed on Alphabet Inc. and Google Inc. is: EUR 1 494 459 000"
   take(prose(String.raw`\bthe (?:final )?(?:amount of the )?fines? imposed on\s+([\s\S]{0,300}?)(?=\s+(?:is|are|amounts? to|for|in respect)\b|STOP|$)`));
+  // "The specific fines imposed for the infringement of Articles 101 and 102 of the Treaty were as follows: — For …: (a) …"
+  // ("of Article 101 of the Treaty" inside it is no next article)
+  take(/\bfines imposed\b[^:.]{0,200}?(?:were|are) as follows:\s*([\s\S]{0,4000}?)(?=\s*(?:Done at|\(\d+\)\s|\(\s\d+\s\)\s+(?:OJ\b|[A-Z][a-z])|\d\.\s+[A-Z]{3,}|$))/g, true);
   // "The following fines were imposed …: (i) Delivery Hero SE: EUR 223 285 000 (ii) …"
   take(/\bfollowing fines (?:are|were|shall be|have been) (?:hereby )?imposed[^:]{0,120}:\s*([\s\S]{0,3000}?)(?=\s*(?:Done at|Article \d+\b|\(\d+\)\s+[A-Z][a-z]|\(\s\d+\s\)\s+(?:OJ\b|[A-Z][a-z])|\d\.\s+[A-Z]{3,}|$))/g, true);
   // a commitments decision: "The Decision makes binding the commitments offered by Renfe"
@@ -212,14 +222,15 @@ function addresseePassages(t: string): { whole: string; names: string; list: boo
   return out;
 }
 
-/** A word that makes an item of an address list a name: a legal word, or a bank's or a group's ("JPMorgan Chase Bank"). */
-const LEGAL_WORD = new RegExp(`\\b(?:${LEGAL}|Co|Corp|Company|Bank|Banking|Association|Group|Holdings?)\\b`, "u");
+/** A word that makes an item of an address list a name: a legal word, its own words ("Alstom (Société Anonyme)"), or a bank's or a group's ("JPMorgan Chase Bank"). */
+const LEGAL_WORD = new RegExp(`\\b(?:${LEGAL}|Co|Corp|Company|Bank|Banking|Association|Group|Holdings?)\\b|Société|Societe|Sociedad|Società|Gesellschaft`, "u");
 /**
- * What separates the names of an entry: "jointly and severally with", "and" (never in "Deere and Company"), a group's
+ * What separates the names of an entry: "jointly and severally with", "and its subsidiaries" ("Comcast Corporation and its
+ * subsidiaries NBCUniversal LLC"), "and the UK company" (AstraZeneca's), "and" (never in "Deere and Company"), a group's
  * label's colon ("— MAGNA: Magna International Inc., …"), or a comma before a capital that begins no legal word
  * ("Ziegler, Inc." is one name).
  */
-const SEPARATOR = new RegExp(String.raw`(,?\s+jointly and severally with\s+|,\s+and\s+|\s+and\s+(?=\p{Lu})(?!(?:Company|Co)\b)|:\s+(?=\p{Lu}|\(\w{1,4}\)\s)|,\s+(?!(?:${LEGAL}|Co)\b)(?=\p{Lu}[\w&.'’-]*(?:\s+[\w&.'’-]+){0,5}(?:\s|$)))`, "u");
+const SEPARATOR = new RegExp(String.raw`(,?\s+jointly and severally with\s+|,?\s+and its (?:subsidiar(?:y|ies)|parent(?: company)?)\s+(?=\p{Lu})|\s+and\s+(?=the\s+(?:\p{Lu}[\p{L}-]*\s+){1,2}(?:company|undertaking)\s+\p{Lu})|,\s+and\s+|\s+and\s+(?=\p{Lu})(?!(?:Company|Co)\b)|:\s+(?=\p{Lu}|\(\w{1,4}\)\s)|,\s+(?!(?:${LEGAL}|Co)\b)(?=\p{Lu}[\w&.'’-]*(?:\s+[\w&.'’-]+){0,5}(?:\s|$)))`, "u");
 
 /**
  * A decision's addressees, as its own passages name them (`addresseePassages`): "This Decision is addressed to: 1. … 2.
@@ -245,9 +256,15 @@ export function decisionAddressees(text: string): string[] {
 function entryNames(entry: string, list: boolean): string[] {
   // its items with the separator before each: [item, separator, item, …]
   const parts = entry.split(SEPARATOR);
-  for (let k = parts.length - 2; k > 0; k -= 2)
-    if (/^\s+and\s+$/.test(parts[k]) && !LEGAL_WORD.test(parts[k - 1]) && !/[(\d]/.test(parts[k - 1]) && ENDS_LEGAL.test(parts[k + 1].trim().replace(/[.,]$/, "")))
-      parts.splice(k - 1, 3, `${parts[k - 1]} and ${parts[k + 1]}`);
+  const firstWord = (x: string) => x.trim().split(/\s+/)[0] ?? "";
+  const starts = new Set(parts.filter((_, j) => j % 2 === 0).map(firstWord));
+  for (let k = parts.length - 2; k > 0; k -= 2) {
+    const [left, right] = [parts[k - 1], parts[k + 1]];
+    // never two of one group's names: "Les Laboratoires Servier and Servier Laboratories Limited", "Coburg and Brose Verwaltung SE"
+    const another = left.split(/\s+/).includes(firstWord(right)) || parts.some((x, j) => j % 2 === 0 && j !== k + 1 && firstWord(x) === firstWord(right) && starts.has(firstWord(right)));
+    if (/^\s+and\s+$/.test(parts[k]) && !another && !LEGAL_WORD.test(left) && !/[(\d]/.test(left) && ENDS_LEGAL.test(right.trim().replace(/[.,]$/, "")))
+      parts.splice(k - 1, 3, `${left} and ${right}`);
+  }
   const out: string[] = [];
   for (let k = 0; k < parts.length; k += 2) {
     if (list && k > 0 && /^,\s+$/.test(parts[k - 1]) && !LEGAL_WORD.test(parts[k])) continue;
@@ -255,6 +272,16 @@ function entryNames(entry: string, list: boolean): string[] {
     if (n && !out.includes(n)) out.push(n);
   }
   return out;
+}
+
+/** A name's spellings as one: "Honda Motor Co." and "Honda Motor Co., Ltd.", "GrafTech International Ltd" and "…, Ltd". */
+export const nameKey = (name: string) => name.replace(/\bCo\.?,?\s+Ltd\.?$/i, "Co").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+
+/** Adds a name to a list unless a spelling of it is there; the longer spelling is kept. */
+function addName(out: string[], n: string): void {
+  const at = out.findIndex((x) => nameKey(x) === nameKey(n));
+  if (at < 0) out.push(n);
+  else if (n.length > out[at].length) out[at] = n;
 }
 
 /** The names a decision's passages give, each once. */
@@ -265,7 +292,7 @@ function passageNames(passages: { names: string; list: boolean }[]): string[] {
     const entries = passage
       .replace(/\s*:\s*(?:EUR|ECU)\s?[\d  .,]+(?:\s*million)?/g, ";")
       .split(/\s*;\s*|\s+(?=\(?\d{1,2}[.)]\s+\p{Lu})|\s+(?=[—–]\s*\p{Lu})|\.?\s+-\s+(?=\p{Lu})|\s+(?=\(?[a-z]{1,2}\)\s+\p{Lu})|\s+(?=\([ivx]{1,5}\)\s+\p{Lu})/u);
-    for (const entry of entries) for (const n of entryNames(entry, list)) if (!out.includes(n)) out.push(n);
+    for (const entry of entries) for (const n of entryNames(entry, list)) addName(out, n);
   }
   return out;
 }
@@ -294,8 +321,10 @@ export function addresseeExcerpt(text: string): string {
  * where a parent liable for a part only is given none. A fine the text states some other way is not read.
  */
 export function decisionFines(text: string): EuFine[] {
-  // the excerpt's passages are read apart, as a list's items are
-  const t = text.replace(/\s+/g, " ").replace(/\s*¶\s*/g, "; ");
+  // the names of one fine a list writes apart ("(b) Servier S.A.S.; Les Laboratoires Servier; … jointly and severally
+  // liable: EUR 131 532 600") are one fine's, as a semicolon after a figure or a bracket ends an item; the excerpt's passages
+  // are read apart, as a list's items are
+  const t = text.replace(/\s+/g, " ").replace(/(?<![\d)¶])\s*;\s+(?=\p{Lu})/gu, ", ").replace(/\s*¶\s*/g, "; ");
   const out: EuFine[] = [];
   const push = (who: string, cur: string, figure: string, million: string | undefined, partOnly?: string) => {
     const amount = amountOf(figure, !!million);
@@ -404,7 +433,7 @@ export function euAntitrust(path = EU_ANTITRUST_DATA): { decisions: readonly EuD
     const held = byKey.get(key);
     if (held) {
       // the decision's full text and its summary: their addressees and fines are one decision's
-      for (const a of t?.addressees ?? []) if (!held.addressees.includes(a)) held.addressees.push(a);
+      for (const a of t?.addressees ?? []) addName(held.addressees, a);
       for (const f of t?.fines ?? []) if (!held.fines.some((x) => x.amount === f.amount && x.names.join("|") === f.names.join("|"))) held.fines.push(f);
       held.read ||= !!t;
       continue;
@@ -437,6 +466,20 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; party: R
       why: "The Dow Chemical Company of before 2019 (\"Dow\" in the chloroprene rubber decision of 2007), whose own record is not Dow Inc.'s; Dow Inc. became its parent on the separation from DowDuPont of 2019-04-01",
     },
   ],
+  100493: [
+    {
+      ticker: "TSN",
+      party: /^IBP Limited$/,
+      why: "IBP Limited, the British copper fittings maker of the 2006 copper fittings decision, not IBP, inc., the meatpacker Tyson bought in 2001, which EPA's map gives Tyson",
+    },
+  ],
+  310158: [
+    {
+      ticker: "MRK",
+      party: /^Merck$/,
+      why: "\"Merck\", the Commission's short name for Merck KGaA of Darmstadt (Lundbeck's decision of 2013, Generics (UK)'s parent); Merck & Co. is MSD in the EU, and its own decisions name it in full",
+    },
+  ],
   1530950: [
     {
       ticker: "POST",
@@ -454,6 +497,13 @@ export const NOT_THE_COMPANY: Readonly<Record<number, { ticker: string; party: R
 export const EU_UNITS: Readonly<Record<number, { ticker: string; party: RegExp; from?: string; to?: string; why: string }[]>> = {
   37996: [{ ticker: "F", party: /^Ford[- ]Werke\b/, why: "Ford's German company, Ford-Werke, the company's own since 1925, through the record's life" }],
   313807: [{ ticker: "BP", party: /^BP Chemicals\b/, why: "BP's own chemicals company, named after it, through the record's life" }],
+  1555280: [
+    {
+      ticker: "ZTS",
+      party: /^Zoetis Products LLC$/,
+      why: "Zoetis's own company, named after it, an addressee of Lundbeck's decision of 2013 as Alpharma's successor; Zoetis's record begins in 2012",
+    },
+  ],
 };
 
 /** Whether a decision's addressee or an aid's beneficiary is the company on the day. */

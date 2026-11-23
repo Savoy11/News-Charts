@@ -751,6 +751,23 @@ export const SOURCES: {
     reviewedOn: "2026-11-22",
     notes: "the Supreme Court of the United States's decisions, 1962 on: the U.S. Reports volumes 368 on from govinfo and the Court's slip-opinion lists from the 2018 term, kept where a party the case's name gives is a listed company by the merger notices' rule with a legal word or a name of two words or more (lib/supremeCourt.ts); one row a company a day, its disposition and side; read monthly and committed, no key (batch 176)",
   },
+  {
+    id: 52,
+    key: "eu_antitrust",
+    name: "European Commission competition decisions",
+    license: "© European Union, reuse permitted (Decision 2011/833/EU)",
+    attribution: "© European Union, https://eur-lex.europa.eu",
+    // EUR-Lex's legal notice, as recorded for source 50 (read 2026-11-22): "The Commission's document reuse policy is based
+    // on Decision 2011/833/EU. Unless otherwise specified, you can re-use the legal documents published in EUR-Lex for
+    // commercial or non-commercial purposes." The decisions and notices are the Official Journal's, listed by the
+    // Publications Office's SPARQL endpoint and read from its document store, CELLAR, as for source 50; no key. Used: each
+    // antitrust decision's title, day, case number, its addressees as its own passages name them and the fines its text
+    // states, each State aid notice's or decision's title, day, case number and beneficiary, and links to EUR-Lex.
+    // Approved by the owner on 2026-11-22 (docs/proposals/2026-11-22c-proposals.md #2).
+    commercialOk: true,
+    reviewedOn: "2026-11-22",
+    notes: "the European Commission's antitrust and cartel decisions, 1973 on, kept where an addressee its text names is a listed company by the merger notices' rule, with the fines it states, and its State aid notices and decisions whose title names a listed company as the beneficiary (lib/euAntitrust.ts); one row a company a day; the Publications Office's lists and CELLAR's texts read monthly and committed, no key (batch 177)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

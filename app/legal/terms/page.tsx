@@ -57,7 +57,7 @@ export default function TermsPage() {
         from its archive, trade adjustment certifications from the U.S. Department of Labor, decisions from
         the National Labor Relations Board, early terminations of the merger waiting period from the
         Federal Trade Commission, Section 337 investigations from the U.S. International Trade Commission,
-        merger notifications from the European Commission&apos;s Official Journal (© European Union,
+        merger notifications and competition decisions from the European Commission&apos;s Official Journal (© European Union,
         https://eur-lex.europa.eu), decisions of the Supreme Court of the United States from the U.S. Reports on
         govinfo and the Court&apos;s own opinion lists,
         material

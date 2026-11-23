@@ -90,6 +90,7 @@ import { UA } from "../lib/contact";
 import { FED_H2_DATA, H2_INDEX, h2Pdf, indexWeeks, readH2 } from "../lib/fedH2";
 import { caseOf, cellarWork, firstParagraph, listedNotices, noticeParties, noticeQueryUrl, noticeText as euNoticeText, notifiedOn } from "../lib/euMergers";
 import { slipCases, slipList, volumeCases, volumeRecord } from "../lib/supremeCourt";
+import { caseNumbers as euCaseNumbers, decisionAddressees, decisionFines, decisionQueryUrl, isDecisionTitle, isStateAidTitle } from "../lib/euAntitrust";
 
 export type Verdict = "PASS" | "FAIL" | "UNREACHABLE" | "SKIPPED";
 
@@ -1092,6 +1093,32 @@ export const CASES: LiveCase[] = [
       if (found.length < 68) out.push(`the 2020 term's list gives ${found.length} opinions, fewer than the 68 of 2026-11-22`);
       const oracle = found.find((c) => c.docket === "18-956");
       if (oracle?.day !== "2021-04-05" || oracle.title !== "Google LLC v. Oracle America, Inc.") out.push(`No. 18-956 reads ${JSON.stringify(oracle)}`);
+      return out;
+    },
+  },
+  {
+    name: "European Commission competition decisions — the SPARQL lists of 2018 as `npm run sync:eu-antitrust` reads them, and CELLAR's text of AT.40099 (batch 177)",
+    covers: ["eu_antitrust"],
+    hosts: ["publications.europa.eu"],
+    async run() {
+      // measured 2026-11-22: 14 decisions and 12 State aid titles listed for 2018; AT.40099 Google Android, of 2018-07-18,
+      // addressed to Google and Alphabet, a fine of EUR 4,342,865,000 on Google
+      const out: string[] = [];
+      const ask = (kind: "antitrust" | "stateaid") => fetch(decisionQueryUrl(kind, 2018), { headers: { ...UA, Accept: "application/sparql-results+json" }, signal: AbortSignal.timeout(120_000) });
+      const [a, s] = await Promise.all([ask("antitrust"), ask("stateaid")]);
+      if (!a.ok || !s.ok) return [`the lists of 2018: HTTP ${a.status} and ${s.status}`];
+      const decisions = listedNotices(await a.json()).filter((n) => isDecisionTitle(n.title));
+      const aid = listedNotices(await s.json()).filter((n) => isStateAidTitle(n.title));
+      if (decisions.length < 14 || aid.length < 12) out.push(`the lists of 2018 hold ${decisions.length} decisions and ${aid.length} State aid titles, fewer than the 14 and 12 of 2026-11-22`);
+      const android = decisions.find((n) => euCaseNumbers(n.title).includes("AT.40099"));
+      if (!android) return [...out, "AT.40099 is not listed for 2018"];
+      const page = await fetch(cellarWork(android.work), { headers: { ...UA, Accept: "application/xhtml+xml", "Accept-Language": "eng" }, signal: AbortSignal.timeout(60_000) });
+      if (!page.ok) return [...out, `CELLAR's AT.40099: HTTP ${page.status}`];
+      const text = euNoticeText(await page.text(), "xhtml");
+      const addressees = decisionAddressees(text);
+      const fines = decisionFines(text);
+      if (!addressees.includes("Google") || !addressees.includes("Alphabet") || !fines.some((f) => f.amount === "4342865000" && f.names.includes("Google")))
+        out.push(`AT.40099 reads ${JSON.stringify({ addressees, fines })}`);
       return out;
     },
   },

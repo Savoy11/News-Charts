@@ -988,6 +988,73 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 177: the European Commission's antitrust and cartel decisions, 1973 on, and its State aid (2026-11-23)
+
+The owner's word: "Merge when green and continue", and the approval of the 2026-11-22c proposal 2 that day with call
+(a), State aid included where the company is the beneficiary. This batch builds it.
+
+- [x] **A new source, 52, `eu_antitrust`** (`lib/euAntitrust.ts`, `lib/ingest/euAntitrustFor.ts`,
+      `scripts/sync-eu-antitrust.ts`): the Publications Office's SPARQL endpoint asked for each year's English titles,
+      two queries a year from 1960 (134 lists): 859 decisions "relating to a proceeding" (or "proceedings", "a
+      procedure") from 1973-01-02, the English edition's first year, and 1,909 State aid titles from 1976. The archive's
+      drafts and meeting agendas ("AG 762 - 12.12.1984 Draft COMMISSION DECISION …"), the Euratom safeguards decisions
+      and the communications are not decisions and are not listed (`isDecisionTitle`). Each decision's text read once
+      from CELLAR, its XHTML, else its HTML, else its PDF with pdftotext, a scan left unread where the same case and day
+      is held as markup: 723 texts. The committed `data/eu-antitrust.json.gz` (250 KB) keeps the lists and each text's
+      addressee and fine passages (`addresseeExcerpt`), which the module reads at load, so a rule's change needs no
+      request; `npm run sync:eu-antitrust` runs monthly, a held text never asked again, a year listed shorter than the
+      file holds an error, the whole lists under 800 decisions or 1,800 titles an error.
+- [x] **One decision once:** its full text, its summary and the archive's copy of one case and day are one, 680
+      decisions; the archive scans' days read as they write them ("2. VII. 1987", "09.11.1987", "20. Vll. 1988", "26. 7.
+      88", "30 ApriI 1984", `decidedOn`), a scan's "IV/31 .902" the same number, "COMP/F/38.456" read (`caseNumbers`).
+- [x] **The addressees** (`decisionAddressees`), 536 decisions naming them: the article "This Decision is addressed to:
+      …" with their addresses, where an item after a bare comma is a name only with a legal word or a bank's or group's
+      word, and a postcode ("NL-6500 AB"), a box, a street written as one word ("Heinrich-von-Stephan-Straße"), a building
+      ("United Technologies Building") or a legal word's following words never are (`LEGAL_END`); the older texts'
+      entries after " - ", the summaries' groups ("— MAGNA: Magna International Inc., …", "(b) for Dow: The Dow Chemical
+      Company from 1 July 1996 to …", the period off), the fines' list, the fines imposed "on" or "upon", a finding of who
+      infringed, and the commitments made binding. A list's footnotes are not read (Brose's "Formerly … Bamberg"). "The
+      Shell Transport and Trading Company Ltd" and "Deere and Company" are one name each. "made binding the commitments
+      offered by the four publishers and Apple", which Penguin's decision of 2013 recalls of the 2012 one, names an
+      addressee only where nothing else does (Microsoft's of 2009 does so).
+- [x] **The fines** (`decisionFines`), on 121 decisions: whole euros or ecus, never a float, "EUR 4,65 million"
+      4,650,000; one fine with every name jointly liable for it; a parent liable for a part only ("of which EUR 1 921 666
+      000 jointly and severally with Alphabet") given none; an immunity's EUR 0 no fine; "has been imposed" (Intel's EUR
+      1,060,000,000 of 2009) read. Microsoft's EUR 497,196,304 of 2004, written only as the basic amount, is not.
+- [x] **The rule:** the merger notices' (`partyIsCompany`) on each addressee's full name or the short name the decision
+      uses ("Google", "Intel", "Shell"), under its names of the year and the release map's units; a row shows the whole
+      names and counts them once ("Hitachi" of "Hitachi, Ltd"). The State aid beneficiary by its title's phrase
+      (`beneficiaryOf`: "Alleged aid to Apple", "implemented by Ireland to Apple", "granted to St. Jude Medical", "to
+      Flughafen Lübeck GmbH and Ryanair"). Read by hand, every company's 172 matches: two namesakes refused
+      (`NOT_THE_COMPANY`: "Dow", The Dow Chemical Company's of 2007, off Dow Inc. before 2019-04-01; "Post", REIMS II's
+      postal operators of 1999, off Post Holdings), two units added (`EU_UNITS`: Ford-Werke on F, BP Chemicals on BP,
+      each the company's own through the record's life). The banks' notes records (UBS AG's AMUB, Barclays Bank PLC's
+      ATMP) take none.
+- [x] **The row:** one a company a day, "The European Commission's decision in Case AT.40099 (Google Android) was
+      addressed to Google and Alphabet", the line with the count of addressees and the fines; a State aid row "the
+      company the aid's beneficiary (Apple), the member state the addressee", an invitation to comment saying it opens a
+      formal investigation. The row says what the Commission did on its day, which can be appealed; linked to EUR-Lex.
+      Its id the day's case numbers, "Also on" by db/061, a grouped row in "· N sources".
+- [x] **Measured** against every company in the index under its present names: 163 company days on 93 companies; from
+      the first prices the fixtures carry, 83 rows on 47 pages, 50 before 2017 (AKZOY 6, BP 6, F 4, AAPL 3, DB 3, MA 3,
+      MSFT 3, UBS 3, ADM 2, BAC 2). With EDGAR's former names for the bank-like companies: 170 on 96, 86 rows on 49 pages,
+      52 before 2017; by decade 9 in the 1980s, 9 in the 1990s, 20 in the 2000s, 28 in the 2010s and 20 since. Of the
+      172 matches 144 antitrust and 28 State aid (Ryanair 15, Apple, Amazon, Starbucks…). The scout estimated about
+      300 from 31 company days in 77 texts read at random; the whole file gives 170 under the rule.
+- [x] **Wired:** `SOURCES` 52 (Decision 2011/833/EU, EUR-Lex's notice as read for source 50), quota, refresh,
+      relevance 0.95, `COMPANY_SOURCES` and ingest's run, `ALSO_ON_SOURCES` and db/061, `GROUPED_ROW_SOURCES`, the
+      footer's and the terms page's credit, check:contact (51 files read the User-Agent), check:also-on, a check:live case
+      (the 2018 lists and AT.40099's text).
+- [x] **Checks:** check:eu-antitrust 32 (new): the titles' readers, the addressees and fines of 14 committed texts
+      (`scripts/fixtures/eu-antitrust-texts.json.gz`, one a pdftotext scan), the excerpt read as the whole, the file's
+      counts, the rows, the namesakes and units, every company and the wiring. On main it fails: the source does not
+      exist.
+- **The ledger:** no item opens or closes; 37 open, 105 closed, 11 parked, 17 blocked.
+- **Requests:** publications.europa.eu 1,055: the SPARQL endpoint 134 (all 200), CELLAR 921 for 723 texts (748 answered
+  200; 43 answered 303 to a format's file, followed; 127 answered 404 for a format the work holds none of, or a scan asked
+  as "pdfa1b" before it was asked as "application/pdf"; two answered 504 and one of them, the 2017 envelopes amendment, was
+  asked again and answered), 1.6 s apart, with the User-Agent "News Charts Research" and no address.
+
 ## NC ledger — batch 176: the 2026-11-22c approvals filed, and the Supreme Court's decisions, 1962 on (2026-11-22)
 
 The owner's word, 2026-11-22: "#1 Supreme Court (Recommended), #2 EU antitrust and State aid, #3 EU court rulings" and
@@ -12834,15 +12901,18 @@ already held, but new investment goes to securities coverage first.
         namesakes refused, five cases and ten units read by hand.
       - *Derived from [`docs/proposals/2026-11-22c-proposals.md`](proposals/2026-11-22c-proposals.md) #1, approved
         2026-11-22.*
-- [ ] `P2` **The European Commission's antitrust and cartel decisions, 1973–2026, and its State aid decisions:**
+- [x] `P2` **The European Commission's antitrust and cartel decisions, 1973–2026, and its State aid decisions:**
       approved by the owner 2026-11-22, with call (a), State aid included where the company is the beneficiary. A new
       source, the decisions the Publications Office's SPARQL endpoint lists, each text read once from CELLAR as batch 174
       reads the merger notices, a row for each decision addressed to the company, with the fine it states. The approval
       settles NC-074 for regulation: international coverage is in scope.
       - **Measured** by the scout: 662 decisions listed, 77 texts read at random giving 31 company days; **estimated**
         about 280, three in four before 2017, and 20 more from State aid titles.
+      - **Done in batch 177** (see its section): 859 decisions and 1,909 State aid titles listed, 723 texts read, 680
+        decisions once each, 536 naming their addressees; 163 company days on 93 companies, 83 on 47 pages from the
+        fixtures' first prices, 50 before 2017; two namesakes refused, two units added.
       - *Derived from [`docs/proposals/2026-11-22c-proposals.md`](proposals/2026-11-22c-proposals.md) #2, approved
-        2026-11-22.* Next: batch 177.
+        2026-11-22.*
 - [ ] `P2` **The EU courts' judgments in the company's own cases, 1954–2026:** approved by the owner 2026-11-22, with call
       (a), every subject but trade-mark and staff cases. A new source, the judgments the same endpoint lists by their
       titles' parties, each ruling's outcome from its Official Journal notice, mostly the appeals of the Commission's

@@ -1141,6 +1141,18 @@ export const CASES: LiveCase[] = [
     },
   },
   {
+    name: "SEC Form N-PORT holdings — the data set page `npm run sync:nport` lists its zips from (batch 180)",
+    covers: ["fund_nport"],
+    hosts: ["www.sec.gov"],
+    async run() {
+      // measured 2026-11-24: 28 zips listed, 2019q4_nport to 2026q3_nport
+      const page = await fetch("https://www.sec.gov/data-research/sec-markets-data/form-n-port-data-sets", { headers: { ...UA }, signal: AbortSignal.timeout(60_000) });
+      if (!page.ok) return [`the N-PORT data set page: HTTP ${page.status}`];
+      const zips = new Set([...(await page.text()).matchAll(/href="([^"]+\.zip)"/g)].map((m) => m[1]));
+      return zips.size < 28 ? [`the N-PORT data set page lists ${zips.size} zips, fewer than the 28 of 2026-11-24`] : [];
+    },
+  },
+  {
     name: "FDA new-drug approvals — the compilation workbook as `npm run sync:fda-approvals` reads it; Prozac on Eli Lilly (batch 105)",
     covers: ["fda_approvals"],
     hosts: ["www.fda.gov"],

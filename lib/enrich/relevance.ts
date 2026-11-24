@@ -292,6 +292,12 @@ export function deterministicScore(
           ? { score: 0.8, reason: "the quarter's 13F reports of the company's biggest buyers and sellers" }
           : { score: 0.9, reason: "a big investor's 13F change of 1% or more of the company's shares" };
       }
+      // a fund's N-PORT report is filed under its trust's CIK: on its own page its report, on a company's its 1% change (batch 180)
+      if (row.sourceKey === "fund_nport") {
+        return / N-PORT report for /.test(row.title)
+          ? { score: 0.9, reason: "the fund's own N-PORT report, naming its biggest purchases and sales" }
+          : { score: 0.9, reason: "a fund's N-PORT change of 1% or more of the company's shares" };
+      }
       if (REGISTRANT_FORM.test(row.title)) {
         return { score: 0.7, reason: "filed by the fund's registrant, which files for every series it sells" };
       }

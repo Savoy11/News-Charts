@@ -67,6 +67,35 @@ export function namesAgree(description: string, names: Iterable<string>): boolea
   return false;
 }
 
+/** The words every fund's name can hold, which tell no fund from another. */
+const FUND_WORDS = new Set(["ETF", "ETFS", "ETN", "FUND", "FD", "FDS", "TRUST", "TR", "INDEX", "IDX", "SHARES", "SHS", "SH", "SERIES", "SER", "PORTFOLIO", "UNIT", "UNITS", "INC", "OF", "AND", "CLASS", "CL", "NEW"]);
+
+const letters = (x: string) => x.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+/**
+ * Whether a security's description names a fund (batch 180). The files cut a description at 30 characters and often lead
+ * with the trust's name ("VANGUARD INDEX FDS VANGUARD MO" is VTI's, "SELECT SECTOR SPDR TR STATE ST" XLF's, "J P MORGAN
+ * EXCHANGE-TRADED FD" JEPI's), so a CUSIP still trading under the ticker (`current`: the one last seen under it, seen in
+ * the files' last half year) needs its sponsor's brand alone, the series name's first word among its letters. Any other
+ * needs the first two words of its series' name that are not every fund's too ("CORE" and "SP" of iShares Core S&P 500
+ * ETF; "500" of Vanguard 500 Index Fund), a number exactly, the description's last word as the files cut it: a brand
+ * alone names no old CUSIP, as every iShares ETF's leads with it and a closed fund's ticker is taken up by another.
+ */
+export function fundNamesAgree(description: string, names: Iterable<string>, current = false): boolean {
+  const d = nameWords(description);
+  if (!d.length) return false;
+  const all = letters(description);
+  for (const name of names) {
+    const f = nameWords(name);
+    if (!f.length || !(d.slice(0, 3).some((w) => like(f[0], w)) || (f[0].length >= 3 && all.includes(letters(f[0]))))) continue;
+    if (current) return true;
+    const marks = f.slice(1).filter((w) => !FUND_WORDS.has(w)).slice(0, 2);
+    const has = (w: string) => d.some((x, i) => (/^\d+$/.test(w) ? x === w : like(w, x, 3) || (i === d.length - 1 && x.length >= 2 && w.startsWith(x))));
+    if (marks.every(has)) return true;
+  }
+  return false;
+}
+
 /** A ticker as the files and the index both compare it: its letters and digits. */
 export const tickerKey = (t: string) => t.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
@@ -101,22 +130,40 @@ export function readFailsFile(text: string, seen: Map<string, Map<string, Seen>>
 }
 
 /**
- * The map: each CUSIP seen to the index ticker it last had, where its description agrees with that company's names; and
+ * The map: each CUSIP seen to the index ticker it last had, where its description agrees with that company's names (a
+ * fund's share class: its series' name by `fundNamesAgree`, "INVESCO QQQ TR UNIT SER 1" Invesco QQQ Trust's); and
  * the refused, each with its ticker, description, days and the company the ticker is now.
  */
 export function buildCusipMap(
   seen: ReadonlyMap<string, ReadonlyMap<string, Seen>>,
-  tickers: ReadonlyMap<string, { ticker: string; cik: number }>,
+  /** each index ticker by its letters and digits, a fund's share class with its series' name (batch 180: QQQ, IVV, VOO) */
+  tickers: ReadonlyMap<string, { ticker: string; cik: number; names?: readonly string[] }>,
   namesOf: (cik: number) => Iterable<string>,
-): { map: Record<string, string>; refused: { cusip: string; symbol: string; description: string; first: string; last: string; ticker: string; cik: number }[] } {
+): { map: Record<string, string>; refused: { cusip: string; symbol: string; description: string; first: string; last: string; ticker: string; cik: number; fund?: true }[] } {
   const map: Record<string, string> = {};
-  const refused: { cusip: string; symbol: string; description: string; first: string; last: string; ticker: string; cik: number }[] = [];
+  const refused: { cusip: string; symbol: string; description: string; first: string; last: string; ticker: string; cik: number; fund?: true }[] = [];
+  const latestOf = new Map<string, Seen>();
+  let end = "";
   for (const [cusip, bySymbol] of seen) {
     const latest = [...bySymbol.values()].sort((a, b) => b.last.localeCompare(a.last) || a.symbol.localeCompare(b.symbol))[0];
+    latestOf.set(cusip, latest);
+    if (latest.last > end) end = latest.last;
+  }
+  // each ticker's CUSIP last seen under it, where the files' last half year saw it
+  const cutoff = end ? new Date(Date.parse(`${end}T00:00:00Z`) - 183 * 86_400_000).toISOString().slice(0, 10) : "";
+  const currentOf = new Map<string, string>();
+  for (const [cusip, s] of latestOf) {
+    const k = tickerKey(s.symbol);
+    const had = currentOf.get(k);
+    if (s.last >= cutoff && (!had || s.last > latestOf.get(had)!.last || (s.last === latestOf.get(had)!.last && cusip < had))) currentOf.set(k, cusip);
+  }
+  for (const [cusip, latest] of latestOf) {
     const company = tickers.get(tickerKey(latest.symbol));
     if (!company) continue;
-    if (namesAgree(latest.description, namesOf(company.cik))) map[cusip] = company.ticker;
-    else refused.push({ cusip, symbol: latest.symbol, description: latest.description, first: latest.first, last: latest.last, ticker: company.ticker, cik: company.cik });
+    // a fund's class by its series' name alone, as its trust's names are every sibling's
+    const agrees = company.names ? fundNamesAgree(latest.description, company.names, currentOf.get(tickerKey(latest.symbol)) === cusip) : namesAgree(latest.description, namesOf(company.cik));
+    if (agrees) map[cusip] = company.ticker;
+    else refused.push({ cusip, symbol: latest.symbol, description: latest.description, first: latest.first, last: latest.last, ticker: company.ticker, cik: company.cik, ...(company.names ? { fund: true } : {}) });
   }
   return { map, refused };
 }

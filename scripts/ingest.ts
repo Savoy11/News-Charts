@@ -61,6 +61,7 @@ import { supremeCourtFor } from "../lib/ingest/supremeCourtFor";
 import { euAntitrustFor } from "../lib/ingest/euAntitrustFor";
 import { instHoldingsFor } from "../lib/ingest/instHoldingsFor";
 import { fundHoldingsFor } from "../lib/ingest/fundHoldingsFor";
+import { insiderTradesFor } from "../lib/ingest/insiderTradesFor";
 import { fdaHistoryFor } from "../lib/ingest/fdaHistoryFor";
 import { itcFor } from "../lib/ingest/itcFor";
 import { nlrbFor, walkNlrbOnce } from "../lib/ingest/nlrbWalk";
@@ -169,6 +170,8 @@ export const COMPANY_SOURCES = [
   "inst_13f",
   // …and mutual funds' and ETFs' N-PORT holdings changes: a fund's own reports, a company's funds' 1% changes (batch 180)
   "fund_nport",
+  // …and its officers', directors' and 10% owners' open-market purchases and sales, 2006 on (batch 181)
+  "insider_trades",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
   // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
@@ -1070,6 +1073,15 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("fund_nport", `N-PORT fund holdings changes for ${company.ticker}`, () =>
     fundHoldingsFor(client, subjectId, { edgarName: company.name, alsoKnownAs, cik: company.cik, ticker: company.ticker, fundSeries }),
+  );
+
+  /**
+   * Insiders' open-market purchases and sales of the company's shares, 2006 on (batch 181, the owner's call of 2026-11-24
+   * reversing 2026-10-18's): one row a filing day naming each officer, director and 10% owner who bought or sold, by its
+   * CIK and its predecessors' records to their handover days, from the first price. No request.
+   */
+  await run("insider_trades", `insider trades in ${company.ticker}`, () =>
+    insiderTradesFor(client, subjectId, { edgarName: company.name, alsoKnownAs, cik: company.cik, ticker: company.ticker, fundSeries }),
   );
 
   /**

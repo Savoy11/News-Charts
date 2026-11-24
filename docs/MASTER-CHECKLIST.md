@@ -988,6 +988,48 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 181: insiders' open-market trades, 2006 on (2026-11-24)
+
+The owner's word: "Merge and continue". The third of the three holdings sources the owner chose on 2026-11-24 ("Insider
+trades, Form 4"), reversing the call of 2026-10-18 to leave insider forms out. The reason of that call stands, that the
+forms are filed so often they would bury a timeline, so only the trades an insider chose are kept: open-market purchases
+and sales, never the grants, exercises, tax withholding and gifts that make most of the forms.
+
+- [x] **A new source, 55, `insider_trades`** (`lib/insiderTrades.ts`, `lib/ingest/insiderTradesFor.ts`,
+      `scripts/sync-insiders.ts`): the SEC's 83 insider transactions data sets (2006 Q1 on, 2 to 15 MB each, 888 MB), each
+      read once into the sync's git-ignored cache (`.cache/insiders`): every Form 4 or 5 (and amendment) by an officer, a
+      director or a 10% owner that reports a non-derivative purchase (code P) or sale (code S), 738,038 filings for the
+      index's issuers and the predecessors' records. Committed: `data/insiders/<year>.json.gz`, 17 MB. `npm run
+      sync:insiders` runs quarterly (6 GB of memory).
+- [x] **The filings:** a filing is its first reporting owner's, its joint filers counted (Berkshire Hathaway's Occidental
+      filings name one, reporting the same shares), the relationship every owner's (`relOf`, `isInsider`: "Other" alone is none); an
+      amendment restates the last filing before it by the same owner for the same issuer and period, on that filing's
+      day (`effectiveFilings`); a trade's value is its shares times its price in whole dollars, none where no price is
+      given. The 10b5-1 box the form has had since 2023 is said on the row.
+- [x] **The rows:** one a company a filing day (`companyDays`), each insider's purchases and sales an entry with the
+      shares, value and trade days, the largest trade's filing linked; one insider's day titled with its role ("Musk Elon
+      (CEO, director, 10% owner) sold 21,995,000 Tesla, Inc. shares, about $3.6 billion"), several insiders' by how many
+      bought and sold, led by the largest. Names as filed, surname first; EDGAR's state suffix off the company's name.
+      Scored 1 within the filing branch, as filed under the company's CIK. A predecessor's record's rows to its handover
+      day (`predecessorsOf`: Exxon Mobil Corporation's on XOM's page before 2026-07-01). `lib/secForms.ts` still leaves
+      the forms themselves out.
+- [x] **Measured:** 521,851 company days on 5,508 issuers, 2006-01-03 to 2026-09-30 (51 on the median issuer, 234 on the
+      busiest tenth, 3,157 at most); from the fixtures' first prices, 105,719 rows on 615 pages. Read by hand: Musk's sale
+      of December 2022, Berkshire Hathaway's Occidental purchases of 2022 as a 10% owner, Apple's and NVIDIA's officers'
+      and directors' sales of 2022, read for sense.
+- [x] **The owner's to set, if wanted:** a large company's page is busy (Meta 1,264 days since 2012, often a few hundred
+      shares a week under a trading plan); a minimum value a day would keep only the larger trades
+      (`docs/OWNER-ACTIONS.md`). Built as the plan was filed: every open-market trade.
+- [x] **Wired:** `SOURCES` 55 (public domain), quota, refresh, `COMPANY_SOURCES` and ingest's run by the page's CIK, the
+      footer's and terms page's credit ("insiders' trades, big investors' 13F and funds' N-PORT holdings reports"),
+      check:contact (54 files read the User-Agent), a check:live case (the data set page's 83 zips).
+- [x] **Checks:** check:insiders 21 (new): the days and roles, the amendments, the company days, the year's file, the rows,
+      the committed files, Musk's and Berkshire's trades, every page, the predecessor's record, the wiring. On main it
+      fails: the source does not exist.
+- **The ledger:** no item opens or closes; 37 open, 105 closed, 11 parked, 17 blocked.
+- **Requests:** www.sec.gov 84 (the data set page and 83 zips), with the project's contact from `.env.local` through the
+  scripts that load it.
+
 ## NC ledger — batch 180: mutual funds' and ETFs' N-PORT holdings changes, 2019 on (2026-11-24)
 
 The owner's word: "Merge and continue". The second of the three holdings sources the owner chose on 2026-11-24 ("Mutual
@@ -13104,10 +13146,9 @@ already held, but new investment goes to securities coverage first.
       ("Mutual funds and ETFs, N-PORT"). Done in batch 180 (see its section): 151,326 fund reports on 9,669 fund
       pages, 15,733 moves of 1% or more on 2,326 company pages; 2,777 moves on 379 pages from
       the fixtures' first prices.
-- [ ] `P1` **Insider trades, Forms 3, 4 and 5, 2006–2026:** asked for by the owner on 2026-11-24 ("Insider trades, Form
-      4"), reversing the call of 2026-10-18 to leave them out. The SEC's insider transactions data sets (83 zips, about 10
-      MB each), each filing giving its issuer's CIK: open-market buys and sells by officers, directors and 10% owners,
-      one row a company a day, grants, option exercises, tax withholding and gifts left out. Next: batch 181.
+- [x] `P1` **Insider trades, Forms 3, 4 and 5, 2006–2026:** asked for by the owner on 2026-11-24 ("Insider trades, Form
+      4"), reversing the call of 2026-10-18 to leave them out. Done in batch 181 (see its section): 521,851 company days on
+      5,508 issuers; 105,719 rows on 615 pages from the fixtures' first prices.
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

@@ -299,6 +299,16 @@ of half a percent of its net assets or more (`BIG_SHARE`); a company's page a ro
 its shares (`MOVE_BP`), against the 13F frames' count of the later quarter only where the earlier agrees (`basisOf`: the
 frames hold counts a hundred times off, and counts stated after a reverse split).
 
+Insiders' open-market trades since 2006 (`lib/insiderTrades.ts`, batch 181, the owner's call of 2026-11-24 reversing
+2026-10-18's) are the SEC's insider transactions data sets, Forms 4 and 5 a zip a quarter, read once each into `npm run
+sync:insiders`'s git-ignored cache (`.cache/insiders`) and committed as `data/insiders/<year>.json.gz` by filing day: only
+purchases (P) and sales (S) of the company's own non-derivative shares by an officer, a director or a 10% owner
+(`isInsider`; "Other" alone none), never a grant, exercise, withholding or gift, which `lib/secForms.ts` still leaves
+out as forms. A filing is its first reporting owner's, the joint filers counted; an amendment restates the last filing
+before it by the same owner, issuer and period, on that filing's day (`effectiveFilings`). One row a company a filing day
+(`companyDays`), each insider's purchases and sales an entry with shares, whole-dollar value and trade days, the owner's
+name as filed; by the issuer's CIK, and a predecessor's record's up to its handover day (`predecessorsOf`).
+
 The Federal Reserve's actions on applications since 1996 (`lib/fedH2.ts`, batch 173) are the Board's weekly H.2 release,
 each week's PDF read once with `pdftotext -layout` into the committed `data/fed-h2.json.gz` (`npm run sync:fed-h2`, weekly; a
 week the file holds is never asked again, a transfer cut short is not held, nor a week whose text gives no action, which fails
@@ -447,6 +457,7 @@ npm run sync:fed-h2         # add the Board's new weekly H.2 releases to data/fe
 npm run sync:eu-mergers     # add the Official Journal's new EU merger notices to data/eu-mergers.json.gz from the Publications Office (monthly, and after sync:tickers; needs pdftotext)
 npm run sync:eu-antitrust   # add the Official Journal's new EU antitrust decisions and State aid titles to data/eu-antitrust.json.gz from the Publications Office (monthly; needs pdftotext; a decision's text the file holds is never asked again)
 npm run sync:13f           # rebuild data/13f/ from the SEC's Form 13F data sets, fails-to-deliver files and share-count frames (monthly; a zip its cache holds is never asked again; 5 GB of cache, 10 GB of memory)
+npm run sync:insiders      # rebuild data/insiders/ from the SEC's insider transactions data sets (quarterly; a zip its cache holds is never asked again; 6 GB of memory)
 npm run sync:nport         # rebuild data/nport/ from the SEC's Form N-PORT data sets (quarterly, after sync:13f, whose map and frames it reads; a zip its cache holds is never asked again; 5 GB of cache, 8 GB of memory)
 npm run sync:supreme-court  # rebuild data/supreme-court.json.gz from govinfo's U.S. Reports and the Court's slip lists (monthly; needs pdftotext; a case's PDF the file holds read is never asked again)
 ```

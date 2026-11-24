@@ -767,7 +767,24 @@ export const SOURCES: {
     commercialOk: true,
     reviewedOn: "2026-11-22",
     notes: "the European Commission's antitrust and cartel decisions, 1973 on, kept where an addressee its text names is a listed company by the merger notices' rule, with the fines it states, and its State aid notices and decisions whose title names a listed company as the beneficiary (lib/euAntitrust.ts); one row a company a day; the Publications Office's lists and CELLAR's texts read monthly and committed, no key (batch 177)",
+  },  {
+    id: 53,
+    key: "inst_13f",
+    name: "SEC Form 13F holdings changes",
+    license: "public domain",
+    attribution: "U.S. Securities and Exchange Commission",
+    // sec.gov's dissemination notice, as for source 31: "Information presented on sec.gov is considered public information
+    // and may be copied or further distributed by users of the web site without the SEC's permission. Please consider
+    // appropriate citation to the SEC as the source." The Form 13F data sets, the fails-to-deliver files and the XBRL
+    // frames are the SEC's own work (17 U.S.C. § 105), with no key. Used: each manager's name and its shares of a page's
+    // security in two quarters' reports, the change, the filing's day and a link to it. Approved by the owner on
+    // 2026-11-24 (13F, N-PORT and insider trades; "one row per quarter naming the biggest buyers and sellers, plus a
+    // separate row for any single holder whose change equals 1% or more of the company's shares").
+    commercialOk: true,
+    reviewedOn: "2026-11-24",
+    notes: "big investors' quarterly holdings changes in a listed security from the SEC's Form 13F data sets, 2013 on: a summary row each quarter naming the three biggest buyers and sellers, and a row for each manager whose change equals 1% or more of the company's shares (lib/instHoldings.ts), by the ticker the security's CUSIP has (lib/cusipMap.ts); read monthly and committed, no key (batch 179)",
   },
+
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

@@ -286,6 +286,12 @@ export function deterministicScore(
     // likely but not certainly about this fund (NC-139): still shown, no longer certain.
     case "filing":
     case "earnings":
+      // a big investor's 13F report is filed under the investor's CIK, not the company's (batch 179)
+      if (row.sourceKey === "inst_13f") {
+        return /^Big investors' 13F reports/.test(row.title)
+          ? { score: 0.8, reason: "the quarter's 13F reports of the company's biggest buyers and sellers" }
+          : { score: 0.9, reason: "a big investor's 13F change of 1% or more of the company's shares" };
+      }
       if (REGISTRANT_FORM.test(row.title)) {
         return { score: 0.7, reason: "filed by the fund's registrant, which files for every series it sells" };
       }

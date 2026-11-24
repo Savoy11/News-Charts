@@ -37,7 +37,7 @@ export default function TermsPage() {
 
       <h2>Other people&apos;s content</h2>
       <p>
-        Much of what the site shows belongs to others or is public record: filings from the SEC,
+        Much of what the site shows belongs to others or is public record: filings and big investors&apos; 13F holdings reports from the SEC,
         historical newspapers from the Library of Congress, rules from the Federal Register, policy
         decisions, press releases and enforcement actions from the Federal Reserve Board, with its weekly
         actions on bank applications (H.2), inflation reports from the Bureau of Labor Statistics,

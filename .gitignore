@@ -37,3 +37,6 @@ next-env.d.ts
 
 # database dumps — backed up by OneDrive, never committed
 /backups
+
+# the sync scripts' working files (npm run sync:13f keeps about 5 GB here)
+/.cache

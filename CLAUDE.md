@@ -268,6 +268,20 @@ its units in `EU_UNITS`; a State aid title's beneficiary by the same rule, the r
 beneficiary. A bank's notes record takes none. One row a company a day, its id the day's case numbers ("Also on",
 db/061); the row says what the Commission did on its day, which can be appealed.
 
+Big investors' 13F holdings changes since 2013 (`lib/instHoldings.ts`, batch 179; the owner's call of 2026-11-24, with
+N-PORT and insider trades to follow in batches 180–181) are the SEC's Form 13F data sets, read once each into `npm run
+sync:13f`'s git-ignored cache (`.cache/13f`, about 5 GB; 10 GB of memory) and committed as `data/13f/<year>.json.gz`: no
+order or trade is public, so a change is the difference between a manager's two quarterly reports. A manager's quarter is
+`effectiveFilings`' (a "new holdings" amendment as large as what it amends replaces it, Morgan Stanley's of 2024; a notice
+none), compared only where both reports hold positions of like size (`comparable`), a position whose value gives no
+other manager's price set aside (`markSuspect`), a split read from the holders' ratios or, where too few held through,
+the company's stated counts (`splitFactor`, `simpleRatio`), and a quarter whose change exceeds the company read as none.
+One summary row a quarter on its 45-day deadline (`deadlineOf`) naming the three biggest buyers and sellers, and a row
+for each manager's change of 1% or more of the company's shares (data.sec.gov's XBRL frames) on its report's day. A
+security's CUSIP is a page's ticker by the SEC's fails-to-deliver files (`lib/cusipMap.ts`, committed as
+`data/13f/cusips.json.gz`), its description agreeing with the company's names, former names included, a fund's by its
+first three words. An ETF is a page; a mutual fund none.
+
 The Federal Reserve's actions on applications since 1996 (`lib/fedH2.ts`, batch 173) are the Board's weekly H.2 release,
 each week's PDF read once with `pdftotext -layout` into the committed `data/fed-h2.json.gz` (`npm run sync:fed-h2`, weekly; a
 week the file holds is never asked again, a transfer cut short is not held, nor a week whose text gives no action, which fails
@@ -415,6 +429,7 @@ npm run sync:fda-clearances # rebuild data/fda-clearances.json.gz from openFDA's
 npm run sync:fed-h2         # add the Board's new weekly H.2 releases to data/fed-h2.json.gz (weekly; needs pdftotext; a week the file holds is never asked again)
 npm run sync:eu-mergers     # add the Official Journal's new EU merger notices to data/eu-mergers.json.gz from the Publications Office (monthly, and after sync:tickers; needs pdftotext)
 npm run sync:eu-antitrust   # add the Official Journal's new EU antitrust decisions and State aid titles to data/eu-antitrust.json.gz from the Publications Office (monthly; needs pdftotext; a decision's text the file holds is never asked again)
+npm run sync:13f           # rebuild data/13f/ from the SEC's Form 13F data sets, fails-to-deliver files and share-count frames (monthly; a zip its cache holds is never asked again; 5 GB of cache, 10 GB of memory)
 npm run sync:supreme-court  # rebuild data/supreme-court.json.gz from govinfo's U.S. Reports and the Court's slip lists (monthly; needs pdftotext; a case's PDF the file holds read is never asked again)
 ```
 

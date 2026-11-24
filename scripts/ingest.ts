@@ -59,6 +59,7 @@ import { fedH2For } from "../lib/ingest/fedH2For";
 import { euMergersFor } from "../lib/ingest/euMergersFor";
 import { supremeCourtFor } from "../lib/ingest/supremeCourtFor";
 import { euAntitrustFor } from "../lib/ingest/euAntitrustFor";
+import { instHoldingsFor } from "../lib/ingest/instHoldingsFor";
 import { fdaHistoryFor } from "../lib/ingest/fdaHistoryFor";
 import { itcFor } from "../lib/ingest/itcFor";
 import { nlrbFor, walkNlrbOnce } from "../lib/ingest/nlrbWalk";
@@ -163,6 +164,8 @@ export const COMPANY_SOURCES = [
   "supreme_court",
   // …and the European Commission's antitrust decisions addressed to the company, and its State aid naming it (batch 177)
   "eu_antitrust",
+  // …and big investors' 13F holdings changes in its own stock, 2013 on (batch 179)
+  "inst_13f",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
   // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
@@ -1045,6 +1048,16 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("eu_antitrust", `EU competition decisions naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
     euAntitrustFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
+
+  /**
+   * Big investors' 13F holdings changes in the page's own security, 2013 on (batch 179, the owner's call of 2026-11-24):
+   * a summary row each quarter naming the biggest buyers and sellers, on the reports' deadline, and a row for each
+   * manager whose change equals 1% or more of the company's shares, on its report's day; by the ticker its CUSIP has,
+   * from the first price. No request.
+   */
+  await run("inst_13f", `13F holdings changes in ${company.ticker}`, () =>
+    instHoldingsFor(client, subjectId, { edgarName: company.name, alsoKnownAs, cik: company.cik, ticker: company.ticker, fundSeries }),
   );
 
   /**

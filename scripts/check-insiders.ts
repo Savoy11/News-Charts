@@ -18,7 +18,24 @@ import { insiderTradesFor } from "../lib/ingest/insiderTradesFor";
 import { QUOTAS } from "../lib/ingest/quota";
 import { SOURCE_TTL_MINUTES } from "../lib/ingest/refresh";
 import { SOURCES } from "../lib/ingest/store";
-import { type Filing, INSIDER_TRADES_DIR, REL, addDay, companyDays, dayOf, effectiveFilings, insiderEvents, insiderTrades, isInsider, newYear, relOf, roleOf } from "../lib/insiderTrades";
+import {
+  type Filing,
+  INSIDER_TRADES_DIR,
+  MIN_DAY_VALUE,
+  REL,
+  addDay,
+  bigEnough,
+  companyDays,
+  dayOf,
+  dayValue,
+  effectiveFilings,
+  insiderEvents,
+  insiderTrades,
+  isInsider,
+  newYear,
+  relOf,
+  roleOf,
+} from "../lib/insiderTrades";
 import { COMPANY_SOURCES } from "./ingest";
 
 let pass = 0;
@@ -35,13 +52,15 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 /** The files as written on 2026-11-24, and every page replayed against them. */
 const EXPECTED = {
   years: 21,
-  issuers: 5_508,
-  days: 521_851,
+  // 5,508 issuers and 521,851 days in batch 181, before the $1 million minimum of batch 182
+  issuers: 4_121,
+  days: 141_131,
   first: "2006-01-03",
   last: "2026-09-30",
   // from first prices, for the pages the fixtures read
-  fromFirst: 105_719,
-  fromFirstPages: 615,
+  // 105,719 on 615 in batch 181
+  fromFirst: 35_318,
+  fromFirstPages: 564,
 };
 
 const filing = (over: Partial<Filing>): Filing => ({
@@ -92,6 +111,10 @@ async function main(): Promise<void> {
       ["Ellison Larry", "P", 100, null, "2022-12-12", "2022-12-12"],
     ]) && tsla[0].accession === "x1",
     tsla);
+  const entry = (code: "P" | "S", value?: number) => ({ owner: "x", rel: REL.officer, code, shares: 1, value, first: "", last: "", plan: false, amended: false, joint: 0 });
+  check("the owner's $1 million minimum (batch 182): a day's purchases and sales together, a trade with no price adding nothing; $999,999 none, $1,000,000 kept",
+    MIN_DAY_VALUE === 1_000_000 && dayValue({ entries: [entry("S", 600_000), entry("P", 400_000), entry("S")] }) === 1_000_000 && bigEnough({ entries: [entry("S", 600_000), entry("P", 400_000)] }) &&
+      !bigEnough({ entries: [entry("S", 999_999)] }) && !bigEnough({ entries: [entry("P"), entry("S")] }));
   const year = newYear();
   for (const d of tsla) addDay(year, 1318605, d);
   check("a year's file: owners and titles once each, a company's days by its CIK", same(year.owners, ["Musk Elon", "Kirkhorn Zachary", "Ellison Larry"]) && same(year.titles, ["CEO", "Chief Financial Officer"]) && year.pages["1318605"].length === 2);
@@ -127,8 +150,9 @@ async function main(): Promise<void> {
   check("  …each file says what it holds, credits the SEC and names its batch",
     files.every((f) => {
       const body = JSON.parse(gunzipSync(readFileSync(join(INSIDER_TRADES_DIR, f))).toString()) as { about: string; read: string };
-      return /insider transactions data sets/.test(body.about) && /17 U\.S\.C\. § 105/.test(body.about) && /batch 181/.test(body.about) && body.read === "2026-11-24";
+      return /insider transactions data sets/.test(body.about) && /17 U\.S\.C\. § 105/.test(body.about) && /\$1 million or more/.test(body.about) && /batches 181–182/.test(body.about) && body.read === "2026-11-24";
     }));
+  check("  …every committed day $1 million or more", [...pages.values()].every((ds) => ds.every(bigEnough)));
   const musk = insiderEvents(pages.get(1318605) ?? [], { ticker: "TSLA", cik: 1318605 }).find((e) => e.date === "2022-12-14");
   check("Tesla's page: Musk's sale of 21,995,000 shares filed December 14, 2022, about $3.6 billion",
     !!musk && /^Musk Elon \(CEO, director, 10% owner\) sold 21,995,000 Tesla, Inc\. shares, about \$3\.6 billion$/.test(musk.title), musk?.title);

@@ -12,7 +12,8 @@ import type { TimelineEvent } from "./types";
  * the plan's or the law's, not the insider's choice to buy or sell, and filed so often they would bury a timeline (the
  * reason of 2026-10-18).
  *
- * One row a company a day, on the day the filings were filed, naming each insider's purchases and sales with their
+ * One row a company a day whose trades come to $1 million or more together (`MIN_DAY_VALUE`, batch 182), on the day
+ * the filings were filed, naming each insider's purchases and sales with their
  * shares, value and trade days. The committed files are `data/insiders/<year>.json.gz`, by filing day, written by `npm
  * run sync:insiders` (scripts/sync-insiders.ts).
  */
@@ -111,6 +112,19 @@ export interface InsiderDay {
   accession: string;
   entries: Entry[];
 }
+
+/**
+ * The smallest day a page shows, in whole dollars: the owner's call of 2026-11-24 ("Add the $1 million minimum"), as every
+ * open-market trade made a large company's page busy (Meta's 1,264 days, a few hundred shares a week under a trading
+ * plan). A day's purchases and sales are added; a trade the filing gives no price for adds nothing.
+ */
+export const MIN_DAY_VALUE = 1_000_000;
+
+/** A filing day's purchases and sales together, in whole dollars, the trades with a price. */
+export const dayValue = (d: Pick<InsiderDay, "entries">) => d.entries.reduce((s, e) => s + (e.value ?? 0), 0);
+
+/** Whether a company's filing day is shown: its trades worth $1 million or more together (`MIN_DAY_VALUE`). */
+export const bigEnough = (d: Pick<InsiderDay, "entries">) => dayValue(d) >= MIN_DAY_VALUE;
 
 /** Each company's filing days, by issuer CIK: one row a company a day, an insider's purchases and sales each one entry. */
 export function companyDays(filings: readonly (Filing & { amended?: true })[]): Map<number, InsiderDay[]> {

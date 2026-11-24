@@ -8,7 +8,8 @@ import { NO_PRICES, type PressPlan } from "./secPressWalk";
 /**
  * Insiders' open-market purchases and sales of the company's own shares (batch 181): every filing day the committed files
  * (`data/insiders/`) hold for its CIK, and for a predecessor's record up to the day the page's company took over from it
- * (`lib/predecessors.ts`), from the first price; one row a day naming each officer, director and 10% owner who bought or
+ * (`lib/predecessors.ts`), from the first price; one row a day of $1 million or more (batch 182) naming each officer,
+ * director and 10% owner who bought or
  * sold. A fund's series has no insiders of its own. No request: `npm run sync:insiders` reads the SEC's data sets
  * quarterly. The files whole are a complete answer (`FetchResult.complete`, batch 108).
  */

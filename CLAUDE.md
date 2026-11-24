@@ -307,7 +307,9 @@ purchases (P) and sales (S) of the company's own non-derivative shares by an off
 out as forms. A filing is its first reporting owner's, the joint filers counted; an amendment restates the last filing
 before it by the same owner, issuer and period, on that filing's day (`effectiveFilings`). One row a company a filing day
 (`companyDays`), each insider's purchases and sales an entry with shares, whole-dollar value and trade days, the owner's
-name as filed; by the issuer's CIK, and a predecessor's record's up to its handover day (`predecessorsOf`).
+name as filed; by the issuer's CIK, and a predecessor's record's up to its handover day (`predecessorsOf`). A day is kept
+only where its trades with a price come to $1 million or more together (`MIN_DAY_VALUE`, `bigEnough`: the owner's call of
+2026-11-24, batch 182), at the sync, so the committed files hold no smaller day.
 
 The Federal Reserve's actions on applications since 1996 (`lib/fedH2.ts`, batch 173) are the Board's weekly H.2 release,
 each week's PDF read once with `pdftotext -layout` into the committed `data/fed-h2.json.gz` (`npm run sync:fed-h2`, weekly; a

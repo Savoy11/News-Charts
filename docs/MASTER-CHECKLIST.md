@@ -988,6 +988,26 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 182: the insider trades' $1 million minimum (2026-11-24)
+
+The owner's word: "Add the $1 million minimum, then continue" — the call batch 181 left open (`docs/OWNER-ACTIONS.md`), as
+every open-market trade made a large company's page busy (Meta's 1,264 days since 2012, often a few hundred shares a week
+under a trading plan).
+
+- [x] **The rule** (`MIN_DAY_VALUE`, `dayValue`, `bigEnough` in `lib/insiderTrades.ts`): a company's filing day is kept
+      only where its trades come to $1,000,000 or more together, purchases and sales added, a trade the filing gives no
+      price for adding nothing. Applied at the sync (`scripts/sync-insiders.ts`), so the committed files hold no smaller
+      day; the cache keeps every filing, and a later minimum needs only a run from it.
+- [x] **Measured:** 141,131 company days on 4,121 issuers kept, 380,720 left out; 14,260 of the kept hold a purchase (10
+      on the median issuer, 93 on the busiest tenth, 1,659 at most; Meta 770, Apple 291, Tesla 253). From the fixtures'
+      first prices, 35,318 rows on 564 pages (105,719 on 615 before). The files: 6 MB (17 before). Musk's sale of December
+      2022 and Berkshire Hathaway's Occidental purchases of 2022 stay.
+- [x] **Checks:** check:insiders 23 (21): the minimum's edges ($999,999 none, $1,000,000 kept, a trade with no price adding
+      nothing) and every committed day at it; the files' new figures. Docs: README, CLAUDE.md, COVERAGE-MAP, OWNER-ACTIONS
+      (the call marked decided), the source's notes.
+- **The ledger:** no item opens or closes; 37 open, 105 closed, 11 parked, 17 blocked.
+- **Requests:** none; the sync ran from its cache.
+
 ## NC ledger — batch 181: insiders' open-market trades, 2006 on (2026-11-24)
 
 The owner's word: "Merge and continue". The third of the three holdings sources the owner chose on 2026-11-24 ("Insider
@@ -13137,7 +13157,8 @@ already held, but new investment goes to securities coverage first.
       - **Measured** by the scout: 17 company days in four sampled years of 5,151 titles; **estimated** about 260 over
         77,843 titles, which could be off by half.
       - *Derived from [`docs/proposals/2026-11-22c-proposals.md`](proposals/2026-11-22c-proposals.md) #3, approved
-        2026-11-22.* Next: batch 182, after the holdings and insider trades the owner asked for on 2026-11-24.
+        2026-11-22.* Next: batch 183, after the holdings and insider trades the owner asked for on 2026-11-24 and the
+        insider trades' $1 million minimum (batch 182).
 - [x] `P1` **Big investors' 13F holdings changes, 2013–2026:** asked for by the owner on 2026-11-24 ("Big investors, 13F",
       "Summary + 1% moves"). Done in batch 179 (see its section): 195,271 quarters on 6,705 pages, 201,204 moves of 1% or
       more; 61,227 rows on 637 pages from the fixtures' first prices. Batch 180 matched ETFs' CUSIPs too: 284,274 quarters
@@ -13148,7 +13169,8 @@ already held, but new investment goes to securities coverage first.
       the fixtures' first prices.
 - [x] `P1` **Insider trades, Forms 3, 4 and 5, 2006–2026:** asked for by the owner on 2026-11-24 ("Insider trades, Form
       4"), reversing the call of 2026-10-18 to leave them out. Done in batch 181 (see its section): 521,851 company days on
-      5,508 issuers; 105,719 rows on 615 pages from the fixtures' first prices.
+      5,508 issuers; 105,719 rows on 615 pages from the fixtures' first prices. The owner's $1 million minimum, batch 182:
+      141,131 days on 4,121 issuers, 35,318 rows on 564 pages.
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

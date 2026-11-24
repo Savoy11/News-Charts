@@ -988,6 +988,73 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 179: big investors' 13F holdings changes, 2013 on (2026-11-24)
+
+The owner asked on 2026-11-24 whether the buy and sell orders of a company's institutional holders, and the big changes
+of mutual funds and ETFs, could be shown, and wanted it added if so. No one's orders are public; what is public is each
+manager's quarterly holdings (Form 13F), each fund's (Form N-PORT) and each insider's trades (Forms 3, 4 and 5). Asked
+which, the owner chose all three ("Big investors, 13F (Recommended)", "Mutual funds and ETFs, N-PORT", "Insider trades,
+Form 4", the last reversing the call of 2026-10-18 to leave insider trades out), and for a company's timeline "Summary +
+1% moves (Recommended)": one row per quarter naming the biggest buyers and sellers, plus a separate row for any single
+holder whose change equals 1% or more of the company's shares. This batch builds the 13F part; N-PORT is batch 180 and
+insider trades batch 181, ahead of the EU courts' judgments, now batch 182.
+
+- [x] **A new source, 53, `inst_13f`** (`lib/instHoldings.ts`, `lib/cusipMap.ts`, `lib/ingest/instHoldingsFor.ts`,
+      `scripts/sync-13f.ts`): the SEC's 54 Form 13F data sets (2013 Q2 on, a quarter's zip to 2023 and three months'
+      filings since; 2.9 GB, 409,685 filings), each read once into the sync's git-ignored cache (`.cache/13f`): every
+      filing with its summary page, and each filing's shares and stated value by CUSIP, options and principal amounts left
+      out. Committed: `data/13f/<year>.json.gz` and the CUSIP map, 16 MB. `npm run sync:13f` runs monthly (about 5 GB of
+      cache and 10 GB of memory; the first run about two hours), a cached zip never asked again.
+- [x] **A manager's quarter** (`effectiveFilings`): its filings in the order filed, an original or a restatement replacing
+      what came before and a "new holdings" amendment adding to it, unless the amendment holds half the entries of what
+      it amends or more, when it is the report filed again (Morgan Stanley's of 2024, 46,943 entries beside 46,942, which
+      added had tripled its positions and read a sale of 434,844,346 Apple shares); a notice none (Vanguard Group's since
+      2026, its holdings reported by Vanguard Capital Management); a report whose holdings were all omitted as
+      confidential replaced by the amendment that gives them (Norges Bank's for 2025 Q1, its 1,743 holdings filed a year
+      later, on 2026-05-11).
+- [x] **Compared** only where both reports hold positions, neither a quarter of the other's count (`comparable`); a
+      position dropped in a report omitting confidential holdings (6,216 filings say so), or taken up after one, no change;
+      a position whose stated value gives a price more than five times off the other managers' median, and not a thousand
+      times (a value in the wrong unit), set aside (`markSuspect`: J. Stern & Co.'s 125,760,307 NVIDIA shares of 2025,
+      between its 910,704 and 619,354, which its own restatement kept). Values in thousands before 2023-01-03 (`dollars`).
+- [x] **Splits:** the median of the holders' later shares over earlier, where five or more held through, read as any
+      simple ratio (`splitFactor`, `simpleRatio`: NVIDIA's ten for one of 2024, GeneDx's one for 33); where fewer did, the
+      company's stated counts (Wheels Up's one for twenty of 2026), never beside holders who show none (NVIDIA's count
+      stated before its split, which read a second split the quarter after and a sale of 19,304,059,370 shares by
+      Vanguard, until this); a quarter whose change still exceeds the company's every share reads nothing (Delcath's of
+      2017).
+- [x] **The share counts** of the 1% rule: data.sec.gov's XBRL frame of `dei:EntityCommonStockSharesOutstanding` for each
+      quarter (59 frames, 4,743 companies in 2024 Q2), a count stated before a split read in the later unit (`shareBasis`);
+      a company with several share classes or a trust of several ETFs has none, and so its summary only.
+- [x] **The CUSIP map** (`lib/cusipMap.ts`): the SEC's fails-to-deliver files, the second half of each month from June
+      2012 (172), give each CUSIP's ticker and description; a CUSIP is the page of the index ticker it last had where the
+      description agrees with the company's names (`namesAgree`: the first word, cut as the files cut it, the second too
+      where the first is common; a fund's among its first three, "STATE STREET SPDR S&P 500 ETF" SPY's), its aliases,
+      predecessors and EDGAR former names (840 companies' lists read from data.sec.gov: "DR HORTON INC", Royal Dutch
+      Shell). 11,081 of 49,951 CUSIPs mapped, 885 refused (CardioNet's BEAT, HeartBeam's since 2021); 307 by another name,
+      a sample of 40 read by hand, all renames.
+- [x] **The rows:** a summary on each quarter's deadline, the 45th day after it (`deadlineOf`): the managers holding, the
+      net change of those compared, the three biggest buyers and sellers; a 1% move on its report's day, linked to it on
+      EDGAR, an amended report said to be one. Each says a change is the difference between two reports, never a trade's
+      day or price. Scored 0.8 and 0.9 within the filing branch, as they are filed under the investors' CIKs, not the
+      company's. Quarters of 2013's first half left out (`MIN_MANAGERS`, 1,000: 124 and 209 managers compared).
+- [x] **Measured:** 195,271 quarters on 6,705 pages, 2013-09-30 to 2026-06-30, and 201,204 moves of 1% or more (two on the
+      median page, 104 or more on the busiest tenth, 458 at most); from the fixtures' first prices, 61,227 rows on 637
+      pages. Read by hand: Berkshire's sale of 389,368,450 Apple shares in 2024 Q2, NVIDIA's split, the largest moves (none
+      above the company's shares), a sample of 30.
+- [x] **Wired:** `SOURCES` 53 (public domain, sec.gov's dissemination notice), quota, refresh, relevance,
+      `COMPANY_SOURCES` and ingest's run by the page's ticker, the footer's and terms page's credit ("filings and big
+      investors' 13F holdings reports from SEC EDGAR"), check:contact (52 files read the User-Agent), a check:live case
+      (the data set page's 54 zips, Apple's count in the frame of 2024 Q2), `/.cache` git-ignored.
+- [x] **Checks:** check:inst-13f 28 (new): the name rule, the map, the effective reports, the deadline, the units, the
+      splits and share basis, the value check, a quarter's changes, the committed files' counts, the rows, every page and
+      the wiring. On main it fails: the source does not exist.
+- **The ledger:** no item opens or closes; 37 open, 105 closed, 11 parked, 17 blocked.
+- **Requests:** www.sec.gov 245 (the 54 data set zips, 172 fails-to-deliver files, 18 page and size asks, one 404 for a
+  file name guessed before the page was read), data.sec.gov 1,177 (59 frames; 1,118 submissions records for the former
+  names, 278 of them answered 429 when asked four a second and asked again one a second), all with the project's
+  contact from `.env.local` through the scripts that load it.
+
 ## NC ledger — batch 178: the proposal's own examples batch 177 missed, read (2026-11-23)
 
 The owner's word: "Merge when green and continue". Read against the proposal's own examples
@@ -12960,7 +13027,18 @@ already held, but new investment goes to securities coverage first.
       - **Measured** by the scout: 17 company days in four sampled years of 5,151 titles; **estimated** about 260 over
         77,843 titles, which could be off by half.
       - *Derived from [`docs/proposals/2026-11-22c-proposals.md`](proposals/2026-11-22c-proposals.md) #3, approved
-        2026-11-22.* Next: batch 179.
+        2026-11-22.* Next: batch 182, after the holdings and insider trades the owner asked for on 2026-11-24.
+- [x] `P1` **Big investors' 13F holdings changes, 2013–2026:** asked for by the owner on 2026-11-24 ("Big investors, 13F",
+      "Summary + 1% moves"). Done in batch 179 (see its section): 195,271 quarters on 6,705 pages, 201,204 moves of 1% or
+      more; 61,227 rows on 637 pages from the fixtures' first prices.
+- [ ] `P1` **Mutual funds' and ETFs' N-PORT holdings changes, 2019 Q4–2026:** asked for by the owner on 2026-11-24
+      ("Mutual funds and ETFs, N-PORT"). The SEC's N-PORT data sets (28 zips, 240 to 480 MB each, about 11 GB): on a
+      company's page a fund's change of 1% or more of the company, by batch 179's CUSIP map; on a fund's own page its
+      biggest buys and sells each quarter. Next: batch 180.
+- [ ] `P1` **Insider trades, Forms 3, 4 and 5, 2006–2026:** asked for by the owner on 2026-11-24 ("Insider trades, Form
+      4"), reversing the call of 2026-10-18 to leave them out. The SEC's insider transactions data sets (83 zips, about 10
+      MB each), each filing giving its issuer's CIK: open-market buys and sells by officers, directors and 10% owners,
+      one row a company a day, grants, option exercises, tax withholding and gifts left out. Next: batch 181.
 
 ## Planned initiatives — free planner & referral board (2026-08-12)
 

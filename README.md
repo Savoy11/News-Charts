@@ -518,6 +518,52 @@ Hathaway 12). With EDGAR's former names for the bank-like companies: 1,909 compa
 of them with a clearance line (663 before batch 175 read the case numbers written without "Case"). "© European Union,
 https://eur-lex.europa.eu"; the Commission's reuse policy (Decision 2011/833/EU) allows commercial reuse. No key.
 
+### Big investors' 13F holdings changes, 2013–2026 (`lib/instHoldings.ts`, batch 179)
+
+What the big investors bought and sold of the company's stock, quarter by quarter, from the SEC's Form 13F reports: every
+investment manager with $100 million or more of listed securities reports its holdings at each quarter's end, within 45
+days. No one's orders or trades are public, so a change is the difference between two of a manager's reports, and the rows
+say so. Approved by the owner on 2026-11-24 with N-PORT (funds and ETFs, batch 180) and insider trades (Forms 3, 4 and 5,
+batch 181): "one row per quarter naming the biggest buyers and sellers, plus a separate row for any single holder whose
+change equals 1% or more of the company's shares".
+
+- **The quarter's summary,** on the reports' deadline (the 45th day after the quarter): how many managers reported
+  holding the stock, the net change of those that reported both quarters, and the three biggest buyers and sellers
+  ("Big investors' 13F reports for the quarter ended June 30, 2024: biggest buyer …, biggest seller …").
+- **A 1% move,** on the day its manager's report was filed: any one manager's change equal to 1% or more of the company's
+  shares ("Berkshire Hathaway Inc reported selling 389,368,450 Apple Inc. shares in the quarter ended June 30, 2024
+  (2.6% of the company)"), linked to the report on EDGAR, an amended report said to be one.
+
+The SEC's Form 13F data sets (54 zips, a quarter's to 2023 and three months' filings since, 2.9 GB) are read once each
+by `npm run sync:13f` into its cache (`.cache/13f`, git-ignored): each filing and its shares by CUSIP, options and
+principal amounts left out. A manager's quarter is its latest original or restatement with the "new holdings" amendments
+after it, unless such an amendment is as large as what it amends, when it is the report filed again (Morgan Stanley's
+of 2024, which added would have doubled its every position); a notice (Vanguard Group's since 2026, its holdings reported
+by its new advisers) is none, and a report whose holdings were omitted as confidential is replaced by the amendment that
+gives them (Norges Bank's for 2025's first quarter, its 1,743 holdings filed a year later). A manager is compared only where it reported both quarters, neither report a quarter of the other's size; a
+position it dropped in a report omitting confidential holdings, or took up after one, is no change; and a position whose
+stated value gives a price five times off every other manager's (J. Stern & Co.'s 125,760,307 NVIDIA shares of 2025, a
+units slip), unless by a thousand times (a value in the wrong unit), is set aside. A split is read from the managers'
+own ratios (NVIDIA's ten for one of 2024), or where too few held through it from the company's stated share counts
+(Wheels Up's one for twenty of 2026); a quarter whose figures still show a change larger than the company reads nothing.
+The share counts are data.sec.gov's XBRL frames of each quarter (59 requests), a count stated before a split read in the
+later unit; a company with several classes, or a trust of many ETFs, has no stated count and so its summary only.
+
+A security's CUSIP is matched to its page by the SEC's fails-to-deliver files (`lib/cusipMap.ts`; one a month from June
+2012, 172 files): the ticker the CUSIP last had, where it is in EDGAR's index and the description agrees with the
+company's names, its aliases, predecessors and EDGAR former names ("DR HORTON INC" is HORTON D R INC's, Royal Dutch Shell's
+CUSIP Shell plc's), a fund's description by its first three words, as its sponsor's brand can lead it ("STATE STREET SPDR
+S&P 500 ETF"); a ticker another company took up later keeps the old CUSIP off it (CardioNet's BEAT, HeartBeam's since
+2021). 11,081 of the 49,951 CUSIPs seen are mapped, 885 refused by their names. An ETF is a page like a company's; a mutual
+fund, which no exchange trades, has none.
+
+The committed files (`data/13f/<year>.json.gz` and `cusips.json.gz`, 16 MB) hold 195,271 quarters on 6,705 pages, from
+2013's third quarter to 2026's second, and 201,204 moves of 1% or more: two on the median page, over a hundred on the
+busiest tenth, mostly small companies whose few holders own large parts of them. From the first prices the fixtures
+carry, 61,227 rows on 637 pages. The quarters of 2013's first half are left out: the SEC's first data set holds only a
+few hundred of their reports. A monthly run needs about 5 GB of disk for its cache and 10 GB of memory; the first, about
+two hours. No key; the SEC's own work.
+
 ### European Commission competition decisions, 1973–2026 (`lib/euAntitrust.ts`, batch 177)
 
 The Commission's antitrust and cartel decisions addressed to the company, with the fines their texts state, and its State

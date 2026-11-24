@@ -77,7 +77,8 @@ export type SourceKey =
   | "fed_h2"
   | "eu_mergers"
   | "supreme_court"
-  | "eu_antitrust";
+  | "eu_antitrust"
+  | "inst_13f";
 
 export interface TimelineEvent {
   id: string;

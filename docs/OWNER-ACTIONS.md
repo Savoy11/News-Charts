@@ -233,6 +233,11 @@ Raised by the November batches, each recorded in the master checklist:
   lists monthly and each new decision's text once from CELLAR (needs `pdftotext`). No key. Batch 178 reads the examples batch 177
   missed (Google Shopping, AstraZeneca, switchgear, Servier) from the same file; nothing more to apply. #3 (the EU
   courts' judgments) is batch 179's.
+- **Big investors' 13F holdings (batch 179), your call of 2026-11-24.** Built and committed: nothing to apply. To keep
+  it current, run `npm run sync:13f` monthly on a host with about 5 GB of free disk for its cache (`.cache/13f`) and 10 GB
+  of memory; the first run reads the SEC's 54 data sets (2.9 GB) and takes about two hours, later runs the new zip and
+  month. It asks www.sec.gov and data.sec.gov with the contact in `.env.local`. N-PORT (funds and ETFs) and insider
+  trades follow in batches 180 and 181.
 - ~~**The 2026-11-22 second run's proposals** (batch 171, `docs/proposals/2026-11-22b-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a recurring
   charge: #1 is openFDA's, CC0, like sources 40 and 47; #2 is the Federal Reserve Board's own work, public domain by

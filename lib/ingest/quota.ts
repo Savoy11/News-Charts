@@ -62,6 +62,7 @@ export const QUOTAS: Record<SourceKey, Quota> = {
   fed_h2: { perDay: null, note: "the Board's weekly H.2 release, one PDF a week read once by npm run sync:fed-h2 and committed; ingest asks nothing" },
   eu_mergers: { perDay: null, note: "the Publications Office's SPARQL list and CELLAR's notice texts, read monthly by npm run sync:eu-mergers and committed; ingest asks nothing" },
   supreme_court: { perDay: null, note: "govinfo's U.S. Reports records and the Court's slip lists, read monthly by npm run sync:supreme-court and committed; ingest asks nothing" },
+  inst_13f: { perDay: null, note: "the SEC's Form 13F data sets, fails-to-deliver files and XBRL share-count frames, read monthly by npm run sync:13f and committed; ingest asks nothing" },
   eu_antitrust: { perDay: null, note: "the Publications Office's SPARQL lists and CELLAR's decision texts, read monthly by npm run sync:eu-antitrust and committed; ingest asks nothing" },
   fda_history: { perDay: null, note: "openFDA's historical documents, one keyless zip of about 14 MB, read once by npm run sync:fda-history and committed (the file ends in 2014); ingest asks nothing" },
   fra_accidents: { perDay: null, note: "the same open-data API as NHTSA's recalls, no published cap without an app token; one request a day per railroad company" },

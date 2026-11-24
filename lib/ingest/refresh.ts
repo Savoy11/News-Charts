@@ -98,6 +98,7 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   eu_mergers: 1440,
   supreme_court: 1440,
   eu_antitrust: 1440,
+  inst_13f: 1440,
   // the NLRB's decision listing: its newest page once a day for every company, the whole once a year at night (lib/ingest/nlrbWalk.ts, batch 161)
   nlrb_decisions: 1440,
   // the FRA's railroad accident reports, asked once a day for the railroads lib/railAccidents.ts maps (batch 127)

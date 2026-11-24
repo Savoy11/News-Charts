@@ -1123,6 +1123,24 @@ export const CASES: LiveCase[] = [
     },
   },
   {
+    name: "SEC Form 13F holdings — the data set page `npm run sync:13f` lists its zips from, and the XBRL frame it reads share counts from (batch 179)",
+    covers: ["inst_13f"],
+    hosts: ["www.sec.gov", "data.sec.gov"],
+    async run() {
+      // measured 2026-11-24: 54 zips listed, 2013q2 to 01jun2026-31aug2026; Apple's 15,204,137,000 shares in the frame of 2024's second quarter
+      const out: string[] = [];
+      const page = await fetch("https://www.sec.gov/data-research/sec-markets-data/form-13f-data-sets", { headers: { ...UA }, signal: AbortSignal.timeout(60_000) });
+      if (!page.ok) return [`the 13F data set page: HTTP ${page.status}`];
+      const zips = new Set([...(await page.text()).matchAll(/href="([^"]+\.zip)"/g)].map((m) => m[1]));
+      if (zips.size < 54) out.push(`the 13F data set page lists ${zips.size} zips, fewer than the 54 of 2026-11-24`);
+      const frame = await fetch("https://data.sec.gov/api/xbrl/frames/dei/EntityCommonStockSharesOutstanding/shares/CY2024Q2I.json", { headers: { ...UA }, signal: AbortSignal.timeout(60_000) });
+      if (!frame.ok) return [...out, `the share-count frame of 2024 Q2: HTTP ${frame.status}`];
+      const apple = ((await frame.json()) as { data: { cik: number; val: number }[] }).data.find((r) => r.cik === 320193);
+      if (apple?.val !== 15_204_137_000) out.push(`Apple's share count in the frame of 2024 Q2 reads ${apple?.val}`);
+      return out;
+    },
+  },
+  {
     name: "FDA new-drug approvals — the compilation workbook as `npm run sync:fda-approvals` reads it; Prozac on Eli Lilly (batch 105)",
     covers: ["fda_approvals"],
     hosts: ["www.fda.gov"],

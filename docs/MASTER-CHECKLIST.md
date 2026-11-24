@@ -988,6 +988,74 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 180: mutual funds' and ETFs' N-PORT holdings changes, 2019 on (2026-11-24)
+
+The owner's word: "Merge and continue". The second of the three holdings sources the owner chose on 2026-11-24 ("Mutual
+funds and ETFs, N-PORT"): a fund reports its holdings at each month's end on Form N-PORT, and the report of each fiscal
+quarter's last month is public, filed within 60 days. As with 13F, no order or trade is public, so a change is the
+difference between two of a fund's public reports. On a fund's own page the owner's "Summary" is the fund's report naming
+its biggest purchases and sales; on a company's page the "1% moves" are each fund's change of 1% or more of the company's
+shares, the quarter's summary of buyers and sellers staying 13F's.
+
+- [x] **A new source, 54, `fund_nport`** (`lib/fundHoldings.ts`, `lib/ingest/fundHoldingsFor.ts`, `scripts/sync-nport.ts`):
+      the SEC's 28 Form N-PORT data sets (2019 Q4 on, 240 to 480 MB each, 336,295 public reports), each read once
+      into the sync's git-ignored cache (`.cache/nport`, 3 GB, and 2 GB of months each run writes): every report's series, month, filing day and net assets,
+      and its long share positions in stocks, preferreds and funds (`UNIT` NS, `ASSET_CAT` EC, EP or RF), with the stated
+      dollar value; bonds, options, swaps and short positions left out. A holding with no CUSIP takes its US ISIN's.
+      Committed: `data/nport/<year>.json.gz`, 13 MB. `npm run sync:nport` runs quarterly, after `sync:13f`, whose CUSIP map
+      and share-count frames it reads (8 GB of memory).
+- [x] **The reports:** a fund's month is its report filed last, an amendment restating the whole (`effectiveReports`);
+      two reports are compared when two to four months apart (`pairable`) and neither holds a quarter of the other's
+      positions (`comparable`). A security is keyed by its page's ticker through the 13F map, else its CUSIP, else its
+      name; a position gone and a position new under the same name between two reports are one security, a new CUSIP's
+      (`rekeyRenamed`). A position five times off the other funds' median price is set aside (`markSuspect`).
+- [x] **Splits:** the median ratio of the funds that held the security through the same two months, five or more, where
+      their median price moved the other way too (`splitFactor`, `priceAgrees`): a first run that read the ratios alone
+      gave a 14-for-1 split to Eledon in 2021 and three-for-two to BWIN's 2020 offering, and with them false sales of up to
+      91% of a company. Else the fund's own exact ratio, where its price moved the other way (`heldSplit`), even where the
+      other funds' ratios read none (Bionano's one for ten of 2023, which the second run missed). A position held through
+      is not compared where the 13F holders read a split in an overlapping quarter, the company's stated counts show one,
+      or the funds' price rose two and a half times or more, that the funds' shares do not show (`uncertain`); a new or
+      closed position then stays on the fund's page in its report's own shares and makes no move (Regis's one for twenty
+      of 2023: First Eagle's sale of its 1,049,823 earlier shares had read as 46% of the company).
+- [x] **The 1% count** (`basisOf`): the stated count of the later report's quarter (the 13F frames), only where the
+      earlier quarter's agrees with it, or differs by the split the funds show, and the quarter after agrees too where its
+      frame is read: the frames hold counts off by a hundred times (Holley's 1,093,750 of 2023 Q3 beside 118 million),
+      counts stated after a reverse split the reports precede (Kala's, Reed's), which in the first run read one index
+      fund's sale as 80% of a company, and a blank-check company's count before its merger (NRx's 2,688,242 of 2021's
+      first two quarters, 58,810,338 in the third). The quarter after took 3,810 of the third run's 19,543 moves off.
+- [x] **ETFs in the CUSIP map** (`fundNamesAgree`, `lib/cusipMap.ts`): an ETF's share class by its series' name, the CUSIP
+      still trading under the ticker by its sponsor's brand ("VANGUARD INDEX FDS VANGUARD MO" is VTI's), an older one by
+      two of its own words too, as a closed fund's ticker is taken up by another; a trust's names never. 16,297 CUSIPs
+      mapped (11,081 before), so a fund's ETF holdings carry their tickers and 13F gains 4,225 ETF pages (284,274 quarters
+      on 10,930 pages; company pages unchanged).
+- [x] **The rows:** on a fund's page (by the ticker index's series: VOO's and VFIAX's are Vanguard 500 Index Fund's), a
+      row on each report's filing day where a purchase or sale was worth half a percent of net assets or more (`BIG_SHARE`),
+      naming the three biggest each way with shares before and after and value at the report's prices; on a company's
+      page, a row for each fund's change of 1% or more of its shares (`MOVE_BP`), linked to the report on EDGAR. Each says
+      a change is the difference between two reports, never a trade. Scored 0.9 within the filing branch.
+- [x] **Measured:** 151,326 fund reports on 9,669 fund pages and 15,733 moves on 2,326 company pages, 2019-12-31
+      to 2026-07-31 (four on the median company page, 54 at most); from the fixtures' first prices, 2,777 moves on 379
+      pages. Read by hand: Vanguard 500 Index Fund's 15,194,651 Tesla shares bought as Tesla joined the S&P 500 in
+      December 2020; the SPDR S&P Dividend ETF's whole stakes in Tanger (22.5% of the company, its report of March 2020)
+      and Kontoor (12.1%, June 2020) sold; Churchill Downs' two-for-one of 2023, Patrick's three-for-two of 2024 and
+      GrafTech's one-for-ten of 2025 read; Vanguard 500's report of September 2025, every position about 13% below June's
+      as its net assets fell from $1.49 trillion to $1.41 trillion, which the row states as it is; the 30 largest moves
+      of each of four runs, the last's all plausible (Alerian MLP ETF's 17% of Suburban Propane, Benitec's 22% bought by
+      Franklin Biotechnology Discovery in 2022 beside a count three quarters agree on).
+- [x] **Run time:** the month's split and price move are read once a security (a run that sorted them for every fund
+      holding a popular stock took over an hour); the comparison now takes about six minutes after the cache is read.
+- [x] **Wired:** `SOURCES` 54 (public domain), quota, refresh, relevance, `COMPANY_SOURCES` and ingest's run by the page's
+      ticker, the footer's and terms page's credit ("big investors' 13F and funds' N-PORT holdings reports"), check:contact
+      (53 files read the User-Agent), a check:live case (the data set page's 28 zips).
+- [x] **Checks:** check:nport 30 (new): the reports, pairing, the value check, splits and their price, the stated
+      counts, renamed CUSIPs, the month's changes and moves, the rows, the committed files, every page and the wiring.
+      check:inst-13f 30 (28): the ETF name rule and the map's new figures. On main it fails: the source does not exist.
+- **The ledger:** no item opens or closes; 37 open, 105 closed, 11 parked, 17 blocked.
+- **Requests:** www.sec.gov 29 (the data set page and 28 zips), and the 13F sync's own run again (no new zip, its
+  fails-to-deliver files and frames read from its cache; data.sec.gov 168 for the former names of CUSIPs the new
+  rule refused), all with the project's contact from `.env.local` through the scripts that load it.
+
 ## NC ledger — batch 179: big investors' 13F holdings changes, 2013 on (2026-11-24)
 
 The owner asked on 2026-11-24 whether the buy and sell orders of a company's institutional holders, and the big changes
@@ -13030,11 +13098,12 @@ already held, but new investment goes to securities coverage first.
         2026-11-22.* Next: batch 182, after the holdings and insider trades the owner asked for on 2026-11-24.
 - [x] `P1` **Big investors' 13F holdings changes, 2013–2026:** asked for by the owner on 2026-11-24 ("Big investors, 13F",
       "Summary + 1% moves"). Done in batch 179 (see its section): 195,271 quarters on 6,705 pages, 201,204 moves of 1% or
-      more; 61,227 rows on 637 pages from the fixtures' first prices.
-- [ ] `P1` **Mutual funds' and ETFs' N-PORT holdings changes, 2019 Q4–2026:** asked for by the owner on 2026-11-24
-      ("Mutual funds and ETFs, N-PORT"). The SEC's N-PORT data sets (28 zips, 240 to 480 MB each, about 11 GB): on a
-      company's page a fund's change of 1% or more of the company, by batch 179's CUSIP map; on a fund's own page its
-      biggest buys and sells each quarter. Next: batch 180.
+      more; 61,227 rows on 637 pages from the fixtures' first prices. Batch 180 matched ETFs' CUSIPs too: 284,274 quarters
+      on 10,930 pages, the 4,225 more ETFs' (summaries only).
+- [x] `P1` **Mutual funds' and ETFs' N-PORT holdings changes, 2019 Q4–2026:** asked for by the owner on 2026-11-24
+      ("Mutual funds and ETFs, N-PORT"). Done in batch 180 (see its section): 151,326 fund reports on 9,669 fund
+      pages, 15,733 moves of 1% or more on 2,326 company pages; 2,777 moves on 379 pages from
+      the fixtures' first prices.
 - [ ] `P1` **Insider trades, Forms 3, 4 and 5, 2006–2026:** asked for by the owner on 2026-11-24 ("Insider trades, Form
       4"), reversing the call of 2026-10-18 to leave them out. The SEC's insider transactions data sets (83 zips, about 10
       MB each), each filing giving its issuer's CIK: open-market buys and sells by officers, directors and 10% owners,

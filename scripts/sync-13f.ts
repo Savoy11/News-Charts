@@ -162,7 +162,15 @@ async function cusipMapStage(): Promise<Record<string, string>> {
     const [entry] = zipEntryNames(buf);
     readFailsFile(readZip(buf, [entry]).get(entry)!.toString("latin1"), seen);
   }
-  const tickers = new Map(companies.map((c) => [tickerKey(c[1]), { ticker: c[1], cik: c[0] }]));
+  const tickers = new Map<string, { ticker: string; cik: number; names?: string[] }>();
+  // a fund's share classes the index lists under its series (QQQ, IVV, VOO: batch 180), each with its series' name; a
+  // company's ticker over a class's of one spelling
+  const fundIndex = index as unknown as { symbolSeries?: Record<string, number>; seriesNames?: string[]; seriesCiks?: number[] };
+  for (const [symbol, i] of Object.entries(fundIndex.symbolSeries ?? {})) {
+    const name = fundIndex.seriesNames?.[i];
+    if (name) tickers.set(tickerKey(symbol), { ticker: symbol, cik: fundIndex.seriesCiks?.[i] ?? 0, names: [name] });
+  }
+  for (const c of companies) tickers.set(tickerKey(c[1]), { ticker: c[1], cik: c[0] });
   const names = new Map<number, Set<string>>();
   const add = (cik: number, n: string) => (names.get(cik) ?? names.set(cik, new Set()).get(cik)!).add(n);
   for (const c of companies) add(c[0], c[2]);
@@ -175,7 +183,7 @@ async function cusipMapStage(): Promise<Record<string, string>> {
   const first = buildCusipMap(seen, tickers, (cik) => names.get(cik) ?? []);
   const formerFile = join(cache, "former-names.json");
   const former: Record<string, string[]> = existsSync(formerFile) ? JSON.parse(readFileSync(formerFile, "utf8")) : {};
-  for (const cik of new Set(first.refused.map((r) => r.cik))) {
+  for (const cik of new Set(first.refused.filter((r) => !r.fund).map((r) => r.cik))) {
     if (former[cik]) continue;
     const body = await get(`https://data.sec.gov/submissions/CIK${String(cik).padStart(10, "0")}.json`);
     const j = body ? (JSON.parse(body.toString("utf8")) as { name?: string; formerNames?: { name: string }[] }) : {};

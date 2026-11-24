@@ -13,7 +13,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import type { PoolClient } from "pg";
-import { type Seen, buildCusipMap, cusipMap, namesAgree, nameWords, readFailsFile } from "../lib/cusipMap";
+import { type Seen, buildCusipMap, cusipMap, fundNamesAgree, namesAgree, nameWords, readFailsFile } from "../lib/cusipMap";
 import { deterministicScore } from "../lib/enrich/relevance";
 import { instHoldingsFor } from "../lib/ingest/instHoldingsFor";
 import { QUOTAS } from "../lib/ingest/quota";
@@ -52,12 +52,14 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 /** The files as written on 2026-11-24, and every page replayed against them. */
 const EXPECTED = {
   cusipsSeen: 49_951,
-  cusipsMapped: 11_081,
+  // 11,081 in batch 179; ETFs' share classes by their series' names since batch 180
+  cusipsMapped: 16_297,
   years: 14,
   firstPeriod: "2013-09-30",
   lastPeriod: "2026-06-30",
-  pages: 6_705,
-  summaries: 195_271,
+  // 6,705 and 195,271 in batch 179, the 4,225 pages more ETFs', whose trusts state no share count and so have no 1% moves
+  pages: 10_930,
+  summaries: 284_274,
   moves: 201_204,
   // from first prices, for the pages the fixtures read
   fromFirst: 61_227,
@@ -88,11 +90,21 @@ async function main(): Promise<void> {
   const built = buildCusipMap(seen, tickers, (cik) => names[cik] ?? []);
   check("each CUSIP to the index ticker it last had, \"BRKB\" read as BRK-B, Facebook's CUSIP as META's; CardioNet's old CUSIP refused, its BEAT HeartBeam's since 2021",
     same(built.map, { "037833100": "AAPL", "084670702": "BRK-B", "30303M102": "META" }) && built.refused.length === 1 && built.refused[0].cusip === "14159L103", built);
+  check("an ETF's class by its series' name (batch 180): a CUSIP still trading under the ticker by its sponsor's brand, the files' cut trust names (\"VANGUARD INDEX FDS VANGUARD MO\" VTI's, \"SELECT SECTOR SPDR TR STATE ST\" XLF's); an old one by two of its own words too",
+    fundNamesAgree("VANGUARD INDEX FDS VANGUARD MO", ["Vanguard Morningstar Total Stock Market Index Fund"], true) && fundNamesAgree("SELECT SECTOR SPDR TR STATE ST", ["State Street(R) Financial Select Sector SPDR(R) ETF"], true) &&
+      fundNamesAgree("J P MORGAN EXCHANGE-TRADED FD ", ["JPMorgan Equity Premium Income ETF"], true) && !fundNamesAgree("PROSHARES TR ULTRA QQQ", ["Invesco QQQ Trust, Series 1"], true) &&
+      fundNamesAgree("ISHARES CORE S&P 500 ETF", ["iShares Core S&P 500 ETF"]) && fundNamesAgree("VANGUARD S&P 500 ETF", ["Vanguard 500 Index Fund"]) &&
+      !fundNamesAgree("ISHARES 20+ YEAR TREASURY BOND", ["iShares Core S&P 500 ETF"]) && !fundNamesAgree("VANGUARD EXTENDED DURATION TREA", ["Vanguard 500 Index Fund"]));
+  const fundSeen = new Map<string, Map<string, Seen>>();
+  readFailsFile("SETTLEMENT DATE|CUSIP|SYMBOL|QUANTITY (FAILS)|DESCRIPTION|PRICE\n20261029|922908769|VTI|5|VANGUARD INDEX FDS VANGUARD MO|300\n20161028|464286848|EWJ|5|ISHARES MSCI JAPAN ETF|50\n20261030|46434G822|EWJ|5|ISHARES MSCI JAPAN ETF|70\n20150101|000000001|VTI|5|VANGUARD INDEX FDS VANGUARD EX|10", fundSeen);
+  const fundBuilt = buildCusipMap(fundSeen, new Map([["VTI", { ticker: "VTI", cik: 36405, names: ["Vanguard Morningstar Total Stock Market Index Fund"] }], ["EWJ", { ticker: "EWJ", cik: 930667, names: ["iShares MSCI Japan ETF"] }]]), () => ["VANGUARD INDEX FUNDS"]);
+  check("  …the current CUSIP alone takes the brand's rule, a fund's old CUSIP its own words' (EWJ's of 2016 and now), a reused ticker's older CUSIP none, and the trust's names never",
+    same(fundBuilt.map, { "922908769": "VTI", "464286848": "EWJ", "46434G822": "EWJ" }) && fundBuilt.refused.length === 1 && fundBuilt.refused[0].fund === true, fundBuilt);
   const map = cusipMap();
   const file = JSON.parse(gunzipSync(readFileSync(join(INST_HOLDINGS_DIR, "cusips.json.gz"))).toString()) as { seen: number; map: Record<string, string> };
-  check(`the committed map: ${EXPECTED.cusipsMapped.toLocaleString("en-US")} of ${EXPECTED.cusipsSeen.toLocaleString("en-US")} CUSIPs seen; Apple, Alphabet's two classes, Berkshire's B shares, SPY`,
+  check(`the committed map: ${EXPECTED.cusipsMapped.toLocaleString("en-US")} of ${EXPECTED.cusipsSeen.toLocaleString("en-US")} CUSIPs seen; Apple, Alphabet's two classes, Berkshire's B shares, SPY, QQQ, IVV, VOO, VTI`,
     file.seen === EXPECTED.cusipsSeen && map.size === EXPECTED.cusipsMapped && map.get("037833100") === "AAPL" && map.get("02079K305") === "GOOGL" && map.get("02079K107") === "GOOG" &&
-      map.get("084670702") === "BRK-B" && map.get("78462F103") === "SPY",
+      map.get("084670702") === "BRK-B" && map.get("78462F103") === "SPY" && map.get("46090E103") === "QQQ" && map.get("464287200") === "IVV" && map.get("922908363") === "VOO" && map.get("922908769") === "VTI",
     { seen: file.seen, mapped: map.size });
 
   console.log("\nThe reports");
@@ -214,8 +226,8 @@ async function main(): Promise<void> {
   check("  …the ingest asks it for every page, by its ticker", /await run\("inst_13f", [^\n]+\n\s*instHoldingsFor\(client, subjectId, \{[^}]*ticker: company\.ticker[^}]*\}\),/.test(read("scripts/ingest.ts")));
   check("  …synced monthly by `npm run sync:13f`, its cache git-ignored, and credited on the footer and the terms page",
     /"sync:13f": "NODE_OPTIONS=--max-old-space-size=10240 tsx scripts\/sync-13f\.ts"/.test(read("package.json")) && /^\/\.cache$/m.test(read(".gitignore")) &&
-      /filings and big investors&apos; 13F holdings reports from SEC EDGAR/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
-      /filings and big investors&apos; 13F holdings reports from the SEC/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
+      /filings, big investors&apos; 13F and funds&apos; N-PORT holdings reports from SEC EDGAR/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
+      /filings, big investors&apos; 13F and funds&apos; N-PORT holdings reports from the SEC/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);

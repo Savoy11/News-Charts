@@ -60,6 +60,7 @@ import { euMergersFor } from "../lib/ingest/euMergersFor";
 import { supremeCourtFor } from "../lib/ingest/supremeCourtFor";
 import { euAntitrustFor } from "../lib/ingest/euAntitrustFor";
 import { instHoldingsFor } from "../lib/ingest/instHoldingsFor";
+import { fundHoldingsFor } from "../lib/ingest/fundHoldingsFor";
 import { fdaHistoryFor } from "../lib/ingest/fdaHistoryFor";
 import { itcFor } from "../lib/ingest/itcFor";
 import { nlrbFor, walkNlrbOnce } from "../lib/ingest/nlrbWalk";
@@ -166,6 +167,8 @@ export const COMPANY_SOURCES = [
   "eu_antitrust",
   // …and big investors' 13F holdings changes in its own stock, 2013 on (batch 179)
   "inst_13f",
+  // …and mutual funds' and ETFs' N-PORT holdings changes: a fund's own reports, a company's funds' 1% changes (batch 180)
+  "fund_nport",
   // …and their later efficacy supplements, where the drug never left the company (batch 115)
   "fda_supplements",
   // …and the FDA's warning letters since 2021, where the addressee is the company (batch 140)
@@ -1058,6 +1061,15 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("inst_13f", `13F holdings changes in ${company.ticker}`, () =>
     instHoldingsFor(client, subjectId, { edgarName: company.name, alsoKnownAs, cik: company.cik, ticker: company.ticker, fundSeries }),
+  );
+
+  /**
+   * Mutual funds' and ETFs' N-PORT holdings changes, 2019 on (batch 180, with 13F's call): on a fund's page its own
+   * reports naming its biggest purchases and sales, on a company's each fund whose change equals 1% or more of the
+   * company's shares, each on the report's filing day; from the first price. No request.
+   */
+  await run("fund_nport", `N-PORT fund holdings changes for ${company.ticker}`, () =>
+    fundHoldingsFor(client, subjectId, { edgarName: company.name, alsoKnownAs, cik: company.cik, ticker: company.ticker, fundSeries }),
   );
 
   /**

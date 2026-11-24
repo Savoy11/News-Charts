@@ -554,15 +554,63 @@ A security's CUSIP is matched to its page by the SEC's fails-to-deliver files (`
 company's names, its aliases, predecessors and EDGAR former names ("DR HORTON INC" is HORTON D R INC's, Royal Dutch Shell's
 CUSIP Shell plc's), a fund's description by its first three words, as its sponsor's brand can lead it ("STATE STREET SPDR
 S&P 500 ETF"); a ticker another company took up later keeps the old CUSIP off it (CardioNet's BEAT, HeartBeam's since
-2021). 11,081 of the 49,951 CUSIPs seen are mapped, 885 refused by their names. An ETF is a page like a company's; a mutual
-fund, which no exchange trades, has none.
+2021). Since batch 180 an ETF's share class is matched too, by its series' name (`fundNamesAgree`): the files cut a
+description at 30 characters and often lead with the trust's name ("VANGUARD INDEX FDS VANGUARD MO" is VTI's), so the
+CUSIP still trading under the ticker needs only its sponsor's brand, and an older one two words of its own as well, since a
+closed fund's ticker is taken up by another (QQQ's PowerShares CUSIP, before Invesco's brand, is so left off: its
+quarters begin in 2016). 16,297 of the 49,951 CUSIPs seen are mapped (11,081 in batch 179), 3,196 refused by their names.
+An ETF is a page like a company's; a mutual fund, which no exchange trades, has none.
 
-The committed files (`data/13f/<year>.json.gz` and `cusips.json.gz`, 16 MB) hold 195,271 quarters on 6,705 pages, from
+The committed files (`data/13f/<year>.json.gz` and `cusips.json.gz`, 22 MB) hold 284,274 quarters on 10,930 pages (4,225
+of them ETFs', added in batch 180; a trust states no share count, so an ETF has its summaries only), from
 2013's third quarter to 2026's second, and 201,204 moves of 1% or more: two on the median page, over a hundred on the
 busiest tenth, mostly small companies whose few holders own large parts of them. From the first prices the fixtures
 carry, 61,227 rows on 637 pages. The quarters of 2013's first half are left out: the SEC's first data set holds only a
 few hundred of their reports. A monthly run needs about 5 GB of disk for its cache and 10 GB of memory; the first, about
 two hours. No key; the SEC's own work.
+
+### Mutual funds' and ETFs' N-PORT holdings changes, 2019–2026 (`lib/fundHoldings.ts`, batch 180)
+
+What mutual funds and ETFs bought and sold, from the SEC's Form N-PORT reports: a fund reports its holdings at each
+month's end, and its report for each fiscal quarter's last month is public, filed within 60 days. As with 13F, no order or
+trade is public, so a change is the difference between two of a fund's public reports, about three months apart, and the
+rows say so. Approved by the owner on 2026-11-24 with 13F (batch 179) and insider trades (batch 181).
+
+- **On a fund's page,** a row on each report's filing day where the fund bought or sold a security worth half a percent of
+  its net assets or more, naming its three biggest purchases and sales ("ARK Innovation ETF's N-PORT report for July 31, 2026: biggest purchase Space Exploration Technologies Corp (SPCX) (+2,501,617 shares), biggest sale Roku Inc (ROKU) (−2,407,993)"), each with its shares
+  before and after and its value at the report's prices. A fund's share classes are one fund: VOO's page and VFIAX's show
+  Vanguard 500 Index Fund's reports.
+- **On a company's page,** a row for any one fund whose change equals 1% or more of the company's shares (the 13F rule's
+  count, data.sec.gov's XBRL frames), on the later report's filing day ("Vanguard 500 Index Fund reported buying 15,194,651 Tesla shares between September 30, 2020 and December 31, 2020 (1.6% of the company)"), linked to the report on
+  EDGAR. The quarter's summary of the biggest buyers and sellers stays 13F's: a fund's manager reports its funds' holdings
+  there too.
+
+The SEC's Form N-PORT data sets (28 zips, 2019's last quarter on, 240 to 480 MB each) are read once each by `npm
+run sync:nport` into its cache (`.cache/nport`, about 5 GB with the months it writes, git-ignored): each public report's series, month, filing day and net
+assets, and its long positions in stocks, preferreds and funds by share count (`UNIT` NS), with their stated dollar value;
+bonds, options, swaps and short positions are left out. A security is keyed by its page's ticker through the 13F map, else
+its CUSIP (a US ISIN's where the fund gives no CUSIP), else its name, and a security that took a new CUSIP between two
+reports under the same name is one (a reverse split's). A fund's month is its report filed last, an amendment restating the
+whole; two reports are compared when they are two to four months apart and neither holds a quarter of the other's
+positions. A position whose stated value gives a price five times off the other funds' median is set aside. A split is the
+median ratio of the funds that held the security through the same two months, five or more, where their median price moved
+the other way too, else the fund's own where its shares moved by a simple ratio and its price the other way: a first run
+that read the ratios alone gave Eledon a 14-for-1 split in 2021 (its funds' stakes all grew in a financing) and read
+false sales of up to 91% of a company. A position held through is not compared where the 13F holders read a split in an
+overlapping quarter, the company's stated counts show one, or the price rose two and a half times or more, that the funds'
+shares do not show; a new or closed position then stays on the fund's page in its report's own shares but makes no move.
+
+A 1% move is measured against the stated count of the later report's quarter (the 13F sync's frames) only where the
+earlier quarter's agrees with it, or differs by the split the funds show, and the quarter after agrees too where its frame
+is read (NRx's blank-check company stated 2,688,242 shares before its merger of 2021, 58,810,338 after): the frames hold counts off by a hundred times
+(Holley's 1,093,750 of 2023's third quarter, beside 118 million) and counts stated after a reverse split the funds' reports
+precede (Regis's of 2023), which the trial runs read as one fund's sale of 46% of a company and an index fund's of 80%. A
+security whose change still exceeds the company's shares reads nothing that month.
+
+The committed files (`data/nport/<year>.json.gz`, 13 MB) hold 151,326 fund reports on 9,669 fund pages and 15,733
+moves of 1% or more on 2,326 company pages, from the reports of December 2019 to those of July 2026, naming 9,754 funds. From the first prices the
+fixtures carry, 2,777 moves on 379 pages. A quarterly run needs about 5 GB of disk for its cache and 8 GB of
+memory, and reads the 13F sync's map and frames, so it runs after it; the first, about two hours. No key; the SEC's own work.
 
 ### European Commission competition decisions, 1973–2026 (`lib/euAntitrust.ts`, batch 177)
 

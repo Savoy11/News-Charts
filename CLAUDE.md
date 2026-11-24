@@ -279,8 +279,25 @@ the company's stated counts (`splitFactor`, `simpleRatio`), and a quarter whose 
 One summary row a quarter on its 45-day deadline (`deadlineOf`) naming the three biggest buyers and sellers, and a row
 for each manager's change of 1% or more of the company's shares (data.sec.gov's XBRL frames) on its report's day. A
 security's CUSIP is a page's ticker by the SEC's fails-to-deliver files (`lib/cusipMap.ts`, committed as
-`data/13f/cusips.json.gz`), its description agreeing with the company's names, former names included, a fund's by its
-first three words. An ETF is a page; a mutual fund none.
+`data/13f/cusips.json.gz`), its description agreeing with the company's names, former names included; an ETF's share
+class by its series' name (`fundNamesAgree`, batch 180: its sponsor's brand where the CUSIP still trades under the ticker,
+else two of its own words too, as a closed fund's ticker is taken up by another). An ETF is a page; a mutual fund none.
+
+Mutual funds' and ETFs' N-PORT holdings changes since 2019 (`lib/fundHoldings.ts`, batch 180, with 13F's call) are the
+SEC's Form N-PORT data sets, each fund's public report of its fiscal quarter's last month, read once each into `npm run
+sync:nport`'s git-ignored cache (`.cache/nport`, about 5 GB; 8 GB of memory) and committed as `data/nport/<year>.json.gz`
+by report month: a change is the difference between a fund's two reports two to four months apart (`pairable`), long
+shares of stocks, preferreds and funds only, a report its month's last filed (`effectiveReports`), compared where both
+hold like-sized positions. A security is keyed by its page's ticker through the 13F map, else its CUSIP, a new CUSIP under
+the same name one security (`rekeyRenamed`); a position five times off the funds' median price is set aside
+(`markSuspect`); a split is the median ratio of the funds that held through the same two months, five or more, only where
+their median price moved the other way (`priceAgrees`: funds that all grew a stake by half in an offering read none),
+else the fund's own exact ratio with its price (`heldSplit`); a position held through is not compared where the 13F
+holders, the company's stated counts or a price two and a half times up show a split the funds do not, and a new or closed
+one then makes no move. A fund's page has a row on each report's filing day naming its three biggest purchases and sales
+of half a percent of its net assets or more (`BIG_SHARE`); a company's page a row for each fund's change of 1% or more of
+its shares (`MOVE_BP`), against the 13F frames' count of the later quarter only where the earlier agrees (`basisOf`: the
+frames hold counts a hundred times off, and counts stated after a reverse split).
 
 The Federal Reserve's actions on applications since 1996 (`lib/fedH2.ts`, batch 173) are the Board's weekly H.2 release,
 each week's PDF read once with `pdftotext -layout` into the committed `data/fed-h2.json.gz` (`npm run sync:fed-h2`, weekly; a
@@ -430,6 +447,7 @@ npm run sync:fed-h2         # add the Board's new weekly H.2 releases to data/fe
 npm run sync:eu-mergers     # add the Official Journal's new EU merger notices to data/eu-mergers.json.gz from the Publications Office (monthly, and after sync:tickers; needs pdftotext)
 npm run sync:eu-antitrust   # add the Official Journal's new EU antitrust decisions and State aid titles to data/eu-antitrust.json.gz from the Publications Office (monthly; needs pdftotext; a decision's text the file holds is never asked again)
 npm run sync:13f           # rebuild data/13f/ from the SEC's Form 13F data sets, fails-to-deliver files and share-count frames (monthly; a zip its cache holds is never asked again; 5 GB of cache, 10 GB of memory)
+npm run sync:nport         # rebuild data/nport/ from the SEC's Form N-PORT data sets (quarterly, after sync:13f, whose map and frames it reads; a zip its cache holds is never asked again; 5 GB of cache, 8 GB of memory)
 npm run sync:supreme-court  # rebuild data/supreme-court.json.gz from govinfo's U.S. Reports and the Court's slip lists (monthly; needs pdftotext; a case's PDF the file holds read is never asked again)
 ```
 

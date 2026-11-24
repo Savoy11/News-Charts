@@ -767,7 +767,8 @@ export const SOURCES: {
     commercialOk: true,
     reviewedOn: "2026-11-22",
     notes: "the European Commission's antitrust and cartel decisions, 1973 on, kept where an addressee its text names is a listed company by the merger notices' rule, with the fines it states, and its State aid notices and decisions whose title names a listed company as the beneficiary (lib/euAntitrust.ts); one row a company a day; the Publications Office's lists and CELLAR's texts read monthly and committed, no key (batch 177)",
-  },  {
+  },
+  {
     id: 53,
     key: "inst_13f",
     name: "SEC Form 13F holdings changes",
@@ -784,7 +785,20 @@ export const SOURCES: {
     reviewedOn: "2026-11-24",
     notes: "big investors' quarterly holdings changes in a listed security from the SEC's Form 13F data sets, 2013 on: a summary row each quarter naming the three biggest buyers and sellers, and a row for each manager whose change equals 1% or more of the company's shares (lib/instHoldings.ts), by the ticker the security's CUSIP has (lib/cusipMap.ts); read monthly and committed, no key (batch 179)",
   },
-
+  {
+    id: 54,
+    key: "fund_nport",
+    name: "SEC Form N-PORT fund holdings changes",
+    license: "public domain",
+    attribution: "U.S. Securities and Exchange Commission",
+    // sec.gov's dissemination notice, as for sources 31 and 53. The Form N-PORT data sets are the SEC's own work (17 U.S.C.
+    // § 105), with no key, and hold only the reports the SEC makes public. Used: each fund's name, its shares of a security
+    // and their stated value in two of its reports, the change, the filing's day and a link to it. Approved by the owner
+    // on 2026-11-24 with source 53 ("Mutual funds and ETFs, N-PORT").
+    commercialOk: true,
+    reviewedOn: "2026-11-24",
+    notes: "mutual funds' and ETFs' holdings changes from the SEC's Form N-PORT data sets, 2019 on: on a fund's page, a row for each of its reports with a purchase or sale of half a percent of its net assets or more, naming its three biggest each way; on a company's page, a row for each fund whose change equals 1% or more of the company's shares (lib/fundHoldings.ts); read quarterly and committed, no key (batch 180)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

@@ -79,7 +79,8 @@ export type SourceKey =
   | "supreme_court"
   | "eu_antitrust"
   | "inst_13f"
-  | "fund_nport";
+  | "fund_nport"
+  | "insider_trades";
 
 export interface TimelineEvent {
   id: string;

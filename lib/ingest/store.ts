@@ -799,6 +799,20 @@ export const SOURCES: {
     reviewedOn: "2026-11-24",
     notes: "mutual funds' and ETFs' holdings changes from the SEC's Form N-PORT data sets, 2019 on: on a fund's page, a row for each of its reports with a purchase or sale of half a percent of its net assets or more, naming its three biggest each way; on a company's page, a row for each fund whose change equals 1% or more of the company's shares (lib/fundHoldings.ts); read quarterly and committed, no key (batch 180)",
   },
+  {
+    id: 55,
+    key: "insider_trades",
+    name: "SEC Forms 4 and 5 insider trades",
+    license: "public domain",
+    attribution: "U.S. Securities and Exchange Commission",
+    // sec.gov's dissemination notice, as for sources 31, 53 and 54. The insider transactions data sets are the SEC's own
+    // work (17 U.S.C. § 105), with no key. Used: each reporting owner's name, relationship and title as filed, the shares,
+    // price and day of each open-market purchase or sale, the filing's day and a link to it. Approved by the owner on
+    // 2026-11-24 ("Insider trades, Form 4"), reversing the call of 2026-10-18 to leave insider forms out.
+    commercialOk: true,
+    reviewedOn: "2026-11-24",
+    notes: "officers', directors' and 10% owners' open-market purchases (code P) and sales (code S) of the company's shares from the SEC's insider transactions data sets (Forms 4 and 5), 2006 on: one row a company a filing day naming each insider, grants, exercises, tax withholding and gifts left out (lib/insiderTrades.ts); read quarterly and committed, no key (batch 181)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

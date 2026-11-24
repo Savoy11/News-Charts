@@ -91,7 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mx-auto max-w-6xl px-4 text-xs text-slate-400">
             <p>
               News Charts is a research tool, not investment advice. Price data from Yahoo Finance,
-              filings, big investors&apos; 13F and funds&apos; N-PORT holdings reports from SEC EDGAR, recent news from GDELT, historical newspapers from the
+              filings, insiders&apos; trades, big investors&apos; 13F and funds&apos; N-PORT holdings reports from SEC EDGAR, recent news from GDELT, historical newspapers from the
               Library of Congress (Chronicling America), historical context from Wikipedia
               (CC BY-SA), federal rules and notices from the Federal Register, archived material
               from the Internet Archive, Fed policy decisions, press releases and

@@ -226,8 +226,8 @@ async function main(): Promise<void> {
   check("  …the ingest asks it for every page, by its ticker", /await run\("inst_13f", [^\n]+\n\s*instHoldingsFor\(client, subjectId, \{[^}]*ticker: company\.ticker[^}]*\}\),/.test(read("scripts/ingest.ts")));
   check("  …synced monthly by `npm run sync:13f`, its cache git-ignored, and credited on the footer and the terms page",
     /"sync:13f": "NODE_OPTIONS=--max-old-space-size=10240 tsx scripts\/sync-13f\.ts"/.test(read("package.json")) && /^\/\.cache$/m.test(read(".gitignore")) &&
-      /filings, big investors&apos; 13F and funds&apos; N-PORT holdings reports from SEC EDGAR/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
-      /filings, big investors&apos; 13F and funds&apos; N-PORT holdings reports from the SEC/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
+      /filings, insiders&apos; trades, big investors&apos; 13F and funds&apos; N-PORT holdings reports from SEC EDGAR/.test(read("app/layout.tsx").replace(/\s+/g, " ")) &&
+      /filings, insiders&apos; trades, big investors&apos; 13F and funds&apos; N-PORT holdings reports from the SEC/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));
 
   console.log(`\n${pass}/${pass + fail} checks passed\n`);
   if (fail) process.exit(1);

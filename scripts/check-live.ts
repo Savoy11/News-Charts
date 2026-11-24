@@ -1153,6 +1153,18 @@ export const CASES: LiveCase[] = [
     },
   },
   {
+    name: "SEC insider transactions — the data set page `npm run sync:insiders` lists its zips from (batch 181)",
+    covers: ["insider_trades"],
+    hosts: ["www.sec.gov"],
+    async run() {
+      // measured 2026-11-24: 83 zips listed, 2006q1_form345 to 2026q3_form345
+      const page = await fetch("https://www.sec.gov/data-research/sec-markets-data/insider-transactions-data-sets", { headers: { ...UA }, signal: AbortSignal.timeout(60_000) });
+      if (!page.ok) return [`the insider transactions data set page: HTTP ${page.status}`];
+      const zips = new Set([...(await page.text()).matchAll(/href="([^"]+\.zip)"/g)].map((m) => m[1]));
+      return zips.size < 83 ? [`the insider transactions data set page lists ${zips.size} zips, fewer than the 83 of 2026-11-24`] : [];
+    },
+  },
+  {
     name: "FDA new-drug approvals — the compilation workbook as `npm run sync:fda-approvals` reads it; Prozac on Eli Lilly (batch 105)",
     covers: ["fda_approvals"],
     hosts: ["www.fda.gov"],

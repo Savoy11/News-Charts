@@ -569,6 +569,34 @@ carry, 61,227 rows on 637 pages. The quarters of 2013's first half are left out:
 few hundred of their reports. A monthly run needs about 5 GB of disk for its cache and 10 GB of memory; the first, about
 two hours. No key; the SEC's own work.
 
+### Insiders' open-market trades, 2006–2026 (`lib/insiderTrades.ts`, batch 181)
+
+What the company's own officers, directors and 10% owners bought and sold of its stock, from the SEC's Forms 4 and 5: an
+insider reports a trade within two business days on Form 4, and a late or exempt one on Form 5. Approved by the owner on
+2026-11-24 ("Insider trades, Form 4"), reversing the call of 2026-10-18 to leave insider forms out; only the trades an
+insider chose are kept, so the timeline is not buried by the forms' routine grants, option exercises, tax withholding and
+gifts, which `lib/secForms.ts` still leaves out as filings.
+
+- **One row a company a filing day,** naming each insider who bought or sold that day, with the role the filing gives,
+  the shares, their value at the prices reported and the trade days ("Musk Elon (CEO, director, 10% owner) sold
+  21,995,000 Tesla, Inc. shares, about $3.6 billion"; "BERKSHIRE HATHAWAY INC and 1 joint filer (10% owner) bought
+  5,985,190 OCCIDENTAL PETROLEUM CORP shares, about $352.5 million"), a trade under a Rule 10b5-1 plan said to be one
+  where the filing's box (since 2023) is ticked, linked to the filing on EDGAR.
+
+The SEC's insider transactions data sets (83 zips, 2006's first quarter on, 2 to 15 MB each) are read once each by `npm run
+sync:insiders` into its cache (`.cache/insiders`, git-ignored): each Form 4 or 5 by an officer, director or 10% owner that
+reports a non-derivative purchase (code P) or sale (code S), its first reporting owner (a joint filing's others counted,
+as they report the same shares), the issuer and each trade's shares, price and day. An amendment restates the last
+filing before it by the same owner for the same issuer and period, and keeps that filing's day, as the trades were public
+from it. Rows are kept for the issuers EDGAR's index lists and the predecessors' records `lib/predecessors.ts` maps,
+each up to its handover day (Exxon Mobil Corporation's insiders on XOM's page before 2026-07-01). Names are as filed,
+surname first.
+
+The committed files (`data/insiders/<year>.json.gz`, 17 MB) hold 521,851 company days on 5,508 issuers, from 2006-01-03 to
+2026-09-30: 51 on the median issuer, 234 on the busiest tenth, 3,157 at most. From the first prices the fixtures carry,
+105,719 rows on 615 pages. A large company's page is busy (Meta 1,264 days, often a few hundred shares under a trading
+plan); a minimum value a day is the owner's to set (`docs/OWNER-ACTIONS.md`). No key; the SEC's own work.
+
 ### Mutual funds' and ETFs' N-PORT holdings changes, 2019–2026 (`lib/fundHoldings.ts`, batch 180)
 
 What mutual funds and ETFs bought and sold, from the SEC's Form N-PORT reports: a fund reports its holdings at each

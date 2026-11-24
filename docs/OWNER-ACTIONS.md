@@ -243,6 +243,12 @@ Raised by the November batches, each recorded in the master checklist:
   share-count frames), on a host with about 5 GB of free disk for its cache (`.cache/nport`) and 8 GB of memory; the
   first run reads the SEC's 28 data sets, 240 to 480 MB each, and takes about two hours, later runs the new zip. It asks
   www.sec.gov with the contact in `.env.local`. Insider trades follow in batch 181.
+- **Insider trades (batch 181), your call of 2026-11-24.** Built and committed: nothing to apply. To keep it current, run
+  `npm run sync:insiders` each quarter (it reads the SEC's 83 insider transactions data sets once, 2 to 15 MB each, and
+  later runs the new zip; 6 GB of memory, the first run about 20 minutes). It asks www.sec.gov with the contact in
+  `.env.local`. **Your call, if you want one:** every open-market trade an insider files makes a row, so a large company's
+  page is busy (Meta 1,264 days since 2012, often a few hundred shares under a trading plan); a minimum, such as $1
+  million a day, would keep only the larger ones. Say the word and a later batch adds it.
 - ~~**The 2026-11-22 second run's proposals** (batch 171, `docs/proposals/2026-11-22b-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a recurring
   charge: #1 is openFDA's, CC0, like sources 40 and 47; #2 is the Federal Reserve Board's own work, public domain by

@@ -108,6 +108,8 @@ export function describeItems(items: string): string | undefined {
  *
  * Insider-trade forms (3, 4, 5 and 144) are left out on the owner's call: they are likely the
  * largest pile of what is discarded, and insiders file them so often they would bury a timeline.
+ * Their open-market purchases and sales alone come in by their own source since the owner's call
+ * of 2026-11-24 (`lib/insiderTrades.ts`, batch 181), one row a company a filing day.
  * 8-K/A is not here — it takes the 8-K's item naming — and nor are 424B prospectuses, which are
  * grouped by day (`PROSPECTUS`).
  */

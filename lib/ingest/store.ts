@@ -811,7 +811,7 @@ export const SOURCES: {
     // 2026-11-24 ("Insider trades, Form 4"), reversing the call of 2026-10-18 to leave insider forms out.
     commercialOk: true,
     reviewedOn: "2026-11-24",
-    notes: "officers', directors' and 10% owners' open-market purchases (code P) and sales (code S) of the company's shares from the SEC's insider transactions data sets (Forms 4 and 5), 2006 on: one row a company a filing day naming each insider, grants, exercises, tax withholding and gifts left out (lib/insiderTrades.ts); read quarterly and committed, no key (batch 181)",
+    notes: "officers', directors' and 10% owners' open-market purchases (code P) and sales (code S) of the company's shares from the SEC's insider transactions data sets (Forms 4 and 5), 2006 on: one row a company a filing day naming each insider, a day's trades together worth $1 million or more (the owner's call of 2026-11-24, batch 182), grants, exercises, tax withholding and gifts left out (lib/insiderTrades.ts); read quarterly and committed, no key (batch 181)",
   },
 ];
 

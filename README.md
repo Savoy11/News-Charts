@@ -577,7 +577,8 @@ insider reports a trade within two business days on Form 4, and a late or exempt
 insider chose are kept, so the timeline is not buried by the forms' routine grants, option exercises, tax withholding and
 gifts, which `lib/secForms.ts` still leaves out as filings.
 
-- **One row a company a filing day,** naming each insider who bought or sold that day, with the role the filing gives,
+- **One row a company a filing day whose trades come to $1 million or more,** purchases and sales together (the owner's
+  call of 2026-11-24, batch 182: every trade made a large company's page busy), naming each insider who bought or sold that day, with the role the filing gives,
   the shares, their value at the prices reported and the trade days ("Musk Elon (CEO, director, 10% owner) sold
   21,995,000 Tesla, Inc. shares, about $3.6 billion"; "BERKSHIRE HATHAWAY INC and 1 joint filer (10% owner) bought
   5,985,190 OCCIDENTAL PETROLEUM CORP shares, about $352.5 million"), a trade under a Rule 10b5-1 plan said to be one
@@ -592,10 +593,11 @@ from it. Rows are kept for the issuers EDGAR's index lists and the predecessors'
 each up to its handover day (Exxon Mobil Corporation's insiders on XOM's page before 2026-07-01). Names are as filed,
 surname first.
 
-The committed files (`data/insiders/<year>.json.gz`, 17 MB) hold 521,851 company days on 5,508 issuers, from 2006-01-03 to
-2026-09-30: 51 on the median issuer, 234 on the busiest tenth, 3,157 at most. From the first prices the fixtures carry,
-105,719 rows on 615 pages. A large company's page is busy (Meta 1,264 days, often a few hundred shares under a trading
-plan); a minimum value a day is the owner's to set (`docs/OWNER-ACTIONS.md`). No key; the SEC's own work.
+The committed files (`data/insiders/<year>.json.gz`, 6 MB) hold 141,131 company days of $1 million or more on 4,121
+issuers, from 2006-01-03 to 2026-09-30: 10 on the median issuer, 93 on the busiest tenth, 1,659 at most; 14,260 of them
+hold a purchase. The minimum left 380,720 smaller days out (batch 181 kept all 521,851, Meta's 1,264 among them, often a
+few hundred shares a week under a trading plan; Meta keeps 770). From the first prices the fixtures carry, 35,318 rows on
+564 pages. No key; the SEC's own work.
 
 ### Mutual funds' and ETFs' N-PORT holdings changes, 2019–2026 (`lib/fundHoldings.ts`, batch 180)
 

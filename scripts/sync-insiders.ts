@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 import index from "../data/edgar-tickers.json";
 import { UA } from "../lib/contact";
-import { type Filing, INSIDER_TRADES_DIR, type Trade, addDay, companyDays, dayOf, effectiveFilings, isInsider, newYear, relOf } from "../lib/insiderTrades";
+import { type Filing, INSIDER_TRADES_DIR, type Trade, addDay, bigEnough, companyDays, dayOf, effectiveFilings, isInsider, newYear, relOf } from "../lib/insiderTrades";
 import { PREDECESSORS } from "../lib/predecessors";
 import { eachZipLine, zipEntryNames } from "../lib/zip";
 
@@ -15,7 +15,8 @@ import { eachZipLine, zipEntryNames } from "../lib/zip";
  *    that report a non-derivative purchase (P) or sale (S), with their owners, the issuer and each trade's shares, price
  *    and day, kept as `.cache/insiders/<zip>.json`; the zip itself is held in memory only.
  * 2. Every filing, an amendment restating the one before it (`effectiveFilings`), grouped a company a filing day
- *    (`companyDays`), for the issuers EDGAR's index lists and the predecessors' records `lib/predecessors.ts` maps.
+ *    (`companyDays`), for the issuers EDGAR's index lists and the predecessors' records `lib/predecessors.ts` maps; a day
+ *    whose trades come to less than $1 million together is not kept (`bigEnough`, batch 182).
  *
  * The SEC's hosts are asked with the project's contact, 1 s apart.
  *
@@ -142,8 +143,14 @@ async function main(): Promise<void> {
   const byIssuer = companyDays(effectiveFilings(all));
   const years = new Map<string, ReturnType<typeof newYear>>();
   let days = 0;
+  let small = 0;
   for (const [cik, list] of byIssuer)
     for (const d of list) {
+      // a day under $1 million is not kept (the owner's call of 2026-11-24, batch 182)
+      if (!bigEnough(d)) {
+        small++;
+        continue;
+      }
       const y = d.day.slice(0, 4);
       addDay(years.get(y) ?? years.set(y, newYear()).get(y)!, cik, d);
       days++;
@@ -153,11 +160,11 @@ async function main(): Promise<void> {
   for (const [y, { ownerAt: _o, titleAt: _t, ...body }] of years) {
     const about =
       `Insiders' open-market purchases and sales filed in ${y}, from the SEC's insider transactions data sets (Forms 4 and 5): for each listed company, ` +
-      "one row a filing day naming each officer's, director's and 10% owner's purchases (code P) and sales (code S) of its shares (lib/insiderTrades.ts). " +
-      "The SEC's own work (17 U.S.C. § 105). Written by `npm run sync:insiders` (batch 181).";
+      "one row a filing day naming each officer's, director's and 10% owner's purchases (code P) and sales (code S) of its shares, a day's together worth " +
+      "$1 million or more (lib/insiderTrades.ts). The SEC's own work (17 U.S.C. § 105). Written by `npm run sync:insiders` (batches 181–182).";
     writeFileSync(join(INSIDER_TRADES_DIR, `${y}.json.gz`), gzipSync(Buffer.from(`${JSON.stringify({ about, read: readOn, ...body })}\n`), { level: 9 }));
   }
-  console.log(`${all.length} filings, ${days} company days on ${byIssuer.size} issuers, ${years.size} years → ${INSIDER_TRADES_DIR}`);
+  console.log(`${all.length} filings, ${days} company days of $1 million or more (${small} smaller left out) on ${byIssuer.size} issuers, ${years.size} years → ${INSIDER_TRADES_DIR}`);
 }
 
 main().catch((err) => {

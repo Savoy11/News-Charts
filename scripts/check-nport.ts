@@ -61,11 +61,12 @@ const EXPECTED = {
   firstReport: "2019-12-31",
   lastReport: "2026-07-31",
   // 9,754 funds, 9,669 pages, 151,326 reports, 2,326 company pages and 15,733 moves in batch 180
-  funds: 9_756,
+  // 9,756 funds, 151,362 reports and 15,829 moves in batch 184
+  funds: 9_755,
   fundPages: 9_671,
-  reports: 151_362,
+  reports: 151_361,
   companyPages: 2_332,
-  moves: 15_829,
+  moves: 15_812,
   // from first prices, for the pages the fixtures read
   // 2,777 on 379 in batch 180
   fromFirst: 2_789,

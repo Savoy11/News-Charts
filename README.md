@@ -551,6 +551,9 @@ every untraded holding alike (`confirmedSplit`: 7% to 22% of the holders in the 
 194 in its CIT quarter of 2022, which batch 179 read as three for two, as it did Agnico Eagle's Kirkland Lake quarter and
 Mativ's Neenah quarter): a split up not confirmed reads the holdings as stated, a stock merger's or an offering's being
 real changes of holdings; a split down not confirmed, nor by the price rising, reads nothing (a spin-off's exchange).
+A median that misses a factor by 3% to 12%, as many holders traded besides, is read as that split where three holders or
+more, and a twenty-fifth, show it exactly (`nearSplit`, batch 185: National Beverage's two for one of 2021, a median of
+1.89, 25 of 174 holders exactly two, read before as every holder doubling).
 The share counts are data.sec.gov's XBRL frames of each quarter (59 requests), a count stated before a split read in the
 later unit, the next quarter's count telling which unit a split down's is in (batch 184); a company with several classes, or a trust of many ETFs, has no stated count and so its summary only.
 
@@ -568,10 +571,10 @@ An ETF is a page like a company's; a mutual fund, which no exchange trades, has 
 
 The committed files (`data/13f/<year>.json.gz` and `cusips.json.gz`, 22 MB) hold 284,259 quarters on 10,930 pages (4,225
 of them ETFs', added in batch 180; a trust states no share count, so an ETF has its summaries only), from
-2013's third quarter to 2026's second, and 201,107 moves of 1% or more: none on the median page (7,382 of the 10,930
+2013's third quarter to 2026's second, and 201,058 moves of 1% or more: none on the median page (7,382 of the 10,930
 pages have none, the ETFs' among them), 72 or more on the busiest tenth, mostly small companies whose few holders own
-large parts of them. 1,528 quarters read a split (2,201 before batch 184 confirmed each). From the first prices the
-fixtures carry, 61,221 rows on 637 pages. The quarters of 2013's first half are left out: the SEC's first data set holds only a
+large parts of them. 1,563 quarters read a split (2,201 before batch 184 confirmed each, 1,528 before batch 185 read the 35 a median
+misses). From the first prices the fixtures carry, 61,211 rows on 637 pages. The quarters of 2013's first half are left out: the SEC's first data set holds only a
 few hundred of their reports. A monthly run needs about 5 GB of disk for its cache and 10 GB of memory; the first, about
 two hours. No key; the SEC's own work.
 
@@ -656,8 +659,8 @@ is read (NRx's blank-check company stated 2,688,242 shares before its merger of 
 precede (Regis's of 2023), which the trial runs read as one fund's sale of 46% of a company and an index fund's of 80%. A
 security whose change still exceeds the company's shares reads nothing that month.
 
-The committed files (`data/nport/<year>.json.gz`, 13 MB) hold 151,362 fund reports on 9,671 fund pages and 15,829
-moves of 1% or more on 2,332 company pages, from the reports of December 2019 to those of July 2026, naming 9,756 funds. From the first prices the
+The committed files (`data/nport/<year>.json.gz`, 13 MB) hold 151,361 fund reports on 9,671 fund pages and 15,812
+moves of 1% or more on 2,332 company pages, from the reports of December 2019 to those of July 2026, naming 9,755 funds. From the first prices the
 fixtures carry, 2,789 moves on 379 pages. A quarterly run needs about 5 GB of disk for its cache and 8 GB of
 memory, and reads the 13F sync's map and frames, so it runs after it; the first, about two hours. No key; the SEC's own work.
 

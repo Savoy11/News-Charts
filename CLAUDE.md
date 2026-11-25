@@ -291,7 +291,8 @@ order or trade is public, so a change is the difference between a manager's two 
 none), compared only where both reports hold positions of like size (`comparable`), a position whose value gives no
 other manager's price set aside (`markSuspect`), a split read from the holders' ratios or, where too few held through,
 the company's stated counts (`splitFactor`, `simpleRatio`), the holders' split only where a twenty-fifth show its factor
-exactly (`confirmedSplit`, batch 184: a stock merger's quarter, First Citizens' CIT one, reads as stated; a split down
+exactly, a median a few percent off a factor read where three or more show it exactly (`nearSplit`, batch 185:
+National Beverage's two for one of 2021) (`confirmedSplit`, batch 184: a stock merger's quarter, First Citizens' CIT one, reads as stated; a split down
 neither that nor the price confirms reads nothing), a split down's stated count read by the next quarter's (`shareBasis`),
 and a quarter whose change exceeds the company read as none.
 One summary row a quarter on its 45-day deadline (`deadlineOf`) naming the three biggest buyers and sellers, and a row

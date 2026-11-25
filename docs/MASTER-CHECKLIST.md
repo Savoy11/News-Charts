@@ -988,6 +988,31 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 185: 13F's near-miss splits (2026-11-25)
+
+The owner's word: "Add the $1 million minimum, then continue". Batch 184 found, and logged, that a 13F quarter whose
+holders' median misses a split's factor by more than 3% reads none, so every holder that kept its shares reads as having
+doubled them; it also lets such a quarter overrule the funds' N-PORT reading of the split.
+
+- [x] **The second reading, `nearSplit`:** where the median misses every simple factor by 3% (`splitFactor` reads 1), the
+      factor nearest it within 12% is the split where three holders or more, and a twenty-fifth, show it exactly (within a
+      five-hundredth up, a hundredth down, as cash for fractions moves each holder a little); then `confirmedSplit` as
+      before. National Beverage's 2021-03-31 reads two for one (a median of 1.886, 25 of 174 holders exactly two, its
+      price halved): its holders' net change is −6,907,027, not +8,603,255. 35 quarters read differently; those looked
+      at match a split, reverse split or ratio change the company made: Trex's and Greene County Bancorp's two for one, ProShares' splits, ARMOUR's, Seacoast's,
+      Scorpio Tankers', Ovintiv's, Global Net Lease's and Praxis's reverse splits, Mesoblast's and Cheetah Mobile's ADS
+      ratio changes, Inhibrx's exchange of 2024, AMC's one for ten with its APE units (0.2 for a holder of both, as
+      passive holders were), and Vanguard's S&P 500 ETF of 2013, whose managers' September holdings show twice the shares
+      at half the price, a slip the reading turns from 33 false "sold half" into no change. Direxion's TECL of 2021, which
+      batch 184's sample counted over every holder, still reads none over the managers the quarter compares; not looked
+      into further.
+- [x] **Measured:** 13F, 1,563 quarters read a split (1,528 before), 284,259 quarters on 10,930 pages, 201,058 moves, 61,211
+      rows on 637 pages from first prices; N-PORT, 151,361 reports on 9,671 fund pages, 15,812 moves on 2,332 company
+      pages, 2,789 from first prices on 379 pages.
+- [x] **Checks:** check:inst-13f 36 (two new: `nearSplit`, and National Beverage's committed quarter), check:nport 35.
+- **The ledger:** no entry changes; 37 open, 105 closed, 11 parked, 17 blocked.
+- **Requests:** none; both syncs read their saved caches, frames and fails-to-deliver files.
+
 ## NC ledger — batch 184: the 2026-11-25 audit of batches 175–183, its findings fixed (2026-11-25)
 
 The owner's word: "Add the $1 million minimum, then continue". The `code-auditor` read batches 175–183 (`304d782..2230f24`)
@@ -1033,7 +1058,7 @@ read again here, against the SEC's zips and the sync caches the auditor did not 
       Airbnb's, XP's, VG's), NVIDIA's, Broadcom's, Walmart's, Tesla's and Amazon's stand; 151,362 reports on 9,671 fund
       pages, 15,829 moves on 2,332 company pages, 2,789 from first prices on 379 pages. The sync reads the 13F holders'
       no-split answer once a month for each ticker and pair of month ends, as it reads every quarter the ticker has.
-- [ ] **Found here, for batch 185: 13F's near-miss splits.** A quarter whose holders' median misses a split's factor by 3%
+- [x] **Found here, done in batch 185: 13F's near-miss splits.** A quarter whose holders' median misses a split's factor by 3%
       to 12% reads none (`simpleRatio`'s 3%), though many holders show it exactly: National Beverage's 2021-03-31 (25 of
       174 holders exactly two for one, its price halved) reads every holder as doubling. A sample of eight quarters finds
       18 such, Direxion's TECL, Mesoblast and Inhibrx among them, most with one holder exact; the fix is a second reading

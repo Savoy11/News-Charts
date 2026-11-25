@@ -151,6 +151,24 @@ export function splitFactor(ratios: readonly number[]): number {
 }
 
 /**
+ * The split a quarter's holders show where their median misses its factor by 3% to 12%, which `splitFactor` reads as none
+ * (batch 185: National Beverage's two for one of 2021, a median of 1.886 as many holders traded besides, 25 of 174 exactly
+ * two): the simple factor nearest the median, where three holders or more, and a twenty-fifth, show it exactly (within a
+ * five-hundredth up, a hundredth down, as cash for fractions moves each holder a little); else 1.
+ */
+export function nearSplit(ratios: readonly number[]): number {
+  if (ratios.length < 5) return 1;
+  const sorted = [...ratios].sort((a, b) => a - b);
+  const m = sorted[Math.floor(sorted.length / 2)];
+  if (!(m > 0)) return 1;
+  const factors = m >= 1 ? [1.5, ...Array.from({ length: 99 }, (_, k) => k + 2)] : Array.from({ length: 999 }, (_, k) => 1 / (k + 2));
+  const c = factors.reduce((best, f) => (Math.abs(Math.log(m / f)) < Math.abs(Math.log(m / best)) ? f : best), factors[0]);
+  if (Math.abs(m / c - 1) >= 0.12) return 1;
+  const tol = c > 1 ? 0.002 : 0.01;
+  return ratios.filter((r) => Math.abs(r / c - 1) < tol).length >= Math.max(3, Math.ceil(0.04 * ratios.length)) ? c : 1;
+}
+
+/**
  * Whether the holders' ratios confirm the split their median reads (batch 184, the audit's finding 4: First Citizens'
  * CIT quarter, Agnico Eagle's Kirkland Lake quarter and Mativ's Neenah quarter each read as three for two). A split
  * multiplies every holder's shares alike, so a holder that neither bought nor sold shows the factor exactly; a stock
@@ -289,7 +307,9 @@ export function pageQuarter(
   // 2024) would read a second split the quarter after; the holders' split only where their own counts confirm it (`confirmedSplit`)
   const p0 = medianPrice(prev);
   const p1 = medianPrice(cur);
-  const read = ratios.length >= 5 || !opts.sharesOutstanding || !opts.sharesBefore ? confirmedSplit(splitFactor(ratios), ratios, p0 && p1 ? p1 / p0 : undefined) : simpleRatio(opts.sharesOutstanding / opts.sharesBefore);
+  // a median that misses a split by a few percent, many holders showing it exactly, is read by `nearSplit` (batch 185)
+  const f0 = splitFactor(ratios);
+  const read = ratios.length >= 5 || !opts.sharesOutstanding || !opts.sharesBefore ? confirmedSplit(f0 === 1 ? nearSplit(ratios) : f0, ratios, p0 && p1 ? p1 / p0 : undefined) : simpleRatio(opts.sharesOutstanding / opts.sharesBefore);
   if (read === null) return null;
   const split = read;
   const changes: Move[] = [];

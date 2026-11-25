@@ -31,6 +31,7 @@ import {
   instHoldings,
   instHoldingsEvents,
   markSuspect,
+  nearSplit,
   nextPeriod,
   pageQuarter,
   previousPeriod,
@@ -63,9 +64,10 @@ const EXPECTED = {
   pages: 10_930,
   // 284,274 quarters, 201,204 moves and 61,227 rows from first prices in batch 180, before batch 184 confirmed each split
   summaries: 284_259,
-  moves: 201_107,
+  // 201,107 and 61,221 in batch 184, before batch 185 read the splits a median misses by a few percent
+  moves: 201_058,
   // from first prices, for the pages the fixtures read
-  fromFirst: 61_221,
+  fromFirst: 61_211,
   fromFirstPages: 637,
 };
 
@@ -141,6 +143,11 @@ async function main(): Promise<void> {
     shareBasis(2_460_000_000, 18_000_000_000, 10) === 24_600_000_000 && shareBasis(15_204_137_000, 9_000_000_000, 1) === 15_204_137_000 && shareBasis(undefined, 5, 1) === undefined && shareBasis(100, 1_000, 1) === undefined);
   check("a split up confirmed where a twenty-fifth of the holders show its factor exactly (batch 184): NVIDIA's ten for one; First Citizens' CIT quarter, each holder grown by its own amount, none",
     confirmedSplit(10, [10, 10.0001, 12, 9.5, 10.3], 0.14) === 10 && confirmedSplit(1.5, [1.43, 1.47, 1.52, 1.55, 1.49, 1.6], 0.8) === 1 && confirmedSplit(1, [1, 1, 1, 1, 1], 1) === 1);
+  const fizz = [...Array(25).fill(2), ...Array.from({ length: 149 }, (_, i) => 1.55 + i * 0.0025)];
+  check("a median that misses a split by a few percent read where three holders and a twenty-fifth show it exactly (batch 185: National Beverage's two for one of 2021, a median of 1.89); a merger's spread, or two exact, none",
+    splitFactor(fizz) === 1 && nearSplit(fizz) === 2 && nearSplit([1.43, 1.47, 1.52, 1.55, 1.49, 1.6, 1.38, 1.51]) === 1 && nearSplit([2, 2, 1.8, 1.82, 1.79, 1.81, 1.83]) === 1 &&
+      nearSplit([0.26, 0.25, 0.251, 0.249, 0.27, 0.3, 0.24]) === 0.25 && nearSplit([1, 1, 1, 1, 1]) === 1,
+    [splitFactor(fizz), nearSplit(fizz)]);
   check("  …a split down confirmed where the price rose to three tenths of its factor, or a twenty-fifth show it within a hundredth; else the quarter reads nothing (News Corp's exchange of 2013)",
     confirmedSplit(0.05, [0.049, 0.0475, 0.053, 0.0465, 0.052], 10.6) === 0.05 && confirmedSplit(0.25, [0.27, 0.24, 0.26, 0.23, 0.265], 0.49) === null && confirmedSplit(0.25, [0.25, 0.27, 0.24, 0.26, 0.23], 0.49) === 0.25);
   check("  …a split down's stated count read by the next quarter's (the audit's finding 7): 200,000,000 before a one for twenty, the next 10,500,000, is 10,000,000; a count already after it, the next agreeing, as stated; with no next as before",
@@ -226,7 +233,9 @@ async function main(): Promise<void> {
   const quarterOf = (t: string, p: string) => (pages.get(t) ?? []).find((x) => x.period === p);
   check("the audit's merger quarters read as stated (batch 184): First Citizens' CIT quarter, Agnico Eagle's and Mativ's no split; NVIDIA's ten for one, Apple's four for one, Old Dominion's three for two kept",
     quarterOf("FCNCA", "2022-03-31")?.split === 1 && quarterOf("AEM", "2022-03-31")?.split === 1 && quarterOf("MATV", "2022-09-30")?.split === 1 &&
-      quarterOf("NVDA", "2024-06-30")?.split === 10 && quarterOf("AAPL", "2020-09-30")?.split === 4 && quarterOf("ODFL", "2020-03-31")?.split === 1.5,
+      quarterOf("NVDA", "2024-06-30")?.split === 10 && quarterOf("AAPL", "2020-09-30")?.split === 4 && quarterOf("ODFL", "2020-03-31")?.split === 1.5 &&
+      // batch 185: National Beverage's two for one of 2021, which its holders' median of 1.89 missed
+      quarterOf("FIZZ", "2021-03-31")?.split === 2,
     ["FCNCA", "AEM", "MATV"].map((t) => quarterOf(t, t === "MATV" ? "2022-09-30" : "2022-03-31")?.split));
 
   console.log("\nAt ingest");

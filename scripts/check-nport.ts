@@ -31,6 +31,7 @@ import {
   newYear,
   pairable,
   priceAgrees,
+  quarterNoSplit,
   quarterSplitsIn,
   rekeyRenamed,
   reportOf,
@@ -59,13 +60,15 @@ const EXPECTED = {
   years: 8,
   firstReport: "2019-12-31",
   lastReport: "2026-07-31",
-  funds: 9_754,
-  fundPages: 9_669,
-  reports: 151_326,
-  companyPages: 2_326,
-  moves: 15_733,
+  // 9,754 funds, 9,669 pages, 151,326 reports, 2,326 company pages and 15,733 moves in batch 180
+  funds: 9_756,
+  fundPages: 9_671,
+  reports: 151_362,
+  companyPages: 2_332,
+  moves: 15_829,
   // from first prices, for the pages the fixtures read
-  fromFirst: 2_777,
+  // 2,777 on 379 in batch 180
+  fromFirst: 2_789,
   fromFirstPages: 379,
 };
 
@@ -113,6 +116,43 @@ async function main(): Promise<void> {
   check("a 13F split in an overlapping quarter: NVIDIA's of 2024's second quarter falls between March 31 and June 30, and between April 30 and July 31; not between June 30 and September 30",
     same(quarterSplitsIn([{ period: "2024-06-30", split: 10 }], "2024-03-31", "2024-06-30"), [10]) && same(quarterSplitsIn([{ period: "2024-06-30", split: 10 }], "2024-04-30", "2024-07-31"), [10]) &&
       same(quarterSplitsIn([{ period: "2024-06-30", split: 10 }], "2024-06-30", "2024-09-30"), []));
+  const he = [{ period: "2024-09-30", split: 1, compared: 328 }, { period: "2024-12-31", split: 1, compared: 331 }];
+  check("the 13F holders read no split in every overlapping quarter, each from 20 managers or more (batch 184): Hawaiian Electric's two quarters cover July 31 to October 31; a quarter missing, a split read or too few managers leave it unknown",
+    quarterNoSplit(he, "2024-07-31", "2024-10-31") && !quarterNoSplit(he.slice(0, 1), "2024-07-31", "2024-10-31") && quarterNoSplit(he.slice(0, 1), "2024-06-30", "2024-09-30") &&
+      !quarterNoSplit([{ ...he[0], split: 1.5 }, he[1]], "2024-07-31", "2024-10-31") && !quarterNoSplit([{ ...he[0], compared: 19 }, he[1]], "2024-07-31", "2024-10-31") && !quarterNoSplit([], "2024-06-30", "2024-09-30"));
+  // six index funds each grown by about half in an offering as the price fell to three fifths (Hawaiian Electric's of 2024)
+  const offer = (noSplit: boolean) =>
+    compareMonth(
+      [1, 2, 3, 4, 5, 6].map((i) => ({ pair: pair(`S00000003${i}`, "2024-07-31", "2024-10-31"), before: new Map([["T:HE", p(1_000 * i, 20_000 * i)]]), now: new Map([["T:HE", p(1_490 * i, 17_880 * i)]]) })),
+      { tickerOf: (k) => k.slice(2), noSplitOf: () => noSplit },
+    );
+  check("  …the funds' three-for-two in a falling price, no fund showing it exactly, overruled where the 13F holders read none: each fund's purchase kept",
+    offer(true).every((m) => m.changes[0]?.split === 1 && m.changes[0].delta === 490 * Number(m.pair.series.slice(-1))) && offer(false).every((m) => m.changes.length === 0 || m.changes[0].split === 1.5),
+    offer(true).map((m) => m.changes.map((c) => [c.delta, c.split])));
+  // six funds through a two for one, five exactly, the 13F holders reading none (National Beverage's of 2021, a 13F median of 1.89)
+  const fizz = compareMonth(
+    [1, 2, 3, 4, 5, 6].map((i) => ({ pair: pair(`S00000006${i}`), before: new Map([["T:FIZZ", p(1_000 * i, 85_000 * i)]]), now: new Map([["T:FIZZ", p(i === 6 ? 2_300 * i : 2_000 * i, (i === 6 ? 2_300 : 2_000) * i * 49)]]) })),
+    { tickerOf: (k) => k.slice(2), noSplitOf: () => true },
+  );
+  check("  …the funds' own exact evidence before a 13F quarter read as none: five funds exactly two for one change nothing, a sixth bought 1,800",
+    fizz.slice(0, 5).every((m) => m.changes.length === 0) && fizz[5].changes[0]?.delta === 1_800 && fizz[5].changes[0].split === 2, fizz.map((m) => m.changes.map((c) => [c.delta, c.split])));
+  // six funds unchanged as the price halved, a seventh that doubled (the audit's reproduction of finding 3)
+  const crash = compareMonth(
+    [
+      ...[1, 2, 3, 4, 5, 6].map((i) => ({ pair: pair(`S00000004${i}`), before: new Map([["T:ACME", p(1_000 * i, 100_000 * i)]]), now: new Map([["T:ACME", p(1_000 * i, 50_000 * i)]]) })),
+      { pair: pair("S000000047"), before: new Map([["T:ACME", p(10_000, 1_000_000)]]), now: new Map([["T:ACME", p(20_000, 1_000_000)]]) },
+    ],
+    { tickerOf: (k) => k.slice(2), sharesOf: () => ({ now: 1_000_000, before: 1_000_000 }) },
+  );
+  const seventh = crash.find((m) => m.pair.series === "S000000047")!;
+  check("  …a fund's own split only where fewer than five held through: six funds unchanged as the price halved read none, so a seventh's doubling is 10,000 bought, a 1% move",
+    seventh.changes[0]?.delta === 10_000 && seventh.changes[0].split === 1 && same(seventh.moves.map((m) => m.bp), [100]), seventh);
+  // six funds cut to about a quarter while the price fell: a split down nothing confirms reads nothing (a spin-off's exchange)
+  const down = compareMonth(
+    [1, 2, 3, 4, 5, 6].map((i) => ({ pair: pair(`S00000005${i}`), before: new Map([["T:NWSA", p(10_000 * i, 200_000 * i)]]), now: new Map([["T:NWSA", p(2_560 * i, 24_800 * i)]]) })),
+    { tickerOf: (k) => k.slice(2) },
+  );
+  check("  …a split down the price does not confirm, nor a twenty-fifth of the funds exactly, compares no fund held through", down.every((m) => m.changes.length === 0 && m.compared === 0), down.map((m) => m.changes.map((c) => [c.delta, c.split])));
   const renamed = rekeyRenamed(new Map([["111111111", p(500, 5_000, "Wheels Up Experience Inc")], ["222222222", p(1, 1, "Other Co")]]), new Map([["333333333", p(25, 5_100, "WHEELS UP EXPERIENCE INC")], ["222222222", p(1, 1, "Other Co")]]));
   check("a security that took a new CUSIP between two reports, gone and new under one name, is one security (a reverse split's)", same([...renamed.keys()].sort(), ["111111111", "222222222"]) && renamed.get("111111111")?.shares === 25);
 
@@ -231,7 +271,7 @@ async function main(): Promise<void> {
   check("  …each file says what it holds, credits the SEC and names its batch",
     files.every((f) => {
       const body = JSON.parse(gunzipSync(readFileSync(join(__dirname, "..", "data", "nport", f))).toString()) as { about: string; read: string };
-      return /N-PORT data sets/.test(body.about) && /17 U\.S\.C\. § 105/.test(body.about) && /batch 180/.test(body.about) && body.read === "2026-11-24";
+      return /N-PORT data sets/.test(body.about) && /17 U\.S\.C\. § 105/.test(body.about) && /batches 180, 184/.test(body.about) && body.read === "2026-11-24";
     }));
 
   console.log("\nEvery page");

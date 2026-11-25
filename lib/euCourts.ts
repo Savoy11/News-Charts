@@ -6,7 +6,7 @@ import { named, partyIsCompany } from "./hsrEarly";
 import type { TimelineEvent } from "./types";
 
 /**
- * The EU courts' judgments in the company's own cases, 1954 on (batch 183; the 2026-11-22c proposal 3, approved by the
+ * The EU courts' judgments in the company's own cases, 1955 on, the year lists asked from 1954 (batch 183; the 2026-11-22c proposal 3, approved by the
  * owner that day with call (a): every judgment naming the company as a party, but the trade mark and design cases against
  * the EU's intellectual property office and staff cases).
  *
@@ -198,9 +198,12 @@ export function readJudgmentTitle(title: string): TitleRead | null {
 const LEGAL_END =
   /\b(?:Inc|Corp|Corporation|Company|Co|Ltd|Limited|plc|PLC|LLC|LP|L\.P|AG|SE|SA|S\.A|SpA|S\.p\.A|Srl|S\.r\.l|NV|N\.V|BV|B\.V|GmbH|KG|KGaA|AB|A\/S|ASA|Oyj|Oy|SAS|SARL|Sàrl|SL|S\.L|Lda|ApS|AS|SNC|DAC|UC|ULC|a\.s|s\.r\.o|z o\.o|Kft|Zrt|Nyrt|OOO|OAO|PAO|JSC|ehf|hf|AE|SAE|Holding|Holdings|International|Group|Bank|& Co)\.?$/i;
 
-/** A public body a caption names beside a company: a ministry, a tax or customs office, a state, a region, an authority. */
+/**
+ * A public body a caption names beside a company: a ministry, a tax or customs office, a state, a region, an authority.
+ * Its end is no ASCII word boundary, which a word ending in "à" never has (batch 184: "Autorità Garante").
+ */
 const PUBLIC_BODY =
-  /\b(?:Ministero|Ministry|Minister|Ministre|Ministerio|Ministerie|Commission|Council|Parliament|Republic|Republik|Kingdom|State|Staat|Stato|Estado|Hauptzollamt|Finanzamt|Zollamt|Autorità|Autoridad|Agencia|Agency|Bundesrepublik|Land|Revenue|Customs|Government|Région|Region|Regione|Comune|Ville|Gemeente|City|Municipality|Authority|Board|Commissioners?|Staatssecretaris|Administration|Inspectorate|Directorate|Préfet|Inspector|Bundesamt|Bundesanstalt|Office|Tribunal)\b/;
+  /\b(?:Ministero|Ministry|Minister|Ministre|Ministerio|Ministerie|Commission|Council|Parliament|Republic|Republik|Kingdom|Grand Duchy|Duchy|State|Staat|Stato|Estado|Hauptzollamt|Finanzamt|Zollamt|Autorità|Autoridad|Agencia|Agency|Bundesrepublik|Land|Revenue|Customs|Government|Région|Region|Regione|Comune|Ville|Gemeente|City|Municipality|Authority|Board|Commissioners?|Staatssecretaris|Administration|Inspectorate|Directorate|Préfet|Inspector|Bundesamt|Bundesanstalt|Office|Tribunal)(?![\p{L}\p{N}])/u;
 
 /**
  * A side's parties: its names split at commas and "and" only where every part is a legal name or a public body (so
@@ -208,6 +211,24 @@ const PUBLIC_BODY =
  * "and Co." a name's own ("Eli Lilly and Co.").
  */
 export function sideParties(side: string): string[] {
+  const { s, parts } = sideParts(side);
+  if (!s) return [];
+  return parts.length > 1 && parts.every(namedPart) ? parts : [s];
+}
+
+/**
+ * The parts of a side `sideParties` keeps whole that end in a legal word: the name a row prints for the company where the
+ * whole side names it (batch 184, the audit's finding 9: "Matina Stevi and The New York Times Company" prints "The New York
+ * Times Company").
+ */
+export function legalParts(side: string): string[] {
+  const { parts } = sideParts(side);
+  return parts.length > 1 ? parts.filter((p) => LEGAL_END.test(p.replace(/\s*\([^)]*\)\s*$/, ""))) : [];
+}
+
+const namedPart = (p: string) => LEGAL_END.test(p.replace(/\s*\([^)]*\)\s*$/, "")) || PUBLIC_BODY.test(p);
+
+function sideParts(side: string): { s: string; parts: string[] } {
   const s = side
     .replace(/\s*\((?:Case|Joined Cases)?\s*[CTF]-\d[^)]*\)/gi, "")
     .replace(/,?\s+and (?:Others|others|Other)\b\.?/g, "")
@@ -216,10 +237,7 @@ export function sideParties(side: string): string[] {
     .replace(/\s+and\s+(Co\.?)(?=,|\s|$)/g, " & $1")
     .replace(/\s+/g, " ")
     .trim();
-  if (!s) return [];
-  const parts = s.split(/,\s+(?!(?:Inc|Ltd|LLC|S\.?A|N\.?V|B\.?V|AG|SE|plc)\b)|\s+and\s+/).map((p) => p.trim()).filter(Boolean);
-  const named = (p: string) => LEGAL_END.test(p.replace(/\s*\([^)]*\)\s*$/, "")) || PUBLIC_BODY.test(p);
-  return parts.length > 1 && parts.every(named) ? parts : [s];
+  return { s, parts: s ? s.split(/,\s+(?!(?:Inc|Ltd|LLC|S\.?A|N\.?V|B\.?V|AG|SE|plc)\b)|\s+and\s+/).map((p) => p.trim()).filter(Boolean) : [] };
 }
 
 /** A title's sides, "X v Y", each its text; a reference naming one party is one side. */
@@ -394,7 +412,14 @@ export function euCourtsEvents(
     let found: { mine: string[]; side: number } | null = null;
     j.sides.forEach((s, i) => {
       if (found) return;
-      const mine = sideParties(s).filter((p) => courtPartyIsCompany(p, j.day, tag, names(j.day)));
+      const is = (p: string) => courtPartyIsCompany(p, j.day, tag, names(j.day));
+      const whole = sideParties(s);
+      let mine = whole.filter(is);
+      // a side kept whole prints the company's own part where one names it alone
+      if (whole.length === 1 && mine.length === 1) {
+        const own = legalParts(s).filter(is);
+        if (own.length) mine = own;
+      }
       if (mine.length) found = { mine, side: i };
     });
     if (found) (byDay.get(j.day) ?? byDay.set(j.day, []).get(j.day)!).push({ j, ...(found as { mine: string[]; side: number }) });

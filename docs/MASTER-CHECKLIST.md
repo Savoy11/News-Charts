@@ -988,6 +988,100 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 184: the 2026-11-25 audit of batches 175–183, its findings fixed (2026-11-25)
+
+The owner's word: "Add the $1 million minimum, then continue". The `code-auditor` read batches 175–183 (`304d782..2230f24`)
+and reported ten findings, two `P1`, three `P2` and five `P3` (docs/audits/2026-11-25-code-audit-b175-183.md); each was
+read again here, against the SEC's zips and the sync caches the auditor did not have, before it was fixed.
+
+- [x] **Finding 1, insider price slips (`P1`):** a filer can put the trade's total in the price column. Each price is now
+      compared with the same company's other filings' (`readPrices`): five times the 10 days' median, fifty times the
+      year's or a hundred times the whole record's is read as the trade's total where that total gives a share's price
+      within half again of the median, and set aside otherwise; with fewer than three prices to compare, over $1,000,000
+      a share or $5 billion a trade is set aside. A price repeated by a group's filers is no comparison, nor one of the
+      same filing. Mubadala's 40,000,000 AMD shares of 2017-08-04 read $525.6 million (not "$21024000 billion"), WL Ross's
+      Assured Guaranty purchase of 2008 $250 million, Tracinda's MGM sale of 2016 $100 million; 135 prices read as totals,
+      887 set aside, and the row says which. No committed entry is over $1,000,000 a share; the days of $10 billion or
+      more are three, PNC's BlackRock sale, Sanofi's Regeneron sale and one at a price within its comparisons. Kept as a
+      trade-off: the whole record's test can set aside a tiny company's real trades after a reverse split of a hundred or
+      more, a missing row and never a wrong figure, as it is what catches four directors' slips of one day (Telesis's of
+      2022, $14 billion each).
+- [x] **Finding 1's second cause, the security's title:** the stage now reads `SECURITY_TITLE` and keeps the company's own
+      shares only (`ownShares`: no preferred share, note, debenture, warrant, option or right; a title's attached rights
+      not its own), so MetLife's and Prudential's 25,000,000 "shares" of closed-end funds at $25,000,000 each, their
+      notes, are gone. The cache is a new stage (`<zip>.v2.json`), as it also keeps each trade's holdings after and whether
+      held directly; a trade day after its filing's is no day (set aside 3: Munch Mark Robert's "2020-02-19" of
+      2010-02-19).
+- [x] **Finding 2, one block counted once per filer (`P1`):** entries of a day with the same code, shares, trade days and
+      value, and holdings after within a ten-thousandth (a filing's holdings added, in any order: Blackstone's three of
+      Hilton's 2017-03-17), are one block where at most one holds it directly, or where the holdings after are more than
+      the trade and not nothing (a husband and wife, each "direct"); the direct holder, else the first, keeps it, naming
+      the others (`also`), and it counts once in the title and the day's value. Antero's 2014-05-21 is "Antero Resources
+      Investment LLC (10% owner), reported also by 12 other filers, sold 12,000,000 … shares, about $744 million" (not
+      13 sold 156,000,000 for $9.7 billion); 4,148 entries carry other filers. Two who each sold out alike, or each made
+      a first purchase alike, both directly, stay two; 931 days keep two or more like blocks, directors each trading the
+      same amount with their own holdings.
+- [x] **Finding 3, N-PORT splits (`P2`):** the funds' split stands only where the 13F holders read it too, a twenty-fifth
+      of the funds show it exactly, or else their median price moved the other way; never where the 13F holders read no
+      split in every overlapping quarter from 20 managers or more (`quarterNoSplit`: Hawaiian Electric's offering of
+      2024, which grew every index fund by half as its price fell); a split down none of those confirm reads nothing. A
+      fund's own split (`heldSplit`) only where fewer than five funds held through and the 13F holders do not read none
+      (the audit's reproduction: six funds unchanged as the price halved, a seventh that doubled, now 10,000 bought, a 1%
+      move). The funds' own exact evidence comes before a 13F quarter read as none, as a 13F median can miss a split by a
+      few percent (National Beverage's two for one of 2021: a median of 1.89, a seventh of the holders exactly two). The
+      false splits the audit named are gone (Hawaiian Electric's three fund lines, CNM's four, Blink's, Circle's, CAI's,
+      Airbnb's, XP's, VG's), NVIDIA's, Broadcom's, Walmart's, Tesla's and Amazon's stand; 151,362 reports on 9,671 fund
+      pages, 15,829 moves on 2,332 company pages, 2,789 from first prices on 379 pages. The sync reads the 13F holders'
+      no-split answer once a month for each ticker and pair of month ends, as it reads every quarter the ticker has.
+- [ ] **Found here, for batch 185: 13F's near-miss splits.** A quarter whose holders' median misses a split's factor by 3%
+      to 12% reads none (`simpleRatio`'s 3%), though many holders show it exactly: National Beverage's 2021-03-31 (25 of
+      174 holders exactly two for one, its price halved) reads every holder as doubling. A sample of eight quarters finds
+      18 such, Direxion's TECL, Mesoblast and Inhibrx among them, most with one holder exact; the fix is a second reading
+      that takes the nearest factor where three or more holders, and a twenty-fifth, show it exactly, then the 13F and
+      N-PORT syncs again.
+- [x] **Finding 4, 13F mergers read as splits (`P2`):** a split the managers' ratios read is confirmed where a
+      twenty-fifth of them show its factor within a five-hundredth (`confirmedSplit`; the real splits read show 7% to
+      22%, First Citizens' 194 holders in its CIT quarter none): a split up not confirmed reads the holdings as stated, a
+      stock merger's or an offering's being real changes; a split down not confirmed, nor by the price rising to three
+      tenths of its factor, reads nothing. First Citizens' Q1 2022, Agnico Eagle's and Mativ's quarters, Waters' and
+      Kenvue's read as stated (Vanguard +568,929 First Citizens shares); NVIDIA's, Apple's, Tesla's, Amazon's, Alphabet's,
+      Walmart's, Broadcom's, Old Dominion's, Rollins' and GE's splits stand. 1,528 quarters read a split (2,201 before);
+      284,259 quarters on 10,930 pages, 201,107 moves, 61,221 rows on 637 pages from first prices.
+- [x] **Finding 5, OWNER-ACTIONS (`P2`):** the batch 183 entry says to apply db/062 (`npm run db:migrate`) after deploying,
+      and the proposals' entry says #3 is batch 183's, not 179's.
+- [x] **Finding 6, an unpriced trade (`P3`):** an entry keeps the value of its trades with a price (`priced`) beside one
+      without, which the day's value counts and the row gives "for the trades with a price".
+- [x] **Finding 7, a split down's share count (`P3`):** `shareBasis` reads a stated count by the next quarter's: in the
+      later unit where the next agrees with that, as stated where the next agrees with it, else as before (the sync
+      passes the next quarter's frame).
+- [x] **Finding 8, the Supreme Court sync (`P3`):** a volume the file holds that govinfo does not serve fails the run, the
+      file left as it was.
+- [x] **Finding 9, EU-court sides (`P3`):** a side kept whole prints the company's own part, the one ending in a legal word
+      that names it alone (`legalParts`: "The New York Times Company the applicant", "Microsoft Corp a party to the
+      national case referred", "Ryanair Ltd", "Amazon.com, Inc."); "Autorità" ends in no ASCII word boundary, so the
+      public bodies' pattern ends in no letter or digit (`u`), and a Grand Duchy is one. The rows found are the same; the
+      free relevance rule scores `eu_courts` at 0.95 under "regulation", a unit's row too (Lubrizol France SAS on
+      Berkshire).
+- [x] **Finding 10, figures (`P3`):** README's 13F median page has no move (7,382 of the 10,930 none, the busiest tenth
+      72 or more); the Supreme Court's ten units are "eight dated by a filing's day" (Converteam by its 10-Q's quarter,
+      Philip Morris USA throughout); its replay skips a bank's notes record, 327 company days on 157 companies (ATMP's
+      left out, which takes none at ingest); the EU courts begin in 1955 (1954's two titles keep no judgment);
+      `lib/alsoOn.ts` names db/062.
+- [x] **Insider amendments:** an amendment's trades dated after the filing it restates, which that filing could not have
+      reported, are a filing of their own on the amendment's day (Seeger's 4/A for Becton Dickinson's 2022-02-02 adds
+      2022-02-08's), so no committed trade day falls after its row's day.
+- [x] **Measured:** insiders, 139,994 company days of $1 million or more on 4,002 issuers (141,131 on 4,121 before), 11 on
+      the median issuer, 94 on the busiest tenth, 13,709 with a purchase; from first prices 35,190 rows on 558 pages.
+- **Set aside, as the audit did:** 99 unmerged same-day EU-court pairs (none on a listed page), EU fines of four
+      decimals, restatements dating 13F and N-PORT rows by the amendment, 13F's thousandfold unit exemption, insider
+      amendments that remove every purchase and sale (a 4/A that may restate only part of a filing would erase real
+      trades), joint filers' roles, Honeywell Aerospace's switch day, RIO and Kennecott.
+- [x] **Checks:** check:insiders 35 (twelve new), check:inst-13f 35 (five new), check:nport 35 (five new), check:eu-courts
+      27 (three new), check:supreme-court 28.
+- **The ledger:** no entry changes; 37 open, 105 closed, 11 parked, 17 blocked.
+- **Requests:** none. The insider, 13F and N-PORT syncs read the zips, stages, frames and fails-to-deliver files already
+      saved (`--zips`, `--cache`, `--frames`, `--ftd`), and no former name or frame was missing.
+
 ## NC ledger — batch 183: the EU courts' judgments in the company's own cases, 1954 on (2026-11-24)
 
 The owner's word: "Add the $1 million minimum, then continue". The third of the 2026-11-22c proposals (#3, approved that

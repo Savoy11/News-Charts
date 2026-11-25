@@ -24,6 +24,7 @@ import {
   euCourts,
   euCourtsEvents,
   isTradeMarkCase,
+  legalParts,
   mergeJudgments,
   operativePart,
   readJudgmentTitle,
@@ -31,6 +32,7 @@ import {
   sideParties,
 } from "../lib/euCourts";
 import { companyNames } from "../lib/frCompany";
+import { deterministicScore } from "../lib/enrich/relevance";
 import { namesForYear } from "../lib/ingest/frBackfill";
 import { euCourtsFor } from "../lib/ingest/euCourtsFor";
 import { QUOTAS } from "../lib/ingest/quota";
@@ -110,6 +112,12 @@ async function main(): Promise<void> {
     same(sideParties("Apple and Pear Australia Ltd"), ["Apple and Pear Australia Ltd"]) && same(sideParties("Ministero dello Sviluppo economico and Others (C-379/08) and ENI SpA"), ["Ministero dello Sviluppo economico", "ENI SpA"]) &&
       sideParties("Glaxo Group Ltd, SmithKline Beecham plc and Eli Lilly and Co.").includes("Eli Lilly & Co.") && same(sideParties("Ryanair DAC, formerly Ryanair Ltd"), ["Ryanair DAC", "Ryanair Ltd"]),
     sideParties("Ryanair DAC, formerly Ryanair Ltd"));
+  check("  …a public body whose name ends in an accent is one (\"Autorità Garante …\", batch 184), and a Grand Duchy",
+    same(sideParties("Ryanair Ltd and Autorità Garante della Concorrenza e del Mercato - Antitrust"), ["Ryanair Ltd", "Autorità Garante della Concorrenza e del Mercato - Antitrust"]) &&
+      same(sideParties("Grand Duchy of Luxembourg , Amazon EU Sàrl and Amazon.com, Inc."), ["Grand Duchy of Luxembourg", "Amazon EU Sàrl", "Amazon.com, Inc."]),
+    sideParties("Grand Duchy of Luxembourg , Amazon EU Sàrl and Amazon.com, Inc."));
+  check("  …a side kept whole prints the company's own part, the one ending in a legal word (\"Matina Stevi and The New York Times Company\")",
+    same(legalParts("Matina Stevi and The New York Times Company"), ["The New York Times Company"]) && same(legalParts("Apple and Pear Australia Ltd"), ["Pear Australia Ltd"]) && same(legalParts("Microsoft Corp"), []));
   check("a trade mark or design case against the EU's IP office makes no row (call (a)); nor a staff case",
     isTradeMarkCase(["Apple and Pear Australia Ltd", "Office for Harmonisation in the Internal Market (Trade Marks and Designs) (OHIM)"]) && isTradeMarkCase(["BlackRock, Inc.", "European Union Intellectual Property Office"]) &&
       !isTradeMarkCase(["Apple Inc.", "Deutsches Patent- und Markenamt"]) &&
@@ -199,6 +207,8 @@ async function main(): Promise<void> {
   check("the source is id 56, cleared for commercial use under the Court's terms, reviewed 2026-11-24, credited to the Court of Justice of the European Union",
     src?.id === 56 && src.commercialOk && src.reviewedOn === "2026-11-24" && src.attribution === "Court of Justice of the European Union", src);
   check("  …a company source, quota and refresh noted", (COMPANY_SOURCES as readonly string[]).includes("eu_courts") && QUOTAS.eu_courts.perDay === null && SOURCE_TTL_MINUTES.eu_courts === 1440);
+  check("  …scored by the free rule, a unit's row too (\"Lubrizol France SAS\" on Berkshire, batch 184)",
+    deterministicScore({ eventId: 0, kind: "regulation", title: "The EU General Court ruled in Lubrizol France SAS v Council (T-369/08)", sourceKey: "eu_courts" }, { kind: "company", displayName: "Berkshire Hathaway", ticker: "BRK-B" }, ["berkshire hathaway"])?.score === 0.95);
   check("  …the ingest asks it for every page; synced monthly by `npm run sync:eu-courts`; credited on the footer and the terms page",
     /await run\("eu_courts", [^\n]+\n\s*euCourtsFor\(client, subjectId,/.test(read("scripts/ingest.ts")) && /"sync:eu-courts": "tsx scripts\/sync-eu-courts\.ts"/.test(read("package.json")) &&
       /judgments of the Court of Justice of the European Union/.test(read("app/layout.tsx").replace(/\s+/g, " ")) && /judgments of the Court of Justice of the European Union/.test(read("app/legal/terms/page.tsx").replace(/\s+/g, " ")));

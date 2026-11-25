@@ -102,6 +102,10 @@ async function main(): Promise<void> {
   }
   // the volume records of 2026-11-22 list about 11,000 cases; far fewer is a broken answer
   if (volumes.length < 200) throw new Error(`only ${volumes.length} volumes read (${missing.length} missing)`);
+  // a volume the file holds that govinfo did not serve this run is a failed answer, not a volume gone (batch 184, the
+  // audit's finding 8): the file is left as it was, as ingest would take its cases off every page
+  const lost = (held.volumes ?? []).filter((v) => !volumes.includes(v));
+  if (lost.length) throw new Error(`volume${lost.length > 1 ? "s" : ""} ${lost.join(", ")}, which the file holds, not served: the file is left as it was`);
   const terms: number[] = [];
   for (let t = FIRST_SLIP_TERM; t <= termOf(readOn); t++) {
     const html = dir ? (existsSync(join(dir, "slip", `${t}.html`)) ? readFileSync(join(dir, "slip", `${t}.html`), "utf8") : null) : (await get(slipList(t)))?.toString("utf8") ?? null;

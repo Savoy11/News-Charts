@@ -455,8 +455,8 @@ or a name of two words or more: a caption names a person by the surname, so "Par
 Dodd" and "Vale v. Louisiana" stay off Cummins, Pearson and Vale, and "FMC" in four captions is the Federal Maritime
 Commission. The other maps' units are read on their days: the railroads' owners (Norfolk & Western on Norfolk Southern,
 Wisconsin Central on CN from 2001-10-09, BNSF on Berkshire from 2010-02-12), the Labor Department's and the NLRB's
-(Oracle America on Oracle, Allstate Insurance on Allstate), and ten of this source's own, each day read from a filing
-(`SC_UNITS`: Travelers' insurers from 2004-04-01, Slack on Salesforce, Supervalu on UNFI, Ameritech's Bell companies on
+(Oracle America on Oracle, Allstate Insurance on Allstate), and ten of this source's own, eight with the day read from a filing,
+Converteam's from the quarter GE's 10-Q gives and Philip Morris USA as Altria's own throughout (batch 184) (`SC_UNITS`: Travelers' insurers from 2004-04-01, Slack on Salesforce, Supervalu on UNFI, Ameritech's Bell companies on
 AT&T from 1999-10-08, Converteam on GE, WesternGeco on Schlumberger, Kraft Foods Group on Kraft Heinz, Lorillard on Loews
 to 2008-06-09, Sony Music Entertainment on Sony, Philip Morris USA on Altria). Every company's matched captions were read by
 hand: seven namesakes refused (`NOT_THE_COMPANY`: the old General Motors on GM's record of 2009, Southland Corp. of
@@ -466,7 +466,7 @@ and 2026, NVIDIA's of 2024, Amgen v. Sanofi on Sanofi, Bruesewitz v. Wyeth on Pf
 says "Also on" (db/060). Not read: a record's predecessor's names (old Alcoa's cases are Howmet's record's, whose chart
 begins in 2016) and a name before EDGAR (Standard Oil Co. of California's on Chevron).
 
-Against every company in the index under its present names: 328 company days on 158 companies; from the first prices
+Against every company in the index under its present names: 327 company days on 157 companies (a bank's notes record, which takes none, left out since batch 184); from the first prices
 the fixtures carry, 203 rows on 95 pages, 162 before 2017 (Exxon Mobil 12, Ford 9, CSX 7, AT&T 7, GE 6, Norfolk Southern
 6, Bank of America 5, Chevron 5, Amgen 4, Boeing 4). With EDGAR's former names for the bank-like companies: 336 on 163,
 205 rows on 96 pages, 164 before 2017 and 58 before 1994. The scout's estimate of about 500 counted the names before
@@ -546,8 +546,13 @@ stated value gives a price five times off every other manager's (J. Stern & Co.'
 units slip), unless by a thousand times (a value in the wrong unit), is set aside. A split is read from the managers'
 own ratios (NVIDIA's ten for one of 2024), or where too few held through it from the company's stated share counts
 (Wheels Up's one for twenty of 2026); a quarter whose figures still show a change larger than the company reads nothing.
+Since batch 184 a split the ratios read is confirmed by the holders that show its factor exactly, as a split multiplies
+every untraded holding alike (`confirmedSplit`: 7% to 22% of the holders in the real splits read, none of First Citizens'
+194 in its CIT quarter of 2022, which batch 179 read as three for two, as it did Agnico Eagle's Kirkland Lake quarter and
+Mativ's Neenah quarter): a split up not confirmed reads the holdings as stated, a stock merger's or an offering's being
+real changes of holdings; a split down not confirmed, nor by the price rising, reads nothing (a spin-off's exchange).
 The share counts are data.sec.gov's XBRL frames of each quarter (59 requests), a count stated before a split read in the
-later unit; a company with several classes, or a trust of many ETFs, has no stated count and so its summary only.
+later unit, the next quarter's count telling which unit a split down's is in (batch 184); a company with several classes, or a trust of many ETFs, has no stated count and so its summary only.
 
 A security's CUSIP is matched to its page by the SEC's fails-to-deliver files (`lib/cusipMap.ts`; one a month from June
 2012, 172 files): the ticker the CUSIP last had, where it is in EDGAR's index and the description agrees with the
@@ -561,11 +566,12 @@ closed fund's ticker is taken up by another (QQQ's PowerShares CUSIP, before Inv
 quarters begin in 2016). 16,297 of the 49,951 CUSIPs seen are mapped (11,081 in batch 179), 3,196 refused by their names.
 An ETF is a page like a company's; a mutual fund, which no exchange trades, has none.
 
-The committed files (`data/13f/<year>.json.gz` and `cusips.json.gz`, 22 MB) hold 284,274 quarters on 10,930 pages (4,225
+The committed files (`data/13f/<year>.json.gz` and `cusips.json.gz`, 22 MB) hold 284,259 quarters on 10,930 pages (4,225
 of them ETFs', added in batch 180; a trust states no share count, so an ETF has its summaries only), from
-2013's third quarter to 2026's second, and 201,204 moves of 1% or more: two on the median page, over a hundred on the
-busiest tenth, mostly small companies whose few holders own large parts of them. From the first prices the fixtures
-carry, 61,227 rows on 637 pages. The quarters of 2013's first half are left out: the SEC's first data set holds only a
+2013's third quarter to 2026's second, and 201,107 moves of 1% or more: none on the median page (7,382 of the 10,930
+pages have none, the ETFs' among them), 72 or more on the busiest tenth, mostly small companies whose few holders own
+large parts of them. 1,528 quarters read a split (2,201 before batch 184 confirmed each). From the first prices the
+fixtures carry, 61,221 rows on 637 pages. The quarters of 2013's first half are left out: the SEC's first data set holds only a
 few hundred of their reports. A monthly run needs about 5 GB of disk for its cache and 10 GB of memory; the first, about
 two hours. No key; the SEC's own work.
 
@@ -586,18 +592,28 @@ gifts, which `lib/secForms.ts` still leaves out as filings.
 
 The SEC's insider transactions data sets (83 zips, 2006's first quarter on, 2 to 15 MB each) are read once each by `npm run
 sync:insiders` into its cache (`.cache/insiders`, git-ignored): each Form 4 or 5 by an officer, director or 10% owner that
-reports a non-derivative purchase (code P) or sale (code S), its first reporting owner (a joint filing's others counted,
-as they report the same shares), the issuer and each trade's shares, price and day. An amendment restates the last
-filing before it by the same owner for the same issuer and period, and keeps that filing's day, as the trades were public
-from it. Rows are kept for the issuers EDGAR's index lists and the predecessors' records `lib/predecessors.ts` maps,
+reports a non-derivative purchase (code P) or sale (code S) of the company's own shares, never a preferred share, a note,
+a warrant or a right (`ownShares`, batch 184: an insurer's 40,000,000 "shares" of a closed-end fund at $40,000,000 each
+were its notes), its first reporting owner (a joint filing's others counted, as they report the same shares), the issuer
+and each trade's shares, price, day (none where it falls after the filing's), holdings after and whether held directly.
+An amendment restates the last filing before it by the same owner for the same issuer and period, and keeps that
+filing's day, as the trades were public from it; its trades dated after that day are a filing of their own on the
+amendment's day. Each price is compared with the same company's other filings' of the 10 days either side, else the
+year's, else its whole record (`readPrices`, batch 184): a filer can put the trade's total in the price column, as
+Mubadala's 40,000,000 AMD shares "at $525,600,000.00 a share" of 2017-08-04, read now as $525.6 million; a price that is
+no share's is set aside, and the row says so. One block several related owners each reported, alike to the share and
+the holdings after, counts once, naming the others (Antero Resources Investment LLC's 12,000,000 shares of 2014-05-21,
+reported by thirteen filers, about $744 million, not $9.7 billion). Rows are kept for the issuers EDGAR's index lists and the predecessors' records `lib/predecessors.ts` maps,
 each up to its handover day (Exxon Mobil Corporation's insiders on XOM's page before 2026-07-01). Names are as filed,
 surname first.
 
-The committed files (`data/insiders/<year>.json.gz`, 6 MB) hold 141,131 company days of $1 million or more on 4,121
-issuers, from 2006-01-03 to 2026-09-30: 10 on the median issuer, 93 on the busiest tenth, 1,659 at most; 14,260 of them
-hold a purchase. The minimum left 380,720 smaller days out (batch 181 kept all 521,851, Meta's 1,264 among them, often a
-few hundred shares a week under a trading plan; Meta keeps 770). From the first prices the fixtures carry, 35,318 rows on
-564 pages. No key; the SEC's own work.
+The committed files (`data/insiders/<year>.json.gz`, 6 MB) hold 139,994 company days of $1 million or more on 4,002
+issuers, from 2006-01-03 to 2026-09-30: 11 on the median issuer, 94 on the busiest tenth, 1,658 at most; 13,709 of them
+hold a purchase. The minimum leaves 379,761 smaller days out (batch 181 kept all 521,851, Meta's 1,264 among them, often a
+few hundred shares a week under a trading plan; Meta keeps 770). Batch 184's rules read 135 prices as the trade's total
+and set 887 aside, and left 141,131 days on 4,121 issuers at 139,994 on 4,002: the notes and preferred shares gone, and the
+days that cleared $1 million only by a slipped price or a block counted once per filer. From the first prices the fixtures
+carry, 35,190 rows on 558 pages. No key; the SEC's own work.
 
 ### Mutual funds' and ETFs' N-PORT holdings changes, 2019–2026 (`lib/fundHoldings.ts`, batch 180)
 
@@ -623,10 +639,13 @@ its CUSIP (a US ISIN's where the fund gives no CUSIP), else its name, and a secu
 reports under the same name is one (a reverse split's). A fund's month is its report filed last, an amendment restating the
 whole; two reports are compared when they are two to four months apart and neither holds a quarter of the other's
 positions. A position whose stated value gives a price five times off the other funds' median is set aside. A split is the
-median ratio of the funds that held the security through the same two months, five or more, where their median price moved
-the other way too, else the fund's own where its shares moved by a simple ratio and its price the other way: a first run
-that read the ratios alone gave Eledon a 14-for-1 split in 2021 (its funds' stakes all grew in a financing) and read
-false sales of up to 91% of a company. A position held through is not compared where the 13F holders read a split in an
+median ratio of the funds that held the security through the same two months, five or more, where the 13F holders read
+it too, or a twenty-fifth of the funds show it exactly, or else their median price moved the other way; none where the
+13F holders read no split in every overlapping quarter from 20 managers or more (batch 184: Hawaiian Electric's offering
+of September 2024, which grew every index fund by half as the price fell, read before as three for two). Only where fewer
+than five funds held it through is the fund's own split read, where its shares moved by a simple ratio and its price the
+other way: a first run that read the ratios alone gave Eledon a 14-for-1 split in 2021 (its funds' stakes all grew in a
+financing) and read false sales of up to 91% of a company. A position held through is not compared where the 13F holders read a split in an
 overlapping quarter, the company's stated counts show one, or the price rose two and a half times or more, that the funds'
 shares do not show; a new or closed position then stays on the fund's page in its report's own shares but makes no move.
 
@@ -637,12 +656,12 @@ is read (NRx's blank-check company stated 2,688,242 shares before its merger of 
 precede (Regis's of 2023), which the trial runs read as one fund's sale of 46% of a company and an index fund's of 80%. A
 security whose change still exceeds the company's shares reads nothing that month.
 
-The committed files (`data/nport/<year>.json.gz`, 13 MB) hold 151,326 fund reports on 9,669 fund pages and 15,733
-moves of 1% or more on 2,326 company pages, from the reports of December 2019 to those of July 2026, naming 9,754 funds. From the first prices the
-fixtures carry, 2,777 moves on 379 pages. A quarterly run needs about 5 GB of disk for its cache and 8 GB of
+The committed files (`data/nport/<year>.json.gz`, 13 MB) hold 151,362 fund reports on 9,671 fund pages and 15,829
+moves of 1% or more on 2,332 company pages, from the reports of December 2019 to those of July 2026, naming 9,756 funds. From the first prices the
+fixtures carry, 2,789 moves on 379 pages. A quarterly run needs about 5 GB of disk for its cache and 8 GB of
 memory, and reads the 13F sync's map and frames, so it runs after it; the first, about two hours. No key; the SEC's own work.
 
-### The EU courts' judgments, 1954–2026 (`lib/euCourts.ts`, batch 183)
+### The EU courts' judgments, 1955–2026 (`lib/euCourts.ts`, batch 183)
 
 What the Court of Justice of the European Union and its General Court ruled in the company's own cases: its appeals of the
 Commission's competition, merger and State aid decisions (GE's and Honeywell's against the merger ban, 2005; Akzo Nobel's

@@ -32,7 +32,11 @@ import {
   insiderEvents,
   insiderTrades,
   isInsider,
+  MAX_PRICE,
+  MAX_TRADE,
   newYear,
+  ownShares,
+  readPrices,
   relOf,
   roleOf,
 } from "../lib/insiderTrades";
@@ -53,14 +57,16 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 const EXPECTED = {
   years: 21,
   // 5,508 issuers and 521,851 days in batch 181, before the $1 million minimum of batch 182
-  issuers: 4_121,
-  days: 141_131,
+  // 4,121 and 141,131 in batch 182, before batch 184 read the security's title, the prices and the blocks reported twice
+  issuers: 4_002,
+  days: 139_994,
   first: "2006-01-03",
   last: "2026-09-30",
   // from first prices, for the pages the fixtures read
   // 105,719 on 615 in batch 181
-  fromFirst: 35_318,
-  fromFirstPages: 564,
+  // 35,318 on 564 in batch 182
+  fromFirst: 35_190,
+  fromFirstPages: 558,
 };
 
 const filing = (over: Partial<Filing>): Filing => ({
@@ -92,11 +98,16 @@ async function main(): Promise<void> {
     filing({ accession: "a2", filedOn: "2022-12-20", form: "4/A", trades: [{ code: "S", shares: 2_000, value: 325_620, day: "2022-12-12" }] }),
     filing({ accession: "b1", filedOn: "2022-12-14", ownerCik: "2", owner: "Kirkhorn Zachary", period: "2022-12-12" }),
     filing({ accession: "c1", filedOn: "2010-01-05", form: "4/A", period: "2009-12-30" }),
+    filing({ accession: "d1", filedOn: "2022-02-02", ownerCik: "9", owner: "Seeger Laureen", period: "2022-01-31", trades: [{ code: "S", shares: 10, value: 2_500, day: "2022-01-31" }] }),
+    filing({ accession: "d2", filedOn: "2022-02-10", form: "4/A", ownerCik: "9", owner: "Seeger Laureen", period: "2022-01-31", trades: [{ code: "S", shares: 10, value: 2_500, day: "2022-01-31" }, { code: "S", shares: 20, value: 5_000, day: "2022-02-08" }] }),
   ]);
   check("an amendment restates the last filing before it by the same owner for the same issuer and period, on that filing's day; another owner's stands; an amendment with none before it is its own",
-    eff.length === 3 && eff.find((f) => f.accession === "a1")?.trades[0].shares === 2_000 && eff.find((f) => f.accession === "a1")?.amended === true && !eff.some((f) => f.accession === "a2") &&
+    eff.length === 5 && eff.find((f) => f.accession === "a1")?.trades[0].shares === 2_000 && eff.find((f) => f.accession === "a1")?.amended === true && !eff.some((f) => f.accession === "a2") &&
       !!eff.find((f) => f.accession === "b1") && !!eff.find((f) => f.accession === "c1"),
     eff.map((f) => [f.accession, f.filedOn, f.trades[0].shares, f.amended]));
+  check("  …its trades dated after that filing's day, which it could not have reported, a filing of their own on the amendment's day (batch 184)",
+    same(eff.filter((f) => f.ownerCik === "9").map((f) => [f.accession, f.filedOn, f.trades.map((t) => t.day)]), [["d1", "2022-02-02", ["2022-01-31"]], ["d2", "2022-02-10", ["2022-02-08"]]]),
+    eff.filter((f) => f.ownerCik === "9").map((f) => [f.accession, f.filedOn, f.trades.map((t) => t.day)]));
   const days = companyDays([
     filing({ accession: "x1", trades: [{ code: "S", shares: 1_000, value: 160_000, day: "2022-12-12" }, { code: "S", shares: 500, value: 81_000, day: "2022-12-13" }] }),
     filing({ accession: "x2", ownerCik: "2", owner: "Kirkhorn Zachary", rel: REL.officer, title: "Chief Financial Officer", trades: [{ code: "S", shares: 300, value: 54_000, day: "2022-12-13" }] }),
@@ -115,6 +126,65 @@ async function main(): Promise<void> {
   check("the owner's $1 million minimum (batch 182): a day's purchases and sales together, a trade with no price adding nothing; $999,999 none, $1,000,000 kept",
     MIN_DAY_VALUE === 1_000_000 && dayValue({ entries: [entry("S", 600_000), entry("P", 400_000), entry("S")] }) === 1_000_000 && bigEnough({ entries: [entry("S", 600_000), entry("P", 400_000)] }) &&
       !bigEnough({ entries: [entry("S", 999_999)] }) && !bigEnough({ entries: [entry("P"), entry("S")] }));
+
+  console.log("\nBatch 184: the audit of 2026-11-25");
+  check("only the company's own shares: common, ordinary, units, ADSs, never a preferred share, a note, a warrant or an option; a title's attached rights not its own",
+    ownShares("Common stock, par value $0.01 per share") && ownShares("Common Stock (including associated preferred stock purchase rights)") && ownShares("Common stock and attached common stock purchase rights") &&
+      ownShares("Units of limited partner interest") && ownShares("Sponsored ADRs, each convertible into 5 ordinary shares") && !ownShares("Series A Preferred Stock") &&
+      !ownShares("5.5% Convertible Senior Notes due 2026") && !ownShares("Common Stock Warrants") && !ownShares("Rights for common shares") && !ownShares("Employee Stock Option (Right to Buy)"));
+  const amd = (accession: string, day: string, shares: number, price: number, owner = "o") =>
+    filing({ accession, issuerCik: 2488, issuerName: "ADVANCED MICRO DEVICES INC", ownerCik: owner, owner, filedOn: day, period: day, trades: [{ code: "S", shares, value: Math.round(shares * price), day }] });
+  const priced = readPrices([
+    amd("m1", "2017-08-01", 10_000, 13.1, "a"),
+    amd("m2", "2017-08-02", 5_000, 12.9, "b"),
+    amd("m3", "2017-08-07", 2_000, 13.4, "c"),
+    amd("slip", "2017-08-04", 40_000_000, 525_600_000, "Mubadala"),
+    amd("odd", "2017-08-04", 1_000, 90_000, "d"),
+  ]);
+  const at = (acc: string) => priced.find((f) => f.accession === acc)!.trades[0];
+  check("a price that is the trade's total is read as the total (Mubadala's 40,000,000 AMD shares \"at $525,600,000.00\", 2017-08-04); another impossible price set aside; the others as stated",
+    at("slip").value === 525_600_000 && at("slip").read === "total" && at("odd").value === undefined && at("odd").read === "aside" && at("m1").value === 131_000 && at("m1").read === undefined,
+    priced.map((f) => [f.accession, f.trades[0].value, f.trades[0].read]));
+  const lone = readPrices([
+    amd("l1", "2008-04-08", 10_651_896, 250_000_000, "WL ROSS"),
+    amd("l2", "2008-04-08", 10_651_896, 250_000_000, "WLR Master"),
+    amd("l3", "2009-06-01", 1_000_000, 6_000, "e"),
+    amd("l4", "2011-06-01", 1_000, 25, "f"),
+  ]);
+  const lat = (acc: string) => lone.find((f) => f.accession === acc)!.trades[0];
+  check("  …with no three other prices to compare, over $1,000,000 a share or $5 billion a trade set aside, a group's repeated slip no comparison; a plausible lone trade as stated",
+    MAX_PRICE === 1_000_000 && MAX_TRADE === 5_000_000_000 && lat("l1").read === "aside" && lat("l2").read === "aside" && lat("l3").read === "aside" && lat("l4").value === 25_000,
+    lone.map((f) => [f.accession, f.trades[0].value, f.trades[0].read]));
+  const record = readPrices([2014, 2016, 2018, 2020, 2022].map((y, i) => amd(`r${i}`, `${y}-03-01`, 1_000, 5, `r${i}`)).concat([amd("far", "2024-03-01", 2_000, 900, "g")]));
+  check("  …a price a hundred times the median of the company's whole record set aside, which a year's slips cannot move",
+    record.find((f) => f.accession === "far")!.trades[0].read === "aside" && record.find((f) => f.accession === "r0")!.trades[0].read === undefined);
+  const ar = (accession: string, owner: string, direct: boolean, after = 208_965_909, rows?: { shares: number; after: number }[]) =>
+    filing({ accession, issuerCik: 1433270, issuerName: "ANTERO RESOURCES Corp", filedOn: "2014-05-21", ownerCik: owner, owner, rel: REL.tenPercent, title: undefined,
+      trades: (rows ?? [{ shares: 12_000_000, after }]).map((r) => ({ code: "S" as const, shares: r.shares, value: r.shares * 62, day: "2014-05-19", after: r.after, direct })) });
+  const block = companyDays([ar("d1", "Antero Resources Investment LLC", true), ar("d2", "WP Antero", false), ar("d3", "RADY PAUL M", false, 208_965_911)]).get(1433270)![0];
+  check("one block its owners each reported counts once (Antero's 12,000,000 shares of 2014-05-21, thirteen times): the one held directly keeps it, naming the others, holdings after within a ten-thousandth",
+    block.entries.length === 1 && block.entries[0].owner === "Antero Resources Investment LLC" && same(block.entries[0].also, ["WP Antero", "RADY PAUL M"]) && dayValue(block) === 744_000_000,
+    block.entries.map((e) => [e.owner, e.also]));
+  const sold = companyDays([ar("s1", "A", true, 0), ar("s2", "B", true, 0)]).get(1433270)![0];
+  const spouses = companyDays([ar("h1", "REITZEL RUFUS H JR", true, 10_404_542), ar("h2", "REITZEL HEATHER", true, 10_404_542)]).get(1433270)![0];
+  const rows2 = [{ shares: 72_421_091, after: 44_002_828 }, { shares: 7_268_143, after: 4_325_050 }];
+  const order = companyDays([ar("o1", "BLACKSTONE", false, 0, rows2), ar("o2", "SCHWARZMAN", false, 0, [...rows2].reverse())]).get(1433270)![0];
+  check("  …two who each sold out alike, both directly, stay two; two holding alike what is more than the trade are one (a husband and wife); a filing's holdings in any order are added",
+    sold.entries.length === 2 && spouses.entries.length === 1 && order.entries.length === 1 && order.entries[0].shares === 79_689_234, [sold.entries.length, spouses.entries.length, order.entries.length]);
+  const partly = companyDays([filing({ accession: "p1", trades: [{ code: "S", shares: 1_000_000, value: 50_000_000, day: "2022-12-12" }, { code: "S", shares: 100, day: "2022-12-12" }] })]).get(1318605)![0];
+  check("  …a trade with no price leaves its entry's priced trades counted (the audit's finding 6: a $50 million sale beside an unpriced 100 shares)",
+    partly.entries[0].value === undefined && partly.entries[0].priced === 50_000_000 && dayValue(partly) === 50_000_000 && bigEnough(partly), partly.entries[0]);
+  const blockRow = insiderEvents([block], { ticker: "AR", cik: 1433270 })[0];
+  const partRow = insiderEvents([partly], { ticker: "TSLA", cik: 1318605 })[0];
+  check("  …the rows say so: the block's other filers, the priced trades' value, a price read as the total or set aside",
+    blockRow.title === "Antero Resources Investment LLC (10% owner), reported also by 2 other filers, sold 12,000,000 ANTERO RESOURCES Corp shares, about $744 million" &&
+      /the same shares reported also by WP Antero and RADY PAUL M: sold 12,000,000 shares/.test(blockRow.description ?? "") && /\(about \$50 million for the trades with a price\)/.test(partRow.description ?? "") &&
+      /a price the filing gives read as the trade's total/.test(insiderEvents([{ ...partly, entries: [{ ...partly.entries[0], total: true }] }], { ticker: "TSLA", cik: 1318605 })[0].description ?? ""),
+    [blockRow.title, blockRow.description?.slice(300, 500)]);
+  check("  …the sync reads the security's title, the holdings after, direct or indirect, and no trade day after its filing's",
+    /!ownShares\(r\.SECURITY_TITLE/.test(read("scripts/sync-insiders.ts")) && /SHRS_OWND_FOLWNG_TRANS/.test(read("scripts/sync-insiders.ts")) && /day > f\.filedOn \? "" : day/.test(read("scripts/sync-insiders.ts")) &&
+      /readPrices\(effectiveFilings\(all\)\)/.test(read("scripts/sync-insiders.ts")));
+
   const year = newYear();
   for (const d of tsla) addDay(year, 1318605, d);
   check("a year's file: owners and titles once each, a company's days by its CIK", same(year.owners, ["Musk Elon", "Kirkhorn Zachary", "Ellison Larry"]) && same(year.titles, ["CEO", "Chief Financial Officer"]) && year.pages["1318605"].length === 2);
@@ -153,6 +223,19 @@ async function main(): Promise<void> {
       return /insider transactions data sets/.test(body.about) && /17 U\.S\.C\. § 105/.test(body.about) && /\$1 million or more/.test(body.about) && /batches 181–182/.test(body.about) && body.read === "2026-11-24";
     }));
   check("  …every committed day $1 million or more", [...pages.values()].every((ds) => ds.every(bigEnough)));
+  let implausible = 0;
+  let lateDays = 0;
+  for (const ds of pages.values()) for (const d of ds) for (const e of d.entries) {
+    if (e.value && e.value / e.shares > MAX_PRICE) implausible++;
+    if (e.last > d.day) lateDays++;
+  }
+  check("  …no entry at over $1,000,000 a share, nor a trade day after its filing day (batch 184)", implausible === 0 && lateDays === 0, { implausible, lateDays });
+  const amdRow = insiderEvents(pages.get(2488) ?? [], { ticker: "AMD", cik: 2488 }).find((e) => e.date === "2017-08-04");
+  const arRow = insiderEvents(pages.get(1433270) ?? [], { ticker: "AR", cik: 1433270 }).find((e) => e.date === "2014-05-21");
+  check("AMD's page: Mubadala's 40,000,000 shares of 2017-08-04, about $525.6 million, its price read as the total; Antero's block of 2014-05-21 once, about $744 million",
+    !!amdRow && /sold 40,000,000 ADVANCED MICRO DEVICES INC shares, about \$525\.6 million$/.test(amdRow.title) && /read as the trade's total/.test(amdRow.description ?? "") &&
+      !!arRow && /reported also by 12 other filers, sold 12,000,000 ANTERO RESOURCES Corp shares, about \$744 million$/.test(arRow.title),
+    [amdRow?.title, arRow?.title]);
   const musk = insiderEvents(pages.get(1318605) ?? [], { ticker: "TSLA", cik: 1318605 }).find((e) => e.date === "2022-12-14");
   check("Tesla's page: Musk's sale of 21,995,000 shares filed December 14, 2022, about $3.6 billion",
     !!musk && /^Musk Elon \(CEO, director, 10% owner\) sold 21,995,000 Tesla, Inc\. shares, about \$3\.6 billion$/.test(musk.title), musk?.title);

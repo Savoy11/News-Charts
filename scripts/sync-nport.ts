@@ -17,6 +17,7 @@ import {
   monthsBetween,
   newYear,
   pairable,
+  quarterNoSplit,
   quarterSplitsIn,
   reportOf,
 } from "../lib/fundHoldings";
@@ -256,9 +257,12 @@ async function main(): Promise<void> {
 
   // the 13F holders' splits by ticker, and the companies' share counts where a CIK lists one ticker
   const splits = new Map<string, { period: string; split: number }[]>();
+  // and every quarter's reading, which a quarter read as no split from 20 managers or more overrules the funds by (batch 184)
+  const quarters = new Map<string, { period: string; split: number; compared: number }[]>();
   for (const [ticker, qs] of instHoldings().pages) {
     const s = qs.filter((q) => q.split !== 1).map((q) => ({ period: q.period, split: q.split }));
     if (s.length) splits.set(ticker, s);
+    quarters.set(ticker, qs.map((q) => ({ period: q.period, split: q.split, compared: q.compared })));
   }
   const tickersOf = new Map<number, number>();
   for (const c of companies) tickersOf.set(c[0], (tickersOf.get(c[0]) ?? 0) + 1);
@@ -283,7 +287,10 @@ async function main(): Promise<void> {
   const loaded = new Map<string, Map<string, Map<string, Position>>>();
   const years = new Map<string, ReturnType<typeof newYear>>();
   let pairsRead = 0;
+  // the 13F holders' no-split reading of a ticker's two month ends, read once a month: a call reads every quarter it has
+  const noSplitRead = new Map<string, boolean>();
   for (const m of months) {
+    noSplitRead.clear();
     for (const k of [...loaded.keys()]) if (monthsBetween(`${k}-01`, `${m}-01`) > 4) loaded.delete(k);
     loaded.set(m, await month(m));
     const pairs: Parameters<typeof compareMonth>[0][number][] = [];
@@ -303,6 +310,14 @@ async function main(): Promise<void> {
     const compared = compareMonth(pairs, {
       tickerOf: (k) => (k.startsWith("T:") ? k.slice(2) : undefined),
       splitsOf: (t, b, a) => quarterSplitsIn(splits.get(t) ?? [], b, a),
+      noSplitOf: (t, b, a) => {
+        const k = `${t}|${b}|${a}`;
+        const had = noSplitRead.get(k);
+        if (had !== undefined) return had;
+        const v = quarterNoSplit(quarters.get(t) ?? [], b, a);
+        noSplitRead.set(k, v);
+        return v;
+      },
       sharesOf: (t, b, a) => ({ now: countOf(t, a), before: countOf(t, b), next: nextOf(t, a) }),
       nameOf: (k) => names.get(k),
     });
@@ -316,7 +331,7 @@ async function main(): Promise<void> {
     const about =
       `Mutual funds' and ETFs' N-PORT holdings changes for the reports of ${y}, from the SEC's Form N-PORT data sets: each fund page's reports with a ` +
       "purchase or sale of half a percent of its net assets or more, its three biggest each way, and each fund's change of 1% or more of a company's " +
-      "shares (lib/fundHoldings.ts). The SEC's own work (17 U.S.C. § 105). Written by `npm run sync:nport` (batch 180).";
+      "shares (lib/fundHoldings.ts). The SEC's own work (17 U.S.C. § 105). Written by `npm run sync:nport` (batches 180, 184).";
     writeFileSync(join(FUND_HOLDINGS_DIR, `${y}.json.gz`), gzipSync(Buffer.from(`${JSON.stringify({ about, read: readOn, ...body })}\n`), { level: 9 }));
   }
   console.log(`${reports.length} reports in ${windows.length} zips, ${eff.size} funds, ${pairsRead} pairs compared, ${years.size} years → ${FUND_HOLDINGS_DIR}`);

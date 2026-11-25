@@ -232,9 +232,11 @@ Raised by the November batches, each recorded in the master checklist:
   (`data/eu-antitrust.json.gz`) is read at ingest, and `npm run sync:eu-antitrust` reads the Publications Office's year
   lists monthly and each new decision's text once from CELLAR (needs `pdftotext`). No key. Batch 178 reads the examples batch 177
   missed (Google Shopping, AstraZeneca, switchgear, Servier) from the same file; nothing more to apply. #3 (the EU
-  courts' judgments) is batch 179's.
-- **The EU courts' judgments (batch 183), your call of 2026-11-22 (proposal #3, call (a)).** Built and committed: nothing
-  to apply. To keep it current, run `npm run sync:eu-courts` monthly (it asks publications.europa.eu for 73 yearly lists and
+  courts' judgments) is batch 183's, below.
+- **The EU courts' judgments (batch 183), your call of 2026-11-22 (proposal #3, call (a)).** Built and committed. After
+  deploying, apply db/062 (`npm run db:migrate`), which builds the "Also on" index again with the courts' judgments;
+  until then every page's "Also on" lookup cannot use the index and the judgments find no other pages (batch 184 corrected
+  this entry, which said there was nothing to apply). To keep it current, run `npm run sync:eu-courts` monthly (it asks publications.europa.eu for 73 yearly lists and
   reads a new matched judgment's text once; needs `pdftotext`). No key; the Court's case-law may be reproduced with the
   source acknowledged, and the footer credits it.
 - **Big investors' 13F holdings (batch 179), your call of 2026-11-24.** Built and committed: nothing to apply. To keep
@@ -252,6 +254,9 @@ Raised by the November batches, each recorded in the master checklist:
   later runs the new zip; 6 GB of memory, the first run about 20 minutes). It asks www.sec.gov with the contact in
   `.env.local`. ~~**Your call, if you want one:** a minimum value a day.~~ Decided 2026-11-24: "Add the $1 million
   minimum" (batch 182). A day's trades must come to $1 million or more together; 141,131 days are kept of 521,851.
+  Batch 184 (the audit of 2026-11-25) reads each trade's security title and holdings too, so its cache is a new stage
+  (`<zip>.v2.json`): the next `npm run sync:insiders` reads the 83 zips again (about 900 MB, about 20 minutes), and the
+  old `.cache/insiders/*.json` files can be deleted. 139,994 days are kept now. Nothing else to apply.
 - ~~**The 2026-11-22 second run's proposals** (batch 171, `docs/proposals/2026-11-22b-proposals.md`): mark each
   `APPROVED`, `REJECTED` or `DEFERRED`, with a reason for a rejection. None needs a key, a paid tier or a recurring
   charge: #1 is openFDA's, CC0, like sources 40 and 47; #2 is the Federal Reserve Board's own work, public domain by

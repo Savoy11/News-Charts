@@ -988,6 +988,57 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 183: the EU courts' judgments in the company's own cases, 1954 on (2026-11-24)
+
+The owner's word: "Add the $1 million minimum, then continue". The third of the 2026-11-22c proposals (#3, approved that
+day with call (a): every judgment naming the company as a party, but trade mark and design cases against the EU's IP office
+and staff cases), held back behind the holdings and insider trades the owner asked for on 2026-11-24.
+
+- [x] **A new source, 56, `eu_courts`** (`lib/euCourts.ts`, `lib/ingest/euCourtsFor.ts`, `scripts/sync-eu-courts.ts`): the
+      Publications Office's SPARQL endpoint asked year by year for the English titles holding "judgment of the"
+      (`courtsQuery`), 73 lists, 77,858 titles, none over 4,484. Committed: `data/eu-courts.json.gz`, 3 MB. `npm run
+      sync:eu-courts` runs monthly (needs pdftotext); a year's list never shorter than the file's.
+- [x] **The titles** (`readJudgmentTitle`): a judgment's own ("Judgment of the Court of First Instance … of 14 December
+      2005.#General Electric Company v Commission …#Case T-210/01.", the day after a comma too, "(Extracts)" off) and its
+      Official Journal notice in three forms (the case after the day, the case leading the title since 2008, the colon left
+      out); a case before 1989 written with no letter is the Court of Justice's ("Case 1/55", C-1/55); an appeal brought, an
+      opinion and a question are none. 73,534 titles read; the two works of a judgment are one by their first case and day
+      (`mergeJudgments`): 21,274 judgments, 19,596 with both works.
+- [x] **Call (a):** a case naming the EU's IP office (OHIM, EUIPO) is a trade mark or design case, and a Civil Service
+      Tribunal case a staff case; neither is kept (`isTradeMarkCase`).
+- [x] **The parties** (`sideParties`): a side's names split at commas and "and" only where every part is a legal name or a
+      public body ("Apple and Pear Australia Ltd" one, "Ministero dello Sviluppo economico and ENI SpA" two, "Eli Lilly and
+      Co." one, "Ryanair DAC, formerly Ryanair Ltd" two names of one party). A party is the company's by the merger notices'
+      rule (`partyIsCompany`), its namesakes in `NOT_THE_COMPANY`, read by hand among the replay's 314 first matches: the
+      old General Motors Corporation (1999), FMC plc the British meat company (1996), IBP Ltd the copper fittings maker
+      (2011, as batch 177's), Knoll International SpA (2015, before Herman Miller bought Knoll), and Honeywell Aerospace
+      GmbH off the spin-off before its record began (2025-10-01, its first filing read from data.sec.gov); the GmbH is
+      Honeywell's own through 2025-09-30 (`EU_COURT_UNITS`).
+- [x] **The operative part** (`operativePart`): read once from CELLAR for each judgment a replay of every listed company
+      finds, the notice's text first ("Operative part of the judgment …"), else the judgment's own ("On those grounds … hereby:
+      …"): 286 of 326. Akzo Nobel's T-485/11 of 2015-07-15 annuls the Commission's decision of 30 June 2011.
+- [x] **The rows:** one a company a day (`euCourtsEvents`), the court, the caption and case numbers, the subject words, the
+      company's side only where one case has two sides (`sideOf`; joined cases' titles run their captions together, so
+      there "a party"), the operative part; its id the day's case numbers, so a judgment of two listed companies says "Also
+      on" (Illumina's and Grail's appeal of 2024; db/062 builds the index again with id 56, `ALSO_ON_SOURCES`,
+      `GROUPED_ROW_SOURCES`).
+- [x] **Measured:** 312 company days on 106 companies under present names (Lufthansa 20, Ryanair 18, Google 15, Deutsche
+      Telekom 13); from the fixtures' first prices, 135 on 55 pages, 68 before 2017 (Merck 11, Banco Santander 11, Akzo
+      Nobel 9). The proposal's estimate was about 260 company days.
+- [x] **Wired:** `SOURCES` 56 (the Court's terms: the case-law may be reproduced with the source acknowledged), quota,
+      refresh, `COMPANY_SOURCES` and ingest's run, the footer's and terms page's credit ("judgments of the Court of Justice
+      of the European Union"), check:contact (55 files read the User-Agent), check:also-on, a check:live case (2005's list,
+      GE's T-210/01 among it).
+- [x] **Checks:** check:eu-courts 24 (new): the title forms, case numbers, parties, call (a), the merge, the operative part,
+      the side, Honeywell's unit, the committed file's figures, GE's and Honeywell's appeals, Akzo Nobel's annulment, the
+      proposal's four that stay off (Apple and Pear Australia, SLM, Knoll, BlackRock v OHIM), every company and the wiring.
+      check:also-on 23. On main it fails: the source does not exist.
+- **The ledger:** no item opens or closes; 37 open, 105 closed, 11 parked, 17 blocked.
+- **Requests:** publications.europa.eu: the 73 yearly lists and the texts of the 326 matched judgments (each one to three
+  requests: a choice of documents answered with its first, a notice with no operative part then the judgment's own), with
+  the User-Agent "News Charts Research" and no address; data.sec.gov 1 (Honeywell Aerospace's filing list), with the
+  project's contact.
+
 ## NC ledger — batch 182: the insider trades' $1 million minimum (2026-11-24)
 
 The owner's word: "Add the $1 million minimum, then continue" — the call batch 181 left open (`docs/OWNER-ACTIONS.md`), as
@@ -13150,15 +13201,15 @@ already held, but new investment goes to securities coverage first.
         three units.
       - *Derived from [`docs/proposals/2026-11-22c-proposals.md`](proposals/2026-11-22c-proposals.md) #2, approved
         2026-11-22.*
-- [ ] `P2` **The EU courts' judgments in the company's own cases, 1954–2026:** approved by the owner 2026-11-22, with call
-      (a), every subject but trade-mark and staff cases. A new source, the judgments the same endpoint lists by their
+- [x] `P2` **The EU courts' judgments in the company's own cases, 1954–2026:** approved by the owner 2026-11-22, with call
+      (a), every subject but trade-mark and staff cases. Done in batch 183 (see its section): 312 company days on 106
+      companies; 135 on 55 pages from the fixtures' first prices. A new source, the judgments the same endpoint lists by their
       titles' parties, each ruling's outcome from its Official Journal notice, mostly the appeals of the Commission's
       decisions.
       - **Measured** by the scout: 17 company days in four sampled years of 5,151 titles; **estimated** about 260 over
         77,843 titles, which could be off by half.
       - *Derived from [`docs/proposals/2026-11-22c-proposals.md`](proposals/2026-11-22c-proposals.md) #3, approved
-        2026-11-22.* Next: batch 183, after the holdings and insider trades the owner asked for on 2026-11-24 and the
-        insider trades' $1 million minimum (batch 182).
+        2026-11-22.* Built in batch 183.
 - [x] `P1` **Big investors' 13F holdings changes, 2013–2026:** asked for by the owner on 2026-11-24 ("Big investors, 13F",
       "Summary + 1% moves"). Done in batch 179 (see its section): 195,271 quarters on 6,705 pages, 201,204 moves of 1% or
       more; 61,227 rows on 637 pages from the fixtures' first prices. Batch 180 matched ETFs' CUSIPs too: 284,274 quarters

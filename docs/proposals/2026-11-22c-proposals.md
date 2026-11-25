@@ -349,7 +349,7 @@ list, units read by hand, NC-074 open
 
 ## 3. The EU courts' judgments in the company's own cases, 1954–2026: GE's and Honeywell's appeals of the merger ban (2005), the Commission's heat stabiliser decision of 2011 annulled on Akzo Nobel's appeal (2015), Eni, LG Display, Lufthansa and LATAM on their cartel fines (2015), Ryanair, Merck Sharp & Dohme, Novartis… · proposed `P2` · target section: Scope refocus — exchange-traded securities (2026-08-08)
 
-**Status:** APPROVED — 2026-11-22, "#1 Supreme Court (Recommended), #2 EU antitrust and State aid, #3 EU court rulings" and "Use the defaults (Recommended)", with call (a): every subject but trade-mark and staff cases. Filed under Scope refocus; to be built in batch 178.
+**Status:** APPROVED — 2026-11-22, "#1 Supreme Court (Recommended), #2 EU antitrust and State aid, #3 EU court rulings" and "Use the defaults (Recommended)", with call (a): every subject but trade-mark and staff cases. Filed under Scope refocus; built in batch 183.
 **Owner's reason (if rejected):**
 
 **Raised before:** no.

@@ -268,6 +268,21 @@ its units in `EU_UNITS`; a State aid title's beneficiary by the same rule, the r
 beneficiary. A bank's notes record takes none. One row a company a day, its id the day's case numbers ("Also on",
 db/061); the row says what the Commission did on its day, which can be appealed.
 
+The EU courts' judgments since 1954 (`lib/euCourts.ts`, batch 183, the 2026-11-22c proposal 3 with call (a)) are the
+English titles holding "judgment of the" the same endpoint lists year by year (`courtsQuery`, 73 lists), into the committed
+`data/eu-courts.json.gz` (`npm run sync:eu-courts`, monthly, and after sync:tickers; needs pdftotext): a judgment's own title
+("Judgment of the Court of First Instance … of 14 December 2005.#General Electric Company v Commission …#Case T-210/01.")
+and its Official Journal notice in three forms (`readJudgmentTitle`) are one judgment by their first case and day
+(`mergeJudgments`), a case before 1989 written with no letter the Court of Justice's ("Case 1/55" C-1/55). A trade mark or
+design case against the EU's IP office and a Civil Service Tribunal case are none (`isTradeMarkCase`). A side's names are split
+at commas and "and" only where every part is a legal name or a public body (`sideParties`: "Apple and Pear Australia Ltd" one,
+"Ministero … and ENI SpA" two, "Eli Lilly and Co." one, a former name its own); a party is a page's by the merger notices' rule
+(`partyIsCompany`), its namesakes in this source's `NOT_THE_COMPANY` (the old General Motors, FMC plc, IBP Ltd, Knoll
+International, Honeywell Aerospace GmbH off the spin-off before its record), its units in `EU_COURT_UNITS` (Honeywell's
+Aerospace GmbH to 2025-09-30). Each judgment a replay of every listed company finds has its operative part read once from
+CELLAR, the notice's text first (`operativePart`). One row a company a day, the company's side only where one case has two
+sides (`sideOf`), its id the day's case numbers ("Also on", db/062); the row never summarises a judgment's reasons.
+
 Big investors' 13F holdings changes since 2013 (`lib/instHoldings.ts`, batch 179; the owner's call of 2026-11-24, with
 N-PORT and insider trades to follow in batches 180–181) are the SEC's Form 13F data sets, read once each into `npm run
 sync:13f`'s git-ignored cache (`.cache/13f`, about 5 GB; 10 GB of memory) and committed as `data/13f/<year>.json.gz`: no
@@ -354,16 +369,16 @@ run, and only Class I and II become rows. The map's days for the units bought an
 it: the file gives a bought unit's own past under its later name ("Boston Scientific CRM Corp" for Guidant's
 2005 recalls), so every such unit carries the day its owner took it.
 
-A row of one of the sixteen multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
-CFTC, the EEOC, batch 155, the NLRB, batch 161, the merger waiting period's grants, batch 166, the ITC's, batch 167, the Fed's H.2 actions, batch 173, the EU's merger notifications, batch 174, the Supreme Court's decisions, batch 176, the EU's competition decisions, batch 177) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
+A row of one of the seventeen multi-party sources (DOJ, the SEC's two, the Board's, CFPB, EPA, CPSC,
+CFTC, the EEOC, batch 155, the NLRB, batch 161, the merger waiting period's grants, batch 166, the ITC's, batch 167, the Fed's H.2 actions, batch 173, the EU's merger notifications, batch 174, the Supreme Court's decisions, batch 176, the EU's competition decisions, batch 177, the EU courts' judgments, batch 183) says which other held company pages carry the same case: "Also on Ford Motor, General Motors
 and 25 more" (`lib/alsoOn.ts`, batch 106). A case is the same source's same number, compared as a set
 for a grouped row (db/041's index, with no pending list since db/042, batch 111: a GIN index's queue made
 every lookup read it); a release held once on several pages counts too. A page's links are found by
 db/042's `event_subjects (subject_id)` index; the key begins with the event. It is read
 beside `loadEvents` and never breaks a page; adding a multi-party source means adding it to
 `ALSO_ON_SOURCES`, `ALSO_ON_SOURCE_IDS` and the index's list, in a new migration that builds it again (db/053
-added the EEOC's, db/054 the NLRB's, db/056 the merger grants', db/057 the ITC's, db/058 the Fed's H.2 actions, db/059 the EU's merger notifications, db/060 the Supreme Court's decisions, db/061 the EU's competition decisions), which check:also-on holds together. A row
-whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the FDA's warning letters' days, the EEOC's days, the NLRB's days, the merger grants' days, the ITC's days, the FDA's own releases' days, the FDA's clearances' months, the Fed's H.2 days, the EU's notification days, the Supreme Court's days, the EU's competition days) is stored again
+added the EEOC's, db/054 the NLRB's, db/056 the merger grants', db/057 the ITC's, db/058 the Fed's H.2 actions, db/059 the EU's merger notifications, db/060 the Supreme Court's decisions, db/061 the EU's competition decisions, db/062 the EU courts' judgments), which check:also-on holds together. A row
+whose case numbers are joined (EPA, CPSC, CFTC, SEC cases, CFPB, the Digest's months, the FDA's warning letters' days, the EEOC's days, the NLRB's days, the merger grants' days, the ITC's days, the FDA's own releases' days, the FDA's clearances' months, the Fed's H.2 days, the EU's notification days, the Supreme Court's days, the EU's competition days, the EU courts' days) is stored again
 when its list grows, so its versions count once in "· N sources" (`GROUPED_ROW_SOURCES` in
 `lib/corroboration.ts`, batch 107); a new source that joins numbers goes there too, and check:also-on
 finds one that does not.
@@ -458,6 +473,7 @@ npm run sync:fda-clearances # rebuild data/fda-clearances.json.gz from openFDA's
 npm run sync:fed-h2         # add the Board's new weekly H.2 releases to data/fed-h2.json.gz (weekly; needs pdftotext; a week the file holds is never asked again)
 npm run sync:eu-mergers     # add the Official Journal's new EU merger notices to data/eu-mergers.json.gz from the Publications Office (monthly, and after sync:tickers; needs pdftotext)
 npm run sync:eu-antitrust   # add the Official Journal's new EU antitrust decisions and State aid titles to data/eu-antitrust.json.gz from the Publications Office (monthly; needs pdftotext; a decision's text the file holds is never asked again)
+npm run sync:eu-courts     # rebuild data/eu-courts.json.gz from the Publications Office's yearly judgment lists and CELLAR's texts (monthly, and after sync:tickers; needs pdftotext; an operative part the file holds is never asked again)
 npm run sync:13f           # rebuild data/13f/ from the SEC's Form 13F data sets, fails-to-deliver files and share-count frames (monthly; a zip its cache holds is never asked again; 5 GB of cache, 10 GB of memory)
 npm run sync:insiders      # rebuild data/insiders/ from the SEC's insider transactions data sets (quarterly; a zip its cache holds is never asked again; 6 GB of memory)
 npm run sync:nport         # rebuild data/nport/ from the SEC's Form N-PORT data sets (quarterly, after sync:13f, whose map and frames it reads; a zip its cache holds is never asked again; 5 GB of cache, 8 GB of memory)

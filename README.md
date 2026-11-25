@@ -642,6 +642,36 @@ moves of 1% or more on 2,326 company pages, from the reports of December 2019 to
 fixtures carry, 2,777 moves on 379 pages. A quarterly run needs about 5 GB of disk for its cache and 8 GB of
 memory, and reads the 13F sync's map and frames, so it runs after it; the first, about two hours. No key; the SEC's own work.
 
+### The EU courts' judgments, 1954–2026 (`lib/euCourts.ts`, batch 183)
+
+What the Court of Justice of the European Union and its General Court ruled in the company's own cases: its appeals of the
+Commission's competition, merger and State aid decisions (GE's and Honeywell's against the merger ban, 2005; Akzo Nobel's
+against the heat stabiliser decision, annulled in 2015; Intel's, Google's and Qualcomm's), and the references from national
+courts naming it (Lufthansa's, Ryanair's and Banco Santander's passengers and borrowers). Approved by the owner on
+2026-11-22 (the 2026-11-22c proposal 3) with call (a): every judgment naming the company as a party, but the trade mark and
+design cases against the EU's intellectual property office and staff cases.
+
+- **One row a company a day:** "The EU General Court ruled in General Electric Company v Commission (T-210/01): Action for
+  annulment - Competition - …", the company's side where one case has two (the applicant, the defendant, an appeal's
+  appellant or respondent; a party to the national case in a reference), and the court's operative part where its text
+  was read ("1. Annuls the Commission Decision of 30 June 2011 …"). The row never summarises the court's reasons. A
+  judgment of two listed companies says "Also on" (Illumina's and Grail's appeal of 2024).
+
+The list is the Publications Office's SPARQL endpoint asked year by year for the English titles holding "judgment of the",
+73 lists and 77,858 titles, no year over 4,484. A judgment is two works, its own title and the Official Journal's notice of
+it, read in their forms ("Judgment of the Court … of 20 January 2005 in Case C-300/03 (reference …): Honeywell Aerospace
+GmbH v Hauptzollamt Gießen (Community transit — …)", and since 2008 "Case T-485/11: Judgment of the General Court of 15 July
+2015 — Akzo Nobel and Others v Commission (…)") and joined by their first case and day: 21,274 judgments. A side's names
+are split at commas and "and" only where every part is a legal name or a public body, so "Apple and Pear Australia Ltd"
+stays one name. A party is the company's by the merger notices' rule, with namesakes read by hand (the old General
+Motors's case of 1999, FMC plc the British meat company, IBP Ltd the copper fittings maker, Knoll International's case of
+2015 before Herman Miller bought Knoll) and Honeywell Aerospace GmbH Honeywell's own until its spin-off's record began.
+The operative part of each judgment a listed company is a party to is read once from CELLAR, the notice's text first, else
+the judgment's own: 286 of 326. Under present names, 312 company days on 106 companies; from the first prices the
+fixtures carry, 135 on 55 pages, 68 before 2017 (Merck & Co. 11, Banco Santander 11, Akzo Nobel 9). The file is 3 MB.
+Credit: "Court of Justice of the European Union", whose copyright page lets the case-law be reproduced with the source
+acknowledged; the notices "© European Union, https://eur-lex.europa.eu". No key.
+
 ### European Commission competition decisions, 1973–2026 (`lib/euAntitrust.ts`, batch 177)
 
 The Commission's antitrust and cartel decisions addressed to the company, with the fines their texts state, and its State

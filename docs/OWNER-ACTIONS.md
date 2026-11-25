@@ -233,6 +233,10 @@ Raised by the November batches, each recorded in the master checklist:
   lists monthly and each new decision's text once from CELLAR (needs `pdftotext`). No key. Batch 178 reads the examples batch 177
   missed (Google Shopping, AstraZeneca, switchgear, Servier) from the same file; nothing more to apply. #3 (the EU
   courts' judgments) is batch 179's.
+- **The EU courts' judgments (batch 183), your call of 2026-11-22 (proposal #3, call (a)).** Built and committed: nothing
+  to apply. To keep it current, run `npm run sync:eu-courts` monthly (it asks publications.europa.eu for 73 yearly lists and
+  reads a new matched judgment's text once; needs `pdftotext`). No key; the Court's case-law may be reproduced with the
+  source acknowledged, and the footer credits it.
 - **Big investors' 13F holdings (batch 179), your call of 2026-11-24.** Built and committed: nothing to apply. To keep
   it current, run `npm run sync:13f` monthly on a host with about 5 GB of free disk for its cache (`.cache/13f`) and 10 GB
   of memory; the first run reads the SEC's 54 data sets (2.9 GB) and takes about two hours, later runs the new zip and

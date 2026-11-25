@@ -27,7 +27,7 @@ import { QUOTAS } from "../lib/ingest/quota";
 import { SOURCE_TTL_MINUTES } from "../lib/ingest/refresh";
 import { SOURCES } from "../lib/ingest/store";
 import { supremeCourtFor } from "../lib/ingest/supremeCourtFor";
-import { releaseNamesOn } from "../lib/releaseNames";
+import { isNotesRecord, releaseNamesOn } from "../lib/releaseNames";
 import { newsNamesFor, possessiveNameFor } from "../lib/sec";
 import { UNITS as CPSC_UNITS } from "../lib/cpscRecalls";
 import { UNITS as EPA_UNITS } from "../lib/epaCases";
@@ -71,8 +71,9 @@ const EXPECTED = {
   dated: 8_432,
   pdfs: 1_112,
   // every listed company in the index, under the rule, its names as the replay below builds them
-  total: 328,
-  companies: 158,
+  // 328 on 158 in batch 176, ATMP's notes record among them, which takes none at ingest (batch 184)
+  total: 327,
+  companies: 157,
   // from first prices, for the companies the fixtures read
   fromFirst: 203,
   fromFirstPages: 95,
@@ -187,7 +188,8 @@ async function main(): Promise<void> {
   const rows: { ticker: string; date: string; first: string | null }[] = [];
   const seen = new Set<number>();
   for (const [cik, ticker] of companies) {
-    if (seen.has(cik)) continue;
+    // a bank's notes record takes none at ingest (supremeCourtFor), so the replay skips it too (batch 184: ATMP, Barclays Bank PLC's)
+    if (seen.has(cik) || isNotesRecord(cik)) continue;
     seen.add(cik);
     const pre = [...new Set([...namesOf(cik)(2026), ...unitYears.flatMap((d) => releaseNamesOn(cik, d))].flatMap(andSpellings).map(alnum).filter((n) => n.length >= 3))];
     // a company's candidates: a case whose sides hold one of its names' letters, or, where it has units, one naming a unit

@@ -472,6 +472,11 @@ export function deterministicScore(
       if (subject.kind === "company" && row.sourceKey === "eu_antitrust") {
         return { score: 0.95, reason: "a European Commission competition decision addressed to the company, or State aid it received" };
       }
+      // …and a judgment of the EU courts in a case naming the company or its unit as a party (lib/euCourts.ts, batch 183;
+      // batch 184, the audit's finding 9: a unit's row, "Lubrizol France SAS", names no alias of the company)
+      if (subject.kind === "company" && row.sourceKey === "eu_courts") {
+        return { score: 0.95, reason: "a judgment of the EU courts in a case naming the company as a party" };
+      }
       // …and an FDA press release or talk paper of 1962–2014 naming the company, each kept row read by hand
       // (lib/fdaHistory.ts, batch 169)
       if (subject.kind === "company" && row.sourceKey === "fda_history") {

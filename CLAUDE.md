@@ -228,8 +228,8 @@ page's by the merger notices' rule (`partyIsCompany`) in the Reports' spellings 
 `expandAbbreviations`: "Pacific Gas & Elec. Co.", "U. S. Bank N. A.", "Teva Pharmaceuticals USA, Inc."), only with a legal
 word or a name of two words or more (`corporateParty`: a caption names a person by the surname, "Cummins", "Pearson"), the
 taken names read first; and by the other maps' units on their days: the railroads' owners (`RAIL_OWNERS`), the Labor
-Department's and the NLRB's units (`TAA_UNITS`, `NLRB_UNITS`), the EEOC's, and this source's own (`SC_UNITS`, ten read from
-filings: Travelers' insurers on TRV from 2004-04-01, WesternGeco on SLB from 2006-04-28…). Namesakes are refused in
+Department's and the NLRB's units (`TAA_UNITS`, `NLRB_UNITS`), the EEOC's, and this source's own (`SC_UNITS`, ten, eight dated by
+a filing's day: Travelers' insurers on TRV from 2004-04-01, WesternGeco on SLB from 2006-04-28…). Namesakes are refused in
 `NOT_THE_COMPANY` (the old General Motors, Southland Corp. of 7-Eleven), a company a caption names by one word is given its case
 in `NAMED_BY_HAND` (FCC v. AT&T). One row a company a day, the Court's disposition and the company's side, its id the day's
 citations ("Also on", db/060); the row never summarises a holding. A record's predecessor's names are not read (old Alcoa's
@@ -268,7 +268,7 @@ its units in `EU_UNITS`; a State aid title's beneficiary by the same rule, the r
 beneficiary. A bank's notes record takes none. One row a company a day, its id the day's case numbers ("Also on",
 db/061); the row says what the Commission did on its day, which can be appealed.
 
-The EU courts' judgments since 1954 (`lib/euCourts.ts`, batch 183, the 2026-11-22c proposal 3 with call (a)) are the
+The EU courts' judgments since 1955 (`lib/euCourts.ts`, batch 183, the 2026-11-22c proposal 3 with call (a)) are the
 English titles holding "judgment of the" the same endpoint lists year by year (`courtsQuery`, 73 lists), into the committed
 `data/eu-courts.json.gz` (`npm run sync:eu-courts`, monthly, and after sync:tickers; needs pdftotext): a judgment's own title
 ("Judgment of the Court of First Instance … of 14 December 2005.#General Electric Company v Commission …#Case T-210/01.")
@@ -290,7 +290,10 @@ order or trade is public, so a change is the difference between a manager's two 
 `effectiveFilings`' (a "new holdings" amendment as large as what it amends replaces it, Morgan Stanley's of 2024; a notice
 none), compared only where both reports hold positions of like size (`comparable`), a position whose value gives no
 other manager's price set aside (`markSuspect`), a split read from the holders' ratios or, where too few held through,
-the company's stated counts (`splitFactor`, `simpleRatio`), and a quarter whose change exceeds the company read as none.
+the company's stated counts (`splitFactor`, `simpleRatio`), the holders' split only where a twenty-fifth show its factor
+exactly (`confirmedSplit`, batch 184: a stock merger's quarter, First Citizens' CIT one, reads as stated; a split down
+neither that nor the price confirms reads nothing), a split down's stated count read by the next quarter's (`shareBasis`),
+and a quarter whose change exceeds the company read as none.
 One summary row a quarter on its 45-day deadline (`deadlineOf`) naming the three biggest buyers and sellers, and a row
 for each manager's change of 1% or more of the company's shares (data.sec.gov's XBRL frames) on its report's day. A
 security's CUSIP is a page's ticker by the SEC's fails-to-deliver files (`lib/cusipMap.ts`, committed as
@@ -305,9 +308,12 @@ by report month: a change is the difference between a fund's two reports two to 
 shares of stocks, preferreds and funds only, a report its month's last filed (`effectiveReports`), compared where both
 hold like-sized positions. A security is keyed by its page's ticker through the 13F map, else its CUSIP, a new CUSIP under
 the same name one security (`rekeyRenamed`); a position five times off the funds' median price is set aside
-(`markSuspect`); a split is the median ratio of the funds that held through the same two months, five or more, only where
-their median price moved the other way (`priceAgrees`: funds that all grew a stake by half in an offering read none),
-else the fund's own exact ratio with its price (`heldSplit`); a position held through is not compared where the 13F
+(`markSuspect`); a split is the median ratio of the funds that held through the same two months, five or more, where the
+13F holders read it too, a twenty-fifth of the funds show it exactly, or else their median price moved the other way
+(`priceAgrees`: funds that all grew a stake by half in an offering read none), never where the 13F holders read no split in
+every overlapping quarter from 20 managers or more (`quarterNoSplit`, batch 184: Hawaiian Electric's offering of 2024),
+and a split down none of those confirm reads nothing; the fund's own exact ratio with its price (`heldSplit`) only where
+fewer than five held through and the 13F holders do not read none; a position held through is not compared where the 13F
 holders, the company's stated counts or a price two and a half times up show a split the funds do not, and a new or closed
 one then makes no move. A fund's page has a row on each report's filing day naming its three biggest purchases and sales
 of half a percent of its net assets or more (`BIG_SHARE`); a company's page a row for each fund's change of 1% or more of
@@ -319,10 +325,16 @@ Insiders' open-market trades since 2006 (`lib/insiderTrades.ts`, batch 181, the 
 sync:insiders`'s git-ignored cache (`.cache/insiders`) and committed as `data/insiders/<year>.json.gz` by filing day: only
 purchases (P) and sales (S) of the company's own non-derivative shares by an officer, a director or a 10% owner
 (`isInsider`; "Other" alone none), never a grant, exercise, withholding or gift, which `lib/secForms.ts` still leaves
-out as forms. A filing is its first reporting owner's, the joint filers counted; an amendment restates the last filing
-before it by the same owner, issuer and period, on that filing's day (`effectiveFilings`). One row a company a filing day
-(`companyDays`), each insider's purchases and sales an entry with shares, whole-dollar value and trade days, the owner's
-name as filed; by the issuer's CIK, and a predecessor's record's up to its handover day (`predecessorsOf`). A day is kept
+out as forms, and of its common shares only, never a preferred share, a note or a warrant (`ownShares`, batch 184). A
+filing is its first reporting owner's, the joint filers counted; an amendment restates the last filing before it by the
+same owner, issuer and period, on that filing's day, its trades dated later a filing of their own on its day
+(`effectiveFilings`). A price is compared with the company's other filings' (`readPrices`, batch 184): five times the 10
+days' median, fifty times the year's, a hundred times the whole record's, or with none to compare over $1,000,000 a share
+or $5 billion a trade, is read as the trade's total where that gives a share's price, else set aside (Mubadala's AMD
+shares of 2017 "at $525,600,000.00"). One row a company a filing day (`companyDays`), each insider's purchases and sales an
+entry with shares, whole-dollar value (a priced subtotal beside an unpriced trade) and trade days, the owner's name as
+filed, one block related owners each reported, alike to the share and the holdings after, counted once naming the others
+(`also`: Antero's 12,000,000 shares of 2014-05-21, thirteen filers); by the issuer's CIK, and a predecessor's record's up to its handover day (`predecessorsOf`). A day is kept
 only where its trades with a price come to $1 million or more together (`MIN_DAY_VALUE`, `bigEnough`: the owner's call of
 2026-11-24, batch 182), at the sync, so the committed files hold no smaller day.
 

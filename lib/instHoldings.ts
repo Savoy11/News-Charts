@@ -19,8 +19,9 @@ import type { TimelineEvent } from "./types";
  * from the SEC's fails-to-deliver files, checked against the company's names). A manager is compared only where it
  * reported both quarters, neither report a quarter of the other's size (`comparable`); a position it dropped in a
  * report that omits confidential holdings, or took up after one, is no move. A split is read from the managers' own
- * ratios (`splitFactor`: NVIDIA's ten for one of 2024) and the earlier quarter scaled by it; a share count stated
- * before the split is read in the later unit (`shareBasis`). The summary row is dated by the reports' deadline, the
+ * ratios (`splitFactor`: NVIDIA's ten for one of 2024), confirmed by the holders that show it exactly (`confirmedSplit`,
+ * batch 184), and the earlier quarter scaled by it; a share count stated before the split is read in the later unit
+ * (`shareBasis`). The summary row is dated by the reports' deadline, the
  * 45th day after the quarter (`deadlineOf`); a 1% move by the day its manager's report was filed. `npm run sync:13f`
  * commits it all (`data/13f/<year>.json.gz`); ingest asks nothing. The SEC's own work (17 U.S.C. § 105).
  */
@@ -114,6 +115,15 @@ export function previousPeriod(period: string): string {
   return `${py}-${String(pm).padStart(2, "0")}-${String(last).padStart(2, "0")}`;
 }
 
+/** The quarter after a quarter's last day. */
+export function nextPeriod(period: string): string {
+  const [y, m] = period.split("-").map(Number);
+  const nm = m + 3 > 12 ? m - 9 : m + 3;
+  const ny = m + 3 > 12 ? y + 1 : y;
+  const last = new Date(Date.UTC(ny, nm, 0)).getUTCDate();
+  return `${ny}-${String(nm).padStart(2, "0")}-${String(last).padStart(2, "0")}`;
+}
+
 /**
  * The split a ratio of later shares to earlier is read as: 1 between 0.72 and 1.4; else three for two, or a whole number
  * for one up to 100 (NVIDIA's ten for one), or one for a whole number up to 1,000 (GeneDx's one for 33 of 2023), within 3%;
@@ -141,11 +151,43 @@ export function splitFactor(ratios: readonly number[]): number {
 }
 
 /**
- * The share count a 1% move is measured against: the company's stated count, or that count in a split's later unit
- * where the managers alone hold more than one and a half times it (a cover page dated before the split), else none.
+ * Whether the holders' ratios confirm the split their median reads (batch 184, the audit's finding 4: First Citizens'
+ * CIT quarter, Agnico Eagle's Kirkland Lake quarter and Mativ's Neenah quarter each read as three for two). A split
+ * multiplies every holder's shares alike, so a holder that neither bought nor sold shows the factor exactly; a stock
+ * merger or an offering grows each holder by its own amount. A split up is confirmed where a twenty-fifth of the holders,
+ * one at least, show its factor within a five-hundredth (NVIDIA's ten for one of 2024: 8%; First Citizens': none of 194);
+ * else the holdings read as stated (1), as a merger's or an offering's are real changes of holdings. A split down, whose
+ * cash for fractions moves each holder a little, is confirmed where the price rose to three tenths of its factor or more
+ * (`priceRatio`, the managers' median price later over earlier), or a twenty-fifth show it within a hundredth; else the
+ * quarter reads nothing (null), as holdings cut to a quarter by a spin-off's exchange (News Corp's of 2013) are no sale.
  */
-export function shareBasis(stated: number | undefined, held: number, factor: number): number | undefined {
+export function confirmedSplit(f: number, ratios: readonly number[], priceRatio: number | undefined): number | null {
+  if (f === 1) return 1;
+  const exact = (tol: number) => ratios.filter((r) => Math.abs(r / f - 1) < tol).length >= Math.max(1, Math.ceil(0.04 * ratios.length));
+  if (f > 1) return exact(0.002) ? f : 1;
+  return (priceRatio !== undefined && priceRatio * f >= 0.3) || exact(0.01) ? f : null;
+}
+
+/** The managers' median price of a security at a quarter's end, by the stated values of positions not suspect, where three or more give one. */
+export function medianPrice(holdings: ReadonlyMap<string, Holding>): number | undefined {
+  const prices = [...holdings.values()].filter((h) => !h.suspect && h.shares > 0 && (h.value ?? 0) > 0).map((h) => h.value! / h.shares).sort((a, b) => a - b);
+  return prices.length >= 3 ? prices[Math.floor(prices.length / 2)] : undefined;
+}
+
+/**
+ * The share count a 1% move is measured against: the company's stated count, or that count in a split's later unit
+ * where the managers alone hold more than one and a half times it (a cover page dated before the split), else none. A
+ * split down's earlier count always passes that test, so there the next quarter's count decides (batch 184, the audit's
+ * finding 7): the stated count read in the later unit where the next agrees with that, as itself where the next agrees
+ * with it, else as before.
+ */
+export function shareBasis(stated: number | undefined, held: number, factor: number, next?: number): number | undefined {
   if (!stated || stated <= 0) return undefined;
+  const near = (a: number, b: number) => a / b > 0.72 && a / b < 1.4;
+  if (factor < 1 && next && next > 0) {
+    if (near(next, stated * factor) && held <= 1.5 * stated * factor) return stated * factor;
+    if (near(next, stated) && held <= 1.5 * stated) return stated;
+  }
   for (const x of factor === 1 ? [stated] : [stated, stated * factor]) if (held <= 1.5 * x) return x;
   return undefined;
 }
@@ -231,7 +273,7 @@ export function pageQuarter(
   cur: ReadonlyMap<string, Holding>,
   /** each compared manager's report for the quarter: its day and accession, which a sale to nothing still has */
   compared: ReadonlyMap<string, { filedOn: string; accession: string; amended?: boolean }>,
-  opts: { sharesOutstanding?: number; sharesBefore?: number; confidentialNow?: ReadonlySet<string>; confidentialBefore?: ReadonlySet<string> } = {},
+  opts: { sharesOutstanding?: number; sharesBefore?: number; sharesNext?: number; confidentialNow?: ReadonlySet<string>; confidentialBefore?: ReadonlySet<string> } = {},
 ): PageQuarter | null {
   if (prev.size < 3) return null;
   // a manager whose position either quarter cannot be right is not compared on this security
@@ -244,8 +286,12 @@ export function pageQuarter(
   }
   // the holders' own ratios where five or more held through the quarter; else the company's stated counts (Wheels Up's one
   // for twenty of 2026, which few held through), never beside them, as a count stated before a split (NVIDIA's of June
-  // 2024) would read a second split the quarter after
-  const split = ratios.length >= 5 || !opts.sharesOutstanding || !opts.sharesBefore ? splitFactor(ratios) : simpleRatio(opts.sharesOutstanding / opts.sharesBefore);
+  // 2024) would read a second split the quarter after; the holders' split only where their own counts confirm it (`confirmedSplit`)
+  const p0 = medianPrice(prev);
+  const p1 = medianPrice(cur);
+  const read = ratios.length >= 5 || !opts.sharesOutstanding || !opts.sharesBefore ? confirmedSplit(splitFactor(ratios), ratios, p0 && p1 ? p1 / p0 : undefined) : simpleRatio(opts.sharesOutstanding / opts.sharesBefore);
+  if (read === null) return null;
+  const split = read;
   const changes: Move[] = [];
   let comparedHere = 0;
   for (const [f, report] of here) {
@@ -262,7 +308,7 @@ export function pageQuarter(
   }
   let held = 0;
   for (const h of cur.values()) held += h.shares;
-  const basis = shareBasis(opts.sharesOutstanding, held, split);
+  const basis = shareBasis(opts.sharesOutstanding, held, split, opts.sharesNext);
   if (basis) for (const c of changes) c.bp = Math.round((10_000 * Math.abs(c.delta)) / basis);
   // a change greater than the whole company is a split or an error not read: the quarter reads nothing
   if (basis && changes.some((c) => Math.abs(c.delta) > basis)) return null;

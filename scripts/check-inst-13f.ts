@@ -24,12 +24,14 @@ import {
   INST_HOLDINGS_DIR,
   MIN_MANAGERS,
   comparable,
+  confirmedSplit,
   deadlineOf,
   dollars,
   effectiveFilings,
   instHoldings,
   instHoldingsEvents,
   markSuspect,
+  nextPeriod,
   pageQuarter,
   previousPeriod,
   shareBasis,
@@ -59,10 +61,11 @@ const EXPECTED = {
   lastPeriod: "2026-06-30",
   // 6,705 and 195,271 in batch 179, the 4,225 pages more ETFs', whose trusts state no share count and so have no 1% moves
   pages: 10_930,
-  summaries: 284_274,
-  moves: 201_204,
+  // 284,274 quarters, 201,204 moves and 61,227 rows from first prices in batch 180, before batch 184 confirmed each split
+  summaries: 284_259,
+  moves: 201_107,
   // from first prices, for the pages the fixtures read
-  fromFirst: 61_227,
+  fromFirst: 61_221,
   fromFirstPages: 637,
 };
 
@@ -136,6 +139,19 @@ async function main(): Promise<void> {
       splitFactor([1 / 33, 1 / 33, 0.0302, 0.0305, 1 / 33]) === 1 / 33 && splitFactor([1.5, 1.49, 1.51, 1.5, 1.5]) === 1.5);
   check("  …a share count stated before the split read in the later unit: NVIDIA's 2,460,000,000 of its May cover page as 24,600,000,000",
     shareBasis(2_460_000_000, 18_000_000_000, 10) === 24_600_000_000 && shareBasis(15_204_137_000, 9_000_000_000, 1) === 15_204_137_000 && shareBasis(undefined, 5, 1) === undefined && shareBasis(100, 1_000, 1) === undefined);
+  check("a split up confirmed where a twenty-fifth of the holders show its factor exactly (batch 184): NVIDIA's ten for one; First Citizens' CIT quarter, each holder grown by its own amount, none",
+    confirmedSplit(10, [10, 10.0001, 12, 9.5, 10.3], 0.14) === 10 && confirmedSplit(1.5, [1.43, 1.47, 1.52, 1.55, 1.49, 1.6], 0.8) === 1 && confirmedSplit(1, [1, 1, 1, 1, 1], 1) === 1);
+  check("  …a split down confirmed where the price rose to three tenths of its factor, or a twenty-fifth show it within a hundredth; else the quarter reads nothing (News Corp's exchange of 2013)",
+    confirmedSplit(0.05, [0.049, 0.0475, 0.053, 0.0465, 0.052], 10.6) === 0.05 && confirmedSplit(0.25, [0.27, 0.24, 0.26, 0.23, 0.265], 0.49) === null && confirmedSplit(0.25, [0.25, 0.27, 0.24, 0.26, 0.23], 0.49) === 0.25);
+  check("  …a split down's stated count read by the next quarter's (the audit's finding 7): 200,000,000 before a one for twenty, the next 10,500,000, is 10,000,000; a count already after it, the next agreeing, as stated; with no next as before",
+    shareBasis(200_000_000, 8_000_000, 0.05, 10_500_000) === 10_000_000 && shareBasis(10_000_000, 300_000, 0.05, 10_200_000) === 10_000_000 && shareBasis(200_000_000, 8_000_000, 0.05) === 200_000_000 &&
+      nextPeriod("2024-12-31") === "2025-03-31" && nextPeriod("2024-03-31") === "2024-06-30" && previousPeriod(nextPeriod("2024-09-30")) === "2024-09-30");
+  const fcPrev = new Map(Array.from({ length: 8 }, (_, i) => [`m${i}`, h(100_000 * (i + 1), 83_000_000 * (i + 1))] as [string, Holding]));
+  const fcNow = new Map(Array.from({ length: 8 }, (_, i) => [`m${i}`, h(Math.round(100_000 * (i + 1) * [1.43, 1.47, 1.52, 1.55, 1.49, 1.6, 1.38, 1.51][i]), 0)] as [string, Holding]));
+  for (const x of fcNow.values()) x.value = Math.round(x.shares * 665);
+  const fc = pageQuarter("2022-03-31", fcPrev, fcNow, new Map([...fcPrev.keys()].map((k) => [k, report()])), { sharesOutstanding: 16_000_000 });
+  check("  …a stock merger's quarter reads as stated, each holder's shares received a change (First Citizens' CIT quarter of 2022, read in batch 179 as three for two)",
+    fc?.split === 1 && fc.buyers.length === 3 && fc.sellers.length === 0, fc?.split);
   const stern = new Map([["s", h(125_760_307, 164_000_000)], ...["a", "b", "c", "d", "e"].map((k, i) => [k, h(1_000 + i, 180_000 + i * 180)] as [string, Holding]), ["u", h(2_000, 360)]]);
   markSuspect(stern);
   check("a position whose stated value gives no other manager's price is set aside (J. Stern & Co.'s 125,760,307 NVIDIA shares of 2025); a value a thousand times off keeps its shares",
@@ -207,6 +223,11 @@ async function main(): Promise<void> {
     if (n) fromPages.add(ticker);
   }
   check(`from first prices: ${EXPECTED.fromFirst.toLocaleString("en-US")} rows on ${EXPECTED.fromFirstPages} pages`, fromFirst === EXPECTED.fromFirst && fromPages.size === EXPECTED.fromFirstPages, `${fromFirst} on ${fromPages.size}`);
+  const quarterOf = (t: string, p: string) => (pages.get(t) ?? []).find((x) => x.period === p);
+  check("the audit's merger quarters read as stated (batch 184): First Citizens' CIT quarter, Agnico Eagle's and Mativ's no split; NVIDIA's ten for one, Apple's four for one, Old Dominion's three for two kept",
+    quarterOf("FCNCA", "2022-03-31")?.split === 1 && quarterOf("AEM", "2022-03-31")?.split === 1 && quarterOf("MATV", "2022-09-30")?.split === 1 &&
+      quarterOf("NVDA", "2024-06-30")?.split === 10 && quarterOf("AAPL", "2020-09-30")?.split === 4 && quarterOf("ODFL", "2020-03-31")?.split === 1.5,
+    ["FCNCA", "AEM", "MATV"].map((t) => quarterOf(t, t === "MATV" ? "2022-09-30" : "2022-03-31")?.split));
 
   console.log("\nAt ingest");
   const step = await instHoldingsFor(fakeDb("1980-12-12"), 1, { edgarName: "Apple Inc.", alsoKnownAs: [], cik: 320193, ticker: "AAPL" });

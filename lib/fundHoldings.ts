@@ -132,6 +132,38 @@ export function quarterSplitsIn(splits: readonly { period: string; split: number
   return splits.filter((q) => q.split !== 1 && q.period > before && previousPeriod(q.period) < after).map((q) => q.split);
 }
 
+/** The fewest 13F managers whose quarter, read as no split, overrules the funds (batch 184). */
+export const NO_SPLIT_MANAGERS = 20;
+
+/**
+ * Whether the 13F holders read no split in every quarter that overlaps the months from `before` to `after`, each from 20
+ * or more managers compared (batch 184, the audit's finding 3: Hawaiian Electric's quarter of September 2024 read no split
+ * from 328 managers while the index funds, each grown by half in its offering, read three for two). A quarter the file
+ * holds no row for leaves it unknown.
+ */
+export function quarterNoSplit(quarters: readonly { period: string; split: number; compared: number }[], before: string, after: string): boolean {
+  const over = quarters.filter((q) => q.period > before && previousPeriod(q.period) < after);
+  if (!over.length || over.some((q) => q.split !== 1 || q.compared < NO_SPLIT_MANAGERS)) return false;
+  // every quarter end from the first after `before` to the first on or after `after` must be held
+  const held = new Set(over.map((q) => q.period));
+  const [y, m] = before.split("-").map(Number);
+  const qm = Math.ceil(m / 3) * 3;
+  let q = `${y}-${String(qm).padStart(2, "0")}-${String(new Date(Date.UTC(y, qm, 0)).getUTCDate()).padStart(2, "0")}`;
+  if (q <= before) q = nextQuarter(q);
+  for (; previousPeriod(q) < after; q = nextQuarter(q)) if (!held.has(q)) return false;
+  return true;
+}
+
+const nextQuarter = (period: string) => {
+  const [y, m] = period.split("-").map(Number);
+  const nm = m + 3 > 12 ? m - 9 : m + 3;
+  const ny = m + 3 > 12 ? y + 1 : y;
+  return `${ny}-${String(nm).padStart(2, "0")}-${String(new Date(Date.UTC(ny, nm, 0)).getUTCDate()).padStart(2, "0")}`;
+};
+
+/** Whether a twenty-fifth of the funds' ratios, one at least, show a split's factor within `tol` (`confirmedSplit`'s test). */
+const exactly = (ratios: readonly number[], f: number, tol: number) => ratios.filter((r) => Math.abs(r / f - 1) < tol).length >= Math.max(1, Math.ceil(0.04 * ratios.length));
+
 const nameKey = (name = "") => name.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
 /**
@@ -228,12 +260,15 @@ const median = (xs: readonly number[]) => [...xs].sort((a, b) => a - b)[Math.flo
 /**
  * A month's comparisons: each fund reporting at its end whose previous report is two to four months before and holds
  * positions of like size (`comparable`). A security's split is the one the funds that held it through the same two months
- * show, five or more, where their median price moved the other way (`splitFactor`, `priceAgrees`: funds that all grew a
- * stake by half in an offering read none), and the fund's own price does not disagree; else the fund's own (`heldSplit`).
- * A position held through is not compared where the 13F holders read a split in an overlapping quarter, or the company's
- * stated counts show one, that these funds do not (`uncertain`); a suspect position either side is not compared for that
- * fund, and a security whose change is more than the company's shares not at all. A new position is the whole as a
- * purchase, a position gone the whole as a sale, in the shares the earlier report gave.
+ * show, five or more (`splitFactor`), where the 13F holders read it too in an overlapping quarter, or a twenty-fifth of the
+ * funds show its factor exactly, or else, unless the 13F holders read no split in every overlapping quarter from 20
+ * managers or more (`quarterNoSplit`, batch 184: an offering that grew every index fund by half), their median price moved
+ * the other way (`priceAgrees`), and the fund's own price does not disagree. A split down none of those confirm reads
+ * nothing (a spin-off's exchange). Where fewer than five funds held it through, the fund's own split (`heldSplit`), unless
+ * the 13F holders read none. A position held through is not compared where the 13F holders read a split in an overlapping
+ * quarter, or the company's stated counts show one, that these funds do not (`uncertain`); a suspect position either side
+ * is not compared for that fund, and a security whose change is more than the company's shares not at all. A new position
+ * is the whole as a purchase, a position gone the whole as a sale, in the shares the earlier report gave.
  */
 export function compareMonth(
   pairs: readonly { pair: FundPair; before: ReadonlyMap<string, Position>; now: ReadonlyMap<string, Position> }[],
@@ -242,6 +277,8 @@ export function compareMonth(
     tickerOf?: (key: string) => string | undefined;
     /** the 13F splits of a ticker's quarters overlapping two month ends (`quarterSplitsIn`) */
     splitsOf?: (ticker: string, before: string, after: string) => readonly number[];
+    /** whether the 13F holders read no split in every quarter overlapping two month ends (`quarterNoSplit`) */
+    noSplitOf?: (ticker: string, before: string, after: string) => boolean;
     /** the company's stated share counts in the frames of the two reports' quarters, where known */
     sharesOf?: (ticker: string, before: string, after: string) => StatedCounts | undefined;
     /** a security's name where its positions carry none */
@@ -264,8 +301,8 @@ export function compareMonth(
       if (pr !== undefined) g.prices.push(pr);
     }
   }
-  // each group's split and median price move, read once
-  const groupRead = new Map<string, { split: number | undefined; move: number | undefined }>();
+  // each group's split as its ratios read it, whether a twenty-fifth show it exactly, whether its median price agrees, read once
+  const groupRead = new Map<string, { f: number | undefined; exact: boolean; priceOk: boolean; move: number | undefined }>();
   const groupOf = (k: string, priorDate: string) => {
     const at = `${k}|${priorDate.slice(0, 7)}`;
     const had = groupRead.get(at);
@@ -273,10 +310,22 @@ export function compareMonth(
     const g = groups.get(priorDate.slice(0, 7))?.get(k);
     const move = g?.prices.length ? median(g.prices) : undefined;
     const f = g && g.ratios.length >= 5 ? splitFactor(g.ratios) : undefined;
-    const split = f === undefined ? undefined : f !== 1 && (g?.prices.length ?? 0) >= 3 && priceAgrees(move!, f) ? f : 1;
-    return groupRead.set(at, { split, move }).get(at)!;
+    const exact = f !== undefined && f !== 1 && exactly(g!.ratios, f, f > 1 ? 0.002 : 0.01);
+    const priceOk = f !== undefined && f !== 1 && (g?.prices.length ?? 0) >= 3 && priceAgrees(move!, f);
+    return groupRead.set(at, { f, exact, priceOk, move }).get(at)!;
   };
-  const groupSplit = (k: string, priorDate: string) => groupOf(k, priorDate).split;
+  // the group's split for a pair, the 13F holders' reading of its months beside it: undefined where fewer than five funds
+  // held it through, null where a split down is read but not confirmed
+  const groupSplit = (k: string, priorDate: string, read: readonly number[], noSplit: boolean): number | undefined | null => {
+    const { f, exact, priceOk } = groupOf(k, priorDate);
+    if (f === undefined || f === 1) return f;
+    // the funds' own exact evidence first: a 13F quarter whose median misses a split by a few percent reads none (National
+    // Beverage's two for one of 2021: a median of 1.89, a seventh of its holders exactly two)
+    if (read.includes(f) || exact) return f;
+    if (noSplit) return f > 1 ? 1 : null;
+    if (priceOk) return f;
+    return f > 1 ? 1 : null;
+  };
   // the funds' median price move: two and a half times up, or to under a third, with no split read, is a split not read
   const jumped = (k: string, priorDate: string) => {
     const mr = groupOf(k, priorDate).move;
@@ -292,18 +341,21 @@ export function compareMonth(
       const a = now.get(k);
       if (b?.suspect || a?.suspect) continue;
       const g = `${k}|${pair.priorDate.slice(0, 7)}`;
-      const gs = groupSplit(k, pair.priorDate);
-      let split = gs && gs !== 1 ? gs : 1;
-      if (b && a) {
-        // the funds' split where the fund's own price does not disagree, else the fund's own exact evidence
-        const pr = priceRatioOf(b, a);
-        split = gs !== undefined && gs !== 1 && (pr === undefined || priceAgrees(pr, gs)) ? gs : heldSplit(b, a);
-      }
       const ticker = opts.tickerOf?.(k);
       const read = ticker ? (opts.splitsOf?.(ticker, pair.priorDate, pair.reportDate) ?? []) : [];
+      const noSplit = !!ticker && !!opts.noSplitOf?.(ticker, pair.priorDate, pair.reportDate);
+      const gs = groupSplit(k, pair.priorDate, read, noSplit);
+      let split = gs ? gs : 1;
+      if (b && a) {
+        // the funds' split where the fund's own price does not disagree, else the fund's own exact evidence; the fund's own
+        // only where fewer than five funds held it through and the 13F holders do not read none (batch 184)
+        const pr = priceRatioOf(b, a);
+        if (gs === undefined) split = noSplit ? 1 : heldSplit(b, a);
+        else if (gs !== null && gs !== 1) split = pr === undefined || priceAgrees(pr, gs) ? gs : heldSplit(b, a);
+      }
       const counts = ticker ? opts.sharesOf?.(ticker, pair.priorDate, pair.reportDate) : undefined;
       const stated = counts?.now && counts.before ? simpleRatio(counts.now / counts.before) : 1;
-      const unread = (read.length > 0 && !read.includes(split)) || (stated !== 1 && stated !== split) || (split === 1 && jumped(k, pair.priorDate));
+      const unread = gs === null || (read.length > 0 && !read.includes(split)) || (stated !== 1 && stated !== split) || (split === 1 && jumped(k, pair.priorDate));
       // a position held through on a split not read is no change; a new or a closed one is, in its report's own shares, but
       // its share of the company is not known
       if (b && a && unread) {

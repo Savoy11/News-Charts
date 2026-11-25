@@ -15,6 +15,7 @@ import {
   dollars,
   effectiveFilings,
   markSuspect,
+  nextPeriod,
   pageQuarter,
   previousPeriod,
   quarterRow,
@@ -322,7 +323,9 @@ async function main(): Promise<void> {
       const single = cik !== undefined && tickersOf.get(cik) === 1;
       const stated = single ? shares.get(p)?.get(cik) : undefined;
       const statedBefore = single ? shares.get(q0)?.get(cik) : undefined;
-      const q = pageQuarter(p, before, now, managers, { sharesOutstanding: stated, sharesBefore: statedBefore, confidentialNow, confidentialBefore });
+      // the next quarter's count, which tells a count stated before a split down from one after (`shareBasis`, batch 184)
+      const statedNext = single ? shares.get(nextPeriod(p))?.get(cik) : undefined;
+      const q = pageQuarter(p, before, now, managers, { sharesOutstanding: stated, sharesBefore: statedBefore, sharesNext: statedNext, confidentialNow, confidentialBefore });
       if (!q) continue;
       for (const m of [...q.buyers, ...q.sellers, ...q.moves]) year.filers.add(m.filer);
       (year.pages[ticker] ??= []).push(quarterRow(q));

@@ -25,7 +25,7 @@ export const ALSO_ON_SOURCES: readonly SourceKey[] = ["doj_press", "sec_press", 
  * Their ids in `sources` (lib/ingest/store.ts `SOURCES`), written out so the read path needs no
  * ingest code; db/041's partial index lists the same (db/053 adds the EEOC's, batch 155; db/054 the NLRB's,
  * batch 161; db/056 the merger waiting period's, batch 166; db/057 the ITC's, batch 167; db/058 the Fed's H.2
- * actions, batch 173; db/059 the EU's merger notifications, batch 174; db/060 the Supreme Court's decisions, batch 176; db/061 the Commission's competition decisions, batch 177), and check:also-on
+ * actions, batch 173; db/059 the EU's merger notifications, batch 174; db/060 the Supreme Court's decisions, batch 176; db/061 the Commission's competition decisions, batch 177; db/062 the EU courts' judgments, batch 183), and check:also-on
  * holds the three together.
  */
 export const ALSO_ON_SOURCE_IDS: readonly number[] = [23, 27, 28, 29, 30, 31, 32, 33, 41, 44, 45, 46, 49, 50, 51, 52, 56];

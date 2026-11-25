@@ -59,6 +59,7 @@ import { fedH2For } from "../lib/ingest/fedH2For";
 import { euMergersFor } from "../lib/ingest/euMergersFor";
 import { supremeCourtFor } from "../lib/ingest/supremeCourtFor";
 import { euAntitrustFor } from "../lib/ingest/euAntitrustFor";
+import { euCourtsFor } from "../lib/ingest/euCourtsFor";
 import { instHoldingsFor } from "../lib/ingest/instHoldingsFor";
 import { fundHoldingsFor } from "../lib/ingest/fundHoldingsFor";
 import { insiderTradesFor } from "../lib/ingest/insiderTradesFor";
@@ -166,6 +167,8 @@ export const COMPANY_SOURCES = [
   "supreme_court",
   // …and the European Commission's antitrust decisions addressed to the company, and its State aid naming it (batch 177)
   "eu_antitrust",
+  // …and the EU courts' judgments naming it, the appeals of those decisions among them (batch 183)
+  "eu_courts",
   // …and big investors' 13F holdings changes in its own stock, 2013 on (batch 179)
   "inst_13f",
   // …and mutual funds' and ETFs' N-PORT holdings changes: a fund's own reports, a company's funds' 1% changes (batch 180)
@@ -1054,6 +1057,15 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
    */
   await run("eu_antitrust", `EU competition decisions naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
     euAntitrustFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
+  );
+
+  /**
+   * The EU courts' judgments, 1954 on (batch 183, the 2026-11-22c proposal 3, call (a)): every judgment in the committed
+   * file naming the company as a party, by the merger notices' rule, from its first price, trade mark cases against the
+   * EU's IP office and staff cases left out; one row a day with the operative part. No request.
+   */
+  await run("eu_courts", `EU court judgments naming ${[...companyNames(company.name, alsoKnownAs), ...releaseNamesAsked(company.cik)].join(" | ")}`, () =>
+    euCourtsFor(client, subjectId, { edgarName: company.name, alsoKnownAs, possessive: dojPossessive(company.name, possessive), cik: company.cik, fundSeries }),
   );
 
   /**

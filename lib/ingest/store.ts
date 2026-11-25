@@ -813,6 +813,23 @@ export const SOURCES: {
     reviewedOn: "2026-11-24",
     notes: "officers', directors' and 10% owners' open-market purchases (code P) and sales (code S) of the company's shares from the SEC's insider transactions data sets (Forms 4 and 5), 2006 on: one row a company a filing day naming each insider, a day's trades together worth $1 million or more (the owner's call of 2026-11-24, batch 182), grants, exercises, tax withholding and gifts left out (lib/insiderTrades.ts); read quarterly and committed, no key (batch 181)",
   },
+  {
+    id: 56,
+    key: "eu_courts",
+    name: "Court of Justice of the European Union judgments",
+    license: "© European Union, reproduction permitted with the source acknowledged",
+    attribution: "Court of Justice of the European Union",
+    // The Court's copyright page (curia.europa.eu, read 2026-11-22 by the scout): "The original content on this website is
+    // copyright of the European Union. Editorial content and the case-law can be reproduced provided the source is
+    // acknowledged … You may reproduce the judicial decisions found in the case-law database." It states no restriction
+    // to non-commercial use. The titles and the Official Journal's notices are listed by the Publications Office's SPARQL
+    // endpoint and read from CELLAR, under EUR-Lex's legal notice as for sources 50 and 52; no key. Used: each judgment's
+    // court, day, case numbers, the parties and subject words its title gives, its operative part, and links to EUR-Lex.
+    // Approved by the owner on 2026-11-22 (docs/proposals/2026-11-22c-proposals.md #3), with call (a).
+    commercialOk: true,
+    reviewedOn: "2026-11-24",
+    notes: "the EU courts' judgments, 1954 on (the Court of Justice's and the General Court's), kept where a party the title names is a listed company by the merger notices' rule, trade mark and design cases against the EU's IP office and staff cases left out (lib/euCourts.ts); one row a company a day, with the court's operative part; the Publications Office's lists and CELLAR's texts read monthly and committed, no key (batch 183)",
+  },
 ];
 
 const SOURCE_ID = new Map(SOURCES.map((s) => [s.key, s.id]));

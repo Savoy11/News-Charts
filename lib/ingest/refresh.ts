@@ -98,6 +98,7 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   eu_mergers: 1440,
   supreme_court: 1440,
   eu_antitrust: 1440,
+  eu_courts: 1440,
   inst_13f: 1440,
   fund_nport: 1440,
   insider_trades: 1440,

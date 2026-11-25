@@ -89,6 +89,7 @@ import type { PricePoint, SourceKey, TimelineEvent } from "../lib/types";
 import { UA } from "../lib/contact";
 import { FED_H2_DATA, H2_INDEX, h2Pdf, indexWeeks, readH2 } from "../lib/fedH2";
 import { caseOf, cellarWork, firstParagraph, listedNotices, noticeParties, noticeQueryUrl, noticeText as euNoticeText, notifiedOn } from "../lib/euMergers";
+import { courtsQueryUrl, readJudgmentTitle } from "../lib/euCourts";
 import { slipCases, slipList, volumeCases, volumeRecord } from "../lib/supremeCourt";
 import { caseNumbers as euCaseNumbers, decisionAddressees, decisionFines, decisionQueryUrl, isDecisionTitle, isStateAidTitle } from "../lib/euAntitrust";
 
@@ -1150,6 +1151,22 @@ export const CASES: LiveCase[] = [
       if (!page.ok) return [`the N-PORT data set page: HTTP ${page.status}`];
       const zips = new Set([...(await page.text()).matchAll(/href="([^"]+\.zip)"/g)].map((m) => m[1]));
       return zips.size < 28 ? [`the N-PORT data set page lists ${zips.size} zips, fewer than the 28 of 2026-11-24`] : [];
+    },
+  },
+  {
+    name: "EU courts — the Publications Office's list of 2005's judgment titles as `npm run sync:eu-courts` asks it; GE's appeal of 2005 among them (batch 183)",
+    covers: ["eu_courts"],
+    hosts: ["publications.europa.eu"],
+    async run() {
+      // measured 2026-11-24: 1,046 titles for 2005, "Judgment of the Court of First Instance … of 14 December 2005.#General Electric Company v Commission …"
+      const res = await fetch(courtsQueryUrl(2005), { headers: { ...UA, Accept: "application/sparql-results+json" }, signal: AbortSignal.timeout(180_000) });
+      if (!res.ok) return [`the endpoint: HTTP ${res.status}`];
+      const listed = listedNotices(await res.json());
+      const out: string[] = [];
+      if (listed.length < 1_000) out.push(`the judgments' list of 2005 holds ${listed.length}, fewer than the 1,046 of 2026-11-24`);
+      const ge = listed.map((n) => readJudgmentTitle(n.title)).find((r) => r?.cases.includes("T-210/01") && r.form === "judgment");
+      if (!ge || ge.day !== "2005-12-14" || !/General Electric Company/.test(ge.sides[0] ?? "")) out.push(`T-210/01 reads ${JSON.stringify(ge)}`);
+      return out;
     },
   },
   {

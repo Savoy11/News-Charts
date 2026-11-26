@@ -1,8 +1,10 @@
 # Coverage map — how far back a timeline can actually go
 
-**Last updated:** 2026-11-25 · 56 sources (47 on the ingest path; 9 are held back by their licences)
+**Last updated:** 2026-11-26 · 56 sources (46 on the ingest path; 10 are held back by their licences)
 
-The nine held back are the eight keyed news and data feeds and, since batch 186, DefiLlama's incident list.
+The ten held back are the eight keyed news and data feeds, since batch 186 DefiLlama's incident list, and since
+batch 189 Yahoo's headline feed. Currents, one of the eight, is built for the ingest path and waits on its
+written answer.
 
 The single question this answers: *given a subject, what is the earliest event News Charts could
 plausibly show, and which source would supply it?*
@@ -68,9 +70,10 @@ because it will be trusted.
 | **1999 – now** | The Guardian Open Platform | 1999 | Articles — only with a visitor's own key, in their browser; never stored |
 | **2015 – now** | Federal Register | 2015 (our query floor) | Sector rules; documents whose title names a company |
 | **2017 – now** | GDELT | 2017 (our query floor) | Recent news, and since batch 57 a company's older news: each month back to 2017, or to its first price, is asked once by relevance and keeps the headlines that name it (`lib/ingest/newsBackfill.ts`), except for a company named by one everyday word ("Target"), held back until measured. On every GDELT headline that word counts only with its capital: "IMF urges retaining 5 % inflation target" is hidden from Target's page (batch 59). GDELT refuses a quoted phrase under five characters, and until 2026-10-22 107 of the 1,500 largest companies got none. Now 59 of them are asked bare ("ETSY"), keeping only headlines that name them, and 48 with their legal form ("VISA Inc") |
-| **—** | Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | not ingested | Free tiers are non-commercial; adapters exist for diagnostics only |
+| **—** | Newsdata, GNews, Marketaux, EODHD, Finnhub | not ingested | Free tiers are non-commercial; adapters exist for diagnostics only |
+| **the last 7 days** | Currents | not ingested yet (batch 189) | A company's headlines by name, a headline and a link each; built, and held until Currents confirms a stored headline is within its terms. Its free plan searches 30 days back, 7 days a request |
 | **Yahoo's whole daily series** | Yahoo Finance chart | every daily close Yahoo holds, to six decimal places — the listing for a younger security, but where Yahoo's daily data begins for an older one (IBM, GE, KO from 1962-01-02; Ford from 1972, though it listed in 1956); read once, ten years on routine refreshes, the whole series again after a split; a session still trading is never stored | Prices, corporate actions |
-| **now** | Yahoo Finance RSS | recent headlines | News |
+| **—** | Yahoo Finance RSS | not ingested since batch 189 | Recent headlines by ticker; Yahoo's terms keep its feeds off a page with advertising |
 
 ### On-chain, which has a hard floor
 
@@ -192,7 +195,7 @@ windows — update both together.
 | Yahoo Finance (RSS and chart) | Undocumented | Unofficial — the licence question is the risk, not the quota |
 | Internet Archive, Snapshot, DefiLlama | No published cap | Keyless; asked on 12–24 h windows |
 | NYT · Guardian (visitor keys) | 500/day and 5/min · 5,000/day | Counted against the visitor's own key, in their browser |
-| Newsdata · GNews · Currents · Marketaux · EODHD · Finnhub | 200 · 100 · 600 · 100 · ~20 per day · 60/min | Not ingested (licences); listed so the cost of wiring one is visible |
+| Newsdata · GNews · Currents · Marketaux · EODHD · Finnhub | 200 · 100 · 250 · 100 · ~20 per day · 60/min | Not ingested (licences); listed so the cost of wiring one is visible. Currents' 250 a day is one request a company a day, counted across companies (`dailyBudgetLeft`) |
 
 ## How to check a specific subject
 

@@ -95,21 +95,23 @@ npm run cost-report            # what it actually spent, against each free tier
 upgrade, drop the key at launch, or — for NYT and the Guardian only — ship BYO-key. Six were
 decided on 2026-10-19 (the aggregators, dropped). On **2026-11-25** the published terms were read
 again and you made four more calls; the record, with the quoted terms, is
-[`docs/decisions/2026-11-25-source-licences.md`](decisions/2026-11-25-source-licences.md). **Two
-things are still yours:** choose the price provider and the news route from
-[`docs/proposals/2026-11-26-prices-and-news-licensing.md`](proposals/2026-11-26-prices-and-news-licensing.md)
-(mark each option `APPROVED`, `REJECTED` or `DEFERRED`; the recommended first steps are one email
-to Tiingo's sales address about its display tier, and dropping Yahoo's headline feed at launch),
-and read the NYT's and the Guardian's developer terms in a browser (they could not be fetched from
-the build container).
+[`docs/decisions/2026-11-25-source-licences.md`](decisions/2026-11-25-source-licences.md). On
+**2026-11-26** you chose from
+[`docs/proposals/2026-11-26-prices-and-news-licensing.md`](proposals/2026-11-26-prices-and-news-licensing.md):
+Tiingo for prices, and for news to drop Yahoo's feed, put each company's own press release on its
+8-K row, and bring Currents back. **Three things are still yours:** send the email to Tiingo and the
+email to Currents (both written out below; nothing is bought and Currents stays off until each
+replies), and read the NYT's and the Guardian's developer terms in a browser (they could not be
+fetched from the build container).
 
 | Source | Options |
 | --- | --- |
-| Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | **Decided 2026-10-19: drop at launch** — keep their keys out of production |
+| Newsdata, GNews, Marketaux, EODHD, Finnhub | **Decided 2026-10-19: drop at launch** — keep their keys out of production |
+| **Currents** | **Decided 2026-11-26: "Bring back Currents"** — built in batch 189 and **held until Currents answers your email**. Its pricing page allows commercial use on every plan with attribution and a link; its terms page bars building "databases of such data", and a timeline is a database. The reader keeps only a headline, its day and its link. A yes from Currents switches it on (then set `CURRENTS_API_KEY` on the host); until then it asks nothing |
 | **Guardian** | **Decided 2026-11-25: drop at launch** — no server key in production. The visitor's own key is hidden on a public build until you or a lawyer reads the Guardian Open Platform's terms |
 | **NYT** | **Decided 2026-11-25: drop at launch** — `NYT_API_KEY` stays out of production. The visitor's own key is hidden the same way until https://developer.nytimes.com/terms is read. To bring the feature back, set `VISITOR_KEYS_TERMS_READ` in `lib/visitorKeysGate.ts` |
-| **Yahoo Finance RSS** | **Open.** Yahoo's terms (1 November 2026) do not clear an ad-supported site: feed items unchanged with a link, "You may not incorporate advertising into any Yahoo RSS Feed", no commercial reuse without permission. You asked how Yahoo itself is licensed and for a route like it: Part B of the proposal of 2026-11-26 answers (Yahoo holds contracts with each publisher and shares revenue; the routes open to us are headline-and-link from GDELT, the company's own press releases from its 8-K, Currents' free tier, and a licensed finance-news feed). Until you decide, the feed is a named launch blocker |
-| **Yahoo Finance chart** (prices) | **Decided 2026-11-25: "Find a licensed provider"** — the chart endpoint has no licence. Part A of the proposal of 2026-11-26 compares the providers whose terms allow public display (Tiingo's display tier from $250 a month, Intrinio from $333, Twelve Data from $149 with caveats); Yahoo stays only while the site is private to you |
+| **Yahoo Finance RSS** | **Decided 2026-11-26: "Drop Yahoo's feed"** — done in batch 189. Yahoo's terms (1 November 2026) keep its feeds off a page with advertising. Ingest no longer asks it, and a headline already stored from it is hidden on a public build. Dividend and split markers, which shared its label, moved to the price source and stay: after deploying, apply db/063 (`npm run db:migrate`), which moves the ones already stored |
+| **Yahoo Finance chart** (prices) | **Decided 2026-11-25: "Find a licensed provider"; 2026-11-26: "Tiingo"** — the chart endpoint has no licence. Send the email below; when Tiingo confirms, a session wires it in and re-reads every stored series. Intrinio and Twelve Data are the fallbacks. Yahoo stays only while the site is private to you |
 | **DefiLlama** (crypto incidents) | **Decided 2026-11-25: off** — its terms are "personal, non-commercial" with no republishing without written consent. Off the feeds, and its stored rows are hidden on a public build |
 | **Etherscan** (stablecoin supply) | **Decided 2026-11-25: off** — its free plan is "for Personal & Research use only" and counts advertising as commercial. Do not set `ETHERSCAN_API_KEY` in production |
 | Internet Archive, Snapshot, mempool.space, Blockscout, Blockstream | **Unread** — no terms text could be obtained on 2026-11-25. Still flagged cleared on the July reading; worth a look in a browser, or a question to each |
@@ -130,6 +132,76 @@ Two things worth knowing before you spend:
   ~25 and Marketaux at ~16 — subject capacity is the number that turns a quota into a decision.
 - **`docs/COVERAGE-MAP.md`: the aggregators add breadth to the present, never depth to the past.**
   The 1963–2017 stretch is the biggest hole in the corpus, and none of these six fill it.
+
+### The email to Tiingo
+
+Send it from the project's address to the sales contact on Tiingo's pricing page, and keep the reply:
+it is the licence record. Nothing is bought until it comes.
+
+> **Subject:** Display Redistribution licence for a start-up: four questions
+>
+> Hello,
+>
+> I run News Charts, a website in development that shows US-listed stocks, ETFs and mutual funds on a
+> timeline: a daily price chart with each security's filings and news marked on it. It is free to
+> read and will carry advertising. It has not launched; I am choosing a licensed price source before
+> it does.
+>
+> Your pricing page lists a Display Redistribution licence at $250 a month for start-ups. Before I
+> sign up I would like to confirm four things in writing:
+>
+> 1. **Eligibility.** Does a pre-launch, one-person site with no revenue yet qualify for the start-up
+>    price, and for how long does that price hold?
+> 2. **Storing and showing.** May we keep your end-of-day series (daily closes, volume, splits and
+>    dividends) in our own database, and draw our own chart from it for anonymous visitors on pages
+>    that carry advertising? We would show a chart and daily figures. We would not offer the data
+>    for download or through an API.
+> 3. **The whole price.** Is $250 a month the full cost for that use, or is it added to a base
+>    subscription, and if so which? Are there exchange fees or agreements on top for end-of-day data?
+> 4. **Coverage.** Does the history include delisted tickers, and mutual fund NAVs back to each
+>    fund's start? How far back do daily prices go? About 10,400 stock and ETF tickers and 28,600
+>    mutual fund share classes are in scope, each read when its page is first visited, not all at once.
+>
+> If there is a credit you would like shown beside the charts, tell me its wording and I will add it.
+>
+> Thank you,
+> [your name], News Charts
+
+### The email to Currents
+
+Send it to the support contact on currentsapi.services. Currents stays switched off until the reply;
+a yes is recorded in `docs/decisions/` and switches it on, and a no costs nothing.
+
+> **Subject:** Free plan: may a stored headline and link be shown on an ad-supported site?
+>
+> Hello,
+>
+> I am building News Charts, a website that shows US-listed companies on a timeline: a price chart
+> with each company's filings and news headlines marked on the day they happened. It is free to read
+> and will carry advertising. I would like to use the Currents search API, starting on the Free plan.
+>
+> Your pricing page says every self-service plan, Free included, allows commercial use with
+> attribution and a link to the original article. Your Terms of Service also say the data may not be
+> used to "create permanent copies of, scrape, build databases of such data". My use sits between
+> the two, so I would like your answer in writing before I switch it on:
+>
+> 1. **What we would keep.** For each article: its headline, its publication date and its link, in
+>    our own database, so that the headline stays on the company's timeline on the day it was
+>    published. We would not keep or show the description, the article text, the image or the
+>    author. Is that within the Free plan's terms? If not, is it within a paid plan's?
+> 2. **For how long.** A timeline is useful only if last year's headline is still there. Is there a
+>    limit on how long a stored headline and link may stay on a page? If a subscription ended, would
+>    they have to be removed?
+> 3. **Attribution.** Each headline would link to the original article and name its outlet's domain,
+>    and every page's footer would carry the link "Powered by Currents News API" to
+>    currentsapi.services. Is that the attribution you ask for, or should it sit beside each headline?
+> 4. **Advertising.** The pages carry display advertising. Is there any restriction on showing a
+>    headline and link on such a page?
+> 5. **Volume.** One search request a company a day, by company name, at most 250 a day on the Free
+>    plan. Is that an acceptable pattern?
+>
+> Thank you,
+> [your name], News Charts
 
 ## 4. Legal review
 

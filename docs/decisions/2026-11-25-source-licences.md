@@ -27,6 +27,7 @@ How each page was read is stated, because it bounds how far the reading can be t
 | Internet Archive | archive.org/about/terms.php | Unread | Only the page title came through. | Unread |
 | mempool.space, Blockscout, Blockstream | their sites | Unread | No API terms found on the pages reached. | Unread |
 | The Guardian, The New York Times | their developer terms | Unread | Both sites refused the fetch. | Unread (both are already off the ingest path as non-commercial) |
+| Currents (read 2026-11-26) | its pricing and documentation pages ("Last updated: 27 October 2026") and its Terms of Service ("Last updated: December 27, 2025") | Direct | Pricing: "Commercial use: every self-service plan, including Free, allows commercial use with attribution and a link to the original article. AI summaries or republication of article text need separate terms." Terms, "Data license": "Unless applicable by law or expressly permitted by the owner of the data, you may not … Create permanent copies of, scrape, build databases of such data". "Use license": the data may be downloaded "for as long as your use case requires", and not mirrored "'as-is' with no-value-added". "Service Attribution": "display an attribution to Currents News API Service beside the display of data", preferably the link "Powered by Currents News API". Free plan: 250 requests a day, 20 results a request, 30 days of history, a 7-day span a search. | Not settled: the two pages pull apart on a stored headline. Held until Currents answers in writing |
 
 ## The owner's calls (2026-11-25)
 
@@ -45,6 +46,29 @@ Asked in one dialog, answered as quoted:
    at launch, as the six aggregators' were on 2026-10-19 (NC-019, NC-020), and the visitor's own
    key is hidden on a public build until the two terms pages are read (NC-136).
 
+## The owner's calls (2026-11-26)
+
+Asked in one dialog on the proposal of that day
+(`docs/proposals/2026-11-26-prices-and-news-licensing.md`), answered as quoted:
+
+1. **Prices:** "Tiingo (Recommended)". The owner emails Tiingo's sales contact four questions (the
+   start-up price, storing the series and drawing our own chart on pages with advertising, whether
+   $250 is the whole price, and the history's coverage). Nothing is bought until the reply. Intrinio
+   and Twelve Data are deferred as fallbacks.
+2. **News:** "Drop Yahoo's feed (Recommended)", "8-K press releases (Recommended)" and "Bring back
+   Currents".
+   - **Yahoo's headline feed is dropped** (batch 189): `yahoo_finance` is `commercialOk: false` and
+     off the ingest path, and a headline stored from it is withheld on a public build. The dividend
+     and split markers that were stored under the same source moved to the price source (db/063), so
+     a chart keeps them.
+   - **The 8-K's press release** on its row is the next batch.
+   - **Currents is built and held** (batch 189). Building it meant reading its terms page again, and
+     the "Data license" clause in the table above had not been quoted in the proposal the owner
+     approved. The proposal already put Currents' written confirmation before building; with this
+     clause that confirmation is the whole question, so the source stays `commercialOk: false` until
+     the reply. What is built keeps a headline, its day and its link only. The owner sends the email
+     in `docs/OWNER-ACTIONS.md` §3.
+
 ## What is still to do
 
 - **Read by a person, in a browser:** https://developer.nytimes.com/terms and the Guardian Open
@@ -53,7 +77,8 @@ Asked in one dialog, answered as quoted:
   `lib/visitorKeysGate.ts`, or remove the feature.
 - **Read or ask:** the Internet Archive's terms, and Snapshot's, mempool.space's, Blockscout's and
   Blockstream's API terms. Each is still flagged cleared on the July reading.
-- **Decide:** the price provider (from the comparison) and the news route (from the proposal).
+- **Send:** the email to Tiingo and the email to Currents (`docs/OWNER-ACTIONS.md` §3). Each reply is
+  the licence record for its source: file it here, dated.
 - **Review rhythm (NC-024, NC-025), not yet decided:** the checklist suggests quarterly once live.
   `npm run check:commercial-mode` already lists any cleared source last read over 180 days ago.
 
@@ -65,7 +90,11 @@ Asked in one dialog, answered as quoted:
    that shows feed items beside advertising, or only advertising inserted into the feed itself?
    The general "no commercial purpose" clause may make the question moot.
 3. Does a federal agency's work stay usable under 17 U.S.C. § 105 where its site states no licence
-   (the owner's ruling of 2026-11-12; 37 of the 47 cleared sources are a US government body's own work)?
+   (the owner's ruling of 2026-11-12; 37 of the 46 cleared sources are a US government body's own work)?
 4. Do the Library of Congress's "determine for yourself" terms need more than a snippet-and-link use
    for newspaper pages after 1930?
 5. Is a visitor's own key, used from their browser on our pages, the visitor's use or ours?
+6. Currents' terms bar building "databases of such data" "unless applicable by law or expressly
+   permitted by the owner of the data". Is a stored headline, date and link, which copyright does
+   not protect as a title or a fact, within "applicable by law", or does the clause bind as contract
+   whatever copyright says?

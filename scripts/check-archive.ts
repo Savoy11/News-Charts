@@ -191,7 +191,8 @@ async function items(): Promise<void> {
     throw new Error("network down");
   }) as typeof fetch;
   check("a thrown request is an error", (await fetchYahooFinanceNews("F")).outcome === "error");
-  check("ingest uses the outcome-keeping adapter", /\(\) => fetchYahooFinanceNews\(/.test(ingestSrc) && !/getYahooFinanceNews/.test(ingestSrc));
+  // batch 189: Yahoo's headline feed left the ingest path by the owner's call of 2026-11-26; its reader stays for check:feeds
+  check("ingest no longer asks Yahoo's headline feed", !/YahooFinanceNews/.test(ingestSrc));
 }
 
 async function main(): Promise<void> {

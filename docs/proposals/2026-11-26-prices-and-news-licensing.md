@@ -22,6 +22,13 @@
 Mark each option `APPROVED`, `REJECTED` or `DEFERRED`. Each approval is a spending decision or a
 sign-up only the owner can make; nothing below can be bought from a session.
 
+> **Decided 2026-11-26 (owner), filed in batch 189.** Prices: "Tiingo (Recommended)": A1 approved,
+> A2 and A3 kept as fallbacks. News: "Drop Yahoo's feed (Recommended)", "8-K press releases
+> (Recommended)" and "Bring back Currents": B1, B2 and B3 approved; B5 was not chosen and stays
+> proposed. B1 is done (batch 189). B3 is built and held: reading Currents' terms page again for the
+> build found a clause this proposal had not quoted, so the written confirmation B3 asked for comes
+> first (see B3). B2 is the next batch. Nothing has been bought or signed up for.
+
 ---
 
 # Part A — Prices (NC-130)
@@ -57,7 +64,8 @@ $11,988 a year after. Twelve Data $1,488 to $1,788, or about $4,200 if the add-o
 
 ## A1. Tiingo's Display Redistribution tier · recommended
 
-**Status:** PROPOSED
+**Status:** APPROVED 2026-11-26 (owner: "Tiingo (Recommended)"). The owner sends the four-question
+email, written out in `docs/OWNER-ACTIONS.md` §3; nothing is bought and nothing is built until the reply.
 
 - **Why first:** the only option read that pairs a named public-display tier with mutual funds and
   history from 1962, which is what the charts hold today, at the lowest verified price for both.
@@ -74,7 +82,8 @@ $11,988 a year after. Twelve Data $1,488 to $1,788, or about $4,200 if the add-o
 
 ## A2. Intrinio Startup
 
-**Status:** PROPOSED
+**Status:** DEFERRED 2026-11-26: the fallback if Tiingo's reply does not allow a stored series behind a
+public chart.
 
 - **Why:** the clearest self-serve grant read directly ("Commercial Use and Display Rights", "No
   exchange fees or paperwork"), with no sales call.
@@ -84,7 +93,7 @@ $11,988 a year after. Twelve Data $1,488 to $1,788, or about $4,200 if the add-o
 
 ## A3. Twelve Data Venture
 
-**Status:** PROPOSED
+**Status:** DEFERRED 2026-11-26: a second fallback, with the caching question still to ask.
 
 - **Why:** the cheapest plan whose own page grants external display, with mutual fund NAVs.
 - **Against:** its help pages restrict caching and ask for deletion after the subscription ends,
@@ -148,7 +157,10 @@ content".
 
 ## B1. Drop Yahoo's headline feed at launch · recommended
 
-**Status:** PROPOSED
+**Status:** APPROVED 2026-11-26 (owner: "Drop Yahoo's feed (Recommended)"). Done in batch 189: the
+source is `commercialOk: false`, ingest and a first visit no longer ask it, a stored headline is
+withheld on a public build, and the dividend and split markers that shared its key moved to the price
+source (db/063).
 
 - **Why:** Yahoo's terms do not clear it (no advertising beside feed items, no commercial reuse),
   and what it adds over GDELT is the same kind of row: a headline and a link.
@@ -160,7 +172,7 @@ content".
 
 ## B2. The company's press release on its 8-K row
 
-**Status:** PROPOSED
+**Status:** APPROVED 2026-11-26 (owner: "8-K press releases (Recommended)"). The next batch.
 
 - **Why:** free, public, already half built, and the announcement is what moves the price. It is
   the one kind of "full article" every listed company publishes with no licence to buy.
@@ -169,7 +181,21 @@ content".
 
 ## B3. Bring Currents back, free tier
 
-**Status:** PROPOSED
+**Status:** APPROVED 2026-11-26, built in batch 189, held until Currents answers in writing.
+
+- **What the build found.** Currents' Terms of Service (last updated December 27, 2025), under
+  "Data license": "Unless applicable by law or expressly permitted by the owner of the data, you may
+  not … Create permanent copies of, scrape, build databases of such data". Its "Use license" allows
+  downloading the data "for as long as your use case requires" and bars mirroring it "'as-is' with
+  no-value-added". The pricing sentence quoted below was all this proposal quoted when the owner
+  approved it. A timeline keeps a headline in a database for good, so the two pages pull apart on
+  exactly this use, and the confirmation this option already asked for is now the whole question.
+- **What was built.** The reader keeps a headline, its day and its link, and never the preview text,
+  the image or the author (`fetchCurrentsNews`); one request a company a day inside the 250 a day;
+  the footer's "Powered by Currents News API" link, shown only once the source is on. All of it
+  follows one flag in the registry, which stays off (`npm run check:currents`).
+- **What the owner does.** Sends the email written out in `docs/OWNER-ACTIONS.md` §3 and keeps the
+  reply. A yes switches the source on in one small change; a no, or silence, leaves it off at no cost.
 
 - **Why:** the only third-party news feed read whose free plan states commercial use in so many
   words. It would return present-day headlines that GDELT's name search misses.

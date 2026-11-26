@@ -106,16 +106,17 @@ export const SOURCES: {
     name: "Yahoo Finance RSS",
     license: "Yahoo Terms of Service (1 November 2026) — feed items unchanged with a link, no advertising, no commercial reuse without permission",
     attribution: "Yahoo Finance",
-    commercialOk: true,
-    // Read 2026-11-25. The RSS clause: "you are only permitted to display the content that is
-    // provided in the feed, without modification, and you must provide attribution to our source
-    // website and link to the full article … You may not incorporate advertising into any Yahoo RSS
-    // Feed." And generally: "Unless otherwise expressly stated, you may not access or reuse the
-    // Services, or any portion thereof, for any commercial purpose", with no automated collection
-    // "without our express, prior permission".
-    reviewedOn: "2026-11-25",
-    launchBlocker: "Yahoo's terms do not clear an ad-supported site; the owner's call on the headline feed is pending the news-licensing proposal (NC-021)",
-    notes: "per-ticker feed; headline/link/date only, article stays on yahoo.com",
+    // Off the ingest path since batch 189, by the owner's call of 2026-11-26 ("Drop Yahoo's feed"): a
+    // stored headline is withheld from a public page (lib/licenceGate.ts). The adapter stays for the
+    // feed diagnostics. The terms were read 2026-11-25. The RSS clause: "you are only permitted to
+    // display the content that is provided in the feed, without modification, and you must provide
+    // attribution to our source website and link to the full article … You may not incorporate
+    // advertising into any Yahoo RSS Feed." And generally: "Unless otherwise expressly stated, you may
+    // not access or reuse the Services, or any portion thereof, for any commercial purpose", with no
+    // automated collection "without our express, prior permission".
+    commercialOk: false,
+    reviewedOn: "2026-11-26",
+    notes: "per-ticker feed; headline/link/date only, article stays on yahoo.com. Dropped 2026-11-26 (NC-021)",
   },
   {
     id: 7,
@@ -161,11 +162,27 @@ export const SOURCES: {
     id: 11,
     key: "currents",
     name: "Currents API",
-    license: "Currents terms — free developer tier is non-commercial",
-    attribution: "CurrentsAPI",
+    license: "Currents terms — its pricing page allows commercial use with attribution on every plan; its terms bar building a database of its data. Held until Currents answers in writing",
+    attribution: "Powered by Currents News API",
+    // Dropped on 2026-10-19 on the July reading that its free tier was non-commercial. Read again
+    // 2026-11-26, and its two pages do not say the same thing. The pricing page: "Commercial use:
+    // every self-service plan, including Free, allows commercial use with attribution and a link to
+    // the original article. AI summaries or republication of article text need separate terms." The
+    // terms (last updated December 27, 2025), of the data: "Unless applicable by law or expressly
+    // permitted by the owner of the data, you may not … Create permanent copies of, scrape, build
+    // databases of such data", and of the service's credit: "display an attribution to Currents News
+    // API Service beside the display of data", preferably a link reading "Powered by Currents News
+    // API". This corpus is a database, and a stored headline is kept. The owner's call of that day was
+    // "Bring back Currents" (batch 189), on a proposal that put Currents' written confirmation first:
+    // so the reader is built (`fetchCurrentsNews`: a headline, its day and its link, never the preview
+    // text or the image) and wired (`scripts/ingest.ts`), and stays off until that answer. To switch it
+    // on: record the answer in docs/decisions/, set `commercialOk: true` here, take 11 out of
+    // `NON_COMMERCIAL_SOURCE_IDS` (lib/licenceGate.ts) and `currents` out of check:wiring's
+    // `NOT_INGESTED_BY_LICENCE`, and set CURRENTS_API_KEY on the host. check:commercial-mode,
+    // check:wiring and check:currents (whose last section holds the hold itself) fail until all agree.
     commercialOk: false,
-    reviewedOn: "2026-07-28",
-    notes: "multi-outlet aggregator, recent news; free key (CURRENTS_API_KEY). Re-license before the ad-supported path uses it",
+    reviewedOn: "2026-11-26",
+    notes: "multi-outlet aggregator, recent news; free key (CURRENTS_API_KEY), 250 requests a day resetting at 00:00 UTC, 20 results a request, the last 30 days. Built and wired in batch 189, off until Currents confirms in writing that a stored headline with a link is within its terms",
   },
   {
     id: 12,

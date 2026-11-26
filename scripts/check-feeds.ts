@@ -44,6 +44,7 @@ import { cachedOccList, occEvents } from "../lib/occActions";
 import { withoutTag } from "../lib/edgarName";
 import { mayCarryRelease, readFilingHeadline } from "../lib/secHeadlines";
 import {
+  fetchCurrentsNews,
   fetchYahooFinanceNews,
   getNytNews,
   getGuardianNews,
@@ -54,7 +55,7 @@ import {
   getEodhdNews,
   getFinnhubNews,
 } from "../lib/newsExtra";
-import { commercialMode, skipReason } from "../lib/ingest/store";
+import { INGESTABLE_SOURCES, commercialMode, skipReason } from "../lib/ingest/store";
 import { COMPANY_SOURCES, TOPIC_SOURCES } from "./ingest";
 import type { FetchResult, SourceKey, TimelineEvent } from "../lib/types";
 
@@ -113,9 +114,9 @@ const INGESTED: ReadonlySet<SourceKey> = new Set([...TOPIC_SOURCES, ...COMPANY_S
 function pathNote(name: string): string {
   const key = SOURCE_OF[name];
   if (!key || INGESTED.has(key)) return "";
-  return KEYED[name]
-    ? "  ⚠ not ingested — licence bars it; visitor-key path only"
-    : "  ⚠ not ingested — no call site on the ingest path";
+  if (name === "Currents") return "  ⚠ not ingested — built, and held until Currents answers in writing";
+  if (KEYED[name]) return "  ⚠ not ingested — licence bars it; visitor-key path only";
+  return INGESTABLE_SOURCES.has(key) ? "  ⚠ not ingested — no call site on the ingest path" : "  ⚠ not ingested — its terms keep it off the ingest path";
 }
 
 function report(name: string, events: TimelineEvent[], note = "") {
@@ -192,7 +193,14 @@ async function main() {
       reportFetch("GDELT, a past month", got && { ...got, events: kept },
         `(${month.from} to ${month.to} by relevance: the ${kept.length} of ${got?.events.length ?? 0} it would keep)`);
     }
+    // off the ingest path since batch 189; asked here only to say whether the feed still answers
     reportFetch("Yahoo Finance RSS", await tried(fetchYahooFinanceNews(company.ticker)));
+    {
+      // Currents, as ingest asks it once the registry clears the source (batch 189)
+      const asked = [name, ...alsoKnownAs];
+      const scoring = { aliases: companyScoringAliases(company) };
+      reportFetch("Currents", await tried(fetchCurrentsNews(asked, scoring.aliases)), `(asked ${asked.join(" | ")}: the last 7 days' headlines that name the company)`);
+    }
     reportFetch("Federal Register (co.)", await tried(fetchCompanyRegulations(company.name, frDailySince(), alsoKnownAs)),
       `(asked ${frSearchTerm(company.name, alsoKnownAs)}, this year)`);
     reportFetch("Federal Register, 2008", await tried(fetchCompanyYear(company.name, 2008, alsoKnownAs)),
@@ -267,7 +275,7 @@ async function main() {
   report("Guardian", await safe(getGuardianNews(name)));
   report("Newsdata", await safe(getNewsdataNews(name)));
   report("GNews", await safe(getGnewsNews(name)));
-  report("Currents", await safe(getCurrentsNews(name)));
+  if (!company) report("Currents", await safe(getCurrentsNews(name)));
   if (ticker) {
     report("Marketaux", await safe(getMarketauxNews(name, ticker)));
     report("EODHD", await safe(getEodhdNews(ticker)), "(free plan may not include news)");

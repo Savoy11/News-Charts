@@ -514,9 +514,14 @@ deliberately outside the chain because they need more than the code: `check:live
   (`docs/decisions/2026-11-25-source-licences.md`, batch 186) took DefiLlama's incident list and the
   Etherscan-keyed supply feeds off the ingest path (`WITHHELD_ONCHAIN_FEEDS`), withholds a stored row of a
   non-commercial source from a public page (`lib/licenceGate.ts`), and pauses the visitor's own NYT and
-  Guardian keys on a public build until their terms are read (`lib/visitorKeysGate.ts`). Yahoo's headline
-  feed and its chart prices are not cleared by Yahoo's terms: each carries a `launchBlocker` in `SOURCES`
-  and an open line in the pre-release gate, and `commercialOk` on them is no clearance.
+  Guardian keys on a public build until their terms are read (`lib/visitorKeysGate.ts`). Yahoo's terms
+  clear neither of its feeds: the headline feed is off the ingest path (`commercialOk: false`, the owner's
+  call of 2026-11-26, batch 189; dividends and splits are the chart's, db/063), and its chart prices carry a
+  `launchBlocker` in `SOURCES` and an open line in the pre-release gate until Tiingo replaces them, so
+  `commercialOk` on them is no clearance. Currents is built for the ingest path (`fetchCurrentsNews`: a
+  headline, its day and its link, 250 requests a day by `dailyBudgetLeft`) and held, since its terms bar
+  building a database of its data: switching it on is its registry row's flag after its written answer, and
+  check:currents says what follows it.
 - **Events schema:** `docs/EVENTS-SCHEMA.md` is the spec — subjects, events, documents are
   three separate axes; enrichments degrade pages, never break them.
 - **Money is numeric, never float** — same rule as the schema doc states.

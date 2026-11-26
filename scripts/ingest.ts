@@ -5,6 +5,8 @@ import type { PoolClient } from "pg";
 import { getPool, closePool, configProblem } from "../lib/db";
 import {
   SOURCES,
+  INGESTABLE_SOURCES,
+  licensedKey,
   ensureSources,
   assertCommercialOk,
   shouldBackOff,
@@ -32,7 +34,8 @@ import { getTopicTimeline, articleAnswersSlug, companyLede, articleCoversSlug, t
 import { fetchPressMentions, dropImplausiblePress, ABSOLUTE_FLOOR } from "../lib/loc";
 import { companyScoringAliases, fetchNews, gdeltNames, gdeltNewsPlan } from "../lib/news";
 import { fetchArchiveItems } from "../lib/archive";
-import { fetchYahooFinanceNews } from "../lib/newsExtra";
+import { fetchCurrentsNews } from "../lib/newsExtra";
+import { QUOTAS, dailyBudgetLeft } from "../lib/ingest/quota";
 import { resolveCompany, getFilingsDeep, getIndustry, commonName, formerNameAliases, fundSeriesId, newsNamesFor, possessiveNameFor, type Rename } from "../lib/sec";
 import { OWN_SERIES_SCORER, fetchSeriesFilings, ownSeriesFilings, withoutJudgedSiblings, type JudgedBefore, type OwnSeriesSplit } from "../lib/fundSeries";
 import { withSecHeadlines } from "../lib/ingest/headlines";
@@ -96,8 +99,8 @@ const BACKOFF_MINUTES = 10;
  * feed that reports healthy in `check:feeds` and contributes nothing to a page.
  *
  * The non-commercial keyed aggregators (NYT, Guardian, Newsdata, GNews, Currents, Marketaux,
- * EODHD, Finnhub) are deliberately absent. Ingesting is republishing, and their terms bar it;
- * `assertCommercialOk` refuses them outright. Their home is the visitor's own key in
+ * EODHD, Finnhub) and, since batch 189, Yahoo's headline feed are deliberately absent. Ingesting
+ * is republishing, and their terms bar it; `assertCommercialOk` refuses them outright. Their home is the visitor's own key in
  * `lib/feeds/browser.ts`, which renders under the visitor's licence and never persists.
  */
 export const TOPIC_SOURCES = [
@@ -184,7 +187,10 @@ export const COMPANY_SOURCES = [
   // deaths at mines, kept only for the controllers lib/mineAccidents.ts maps (batch 134)
   "msha_accidents",
   "gdelt",
-  "yahoo_finance",
+  // Currents' present-day headlines (batch 189), on the list only once the registry clears it: its
+  // terms bar building a database of its data, and until it answers in writing the source is held
+  // (`commercialOk: false`). Yahoo's headline feed left the list in the same batch.
+  ...(INGESTABLE_SOURCES.has("currents") ? (["currents"] as const) : []),
   "yahoo_prices",
   "loc_chronam",
   "internet_archive",
@@ -1236,12 +1242,23 @@ export async function ingestCompany(client: PoolClient, ticker: string): Promise
     );
   }
 
-  // Headline/link/date under the ticker's own feed. Licensed for the ad-supported path (the
-  // registry's `commercialOk: true`), unlike the keyed aggregators, which is why it is here and
-  // they are not.
-  await run("yahoo_finance", company.ticker, () => fetchYahooFinanceNews(company.ticker), (e) =>
-    collapseNearDuplicates(e)
-  );
+  /**
+   * Currents' present-day headlines under the company's names (batch 189, the owner's call of
+   * 2026-11-26), in the place Yahoo's per-ticker feed held until that day. Asked only while the
+   * registry clears the source, which it does not yet (see its row), and only with a key on the
+   * host. One request a company a day, and none once the day's 250 are spent or Currents has
+   * refused one today: its quota is the account's, not a company's, so the count is every
+   * company's requests since 00:00 UTC, when it resets.
+   */
+  if (INGESTABLE_SOURCES.has("currents")) {
+    const asked = [name, ...alsoKnownAs];
+    const keyed = licensedKey("CURRENTS_API_KEY", "currents") !== null;
+    // counted only when a request would follow: inside its window the runner says so and asks nothing
+    const left = keyed && due.has("currents") ? await dailyBudgetLeft(client, "currents") : null;
+    if (!keyed) line("currents", "skipped   no CURRENTS_API_KEY set");
+    else if (left !== null && left <= 0) line("currents", `skipped   the day's ${QUOTAS.currents.perDay} requests are spent; they reset at 00:00 UTC`);
+    else await run("currents", asked.join(" | "), () => fetchCurrentsNews(asked, scoring.aliases), (e) => collapseNearDuplicates(e));
+  }
 
   return { ingested: true };
 }

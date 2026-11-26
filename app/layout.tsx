@@ -3,6 +3,7 @@ import Link from "next/link";
 import localFont from "next/font/local";
 import SettingsMenu from "@/components/SettingsMenu";
 import { VISITOR_KEYS_ATTR, VISITOR_KEYS_PAUSED, visitorKeysPaused } from "@/lib/visitorKeysGate";
+import { CURRENTS_CLEARED, CURRENTS_CREDIT } from "@/lib/licenceGate";
 import AdScript from "@/components/AdScript";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
@@ -128,6 +129,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Commission&apos;s Official Journal (© European Union, https://eur-lex.europa.eu), judgments of the Court of Justice of the
               European Union, and decisions of the Supreme Court of the United
               States from the U.S. Reports on govinfo and the Court&apos;s own opinion lists.
+              {/* Currents' credit, in the words and with the link its terms ask for, only while its
+                  headlines are on the pages (lib/licenceGate.ts, batch 189) */}
+              {CURRENTS_CLEARED && (
+                <>
+                  {" "}Some recent headlines are found through Currents:{" "}
+                  <a href={CURRENTS_CREDIT.href} className="underline decoration-slate-600 underline-offset-2 hover:text-slate-200" rel="noopener">
+                    {CURRENTS_CREDIT.text}
+                  </a>
+                  .
+                </>
+              )}
             </p>
             {/* Explorers are credited separately because their standing is different: they read a
                 public chain for us, they are not the authority for what it says. Every on-chain

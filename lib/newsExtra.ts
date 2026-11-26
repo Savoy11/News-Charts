@@ -1,8 +1,9 @@
 import { FetchResult, TimelineEvent } from "./types";
-import { sourceLabel } from "./sourceLabel";
+import { cleanDomain, sourceLabel } from "./sourceLabel";
 import { licensedKey } from "./ingest/store";
 import { storyKey } from "./newsQuality";
-import { UA } from "./contact";
+import { CLIENT_NAME, UA } from "./contact";
+import { mentions } from "./enrich/relevance";
 
 /**
  * Additional news repositories beyond GDELT, so a subject's coverage isn't one feed's
@@ -20,7 +21,10 @@ import { UA } from "./contact";
  * non-commercial tiers today, and `COMMERCIAL_MODE=true` withholds their key so a forgotten
  * `.env.local` entry cannot quietly serve them once anyone else can load the site (D22).
  *
- *   Yahoo Finance RSS  — keyless, per-ticker company headlines (recent)
+ *   Yahoo Finance RSS  — keyless, per-ticker company headlines (recent); off the ingest path
+ *                        since batch 189, kept for the feed diagnostics
+ *   Currents           — a company's present-day headlines by name; built for the ingest path
+ *                        in batch 189 and off until Currents answers in writing
  *   NYT Article Search — archive back to 1851, free key: NYT_API_KEY
  *   The Guardian       — archive back to 1999, free key: GUARDIAN_API_KEY
  */
@@ -82,12 +86,15 @@ function nytImage(m: unknown): string | undefined {
 const toDay = (d: Date) =>
   Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 
-/** Recent company headlines from Yahoo Finance's per-ticker RSS. Keyless. */
 /**
  * Yahoo Finance's per-ticker RSS headlines, with the outcome kept: a 429/503 is "throttled" and
  * any other failure "error", so ingest backs off and the per-source status shows it. This
  * returned [] for all of them, which ingest logged as "empty" — a successful fetch of nothing
  * (NC-142).
+ *
+ * Not on the ingest path since batch 189 (the owner's call of 2026-11-26): Yahoo's terms keep its RSS
+ * feeds off a page that carries advertising, and the registry now marks the source non-commercial.
+ * The reader stays for `npm run check:feeds`, on the owner's own machine.
  */
 export async function fetchYahooFinanceNews(ticker: string): Promise<FetchResult> {
   try {
@@ -341,61 +348,125 @@ export async function getGnewsNews(query: string): Promise<TimelineEvent[]> {
   }
 }
 
+/** What one request on Currents' free plan may ask (its documentation, read 2026-11-26). */
+export const CURRENTS_PAGE_SIZE = 20;
+/** "The free news API plan covers Search with a 7-day maximum date span per request." */
+export const CURRENTS_SPAN_DAYS = 7;
+/** The most names one query asks for. */
+const CURRENTS_MAX_NAMES = 5;
+
 /**
- * Currents API — another multi-outlet aggregator with a keyword search. Free key from
- * currentsapi.services → CURRENTS_API_KEY. Items carry an author but no reliable outlet name.
- * The author used to stand in as the source, which made a byline read as a masthead — it is a
- * person, not a publisher. It now rides in the description where a byline belongs, and the
- * outlet is reported honestly as unknown.
+ * The Boolean query Currents is asked: each name in quotation marks, joined by OR. Its documentation
+ * gives the choice: "Use keywords to find articles about a topic; it also matches other forms of each
+ * word … Use query when the exact word must appear, such as a company name, ticker, brand, or person."
+ * Only names, never a ticker: "Matching ignores letter case, so a ticker that is also a common word,
+ * such as ARM, META or NOW, also matches that word. Search the company name instead."
  */
-export async function getCurrentsNews(query: string): Promise<TimelineEvent[]> {
+export function currentsQuery(names: readonly string[]): string {
+  const seen = new Set<string>();
+  const terms: string[] = [];
+  for (const n of names) {
+    const name = n.replace(/["()]/g, " ").replace(/\s+/g, " ").trim();
+    const key = name.toLowerCase();
+    if (name.length < 3 || seen.has(key)) continue;
+    seen.add(key);
+    terms.push(`"${name}"`);
+    if (terms.length >= CURRENTS_MAX_NAMES) break;
+  }
+  return terms.join(" OR ");
+}
+
+/**
+ * Currents' search, for a company's present-day headlines (batch 189): one request for the last
+ * seven days under the company's names, twenty results, the free plan's page. Free key from
+ * currentsapi.services → CURRENTS_API_KEY, sent as a header, never in the address.
+ *
+ * Only a headline, its day and its link are kept. The API also returns a preview of the article's
+ * text, an image and an author; its pricing page allows "commercial use with attribution and a link
+ * to the original article" and says "republication of article text need separate terms", so none of
+ * the three is read into a row. The outlet is the link's own domain ("reuters.com · via Currents"):
+ * the API names an author, who is a person and not a publisher.
+ *
+ * An article is kept only where its headline names the company, the way headline scoring counts
+ * naming (`mentions`): the search also matches "the start of the article body", so a passing mention
+ * comes back too, and a row holding no text but its headline has nothing else to show why it is there.
+ * `headlineNames` are the names a headline is scored by (`companyScoringAliases` at ingest); by
+ * default the names asked for, in lower case.
+ *
+ * The outcome is kept: a 429 is the day's quota spent ("At the daily cap, the API returns HTTP 429
+ * with a Retry-After header") and a 503 its search timing out, both "throttled"; a refused key or
+ * query is an "error" with the API's own code.
+ */
+export async function fetchCurrentsNews(
+  names: readonly string[],
+  headlineNames: readonly string[] = names.map((n) => n.toLowerCase()),
+  now: Date = new Date()
+): Promise<FetchResult> {
   const key = licensedKey("CURRENTS_API_KEY", "currents");
-  if (!key) return [];
+  if (!key) return { events: [], outcome: "empty", detail: "no key, or withheld by COMMERCIAL_MODE" };
+  const query = currentsQuery(names);
+  if (!query) return { events: [], outcome: "empty", detail: "no name to ask for" };
   try {
+    // an hour inside the plan's span, so the request holds whichever way the span is counted; the
+    // API takes "Strict RFC 3339 only", as its example writes it: no fraction of a second
+    const rfc = (d: Date) => d.toISOString().replace(/\.\d{3}Z$/, "Z");
+    const from = new Date(now.getTime() - (CURRENTS_SPAN_DAYS * 24 - 1) * 3_600_000);
     const url =
-      `https://api.currentsapi.services/v1/search?keywords=${encodeURIComponent(query)}` +
-      `&language=en&apiKey=${encodeURIComponent(key)}`;
-    const res = await fetch(url, REVAL);
-    if (!res.ok) return [];
-    const json = await res.json();
-    const items = (json?.news ?? []) as {
-      title?: string;
-      description?: string;
-      url?: string;
-      author?: string;
-      image?: string;
-      published?: string; // "2026-07-25 03:20:20 +0000"
-    }[];
+      `https://api.currentsapi.services/v1/search?query=${encodeURIComponent(query)}&language=en` +
+      `&page_size=${CURRENTS_PAGE_SIZE}&start_date=${encodeURIComponent(rfc(from))}&end_date=${encodeURIComponent(rfc(now))}`;
+    const res = await fetch(url, {
+      // the key says whose requests these are: the client's name alone, no contact address
+      headers: { Authorization: `Bearer ${key}`, "User-Agent": CLIENT_NAME, Accept: "application/json" },
+      // a keyed answer for a window ending now: never one kept from an earlier request
+      cache: "no-store",
+    });
+    if (res.status === 429 || res.status === 503) {
+      const wait = res.headers.get("retry-after");
+      const why = res.status === 429 ? "the day's requests are spent" : "the search timed out";
+      return { events: [], outcome: "throttled", httpStatus: res.status, detail: wait ? `${why}; retry after ${wait.slice(0, 40)}` : why };
+    }
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { code?: unknown; msg?: unknown } | null;
+      const said = [body?.code, body?.msg].filter((v): v is string => typeof v === "string").join(": ");
+      return { events: [], outcome: "error", httpStatus: res.status, detail: said.slice(0, 160) || undefined };
+    }
+    const json = (await res.json()) as { status?: string; news?: unknown };
+    if (json?.status !== "ok" || !Array.isArray(json.news)) {
+      return { events: [], outcome: "error", httpStatus: res.status, detail: "not the documented answer" };
+    }
+    const items = json.news as { title?: unknown; url?: unknown; published?: unknown }[];
+    const seen = new Set<string>();
     const events: TimelineEvent[] = [];
     for (const n of items) {
-      const day = n.published ? toDay(new Date(n.published)) : null;
-      if (!n.title || !n.url || !day) continue;
-      const author = n.author?.trim();
-      const byline = author && author.toLowerCase() !== "none" ? author : null;
+      // "2026-07-25 03:20:20 +0000"
+      const day = typeof n.published === "string" ? toDay(new Date(n.published)) : null;
+      const title = typeof n.title === "string" ? n.title.replace(/\s+/g, " ").trim() : "";
+      const link = typeof n.url === "string" && /^https?:\/\//i.test(n.url) ? n.url : "";
+      // "merge on url before you count articles": one article can come back more than once
+      if (!title || !link || !day || seen.has(link)) continue;
+      seen.add(link);
+      if (mentions(title, [...headlineNames]) !== "named") continue;
       events.push({
         id: `cur-${events.length}`,
         date: day,
         type: "news",
-        title: n.title.trim(),
-        // Currents reports an *author*, which is a person and not a publisher. Using it as the
-        // source made a byline look like a masthead; the outlet is simply unknown here.
-        source: sourceLabel(null, "currents"),
-        url: n.url,
-        description:
-          [byline, (n.description ?? "").trim()].filter(Boolean).join(" — ").slice(0, 240) ||
-          undefined,
-        // the API uses the literal string "None" for missing images
-        imageUrl: n.image && /^https?:\/\//i.test(n.image) ? n.image : undefined,
+        title,
+        source: sourceLabel(cleanDomain(link), "currents"),
+        url: link,
         sourceKey: "currents",
-        externalId: n.url,
-        dedupBasis: storyKey(n.title, day),
+        externalId: link,
+        dedupBasis: storyKey(title, day),
       });
-      if (events.length >= 25) break;
     }
-    return events;
-  } catch {
-    return [];
+    return { events, outcome: events.length ? "ok" : "empty", httpStatus: res.status };
+  } catch (err) {
+    return { events: [], outcome: "error", detail: (err as Error).message };
   }
+}
+
+/** The same search for the feed diagnostics, events only. */
+export async function getCurrentsNews(query: string): Promise<TimelineEvent[]> {
+  return (await fetchCurrentsNews([query])).events;
 }
 
 /**

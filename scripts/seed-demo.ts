@@ -252,7 +252,7 @@ const FORD_ACTIONS: Seed[] = [
       description: "Cash dividend with this ex-dividend date. A mechanical change, not news.",
       type: "corporate_action" as const,
       source: "Yahoo Finance",
-      sourceKey: "yahoo_finance" as const,
+      sourceKey: "yahoo_prices" as const,
       externalId: `div-F-${date}`,
     })
   ),
@@ -264,7 +264,7 @@ const FORD_ACTIONS: Seed[] = [
       "does not step — this marker is the only thing that says it happened.",
     type: "corporate_action",
     source: "Yahoo Finance",
-    sourceKey: "yahoo_finance",
+    sourceKey: "yahoo_prices",
     externalId: "split-F-2026-03-04",
   },
 ];
@@ -480,7 +480,7 @@ async function main(): Promise<void> {
       ["sec_edgar", "ok", 13],
       ["gdelt", "ok", 7],
       ["federal_register", "ok", 1],
-      ["yahoo_finance", "ok", 7],
+      ["yahoo_prices", "ok", 7],
       // the two that a page cannot distinguish without the panel
       ["nyt", "empty", 0],
       ["gnews", "throttled", 0],

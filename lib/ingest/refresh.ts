@@ -132,7 +132,8 @@ export const SOURCE_TTL_MINUTES: Record<SourceKey, number> = {
   gnews: 360,
   // 200/day.
   newsdata: 240,
-  currents: 240,
+  // 250 requests a day on the free plan: one a day a company, so 250 companies a day (batch 189)
+  currents: 1440,
   marketaux: 240,
   // News access varies by plan and the free tier is tiny.
   eodhd: 360,

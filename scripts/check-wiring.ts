@@ -81,7 +81,9 @@ const NOT_INGESTED_BY_LICENCE: Partial<Record<SourceKey, string>> = {
   guardian: "non-commercial terms; visitor-key path in lib/feeds/browser.ts",
   newsdata: "non-commercial free tier; no visitor-key path yet",
   gnews: "non-commercial free tier; no visitor-key path yet",
-  currents: "non-commercial free tier; no visitor-key path yet",
+  // batch 189: its pricing page allows commercial use, its terms bar building a database of its data
+  currents: "held until Currents answers in writing; built and wired behind the registry's flag (check:currents)",
+  yahoo_finance: "Yahoo's terms keep its RSS feeds off a page with advertising; dropped by the owner's call of 2026-11-26",
   marketaux: "non-commercial free tier; no visitor-key path yet",
   eodhd: "personal/evaluation free tier; no visitor-key path yet",
   finnhub: "non-commercial free tier; no visitor-key path yet",

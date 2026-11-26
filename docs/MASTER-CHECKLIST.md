@@ -988,6 +988,57 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 189: Yahoo's headline feed dropped, Currents built and held, the owner's calls filed (2026-11-26)
+
+The owner's calls of 2026-11-26 on the proposal of that day, answered as quoted. Prices: "Tiingo (Recommended)". News:
+"Drop Yahoo's feed (Recommended)", "8-K press releases (Recommended)" and "Bring back Currents".
+
+- [x] **The calls are filed.** `docs/proposals/2026-11-26-prices-and-news-licensing.md` marks A1, B1, B2 and B3 approved,
+      A2 and A3 deferred as fallbacks, and B5 still proposed; `docs/decisions/2026-11-25-source-licences.md` gains the
+      day's calls and Currents' two pages as read; `docs/OWNER-ACTIONS.md` §3 says what is still the owner's.
+- [x] **Yahoo's headline feed is off (B1).** `yahoo_finance` is `commercialOk: false`, dated 2026-11-26, and no longer a
+      launch blocker waiting on a call. `ingestCompany` and a first visit no longer ask it (`COMPANY_SOURCES`,
+      `FIRST_PASS_SOURCES`), and a headline stored from it is withheld on a public build unless another source attests
+      it too (`NON_COMMERCIAL_SOURCE_IDS` holds its id). Its reader stays for `npm run check:feeds`. Closes NC-021.
+- [x] **Dividend and split markers stay on the chart.** They are read from the chart answer, with the closes, but were
+      stored under the headline feed's key from before prices had one of their own; marking that key non-commercial
+      would have hidden every marker on a public build. `lib/prices.ts` now writes them under `yahoo_prices`, and
+      db/063 moves the stored ones by source key: an action's id only ("div-…", "split-…"; a headline's is its link),
+      the price source's row kept where both attest, and kept as the linked row where the old one was. Run against a
+      scratch Postgres with db/001–062 applied: a marker only the old source attested, one both attested, a ticker
+      with a hyphen and a dot, and a headline left alone, then again with nothing to do.
+- [x] **Currents is built (B3).** `fetchCurrentsNews` asks the search endpoint once for a company's names, each quoted
+      and joined by OR as its documentation asks for a company's name, for the last seven days less an hour and the
+      free plan's twenty results, the key in the Authorization header and never in the address, with no contact
+      address. It keeps a headline, its day and its link, the outlet named by the link's domain ("reuters.com · via
+      Currents"), and nothing of the preview text, the image or the author; one article returned twice is one row, and
+      a headline is kept only where it names the company the way headline scoring counts naming (`mentions`, by
+      `companyScoringAliases`). A 429 is the day's requests spent and a 503 the search timing out, both "throttled";
+      a refused key or query is an error with the API's own words. Ingest asks it once a company a day, and not at all
+      once the fetch log holds 250 requests for the source since 00:00 UTC or a 429 today (`dailyBudgetLeft`: the quota
+      is the account's, so no guard a company at a time could keep inside it). The footer's "Powered by Currents News
+      API" link is shown only while the source is on. `npm run check:currents` (28 checks), in the chain.
+- [ ] **…and held until Currents answers in writing.** Reading its terms page again for the build found a clause the
+      proposal had not quoted: "Unless applicable by law or expressly permitted by the owner of the data, you may not …
+      Create permanent copies of, scrape, build databases of such data" (Terms of Service, last updated December 27,
+      2025), beside the pricing page's "every self-service plan, including Free, allows commercial use with attribution
+      and a link to the original article". A timeline keeps a headline in a database for good, and the proposal the
+      owner approved already put Currents' written confirmation before building. So the registry keeps the source
+      `commercialOk: false`, and the ingest list, the request and the footer's credit all follow that one flag: nothing
+      is asked of Currents today. **Owner:** send the email in `docs/OWNER-ACTIONS.md` §3. On a yes: record it in
+      `docs/decisions/`, set the flag, take 11 out of `NON_COMMERCIAL_SOURCE_IDS` and `currents` out of check:wiring's
+      `NOT_INGESTED_BY_LICENCE`, and set `CURRENTS_API_KEY` on the host; the checks fail until all agree.
+- [x] **Tiingo (A1): the email is written.** Four questions, in `docs/OWNER-ACTIONS.md` §3: the start-up price, storing
+      the series and drawing our own chart on pages with advertising, whether $250 is the whole price, and the
+      history's coverage (delisted tickers, mutual fund NAVs). Nothing is bought or built until the reply; NC-130 stays
+      open and Yahoo's chart prices keep their launch blocker.
+- **Counted:** 56 sources, 46 on the ingest path and 10 held back (`docs/COVERAGE-MAP.md`). check:commercial-mode 34,
+      check:wiring 332, check:archive 48, check:currents 28.
+- **Not done here:** the 8-K's press release on its row (B2) is the next batch. A live read of Currents needs its yes
+      and a key on the owner's host; none was made, and no key was created. The aggregators' relevance floor
+      (`applyRelevanceFloor`, NC-036) stays unused: Currents is read by the scoring rule instead.
+- **After deploying:** apply db/063 (`npm run db:migrate`).
+
 ## NC ledger — batch 188: licensed prices and a licensed route for news, proposed (2026-11-26)
 
 The owner's words of 2026-11-25: "Find a licensed provider" (prices) and "Can you find out how yahoo is able to host
@@ -1071,8 +1122,9 @@ and the owner made four calls that day; the record, with the quoted terms and ho
       until the provider is chosen: `yahoo_prices` and `yahoo_finance` carry a `launchBlocker` in `SOURCES`, each has an
       open line in the pre-release gate, and check:commercial-mode holds the two together, so `commercialOk: true` on
       them is read by nobody as a clearance. NC-130 stays open for the comparison and the choice.
-- [ ] **Yahoo's headlines: the owner's call is pending.** Asked to keep or drop the feed, the owner asked how Yahoo
-      itself is licensed to carry its articles and for a route like it; the news-licensing proposal answers that. NC-021.
+- [x] **Yahoo's headlines: the owner's call was pending.** Asked to keep or drop the feed, the owner asked how Yahoo
+      itself is licensed to carry its articles and for a route like it; the news-licensing proposal answered that, and
+      the owner's call of 2026-11-26 was "Drop Yahoo's feed": done in batch 189, which closes NC-021.
 - [x] **GDELT's citation and link.** Its terms allow commercial use with "a citation to the GDELT Project and a link
       to this website"; the footer named GDELT without the link, and now links it.
 - [x] **The registry says what was read.** `reviewedOn` is 2026-11-25 on the seven sources read (Wikipedia, the
@@ -13635,6 +13687,9 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
 - [x] **Newsdata.io** — free tier is personal/testing. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
 - [x] **GNews** — free tier is non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
 - [x] **Currents API** — free developer tier is non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
+      Read again 2026-11-26: its pricing page now allows commercial use on every plan, and its terms bar building a
+      database of its data. The owner's call that day was "Bring back Currents"; batch 189 built it and holds it off
+      until Currents answers in writing, so nothing here blocks a release: no key in production until then.
 - [x] **Marketaux** — free tier is non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
 - [x] **EODHD** — free tier is personal/evaluation. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
 - [x] **Finnhub** — free tier is personal/non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
@@ -13644,14 +13699,13 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
 - [x] **NYT Article Search** — public API terms are non-commercial and there is **no self-serve
       commercial tier**. ✅ **Decided 2026-11-25 (owner): drop at launch** — `NYT_API_KEY` stays out
       of production; the visitor's own key is paused the same way.
-- [ ] **Yahoo Finance RSS** — no longer a gray zone. Yahoo's Terms of Service (last updated 1
+- [x] **Yahoo Finance RSS** — no longer a gray zone. Yahoo's Terms of Service (last updated 1
       November 2026), read 2026-11-25: a feed may be shown only "without modification" with
       attribution and a link, "You may not incorporate advertising into any Yahoo RSS Feed", and
       "Unless otherwise expressly stated, you may not access or reuse the Services, or any portion
-      thereof, for any commercial purpose". They do not clear an ad-supported site. **The owner's
-      call is pending** the news-licensing proposal asked for that day (how Yahoo itself is licensed
-      to carry its articles, and the equivalent route here); until it is made the feed is a launch
-      blocker (`launchBlocker` in `SOURCES`). NC-021.
+      thereof, for any commercial purpose". They do not clear an ad-supported site. ✅ **Decided
+      2026-11-26 (owner): "Drop Yahoo's feed"** — flagged `commercialOk: false` and off the ingest
+      path, and a stored headline is withheld from a public page (batch 189). NC-021.
 - [ ] **Yahoo Finance chart** — the prices behind every chart. The endpoint is undocumented and
       carries no licence, and the same terms bar collecting data "using any automated means" and
       commercial reuse. ✅ **Decided 2026-11-25 (owner): "Find a licensed provider"** — a licensed
@@ -13713,8 +13767,8 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
       - `scripts/check-feeds.ts` now reports *why* a feed sat out ("blocked by COMMERCIAL_MODE"
         vs "no KEY set") instead of showing an indistinguishable empty result.
       - ⚠ The flag enforces the `commercialOk` flags; it does not judge them. Yahoo Finance RSS
-        is flagged `true` today (the "gray zone" item above), so it keeps fetching — settle that
-        call rather than assuming the flag covers it.
+        was flagged `true` until 2026-11-26 (the "gray zone" item above) and kept fetching; the
+        owner's call that day flagged it `false` (batch 189).
 - [ ] `P0` **Turn `COMMERCIAL_MODE=true` on before anyone other than the owner loads the site** —
       a private preview included, not only the production launch. **The trigger changed on
       2026-10-19 (D22, NC-133):** it used to be "the day anything earns money". The site is

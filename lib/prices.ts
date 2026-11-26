@@ -199,7 +199,9 @@ function corporateActions(events: unknown, ticker: string): TimelineEvent[] {
       title: dividendTitle(d.amount),
       description: "Cash dividend with this ex-dividend date. A mechanical change, not news.",
       source: "Yahoo Finance",
-      sourceKey: "yahoo_finance",
+      // the chart endpoint's, as the closes are: keyed with the prices since batch 189, when the headline
+      // feed's key became a non-commercial source's
+      sourceKey: "yahoo_prices",
       externalId: `div-${ticker}-${date}`,
       dedupBasis: `${ticker} dividend ${date}`,
     });
@@ -218,7 +220,7 @@ function corporateActions(events: unknown, ticker: string): TimelineEvent[] {
         "The share count changed on this date. Prices here are split-adjusted, so the line " +
         "does not step — this marker is the only thing that says it happened.",
       source: "Yahoo Finance",
-      sourceKey: "yahoo_finance",
+      sourceKey: "yahoo_prices",
       externalId: `split-${ticker}-${date}`,
       dedupBasis: `${ticker} split ${date}`,
     });

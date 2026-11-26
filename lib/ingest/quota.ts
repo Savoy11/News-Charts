@@ -26,7 +26,7 @@ export const QUOTAS: Record<SourceKey, Quota> = {
   // ---- keyed feeds, where the cap is small enough to hit in an afternoon ----
   gnews: { perDay: 100, note: "free tier, 100 req/day — the tightest budget here" },
   newsdata: { perDay: 200, note: "free tier, 200 req/day" },
-  currents: { perDay: 600, note: "free developer tier" },
+  currents: { perDay: 250, note: "free plan, 250 requests a day resetting at 00:00 UTC (pricing page, 2026-11-26); one request a day a company, and ingest stops asking when the day's are spent" },
   marketaux: { perDay: 100, note: "free tier, 100 req/day" },
   eodhd: { perDay: 20, note: "free tier is ~20 API calls/day and may exclude news entirely" },
   finnhub: { perDay: null, perSecond: 1, note: "60 req/min rather than a daily cap" },
@@ -76,7 +76,7 @@ export const QUOTAS: Record<SourceKey, Quota> = {
   sec_cases: { perDay: null, perSecond: 10, note: "the SEC's litigation-release and administrative-proceeding year listings, sec.gov's 10 req/s; each past year of each read once for every company (342 pages for 1995–2026, and 86 more for the months that fill a year's repeated rows, 1s apart), then a page or two a day" },
   fda_device_recalls: { perDay: 1000, note: "openFDA without a key, as fda_enforcement: one or two requests a day per mapped company, and one a process for the reports' older events; each recall's page in the FDA's recall database read once and kept, at most 200 a process, 1.3 s apart (about 2,600 in all)" },
   fda_enforcement: { perDay: 1000, note: "openFDA without a key: 1,000 requests a day, 240 a minute; three to six a day per mapped company" },
-  yahoo_finance: { perDay: null, note: "undocumented and unofficial — the licence question, not the quota, is the risk" },
+  yahoo_finance: { perDay: null, note: "undocumented and unofficial; off the ingest path since batch 189, as Yahoo's terms keep its feeds off a page with advertising" },
   yahoo_prices: { perDay: null, note: "the same unofficial host as the RSS feed — the licence question, not the quota, is the risk" },
   internet_archive: { perDay: null, note: "no published cap; be a good citizen" },
   snapshot: { perDay: null, note: "public GraphQL hub, no published cap" },
@@ -131,6 +131,29 @@ export function subjectCapacity(source: SourceKey): number | null {
   if (limit === null) return null;
   const per = dailyRequestsPerSubject(source);
   return per > 0 ? Math.floor(limit / per) : null;
+}
+
+/**
+ * How many of a source's daily requests are left, by the fetch log: its cap less every request logged
+ * for it since 00:00 UTC, whichever subject asked, and none once the source has answered 429 today.
+ * Null where the source publishes no daily cap. A keyed feed's quota is the account's, so a guard a
+ * subject at a time (the refresh window, the back-off) cannot keep a day's ingest inside it: at 250
+ * requests a day the 251st company would spend a request to be refused (batch 189, for Currents).
+ */
+export async function dailyBudgetLeft(
+  client: { query: (sql: string, params: unknown[]) => Promise<{ rows: { asked: number; refused: number }[] }> },
+  source: SourceKey
+): Promise<number | null> {
+  const limit = QUOTAS[source].perDay;
+  if (limit === null) return null;
+  const { rows } = await client.query(
+    `SELECT count(*)::int AS asked, (count(*) FILTER (WHERE f.http_status = 429))::int AS refused
+       FROM source_fetches f JOIN sources s ON s.id = f.source_id
+      WHERE s.key = $1 AND f.fetched_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'`,
+    [source]
+  );
+  const { asked = 0, refused = 0 } = rows[0] ?? {};
+  return refused > 0 ? 0 : Math.max(0, limit - asked);
 }
 
 /** Sources whose free tier cannot carry the given subject count, tightest budget first. */

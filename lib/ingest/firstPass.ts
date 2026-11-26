@@ -48,7 +48,7 @@ import {
  */
 
 /** Sources the first pass may reach. Asserted keyless/unmetered by scripts/check-ondemand.ts. */
-export const FIRST_PASS_SOURCES = ["wikipedia", "sec_edgar", "yahoo_finance", "yahoo_prices"] as const;
+export const FIRST_PASS_SOURCES = ["wikipedia", "sec_edgar", "yahoo_prices"] as const;
 
 /** How long a visitor's first search may wait on the gather before we fall back to the notice. */
 export const FIRST_PASS_BUDGET_MS = 8_000;

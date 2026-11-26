@@ -988,6 +988,38 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 188: licensed prices and a licensed route for news, proposed (2026-11-26)
+
+The owner's words of 2026-11-25: "Find a licensed provider" (prices) and "Can you find out how yahoo is able to host
+all their news articles and work on a way to mirror their method". Nothing is built: the proposal is
+`docs/proposals/2026-11-26-prices-and-news-licensing.md`, each option to be marked `APPROVED`, `REJECTED` or `DEFERRED`.
+
+- [x] **Prices (NC-130), researched.** The licence must allow commercial use, storage and display to the public; a
+      "personal" or "internal use" plan does not. Three qualify on their own pages: Tiingo's Display Redistribution tier
+      ("$250/Month for Start-ups", US equities, ETFs and mutual funds, from 1962; by sales contact), Intrinio's Startup
+      plan ("6 mo at $333, 6 mo at $666, $999 thereafter", "Commercial Use and Display Rights", no mutual fund NAVs below
+      Enterprise) and Twelve Data's Venture plan ("$149/month", "External display data access", with caching and
+      deletion terms that may not fit a stored series). EODHD, Massive and FMP sell display by quote; Alpha Vantage,
+      Finnhub, Alpaca and Marketstack do not qualify. Recommended first: one email to Tiingo with four questions.
+- [x] **News (NC-021), researched.** Yahoo carries other publishers' articles under contracts with each publisher and
+      wire service, paid partly in traffic and partly in a share of advertising revenue (its help page: "Many of the news
+      articles on Yahoo Finance come from publishers like AP and Reuters"); that is a set of licences, not a technique.
+      The routes open here: headline-and-link from GDELT (held already), the company's own press release from its 8-K
+      exhibit, Currents' free tier, and a licensed finance-news feed (Stock News API, Benzinga) when there is a budget.
+      Recommended first: drop Yahoo's headline feed at launch, and put the 8-K's press release on its row.
+- [x] **Currents' terms have changed.** Dropped on 2026-10-19 on the July reading that its free tier was non-commercial,
+      its pricing page now reads "every self-service plan, including Free, allows commercial use with attribution and a
+      link to the original article". It is an option in the proposal (B3), not a change made: bringing a dropped feed
+      back is the owner's call.
+- [x] **How it was read.** Each price and licence sentence is from the provider's own page, read on 2026-11-25 or
+      2026-11-26; the proposal marks which were found in the page's text directly and which a fetch tool reported
+      (pages drawn by script). Intrinio's and Twelve Data's prices and display lines, Yahoo's help page, Stock News API's
+      terms and Currents' pricing page were read directly.
+- [ ] **The owner's calls:** A1 to A3 (prices), B1, B2, B3 and B5 (news). A price provider needs a sales reply and a
+      paid plan, which no session can obtain.
+- **The ledger:** no status changes; 35 open, 108 closed, 11 parked, 16 blocked. NC-021 and NC-130 point at the proposal.
+- **Requests:** the public pricing, terms and help pages the proposal lists, once each; no sign-up, key or purchase.
+
 ## NC ledger — batch 187: the ledger's line references re-anchored (2026-11-26)
 
 The owner's word: "Do this task here: “Re-anchor the ledger's stale line references”". Batch 186 found, in passing,

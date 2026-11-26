@@ -1,6 +1,7 @@
 "use client";
 
 import type { SourceKey } from "./types";
+import { VISITOR_KEYS_ATTR, VISITOR_KEYS_PAUSED } from "./visitorKeysGate";
 
 /**
  * Bring-your-own-key for the licensed news feeds.
@@ -59,8 +60,17 @@ const STORAGE_KEY = "news-charts:feed-keys:v1";
 /** Fired whenever the stored keys change, so an open timeline re-reads them. */
 export const FEED_KEYS_EVENT = "news-charts:feed-keys";
 
+/**
+ * Whether this page has the feature paused: the layout marks `<body>` on a public build whose terms
+ * reading is not made (lib/visitorKeysGate.ts, batch 186). A paused page reads no stored key, so it
+ * makes no request under one, and the settings panel shows no form.
+ */
+export function visitorKeysPausedHere(): boolean {
+  return typeof document !== "undefined" && document.body?.getAttribute(VISITOR_KEYS_ATTR) === VISITOR_KEYS_PAUSED;
+}
+
 export function loadFeedKeys(): FeedKeys {
-  if (typeof window === "undefined") return {};
+  if (typeof window === "undefined" || visitorKeysPausedHere()) return {};
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};

@@ -8,6 +8,7 @@ import FeedKeysForm from "./FeedKeysForm";
 import AdFreeKeyEntry from "./AdFreeKeyEntry";
 import { useHydrated } from "@/lib/useHydrated";
 import { loadPrefs, PREFS_EVENT, type Prefs, DEFAULT_PREFS } from "@/lib/prefs";
+import { visitorKeysPausedHere } from "@/lib/feedKeys";
 import {
   CONFIG_EVENT,
   OPEN_SETTINGS_EVENT,
@@ -162,6 +163,8 @@ export default function SettingsMenu() {
                 <AiSettingsForm config={config} onSaved={setConfig} />
               </AdFreeKeyEntry>
 
+              {/* hidden on a public build until the two publishers' terms are read (lib/visitorKeysGate.ts) */}
+              {!visitorKeysPausedHere() && (
               <div className="border-t border-slate-800 pt-5">
                 <h3 className="text-sm font-bold text-slate-200">News feed keys</h3>
                 <p className="pb-2 pt-1 text-xs leading-relaxed text-slate-500">
@@ -173,6 +176,7 @@ export default function SettingsMenu() {
                   <FeedKeysForm />
                 </AdFreeKeyEntry>
               </div>
+              )}
 
               <div className="border-t border-slate-800 pt-5">
                 <PrefsSettings prefs={prefs} onChange={setPrefs} />

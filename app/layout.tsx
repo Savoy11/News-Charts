@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import localFont from "next/font/local";
 import SettingsMenu from "@/components/SettingsMenu";
+import { VISITOR_KEYS_ATTR, VISITOR_KEYS_PAUSED, visitorKeysPaused } from "@/lib/visitorKeysGate";
 import AdScript from "@/components/AdScript";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
@@ -35,7 +36,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} min-h-screen bg-slate-950 font-sans text-slate-200 antialiased`}>
+      {/* the visitor's own NYT and Guardian keys are paused on a public build until their terms are read (lib/visitorKeysGate.ts) */}
+      <body
+        className={`${geistSans.variable} min-h-screen bg-slate-950 font-sans text-slate-200 antialiased`}
+        {...(visitorKeysPaused() ? { [VISITOR_KEYS_ATTR]: VISITOR_KEYS_PAUSED } : {})}
+      >
         {/* One-time migration of localStorage from the "chronolens:" namespace back to
             "news-charts:". Inline so it runs while the HTML parses — before hydration, and
             therefore before any component's first read of a "news-charts:" key. An existing new
@@ -91,7 +96,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mx-auto max-w-6xl px-4 text-xs text-slate-400">
             <p>
               News Charts is a research tool, not investment advice. Price data from Yahoo Finance,
-              filings, insiders&apos; trades, big investors&apos; 13F and funds&apos; N-PORT holdings reports from SEC EDGAR, recent news from GDELT, historical newspapers from the
+              filings, insiders&apos; trades, big investors&apos; 13F and funds&apos; N-PORT holdings reports from SEC EDGAR, recent news from{" "}
+              <a href="https://www.gdeltproject.org/" className="underline decoration-slate-600 underline-offset-2 hover:text-slate-200" rel="noopener">
+                the GDELT Project
+              </a>
+              , historical newspapers from the
               Library of Congress (Chronicling America), historical context from Wikipedia
               (CC BY-SA), federal rules and notices from the Federal Register, archived material
               from the Internet Archive, Fed policy decisions, press releases and

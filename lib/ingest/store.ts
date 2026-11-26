@@ -31,6 +31,15 @@ export const SOURCES: {
    * docs/MASTER-CHECKLIST.md lists, is what moves this date.
    */
   reviewedOn: string;
+  /**
+   * Set where the provider's terms, as last read, do NOT clear a public ad-supported site and the
+   * source is kept on the ingest path only while the site is private to its owner (batch 186, the
+   * terms reading of 2026-11-25). It is not a clearance: the pre-release feed gate in
+   * docs/MASTER-CHECKLIST.md names every such source, and check:commercial-mode holds the two
+   * together. `commercialOk` stays true only because a false there bars ingest outright, which
+   * would blank a private build's charts before their replacement exists.
+   */
+  launchBlocker?: string;
   notes?: string;
 }[] = [
   {
@@ -40,7 +49,9 @@ export const SOURCES: {
     license: "CC BY-SA 4.0",
     attribution: "Wikipedia contributors",
     commercialOk: true,
-    reviewedOn: "2026-07-28",
+    // Read 2026-11-25: the Wikimedia Terms of Use in effect since 7 June 2023 allow reuse, commercial
+    // included, under the licence: credit by a link to the article, and share-alike for adapted text.
+    reviewedOn: "2026-11-25",
   },
   {
     id: 2,
@@ -49,17 +60,24 @@ export const SOURCES: {
     license: "public domain",
     attribution: "Library of Congress, Chronicling America",
     commercialOk: true,
-    reviewedOn: "2026-07-28",
-    notes: "503s under load; never sort by date — OCR misreads surface first",
+    // Read 2026-11-25, loc.gov/legal (dated 17 December 2020): the Library "generally do[es] not own
+    // the rights to materials in our collections" and leaves each item's rights to the user; its
+    // guideline is "no more than 10 requests per minute". The API's own page answered 403 that day.
+    reviewedOn: "2026-11-25",
+    notes: "503s under load; never sort by date — OCR misreads surface first; the Library's guideline is 10 requests a minute",
   },
   {
     id: 3,
     key: "gdelt",
     name: "GDELT 2.0",
-    license: "open data",
+    license: "open data — any academic, commercial or governmental use, with a citation and a link",
     attribution: "The GDELT Project",
     commercialOk: true,
-    reviewedOn: "2026-07-28",
+    // Read 2026-11-25, gdeltproject.org/about.html: its datasets are "available for unlimited and
+    // unrestricted use for any academic, commercial, or governmental use of any kind without fee",
+    // and "any use or redistribution of the data must include a citation to the GDELT Project and a
+    // link to this website". The footer carries both. A headline is still its publisher's.
+    reviewedOn: "2026-11-25",
     notes: "~1 req/5s per IP; throttle replies arrive as HTTP 200 with a text body",
   },
   {
@@ -86,10 +104,17 @@ export const SOURCES: {
     id: 6,
     key: "yahoo_finance",
     name: "Yahoo Finance RSS",
-    license: "RSS headlines + links",
+    license: "Yahoo Terms of Service (1 November 2026) — feed items unchanged with a link, no advertising, no commercial reuse without permission",
     attribution: "Yahoo Finance",
     commercialOk: true,
-    reviewedOn: "2026-07-28",
+    // Read 2026-11-25. The RSS clause: "you are only permitted to display the content that is
+    // provided in the feed, without modification, and you must provide attribution to our source
+    // website and link to the full article … You may not incorporate advertising into any Yahoo RSS
+    // Feed." And generally: "Unless otherwise expressly stated, you may not access or reuse the
+    // Services, or any portion thereof, for any commercial purpose", with no automated collection
+    // "without our express, prior permission".
+    reviewedOn: "2026-11-25",
+    launchBlocker: "Yahoo's terms do not clear an ad-supported site; the owner's call on the headline feed is pending the news-licensing proposal (NC-021)",
     notes: "per-ticker feed; headline/link/date only, article stays on yahoo.com",
   },
   {
@@ -177,13 +202,17 @@ export const SOURCES: {
     key: "onchain",
     name: "On-chain records",
     license: "public domain (on-chain facts)",
-    attribution: "Bitcoin and Ethereum block data via mempool.space, Blockstream Esplora and Etherscan",
-    // Raw chain facts are nobody's copyright, and the explorers used here serve them under
-    // terms that permit commercial use. This stays true only while the sources stay raw:
-    // Dune and Nansen sell *aggregations*, and their terms bar the ad-supported path.
+    attribution: "Bitcoin and Ethereum block data via mempool.space, Blockstream Esplora and Blockscout",
+    // Raw chain facts are nobody's copyright. This stays true only while the sources stay raw:
+    // Dune and Nansen sell *aggregations*, and their terms bar the ad-supported path. Read
+    // 2026-11-25: Etherscan's API terms (last updated 1 October 2026) license its free plan "for
+    // Personal & Research use only" and count advertising as commercial use, so the two feeds that
+    // need its key (stablecoin and Tether supply moves) are off the ingest path by the owner's call
+    // of that day (`fetchOnchainFor`). mempool.space, Blockstream and Blockscout published no API
+    // terms that could be read that day: unread, not cleared (NC-063).
     commercialOk: true,
-    reviewedOn: "2026-07-28",
-    notes: "keyless for BTC/ETH milestones; ETHERSCAN_API_KEY only for token supply moves. No aggregator data — raw chain + public explorers only",
+    reviewedOn: "2026-11-25",
+    notes: "keyless BTC/ETH milestones only; the Etherscan-keyed token supply feeds are off (its free plan is personal and research use). No aggregator data — raw chain + public explorers only",
   },
   {
     id: 16,
@@ -215,25 +244,34 @@ export const SOURCES: {
     id: 18,
     key: "defillama",
     name: "DefiLlama (hacks dataset)",
-    license: "open data, keyless API",
+    license: "DefiLlama Terms of Use (24 June 2025) — personal, non-commercial; no republishing without written consent",
     attribution: "DefiLlama",
-    // A public record of incidents, republished with attribution and a link back. What is used
-    // is the fact of the incident, not DefiLlama's analysis of it.
-    commercialOk: true,
-    reviewedOn: "2026-07-29",
+    // Read 2026-11-25: the terms grant a licence "to access and use the Site for personal,
+    // non-commercial purposes" and bar anyone to "republish the data in any form without permission"
+    // or "copy, scrape, harvest or otherwise exploit the Content & Data for commercial purposes
+    // without prior written consent", with liquidated damages for a breach. The "open data" reading
+    // of July did not survive them. Off the ingest path by the owner's call of that day; a stored
+    // row is withheld from a public page (lib/licenceGate.ts).
+    commercialOk: false,
+    reviewedOn: "2026-11-25",
     notes: "incidents are ATTRIBUTED, not confirmed on-chain by us — the 'exploit' kind exists to keep that distinction visible",
   },
   {
     id: 19,
     key: "yahoo_prices",
     name: "Yahoo Finance chart",
-    license: "unofficial chart API — daily closes and corporate actions",
+    license: "unofficial chart API, no licence — Yahoo's Terms of Service (1 November 2026) bar commercial reuse and automated collection",
     attribution: "Yahoo Finance",
     // Prices always came from this endpoint; they were logged under the RSS feed's key, or not at
     // all. A key of its own changes what is recorded, not what is used — the terms question in
-    // the release gate is the same one the RSS row carries.
+    // the release gate is the same one the RSS row carries. Read 2026-11-25: the endpoint is
+    // undocumented and carries no licence, and the Terms of Service bar accessing or collecting data
+    // "using any automated means" and reuse "for any commercial purpose" without permission. The
+    // owner's call that day: a licensed end-of-day provider replaces it before anyone else loads
+    // the site (NC-130).
     commercialOk: true,
-    reviewedOn: "2026-10-17",
+    reviewedOn: "2026-11-25",
+    launchBlocker: "no licence for the chart endpoint; a licensed end-of-day price provider replaces it before public launch (NC-130, the owner's call of 2026-11-25)",
     notes: "daily closes for the price chart; its own window and outcome log, separate from the RSS headlines (NC-103)",
   },
   {

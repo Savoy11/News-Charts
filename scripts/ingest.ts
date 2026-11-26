@@ -1404,8 +1404,12 @@ async function linkCryptoSectors(client: PoolClient, slug: string): Promise<void
   }
 }
 
-/** Every source an on-chain subject draws from, prices included. */
-const ONCHAIN_SOURCES: readonly SourceKey[] = ["onchain", "snapshot", "defillama", "yahoo_prices"];
+/**
+ * Every source an on-chain subject draws from, prices included. DefiLlama's incident list is not
+ * one since batch 186: its terms are personal and non-commercial (lib/onchain/index.ts,
+ * `WITHHELD_ONCHAIN_FEEDS`).
+ */
+const ONCHAIN_SOURCES: readonly SourceKey[] = ["onchain", "snapshot", "yahoo_prices"];
 
 export async function ingestOnchain(client: PoolClient, which: string): Promise<IngestOutcome> {
   const targets = which === "all" ? CRYPTO_SUBJECTS : CRYPTO_SUBJECTS.filter((c) => c.slug === which);

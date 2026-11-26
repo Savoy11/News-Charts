@@ -506,7 +506,13 @@ deliberately outside the chain because they need more than the code: `check:live
   someone other than the owner can load — a private preview included — before the first such
   page load (D22, applied 2026-10-19; open `P0` in the checklist). A federal agency's own work is
   usable where its site states no licence (17 U.S.C. § 105; the owner's ruling of 2026-11-12); terms a
-  site does state are still read and quoted.
+  site does state are still read and quoted. The terms reading of 2026-11-25
+  (`docs/decisions/2026-11-25-source-licences.md`, batch 186) took DefiLlama's incident list and the
+  Etherscan-keyed supply feeds off the ingest path (`WITHHELD_ONCHAIN_FEEDS`), withholds a stored row of a
+  non-commercial source from a public page (`lib/licenceGate.ts`), and pauses the visitor's own NYT and
+  Guardian keys on a public build until their terms are read (`lib/visitorKeysGate.ts`). Yahoo's headline
+  feed and its chart prices are not cleared by Yahoo's terms: each carries a `launchBlocker` in `SOURCES`
+  and an open line in the pre-release gate, and `commercialOk` on them is no clearance.
 - **Events schema:** `docs/EVENTS-SCHEMA.md` is the spec — subjects, events, documents are
   three separate axes; enrichments degrade pages, never break them.
 - **Money is numeric, never float** — same rule as the schema doc states.

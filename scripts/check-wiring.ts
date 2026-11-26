@@ -62,9 +62,8 @@ const ingestSrcFor = (name: string): string =>
  * it is written down as deliberately not.
  */
 const OTHER_INGEST_PATHS: Partial<Record<SourceKey, string>> = {
-  onchain: "ingestOnchain — chain milestones and stablecoin supply moves",
+  onchain: "ingestOnchain — chain milestones",
   snapshot: "ingestOnchain via lib/onchain — governance votes",
-  defillama: "ingestOnchain via lib/onchain — attributed incidents",
   fed_fomc: "ingestMacro via lib/macro — FOMC policy statements on the economy subject",
   bls_cpi: "ingestMacro via lib/macro — CPI releases on the economy subject",
 };
@@ -86,6 +85,8 @@ const NOT_INGESTED_BY_LICENCE: Partial<Record<SourceKey, string>> = {
   marketaux: "non-commercial free tier; no visitor-key path yet",
   eodhd: "personal/evaluation free tier; no visitor-key path yet",
   finnhub: "non-commercial free tier; no visitor-key path yet",
+  // batch 186, the terms reading of 2026-11-25 and the owner's call that day
+  defillama: "personal, non-commercial terms (24 June 2025), no republishing without written consent; off the on-chain feeds",
 };
 
 console.log("\nEvery registered source has a home");
@@ -121,6 +122,13 @@ for (const key of Object.keys(OTHER_INGEST_PATHS) as SourceKey[]) {
 }
 const onchainFeeds = [...read("lib/onchain/index.ts").matchAll(/feeds\.push\(\[\s*"([a-z_]+)"/g)].map((m) => m[1] as SourceKey);
 check("the on-chain feeds were found", onchainFeeds.length >= 3, onchainFeeds.join(", "));
+// batch 186: neither DefiLlama's incident list nor an Etherscan-keyed supply feed is started (the terms reading of 2026-11-25)
+check(
+  "no on-chain feed is DefiLlama's, and none needs Etherscan's key",
+  !onchainFeeds.includes("defillama") && !/feeds\.push\([^)]*(?:fetchExploits|fetchStablecoinSupplyMoves|fetchUsdtSupplyMoves)/.test(read("lib/onchain/index.ts")) &&
+    /WITHHELD_ONCHAIN_FEEDS/.test(read("lib/onchain/index.ts")),
+  onchainFeeds.join(", ")
+);
 for (const key of new Set(onchainFeeds)) {
   check(`on-chain feed ${key} is a recorded ingest path`, OTHER_INGEST_PATHS[key] !== undefined);
 }
@@ -540,7 +548,7 @@ check("a document on both the company and its sector is listed once",
   withoutSharedSectorRows(ownRows, sectorRows).map((e) => e.id).join() === "sector-8");
 check("  …and the company page uses that", /withoutSharedSectorRows\(events, sector\)/.test(read("lib/page-data.ts")));
 // batch 107, the 2026-11-07 audit's finding 5: the map's header kept 33 sources after two more were added
-const mapHeader = /^\*\*Last updated:\*\* \d{4}-\d{2}-\d{2} · (\d+) sources \((\d+) on the ingest path; the (\d+) keyed ones are held back by their licences\)$/m.exec(read("docs/COVERAGE-MAP.md"));
+const mapHeader = /^\*\*Last updated:\*\* \d{4}-\d{2}-\d{2} · (\d+) sources \((\d+) on the ingest path; (\d+) are held back by their licences\)$/m.exec(read("docs/COVERAGE-MAP.md"));
 const commercial = SOURCES.filter((s) => s.commercialOk).length;
 check("the coverage map's header counts the sources `SOURCES` registers, and how many the licence gate lets ingest read",
   !!mapHeader && Number(mapHeader[1]) === SOURCES.length && Number(mapHeader[2]) === commercial && Number(mapHeader[3]) === SOURCES.length - commercial,

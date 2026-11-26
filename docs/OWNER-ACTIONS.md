@@ -96,17 +96,20 @@ upgrade, drop the key at launch, or — for NYT and the Guardian only — ship B
 decided on 2026-10-19 (the aggregators, dropped). On **2026-11-25** the published terms were read
 again and you made four more calls; the record, with the quoted terms, is
 [`docs/decisions/2026-11-25-source-licences.md`](decisions/2026-11-25-source-licences.md). **Two
-things are still yours:** choose the price provider and the news route from the two proposals to
-follow, and read the NYT's and the Guardian's developer terms in a browser (they could not be
-fetched from the build container).
+things are still yours:** choose the price provider and the news route from
+[`docs/proposals/2026-11-26-prices-and-news-licensing.md`](proposals/2026-11-26-prices-and-news-licensing.md)
+(mark each option `APPROVED`, `REJECTED` or `DEFERRED`; the recommended first steps are one email
+to Tiingo's sales address about its display tier, and dropping Yahoo's headline feed at launch),
+and read the NYT's and the Guardian's developer terms in a browser (they could not be fetched from
+the build container).
 
 | Source | Options |
 | --- | --- |
 | Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | **Decided 2026-10-19: drop at launch** — keep their keys out of production |
 | **Guardian** | **Decided 2026-11-25: drop at launch** — no server key in production. The visitor's own key is hidden on a public build until you or a lawyer reads the Guardian Open Platform's terms |
 | **NYT** | **Decided 2026-11-25: drop at launch** — `NYT_API_KEY` stays out of production. The visitor's own key is hidden the same way until https://developer.nytimes.com/terms is read. To bring the feature back, set `VISITOR_KEYS_TERMS_READ` in `lib/visitorKeysGate.ts` |
-| **Yahoo Finance RSS** | **Open.** Yahoo's terms (1 November 2026) do not clear an ad-supported site: feed items unchanged with a link, "You may not incorporate advertising into any Yahoo RSS Feed", no commercial reuse without permission. You asked how Yahoo itself is licensed and for a route like it: the news-licensing proposal follows. Until you decide, the feed is a named launch blocker |
-| **Yahoo Finance chart** (prices) | **Decided 2026-11-25: "Find a licensed provider"** — the chart endpoint has no licence. A comparison of paid end-of-day providers whose terms allow public display follows; Yahoo stays only while the site is private to you |
+| **Yahoo Finance RSS** | **Open.** Yahoo's terms (1 November 2026) do not clear an ad-supported site: feed items unchanged with a link, "You may not incorporate advertising into any Yahoo RSS Feed", no commercial reuse without permission. You asked how Yahoo itself is licensed and for a route like it: Part B of the proposal of 2026-11-26 answers (Yahoo holds contracts with each publisher and shares revenue; the routes open to us are headline-and-link from GDELT, the company's own press releases from its 8-K, Currents' free tier, and a licensed finance-news feed). Until you decide, the feed is a named launch blocker |
+| **Yahoo Finance chart** (prices) | **Decided 2026-11-25: "Find a licensed provider"** — the chart endpoint has no licence. Part A of the proposal of 2026-11-26 compares the providers whose terms allow public display (Tiingo's display tier from $250 a month, Intrinio from $333, Twelve Data from $149 with caveats); Yahoo stays only while the site is private to you |
 | **DefiLlama** (crypto incidents) | **Decided 2026-11-25: off** — its terms are "personal, non-commercial" with no republishing without written consent. Off the feeds, and its stored rows are hidden on a public build |
 | **Etherscan** (stablecoin supply) | **Decided 2026-11-25: off** — its free plan is "for Personal & Research use only" and counts advertising as commercial. Do not set `ETHERSCAN_API_KEY` in production |
 | Internet Archive, Snapshot, mempool.space, Blockscout, Blockstream | **Unread** — no terms text could be obtained on 2026-11-25. Still flagged cleared on the July reading; worth a look in a browser, or a question to each |

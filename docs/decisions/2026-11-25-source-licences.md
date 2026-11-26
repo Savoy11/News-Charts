@@ -61,7 +61,9 @@ Asked in one dialog on the proposal of that day
      off the ingest path, and a headline stored from it is withheld on a public build. The dividend
      and split markers that were stored under the same source moved to the price source (db/063), so
      a chart keeps them.
-   - **The 8-K's press release** on its row is the next batch.
+   - **The 8-K's press release** on its row was already there (batches 42–56, October). Batch 190
+     measured it on 260 recent filings of 26 companies and read the nine releases it had missed; the
+     proposal's B2 says so.
    - **Currents is built and held** (batch 189). Building it meant reading its terms page again, and
      the "Data license" clause in the table above had not been quoted in the proposal the owner
      approved. The proposal already put Currents' written confirmation before building; with this

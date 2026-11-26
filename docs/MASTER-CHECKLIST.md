@@ -988,6 +988,31 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 187: the ledger's line references re-anchored (2026-11-26)
+
+The owner's word: "Do this task here: “Re-anchor the ledger's stale line references”". Batch 186 found, in passing,
+that the ledger's evidence no longer sat where it said: of the 129 references of the items still open that cite a file,
+lines and a quote, the lines held the quote in 10.
+
+- [x] **Why.** Each batch had remapped the ledger's line numbers by the offsets its own edits made, which keeps a
+      right reference right and never repairs a wrong one; the references had been wrong since the checklist was
+      reordered (NC-006 cited line 61 of the checklist for a sentence now on another page).
+- [x] **Re-anchored by the quote's words** (`scripts/ledger-quotes.ts`): a quote is found as written, or with the
+      document's markdown, list number and case dropped, each passage of a quote joined by "..." in order within
+      sixty lines; of several places, the one nearest where it was cited. 102 references moved to their quote's own
+      lines; 11 held already (one exactly, ten as ranges that still contain it, which stay ranges).
+- [x] **Ten quotes were nowhere:** their text had been rewritten, six of them by batch 186 (Yahoo's "gray zone" line,
+      the owner-actions table) and four earlier (the `COMMERCIAL_MODE` trigger of 2026-10-19, the ingest path's price
+      and headline calls). Each was read by hand and now quotes the sentence that took its place, the old quote kept
+      beside it (`quote_was`, `requoted_on`): NC-021 (three), NC-022 (two), NC-028, NC-033, NC-130 (three).
+- [x] **So it stays right:** `npm run check:ledger` (new, in the chain) holds every open item's reference to its
+      file as it is now, and `npm run ledger:reanchor` puts the lines back after a batch edits a cited document; a
+      quote it cannot find it reports and leaves for a person.
+- [x] **Checks:** check:ledger 10 (new): the matcher's cases, the ledger's counts, 123 references each holding its
+      quote.
+- **The ledger:** no status changes; 35 open, 108 closed, 11 parked, 16 blocked.
+- **Requests:** none.
+
 ## NC ledger — batch 186: the source licences read again, and the owner's calls (2026-11-25)
 
 The owner's word: "Let's address the source licenses". Each outside source's published terms were read on 2026-11-25

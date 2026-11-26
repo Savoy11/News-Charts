@@ -27,6 +27,9 @@ the new name to its `THIS_REPO_NAMES`.
    deeper cross-project connection — never something to assume or add in passing.
 3. **The work log for this repo is [`docs/MASTER-CHECKLIST.md`](docs/MASTER-CHECKLIST.md)** —
    prioritised backlog plus done log. Check the box in the same change that ships the work.
+   The task ledger beside it (`docs/audits/nc-task-queue-2026-09-28.json`) cites its evidence by file, lines and
+   quote; `npm run check:ledger` holds each to the file as it is, so run `npm run ledger:reanchor` after editing
+   a document it cites (batch 187).
 4. **This boundary is enforced by test, not just prose:** `npm run check:boundary`
    (`scripts/check-boundary.ts`, part of `npm run check`) fails if a submodule, foreign remote,
    cross-repo checkout, escaping import, or a stale path into another product's checkout
@@ -470,6 +473,7 @@ docs/         # MASTER-CHECKLIST.md (work log), EVENTS-SCHEMA.md, COVERAGE-MAP.m
 npm run dev              # http://localhost:3000
 npm run check            # full offline check suite (parsers, dates, markers, …, boundary)
 npm run check:boundary   # repo-boundary checks alone
+npm run ledger:reanchor  # put the task ledger's cited lines back where their quotes are (after editing a document it cites; check:ledger fails otherwise)
 npm run db:migrate       # apply db/*.sql in order
 npm run ingest -- …      # pull events for a subject (see README)
 npm run sync:aliases     # rebuild data/company-aliases.json from Wikidata (after sync:tickers)

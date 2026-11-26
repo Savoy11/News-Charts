@@ -3,7 +3,7 @@ import { getEthereumMilestones } from "./ethereum";
 import { fetchStablecoinSupplyMoves } from "./stablecoin";
 import { DAI, PYUSD, USDC, type Stablecoin } from "./addresses";
 import { GOVERNANCE_SPACES, fetchGovernance } from "./governance";
-import { EXPLOIT_TARGETS, fetchExploits } from "./exploits";
+import { fetchExploits } from "./exploits";
 import { fetchUsdtSupplyMoves } from "./usdt";
 import type { FetchResult, SourceKey, TimelineEvent } from "../types";
 
@@ -175,19 +175,32 @@ async function feed(sourceKey: SourceKey, work: Promise<FetchResult>): Promise<O
 }
 
 /**
- * Every feed a subject draws from, each with its own outcome.
+ * The feeds the licence holds off the ingest path (batch 186, the terms reading of 2026-11-25 and the
+ * owner's call that day, "Turn both off"), each still callable by its own check and by check:live:
  *
- * Exploits are additive rather than exclusive: Ethereum has milestones *and* incidents, and a
- * protocol has governance *and* incidents. One feed failing costs only its own events.
+ *  - **DefiLlama's incident list** (`fetchExploits`): its Terms of Use of 24 June 2025 grant a
+ *    "personal, non-commercial" licence and bar republishing the data without written consent.
+ *  - **The Etherscan-keyed supply feeds** (`fetchStablecoinSupplyMoves`, `fetchUsdtSupplyMoves`):
+ *    Etherscan's API terms of 1 October 2026 license the free plan "for Personal & Research use
+ *    only" and count advertising as commercial use.
+ *
+ * Either comes back by a change here and to its registry row once the licence allows it: written
+ * consent from DefiLlama, a commercial Etherscan plan.
+ */
+export const WITHHELD_ONCHAIN_FEEDS = {
+  defillama: fetchExploits,
+  etherscanSupply: fetchStablecoinSupplyMoves,
+  etherscanTether: fetchUsdtSupplyMoves,
+} as const;
+
+/**
+ * Every feed a subject draws from, each with its own outcome. One feed failing costs only its own
+ * events. A stablecoin's only feed was an Etherscan-keyed one, so it has none now.
  */
 export async function fetchOnchainFor(slug: string, only?: ReadonlySet<SourceKey>): Promise<OnchainFeed[]> {
   // Each feed as [key, start] so a feed that is not due is never started — ingest passes the
   // keys still outside their refresh window and not backing off (NC-147).
   const feeds: [SourceKey, () => Promise<FetchResult>][] = [];
-  const exploitTarget = EXPLOIT_TARGETS.find((t) => t.slug === slug);
-  const exploits = () => {
-    if (exploitTarget) feeds.push(["defillama", () => fetchExploits(exploitTarget)]);
-  };
 
   switch (slug) {
     case "btc":
@@ -200,22 +213,11 @@ export async function fetchOnchainFor(slug: string, only?: ReadonlySet<SourceKey
         "onchain",
         () => getEthereumMilestones().then((events): FetchResult => ({ events, outcome: events.length ? "ok" : "empty" })),
       ]);
-      exploits();
       break;
     default: {
-      // USDT first: it is a stablecoin subject but not a transfer-readable one, so it must not
-      // fall through to the table that would ask the wrong question and find nothing.
-      const token = STABLECOIN_SUBJECTS[slug];
+      // a stablecoin (USDC, DAI, PayPal USD, Tether) has no feed: see WITHHELD_ONCHAIN_FEEDS
       const space = GOVERNANCE_SPACES.find((g) => g.slug === slug);
-      if (slug === "usdt") {
-        feeds.push(["onchain", () => fetchUsdtSupplyMoves()]);
-        exploits();
-      } else if (token) {
-        feeds.push(["onchain", () => fetchStablecoinSupplyMoves(token)]);
-      } else if (space) {
-        feeds.push(["snapshot", () => fetchGovernance(space)]);
-        exploits();
-      }
+      if (space) feeds.push(["snapshot", () => fetchGovernance(space)]);
     }
   }
   return Promise.all(feeds.filter(([key]) => !only || only.has(key)).map(([key, start]) => feed(key, start())));

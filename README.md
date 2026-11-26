@@ -2220,10 +2220,15 @@ npm run check:onchain               # adapters against canned responses, offline
 ```
 
 Sources are raw chain facts and public explorers only — mempool.space and Blockstream for
-Bitcoin, Blockscout for Ethereum, Etherscan for token supply moves. All are `commercialOk: true`,
-and that stays true only while they stay raw: Dune and Nansen sell *aggregations* and their terms
-bar the ad-supported path. Only the stablecoin adapter needs a key (`ETHERSCAN_API_KEY`); without
-it that one adapter sits out and the rest of the on-chain timeline is unaffected.
+Bitcoin, Blockscout for Ethereum. That stays true only while they stay raw: Dune and Nansen sell
+*aggregations* and their terms bar the ad-supported path. **Two feeds are off since batch 186**
+(the terms reading of 2026-11-25, `docs/decisions/2026-11-25-source-licences.md`, and the owner's
+call that day): the stablecoin and Tether supply moves, which need Etherscan's API, whose free plan
+is "for Personal & Research use only" and counts advertising as commercial use; and DefiLlama's
+incident list, whose terms are "personal, non-commercial" with no republishing without written
+consent. Their adapters and checks stay (`WITHHELD_ONCHAIN_FEEDS` in `lib/onchain/index.ts`), no
+ingest run starts them, and a stored DefiLlama row is withheld from a public page
+(`lib/licenceGate.ts`). A stablecoin's page therefore has no on-chain feed.
 
 Live feeds — the stablecoin and USDT supply moves — read blocks minutes old, so a finality gate
 (`lib/onchain/finality.ts`) withholds any on-chain event younger than its chain's settling time
@@ -2540,9 +2545,9 @@ reviewed — and `docs/COVERAGE-MAP.md` says how far back each one reaches.
 | SEC News Digest | The SEC's daily summary of 1956–1993: the 8-K reports a company filed, its registration statements, the 13D and 14D-1 filings on its shares, the SEC's orders and actions on it, its listing orders | Every issue's PDF read once for every company, 60 a run (`lib/ingest/secDigestWalk.ts`); kept when an entry's party is the company under the name its EDGAR record had that day and no other company's (`lib/secDigest.ts`), from its first price; a month's 8-K reports one row. Public information the SEC lets anyone copy, cited to the SEC; no key; needs `pdftotext` and `NEWS_CHARTS_CONTACT` |
 | Wikidata | Other names for listed companies ("Google" → Alphabet, "Facebook" → Meta, "P&G", and a company's own initials: "IBM", "AIG", "BMS", which claim its news too unless they mean something else first, as Philip Morris's "PMI"). Search uses them all; news queries, headline scoring and the company Federal Register feed use only a company's own names and a predecessor's (`newsNamesFor`), as written ("U.S. Bancorp") | CC0. Committed as `data/company-aliases.json` by `npm run sync:aliases` (run after the ticker index); rules in `lib/companyAliases.ts`. Also P856 website domains (`lib/wikidata.ts`) |
 | mempool.space, Blockstream, Blockscout | Bitcoin halvings, Ethereum milestones | Keyless explorers |
-| Etherscan (V2) | Stablecoin and USDT supply moves | `ETHERSCAN_API_KEY` |
-| Snapshot | Protocol governance votes | Keyless GraphQL |
-| DefiLlama | Protocol exploits | Open hacks dataset |
+| Etherscan (V2) | Stablecoin and USDT supply moves — **off since batch 186** | Its free plan is personal and research use only; the adapter stays for a commercial plan |
+| Snapshot | Protocol governance votes | Keyless GraphQL; its terms were unreadable on 2026-11-25 |
+| DefiLlama | Protocol exploits — **off since batch 186** | Its terms are personal and non-commercial; no republishing without written consent |
 
 The eight keyed news aggregators (NYT, Guardian, Newsdata, GNews, Currents, Marketaux, EODHD,
 Finnhub) have adapters but are not ingested: their free tiers bar commercial use. NYT and the

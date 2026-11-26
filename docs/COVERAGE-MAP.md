@@ -1,6 +1,8 @@
 # Coverage map — how far back a timeline can actually go
 
-**Last updated:** 2026-11-24 · 56 sources (48 on the ingest path; the 8 keyed ones are held back by their licences)
+**Last updated:** 2026-11-25 · 56 sources (47 on the ingest path; 9 are held back by their licences)
+
+The nine held back are the eight keyed news and data feeds and, since batch 186, DefiLlama's incident list.
 
 The single question this answers: *given a subject, what is the earliest event News Charts could
 plausibly show, and which source would supply it?*

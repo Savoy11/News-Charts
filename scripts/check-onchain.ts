@@ -704,19 +704,24 @@ async function outcomes(): Promise<void> {
   const halvings = await fetchBitcoinHalvings();
   check("no explorer answering is an error — four halvings are history", halvings.outcome === "error", halvings.outcome);
 
-  // Governance is Snapshot's, incidents are DefiLlama's: logged and licence-checked as such.
+  // Governance is Snapshot's. Incidents were DefiLlama's until batch 186: its terms are personal and
+  // non-commercial, so that feed is not started (lib/onchain/index.ts, WITHHELD_ONCHAIN_FEEDS).
   serve((url) => (url.includes("snapshot") ? { data: { proposals: [] } } : []));
   const aave = await fetchOnchainFor("aave");
   check(
-    "a protocol's feeds are keyed snapshot and defillama",
-    aave.map((f) => f.sourceKey).sort().join(",") === "defillama,snapshot",
+    "a protocol's one feed is keyed snapshot; DefiLlama's incident list is not started",
+    aave.map((f) => f.sourceKey).sort().join(",") === "snapshot",
     aave.map((f) => f.sourceKey).join(",")
   );
+  const stable = await Promise.all(["usdc", "dai", "pyusd", "usdt"].map((s) => fetchOnchainFor(s)));
+  check("a stablecoin has no feed: its supply moves needed Etherscan's key, whose free plan is personal and research use", stable.every((f) => f.length === 0), stable.map((f) => f.length).join(","));
+  const eth = await fetchOnchainFor("eth");
+  check("Ethereum's one feed is its milestones", eth.map((f) => f.sourceKey).join(",") === "onchain", eth.map((f) => f.sourceKey).join(","));
   globalThis.fetch = (async () => {
     throw new TypeError("fetch failed");
   }) as typeof fetch;
   const down = await fetchOnchainFor("aave");
-  check("a feed that cannot connect is an error, and costs only itself", down.length === 2 && down.every((f) => f.result.outcome === "error"), down.map((f) => f.result.outcome).join(","));
+  check("a feed that cannot connect is an error, and costs only itself", down.length === 1 && down.every((f) => f.result.outcome === "error"), down.map((f) => f.result.outcome).join(","));
   const btc = await fetchOnchainFor("btc");
   check("btc is one onchain feed", btc.length === 1 && btc[0].sourceKey === "onchain");
 

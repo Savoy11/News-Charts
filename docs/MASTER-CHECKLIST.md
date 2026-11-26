@@ -988,6 +988,47 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 186: the source licences read again, and the owner's calls (2026-11-25)
+
+The owner's word: "Let's address the source licenses". Each outside source's published terms were read on 2026-11-25
+and the owner made four calls that day; the record, with the quoted terms and how each page was read, is
+`docs/decisions/2026-11-25-source-licences.md`.
+
+- [x] **The reading.** Yahoo's Terms of Service (1 November 2026) and DefiLlama's Terms of Use (24 June 2025) were read
+      directly; Etherscan's API terms (1 October 2026), GDELT's, Wikimedia's and the Library of Congress's through a
+      fetch tool; the Guardian's and the NYT's sites refused the fetch, and no terms text could be had for the Internet
+      Archive, Snapshot, mempool.space, Blockscout or Blockstream. Three sources flagged `commercialOk: true` since July
+      are not cleared by their terms: Yahoo (headlines and prices), DefiLlama, and Etherscan's free plan.
+- [x] **"Turn both off" (DefiLlama, Etherscan).** DefiLlama is `commercialOk: false`, off `ONCHAIN_SOURCES` and the
+      feeds `fetchOnchainFor` starts; the two Etherscan-keyed supply feeds are not started, so a stablecoin has no
+      on-chain feed. The adapters and their checks stay (`WITHHELD_ONCHAIN_FEEDS`). A row stored while DefiLlama was
+      thought cleared is withheld from a public page: in `COMMERCIAL_MODE`, `loadEvents` drops a row every attestation
+      of which is a non-commercial source's (`lib/licenceGate.ts`), the ids held to the registry by a check.
+- [x] **"Pause visitor keys" (the Guardian, the NYT).** Both server keys are dropped at launch, as the six
+      aggregators' were (closes NC-019 and NC-020, and NC-075, the NYT's keyword tags, which needed the NYT on the
+      server). The visitor's own key is hidden on a public build until the two terms pages are read
+      (`lib/visitorKeysGate.ts`, `VISITOR_KEYS_TERMS_READ`): the layout marks the page, a paused page reads no stored
+      key and so asks neither publisher anything, and the settings panel shows no form. The owner's own machine keeps
+      the feature (NC-044's live check). NC-136 stays open for the reading.
+- [x] **"Find a licensed provider" (prices).** Yahoo's chart endpoint has no licence. Nothing changes in the price path
+      until the provider is chosen: `yahoo_prices` and `yahoo_finance` carry a `launchBlocker` in `SOURCES`, each has an
+      open line in the pre-release gate, and check:commercial-mode holds the two together, so `commercialOk: true` on
+      them is read by nobody as a clearance. NC-130 stays open for the comparison and the choice.
+- [ ] **Yahoo's headlines: the owner's call is pending.** Asked to keep or drop the feed, the owner asked how Yahoo
+      itself is licensed to carry its articles and for a route like it; the news-licensing proposal answers that. NC-021.
+- [x] **GDELT's citation and link.** Its terms allow commercial use with "a citation to the GDELT Project and a link
+      to this website"; the footer named GDELT without the link, and now links it.
+- [x] **The registry says what was read.** `reviewedOn` is 2026-11-25 on the seven sources read (Wikipedia, the
+      Library of Congress, GDELT, both Yahoo rows, on-chain, DefiLlama), each with the sentence its judgement rests on.
+- **Still unread:** the Guardian's and the NYT's developer terms (a browser will open them), the Internet Archive's,
+      Snapshot's, mempool.space's, Blockscout's and Blockstream's. Each of the last five is still flagged cleared on the
+      July reading (NC-063, NC-126).
+- **Not decided:** a review rhythm (NC-024, NC-025). check:commercial-mode already lists a cleared source last read
+      over 180 days ago.
+- [x] **Checks:** check:commercial-mode 27 (nine new), check:wiring 332 (one new), check:onchain 164 (two new).
+- **The ledger:** NC-019, NC-020 and NC-075 closed; 35 open, 108 closed, 11 parked, 16 blocked.
+- **Requests:** the terms pages named above, read once each; nothing else.
+
 ## NC ledger — batch 185: 13F's near-miss splits (2026-11-25)
 
 The owner's word: "Add the $1 million minimum, then continue". Batch 184 found, and logged, that a 13F quarter whose
@@ -13540,15 +13581,50 @@ allowed to use it commercially.** The source registry (`lib/ingest/store.ts` `SO
 - [x] **Marketaux** — free tier is non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
 - [x] **EODHD** — free tier is personal/evaluation. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
 - [x] **Finnhub** — free tier is personal/non-commercial. ✅ **Decided 2026-10-19 (owner): drop at launch** — no key in production.
-- [ ] **Guardian** — free developer key is non-commercial. Request a commercial license/key from
-      Guardian Open Platform; swap key.
-- [ ] **NYT Article Search** — public API terms are non-commercial and there is **no self-serve
-      commercial tier**. Either negotiate a license with NYT or **remove `NYT_API_KEY` at launch**
-      (adapter degrades gracefully to off).
-- [ ] **Yahoo Finance RSS** — gray zone (headline+link+date with click-through). Review the ToS at
-      ship time; if uncomfortable, disable the adapter.
+- [x] **Guardian** — free developer key is non-commercial. ✅ **Decided 2026-11-25 (owner): drop at
+      launch** — no server key in production, as for the six aggregators. The visitor's own key is
+      paused on a public build until its terms are read (next item but two; batch 186).
+- [x] **NYT Article Search** — public API terms are non-commercial and there is **no self-serve
+      commercial tier**. ✅ **Decided 2026-11-25 (owner): drop at launch** — `NYT_API_KEY` stays out
+      of production; the visitor's own key is paused the same way.
+- [ ] **Yahoo Finance RSS** — no longer a gray zone. Yahoo's Terms of Service (last updated 1
+      November 2026), read 2026-11-25: a feed may be shown only "without modification" with
+      attribution and a link, "You may not incorporate advertising into any Yahoo RSS Feed", and
+      "Unless otherwise expressly stated, you may not access or reuse the Services, or any portion
+      thereof, for any commercial purpose". They do not clear an ad-supported site. **The owner's
+      call is pending** the news-licensing proposal asked for that day (how Yahoo itself is licensed
+      to carry its articles, and the equivalent route here); until it is made the feed is a launch
+      blocker (`launchBlocker` in `SOURCES`). NC-021.
+- [ ] **Yahoo Finance chart** — the prices behind every chart. The endpoint is undocumented and
+      carries no licence, and the same terms bar collecting data "using any automated means" and
+      commercial reuse. ✅ **Decided 2026-11-25 (owner): "Find a licensed provider"** — a licensed
+      end-of-day price provider replaces it before release; Yahoo stays only while the site is
+      private to the owner. Open until the provider is chosen from the comparison and wired.
+      NC-130.
+- [x] **DefiLlama's incident list** — its Terms of Use (effective 24 June 2025) grant a "personal,
+      non-commercial" licence and bar republishing the data "without permission", with liquidated
+      damages for a breach. ✅ **Decided 2026-11-25 (owner): "Turn both off"** — flagged
+      `commercialOk: false`, off the on-chain feeds, and a stored row is withheld from a public
+      page (`lib/licenceGate.ts`). Batch 186.
+- [x] **Etherscan's API** (stablecoin and Tether supply moves) — its API terms (last updated 1
+      October 2026) license the free plan "for Personal & Research use only" and count advertising
+      as commercial use. ✅ **Decided 2026-11-25 (owner): off** — the two keyed feeds are not
+      started (`WITHHELD_ONCHAIN_FEEDS`); no `ETHERSCAN_API_KEY` in production. Batch 186.
+- [ ] **The visitor's own NYT and Guardian keys** — whether either publisher's developer terms let
+      a personal key be used inside another party's ad-supported site is unread: both terms pages
+      refused to be fetched on 2026-11-25. ✅ **Decided that day (owner): "Pause visitor keys"** —
+      hidden on a public build (`lib/visitorKeysGate.ts`). Open until the owner or a lawyer reads
+      https://developer.nytimes.com/terms and the Guardian Open Platform's terms; then set
+      `VISITOR_KEYS_TERMS_READ`. NC-136.
+- [ ] **Terms that could not be read on 2026-11-25** — the Internet Archive's (the page's text did
+      not come through), Snapshot's (an app shell), mempool.space's, Blockscout's and
+      Blockstream's (no API terms found), and the Chronicling America API page (403). Each is
+      still flagged `commercialOk: true` on the July reading; unread, not cleared. NC-063, NC-126.
 - [x] Keyless public-domain / open sources — SEC EDGAR, Federal Register, Chronicling America,
-      Wikipedia (CC BY-SA), GDELT — nothing to license. **Attribution confirmed rendering**
+      Wikipedia (CC BY-SA), GDELT — nothing to license. (Read again 2026-11-25: GDELT's terms
+      allow "any academic, commercial, or governmental use" with "a citation to the GDELT Project
+      and a link to this website", which the footer now gives; Wikimedia's allow reuse under the
+      licence; the Library of Congress leaves each item's rights to the user.) **Attribution confirmed rendering**
       2026-07-28 against the seeded corpus: every event row carries its source label and an
       outward link (84 on one company page — "Wikipedia: History of Ford Motor Company",
       "Chronicling America: Detroit Free Press", "SEC EDGAR", "Federal Register", outlet names

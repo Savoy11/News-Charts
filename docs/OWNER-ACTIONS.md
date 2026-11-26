@@ -51,7 +51,7 @@ Each feed reports one of three things, and the distinction is the point: `✓ N 
 
 | What | Why it matters |
 | --- | --- |
-| **Stablecoin + USDT supply** | Now on Etherscan's V2 API (the V1 address they used was retired — every supply timeline was empty, NC-054). Needs `ETHERSCAN_API_KEY`; run the ingest once with it and confirm rows arrive. |
+| ~~**Stablecoin + USDT supply**~~ | **Off since batch 186** (your call of 2026-11-25): Etherscan's free plan is for personal and research use only, so no ingest run starts these feeds and there is nothing to verify. They come back only with a commercial Etherscan plan. |
 | **BYO feed keys** (NYT/Guardian) | Needs a browser, not `check:feeds`. Settings → News feed keys → paste a real key → load a company page. **A CORS rejection looks identical to a wrong key: no articles, no error.** |
 | **Governance + USDT** | `check:feeds` reports per space and per token, so a zero is visible rather than assumed. A wrong Snapshot space id returns an empty list that reads as a quiet month. |
 
@@ -92,16 +92,24 @@ npm run cost-report            # what it actually spent, against each free tier
 ## 3. The licensing decisions (the real blocker)
 
 **Every free tier you are on is non-commercial.** Nine calls, each with three possible answers:
-upgrade, drop the key at launch, or — for NYT and the Guardian only — ship BYO-key. Six are
-decided (the aggregators, dropped on 2026-10-19); NYT, the Guardian and Yahoo remain.
+upgrade, drop the key at launch, or — for NYT and the Guardian only — ship BYO-key. Six were
+decided on 2026-10-19 (the aggregators, dropped). On **2026-11-25** the published terms were read
+again and you made four more calls; the record, with the quoted terms, is
+[`docs/decisions/2026-11-25-source-licences.md`](decisions/2026-11-25-source-licences.md). **Two
+things are still yours:** choose the price provider and the news route from the two proposals to
+follow, and read the NYT's and the Guardian's developer terms in a browser (they could not be
+fetched from the build container).
 
 | Source | Options |
 | --- | --- |
 | Newsdata, GNews, Currents, Marketaux, EODHD, Finnhub | **Decided 2026-10-19: drop at launch** — keep their keys out of production |
-| **Guardian** | Commercial key, drop, **or BYO-only** |
-| **NYT** | No self-serve commercial tier — negotiate, drop, **or BYO-only** |
-| **Yahoo Finance RSS** | Gray zone. Read the ToS and settle it — it is flagged `commercialOk: true` today, so it keeps fetching on the assumption you have decided |
-| **Yahoo Finance chart** (prices) | The same question for the price chart, which every company page leads with. Its own registry row since October (`yahoo_prices`), also `commercialOk: true` |
+| **Guardian** | **Decided 2026-11-25: drop at launch** — no server key in production. The visitor's own key is hidden on a public build until you or a lawyer reads the Guardian Open Platform's terms |
+| **NYT** | **Decided 2026-11-25: drop at launch** — `NYT_API_KEY` stays out of production. The visitor's own key is hidden the same way until https://developer.nytimes.com/terms is read. To bring the feature back, set `VISITOR_KEYS_TERMS_READ` in `lib/visitorKeysGate.ts` |
+| **Yahoo Finance RSS** | **Open.** Yahoo's terms (1 November 2026) do not clear an ad-supported site: feed items unchanged with a link, "You may not incorporate advertising into any Yahoo RSS Feed", no commercial reuse without permission. You asked how Yahoo itself is licensed and for a route like it: the news-licensing proposal follows. Until you decide, the feed is a named launch blocker |
+| **Yahoo Finance chart** (prices) | **Decided 2026-11-25: "Find a licensed provider"** — the chart endpoint has no licence. A comparison of paid end-of-day providers whose terms allow public display follows; Yahoo stays only while the site is private to you |
+| **DefiLlama** (crypto incidents) | **Decided 2026-11-25: off** — its terms are "personal, non-commercial" with no republishing without written consent. Off the feeds, and its stored rows are hidden on a public build |
+| **Etherscan** (stablecoin supply) | **Decided 2026-11-25: off** — its free plan is "for Personal & Research use only" and counts advertising as commercial. Do not set `ETHERSCAN_API_KEY` in production |
+| Internet Archive, Snapshot, mempool.space, Blockscout, Blockstream | **Unread** — no terms text could be obtained on 2026-11-25. Still flagged cleared on the July reading; worth a look in a browser, or a question to each |
 
 **Decided 2026-11-12: a federal agency's own work may be used where its site states no licence.**
 The owner's ruling ("Allow federal works"): work of the United States government has no copyright

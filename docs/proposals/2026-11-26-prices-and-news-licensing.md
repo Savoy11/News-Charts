@@ -27,7 +27,8 @@ sign-up only the owner can make; nothing below can be bought from a session.
 > (Recommended)" and "Bring back Currents": B1, B2 and B3 approved; B5 was not chosen and stays
 > proposed. B1 is done (batch 189). B3 is built and held: reading Currents' terms page again for the
 > build found a clause this proposal had not quoted, so the written confirmation B3 asked for comes
-> first (see B3). B2 is the next batch. Nothing has been bought or signed up for.
+> first (see B3). B2 turned out to be built already, and batch 190 measured and tightened it (see
+> B2). Nothing has been bought or signed up for.
 
 ---
 
@@ -172,7 +173,21 @@ source (db/063).
 
 ## B2. The company's press release on its 8-K row
 
-**Status:** APPROVED 2026-11-26 (owner: "8-K press releases (Recommended)"). The next batch.
+**Status:** APPROVED 2026-11-26 (owner: "8-K press releases (Recommended)"). Found already built;
+measured and tightened in batch 190.
+
+- **A correction to this option.** It was written as work to do ("already half built"). It was
+  built: since batches 42–56, in October, an 8-K's or a foreign company's 6-K's row is titled with
+  the headline of the press release filed with it, and its link opens the release on sec.gov
+  (`lib/secHeadlines.ts`). Batch 190 therefore measured it instead of building it again.
+- **Measured 2026-11-26.** The ten most recent such filings of each of 26 companies, 260 in all: 192
+  had a document to read and 148 gave a headline. Of the 44 that gave none, 35 are rightly none
+  (slide decks, shareholder letters, supplements, pages set as images) and nine were releases the
+  reader missed (GameStop's, JPMorgan's, seven of Toyota's notices). The reader's ninth version
+  reads those nine: 157 of the 260, the other 251 unchanged.
+- **What is still not there.** 68 of the 260 had no exhibit at all: an officer's change, a material
+  agreement or a vote reported in the 8-K's own text. Their rows keep the item's name. Putting the
+  filing's own first sentence on such a row would be new work, and is not approved here.
 
 - **Why:** free, public, already half built, and the announcement is what moves the price. It is
   the one kind of "full article" every listed company publishes with no licence to buy.

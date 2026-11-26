@@ -988,6 +988,45 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 190: the 8-K's press release on its row, measured, and nine missed releases read (2026-11-26)
+
+The owner's call of 2026-11-26, "8-K press releases (Recommended)": B2 of
+`docs/proposals/2026-11-26-prices-and-news-licensing.md`.
+
+- [x] **What B2 asked for was already on the pages.** The proposal wrote it as work to do ("already half built").
+      It was built: since batches 42–56 an 8-K's or a foreign company's 6-K's row is titled with the headline of the
+      press release filed with it, and its link opens the release on sec.gov (`lib/secHeadlines.ts`,
+      `lib/ingest/headlines.ts`). So this batch measured it instead of building it again, and the proposal's B2 now
+      says so.
+- [x] **Measured.** The ten most recent 8-Ks or 6-Ks that can carry a release (`mayCarryRelease`) of each of 26
+      companies (AAPL, F, BBY, KO, PFE, NVDA, JPM, ROKU, ETSY, PLUG, GME, CROX, FIZZ, TTC, HE, WKHS, AMD, DIS, XOM, BA,
+      RGCO, DMRC, INDB, LAMR, NIO, TM), read from EDGAR as ingest reads them, 1.1 s apart: 260 filings, 470 requests.
+      192 had a document to read and 148 gave a headline; 44 had a document and gave none; 68 had no exhibit at all.
+- [x] **The 44 read by hand.** 35 are rightly none: 13 slide decks, 6 shareholder letters, 7 supplements, recasts
+      and reconciliations, 3 notices that are no release (a note redemption, two board-meeting dates), and 6 pages set
+      as images, which hold no text to read (a JPMorgan release, RGC's four, Ford's slides). Nine were releases the
+      reader missed: GameStop's "GameStop Reminds Holders of October 30, 2026 Warrant Expiration Date", JPMorgan's
+      announcement of its next chief financial officer, and seven of Toyota's Tokyo Stock Exchange notices.
+- [x] **The reader's ninth version reads the nine.** A headline with a whole date in it after "of" is no longer taken
+      for a place and its date (no place ends on "of"; "Basel, Switzerland, January 28, 2013 Management announcement",
+      "London 10 July 2017 Trading update" and "Isle of Man …" still are). A release set as runs of text is read by
+      a dateline in small letters, only where a full stop comes before it and the company announces after it ("…at
+      that time. New York, November 17, 2026 – JPMorganChase announced today"), its letterhead ended by the marker
+      "IMMEDIATE", its headline the first of the sentences above (`sentences`: an abbreviation's point ends none). A
+      Tokyo Stock Exchange notice with no dateline and no "today announces" gives its title (`noticeTitle`): two of
+      the fields such a notice opens with, then the first line that opens "Notice", "Notification" or "Announcement"
+      with what it is of, a label in brackets before it left off, run on only where it cannot end.
+- [x] **Measured again, the same 260.** 157 give a headline (of the 192 with a document, 82%, from 77%): the nine,
+      and the other 251 filings read exactly as before, none changed and none lost.
+- [x] **Held by check.** Eight of the sampled documents join the saved cases (five headlines, three rightly none: a
+      results letter, a deck, a supplement), and Toyota's notice of 2022, saved as "none" because the reader had no
+      mark for it, now gives its title. check:sec-headlines 284 (152 saved cases, 27 of them none).
+- **Not done here.** The 68 filings with no exhibit keep their item's name ("Officer or director change"): what
+      happened is in the 8-K's own text. Reading that text's first sentence onto the row would be new work and is not
+      approved. A page set as an image would need the picture read.
+- **After deploying:** nothing to apply. Stored headlines are read again at ingest, 150 a company a run, as after
+      every new version.
+
 ## NC ledger — batch 189: Yahoo's headline feed dropped, Currents built and held, the owner's calls filed (2026-11-26)
 
 The owner's calls of 2026-11-26 on the proposal of that day, answered as quoted. Prices: "Tiingo (Recommended)". News:

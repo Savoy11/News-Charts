@@ -99,7 +99,8 @@ again and you made four more calls; the record, with the quoted terms, is
 **2026-11-26** you chose from
 [`docs/proposals/2026-11-26-prices-and-news-licensing.md`](proposals/2026-11-26-prices-and-news-licensing.md):
 Tiingo for prices, and for news to drop Yahoo's feed, put each company's own press release on its
-8-K row, and bring Currents back. **Three things are still yours:** send the email to Tiingo and the
+8-K row (already there since October, as it turned out; batch 190 measured it and read nine
+releases it had missed), and bring Currents back. **Three things are still yours:** send the email to Tiingo and the
 email to Currents (both written out below; nothing is bought and Currents stays off until each
 replies), and read the NYT's and the Guardian's developer terms in a browser (they could not be
 fetched from the build container).

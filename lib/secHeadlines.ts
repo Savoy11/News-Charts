@@ -18,9 +18,12 @@ import { UA } from "./contact";
  *    — whose title is the headline;
  * 2. a dateline in its first 40 lines — "DEARBORN, Mich., Sept. 1, 2004 –" — the headline above it;
  * 3. with no dateline, a lead paragraph in which the company announces today, the headline above it;
- * 4. with neither, a headline under its letterhead that announces results.
+ * 4. with neither, a Tokyo Stock Exchange notice's title under the fields such a notice opens with
+ *    (`noticeTitle`, batch 190);
+ * 5. with none of those, a headline under its letterhead that announces results.
  *
- * With none it gives nothing, and the filing keeps its item title.
+ * With none it gives nothing, and the filing keeps its item title: a slide deck, a shareholder
+ * letter, a statistical supplement, a page set as an image.
  */
 
 /**
@@ -37,9 +40,12 @@ import { UA } from "./contact";
  * length of time or "to" and a verb is read whole. 7 (batch 54): a page's count opening the line
  * that holds the page ("Page 1 of 21 UnitedHealth Group Reports…") is no part of the headline. 8
  * (batch 56): a headline cut after a reporting period or a "Non-" word is read whole, and a results
- * deck's cover loses the picture's caption and the company's name after its title.
+ * deck's cover loses the picture's caption and the company's name after its title. 9 (batch 190,
+ * from a sample of 260 recent filings of 26 companies): a headline with a date in it after "of" is no
+ * place and date, a release set as runs of text is read by a dateline in small letters after its
+ * sentences, and a Tokyo Stock Exchange notice with no dateline gives its title.
  */
-export const HEADLINE_VERSION = 8;
+export const HEADLINE_VERSION = 9;
 
 /** The exhibit types a press release is filed under: EX-99.x, and EX-20 before the 2004 rules. */
 const RELEASE_EXHIBIT = /^EX-(?:99|20)\b/i;
@@ -248,9 +254,19 @@ const DATELINE_IN_RUN_TODAY = new RegExp(String.raw`(?:^|\s)((${CAPS_PLACE})${ST
  */
 const CITY_BEFORE = /(?:^|\s)((?:(?:New|San|Los|Las|Santa|St\.?|Saint|Hong|Tel|Palo|Salt|Fort|Kuala|Rio|Buenos|Mexico)\s)?[A-Z][a-z][A-Za-z'’.-]*),\s*$/;
 
+/**
+ * …or a place in small letters with its whole date, where a sentence has just ended and the company
+ * announces under it: "…Barnum to become a Vice Chairman at that time. New York, November 17, 2026 –
+ * JPMorganChase announced today that…" (batch 190). Only after a full stop: with none before it the
+ * place's first word could be the headline's last.
+ */
+const DATELINE_IN_RUN_CASED = new RegExp(
+  String.raw`(?<=[a-z0-9)]\.["”]?\s)((${PLACE})${STATE},\s*${DATE_WITH_YEAR}\s*${DASH})\s*(?=[A-Z].{0,120}?\b(?:today|announced)\b)`
+);
+
 /** Where a dateline starts inside a run of text, or -1. */
 function datelineInRun(run: string): number {
-  for (const source of [DATELINE_IN_RUN, DATELINE_IN_RUN_TODAY]) {
+  for (const source of [DATELINE_IN_RUN, DATELINE_IN_RUN_TODAY, DATELINE_IN_RUN_CASED]) {
     const re = new RegExp(source.source, "g");
     for (let m = re.exec(run); m; m = re.exec(run)) {
       if (NOT_A_PLACE.test(m[2])) continue;
@@ -344,8 +360,9 @@ const NOISE = [
   new RegExp(String.raw`^${DATE},?\s+[A-Z][\w.'’-]*(?:,?\s+[A-Z][\w.'’-]*){0,2}$`, "i"),
   // a place and a date with no dash, on a line of their own or before a label: "Basel, Switzerland,
   // January 28, 2013 Management announcement" — its year required, or "MUFG Announces December 1
-  // Closing Date…" reads as one
-  new RegExp(String.raw`^${PLACE}${STATE}[,\s]+${DATE_WITH_YEAR}\b(?!\s*${DASH})`),
+  // Closing Date…" reads as one; and never words that end on "of", which no place does: "GameStop
+  // Reminds Holders of October 30, 2026 Warrant Expiration Date" is a headline (batch 190)
+  new RegExp(String.raw`^${PLACE}(?<!\s(?:of|de|la))${STATE}[,\s]+${DATE_WITH_YEAR}\b(?!\s*${DASH})`),
 ];
 /** A rule between lines: "-", "* * *", "|". */
 const SEPARATOR = /^[|•·*_=\s-]+$/;
@@ -700,6 +717,36 @@ export function listedRelease(lines: string[]): string | null {
 }
 
 /**
+ * A Tokyo Stock Exchange disclosure with no dateline and no "today announces": Toyota's "Notice
+ * Concerning the Status of the Repurchase of Shares of our Common Stock", under the fields such a
+ * notice opens with ("Company name:", "Representative:", "(Code number: 7203…)", "Inquiries:") and
+ * over a text that "hereby announces" (batch 190). Two of the fields in the first lines mark the
+ * document; its title is the first line after them that opens "Notice", "Notification" or
+ * "Announcement" with what it is of, a label in brackets before it left off ("(Changes to Disclosed
+ * Matters) Notice of Partial Amendment to the…"), read with the line it wraps onto only where it
+ * cannot end ("…for Disposition of" / "Treasury Stock under…"): the "Dear Shareholder," under a
+ * whole title is no part of it.
+ */
+const NOTICE_FIELD =
+  /^\(?(?:company\s+name|name\s+and\s+title|(?:name\s+of\s+)?representative|inquiries|contact\s+person|code\s+number|securities\s+code|stock\s+code|telephone(?:\s+number)?)\b|^to\s+(?:all\s+shareholders|whom\s+it\s+may\s+concern)\s*:?$/i;
+const NOTICE_TITLE = /^(?:\([^)]{3,40}\)\s+)?((?:Notice|Notification|Announcement)\s+(?:of|on|concerning|regarding|about|with\s+respect\s+to)\s.*)$/i;
+/** How far down the fields and the title may sit. */
+const NOTICE_REACH = 16;
+export function noticeTitle(lines: string[]): string | null {
+  const top = lines.slice(0, NOTICE_REACH);
+  const fields = top.flatMap((l, i) => (NOTICE_FIELD.test(l) ? [i] : []));
+  if (fields.length < 2) return null;
+  for (let i = fields[fields.length - 1] + 1; i < top.length; i++) {
+    const m = NOTICE_TITLE.exec(top[i]);
+    if (!m) continue;
+    let title = m[1];
+    for (let j = i + 1; j <= i + 2 && j < lines.length && WRAPS_AFTER.test(title) && continues(title, lines[j]); j++) title = `${title} ${lines[j]}`;
+    return /[.:]$/.test(title) ? null : finish(title);
+  }
+  return null;
+}
+
+/**
  * A dateline's first city, left before it where the dateline was read from its second: "OSAKA, Japan,
  * and" — on its own, or one word at the end of a run of text ("…Congress Osaka, JAPAN and"), so a
  * headline's last word is not taken for a city's first.
@@ -745,12 +792,12 @@ export function pressReleaseHeadline(doc: string): string | null {
   const listed = listedRelease(datelined ? lines.slice(0, datelined.line) : lines);
   if (listed) return listed;
   const dateline = datelined ?? findLead(lines);
-  if (!dateline) return resultsHeadline(lines);
+  if (!dateline) return noticeTitle(lines) ?? resultsHeadline(lines);
   const head = lines.slice(0, dateline.line);
   if (dateline.at > 0) {
     // …less the dateline's own first city: "OSAKA, Japan, and CAMBRIDGE, Massachusetts, February 1, 2024 –"
     const before = lines[dateline.line].slice(0, dateline.at).trim().replace(FIRST_CITY, "").trim();
-    if (before) head.push(...splitRun(before));
+    if (before) head.push(...splitRun(before).flatMap(sentences));
   }
   const blocks = headlineBlocks(head);
   let lastLetterhead = -1;
@@ -873,12 +920,35 @@ function splitRun(run: string): string[] {
   const tokens = run.split(/[•·▪●■]/)[0].split(/\s+/);
   let cut = -1;
   tokens.forEach((t, i) => {
-    if (URLISH.test(t) || PHONE.test(t) || /^news$/i.test(t)) cut = i;
+    // …or the release marker in capitals: "News release: IMMEDIATE JPMorganChase announces…" (batch 190)
+    if (URLISH.test(t) || PHONE.test(t) || /^news$/i.test(t) || t === "IMMEDIATE" || (t === "RELEASE" && tokens[i - 1] === "IMMEDIATE")) cut = i;
     // the time it went out: "For Release: Tuesday, Oct. 25, 2022, at 6:30 a.m. ET"
     if (/^(?:ET|EST|EDT|CT|CST|CDT|PT|PST|PDT|GMT|CET)$/.test(t) && /^[ap]\.?m\.?$/i.test(tokens[i - 1] ?? "")) cut = i;
   });
   const rest = tokens.slice(cut + 1).join(" ").trim();
   return rest ? [rest] : [];
+}
+
+/**
+ * A run that ends as a sentence, each of its sentences a line with its full stop off: the headline
+ * and the line under it, where a release sets both as text — "JPMorganChase announces Bregje de Best
+ * will succeed Jeremy Barnum as Chief Financial Officer…. Barnum to become a Vice Chairman at that
+ * time." (batch 190). An abbreviation's point and an initial's end no sentence; a run that does not
+ * end on a full stop is left whole.
+ */
+function sentences(run: string): string[] {
+  if (!/[a-z0-9)]\.$/.test(run) || ABBREV_END.test(run)) return [run];
+  const out: string[] = [];
+  let from = 0;
+  const stop = /\.\s+(?=[A-Z])/g;
+  for (let m = stop.exec(run); m; m = stop.exec(run)) {
+    const upTo = run.slice(from, m.index + 1);
+    if (ABBREV_END.test(upTo) || /(?:^|\s)[A-Z]\.$/.test(upTo)) continue;
+    out.push(upTo.slice(0, -1).trim());
+    from = m.index + m[0].length;
+  }
+  out.push(run.slice(from).replace(/\.$/, "").trim());
+  return out.filter(Boolean);
 }
 
 const ARCHIVES = "https://www.sec.gov";

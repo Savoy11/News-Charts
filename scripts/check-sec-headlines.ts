@@ -15,6 +15,7 @@ import {
   headlineCase,
   listedRelease,
   mayCarryRelease,
+  noticeTitle,
   pressReleaseHeadline,
   readFilingHeadline,
   releaseExhibits,
@@ -345,6 +346,42 @@ async function main(): Promise<void> {
     pressReleaseHeadline(asDoc(["Acme to Announce First Quarter 2026", "Financial Results on April 28", "AKRON, Ohio, April 1, 2026 — Acme will report."])) === "Acme to Announce First Quarter 2026 Financial Results on April 28" &&
       pressReleaseHeadline(asDoc(["Acme Reports Results for First Quarter 2026", "Sales Rise in Every Region", "AKRON, Ohio, April 21, 2026 — Acme today reported results."])) === "Acme Reports Results for First Quarter 2026");
   check("titles stored by batch 54's reading are read again: Stellantis, TotalEnergies, Toyota", HEADLINE_VERSION >= 8);
+  // batch 190: 260 recent filings of 26 companies read on 2026-11-26; nine releases that gave no headline
+  const wireUnder = "GRAPEVINE, Texas – (BUSINESS WIRE) –– Acme Corp. (NYSE: ACM) today reminds holders that its warrants will expire.";
+  check("a headline with a whole date in it after \"of\" is no place and date: \"Acme Reminds Holders of October 30, 2026 Warrant Expiration Date\"",
+    pressReleaseHeadline(asDoc(["Acme Reminds Holders of October 30, 2026 Warrant Expiration Date", "October 19, 2026", wireUnder])) === "Acme Reminds Holders of October 30, 2026 Warrant Expiration Date",
+    String(pressReleaseHeadline(asDoc(["Acme Reminds Holders of October 30, 2026 Warrant Expiration Date", "October 19, 2026", wireUnder]))));
+  const leadUnder = "Acme AG (SIX: ACM) today announced that its board has named Jane Doe chief executive, effective on the first of March, after a search of six months.";
+  check("  …a place and its date before a label still is, with a comma or in Europe's order with none",
+    pressReleaseHeadline(asDoc(["Basel, Switzerland, January 28, 2013 Management announcement", "Acme Names Jane Doe Chief Executive", leadUnder])) === "Acme Names Jane Doe Chief Executive" &&
+      pressReleaseHeadline(asDoc(["London 10 July 2017 Trading update", "Acme Names Jane Doe Chief Executive", leadUnder])) === "Acme Names Jane Doe Chief Executive" &&
+      pressReleaseHeadline(asDoc(["Isle of Man 10 July 2017 Announcement", "Acme Names Jane Doe Chief Executive", leadUnder])) === "Acme Names Jane Doe Chief Executive");
+  const runLetterhead = "Acme Holdings & Co. 270 Park Avenue, NY 10017-2014 NYSE symbol: ACM www.acme.example News release: IMMEDIATE ";
+  const saidUnder = "New York, November 17, 2026 – Acme announced today that Jane Doe, Chief Financial Officer of its Commercial Bank, will succeed John Roe as CFO of the company following its first-quarter 2027 financial reporting.";
+  const asRun = (head: string) => pressReleaseHeadline(`<p>${runLetterhead}${head} ${saidUnder}</p>`);
+  check("a release set as a run of text: the headline is the first sentence after \"IMMEDIATE\", over a dateline in small letters that follows a full stop",
+    asRun("Acme announces Jane Doe will succeed John Roe as Chief Financial Officer following first-quarter 2027 financial reporting. Roe to become a Vice Chairman at that time.") ===
+      "Acme announces Jane Doe will succeed John Roe as Chief Financial Officer following first-quarter 2027 financial reporting",
+    String(asRun("Acme announces Jane Doe will succeed John Roe as Chief Financial Officer following first-quarter 2027 financial reporting. Roe to become a Vice Chairman at that time.")));
+  check("  …an abbreviation's point and an initial's end no sentence",
+    asRun("Acme Inc. names Jane Q. Doe to succeed John Roe as Chief Financial Officer. Roe to become a Vice Chairman.") === "Acme Inc. names Jane Q. Doe to succeed John Roe as Chief Financial Officer",
+    String(asRun("Acme Inc. names Jane Q. Doe to succeed John Roe as Chief Financial Officer. Roe to become a Vice Chairman.")));
+  check("  …and with no full stop before it no place in small letters is looked for: a headline's last words could be the place's first",
+    asRun("Acme Announces the Results of Its Annual Meeting and the Election of Three New Directors to Its Board") === null,
+    String(asRun("Acme Announces the Results of Its Annual Meeting and the Election of Three New Directors to Its Board")));
+  const noticeFields = ["September 3, 2026", "Company name: ACME MOTOR CORPORATION", "Representative: Jane Doe, President", "(Code number:7203; TSE Prime/NSE Premier)", "Inquiries: John Roe, General Manager", "(Telephone: 0565-28-2121)"];
+  const noticeBody = "We hereby inform you of the repurchase of shares conducted in August pursuant to Article 156 of the Companies Act of Japan as applied to the Company.";
+  check("a Tokyo Stock Exchange notice with no dateline and no \"today\": its title under the fields it opens with, the line in brackets under it no part",
+    pressReleaseHeadline(asDoc([...noticeFields, "Notice Concerning the Status of the Repurchase of Shares of our Common Stock", "(Repurchase of Shares under our Articles of Incorporation)", noticeBody])) ===
+      "Notice Concerning the Status of the Repurchase of Shares of our Common Stock");
+  check("  …a label in brackets before the title left off, a title cut after \"to the\" read whole, the \"Dear Shareholder,\" under a whole one no part",
+    noticeTitle([...noticeFields, "(Changes to Disclosed Matters) Notice of Partial Amendment to the", "Share-Based Compensation Plan for Employees", noticeBody]) === "Notice of Partial Amendment to the Share-Based Compensation Plan for Employees" &&
+      noticeTitle(["(Securities Code 7203)", "June 17, 2026", "To All Shareholders:", "ACME MOTOR CORPORATION", "Notice of Resolutions Adopted at the 122nd Ordinary General Shareholders’ Meeting", "Dear Shareholder,", noticeBody]) ===
+        "Notice of Resolutions Adopted at the 122nd Ordinary General Shareholders’ Meeting");
+  check("  …none with one of the fields only, with no title that says what it is of, or with a sentence in the title's place",
+    noticeTitle(["Inquiries: John Roe", "Notice of Annual Meeting of Shareholders", noticeBody]) === null && noticeTitle([...noticeFields, "Notice", noticeBody]) === null &&
+      noticeTitle([...noticeFields, "Notice of the board's decision is given below.", noticeBody]) === null && noticeTitle([...noticeFields, "Acme Reports Results", noticeBody]) === null);
+  check("titles stored by batch 56's reading are read again: GameStop's, JPMorgan's, Toyota's notices", HEADLINE_VERSION >= 9);
 
   console.log("\nWhich 8-Ks and 6-Ks are asked about");
   const asked = (label: string, items?: string) => mayCarryRelease(eightK("000001292719000001", "2019-01-01", label, items));

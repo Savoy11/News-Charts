@@ -703,9 +703,14 @@ AI summary nodes. **I'd hold off**: each is another adapter shipped against an u
 and six are already waiting on §1. Validating those beats adding to the pile.
 
 **Your calls of 2026-11-28 settle these:** on-chain governance is parked, AI summary nodes are on
-hold until after launch, and DefiLlama's TVL events are not to be built (DefiLlama is off). Two
-comparisons you asked for that day come next: a licensed news archive for 1963–2017, and a web
-search engine.
+hold until after launch, and DefiLlama's TVL events are not to be built (DefiLlama is off). The two
+comparisons you asked for that day are written:
+[`docs/proposals/2026-11-28-news-archive-and-web-search.md`](proposals/2026-11-28-news-archive-and-web-search.md).
+**Yours to mark** (`APPROVED`, `REJECTED` or `DEFERRED`): for the 1963–2017 news gap, a three-year
+licence from NewsAPI.ai (from $90 a month, with one question to ask it first), enquiries to the
+Times and to Reuters for the older decades, a free count of Wikipedia's dated entries, or leaving
+the gap to the records already held; for web search, Mojeek's Business plan (about £22.50 a month
+at 250 requests a day, after a trial), Brave by negotiation, or none.
 
 One was genuinely blocked, not deferred, and is now moot with DefiLlama off: **confirming exploits on-chain** needs a transaction
 reference DefiLlama may not carry. (The macro-event overlay, blocked here before for want of

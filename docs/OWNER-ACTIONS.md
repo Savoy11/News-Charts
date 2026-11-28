@@ -298,7 +298,10 @@ Not blocking launch, but they shape what gets built next:
   right number depends on real demand, which does not exist yet.
 - **Affiliate links** — whether at all, and if so the neutrality rule and per-link disclosure.
   Nothing is built; the checklist records the constraints.
-- **Accounts, i18n, geo-access** — each is a product direction rather than a task.
+- **Accounts, i18n, geo-access** — each is a product direction rather than a task. **Decided
+  2026-11-28:** no accounts, English only, no country blocked
+  ([`docs/decisions/2026-11-28-product-choices.md`](decisions/2026-11-28-product-choices.md), with
+  your five other product calls of that day).
 
 Raised by the November batches, each recorded in the master checklist:
 
@@ -699,6 +702,11 @@ On-chain `P2` work (Tally governance, DefiLlama TVL, paginated backfill), NYT ke
 AI summary nodes. **I'd hold off**: each is another adapter shipped against an unverified payload,
 and six are already waiting on §1. Validating those beats adding to the pile.
 
-One is genuinely blocked, not deferred: **confirming exploits on-chain** needs a transaction
+**Your calls of 2026-11-28 settle these:** on-chain governance is parked, AI summary nodes are on
+hold until after launch, and DefiLlama's TVL events are not to be built (DefiLlama is off). Two
+comparisons you asked for that day come next: a licensed news archive for 1963–2017, and a web
+search engine.
+
+One was genuinely blocked, not deferred, and is now moot with DefiLlama off: **confirming exploits on-chain** needs a transaction
 reference DefiLlama may not carry. (The macro-event overlay, blocked here before for want of
 verifiable FOMC/CPI dates, was built and verified against both live sites on 2026-10-20 — batch 21.)

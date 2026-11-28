@@ -20,6 +20,11 @@ against those records. Where the two disagree, the Finance Now record wins.
 | Affiliate stance | Planned, built dark, no paid placement in anything ranked. | Matches the affiliate initiative in `docs/MASTER-CHECKLIST.md`: links may exist only where ranking cannot read them. |
 | Pricing | Free / Core $9.99 / Pro $29 / Advisor $99, plus a $299 bring-your-own-key desktop edition. | **A working plan, to be reassessed — not a decision to build against.** Which product each tier belongs to is in the Finance Now record. |
 
+**2026-11-28, D3 as applied here.** D3 itself is unchanged. Asked what the site should do about
+languages and countries, the owner answered "English, no blocking": written for US readers in
+English, no country blocked, no geo-detection built (`docs/decisions/2026-11-28-product-choices.md`;
+NC-091 and NC-092 closed).
+
 When one of these changes, update this file, add a dated line saying what changed, and add the
 same line to the NC ledger. A summary that has drifted from its record is worse than none,
 because it will be trusted.

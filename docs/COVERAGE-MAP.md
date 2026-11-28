@@ -133,7 +133,9 @@ relevance order, since sorting by its uncurated date field promoted mis-catalogu
   window will look sparser than it was. **This is the single biggest hole in the corpus.**
   Priced on 2026-11-28 at the owner's asking (`docs/proposals/2026-11-28-news-archive-and-web-search.md`):
   no archive read licenses headline display for 1963–2013 at a published price, and one self-serve
-  licence covers 2014–2017.
+  licence covers 2014–2017. The owner's call that day: leave the gap to the records held. Wikipedia's
+  dated Current events entries were counted first (2002–2017: about 1,450 that are news about a
+  listed company, with half of the matches on twenty names) and are not built.
   For vehicle makers it is partly filled: NHTSA recalls reach back to 1966 (Ford has 861 of 10,000
   vehicles or more), the one free source found for that stretch that may be used commercially
   (`docs/proposals/2026-10-22-news-sources.md`), and NHTSA's defect investigations to 1975 (1,579

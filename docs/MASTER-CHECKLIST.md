@@ -988,6 +988,39 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 192: a news archive for 1963–2017 and a web search engine, compared (2026-11-28)
+
+The owner's calls of 2026-11-28: "Price a news archive" (NC-072) and "Write the comparison" of web search engines
+(NC-070). Nothing is built: the comparison is `docs/proposals/2026-11-28-news-archive-and-web-search.md`, each option
+to be marked `APPROVED`, `REJECTED` or `DEFERRED`. No sign-up, no key, no purchase, no form, no email.
+
+- [x] **The news gap, priced (NC-072).** Nothing read licenses headline-and-link display for 1963–2013 at a published
+      price. The archives that hold those decades are the newspapers' and wire services' own; the Times's, Dow
+      Jones's, LexisNexis's, ProQuest's, NewsBank's and the AP's pages refused to be fetched or failed, so their
+      terms and prices are unread, and Reuters's page in LSEG's catalogue ("History: From 1900") gives no price.
+      GDELT's older records hold no headline and no link before April 2013. One self-serve licence fits, for
+      2014–2017: NewsAPI.ai, whose terms name the use ("displaying article headlines … and links to the original
+      articles to your users"; "These Terms set no retention period"), from $90 a month, about $1,300 for one page
+      of results for every stock and ETF ticker. Free partial fills: Wikipedia's Current events pages from 2002
+      (to be counted before anything is built) and more government records.
+- [x] **Web search engines, compared (NC-070).** Mojeek's published terms allow all of it on its Business plan:
+      commercial use, display "together with advertising from other parties, without attribution", and indefinite
+      retention, at £3 per 1,000 requests. Brave bars storing results on its self-serve plan and sells storage rights
+      by negotiation. Kagi, You.com, Exa, Tavily and Bing's replacement forbid or do not grant storing. SerpApi and
+      its peers resell Google's results by scraping, with Google's suit against SerpApi still open. Two questions for
+      Mojeek first (its "search index" clause; retention after the plan ends), and a trial to see whether its dates
+      can place a row on a day.
+- [x] **Bing and Google are gone (NC-071 closed).** Microsoft: "Bing Search APIs will be retired on August 11, 2025."
+      Google: "The Custom Search JSON API is closed to new customers", ending January 1, 2027. The ledger's two
+      notes that these were unverified are now settled.
+- [x] **How it was read.** Two research passes read each provider's own pages; a page that refused the fetch was left
+      unread and is listed for a person to open. Every provider sentence quoted in the proposal (43) was then
+      found a second time in the saved text of its page.
+- [ ] **Owner:** mark the options. Recommended: for the gap, the free Wikipedia count first, NewsAPI.ai only if it
+      confirms headlines may stay public after cancelling, otherwise leave the gap to the records held; for web
+      search, none, unless a small Mojeek trial is wanted first.
+- **Counted:** the ledger has 26 open, 116 closed, 14 parked and 14 blocked.
+
 ## NC ledger — batch 191: the owner's eight product choices filed (2026-11-28)
 
 The ledger's "product choices" were thirteen items that were directions, not tasks. Asked in two dialogs on 2026-11-28,
@@ -14786,9 +14819,10 @@ Today Wikipedia does double duty badly: `getTopicTimeline` slices one or two *Hi
 article** — dense on screen, redundant as sourcing. Reframe Wikipedia as **skeleton + source
 index**, and add real archives to close the **1963–2017 gap** (Chronicling America covers
 pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
-*(2026-11-28, the owner's call on the gap: "Price a news archive". A comparison of the archives that
-license headline-and-link display for those years, with their costs, is to follow in `docs/proposals/`;
-NC-072.)*
+*(2026-11-28, the owner's call on the gap: "Price a news archive". The comparison is Part A of
+`docs/proposals/2026-11-28-news-archive-and-web-search.md` (batch 192): nothing read
+licenses headline display for 1963–2013 at a published price, and one self-serve licence fits
+2014–2017; NC-072.)*
 
 ### Coverage map (which source owns which era)
 
@@ -14829,15 +14863,18 @@ NC-072.)*
       item asked for — see the BYO-key item under Cross-cutting, which is still open.
 - [x] ~~`P1` **Guardian Open Platform adapter** (to 1999)~~ — **shipped in PR #9**
       (`getGuardianNews`), same server-env caveat as NYT above.
-- [ ] `P2` **Google Programmable Search** (Custom Search JSON API) as a **present-day discovery
-      layer only** — accept the 100/day free cap and weak historical date-filtering; it searches
+- [x] `P2` **Google Programmable Search** (Custom Search JSON API) as a **present-day discovery
+      layer only** — **not available:** Google's own page, read 2026-11-28, says "The Custom Search
+      JSON API is closed to new customers", with the service ending on January 1, 2027 (NC-071,
+      closed in batch 192). As written: accept the 100/day free cap and weak historical date-filtering; it searches
       the live web, not archives, so it is *not* a time machine.
 - [ ] `P1` **Evaluate an alternative search engine to Google** — Bing Web Search, Brave Search
       API, SerpAPI, Marginalia, DuckDuckGo (and similar). Compare historical reach, date-filter
       quality, quota, cost, and ToS for an ad-supported product; pick the best discovery engine,
       which may replace Google rather than supplement it. *(2026-11-28, the owner's call: "Write
-      the comparison". It is to follow in `docs/proposals/`, and must say whether each engine's terms
-      allow storing a result; NC-070.)*
+      the comparison". It is Part B of `docs/proposals/2026-11-28-news-archive-and-web-search.md`
+      (batch 192): Mojeek's Business plan allows storing a result and showing it beside advertising,
+      Brave sells that by negotiation, and Bing's and Google's APIs are no longer sold; NC-070.)*
 
 ### Cross-cutting
 

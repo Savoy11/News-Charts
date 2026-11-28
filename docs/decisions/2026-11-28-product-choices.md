@@ -30,7 +30,8 @@ Neither was asked. Both rest on DefiLlama, which the owner turned off on 2026-11
 
 ## What follows
 
-- Two comparisons for the owner to pick from, each a proposal under `docs/proposals/`: the news
-  archive for 1963–2017 (call 1) and the web search engine (call 4).
+- Two comparisons for the owner to pick from, written in batch 192 as
+  `docs/proposals/2026-11-28-news-archive-and-web-search.md`: the news archive for 1963–2017
+  (call 1, its Part A) and the web search engine (call 4, its Part B).
 - To reopen any of the parked or closed calls, say so: accounts (and with them email alerts),
   Spanish menus or country blocking, AI summaries, the newspapers' decade walk, on-chain governance.

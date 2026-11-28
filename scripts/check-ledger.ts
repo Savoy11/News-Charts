@@ -79,7 +79,8 @@ function main(): void {
       else if (!linesHold(lines, s.lines, s.quote)) moved.push(`${it.id} ${s.file}:${s.lines} "${s.quote.slice(0, 50)}"`);
     }
   }
-  check(`every file an open item cites exists (${cited} references with lines and a quote)`, cited > 100 && missing.length === 0, missing);
+  // some, not a set number: the count falls as items close (106 after batch 191's closures, from 123)
+  check(`every file an open item cites exists (${cited} references with lines and a quote)`, cited > 0 && missing.length === 0, missing);
   check("  …and the lines each cites hold its quote: run `npm run ledger:reanchor` after a document moves", moved.length === 0, `${moved.length}: ${moved.slice(0, 6).join("; ")}`);
   const requoted = ledger.outstanding.flatMap((it) => (it.sources ?? []).filter((s) => s.quote_was));
   check("  …a quote whose text was rewritten keeps the old one beside it, dated", requoted.every((s) => /^\d{4}-\d{2}-\d{2}$/.test(s.requoted_on ?? "") && s.quote_was !== s.quote), requoted.length);

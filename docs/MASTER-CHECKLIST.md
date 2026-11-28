@@ -988,6 +988,32 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 191: the owner's eight product choices filed (2026-11-28)
+
+The ledger's "product choices" were thirteen items that were directions, not tasks. Asked in two dialogs on 2026-11-28,
+the owner made eight calls; the record, with each question and the answer as quoted, is
+`docs/decisions/2026-11-28-product-choices.md`. Nothing was built and nothing was bought.
+
+- [x] **"No accounts (Recommended)".** The site stays account-free: follows and settings live in the visitor's
+      browser and no personal data is held. NC-089 closed. Email alerts need an identity to send to, so NC-081 is
+      parked until the owner reopens accounts.
+- [x] **"English, no blocking (Recommended)".** Written for US readers in English (D3 unchanged), no country blocked,
+      no geo-detection, no translation. NC-091 and NC-092 closed; cookie consent for EU and UK visitors stays NC-125.
+- [x] **"Keep best 25 (Recommended)".** The Library of Congress decade walk is not built. NC-007 closed.
+- [x] **"Hold off (Recommended)"** on AI-written summaries: no server-side AI spending before launch. NC-079 parked.
+- [x] **"Leave until beta (Recommended)"** for the AI ranking panel's quality test with a real key. NC-087 now waits
+      on the beta (NC-088).
+- [x] **"Park it (Recommended)"** for on-chain governance votes: with the other crypto ideas. NC-061 parked.
+- [x] **Two items fell away with DefiLlama, off since the owner's call of 2026-11-25:** its protocol launches and TVL
+      events (NC-062, not to be built) and confirming its exploits on-chain (NC-060, moot). Both closed.
+- [ ] **"Price a news archive"** (NC-072). The owner wants the cost of a licensed archive for 1963–2017 before
+      deciding. A comparison is being researched: which archives license headline-and-link display, what their
+      terms say about storing and showing it, and what they charge.
+- [ ] **"Write the comparison"** (NC-070). Web search engines as a discovery layer, compared on reach, date
+      filters, cost, and whether their terms allow storing a result on a site with advertising. Being researched;
+      NC-071 (Google's) waits on it.
+- **Counted:** the ledger has 26 open, 115 closed, 14 parked and 15 blocked (from 34, 109, 11 and 16).
+
 ## NC ledger — batch 190: the 8-K's press release on its row, measured, and nine missed releases read (2026-11-26)
 
 The owner's call of 2026-11-26, "8-K press releases (Recommended)": B2 of
@@ -11793,8 +11819,10 @@ is 187/187 — every check green for the first time since the seven went stale, 
       - *Derived from [`docs/proposals/2026-10-17-proposals.md`](proposals/2026-10-17-proposals.md)
         #9, approved 2026-10-19 with `corporate_action` as the event kind. Importance
         low-medium · Efficiency high · Practicality medium (an unverified field).*
-- [ ] `P2` **LoC decade walk — measured 2026-08-12, and it is a real trade-off rather than a
-      clear win. Do not build it without deciding the two questions below.**
+- [x] `P2` **LoC decade walk — measured 2026-08-12, and it is a real trade-off rather than a
+      clear win. Do not build it without deciding the two questions below.** ✅ **Decided
+      2026-11-28 (owner): "Keep best 25"** — the walk is not built, and the flat cap stays
+      (`docs/decisions/2026-11-28-product-choices.md`; NC-007).
       - **It does reach material relevance ranking never returns.** An unfiltered `"bicycle"`
         query returns 40 results spanning 1895–1962; adding `dates=1870/1879` and `dates=1860/1869`
         returns 20 apiece from decades the unfiltered query never touched.
@@ -14625,12 +14653,18 @@ machine closes that gap.
       *millions* of USD; if that is wrong every figure is off by 10⁶ — glaring on screen
       ("$600" where "$600m" belongs), invisible offline. `npm run check:feeds` reports each
       target so it is visible immediately.
-- [ ] `P2` **Confirm exploits on-chain before ingest** — the stronger guarantee the item above
+- [x] `P2` **Confirm exploits on-chain before ingest** — moot since 2026-11-25: the exploit rows
+      were DefiLlama's incident list, which the owner turned off that day, so nothing is left to
+      confirm (NC-060, closed 2026-11-28). As written: the stronger guarantee the item above
       originally asked for. Needs a transaction reference per incident and a check against the
       chain, on the pattern of `npm run verify:addresses`. Until then the `exploit` kind and its
       copy carry the weaker claim honestly rather than overstating it.
 - [ ] `P2` **Tally / on-chain governance** for executed proposals (parameter changes).
-- [ ] `P2` **DefiLlama** protocol launches / TVL inflection events.
+      ⏸ **Parked 2026-11-28 (owner): "Park it"** — with the other crypto ideas, as the build scope is
+      listed securities (NC-061).
+- [x] `P2` **DefiLlama** protocol launches / TVL inflection events. **Not to be built:** DefiLlama's
+      terms are personal and non-commercial and the owner turned it off on 2026-11-25 (NC-062, closed
+      2026-11-28).
 - [x] ~~`P2` **Industry/sector grouping** for crypto~~ — done 2026-07-28, `lib/onchain/sectors.ts`:
       `/industry/sector-stablecoins`, `sector-layer-1`, `sector-defi-governance`.
       **Reuses `kind = 'industry'` rather than adding a fourth subject kind.** A new kind would
@@ -14752,6 +14786,9 @@ Today Wikipedia does double duty badly: `getTopicTimeline` slices one or two *Hi
 article** — dense on screen, redundant as sourcing. Reframe Wikipedia as **skeleton + source
 index**, and add real archives to close the **1963–2017 gap** (Chronicling America covers
 pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
+*(2026-11-28, the owner's call on the gap: "Price a news archive". A comparison of the archives that
+license headline-and-link display for those years, with their costs, is to follow in `docs/proposals/`;
+NC-072.)*
 
 ### Coverage map (which source owns which era)
 
@@ -14798,7 +14835,9 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
 - [ ] `P1` **Evaluate an alternative search engine to Google** — Bing Web Search, Brave Search
       API, SerpAPI, Marginalia, DuckDuckGo (and similar). Compare historical reach, date-filter
       quality, quota, cost, and ToS for an ad-supported product; pick the best discovery engine,
-      which may replace Google rather than supplement it.
+      which may replace Google rather than supplement it. *(2026-11-28, the owner's call: "Write
+      the comparison". It is to follow in `docs/proposals/`, and must say whether each engine's terms
+      allow storing a result; NC-070.)*
 
 ### Cross-cutting
 
@@ -15088,7 +15127,8 @@ Each idea checked against the codebase before listing — several were cheaper t
         every realistic phrasing and inverted them all.
       - The lexicon is market-specific: "beat", "miss" and "cut" are near-meaningless in general
         English and unambiguous here. BYO-model rescoring can refine it later at no server cost.
-- [ ] `P2` **AI primary-event summary nodes.** Overlaps the planned cross-feed near-duplicate
+- [ ] `P2` **AI primary-event summary nodes.** ⏸ **Parked 2026-11-28 (owner): "Hold off"** — no
+      server-side AI spending before launch (NC-079). As written: Overlaps the planned cross-feed near-duplicate
       collapsing (hardening list) — do the heuristic clustering there first; the DB's existing
       syntheses layer (synthesis + synthesis_citations tables) is the natural home for an
       AI-written summary node over a cluster. Sequence: cluster → then summarize.
@@ -15144,7 +15184,9 @@ Each idea checked against the codebase before listing — several were cheaper t
         an annotation carries no source key.
       - Bounded (500 chars, 200 per subject) so a runaway paste cannot fill the origin's storage
         and take prefs and follows down with it. Malformed stored JSON is filtered, not thrown on.
-- [ ] `P3` **Saved-focus alerts (email/push on new matches).** Real retention value, and the only
+- [ ] `P3` **Saved-focus alerts (email/push on new matches).** ⏸ **Parked 2026-11-28:** the owner's
+      call on accounts was "No accounts", and an alert needs an identity to send to (NC-081). As
+      written: Real retention value, and the only
       idea in this file that needs infrastructure which does not exist.
       - **Blocked on, in order:** (1) the `P2` **accounts** decision below — this needs a user
         identity to alert, and taking one makes the project a **data controller**, with a user
@@ -15331,21 +15373,27 @@ look like") went to a **separate business checklist** worked independently of bo
         Worth checking with `npm run ingest -- --ticker F` before judging the feature.
         *(2026-10-21, batch 22, NC-077: ingest now reads every daily close since listing — Ford's
         13,709 since June 1972 — where it read ten years, so a decades-old event has a price.)*
-- [ ] `P1` **Test and fine-tune the AI tools.** The BYO-key ranking panel is the only AI surface
+- [ ] `P1` **Test and fine-tune the AI tools.** *(2026-11-28, the owner's call: "Leave until
+      beta": tuned when real use shows a problem; NC-087 waits on the beta.)* The BYO-key ranking panel is the only AI surface
       here: check ranking quality across subject types, the 0.35 relevance cut-off, batch size,
       and behaviour when a model returns junk. (CAEP's 11 agents are tracked separately.)
 - [ ] `P1` **Beta launch.** ⚠ Blocked by the ⛔ pre-release feed gate above — a public beta is a
       release, so licences and feed health must be settled first, not after.
-- [ ] `P2` **Security deep-dive + what an account looks like (Google login?).** ⚠ Note the
+- [x] `P2` **Security deep-dive + what an account looks like (Google login?).** ✅ **Decided
+      2026-11-28 (owner): "No accounts"** — the site stays account-free and holds no personal data
+      (NC-089). ⚠ Note the
       architectural shift: News Charts is deliberately accounts-free today — follows, prefs and
       view state are localStorage, and "your key never leaves your machine" is currently
       literally true. Accounts add a user table, session security, and a privacy-policy surface.
       They are also the prerequisite for the `P3` saved-focus alerts already parked above.
       Decide whether the retention gain is worth becoming a data controller.
-- [ ] `P2` **Translation / i18n for the site.** Note what actually needs translating: the UI
+- [x] `P2` **Translation / i18n for the site.** ✅ **Decided 2026-11-28 (owner): "English, no
+      blocking"** — English only; nothing is translated (NC-091). Note what actually needs translating: the UI
       chrome can be localised, but the *events* are English-language sources — be explicit
       rather than shipping a half-translated page.
-- [ ] `P2` **Which countries can access the site** (implementation side: geo-detection,
+- [x] `P2` **Which countries can access the site** ✅ **Decided 2026-11-28 (owner): "English, no
+      blocking"** — written for US readers (D3), no country is blocked and no geo-detection is built;
+      cookie consent stays NC-125 (NC-092). As written: (implementation side: geo-detection,
       blocking, or per-region content). The *decision* — which jurisdictions are worth the
       compliance cost — lives in the business checklist.
 - [x] ~~**Rename the software to News Charts.**~~ Done 2026-07-28 (PR #11, merged) — **and

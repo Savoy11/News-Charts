@@ -706,11 +706,10 @@ and six are already waiting on §1. Validating those beats adding to the pile.
 hold until after launch, and DefiLlama's TVL events are not to be built (DefiLlama is off). The two
 comparisons you asked for that day are written:
 [`docs/proposals/2026-11-28-news-archive-and-web-search.md`](proposals/2026-11-28-news-archive-and-web-search.md).
-**Yours to mark** (`APPROVED`, `REJECTED` or `DEFERRED`): for the 1963–2017 news gap, a three-year
-licence from NewsAPI.ai (from $90 a month, with one question to ask it first), enquiries to the
-Times and to Reuters for the older decades, a free count of Wikipedia's dated entries, or leaving
-the gap to the records already held; for web search, Mojeek's Business plan (about £22.50 a month
-at 250 requests a day, after a trial), Brave by negotiation, or none.
+**Decided 2026-11-28:** for the 1963–2017 news gap, "Count Wikipedia first" and "Leave the gap";
+for web search, "No search layer". The count is made (about 1,450 usable entries in sixteen years,
+with half of the matches on twenty names: too thin to build on), no archive is licensed and no search
+engine is added. Nothing here is waiting on you; say so to reopen any of it.
 
 One was genuinely blocked, not deferred, and is now moot with DefiLlama off: **confirming exploits on-chain** needs a transaction
 reference DefiLlama may not carry. (The macro-event overlay, blocked here before for want of

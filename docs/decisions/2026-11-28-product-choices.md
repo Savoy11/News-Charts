@@ -28,10 +28,21 @@ Neither was asked. Both rest on DefiLlama, which the owner turned off on 2026-11
 - **Confirming exploits on-chain before ingest (NC-060).** Moot: the exploit rows were DefiLlama's
   incident list, which is no longer read, and a stored one is withheld on a public build.
 
+## The two follow-up calls, the same day
+
+The comparisons asked for in calls 1 and 4 were written the same day
+(`docs/proposals/2026-11-28-news-archive-and-web-search.md`), and the owner picked from them in a
+third dialog:
+
+| Asked | The owner's answer | What it means | Ledger |
+| --- | --- | --- | --- |
+| News for 1963–2017: count Wikipedia's dated entries, ask NewsAPI.ai, ask the Times and Reuters, or leave the gap (any that apply) | "Count Wikipedia first (Recommended)" and "Leave the gap" | No archive is licensed and no enquiry is sent. The free count was made: 67,280 entries of 2002–2017, of which 2,150 name a listed company by its whole name and about 1,450 are news about it, with half of the matches on twenty names. Too thin to build on; the government and regulator records stay the coverage before 2017. | NC-072 closed |
+| Web search: none, a Mojeek trial, or a quote from Brave | "No search layer (Recommended)" | No search engine is added. GDELT, the companies' own press releases and the government records stay the news layer. | NC-070 closed |
+
 ## What follows
 
-- Two comparisons for the owner to pick from, written in batch 192 as
-  `docs/proposals/2026-11-28-news-archive-and-web-search.md`: the news archive for 1963–2017
-  (call 1, its Part A) and the web search engine (call 4, its Part B).
+- Nothing is owed on these calls. The two comparisons were written in batch 192 and decided the
+  same day (above); the count they led to is recorded under A3 of the proposal.
 - To reopen any of the parked or closed calls, say so: accounts (and with them email alerts),
-  Spanish menus or country blocking, AI summaries, the newspapers' decade walk, on-chain governance.
+  Spanish menus or country blocking, AI summaries, the newspapers' decade walk, on-chain governance,
+  a licensed news archive, a web search engine, or Wikipedia's dated entries on the pages.

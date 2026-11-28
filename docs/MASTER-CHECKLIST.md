@@ -988,6 +988,33 @@ checks.
 - [x] The footer's source line now says the Federal Register supplies federal rules and notices,
       not only sector rules (batch 14 made company pages carry them).
 
+## NC ledger — batch 193: the two follow-up calls filed, and Wikipedia's dated entries counted (2026-11-28)
+
+The owner's answers of 2026-11-28 on `docs/proposals/2026-11-28-news-archive-and-web-search.md`, as quoted. The news
+gap: "Count Wikipedia first (Recommended)" and "Leave the gap". Web search: "No search layer (Recommended)". Nothing was
+built, bought or signed up for, and no enquiry was sent.
+
+- [x] **"Leave the gap" (NC-072 closed).** No news archive is licensed for 1963–2017: none read sells headline display
+      for 1963–2013 at a published price, and the three years NewsAPI.ai could add were not taken up. The government
+      and regulator records stay the coverage before 2017.
+- [x] **"Count Wikipedia first": counted.** The 192 monthly Current events pages of January 2002 to December 2017, read
+      once each as a reader opens them, six seconds apart (the API refused a faster read, and so did the pages at one
+      and a half seconds; nothing was done to get round either): 67,280 dated entries. Matched to a listed company only
+      by its whole name written with its capitals, never by a word of a longer name, a ticker or the outlet an entry
+      cites: 2,150 entries (3.2%), 361 companies. A first, looser rule (the names headlines are scored by) matched
+      400 of the first 723 entries, on words such as "Israel", "India" and "London", and was thrown out.
+- [x] **Read by hand.** Of a random 100 of the 2,150: 68 are news about the company; 13 name the right company only in
+      passing or are a football result; 19 are something else with the same name ("North-West Pakistan" as The North
+      West Company, 168 matches on its own; "Rafael" Nadal as Rafael Holdings; the "ISS" as ISS A/S). So about 1,450
+      usable entries in sixteen years, some 90 a year across every company, with half of the matches on twenty names
+      and 166 companies holding one entry each.
+- [x] **Not built.** It would add a few lines a year to a few dozen household names' pages, the ones already best
+      covered for those years, and would need its 2,000 rows read by hand and a list of the names that are something
+      else. The proposal's A3 records the count and the verdict; it can be asked for later.
+- [x] **"No search layer" (NC-070 closed).** No search engine is added and no adapter is built. GDELT, the companies'
+      own press releases and the government records stay the news layer.
+- **Counted:** the ledger has 24 open, 118 closed, 14 parked and 14 blocked.
+
 ## NC ledger — batch 192: a news archive for 1963–2017 and a web search engine, compared (2026-11-28)
 
 The owner's calls of 2026-11-28: "Price a news archive" (NC-072) and "Write the comparison" of web search engines
@@ -1016,7 +1043,7 @@ to be marked `APPROVED`, `REJECTED` or `DEFERRED`. No sign-up, no key, no purcha
 - [x] **How it was read.** Two research passes read each provider's own pages; a page that refused the fetch was left
       unread and is listed for a person to open. Every provider sentence quoted in the proposal (43) was then
       found a second time in the saved text of its page.
-- [ ] **Owner:** mark the options. Recommended: for the gap, the free Wikipedia count first, NewsAPI.ai only if it
+- [x] **Owner:** marked the same day (batch 193, above). As asked: mark the options. Recommended: for the gap, the free Wikipedia count first, NewsAPI.ai only if it
       confirms headlines may stay public after cancelling, otherwise leave the gap to the records held; for web
       search, none, unless a small Mojeek trial is wanted first.
 - **Counted:** the ledger has 26 open, 116 closed, 14 parked and 14 blocked.
@@ -14822,7 +14849,8 @@ pre-1963, GDELT covers 2017+; the modern era has no real-article source today).
 *(2026-11-28, the owner's call on the gap: "Price a news archive". The comparison is Part A of
 `docs/proposals/2026-11-28-news-archive-and-web-search.md` (batch 192): nothing read
 licenses headline display for 1963–2013 at a published price, and one self-serve licence fits
-2014–2017; NC-072.)*
+2014–2017. The owner's call on it, the same day: "Count Wikipedia first" and "Leave the gap"; NC-072
+closed in batch 193.)*
 
 ### Coverage map (which source owns which era)
 
@@ -14868,7 +14896,8 @@ licenses headline display for 1963–2013 at a published price, and one self-ser
       JSON API is closed to new customers", with the service ending on January 1, 2027 (NC-071,
       closed in batch 192). As written: accept the 100/day free cap and weak historical date-filtering; it searches
       the live web, not archives, so it is *not* a time machine.
-- [ ] `P1` **Evaluate an alternative search engine to Google** — Bing Web Search, Brave Search
+- [x] `P1` **Evaluate an alternative search engine to Google** — ✅ **Decided 2026-11-28 (owner):
+      "No search layer"**, on the comparison below (NC-070, closed in batch 193). As written: Bing Web Search, Brave Search
       API, SerpAPI, Marginalia, DuckDuckGo (and similar). Compare historical reach, date-filter
       quality, quota, cost, and ToS for an ad-supported product; pick the best discovery engine,
       which may replace Google rather than supplement it. *(2026-11-28, the owner's call: "Write

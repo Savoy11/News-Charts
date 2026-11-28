@@ -20,6 +20,11 @@ pages read through its proxy · **Nothing was built, bought or signed up for.**
 Mark each option `APPROVED`, `REJECTED` or `DEFERRED`. Anything that costs money or needs a sign-up
 is the owner's to do; nothing below can be bought from a session.
 
+> **Decided 2026-11-28 (owner), filed in batch 193.** The news gap: "Count Wikipedia first
+> (Recommended)" and "Leave the gap": A3's count approved and made (its result is under A3), A4
+> approved, A1 and A2 not taken up. Web search: "No search layer (Recommended)": B3 approved, B1
+> and B2 not taken up. Nothing was bought, no account was opened and no enquiry was sent.
+
 ---
 
 # Part A — A news archive for 1963–2017 (NC-072)
@@ -53,7 +58,8 @@ Three things were established about the rest of the field:
 
 ## A1. NewsAPI.ai (Event Registry), for 2014–2017
 
-**Status:** PROPOSED
+**Status:** REJECTED 2026-11-28 (not taken up: the owner's answer was to count Wikipedia's entries
+and otherwise leave the gap). It can be reopened; the question to ask first still stands.
 
 - **Why:** the only source read whose own terms name this exact use. Its terms ("Last updated:
   October 7, 2026", direct): "This includes displaying article headlines, short excerpts, source
@@ -79,7 +85,7 @@ Three things were established about the rest of the field:
 
 ## A2. Ask the two archives that hold the older decades
 
-**Status:** PROPOSED
+**Status:** REJECTED 2026-11-28 (not taken up, as A1). No enquiry was drafted or sent.
 
 - **Why:** the Times and Reuters are the two archives identified that hold dated, headline-level
   records for 1963–2013. Neither publishes a price for display.
@@ -91,7 +97,32 @@ Three things were established about the rest of the field:
 
 ## A3. Free fills that need no licence
 
-**Status:** PROPOSED
+**Status:** APPROVED 2026-11-28 for the count (owner: "Count Wikipedia first (Recommended)").
+Counted in batch 193; nothing is built.
+
+- **The count.** The 192 monthly pages of January 2002 to December 2017 were read once each, as a
+  reader opens them, six seconds apart: **67,280 dated entries**. An entry was matched to a listed
+  company only by the company's whole name written with its capitals (its everyday name, or another
+  name news may use: "Google", "Facebook"), never by one word of a longer name or by a ticker, and
+  never by the outlet it cites. **2,150 entries (3.2%) matched, naming 361 companies.**
+- **Read by hand.** Of a random 100 of the 2,150: **68 are news about the company**, 13 name the
+  right company only in passing or are a football result (Manchester United), and **19 are
+  something else with the same name**: the war in "North-West Pakistan" read as The North West
+  Company (168 of the 2,150 on its own), "Rafael" Nadal as Rafael Holdings, the "ISS" space station
+  as ISS A/S, the "Copa" América as Copa Holdings.
+- **What that comes to.** About 1,450 usable entries in sixteen years, some 90 a year across every
+  company (the matches themselves run from 26 in 2002 to between 150 and 230 a year from 2010).
+  Half of all the matches fall on twenty names, two of the false ones among them, led by Google
+  154, Microsoft 119, Facebook 100, Boeing 74 and General Motors 67; 166 companies have a single
+  entry. A further 1,165 entries matched only a one-word name that is an everyday
+  word; most are false ("Southern" 183, "Peoples" 107), though Apple (93) and Amazon (43) are among
+  them.
+- **Verdict.** Small. It would put a few lines a year on the pages of a few dozen household names,
+  which are the pages already best covered by filings and agency records for those years, and
+  nothing on the rest. To be safe to show it would need its 2,000 rows read by hand once and a list
+  of the names that are something else. A session does not propose building it now; say so if it is
+  wanted, and it is a contained job (one committed file, Wikipedia's credit and licence as for its
+  history text).
 
 - **Wikipedia's "Current events" pages, 2002 on.** Monthly pages reach back to January 2002
   (direct), with dated one-line entries under headings that include business, each linking the
@@ -110,7 +141,7 @@ Three things were established about the rest of the field:
 
 ## A4. Leave the gap to the records already held
 
-**Status:** PROPOSED
+**Status:** APPROVED 2026-11-28 (owner: "Leave the gap"). NC-072 closed in batch 193.
 
 - **Why:** the government and regulator records built since October (the SEC's digest from 1956,
   recalls, EPA, the courts, FDA, EDGAR from 1994) are free, permanent and already on the pages.
@@ -171,7 +202,8 @@ The sentences that decide the "not available" and "does not fit" rows, all direc
 
 ## B1. Mojeek, Business plan
 
-**Status:** PROPOSED
+**Status:** REJECTED 2026-11-28 (not taken up: the owner's answer was "No search layer"). No
+account was opened and no trial was run.
 
 - **Why:** the only engine whose published terms allow all of it. Its API terms (undated; direct):
   "You may use Data for commercial purposes, such as subscription services, and display it together
@@ -194,7 +226,7 @@ The sentences that decide the "not available" and "does not fit" rows, all direc
 
 ## B2. Brave, a custom plan with storage rights
 
-**Status:** PROPOSED (only if B1's trial shows too little)
+**Status:** REJECTED 2026-11-28 (not taken up, as B1). No enquiry was sent.
 
 - **Why:** the better engine for this job: it has a news index and can filter by a date range.
 - **Against:** its terms ("Last updated: 1 Sep, 2026", direct) bar a customer to "store, cache, or
@@ -204,7 +236,8 @@ The sentences that decide the "not available" and "does not fit" rows, all direc
 
 ## B3. No discovery layer
 
-**Status:** PROPOSED
+**Status:** APPROVED 2026-11-28 (owner: "No search layer (Recommended)"). NC-070 closed in batch
+193; GDELT, the companies' own press releases and the government records stay the news layer.
 
 - **Why:** GDELT already indexes mainstream news, free, with dates. What a search engine would add
   is company, trade and local pages, which carry the weakest dates. The item was written when topic
